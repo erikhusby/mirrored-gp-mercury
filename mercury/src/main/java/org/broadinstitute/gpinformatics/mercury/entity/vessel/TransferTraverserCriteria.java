@@ -164,6 +164,16 @@ public interface TransferTraverserCriteria {
         private static final int STARTER_INDEX = -1;
 
         private final Map<Integer, Collection<LabBatch>> labBatchesAtHopCount = new HashMap<Integer, Collection<LabBatch>>();
+        private LabBatch.LabBatchType type;
+
+        /**
+         * Constructs a new NearestLabBatchFinder with a LabBatch type filter.
+         *
+         * @param type This type is used to filter the lab batches. If it is null there is no filtering.
+         */
+        public NearestLabBatchFinder(LabBatch.LabBatchType type) {
+            this.type = type;
+        }
 
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
@@ -171,10 +181,24 @@ public interface TransferTraverserCriteria {
                 Collection<LabBatch> labBatches = context.getLabVessel().getLabBatches();
 
                 if (!labBatches.isEmpty()) {
-                    if (!labBatchesAtHopCount.containsKey(context.getHopCount())) {
-                        labBatchesAtHopCount.put(context.getHopCount(), new HashSet<LabBatch>());
+
+                    Collection<LabBatch> batchesAtHop = labBatchesAtHopCount.get(context.getHopCount());
+                    if (batchesAtHop == null) {
+                        batchesAtHop = new HashSet<LabBatch>();
                     }
-                    labBatchesAtHopCount.get(context.getHopCount()).addAll(labBatches);
+                    if (type == null) {
+                        batchesAtHop.addAll(labBatches);
+                    } else {
+                        for (LabBatch labBatch : labBatches) {
+                            if (labBatch.getLabBatchType().equals(type)) {
+                                batchesAtHop.add(labBatch);
+                            }
+                        }
+                    }
+                    // If, after filtering, we have results add them to the map
+                    if (batchesAtHop.size() > 0) {
+                        labBatchesAtHopCount.put(context.getHopCount(), batchesAtHop);
+                    }
                 }
             }
             return TraversalControl.ContinueTraversing;
@@ -196,8 +220,18 @@ public interface TransferTraverserCriteria {
                     nearest = labBatchesForHopCount.getKey();
                 }
             }
-            if (labBatchesAtHopCount.containsKey(nearest)) {
-                nearestSet.addAll(labBatchesAtHopCount.get(nearest));
+            Collection<LabBatch> batchesAtHop = labBatchesAtHopCount.get(nearest);
+            if (batchesAtHop != null) {
+                if (type == null) {
+                    nearestSet.addAll(batchesAtHop);
+                } else {
+                    for (LabBatch labBatch : batchesAtHop) {
+                        if (labBatch.getLabBatchType().equals(type)) {
+                            nearestSet.add(labBatch);
+                        }
+                    }
+                }
+
             }
 
             return nearestSet;

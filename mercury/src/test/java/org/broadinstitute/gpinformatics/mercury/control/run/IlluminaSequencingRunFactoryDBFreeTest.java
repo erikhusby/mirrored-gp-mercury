@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.control.run;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.easymock.EasyMock;
@@ -45,7 +46,7 @@ public class IlluminaSequencingRunFactoryDBFreeTest {
         runBarcode = flowcellTestBarcode + format.format(runDate);
         testFlowcell = new IlluminaFlowcell(IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell, flowcellTestBarcode);
 
-        runFactory = new IlluminaSequencingRunFactory();
+        runFactory = new IlluminaSequencingRunFactory(EasyMock.createNiceMock(JiraCommentUtil.class));
 
         testRunName = "run" + (new Date()).getTime();
         String baseDirectory = System.getProperty("java.io.tmpdir");

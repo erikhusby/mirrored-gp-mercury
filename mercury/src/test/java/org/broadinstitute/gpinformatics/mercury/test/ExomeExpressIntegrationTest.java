@@ -8,7 +8,9 @@ import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ChildVesselBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ParentVesselBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleImportBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleReceiptBean;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 
 import javax.ws.rs.core.MediaType;
 import java.io.BufferedReader;
@@ -41,26 +43,47 @@ public class ExomeExpressIntegrationTest {
             String testSuffix = testSuffixDateFormat.format(new Date());
 
             // load reagents with ImportFromSquidTest.
-            // Use BSP CreateKitTest.createKit to send receipt messages to Mercury.
 
             // get list of samples and tube barcodes.
             BufferedReader bufferedReader = new BufferedReader(new FileReader(sampleFileName));
-            // List<String> samples = new ArrayList<String>();
-            List<String> tubeBarcodes = new ArrayList<String>();
+            List<String> sampleIds = new ArrayList<String>();
             while (bufferedReader.ready()) {
                 String line = bufferedReader.readLine();
                 if (!line.trim().isEmpty()) {
-                    String[] fields = line.split("\t");
-                    // samples.add(fields[0]);
-                    tubeBarcodes.add(fields[1]);
+                    sampleIds.add(line);
                 }
             }
+
+            Scanner scanner = new Scanner(System.in);
+            System.out.println("Using samples");
+            for (String sampleId : sampleIds) {
+                System.out.println(sampleId);
+            }
+
+            System.out.println("Press enter to send receipt message");
+            scanner.nextLine();
+            // Send receipt message
+            List<ParentVesselBean> parentVesselBeans = new ArrayList<ParentVesselBean>();
+            List<String> tubeBarcodes = new ArrayList<String>();
+            int j = 1;
+            for (String sampleId : sampleIds) {
+                String manufacturerBarcode = "0" + testSuffix + j;
+                tubeBarcodes.add(manufacturerBarcode);
+                parentVesselBeans.add(new ParentVesselBean(manufacturerBarcode, sampleId, "Matrix Tube [0.75mL]", null));
+                j++;
+            }
+            SampleReceiptBean sampleReceiptBean = new SampleReceiptBean(new Date(), "SK-" + testSuffix,
+                    parentVesselBeans, "jowalsh");
+            WebResource resource = Client.create().resource(baseUrl.toExternalForm() + "/rest/samplereceipt");
+            resource.type(MediaType.APPLICATION_XML_TYPE)
+                    .accept(MediaType.APPLICATION_XML)
+                    .entity(sampleReceiptBean)
+                    .post(String.class);
 
             // User creates PDO in UI.
             // User checks bucket.
             // User creates LCSET from bucket.
 
-            Scanner scanner = new Scanner(System.in);
             System.out.println("Press enter to send dilution and plating");
             scanner.nextLine();
             // dilution.
@@ -97,7 +120,7 @@ public class ExomeExpressIntegrationTest {
             System.out.println("Press enter to send export");
             scanner.nextLine();
             // export message.
-            List<ParentVesselBean> parentVesselBeans = new ArrayList<ParentVesselBean>();
+            parentVesselBeans = new ArrayList<ParentVesselBean>();
             ArrayList<ChildVesselBean> childVesselBeans = new ArrayList<ChildVesselBean>();
             // Need a 4 character base 36 ID.
             @SuppressWarnings("NumericCastThatLosesPrecision")
@@ -110,7 +133,7 @@ public class ExomeExpressIntegrationTest {
             parentVesselBeans.add(new ParentVesselBean(exportRackBarcode, null, "Rack", childVesselBeans));
             SampleImportBean sampleImportBean = new SampleImportBean("BSP", "EX-" + testSuffix, new Date(),
                     parentVesselBeans, "jowalsh");
-            WebResource resource = Client.create().resource(baseUrl.toExternalForm() + "/rest/sampleimport");
+            resource = Client.create().resource(baseUrl.toExternalForm() + "/rest/sampleimport");
             resource.type(MediaType.APPLICATION_XML_TYPE)
                     .accept(MediaType.APPLICATION_XML)
                     .entity(sampleImportBean)
@@ -143,10 +166,15 @@ public class ExomeExpressIntegrationTest {
                 sendMessage(baseUrl, bettaLIMSMessage);
             }
             LabEventTest.QtpJaxbBuilder qtpJaxbBuilder = new LabEventTest.QtpJaxbBuilder(bettaLimsMessageFactory, testSuffix,
-                    hybridSelectionJaxbBuilder.getNormCatchBarcodes(), hybridSelectionJaxbBuilder.getNormCatchRackBarcode()).invoke();
+                    hybridSelectionJaxbBuilder.getNormCatchBarcodes(), hybridSelectionJaxbBuilder.getNormCatchRackBarcode(),
+                    WorkflowName.EXOME_EXPRESS).invoke();
             for (BettaLIMSMessage bettaLIMSMessage : qtpJaxbBuilder.getMessageList()) {
                 sendMessage(baseUrl, bettaLIMSMessage);
             }
+
+            System.out.println("Transfer from denature tube: " + qtpJaxbBuilder.getDenatureTubeBarcode());
+            System.out.print("Enter flowcell barcode: ");
+            String flowcellBarcode = scanner.nextLine();
 
             // User checks chain of custody, activity stream.
             // User does denature to flowcell transfer in UI.
@@ -155,8 +183,8 @@ public class ExomeExpressIntegrationTest {
             System.out.println("Press enter to register run");
             scanner.nextLine();
             // Run registration web service call.
-            SolexaRunBean solexaRunBean = new SolexaRunBean(qtpJaxbBuilder.getFlowcellBarcode(), "Run" + testSuffix,
-                    new Date(), "SL-HAL", File.createTempFile("RunDir", ".txt").getAbsolutePath(), null);
+            SolexaRunBean solexaRunBean = new SolexaRunBean(flowcellBarcode, "Run" + testSuffix, new Date(), "SL-HAL",
+                    File.createTempFile("RunDir", ".txt").getAbsolutePath(), null);
             Client.create().resource(baseUrl.toExternalForm() + "/rest/solexarun")
                     .type(MediaType.APPLICATION_XML_TYPE)
                     .accept(MediaType.APPLICATION_XML)

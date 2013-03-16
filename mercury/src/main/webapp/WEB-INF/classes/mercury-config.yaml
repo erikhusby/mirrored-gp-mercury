@@ -8,7 +8,7 @@ app:
       port:     8080
       jmsPort:  5445
 
-    BAMBOO:
+    AUTO_BUILD:
       host:     mercurydev.broadinstitute.org
       port:     8081
       jmsPort:  5446
@@ -260,9 +260,9 @@ mercury:
       hipchat: DEV
 
 
-    BAMBOO:
+    AUTO_BUILD:
 
-      app:      BAMBOO
+      app:      AUTO_BUILD
       bsp:      DEV
       gap:      DEV
       jira:     TEST

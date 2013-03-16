@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriteria;
+import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.meanbean.lang.Factory;
 import org.meanbean.test.BeanTester;
@@ -29,13 +29,13 @@ public class RiskItemTest {
                 .ignoreProperty("productOrderSample")
                 .build();
 
-        class RiskCriteriaFactory implements Factory<RiskCriteria> {
-            @Override public RiskCriteria create() {
-                return new RiskCriteria(RiskCriteria.RiskCriteriaType.CONCENTRATION, Operator.LESS_THAN, "100.0");
+        class RiskCriteriaFactory implements Factory<RiskCriterion> {
+            @Override public RiskCriterion create() {
+                return new RiskCriterion(RiskCriterion.RiskCriteriaType.CONCENTRATION, Operator.LESS_THAN, "100.0");
             }
         }
         RiskCriteriaFactory riskCriteriaFactory = new RiskCriteriaFactory();
-        tester.getFactoryCollection().addFactory(RiskCriteria.class, riskCriteriaFactory);
+        tester.getFactoryCollection().addFactory(RiskCriterion.class, riskCriteriaFactory);
 
 
         class ProductFactory implements Factory<Product> {

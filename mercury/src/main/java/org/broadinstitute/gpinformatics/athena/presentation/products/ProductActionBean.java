@@ -145,7 +145,7 @@ public class ProductActionBean extends CoreActionBean {
         // Ensure that numeric criteria have valid data.
         int matchingValueIndex = 0;
         for (String criterion : criteria) {
-            RiskCriteria.RiskCriteriaType type = RiskCriteria.RiskCriteriaType.findByLabel(criterion);
+            RiskCriterion.RiskCriteriaType type = RiskCriterion.RiskCriteriaType.findByLabel(criterion);
             if (type.getOperatorType() == Operator.OperatorType.NUMERIC) {
                 try {
                     Double.parseDouble(values[matchingValueIndex]);
@@ -243,7 +243,7 @@ public class ProductActionBean extends CoreActionBean {
             int fullPosition = 0;
             int originalPosition = 0;
             for (String criterion : criteria) {
-                RiskCriteria.RiskCriteriaType type = RiskCriteria.RiskCriteriaType.findByLabel(criterion);
+                RiskCriterion.RiskCriteriaType type = RiskCriterion.RiskCriteriaType.findByLabel(criterion);
                 if (type.getOperatorType() == Operator.OperatorType.BOOLEAN) {
                     fullOperators[fullPosition] = type.getOperators().get(0).getLabel();
                     fullValues[fullPosition] = "true";
@@ -341,8 +341,8 @@ public class ProductActionBean extends CoreActionBean {
         return Operator.findOperatorsByType(Operator.OperatorType.NUMERIC);
     }
 
-    public RiskCriteria.RiskCriteriaType[] getCriteriaTypes() {
-        return RiskCriteria.RiskCriteriaType.values();
+    public RiskCriterion.RiskCriteriaType[] getCriteriaTypes() {
+        return RiskCriterion.RiskCriteriaType.values();
     }
 
     public String[] getValues() {

@@ -173,18 +173,23 @@ public class LimsQueryResource {
         return thriftService.fetchUnfulfilledDesignations();
     }
 
+    /**
+     * Contrary to the path of this service, the data provided here is no longer provided by a Thrift Query.  This data
+     * now comes from the BspUserList
+     * @param badgeId badge ID of a broad user
+     * @return Broad User ID that corresponds to the Badge.
+     */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchUserIdForBadgeId")
     public String fetchUserIdForBadgeId(@QueryParam("badgeId") String badgeId) {
-        return thriftService.fetchUserIdForBadgeId(badgeId);
 
-//        BspUser foundUser = bspUserList.getByBadgeId(badgeId);
-//        if (foundUser != null) {
-//            return foundUser.getUsername();
-//        } else {
-//            throw new RuntimeException("User not found for badge ID: " + badgeId);
-//        }
+        BspUser foundUser = bspUserList.getByBadgeId(badgeId);
+        if (foundUser != null) {
+            return foundUser.getUsername();
+        } else {
+            throw new RuntimeException("User not found for badge ID: " + badgeId);
+        }
     }
 
     /**

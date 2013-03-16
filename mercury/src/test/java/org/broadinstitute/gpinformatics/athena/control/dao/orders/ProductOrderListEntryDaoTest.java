@@ -4,10 +4,10 @@ import org.apache.commons.collections15.CollectionUtils;
 import org.apache.commons.collections15.Predicate;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
-import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
-import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
@@ -39,7 +39,7 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
     private ProductDao productDao;
 
     @Inject
-    private BillingLedgerDao billingLedgerDao;
+    private LedgerEntryDao ledgerEntryDao;
 
     @Inject
     private BillingSessionDao billingSessionDao;
@@ -63,7 +63,7 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
         order = ProductOrderDaoTest.createTestProductOrder(researchProjectDao, productDao);
 
         // need to initialize the price items here as we will be exercising their hashCode methods when we create
-        // BillingLedger entities in some of our tests
+        // LedgerEntry entities in some of our tests
         //noinspection ResultOfMethodCallIgnored
         order.getProduct().getPrimaryPriceItem().hashCode();
         for (PriceItem priceItem : order.getProduct().getOptionalPriceItems()) {
@@ -160,13 +160,13 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
 
     public void testOneLedgerEntryNoBillingSession() {
 
-        BillingLedger billingLedger =
-                new BillingLedger(order.getSamples().iterator().next(), order.getProduct().getPrimaryPriceItem(),
+        LedgerEntry ledgerEntry =
+                new LedgerEntry(order.getSamples().iterator().next(), order.getProduct().getPrimaryPriceItem(),
                         new Date(), 2);
 
-        billingLedgerDao.persist(billingLedger);
-        billingLedgerDao.flush();
-        billingLedgerDao.clear();
+        ledgerEntryDao.persist(ledgerEntry);
+        ledgerEntryDao.flush();
+        ledgerEntryDao.clear();
 
         ProductOrderListEntry productOrderListEntry = sanityCheckAndGetTestOrderListEntry();
 
@@ -177,11 +177,11 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
 
 
     public void testOneLedgerEntryWithBillingSession() {
-        BillingLedger billingLedger =
-                new BillingLedger(order.getSamples().iterator().next(), order.getProduct().getPrimaryPriceItem(),
+        LedgerEntry ledgerEntry =
+                new LedgerEntry(order.getSamples().iterator().next(), order.getProduct().getPrimaryPriceItem(),
                         new Date(), 2);
 
-        BillingSession billingSession = new BillingSession(1L, Collections.singleton(billingLedger));
+        BillingSession billingSession = new BillingSession(1L, Collections.singleton(ledgerEntry));
 
         billingSessionDao.persist(billingSession);
         billingSessionDao.flush();

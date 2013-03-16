@@ -33,6 +33,8 @@ public class VesselToSectionTransfer extends VesselTransfer {
         this.targetSection = targetSection;
         this.labEvent = labEvent;
         this.targetVessel = targetVesselContainer.getEmbedder();
+        sourceVessel.getVesselToSectionTransfersThisAsSource().add(this);
+        targetVessel.getContainerRole().getVesselToSectionTransfersTo().add(this);
     }
 
     protected VesselToSectionTransfer() {

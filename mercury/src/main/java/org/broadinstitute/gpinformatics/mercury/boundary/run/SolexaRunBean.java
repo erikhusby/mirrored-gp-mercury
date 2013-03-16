@@ -3,13 +3,14 @@ package org.broadinstitute.gpinformatics.mercury.boundary.run;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 
 import javax.xml.bind.annotation.XmlRootElement;
+import java.io.Serializable;
 import java.util.Date;
 
 /**
  * JAX-RS DTO for Solexa sequencing run
  */
 @XmlRootElement
-public class SolexaRunBean {
+public class SolexaRunBean implements Serializable {
     private String flowcellBarcode;
     private String runBarcode;
     private Date runDate;
@@ -77,6 +78,7 @@ public class SolexaRunBean {
     public void setReagentBlockBarcode(String reagentBlockBarcode) {
         this.reagentBlockBarcode = reagentBlockBarcode;
     }
+
 
     public SolexaRunBean(IlluminaSequencingRun illuminaSequencingRun) {
         flowcellBarcode = illuminaSequencingRun.getSampleCartridge().getCartridgeBarcode();

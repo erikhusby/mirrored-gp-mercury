@@ -89,9 +89,15 @@ public enum LabEventType {
             PlasticToValidate.SOURCE, PipelineTransformation.NONE),
     STRIP_TUBE_B_TRANSFER("StripTubeBTransfer", true, false, SystemOfRecord.SQUID, false,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE),
+
+    // HiSeq 2000
     FLOWCELL_TRANSFER("FlowcellTransfer", true, false, SystemOfRecord.SQUID, false,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE),
     FLOWCELL_LOADED("FlowcellLoaded", true, false, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
+
+    // For HiSeq 2500
+    DENATURE_TO_FLOWCELL_TRANSFER("DenatureToFlowcellTransfer", false, true, SystemOfRecord.MERCURY, false,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE),
 
     // Sage
     SAGE_LOADING("SageLoading", true, false, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE, PipelineTransformation.NONE),

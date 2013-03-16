@@ -7,12 +7,16 @@ import net.sourceforge.stripes.action.UrlBinding;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
+import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -30,7 +34,6 @@ public class PlasticHistoryViewActionBean extends CoreActionBean {
     private static final String VIEW_PAGE = "/resources/sample/plasticHistoryView.jsp";
 
     private String sampleKey;
-
     private String batchKey;
 
     public String getBatchKey() {
@@ -58,28 +61,42 @@ public class PlasticHistoryViewActionBean extends CoreActionBean {
     /**
      * This method traverses the all descendant vessels for the selected sample.
      *
-     * @return a list of vessels that represents the plastic history of the selected sample.
+     * @return a list of items that represents the plastic history of the selected sample.
      */
-    public Set<LabVessel> getPlasticHistory() {
-        Set<LabVessel> targetVessels = new HashSet<LabVessel>();
+    public Set<PlasticHistoryListItem> getPlasticHistory() {
+        Set<PlasticHistoryListItem> targetItems = new HashSet<PlasticHistoryListItem>();
         if (sampleKey != null) {
             MercurySample selectedSample = mercurySampleDao.findBySampleKey(sampleKey);
             if (selectedSample != null) {
                 List<LabVessel> vessels = labVesselDao.findBySampleKey(selectedSample.getSampleKey());
-                for (LabVessel vessel : vessels) {
-                    targetVessels.addAll(vessel.getDescendantVessels());
-                }
+                addVesselsToItemList(targetItems, vessels);
             }
         } else if (batchKey != null) {
             LabBatch batch = labBatchDAO.findByBusinessKey(batchKey);
             if (batch != null) {
                 Set<LabVessel> vessels = batch.getStartingLabVessels();
-                for (LabVessel vessel : vessels) {
-                    targetVessels.addAll(vessel.getDescendantVessels());
+                addVesselsToItemList(targetItems, vessels);
+            }
+        }
+        return targetItems;
+    }
+
+    private void addVesselsToItemList(Set<PlasticHistoryListItem> targetItems, Collection<LabVessel> vessels) {
+        for (LabVessel vessel : vessels) {
+            for (LabVessel descendentVessel : vessel.getDescendantVessels()) {
+                targetItems.add(new PlasticHistoryListItem(descendentVessel));
+
+                // Adds flowcell's sequencer runs to the list.
+                if (descendentVessel.getType().equals(LabVessel.ContainerType.FLOWCELL)) {
+                    if (OrmUtil.proxySafeIsInstance(descendentVessel, RunCartridge.class)) {
+                        RunCartridge runCartridge = (RunCartridge) descendentVessel;
+                        for (SequencingRun seqRun : runCartridge.getSequencingRuns()) {
+                            targetItems.add(new PlasticHistoryListItem(seqRun, descendentVessel));
+                        }
+                    }
                 }
             }
         }
-        return targetVessels;
     }
 
 }

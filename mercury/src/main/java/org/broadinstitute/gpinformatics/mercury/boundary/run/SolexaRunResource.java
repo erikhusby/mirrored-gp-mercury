@@ -44,8 +44,6 @@ public class SolexaRunResource {
 
     private SquidConnector connector;
 
-
-
     @Inject
     public SolexaRunResource(IlluminaSequencingRunDao illuminaSequencingRunDao,
                              IlluminaSequencingRunFactory illuminaSequencingRunFactory,
@@ -83,28 +81,40 @@ public class SolexaRunResource {
         Response callerResponse;
 
         SquidConnector.SquidResponse connectorRun = connector.createRun(solexaRunBean);
-        if (connectorRun.getCode() != Response.Status.CREATED.getStatusCode()) {
-            throw new ResourceException(connectorRun.getMessage(),
-                                               Response.Status.fromStatusCode(connectorRun.getCode()));
-        }
-        callerResponse = Response.created(uriInfo.getAbsolutePathBuilder().path(runDirectory.getName()).build())
-                                 .entity(connectorRun).build();
 
-        if (router.routeForVessel(flowcell) == MercuryOrSquidRouter.MercuryOrSquid.MERCURY) {
-            try {
-                run = registerRun(solexaRunBean, flowcell);
-            } catch (Exception e) {
-                LOG.error("Failed to process run" + Response.Status.INTERNAL_SERVER_ERROR, e);
-                /*
-                 * TODO SGM  Until ExExV2 is totally live, errors thrown from the Mercury side with Registration should
-                 * not be thrown (except if registering a run multiple times
-                 *
-                 * throw new ResourceException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR, e);
-                 */
-            }
-            URI createdUri = uriInfo.getAbsolutePathBuilder().path(run.getRunName()).build();
-            callerResponse = Response.created(createdUri).entity(new SolexaRunBean(run)).build();
+        /**
+         * TODO SGM  To get past the demo and pre ExExV2 release, we will not forcibly return if there is an error with
+         * the Squid call.  For now, we will run, call mercury and return the Squid response if there was an error.
+         *
+         * In the future, this will be encompassed by MercuryOrSquidRouter tests.
+         */
+        if (connectorRun.getCode() != Response.Status.CREATED.getStatusCode()) {
+            callerResponse = Response.status(connectorRun.getCode()).entity(solexaRunBean).build();
         }
+        else {
+
+            callerResponse = Response.created(uriInfo.getAbsolutePathBuilder().path(runDirectory.getName()).build())
+                                     .entity(solexaRunBean).build();
+        }
+
+            if (router.routeForVessel(flowcell) == MercuryOrSquidRouter.MercuryOrSquid.MERCURY) {
+                try {
+                    run = registerRun(solexaRunBean, flowcell);
+                    URI createdUri = uriInfo.getAbsolutePathBuilder().path(run.getRunName()).build();
+                    if(callerResponse.getStatus() == Response.Status.CREATED.getStatusCode()) {
+                        callerResponse = Response.created(createdUri).entity(new SolexaRunBean(run)).build();
+                    }
+                } catch (Exception e) {
+                    LOG.error("Failed to process run" + Response.Status.INTERNAL_SERVER_ERROR, e);
+                    /*
+                    * TODO SGM  Until ExExV2 is totally live, errors thrown from the Mercury side with Registration should
+                    * not be thrown (except if registering a run multiple times
+                    *
+                    * throw new ResourceException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR, e);
+                    */
+                }
+            }
+
         return callerResponse;
     }
 

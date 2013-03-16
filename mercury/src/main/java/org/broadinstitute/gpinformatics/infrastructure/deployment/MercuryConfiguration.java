@@ -17,6 +17,7 @@ import org.yaml.snakeyaml.Yaml;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -41,7 +42,7 @@ public class MercuryConfiguration {
     // support @TestInstance-style qualifier injection with producer classes.  But not in this version.
     @SuppressWarnings("unchecked")
     private static final Class<? extends AbstractConfig>[] CONFIG_CLASSES = array(
-            MercuryConfig.class,
+            AppConfig.class,
             SquidConfig.class,
             BSPConfig.class,
             JiraConfig.class,
@@ -257,7 +258,7 @@ public class MercuryConfiguration {
                 MERCURY_BUILD_INFO = "Unknown build - problematic " + versionFilename;
                 throw new RuntimeException("Problem reading version file " + versionFilename, ioe);
             } catch (ParseException e) {
-                // problem parsing the maven build date, use it's default one
+                // Problem parsing the maven build date, use its default one.
                 if ((buildDate != null) && !buildDate.isEmpty()) {
                    MERCURY_BUILD_INFO += " built on " + buildDate;    
                 }        
@@ -325,7 +326,7 @@ public class MercuryConfiguration {
 
 
     /**
-     * Intended solely for test code to clear out mappings
+     * Intended solely for test code to clear out mappings.
      */
     /* package */
     void clear() {
@@ -351,43 +352,49 @@ public class MercuryConfiguration {
         }
     }
 
-    public AbstractConfig getConfig(Class<? extends AbstractConfig> clazz, Deployment deployment) {
-        if (!mercuryConnections.isInitialized()) {
-            synchronized (this) {
-                if (!mercuryConnections.isInitialized()) {
-                    InputStream is;
+     public AbstractConfig getConfig(Class<? extends AbstractConfig> clazz, Deployment deployment) {
+        InputStream is = null;
+        try {
+            if (!mercuryConnections.isInitialized()) {
+                synchronized (this) {
+                    if (!mercuryConnections.isInitialized()) {
 
-                    is = getClass().getResourceAsStream(MERCURY_CONFIG);
+                        is = getClass().getResourceAsStream(MERCURY_CONFIG);
 
-                    if (is == null) {
-                        throw new RuntimeException("Cannot find global config file '" + MERCURY_CONFIG + "'");
+                        if (is == null) {
+                            throw new RuntimeException("Cannot find global config file '" + MERCURY_CONFIG + "'");
+                        }
+
+                        Yaml yaml = new Yaml();
+
+                        @SuppressWarnings("unchecked")
+                        final Map<String, Map> globalConfigDoc = (Map<String, Map>) yaml.load(is);
+
+                        // take local overrides if any
+                        Map<String, Map> localConfigDoc = null;
+                        is = getClass().getResourceAsStream(MERCURY_CONFIG_LOCAL);
+
+                        if (is != null) {
+                            //noinspection unchecked
+                            localConfigDoc = (Map<String, Map>) yaml.load(is);
+                        }
+
+                        load(globalConfigDoc, localConfigDoc);
                     }
-
-                    Yaml yaml = new Yaml();
-                    //noinspection unchecked
-                    final Map<String, Map> globalConfigDoc = (Map<String, Map>) yaml.load(is);
-
-                    // take local overrides if any
-                    Map<String, Map> localConfigDoc = null;
-                    is = getClass().getResourceAsStream(MERCURY_CONFIG_LOCAL);
-
-                    if (is != null) {
-                        //noinspection unchecked
-                        localConfigDoc = (Map<String, Map>) yaml.load(is);
-                    }
-
-                    load(globalConfigDoc, localConfigDoc);
                 }
             }
+
+            String systemKey = getConfigKey(clazz);
+
+            // Find the external deployment for this system key and Mercury deployment
+            Deployment externalDeployment = mercuryConnections.getExternalDeployment(systemKey, deployment);
+
+            // Look up the config for this system
+            return externalSystems.getConfig(systemKey, externalDeployment);
+        } finally {
+            IOUtils.closeQuietly(is);
         }
 
-        String systemKey = getConfigKey(clazz);
-
-        // Find the external deployment for this system key and Mercury deployment
-        Deployment externalDeployment = mercuryConnections.getExternalDeployment(systemKey, deployment);
-
-        // Look up the config for this system
-        return externalSystems.getConfig(systemKey, externalDeployment);
     }
 
 
@@ -427,17 +434,24 @@ public class MercuryConfiguration {
     }
 
     /**
-     * Utility method to create a new instance of the specified {@link AbstractConfig}-derived class
+     * Utility method to create a new instance of the specified {@link AbstractConfig}-derived class.
      *
      * @param clazz The class extending {@link AbstractConfig} of which this method should create a new instance.
      * @return The new instance.
      */
     private AbstractConfig newConfig(Class<? extends AbstractConfig> clazz) {
         try {
-            return clazz.newInstance();
+            // This will throw NoSuchMethodException if the constructor does not exist, so no need to null check.
+            Constructor<? extends AbstractConfig> constructor = clazz.getConstructor(Deployment.class);
+            return constructor.newInstance(Deployment.STUBBY);
+
         } catch (InstantiationException e) {
             throw new RuntimeException(e);
         } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        } catch (NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        } catch (InvocationTargetException e) {
             throw new RuntimeException(e);
         }
     }

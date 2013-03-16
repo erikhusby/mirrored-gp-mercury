@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
-import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 
 import java.text.MessageFormat;
@@ -14,19 +14,19 @@ public class QuoteImportItem {
     private final String quoteId;
     private final PriceItem priceItem;
     private final Date billToDate;
-    private final List<BillingLedger> ledgerItems;
+    private final List<LedgerEntry> ledgerItems;
     private Date startRange;
     private Date endRange;
 
     public QuoteImportItem(
-        String quoteId, PriceItem priceItem, List<BillingLedger> ledgerItems, Date billToDate) {
+        String quoteId, PriceItem priceItem, List<LedgerEntry> ledgerItems, Date billToDate) {
 
         this.quoteId = quoteId;
         this.priceItem = priceItem;
         this.ledgerItems = ledgerItems;
         this.billToDate = billToDate;
 
-        for (BillingLedger ledger : ledgerItems) {
+        for (LedgerEntry ledger : ledgerItems) {
             updateDateRange(ledger.getWorkCompleteDate());
         }
     }
@@ -57,7 +57,7 @@ public class QuoteImportItem {
 
     public double getQuantity() {
         double quantity = 0;
-        for (BillingLedger ledgerItem : ledgerItems) {
+        for (LedgerEntry ledgerItem : ledgerItems) {
             quantity += ledgerItem.getQuantity();
         }
         return quantity;
@@ -73,7 +73,7 @@ public class QuoteImportItem {
     }
 
     public void setBillingMessages(String billedMessage) {
-        for (BillingLedger ledgerItem : ledgerItems) {
+        for (LedgerEntry ledgerItem : ledgerItems) {
             ledgerItem.setBillingMessage(billedMessage);
         }
     }
@@ -95,8 +95,8 @@ public class QuoteImportItem {
      * billed.
      */
     public void updateQuoteIntoLedgerEntries() {
-        for (BillingLedger billingLedger : ledgerItems) {
-            billingLedger.setQuoteId(quoteId);
+        for (LedgerEntry ledgerEntry : ledgerItems) {
+            ledgerEntry.setQuoteId(quoteId);
         }
     }
 }

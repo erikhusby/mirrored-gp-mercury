@@ -6,41 +6,38 @@
     <%--@elvariable id="vessels" type="java.util.Collection"--%>
     <%--@elvariable id="bean" type="org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean"--%>
     <%--@elvariable id="showCheckboxes" type="java.lang.Boolean"--%>
-    <%--@elvariable id="showSampleList" type="java.lang.Boolean" value="true" --%>
-    <%--@elvariable id="showVesselView" type="java.lang.Boolean" value="true"--%>
-    <%--@elvariable id="showWorkflow" type="java.lang.Boolean" value="true" --%>
 
     <script type="text/javascript">
 
         $(document).ready(function () {
-            var tableOptions=[];
-            var firstSortColumn=4;
+            var tableOptions = [];
+            var firstSortColumn = 4;
             if (${showCheckboxes}) {
                 firstSortColumn++;
                 tableOptions.push({"bSortable":false});
             }
-            tableOptions.push [{"bSortable":false},{"bSortable":false},
-            {"bSortable":false},{"bSortable":false},{"bSortable":false},
-                                        {"bSortable":false},
-                                        {"bSortable":true},
-                                        {"bSortable":true, "sType":"numeric"},
-                                        {"bSortable":true},
-                                        {"bSortable":true, "sType":"numeric"},
-                                        {"bSortable":true, "sType":"numeric"},
-                                        {"bSortable":true, "sType":"numeric"},
-                                        {"bSortable":true},
-                                        {"bSortable":true},
-                                        {"bSortable":true},
-                                        {"bSortable":true, "sType":"date"},
-                                        {"bSortable":true, "sType":"date"}];
+            tableOptions.push [{"bSortable":false}, {"bSortable":false},
+            {"bSortable":false}, {"bSortable":false}, {"bSortable":false},
+            {"bSortable":false},
+            {"bSortable":true},
+            {"bSortable":true, "sType":"numeric"},
+            {"bSortable":true},
+            {"bSortable":true, "sType":"numeric"},
+            {"bSortable":true, "sType":"numeric"},
+            {"bSortable":true},
+            {"bSortable":true},
+            {"bSortable":true},
+            {"bSortable":true},
+            {"bSortable":true, "sType":"date"},
+            {"bSortable":true, "sType":"date"}];
 
-                $j('#vesselList').dataTable({
-                    "oTableTools":ttExportDefines,
-                    "aaSorting":[
-                        [tableOptions.length, 'asc']
-                    ],
-                    "aoColumns":tableOptions
-                });
+            $j('#vesselList').dataTable({
+                "oTableTools":ttExportDefines,
+                "aaSorting":[
+                    [tableOptions.length, 'asc']
+                ],
+                "aoColumns":tableOptions
+            });
 
             $j('.vessel-checkbox').enableCheckboxRangeSelection({
                 checkAllClass:'vessel-checkAll',
@@ -76,15 +73,15 @@
                     <input type="checkbox" class="vessel-checkAll"/><span id="count" class="vessel-checkedCount"></span>
                 </th>
             </c:if>
-            <c:if test="${showVesselView}"> <th width="30">Vessel Viewer</th> </c:if>
-            <c:if test="${showSampleList}"><th width="30">Sample List Viewer</th></c:if>
-            <c:if test="${showWorkflow}"><th width="30">Workflow View</th></c:if>
+            <th width="30">Vessel Viewer</th>
+            <th width="30">Sample List Viewer</th>
+            <th width="30">Workflow View</th>
             <th>Label</th>
             <th width="80">Sample Count</th>
             <th>Type</th>
             <th width="30">PDO Count</th>
             <th width="30">Index Count</th>
-            <th width="30">Lab Batch Count</th>
+            <th width="60">Lab Batch</th>
             <th width="100">Latest Event</th>
             <th width="120">Event Location</th>
             <th>Event User</th>
@@ -103,31 +100,30 @@
 
                     </td>
                 </c:if>
-                <c:if test="${showVesselView}"><td>
+                <td>
                     <c:if test="${vessel.sampleInstanceCount > 0 }">
                         <a href="javascript:showVesselVisualizer('${vessel.label}')">
                             <img width="30" height="30" name="" title="show plate view"
                                  src="${ctxpath}/images/plate.png"/>
                         </a>
                     </c:if>
-                </td></c:if>
-                <c:if test="${showSampleList}"><td>
+                </td>
+                <td>
                     <c:if test="${vessel.sampleInstanceCount > 0 }">
                         <a href="javascript:showSampleVisualizer('${vessel.label}')">
                             <img width="30" height="30" name="" title="show sample list"
                                  src="${ctxpath}/images/list.png"/>
                         </a>
                     </c:if>
-                </td></c:if>
-
-                <c:if test="${showWorkflow}"><td>
+                </td>
+                <td>
                     <c:if test="${vessel.sampleInstanceCount > 0 }">
                         <a href="javascript:showWorkflowVisualizer('${vessel.label}')">
                             <img width="30" height="30" name="" title="show workflow view"
                                  src="${ctxpath}/images/list.png"/>
                         </a>
                     </c:if>
-                </td></c:if>
+                </td>
 
                 <td>
                     <a href="${ctxpath}/search/all.action?search=&searchKey=${vessel.label}">
@@ -147,7 +143,13 @@
                         ${vessel.indexesCount}
                 </td>
                 <td>
-                        ${vessel.nearestLabBatchesCount}
+                    <c:forEach items="${vessel.nearestWorkflowLabBatches}" var="batch">
+                        <stripes:link target="JIRA"
+                                      href="${batch.jiraTicket.browserUrl}"
+                                      class="external">
+                            ${batch.businessKey}
+                        </stripes:link>
+                    </c:forEach>
                 </td>
                 <td>
                         ${vessel.latestEvent.labEventType.name}

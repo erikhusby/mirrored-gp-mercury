@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriteria;
+import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
@@ -33,7 +33,8 @@ public class RiskItem implements Serializable {
 
     @Index(name = "IX_RISK_RISK_CRITERIA")
     @ManyToOne
-    private RiskCriteria riskCriteria;
+    @JoinColumn(name = "RISK_CRITERIA")
+    private RiskCriterion riskCriterion;
 
     @Column(name = "OCCURRED_DATE")
     private Date occurredDate;
@@ -47,14 +48,14 @@ public class RiskItem implements Serializable {
     RiskItem() {
     }
 
-    public RiskItem(@Nullable RiskCriteria riskCriteria, @Nullable String comparedValue) {
-        this.riskCriteria = riskCriteria;
+    public RiskItem(@Nullable RiskCriterion riskCriterion, @Nullable String comparedValue) {
+        this.riskCriterion = riskCriterion;
         this.occurredDate = new Date();
         this.comparedValue = comparedValue;
     }
 
-    public RiskItem(RiskCriteria riskCriteria, String comparedValue, String comment) {
-        this(riskCriteria, comparedValue);
+    public RiskItem(RiskCriterion riskCriterion, String comparedValue, String comment) {
+        this(riskCriterion, comparedValue);
         this.remark = comment;
     }
 
@@ -72,12 +73,12 @@ public class RiskItem implements Serializable {
         return riskItemId;
     }
 
-    public RiskCriteria getRiskCriteria() {
-        return riskCriteria;
+    public RiskCriterion getRiskCriterion() {
+        return riskCriterion;
     }
 
-    public void setRiskCriteria(RiskCriteria riskCriteria) {
-        this.riskCriteria = riskCriteria;
+    public void setRiskCriterion(RiskCriterion riskCriterion) {
+        this.riskCriterion = riskCriterion;
     }
 
     public String getRemark() {
@@ -107,21 +108,21 @@ public class RiskItem implements Serializable {
     public String getInformation() {
 
         // If the criteria is null, then set empty
-        if (riskCriteria == null) {
+        if (riskCriterion == null) {
             return "";
         }
 
         String comment =
             StringUtils.isBlank(remark) ? "" : MessageFormat.format("with comment: {0}", remark);
 
-        if (riskCriteria.getOperatorType() == BOOLEAN) {
+        if (riskCriterion.getOperatorType() == BOOLEAN) {
             return MessageFormat.format(
                     "At {0,time} on {0,date}, calculated {1} {2}",
-                    occurredDate, riskCriteria.getCalculationString(), comment);
+                    occurredDate, riskCriterion.getCalculationString(), comment);
         }
 
         return MessageFormat.format(
                 "At {0,time} on {0,date}, calculated ({1}) risk on value {2} {3}",
-                occurredDate, riskCriteria.getCalculationString(), comparedValue, comment);
+                occurredDate, riskCriterion.getCalculationString(), comparedValue, comment);
     }
 }

@@ -7,7 +7,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteWorkItemsExporter;
-import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
@@ -41,7 +41,7 @@ public class BillingSessionActionBean extends CoreActionBean {
     private BillingSessionDao billingSessionDao;
 
     @Inject
-    private BillingLedgerDao billingLedgerDao;
+    private LedgerEntryDao ledgerEntryDao;
 
     @Inject
     private ProductOrderDao productOrderDao;
@@ -197,10 +197,10 @@ public class BillingSessionActionBean extends CoreActionBean {
 
         if (errorsInBilling) {
             return getSourcePageResolution();
-        } else {
-            return new RedirectResolution(BillingSessionActionBean.class, VIEW_ACTION)
-                    .addParameter("sessionKey", editSession.getBusinessKey());
         }
+
+        return new RedirectResolution(BillingSessionActionBean.class, VIEW_ACTION)
+                .addParameter("sessionKey", editSession.getBusinessKey());
     }
 
 
@@ -222,6 +222,8 @@ public class BillingSessionActionBean extends CoreActionBean {
         return sessionKey;
     }
 
+
+    @SuppressWarnings("UnusedDeclaration")
     public void setSessionKey(String sessionKey) {
         this.sessionKey = sessionKey;
     }
@@ -230,6 +232,7 @@ public class BillingSessionActionBean extends CoreActionBean {
         return editSession;
     }
 
+    @SuppressWarnings("UnusedDeclaration")
     public void setEditSession(BillingSession editSession) {
         this.editSession = editSession;
     }
@@ -246,10 +249,12 @@ public class BillingSessionActionBean extends CoreActionBean {
         return priceItemNameMap;
     }
 
+    @SuppressWarnings("UnusedDeclaration")
     public String getBillingSession() {
         return billingSession;
     }
 
+    @SuppressWarnings("UnusedDeclaration")
     public void setBillingSession(String billingSession) {
         this.billingSession = billingSession;
     }

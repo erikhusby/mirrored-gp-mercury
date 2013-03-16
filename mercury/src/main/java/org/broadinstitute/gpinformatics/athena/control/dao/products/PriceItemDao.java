@@ -26,7 +26,7 @@ public class PriceItemDao extends GenericDao {
     /**
      * TODO This method is probably useless as it only serves up the PriceItems that have been attached to Products in
      * Mercury, not anything resembling the full list of PriceItems from the Quote Server.  It is only referenced from its
-     * own test and a BillingLedgerDaoTest.
+     * own test and a LedgerEntryDaoTest.
      *
      * TODO Delete.
      *

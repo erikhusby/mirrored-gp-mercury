@@ -37,7 +37,7 @@ public class PMBQuoteServiceProducer {
      */
     public static PMBQuoteService qaInstance() {
 
-        QuoteConfig bspConfig = QuoteConfigProducer.getConfig(QA);
+        QuoteConfig bspConfig = QuoteConfig.produce(QA);
 
         return new PMBQuoteServiceImpl( bspConfig );
 

@@ -98,6 +98,7 @@ public class MercuryClientEjb {
                     for (MercurySample mercurySample : vessel.getMercurySamples()) {
                         String sampleKey = mercurySample.getSampleKey();
                         assert(nameToSampleMap.containsKey(sampleKey));
+                        mercurySample.setProductOrderKey(pdo.getBusinessKey());
                         samplesAdded.add(nameToSampleMap.get(sampleKey));
                     }
                 }
@@ -116,7 +117,7 @@ public class MercuryClientEjb {
         bucketBean.add(vesselsAdded, picoBucket, username, LabEvent.UI_EVENT_LOCATION, LabEventType.PICO_PLATING_BUCKET,
                 pdo.getBusinessKey());
 
-        if(picoBucket.getBucketId() == null) {
+        if (picoBucket.getBucketId() == null) {
             bucketDao.persist(bucketBean);
         }
         return samplesAdded;

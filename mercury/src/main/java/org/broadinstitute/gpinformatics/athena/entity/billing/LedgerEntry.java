@@ -20,7 +20,7 @@ import java.util.Date;
 @Entity
 @Audited
 @Table(name= "BILLING_LEDGER", schema = "athena")
-public class BillingLedger implements Serializable {
+public class LedgerEntry implements Serializable {
     private static final long serialVersionUID = -4740767648087018522L;
 
     @Id
@@ -58,12 +58,12 @@ public class BillingLedger implements Serializable {
      * Package private constructor for JPA use.
      */
     @SuppressWarnings("UnusedDeclaration")
-    BillingLedger() {}
+    LedgerEntry() {}
 
-    public BillingLedger(@Nonnull ProductOrderSample productOrderSample,
-                         @Nonnull PriceItem priceItem,
-                         @Nonnull Date workCompleteDate,
-                         double quantity) {
+    public LedgerEntry(@Nonnull ProductOrderSample productOrderSample,
+                       @Nonnull PriceItem priceItem,
+                       @Nonnull Date workCompleteDate,
+                       double quantity) {
         this.productOrderSample = productOrderSample;
         this.priceItem = priceItem;
         this.quantity = quantity;
@@ -146,11 +146,11 @@ public class BillingLedger implements Serializable {
             return true;
         }
 
-        if (!(other instanceof BillingLedger)) {
+        if (!(other instanceof LedgerEntry)) {
             return false;
         }
 
-        BillingLedger castOther = (BillingLedger) other;
+        LedgerEntry castOther = (LedgerEntry) other;
         return new EqualsBuilder()
                 .append(productOrderSample, castOther.getProductOrderSample())
                 .append(priceItem, castOther.getPriceItem())

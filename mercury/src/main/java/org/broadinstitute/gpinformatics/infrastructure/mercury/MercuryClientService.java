@@ -19,7 +19,7 @@ public interface MercuryClientService extends Serializable {
      * @param pdo with samples to be added
      * @return ProductOrderSamples that were successfully added to pico bucket.
      */
-    public Collection<ProductOrderSample> addSampleToPicoBucket(@Nonnull ProductOrder pdo);
+    Collection<ProductOrderSample> addSampleToPicoBucket(@Nonnull ProductOrder pdo);
 
     /**
      * Adds the specified product order samples to the pico bucket.
@@ -28,5 +28,6 @@ public interface MercuryClientService extends Serializable {
      * @param samples    the (possibly subset of) PDO samples to process
      * @return the ProductOrderSamples that were successfully added to the pico bucket
      */
-    public Collection<ProductOrderSample> addSampleToPicoBucket(@Nonnull ProductOrder pdo, @Nonnull Collection<ProductOrderSample> samples);
+    Collection<ProductOrderSample> addSampleToPicoBucket(@Nonnull ProductOrder pdo,
+                                                         @Nonnull Collection<ProductOrderSample> samples);
 }
