@@ -166,16 +166,15 @@ public class ExomeExpressIntegrationTest {
                 sendMessage(baseUrl, bettaLIMSMessage);
             }
             LabEventTest.QtpJaxbBuilder qtpJaxbBuilder = new LabEventTest.QtpJaxbBuilder(bettaLimsMessageFactory, testSuffix,
-                    hybridSelectionJaxbBuilder.getNormCatchBarcodes(), hybridSelectionJaxbBuilder.getNormCatchRackBarcode(), WorkflowName.EXOME_EXPRESS).invoke();
+                    hybridSelectionJaxbBuilder.getNormCatchBarcodes(), hybridSelectionJaxbBuilder.getNormCatchRackBarcode(),
+                    WorkflowName.EXOME_EXPRESS).invoke();
             for (BettaLIMSMessage bettaLIMSMessage : qtpJaxbBuilder.getMessageList()) {
                 sendMessage(baseUrl, bettaLIMSMessage);
             }
 
-            LabEventTest.HiSeq2500JaxbBuilder hiSeq2500JaxbBuilder = new LabEventTest.HiSeq2500JaxbBuilder(bettaLimsMessageFactory, testSuffix,
-                    qtpJaxbBuilder.getDenatureTubeBarcode());
-            for (BettaLIMSMessage bettaLIMSMessage : hiSeq2500JaxbBuilder.getMessageList()) {
-                sendMessage(baseUrl, bettaLIMSMessage);
-            }
+            System.out.println("Transfer from denature tube: " + qtpJaxbBuilder.getDenatureTubeBarcode());
+            System.out.print("Enter flowcell barcode: ");
+            String flowcellBarcode = scanner.nextLine();
 
             // User checks chain of custody, activity stream.
             // User does denature to flowcell transfer in UI.
@@ -184,9 +183,8 @@ public class ExomeExpressIntegrationTest {
             System.out.println("Press enter to register run");
             scanner.nextLine();
             // Run registration web service call.
-            SolexaRunBean solexaRunBean = new SolexaRunBean(hiSeq2500JaxbBuilder.getFlowcellBarcode(),
-                    "Run" + testSuffix, new Date(), "SL-HAL", File.createTempFile("RunDir", ".txt").getAbsolutePath(),
-                    null);
+            SolexaRunBean solexaRunBean = new SolexaRunBean(flowcellBarcode, "Run" + testSuffix, new Date(), "SL-HAL",
+                    File.createTempFile("RunDir", ".txt").getAbsolutePath(), null);
             Client.create().resource(baseUrl.toExternalForm() + "/rest/solexarun")
                     .type(MediaType.APPLICATION_XML_TYPE)
                     .accept(MediaType.APPLICATION_XML)

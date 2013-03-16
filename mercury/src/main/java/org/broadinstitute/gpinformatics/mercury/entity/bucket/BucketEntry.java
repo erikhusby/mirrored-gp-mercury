@@ -163,9 +163,9 @@ public class BucketEntry  {
 
         BucketEntry that = ( BucketEntry ) o;
 
-        if ( labVessel != null ? !labVessel.equals ( that.labVessel ) : that.labVessel != null )
+        if ( labVessel != null ? !labVessel.equals ( that.getLabVessel() ) : that.getLabVessel() != null )
             return false;
-        if ( poBusinessKey != null ? !poBusinessKey.equals ( that.poBusinessKey ) : that.poBusinessKey != null )
+        if ( poBusinessKey != null ? !poBusinessKey.equals ( that.getPoBusinessKey() ) : that.getPoBusinessKey() != null )
             return false;
 
         return true;

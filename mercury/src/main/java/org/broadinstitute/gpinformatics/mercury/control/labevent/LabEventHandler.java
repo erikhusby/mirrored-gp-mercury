@@ -139,27 +139,9 @@ public class LabEventHandler implements Serializable {
         }
         */
 
-        // todo arz fix this by using LabBatch instead.  maybe strip out this denormalization entirely,
-        // and leave the override processing for on-the-fly work in VesselContainer
-        //processProjectPlanOverrides(labEvent, workflow);
-
-        String message = "";
-        if (bspUserList != null) {
-            BspUser bspUser = bspUserList.getById(labEvent.getEventOperator());
-            if (bspUser != null) {
-                message += bspUser.getUsername() + " ran ";
-            }
-        }
-        // todo jmt why is AppConfig null?
-//        AppConfig appConfig = ServiceAccessUtility.getBean(AppConfig.class);
-//        message += labEvent.getLabEventType().getName() + " for <a href=\"" + appConfig.getUrl() +
-//                "/search/all.action?search=&searchKey=" + labEvent.getAllLabVessels().iterator().next().getLabel() +
-//                "\">" + labEvent.getAllLabVessels().iterator().next().getLabel() + "</a>" +
-        message += labEvent.getLabEventType().getName() + " for " + labEvent.getAllLabVessels().iterator().next().getLabel() +
-                " on " + labEvent.getEventLocation() + " at " + labEvent.getEventDate();
         if (jiraCommentUtil != null) {
             try {
-                jiraCommentUtil.postUpdate(message, labEvent.getAllLabVessels());
+                jiraCommentUtil.postUpdate(labEvent);
             } catch (Exception e) {
                 // This is not fatal, so don't rethrow
                 LOG.error("Failed to update JIRA", e);
