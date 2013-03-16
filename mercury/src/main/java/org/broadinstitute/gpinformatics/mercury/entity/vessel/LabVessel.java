@@ -126,7 +126,7 @@ public abstract class LabVessel implements Serializable {
     @OneToMany(mappedBy = "targetLabVessel", cascade = CascadeType.PERSIST)
     private Set<VesselToVesselTransfer> vesselToVesselTransfersThisAsTarget = new HashSet<VesselToVesselTransfer>();
 
-    @OneToMany(mappedBy = "targetVessel", cascade = CascadeType.PERSIST)
+    @OneToMany(mappedBy = "sourceVessel", cascade = CascadeType.PERSIST)
     private Set<VesselToSectionTransfer> vesselToSectionTransfersThisAsSource = new HashSet<VesselToSectionTransfer>();
 
     @OneToMany(mappedBy = "labVessel", cascade = CascadeType.PERSIST)
