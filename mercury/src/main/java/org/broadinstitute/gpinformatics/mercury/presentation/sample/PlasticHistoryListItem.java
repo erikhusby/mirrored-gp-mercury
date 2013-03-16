@@ -2,7 +2,9 @@ package org.broadinstitute.gpinformatics.mercury.presentation.sample;
 
 import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
+import java.util.Collection;
 import java.util.Date;
 
 /**
@@ -16,12 +18,13 @@ public class PlasticHistoryListItem {
     private String type;
     private int pdoKeyCount;
     private int indexCount;
-    private int labBatchCount;
+    private Collection<LabBatch> labBatches;
     private String eventType;
     private String eventLocation;
     private Long eventOperator;
     private Date eventDate;
     private Date creationDate;
+    private String lcSetName;
 
     public PlasticHistoryListItem(LabVessel vessel) {
         label = vessel.getLabel();
@@ -29,7 +32,7 @@ public class PlasticHistoryListItem {
         type = vessel.getType().getName();
         pdoKeyCount = vessel.getPdoKeysCount();
         indexCount = vessel.getIndexesCount();
-        labBatchCount = vessel.getNearestLabBatchesCount();
+        labBatches = vessel.getNearestWorkflowLabBatches();
         eventType = vessel.getLatestEvent().getLabEventType().getName();
         eventLocation = vessel.getLatestEvent().getEventLocation();
         eventOperator = vessel.getLatestEvent().getEventOperator();
@@ -66,8 +69,8 @@ public class PlasticHistoryListItem {
         return indexCount;
     }
 
-    public int getLabBatchCount() {
-        return labBatchCount;
+    public Collection<LabBatch> getLabBatches() {
+        return labBatches;
     }
 
     public String getEventType() {

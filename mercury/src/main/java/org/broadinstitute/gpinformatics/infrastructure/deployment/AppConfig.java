@@ -7,15 +7,15 @@ import javax.inject.Inject;
 import java.io.Serializable;
 
 /**
- * @author breilly
+ * The class contains the config settings for the app itself. Use this to generate external links that refer back to
+ * the application server, or for writing tests that need to communicate directly with the server.
  */
-// called "app" because "mercury" has a special meaning in the YAML file
 @SuppressWarnings("UnusedDeclaration")
 @ConfigKey("app")
-public class MercuryConfig extends AbstractConfig implements Serializable {
+public class AppConfig extends AbstractConfig implements Serializable {
 
     @Inject
-    public MercuryConfig(@Nonnull Deployment mercuryDeployment) {
+    public AppConfig(@Nonnull Deployment mercuryDeployment) {
         super(mercuryDeployment);
     }
 
@@ -57,7 +57,7 @@ public class MercuryConfig extends AbstractConfig implements Serializable {
         return port;
     }
 
-    public static MercuryConfig produce(Deployment deployment) {
-        return produce(MercuryConfig.class, deployment);
+    public static AppConfig produce(Deployment deployment) {
+        return produce(AppConfig.class, deployment);
     }
 }

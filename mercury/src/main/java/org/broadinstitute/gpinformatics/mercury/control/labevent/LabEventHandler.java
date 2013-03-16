@@ -7,8 +7,6 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfig;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Billable;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
@@ -141,27 +139,9 @@ public class LabEventHandler implements Serializable {
         }
         */
 
-        // todo arz fix this by using LabBatch instead.  maybe strip out this denormalization entirely,
-        // and leave the override processing for on-the-fly work in VesselContainer
-        //processProjectPlanOverrides(labEvent, workflow);
-
-        String message = "";
-        if (bspUserList != null) {
-            BspUser bspUser = bspUserList.getById(labEvent.getEventOperator());
-            if (bspUser != null) {
-                message += bspUser.getUsername() + " ran ";
-            }
-        }
-        // todo jmt why is MercuryConfig null?
-//        MercuryConfig mercuryConfig = ServiceAccessUtility.getBean(MercuryConfig.class);
-//        message += labEvent.getLabEventType().getName() + " for <a href=\"" + mercuryConfig.getUrl() +
-//                "/search/all.action?search=&searchKey=" + labEvent.getAllLabVessels().iterator().next().getLabel() +
-//                "\">" + labEvent.getAllLabVessels().iterator().next().getLabel() + "</a>" +
-        message += labEvent.getLabEventType().getName() + " for " + labEvent.getAllLabVessels().iterator().next().getLabel() +
-                " on " + labEvent.getEventLocation() + " at " + labEvent.getEventDate();
         if (jiraCommentUtil != null) {
             try {
-                jiraCommentUtil.postUpdate(message, labEvent.getAllLabVessels());
+                jiraCommentUtil.postUpdate(labEvent);
             } catch (Exception e) {
                 // This is not fatal, so don't rethrow
                 LOG.error("Failed to update JIRA", e);

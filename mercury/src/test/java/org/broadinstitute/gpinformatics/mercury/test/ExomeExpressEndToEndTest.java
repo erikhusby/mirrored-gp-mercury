@@ -26,7 +26,6 @@ import org.broadinstitute.gpinformatics.mercury.bsp.EverythingYouAskForYouGetAnd
 import org.broadinstitute.gpinformatics.mercury.control.dao.bsp.BSPSampleFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
@@ -49,6 +48,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
@@ -86,7 +86,7 @@ public class ExomeExpressEndToEndTest {
     /*
         Temporarily adding from ProjectPlanFromPassTest to move test case content along.
      */
-    private static final long   BAIT_ID          = 5L;
+    private static final long BAIT_ID = 5L;
     private static final String BAIT_DESIGN_NAME = "interesting genes";
 
     private final String BILLING_QUOTE = "DNA375";
@@ -141,7 +141,7 @@ public class ExomeExpressEndToEndTest {
 
             // todo when R3_725 comes out, revert to looking this up via the pass
             PriceItem priceItem = new PriceItem("Illumina Sequencing", "1", "Illumina HiSeq Run 44 Base", "15",
-                                                "Bananas", "DNA Sequencing");
+                    "Bananas", "DNA Sequencing");
             //            WorkflowDescription workflowDescription = new WorkflowDescription("HybridSelection", priceItem,
             //                    CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
 
@@ -198,10 +198,10 @@ public class ExomeExpressEndToEndTest {
 
             for (LabBatch labBatch : labBatches) {
                 JiraIssue jira = jiraService.createIssue(null, //Project.JIRA_PROJECT_PREFIX,
-                                                         "hrafal", CreateFields.IssueType.WHOLE_EXOME_HYBSEL,
-                                                         labBatch.getBatchName(), "Pass "
-                                                         /*+ projectPlan.getPass().getProjectInformation().getPassNumber()*/,
-                                                         allCustomFields);
+                        "hrafal", CreateFields.IssueType.WHOLE_EXOME_HYBSEL,
+                        labBatch.getBatchName(), "Pass "
+                        /*+ projectPlan.getPass().getProjectInformation().getPassNumber()*/,
+                        allCustomFields);
                 Assert.assertNotNull(jira);
                 Assert.assertNotNull(jira.getKey());
                 jiraTicket = new JiraTicket(jiraService, jira.getKey());
@@ -232,18 +232,18 @@ public class ExomeExpressEndToEndTest {
             BSPPlatingRequestService bspPlatingService = new BSPPlatingRequestServiceStub();
             BSPPlatingRequestOptions options = bspPlatingService.getBSPPlatingRequestDefaultOptions();
             BSPPlatingRequestResult platingResult = bspPlatingService.issueBSPPlatingRequest(options, bspRequests,
-                                                                                             controls, "sampath",
-                                                                                             "EE-BSP-PLATING-1",
-                                                                                             "BSP Plating Exome Express Test",
-                                                                                             "Solexa", "EE-TEST-1");
+                    controls, "sampath",
+                    "EE-BSP-PLATING-1",
+                    "BSP Plating Exome Express Test",
+                    "Solexa", "EE-TEST-1");
             Assert.assertNotNull(platingResult); //just Stub any way
             BSPPlatingReceipt platingReceipt = bspSampleFactory.buildPlatingReceipt(bspRequests, platingResult);
             Assert.assertNotNull(platingReceipt);
             Assert.assertEquals(platingReceipt.getPlatingRequests().size(), bspRequests.size(),
-                                "BSP Plating Requests in receipt & passed requests count does not match");
+                    "BSP Plating Requests in receipt & passed requests count does not match");
 
             Assert.assertEquals(platingReceipt.getPlatingRequests().size(), STARTER_COUNT,
-                                "Started with " + STARTER_COUNT + " samples. BSP Plating requests should be " + STARTER_COUNT);
+                    "Started with " + STARTER_COUNT + " samples. BSP Plating requests should be " + STARTER_COUNT);
             //Test BSP Plating EXPORT
             BSPSampleExportTest.runBSPExportTest(platingReceipt, testLabBatch);
             //new GSSRSampleKitRequest();
@@ -317,7 +317,7 @@ public class ExomeExpressEndToEndTest {
 
             for (Map.Entry<String, LabVessel> stockToAliquotEntry : stockSampleAliquotMap.entrySet()) {
                 mapBarcodeToTube.put(stockToAliquotEntry.getValue().getLabel(),
-                                     (TwoDBarcodedTube) stockToAliquotEntry.getValue());
+                        (TwoDBarcodedTube) stockToAliquotEntry.getValue());
             }
 
             LabEventTest.PreFlightEntityBuilder preFlightEntityBuilder = new LabEventTest.PreFlightEntityBuilder(
@@ -329,20 +329,20 @@ public class ExomeExpressEndToEndTest {
 
             LabEventTest.LibraryConstructionEntityBuilder libraryConstructionEntityBuilder =
                     new LabEventTest.LibraryConstructionEntityBuilder(bettaLimsMessageFactory, labEventFactory,
-                                                                      labEventHandler,
-                                                                      shearingEntityBuilder.getShearingCleanupPlate(),
-                                                                      shearingEntityBuilder.getShearCleanPlateBarcode(),
-                                                                      shearingEntityBuilder.getShearingPlate(),
-                                                                      mapBarcodeToTube.size()).invoke();
+                            labEventHandler,
+                            shearingEntityBuilder.getShearingCleanupPlate(),
+                            shearingEntityBuilder.getShearCleanPlateBarcode(),
+                            shearingEntityBuilder.getShearingPlate(),
+                            mapBarcodeToTube.size()).invoke();
 
             LabEventTest.HybridSelectionEntityBuilder hybridSelectionEntityBuilder =
                     new LabEventTest.HybridSelectionEntityBuilder(bettaLimsMessageFactory, labEventFactory,
-                                                                  labEventHandler,
-                                                                  libraryConstructionEntityBuilder.getPondRegRack(),
-                                                                  libraryConstructionEntityBuilder
-                                                                          .getPondRegRackBarcode(),
-                                                                  libraryConstructionEntityBuilder
-                                                                          .getPondRegTubeBarcodes()).invoke();
+                            labEventHandler,
+                            libraryConstructionEntityBuilder.getPondRegRack(),
+                            libraryConstructionEntityBuilder
+                                    .getPondRegRackBarcode(),
+                            libraryConstructionEntityBuilder
+                                    .getPondRegTubeBarcodes()).invoke();
 
             TubeFormation pondRack = libraryConstructionEntityBuilder.getPondRegRack();
             Assert.assertEquals(pondRack.getSampleInstances().size(), 2);
@@ -379,16 +379,17 @@ public class ExomeExpressEndToEndTest {
             //            }
 
             LabEventTest.QtpEntityBuilder qtpEntityBuilder = new LabEventTest.QtpEntityBuilder(bettaLimsMessageFactory,
-                                                                                               labEventFactory,
-                                                                                               labEventHandler,
-                                                                                               hybridSelectionEntityBuilder
-                                                                                                       .getNormCatchRack(),
-                                                                                               hybridSelectionEntityBuilder
-                                                                                                       .getNormCatchRackBarcode(),
-                                                                                               hybridSelectionEntityBuilder
-                                                                                                       .getNormCatchBarcodes(),
-                                                                                               hybridSelectionEntityBuilder
-                                                                                                       .getMapBarcodeToNormCatchTubes());
+                    labEventFactory,
+                    labEventHandler,
+                    hybridSelectionEntityBuilder
+                            .getNormCatchRack(),
+                    hybridSelectionEntityBuilder
+                            .getNormCatchRackBarcode(),
+                    hybridSelectionEntityBuilder
+                            .getNormCatchBarcodes(),
+                    hybridSelectionEntityBuilder
+                            .getMapBarcodeToNormCatchTubes(),
+                    WorkflowName.HYBRID_SELECTION);
             qtpEntityBuilder.invoke();
 
             TubeFormation poolingResult = qtpEntityBuilder.getDenatureRack();
@@ -440,7 +441,7 @@ public class ExomeExpressEndToEndTest {
             Assert.assertEquals(singleSampleAncestors.size(), 2);
 
             Collection<LabBatch> nearestBatches = poolingResult.getContainerRole().getNearestLabBatches(
-                    VesselPosition.A01);
+                    VesselPosition.A01, null);
             Assert.assertEquals(nearestBatches.size(), 1);
             LabBatch labBatch = nearestBatches.iterator().next();
 
@@ -481,7 +482,7 @@ public class ExomeExpressEndToEndTest {
                 throw new RuntimeException(e);
             }
             Assert.assertNotNull(illuminaSequencingRun.getSampleCartridge(),
-                                 "No registered flowcell");
+                    "No registered flowcell");
 
             // We're container-free, so we have to populate the BSPSampleDTO ourselves
             //            for (Starter starter : projectPlan.getStarters()) {

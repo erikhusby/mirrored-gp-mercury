@@ -91,6 +91,7 @@ public class MercuryClientEjbDbFreeTest {
         expect(labBatch.getLabBatchType()).andReturn(LabBatch.LabBatchType.SAMPLES_RECEIPT);
         expect(labVessel.getMercurySamples()).andReturn(samples);
         expect(mercurySample.getSampleKey()).andReturn(sampleKey);
+        mercurySample.setProductOrderKey(pdoKey);
 
         expect(pdo.getProduct()).andReturn(product);
         expect(product.getWorkflowName()).andReturn(workflowName).anyTimes();
@@ -99,7 +100,7 @@ public class MercuryClientEjbDbFreeTest {
         expect(bspUserList.getById(userId)).andReturn(bspUser);
         expect(bspUser.getUsername()).andReturn(userName);
 
-        expect(pdo.getBusinessKey()).andReturn(pdoKey);
+        expect(pdo.getBusinessKey()).andReturn(pdoKey).anyTimes();
 
         bucketBean.add(labVessels, bucket, userName, eventLocation, eventType, pdoKey);
         expect(bucket.getBucketId()).andReturn(10L);
@@ -120,6 +121,7 @@ public class MercuryClientEjbDbFreeTest {
         expect(labBatch.getLabBatchType()).andReturn(LabBatch.LabBatchType.SAMPLES_RECEIPT);
         expect(labVessel.getMercurySamples()).andReturn(samples);
         expect(mercurySample.getSampleKey()).andReturn(sampleKey);
+        mercurySample.setProductOrderKey(pdoKey);
 
         expect(pdo.getProduct()).andReturn(product);
         expect(product.getWorkflowName()).andReturn(workflowName).anyTimes();
@@ -128,7 +130,7 @@ public class MercuryClientEjbDbFreeTest {
         expect(bspUserList.getById(userId)).andReturn(bspUser);
         expect(bspUser.getUsername()).andReturn(userName);
 
-        expect(pdo.getBusinessKey()).andReturn(pdoKey);
+        expect(pdo.getBusinessKey()).andReturn(pdoKey).anyTimes();
 
         Collection<LabVessel> bucketVessels = new ArrayList<LabVessel>();
         bucketVessels.add(labVessel);

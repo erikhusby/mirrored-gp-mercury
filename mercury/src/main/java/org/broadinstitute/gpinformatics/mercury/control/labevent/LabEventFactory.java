@@ -52,7 +52,7 @@ public class LabEventFactory implements Serializable {
      */
     public static final String PHYS_TYPE_STRIP_TUBE = "StripTube";
     /**
-     * Physical type for a flowcell
+     * Physical type for an 8-lane flowcell
      */
     public static final String PHYS_TYPE_FLOWCELL = "Flowcell";
     /**
@@ -903,20 +903,30 @@ public class LabEventFactory implements Serializable {
 
     @DaoFree
     public LabEvent buildVesselToSectionDbFree(ReceptaclePlateTransferEvent receptaclePlateTransferEvent,
-                                               TwoDBarcodedTube sourceTube, @Nullable StaticPlate targetPlate,
+                                               TwoDBarcodedTube sourceTube,
+                                               @Nullable VesselContainerEmbedder targetVessel,
                                                String targetSection) {
         LabEvent labEvent = constructReferenceData(receptaclePlateTransferEvent, labEventRefDataFetcher);
         if (sourceTube == null) {
             throw new RuntimeException("Source tube not found for " + receptaclePlateTransferEvent.getSourceReceptacle().getBarcode());
         }
-        if (targetPlate == null) {
-            targetPlate = new StaticPlate(receptaclePlateTransferEvent.getDestinationPlate().getBarcode(),
-                    StaticPlate.PlateType.getByDisplayName(
-                            receptaclePlateTransferEvent.getDestinationPlate()
-                                    .getPhysType()));
+        if (targetVessel == null) {
+            String physType = receptaclePlateTransferEvent.getDestinationPlate().getPhysType();
+            if (StaticPlate.PlateType.getByAutomationName(physType) != null) {
+                targetVessel = new StaticPlate(receptaclePlateTransferEvent.getDestinationPlate().getBarcode(),
+                        StaticPlate.PlateType.getByAutomationName(physType));
+            } else if (IlluminaFlowcell.FlowcellType.getByAutomationName(physType) != null) {
+                targetVessel = new IlluminaFlowcell(IlluminaFlowcell.FlowcellType.getByAutomationName(physType),
+                        receptaclePlateTransferEvent.getDestinationPlate().getBarcode());
+            } else if (physType.equals(PHYS_TYPE_FLOWCELL)) {
+                // Guard against the possibility that automation scripts send us bare "Flowcell" types.
+                // Assume it to mean an 8-lane HiSeq flowcell.
+                targetVessel = new IlluminaFlowcell(IlluminaFlowcell.FlowcellType.HiSeqFlowcell,
+                        receptaclePlateTransferEvent.getDestinationPlate().getBarcode());
+            }
         }
         labEvent.getVesselToSectionTransfers().add(new VesselToSectionTransfer(sourceTube,
-                SBSSection.getBySectionName(targetSection), targetPlate.getContainerRole(), labEvent));
+                SBSSection.getBySectionName(targetSection), targetVessel.getContainerRole(), labEvent));
         return labEvent;
     }
 

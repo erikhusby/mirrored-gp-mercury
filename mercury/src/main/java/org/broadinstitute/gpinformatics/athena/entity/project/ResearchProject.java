@@ -12,7 +12,7 @@ import org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchPro
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfig;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -489,10 +489,10 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
         issue.addWatcher(username);
 
         // Update ticket with link back into Mercury
-        MercuryConfig mercuryConfig = ServiceAccessUtility.getBean(MercuryConfig.class);
+        AppConfig appConfig = ServiceAccessUtility.getBean(AppConfig.class);
         CustomField mercuryUrlField = new CustomField(
                 submissionFields, RequiredSubmissionFields.MERCURY_URL,
-                mercuryConfig.getUrl() + ResearchProjectActionBean.ACTIONBEAN_URL_BINDING + "?" +
+                appConfig.getUrl() + ResearchProjectActionBean.ACTIONBEAN_URL_BINDING + "?" +
                         ResearchProjectActionBean.VIEW_ACTION + "&" +
                         ResearchProjectActionBean.RESEARCH_PROJECT_PARAMETER + "=" + jiraTicketKey);
 

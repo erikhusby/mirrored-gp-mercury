@@ -36,6 +36,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.broadinstitute.gpinformatics.mercury.test.BettaLimsMessageFactory;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.easymock.EasyMock;
@@ -261,7 +262,7 @@ public class SolexaRunRoutingTest {
                 new LabEventTest.QtpEntityBuilder(bettaLimsMessageFactory, labEventFactory, labEventHandler,
                                                          sageCleanupRack,
                                                          sageCleanupBarcode, sageCleanupTubeBarcodes,
-                                                         mapBarcodeToSageUnloadTubes);
+                                                         mapBarcodeToSageUnloadTubes, WorkflowName.WHOLE_GENOME);
 
         qtpEntityBuilder.invoke();
 
@@ -289,12 +290,6 @@ public class SolexaRunRoutingTest {
         EasyMock.expect(runDao.findByRunName(EasyMock.anyObject(String.class))).andReturn(null);
 
         IlluminaSequencingRunFactory runFactory = EasyMock.createMock(IlluminaSequencingRunFactory.class);
-        //        EasyMock.expect(runFactory.build(EasyMock.anyObject(SolexaRunBean.class),
-        //                                                EasyMock.anyObject(IlluminaFlowcell.class)))
-        ////                .andReturn(new IlluminaSequencingRun(null, null, null, null,null, false, null,null))
-        //                .andThrow(new InformaticsServiceException("This is a Whole Genome Shotgun workflow.  " +
-        //                                                                  "We should NOT have called Mercury"))
-        ;
 
         IlluminaFlowcellDao flowcellDao = EasyMock.createNiceMock(IlluminaFlowcellDao.class);
         EasyMock.expect(flowcellDao.findByBarcode(EasyMock.anyObject(String.class))).andReturn(flowcell);
@@ -422,7 +417,6 @@ public class SolexaRunRoutingTest {
         ////                .andReturn(new IlluminaSequencingRun(null, null, null, null,null, false, null,null))
         //                .andThrow(new InformaticsServiceException("This is a Whole Genome Shotgun workflow.  " +
         //                                                                  "We should NOT have called Mercury"))
-        ;
 
         IlluminaFlowcellDao flowcellDao = EasyMock.createNiceMock(IlluminaFlowcellDao.class);
         EasyMock.expect(flowcellDao.findByBarcode(EasyMock.anyObject(String.class))).andReturn(null);
