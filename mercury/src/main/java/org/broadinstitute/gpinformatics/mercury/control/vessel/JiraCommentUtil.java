@@ -2,21 +2,27 @@ package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
 // todo jmt re-evaluate where this functionality belongs
 
+import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import javax.inject.Inject;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Utility methods for sending human readable updates
@@ -25,10 +31,51 @@ import java.util.*;
 public class JiraCommentUtil {
 
     private JiraService jiraService;
+    private AppConfig appConfig;
+    private BSPUserList bspUserList;
 
     @Inject
-    public JiraCommentUtil(JiraService jiraService) {
+    public JiraCommentUtil(JiraService jiraService, AppConfig appConfig, BSPUserList bspUserList) {
         this.jiraService = jiraService;
+        this.appConfig = appConfig;
+        this.bspUserList = bspUserList;
+    }
+
+    /**
+     * Formats a message to record the receipt of a lab event
+     * @param labEvent event to add to JIRA ticket
+     */
+    public void postUpdate(LabEvent labEvent) {
+        LabVessel messageLabVessel;
+        if (labEvent.getInPlaceLabVessel() == null) {
+            messageLabVessel = labEvent.getSourceLabVessels().iterator().next();
+        } else {
+            messageLabVessel = labEvent.getInPlaceLabVessel();
+        }
+        // The label for a tube formation is a digest, so use the label for one of the tubes.
+        if (OrmUtil.proxySafeIsInstance(messageLabVessel, TubeFormation.class)) {
+            TubeFormation tubeFormation = OrmUtil.proxySafeCast(messageLabVessel, TubeFormation.class);
+            messageLabVessel = tubeFormation.getContainerRole().getContainedVessels().iterator().next();
+        }
+        String message = "";
+        if (bspUserList != null) {
+            BspUser bspUser = bspUserList.getById(labEvent.getEventOperator());
+            if (bspUser != null) {
+                message += bspUser.getUsername() + " ran ";
+            }
+        }
+        message += labEvent.getLabEventType().getName() + " for <a href=\"" + appConfig.getUrl() +
+                "/search/all.action?search=&searchKey=" + messageLabVessel.getLabel() +
+                "\">" + messageLabVessel.getLabel() + "</a>" +
+                " on " + labEvent.getEventLocation() + " at " + labEvent.getEventDate();
+
+        Set<LabVessel> labVessels;
+        if (labEvent.getInPlaceLabVessel() == null) {
+            labVessels = labEvent.getSourceLabVessels();
+        } else {
+            labVessels = Collections.singleton(labEvent.getInPlaceLabVessel());
+        }
+        postUpdate(message, labVessels);
     }
 
     /**
@@ -47,35 +94,19 @@ public class JiraCommentUtil {
      * @param message the text of the message
      * @param vessels the containers used in the operation
      */
-    public void postUpdate(String message,
-                           Collection<LabVessel> vessels) {
-        // keep a list of sample names for each project because we're going
-        // to make a single message that references each sample in a project
-
+    public void postUpdate(String message, Collection<LabVessel> vessels) {
         Set<JiraTicket> tickets = new HashSet<JiraTicket>();
         for (LabVessel vessel : vessels) {
-            VesselContainer vesselContainer = vessel.getContainerRole();
-            if (vesselContainer != null) {
-                for (Object o : vesselContainer.getPositions()) {
-                    VesselPosition position = (VesselPosition) o;
-                    Collection<LabBatch> batches = vesselContainer.getNearestLabBatches(position, null);
-                    if (batches != null) {
-                        for (LabBatch batch : batches) {
-                            if (batch.getJiraTicket() != null) {
-                                tickets.add(batch.getJiraTicket());
-                            }
-                        }
-                    }
-                }
-            } else {
-                for (LabBatch labBatch : vessel.getLabBatches()) {
-                    JiraTicket jiraTicket = labBatch.getJiraTicket();
-                    if (jiraTicket != null) {
-                        tickets.add(jiraTicket);
+            Collection<LabBatch> batches = vessel.getNearestWorkflowLabBatches();
+            if (batches != null) {
+                for (LabBatch batch : batches) {
+                    if (batch.getJiraTicket() != null) {
+                        tickets.add(batch.getJiraTicket());
                     }
                 }
             }
         }
+
         for (JiraTicket ticket : tickets) {
             try {
                 JiraIssue jiraIssue = ticket.getJiraDetails();
@@ -121,23 +152,4 @@ public class JiraCommentUtil {
 
     }
 
-    public static void postProjectOwnershipTableToTicket(Collection<LabVessel> labVessels,
-                                                         JiraTicket ticket) {
-        // keep a list of sample names for each project because we're going
-        // to make a single message that references each sample in a project
-        Collection<MercurySample> allStarters = new HashSet<MercurySample>();
-
-        for (LabVessel vessel : labVessels) {
-            for (SampleInstance samInstance : vessel.getSampleInstances()) {
-                allStarters.add(samInstance.getStartingSample());
-            }
-        }
-
-        StringBuilder messageBuilder = new StringBuilder("{panel:title=Project Ownership}");
-        messageBuilder.append("\n");
-        messageBuilder.append("||Sample||Project||Owner||").append("\n");
-
-        messageBuilder.append("{panel}");
-        ticket.addComment(messageBuilder.toString());
-    }
 }
