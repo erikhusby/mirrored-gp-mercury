@@ -2757,17 +2757,13 @@ public class LabEventTest {
                         new ArrayList<BettaLimsMessageFactory.CherryPick>();
                 for (int rackPosition = 0; rackPosition < 8; rackPosition++) {
                     stripTubeCherryPicks.add(new BettaLimsMessageFactory.CherryPick(denatureRackBarcode, "A01",
-                            stripTubeHolderBarcode,
-                            Character.toString(
-                                    (char) ('A' + rackPosition)) + "01"));
+                            stripTubeHolderBarcode, Character.toString((char) ('A' + rackPosition)) + "01"));
                 }
                 stripTubeBarcode = "StripTube" + testPrefix + "1";
 
                 stripTubeTransferJaxb = bettaLimsMessageFactory.buildCherryPickToStripTube("StripTubeBTransfer",
-                        Arrays.asList(
-                                denatureRackBarcode),
-                        Arrays.asList(
-                                denatureTubeBarcodes),
+                        Arrays.asList(denatureRackBarcode),
+                        Arrays.asList(denatureTubeBarcodes),
                         stripTubeHolderBarcode,
                         Arrays.asList(stripTubeBarcode),
                         stripTubeCherryPicks);
@@ -2779,9 +2775,8 @@ public class LabEventTest {
                         stripTubeBarcode, flowcellBarcode);
                 addMessage(messageList, bettaLimsMessageFactory, flowcellTransferJaxb);
 
-                flowcellLoad = bettaLimsMessageFactory.buildReceptacleEvent(LabEventType.FLOWCELL_LOADED
-                        .getName(), flowcellBarcode,
-                        LabEventFactory.PHYS_TYPE_FLOWCELL);
+                flowcellLoad = bettaLimsMessageFactory.buildReceptacleEvent(LabEventType.FLOWCELL_LOADED.getName(),
+                        flowcellBarcode, LabEventFactory.PHYS_TYPE_FLOWCELL);
                 addMessage(messageList, bettaLimsMessageFactory, flowcellLoad);
             }
             return this;
