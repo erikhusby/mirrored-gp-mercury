@@ -10,10 +10,12 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.DesignedReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
 import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
@@ -95,9 +97,15 @@ public class ZimsIlluminaRunFactory {
                 throw new RuntimeException("Could not find LCSET for vessel: " + labVessel.getLabel());
             }
             MolecularIndexingScheme indexingSchemeEntity = null;
+            String baitName = null;
             for (Reagent reagent : sampleInstance.getReagents()) {
-                if(reagent instanceof MolecularIndexReagent) {
-                    indexingSchemeEntity = ((MolecularIndexReagent) reagent).getMolecularIndexingScheme();
+                if (OrmUtil.proxySafeIsInstance(reagent, MolecularIndexReagent.class)) {
+                    indexingSchemeEntity = OrmUtil.proxySafeCast(reagent, MolecularIndexReagent.class).getMolecularIndexingScheme();
+                } else if (OrmUtil.proxySafeIsInstance(reagent, DesignedReagent.class)) {
+                    DesignedReagent designedReagent = OrmUtil.proxySafeCast(reagent, DesignedReagent.class);
+                    if(designedReagent.getReagentDesign().getReagentType() == ReagentDesign.ReagentType.BAIT) {
+                        baitName = designedReagent.getReagentDesign().getDesignName();
+                    }
                 }
             }
 
@@ -115,9 +123,9 @@ public class ZimsIlluminaRunFactory {
             }
             libraryBeans.add(new LibraryBean(
                     labVessel.getLabel() + (indexingSchemeEntity == null ? "" : "_" + indexingSchemeEntity.getName()),
-                    productOrder.getResearchProject().getBusinessKey(),
-                    null, null, indexingSchemeDto, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-                    null, 0.0, null, null, null, null, null, null, null, productOrder, lcSet, bspSampleDTO));
+                    productOrder.getResearchProject().getBusinessKey(), null, null, indexingSchemeDto, null, null,
+                    null, null, null, null, null, null, null, null, null, null, null, baitName, null, 0.0, null,
+                    null, null, null, null, null, null, productOrder, lcSet, bspSampleDTO));
         }
         return libraryBeans;
     }
