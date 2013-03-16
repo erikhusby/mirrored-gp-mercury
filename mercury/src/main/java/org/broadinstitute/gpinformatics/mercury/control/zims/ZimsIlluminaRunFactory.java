@@ -98,13 +98,17 @@ public class ZimsIlluminaRunFactory {
             }
             MolecularIndexingScheme indexingSchemeEntity = null;
             String baitName = null;
+            List<String> catNames = new ArrayList<String>();
             for (Reagent reagent : sampleInstance.getReagents()) {
                 if (OrmUtil.proxySafeIsInstance(reagent, MolecularIndexReagent.class)) {
                     indexingSchemeEntity = OrmUtil.proxySafeCast(reagent, MolecularIndexReagent.class).getMolecularIndexingScheme();
                 } else if (OrmUtil.proxySafeIsInstance(reagent, DesignedReagent.class)) {
                     DesignedReagent designedReagent = OrmUtil.proxySafeCast(reagent, DesignedReagent.class);
-                    if(designedReagent.getReagentDesign().getReagentType() == ReagentDesign.ReagentType.BAIT) {
+                    ReagentDesign.ReagentType reagentType = designedReagent.getReagentDesign().getReagentType();
+                    if (reagentType == ReagentDesign.ReagentType.BAIT) {
                         baitName = designedReagent.getReagentDesign().getDesignName();
+                    } else if (reagentType == ReagentDesign.ReagentType.CAT) {
+                        catNames.add(designedReagent.getReagentDesign().getDesignName());
                     }
                 }
             }
@@ -123,9 +127,10 @@ public class ZimsIlluminaRunFactory {
             }
             libraryBeans.add(new LibraryBean(
                     labVessel.getLabel() + (indexingSchemeEntity == null ? "" : "_" + indexingSchemeEntity.getName()),
-                    productOrder.getResearchProject().getBusinessKey(), null, null, indexingSchemeDto, null, null,
-                    null, null, null, null, null, null, null, null, null, null, null, baitName, null, 0.0, null,
-                    null, null, null, null, null, null, productOrder, lcSet, bspSampleDTO));
+                    productOrder.getResearchProject().getBusinessKey(), null, null, indexingSchemeDto,
+                    null/*todo jmt hasIndexingRead, designation?*/, null, null, null, null, null, null, null, null,
+                    null, null, null, null, baitName, null, 0.0, null, null, null, null, null, null,
+                    catNames, productOrder, lcSet, bspSampleDTO));
         }
         return libraryBeans;
     }
