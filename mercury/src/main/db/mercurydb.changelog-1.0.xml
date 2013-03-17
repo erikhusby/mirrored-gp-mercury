@@ -962,8 +962,10 @@
     </changeSet>
 
     <changeSet id="GPLIM-1094-25" author="epolk">
+      <preConditions onFail="MARK_RAN">
+	<primaryKeyExists schemaName="MERCURY" tableName="LAB_METRIC_AUD"/>
+      </preConditions>
       <dropPrimaryKey schemaName="MERCURY" tableName="LAB_METRIC_AUD"/>
-      <addPrimaryKey schemaName="MERCURY" tableName="LAB_METRIC_AUD"/>
     </changeSet>
 
     <changeSet id="GPLIM-1094-27" author="epolk">
