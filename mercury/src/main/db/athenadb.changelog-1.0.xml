@@ -2527,175 +2527,182 @@
         <addPrimaryKey schemaName="athena" tableName="work_complete_message_join_aud" columnNames="rev, WORK_COMPLETE_MESSAGE, MESSAGE_DATA_VALUE_ID"/>
     </changeSet>
 
-    <changeSet id="GPLIM-1094-1136" author="epolk">
+    <changeSet id="GPLIM-1094-1136a" author="epolk">
       <preConditions onFail="MARK_RAN">
 	<primaryKeyExists schemaName="ATHENA" tableName="BILLING_LEDGER_AUD"/>
       </preConditions>
       <dropPrimaryKey schemaName="ATHENA" tableName="BILLING_LEDGER_AUD"/>
     </changeSet>
 
-    <changeSet id="GPLIM-1094-1137" author="epolk">
+    <changeSet id="GPLIM-1094-1137a" author="epolk">
       <preConditions onFail="MARK_RAN">
 	<primaryKeyExists schemaName="ATHENA" tableName="BILLING_REQUIREMENT_AUD"/>
       </preConditions>
       <dropPrimaryKey schemaName="ATHENA" tableName="BILLING_REQUIREMENT_AUD"/>
     </changeSet>
 
-    <changeSet id="GPLIM-1094-1138" author="epolk">
+    <changeSet id="GPLIM-1094-1138a" author="epolk">
       <preConditions onFail="MARK_RAN">
 	<primaryKeyExists schemaName="ATHENA" tableName="BILLING_SESSION_AUD"/>
       </preConditions>
       <dropPrimaryKey schemaName="ATHENA" tableName="BILLING_SESSION_AUD"/>
     </changeSet>
 
-    <changeSet id="GPLIM-1094-1139" author="epolk">
+    <changeSet id="GPLIM-1094-1139a" author="epolk">
       <preConditions onFail="MARK_RAN">
 	<primaryKeyExists schemaName="ATHENA" tableName="MATERIAL_TYPE_AUD" />
       </preConditions>
       <dropPrimaryKey schemaName="ATHENA" tableName="MATERIAL_TYPE_AUD"/>
     </changeSet>
 
-    <changeSet id="GPLIM-1094-1143" author="epolk">
+    <changeSet id="GPLIM-1094-1143a" author="epolk">
       <preConditions onFail="MARK_RAN">
 	<primaryKeyExists schemaName="ATHENA" tableName="MESSAGE_DATA_VALUE_AUD"/>
       </preConditions>
       <dropPrimaryKey schemaName="ATHENA" tableName="MESSAGE_DATA_VALUE_AUD"/>
     </changeSet>
 
-    <changeSet id="GPLIM-1094-1146" author="epolk">
+    <changeSet id="GPLIM-1094-1146a" author="epolk">
       <preConditions onFail="MARK_RAN">
 	<primaryKeyExists schemaName="ATHENA" tableName="PO_SAMPLE_RISK_JOIN_AUD"/>
       </preConditions>
       <dropPrimaryKey schemaName="ATHENA" tableName="PO_SAMPLE_RISK_JOIN_AUD"/>
     </changeSet>
 
-    <changeSet id="GPLIM-1094-1150" author="epolk">
+    <changeSet id="GPLIM-1094-1150a" author="epolk">
       <preConditions onFail="MARK_RAN">
 	<primaryKeyExists schemaName="ATHENA" tableName="PRICE_ITEM_AUD"/>
       </preConditions>
       <dropPrimaryKey schemaName="ATHENA" tableName="PRICE_ITEM_AUD"/>
     </changeSet>
 
-    <changeSet id="GPLIM-1094-1154" author="epolk">
+    <changeSet id="GPLIM-1094-1154a" author="epolk">
       <preConditions onFail="MARK_RAN">
 	<primaryKeyExists schemaName="ATHENA" tableName="PRODUCT_ADD_ONS_AUD"/>
       </preConditions>
       <dropPrimaryKey schemaName="ATHENA" tableName="PRODUCT_ADD_ONS_AUD"/>
     </changeSet>
 
-    <changeSet id="GPLIM-1094-1158" author="epolk">
+    <changeSet id="GPLIM-1094-1158a" author="epolk">
       <preConditions onFail="MARK_RAN">
 	<primaryKeyExists schemaName="ATHENA" tableName="PRODUCT_AUD"/>
       </preConditions>
       <dropPrimaryKey schemaName="ATHENA" tableName="PRODUCT_AUD"/>
     </changeSet>
 
-    <changeSet id="GPLIM-1094-1162" author="epolk">
+    <changeSet id="GPLIM-1094-1162a" author="epolk">
       <preConditions onFail="MARK_RAN">
 	<primaryKeyExists schemaName="ATHENA" tableName="PRODUCT_FAMILY_AUD"/>
       </preConditions>
       <dropPrimaryKey schemaName="ATHENA" tableName="PRODUCT_FAMILY_AUD"/>
     </changeSet>
 
-    <changeSet id="GPLIM-1094-1166" author="epolk">
+    <changeSet id="GPLIM-1094-1166a" author="epolk">
       <preConditions onFail="MARK_RAN">
 	<primaryKeyExists schemaName="ATHENA" tableName="PRODUCT_MATERIAL_TYPES_AUD"/>
       </preConditions>
       <dropPrimaryKey schemaName="ATHENA" tableName="PRODUCT_MATERIAL_TYPES_AUD"/>
     </changeSet>
 
-    <changeSet id="GPLIM-1094-1170" author="epolk">
+    <changeSet id="GPLIM-1094-1170a" author="epolk">
       <preConditions onFail="MARK_RAN">
 	<primaryKeyExists schemaName="ATHENA" tableName="PRODUCT_OPT_PRICE_ITEMS_AUD"/>
       </preConditions>
       <dropPrimaryKey schemaName="ATHENA" tableName="PRODUCT_OPT_PRICE_ITEMS_AUD"/>
     </changeSet>
 
-    <changeSet id="GPLIM-1094-1174" author="epolk">
+    <changeSet id="GPLIM-1094-1174a" author="epolk">
       <preConditions onFail="MARK_RAN">
 	<primaryKeyExists schemaName="ATHENA" tableName="PRODUCT_ORDER_AUD"/>
       </preConditions>
       <dropPrimaryKey schemaName="ATHENA" tableName="PRODUCT_ORDER_AUD"/>
     </changeSet>
 
-    <changeSet id="GPLIM-1094-1178" author="epolk">
+    <changeSet id="GPLIM-1094-1175a" author="epolk">
+      <preConditions onFail="MARK_RAN">
+	<primaryKeyExists schemaName="ATHENA" tableName="PRODUCT_ORDER_ADD_ON_AUD"/>
+      </preConditions>
+      <dropPrimaryKey schemaName="ATHENA" tableName="PRODUCT_ORDER_ADD_ON_AUD"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1094-1178a" author="epolk">
       <preConditions onFail="MARK_RAN">
 	<primaryKeyExists schemaName="ATHENA" tableName="PRODUCT_ORDER_SAMPLE_AUD"/>
       </preConditions>
       <dropPrimaryKey schemaName="ATHENA" tableName="PRODUCT_ORDER_SAMPLE_AUD"/>
     </changeSet>
 
-    <changeSet id="GPLIM-1094-1182" author="epolk">
+    <changeSet id="GPLIM-1094-1182a" author="epolk">
       <preConditions onFail="MARK_RAN">
 	<primaryKeyExists schemaName="ATHENA" tableName="PRODUCT_ORDER_SAMPLE_JOIN_AUD"/>
       </preConditions>
       <dropPrimaryKey schemaName="ATHENA" tableName="PRODUCT_ORDER_SAMPLE_JOIN_AUD"/>
     </changeSet>
 
-    <changeSet id="GPLIM-1094-1186" author="epolk">
+    <changeSet id="GPLIM-1094-1186a" author="epolk">
       <preConditions onFail="MARK_RAN">
 	<primaryKeyExists schemaName="ATHENA" tableName="PRODUCT_REQUIREMENT_JOIN_AUD"/>
       </preConditions>
       <dropPrimaryKey schemaName="ATHENA" tableName="PRODUCT_REQUIREMENT_JOIN_AUD"/>
     </changeSet>
 
-    <changeSet id="GPLIM-1094-1190" author="epolk">
+    <changeSet id="GPLIM-1094-1190a" author="epolk">
       <preConditions onFail="MARK_RAN">
 	<primaryKeyExists schemaName="ATHENA" tableName="PRODUCT_RISK_CRITERIA_JOIN_AUD"/>
       </preConditions>
       <dropPrimaryKey schemaName="ATHENA" tableName="PRODUCT_RISK_CRITERIA_JOIN_AUD"/>
     </changeSet>
 
-    <changeSet id="GPLIM-1094-1194" author="epolk">
+    <changeSet id="GPLIM-1094-1194a" author="epolk">
       <preConditions onFail="MARK_RAN">
 	<primaryKeyExists schemaName="ATHENA" tableName="PROJECT_PERSON_AUD"/>
       </preConditions>
       <dropPrimaryKey schemaName="ATHENA" tableName="PROJECT_PERSON_AUD"/>
     </changeSet>
 
-    <changeSet id="GPLIM-1094-1198" author="epolk">
+    <changeSet id="GPLIM-1094-1198a" author="epolk">
       <preConditions onFail="MARK_RAN">
 	<primaryKeyExists schemaName="ATHENA" tableName="RESEARCH_PROJECTIRB_AUD"/>
       </preConditions>
       <dropPrimaryKey schemaName="ATHENA" tableName="RESEARCH_PROJECTIRB_AUD"/>
     </changeSet>
 
-    <changeSet id="GPLIM-1094-1202" author="epolk">
+    <changeSet id="GPLIM-1094-1202a" author="epolk">
       <preConditions onFail="MARK_RAN">
 	<primaryKeyExists schemaName="ATHENA" tableName="RESEARCH_PROJECT_AUD"/>
       </preConditions>
       <dropPrimaryKey schemaName="ATHENA" tableName="RESEARCH_PROJECT_AUD"/>
     </changeSet>
 
-    <changeSet id="GPLIM-1094-1206" author="epolk">
+    <changeSet id="GPLIM-1094-1206a" author="epolk">
       <preConditions onFail="MARK_RAN">
 	<primaryKeyExists schemaName="ATHENA" tableName="RESEARCH_PROJECT_COHORT_AUD"/>
       </preConditions>
       <dropPrimaryKey schemaName="ATHENA" tableName="RESEARCH_PROJECT_COHORT_AUD"/>
     </changeSet>
 
-    <changeSet id="GPLIM-1094-1210" author="epolk">
+    <changeSet id="GPLIM-1094-1210a" author="epolk">
       <preConditions onFail="MARK_RAN">
 	<primaryKeyExists schemaName="ATHENA" tableName="RESEARCH_PROJECT_FUNDING_AUD"/>
       </preConditions>
       <dropPrimaryKey schemaName="ATHENA" tableName="RESEARCH_PROJECT_FUNDING_AUD"/>
     </changeSet>
 
-    <changeSet id="GPLIM-1094-1214" author="epolk">
+    <changeSet id="GPLIM-1094-1214a" author="epolk">
       <preConditions onFail="MARK_RAN">
 	<primaryKeyExists schemaName="ATHENA" tableName="WORK_COMPLETE_MESSAGE_AUD"/>
       </preConditions>
       <dropPrimaryKey schemaName="ATHENA" tableName="WORK_COMPLETE_MESSAGE_AUD"/>
     </changeSet>
 
-    <changeSet id="GPLIM-1094-1216" author="epolk">
+    <changeSet id="GPLIM-1094-1216a" author="epolk">
       <preConditions onFail="MARK_RAN">
 	<primaryKeyExists schemaName="ATHENA" tableName="WORK_COMPLETE_MESSAGE_JOIN_AUD"/>
       </preConditions>
       <dropPrimaryKey schemaName="ATHENA" tableName="WORK_COMPLETE_MESSAGE_JOIN_AUD"/>
     </changeSet>
 
-    <changeSet id="GPLIM-1094-1217" author="epolk">
+    <changeSet id="GPLIM-1094-1217a" author="epolk">
       <addPrimaryKey schemaName="ATHENA" tableName="BILLING_LEDGER_AUD" 
 		     constraintName="PK_BILLING_LEDGER_AUD" 
 		     columnNames="rev, ledger_id"/>
@@ -2719,7 +2726,7 @@
 		     columnNames="rev, price_item_id"/>
       <addPrimaryKey schemaName="ATHENA" tableName="PRODUCT_ADD_ONS_AUD" 
 		     constraintName="PK_PRODUCT_ADD_ONS_AUD" 
-		     columnNames="rev, add_on, product_order"/>
+		     columnNames="rev, product, add_ons"/>
       <addPrimaryKey schemaName="ATHENA" tableName="PRODUCT_AUD" 
 		     constraintName="PK_PRODUCT_AUD" 
 		     columnNames="rev, product_id"/>
@@ -2735,6 +2742,9 @@
       <addPrimaryKey schemaName="ATHENA" tableName="PRODUCT_ORDER_AUD" 
 		     constraintName="PK_PRODUCT_ORDER_AUD" 
 		     columnNames="rev, product_order_id"/>
+      <addPrimaryKey schemaName="ATHENA" tableName="PRODUCT_ORDER_ADD_ON_AUD" 
+		     constraintName="PK_PRODUCT_ORDER_ADD_ON_AUD" 
+		     columnNames="rev, product_order_add_on_id"/>
       <addPrimaryKey schemaName="ATHENA" tableName="PRODUCT_ORDER_SAMPLE_AUD" 
 		     constraintName="PK_PRODUCT_ORDER_SAMPLE_AUD" 
 		     columnNames="rev, materialtype_id"/>
