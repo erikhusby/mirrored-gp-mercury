@@ -2566,7 +2566,7 @@
 		     columnNames="rev, material_type_id"/>
       <addPrimaryKey schemaName="ATHENA" tableName="MESSAGE_DATA_VALUE_AUD" 
 		     constraintName="PK_MESSAGE_DATA_VALUE_AUD" 
-		     columnNames="rev, work_complete_message_id"/>
+		     columnNames="rev, message_data_value_id"/>
       <addPrimaryKey schemaName="ATHENA" tableName="PO_SAMPLE_RISK_JOIN_AUD" 
 		     constraintName="PK_PO_SAMPLE_RISK_JOIN_AUD" 
 		     columnNames="rev, product_order_sample, risk_item_id"/>
