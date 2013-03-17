@@ -968,6 +968,13 @@
       <dropPrimaryKey schemaName="MERCURY" tableName="LAB_METRIC_AUD"/>
     </changeSet>
 
+    <changeSet id="GPLIM-1094-1026" author="epolk">
+      <preConditions onFail="MARK_RAN">
+	<primaryKeyExists schemaName="MERCURY" tableName="LAB_METRIC_RUN_AUD"/>
+      </preConditions>
+      <dropPrimaryKey schemaName="MERCURY" tableName="LAB_METRIC_RUN_AUD"/>
+    </changeSet>
+
     <changeSet id="GPLIM-1094-1027" author="epolk">
       <preConditions onFail="MARK_RAN">
 	<primaryKeyExists schemaName="MERCURY" tableName="LAB_VESSEL_AUD"/>
