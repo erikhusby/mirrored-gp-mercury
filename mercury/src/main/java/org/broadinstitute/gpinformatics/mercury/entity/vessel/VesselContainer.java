@@ -177,6 +177,11 @@ public class VesselContainer<T extends LabVessel> {
                     }
                 }
             }
+
+            // also handle un-racked VesselToSectionTransfers
+            if (OrmUtil.proxySafeIsInstance(vesselAtPosition, TwoDBarcodedTube.class) && traversalDirection == TransferTraverserCriteria.TraversalDirection.Descendants) {
+                vesselAtPosition.evaluateCriteria(transferTraverserCriteria, traversalDirection, labEvent, hopCount);
+            }
         }
         if (traversalControl == TransferTraverserCriteria.TraversalControl.ContinueTraversing) {
             if (traversalDirection == TransferTraverserCriteria.TraversalDirection.Ancestors) {
