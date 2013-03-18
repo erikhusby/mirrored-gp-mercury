@@ -113,6 +113,7 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
         String collaboratorName = null;
         String population = null;
         String ethnicity = null;
+        String sampleKitUploadRackscanMismatch = null;
 
         if (bspColumns.length > 0) {
             patientId = getIfNotNullAndNotEmpty(bspColumns[0]);
@@ -180,13 +181,15 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
         if (bspColumns.length > 21) {
             population = getIfNotNullAndNotEmpty(bspColumns[21]);
         }
-        /** beware of DBFreeBSPSampleTest: if you add columns here, you'll need to add them to the mock **/
+        if (bspColumns.length > 22) {
+            sampleKitUploadRackscanMismatch = getIfNotNullAndNotEmpty(bspColumns[22]);
+        }
 
+        /** beware of DBFreeBSPSampleTest: if you add columns here, you'll need to add them to the mock **/
         return new BSPSampleDTO(containerId, stockSample, rootSample, null, patientId, organism, collaboratorSampleId, collection,
                 volume, concentration, sampleLsid, collaboratorParticipantId, materialType, total,
                 sampleType, primaryDisease, gender, stockType, fingerprint, sampleId, collaboratorName,
-                ethnicity, population);
-
+                ethnicity, population, sampleKitUploadRackscanMismatch);
     }
 
     private static String getIfNotNullAndNotEmpty(String value) {
@@ -221,9 +224,9 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
                 BSPSampleSearchColumn.SAMPLE_ID,
                 BSPSampleSearchColumn.COLLABORATOR_NAME,
                 BSPSampleSearchColumn.ETHNICITY,
-                BSPSampleSearchColumn.RACE);
+                BSPSampleSearchColumn.RACE,
+                BSPSampleSearchColumn.SAMPLE_KIT_UPLOAD_RACKSCAN_MISMATCH);
     }
-
 
     @Override
     protected void customizeConfig(ClientConfig clientConfig) {
@@ -236,7 +239,6 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
         specifyHttpAuthCredentials(client, bspConfig);
     }
 
-
     /**
      * There is much copying and pasting of code from BSPSampleSearchServiceImpl into here, a refactoring is needed
      *
@@ -244,7 +246,6 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
      *                      be filled with the ffpeDerived value returned by the FFPE webservice
      */
     public void fetchFFPEDerived(@Nonnull Collection<BSPSampleDTO> bspSampleDTOs) {
-
         if (bspSampleDTOs.isEmpty()) {
             return;
         }
@@ -299,4 +300,15 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
 
     }
 
+    /**
+     * Given an aliquot ID, return its stock sample ID.
+     */
+    public String getStockIdForAliquotId(@Nonnull String aliquotId) {
+        List<String[]> results =
+                service.runSampleSearch(Collections.singletonList(aliquotId), BSPSampleSearchColumn.STOCK_SAMPLE);
+        if (results.isEmpty() || results.get(0).length == 0) {
+            return null;
+        }
+        return results.get(0)[0];
+    }
 }

@@ -229,14 +229,6 @@ public class ExtractTransformDbFreeTest {
         Assert.assertTrue(f.exists());
     }
 
-    public void testIncr() {
-        replay(mocks);
-        extractTransform.writeLastEtlRun(0L);
-        extractTransform.scheduledEtl();
-        Assert.assertEquals(0L, extractTransform.readLastEtlRun());
-        verify(mocks);
-    }
-
     public void testOnDemandIncr() {
         replay(mocks);
         extractTransform.writeLastEtlRun(0L);

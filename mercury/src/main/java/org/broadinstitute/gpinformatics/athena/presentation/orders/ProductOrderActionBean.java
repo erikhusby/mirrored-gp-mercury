@@ -686,6 +686,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 item.put("concentration", sample.getBspDTO().getConcentration());
                 item.put("total", sample.getBspDTO().getTotal());
                 item.put("hasFingerprint", sample.getBspDTO().getHasFingerprint());
+                item.put("hasSampleKitUploadRackscanMismatch", sample.getBspDTO().getHasSampleKitUploadRackscanMismatch());
 
                 itemList.put(item);
             }

@@ -178,7 +178,7 @@ public class ZimsIlluminaRunFactoryTest {
         BSPSampleDTO sampleDTO = new BSPSampleDTO("BspContainer", "Stock1", "RootSample", "Aliquot1", "Spencer", "Hamster",
                 "first_sample", "collection1", "7", "9", "ZimsIlluminaRunFactoryTest.testMakeLibraryBean.sampleDTO",
                 "participant1", "Test Material", "42", "Test Sample", "Test failure", "M", "Stock Type", "fingerprint",
-                "sample1", "ZimsIlluminaRunFactoryTest", "N/A", "unknown");
+                "sample1", "ZimsIlluminaRunFactoryTest", "N/A", "unknown", false);
         when(mockBSPSampleDataFetcher.fetchSingleSampleFromBSP("TestSM-1")).thenReturn(sampleDTO);
 
         LibraryBean libraryBean = zimsIlluminaRunFactory.makeLibraryBeans(testTube).get(0);

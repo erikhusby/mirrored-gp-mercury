@@ -29,7 +29,8 @@ public enum BSPSampleSearchColumn {
     COLLABORATOR_NAME("Site PI") ,
     // todo arz db free testing of race and ethnicity
     RACE("Race"),
-    ETHNICITY("Ethnicity")
+    ETHNICITY("Ethnicity"),
+    SAMPLE_KIT_UPLOAD_RACKSCAN_MISMATCH("Sample Kit Data Upload/Rackscan Mismatch")
     ;
     
     private final String columnName;

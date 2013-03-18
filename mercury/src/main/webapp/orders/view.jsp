@@ -176,6 +176,10 @@
                         $j('#fingerprint-' + sampleId).html('<img src="${ctxpath}/images/check.png" title="Yes"/>');
                     }
 
+                    if (sampleData[x].hasSampleKitUploadRackscanMismatch) {
+                        $j('#sampleKitUploadRackscanMismatch-' + sampleId).html('<img src="${ctxpath}/images/red_check.png" title="Yes"/>');
+                    }
+
                     bspDataCount--;
                 }
 
@@ -193,6 +197,7 @@
                             {"bSortable": true, "sType": "numeric"},        // Concentration
                             {"bSortable": true, "sType": "numeric"},        // Yield Amount
                             {"bSortable": true, "sType" : "title-string"},  // FP Status
+                            {"bSortable": true},                            // sample kit upload/rackscan mismatch
                             {"bSortable": true},                            // On Risk
                             {"bSortable": true},                            // Status
                             {"bSortable": true}                             // Comment
@@ -607,6 +612,8 @@
                             <th width="40">Concentration</th>
                             <th width="40">Yield Amount</th>
                             <th width="60">FP Status</th>
+                            <th width="60"><abbr title="Sample Kit Upload/Rackscan Mismatch">Rackscan Mismatch</abbr></th>
+
                             <th>On Risk</th>
                             <th width="40">Status</th>
                             <th width="200">Comment</th>
@@ -640,6 +647,7 @@
                                 <td id="concentration-${sample.productOrderSampleId}">&#160; </td>
                                 <td id="total-${sample.productOrderSampleId}">&#160; </td>
                                 <td id="fingerprint-${sample.productOrderSampleId}" style="text-align: center">&#160; </td>
+                                <td id="sampleKitUploadRackscanMismatch-${sample.productOrderSampleId}"  style="text-align: center">&#160; </td>
                                 <td>${sample.riskString}</td>
                                 <td>${sample.deliveryStatus.displayName}</td>
                                 <td>${sample.sampleComment}</td>

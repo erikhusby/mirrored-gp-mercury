@@ -8,7 +8,6 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfiguration;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 
-import javax.ejb.Schedule;
 import javax.ejb.Stateful;
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -20,7 +19,7 @@ import java.util.Date;
 import java.util.concurrent.Semaphore;
 
 /**
- * This is a JEE scheduled bean that does the extract and transform parts of ETL for the data warehouse.
+ * Performs the extract and transform parts of ETL for the data warehouse.
  *
  * For incremental etl, Envers AuditReader is used to get relevant data from the _AUD tables which contain
  * changed data and a revision number.  ETL only wants the latest (current) version of an entity,
@@ -44,7 +43,6 @@ public class ExtractTransform {
     public static final String READY_FILE_SUFFIX = "_is_ready";
     /** This date format matches what cron job expects in filenames, and in SqlLoader data files. */
     public static final SimpleDateFormat secTimestampFormat = new SimpleDateFormat("yyyyMMddHHmmss");
-    public static final SimpleDateFormat msecTimestampFormat = new SimpleDateFormat("yyyyMMddHHmmssSSS");
     /** Name of file that contains the mSec time of the last etl run. */
     public static final String LAST_ETL_FILE = "last_etl_run";
     /** Name of the file that contains the hash of the last exported workflow config data. */
@@ -150,15 +148,6 @@ public class ExtractTransform {
         this.workflowConfigEtl = workflowConfigEtl;
         this.riskItemEtl = riskItemEtl;
         this.ledgerEntryEtl = ledgerEntryEtl;
-    }
-
-    /**
-     * JEE auto-schedules incremental ETL.
-     */
-    @Schedule(hour="*", minute="*/15", persistent=false)
-    void scheduledEtl() {
-        initConfig();
-        incrementalEtl();
     }
 
     /**
