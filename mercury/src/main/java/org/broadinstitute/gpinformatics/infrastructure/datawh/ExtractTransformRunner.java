@@ -1,8 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import javax.ejb.ConcurrencyManagement;
 import javax.ejb.Schedule;
 import javax.ejb.Singleton;
@@ -15,7 +12,6 @@ import static javax.ejb.ConcurrencyManagementType.BEAN;
 @Singleton
 @ConcurrencyManagement(BEAN)
 public class ExtractTransformRunner {
-    private Log logger = LogFactory.getLog(getClass());
 
     @Inject
     private ExtractTransform extractTransform;
@@ -23,9 +19,8 @@ public class ExtractTransformRunner {
     /**
      * JEE auto-schedules incremental ETL.
      */
-    @Schedule(hour = "*", minute = "*/1", persistent = false)
+    @Schedule(hour = "*", minute = "*/15", persistent = false)
     void scheduledEtl() {
-        logger.info("XXX scheduledEtl");
         extractTransform.onDemandIncrementalEtl();
     }
 }
