@@ -73,6 +73,13 @@ public class ProductOrderSample implements Serializable {
     private Set<RiskItem> riskItems = new HashSet<RiskItem>();
 
     /**
+     * Aliquot ID is used by the auto-bill code to track pipeline results.  It will only be set when a sample has
+     * been billed by the auto-bill code.
+     */
+    @Column(name = "ALIQUOT_ID")
+    private String aliquotId;
+
+    /**
      * Convert a list of ProductOrderSamples into a list of sample names.
      * @param samples the samples to convert
      * @return the names of the samples, in the same order as the input
@@ -455,5 +462,13 @@ public class ProductOrderSample implements Serializable {
     public void setRiskItems(Collection<RiskItem> riskItems) {
         this.riskItems.clear();
         this.riskItems.addAll(riskItems);
+    }
+
+    public String getAliquotId() {
+        return aliquotId;
+    }
+
+    public void setAliquotId(String aliquotId) {
+        this.aliquotId = aliquotId;
     }
 }

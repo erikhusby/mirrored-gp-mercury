@@ -2803,4 +2803,20 @@
 		     columnNames="rev, risk_criteria_id"/>
     </changeSet>
 
+    <changeSet id="GPLIM-1059-2" author="pshapiro">
+        <preConditions>
+            <not>
+                <columnExists tableName="PRODUCT_ORDER_SAMPLE" columnName="ALIQUOT_ID" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="PRODUCT_ORDER_SAMPLE" schemaName="athena">
+            <column name="ALIQUOT_ID" type="varchar2(255)"/>
+        </addColumn>
+        <addColumn tableName="PRODUCT_ORDER_SAMPLE_AUD" schemaName="athena">
+            <column name="ALIQUOT_ID" type="varchar2(255)"/>
+        </addColumn>
+        <dropPrimaryKey tableName="WORK_COMPLETE_MESSAGE_AUD" schemaName="athena"/>
+        <addPrimaryKey schemaName="athena" tableName="WORK_COMPLETE_MESSAGE_AUD" columnNames="rev, WORK_COMPLETE_MESSAGE_ID"/>
+    </changeSet>
+
 </databaseChangeLog>

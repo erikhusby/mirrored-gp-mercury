@@ -120,6 +120,10 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
     public static final String SM_12MD2_CONTAINER_ID = "CO-2859994";
 
 
+    public static final String ALIQUOT_ID_1 = "SM-ALIQUOT1";
+    public static final String ALIQUOT_ID_2 = "SM-ALIQUOT2";
+    public static final String STOCK_ID = "SM-STOCK";
+
     private final Map<String,String[]> samples = new HashMap<String,String[]>();
 
     public BSPSampleSearchServiceStub() {
@@ -255,9 +259,16 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
                   SM_12MD2 // Sample ID
         });
 
+        addToMap(ALIQUOT_ID_1, new String[] {
+                STOCK_ID
+        });
+
+        addToMap(ALIQUOT_ID_2, new String[] {
+                STOCK_ID
+        });
     }
 
-    private void addToMap(String sampleName,String[] attributes) {
+    private void addToMap(String sampleName, String[] attributes) {
         if (samples.containsKey(sampleName)) {
             throw new RuntimeException("The mock BSP service already contains " + sampleName);
         }

@@ -77,7 +77,6 @@ public class ProductOrderSampleTest {
             bspSampleDTO2.setMaterialType("XXX:XXX");
             sample2 = new ProductOrderSample("Sample2", bspSampleDTO2);
 
-            order.setSamples(Collections.singletonList(sample1));
             List<ProductOrderSample> samples = new ArrayList<ProductOrderSample>();
             samples.add(sample1);
             samples.add(sample2);
