@@ -63,7 +63,7 @@ public class MercuryConfigurationTest {
         final JiraConfig testJiraConfig = (JiraConfig) configuration.getConfig(JiraConfig.class, Deployment.TEST);
 
         Assert.assertEquals(testJiraConfig.getPort(), 8888);
-        Assert.assertEquals(testJiraConfig.getHost(), "vsquid00.broadinstitute.org");
+        Assert.assertEquals(testJiraConfig.getHost(), "labopsjiratest.broadinstitute.org");
 
         // And Deployment mappings
         final BSPConfig testBSPConfig = (BSPConfig) configuration.getConfig(BSPConfig.class, Deployment.TEST);
