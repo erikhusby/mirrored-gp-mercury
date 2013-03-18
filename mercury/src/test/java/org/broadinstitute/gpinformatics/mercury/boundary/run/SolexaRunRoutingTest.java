@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProduc
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnectorProducer;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -27,7 +28,9 @@ import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
+import org.broadinstitute.gpinformatics.mercury.entity.run.OutputDataLocation;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
@@ -37,6 +40,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.broadinstitute.gpinformatics.mercury.test.BettaLimsMessageFactory;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.easymock.EasyMock;
@@ -57,6 +61,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Scott Matthews
@@ -76,7 +81,7 @@ public class SolexaRunRoutingTest {
     private LabEventFactory               labEventFactory;
     private Map<String, TwoDBarcodedTube> mapBarcodeToTube;
 
-    @BeforeMethod
+    @Test(enabled = false)
     public void setUp() {
 
         LabBatchEjb labBatchEJB = new LabBatchEjb();
@@ -159,6 +164,8 @@ public class SolexaRunRoutingTest {
      * @throws Exception
      */
     public void testWholeGenomeFlowcell() throws Exception {
+
+        setUp();
 
         LabEventHandler labEventHandler =
                 new LabEventHandler(new WorkflowLoader(), AthenaClientProducer
@@ -395,6 +402,8 @@ public class SolexaRunRoutingTest {
 
     public void testNoChainOfCustodyRegistration() throws Exception {
 
+        setUp();
+
         Date runDate = new Date();
 
         final String flowcellBarcode = "FlowCellBarcode" + runDate.getTime();
@@ -410,13 +419,7 @@ public class SolexaRunRoutingTest {
 
         EasyMock.expect(runDao.findByRunName(EasyMock.anyObject(String.class))).andReturn(null);
 
-
         IlluminaSequencingRunFactory runFactory = EasyMock.createMock(IlluminaSequencingRunFactory.class);
-        //        EasyMock.expect(runFactory.build(EasyMock.anyObject(SolexaRunBean.class),
-        //                                                EasyMock.anyObject(IlluminaFlowcell.class)))
-        ////                .andReturn(new IlluminaSequencingRun(null, null, null, null,null, false, null,null))
-        //                .andThrow(new InformaticsServiceException("This is a Whole Genome Shotgun workflow.  " +
-        //                                                                  "We should NOT have called Mercury"))
 
         IlluminaFlowcellDao flowcellDao = EasyMock.createNiceMock(IlluminaFlowcellDao.class);
         EasyMock.expect(flowcellDao.findByBarcode(EasyMock.anyObject(String.class))).andReturn(null);
@@ -518,4 +521,8 @@ public class SolexaRunRoutingTest {
 
         EasyMock.verify(runDao, flowcellDao, vesselDao, runFactory);
     }
+
+    /*
+     * For the Happy path of routing logic (that it should call Mercury) see End to End tests in LabEventTest
+     */
 }

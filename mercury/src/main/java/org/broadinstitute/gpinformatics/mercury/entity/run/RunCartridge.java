@@ -44,4 +44,8 @@ public abstract class RunCartridge extends LabVessel {
     public Set<SequencingRun> getSequencingRuns() {
         return sequencingRuns;
     }
+
+    public void addSequencingRun(SequencingRun sequencingRun) {
+        this.sequencingRuns.add(sequencingRun);
+    }
 }

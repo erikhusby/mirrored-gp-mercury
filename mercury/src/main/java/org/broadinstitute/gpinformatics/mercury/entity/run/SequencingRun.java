@@ -54,8 +54,8 @@ public class SequencingRun {
         this.operator = operator;
         this.testRun = testRun;
         this.runDate = runDate;
-        this.runCartridge = runCartridge;
         this.runLocation = runLocation;
+        setRunCartridge(runCartridge);
     }
 
     protected SequencingRun() {
@@ -112,6 +112,11 @@ public class SequencingRun {
      */
     public RunCartridge getSampleCartridge() {
         return runCartridge;
+    }
+
+    public void setRunCartridge(RunCartridge runCartridge) {
+        this.runCartridge = runCartridge;
+        runCartridge.addSequencingRun(this);
     }
 
     public Date getRunDate() {
