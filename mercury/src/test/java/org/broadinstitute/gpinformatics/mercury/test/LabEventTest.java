@@ -14,24 +14,20 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.*;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.graph.Graph;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunResource;
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferEntityGrapher;
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVisualizer;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexingSchemeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
@@ -55,6 +51,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.rework.ReworkLevel;
 import org.broadinstitute.gpinformatics.mercury.entity.rework.ReworkReason;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
+import org.broadinstitute.gpinformatics.mercury.entity.run.OutputDataLocation;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -81,8 +78,13 @@ import org.testng.annotations.Test;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.PathSegment;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -349,7 +351,7 @@ public class LabEventTest {
      * Build object graph for Hybrid Selection messages, verify chain of events.
      */
     @Test(groups = {DATABASE_FREE})
-    public void testExomeExpress() {
+    public void testExomeExpress() throws Exception {
 //        Controller.startCPURecording(true);
 
         LabBatchEjb labBatchEJB = new LabBatchEjb();
@@ -387,7 +389,8 @@ public class LabEventTest {
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
         labBatchEJB.createLabBatch(workflowBatch, "scottmat");
 
-        String rackBarcode = "REXEX" + (new Date()).toString();
+        final Date runDate = new Date();
+        String rackBarcode = "REXEX" + runDate.toString();
 
         // Messaging
         BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
@@ -436,7 +439,7 @@ public class LabEventTest {
                 hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), WorkflowName.EXOME_EXPRESS);
         qtpEntityBuilder.invoke();
 
-        String flowcellBarcode = "flowcell" + new Date().getTime();
+        String flowcellBarcode = "flowcell" + runDate.getTime();
 
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
             new HiSeq2500FlowcellEntityBuilder(bettaLimsMessageFactory, labEventFactory,
@@ -454,6 +457,132 @@ public class LabEventTest {
         Assert.assertEquals(lane2SampleInstances.iterator().next().getReagents().size(), 2,
                 "Wrong number of reagents");
 
+
+
+
+        final String machineName = "Superman";
+        final File runPath = File.createTempFile("tempRun" + IlluminaSequencingRun.RUNFORMAT
+                                                                                  .format(runDate), ".txt");
+        SolexaRunBean runBean =
+                new SolexaRunBean(flowcellBarcode,
+                                         flowcellBarcode + IlluminaSequencingRun.RUNFORMAT.format(runDate),
+                                         runDate, machineName,
+                                         runPath.getAbsolutePath(), null);
+
+        IlluminaSequencingRunDao runDao = EasyMock.createNiceMock(IlluminaSequencingRunDao.class);
+
+        EasyMock.expect(runDao.findByRunName(EasyMock.anyObject(String.class))).andReturn(null);
+
+        IlluminaSequencingRunFactory runFactory = EasyMock.createMock(IlluminaSequencingRunFactory.class);
+        EasyMock.expect(runFactory.build(EasyMock.anyObject(SolexaRunBean.class),
+                                                EasyMock.anyObject(IlluminaFlowcell.class)))
+                .andReturn(new IlluminaSequencingRun(hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell(),
+                                                            runPath.getName(), runBean.getRunBarcode(), machineName,
+                                                            null, false, runDate,
+                                                            new OutputDataLocation(runPath.getAbsolutePath())));
+
+        IlluminaFlowcellDao flowcellDao = EasyMock.createMock(IlluminaFlowcellDao.class);
+        EasyMock.expect(flowcellDao.findByBarcode(EasyMock.anyObject(String.class)))
+                .andReturn(hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell());
+
+
+        LabVesselDao vesselDao = EasyMock.createNiceMock(LabVesselDao.class);
+
+        MercuryOrSquidRouter router = new MercuryOrSquidRouter(vesselDao, AthenaClientProducer.stubInstance());
+
+        SolexaRunResource runResource = new SolexaRunResource(runDao, runFactory, flowcellDao, router,
+                                                                     SquidConnectorProducer.stubInstance());
+        EasyMock.replay(runDao, runFactory, flowcellDao, vesselDao);
+
+        runResource.createRun(runBean, new UriInfo() {
+            @Override
+            public String getPath() {
+                return null;
+            }
+
+            @Override
+            public String getPath(boolean decode) {
+                return null;
+            }
+
+            @Override
+            public List<PathSegment> getPathSegments() {
+                return null;
+            }
+
+            @Override
+            public List<PathSegment> getPathSegments(boolean decode) {
+                return null;
+            }
+
+            @Override
+            public URI getRequestUri() {
+                return null;
+            }
+
+            @Override
+            public UriBuilder getRequestUriBuilder() {
+                return null;
+            }
+
+            @Override
+            public URI getAbsolutePath() {
+                return null;
+            }
+
+            @Override
+            public UriBuilder getAbsolutePathBuilder() {
+                return UriBuilder.fromPath("");
+            }
+
+            @Override
+            public URI getBaseUri() {
+                return null;
+            }
+
+            @Override
+            public UriBuilder getBaseUriBuilder() {
+                return null;
+            }
+
+            @Override
+            public MultivaluedMap<String, String> getPathParameters() {
+                return null;
+            }
+
+            @Override
+            public MultivaluedMap<String, String> getPathParameters(boolean decode) {
+                return null;
+            }
+
+            @Override
+            public MultivaluedMap<String, String> getQueryParameters() {
+                return null;
+            }
+
+            @Override
+            public MultivaluedMap<String, String> getQueryParameters(boolean decode) {
+                return null;
+            }
+
+            @Override
+            public List<String> getMatchedURIs() {
+                return null;
+            }
+
+            @Override
+            public List<String> getMatchedURIs(boolean decode) {
+                return null;
+            }
+
+            @Override
+            public List<Object> getMatchedResources() {
+                return null;
+            }
+        });
+
+        EasyMock.verify(runDao, flowcellDao, vesselDao, runFactory);
+/*
         IlluminaSequencingRunFactory illuminaSequencingRunFactory =
                 new IlluminaSequencingRunFactory(EasyMock.createNiceMock(JiraCommentUtil.class));
         IlluminaSequencingRun illuminaSequencingRun;
@@ -465,6 +594,12 @@ public class LabEventTest {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+*/
+
+
+
+
+
 
         Map.Entry<String, TwoDBarcodedTube> stringTwoDBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
         ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
@@ -474,6 +609,9 @@ public class LabEventTest {
 
         //todo: these need to be made to assert something useful, andn pass.
         Assert.assertEquals(labEventNames.size(), 11, "Wrong number of transfers");
+
+        IlluminaSequencingRun illuminaSequencingRun
+                = (IlluminaSequencingRun) hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell().getSequencingRuns().iterator().next();
 
         Assert.assertEquals(illuminaSequencingRun.getSampleCartridge(),
                 hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell(), "Wrong flowcell");

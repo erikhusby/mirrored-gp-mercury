@@ -196,7 +196,7 @@
 
                         </td>
                         <td>
-                            <fmt:formatDate value="${entry.createdDate}" pattern="MM/dd/yyyy HH:MM:ss"/>
+                            <fmt:formatDate value="${entry.createdDate}" pattern="MM/dd/yyyy HH:mm:ss"/>
                         </td>
                     </tr>
                 </c:forEach>

@@ -14,9 +14,11 @@
 
         <div class="fourcolumn" style="margin-bottom:5px;">
             <ul>
-                <c:forEach items="${actionBean.denatureTube.nearestLabBatches}" var="batch">
+                <c:forEach items="${actionBean.denatureTube.nearestWorkflowLabBatches}" var="batch">
                     <li>
-                        Batch: ${batch.batchName}
+                        Batch: <stripes:link target="JIRA"
+                                             href="${batch.jiraTicket.browserUrl}"
+                                             class="external">${batch.batchName}</stripes:link>
                     </li>
                 </c:forEach>
             </ul>
@@ -27,7 +29,7 @@
             </ul>
             <ul>
 
-                <li> Index Count: ${actionBean.denatureTube.indexesCount}</li>
+                <li> Sample Count: ${actionBean.denatureTube.sampleInstanceCount}</li>
             </ul>
             <ul>
                 <li>Last Event: ${actionBean.denatureTube.latestEvent.labEventType.name}</li>

@@ -120,6 +120,8 @@ public class ExomeExpressIntegrationTest {
             System.out.println("Press enter to send export");
             scanner.nextLine();
             // export message.
+            // Reconstruct the factory, to update the time.
+            bettaLimsMessageFactory = new BettaLimsMessageFactory();
             parentVesselBeans = new ArrayList<ParentVesselBean>();
             ArrayList<ChildVesselBean> childVesselBeans = new ArrayList<ChildVesselBean>();
             // Need a 4 character base 36 ID.
@@ -153,7 +155,7 @@ public class ExomeExpressIntegrationTest {
             }
             LabEventTest.LibraryConstructionJaxbBuilder libraryConstructionJaxbBuilder = new LabEventTest.LibraryConstructionJaxbBuilder(
                     bettaLimsMessageFactory, testSuffix, shearingJaxbBuilder.getShearCleanPlateBarcode(), "000002453323",
-                    LabEventTest.NUM_POSITIONS_IN_RACK).invoke();
+                    sampleIds.size()).invoke();
 
             for (BettaLIMSMessage bettaLIMSMessage : libraryConstructionJaxbBuilder.getMessageList()) {
                 sendMessage(baseUrl, bettaLIMSMessage);

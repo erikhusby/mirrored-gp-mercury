@@ -60,14 +60,14 @@
             </td>
             <td>
                 <fmt:formatDate value="${actionBean.getFirstLabEvent(sample).eventDate}"
-                                pattern="MM/dd/yyyy HH:MM:ss"/>
+                                pattern="MM/dd/yyyy HH:mm:ss"/>
             </td>
             <td>
                 <span class="sparkline">${actionBean.getSparklineData(sample)}</span>
             </td>
             <td>
                 <fmt:formatDate value="${actionBean.getLatestLabEvent(sample).eventDate}"
-                                pattern="MM/dd/yyyy HH:MM:ss"/>
+                                pattern="MM/dd/yyyy HH:mm:ss"/>
             </td>
             <td>
                     ${actionBean.getDuration(sample)}

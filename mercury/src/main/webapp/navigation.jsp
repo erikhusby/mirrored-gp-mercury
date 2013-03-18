@@ -1,4 +1,3 @@
-<%@ page import="org.broadinstitute.gpinformatics.mercury.entity.DB" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 <%@ taglib uri="http://mercury.broadinstitute.org/Mercury/security" prefix="security" %>
 <%@ page import="static org.broadinstitute.gpinformatics.mercury.entity.DB.Role.*" %>
@@ -97,6 +96,11 @@
                                 <stripes:link
                                         beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.CollaboratorControlsActionBean"
                                         event="list">Controls</stripes:link>
+                            </li>
+                            <li>
+                                <stripes:link
+                                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.LinkDenatureTubeToFlowcellActionBean"
+                                        event="view">Link Dtube to Flowcell</stripes:link>
                             </li>
                         </security:authorizeBlock>
                         <security:authorizeBlock roles="<%= roles(Developer) %>">

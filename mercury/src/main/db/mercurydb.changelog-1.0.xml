@@ -918,4 +918,378 @@
         </createIndex>
     </changeSet>
 
+
+    <changeSet id="GPLIM-1094-1010a" author="epolk">
+      <preConditions onFail="MARK_RAN">
+	<primaryKeyExists schemaName="MERCURY" tableName="BUCKET_AUD"/>
+      </preConditions>
+      <dropPrimaryKey schemaName="MERCURY" tableName="BUCKET_AUD"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1094-1011a" author="epolk">
+      <preConditions onFail="MARK_RAN">
+	<primaryKeyExists schemaName="MERCURY" tableName="BUCKET_ENTRY_AUD"/>
+      </preConditions>
+      <dropPrimaryKey schemaName="MERCURY" tableName="BUCKET_ENTRY_AUD"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1094-1012a" author="epolk">
+      <preConditions onFail="MARK_RAN">
+	<primaryKeyExists schemaName="MERCURY" tableName="JIRA_TICKET_AUD"/>
+      </preConditions>
+      <dropPrimaryKey schemaName="MERCURY" tableName="JIRA_TICKET_AUD"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1094-1013a" author="epolk">
+      <preConditions onFail="MARK_RAN">
+	<primaryKeyExists schemaName="MERCURY" tableName="LAB_BATCH_AUD"/>
+      </preConditions>
+      <dropPrimaryKey schemaName="MERCURY" tableName="LAB_BATCH_AUD"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1094-1017a" author="epolk">
+      <preConditions onFail="MARK_RAN">
+	<primaryKeyExists schemaName="MERCURY" tableName="LAB_EVENT_AUD"/>
+      </preConditions>
+      <dropPrimaryKey schemaName="MERCURY" tableName="LAB_EVENT_AUD"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1094-1021a" author="epolk">
+      <preConditions onFail="MARK_RAN">
+	<primaryKeyExists schemaName="MERCURY" tableName="LAB_EVENT_REAGENTS_AUD"/>
+      </preConditions>
+      <dropPrimaryKey schemaName="MERCURY" tableName="LAB_EVENT_REAGENTS_AUD"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1094-1025a" author="epolk">
+      <preConditions onFail="MARK_RAN">
+	<primaryKeyExists schemaName="MERCURY" tableName="LAB_METRIC_AUD"/>
+      </preConditions>
+      <dropPrimaryKey schemaName="MERCURY" tableName="LAB_METRIC_AUD"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1094-1026a" author="epolk">
+      <preConditions onFail="MARK_RAN">
+	<primaryKeyExists schemaName="MERCURY" tableName="LAB_METRIC_RUN_AUD"/>
+      </preConditions>
+      <dropPrimaryKey schemaName="MERCURY" tableName="LAB_METRIC_RUN_AUD"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1094-1027a" author="epolk">
+      <preConditions onFail="MARK_RAN">
+	<primaryKeyExists schemaName="MERCURY" tableName="LAB_VESSEL_AUD"/>
+      </preConditions>
+      <dropPrimaryKey schemaName="MERCURY" tableName="LAB_VESSEL_AUD"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1094-1031a" author="epolk">
+      <preConditions onFail="MARK_RAN">
+	<primaryKeyExists schemaName="MERCURY" tableName="LAB_VESSEL_CONTAINERS_AUD"/>
+      </preConditions>
+      <dropPrimaryKey schemaName="MERCURY" tableName="LAB_VESSEL_CONTAINERS_AUD"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1094-1035a" author="epolk">
+      <preConditions onFail="MARK_RAN">
+	<primaryKeyExists schemaName="MERCURY" tableName="LAB_VESSEL_LAB_BATCHES_AUD"/>
+      </preConditions>
+      <dropPrimaryKey schemaName="MERCURY" tableName="LAB_VESSEL_LAB_BATCHES_AUD"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1094-1039a" author="epolk">
+      <preConditions onFail="MARK_RAN">
+	<primaryKeyExists schemaName="MERCURY" tableName="LAB_VESSEL_MERCURY_SAMPLES_AUD"/>
+      </preConditions>
+      <dropPrimaryKey schemaName="MERCURY" tableName="LAB_VESSEL_MERCURY_SAMPLES_AUD"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1094-1043a" author="epolk">
+      <preConditions onFail="MARK_RAN">
+	<primaryKeyExists schemaName="MERCURY" tableName="LAB_VESSEL_NOTES_AUD"/>
+      </preConditions>
+      <dropPrimaryKey schemaName="MERCURY" tableName="LAB_VESSEL_NOTES_AUD"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1094-1047a" author="epolk">
+      <preConditions onFail="MARK_RAN">
+	<primaryKeyExists schemaName="MERCURY" tableName="LAB_VESSEL_RACKS_OF_TUBES_AUD"/>
+      </preConditions>
+      <dropPrimaryKey schemaName="MERCURY" tableName="LAB_VESSEL_RACKS_OF_TUBES_AUD"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1094-1048a" author="epolk">
+      <preConditions onFail="MARK_RAN">
+	<primaryKeyExists schemaName="MERCURY" tableName="LAB_VESSEL_TICKETS_CREATED_AUD"/>
+      </preConditions>
+      <dropPrimaryKey schemaName="MERCURY" tableName="LAB_VESSEL_TICKETS_CREATED_AUD"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1094-1052a" author="epolk">
+      <preConditions onFail="MARK_RAN">
+	<primaryKeyExists schemaName="MERCURY" tableName="LB_STARTING_LAB_VESSELS_AUD"/>
+      </preConditions>
+      <dropPrimaryKey schemaName="MERCURY" tableName="LB_STARTING_LAB_VESSELS_AUD"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1094-1056a" author="epolk">
+      <preConditions onFail="MARK_RAN">
+	<primaryKeyExists schemaName="MERCURY" tableName="LV_COMMENT_AUD"/>
+      </preConditions>
+      <dropPrimaryKey schemaName="MERCURY" tableName="LV_COMMENT_AUD"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1094-1060a" author="epolk">
+      <preConditions onFail="MARK_RAN">
+	<primaryKeyExists schemaName="MERCURY" tableName="LV_MAP_POSITION_TO_VESSEL_AUD"/>
+      </preConditions>
+      <dropPrimaryKey schemaName="MERCURY" tableName="LV_MAP_POSITION_TO_VESSEL_AUD"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1094-1064a" author="epolk">
+      <preConditions onFail="MARK_RAN">
+	<primaryKeyExists schemaName="MERCURY" tableName="LV_POS_AUD"/>
+      </preConditions>
+      <dropPrimaryKey schemaName="MERCURY" tableName="LV_POS_AUD"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1094-1068a" author="epolk">
+      <preConditions onFail="MARK_RAN">
+	<primaryKeyExists schemaName="MERCURY" tableName="LV_POS_MERCURY_SAMPLES_AUD"/>
+      </preConditions>
+      <dropPrimaryKey schemaName="MERCURY" tableName="LV_POS_MERCURY_SAMPLES_AUD"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1094-1072a" author="epolk">
+      <preConditions onFail="MARK_RAN">
+	<primaryKeyExists schemaName="MERCURY" tableName="LV_REAGENT_CONTENTS_AUD"/>
+      </preConditions>
+      <dropPrimaryKey schemaName="MERCURY" tableName="LV_REAGENT_CONTENTS_AUD"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1094-1076a" author="epolk">
+      <preConditions onFail="MARK_RAN">
+	<primaryKeyExists schemaName="MERCURY" tableName="MERCURY_CONTROL_AUD"/>
+      </preConditions>
+      <dropPrimaryKey schemaName="MERCURY" tableName="MERCURY_CONTROL_AUD"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1094-1080a" author="epolk">
+      <preConditions onFail="MARK_RAN">
+	<primaryKeyExists schemaName="MERCURY" tableName="MERCURY_SAMPLE_AUD"/>
+      </preConditions>
+      <dropPrimaryKey schemaName="MERCURY" tableName="MERCURY_SAMPLE_AUD"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1094-1084a" author="epolk">
+      <preConditions onFail="MARK_RAN">
+	<primaryKeyExists schemaName="MERCURY" tableName="MOLECULAR_INDEXING_SCHEME_AUD"/>
+      </preConditions>
+      <dropPrimaryKey schemaName="MERCURY" tableName="MOLECULAR_INDEXING_SCHEME_AUD"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1094-1088a" author="epolk">
+      <preConditions onFail="MARK_RAN">
+	<primaryKeyExists schemaName="MERCURY" tableName="MOLECULAR_INDEX_AUD"/>
+      </preConditions>
+      <dropPrimaryKey schemaName="MERCURY" tableName="MOLECULAR_INDEX_AUD"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1094-1092a" author="epolk">
+      <preConditions onFail="MARK_RAN">
+	<primaryKeyExists schemaName="MERCURY" tableName="MOLECULAR_INDEX_POSITION_AUD"/>
+      </preConditions>
+      <dropPrimaryKey schemaName="MERCURY" tableName="MOLECULAR_INDEX_POSITION_AUD"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1094-1096a" author="epolk">
+      <preConditions onFail="MARK_RAN">
+	<primaryKeyExists schemaName="MERCURY" tableName="OUTPUT_DATA_LOCATION_AUD"/>
+      </preConditions>
+      <dropPrimaryKey schemaName="MERCURY" tableName="OUTPUT_DATA_LOCATION_AUD"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1094-1099a" author="epolk">
+      <preConditions onFail="MARK_RAN">
+	<primaryKeyExists schemaName="MERCURY" tableName="QUOTE_AUD"/>
+      </preConditions>
+      <dropPrimaryKey schemaName="MERCURY" tableName="QUOTE_AUD"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1094-1103a" author="epolk">
+      <preConditions onFail="MARK_RAN">
+	<primaryKeyExists schemaName="MERCURY" tableName="RAP_SHEET_AUD"/>
+      </preConditions>
+      <dropPrimaryKey schemaName="MERCURY" tableName="RAP_SHEET_AUD"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1094-1107a" author="epolk">
+      <preConditions onFail="MARK_RAN">
+	<primaryKeyExists schemaName="MERCURY" tableName="RAP_SHEET_ENTRY_AUD"/>
+      </preConditions>
+      <dropPrimaryKey schemaName="MERCURY" tableName="RAP_SHEET_ENTRY_AUD"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1094-1111a" author="epolk">
+      <preConditions onFail="MARK_RAN">
+	<primaryKeyExists schemaName="MERCURY" tableName="REAGENT_AUD"/>
+      </preConditions>
+      <dropPrimaryKey schemaName="MERCURY" tableName="REAGENT_AUD"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1094-1115a" author="epolk">
+      <preConditions onFail="MARK_RAN">
+	<primaryKeyExists schemaName="MERCURY" tableName="REAGENT_CONTAINERS_AUD"/>
+      </preConditions>
+      <dropPrimaryKey schemaName="MERCURY" tableName="REAGENT_CONTAINERS_AUD"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1094-1119a" author="epolk">
+      <preConditions onFail="MARK_RAN">
+	<primaryKeyExists schemaName="MERCURY" tableName="REAGENT_DESIGN_AUD"/>
+      </preConditions>
+      <dropPrimaryKey schemaName="MERCURY" tableName="REAGENT_DESIGN_AUD"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1094-1120a" author="epolk">
+      <preConditions onFail="MARK_RAN">
+	<primaryKeyExists schemaName="MERCURY" tableName="SEQUENCING_RUN_AUD"/>
+      </preConditions>
+      <dropPrimaryKey schemaName="MERCURY" tableName="SEQUENCING_RUN_AUD"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1094-1124a" author="epolk">
+      <preConditions onFail="MARK_RAN">
+	<primaryKeyExists schemaName="MERCURY" tableName="SEQ_RUN_RUN_CARTRIDGES_AUD"/>
+      </preConditions>
+      <dropPrimaryKey schemaName="MERCURY" tableName="SEQ_RUN_RUN_CARTRIDGES_AUD"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1094-1128a" author="epolk">
+      <preConditions onFail="MARK_RAN">
+	<primaryKeyExists schemaName="MERCURY" tableName="STATUS_NOTE_AUD"/>
+      </preConditions>
+      <dropPrimaryKey schemaName="MERCURY" tableName="STATUS_NOTE_AUD"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1094-1132a" author="epolk">
+      <preConditions onFail="MARK_RAN">
+	<primaryKeyExists schemaName="MERCURY" tableName="VESSEL_TRANSFER_AUD"/>
+      </preConditions>
+      <dropPrimaryKey schemaName="MERCURY" tableName="VESSEL_TRANSFER_AUD"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1094-1133a" author="epolk">
+      <addPrimaryKey schemaName="MERCURY" tableName="BUCKET_AUD"
+		     constraintName="PK_BUCKET_AUD"
+		     columnNames="rev, bucket_id"/>
+      <addPrimaryKey schemaName="MERCURY" tableName="BUCKET_ENTRY_AUD"
+		     constraintName="PK_BUCKET_ENTRY_AUD"
+		     columnNames="rev, bucket_entry_id"/>
+      <addPrimaryKey schemaName="MERCURY" tableName="JIRA_TICKET_AUD"
+		     constraintName="PK_JIRA_TICKET_AUD"
+		     columnNames="rev, ticket_id"/>
+      <addPrimaryKey schemaName="MERCURY" tableName="LAB_BATCH_AUD"
+		     constraintName="PK_LAB_BATCH_AUD"
+		     columnNames="rev, lab_batch_id"/>
+      <addPrimaryKey schemaName="MERCURY" tableName="LAB_EVENT_AUD"
+		     constraintName="PK_LAB_EVENT_AUD"
+		     columnNames="rev, lab_event_id"/>
+      <addPrimaryKey schemaName="MERCURY" tableName="LAB_EVENT_REAGENTS_AUD"
+		     constraintName="PK_LAB_EVENT_REAGENTS_AUD"
+		     columnNames="rev, lab_event, reagents"/>
+      <addPrimaryKey schemaName="MERCURY" tableName="LAB_METRIC_AUD"
+		     constraintName="PK_LAB_METRIC_AUD"
+		     columnNames="rev, lab_metric_id"/>
+      <addPrimaryKey schemaName="MERCURY" tableName="LAB_METRIC_RUN_AUD"
+		     constraintName="PK_LAB_METRIC_RUN_AUD"
+		     columnNames="rev, lab_metric_run_id"/>
+      <addPrimaryKey schemaName="MERCURY" tableName="LAB_VESSEL_AUD"
+		     constraintName="PK_LAB_VESSEL_AUD"
+		     columnNames="rev, lab_vessel_id"/>
+      <addPrimaryKey schemaName="MERCURY" tableName="LAB_VESSEL_CONTAINERS_AUD"
+		     constraintName="PK_LAB_VESSEL_CONTAINERS_AUD"
+		     columnNames="rev, lab_vessel, containers"/>
+      <addPrimaryKey schemaName="MERCURY" tableName="LAB_VESSEL_LAB_BATCHES_AUD"
+		     constraintName="PK_LAB_VESSEL_LAB_BATCHES_AU"
+		     columnNames="rev, lab_vessel, lab_batches"/>
+      <addPrimaryKey schemaName="MERCURY" tableName="LAB_VESSEL_MERCURY_SAMPLES_AUD"
+		     constraintName="PK_LAB_VESSEL_MERCURY_SAM_AUD"
+		     columnNames="rev, lab_vessel, mercury_samples"/>
+      <addPrimaryKey schemaName="MERCURY" tableName="LAB_VESSEL_NOTES_AUD"
+		     constraintName="PK_LAB_VESSEL_NOTES_AUD"
+		     columnNames="rev, lab_vessel, notes"/>
+      <addPrimaryKey schemaName="MERCURY" tableName="LAB_VESSEL_RACKS_OF_TUBES_AUD"
+		     constraintName="PK_LAB_VESSEL_RACKS_OF_TUBES_A"
+		     columnNames="rev, lab_vessel, racks_of_tubes"/>
+      <addPrimaryKey schemaName="MERCURY" tableName="LAB_VESSEL_TICKETS_CREATED_AUD"
+		     constraintName="PK_LAB_VESSEL_TICKETS_CR_AUD"
+		     columnNames="rev, lab_vessel, tickets_created"/>
+      <addPrimaryKey schemaName="MERCURY" tableName="LB_STARTING_LAB_VESSELS_AUD"
+		     constraintName="PK_LB_STARTING_LAB_VESSELS_A"
+		     columnNames="rev, lab_batch, starting_lab_vessels"/>
+      <addPrimaryKey schemaName="MERCURY" tableName="LV_COMMENT_AUD"
+		     constraintName="PK_LV_COMMENT_AUD"
+		     columnNames="rev, lab_vessel_comment_id"/>
+      <addPrimaryKey schemaName="MERCURY" tableName="LV_MAP_POSITION_TO_VESSEL_AUD"
+		     constraintName="PK_LV_MAP_POSITION_TO_VE_AUD"
+		     columnNames="rev, lab_vessel, map_position_to_vessel, mapkey"/>
+      <addPrimaryKey schemaName="MERCURY" tableName="LV_POS_AUD"
+		     constraintName="PK_LV_POS_AUD"
+		     columnNames="rev, lab_vessel_position_id"/>
+      <addPrimaryKey schemaName="MERCURY" tableName="LV_POS_MERCURY_SAMPLES_AUD"
+		     constraintName="PK_LV_POS_MERCURY_SAMPLES_AU"
+		     columnNames="rev, lv_pos, mercury_samples"/>
+      <addPrimaryKey schemaName="MERCURY" tableName="LV_REAGENT_CONTENTS_AUD"
+		     constraintName="PK_LV_REAGENT_CONTENTS_AUD"
+		     columnNames="rev, lab_vessel, reagent_contents"/>
+      <addPrimaryKey schemaName="MERCURY" tableName="MERCURY_CONTROL_AUD"
+		     constraintName="PK_MERCURY_CONTROL_AUD"
+		     columnNames="rev, mercury_control_id"/>
+      <addPrimaryKey schemaName="MERCURY" tableName="MERCURY_SAMPLE_AUD"
+		     constraintName="PK_MERCURY_SAMPLE_AUD"
+		     columnNames="rev, mercury_sample_id"/>
+      <addPrimaryKey schemaName="MERCURY" tableName="MOLECULAR_INDEXING_SCHEME_AUD"
+		     constraintName="PK_MOLECULAR_INDEXING_SC_AUD"
+		     columnNames="rev, molecular_indexing_scheme_id"/>
+      <addPrimaryKey schemaName="MERCURY" tableName="MOLECULAR_INDEX_AUD"
+		     constraintName="PK_MOLECULAR_INDEX_AUD"
+		     columnNames="rev, molecular_index_id"/>
+      <addPrimaryKey schemaName="MERCURY" tableName="MOLECULAR_INDEX_POSITION_AUD"
+		     constraintName="PK_MOLECULAR_INDEX_POSIT_AUD"
+		     columnNames="rev, scheme_id, index_id, mapkey"/>
+      <addPrimaryKey schemaName="MERCURY" tableName="OUTPUT_DATA_LOCATION_AUD"
+		     constraintName="PK_OUTPUT_DATA_LOCATION_AUD"
+		     columnNames="rev, data_location_id"/>
+      <addPrimaryKey schemaName="MERCURY" tableName="QUOTE_AUD"
+		     constraintName="PK_QUOTE_AUD"
+		     columnNames="rev, alphanumeric_id"/>
+      <addPrimaryKey schemaName="MERCURY" tableName="RAP_SHEET_AUD"
+		     constraintName="PK_RAP_SHEET_AUD"
+		     columnNames="rev, rap_sheet_id"/>
+      <addPrimaryKey schemaName="MERCURY" tableName="RAP_SHEET_ENTRY_AUD"
+		     constraintName="PK_RAP_SHEET_ENTRY_AUD"
+		     columnNames="rev, rap_sheet_entry_id"/>
+      <addPrimaryKey schemaName="MERCURY" tableName="REAGENT_AUD"
+		     constraintName="PK_REAGENT_AUD"
+		     columnNames="rev, reagent_id"/>
+      <addPrimaryKey schemaName="MERCURY" tableName="REAGENT_CONTAINERS_AUD"
+		     constraintName="PK_REAGENT_CONTAINERS_AUD"
+		     columnNames="rev, reagent, containers"/>
+      <addPrimaryKey schemaName="MERCURY" tableName="REAGENT_DESIGN_AUD"
+		     constraintName="PK_REAGENT_DESIGN_AUD"
+		     columnNames="rev, reagent_design_id"/>
+      <addPrimaryKey schemaName="MERCURY" tableName="SEQUENCING_RUN_AUD"
+		     constraintName="PK_SEQUENCING_RUN_AUD"
+		     columnNames="rev, sequencing_run_id"/>
+      <addPrimaryKey schemaName="MERCURY" tableName="SEQ_RUN_RUN_CARTRIDGES_AUD"
+		     constraintName="PK_SEQ_RUN_RUN_CARTRIDGES_AU"
+		     columnNames="rev, sequencing_run, run_cartridge"/>
+      <addPrimaryKey schemaName="MERCURY" tableName="STATUS_NOTE_AUD"
+		     constraintName="PK_STATUS_NOTE_AUD"
+		     columnNames="rev, status_note_id"/>
+      <addPrimaryKey schemaName="MERCURY" tableName="VESSEL_TRANSFER_AUD"
+		     constraintName="PK_VESSEL_TRANSFER_AUD"
+		     columnNames="rev, vessel_transfer_id"/>
+    </changeSet>
+
 </databaseChangeLog>

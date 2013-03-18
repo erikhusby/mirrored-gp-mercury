@@ -244,6 +244,13 @@ public class VesselContainer<T extends LabVessel> {
                         cherryPickTransfer.getLabEvent(), hopCount + 1);
             }
         }
+        // handle un-racked VesselToSectionTransfers
+        T vessel = getVesselAtPosition(position);
+        if (vessel != null) {
+            for (VesselToSectionTransfer vesselToSectionTransfer : vessel.getVesselToSectionTransfersThisAsSource()) {
+                vessel.evaluateCriteria(transferTraverserCriteria, traversalDirection, vesselToSectionTransfer.getLabEvent(), hopCount);
+            }
+        }
     }
 
     public VesselPosition getPositionOfVessel(LabVessel vesselAtPosition) {
