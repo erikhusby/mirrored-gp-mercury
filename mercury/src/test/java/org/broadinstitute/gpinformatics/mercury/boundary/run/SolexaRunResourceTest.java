@@ -24,6 +24,7 @@ import javax.transaction.UserTransaction;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
@@ -95,7 +96,9 @@ public class SolexaRunResourceTest extends Arquillian {
 
         utx.commit();
 
-        runBarcode = flowcellBarcode + IlluminaSequencingRun.RUNFORMAT.format(runDate);
+        SimpleDateFormat dateFormat = new SimpleDateFormat(IlluminaSequencingRun.RUN_FORMAT_PATTERN);
+
+        runBarcode = flowcellBarcode + dateFormat.format(runDate);
         final String runName = "testRunName" + runDate.getTime();
         String baseDirectory = System.getProperty("java.io.tmpdir");
         runFileDirectory = baseDirectory + File.separator + "bin" + File.separator +

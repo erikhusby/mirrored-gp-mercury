@@ -46,7 +46,9 @@ public class SquidConnectorTest extends Arquillian {
 
         flowcellBarcode = "testcaseFlowcell" + runDate.getTime();
 
-        runBarcode = "Run" + IlluminaSequencingRun.RUNFORMAT.format(runDate);
+        SimpleDateFormat dateFormat = new SimpleDateFormat(IlluminaSequencingRun.RUN_FORMAT_PATTERN);
+
+        runBarcode = "Run" + dateFormat.format(runDate);
         final String runName = "testRunName" + runDate.getTime();
         //        String baseDirectory = System.getProperty("java.io.tmpdir","/tmp");
         //        runFileDirectory = baseDirectory;// + File.separator + "bin" + File.separator + "testRoot" + File.separator + "finalPath" + runDate.getTime() + File.separator + runName;

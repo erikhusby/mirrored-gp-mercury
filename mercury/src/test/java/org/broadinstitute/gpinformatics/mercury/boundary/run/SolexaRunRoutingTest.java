@@ -54,6 +54,7 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.io.File;
 import java.net.URI;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -80,8 +81,9 @@ public class SolexaRunRoutingTest {
     private BettaLimsMessageFactory       bettaLimsMessageFactory;
     private LabEventFactory               labEventFactory;
     private Map<String, TwoDBarcodedTube> mapBarcodeToTube;
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat(IlluminaSequencingRun.RUN_FORMAT_PATTERN);
 
-    @Test(enabled = false)
+    @BeforeMethod
     public void setUp() {
 
         LabBatchEjb labBatchEJB = new LabBatchEjb();
@@ -165,7 +167,6 @@ public class SolexaRunRoutingTest {
      */
     public void testWholeGenomeFlowcell() throws Exception {
 
-        setUp();
 
         LabEventHandler labEventHandler =
                 new LabEventHandler(new WorkflowLoader(), AthenaClientProducer
@@ -285,11 +286,9 @@ public class SolexaRunRoutingTest {
 
         SolexaRunBean runBean =
                 new SolexaRunBean(flowcell.getCartridgeBarcode(),
-                                         flowcell.getCartridgeBarcode() + IlluminaSequencingRun.RUNFORMAT
-                                                                                               .format(runDate),
+                                         flowcell.getCartridgeBarcode() + dateFormat.format(runDate),
                                          runDate, "Superman",
-                                         File.createTempFile("tempRun" + IlluminaSequencingRun.RUNFORMAT
-                                                                                              .format(runDate), ".txt")
+                                         File.createTempFile("tempRun" + dateFormat.format(runDate), ".txt")
                                              .getAbsolutePath(), null);
 
         IlluminaSequencingRunDao runDao = EasyMock.createMock(IlluminaSequencingRunDao.class);
@@ -402,17 +401,14 @@ public class SolexaRunRoutingTest {
 
     public void testNoChainOfCustodyRegistration() throws Exception {
 
-        setUp();
-
         Date runDate = new Date();
 
         final String flowcellBarcode = "FlowCellBarcode" + runDate.getTime();
         SolexaRunBean runBean =
                 new SolexaRunBean(flowcellBarcode,
-                                         flowcellBarcode + IlluminaSequencingRun.RUNFORMAT.format(runDate),
+                                         flowcellBarcode + dateFormat.format(runDate),
                                          runDate, "Superman",
-                                         File.createTempFile("tempRun" + IlluminaSequencingRun.RUNFORMAT
-                                                                                              .format(runDate), ".txt")
+                                         File.createTempFile("tempRun" + dateFormat.format(runDate), ".txt")
                                              .getAbsolutePath(), null);
 
         IlluminaSequencingRunDao runDao = EasyMock.createMock(IlluminaSequencingRunDao.class);

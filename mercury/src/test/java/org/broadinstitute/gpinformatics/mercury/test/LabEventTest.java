@@ -410,11 +410,13 @@ public class LabEventTest {
 
 
         final String machineName = "Superman";
-        final File runPath = File.createTempFile("tempRun" + IlluminaSequencingRun.RUNFORMAT
-                                                                                  .format(runDate), ".txt");
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat(IlluminaSequencingRun.RUN_FORMAT_PATTERN);
+
+        final File runPath = File.createTempFile("tempRun" +dateFormat.format(runDate), ".txt");
         SolexaRunBean runBean =
                 new SolexaRunBean(flowcellBarcode,
-                                         flowcellBarcode + IlluminaSequencingRun.RUNFORMAT.format(runDate),
+                                         flowcellBarcode + dateFormat.format(runDate),
                                          runDate, machineName,
                                          runPath.getAbsolutePath(), null);
 

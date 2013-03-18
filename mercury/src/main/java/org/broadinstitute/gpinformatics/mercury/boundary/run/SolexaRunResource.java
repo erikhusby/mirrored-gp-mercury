@@ -129,7 +129,6 @@ public class SolexaRunResource {
         illuminaSequencingRun = illuminaSequencingRunFactory.build(solexaRunBean, illuminaFlowcell);
 
         illuminaSequencingRunDao.persist(illuminaSequencingRun);
-        illuminaSequencingRunDao.flush();
         return illuminaSequencingRun;
     }
 }

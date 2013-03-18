@@ -10,7 +10,7 @@ import java.util.Date;
 @Audited
 public class IlluminaSequencingRun extends SequencingRun {
 
-    public static final SimpleDateFormat RUNFORMAT = new SimpleDateFormat("yyMMdd");
+    public static final String RUN_FORMAT_PATTERN = "yyMMdd";
 
     public IlluminaSequencingRun(final IlluminaFlowcell flowcell,
                                  String runName,
