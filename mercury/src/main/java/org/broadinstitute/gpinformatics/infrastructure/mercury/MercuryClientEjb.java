@@ -118,7 +118,7 @@ public class MercuryClientEjb {
                 pdo.getBusinessKey());
 
         if (picoBucket.getBucketId() == null) {
-            bucketDao.persist(bucketBean);
+            bucketDao.persist(picoBucket);
         }
         return samplesAdded;
     }
