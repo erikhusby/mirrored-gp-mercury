@@ -142,9 +142,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     private ProductOrderEjb productOrderEjb;
 
     @Inject
-    private UserBean userBean;
-
-    @Inject
     private ProductTokenInput productTokenInput;
 
     @Inject

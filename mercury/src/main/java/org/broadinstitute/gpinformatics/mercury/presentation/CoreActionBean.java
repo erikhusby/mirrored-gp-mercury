@@ -69,7 +69,7 @@ public class CoreActionBean implements ActionBean {
     private BuildInfoBean buildInfoBean;
 
     @Inject
-    private UserBean userBean;
+    protected UserBean userBean;
 
     @Inject
     private BSPUserList bspUserList;

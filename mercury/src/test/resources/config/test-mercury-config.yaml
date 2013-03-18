@@ -37,9 +37,9 @@ jira:
 
       login:    squid
       password: squid
-      host:     vsquid00.broadinstitute.org
-      port:     8020
-      urlBase:      http://vsquid00.broadinstitute.org:8020
+      host:     labopsjiratest.broadinstitute.org
+      port:     8443
+      urlBase:      http://labopsjiratest.broadinstitute.org:8443
 
     PROD:
 
