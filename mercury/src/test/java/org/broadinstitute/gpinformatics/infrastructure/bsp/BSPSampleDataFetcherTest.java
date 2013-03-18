@@ -1,28 +1,16 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
-import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
-import org.jboss.arquillian.testng.Arquillian;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-
-import javax.inject.Inject;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 import static org.testng.Assert.assertEquals;
 
 @Test(groups = EXTERNAL_INTEGRATION)
-public class BSPSampleDataFetcherTest extends Arquillian {
+public class BSPSampleDataFetcherTest extends ContainerTest {
 
-    @Inject
-    BSPSampleSearchService sampleSearchService;
-
-
-    @org.jboss.arquillian.container.test.api.Deployment
-    public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(Deployment.QA);
-    }
+    BSPSampleSearchService sampleSearchService = BSPSampleSearchServiceProducer.qaInstance();
 
     /**
      * BSP sometimes sends shorter result arrays when there are null fields
