@@ -2780,4 +2780,27 @@
 		     columnNames="rev, work_complete_message, message_data_value_id"/>
     </changeSet>
 
+    <changeSet id="GPLIM-1094-2000" author="epolk">
+      <preConditions onFail="MARK_RAN">
+	<primaryKeyExists schemaName="ATHENA" tableName="RISK_ITEM_AUD"/>
+      </preConditions>
+      <dropPrimaryKey schemaName="ATHENA" tableName="RISK_ITEM_AUD"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1094-2001" author="epolk">
+      <preConditions onFail="MARK_RAN">
+	<primaryKeyExists schemaName="ATHENA" tableName="RISK_CRITERIA_AUD"/>
+      </preConditions>
+      <dropPrimaryKey schemaName="ATHENA" tableName="RISK_CRITERIA_AUD"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1094-2002" author="epolk">
+      <addPrimaryKey schemaName="ATHENA" tableName="RISK_ITEM_AUD" 
+		     constraintName="PK_RISK_ITEM_AUD" 
+		     columnNames="rev, risk_item_id"/>
+      <addPrimaryKey schemaName="ATHENA" tableName="RISK_CRITERIA_AUD" 
+		     constraintName="PK_RISK_CRITERIA_AUD" 
+		     columnNames="rev, risk_criteria_id"/>
+    </changeSet>
+
 </databaseChangeLog>
