@@ -45,17 +45,13 @@ public class ProductOrderDaoTest extends ContainerTest {
     @Inject
     private UserTransaction utx;
 
-    private static final String testProductOrderKeyPrefix = "DRAFT-";
+    private static final String TEST_PRODUCT_ORDER_KEY_PREFIX = "DRAFT-";
 
     ProductOrder order;
 
-    private static String getTestProductOrderKey() {
-        return testProductOrderKeyPrefix + UUID.randomUUID();
-    }
-
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void setUp() throws Exception {
-        // Skip if no injections, meaning we're not running in container
+        // Skip if no injections, meaning we're not running in container.
         if (utx == null) {
             return;
         }
@@ -70,7 +66,7 @@ public class ProductOrderDaoTest extends ContainerTest {
 
     @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void tearDown() throws Exception {
-        // Skip if no injections, meaning we're not running in container
+        // Skip if no injections, meaning we're not running in container.
         if (utx == null) {
             return;
         }
@@ -99,7 +95,7 @@ public class ProductOrderDaoTest extends ContainerTest {
                 new ProductOrder(TEST_CREATOR_ID, testProductOrderTitle, ProductOrderTest.createSampleList(sampleNames),
                                         "quoteId", product, project);
 
-        order.setJiraTicketKey(getTestProductOrderKey());
+        order.setJiraTicketKey(TEST_PRODUCT_ORDER_KEY_PREFIX + UUID.randomUUID());
         BspUser testUser = new BspUser();
         testUser.setUserId(TEST_CREATOR_ID);
         order.prepareToSave(testUser, true);
@@ -115,8 +111,7 @@ public class ProductOrderDaoTest extends ContainerTest {
         ResearchProject project = projects.get(new Random().nextInt(projects.size()));
 
         List<Product> products = productDao.findList(Product.class, Product_.workflowName,
-                                                            WorkflowName.EXOME_EXPRESS
-                                                                                       .getWorkflowName());
+                                                            WorkflowName.EXOME_EXPRESS.getWorkflowName());
         Assert.assertTrue(products != null && !products.isEmpty());
         Product product = products.get(new Random().nextInt(products.size()));
 
@@ -126,7 +121,7 @@ public class ProductOrderDaoTest extends ContainerTest {
                 new ProductOrder(TEST_CREATOR_ID, testProductOrderTitle, ProductOrderTest.createSampleList(sampleNames),
                                         "quoteId", product, project);
 
-        order.setJiraTicketKey(getTestProductOrderKey());
+        order.setJiraTicketKey(TEST_PRODUCT_ORDER_KEY_PREFIX + UUID.randomUUID());
         BspUser testUser = new BspUser();
         testUser.setUserId(TEST_CREATOR_ID);
         order.prepareToSave(testUser, true);
@@ -144,13 +139,13 @@ public class ProductOrderDaoTest extends ContainerTest {
         Assert.assertEquals(productOrderFromDb.getTotalSampleCount(), order.getTotalSampleCount());
         Assert.assertEquals(productOrderFromDb.getSamples().size(), order.getSamples().size());
 
-        // Try to find a non-existing ProductOrder
+        // Try to find a non-existing ProductOrder.
         productOrderFromDb = productOrderDao.findByResearchProjectAndTitle(order.getResearchProject(),
                                                                                   "NonExistingProductOrder_" + UUID.randomUUID());
         Assert.assertNull(productOrderFromDb,
                                  "Should have thrown exception when trying to retrieve an non-existing product Order.");
 
-        // Try to find an existing ProductOrder by ResearchProject
+        // Try to find an existing ProductOrder by ResearchProject.
         List<ProductOrder> orders = productOrderDao.findByResearchProject(order.getResearchProject());
         Assert.assertNotNull(orders);
         if (!orders.isEmpty()) {
