@@ -84,6 +84,7 @@ public class LinkDenatureTubeToFlowcellActionBean extends CoreActionBean {
     }
 
     @DefaultHandler
+    @HandlesEvent(VIEW_ACTION)
     public ForwardResolution showPage() {
         return new ForwardResolution(VIEW_PAGE);
     }
