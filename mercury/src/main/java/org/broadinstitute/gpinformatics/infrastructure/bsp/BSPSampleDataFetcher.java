@@ -299,4 +299,15 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
 
     }
 
+    /**
+     * Given an aliquot ID, return its stock sample ID.
+     */
+    public String getStockIdForAliquotId(@Nonnull String aliquotId) {
+        List<String[]> results =
+                service.runSampleSearch(Collections.singletonList(aliquotId), BSPSampleSearchColumn.STOCK_SAMPLE);
+        if (results.isEmpty() || results.get(0).length == 0) {
+            return null;
+        }
+        return results.get(0)[0];
+    }
 }
