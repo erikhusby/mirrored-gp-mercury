@@ -1,9 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.workflow;
 
-import net.sourceforge.stripes.action.DefaultHandler;
-import net.sourceforge.stripes.action.ForwardResolution;
-import net.sourceforge.stripes.action.HandlesEvent;
-import net.sourceforge.stripes.action.UrlBinding;
+import net.sourceforge.stripes.action.*;
 import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.lang3.StringUtils;
@@ -90,7 +87,7 @@ public class LinkDenatureTubeToFlowcellActionBean extends CoreActionBean {
     }
 
     @HandlesEvent(SAVE_ACTION)
-    public ForwardResolution save() {
+    public Resolution save() {
         BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
 
         ReceptaclePlateTransferEvent transferEventType = buildDenatureTubeToFlowcell(
@@ -100,9 +97,7 @@ public class LinkDenatureTubeToFlowcellActionBean extends CoreActionBean {
         bettalimsMessageResource.processMessage(bettaLIMSMessage);
 
         addMessage("Denature Tube {0} associated with Flowcell {1}", denatureTubeBarcode, flowcellBarcode);
-        denatureTubeBarcode = null;
-        flowcellBarcode = null;
-        return new ForwardResolution(VIEW_PAGE);
+        return new RedirectResolution(VIEW_PAGE);
     }
 
     @ValidationMethod(on = SAVE_ACTION)
