@@ -161,7 +161,7 @@
                         ${bean.getUserFullName(vessel.latestEvent.eventOperator)}
                 </td>
                 <td>
-                    <fmt:formatDate value="${vessel.latestEvent.eventDate}" pattern="MM/dd/yyyy HH:MM:ss"/>
+                    <fmt:formatDate value="${vessel.latestEvent.eventDate}" pattern="MM/dd/yyyy HH:mm:ss"/>
                 </td>
                 <td>
                     <fmt:formatDate value="${vessel.createdOn}" pattern="MM/dd/yyyy"/>

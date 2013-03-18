@@ -121,10 +121,10 @@
                         ${bean.getUserFullName(batch.latestEvent.eventOperator)}
                 </td>
                 <td>
-                    <fmt:formatDate value="${batch.latestEvent.eventDate}" pattern="MM/dd/yyyy HH:MM"/>
+                    <fmt:formatDate value="${batch.latestEvent.eventDate}" pattern="MM/dd/yyyy HH:mm"/>
                 </td>
                 <td>
-                    <fmt:formatDate value="${batch.createdOn}" pattern="MM/dd/yyyy HH:MM"/>
+                    <fmt:formatDate value="${batch.createdOn}" pattern="MM/dd/yyyy HH:mm"/>
                 </td>
             </tr>
         </c:forEach>

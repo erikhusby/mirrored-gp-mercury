@@ -17,7 +17,7 @@
                     [eventDateIdx, 'asc']
                 ],
                 "aoColumns":[
-                    {"bSortable":true},
+                    {"bSortable":true, "sType":"html"},
                     //Label
                     {"bSortable":true, "sType":"numeric"},
                     //Sample count
@@ -27,7 +27,7 @@
                     //Pdo count
                     {"bSortable":true, "sType":"numeric"},
                     //Index count
-                    {"bSortable":true},
+                    {"bSortable":true, "sType":"html"},
                     //Lab batch count
                     {"bSortable":true},
                     //Latest event
@@ -99,7 +99,7 @@
                         ${bean.getUserFullNameOrBlank(listItem.eventOperator)}
                 </td>
                 <td>
-                    <fmt:formatDate value="${listItem.eventDate}" pattern="MM/dd/yyyy HH:MM:ss.SSS"/>
+                    <fmt:formatDate value="${listItem.eventDate}" pattern="MM/dd/yyyy HH:mm:ss.S"/>
                 </td>
                 <td>
                     <fmt:formatDate value="${listItem.creationDate}" pattern="MM/dd/yyyy"/>
