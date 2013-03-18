@@ -498,15 +498,20 @@ public abstract class LabVessel implements Serializable {
      * @return
      */
     public Set<SampleInstance> getSampleInstances() {
+        return getSampleInstances(false);
+    }
+
+    public Set<SampleInstance> getSampleInstances(boolean onlyWithPdo) {
+
         if (getContainerRole() != null) {
-            return getContainerRole().getSampleInstances();
+            return getContainerRole().getSampleInstances(onlyWithPdo);
         }
-        TraversalResults traversalResults = traverseAncestors();
+        TraversalResults traversalResults = traverseAncestors(onlyWithPdo);
         return traversalResults.getSampleInstances();
     }
 
     public int getSampleInstanceCount() {
-        return getSampleInstances().size();
+        return getSampleInstances(false).size();
     }
 
     /**
@@ -585,12 +590,21 @@ public abstract class LabVessel implements Serializable {
      *
      * @return accumulated sampleInstances
      */
-    TraversalResults traverseAncestors() {
+    TraversalResults traverseAncestors(boolean onlyWithPdo) {
         TraversalResults traversalResults = new TraversalResults();
 
-        // stop traversing at first MercurySample, to avoid picking up multiple BSP batches
-        if (isSampleAuthority()) {
+        Set<MercurySample> filteredMercurySamples = new HashSet<MercurySample>();
+        if (onlyWithPdo) {
             for (MercurySample mercurySample : mercurySamples) {
+                if (mercurySample.getProductOrderKey() != null) {
+                    filteredMercurySamples.add(mercurySample);
+                }
+            }
+        } else {
+            filteredMercurySamples = mercurySamples;
+        }
+        if (!filteredMercurySamples.isEmpty()) {
+            for (MercurySample mercurySample : filteredMercurySamples) {
                 traversalResults.add(new SampleInstance(mercurySample, null, null));
             }
         } else {
@@ -599,9 +613,9 @@ public abstract class LabVessel implements Serializable {
                 LabVessel labVessel = vesselEvent.getLabVessel();
                 // todo jmt put this logic in VesselEvent?
                 if (labVessel == null) {
-                    traversalResults.add(vesselEvent.getVesselContainer().traverseAncestors(vesselEvent.getPosition()));
+                    traversalResults.add(vesselEvent.getVesselContainer().traverseAncestors(vesselEvent.getPosition(), onlyWithPdo));
                 } else {
-                    traversalResults.add(labVessel.traverseAncestors());
+                    traversalResults.add(labVessel.traverseAncestors(onlyWithPdo));
                 }
             }
         }
@@ -615,7 +629,7 @@ public abstract class LabVessel implements Serializable {
     }
 
     public List<SampleInstance> getSampleInstancesList() {
-        return new ArrayList<SampleInstance>(getSampleInstances());
+        return new ArrayList<SampleInstance>(getSampleInstances(false));
     }
 
     /**
@@ -771,55 +785,9 @@ public abstract class LabVessel implements Serializable {
         this.concentration = concentration;
     }
 
-    public boolean isSampleAuthority() {
-        return !mercurySamples.isEmpty();
-    }
-
     public Set<BucketEntry> getBucketEntries() {
         return Collections.unmodifiableSet(bucketEntries);
     }
-
-    /* *
-    * In the context of the given WorkflowDescription, are there any
-    * events for this vessel which are annotated as WorkflowAnnotation#SINGLE_SAMPLE_LIBRARY?
-    * @param workflowDescription
-    * @return
-    */
-    /*
-        public boolean isSingleSampleLibrary(WorkflowDescription workflowDescription) {
-            if (workflowDescription == null) {
-                throw new RuntimeException("workflowDescription cannot be null.");
-            }
-            boolean isSingleSample = false;
-
-            final Set<LabEvent> allEvents = new HashSet<LabEvent>();
-
-            Set<VesselContainer<?>> containers = getContainers();
-
-            if (containers != null) {
-                for (VesselContainer<? extends LabVessel> container : containers) {
-                    // todo arz is confused about containers, embedders, and vessels.
-                    allEvents.addAll(container.getEmbedder().getTransfersTo());
-                    allEvents.addAll(container.getEmbedder().getInPlaceEvents());
-                }
-            }
-            allEvents.addAll(getInPlaceEvents());
-            allEvents.addAll(getTransfersTo());
-
-            for (LabEvent event: allEvents) {
-                GenericLabEvent labEvent = OrmUtil.proxySafeCast(event, GenericLabEvent.class);
-                Collection<WorkflowAnnotation> workflowAnnotations = workflowDescription.getAnnotations(labEvent.getLabEventType().getName());
-
-                for (WorkflowAnnotation workflowAnnotation : workflowAnnotations) {
-                    if (workflowAnnotation instanceof SequencingLibraryAnnotation) {
-                        isSingleSample = true;
-                        break;
-                    }
-                }
-            }
-            return isSingleSample;
-        }
-    */
 
     public void addLabBatch(LabBatch labBatch) {
         labBatches.add(labBatch);
@@ -836,24 +804,6 @@ public abstract class LabVessel implements Serializable {
     // todo jmt can the next three methods be deleted?
 
     /**
-     * Walk the chain of custody back until it can be
-     * walked no further.  What you get are the roots
-     * of the transfer graph.
-     *
-     * @return
-     */
-    public Collection<? extends LabVessel> getChainOfCustodyRoots() {
-        // todo the real method should walk transfers...this is just for experimental testing for GPLIM-64
-        return chainOfCustodyRoots;
-    }
-
-    public void setChainOfCustodyRoots(Collection<? extends LabVessel> roots) {
-        // todo this is just for experimental GPLIM-64...this method shouldn't ever
-        // be in production.
-        this.chainOfCustodyRoots = roots;
-    }
-
-    /**
      * What {@link SampleMetadata samples} are contained in
      * this container?  Implementations are expected to
      * walk the transfer graph back to a point where
@@ -864,10 +814,6 @@ public abstract class LabVessel implements Serializable {
      * @return
      */
     public Set<MercurySample> getMercurySamples() {
-        // todo the real method should walk transfers...this is just for experimental testing for GPLIM-64
-        // in reality, the implementation would walk back to all roots,
-        // detecting vessels along the way where hasSampleMetadata is true.
-        //
         Set<MercurySample> foundSamples = new HashSet<MercurySample>();
         if (!mercurySamples.isEmpty()) {
             foundSamples.addAll(mercurySamples);
@@ -1136,9 +1082,9 @@ public abstract class LabVessel implements Serializable {
      */
     public Set<SampleInstance> getAllSamples() {
         Set<SampleInstance> allSamples = new HashSet<SampleInstance>();
-        allSamples.addAll(getSampleInstances());
+        allSamples.addAll(getSampleInstances(false));
         if (getContainerRole() != null) {
-            allSamples.addAll(getContainerRole().getSampleInstances());
+            allSamples.addAll(getContainerRole().getSampleInstances(false));
         }
         return allSamples;
     }

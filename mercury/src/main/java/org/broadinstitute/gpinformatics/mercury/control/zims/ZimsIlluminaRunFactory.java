@@ -84,12 +84,11 @@ public class ZimsIlluminaRunFactory {
 
     public List<LibraryBean> makeLibraryBeans(LabVessel labVessel) {
         List<LibraryBean> libraryBeans = new ArrayList<LibraryBean>();
-        String productOrderKey = labVessel.getNearestProductOrders().iterator().next(); // TODO: use singular version
-        ProductOrder productOrder = productOrderDao.findByBusinessKey(productOrderKey);
-        Set<SampleInstance> sampleInstances = labVessel.getSampleInstances();
+        Set<SampleInstance> sampleInstances = labVessel.getSampleInstances(true);
         for (SampleInstance sampleInstance : sampleInstances) {
+            ProductOrder productOrder = productOrderDao.findByBusinessKey(sampleInstance.getStartingSample().getProductOrderKey());
             BSPSampleDTO bspSampleDTO = bspSampleDataFetcher.fetchSingleSampleFromBSP(sampleInstance.getStartingSample().getSampleKey());
-            LabBatch labBatch = labVessel.getNearestLabBatches().iterator().next(); // TODO: change to use singular version
+            LabBatch labBatch = labVessel.getNearestWorkflowLabBatches().iterator().next(); // TODO: change to use singular version
             String lcSet;
             if (labBatch.getJiraTicket() != null) {
                 lcSet = labBatch.getJiraTicket().getTicketId();
