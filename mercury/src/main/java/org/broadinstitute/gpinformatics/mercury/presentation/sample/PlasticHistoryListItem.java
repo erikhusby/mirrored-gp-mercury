@@ -42,6 +42,7 @@ public class PlasticHistoryListItem {
 
     public PlasticHistoryListItem(SequencingRun seqRun, LabVessel seqVessel) {
         this(seqVessel);
+        type = "Run";
         label = seqRun.getRunBarcode();
         eventType = SEQUENCER_RUN_EVENT;
         eventLocation = seqRun.getMachineName();
