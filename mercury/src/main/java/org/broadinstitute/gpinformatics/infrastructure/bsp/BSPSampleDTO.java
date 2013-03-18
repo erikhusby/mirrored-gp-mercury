@@ -46,6 +46,8 @@ public class BSPSampleDTO {
 
     private Boolean negativeControl;
 
+    private String sampleKitUploadRackscanMismatch;
+
     private String sampleLsid;
 
     private String collaboratorParticipantId;
@@ -121,7 +123,7 @@ public class BSPSampleDTO {
     }
 
     public static BSPSampleDTO createDummy() {
-        return new BSPSampleDTO("", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", FFPEStatus.NOT_DERIVED);
+        return new BSPSampleDTO("", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", FFPEStatus.NOT_DERIVED);
     }
 
     /**
@@ -132,7 +134,7 @@ public class BSPSampleDTO {
                         String volume, String concentration, String sampleLsid, String collaboratorParticipantId,
                         String materialType, String total, String sampleType, String primaryDisease,
                         String gender, String stockType, String fingerprint, String sampleId, String collaboratorName,
-                        String race, String population, @Nonnull FFPEStatus ffpeStatus) {
+                        String race, String population, String sampleKitUploadRackscanMismatch, @Nonnull FFPEStatus ffpeStatus) {
         this(primaryDisease, sampleLsid, materialType, collaboratorsSampleName, organism, patientId);
         this.containerId = containerId;
         this.stockSample = stockSample;
@@ -148,14 +150,15 @@ public class BSPSampleDTO {
         this.gender = gender;
         this.stockType = stockType;
         this.fingerprint = fingerprint;
-        stockAtExport = null;
-        positiveControl = false;
-        negativeControl = false;
+        this.stockAtExport = null;
+        this.positiveControl = false;
+        this.negativeControl = false;
         this.sampleId = sampleId;
         this.collaboratorName = collaboratorName;
         this.race = race;
         this.population = population;
         this.ffpeStatus = ffpeStatus;
+        this.sampleKitUploadRackscanMismatch = sampleKitUploadRackscanMismatch;
     }
 
     /**
@@ -188,11 +191,11 @@ public class BSPSampleDTO {
                         String volume, String concentration, String sampleLsid, String collaboratorParticipantId,
                         String materialType, String total, String sampleType, String primaryDisease,
                         String gender, String stockType, String fingerprint, String sampleId, String collaboratorName,
-                        String race, String population) {
+                        String race, String population, String sampleKitUploadRackscanMismatch) {
 
         this(containerId, stockSample, rootSample, aliquotSample, patientId, organism, collaboratorsSampleName, collection,
                 volume, concentration, sampleLsid, collaboratorParticipantId, materialType, total, sampleType, primaryDisease,
-                gender, stockType, fingerprint, sampleId, collaboratorName, race, population, FFPEStatus.UNKNOWN);
+                gender, stockType, fingerprint, sampleId, collaboratorName, race, population, sampleKitUploadRackscanMismatch, FFPEStatus.UNKNOWN);
     }
 
 
@@ -265,6 +268,14 @@ public class BSPSampleDTO {
 //        return negativeControl;
     }
 
+    public boolean getHasSampleKitUploadRackscanMismatch() {
+        if (sampleKitUploadRackscanMismatch == null) {
+            return false;
+        }
+
+        return sampleKitUploadRackscanMismatch.equalsIgnoreCase("true");
+    }
+
     public String getSampleLsid() {
         return sampleLsid;
     }
@@ -292,6 +303,7 @@ public class BSPSampleDTO {
     public double getTotal() {
         return total;
     }
+
     public void setTotal(double total) {
         this.total = total;
     }

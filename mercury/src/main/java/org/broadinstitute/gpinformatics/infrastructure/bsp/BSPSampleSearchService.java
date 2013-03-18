@@ -27,7 +27,6 @@ public interface BSPSampleSearchService extends Serializable {
     List<String[]> runSampleSearch(Collection<String> sampleIDs,
                                    BSPSampleSearchColumn... resultColumns);
 
-
     /**
      * Same method as above with a List instead of varargs for the BSPSampleSearchColumns
      *
@@ -44,6 +43,4 @@ public interface BSPSampleSearchService extends Serializable {
      */
     List<String []> runSampleSearch(Collection<String> sampleIDs,
                                     List<BSPSampleSearchColumn> resultColumns);
-
-
 }
