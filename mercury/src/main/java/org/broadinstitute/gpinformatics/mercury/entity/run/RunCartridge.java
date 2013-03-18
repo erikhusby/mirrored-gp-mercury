@@ -22,7 +22,7 @@ import java.util.Set;
 @Audited
 public abstract class RunCartridge extends LabVessel {
 
-    @OneToMany(cascade = CascadeType.PERSIST) // todo jmt should this have mappedBy?
+    @OneToMany(cascade = CascadeType.PERSIST)
     // have to specify name, generated aud name is too long for Oracle
     @JoinTable(schema = "mercury", name = "seq_run_run_cartridges", joinColumns = @JoinColumn(name = "run_cartridge"),
     inverseJoinColumns = @JoinColumn(name = "sequencing_run"))
