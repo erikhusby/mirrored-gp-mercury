@@ -177,13 +177,6 @@ public class VesselContainer<T extends LabVessel> {
                     }
                 }
             }
-
-            // also handle un-racked VesselToSectionTransfers
-/* TODO: fix this to not break LabEventTest
-            if (OrmUtil.proxySafeIsInstance(vesselAtPosition, TwoDBarcodedTube.class) && traversalDirection == TransferTraverserCriteria.TraversalDirection.Descendants) {
-                vesselAtPosition.evaluateCriteria(transferTraverserCriteria, traversalDirection, labEvent, hopCount);
-            }
-*/
         }
         if (traversalControl == TransferTraverserCriteria.TraversalControl.ContinueTraversing) {
             if (traversalDirection == TransferTraverserCriteria.TraversalDirection.Ancestors) {
@@ -249,6 +242,13 @@ public class VesselContainer<T extends LabVessel> {
                 VesselPosition targetPosition = cherryPickTransfer.getTargetPosition();
                 targetVesselContainer.evaluateCriteria(targetPosition, transferTraverserCriteria, traversalDirection,
                         cherryPickTransfer.getLabEvent(), hopCount + 1);
+            }
+        }
+        // handle un-racked VesselToSectionTransfers
+        T vessel = getVesselAtPosition(position);
+        if (vessel != null) {
+            for (VesselToSectionTransfer vesselToSectionTransfer : vessel.getVesselToSectionTransfersThisAsSource()) {
+                vessel.evaluateCriteria(transferTraverserCriteria, traversalDirection, vesselToSectionTransfer.getLabEvent(), hopCount);
             }
         }
     }
