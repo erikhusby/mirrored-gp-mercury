@@ -197,7 +197,7 @@
                             {"bSortable": true},                            // Status
                             {"bSortable": true}                             // Comment
                         ]
-                    }) ;
+                    });
 
                     includeAdvancedFilter(oTable, "#sampleData");
                     $j('.dataTables_filter input').clearable();
