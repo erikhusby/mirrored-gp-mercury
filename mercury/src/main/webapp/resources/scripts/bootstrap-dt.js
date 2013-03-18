@@ -63,13 +63,14 @@ function includeAdvancedFilter(oTable, tableID) {
 function chooseFilterForData(oTable) {
     $j(".dataTables_filter input").unbind('keyup');
     $j(".dataTables_filter input").keyup(function() {
+        var tab = RegExp("\\t", "g");
         var useOr = false;
         var dataTableName = $j(this).attr("aria-controls");
         if ($j("#" + dataTableName + "_filter").find(".filterDropdown").val() == "any") {
             useOr = true;
         }
 
-        var filterInput = $j(".dataTables_filter input").val();
+        var filterInput = $j(".dataTables_filter input").val().replace(tab, " ");
         if (useOr) {
             // OR
             var searchRegex = ".";

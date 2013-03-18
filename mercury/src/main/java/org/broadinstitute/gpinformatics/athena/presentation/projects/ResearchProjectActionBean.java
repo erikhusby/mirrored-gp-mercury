@@ -108,9 +108,6 @@ public class ResearchProjectActionBean extends CoreActionBean {
     private CohortTokenInput cohortsList;
 
     @Inject
-    private UserBean userBean;
-
-    @Inject
     private ProductOrderDao productOrderDao;
 
     private String irbList = "";
