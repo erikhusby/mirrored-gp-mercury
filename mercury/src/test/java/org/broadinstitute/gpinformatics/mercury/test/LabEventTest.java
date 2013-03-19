@@ -533,23 +533,6 @@ public class LabEventTest {
         });
 
         EasyMock.verify(runDao, flowcellDao, vesselDao, runFactory);
-/*
-        IlluminaSequencingRunFactory illuminaSequencingRunFactory =
-                new IlluminaSequencingRunFactory(EasyMock.createNiceMock(JiraCommentUtil.class));
-        IlluminaSequencingRun illuminaSequencingRun;
-        try {
-            illuminaSequencingRun = illuminaSequencingRunFactory.buildDbFree(new SolexaRunBean(
-                    flowcellBarcode, "Run1", new Date(), "SL-HAL",
-                    File.createTempFile("RunDir", ".txt").getAbsolutePath(), null),
-                    hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-*/
-
-
-
-
 
 
         Map.Entry<String, TwoDBarcodedTube> stringTwoDBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
@@ -566,11 +549,11 @@ public class LabEventTest {
          * Temporarily disabling this check until after demo.
          */
 
-//        IlluminaSequencingRun illuminaSequencingRun
-//                = (IlluminaSequencingRun) hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell().getSequencingRuns().iterator().next();
-//
-//        Assert.assertEquals(illuminaSequencingRun.getSampleCartridge(),
-//                hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell(), "Wrong flowcell");
+        IlluminaSequencingRun illuminaSequencingRun
+                = (IlluminaSequencingRun) hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell().getSequencingRuns().iterator().next();
+
+        Assert.assertEquals(illuminaSequencingRun.getSampleCartridge(),
+                hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell(), "Wrong flowcell");
 
         EasyMock.verify(mockBucketDao);
 //        Controller.stopCPURecording();
