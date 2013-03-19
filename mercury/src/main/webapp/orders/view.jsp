@@ -612,7 +612,7 @@
                             <th width="40">Concentration</th>
                             <th width="40">Yield Amount</th>
                             <th width="60">FP Status</th>
-                            <th width="60"><abbr title="Sample Kit Upload/Rackscan Mismatch">Rackscan Mismatch</abbr></th>
+                            <th width="60"><abbr title="Red X signifies a Sample Kit Upload/Rackscan Mismatch">Rackscan Match</abbr></th>
 
                             <th>On Risk</th>
                             <th width="40">Status</th>
