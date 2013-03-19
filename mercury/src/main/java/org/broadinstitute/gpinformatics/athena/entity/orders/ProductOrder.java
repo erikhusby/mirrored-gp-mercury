@@ -390,7 +390,7 @@ public class ProductOrder implements Serializable {
             }
 
             if (hasSampleKitUploadRackscanMismatch != 0) {
-                formatSummaryNumber(output, "Rackscan Mismatch: {0}", hasSampleKitUploadRackscanMismatch, totalSampleCount);
+                formatSummaryNumber(output, "<div class='text-error'>Rackscan Mismatch: {0}</div>", hasSampleKitUploadRackscanMismatch, totalSampleCount);
             }
 
             return output;
