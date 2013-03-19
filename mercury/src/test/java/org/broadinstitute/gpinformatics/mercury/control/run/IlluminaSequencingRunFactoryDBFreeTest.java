@@ -41,7 +41,7 @@ public class IlluminaSequencingRunFactoryDBFreeTest {
 
         flowcellTestBarcode = "flowTestBcode123";
         runDate = new Date();
-        SimpleDateFormat format = new SimpleDateFormat("yyMMdd");
+        SimpleDateFormat format = new SimpleDateFormat(IlluminaSequencingRun.RUN_FORMAT_PATTERN);
 
         runBarcode = flowcellTestBarcode + format.format(runDate);
         testFlowcell = new IlluminaFlowcell(IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell, flowcellTestBarcode);
@@ -52,15 +52,6 @@ public class IlluminaSequencingRunFactoryDBFreeTest {
         String baseDirectory = System.getProperty("java.io.tmpdir");
 
         runFileDirectory = baseDirectory + File.separator + "testRoot" + File.separator + "finalPath" + File.separator + testRunName;
-
-        File runFile = new File(runFileDirectory);
-        boolean fileSuccess = true;
-        if (!runFile.exists()) {
-            fileSuccess = runFile.mkdirs();
-        }
-        if (!fileSuccess) {
-            Assert.fail("Unable to setup test run directory for testing sequencingRunFactoryTest");
-        }
 
     }
 

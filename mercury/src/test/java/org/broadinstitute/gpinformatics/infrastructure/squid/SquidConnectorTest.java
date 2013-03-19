@@ -32,8 +32,7 @@ public class SquidConnectorTest extends Arquillian {
     private Date   runDate;
     private String flowcellBarcode;
     private String runBarcode;
-    private String runFileDirectory;
-    private File   runFile;
+    private String runDirectory;
 
     @BeforeMethod
     public void setUp() throws Exception {
@@ -46,12 +45,11 @@ public class SquidConnectorTest extends Arquillian {
 
         flowcellBarcode = "testcaseFlowcell" + runDate.getTime();
 
-        runBarcode = "Run" + IlluminaSequencingRun.RUNFORMAT.format(runDate);
+        SimpleDateFormat dateFormat = new SimpleDateFormat(IlluminaSequencingRun.RUN_FORMAT_PATTERN);
+
+        runBarcode = "Run" + dateFormat.format(runDate);
         final String runName = "testRunName" + runDate.getTime();
-        //        String baseDirectory = System.getProperty("java.io.tmpdir","/tmp");
-        //        runFileDirectory = baseDirectory;// + File.separator + "bin" + File.separator + "testRoot" + File.separator + "finalPath" + runDate.getTime() + File.separator + runName;
-        runFile = File.createTempFile(runName, "txt");
-        //        result = runFile.mkdirs();
+        runDirectory = File.createTempFile(runName, "txt").getAbsolutePath();
 
     }
 
@@ -68,7 +66,7 @@ public class SquidConnectorTest extends Arquillian {
     public void testRunCreationConnection() throws Exception {
 
         SolexaRunBean connectorData =
-                new SolexaRunBean(flowcellBarcode, runBarcode, runDate, "Superman", runFile.getAbsolutePath(), null);
+                new SolexaRunBean(flowcellBarcode, runBarcode, runDate, "Superman", runDirectory, null);
 
         SquidConnector.SquidResponse response = connector.createRun(connectorData);
 

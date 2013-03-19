@@ -67,8 +67,9 @@ public class SolexaRunResource {
     @Produces({"application/xml", "application/json"})
     public Response createRun(SolexaRunBean solexaRunBean, @Context UriInfo uriInfo) {
 
-        File runDirectory = new File(solexaRunBean.getRunDirectory());
-        IlluminaSequencingRun run = illuminaSequencingRunDao.findByRunName(runDirectory.getName());
+        String runname = new File(solexaRunBean.getRunDirectory()).getName();
+
+        IlluminaSequencingRun run = illuminaSequencingRunDao.findByRunName(runname);
 
         if (run != null) {
             throw new ResourceException("Attempting to create a run that is already registered in the system",
@@ -90,30 +91,29 @@ public class SolexaRunResource {
          */
         if (connectorRun.getCode() != Response.Status.CREATED.getStatusCode()) {
             callerResponse = Response.status(connectorRun.getCode()).entity(solexaRunBean).build();
-        }
-        else {
+        } else {
 
-            callerResponse = Response.created(uriInfo.getAbsolutePathBuilder().path(runDirectory.getName()).build())
+            callerResponse = Response.created(uriInfo.getAbsolutePathBuilder().path(runname).build())
                                      .entity(solexaRunBean).build();
         }
 
-            if (router.routeForVessel(flowcell) == MercuryOrSquidRouter.MercuryOrSquid.MERCURY) {
-                try {
-                    run = registerRun(solexaRunBean, flowcell);
-                    URI createdUri = uriInfo.getAbsolutePathBuilder().path(run.getRunName()).build();
-                    if(callerResponse.getStatus() == Response.Status.CREATED.getStatusCode()) {
-                        callerResponse = Response.created(createdUri).entity(new SolexaRunBean(run)).build();
-                    }
-                } catch (Exception e) {
-                    LOG.error("Failed to process run" + Response.Status.INTERNAL_SERVER_ERROR, e);
-                    /*
-                    * TODO SGM  Until ExExV2 is totally live, errors thrown from the Mercury side with Registration should
-                    * not be thrown (except if registering a run multiple times
-                    *
-                    * throw new ResourceException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR, e);
-                    */
+        if (router.routeForVessel(flowcell) == MercuryOrSquidRouter.MercuryOrSquid.MERCURY) {
+            try {
+                run = registerRun(solexaRunBean, flowcell);
+                URI createdUri = uriInfo.getAbsolutePathBuilder().path(run.getRunName()).build();
+                if (callerResponse.getStatus() == Response.Status.CREATED.getStatusCode()) {
+                    callerResponse = Response.created(createdUri).entity(new SolexaRunBean(run)).build();
                 }
+            } catch (Exception e) {
+                LOG.error("Failed to process run" + Response.Status.INTERNAL_SERVER_ERROR, e);
+                /*
+                * TODO SGM  Until ExExV2 is totally live, errors thrown from the Mercury side with Registration should
+                * not be thrown (except if registering a run multiple times
+                *
+                * throw new ResourceException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR, e);
+                */
             }
+        }
 
         return callerResponse;
     }
@@ -129,7 +129,6 @@ public class SolexaRunResource {
         illuminaSequencingRun = illuminaSequencingRunFactory.build(solexaRunBean, illuminaFlowcell);
 
         illuminaSequencingRunDao.persist(illuminaSequencingRun);
-        illuminaSequencingRunDao.flush();
         return illuminaSequencingRun;
     }
 }

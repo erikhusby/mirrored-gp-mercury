@@ -265,8 +265,8 @@ public class BettalimsMessageResourceTest extends Arquillian {
         runDate = new Date();
         SimpleDateFormat format = new SimpleDateFormat("yyMMdd");
         String runName="TestRun" + testPrefix + runDate.getTime();
-        try {
-            final File tempRunFile = File.createTempFile(runName, ".txt");
+
+            String runPath = "/tmp/file/run/path/"+ runName + ".txt";
 
             IlluminaFlowcell flowcell = flowcellDao.findByBarcode(qtpJaxbBuilder.getFlowcellBarcode());
 
@@ -274,12 +274,9 @@ public class BettalimsMessageResourceTest extends Arquillian {
                                                                    qtpJaxbBuilder.getFlowcellBarcode()
                                                                            + format.format(runDate),
                                                                    runDate, "SL-HAL",
-                                                                   tempRunFile.getAbsolutePath(),
+                                                                   runPath,
                                                                    null),
                                                  flowcell);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
         System.out.println("Test run name " + runName);
     }
 
