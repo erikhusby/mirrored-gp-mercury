@@ -18,7 +18,7 @@ import java.util.*;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 
-@Test(groups = EXTERNAL_INTEGRATION)
+@Test(groups = EXTERNAL_INTEGRATION, singleThreaded = true)
 public class JiraServiceTest {
 
     private JiraService service;
