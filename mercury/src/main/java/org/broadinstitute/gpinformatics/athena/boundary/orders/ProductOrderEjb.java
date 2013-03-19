@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.work.MessageDataValue;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
@@ -79,6 +80,9 @@ public class ProductOrderEjb {
 
     @Inject
     private ProductOrderSampleDao productOrderSampleDao;
+
+    @Inject
+    BSPSampleDataFetcher sampleDataFetcher;
 
     private final Log log = LogFactory.getLog(ProductOrderEjb.class);
 
@@ -153,15 +157,56 @@ public class ProductOrderEjb {
     }
 
     /**
+     * Convert a PDO aliquot into a PDO sample.  To do this:
+     * <ol>
+     *     <li>Check & see if the aliquot is already set on a PDO sample. If so, we're done.</li>
+     *     <li>Convert aliquot ID to stock sample ID</li>
+     *     <li>Find sample with stock sample ID in PDO list with no aliquot set</li>
+     *     <li>set aliquot to passed in aliquot, persist data, and return the sample found</li>
+     * </ol>
+     */
+    @Nonnull
+    public ProductOrderSample mapAliquotIdToSample(ProductOrder order, @Nonnull String aliquotId) {
+        for (ProductOrderSample sample : order.getSamples()) {
+            if (aliquotId.equals(sample.getAliquotId())) {
+                return sample;
+            }
+        }
+
+        String sampleName = sampleDataFetcher.getStockIdForAliquotId(aliquotId);
+        if (sampleName == null) {
+            throw new RuntimeException("Couldn't find a sample for aliquot: " + aliquotId);
+        }
+        ProductOrderSample foundSample = null;
+        for (ProductOrderSample sample : order.getSamples()) {
+            if (sample.getSampleName().equals(sampleName) && sample.getAliquotId() == null) {
+                foundSample = sample;
+                break;
+            }
+        }
+        if (foundSample == null) {
+            throw new RuntimeException(
+                    MessageFormat.format("Could not bill PDO {0}, Sample {1}, Aliquot {2}, all" +
+                                         " samples have been assigned aliquots already.",
+                            order.getBusinessKey(), sampleName, aliquotId));
+        }
+
+        foundSample.setAliquotId(aliquotId);
+        productOrderSampleDao.persist(foundSample);
+
+        return foundSample;
+    }
+
+    /**
      * If the order's product supports automated billing, and it's not currently locked out,
      * generate a list of billing ledger items for the sample and add them to the billing ledger.
      *
      * @param order order to bill for
-     * @param sampleName the sample aliquot name
+     * @param aliquotId the sample aliquot ID
      * @param completedDate the date completed to use when billing
      * @param data used to check and see if billing can occur
      */
-    public void autoBillSample(ProductOrder order, String sampleName, Date completedDate, Map<String, MessageDataValue> data) {
+    public void autoBillSample(ProductOrder order, String aliquotId, Date completedDate, Map<String, MessageDataValue> data) {
 
         Product product = order.getProduct();
 
@@ -175,10 +220,8 @@ public class ProductOrderEjb {
         }
 
         if (product.isUseAutomatedBilling()) {
-            // FIXME: compute correct sample from aliquot ID.
-            List<ProductOrderSample> samples =
-                productOrderSampleDao.findByOrderAndName(order, sampleName);
-            ProductOrderSample sample = samples.get(1);
+
+            ProductOrderSample sample = mapAliquotIdToSample(order, aliquotId);
 
             // Always bill if the sample is on risk, otherwise, check if the requirement is met for billing.
             if (sample.isOnRisk() || product.getRequirement().canBill(data)) {

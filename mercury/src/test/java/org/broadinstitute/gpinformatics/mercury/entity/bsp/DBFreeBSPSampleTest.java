@@ -23,10 +23,11 @@ public class DBFreeBSPSampleTest {
         Collection<String> samplesNames = new ArrayList<String>();
         String sampleName = "Sample1";
         resultColumns.add(new String[] {"Bill the Cat","2",sampleName,"4","5","6","7",
-                                        "8","9","10","11","12","13","14","15","16","17","18","19","20","21","22"});
+                                        "8","9","10","11","12","13","14","15","16","17","18","19","20","21","22", "23"});
         samplesNames.add(sampleName);
         EasyMock.expect(service.runSampleSearch(
                 (Collection<String>) EasyMock.anyObject(),
+                (BSPSampleSearchColumn)EasyMock.anyObject(),
                 (BSPSampleSearchColumn)EasyMock.anyObject(),
                 (BSPSampleSearchColumn)EasyMock.anyObject(),
                 (BSPSampleSearchColumn)EasyMock.anyObject(),
