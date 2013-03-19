@@ -47,10 +47,10 @@ public class IlluminaSequencingRunFactory implements Serializable {
             throw new RuntimeException("runDate must be specified");
         }
 
-        File runDirectory = new File(solexaRunBean.getRunDirectory());
+        String runName = new File(solexaRunBean.getRunDirectory()).getName();
         OutputDataLocation dataLocation = new OutputDataLocation(solexaRunBean.getRunDirectory());
 
-        return new IlluminaSequencingRun(illuminaFlowcell, runDirectory.getName(), solexaRunBean.getRunBarcode(),
+        return new IlluminaSequencingRun(illuminaFlowcell, runName, solexaRunBean.getRunBarcode(),
                                                 solexaRunBean.getMachineName(),
                                                 null
                                                 /* TODO SGM -- Operator information is always missing.  may revisit later*/,

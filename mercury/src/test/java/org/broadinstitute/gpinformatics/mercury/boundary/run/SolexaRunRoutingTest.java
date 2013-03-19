@@ -306,94 +306,11 @@ public class SolexaRunRoutingTest {
 
         SolexaRunResource runResource = new SolexaRunResource(runDao, runFactory, flowcellDao, router,
                                                                      SquidConnectorProducer.stubInstance());
-        EasyMock.replay(runDao, runFactory, flowcellDao, vesselDao);
+        UriInfo uriInfoMock = EasyMock.createNiceMock(UriInfo.class);
+        EasyMock.expect(uriInfoMock.getAbsolutePathBuilder()).andReturn(UriBuilder.fromPath(""));
+        EasyMock.replay(runDao, runFactory, flowcellDao, vesselDao, uriInfoMock);
 
-        runResource.createRun(runBean, new UriInfo() {
-            @Override
-            public String getPath() {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public String getPath(boolean decode) {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public List<PathSegment> getPathSegments() {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public List<PathSegment> getPathSegments(boolean decode) {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public URI getRequestUri() {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public UriBuilder getRequestUriBuilder() {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public URI getAbsolutePath() {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public UriBuilder getAbsolutePathBuilder() {
-                return UriBuilder.fromPath("");
-            }
-
-            @Override
-            public URI getBaseUri() {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public UriBuilder getBaseUriBuilder() {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public MultivaluedMap<String, String> getPathParameters() {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public MultivaluedMap<String, String> getPathParameters(boolean decode) {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public MultivaluedMap<String, String> getQueryParameters() {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public MultivaluedMap<String, String> getQueryParameters(boolean decode) {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public List<String> getMatchedURIs() {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public List<String> getMatchedURIs(boolean decode) {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public List<Object> getMatchedResources() {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-        });
+        runResource.createRun(runBean, uriInfoMock);
 
         EasyMock.verify(runDao, flowcellDao, vesselDao, runFactory);
 
@@ -426,94 +343,11 @@ public class SolexaRunRoutingTest {
 
         SolexaRunResource runResource = new SolexaRunResource(runDao, runFactory, flowcellDao, router,
                                                                      SquidConnectorProducer.stubInstance());
-        EasyMock.replay(runDao, runFactory, flowcellDao, vesselDao);
+        UriInfo uriInfoMock = EasyMock.createNiceMock(UriInfo.class);
+        EasyMock.expect(uriInfoMock.getAbsolutePathBuilder()).andReturn(UriBuilder.fromPath(""));
+        EasyMock.replay(runDao, runFactory, flowcellDao, vesselDao, uriInfoMock);
 
-        runResource.createRun(runBean, new UriInfo() {
-            @Override
-            public String getPath() {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public String getPath(boolean decode) {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public List<PathSegment> getPathSegments() {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public List<PathSegment> getPathSegments(boolean decode) {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public URI getRequestUri() {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public UriBuilder getRequestUriBuilder() {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public URI getAbsolutePath() {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public UriBuilder getAbsolutePathBuilder() {
-                return UriBuilder.fromPath("");
-            }
-
-            @Override
-            public URI getBaseUri() {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public UriBuilder getBaseUriBuilder() {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public MultivaluedMap<String, String> getPathParameters() {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public MultivaluedMap<String, String> getPathParameters(boolean decode) {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public MultivaluedMap<String, String> getQueryParameters() {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public MultivaluedMap<String, String> getQueryParameters(boolean decode) {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public List<String> getMatchedURIs() {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public List<String> getMatchedURIs(boolean decode) {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public List<Object> getMatchedResources() {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-        });
+        runResource.createRun(runBean, uriInfoMock);
 
         EasyMock.verify(runDao, flowcellDao, vesselDao, runFactory);
     }
