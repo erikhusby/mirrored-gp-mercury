@@ -99,9 +99,9 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
 
 
     /**
-     * Test sending a message to the JMS queue. We currently don't try to test to see if the message was
-     * received. This is tricky to test since JMS messages are received and processed in a different thread,
-     * so we don't know when it's OK to check and see if the messages are in the queue.
+     * Test sending a message to the JMS queue. We currently don't test to see if the message was received. This is
+     * tricky to test since JMS messages are received and processed in a different thread, so we don't know when it's
+     * OK to check and see if the messages are in the queue.
      */
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testSendMessage() throws Exception {
