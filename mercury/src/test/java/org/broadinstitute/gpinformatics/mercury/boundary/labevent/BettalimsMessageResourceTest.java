@@ -287,12 +287,10 @@ public class BettalimsMessageResourceTest extends Arquillian {
 
         IlluminaFlowcell flowcell = flowcellDao.findByBarcode(qtpJaxbBuilder.getFlowcellBarcode());
 
-        IlluminaSequencingRun illuminaSequencingRun = illuminaSequencingRunFactory.buildDbFree(new SolexaRunBean(qtpJaxbBuilder.getFlowcellBarcode(),
-                                                               qtpJaxbBuilder.getFlowcellBarcode()
-                                                                       + format.format(runDate),
-                                                               runDate, "SL-HAL",
-                                                               runPath,
-                                                               null),
+        IlluminaSequencingRun illuminaSequencingRun = illuminaSequencingRunFactory.buildDbFree(
+                new SolexaRunBean(qtpJaxbBuilder.getFlowcellBarcode(),
+                        qtpJaxbBuilder.getFlowcellBarcode() + format.format(runDate),
+                        runDate, "SL-HAL", runPath, null),
                 flowcell);
         ZimsIlluminaRunFactory zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(productOrderDao, bspSampleDataFetcher);
         ZimsIlluminaRun zimsIlluminaRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(illuminaSequencingRun);
