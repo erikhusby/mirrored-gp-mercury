@@ -116,7 +116,7 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
      * @return List of the column names for the web service
      */
     private List<String[]> getBSPResponse(Collection<String> sampleNames) {
-        return service.runSampleSearch(sampleNames, BSPSampleSearchColumn.values());
+        return service.runSampleSearch(sampleNames, BSPSampleSearchColumn.PDO_SEARCH);
     }
 
     @Override

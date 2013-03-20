@@ -285,10 +285,4 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
         }
         return sampleAttributes;
     }
-
-
-    @Override
-    public List<String[]> runSampleSearch(Collection<String> sampleIDs, List<BSPSampleSearchColumn> resultColumns) {
-        return null;
-    }
 }

@@ -89,10 +89,4 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
 
         return ret;
     }
-
-    @Override
-    public List<String[]> runSampleSearch(Collection<String> sampleIDs, List<BSPSampleSearchColumn> resultColumns) {
-        BSPSampleSearchColumn [] dummy = new BSPSampleSearchColumn[resultColumns.size()];
-        return runSampleSearch(sampleIDs, resultColumns.toArray(dummy));
-    }
 }
