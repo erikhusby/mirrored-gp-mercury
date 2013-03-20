@@ -16,7 +16,15 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFac
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.monitoring.HipChatMessageSender;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnectorProducer;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.*;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.graph.Graph;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
@@ -53,7 +61,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.rework.ReworkLevel;
 import org.broadinstitute.gpinformatics.mercury.entity.rework.ReworkReason;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
-import org.broadinstitute.gpinformatics.mercury.entity.run.OutputDataLocation;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -80,13 +87,10 @@ import org.testng.annotations.Test;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -156,7 +160,7 @@ public class LabEventTest {
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
             if (context.getEvent() != null) {
-                if (!visitedLabEvents.add(context.getEvent())) {
+                if (!getVisitedLabEvents().add(context.getEvent())) {
                     return TraversalControl.StopTraversing;
                 }
                 if (context.getHopCount() > hopCount) {
@@ -178,6 +182,10 @@ public class LabEventTest {
 
         public List<String> getLabEventNames() {
             return labEventNames;
+        }
+
+        public Set<LabEvent> getVisitedLabEvents() {
+            return visitedLabEvents;
         }
     }
 
@@ -301,8 +309,9 @@ public class LabEventTest {
         ZimsIlluminaChamber zimsIlluminaChamber = zimsIlluminaRun.getLanes().iterator().next();
         Assert.assertEquals(zimsIlluminaChamber.getLibraries().size(), NUM_POSITIONS_IN_RACK, "Wrong number of libraries");
         LibraryBean libraryBean = zimsIlluminaChamber.getLibraries().iterator().next();
+        // todo jmt need to investigate the ordering of libraries in ZIMS API results, and do more asserts here
         Assert.assertNotNull(libraryBean.getMolecularIndexingScheme().getName(), "No molecular index");
-        Assert.assertNotNull(libraryBean.getBaitSetName(), "No bait");
+        Assert.assertEquals(libraryBean.getBaitSetName(), HybridSelectionEntityBuilder.BAIT_DESIGN_NAME, "Wrong bait");
 
         ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
         TwoDBarcodedTube startingTube = mapBarcodeToTube.entrySet().iterator().next().getValue();
@@ -316,9 +325,9 @@ public class LabEventTest {
 
         // pick a sample and mark it for rework
         Map.Entry<String, TwoDBarcodedTube> twoDBarcodedTubeForRework = mapBarcodeToTube.entrySet().iterator().next();
-        int lastEventIndex = transferTraverserCriteria.visitedLabEvents.size();
+        int lastEventIndex = transferTraverserCriteria.getVisitedLabEvents().size();
         LabEvent catchEvent =
-                transferTraverserCriteria.visitedLabEvents.toArray(new LabEvent[lastEventIndex])[lastEventIndex - 1];
+                transferTraverserCriteria.getVisitedLabEvents().toArray(new LabEvent[lastEventIndex])[lastEventIndex - 1];
         MercurySample startingSample =
                 twoDBarcodedTubeForRework.getValue().getAllSamples().iterator().next().getStartingSample();
 
@@ -2064,6 +2073,7 @@ public class LabEventTest {
      * Builds entity graph for Hybrid Selection events
      */
     public static class HybridSelectionEntityBuilder {
+        public static final String BAIT_DESIGN_NAME = "cancer_2000gene_shift170_undercovered";
         private final BettaLimsMessageFactory bettaLimsMessageFactory;
         private final LabEventFactory labEventFactory;
         private final LabEventHandler labEventHandler;
@@ -2162,7 +2172,7 @@ public class LabEventTest {
 
             // BaitSetup
             ReagentDesign baitDesign =
-                    new ReagentDesign("cancer_2000gene_shift170_undercovered", ReagentType.BAIT);
+                    new ReagentDesign(BAIT_DESIGN_NAME, ReagentType.BAIT);
 
             TwoDBarcodedTube baitTube = buildBaitTube(hybridSelectionJaxbBuilder.getBaitTubeBarcode(), baitDesign);
             LabEvent baitSetupEntity = labEventFactory.buildVesselToSectionDbFree(
