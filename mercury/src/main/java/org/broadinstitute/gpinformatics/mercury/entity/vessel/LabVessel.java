@@ -64,14 +64,14 @@ public abstract class LabVessel implements Serializable {
     @JoinTable(schema = "mercury")
     private final Set<JiraTicket> ticketsCreated = new HashSet<JiraTicket>();
 
-    @ManyToMany(cascade = CascadeType.PERSIST)
-    @JoinTable(schema = "mercury")
+    @ManyToMany(cascade = CascadeType.PERSIST, mappedBy = "startingLabVessels")
     private Set<LabBatch> labBatches = new HashSet<LabBatch>();
 
     // todo jmt separate role for reagents?
     @ManyToMany(cascade = CascadeType.PERSIST)
     // have to specify name, generated aud name is too long for Oracle
-    @JoinTable(schema = "mercury", name = "lv_reagent_contents")
+    @JoinTable(schema = "mercury", name = "lv_reagent_contents", joinColumns = @JoinColumn(name = "lab_vessel"),
+            inverseJoinColumns = @JoinColumn(name = "reagent_contents"))
     private Set<Reagent> reagentContents = new HashSet<Reagent>();
 
     /**

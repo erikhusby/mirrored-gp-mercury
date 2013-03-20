@@ -1292,4 +1292,12 @@
 		     columnNames="rev, vessel_transfer_id"/>
     </changeSet>
 
+    <changeSet id="GPLIM-1098-1" author="thompson">
+        <dropTable tableName="lab_vessel_lab_batches" schemaName="mercury"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1098-2" author="thompson">
+        <dropTable tableName="reagent_containers" schemaName="mercury"/>
+    </changeSet>
+
 </databaseChangeLog>

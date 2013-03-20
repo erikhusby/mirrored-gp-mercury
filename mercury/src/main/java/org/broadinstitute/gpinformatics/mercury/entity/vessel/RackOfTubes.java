@@ -20,10 +20,7 @@ import java.util.Set;
 @Audited
 public class RackOfTubes extends LabVessel {
 
-    @ManyToMany(cascade = CascadeType.PERSIST)
-    @JoinTable(schema = "mercury", name = "LAB_VESSEL_RACKS_OF_TUBES",
-                      joinColumns = @JoinColumn(name = "RACKS_OF_TUBES"),
-                      inverseJoinColumns = @JoinColumn(name = "LAB_VESSEL"))
+    @ManyToMany(cascade = CascadeType.PERSIST, mappedBy = "racksOfTubes")
     private Set<TubeFormation> tubeFormations = new HashSet<TubeFormation>();
 
     /**
