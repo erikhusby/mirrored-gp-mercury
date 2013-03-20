@@ -59,6 +59,8 @@ public class BSPSampleDTO {
 
     private double total;
 
+    private double rin;
+
     private String sampleType;
 
     private final String primaryDisease;
@@ -132,95 +134,48 @@ public class BSPSampleDTO {
         return new BSPSampleDTO("", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", FFPEStatus.NOT_DERIVED);
     }
 
+    private String getValue(String[] bspColumns, int columnNumber) {
+        if (bspColumns.length <= columnNumber) {
+            return null;
+        }
+
+        return trim(bspColumns[columnNumber]);
+    }
+
     /**
      * A constructor based upon the BSP sample search result data.  This would need to be updated is the BSP Sample Search gets changed.
      *
      * @param bspColumns The BSP Sample Search ws data
      */
     public BSPSampleDTO(String[] bspColumns) {
-        if (bspColumns.length > BSPSampleSearchColumn.PARTICIPANT_ID.columnNumber()) {
-            patientId = trim(bspColumns[BSPSampleSearchColumn.PARTICIPANT_ID.columnNumber()]);
-        } else {
-            patientId = null;
-        }
-        if (bspColumns.length > 7) {
-            organism = trim(bspColumns[7]);
-        } else {
-            organism = null;
-        }
-        if (bspColumns.length > BSPSampleSearchColumn.PRIMARY_DISEASE.columnNumber()) {
-            primaryDisease = trim(bspColumns[BSPSampleSearchColumn.PRIMARY_DISEASE.columnNumber()]);
-        } else {
-            primaryDisease = null;
-        }
-        if (bspColumns.length > BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID.columnNumber()) {
-            collaboratorsSampleName = trim(bspColumns[BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID.columnNumber()]);
-        } else {
-            collaboratorsSampleName = null;
-        }
 
-        if (bspColumns.length > BSPSampleSearchColumn.LSID.columnNumber()) {
-            sampleLsid = trim(bspColumns[BSPSampleSearchColumn.LSID.columnNumber()]);
-        }
+        patientId = getValue(bspColumns, BSPSampleSearchColumn.PARTICIPANT_ID.columnNumber());
+        organism = getValue(bspColumns, 7);
+        primaryDisease = getValue(bspColumns, BSPSampleSearchColumn.PRIMARY_DISEASE.columnNumber());
+        collaboratorsSampleName = getValue(bspColumns, BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID.columnNumber());
+        sampleLsid = getValue(bspColumns, BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID.columnNumber());
+        rootSample = getValue(bspColumns, BSPSampleSearchColumn.ROOT_SAMPLE.columnNumber());
+        stockSample = getValue(bspColumns, BSPSampleSearchColumn.STOCK_SAMPLE.columnNumber());
+        collection = getValue(bspColumns, BSPSampleSearchColumn.COLLECTION.columnNumber());
+        volume = safeParseDouble(getValue(bspColumns, BSPSampleSearchColumn.VOLUME.columnNumber()));
+        concentration = safeParseDouble(getValue(bspColumns, BSPSampleSearchColumn.CONCENTRATION.columnNumber()));
+        collaboratorParticipantId = getValue(bspColumns, BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID.columnNumber());
+        materialType = getValue(bspColumns, BSPSampleSearchColumn.MATERIAL_TYPE.columnNumber());
+        total = safeParseDouble(getValue(bspColumns, BSPSampleSearchColumn.TOTAL_DNA.columnNumber()));
+        sampleType = getValue(bspColumns, BSPSampleSearchColumn.SAMPLE_TYPE.columnNumber());
+        gender = getValue(bspColumns, BSPSampleSearchColumn.GENDER.columnNumber());
+        stockType = getValue(bspColumns, BSPSampleSearchColumn.STOCK_TYPE.columnNumber());
+        fingerprint = getValue(bspColumns, BSPSampleSearchColumn.FINGERPRINT.columnNumber());
+        containerId = getValue(bspColumns, BSPSampleSearchColumn.CONTAINER_ID.columnNumber());
+        sampleId = getValue(bspColumns, BSPSampleSearchColumn.SAMPLE_ID.columnNumber());
+        collaboratorName = getValue(bspColumns, BSPSampleSearchColumn.COLLABORATOR_NAME.columnNumber());
+        population = getValue(bspColumns, 21);
+        sampleKitUploadRackscanMismatch = getValue(bspColumns, BSPSampleSearchColumn.RACKSCAN_MISMATCH.columnNumber());
+        rin = safeParseDouble(getValue(bspColumns, BSPSampleSearchColumn.RIN.columnNumber()));
 
-        if (bspColumns.length > BSPSampleSearchColumn.ROOT_SAMPLE.columnNumber()) {
-            rootSample = trim(bspColumns[BSPSampleSearchColumn.ROOT_SAMPLE.columnNumber()]);
-        }
-        if (bspColumns.length > BSPSampleSearchColumn.STOCK_SAMPLE.columnNumber()) {
-            stockSample = trim(bspColumns[BSPSampleSearchColumn.STOCK_SAMPLE.columnNumber()]);
-        }
-        if (bspColumns.length > BSPSampleSearchColumn.COLLECTION.columnNumber()) {
-            collection = trim(bspColumns[BSPSampleSearchColumn.COLLECTION.columnNumber()]);
-        }
-        if (bspColumns.length > BSPSampleSearchColumn.VOLUME.columnNumber()) {
-            volume = safeParseDouble(trim(bspColumns[BSPSampleSearchColumn.VOLUME.columnNumber()]));
-        }
-        if (bspColumns.length > BSPSampleSearchColumn.CONCENTRATION.columnNumber()) {
-            concentration = safeParseDouble(trim(bspColumns[BSPSampleSearchColumn.CONCENTRATION.columnNumber()]));
-        }
-        if (bspColumns.length > BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID.columnNumber()) {
-            collaboratorParticipantId = trim(bspColumns[BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID.columnNumber()]);
-        }
-        if (bspColumns.length > BSPSampleSearchColumn.MATERIAL_TYPE.columnNumber()) {
-            materialType = trim(bspColumns[BSPSampleSearchColumn.MATERIAL_TYPE.columnNumber()]);
-        }
-        if (bspColumns.length > BSPSampleSearchColumn.TOTAL_DNA.columnNumber()) {
-            total = safeParseDouble(trim(bspColumns[BSPSampleSearchColumn.TOTAL_DNA.columnNumber()]));
-        }
-        if (bspColumns.length > BSPSampleSearchColumn.SAMPLE_TYPE.columnNumber()) {
-            sampleType = trim(bspColumns[BSPSampleSearchColumn.SAMPLE_TYPE.columnNumber()]);
-        }
-        if (bspColumns.length > BSPSampleSearchColumn.GENDER.columnNumber()) {
-            gender = trim(bspColumns[BSPSampleSearchColumn.GENDER.columnNumber()]);
-        }
-        if (bspColumns.length > BSPSampleSearchColumn.STOCK_TYPE.columnNumber()) {
-            stockType = trim(bspColumns[BSPSampleSearchColumn.STOCK_TYPE.columnNumber()]);
-        }
-        if (bspColumns.length > BSPSampleSearchColumn.FINGERPRINT.columnNumber()) {
-            fingerprint = trim(bspColumns[BSPSampleSearchColumn.FINGERPRINT.columnNumber()]);
-        }
-        if (bspColumns.length > BSPSampleSearchColumn.CONTAINER_ID.columnNumber()) {
-            containerId = trim(bspColumns[BSPSampleSearchColumn.CONTAINER_ID.columnNumber()]);
-        }
-        if (bspColumns.length > BSPSampleSearchColumn.SAMPLE_ID.columnNumber()) {
-            sampleId = trim(bspColumns[BSPSampleSearchColumn.SAMPLE_ID.columnNumber()]);
-        }
-        if (bspColumns.length > BSPSampleSearchColumn.COLLABORATOR_NAME.columnNumber()) {
-            collaboratorName = trim(bspColumns[BSPSampleSearchColumn.COLLABORATOR_NAME.columnNumber()]);
-        }
+        // Race and Ethnicity are used interchangeably.
+        race = getValue(bspColumns, BSPSampleSearchColumn.ETHNICITY.columnNumber());
 
-        /**
-         * Race and Ethnicity are used interchangeably.
-         */
-        if (bspColumns.length > BSPSampleSearchColumn.ETHNICITY.columnNumber()) {
-            race = trim(bspColumns[BSPSampleSearchColumn.ETHNICITY.columnNumber()]);
-        }
-        if (bspColumns.length > 21) {
-            population = trim(bspColumns[21]);
-        }
-        if (bspColumns.length > BSPSampleSearchColumn.RACKSCAN_MISMATCH.columnNumber()) {
-            sampleKitUploadRackscanMismatch = trim(bspColumns[BSPSampleSearchColumn.RACKSCAN_MISMATCH.columnNumber()]);
-        }
     }
 
     /**
@@ -254,6 +209,7 @@ public class BSPSampleDTO {
         this.ffpeStatus = ffpeStatus;
         this.sampleKitUploadRackscanMismatch = sampleKitUploadRackscanMismatch;
 
+        rin = 0.0;
         stockAtExport = null;
         positiveControl = false;
         negativeControl = false;
@@ -309,6 +265,10 @@ public class BSPSampleDTO {
             }
         }
         return null;
+    }
+
+    public double getRin() {
+        return rin;
     }
 
     public double getVolume() {

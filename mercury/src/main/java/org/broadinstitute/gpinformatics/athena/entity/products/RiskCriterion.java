@@ -158,6 +158,12 @@ public class RiskCriterion {
             public String getValue(ProductOrderSample sample) {
                 return String.valueOf(sample.getBspDTO().getTotal());
             }
+        }),
+        RIN("RIN", NUMERIC, NOT_DISPLAYED, new ValueProvider() {
+            @Override
+            public String getValue(ProductOrderSample sample) {
+                return String.valueOf(sample.getBspDTO().getRin());
+            }
         });
 
         private final OperatorType operatorType;
@@ -180,8 +186,8 @@ public class RiskCriterion {
             return label;
         }
 
-        public boolean isDisplayed() {
-            return isDisplayed;
+        public boolean getDisplayed(boolean supportsRin) {
+            return ((this == RIN) && supportsRin) || isDisplayed;
         }
 
         public boolean getRiskStatus(ProductOrderSample sample, Operator operator, String value) {

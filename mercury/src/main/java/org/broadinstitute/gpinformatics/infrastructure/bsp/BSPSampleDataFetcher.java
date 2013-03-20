@@ -116,30 +116,7 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
      * @return List of the column names for the web service
      */
     private List<String[]> getBSPResponse(Collection<String> sampleNames) {
-        return service.runSampleSearch(sampleNames,
-            BSPSampleSearchColumn.PARTICIPANT_ID,
-            BSPSampleSearchColumn.ROOT_SAMPLE,
-            BSPSampleSearchColumn.STOCK_SAMPLE,
-            BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID,
-            BSPSampleSearchColumn.COLLECTION,
-            BSPSampleSearchColumn.VOLUME,
-            BSPSampleSearchColumn.CONCENTRATION,
-            BSPSampleSearchColumn.SPECIES,
-            BSPSampleSearchColumn.LSID,
-            BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID,
-            BSPSampleSearchColumn.MATERIAL_TYPE,
-            BSPSampleSearchColumn.TOTAL_DNA,
-            BSPSampleSearchColumn.SAMPLE_TYPE,
-            BSPSampleSearchColumn.PRIMARY_DISEASE,
-            BSPSampleSearchColumn.GENDER,
-            BSPSampleSearchColumn.STOCK_TYPE,
-            BSPSampleSearchColumn.FINGERPRINT,
-            BSPSampleSearchColumn.CONTAINER_ID,
-            BSPSampleSearchColumn.SAMPLE_ID,
-            BSPSampleSearchColumn.COLLABORATOR_NAME,
-            BSPSampleSearchColumn.ETHNICITY,
-            BSPSampleSearchColumn.RACE,
-            BSPSampleSearchColumn.RACKSCAN_MISMATCH);
+        return service.runSampleSearch(sampleNames, BSPSampleSearchColumn.values());
     }
 
     @Override

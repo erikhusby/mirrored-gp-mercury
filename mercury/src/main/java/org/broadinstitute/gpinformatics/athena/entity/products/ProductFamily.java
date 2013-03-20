@@ -39,7 +39,7 @@ public class ProductFamily implements Serializable, Comparable<ProductFamily> {
 
     /** Name of the Sequence Only Product Family.  Must be updated if the name is changed in the database! */
     private static final String SEQUENCE_ONLY_NAME = "Sequence Only";
-    private static final String RNA_FAMILY_NAME = "RNA";
+    public static final String RNA_FAMILY_NAME = "RNA";
 
     /**
      * JPA package visible constructor. Need the empty constructor so that stripes can create this when needed

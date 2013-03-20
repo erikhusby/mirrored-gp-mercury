@@ -23,13 +23,11 @@ public enum BSPSampleSearchColumn {
     PARENT_SAMPLES("Parent Sample(s)", null),
     CONTAINER_ID("Container", 17),
     CONTAINER_NAME("Container Name", null),
-    COLLABORATOR_NAME("Site PI", 19) ,
-
-    // todo arz db free testing of race and ethnicity
+    COLLABORATOR_NAME("Site PI", 19),
     RACE("Race", null),
     ETHNICITY("Ethnicity", 20),
-
-    RACKSCAN_MISMATCH("Sample Kit Data Upload/Rackscan Mismatch", 22);
+    RACKSCAN_MISMATCH("Sample Kit Data Upload/Rackscan Mismatch", 22),
+    RIN("RIN Number", 23);
 
     private final String columnName;
 

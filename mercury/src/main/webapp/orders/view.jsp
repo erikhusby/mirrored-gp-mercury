@@ -170,6 +170,7 @@
                     $j('#collab-patient-' + sampleId).text(sampleData[x].collaboratorParticipantId);
                     $j('#volume-' + sampleId).text(sampleData[x].volume);
                     $j('#concentration-' + sampleId).text(sampleData[x].concentration);
+                    $j('#rin-' + sampleId).text(sampleData[x].rin);
                     $j('#total-' + sampleId).text(sampleData[x].total);
 
                     if (sampleData[x].hasFingerprint) {
@@ -195,6 +196,11 @@
                             {"bSortable": true},                            // Collaborator Participant ID
                             {"bSortable": true, "sType": "numeric"},        // Volume
                             {"bSortable": true, "sType": "numeric"},        // Concentration
+
+                        <c:if test="${actionBean.editOrder.product.supportsRin}">
+                            {"bSortable": true, "sType": "numeric"},        // RIN
+                        </c:if>
+
                             {"bSortable": true, "sType": "numeric"},        // Yield Amount
                             {"bSortable": true, "sType" : "title-string"},  // FP Status
                             {"bSortable": true},                            // sample kit upload/rackscan mismatch
@@ -610,10 +616,14 @@
                             <th width="110">Collaborator Participant ID</th>
                             <th width="40">Volume</th>
                             <th width="40">Concentration</th>
+
+                            <c:if test="${actionBean.editOrder.product.supportsRin}">
+                                <th width="40">RIN</th>
+                            </c:if>
+
                             <th width="40">Yield Amount</th>
                             <th width="60">FP Status</th>
                             <th width="60"><abbr title="Sample Kit Upload/Rackscan Mismatch">Rackscan Mismatch</abbr></th>
-
                             <th>On Risk</th>
                             <th width="40">Status</th>
                             <th width="200">Comment</th>
@@ -645,6 +655,11 @@
                                 <td id="collab-patient-${sample.productOrderSampleId}">&#160; </td>
                                 <td id="volume-${sample.productOrderSampleId}">&#160; </td>
                                 <td id="concentration-${sample.productOrderSampleId}">&#160; </td>
+
+                                <c:if test="${actionBean.editOrder.product.supportsRin}">
+                                    <td id="rin-${sample.productOrderSampleId}">&#160; </td>
+                                </c:if>
+                                ``
                                 <td id="total-${sample.productOrderSampleId}">&#160; </td>
                                 <td id="fingerprint-${sample.productOrderSampleId}" style="text-align: center">&#160; </td>
                                 <td id="sampleKitUploadRackscanMismatch-${sample.productOrderSampleId}"  style="text-align: center">&#160; </td>
