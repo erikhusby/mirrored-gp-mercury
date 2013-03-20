@@ -297,7 +297,7 @@ public class ExomeExpressV2EndToEndTest {
             illuminaSequencingRun = illuminaSequencingRunFactory.buildDbFree(new SolexaRunBean(
                     hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell().getCartridgeBarcode(), "Run1", new Date(),
                     "SL-HAL", File.createTempFile("RunDir", ".txt").getAbsolutePath(), null),
-                    qtpEntityBuilder.getIlluminaFlowcell());
+                                                                              hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

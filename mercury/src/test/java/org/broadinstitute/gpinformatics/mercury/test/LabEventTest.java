@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
+import org.broadinstitute.gpinformatics.infrastructure.monitoring.HipChatMessageSender;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnectorProducer;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.*;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
@@ -430,7 +431,8 @@ public class LabEventTest {
                 .andReturn(new IlluminaSequencingRun(hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell(),
                                                             runPath.getName(), runBean.getRunBarcode(), machineName,
                                                             null, false, runDate,
-                                                            new OutputDataLocation(runPath.getAbsolutePath())));
+                                                            null,
+                                                            runPath.getAbsolutePath()));
 
         IlluminaFlowcellDao flowcellDao = EasyMock.createMock(IlluminaFlowcellDao.class);
         EasyMock.expect(flowcellDao.findByBarcode(EasyMock.anyObject(String.class)))
@@ -439,118 +441,17 @@ public class LabEventTest {
 
         LabVesselDao vesselDao = EasyMock.createNiceMock(LabVesselDao.class);
 
+        HipChatMessageSender hipChatMsgSender = EasyMock.createNiceMock(HipChatMessageSender.class);
+
         MercuryOrSquidRouter router = new MercuryOrSquidRouter(vesselDao, AthenaClientProducer.stubInstance());
 
         SolexaRunResource runResource = new SolexaRunResource(runDao, runFactory, flowcellDao, router,
-                                                                     SquidConnectorProducer.stubInstance());
-        EasyMock.replay(runDao, runFactory, flowcellDao, vesselDao);
+                                                                     SquidConnectorProducer.stubInstance(),
+                                                                     hipChatMsgSender);
 
-        runResource.createRun(runBean, new UriInfo() {
-            @Override
-            public String getPath() {
-                return null;
-            }
-
-            @Override
-            public String getPath(boolean decode) {
-                return null;
-            }
-
-            @Override
-            public List<PathSegment> getPathSegments() {
-                return null;
-            }
-
-            @Override
-            public List<PathSegment> getPathSegments(boolean decode) {
-                return null;
-            }
-
-            @Override
-            public URI getRequestUri() {
-                return null;
-            }
-
-            @Override
-            public UriBuilder getRequestUriBuilder() {
-                return null;
-            }
-
-            @Override
-            public URI getAbsolutePath() {
-                return null;
-            }
-
-            @Override
-            public UriBuilder getAbsolutePathBuilder() {
-                return UriBuilder.fromPath("");
-            }
-
-            @Override
-            public URI getBaseUri() {
-                return null;
-            }
-
-            @Override
-            public UriBuilder getBaseUriBuilder() {
-                return null;
-            }
-
-            @Override
-            public MultivaluedMap<String, String> getPathParameters() {
-                return null;
-            }
-
-            @Override
-            public MultivaluedMap<String, String> getPathParameters(boolean decode) {
-                return null;
-            }
-
-            @Override
-            public MultivaluedMap<String, String> getQueryParameters() {
-                return null;
-            }
-
-            @Override
-            public MultivaluedMap<String, String> getQueryParameters(boolean decode) {
-                return null;
-            }
-
-            @Override
-            public List<String> getMatchedURIs() {
-                return null;
-            }
-
-            @Override
-            public List<String> getMatchedURIs(boolean decode) {
-                return null;
-            }
-
-            @Override
-            public List<Object> getMatchedResources() {
-                return null;
-            }
-        });
-
-        EasyMock.verify(runDao, flowcellDao, vesselDao, runFactory);
-/*
-        IlluminaSequencingRunFactory illuminaSequencingRunFactory =
-                new IlluminaSequencingRunFactory(EasyMock.createNiceMock(JiraCommentUtil.class));
-        IlluminaSequencingRun illuminaSequencingRun;
-        try {
-            illuminaSequencingRun = illuminaSequencingRunFactory.buildDbFree(new SolexaRunBean(
-                    flowcellBarcode, "Run1", new Date(), "SL-HAL",
-                    File.createTempFile("RunDir", ".txt").getAbsolutePath(), null),
-                    hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-*/
-
-
-
-
-
+        UriInfo uriInfoMock = EasyMock.createNiceMock(UriInfo.class);
+        EasyMock.expect(uriInfoMock.getAbsolutePathBuilder()).andReturn(UriBuilder.fromPath(""));
+        EasyMock.replay(runDao, runFactory, flowcellDao, vesselDao, uriInfoMock,hipChatMsgSender);
 
         Map.Entry<String, TwoDBarcodedTube> stringTwoDBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
         ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
@@ -566,11 +467,11 @@ public class LabEventTest {
          * Temporarily disabling this check until after demo.
          */
 
-//        IlluminaSequencingRun illuminaSequencingRun
-//                = (IlluminaSequencingRun) hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell().getSequencingRuns().iterator().next();
-//
-//        Assert.assertEquals(illuminaSequencingRun.getSampleCartridge(),
-//                hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell(), "Wrong flowcell");
+        IlluminaSequencingRun illuminaSequencingRun
+                = (IlluminaSequencingRun) hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell().getSequencingRuns().iterator().next();
+
+        Assert.assertEquals(illuminaSequencingRun.getSampleCartridge(),
+                hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell(), "Wrong flowcell");
 
         EasyMock.verify(mockBucketDao);
 //        Controller.stopCPURecording();
@@ -964,11 +865,11 @@ public class LabEventTest {
             this.mapBarcodeToTube = mapBarcodeToTube;
         }
         public PreFlightEntityBuilder(BettaLimsMessageFactory bettaLimsMessageFactory, LabEventFactory labEventFactory,
-                LabEventHandler labEventHandler, Map<String, TwoDBarcodedTube> mapBarcodeToTube,Map<String, ProductOrder> mapKeyToProductOrderIn) {
+                LabEventHandler labEventHandler, Map<String, TwoDBarcodedTube> mapBarcodeToTube,Map<String, ProductOrder> mapKeyToProductOrder) {
 
             this(bettaLimsMessageFactory,labEventFactory, labEventHandler, mapBarcodeToTube);
 
-            mapKeyToProductOrder = mapKeyToProductOrderIn;
+            LabEventTest.mapKeyToProductOrder = mapKeyToProductOrder;
         }
 
         public PreFlightEntityBuilder invoke() {
