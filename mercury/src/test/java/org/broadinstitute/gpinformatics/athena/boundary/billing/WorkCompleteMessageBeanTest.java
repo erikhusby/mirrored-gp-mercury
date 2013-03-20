@@ -37,6 +37,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 
 public class WorkCompleteMessageBeanTest extends Arquillian {
 
+    // These objects are not persisted, so using non-unique names is OK here.
     public static final String TEST_PDO_NAME = "PDO-xxx";
     public static final String TEST_ALIQUOT_ID = "SM-xxx";
 
@@ -72,19 +73,6 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
         }
 
         utx.begin();
-
-        try {
-            // We send the JMS message object directly to our message handler for the purposes of this test.
-            WorkCompleteMessageBean workCompleteMessageBean = new WorkCompleteMessageBean(workCompleteMessageDao);
-            workCompleteMessageBean.onMessage(createMessage(createSession()));
-            workCompleteMessageDao.flush();
-            workCompleteMessageDao.clear();
-
-        } catch (Exception e) {
-            // Make sure we rollback if this code fails, otherwise we can cause other tests to fail.
-            utx.rollback();
-            throw e;
-        }
     }
 
     @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
@@ -102,6 +90,8 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
      * Test sending a message to the JMS queue. We currently don't test to see if the message was received. This is
      * tricky to test since JMS messages are received and processed in a different thread, so we don't know when it's
      * OK to check and see if the messages are in the queue.
+     * <p/>
+     * This test is only checking to see if the queue is present on the server at the specified port and host name.
      */
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testSendMessage() throws Exception {
@@ -113,6 +103,7 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
      */
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testOnMessage() throws Exception {
+        deliverMessage();
         List<WorkCompleteMessage> messages = workCompleteMessageDao.getNewMessages();
         Assert.assertTrue(!messages.isEmpty(), "Should be at least one message in new message queue");
         boolean found = false;
@@ -126,9 +117,10 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
         Assert.assertTrue(found, "Should find our message in message queue");
     }
 
-    // FIXME: expand to test creating ledger entries from message
+    // TODO: expand to test creating ledger entries from message
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testOnMessageReadBack() throws Exception {
+        deliverMessage();
         AutomatedBiller automatedBiller = new AutomatedBiller(workCompleteMessageDao, productOrderDao, productOrderEjb);
         automatedBiller.processMessages();
         workCompleteMessageDao.flush();
@@ -156,20 +148,43 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
         return connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
     }
 
+    /**
+     * Create a message and send it using the JMS API.  The message is created with flag so that if the JMS
+     * listener reads it, it won't get written to the database.
+     */
     public void sendMessage() throws JMSException {
         Session session = createSession();
         Destination destination = session.createQueue("broad.queue.athena.workreporting.dev");
         MessageProducer producer = session.createProducer(destination);
-        Message message = createMessage(session);
+        Message message = createMessage(session, false);
         producer.send(destination, message);
     }
 
-    public static Message createMessage(Session session) throws JMSException {
+    /**
+     * Create a message and deliver it by calling the JMS message handler directly.  This allows us to test the code
+     * that creates a message entity, and the code that reads the created message entity, but doesn't cause the
+     * entity to be persisted.
+     */
+    public void deliverMessage() throws JMSException {
+        WorkCompleteMessageBean workCompleteMessageBean = new WorkCompleteMessageBean(workCompleteMessageDao);
+        workCompleteMessageBean.onMessage(createMessage(createSession()));
+        workCompleteMessageDao.flush();
+        workCompleteMessageDao.clear();
+    }
+
+    public static Message createMessage(Session session, boolean persist) throws JMSException {
         Message message = session.createMapMessage();
         message.clearBody();
         message.setStringProperty(WorkCompleteMessage.Properties.PDO_NAME.name(), TEST_PDO_NAME);
         message.setStringProperty(WorkCompleteMessage.Properties.ALIQUOT_ID.name(), TEST_ALIQUOT_ID);
         message.setLongProperty(WorkCompleteMessage.Properties.COMPLETED_TIME.name(), new Date().getTime());
+        if (!persist) {
+            message.setBooleanProperty(WorkCompleteMessageBean.TEST_DATA_FLAG, true);
+        }
         return message;
+    }
+
+    public static Message createMessage(Session session) throws JMSException {
+        return createMessage(session, true);
     }
 }
