@@ -16,9 +16,6 @@ public enum BSPSampleSearchColumn {
     GENDER("Gender"),
     STOCK_TYPE("Stock Type"),
     FINGERPRINT("Fingerprint"),
-    // ALERT("!", "Alert"),
-    // MESSAGE("message");
-
     LSID("Sample LSID"),
     ROOT_SAMPLE("Root Sample(s)"),
     COLLECTION("Collection"),
@@ -27,22 +24,15 @@ public enum BSPSampleSearchColumn {
     CONTAINER_ID("Container"),
     CONTAINER_NAME("Container Name")    ,
     COLLABORATOR_NAME("Site PI") ,
-    // todo arz db free testing of race and ethnicity
     RACE("Race"),
     ETHNICITY("Ethnicity"),
-    SAMPLE_KIT_UPLOAD_RACKSCAN_MISMATCH("Sample Kit Data Upload/Rackscan Mismatch")
-    ;
+    SAMPLE_KIT_UPLOAD_RACKSCAN_MISMATCH("Sample Kit Data Upload/Rackscan Mismatch");
     
     private final String columnName;
-    
-    
-    
+
     public String columnName() { return columnName; }
     
     BSPSampleSearchColumn(String name) {
         this.columnName = name;
     }
-    
-
-
 }
