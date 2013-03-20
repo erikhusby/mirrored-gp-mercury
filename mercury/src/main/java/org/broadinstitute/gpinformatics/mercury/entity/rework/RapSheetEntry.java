@@ -36,7 +36,8 @@ public abstract class RapSheetEntry {
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private LabVesselComment labVesselComment;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    // this should not cause n+1 select performance issue if it is LAZY and mandatory
+    @OneToOne(optional = false, fetch = FetchType.LAZY,cascade = {CascadeType.ALL})
     @NotNull
     private LabVesselPosition labVesselPosition;
 
