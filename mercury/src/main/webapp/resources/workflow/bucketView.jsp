@@ -59,12 +59,12 @@
     </security:authorizeBlock>
     <stripes:form beanclass="${actionBean.class.name}" id="bucketForm">
         <div class="control-group">
-            <div class="control">
-                <stripes:select id="bucketSelect" name="selectedBucket">
+            <div class="controls">
+                <stripes:select id="bucketSelect" name="selectedBucket" style="margin-bottom: 0;">
                     <stripes:options-collection collection="${actionBean.buckets}" label="name"
                                                 value="name"/>
                 </stripes:select>
-                <stripes:submit name="viewBucket" value="View Bucket" onclick="javascript:showJiraInfo();"/>
+                <stripes:submit name="viewBucket" class="btn" value="View Bucket" onclick="javascript:showJiraInfo();"/>
             </div>
         </div>
     </stripes:form>

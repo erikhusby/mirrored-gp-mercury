@@ -100,7 +100,7 @@
                             <li>
                                 <stripes:link
                                         beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.LinkDenatureTubeToFlowcellActionBean"
-                                        event="view">Link Dtube to Flowcell</stripes:link>
+                                        event="view">Link Denature Tube to Flowcell</stripes:link>
                             </li>
                         </security:authorizeBlock>
                         <security:authorizeBlock roles="<%= roles(Developer) %>">
