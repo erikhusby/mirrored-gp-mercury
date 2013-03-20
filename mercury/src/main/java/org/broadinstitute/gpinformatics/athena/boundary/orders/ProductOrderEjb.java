@@ -166,7 +166,7 @@ public class ProductOrderEjb {
      * </ol>
      */
     @Nonnull
-    public ProductOrderSample mapAliquotIdToSample(ProductOrder order, @Nonnull String aliquotId) {
+    public ProductOrderSample mapAliquotIdToSample(@Nonnull ProductOrder order, @Nonnull String aliquotId) {
         for (ProductOrderSample sample : order.getSamples()) {
             if (aliquotId.equals(sample.getAliquotId())) {
                 return sample;
@@ -177,24 +177,17 @@ public class ProductOrderEjb {
         if (sampleName == null) {
             throw new RuntimeException("Couldn't find a sample for aliquot: " + aliquotId);
         }
-        ProductOrderSample foundSample = null;
         for (ProductOrderSample sample : order.getSamples()) {
             if (sample.getSampleName().equals(sampleName) && sample.getAliquotId() == null) {
-                foundSample = sample;
-                break;
+                sample.setAliquotId(aliquotId);
+                productOrderSampleDao.persist(sample);
+                return sample;
             }
         }
-        if (foundSample == null) {
-            throw new RuntimeException(
-                    MessageFormat.format("Could not bill PDO {0}, Sample {1}, Aliquot {2}, all" +
-                                         " samples have been assigned aliquots already.",
-                            order.getBusinessKey(), sampleName, aliquotId));
-        }
-
-        foundSample.setAliquotId(aliquotId);
-        productOrderSampleDao.persist(foundSample);
-
-        return foundSample;
+        throw new RuntimeException(
+                MessageFormat.format("Could not bill PDO {0}, Sample {1}, Aliquot {2}, all" +
+                                     " samples have been assigned aliquots already.",
+                        order.getBusinessKey(), sampleName, aliquotId));
     }
 
     /**

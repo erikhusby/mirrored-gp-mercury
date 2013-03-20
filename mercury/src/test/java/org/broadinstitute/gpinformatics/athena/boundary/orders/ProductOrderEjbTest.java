@@ -19,7 +19,7 @@ import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.util.List;
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
+@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class ProductOrderEjbTest extends ContainerTest {
 
     @Inject
@@ -40,9 +40,6 @@ public class ProductOrderEjbTest extends ContainerTest {
     @Inject
     UserTransaction utx;
 
-    private String testOrderOneSampleKey;
-    private String testOrderTwoSamplesKey;
-
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void setUp() throws Exception {
         // Skip if no injections, since we're not running in container.
@@ -51,19 +48,6 @@ public class ProductOrderEjbTest extends ContainerTest {
         }
 
         utx.begin();
-
-        ProductOrder order = ProductOrderDaoTest.createTestProductOrder(researchProjectDao, productDao,
-                BSPSampleSearchServiceStub.STOCK_ID);
-        testOrderOneSampleKey = order.getBusinessKey();
-        productOrderDao.persist(order);
-
-        order = ProductOrderDaoTest.createTestProductOrder(researchProjectDao, productDao,
-                BSPSampleSearchServiceStub.STOCK_ID, BSPSampleSearchServiceStub.STOCK_ID);
-        testOrderTwoSamplesKey = order.getBusinessKey();
-
-        productOrderDao.persist(order);
-        productOrderDao.flush();
-        productOrderDao.clear();
     }
 
     @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
@@ -76,9 +60,16 @@ public class ProductOrderEjbTest extends ContainerTest {
         utx.rollback();
     }
 
-    public void testMapAliquotIdToSample() throws Exception {
+    public void testMapAliquotIdToSampleOne() throws Exception {
+        ProductOrder order = ProductOrderDaoTest.createTestProductOrder(researchProjectDao, productDao,
+                BSPSampleSearchServiceStub.STOCK_ID);
+        String key = order.getBusinessKey();
+        productOrderDao.persist(order);
+        productOrderDao.flush();
+        productOrderDao.clear();
+
         // Test case where sample has not yet been mapped to an aliquot.
-        ProductOrder order = productOrderDao.findByBusinessKey(testOrderOneSampleKey);
+        order = productOrderDao.findByBusinessKey(key);
         List<ProductOrderSample> samples = productOrderSampleDao.findByOrderAndName(order, BSPSampleSearchServiceStub.STOCK_ID);
         Assert.assertTrue(samples.size() == 1);
         Assert.assertTrue(samples.get(0).getAliquotId() == null);
@@ -100,10 +91,20 @@ public class ProductOrderEjbTest extends ContainerTest {
         } catch (RuntimeException e) {
             // Error is expected.
         }
+    }
 
-        // Test case where there are multiple samples, each one should map to a different aliquot.
-        order = productOrderDao.findByBusinessKey(testOrderTwoSamplesKey);
-        sample = productOrderEjb.mapAliquotIdToSample(order, BSPSampleSearchServiceStub.ALIQUOT_ID_1);
+    public void testMapAliquotToSampleTwo() throws Exception {
+        // Test case where there are multiple samples, where each one maps to a different aliquot.
+
+        ProductOrder order = ProductOrderDaoTest.createTestProductOrder(researchProjectDao, productDao,
+                BSPSampleSearchServiceStub.STOCK_ID, BSPSampleSearchServiceStub.STOCK_ID);
+        String key = order.getBusinessKey();
+        productOrderDao.persist(order);
+        productOrderDao.flush();
+        productOrderDao.clear();
+
+        order = productOrderDao.findByBusinessKey(key);
+        ProductOrderSample sample = productOrderEjb.mapAliquotIdToSample(order, BSPSampleSearchServiceStub.ALIQUOT_ID_1);
         ProductOrderSample sample2 = productOrderEjb.mapAliquotIdToSample(order, BSPSampleSearchServiceStub.ALIQUOT_ID_2);
         Assert.assertEquals(sample.getAliquotId(), BSPSampleSearchServiceStub.ALIQUOT_ID_1);
         Assert.assertEquals(sample2.getAliquotId(), BSPSampleSearchServiceStub.ALIQUOT_ID_2);

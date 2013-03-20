@@ -7,7 +7,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.AliquotParameters;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.AliquotReceiver;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.*;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
@@ -36,59 +35,6 @@ public class BSPSampleFactory {
     private Log log;
 
     private static final Float WATER_CONTROL_CONCENTARTION = 0F;
-
-    public List<LabVessel> receiveBSPAliquots(BSPPlatingReceipt bspReceipt,
-                                              Map<String, MercurySample> aliquotSourceMap,
-                                              Map<String, BSPSampleDTO> bspControlSampleDataMap)
-            throws Exception {
-
-        if (bspReceipt == null) {
-            throw new IllegalArgumentException("BSP Plating receipt cannot be null");
-        }
-
-        List<LabVessel> bspAliquots = new ArrayList<LabVessel>();
-
-        //iterate through aliquotSourceMap (sampleStock )
-        Iterator<String> sampleItr = aliquotSourceMap.keySet().iterator();
-        while (sampleItr.hasNext()) {
-            String sampleLSID = sampleItr.next();
-
-            //All below ugly parsing will go way once bsp passes the stock we asked for (source sample name / starting sample) ?
-            String[] chunks = sampleLSID.split(":");
-            String bareId = chunks[chunks.length - 1];
-            String sampleName = "SM-" + bareId;
-
-            //get ProjectPlan from startingSample
-            MercurySample startingSample = aliquotSourceMap.get(sampleLSID);
-            if (startingSample == null) {
-                throw new Exception("failed to lookup starting sample for sample : " + sampleLSID);
-            }
-//            ProjectPlan projectPlan = startingSample.getRootProjectPlan();
-
-//            StartingSample aliquot = new BSPStartingSample(sampleName/*, projectPlan*/);
-//            LabVessel bspAliquot = new BSPSampleAuthorityTwoDTube(aliquot);
-//            projectPlan.addAliquotForStarter(startingSample, bspAliquot);
-
-//            bspAliquots.add(bspAliquot);
-            AliquotReceiver aliquotReceiver = new AliquotReceiver();
-
-//            aliquotReceiver.receiveAliquot(startingSample, bspAliquot, bspReceipt);
-
-            //TODO .. need any LabEvent Message ????
-        }
-
-        if (bspControlSampleDataMap != null) {
-            Iterator<String> controlSampleItr = bspControlSampleDataMap.keySet().iterator();
-            while (controlSampleItr.hasNext()) {
-                String controlName = sampleItr.next();
-//                StartingSample aliquot = new BSPStartingSample(controlName, null);//?? ProjectPlan
-//                LabVessel bspAliquot = new BSPSampleAuthorityTwoDTube(aliquot);
-//                bspAliquots.add(bspAliquot);
-            }
-        }
-
-        return bspAliquots;
-    }
 
     public List<BSPPlatingRequest> buildBSPPlatingRequests(Map<MercurySample, AliquotParameters> starterMap)
             throws Exception {

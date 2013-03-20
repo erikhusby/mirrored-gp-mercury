@@ -160,9 +160,4 @@ public class LabMetric {
         this.labVessel = labVessel;
     }
 
-    /*
-    public Float convertTo(LabUnit otherUnit);
-
-    public boolean isInRange(LabMetricRange range);
-*/
 }
