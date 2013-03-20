@@ -282,22 +282,21 @@ public class BettalimsMessageResourceTest extends Arquillian {
         runDate = new Date();
         SimpleDateFormat format = new SimpleDateFormat("yyMMdd");
         String runName="TestRun" + testPrefix + runDate.getTime();
-        try {
-            File tempRunFile = File.createTempFile(runName, ".txt");
 
-            IlluminaFlowcell flowcell = flowcellDao.findByBarcode(qtpJaxbBuilder.getFlowcellBarcode());
+        String runPath = "/tmp/file/run/path/"+ runName + ".txt";
 
-            IlluminaSequencingRun illuminaSequencingRun = illuminaSequencingRunFactory.buildDbFree(
-                    new SolexaRunBean(qtpJaxbBuilder.getFlowcellBarcode(),
-                            qtpJaxbBuilder.getFlowcellBarcode() + format.format(runDate),
-                            runDate, "SL-HAL", tempRunFile.getAbsolutePath(), null), flowcell);
+        IlluminaFlowcell flowcell = flowcellDao.findByBarcode(qtpJaxbBuilder.getFlowcellBarcode());
 
-            ZimsIlluminaRunFactory zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(productOrderDao, bspSampleDataFetcher);
-            ZimsIlluminaRun zimsIlluminaRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(illuminaSequencingRun);
-            Assert.assertEquals(zimsIlluminaRun.getLanes().size(), 8, "Wrong number of lanes");
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        IlluminaSequencingRun illuminaSequencingRun = illuminaSequencingRunFactory.buildDbFree(new SolexaRunBean(qtpJaxbBuilder.getFlowcellBarcode(),
+                                                               qtpJaxbBuilder.getFlowcellBarcode()
+                                                                       + format.format(runDate),
+                                                               runDate, "SL-HAL",
+                                                               runPath,
+                                                               null),
+                flowcell);
+        ZimsIlluminaRunFactory zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(productOrderDao, bspSampleDataFetcher);
+        ZimsIlluminaRun zimsIlluminaRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(illuminaSequencingRun);
+        Assert.assertEquals(zimsIlluminaRun.getLanes().size(), 8, "Wrong number of lanes");
         System.out.println("Test run name " + runName);
     }
 

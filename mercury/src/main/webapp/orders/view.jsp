@@ -177,7 +177,7 @@
                     }
 
                     if (sampleData[x].hasSampleKitUploadRackscanMismatch) {
-                        $j('#sampleKitUploadRackscanMismatch-' + sampleId).html('<img src="${ctxpath}/images/red_check.png" title="Yes"/>');
+                        $j('#sampleKitUploadRackscanMismatch-' + sampleId).html('<img src="${ctxpath}/images/error.png" title="Yes"/>');
                     }
 
                     bspDataCount--;

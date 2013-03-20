@@ -7,8 +7,8 @@ import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProduc
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
+import org.broadinstitute.gpinformatics.infrastructure.monitoring.HipChatMessageSender;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnectorProducer;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
@@ -28,9 +28,7 @@ import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
-import org.broadinstitute.gpinformatics.mercury.entity.run.OutputDataLocation;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
@@ -40,7 +38,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.broadinstitute.gpinformatics.mercury.test.BettaLimsMessageFactory;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.easymock.EasyMock;
@@ -48,12 +45,10 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.io.File;
-import java.net.URI;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -61,7 +56,6 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * @author Scott Matthews
@@ -80,8 +74,9 @@ public class SolexaRunRoutingTest {
     private BettaLimsMessageFactory       bettaLimsMessageFactory;
     private LabEventFactory               labEventFactory;
     private Map<String, TwoDBarcodedTube> mapBarcodeToTube;
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat(IlluminaSequencingRun.RUN_FORMAT_PATTERN);
 
-    @Test(enabled = false)
+    @BeforeMethod
     public void setUp() {
 
         LabBatchEjb labBatchEJB = new LabBatchEjb();
@@ -165,7 +160,6 @@ public class SolexaRunRoutingTest {
      */
     public void testWholeGenomeFlowcell() throws Exception {
 
-        setUp();
 
         LabEventHandler labEventHandler =
                 new LabEventHandler(new WorkflowLoader(), AthenaClientProducer
@@ -285,11 +279,9 @@ public class SolexaRunRoutingTest {
 
         SolexaRunBean runBean =
                 new SolexaRunBean(flowcell.getCartridgeBarcode(),
-                                         flowcell.getCartridgeBarcode() + IlluminaSequencingRun.RUNFORMAT
-                                                                                               .format(runDate),
+                                         flowcell.getCartridgeBarcode() + dateFormat.format(runDate),
                                          runDate, "Superman",
-                                         File.createTempFile("tempRun" + IlluminaSequencingRun.RUNFORMAT
-                                                                                              .format(runDate), ".txt")
+                                         File.createTempFile("tempRun" + dateFormat.format(runDate), ".txt")
                                              .getAbsolutePath(), null);
 
         IlluminaSequencingRunDao runDao = EasyMock.createMock(IlluminaSequencingRunDao.class);
@@ -304,115 +296,31 @@ public class SolexaRunRoutingTest {
         LabVesselDao vesselDao = EasyMock.createNiceMock(LabVesselDao.class);
 
         MercuryOrSquidRouter router = new MercuryOrSquidRouter(vesselDao, AthenaClientProducer.stubInstance());
+        HipChatMessageSender hipChatMsgSender = EasyMock.createNiceMock(HipChatMessageSender.class);
 
         SolexaRunResource runResource = new SolexaRunResource(runDao, runFactory, flowcellDao, router,
-                                                                     SquidConnectorProducer.stubInstance());
-        EasyMock.replay(runDao, runFactory, flowcellDao, vesselDao);
+                                                                     SquidConnectorProducer.stubInstance(),
+                                                                     hipChatMsgSender);
+        UriInfo uriInfoMock = EasyMock.createNiceMock(UriInfo.class);
+        EasyMock.expect(uriInfoMock.getAbsolutePathBuilder()).andReturn(UriBuilder.fromPath(""));
+        EasyMock.replay(runDao, runFactory, flowcellDao, vesselDao, uriInfoMock, hipChatMsgSender);
 
-        runResource.createRun(runBean, new UriInfo() {
-            @Override
-            public String getPath() {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
+        runResource.createRun(runBean, uriInfoMock);
 
-            @Override
-            public String getPath(boolean decode) {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public List<PathSegment> getPathSegments() {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public List<PathSegment> getPathSegments(boolean decode) {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public URI getRequestUri() {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public UriBuilder getRequestUriBuilder() {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public URI getAbsolutePath() {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public UriBuilder getAbsolutePathBuilder() {
-                return UriBuilder.fromPath("");
-            }
-
-            @Override
-            public URI getBaseUri() {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public UriBuilder getBaseUriBuilder() {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public MultivaluedMap<String, String> getPathParameters() {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public MultivaluedMap<String, String> getPathParameters(boolean decode) {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public MultivaluedMap<String, String> getQueryParameters() {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public MultivaluedMap<String, String> getQueryParameters(boolean decode) {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public List<String> getMatchedURIs() {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public List<String> getMatchedURIs(boolean decode) {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public List<Object> getMatchedResources() {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-        });
-
-        EasyMock.verify(runDao, flowcellDao, vesselDao, runFactory);
+        EasyMock.verify(runDao, flowcellDao, vesselDao, runFactory, uriInfoMock, hipChatMsgSender);
 
     }
 
     public void testNoChainOfCustodyRegistration() throws Exception {
-
-        setUp();
 
         Date runDate = new Date();
 
         final String flowcellBarcode = "FlowCellBarcode" + runDate.getTime();
         SolexaRunBean runBean =
                 new SolexaRunBean(flowcellBarcode,
-                                         flowcellBarcode + IlluminaSequencingRun.RUNFORMAT.format(runDate),
+                                         flowcellBarcode + dateFormat.format(runDate),
                                          runDate, "Superman",
-                                         File.createTempFile("tempRun" + IlluminaSequencingRun.RUNFORMAT
-                                                                                              .format(runDate), ".txt")
+                                         File.createTempFile("tempRun" + dateFormat.format(runDate), ".txt")
                                              .getAbsolutePath(), null);
 
         IlluminaSequencingRunDao runDao = EasyMock.createMock(IlluminaSequencingRunDao.class);
@@ -428,96 +336,16 @@ public class SolexaRunRoutingTest {
 
         MercuryOrSquidRouter router = new MercuryOrSquidRouter(vesselDao, AthenaClientProducer.stubInstance());
 
+        HipChatMessageSender hipChatMsgSender = EasyMock.createNiceMock(HipChatMessageSender.class);
+
         SolexaRunResource runResource = new SolexaRunResource(runDao, runFactory, flowcellDao, router,
-                                                                     SquidConnectorProducer.stubInstance());
-        EasyMock.replay(runDao, runFactory, flowcellDao, vesselDao);
+                                                                     SquidConnectorProducer.stubInstance(),
+                                                                     hipChatMsgSender);
+        UriInfo uriInfoMock = EasyMock.createNiceMock(UriInfo.class);
+        EasyMock.expect(uriInfoMock.getAbsolutePathBuilder()).andReturn(UriBuilder.fromPath(""));
+        EasyMock.replay(runDao, runFactory, flowcellDao, vesselDao, uriInfoMock, hipChatMsgSender);
 
-        runResource.createRun(runBean, new UriInfo() {
-            @Override
-            public String getPath() {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public String getPath(boolean decode) {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public List<PathSegment> getPathSegments() {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public List<PathSegment> getPathSegments(boolean decode) {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public URI getRequestUri() {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public UriBuilder getRequestUriBuilder() {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public URI getAbsolutePath() {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public UriBuilder getAbsolutePathBuilder() {
-                return UriBuilder.fromPath("");
-            }
-
-            @Override
-            public URI getBaseUri() {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public UriBuilder getBaseUriBuilder() {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public MultivaluedMap<String, String> getPathParameters() {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public MultivaluedMap<String, String> getPathParameters(boolean decode) {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public MultivaluedMap<String, String> getQueryParameters() {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public MultivaluedMap<String, String> getQueryParameters(boolean decode) {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public List<String> getMatchedURIs() {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public List<String> getMatchedURIs(boolean decode) {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public List<Object> getMatchedResources() {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-        });
+        runResource.createRun(runBean, uriInfoMock);
 
         EasyMock.verify(runDao, flowcellDao, vesselDao, runFactory);
     }

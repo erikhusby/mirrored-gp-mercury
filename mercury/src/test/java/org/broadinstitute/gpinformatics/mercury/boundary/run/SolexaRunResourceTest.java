@@ -24,6 +24,7 @@ import javax.transaction.UserTransaction;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
@@ -95,7 +96,9 @@ public class SolexaRunResourceTest extends Arquillian {
 
         utx.commit();
 
-        runBarcode = flowcellBarcode + IlluminaSequencingRun.RUNFORMAT.format(runDate);
+        SimpleDateFormat dateFormat = new SimpleDateFormat(IlluminaSequencingRun.RUN_FORMAT_PATTERN);
+
+        runBarcode = flowcellBarcode + dateFormat.format(runDate);
         final String runName = "testRunName" + runDate.getTime();
         String baseDirectory = System.getProperty("java.io.tmpdir");
         runFileDirectory = baseDirectory + File.separator + "bin" + File.separator +
@@ -124,7 +127,6 @@ public class SolexaRunResourceTest extends Arquillian {
 
         Assert.assertTrue(result);
 
-        //        try {
 
         Response response = Client.create().resource(appConfig.getUrl() + "rest/solexarun")
                 .type(MediaType.APPLICATION_XML_TYPE)
@@ -132,13 +134,19 @@ public class SolexaRunResourceTest extends Arquillian {
                 .entity(new SolexaRunBean(flowcellBarcode, runBarcode, runDate, "SL-HAL",
                         runFileDirectory, null)).post(Response.class);
 
+
         Assert.assertEquals(response.getStatus(), Response.Status.CREATED);
         System.out.println(response.getStatus());
-        //        } catch (IOException e) {
-        //            throw new RuntimeException(e);
-        //        }
+
+        String runName = new File(runFileDirectory).getName();
+
+        IlluminaSequencingRun sequencingRun = runDao.findByRunName(runName);
 
         IlluminaFlowcell createdFlowcell = flowcellDao.findByBarcode(flowcellBarcode);
+
+        Assert.assertEquals(sequencingRun.getSampleCartridge(), createdFlowcell);
+
+        Assert.assertEquals(createdFlowcell.getSequencingRuns().iterator().next(), sequencingRun);
 
     }
 }

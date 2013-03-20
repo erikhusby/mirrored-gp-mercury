@@ -21,6 +21,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Rapsheets and Rework log at the sample level. To know where the
+ * "thing" we are logging occurred, we keep track of VesselPosition as well.
+ */
 @Entity
 @Audited
 @Table(schema = "mercury", name = "lv_pos")

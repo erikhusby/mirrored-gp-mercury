@@ -38,12 +38,13 @@ public class AutomatedBiller {
         this.productOrderEjb = productOrderEjb;
     }
 
-    // EJBs require a no arg constructor
+    // EJBs require a no arg constructor.
     @SuppressWarnings("unused")
     public AutomatedBiller() {
         this(null, null, null);
     }
 
+    // The schedule "minute = */15, hour = *" means every 15 minutes on the hour.
     @Schedule(minute = "*/15", hour = "*")
     public void processMessages() {
         for (WorkCompleteMessage message : workCompleteMessageDao.getNewMessages()) {
@@ -57,15 +58,13 @@ public class AutomatedBiller {
                     log.error(MessageFormat.format("Invalid PDO key ''{0}'', no billing will occur.",
                             message.getPdoName()));
                 }
-                // Once a message is processed, mark it to avoid processing it again.
                 workCompleteMessageDao.markMessageProcessed(message);
             } catch (Exception e) {
-                // FIXME: need to mark messages as processed even when an error occurs; enable this once code is debugged.
-//                workCompleteMessageDao.markMessageProcessed(message);
                 log.error(MessageFormat.format("Error while processing work complete message. PDO: {0}, Sample: {1}",
                         message.getPdoName(), message.getAliquotId()), e);
             }
+            // Once a message is processed, mark it to avoid processing it again.
+            workCompleteMessageDao.markMessageProcessed(message);
         }
     }
-
 }
