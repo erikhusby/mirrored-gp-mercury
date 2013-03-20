@@ -28,10 +28,8 @@ public class IlluminaSequencingRunTest {
 
     public void testConstruction() {
 
-        Assert.assertNotNull(testRun.getRunLocation());
-        Assert.assertEquals(fullRunPath, testRun.getRunLocation().getDataLocation());
-        Assert.assertFalse(testRun.getRunLocation().isArchived());
-
+        Assert.assertNotNull(testRun.getRunDirectory());
+        Assert.assertEquals(fullRunPath, testRun.getRunDirectory());
         Assert.assertNotNull(testRun.getRunName());
         Assert.assertEquals(runName, testRun.getRunName());
 
@@ -57,9 +55,8 @@ public class IlluminaSequencingRunTest {
         testFlowcell = new IlluminaFlowcell(flowcellBarcode, IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell);
         runPath = "/start/of/run/";
         fullRunPath = runPath + runName;
-        dataLocation = new OutputDataLocation(fullRunPath);
         machineName = "Superman";
         testRun = new IlluminaSequencingRun(testFlowcell, runName, runBarcode, machineName, null, false, runDate,
-                dataLocation);
+                null, fullRunPath);
     }
 }

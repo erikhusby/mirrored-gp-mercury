@@ -76,10 +76,9 @@ public class IlluminaSequencingRunDaoTest extends ContainerTest {
 
         runPath = baseDirectory + "/start/of/run/";
         fullRunPath = runPath + runName;
-        dataLocation = new OutputDataLocation(fullRunPath);
         machineName = "Superman";
         IlluminaSequencingRun initialRun = new IlluminaSequencingRun(testFlowcell, runName, runBarcode, machineName, null, false, runDate,
-                dataLocation);
+                null, fullRunPath);
 
         runDao.persist(initialRun);
         runDao.flush();
@@ -108,15 +107,13 @@ public class IlluminaSequencingRunDaoTest extends ContainerTest {
         Assert.assertEquals(runBarcode, testRun.getRunBarcode());
         Assert.assertEquals(runName, testRun.getRunName());
 
-        Assert.assertEquals(fullRunPath, testRun.getRunLocation().getDataLocation());
+        Assert.assertEquals(fullRunPath, testRun.getRunDirectory());
 
         Assert.assertEquals(testFlowcell, testRun.getSampleCartridge());
 
         Assert.assertEquals(1, testFlowcell.getSequencingRuns().size());
 
         Assert.assertEquals(testRun.getRunName(), testFlowcell.getSequencingRuns().iterator().next().getRunName());
-
-        Assert.assertFalse(testRun.getRunLocation().isArchived());
 
         Assert.assertEquals(machineName, testRun.getMachineName());
 
