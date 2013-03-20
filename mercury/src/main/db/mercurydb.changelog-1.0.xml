@@ -1345,7 +1345,7 @@
                 <indexExists indexName="SYS_C0042392" schemaName="mercury" />
             </not>
         </preConditions>
-        <dropUniqueConstraint constraintName="SYS_C0042392" schemaName="mercury" />
+        <dropUniqueConstraint constraintName="SYS_C0042392" tableName="LV_POS_MERCURY_SAMPLES" schemaName="mercury" />
     </changeSet>
 
 </databaseChangeLog>
