@@ -1,10 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.control.run;
 
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
-import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnector;
-import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
@@ -32,8 +29,7 @@ public class IlluminaSequencingRunFactory implements Serializable {
         IlluminaSequencingRun builtRun = buildDbFree(solexaRunBean, illuminaFlowcell);
         jiraCommentUtil.postUpdate(MessageFormat.format("Registered new Solexa run {0} located at {1}",
                                                                builtRun.getRunName(),
-                                                               builtRun.getRunLocation()
-                                                                       .getDataLocation()),
+                                                               builtRun.getRunDirectory()),
                                           illuminaFlowcell);
 
         return builtRun;
@@ -48,12 +44,11 @@ public class IlluminaSequencingRunFactory implements Serializable {
         }
 
         String runName = new File(solexaRunBean.getRunDirectory()).getName();
-        OutputDataLocation dataLocation = new OutputDataLocation(solexaRunBean.getRunDirectory());
 
         return new IlluminaSequencingRun(illuminaFlowcell, runName, solexaRunBean.getRunBarcode(),
                                                 solexaRunBean.getMachineName(),
                                                 null
                                                 /* TODO SGM -- Operator information is always missing.  may revisit later*/,
-                                                false, solexaRunBean.getRunDate(), dataLocation);
+                                                false, solexaRunBean.getRunDate(), null, solexaRunBean.getRunDirectory());
     }
 }

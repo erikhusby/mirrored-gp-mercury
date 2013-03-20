@@ -127,7 +127,6 @@ public class SolexaRunResourceTest extends Arquillian {
 
         Assert.assertTrue(result);
 
-        //        try {
 
         Response response = Client.create().resource(appConfig.getUrl() + "rest/solexarun")
                 .type(MediaType.APPLICATION_XML_TYPE)
@@ -135,13 +134,19 @@ public class SolexaRunResourceTest extends Arquillian {
                 .entity(new SolexaRunBean(flowcellBarcode, runBarcode, runDate, "SL-HAL",
                         runFileDirectory, null)).post(Response.class);
 
+
         Assert.assertEquals(response.getStatus(), Response.Status.CREATED);
         System.out.println(response.getStatus());
-        //        } catch (IOException e) {
-        //            throw new RuntimeException(e);
-        //        }
+
+        String runName = new File(runFileDirectory).getName();
+
+        IlluminaSequencingRun sequencingRun = runDao.findByRunName(runName);
 
         IlluminaFlowcell createdFlowcell = flowcellDao.findByBarcode(flowcellBarcode);
+
+        Assert.assertEquals(sequencingRun.getSampleCartridge(), createdFlowcell);
+
+        Assert.assertEquals(createdFlowcell.getSequencingRuns().iterator().next(), sequencingRun);
 
     }
 }

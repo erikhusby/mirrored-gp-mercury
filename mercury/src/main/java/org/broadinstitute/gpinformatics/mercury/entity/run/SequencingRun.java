@@ -8,7 +8,6 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
@@ -37,15 +36,23 @@ public class SequencingRun {
     private Date runDate;
 
     @ManyToOne(cascade = CascadeType.PERSIST)
-    @JoinColumn(name = "run_cartridge")
     private RunCartridge runCartridge;
 
     @ManyToOne(cascade = {CascadeType.ALL})
     @JoinColumn(name = "run_location_id")
     private OutputDataLocation runLocation;
 
+    /*
+     *  Phased approach to removing the entity above (Output Location).  Adding data location here and then when the data
+     *  is copied over from the old, will remove the OutputDataLocation entity all together
+     *
+     */
+    private String runDirectory;
+
+
+
     public SequencingRun(String runName, String runBarcode, String machineName, Long operator, Boolean testRun,
-                         Date runDate, RunCartridge runCartridge, OutputDataLocation runLocation) {
+                         Date runDate, RunCartridge runCartridge, OutputDataLocation runLocation, String runDirectory) {
         this.runName = runName;
         this.runBarcode = runBarcode;
         this.machineName = machineName;
@@ -53,8 +60,8 @@ public class SequencingRun {
         this.testRun = testRun;
         this.runDate = runDate;
         this.runLocation = runLocation;
-//        this.runCartridge = runCartridge;
         setRunCartridge(runCartridge);
+        this.runDirectory = runDirectory;
     }
 
     protected SequencingRun() {
@@ -132,5 +139,9 @@ public class SequencingRun {
 
     public void setRunLocation(OutputDataLocation runLocation) {
         this.runLocation = runLocation;
+    }
+
+    public String getRunDirectory() {
+        return runDirectory;
     }
 }

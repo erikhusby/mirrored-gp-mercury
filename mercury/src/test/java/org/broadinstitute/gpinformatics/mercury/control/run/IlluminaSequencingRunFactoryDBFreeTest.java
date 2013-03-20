@@ -81,11 +81,9 @@ public class IlluminaSequencingRunFactoryDBFreeTest {
 
         Assert.assertEquals(testRunName, testRun.getRunName());
 
-        Assert.assertNotNull(testRun.getRunLocation());
+        Assert.assertNotNull(testRun.getRunDirectory());
 
-        Assert.assertEquals(runFileDirectory, testRun.getRunLocation().getDataLocation());
-
-        Assert.assertFalse(testRun.getRunLocation().isArchived());
+        Assert.assertEquals(runFileDirectory, testRun.getRunDirectory());
 
         Assert.assertFalse(testRun.isTestRun());
 

@@ -148,7 +148,8 @@ public class ZimsIlluminaRunFactoryTest {
         IlluminaSequencingRun sequencingRun =
                 new IlluminaSequencingRun(flowcell, testRunDirectory, "Run-123", "IlluminaRunServiceImplTest", 101L, true,
                         runDate,
-                        new OutputDataLocation("/root/path/to/run/" + testRunDirectory));
+                        null,
+                                                 "/root/path/to/run/" + testRunDirectory);
         ZimsIlluminaRun zimsIlluminaRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(sequencingRun);
 //        LibraryBeanFactory libraryBeanFactory = new LibraryBeanFactory();
 //        ZimsIlluminaRun zimsIlluminaRun = libraryBeanFactory.buildLibraries(sequencingRun);

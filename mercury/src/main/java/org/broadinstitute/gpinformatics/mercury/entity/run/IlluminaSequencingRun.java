@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.mercury.entity.run;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
 @Entity
@@ -18,8 +17,8 @@ public class IlluminaSequencingRun extends SequencingRun {
                                  String machineName,
                                  Long operator,
                                  boolean isTestRun,
-                                 Date runDate, OutputDataLocation dataLocation) {
-        super(runName, runBarcode, machineName, operator, isTestRun, runDate, flowcell, dataLocation);
+                                 Date runDate, OutputDataLocation dataLocation, String runDirectory) {
+        super(runName, runBarcode, machineName, operator, isTestRun, runDate, flowcell, dataLocation, runDirectory);
     }
 
     protected IlluminaSequencingRun() {
