@@ -12,6 +12,8 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
@@ -20,15 +22,20 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesig
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
+import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.IndexedPlateFactory;
+import org.broadinstitute.gpinformatics.mercury.control.zims.ZimsIlluminaRunFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
+import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.gpinformatics.mercury.test.BettaLimsMessageFactory;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -104,7 +111,13 @@ public class BettalimsMessageResourceTest extends Arquillian {
     private ReagentDesignDao reagentDesignDao;
 
     @Inject
-    IlluminaFlowcellDao flowcellDao;
+    private IlluminaFlowcellDao flowcellDao;
+    
+    @Inject
+    private BSPSampleDataFetcher bspSampleDataFetcher;
+
+    @Inject
+    private IlluminaSequencingRunFactory illuminaSequencingRunFactory;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -174,7 +187,11 @@ public class BettalimsMessageResourceTest extends Arquillian {
             twoDBarcodedTubeDAO.persist(bspAliquot);
             starters.add(bspAliquot);
         }
-        LabBatch labBatch = new LabBatch("LCSET-MsgTest-" + testPrefix, starters, LabBatch.LabBatchType.WORKFLOW);
+
+        String batchName = "LCSET-MsgTest-" + testPrefix;
+        // This will be persisted by cascade
+        LabBatch labBatch = new LabBatch(batchName, starters, LabBatch.LabBatchType.WORKFLOW);
+        labBatch.setJiraTicket(new JiraTicket(JiraServiceProducer.stubInstance(), batchName));
 
         Product exomeExpressProduct=productDao.findByPartNumber("P-EX-0001");
         if(exomeExpressProduct == null) {
@@ -266,17 +283,18 @@ public class BettalimsMessageResourceTest extends Arquillian {
         SimpleDateFormat format = new SimpleDateFormat("yyMMdd");
         String runName="TestRun" + testPrefix + runDate.getTime();
         try {
-            final File tempRunFile = File.createTempFile(runName, ".txt");
+            File tempRunFile = File.createTempFile(runName, ".txt");
 
             IlluminaFlowcell flowcell = flowcellDao.findByBarcode(qtpJaxbBuilder.getFlowcellBarcode());
 
-            solexaRunResource.registerRun(new SolexaRunBean(qtpJaxbBuilder.getFlowcellBarcode(),
-                                                                   qtpJaxbBuilder.getFlowcellBarcode()
-                                                                           + format.format(runDate),
-                                                                   runDate, "SL-HAL",
-                                                                   tempRunFile.getAbsolutePath(),
-                                                                   null),
-                                                 flowcell);
+            IlluminaSequencingRun illuminaSequencingRun = illuminaSequencingRunFactory.buildDbFree(
+                    new SolexaRunBean(qtpJaxbBuilder.getFlowcellBarcode(),
+                            qtpJaxbBuilder.getFlowcellBarcode() + format.format(runDate),
+                            runDate, "SL-HAL", tempRunFile.getAbsolutePath(), null), flowcell);
+
+            ZimsIlluminaRunFactory zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(productOrderDao, bspSampleDataFetcher);
+            ZimsIlluminaRun zimsIlluminaRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(illuminaSequencingRun);
+            Assert.assertEquals(zimsIlluminaRun.getLanes().size(), 8, "Wrong number of lanes");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
