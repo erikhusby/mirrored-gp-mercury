@@ -30,6 +30,9 @@ public class BSPSampleDTO {
 
     private String aliquotSample;
 
+    /**
+     * These are all the same, but sometimes called different names -- collaboratorsSampleName, collaboratorsSampleID and collaboratorSampleName.
+     */
     private final String collaboratorsSampleName;
 
     private String collection;
@@ -95,6 +98,9 @@ public class BSPSampleDTO {
 
     private String collaboratorName;
 
+    /**
+     * Race and Ethnicity are used interchangeably.
+     */
     private String race;
 
     private String population;
@@ -127,6 +133,97 @@ public class BSPSampleDTO {
     }
 
     /**
+     * A constructor based upon the BSP sample search result data.  This would need to be updated is the BSP Sample Search gets changed.
+     *
+     * @param bspColumns The BSP Sample Search ws data
+     */
+    public BSPSampleDTO(String[] bspColumns) {
+        if (bspColumns.length > BSPSampleSearchColumn.PARTICIPANT_ID.columnNumber()) {
+            patientId = trim(bspColumns[BSPSampleSearchColumn.PARTICIPANT_ID.columnNumber()]);
+        } else {
+            patientId = null;
+        }
+        if (bspColumns.length > 7) {
+            organism = trim(bspColumns[7]);
+        } else {
+            organism = null;
+        }
+        if (bspColumns.length > BSPSampleSearchColumn.PRIMARY_DISEASE.columnNumber()) {
+            primaryDisease = trim(bspColumns[BSPSampleSearchColumn.PRIMARY_DISEASE.columnNumber()]);
+        } else {
+            primaryDisease = null;
+        }
+        if (bspColumns.length > BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID.columnNumber()) {
+            collaboratorsSampleName = trim(bspColumns[BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID.columnNumber()]);
+        } else {
+            collaboratorsSampleName = null;
+        }
+
+        if (bspColumns.length > BSPSampleSearchColumn.LSID.columnNumber()) {
+            sampleLsid = trim(bspColumns[BSPSampleSearchColumn.LSID.columnNumber()]);
+        }
+
+        if (bspColumns.length > BSPSampleSearchColumn.ROOT_SAMPLE.columnNumber()) {
+            rootSample = trim(bspColumns[BSPSampleSearchColumn.ROOT_SAMPLE.columnNumber()]);
+        }
+        if (bspColumns.length > BSPSampleSearchColumn.STOCK_SAMPLE.columnNumber()) {
+            stockSample = trim(bspColumns[BSPSampleSearchColumn.STOCK_SAMPLE.columnNumber()]);
+        }
+        if (bspColumns.length > BSPSampleSearchColumn.COLLECTION.columnNumber()) {
+            collection = trim(bspColumns[BSPSampleSearchColumn.COLLECTION.columnNumber()]);
+        }
+        if (bspColumns.length > BSPSampleSearchColumn.VOLUME.columnNumber()) {
+            volume = safeParseDouble(trim(bspColumns[BSPSampleSearchColumn.VOLUME.columnNumber()]));
+        }
+        if (bspColumns.length > BSPSampleSearchColumn.CONCENTRATION.columnNumber()) {
+            concentration = safeParseDouble(trim(bspColumns[BSPSampleSearchColumn.CONCENTRATION.columnNumber()]));
+        }
+        if (bspColumns.length > BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID.columnNumber()) {
+            collaboratorParticipantId = trim(bspColumns[BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID.columnNumber()]);
+        }
+        if (bspColumns.length > BSPSampleSearchColumn.MATERIAL_TYPE.columnNumber()) {
+            materialType = trim(bspColumns[BSPSampleSearchColumn.MATERIAL_TYPE.columnNumber()]);
+        }
+        if (bspColumns.length > BSPSampleSearchColumn.TOTAL_DNA.columnNumber()) {
+            total = safeParseDouble(trim(bspColumns[BSPSampleSearchColumn.TOTAL_DNA.columnNumber()]));
+        }
+        if (bspColumns.length > BSPSampleSearchColumn.SAMPLE_TYPE.columnNumber()) {
+            sampleType = trim(bspColumns[BSPSampleSearchColumn.SAMPLE_TYPE.columnNumber()]);
+        }
+        if (bspColumns.length > BSPSampleSearchColumn.GENDER.columnNumber()) {
+            gender = trim(bspColumns[BSPSampleSearchColumn.GENDER.columnNumber()]);
+        }
+        if (bspColumns.length > BSPSampleSearchColumn.STOCK_TYPE.columnNumber()) {
+            stockType = trim(bspColumns[BSPSampleSearchColumn.STOCK_TYPE.columnNumber()]);
+        }
+        if (bspColumns.length > BSPSampleSearchColumn.FINGERPRINT.columnNumber()) {
+            fingerprint = trim(bspColumns[BSPSampleSearchColumn.FINGERPRINT.columnNumber()]);
+        }
+        if (bspColumns.length > BSPSampleSearchColumn.CONTAINER_ID.columnNumber()) {
+            containerId = trim(bspColumns[BSPSampleSearchColumn.CONTAINER_ID.columnNumber()]);
+        }
+        if (bspColumns.length > BSPSampleSearchColumn.SAMPLE_ID.columnNumber()) {
+            sampleId = trim(bspColumns[BSPSampleSearchColumn.SAMPLE_ID.columnNumber()]);
+        }
+        if (bspColumns.length > BSPSampleSearchColumn.COLLABORATOR_NAME.columnNumber()) {
+            collaboratorName = trim(bspColumns[BSPSampleSearchColumn.COLLABORATOR_NAME.columnNumber()]);
+        }
+
+        /**
+         * Race and Ethnicity are used interchangeably.
+         */
+        if (bspColumns.length > BSPSampleSearchColumn.ETHNICITY.columnNumber()) {
+            race = trim(bspColumns[BSPSampleSearchColumn.ETHNICITY.columnNumber()]);
+        }
+        if (bspColumns.length > 21) {
+            population = trim(bspColumns[21]);
+        }
+        if (bspColumns.length > BSPSampleSearchColumn.RACKSCAN_MISMATCH.columnNumber()) {
+            sampleKitUploadRackscanMismatch = trim(bspColumns[BSPSampleSearchColumn.RACKSCAN_MISMATCH.columnNumber()]);
+        }
+    }
+
+    /**
      * Use this constructor for DatabaseFree tests with a non-UNKNOWN ffpeStatus value.
      */
     public BSPSampleDTO(String containerId, String stockSample, String rootSample, String aliquotSample,
@@ -150,15 +247,16 @@ public class BSPSampleDTO {
         this.gender = gender;
         this.stockType = stockType;
         this.fingerprint = fingerprint;
-        this.stockAtExport = null;
-        this.positiveControl = false;
-        this.negativeControl = false;
         this.sampleId = sampleId;
         this.collaboratorName = collaboratorName;
         this.race = race;
         this.population = population;
         this.ffpeStatus = ffpeStatus;
         this.sampleKitUploadRackscanMismatch = sampleKitUploadRackscanMismatch;
+
+        stockAtExport = null;
+        positiveControl = false;
+        negativeControl = false;
     }
 
     /**
@@ -173,12 +271,13 @@ public class BSPSampleDTO {
                         String collaboratorsSampleName,
                         String organism,
                         String patientId) {
-        this.primaryDisease = primaryDisease;
-        this.sampleLsid = lsid;
-        this.materialType = materialType;
-        this.collaboratorsSampleName = collaboratorsSampleName;
-        this.organism = organism;
-        this.patientId = patientId;
+        this.primaryDisease = trim(primaryDisease);
+        this.sampleLsid = trim(lsid);
+        this.materialType = trim(materialType);
+        this.collaboratorsSampleName = trim(collaboratorsSampleName);
+        this.organism = trim(organism);
+        this.patientId = trim(patientId);
+
         // Need to set this explicitly to be sure we don't trigger a lazy load in a DBFree test context
         this.ffpeStatus = FFPEStatus.NOT_DERIVED;
     }
@@ -192,12 +291,25 @@ public class BSPSampleDTO {
                         String materialType, String total, String sampleType, String primaryDisease,
                         String gender, String stockType, String fingerprint, String sampleId, String collaboratorName,
                         String race, String population, String sampleKitUploadRackscanMismatch) {
-
         this(containerId, stockSample, rootSample, aliquotSample, patientId, organism, collaboratorsSampleName, collection,
                 volume, concentration, sampleLsid, collaboratorParticipantId, materialType, total, sampleType, primaryDisease,
                 gender, stockType, fingerprint, sampleId, collaboratorName, race, population, sampleKitUploadRackscanMismatch, FFPEStatus.UNKNOWN);
     }
 
+    /**
+     * Trim off any empty white space after the string value.
+     *
+     * @param value The string to trim
+     * @return Trimmed value
+     */
+    private static String trim(String value) {
+        if (value != null) {
+            if (value.trim().length() > 0) {
+                return value.trim();
+            }
+        }
+        return null;
+    }
 
     public double getVolume() {
         return volume;

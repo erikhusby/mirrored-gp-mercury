@@ -32,7 +32,6 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
     public BSPSampleDataFetcher() {
     }
 
-
     /**
      * New one up using the given service.
      *
@@ -90,106 +89,15 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
         return sampleNameToDTO;
     }
 
+    /**
+     * Create a BSPSampleDTO based off the BSP Sample Search results.
+     *
+     * @param bspColumns The columns returned by BSP Sample Search web service
+     * @return A populated BSPSampleDTO object
+     */
     private static BSPSampleDTO toDTO(String[] bspColumns) {
-        String patientId = null;
-        String rootSample = null;
-        String stockSample = null;
-        String collaboratorSampleId = null;
-        String collection = null;
-        String volume = null;
-        String concentration = null;
-        String organism = null;
-        String sampleLsid = null;
-        String gender = null;
-        String collaboratorParticipantId = null;
-        String materialType = null;
-        String total = null;
-        String sampleType = null;
-        String primaryDisease = null;
-        String stockType = null;
-        String fingerprint = null;
-        String containerId = null;
-        String sampleId = null;
-        String collaboratorName = null;
-        String population = null;
-        String ethnicity = null;
-        String sampleKitUploadRackscanMismatch = null;
-
-        if (bspColumns.length > 0) {
-            patientId = getIfNotNullAndNotEmpty(bspColumns[0]);
-        }
-        if (bspColumns.length > 1) {
-            rootSample = getIfNotNullAndNotEmpty(bspColumns[1]);
-        }
-        if (bspColumns.length > 2) {
-            stockSample = getIfNotNullAndNotEmpty(bspColumns[2]);
-        }
-        if (bspColumns.length > 3) {
-            collaboratorSampleId = getIfNotNullAndNotEmpty(bspColumns[3]);
-        }
-        if (bspColumns.length > 4) {
-            collection = getIfNotNullAndNotEmpty(bspColumns[4]);
-        }
-        if (bspColumns.length > 5) {
-            volume = getIfNotNullAndNotEmpty(bspColumns[5]);
-        }
-        if (bspColumns.length > 6) {
-            concentration = getIfNotNullAndNotEmpty(bspColumns[6]);
-        }
-        if (bspColumns.length > 7) {
-            organism = getIfNotNullAndNotEmpty(bspColumns[7]);
-        }
-        if (bspColumns.length > 8) {
-            sampleLsid = getIfNotNullAndNotEmpty(bspColumns[8]);
-        }
-        if (bspColumns.length > 9) {
-            collaboratorParticipantId = getIfNotNullAndNotEmpty(bspColumns[9]);
-        }
-        if (bspColumns.length > 10) {
-            materialType = getIfNotNullAndNotEmpty(bspColumns[10]);
-        }
-        if (bspColumns.length > 11) {
-            total = getIfNotNullAndNotEmpty(bspColumns[11]);
-        }
-        if (bspColumns.length > 12) {
-            sampleType = getIfNotNullAndNotEmpty(bspColumns[12]);
-        }
-        if (bspColumns.length > 13) {
-            primaryDisease = getIfNotNullAndNotEmpty(bspColumns[13]);
-        }
-        if (bspColumns.length > 14) {
-            gender = getIfNotNullAndNotEmpty(bspColumns[14]);
-        }
-        if (bspColumns.length > 15) {
-            stockType = getIfNotNullAndNotEmpty(bspColumns[15]);
-        }
-        if (bspColumns.length > 16) {
-            fingerprint = getIfNotNullAndNotEmpty(bspColumns[16]);
-        }
-        if (bspColumns.length > 17) {
-            containerId = getIfNotNullAndNotEmpty(bspColumns[17]);
-        }
-        if (bspColumns.length > 18) {
-            sampleId = getIfNotNullAndNotEmpty(bspColumns[18]);
-        }
-        if (bspColumns.length > 19) {
-            collaboratorName = getIfNotNullAndNotEmpty(bspColumns[19]);
-        }
-        if (bspColumns.length > 20) {
-            ethnicity = getIfNotNullAndNotEmpty(bspColumns[20]);
-        }
-        if (bspColumns.length > 21) {
-            population = getIfNotNullAndNotEmpty(bspColumns[21]);
-        }
-        if (bspColumns.length > 22) {
-            sampleKitUploadRackscanMismatch = getIfNotNullAndNotEmpty(bspColumns[22]);
-        }
-
         /** beware of DBFreeBSPSampleTest: if you add columns here, you'll need to add them to the mock **/
-        return new BSPSampleDTO(containerId, stockSample, rootSample, null, patientId, organism, collaboratorSampleId, collection,
-                volume, concentration, sampleLsid, collaboratorParticipantId, materialType, total,
-                sampleType, primaryDisease, gender, stockType, fingerprint, sampleId, collaboratorName,
-                ethnicity, population, sampleKitUploadRackscanMismatch);
+        return new BSPSampleDTO(bspColumns);
     }
 
     private static String getIfNotNullAndNotEmpty(String value) {
@@ -201,6 +109,12 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
         return null;
     }
 
+    /**
+     * Get the list of column names that need to be supplied to BSP for the sample search web service.
+     *
+     * @param sampleNames The sample names
+     * @return List of the column names for the web service
+     */
     private List<String[]> getBSPResponse(Collection<String> sampleNames) {
         return service.runSampleSearch(sampleNames,
             BSPSampleSearchColumn.PARTICIPANT_ID,
@@ -225,7 +139,7 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
             BSPSampleSearchColumn.COLLABORATOR_NAME,
             BSPSampleSearchColumn.ETHNICITY,
             BSPSampleSearchColumn.RACE,
-            BSPSampleSearchColumn.SAMPLE_KIT_UPLOAD_RACKSCAN_MISMATCH);
+            BSPSampleSearchColumn.RACKSCAN_MISMATCH);
     }
 
     @Override
