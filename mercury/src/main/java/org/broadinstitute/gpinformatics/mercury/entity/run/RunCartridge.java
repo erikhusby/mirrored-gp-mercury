@@ -22,10 +22,7 @@ import java.util.Set;
 @Audited
 public abstract class RunCartridge extends LabVessel {
 
-    @OneToMany(cascade = CascadeType.PERSIST)
-    // have to specify name, generated aud name is too long for Oracle
-    @JoinTable(schema = "mercury", name = "seq_run_run_cartridges", joinColumns = @JoinColumn(name = "run_cartridge"),
-    inverseJoinColumns = @JoinColumn(name = "sequencing_run"))
+    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "runCartridge")
     Set<SequencingRun> sequencingRuns = new HashSet<SequencingRun>();
 
     public RunCartridge(String label) {
