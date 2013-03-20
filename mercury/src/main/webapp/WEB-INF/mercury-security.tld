@@ -23,14 +23,5 @@
             <rtexprvalue>true</rtexprvalue>
             <type>java.lang.String</type>
         </attribute>
-        <attribute>
-            <description>
-                Comma separated list of roles that this block will restrict access to -- restriction overrides inclusion.
-            </description>
-            <name>exclusionRoles</name>
-            <required>false</required>
-            <rtexprvalue>true</rtexprvalue>
-            <type>java.lang.String</type>
-        </attribute>
     </tag>
 </taglib>

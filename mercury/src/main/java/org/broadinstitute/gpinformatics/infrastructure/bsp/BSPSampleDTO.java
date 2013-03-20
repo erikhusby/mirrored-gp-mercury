@@ -252,22 +252,6 @@ public class BSPSampleDTO {
         return organism;
     }
 
-    public String getStockAtExport() {
-        throw new RuntimeException("not implemented yet.");
-//        return stockAtExport;
-    }
-
-    public boolean isPositiveControl() {
-        throw new RuntimeException("not implemented yet.");
-//        return positiveControl;
-    }
-
-    public boolean isNegativeControl() {
-        throw new RuntimeException("not implemented yet.");
-
-//        return negativeControl;
-    }
-
     public boolean getHasSampleKitUploadRackscanMismatch() {
         if (sampleKitUploadRackscanMismatch == null) {
             return false;
