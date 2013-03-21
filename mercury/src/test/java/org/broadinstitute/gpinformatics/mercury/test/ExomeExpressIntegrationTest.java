@@ -22,6 +22,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Scanner;
@@ -168,7 +169,8 @@ public class ExomeExpressIntegrationTest {
                 sendMessage(baseUrl, bettaLIMSMessage);
             }
             LabEventTest.QtpJaxbBuilder qtpJaxbBuilder = new LabEventTest.QtpJaxbBuilder(bettaLimsMessageFactory, testSuffix,
-                    hybridSelectionJaxbBuilder.getNormCatchBarcodes(), hybridSelectionJaxbBuilder.getNormCatchRackBarcode(),
+                    Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchBarcodes()),
+                    Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchRackBarcode()),
                     WorkflowName.EXOME_EXPRESS).invoke();
             for (BettaLIMSMessage bettaLIMSMessage : qtpJaxbBuilder.getMessageList()) {
                 sendMessage(baseUrl, bettaLIMSMessage);

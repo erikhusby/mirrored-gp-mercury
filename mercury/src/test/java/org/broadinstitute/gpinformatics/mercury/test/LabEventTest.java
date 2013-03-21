@@ -81,6 +81,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
+import org.broadinstitute.gpinformatics.mercury.presentation.transfervis.TransferVisualizerFrame;
 import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -95,6 +96,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -264,13 +266,12 @@ public class LabEventTest {
                 libraryConstructionEntityBuilder.getPondRegRackBarcode(),
                 libraryConstructionEntityBuilder.getPondRegTubeBarcodes()).invoke();
 
-        QtpEntityBuilder qtpEntityBuilder = new QtpEntityBuilder(bettaLimsMessageFactory, labEventFactory,
-                labEventHandler,
-                hybridSelectionEntityBuilder.getNormCatchRack(),
-                hybridSelectionEntityBuilder.getNormCatchRackBarcode(),
-                hybridSelectionEntityBuilder.getNormCatchBarcodes(),
-                hybridSelectionEntityBuilder
-                        .getMapBarcodeToNormCatchTubes(), WorkflowName.HYBRID_SELECTION);
+        QtpEntityBuilder qtpEntityBuilder = new QtpEntityBuilder(
+                bettaLimsMessageFactory, labEventFactory, labEventHandler,
+                Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchRack()),
+                Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchRackBarcode()),
+                Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchBarcodes()),
+                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), WorkflowName.HYBRID_SELECTION);
         qtpEntityBuilder.invoke();
 
         IlluminaFlowcell illuminaFlowcell = qtpEntityBuilder.getIlluminaFlowcell();
@@ -349,11 +350,21 @@ public class LabEventTest {
         Assert.assertNotNull(rework.getRapSheet(), "rework.getRapSheet cannot be null.");
         Assert.assertNotNull(rework.getRapSheet().getSample(), "RapSheet.sample cannot be null.");
 
+        if (false) {
+            TransferVisualizerFrame transferVisualizerFrame = new TransferVisualizerFrame();
+            transferVisualizerFrame.renderVessel(startingTube);
+            try {
+                Thread.sleep(500000L);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
         TransferEntityGrapher transferEntityGrapher = new TransferEntityGrapher();
         transferEntityGrapher.setMaxNumVesselsPerRequest(1000);
         Graph graph = new Graph();
         transferEntityGrapher.startWithTube(startingTube, graph, new ArrayList<TransferVisualizer.AlternativeId>());
-        Assert.assertEquals(graph.getMapIdToVertex().size(), 1255, "Wrong number of vertices");
+        Assert.assertEquals(graph.getMapIdToVertex().size(), 1208, "Wrong number of vertices");
 //        Controller.stopCPURecording();
     }
 
@@ -387,7 +398,6 @@ public class LabEventTest {
         // starting rack
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
         int rackPosition = 1;
-//        for (int rackPosition = 1; rackPosition <= NUM_POSITIONS_IN_RACK; rackPosition++) {
         for(ProductOrderSample poSample:productOrder.getSamples()) {
             String barcode = "R" + rackPosition;
             TwoDBarcodedTube bspAliquot = new TwoDBarcodedTube(barcode);
@@ -442,11 +452,11 @@ public class LabEventTest {
                 libraryConstructionEntityBuilder.getPondRegRackBarcode(),
                 libraryConstructionEntityBuilder.getPondRegTubeBarcodes()).invoke();
 
-        QtpEntityBuilder qtpEntityBuilder = new QtpEntityBuilder(bettaLimsMessageFactory, labEventFactory,
-                labEventHandler,
-                hybridSelectionEntityBuilder.getNormCatchRack(),
-                hybridSelectionEntityBuilder.getNormCatchRackBarcode(),
-                hybridSelectionEntityBuilder.getNormCatchBarcodes(),
+        QtpEntityBuilder qtpEntityBuilder = new QtpEntityBuilder(
+                bettaLimsMessageFactory, labEventFactory, labEventHandler,
+                Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchRack()),
+                Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchRackBarcode()),
+                Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchBarcodes()),
                 hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), WorkflowName.EXOME_EXPRESS);
         qtpEntityBuilder.invoke();
 
@@ -656,8 +666,8 @@ public class LabEventTest {
         Map<VesselPosition, TwoDBarcodedTube> mapPositionToTube = new HashMap<VesselPosition, TwoDBarcodedTube>();
         List<TwoDBarcodedTube> sageUnloadTubes = new ArrayList<TwoDBarcodedTube>(mapBarcodeToSageUnloadTubes.values());
         for (int i = 0; i < NUM_POSITIONS_IN_RACK; i++) {
-            mapPositionToTube.put(VesselPosition
-                    .getByName(bettaLimsMessageFactory.buildWellName(i + 1)), sageUnloadTubes.get(i));
+            mapPositionToTube.put(VesselPosition.getByName(bettaLimsMessageFactory.buildWellName(i + 1)),
+                    sageUnloadTubes.get(i));
         }
         TubeFormation sageUnloadRackRearrayed = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
         sageUnloadRackRearrayed.addRackOfTubes(new RackOfTubes("sageUnloadRearray", RackOfTubes.RackType.Matrix96));
@@ -668,8 +678,9 @@ public class LabEventTest {
         Assert.assertEquals(sageCleanupRack.getSampleInstances().size(), NUM_POSITIONS_IN_RACK, "Wrong number of sage cleanup samples");
 
         QtpEntityBuilder qtpEntityBuilder =
-                new QtpEntityBuilder(bettaLimsMessageFactory, labEventFactory, labEventHandler, sageCleanupRack,
-                        sageCleanupBarcode, sageCleanupTubeBarcodes, mapBarcodeToSageUnloadTubes,
+                new QtpEntityBuilder(bettaLimsMessageFactory, labEventFactory, labEventHandler,
+                        Collections.singletonList(sageCleanupRack), Collections.singletonList(sageCleanupBarcode),
+                        Collections.singletonList(sageCleanupTubeBarcodes), mapBarcodeToSageUnloadTubes,
                         WorkflowName.WHOLE_GENOME);
         qtpEntityBuilder.invoke();
 
@@ -2480,9 +2491,9 @@ public class LabEventTest {
         private final BettaLimsMessageFactory bettaLimsMessageFactory;
         private final LabEventFactory labEventFactory;
         private final LabEventHandler labEventHandler;
-        private final TubeFormation normCatchRack;
-        private final String normCatchRackBarcode;
-        private final List<String> normCatchBarcodes;
+        private final List<TubeFormation> normCatchRacks;
+        private final List<String> normCatchRackBarcodes;
+        private final List<List<String>> listLcsetListNormCatchBarcodes;
         private final Map<String, TwoDBarcodedTube> mapBarcodeToNormCatchTubes;
         private final WorkflowName workflowName;
 
@@ -2492,23 +2503,23 @@ public class LabEventTest {
 
         public QtpEntityBuilder(BettaLimsMessageFactory bettaLimsMessageFactory,
                                 LabEventFactory labEventFactory, LabEventHandler labEventHandler,
-                                TubeFormation normCatchRack,
-                                String normCatchRackBarcode, List<String> normCatchBarcodes,
+                                List<TubeFormation> normCatchRacks,
+                                List<String >normCatchRackBarcodes, List<List<String>> listLcsetListNormCatchBarcodes,
                                 Map<String, TwoDBarcodedTube> mapBarcodeToNormCatchTubes,
                                 WorkflowName workflowName) {
             this.bettaLimsMessageFactory = bettaLimsMessageFactory;
             this.labEventFactory = labEventFactory;
             this.labEventHandler = labEventHandler;
-            this.normCatchRack = normCatchRack;
-            this.normCatchRackBarcode = normCatchRackBarcode;
-            this.normCatchBarcodes = normCatchBarcodes;
+            this.normCatchRacks = normCatchRacks;
+            this.normCatchRackBarcodes = normCatchRackBarcodes;
+            this.listLcsetListNormCatchBarcodes = listLcsetListNormCatchBarcodes;
             this.mapBarcodeToNormCatchTubes = mapBarcodeToNormCatchTubes;
             this.workflowName = workflowName;
         }
 
         public void invoke() {
-            QtpJaxbBuilder qtpJaxbBuilder = new QtpJaxbBuilder(bettaLimsMessageFactory, "", normCatchBarcodes,
-                    normCatchRackBarcode,workflowName).invoke();
+            QtpJaxbBuilder qtpJaxbBuilder = new QtpJaxbBuilder(bettaLimsMessageFactory, "",
+                    listLcsetListNormCatchBarcodes, normCatchRackBarcodes, workflowName).invoke();
             PlateCherryPickEvent cherryPickJaxb = qtpJaxbBuilder.getPoolingTransferJaxb();
             final String poolRackBarcode = qtpJaxbBuilder.getPoolRackBarcode();
             PlateCherryPickEvent denatureJaxb = qtpJaxbBuilder.getDenatureJaxb();
@@ -2518,33 +2529,56 @@ public class LabEventTest {
             PlateTransferEventType flowcellTransferJaxb = qtpJaxbBuilder.getFlowcellTransferJaxb();
 
             ReceptacleEventType flowcellLoadJaxb = qtpJaxbBuilder.getFlowcellLoad();
+            Map<String, TwoDBarcodedTube> mapBarcodeToPoolTube = null;
 
-            // PoolingTransfer
-            validateWorkflow("PoolingTransfer", normCatchRack);
-            Map<String, TwoDBarcodedTube> mapBarcodeToPoolTube = new HashMap<String, TwoDBarcodedTube>();
-            LabEvent poolingEntity = labEventFactory.buildCherryPickRackToRackDbFree(cherryPickJaxb,
-                    new HashMap<String, TubeFormation>() {{
-                        put(normCatchRackBarcode, normCatchRack);
-                    }},
-                    new HashMap<String, RackOfTubes>(),
-                    mapBarcodeToNormCatchTubes,
-                    new HashMap<String, TubeFormation>() {{
-                        put(poolRackBarcode, null);
-                    }}, mapBarcodeToPoolTube, null
-            );
-            labEventHandler.processEvent(poolingEntity);
-            // asserts
-            final TubeFormation poolingRack = (TubeFormation) poolingEntity.getTargetLabVessels().iterator().next();
-            Set<SampleInstance> pooledSampleInstances = poolingRack.getContainerRole().getSampleInstancesAtPosition(VesselPosition.A01);
-            Assert.assertEquals(pooledSampleInstances.size(), normCatchRack.getSampleInstances().size(), "Wrong number of pooled samples");
+            int i = 0;
+            List<TwoDBarcodedTube> poolTubes = new ArrayList<TwoDBarcodedTube>();
+            List<TubeFormation> poolingRacks = new ArrayList<TubeFormation>();
+            for (final TubeFormation normCatchRack : normCatchRacks) {
+                // PoolingTransfer
+                validateWorkflow("PoolingTransfer", normCatchRack);
+                mapBarcodeToPoolTube = new HashMap<String, TwoDBarcodedTube>();
+                final int finalI = i;
+                LabEvent poolingEntity = labEventFactory.buildCherryPickRackToRackDbFree(cherryPickJaxb,
+                        new HashMap<String, TubeFormation>() {{
+                            put(normCatchRackBarcodes.get(finalI), normCatchRack);
+                        }},
+                        new HashMap<String, RackOfTubes>(),
+                        mapBarcodeToNormCatchTubes,
+                        new HashMap<String, TubeFormation>() {{
+                            put(poolRackBarcode, null);
+                        }}, mapBarcodeToPoolTube, null
+                );
+                labEventHandler.processEvent(poolingEntity);
+                // asserts
+                TubeFormation poolingRack = (TubeFormation) poolingEntity.getTargetLabVessels().iterator().next();
+                poolingRacks.add(poolingRack);
+                poolTubes.add(poolingRack.getContainerRole().getVesselAtPosition(VesselPosition.A01));
+                Set<SampleInstance> pooledSampleInstances = poolingRack.getContainerRole().getSampleInstancesAtPosition(VesselPosition.A01);
+                Assert.assertEquals(pooledSampleInstances.size(), normCatchRack.getSampleInstances().size(), "Wrong number of pooled samples");
+                i++;
+            }
+
+            TubeFormation rearrayedPoolingRack;
+            if (poolTubes.size() > 1) {
+                Map<VesselPosition, TwoDBarcodedTube> mapPositionToTube = new HashMap<VesselPosition, TwoDBarcodedTube>();
+                for (int j = 0; j < poolTubes.size(); j++) {
+                    mapPositionToTube.put(VesselPosition.getByName(bettaLimsMessageFactory.buildWellName(j + 1)),
+                            poolTubes.get(j));
+                }
+                rearrayedPoolingRack = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
+                rearrayedPoolingRack.addRackOfTubes(new RackOfTubes("poolRearray", RackOfTubes.RackType.Matrix96));
+            } else {
+                rearrayedPoolingRack = poolingRacks.get(0);
+            }
 
             // DenatureTransfer
-            validateWorkflow("DenatureTransfer", poolingRack);
+            validateWorkflow("DenatureTransfer", rearrayedPoolingRack);
             Map<String, TwoDBarcodedTube> mapBarcodeToDenatureTube = new HashMap<String, TwoDBarcodedTube>();
+            Map<String, TubeFormation> mapBarcodeToPoolRack = new HashMap<String, TubeFormation>();
+            mapBarcodeToPoolRack.put(poolRackBarcode, rearrayedPoolingRack);
             LabEvent denatureEntity = labEventFactory.buildCherryPickRackToRackDbFree(denatureJaxb,
-                    new HashMap<String, TubeFormation>() {{
-                        put(poolRackBarcode, poolingRack);
-                    }},
+                    mapBarcodeToPoolRack,
                     new HashMap<String, RackOfTubes>(),
                     mapBarcodeToPoolTube,
                     new HashMap<String, TubeFormation>() {{
@@ -2555,10 +2589,15 @@ public class LabEventTest {
             // asserts
             denatureRack = (TubeFormation) denatureEntity.getTargetLabVessels().iterator().next();
             Set<SampleInstance> denaturedSampleInstances = denatureRack.getContainerRole().getSampleInstancesAtPosition(VesselPosition.A01);
-            Assert.assertEquals(denaturedSampleInstances.size(), normCatchRack.getSampleInstances().size(), "Wrong number of denatured samples");
+            int catchSampleInstanceCount = 0;
+            for (TubeFormation normCatchRack : normCatchRacks) {
+                catchSampleInstanceCount += normCatchRack.getSampleInstances().size();
+            }
+
+            Assert.assertEquals(denaturedSampleInstances.size(), catchSampleInstanceCount, "Wrong number of denatured samples");
             Assert.assertEquals(denatureRack.getContainerRole().getVesselAtPosition(VesselPosition.A01).getSampleInstances().size(),
-                    normCatchRack.getSampleInstances().size(), "Wrong number of denatured samples");
-            LabEvent flowcellTransferEntity=null;
+                    catchSampleInstanceCount, "Wrong number of denatured samples");
+            LabEvent flowcellTransferEntity;
             // StripTubeBTransfer
             if (workflowName != WorkflowName.EXOME_EXPRESS) {
                 validateWorkflow("StripTubeBTransfer", denatureRack);
@@ -2580,7 +2619,7 @@ public class LabEventTest {
                 stripTube = (StripTube) stripTubeTransferEntity.getTargetLabVessels().iterator().next();
                 Assert.assertEquals(
                         stripTube.getContainerRole().getSampleInstancesAtPosition(VesselPosition.TUBE1).size(),
-                        normCatchRack.getSampleInstances().size(),
+                        catchSampleInstanceCount,
                         "Wrong number of samples in strip tube well");
 
                 // FlowcellTransfer
@@ -2592,7 +2631,7 @@ public class LabEventTest {
                 illuminaFlowcell = (IlluminaFlowcell) flowcellTransferEntity.getTargetLabVessels().iterator().next();
                 Set<SampleInstance> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
                         VesselPosition.LANE1);
-                Assert.assertEquals(lane1SampleInstances.size(), normCatchRack.getSampleInstances().size(),
+                Assert.assertEquals(lane1SampleInstances.size(), normCatchRacks.get(0).getSampleInstances().size(),
                         "Wrong number of samples in flowcell lane");
                 //FlowcellLoaded
                 validateWorkflow(LabEventType.FLOWCELL_LOADED.getName(), illuminaFlowcell);
@@ -2756,11 +2795,11 @@ public class LabEventTest {
     public static class QtpJaxbBuilder {
         private final BettaLimsMessageFactory bettaLimsMessageFactory;
         private final String testPrefix;
-        private final List<String> normCatchBarcodes;
-        private final String normCatchRackBarcode;
+        private final List<List<String>> listLcsetListNormCatchBarcodes;
+        private final List<String> normCatchRackBarcodes;
 
         private String poolRackBarcode;
-        private String poolTubeBarcode;
+        private List<String> poolTubeBarcodes = new ArrayList<String>();
         private PlateCherryPickEvent poolingTransferJaxb;
         private String denatureRackBarcode;
         private PlateCherryPickEvent denatureJaxb;
@@ -2775,11 +2814,11 @@ public class LabEventTest {
         private String denatureTubeBarcode;
 
         public QtpJaxbBuilder(BettaLimsMessageFactory bettaLimsMessageFactory, String testPrefix,
-                List<String> normCatchBarcodes, String normCatchRackBarcode, WorkflowName workflowName) {
+                List<List<String>> listLcsetListNormCatchBarcodes, List<String> normCatchRackBarcodes, WorkflowName workflowName) {
             this.bettaLimsMessageFactory = bettaLimsMessageFactory;
             this.testPrefix = testPrefix;
-            this.normCatchBarcodes = normCatchBarcodes;
-            this.normCatchRackBarcode = normCatchRackBarcode;
+            this.listLcsetListNormCatchBarcodes = listLcsetListNormCatchBarcodes;
+            this.normCatchRackBarcodes = normCatchRackBarcodes;
             this.workflowName = workflowName;
         }
 
@@ -2787,8 +2826,8 @@ public class LabEventTest {
             return poolRackBarcode;
         }
 
-        public String getPoolTubeBarcode() {
-            return poolTubeBarcode;
+        public List<String> getPoolTubeBarcodes() {
+            return poolTubeBarcodes;
         }
 
         public PlateCherryPickEvent getPoolingTransferJaxb() {
@@ -2836,35 +2875,39 @@ public class LabEventTest {
         }
 
         public QtpJaxbBuilder invoke() {
-            // PoolingTransfer
-            poolRackBarcode = "PoolRack" + testPrefix;
-            List<BettaLimsMessageFactory.CherryPick> poolingCherryPicks =
-                    new ArrayList<BettaLimsMessageFactory.CherryPick>();
-            List<String> poolTubeBarcodes = new ArrayList<String>();
-            for (int rackPosition = 1; rackPosition <= normCatchBarcodes.size(); rackPosition++) {
-                poolingCherryPicks.add(new BettaLimsMessageFactory.CherryPick(normCatchRackBarcode,
-                        bettaLimsMessageFactory.buildWellName(rackPosition), poolRackBarcode,
-                        "A01"));
-                poolTubeBarcodes.add("Pool" + testPrefix + rackPosition);
+            int i = 0;
+            for (List<String> normCatchBarcodes : listLcsetListNormCatchBarcodes) {
+                // PoolingTransfer
+                poolRackBarcode = "PoolRack" + testPrefix;
+                List<BettaLimsMessageFactory.CherryPick> poolingCherryPicks =
+                        new ArrayList<BettaLimsMessageFactory.CherryPick>();
+                for (int rackPosition = 1; rackPosition <= normCatchBarcodes.size(); rackPosition++) {
+                    poolingCherryPicks.add(new BettaLimsMessageFactory.CherryPick(normCatchRackBarcodes.get(i),
+                            bettaLimsMessageFactory.buildWellName(rackPosition), poolRackBarcode,
+                            "A01"));
+                }
+                poolTubeBarcodes.add("Pool" + testPrefix + i);
+                poolingTransferJaxb = bettaLimsMessageFactory.buildCherryPick("PoolingTransfer",
+                        Arrays.asList(normCatchRackBarcodes.get(i)), Collections.singletonList(normCatchBarcodes),
+                        poolRackBarcode, Collections.singletonList(poolTubeBarcodes.get(i)), poolingCherryPicks);
+                addMessage(messageList, bettaLimsMessageFactory, poolingTransferJaxb);
+                i++;
             }
-            poolTubeBarcode = "Pool" + testPrefix + "1";
-            poolingTransferJaxb = bettaLimsMessageFactory.buildCherryPick("PoolingTransfer",
-                    Arrays.asList(normCatchRackBarcode), Arrays.asList(normCatchBarcodes), poolRackBarcode,
-                    poolTubeBarcodes, poolingCherryPicks);
-            addMessage(messageList, bettaLimsMessageFactory, poolingTransferJaxb);
 
             // DenatureTransfer
             denatureRackBarcode = "DenatureRack" + testPrefix;
-            List<BettaLimsMessageFactory.CherryPick> denatureCherryPicks =
-                    new ArrayList<BettaLimsMessageFactory.CherryPick>();
+            List<BettaLimsMessageFactory.CherryPick> denatureCherryPicks = new ArrayList<BettaLimsMessageFactory.CherryPick>();
             List<String> denatureTubeBarcodes = new ArrayList<String>();
-            denatureCherryPicks.add(new BettaLimsMessageFactory.CherryPick(poolRackBarcode, "A01", denatureRackBarcode,
-                    "A01"));
-            denatureTubeBarcode = "DenatureTube" + testPrefix + "1";
-            denatureTubeBarcodes.add(denatureTubeBarcode);
-            denatureJaxb = bettaLimsMessageFactory.buildCherryPick("DenatureTransfer", Arrays.asList(poolRackBarcode),
-                    Arrays.asList(poolTubeBarcodes), denatureRackBarcode,
-                    denatureTubeBarcodes, denatureCherryPicks);
+            for (int j = 0; j < poolTubeBarcodes.size(); j++) {
+                denatureCherryPicks.add(new BettaLimsMessageFactory.CherryPick(poolRackBarcode,
+                        bettaLimsMessageFactory.buildWellName(j + 1), denatureRackBarcode,
+                        bettaLimsMessageFactory.buildWellName(j + 1)));
+                denatureTubeBarcode = "DenatureTube" + testPrefix + "1";
+                denatureTubeBarcodes.add(denatureTubeBarcode);
+            }
+            denatureJaxb = bettaLimsMessageFactory.buildCherryPick("DenatureTransfer",
+                    Collections.singletonList(poolRackBarcode), Collections.singletonList(poolTubeBarcodes),
+                    denatureRackBarcode, denatureTubeBarcodes, denatureCherryPicks);
             addMessage(messageList, bettaLimsMessageFactory, denatureJaxb);
 
             if (workflowName != WorkflowName.EXOME_EXPRESS) {

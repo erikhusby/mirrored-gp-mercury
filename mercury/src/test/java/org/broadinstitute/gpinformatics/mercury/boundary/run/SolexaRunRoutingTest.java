@@ -50,6 +50,7 @@ import javax.ws.rs.core.UriInfo;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -261,9 +262,9 @@ public class SolexaRunRoutingTest {
 
         LabEventTest.QtpEntityBuilder qtpEntityBuilder =
                 new LabEventTest.QtpEntityBuilder(bettaLimsMessageFactory, labEventFactory, labEventHandler,
-                                                         sageCleanupRack,
-                                                         sageCleanupBarcode, sageCleanupTubeBarcodes,
-                                                         mapBarcodeToSageUnloadTubes, WorkflowName.WHOLE_GENOME);
+                        Collections.singletonList(sageCleanupRack), Collections.singletonList(sageCleanupBarcode),
+                        Collections.singletonList(sageCleanupTubeBarcodes), mapBarcodeToSageUnloadTubes,
+                        WorkflowName.WHOLE_GENOME);
 
         qtpEntityBuilder.invoke();
 

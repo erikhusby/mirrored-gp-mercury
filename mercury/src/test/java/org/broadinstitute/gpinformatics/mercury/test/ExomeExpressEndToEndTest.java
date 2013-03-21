@@ -379,17 +379,12 @@ public class ExomeExpressEndToEndTest {
             //
             //            }
 
-            LabEventTest.QtpEntityBuilder qtpEntityBuilder = new LabEventTest.QtpEntityBuilder(bettaLimsMessageFactory,
-                    labEventFactory,
-                    labEventHandler,
-                    hybridSelectionEntityBuilder
-                            .getNormCatchRack(),
-                    hybridSelectionEntityBuilder
-                            .getNormCatchRackBarcode(),
-                    hybridSelectionEntityBuilder
-                            .getNormCatchBarcodes(),
-                    hybridSelectionEntityBuilder
-                            .getMapBarcodeToNormCatchTubes(),
+            LabEventTest.QtpEntityBuilder qtpEntityBuilder = new LabEventTest.QtpEntityBuilder(
+                    bettaLimsMessageFactory, labEventFactory, labEventHandler,
+                    Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchRack()),
+                    Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchRackBarcode()),
+                    Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchBarcodes()),
+                    hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(),
                     WorkflowName.HYBRID_SELECTION);
             qtpEntityBuilder.invoke();
 

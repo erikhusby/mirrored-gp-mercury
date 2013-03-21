@@ -26,6 +26,7 @@ import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRu
 import org.broadinstitute.gpinformatics.mercury.control.vessel.IndexedPlateFactory;
 import org.broadinstitute.gpinformatics.mercury.control.zims.ZimsIlluminaRunFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.ImportFromSquidTest;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
@@ -268,14 +269,15 @@ public class BettalimsMessageResourceTest extends Arquillian {
         }
 
         LabEventTest.QtpJaxbBuilder qtpJaxbBuilder=new LabEventTest.QtpJaxbBuilder(bettaLimsMessageFactory, testPrefix,
-                hybridSelectionJaxbBuilder.getNormCatchBarcodes(), hybridSelectionJaxbBuilder.getNormCatchRackBarcode(),
+                Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchBarcodes()),
+                Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchRackBarcode()),
                 WorkflowName.HYBRID_SELECTION).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : qtpJaxbBuilder.getMessageList()) {
             sendMessage(bettaLIMSMessage);
         }
 
 //        Controller.stopCPURecording();
-        TwoDBarcodedTube poolTube = twoDBarcodedTubeDAO.findByBarcode(qtpJaxbBuilder.getPoolTubeBarcode());
+        TwoDBarcodedTube poolTube = twoDBarcodedTubeDAO.findByBarcode(qtpJaxbBuilder.getPoolTubeBarcodes().get(0));
         Assert.assertEquals(poolTube.getSampleInstances().size(), LabEventTest.NUM_POSITIONS_IN_RACK,
                 "Wrong number of sample instances");
 
@@ -299,25 +301,31 @@ public class BettalimsMessageResourceTest extends Arquillian {
     }
 
     private void sendMessage(BettaLIMSMessage bettaLIMSMessage) {
-        // In JVM
-        bettalimsMessageResource.processMessage(bettaLIMSMessage);
-        twoDBarcodedTubeDAO.flush();
-        twoDBarcodedTubeDAO.clear();
+        if (true) {
+            // In JVM
+            bettalimsMessageResource.processMessage(bettaLIMSMessage);
+            twoDBarcodedTubeDAO.flush();
+            twoDBarcodedTubeDAO.clear();
+        }
 
-        // JAX-RS
-//        String response = Client.create().resource(ImportFromSquidTest.TEST_MERCURY_URL + "/rest/bettalimsmessage")
-//                .type(MediaType.APPLICATION_XML_TYPE)
-//                .accept(MediaType.APPLICATION_XML)
-//                .entity(bettaLIMSMessage)
-//                .post(String.class);
+        if (false) {
+            // JAX-RS
+            String response = Client.create().resource(ImportFromSquidTest.TEST_MERCURY_URL + "/rest/bettalimsmessage")
+                    .type(MediaType.APPLICATION_XML_TYPE)
+                    .accept(MediaType.APPLICATION_XML)
+                    .entity(bettaLIMSMessage)
+                    .post(String.class);
+        }
 
-        // JMS
-//        BettalimsMessageBeanTest.sendJmsMessage(BettalimsMessageBeanTest.marshalMessage(bettaLIMSMessage));
-//        try {
-//            Thread.sleep(2000L);
-//        } catch (InterruptedException e) {
-//            throw new RuntimeException(e);
-//        }
+        if (false) {
+            // JMS
+            BettalimsMessageBeanTest.sendJmsMessage(BettalimsMessageBeanTest.marshalMessage(bettaLIMSMessage));
+            try {
+                Thread.sleep(2000L);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     @Test(enabled=false, groups=EXTERNAL_INTEGRATION, dataProvider=Arquillian.ARQUILLIAN_DATA_PROVIDER)

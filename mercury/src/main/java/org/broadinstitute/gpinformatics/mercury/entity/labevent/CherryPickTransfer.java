@@ -34,11 +34,23 @@ public class CherryPickTransfer extends VesselTransfer {
 
     public CherryPickTransfer(VesselContainer<?> sourceVesselContainer, VesselPosition sourcePosition,
             VesselContainer<?> targetVesselContainer, VesselPosition targetPosition, LabEvent labEvent) {
+        if (sourceVesselContainer == null) {
+            throw new RuntimeException("sourceVesselContainer must not be null");
+        }
+        if (sourcePosition == null) {
+            throw new RuntimeException("sourcePosition must not be null");
+        }
+        if (targetVesselContainer == null) {
+            throw new RuntimeException("targetVesselContainer must not be null");
+        }
+        if (targetPosition == null) {
+            throw new RuntimeException("targetPosition must not be null");
+        }
         this.labEvent = labEvent;
-        this.sourceVessel = sourceVesselContainer.getEmbedder();
+        sourceVessel = sourceVesselContainer.getEmbedder();
         sourceVesselContainer.getCherryPickTransfersFrom().add(this);
         this.sourcePosition = sourcePosition;
-        this.targetVessel = targetVesselContainer.getEmbedder();
+        targetVessel = targetVesselContainer.getEmbedder();
         targetVesselContainer.getCherryPickTransfersTo().add(this);
         this.targetPosition = targetPosition;
     }
