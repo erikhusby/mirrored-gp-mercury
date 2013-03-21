@@ -25,13 +25,8 @@ public class OnRiskCriteriaTest {
     public void testConcentrationOnRisk() {
 
         // Create one sample with LOW_NUMBER for the conc, and one with the HIGH_NUMBER for the conc to be tested
-        BSPSampleDTO lowNumSample = BSPSampleDTO.createDummy();
-        lowNumSample.setConcentration(Double.parseDouble(LOW_NUMBER));
-        lowNumSample.setSampleId("TST-1234");
-
-        BSPSampleDTO highNumSample = BSPSampleDTO.createDummy();
-        highNumSample.setConcentration(Double.parseDouble(HIGH_NUMBER));
-        highNumSample.setSampleId("TST-1235");
+        BSPSampleDTO lowNumSample = BSPSampleDTO.createConcentrationSampleDummy(LOW_NUMBER, "TST-1234");
+        BSPSampleDTO highNumSample =  BSPSampleDTO.createConcentrationSampleDummy(HIGH_NUMBER, "TST-1235");
 
         handleNumericOnRisk(lowNumSample, highNumSample, RiskCriterion.RiskCriteriaType.CONCENTRATION);
     }
@@ -41,15 +36,8 @@ public class OnRiskCriteriaTest {
      */
     @Test
     public void testVolumeOnRisk() {
-
-        // Create one sample with LOW_NUMBER for the vol, and one with the HIGH_NUMBER for the vol to be tested
-        BSPSampleDTO lowNumSample = BSPSampleDTO.createDummy();
-        lowNumSample.setVolume(Double.parseDouble(LOW_NUMBER));
-        lowNumSample.setSampleId("TST-1234");
-
-        BSPSampleDTO highNumSample = BSPSampleDTO.createDummy();
-        highNumSample.setVolume(Double.parseDouble(HIGH_NUMBER));
-        highNumSample.setSampleId("TST-1235");
+        BSPSampleDTO lowNumSample = BSPSampleDTO.createVolumeSampleDummy(LOW_NUMBER, "TST-1234");
+        BSPSampleDTO highNumSample =  BSPSampleDTO.createVolumeSampleDummy(HIGH_NUMBER, "TST-1235");
 
         handleNumericOnRisk(lowNumSample, highNumSample, RiskCriterion.RiskCriteriaType.VOLUME);
     }
@@ -59,16 +47,8 @@ public class OnRiskCriteriaTest {
      */
     @Test
     public void testTotalDnaOnRisk() {
-
-        // Create one sample with LOW_NUMBER for the total DNA, and one with the HIGH_NUMBER for the totalDNA
-        // to be tested
-        BSPSampleDTO lowNumSample = BSPSampleDTO.createDummy();
-        lowNumSample.setTotal(Double.parseDouble(LOW_NUMBER));
-        lowNumSample.setSampleId("TST-1234");
-
-        BSPSampleDTO highNumSample = BSPSampleDTO.createDummy();
-        highNumSample.setTotal(Double.parseDouble(HIGH_NUMBER));
-        highNumSample.setSampleId("TST-1235");
+        BSPSampleDTO lowNumSample = BSPSampleDTO.createTotalDNASampleDummy(LOW_NUMBER, "TST-1234");
+        BSPSampleDTO highNumSample =  BSPSampleDTO.createTotalDNASampleDummy(HIGH_NUMBER, "TST-1235");
 
         handleNumericOnRisk(lowNumSample, highNumSample, RiskCriterion.RiskCriteriaType.TOTAL_DNA);
     }
@@ -80,13 +60,8 @@ public class OnRiskCriteriaTest {
     public void testWGAOnRisk() {
 
         // Create one sample with WGA for material and one with non-WGA for material
-        BSPSampleDTO hasWgaDummy = BSPSampleDTO.createDummy();
-        hasWgaDummy.setMaterialType("DNA:DNA WGA Cleaned");
-        hasWgaDummy.setSampleId("TST-1234");
-
-        BSPSampleDTO nonWgaDummy = BSPSampleDTO.createDummy();
-        nonWgaDummy.setMaterialType("DNA:DNA Genomic");
-        nonWgaDummy.setSampleId("TST-1235");
+        BSPSampleDTO hasWgaDummy = BSPSampleDTO.createMaterialTypeSampleDummy("DNA:DNA WGA Cleaned", "TST-1234");
+        BSPSampleDTO nonWgaDummy = BSPSampleDTO.createMaterialTypeSampleDummy("DNA:DNA Genomic", "TST-1235");
 
         handleBooleanOnRisk(hasWgaDummy, nonWgaDummy, RiskCriterion.RiskCriteriaType.WGA);
     }
@@ -98,13 +73,11 @@ public class OnRiskCriteriaTest {
     public void testFFPEOnRisk() {
 
         // Create one sample with FFPE status of true, and one FFPE status of false
-        BSPSampleDTO hasWgaDummy = BSPSampleDTO.createDummy();
+        BSPSampleDTO hasWgaDummy = BSPSampleDTO.createMaterialTypeSampleDummy("DNA:DNA WGA Cleaned", "TST-1234");
         hasWgaDummy.setFfpeStatus(true);
-        hasWgaDummy.setSampleId("TST-1234");
 
-        BSPSampleDTO nonWgaDummy = BSPSampleDTO.createDummy();
+        BSPSampleDTO nonWgaDummy = BSPSampleDTO.createMaterialTypeSampleDummy("DNA:DNA WGA Cleaned", "TST-1235");
         nonWgaDummy.setFfpeStatus(false);
-        nonWgaDummy.setSampleId("TST-1235");
 
         handleBooleanOnRisk(hasWgaDummy, nonWgaDummy, RiskCriterion.RiskCriteriaType.FFPE);
     }

@@ -69,12 +69,10 @@ public class ProductOrderSampleTest {
             addOn.setPrimaryPriceItem(new PriceItem("A", "B", "C", "D"));
             product.addAddOn(addOn);
 
-            BSPSampleDTO bspSampleDTO1 = BSPSampleDTO.createDummy();
-            bspSampleDTO1.setMaterialType(BSP_MATERIAL_TYPE.getFullName());
+            BSPSampleDTO bspSampleDTO1 = BSPSampleDTO.createMaterialTypeDummy(BSP_MATERIAL_TYPE.getFullName());
             sample1 = new ProductOrderSample("Sample1", bspSampleDTO1);
 
-            BSPSampleDTO bspSampleDTO2 = BSPSampleDTO.createDummy();
-            bspSampleDTO2.setMaterialType("XXX:XXX");
+            BSPSampleDTO bspSampleDTO2 = BSPSampleDTO.createMaterialTypeDummy("XXX:XXX");
             sample2 = new ProductOrderSample("Sample2", bspSampleDTO2);
 
             List<ProductOrderSample> samples = new ArrayList<ProductOrderSample>();

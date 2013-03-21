@@ -83,21 +83,10 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
         List<String[]> results = getBSPResponse(sampleNames);
 
         for (String[] result : results) {
-            BSPSampleDTO bspDTO = toDTO(result);
+            BSPSampleDTO bspDTO = new BSPSampleDTO(result, BSPSampleSearchColumn.PDO_SEARCH);
             sampleNameToDTO.put(bspDTO.getSampleId(), bspDTO);
         }
         return sampleNameToDTO;
-    }
-
-    /**
-     * Create a BSPSampleDTO based off the BSP Sample Search results.
-     *
-     * @param bspColumns The columns returned by BSP Sample Search web service
-     * @return A populated BSPSampleDTO object
-     */
-    private static BSPSampleDTO toDTO(String[] bspColumns) {
-        /** beware of DBFreeBSPSampleTest: if you add columns here, you'll need to add them to the mock **/
-        return new BSPSampleDTO(bspColumns);
     }
 
     private static String getIfNotNullAndNotEmpty(String value) {

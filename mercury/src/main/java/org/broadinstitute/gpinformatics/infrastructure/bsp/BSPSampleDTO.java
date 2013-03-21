@@ -5,9 +5,7 @@ import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 
 import javax.annotation.Nonnull;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * A simple DTO for fetching commonly used data from BSP.
@@ -22,58 +20,7 @@ public class BSPSampleDTO {
 
     public static final String ACTIVE_IND = "Active Stock";
 
-    private final String patientId;
-
-    private String stockSample;
-
-    private String rootSample;
-
-    private String aliquotSample;
-
-    /**
-     * These are all the same, but sometimes called different names -- collaboratorsSampleName, collaboratorsSampleID and collaboratorSampleName.
-     */
-    private final String collaboratorsSampleName;
-
-    private String collection;
-
-    private double volume;
-
-    private double concentration;
-
-    private final String organism;
-
-    private String stockAtExport;
-
-    private Boolean positiveControl;
-
-    private Boolean negativeControl;
-
-    private String sampleKitUploadRackscanMismatch;
-
-    private String sampleLsid;
-
-    private String collaboratorParticipantId;
-
-    private String materialType;
-
-    private double total;
-
-    private double rin;
-
-    private String sampleType;
-
-    private final String primaryDisease;
-
-    private String gender;
-
-    private String stockType;
-
-    private String fingerprint;
-
-    private String containerId;
-
-    private String sampleId;
+    private final Map<BSPSampleSearchColumn, String> columnToValue = new HashMap<BSPSampleSearchColumn, String>();
 
     public enum FFPEStatus {
         DERIVED(true),
@@ -98,15 +45,6 @@ public class BSPSampleDTO {
 
     private FFPEStatus ffpeStatus = FFPEStatus.UNKNOWN;
 
-    private String collaboratorName;
-
-    /**
-     * Race and Ethnicity are used interchangeably.
-     */
-    private String race;
-
-    private String population;
-
     private List<String> plasticBarcodes;
 
     /**
@@ -130,6 +68,26 @@ public class BSPSampleDTO {
         return 0;
     }
 
+    public static BSPSampleDTO createConcentrationSampleDummy(String concentration, String sampleId) {
+        return new BSPSampleDTO("", "", "", "", "", "", "", "", "", concentration, "", "", "", "", "", "", "", "", "", sampleId, "", "", "", "", FFPEStatus.NOT_DERIVED);
+    }
+
+    public static BSPSampleDTO createVolumeSampleDummy(String volume, String sampleId) {
+        return new BSPSampleDTO("", "", "", "", "", "", "", "", volume, "", "", "", "", "", "", "", "", "", "", sampleId, "", "", "", "", FFPEStatus.NOT_DERIVED);
+    }
+
+    public static BSPSampleDTO createTotalDNASampleDummy(String totalDNA, String sampleId) {
+        return new BSPSampleDTO("", "", "", "", "", "", "", "", "", "", "", "", "", totalDNA, "", "", "", "", "", sampleId, "", "", "", "", FFPEStatus.NOT_DERIVED);
+    }
+
+    public static BSPSampleDTO createMaterialTypeDummy(String materialType) {
+        return new BSPSampleDTO("", "", materialType, "", "", "");
+    }
+
+    public static BSPSampleDTO createMaterialTypeSampleDummy(String materialType, String sampleId) {
+        return new BSPSampleDTO("", "", "", "", "", "", "", "", "", "", "", "", materialType, "", "", "", "", "", "", sampleId, "", "", "", "", FFPEStatus.NOT_DERIVED);
+    }
+
     public static BSPSampleDTO createDummy() {
         return new BSPSampleDTO("", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", FFPEStatus.NOT_DERIVED);
     }
@@ -147,95 +105,67 @@ public class BSPSampleDTO {
      *
      * @param bspColumns The BSP Sample Search ws data
      */
-    public BSPSampleDTO(String[] bspColumns) {
+    public BSPSampleDTO(String[] bspColumns, BSPSampleSearchColumn[] searchColumns) {
 
-        patientId = getValue(bspColumns, BSPSampleSearchColumn.PARTICIPANT_ID.columnNumber());
-        organism = getValue(bspColumns, 7);
-        primaryDisease = getValue(bspColumns, BSPSampleSearchColumn.PRIMARY_DISEASE.columnNumber());
-        collaboratorsSampleName = getValue(bspColumns, BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID.columnNumber());
-        sampleLsid = getValue(bspColumns, BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID.columnNumber());
-        rootSample = getValue(bspColumns, BSPSampleSearchColumn.ROOT_SAMPLE.columnNumber());
-        stockSample = getValue(bspColumns, BSPSampleSearchColumn.STOCK_SAMPLE.columnNumber());
-        collection = getValue(bspColumns, BSPSampleSearchColumn.COLLECTION.columnNumber());
-        volume = safeParseDouble(getValue(bspColumns, BSPSampleSearchColumn.VOLUME.columnNumber()));
-        concentration = safeParseDouble(getValue(bspColumns, BSPSampleSearchColumn.CONCENTRATION.columnNumber()));
-        collaboratorParticipantId = getValue(bspColumns, BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID.columnNumber());
-        materialType = getValue(bspColumns, BSPSampleSearchColumn.MATERIAL_TYPE.columnNumber());
-        total = safeParseDouble(getValue(bspColumns, BSPSampleSearchColumn.TOTAL_DNA.columnNumber()));
-        sampleType = getValue(bspColumns, BSPSampleSearchColumn.SAMPLE_TYPE.columnNumber());
-        gender = getValue(bspColumns, BSPSampleSearchColumn.GENDER.columnNumber());
-        stockType = getValue(bspColumns, BSPSampleSearchColumn.STOCK_TYPE.columnNumber());
-        fingerprint = getValue(bspColumns, BSPSampleSearchColumn.FINGERPRINT.columnNumber());
-        containerId = getValue(bspColumns, BSPSampleSearchColumn.CONTAINER_ID.columnNumber());
-        sampleId = getValue(bspColumns, BSPSampleSearchColumn.SAMPLE_ID.columnNumber());
-        collaboratorName = getValue(bspColumns, BSPSampleSearchColumn.COLLABORATOR_NAME.columnNumber());
-        population = getValue(bspColumns, 21);
-        sampleKitUploadRackscanMismatch = getValue(bspColumns, BSPSampleSearchColumn.RACKSCAN_MISMATCH.columnNumber());
-        rin = safeParseDouble(getValue(bspColumns, BSPSampleSearchColumn.RIN.columnNumber()));
+        if (searchColumns.length != bspColumns.length) {
+            throw new IllegalArgumentException("The columns returned are not the same length as the actual columns searched");
+        }
 
-        // Race and Ethnicity are used interchangeably.
-        race = getValue(bspColumns, BSPSampleSearchColumn.ETHNICITY.columnNumber());
-
+        columnToValue.clear();
+        for (int i=0; i<searchColumns.length; i++) {
+            columnToValue.put(searchColumns[i], trim(bspColumns[i]));
+        }
     }
 
-    /**
-     * Use this constructor for DatabaseFree tests with a non-UNKNOWN ffpeStatus value.
-     */
-    public BSPSampleDTO(String containerId, String stockSample, String rootSample, String aliquotSample,
-                        String patientId, String organism, String collaboratorsSampleName, String collection,
-                        String volume, String concentration, String sampleLsid, String collaboratorParticipantId,
-                        String materialType, String total, String sampleType, String primaryDisease,
-                        String gender, String stockType, String fingerprint, String sampleId, String collaboratorName,
-                        String race, String population, String sampleKitUploadRackscanMismatch, @Nonnull FFPEStatus ffpeStatus) {
-        this(primaryDisease, sampleLsid, materialType, collaboratorsSampleName, organism, patientId);
-        this.containerId = containerId;
-        this.stockSample = stockSample;
-        this.rootSample = rootSample;
-        this.aliquotSample = aliquotSample;
-        this.collection = collection;
-
-        this.volume = safeParseDouble(volume);
-        this.concentration = safeParseDouble(concentration);
-        this.collaboratorParticipantId = collaboratorParticipantId;
-        this.total = safeParseDouble(total);
-        this.sampleType = sampleType;
-        this.gender = gender;
-        this.stockType = stockType;
-        this.fingerprint = fingerprint;
-        this.sampleId = sampleId;
-        this.collaboratorName = collaboratorName;
-        this.race = race;
-        this.population = population;
-        this.ffpeStatus = ffpeStatus;
-        this.sampleKitUploadRackscanMismatch = sampleKitUploadRackscanMismatch;
-
-        rin = 0.0;
-        stockAtExport = null;
-        positiveControl = false;
-        negativeControl = false;
-    }
-
-    /**
-     * Useful for tests
-     *
-     * @param primaryDisease
-     * @param lsid
-     */
     public BSPSampleDTO(String primaryDisease,
                         String lsid,
                         String materialType,
                         String collaboratorsSampleName,
                         String organism,
                         String patientId) {
-        this.primaryDisease = trim(primaryDisease);
-        this.sampleLsid = trim(lsid);
-        this.materialType = trim(materialType);
-        this.collaboratorsSampleName = trim(collaboratorsSampleName);
-        this.organism = trim(organism);
-        this.patientId = trim(patientId);
+
+        columnToValue.clear();
+
+        columnToValue.put(BSPSampleSearchColumn.PRIMARY_DISEASE, trim(primaryDisease));
+        columnToValue.put(BSPSampleSearchColumn.LSID, trim(lsid));
+        columnToValue.put(BSPSampleSearchColumn.MATERIAL_TYPE, trim(materialType));
+        columnToValue.put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, trim(collaboratorsSampleName));
+        columnToValue.put(BSPSampleSearchColumn.SPECIES, trim(organism));
+        columnToValue.put(BSPSampleSearchColumn.PARTICIPANT_ID, trim(patientId));
 
         // Need to set this explicitly to be sure we don't trigger a lazy load in a DBFree test context
         this.ffpeStatus = FFPEStatus.NOT_DERIVED;
+    }
+
+    public BSPSampleDTO(String containerId, String stockSample, String rootSample, String aliquotSample,
+                        String patientId, String organism, String collaboratorsSampleName, String collection,
+                        String volume, String concentration, String sampleLsid, String collaboratorParticipantId,
+                        String materialType, String total, String sampleType, String primaryDisease,
+                        String gender, String stockType, String fingerprint, String sampleId, String collaboratorName,
+                        String race, String population, String sampleKitUploadRackscanMismatch, @Nonnull FFPEStatus ffpeStatus) {
+
+        this(primaryDisease, sampleLsid, materialType, collaboratorsSampleName, organism, patientId);
+
+        columnToValue.put(BSPSampleSearchColumn.CONTAINER_ID, trim(containerId));
+        columnToValue.put(BSPSampleSearchColumn.STOCK_SAMPLE, trim(stockSample));
+        columnToValue.put(BSPSampleSearchColumn.ROOT_SAMPLE, trim(rootSample));
+        columnToValue.put(BSPSampleSearchColumn.SAMPLE_ID, trim(aliquotSample));
+        columnToValue.put(BSPSampleSearchColumn.COLLECTION, trim(collection));
+        columnToValue.put(BSPSampleSearchColumn.STOCK_TYPE, trim(stockType));
+        columnToValue.put(BSPSampleSearchColumn.VOLUME, trim(volume));
+        columnToValue.put(BSPSampleSearchColumn.CONCENTRATION, trim(concentration));
+        columnToValue.put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, trim(collaboratorParticipantId));
+        columnToValue.put(BSPSampleSearchColumn.TOTAL_DNA, trim(total));
+        columnToValue.put(BSPSampleSearchColumn.SAMPLE_TYPE, trim(sampleType));
+        columnToValue.put(BSPSampleSearchColumn.GENDER, trim(gender));
+        columnToValue.put(BSPSampleSearchColumn.FINGERPRINT, trim(fingerprint));
+        columnToValue.put(BSPSampleSearchColumn.SAMPLE_ID, trim(sampleId));
+        columnToValue.put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, trim(collaboratorName));
+        columnToValue.put(BSPSampleSearchColumn.ETHNICITY, trim(race));
+        columnToValue.put(BSPSampleSearchColumn.RACKSCAN_MISMATCH, trim(sampleKitUploadRackscanMismatch));
+        columnToValue.put(BSPSampleSearchColumn.RIN, "0.0");
+
+        this.ffpeStatus = ffpeStatus;
     }
 
     /**
@@ -268,183 +198,117 @@ public class BSPSampleDTO {
     }
 
     public double getRin() {
-        return rin;
+        return safeParseDouble(columnToValue.get(BSPSampleSearchColumn.RIN));
     }
 
     public double getVolume() {
-        return volume;
-    }
-
-    public void setVolume(double volume) {
-        this.volume = volume;
+        return safeParseDouble(columnToValue.get(BSPSampleSearchColumn.VOLUME));
     }
 
     public double getConcentration() {
-        return concentration;
-    }
-
-    public void setConcentration(double concentration) {
-        this.concentration = concentration;
+        return safeParseDouble(columnToValue.get(BSPSampleSearchColumn.CONCENTRATION));
     }
 
     public String getRootSample() {
-        return rootSample;
+        return columnToValue.get(BSPSampleSearchColumn.ROOT_SAMPLE);
     }
 
     public String getStockSample() {
-        return stockSample;
+        return columnToValue.get(BSPSampleSearchColumn.STOCK_SAMPLE);
     }
 
-    /**
-     * Returns the name of the BSP collection
-     * in which this sample resides
-     *
-     * @return
-     */
     public String getCollection() {
-        return collection;
+        return columnToValue.get(BSPSampleSearchColumn.COLLECTION);
     }
 
-    /**
-     * @return the name that the collaborator gave to this sample.
-     */
     public String getCollaboratorsSampleName() {
-        return collaboratorsSampleName;
+        return columnToValue.get(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID);
     }
 
     public String getContainerId() {
-        return containerId;
+        return columnToValue.get(BSPSampleSearchColumn.CONTAINER_ID);
     }
 
     public String getPatientId() {
-        return patientId;
+        return columnToValue.get(BSPSampleSearchColumn.PARTICIPANT_ID);
     }
 
     public String getOrganism() {
-        return organism;
-    }
-
-    public String getStockAtExport() {
-        throw new RuntimeException("not implemented yet.");
-//        return stockAtExport;
-    }
-
-    public boolean isPositiveControl() {
-        throw new RuntimeException("not implemented yet.");
-//        return positiveControl;
-    }
-
-    public boolean isNegativeControl() {
-        throw new RuntimeException("not implemented yet.");
-
-//        return negativeControl;
+        return columnToValue.get(BSPSampleSearchColumn.SPECIES);
     }
 
     public boolean getHasSampleKitUploadRackscanMismatch() {
-        if (sampleKitUploadRackscanMismatch == null) {
-            return false;
-        }
-
-        return sampleKitUploadRackscanMismatch.equalsIgnoreCase("true");
+        return Boolean.parseBoolean(columnToValue.get(BSPSampleSearchColumn.RACKSCAN_MISMATCH));
     }
 
     public String getSampleLsid() {
-        return sampleLsid;
-    }
-
-    public boolean getPositiveControl() {
-        throw new RuntimeException("not implemented yet.");
-    }
-
-    public boolean getNegativeControl() {
-        throw new RuntimeException("not implemented yet.");
+        return columnToValue.get(BSPSampleSearchColumn.LSID);
     }
 
     public String getCollaboratorParticipantId() {
-        return collaboratorParticipantId;
+        return columnToValue.get(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID);
     }
 
     public String getMaterialType() {
-        return materialType;
-    }
-
-    public void setMaterialType(String materialType) {
-        this.materialType = materialType;
+        return columnToValue.get(BSPSampleSearchColumn.MATERIAL_TYPE);
     }
 
     public double getTotal() {
-        return total;
-    }
-
-    public void setTotal(double total) {
-        this.total = total;
+        return safeParseDouble(columnToValue.get(BSPSampleSearchColumn.TOTAL_DNA));
     }
 
     public String getSampleType() {
-        return sampleType;
+        return columnToValue.get(BSPSampleSearchColumn.SAMPLE_TYPE);
     }
 
     public String getPrimaryDisease() {
-        return primaryDisease;
+        return columnToValue.get(BSPSampleSearchColumn.PRIMARY_DISEASE);
     }
 
     public String getGender() {
-        return gender;
+        return columnToValue.get(BSPSampleSearchColumn.GENDER);
     }
 
     public String getStockType() {
-        return stockType;
+        return columnToValue.get(BSPSampleSearchColumn.STOCK_TYPE);
     }
 
     public String getFingerprint() {
-        return fingerprint;
-    }
-
-    public boolean isTumor() {
-        return TUMOR_IND.equals(sampleType);
+        return columnToValue.get(BSPSampleSearchColumn.FINGERPRINT);
     }
 
     public boolean isSampleReceived() {
-        return !StringUtils.isBlank(rootSample);
+        return !StringUtils.isBlank(columnToValue.get(BSPSampleSearchColumn.ROOT_SAMPLE));
     }
 
     public boolean isActiveStock() {
+        String stockType = getStockType();
         return (stockType != null) && (stockType.equals(ACTIVE_IND));
     }
 
     public boolean getHasFingerprint() {
-        return !StringUtils.isBlank(fingerprint);
-    }
-
-    public String getAliquotSample() {
-        return aliquotSample;
+        return !StringUtils.isBlank(getFingerprint());
     }
 
     public String getSampleId() {
-        return sampleId;
-    }
-
-    public void setSampleId(String sampleId) {
-        this.sampleId = sampleId;
+        return columnToValue.get(BSPSampleSearchColumn.SAMPLE_ID);
     }
 
     public MaterialType getMaterialTypeObject() {
-        if (StringUtils.isBlank(materialType)) {
-            return null;
-        }
-        return new MaterialType(materialType);
+        String materialType = getMaterialType();
+        return (StringUtils.isBlank(materialType)) ? null : new MaterialType(materialType);
     }
 
     public String getCollaboratorName() {
-        return collaboratorName;
+        return columnToValue.get(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID);
     }
 
     public String getPopulation() {
-        return population;
+        return columnToValue.get(BSPSampleSearchColumn.ETHNICITY);
     }
 
     public String getRace() {
-        return race;
+        return columnToValue.get(BSPSampleSearchColumn.ETHNICITY);
     }
 
     public Boolean getFfpeStatus() {
