@@ -1218,4 +1218,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     public void setAbandonWarning(boolean abandonWarning) {
         this.abandonWarning = abandonWarning;
     }
+
+    public boolean isSupportsRin() {
+        return editOrder.getProduct().isSupportsRin();
+    }
 }

@@ -190,7 +190,7 @@ public class BSPSampleDTO {
 
     public MaterialType getMaterialTypeObject() {
         String materialType = getMaterialType();
-        return (StringUtils.isBlank(materialType)) ? null : new MaterialType(materialType);
+        return StringUtils.isBlank(materialType) ? null : new MaterialType(materialType);
     }
 
     public String getCollaboratorName() {
