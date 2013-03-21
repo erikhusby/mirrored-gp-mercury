@@ -35,7 +35,7 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
     /**
      * New one up using the given service.
      *
-     * @param service
+     * @param service The search service object.
      */
     public BSPSampleDataFetcher(@Nonnull BSPSampleSearchService service) {
         if (service == null) {
@@ -47,8 +47,9 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
     /**
      * Fetch the data from BSP for the given sample.
      *
-     * @param sampleName
-     * @return
+     * @param sampleName The sample name.
+     *
+     * @return The sample DTO that was fetched.
      */
     public BSPSampleDTO fetchSingleSampleFromBSP(String sampleName) {
         if (service == null) {
@@ -69,43 +70,27 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
     /**
      * Fetch the data from bsp for multiple samples.
      *
-     * @param sampleNames
-     * @return
+     * @param sampleNames The sample names
+     *
+     * @return Mapping of sample id to its bsp data
      */
     public Map<String, BSPSampleDTO> fetchSamplesFromBSP(@Nonnull Collection<String> sampleNames) {
         if (sampleNames == null) {
             throw new NullPointerException("sampleNames cannot be null.");
         }
+
         if (sampleNames.isEmpty()) {
             return Collections.emptyMap();
         }
-        Map<String, BSPSampleDTO> sampleNameToDTO = new HashMap<String, BSPSampleDTO>();
-        List<String[]> results = getBSPResponse(sampleNames);
 
+        Map<String, BSPSampleDTO> sampleNameToDTO = new HashMap<String, BSPSampleDTO>();
+        List<String[]> results =  service.runSampleSearch(sampleNames, BSPSampleSearchColumn.PDO_SEARCH);
         for (String[] result : results) {
             BSPSampleDTO bspDTO = new BSPSampleDTO(result, BSPSampleSearchColumn.PDO_SEARCH);
             sampleNameToDTO.put(bspDTO.getSampleId(), bspDTO);
         }
+
         return sampleNameToDTO;
-    }
-
-    private static String getIfNotNullAndNotEmpty(String value) {
-        if (value != null) {
-            if (value.trim().length() > 0) {
-                return value.trim();
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Get the list of column names that need to be supplied to BSP for the sample search web service.
-     *
-     * @param sampleNames The sample names
-     * @return List of the column names for the web service
-     */
-    private List<String[]> getBSPResponse(Collection<String> sampleNames) {
-        return service.runSampleSearch(sampleNames, BSPSampleSearchColumn.PDO_SEARCH);
     }
 
     @Override

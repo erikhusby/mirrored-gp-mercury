@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientHandlerException;
-import com.sun.jersey.api.client.config.ClientConfig;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
@@ -31,11 +30,6 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
     @Inject
     public BSPSampleSearchServiceImpl(BSPConfig bspConfig) {
         this.bspConfig = bspConfig;
-    }
-
-    @Override
-    protected void customizeConfig(ClientConfig clientConfig) {
-        // no-op
     }
 
     @Override
