@@ -4,6 +4,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -16,6 +17,7 @@ import org.hibernate.envers.Audited;
 import javax.annotation.Nonnull;
 import javax.persistence.*;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.regex.Pattern;
 
 /**
@@ -113,23 +115,14 @@ public class MercurySample {
         return BSP_SAMPLE_NAME_PATTERN.matcher(sampleName).matches();
     }
 
-    /**
-     * @return true if sample is a loaded BSP sample but BSP didn't have any data for it.
-     */
-    public boolean bspMetaDataMissing() {
-        // Use == here, we want to match the exact object.
-        //noinspection ObjectEquality
-        return isInBspFormat() && hasBspDTOBeenInitialized && bspSampleDTO == BSPSampleDTO.DUMMY;
-    }
-
     public BSPSampleDTO getBspSampleDTO() {
         if (!hasBspDTOBeenInitialized) {
             if (isInBspFormat()) {
                 BSPSampleDataFetcher bspSampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
                 bspSampleDTO = bspSampleDataFetcher.fetchSingleSampleFromBSP(getSampleKey());
                 if (bspSampleDTO == null) {
-                    // not BSP sample exists with this name, but we still need a semblance of a BSP DTO
-                    bspSampleDTO = BSPSampleDTO.DUMMY;
+                    // no BSP sample exists with this name, but we still need a semblance of a BSP DTO
+                    bspSampleDTO = new BSPSampleDTO(new HashMap<BSPSampleSearchColumn, String>());
                 }
             }
 

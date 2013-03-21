@@ -16,33 +16,50 @@ public enum BSPSampleSearchColumn {
     GENDER("Gender"),
     STOCK_TYPE("Stock Type"),
     FINGERPRINT("Fingerprint"),
-    // ALERT("!", "Alert"),
-    // MESSAGE("message");
-
     LSID("Sample LSID"),
     ROOT_SAMPLE("Root Sample(s)"),
     COLLECTION("Collection"),
     STOCK_SAMPLE("Stock Sample"),
     PARENT_SAMPLES("Parent Sample(s)"),
     CONTAINER_ID("Container"),
-    CONTAINER_NAME("Container Name")    ,
-    COLLABORATOR_NAME("Site PI") ,
-    // todo arz db free testing of race and ethnicity
+    CONTAINER_NAME("Container Name"),
+    COLLABORATOR_NAME("Site PI"),
     RACE("Race"),
     ETHNICITY("Ethnicity"),
-    SAMPLE_KIT_UPLOAD_RACKSCAN_MISMATCH("Sample Kit Data Upload/Rackscan Mismatch")
-    ;
-    
+    RACKSCAN_MISMATCH("Sample Kit Data Upload/Rackscan Mismatch"),
+    RIN("RIN Number");
+
     private final String columnName;
-    
-    
-    
     public String columnName() { return columnName; }
-    
+
     BSPSampleSearchColumn(String name) {
         this.columnName = name;
     }
-    
 
-
+    public static final BSPSampleSearchColumn[] PDO_SEARCH_COLUMNS = {
+        BSPSampleSearchColumn.PARTICIPANT_ID,
+        BSPSampleSearchColumn.ROOT_SAMPLE,
+        BSPSampleSearchColumn.STOCK_SAMPLE,
+        BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID,
+        BSPSampleSearchColumn.COLLECTION,
+        BSPSampleSearchColumn.VOLUME,
+        BSPSampleSearchColumn.CONCENTRATION,
+        BSPSampleSearchColumn.SPECIES,
+        BSPSampleSearchColumn.LSID,
+        BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID,
+        BSPSampleSearchColumn.MATERIAL_TYPE,
+        BSPSampleSearchColumn.TOTAL_DNA,
+        BSPSampleSearchColumn.SAMPLE_TYPE,
+        BSPSampleSearchColumn.PRIMARY_DISEASE,
+        BSPSampleSearchColumn.GENDER,
+        BSPSampleSearchColumn.STOCK_TYPE,
+        BSPSampleSearchColumn.FINGERPRINT,
+        BSPSampleSearchColumn.CONTAINER_ID,
+        BSPSampleSearchColumn.SAMPLE_ID,
+        BSPSampleSearchColumn.COLLABORATOR_NAME,
+        BSPSampleSearchColumn.ETHNICITY,
+        BSPSampleSearchColumn.RACE,
+        BSPSampleSearchColumn.RACKSCAN_MISMATCH,
+        BSPSampleSearchColumn.RIN,
+    };
 }

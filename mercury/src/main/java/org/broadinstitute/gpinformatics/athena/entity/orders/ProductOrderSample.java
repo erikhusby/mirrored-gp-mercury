@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.AuditJoinTable;
@@ -146,7 +147,7 @@ public class ProductOrderSample implements Serializable {
     private DeliveryStatus deliveryStatus = DeliveryStatus.NOT_STARTED;
 
     @Transient
-    private BSPSampleDTO bspDTO = BSPSampleDTO.DUMMY;
+    private BSPSampleDTO bspDTO = new BSPSampleDTO(new HashMap<BSPSampleSearchColumn, String>());
 
     @Transient
     private boolean hasBspDTOBeenInitialized;
@@ -209,7 +210,7 @@ public class ProductOrderSample implements Serializable {
     public boolean bspMetaDataMissing() {
         // Use == here, we want to match the exact object.
         //noinspection ObjectEquality
-        return isInBspFormat() && hasBspDTOBeenInitialized && bspDTO == BSPSampleDTO.DUMMY;
+        return isInBspFormat() && hasBspDTOBeenInitialized && bspDTO.hasNoColumns();
     }
 
     public BSPSampleDTO getBspDTO() {
@@ -218,8 +219,8 @@ public class ProductOrderSample implements Serializable {
                 BSPSampleDataFetcher bspSampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
                 bspDTO = bspSampleDataFetcher.fetchSingleSampleFromBSP(getSampleName());
                 if (bspDTO == null) {
-                    // not BSP sample exists with this name, but we still need a semblance of a BSP DTO
-                    bspDTO = BSPSampleDTO.DUMMY;
+                    // no BSP sample exists with this name, but we still need a semblance of a BSP DTO
+                    bspDTO = new BSPSampleDTO(new HashMap<BSPSampleSearchColumn, String>());
                 }
             }
 
