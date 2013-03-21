@@ -1,13 +1,13 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.testng.Assert;
-import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.testng.annotations.Test;
 
 import javax.xml.bind.JAXBContext;
@@ -17,6 +17,8 @@ import javax.xml.bind.Marshaller;
 import javax.xml.namespace.QName;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Test product workflow, processes and steps
@@ -189,9 +191,18 @@ public class WorkflowTest {
     
     @Test
     public void testEntryExpression() {
+
+        Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
+            put(BSPSampleSearchColumn.PRIMARY_DISEASE, "Cancer");
+            put(BSPSampleSearchColumn.LSID, "org.broad:SM-1234");
+            put(BSPSampleSearchColumn.MATERIAL_TYPE, "DNA:DNA Genomic");
+            put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, "4321");
+            put(BSPSampleSearchColumn.SPECIES, "Homo Sapiens");
+            put(BSPSampleSearchColumn.PARTICIPANT_ID, "PT-1234");
+        }};
+
         TwoDBarcodedTube twoDBarcodedTube = new TwoDBarcodedTube("00001234");
-        twoDBarcodedTube.addSample(new MercurySample("PDO-123", "SM-1234", new BSPSampleDTO("Cancer", "org.broad:SM-1234",
-                "DNA:DNA Genomic", "4321", "Homo Sapiens", "PT-1234")));
+        twoDBarcodedTube.addSample(new MercurySample("PDO-123", "SM-1234", new BSPSampleDTO(dataMap)));
 
         WorkflowLoader workflowLoader = new WorkflowLoader();
         WorkflowConfig workflowConfig1 = workflowLoader.load();

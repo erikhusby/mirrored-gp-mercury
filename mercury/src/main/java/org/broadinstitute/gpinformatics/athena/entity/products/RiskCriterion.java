@@ -122,44 +122,50 @@ public class RiskCriterion {
     }
 
     public enum RiskCriteriaType {
-        VOLUME("Volume", NUMERIC, DISPLAYED, new ValueProvider() {
+        VOLUME("Volume", NUMERIC, new ValueProvider() {
             @Override
             public String getValue(ProductOrderSample sample) {
                 return String.valueOf(sample.getBspDTO().getVolume());
             }
         }),
-        CONCENTRATION("Concentration", NUMERIC, DISPLAYED, new ValueProvider() {
+        CONCENTRATION("Concentration", NUMERIC, new ValueProvider() {
             @Override
             public String getValue(ProductOrderSample sample) {
                 return String.valueOf(sample.getBspDTO().getConcentration());
             }
         }),
-        WGA("Is WGA", BOOLEAN, DISPLAYED, new ValueProvider() {
+        WGA("Is WGA", BOOLEAN, new ValueProvider() {
             @Override
             public String getValue(ProductOrderSample sample) {
                 return String.valueOf(sample.getBspDTO().getMaterialType().contains("WGA"));
             }
         }),
-        FFPE("Is FFPE", BOOLEAN, DISPLAYED, new ValueProvider() {
+        FFPE("Is FFPE", BOOLEAN, new ValueProvider() {
             @Override
             public String getValue(ProductOrderSample sample) {
                 return String.valueOf(sample.getBspDTO().getFfpeStatus());
             }
         }),
-        MANUAL("Manual", BOOLEAN, NOT_DISPLAYED, new ValueProvider() {
+        MANUAL("Manual", BOOLEAN, new ValueProvider() {
             @Override
             public String getValue(ProductOrderSample sample) {
                 // Manual is used for manually failing a sample.
                 return String.valueOf(true);
             }
+
+            @Override
+            public boolean isDisplayed(Product product) {
+                return false;
+            }
+
         }),
-        TOTAL_DNA("Total DNA", NUMERIC, DISPLAYED, new ValueProvider() {
+        TOTAL_DNA("Total DNA", NUMERIC, new ValueProvider() {
             @Override
             public String getValue(ProductOrderSample sample) {
                 return String.valueOf(sample.getBspDTO().getTotal());
             }
         }),
-        RIN("RIN", NUMERIC, NOT_DISPLAYED, new ValueProvider() {
+        RIN("RIN", NUMERIC, new ValueProvider() {
             @Override
             public String getValue(ProductOrderSample sample) {
                 return String.valueOf(sample.getBspDTO().getRin());
@@ -169,13 +175,11 @@ public class RiskCriterion {
         private final OperatorType operatorType;
         private final String label;
         private final ValueProvider valueProvider;
-        private final boolean isDisplayed;
 
-        RiskCriteriaType(String label, OperatorType operatorType, boolean isDisplayed, ValueProvider valueProvider) {
+        RiskCriteriaType(String label, OperatorType operatorType, ValueProvider valueProvider) {
             this.label = label;
             this.operatorType = operatorType;
             this.valueProvider = valueProvider;
-            this.isDisplayed = isDisplayed;
         }
 
         public OperatorType getOperatorType() {
@@ -186,8 +190,8 @@ public class RiskCriterion {
             return label;
         }
 
-        public boolean getDisplayed(boolean supportsRin) {
-            return ((this == RIN) && supportsRin) || isDisplayed;
+        public boolean getDisplayed(Product product) {
+            return valueProvider.isDisplayed(product);
         }
 
         public boolean getRiskStatus(ProductOrderSample sample, Operator operator, String value) {
@@ -213,5 +217,12 @@ public class RiskCriterion {
         private static final long serialVersionUID = 746447531515367731L;
 
         public abstract String getValue(ProductOrderSample sample);
+
+        /**
+         * @return This determines whether the particular provider should be displayed based on the product
+         */
+        public boolean isDisplayed(Product product) {
+            return true;
+        }
     }
 }

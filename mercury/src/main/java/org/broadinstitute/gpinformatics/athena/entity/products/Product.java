@@ -595,6 +595,6 @@ public class Product implements Serializable, Comparable<Product> {
     }
 
     public boolean isSupportsRin() {
-        return getProductFamily().isSupportsRIN();
+        return getProductFamily().isSupportsRin();
     }
 }

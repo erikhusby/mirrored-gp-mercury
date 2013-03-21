@@ -2,8 +2,12 @@ package org.broadinstitute.gpinformatics.mercury.entity.zims;
 
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServiceStub;
 import org.testng.annotations.Test;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
 import static org.testng.Assert.*;
@@ -17,20 +21,30 @@ public class LibraryBeanTest {
      */
     @Test(groups = DATABASE_FREE)
     public void test_bsp_dto_override() {
-        String gssrLsid = "gssr:lsid";
-        String bspLsid = "bsp:lsid";
-        String disease = "cancer";
-        String gssrMaterialType = "Genomic DNA";
-        String bspMaterialType = "DNA: Genomic";
-        String bspCollabSampleId = "bsp:collabId";
-        String gssrCollabSampleId = "gssr:collabId";
-        String gssrOrganism = "gssrOrg";
-        String gssrSpecies = "gssrSpecies";
-        String gssrStrain = "gssrStrain";
-        String bspSpecies = "bsp species";
-        String gssrParticipant = "gssrPatient";
-        String bspParticipant = "bsp participant";
-        BSPSampleDTO bspDto = new BSPSampleDTO(bspLsid,disease,bspMaterialType,bspCollabSampleId,bspSpecies,bspParticipant);
+        final String gssrLsid = "gssr:lsid";
+        final String bspLsid = "bsp:lsid";
+        final String disease = "cancer";
+        final String gssrMaterialType = "Genomic DNA";
+        final String bspMaterialType = "DNA: Genomic";
+        final String bspCollabSampleId = "bsp:collabId";
+        final String gssrCollabSampleId = "gssr:collabId";
+        final String gssrOrganism = "gssrOrg";
+        final String gssrSpecies = "gssrSpecies";
+        final String gssrStrain = "gssrStrain";
+        final String bspSpecies = "bsp species";
+        final String gssrParticipant = "gssrPatient";
+        final String bspParticipant = "bsp participant";
+
+        Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
+            put(BSPSampleSearchColumn.PRIMARY_DISEASE, disease);
+            put(BSPSampleSearchColumn.LSID, bspLsid);
+            put(BSPSampleSearchColumn.MATERIAL_TYPE, bspMaterialType);
+            put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, bspCollabSampleId);
+            put(BSPSampleSearchColumn.SPECIES, bspSpecies);
+            put(BSPSampleSearchColumn.PARTICIPANT_ID, bspParticipant);
+        }};
+
+        BSPSampleDTO bspDto = new BSPSampleDTO(dataMap);
 
         // send in some GSSR sample attributes in addition to bsp DTO to verify GSSR override
         LibraryBean libraryBean = new LibraryBean(gssrLsid,gssrMaterialType,gssrCollabSampleId,gssrOrganism,gssrSpecies,gssrStrain,gssrParticipant,bspDto);

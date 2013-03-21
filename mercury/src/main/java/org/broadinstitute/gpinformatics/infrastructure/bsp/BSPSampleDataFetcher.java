@@ -84,9 +84,10 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
         }
 
         Map<String, BSPSampleDTO> sampleNameToDTO = new HashMap<String, BSPSampleDTO>();
-        List<String[]> results =  service.runSampleSearch(sampleNames, BSPSampleSearchColumn.PDO_SEARCH);
-        for (String[] result : results) {
-            BSPSampleDTO bspDTO = new BSPSampleDTO(result, BSPSampleSearchColumn.PDO_SEARCH);
+        List<Map<BSPSampleSearchColumn, String>> results =
+                service.runSampleSearch(sampleNames, BSPSampleSearchColumn.PDO_SEARCH_COLUMNS);
+        for (Map<BSPSampleSearchColumn, String> result : results) {
+            BSPSampleDTO bspDTO = new BSPSampleDTO(result);
             sampleNameToDTO.put(bspDTO.getSampleId(), bspDTO);
         }
 
@@ -169,11 +170,12 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
      * Given an aliquot ID, return its stock sample ID.
      */
     public String getStockIdForAliquotId(@Nonnull String aliquotId) {
-        List<String[]> results =
+        List<Map<BSPSampleSearchColumn, String>> results =
                 service.runSampleSearch(Collections.singletonList(aliquotId), BSPSampleSearchColumn.STOCK_SAMPLE);
-        if (results.isEmpty() || results.get(0).length == 0) {
+        if (results.isEmpty()) {
             return null;
         }
-        return results.get(0)[0];
+
+        return results.get(0).get(BSPSampleSearchColumn.STOCK_SAMPLE);
     }
 }

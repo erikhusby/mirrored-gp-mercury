@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
@@ -37,7 +38,8 @@ public class ProductOrderSampleTest {
         for (String sampleName : sampleArray) {
             ProductOrderSample productOrderSample;
             if (dbFree) {
-                productOrderSample = new ProductOrderSample(sampleName, BSPSampleDTO.DUMMY);
+                productOrderSample = new ProductOrderSample(sampleName,
+                        new BSPSampleDTO(new HashMap<BSPSampleSearchColumn, String>()));
             } else {
                 productOrderSample = new ProductOrderSample(sampleName);
             }
@@ -69,11 +71,15 @@ public class ProductOrderSampleTest {
             addOn.setPrimaryPriceItem(new PriceItem("A", "B", "C", "D"));
             product.addAddOn(addOn);
 
-            BSPSampleDTO bspSampleDTO1 = BSPSampleDTO.createMaterialTypeDummy(BSP_MATERIAL_TYPE.getFullName());
-            sample1 = new ProductOrderSample("Sample1", bspSampleDTO1);
+            Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
+                put(BSPSampleSearchColumn.MATERIAL_TYPE, BSP_MATERIAL_TYPE.getFullName());
+            }};
+            sample1 = new ProductOrderSample("Sample1", new BSPSampleDTO(dataMap));
 
-            BSPSampleDTO bspSampleDTO2 = BSPSampleDTO.createMaterialTypeDummy("XXX:XXX");
-            sample2 = new ProductOrderSample("Sample2", bspSampleDTO2);
+            dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
+                put(BSPSampleSearchColumn.MATERIAL_TYPE, "XXX:XXX");
+            }};
+            sample2 = new ProductOrderSample("Sample2", new BSPSampleDTO(dataMap));
 
             List<ProductOrderSample> samples = new ArrayList<ProductOrderSample>();
             samples.add(sample1);

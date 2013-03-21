@@ -154,6 +154,13 @@ public class ProductActionBean extends CoreActionBean {
                 }
             }
 
+            // If this is a RIN criterion and the product does not support RIN, give an error. This was still parsed
+            // and validated as any other criterion
+            if ((type == RiskCriterion.RiskCriteriaType.RIN) && !editProduct.isSupportsRin()) {
+                addGlobalValidationError("Cannot add a RIN criterion for product: {2} of family {3}",
+                    editProduct.getDisplayName(), editProduct.getProductFamily().getName());
+            }
+
             // Only increment the matching value if it is not boolean or if this is old style boolean where all indexes match
             if ((type.getOperatorType() != Operator.OperatorType.BOOLEAN) || allLengthsMatch()) {
                 matchingValueIndex++;

@@ -36,7 +36,7 @@ public enum BSPSampleSearchColumn {
         this.columnName = name;
     }
 
-    public static final BSPSampleSearchColumn[] PDO_SEARCH = {
+    public static final BSPSampleSearchColumn[] PDO_SEARCH_COLUMNS = {
         BSPSampleSearchColumn.PARTICIPANT_ID,
         BSPSampleSearchColumn.ROOT_SAMPLE,
         BSPSampleSearchColumn.STOCK_SAMPLE,
