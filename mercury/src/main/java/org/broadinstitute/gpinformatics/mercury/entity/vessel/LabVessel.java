@@ -208,25 +208,6 @@ public abstract class LabVessel implements Serializable {
         return reagentContentsCount;
     }
 
-    /**
-     * When traipsing our internal lims data, the search
-     * mode is important.  If we're referencing sample sheet
-     * data that was sent to us by a collaborator, we
-     * probably ignore the search mode, or require
-     * that it be set to THIS_VESSEL_ONLY, since we'll
-     * only have metrics for a single container--and
-     * no transfer graph.
-     *
-     * @param metricType
-     * @param searchMode
-     * @param sampleInstance
-     * @return
-     */
-    public LabMetric getMetric(LabMetric.MetricType metricType, MetricSearchMode searchMode,
-                               SampleInstance sampleInstance) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
     public void addToContainer(VesselContainer<?> vesselContainer) {
         containers.add(vesselContainer.getEmbedder());
         if (containersCount == null) {
@@ -709,50 +690,6 @@ public abstract class LabVessel implements Serializable {
         events.addAll(getTransfersFrom());
         events.addAll(getTransfersTo());
         return events;
-    }
-
-    /**
-     * PM Dashboard will want to show the most recent
-     * event performed on this aliquot.  Implementations
-     * traipse through lims history to find the most
-     * recent event.
-     * <p/>
-     * For informational use only.  Can be volatile.
-     * <p/>
-     * For informational use only.  Can be volatile.
-     *
-     * @return
-     */
-    public StatusNote getLatestNote() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    /**
-     * Reporting will want to look at aliquot-level
-     * notes, not traipse through our {@link org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent}
-     * history.  So every time we do a {@link org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent}
-     * or have key things happen like {@link org.broadinstitute.gpinformatics.infrastructure.bsp.AliquotReceiver receiving an aliquot},
-     * recording quants, etc. our code will want to post
-     * a semi-structured note here for reporting.
-     * @param statusNote
-     */
-    /**
-     * Adds a persistent note.  These notes will be used for reporting
-     * things like dwell time and reporting status back to other
-     * systems like PM Bridge, POEMs, and reporting.  Instead of having
-     * these other systems query our operational event information,
-     * we can summarize the events in a more flexible way in
-     * a sample centric manner.
-     *
-     * @param statusNote
-     */
-    public void logNote(StatusNote statusNote) {
-        //        logger.info(statusNote);
-        this.notes.add(statusNote);
-    }
-
-    public Collection<StatusNote> getAllStatusNotes() {
-        return this.notes;
     }
 
     public Float getVolume() {
