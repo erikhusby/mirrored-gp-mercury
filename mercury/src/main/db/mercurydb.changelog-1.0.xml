@@ -1339,4 +1339,11 @@
         </addColumn>
     </changeSet>
 
+    <changeSet author="dryan" id="GPLIM-765-a01">
+        <preConditions onFail="MARK_RAN">
+                <indexExists indexName="SYS_C0042392" schemaName="mercury" />
+        </preConditions>
+        <dropUniqueConstraint constraintName="SYS_C0042392" tableName="LV_POS_MERCURY_SAMPLES" schemaName="mercury" />
+    </changeSet>
+
 </databaseChangeLog>
