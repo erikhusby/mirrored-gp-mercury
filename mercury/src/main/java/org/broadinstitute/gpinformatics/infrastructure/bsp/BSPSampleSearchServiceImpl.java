@@ -12,17 +12,18 @@ import java.net.URLEncoder;
 import java.util.*;
 
 @Impl
-public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService implements
-                                                BSPSampleSearchService {
+public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService implements BSPSampleSearchService {
+
+    private static final long serialVersionUID = 3432255750259397293L;
 
     public static final String SEARCH_RUN_SAMPLE_SEARCH = "search/runSampleSearch";
 
     private BSPConfig bspConfig;
 
     /**
-     * Container free constructor, need to initialize all dependencies explicitly
+     * Container free constructor, need to initialize all dependencies explicitly.
      *
-     * @param bspConfig
+     * @param bspConfig The configuration for connecting with bsp.
      */
     @Inject
     public BSPSampleSearchServiceImpl(BSPConfig bspConfig) {
@@ -73,13 +74,12 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
                     // appears to be the case.
                     int i = 0;
                     for (BSPSampleSearchColumn column : queryColumns) {
-                        newMap.put(column, bspData[i]);
+                        newMap.put(column, bspData[i++]);
                     }
 
                     ret.add(newMap);
                 }
             });
-
         } catch (ClientHandlerException clientException) {
             throw new RuntimeException("Error connecting to BSP", clientException);
         } catch (UnsupportedEncodingException uex) {
