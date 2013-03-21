@@ -64,6 +64,26 @@ public class OnRiskCriteriaTest {
     }
 
     /**
+     * test RIN risk
+     */
+    @Test
+    public void testRin() {
+        Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
+            put(BSPSampleSearchColumn.RIN, LOW_NUMBER);
+            put(BSPSampleSearchColumn.SAMPLE_ID, "TST-1234");
+        }};
+        BSPSampleDTO lowNumSample = new BSPSampleDTO(dataMap);
+
+        dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
+            put(BSPSampleSearchColumn.RIN, HIGH_NUMBER);
+            put(BSPSampleSearchColumn.SAMPLE_ID, "TST-1235");
+        }};
+        BSPSampleDTO highNumSample =  new BSPSampleDTO(dataMap);
+
+        handleNumericOnRisk(lowNumSample, highNumSample, RiskCriterion.RiskCriteriaType.RIN);
+    }
+
+    /**
      * test Total DNA On risk
      */
     @Test
