@@ -300,8 +300,12 @@ public class LabEventTest {
                 },
                 new BSPSampleDataFetcher() {
                     @Override
-                    public BSPSampleDTO fetchSingleSampleFromBSP(String sampleName) {
-                        return new BSPSampleDTO("HIV", "lsid", "DNA", "samplealias", "Homo Sapiens", "PT-123");
+                    public Map<String, BSPSampleDTO> fetchSamplesFromBSP(@Nonnull Collection<String> sampleNames) {
+                        Map<String, BSPSampleDTO> mapSampleIdToDto = new HashMap<String, BSPSampleDTO>();
+                        for (String sampleName : sampleNames) {
+                            mapSampleIdToDto.put(sampleName, new BSPSampleDTO("HIV", "lsid", "DNA", "samplealias", "Homo Sapiens", "PT-123"));
+                        }
+                        return mapSampleIdToDto;
                     }
                 }
         );
@@ -463,10 +467,8 @@ public class LabEventTest {
         String flowcellBarcode = "flowcell" + runDate.getTime();
 
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
-            new HiSeq2500FlowcellEntityBuilder(bettaLimsMessageFactory, labEventFactory,
-                    labEventHandler,
-                    qtpEntityBuilder.getDenatureRack(),
-                            flowcellBarcode).invoke();
+            new HiSeq2500FlowcellEntityBuilder(bettaLimsMessageFactory, labEventFactory, labEventHandler,
+                    qtpEntityBuilder.getDenatureRack(), flowcellBarcode).invoke();
 
         IlluminaFlowcell illuminaFlowcell = hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell();
         Set<SampleInstance> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
@@ -486,8 +488,7 @@ public class LabEventTest {
         SimpleDateFormat dateFormat = new SimpleDateFormat(IlluminaSequencingRun.RUN_FORMAT_PATTERN);
 
         final File runPath = File.createTempFile("tempRun" +dateFormat.format(runDate), ".txt");
-        SolexaRunBean runBean =
-                new SolexaRunBean(flowcellBarcode,
+        SolexaRunBean runBean = new SolexaRunBean(flowcellBarcode,
                                          flowcellBarcode + dateFormat.format(runDate),
                                          runDate, machineName,
                                          runPath.getAbsolutePath(), null);
@@ -625,18 +626,12 @@ public class LabEventTest {
             // SageLoading
             String sageCassetteBarcode = "SageCassette" + i;
             PlateTransferEventType sageLoadingJaxb = bettaLimsMessageFactory.buildRackToPlate("SageLoading",
-                    libraryConstructionEntityBuilder
-                            .getPondRegRackBarcode(),
-                    libraryConstructionEntityBuilder
-                            .getPondRegTubeBarcodes()
-                            .subList(i * 4,
-                                    i * 4 + 4),
+                    libraryConstructionEntityBuilder.getPondRegRackBarcode(),
+                    libraryConstructionEntityBuilder.getPondRegTubeBarcodes().subList(i * 4, i * 4 + 4),
                     sageCassetteBarcode);
             // todo jmt SAGE section
             LabEvent sageLoadingEntity = labEventFactory.buildFromBettaLimsRackToPlateDbFree(sageLoadingJaxb,
-                    libraryConstructionEntityBuilder
-                            .getPondRegRack(),
-                    null);
+                    libraryConstructionEntityBuilder.getPondRegRack(), null);
             labEventHandler.processEvent(sageLoadingEntity);
             StaticPlate sageCassette = (StaticPlate) sageLoadingEntity.getTargetLabVessels().iterator().next();
 
@@ -644,11 +639,7 @@ public class LabEventTest {
 
             // SageUnloading
             PlateTransferEventType sageUnloadingJaxb = bettaLimsMessageFactory.buildPlateToRack("SageUnloading",
-                    sageCassetteBarcode,
-                    sageUnloadBarcode,
-                    sageUnloadTubeBarcodes
-                            .subList(i * 4,
-                                    i * 4 + 4));
+                    sageCassetteBarcode, sageUnloadBarcode, sageUnloadTubeBarcodes.subList(i * 4, i * 4 + 4));
             LabEvent sageUnloadEntity = labEventFactory.buildFromBettaLimsPlateToRackDbFree(sageUnloadingJaxb,
                     sageCassette, mapBarcodeToSageUnloadTubes, targetRackOfTubes);
             labEventHandler.processEvent(sageUnloadEntity);
@@ -738,8 +729,8 @@ public class LabEventTest {
         BucketBean bucketBeanEJB = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB);
         EasyMock.replay(mockBucketDao, tubeDao, mockJira, labBatchDAO);
 
-        LabEventHandler labEventHandler = new LabEventHandler(new WorkflowLoader(), AthenaClientProducer.stubInstance(), bucketBeanEJB, mockBucketDao, new BSPUserList(BSPManagerFactoryProducer
-                .stubInstance()));
+        LabEventHandler labEventHandler = new LabEventHandler(new WorkflowLoader(), AthenaClientProducer.stubInstance(),
+                bucketBeanEJB, mockBucketDao, new BSPUserList(BSPManagerFactoryProducer.stubInstance()));
         BuildIndexPlate buildIndexPlate = new BuildIndexPlate("IndexPlate").invoke(null);
         FluidigmMessagesBuilder fluidigmMessagesBuilder = new FluidigmMessagesBuilder("", bettaLimsMessageFactory,
                 labEventFactory, labEventHandler,
@@ -2899,10 +2890,10 @@ public class LabEventTest {
             List<BettaLimsMessageFactory.CherryPick> denatureCherryPicks = new ArrayList<BettaLimsMessageFactory.CherryPick>();
             List<String> denatureTubeBarcodes = new ArrayList<String>();
             for (int j = 0; j < poolTubeBarcodes.size(); j++) {
-                denatureCherryPicks.add(new BettaLimsMessageFactory.CherryPick(poolRackBarcode,
-                        bettaLimsMessageFactory.buildWellName(j + 1), denatureRackBarcode,
-                        bettaLimsMessageFactory.buildWellName(j + 1)));
-                denatureTubeBarcode = "DenatureTube" + testPrefix + "1";
+                denatureCherryPicks.add(new BettaLimsMessageFactory.CherryPick(
+                        poolRackBarcode, bettaLimsMessageFactory.buildWellName(j + 1),
+                        denatureRackBarcode, bettaLimsMessageFactory.buildWellName(j + 1)));
+                denatureTubeBarcode = "DenatureTube" + testPrefix + j;
                 denatureTubeBarcodes.add(denatureTubeBarcode);
             }
             denatureJaxb = bettaLimsMessageFactory.buildCherryPick("DenatureTransfer",
@@ -2913,11 +2904,16 @@ public class LabEventTest {
             if (workflowName != WorkflowName.EXOME_EXPRESS) {
                 // StripTubeBTransfer
                 stripTubeHolderBarcode = "StripTubeHolder" + testPrefix;
-                List<BettaLimsMessageFactory.CherryPick> stripTubeCherryPicks =
-                        new ArrayList<BettaLimsMessageFactory.CherryPick>();
-                for (int rackPosition = 0; rackPosition < 8; rackPosition++) {
-                    stripTubeCherryPicks.add(new BettaLimsMessageFactory.CherryPick(denatureRackBarcode, "A01",
-                            stripTubeHolderBarcode, Character.toString((char) ('A' + rackPosition)) + "01"));
+                List<BettaLimsMessageFactory.CherryPick> stripTubeCherryPicks = new ArrayList<BettaLimsMessageFactory.CherryPick>();
+                int sourcePosition = 0;
+                // Transfer column 1 to 8 rows, using non-empty source rows
+                for (int destinationPosition = 0; destinationPosition < 8; destinationPosition++) {
+                    stripTubeCherryPicks.add(new BettaLimsMessageFactory.CherryPick(
+                            denatureRackBarcode, Character.toString((char) ('A' + sourcePosition)) + "01",
+                            stripTubeHolderBarcode, Character.toString((char) ('A' + destinationPosition)) + "01"));
+                    if (sourcePosition + 1 < poolTubeBarcodes.size()) {
+                        sourcePosition++;
+                    }
                 }
                 stripTubeBarcode = "StripTube" + testPrefix + "1";
 

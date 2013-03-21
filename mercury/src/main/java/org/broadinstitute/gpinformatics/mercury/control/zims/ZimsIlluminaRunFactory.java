@@ -56,6 +56,12 @@ public class ZimsIlluminaRunFactory {
         }
         IlluminaSequencingRun illuminaRun = OrmUtil.proxySafeCast(sequencingRun, IlluminaSequencingRun.class);
         RunCartridge flowcell = illuminaRun.getSampleCartridge();
+        Set<SampleInstance> sampleInstances = flowcell.getSampleInstances(true);
+        Set<String> sampleIds = new HashSet<String>();
+        for (SampleInstance sampleInstance : sampleInstances) {
+            sampleIds.add(sampleInstance.getStartingSample().getSampleKey());
+        }
+        Map<String, BSPSampleDTO> mapSampleIdToDto = bspSampleDataFetcher.fetchSamplesFromBSP(sampleIds);
 
         DateFormat dateFormat = new SimpleDateFormat(ZimsIlluminaRun.DATE_FORMAT);
         // TODO: fill in sequencerModel and isPaired
@@ -72,7 +78,7 @@ public class ZimsIlluminaRunFactory {
             flowcell.getContainerRole().evaluateCriteria(vesselPosition, criteria, Ancestors, null, 0);
             ArrayList<LibraryBean> libraryBeans = new ArrayList<LibraryBean>();
             for (LabVessel labVessel : criteria.getNearestLabVessels()) {
-                libraryBeans.addAll(makeLibraryBeans(labVessel));
+                libraryBeans.addAll(makeLibraryBeans(labVessel, mapSampleIdToDto));
             }
             ZimsIlluminaChamber lane = new ZimsIlluminaChamber(laneNum, libraryBeans, null, null);
             run.addLane(lane);
@@ -82,12 +88,13 @@ public class ZimsIlluminaRunFactory {
         return run;
     }
 
-    public List<LibraryBean> makeLibraryBeans(LabVessel labVessel) {
+    public List<LibraryBean> makeLibraryBeans(LabVessel labVessel, Map<String, BSPSampleDTO> mapSampleIdToDto) {
         List<LibraryBean> libraryBeans = new ArrayList<LibraryBean>();
+        // todo jmt reuse the sampleInstances fetched in makeZimsIlluminaRun? Would save a few milliseconds.
         Set<SampleInstance> sampleInstances = labVessel.getSampleInstances(true);
         for (SampleInstance sampleInstance : sampleInstances) {
             ProductOrder productOrder = productOrderDao.findByBusinessKey(sampleInstance.getStartingSample().getProductOrderKey());
-            BSPSampleDTO bspSampleDTO = bspSampleDataFetcher.fetchSingleSampleFromBSP(sampleInstance.getStartingSample().getSampleKey());
+            BSPSampleDTO bspSampleDTO = mapSampleIdToDto.get(sampleInstance.getStartingSample().getSampleKey());
             LabBatch labBatch = labVessel.getNearestWorkflowLabBatches().iterator().next(); // TODO: change to use singular version
             String lcSet;
             if (labBatch.getJiraTicket() != null) {

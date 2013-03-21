@@ -19,7 +19,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
-import org.broadinstitute.gpinformatics.mercury.entity.run.OutputDataLocation;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.*;
@@ -180,9 +179,10 @@ public class ZimsIlluminaRunFactoryTest {
                 "first_sample", "collection1", "7", "9", "ZimsIlluminaRunFactoryTest.testMakeLibraryBean.sampleDTO",
                 "participant1", "Test Material", "42", "Test Sample", "Test failure", "M", "Stock Type", "fingerprint",
                 "sample1", "ZimsIlluminaRunFactoryTest", "N/A", "unknown", "false");
-        when(mockBSPSampleDataFetcher.fetchSingleSampleFromBSP("TestSM-1")).thenReturn(sampleDTO);
 
-        LibraryBean libraryBean = zimsIlluminaRunFactory.makeLibraryBeans(testTube).get(0);
+        Map<String, BSPSampleDTO> mapSampleIdToDto = new HashMap<String, BSPSampleDTO>();
+        mapSampleIdToDto.put("TestSM-1", sampleDTO);
+        LibraryBean libraryBean = zimsIlluminaRunFactory.makeLibraryBeans(testTube, mapSampleIdToDto).get(0);
         verify(mockProductOrderDao).findByBusinessKey("TestPDO-1");
         assertThat(libraryBean.getLibrary(), equalTo("testTube")); // TODO: expand with full definition of generated library name
         assertThat(libraryBean.getProject(), equalTo("TestRP-1"));
