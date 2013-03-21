@@ -145,13 +145,20 @@ public class ProductActionBean extends CoreActionBean {
         // Ensure that numeric criteria have valid data.
         int matchingValueIndex = 0;
         for (String criterion : criteria) {
-            RiskCriteria.RiskCriteriaType type = RiskCriteria.RiskCriteriaType.findByLabel(criterion);
+            RiskCriterion.RiskCriteriaType type = RiskCriterion.RiskCriteriaType.findByLabel(criterion);
             if (type.getOperatorType() == Operator.OperatorType.NUMERIC) {
                 try {
                     Double.parseDouble(values[matchingValueIndex]);
                 } catch (NumberFormatException e) {
                     addGlobalValidationError("Not a valid number for risk calculation: {2}", values[matchingValueIndex]);
                 }
+            }
+
+            // If this is a RIN criterion and the product does not support RIN, give an error. This was still parsed
+            // and validated as any other criterion
+            if ((type == RiskCriterion.RiskCriteriaType.RIN) && !editProduct.isSupportsRin()) {
+                addGlobalValidationError("Cannot add a RIN criterion for product: {2} of family {3}",
+                    editProduct.getDisplayName(), editProduct.getProductFamily().getName());
             }
 
             // Only increment the matching value if it is not boolean or if this is old style boolean where all indexes match
@@ -243,7 +250,7 @@ public class ProductActionBean extends CoreActionBean {
             int fullPosition = 0;
             int originalPosition = 0;
             for (String criterion : criteria) {
-                RiskCriteria.RiskCriteriaType type = RiskCriteria.RiskCriteriaType.findByLabel(criterion);
+                RiskCriterion.RiskCriteriaType type = RiskCriterion.RiskCriteriaType.findByLabel(criterion);
                 if (type.getOperatorType() == Operator.OperatorType.BOOLEAN) {
                     fullOperators[fullPosition] = type.getOperators().get(0).getLabel();
                     fullValues[fullPosition] = "true";
@@ -341,8 +348,8 @@ public class ProductActionBean extends CoreActionBean {
         return Operator.findOperatorsByType(Operator.OperatorType.NUMERIC);
     }
 
-    public RiskCriteria.RiskCriteriaType[] getCriteriaTypes() {
-        return RiskCriteria.RiskCriteriaType.values();
+    public RiskCriterion.RiskCriteriaType[] getCriteriaTypes() {
+        return RiskCriterion.RiskCriteriaType.values();
     }
 
     public String[] getValues() {

@@ -147,12 +147,13 @@ public abstract class AbstractJerseyClientService implements Serializable {
     }
 
     /**
-     * Template pattern method for subclasses to customize the {@link ClientConfig} before the {@link Client} is created.
+     * The default for this is to do nothing, but it can be overriden for custom set up
      *
-     * @param clientConfig
+     * @param clientConfig The config object
      */
-    protected abstract void customizeConfig(ClientConfig clientConfig);
-
+    protected void customizeConfig(ClientConfig clientConfig) {
+        // noop
+    }
 
     /**
      * Template pattern method for subclasses to modify the {@link Client} after it has been created

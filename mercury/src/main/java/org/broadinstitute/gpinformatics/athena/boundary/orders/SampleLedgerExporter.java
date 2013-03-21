@@ -6,7 +6,7 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingTrackerUtils;
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
-import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
@@ -68,16 +68,16 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         return user.getFullName();
     }
 
-    private static Date getWorkCompleteDate(Set<BillingLedger> billingLedgers, ProductOrderSample productOrderSample) {
-        if (billingLedgers == null) {
+    private static Date getWorkCompleteDate(Set<LedgerEntry> ledgerEntries, ProductOrderSample productOrderSample) {
+        if (ledgerEntries == null) {
             return null;
         }
 
         // Very simple logic that for now rolls up all work complete dates and assumes they are the same across
         // all price items on the PDO sample.
-        for (BillingLedger billingLedger : billingLedgers) {
-            if (!billingLedger.isBilled() && billingLedger.getProductOrderSample().equals(productOrderSample)) {
-                return billingLedger.getWorkCompleteDate();
+        for (LedgerEntry ledgerEntry : ledgerEntries) {
+            if (!ledgerEntry.isBilled() && ledgerEntry.getProductOrderSample().equals(productOrderSample)) {
+                return ledgerEntry.getWorkCompleteDate();
             }
         }
 
@@ -271,11 +271,11 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         }
     }
 
-    private static String getBillingError(Set<BillingLedger> billableItems) {
+    private static String getBillingError(Set<LedgerEntry> billableItems) {
         Set<String> errors = new HashSet<String>();
 
         // Collect all unique errors
-        for (BillingLedger ledger : billableItems) {
+        for (LedgerEntry ledger : billableItems) {
             if (!StringUtils.isBlank(ledger.getBillingMessage())) {
                 errors.add(ledger.getBillingMessage());
             }

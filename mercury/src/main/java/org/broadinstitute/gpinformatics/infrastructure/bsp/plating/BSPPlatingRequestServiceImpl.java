@@ -2,20 +2,19 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp.plating;
 
 
 import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.config.ClientConfig;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.container.ContainerManager;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.bsp.client.users.UserManager;
 import org.broadinstitute.bsp.client.workrequest.*;
-import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
-import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
-import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.common.GroupingIterable;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
+import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
+import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingRequest;
 
 import javax.inject.Inject;
 import java.text.DateFormat;
@@ -489,11 +488,6 @@ public class BSPPlatingRequestServiceImpl extends AbstractJerseyClientService im
     @Override
     public BSPPlatingRequestOptions getBSPPlatingRequestDefaultOptions() {
         return defaultPlatingRequestOptions;
-    }
-
-
-    @Override
-    protected void customizeConfig(ClientConfig clientConfig) {
     }
 
     @Override

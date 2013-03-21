@@ -32,6 +32,11 @@ import java.util.*;
 
 /**
  * Web service for fetching run data for Zamboni.
+ *
+ * The flip side to this regards registering runs.  This is found in
+ * {@link org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunResource}.  it may be prudent sometime in
+ * the near future to join these two, or at least have thim in the same package.
+ *
  */
 @Path("/IlluminaRun")
 @Stateless

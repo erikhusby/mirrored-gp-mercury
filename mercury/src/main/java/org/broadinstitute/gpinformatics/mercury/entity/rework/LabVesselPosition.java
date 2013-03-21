@@ -21,6 +21,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Rapsheets and Rework log at the sample level. To know where the
+ * "thing" we are logging occurred, we keep track of VesselPosition as well.
+ */
 @Entity
 @Audited
 @Table(schema = "mercury", name = "lv_pos")
@@ -30,6 +34,10 @@ public class LabVesselPosition {
     @SequenceGenerator(name = "SEQ_LV_POS", schema = "mercury", sequenceName = "SEQ_LV_POS")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_LV_POS")
     private Long labVesselPositionId;
+
+    // this should not cause n+1 select performance issue if it is LAZY and mandatory
+    @OneToOne(mappedBy = "labVesselPosition", optional = false)
+    private RapSheetEntry rapSheetEntry;
 
     @NotNull
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
@@ -65,5 +73,13 @@ public class LabVesselPosition {
 
     public void setVesselPosition(VesselPosition vesselPosition) {
         this.vesselPosition = vesselPosition;
+    }
+
+    public RapSheetEntry getRapSheetEntry() {
+        return rapSheetEntry;
+    }
+
+    public void setRapSheetEntry(RapSheetEntry rapSheetEntry) {
+        this.rapSheetEntry = rapSheetEntry;
     }
 }

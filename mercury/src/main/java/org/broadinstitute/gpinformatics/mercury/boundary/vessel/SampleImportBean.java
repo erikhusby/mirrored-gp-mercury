@@ -20,16 +20,20 @@ public class SampleImportBean {
     private String sourceSystemExportId;
     private Date exportDate;
     private List<ParentVesselBean> parentVesselBeans;
+    private String userName;
 
     /** For JAXB */
+    @SuppressWarnings("UnusedDeclaration")
     public SampleImportBean() {
     }
 
-    public SampleImportBean(String sourceSystem, String sourceSystemExportId, Date exportDate, List<ParentVesselBean> parentVesselBeans) {
+    public SampleImportBean(String sourceSystem, String sourceSystemExportId, Date exportDate,
+            List<ParentVesselBean> parentVesselBeans, String userName) {
         this.sourceSystem = sourceSystem;
         this.sourceSystemExportId = sourceSystemExportId;
         this.exportDate = exportDate;
         this.parentVesselBeans = parentVesselBeans;
+        this.userName = userName;
     }
 
     public String getSourceSystem() {
@@ -46,5 +50,9 @@ public class SampleImportBean {
 
     public List<ParentVesselBean> getParentVesselBeans() {
         return parentVesselBeans;
+    }
+
+    public String getUserName() {
+        return userName;
     }
 }

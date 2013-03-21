@@ -1,6 +1,13 @@
 package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
-import net.sourceforge.stripes.action.*;
+import net.sourceforge.stripes.action.After;
+import net.sourceforge.stripes.action.Before;
+import net.sourceforge.stripes.action.DefaultHandler;
+import net.sourceforge.stripes.action.ForwardResolution;
+import net.sourceforge.stripes.action.HandlesEvent;
+import net.sourceforge.stripes.action.RedirectResolution;
+import net.sourceforge.stripes.action.Resolution;
+import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidateNestedProperties;
@@ -14,18 +21,22 @@ import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusF
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
-import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderListEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
-import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
-import org.broadinstitute.gpinformatics.athena.entity.orders.*;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriteria;
+import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
@@ -34,7 +45,6 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.Produ
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProjectTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.mercury.MercuryClientService;
@@ -51,9 +61,21 @@ import org.jvnet.inflector.Noun;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 /**
  * This handles all the needed interface processing elements
@@ -111,7 +133,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private BillingSessionDao billingSessionDao;
 
     @Inject
-    private BillingLedgerDao billingLedgerDao;
+    private LedgerEntryDao ledgerEntryDao;
 
     @Inject
     private ProductOrderSampleDao productOrderSampleDao;
@@ -120,16 +142,10 @@ public class ProductOrderActionBean extends CoreActionBean {
     private ProductOrderEjb productOrderEjb;
 
     @Inject
-    private UserBean userBean;
-
-    @Inject
     private ProductTokenInput productTokenInput;
 
     @Inject
     private ProjectTokenInput projectTokenInput;
-
-    @Inject
-    private Deployment deployment;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -354,10 +370,10 @@ public class ProductOrderActionBean extends CoreActionBean {
 
             // If there are locked out orders, then do not allow the session to start. Using a DAO to do this is a quick
             // way to do this without having to go through all the objects.
-            Set<BillingLedger> lockedOutOrders = billingLedgerDao.findLockedOutByOrderList(selectedProductOrderBusinessKeys);
+            Set<LedgerEntry> lockedOutOrders = ledgerEntryDao.findLockedOutByOrderList(selectedProductOrderBusinessKeys);
             if (!lockedOutOrders.isEmpty()) {
                 Set<String> lockedOutOrderStrings = new HashSet<String>(lockedOutOrders.size());
-                for (BillingLedger ledger : lockedOutOrders) {
+                for (LedgerEntry ledger : lockedOutOrders) {
                     lockedOutOrderStrings.add(ledger.getProductOrderSample().getProductOrder().getTitle());
                 }
 
@@ -494,12 +510,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         addMessage("Product Order \"{0}\" has been placed", editOrder.getTitle());
 
-        if (deployment != null && deployment == Deployment.DEV) {
-            Collection<ProductOrderSample> samples = mercuryClientService.addSampleToPicoBucket(editOrder);
-            if (!samples.isEmpty()) {
-                addMessage("{0} samples have been added to the pico bucket: {1}", samples.size(), StringUtils.join(ProductOrderSample.getSampleNames(samples), ", "));
-            }
-        }
+        handleSamplesAdded(editOrder.getSamples());
 
         return createViewResolution();
     }
@@ -585,8 +596,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent("startBilling")
     public Resolution startBilling() {
-        Set<BillingLedger> ledgerItems =
-                billingLedgerDao.findWithoutBillingSessionByOrderList(selectedProductOrderBusinessKeys);
+        Set<LedgerEntry> ledgerItems =
+                ledgerEntryDao.findWithoutBillingSessionByOrderList(selectedProductOrderBusinessKeys);
         if (CollectionUtils.isEmpty(ledgerItems)) {
             addGlobalValidationError("There are no items to bill on any of the selected orders");
             return new ForwardResolution(ProductOrderActionBean.class, LIST_ACTION);
@@ -673,8 +684,10 @@ public class ProductOrderActionBean extends CoreActionBean {
                 item.put("collaboratorParticipantId", sample.getBspDTO().getCollaboratorParticipantId());
                 item.put("volume", sample.getBspDTO().getVolume());
                 item.put("concentration", sample.getBspDTO().getConcentration());
+                item.put("rin", sample.getBspDTO().getRin());
                 item.put("total", sample.getBspDTO().getTotal());
                 item.put("hasFingerprint", sample.getBspDTO().getHasFingerprint());
+                item.put("hasSampleKitUploadRackscanMismatch", sample.getBspDTO().getHasSampleKitUploadRackscanMismatch());
 
                 itemList.put(item);
             }
@@ -757,9 +770,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     public Resolution setRisk() throws Exception {
 
         // If we are creating a manual on risk, then need to set it up and persist it for reuse
-        RiskCriteria criterion = null;
+        RiskCriterion criterion = null;
         if (riskStatus) {
-            criterion = RiskCriteria.createManual();
+            criterion = RiskCriterion.createManual();
             productOrderDao.persist(criterion);
         }
 
@@ -811,14 +824,17 @@ public class ProductOrderActionBean extends CoreActionBean {
                 editOrder.getSampleString(),
                 ProductOrder.TransitionStates.DeveloperEdit.getStateName());
 
-        if (deployment != null && deployment == Deployment.DEV) {
-            Collection<ProductOrderSample> samplesInPico = mercuryClientService.addSampleToPicoBucket(editOrder, samplesToAdd);
-            if (!samplesInPico.isEmpty()) {
-                addMessage("{0} samples have been added to the pico bucket: {1}", samplesInPico.size(), nameList);
-            }
-        }
+        handleSamplesAdded(samplesToAdd);
 
         return createViewResolution();
+    }
+
+    private void handleSamplesAdded(List<ProductOrderSample> newSamples) {
+        Collection<ProductOrderSample> samples = mercuryClientService.addSampleToPicoBucket(editOrder, newSamples);
+        if (!samples.isEmpty()) {
+            addMessage("{0} samples have been added to the pico bucket: {1}", samples.size(),
+                    StringUtils.join(ProductOrderSample.getSampleNames(samples), ", "));
+        }
     }
 
     public List<String> getSelectedProductOrderBusinessKeys() {
@@ -1000,16 +1016,6 @@ public class ProductOrderActionBean extends CoreActionBean {
         return editOrder.isDraft();
     }
 
-    /**
-     * Quote edit is allowed if the PDO is DRAFT, or if no billing has occurred for any samples yet. This may change
-     * if we snapshot quotes into ledger entries.
-     *
-     * @return true if user can edit the quote
-     */
-    public boolean getAllowQuoteEdit() {
-        return editOrder.isDraft() || productOrderSampleDao.countSamplesWithBillingLedgerEntries(editOrder) == 0;
-    }
-
     public String getQ() {
         return q;
     }
@@ -1121,7 +1127,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (!editOrder.isSubmitted()) {
             setAbandonDisabledReason("the order status of the PDO is not 'Submitted'.");
             return false;
-        } else if (productOrderSampleDao.countSamplesWithBillingLedgerEntries(editOrder) > 0) {
+        } else if (productOrderSampleDao.countSamplesWithLedgerEntries(editOrder) > 0) {
             setAbandonWarning(true);
         }
         return true;
@@ -1211,5 +1217,9 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     public void setAbandonWarning(boolean abandonWarning) {
         this.abandonWarning = abandonWarning;
+    }
+
+    public boolean isSupportsRin() {
+        return editOrder.getProduct().isSupportsRin();
     }
 }

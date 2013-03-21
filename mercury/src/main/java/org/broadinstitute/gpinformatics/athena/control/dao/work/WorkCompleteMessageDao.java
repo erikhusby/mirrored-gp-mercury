@@ -4,9 +4,13 @@ import org.broadinstitute.gpinformatics.athena.entity.work.WorkCompleteMessage;
 import org.broadinstitute.gpinformatics.athena.entity.work.WorkCompleteMessage_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
+import javax.ejb.Stateful;
+import javax.enterprise.context.RequestScoped;
 import java.util.Date;
 import java.util.List;
 
+@Stateful
+@RequestScoped
 public class WorkCompleteMessageDao extends GenericDao {
 
     /**

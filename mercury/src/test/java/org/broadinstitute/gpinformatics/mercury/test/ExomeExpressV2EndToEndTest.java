@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.test;
 
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
 import org.testng.Assert;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -41,6 +43,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
+
 /**
  * Test Exome Express in Mercury
  */
@@ -50,7 +54,7 @@ public class ExomeExpressV2EndToEndTest {
             "12");
     public static List<String> RACK_ROWS = Arrays.asList("A", "B", "C", "D", "E", "F", "G", "H");
 
-    @Test
+    @Test(groups = DATABASE_FREE)
     public void test() {
 
 
@@ -175,8 +179,8 @@ public class ExomeExpressV2EndToEndTest {
         Map<String, ProductOrder> keyToPoMap = new HashMap<String, ProductOrder>();
         keyToPoMap.put(productOrder1.getBusinessKey(), productOrder1);
 
-        LabEventTest.PicoPlatingEntityBuider pplatingEntityBuilder =
-                new LabEventTest.PicoPlatingEntityBuider(bettaLimsMessageFactory,
+        LabEventTest.PicoPlatingEntityBuilder pplatingEntityBuilder =
+                new LabEventTest.PicoPlatingEntityBuilder(bettaLimsMessageFactory,
                 labEventFactory, leHandler, mapBarcodeToTube, rackBarcode, keyToPoMap).invoke();
 
         // Lab Event Factory should have put tubes into the Bucket after normalization
@@ -274,17 +278,26 @@ public class ExomeExpressV2EndToEndTest {
                 hybridSelectionEntityBuilder.getNormCatchRackBarcode(),
                 hybridSelectionEntityBuilder.getNormCatchBarcodes(),
                 hybridSelectionEntityBuilder
-                        .getMapBarcodeToNormCatchTubes());
+                        .getMapBarcodeToNormCatchTubes(), WorkflowName.EXOME_EXPRESS);
         qtpEntityBuilder.invoke();
+
+        String flowcellBarcode = "flowcell"+ new Date().getTime();
+
+        LabEventTest.HiSeq2500FlowcellEntityBuilder  hiSeq2500FlowcellEntityBuilder =
+            new LabEventTest.HiSeq2500FlowcellEntityBuilder(bettaLimsMessageFactory, labEventFactory,
+                            leHandler,
+                    qtpEntityBuilder.getDenatureRack(),
+                            flowcellBarcode).invoke();
         // MiSeq reagent block transfer message
         // Register run
-        IlluminaSequencingRunFactory illuminaSequencingRunFactory = new IlluminaSequencingRunFactory();
+        IlluminaSequencingRunFactory illuminaSequencingRunFactory =
+                new IlluminaSequencingRunFactory(EasyMock.createNiceMock(JiraCommentUtil.class));
         IlluminaSequencingRun illuminaSequencingRun;
         try {
             illuminaSequencingRun = illuminaSequencingRunFactory.buildDbFree(new SolexaRunBean(
-                    qtpEntityBuilder.getIlluminaFlowcell().getCartridgeBarcode(), "Run1", new Date(), "SL-HAL",
-                    File.createTempFile("RunDir", ".txt").getAbsolutePath(), null),
-                    qtpEntityBuilder.getIlluminaFlowcell());
+                    hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell().getCartridgeBarcode(), "Run1", new Date(),
+                    "SL-HAL", File.createTempFile("RunDir", ".txt").getAbsolutePath(), null),
+                                                                              hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
@@ -17,7 +18,6 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
-import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaRunConfiguration;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
@@ -33,15 +33,10 @@ import java.util.*;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
 import static org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType.*;
-import static org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell.FLOWCELL_TYPE.EIGHT_LANE;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * @author breilly
@@ -126,7 +121,7 @@ public class ZimsIlluminaRunFactoryTest {
         // Record some events for the sample
         BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
         List<BettaLimsMessageFactory.CherryPick> cherryPicks = new ArrayList<BettaLimsMessageFactory.CherryPick>();
-        String stripTubeWells[] = new String[]{ "A01", "B01", "C01", "D01", "E01", "F01", "G01", "H01" };
+        String stripTubeWells[] = new String[]{"A01", "B01", "C01", "D01", "E01", "F01", "G01", "H01"};
         for (int i = 0; i < 8; i++) {
             cherryPicks.add(new BettaLimsMessageFactory.CherryPick("testRack", "A01", "testStripTubeHolder", stripTubeWells[i]));
         }
@@ -135,7 +130,7 @@ public class ZimsIlluminaRunFactoryTest {
         mapBarcodeToSourceTube.put("testTube", testTube);
         LabEvent stripTubeBTransfer = labEventFactory.buildCherryPickRackToStripTubeDbFree(stripTubeBTransferEvent, new HashMap<String, TubeFormation>(), mapBarcodeToSourceTube, null, new HashMap<String, StripTube>(), new HashMap<String, RackOfTubes>());
 
-        flowcell = new IlluminaFlowcell(EIGHT_LANE, "testFlowcell", new IlluminaRunConfiguration(76, true));
+        flowcell = new IlluminaFlowcell(IlluminaFlowcell.FlowcellType.HiSeqFlowcell, "testFlowcell");
         PlateTransferEventType flowcellTransferEvent = bettaLimsMessageFactory.buildStripTubeToFlowcell("FlowcellTransfer", "testStripTube", "testFlowcell");
         StripTube stripTube = (StripTube) getOnly(stripTubeBTransfer.getTargetLabVessels());
         labEventFactory.buildFromBettaLimsPlateToPlateDbFree(flowcellTransferEvent, stripTube, flowcell);
@@ -149,7 +144,12 @@ public class ZimsIlluminaRunFactoryTest {
     @Test(groups = DATABASE_FREE)
     public void testMakeZimsIlluminaRun() throws Exception {
         Date runDate = new Date(1358889107084L);
-        IlluminaSequencingRun sequencingRun = new IlluminaSequencingRun(flowcell, "TestRun", "Run-123", "IlluminaRunServiceImplTest", 101L, true, runDate);
+        final String testRunDirectory = "TestRun";
+        IlluminaSequencingRun sequencingRun =
+                new IlluminaSequencingRun(flowcell, testRunDirectory, "Run-123", "IlluminaRunServiceImplTest", 101L, true,
+                        runDate,
+                        null,
+                                                 "/root/path/to/run/" + testRunDirectory);
         ZimsIlluminaRun zimsIlluminaRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(sequencingRun);
 //        LibraryBeanFactory libraryBeanFactory = new LibraryBeanFactory();
 //        ZimsIlluminaRun zimsIlluminaRun = libraryBeanFactory.buildLibraries(sequencingRun);
@@ -160,9 +160,9 @@ public class ZimsIlluminaRunFactoryTest {
         assertThat(zimsIlluminaRun.getSequencer(), equalTo("IlluminaRunServiceImplTest"));
         assertThat(zimsIlluminaRun.getFlowcellBarcode(), equalTo("testFlowcell"));
         assertThat(zimsIlluminaRun.getRunDateString(), equalTo("01/22/2013 16:11"));
-//        assertThat(zimsIlluminaRun.getPairedRun(), is(true)); // TODO
-//        assertThat(zimsIlluminaRun.getSequencerModel(), equalTo("HiSeq")); // TODO
-//        assertThat(zimsIlluminaRun.getLanes().size(), equalTo(8));
+//        assertThat(zimsIlluminaRun.getPairedRun(), is(true)); // TODO SGM will pull from Workflow
+//        assertThat(zimsIlluminaRun.getSequencerModel(), equalTo("HiSeq")); // TODO  SGM Will pull from workflow
+//        assertThat(zimsIlluminaRun.getLanes().size(), equalTo(8)); // TODO SGM WIll pull from workflow
 
         for (ZimsIlluminaChamber lane : zimsIlluminaRun.getLanes()) {
             if (lane.getName().equals("1")) {
@@ -175,7 +175,36 @@ public class ZimsIlluminaRunFactoryTest {
 
     @Test(groups = DATABASE_FREE)
     public void testMakeLibraryBean() {
-        BSPSampleDTO sampleDTO = new BSPSampleDTO("BspContainer", "Stock1", "RootSample", "Aliquot1", "Spencer", "Hamster", "first_sample", "collection1", "7", "9", "ZimsIlluminaRunFactoryTest.testMakeLibraryBean.sampleDTO", "participant1", "Test Material", "42", "Test Sample", "Test failure", "M", "Stock Type", "fingerprint", "sample1", "ZimsIlluminaRunFactoryTest", "N/A", "unknown");
+
+        Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
+            put(BSPSampleSearchColumn.CONTAINER_ID, "BspContainer");
+            put(BSPSampleSearchColumn.STOCK_SAMPLE, "Stock1");
+            put(BSPSampleSearchColumn.ROOT_SAMPLE, "RootSample");
+            put(BSPSampleSearchColumn.SAMPLE_ID, "Aliquot1");
+            put(BSPSampleSearchColumn.PARTICIPANT_ID, "Spencer");
+            put(BSPSampleSearchColumn.SPECIES, "Hamster");
+            put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, "first_sample");
+            put(BSPSampleSearchColumn.COLLECTION, "collection1");
+            put(BSPSampleSearchColumn.VOLUME, "7");
+            put(BSPSampleSearchColumn.CONCENTRATION, "9");
+            put(BSPSampleSearchColumn.LSID, "ZimsIlluminaRunFactoryTest.testMakeLibraryBean.sampleDTO");
+            put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, "participant1");
+            put(BSPSampleSearchColumn.MATERIAL_TYPE, "Test Material");
+            put(BSPSampleSearchColumn.TOTAL_DNA, "42");
+            put(BSPSampleSearchColumn.SAMPLE_TYPE, "Test Sample");
+            put(BSPSampleSearchColumn.PRIMARY_DISEASE, "Test failure");
+            put(BSPSampleSearchColumn.GENDER, "M");
+            put(BSPSampleSearchColumn.STOCK_TYPE, "Stock Type");
+            put(BSPSampleSearchColumn.FINGERPRINT, "fingerprint");
+            put(BSPSampleSearchColumn.SAMPLE_ID, "sample1");
+            put(BSPSampleSearchColumn.SAMPLE_TYPE, "ZimsIlluminaRunFactoryTest");
+            put(BSPSampleSearchColumn.RACE, "N/A");
+            put(BSPSampleSearchColumn.ETHNICITY, "unknown");
+            put(BSPSampleSearchColumn.RACKSCAN_MISMATCH ,"false");
+            put(BSPSampleSearchColumn.RIN, "8.4");
+        }};
+
+        BSPSampleDTO sampleDTO = new BSPSampleDTO(dataMap);
         when(mockBSPSampleDataFetcher.fetchSingleSampleFromBSP("TestSM-1")).thenReturn(sampleDTO);
 
         LibraryBean libraryBean = zimsIlluminaRunFactory.makeLibraryBean(testTube);

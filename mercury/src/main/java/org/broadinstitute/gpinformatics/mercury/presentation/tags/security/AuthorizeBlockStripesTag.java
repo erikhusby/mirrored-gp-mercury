@@ -14,8 +14,8 @@ import javax.servlet.jsp.tagext.TagSupport;
  * <br/>
  * {@code
  * <%@ taglib uri="http://www.broadinstitute.org/Mercury/AuthorizeBlock"" prefix="security"%>
- * <security:authorizeBlock roles={"Administrator", "Project Manager"} exclusionRoles={"Foobar"}>
- * Secured content goes in here
+ * <security:authorizeBlock roles={"Administrator", "Project Manager"}>
+ *      Secured content goes in here
  * </security:authorizeBlock>
  * }
  *
@@ -28,8 +28,6 @@ public class AuthorizeBlockStripesTag extends TagSupport {
 
     private String[] roles;
 
-    private String[] exclusionRoles;
-
     public static final String ALLOW_ALL_ROLES = "All";
 
     public String[] getRoles() {
@@ -40,14 +38,6 @@ public class AuthorizeBlockStripesTag extends TagSupport {
         this.roles = roles;
     }
 
-    public String[] getExclusionRoles() {
-        return exclusionRoles;
-    }
-
-    public void setExclusionRoles(String[] exclusionRoles) {
-        this.exclusionRoles = exclusionRoles;
-    }
-
     /**
      * Process the tag. The exclusion tag takes precedence over the inclusion
      * role list. If an exception occurs then the default result is to skip the
@@ -55,22 +45,12 @@ public class AuthorizeBlockStripesTag extends TagSupport {
      */
     @Override
     public int doStartTag() throws JspException {
-        if (roles == null && exclusionRoles == null) {
+        if (roles == null) {
             return SKIP_BODY;
         }
 
         try {
             HttpServletRequest request = (HttpServletRequest) pageContext.getRequest();
-
-            // Exclusion tag check to skip the jsp code block.
-            if (exclusionRoles != null) {
-                for (String role : exclusionRoles) {
-                    if (request.isUserInRole(role) || role.equals(ALLOW_ALL_ROLES)) {
-                        // User has a role that should be skipped or "All" roles to be excluded (?).
-                        return SKIP_BODY;
-                    }
-                }
-            }
 
             // Now check the roles to include the jsp code block.
             if (roles != null) {

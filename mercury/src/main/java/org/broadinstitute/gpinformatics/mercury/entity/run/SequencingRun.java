@@ -7,13 +7,11 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.JoinTable;
-import javax.persistence.OneToMany;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
 
 @Entity
 @Audited
@@ -31,27 +29,39 @@ public class SequencingRun {
 
     private String machineName;
 
-    //    @ManyToOne(fetch = FetchType.LAZY)
     private Long operator;
 
     private Boolean testRun;
 
     private Date runDate;
 
-    @OneToMany(cascade = CascadeType.PERSIST) // todo jmt should this have mappedBy?
-    // have to specify name, generated aud name is too long for Oracle
-    @JoinTable(schema = "mercury", name = "seq_run_run_cartridges")
-    private Set<RunCartridge> runCartridges = new HashSet<RunCartridge>();
+    @ManyToOne(cascade = CascadeType.PERSIST)
+    private RunCartridge runCartridge;
+
+    @ManyToOne(cascade = {CascadeType.ALL})
+    @JoinColumn(name = "run_location_id")
+    private OutputDataLocation runLocation;
+
+    /*
+     *  Phased approach to removing the entity above (Output Location).  Adding data location here and then when the data
+     *  is copied over from the old, will remove the OutputDataLocation entity all together
+     *
+     */
+    private String runDirectory;
+
+
 
     public SequencingRun(String runName, String runBarcode, String machineName, Long operator, Boolean testRun,
-                         Date runDate, Set<RunCartridge> runCartridges) {
+                         Date runDate, RunCartridge runCartridge, OutputDataLocation runLocation, String runDirectory) {
         this.runName = runName;
         this.runBarcode = runBarcode;
         this.machineName = machineName;
         this.operator = operator;
         this.testRun = testRun;
         this.runDate = runDate;
-        this.runCartridges = runCartridges;
+        this.runLocation = runLocation;
+        setRunCartridge(runCartridge);
+        this.runDirectory = runDirectory;
     }
 
     protected SequencingRun() {
@@ -106,8 +116,13 @@ public class SequencingRun {
      *
      * @return
      */
-    public Iterable<RunCartridge> getSampleCartridge() {
-        return runCartridges;
+    public RunCartridge getSampleCartridge() {
+        return runCartridge;
+    }
+
+    public void setRunCartridge(RunCartridge runCartridge) {
+        this.runCartridge = runCartridge;
+        runCartridge.addSequencingRun(this);
     }
 
     public Date getRunDate() {
@@ -116,5 +131,17 @@ public class SequencingRun {
 
     public void setRunDate(Date runDate) {
         this.runDate = runDate;
+    }
+
+    public OutputDataLocation getRunLocation() {
+        return runLocation;
+    }
+
+    public void setRunLocation(OutputDataLocation runLocation) {
+        this.runLocation = runLocation;
+    }
+
+    public String getRunDirectory() {
+        return runDirectory;
     }
 }

@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.work;
 
+import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
@@ -9,26 +10,25 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * This is the message containing all information for work complete
+ * This contains information for work complete messages from pipelines.
  */
 @Entity
 @Audited
 @Table(name= "WORK_COMPLETE_MESSAGE", schema = "athena")
 public class WorkCompleteMessage {
-    public enum REQUIRED_NAMES {
-        PDO_NAME, SAMPLE_NAME, SAMPLE_INDEX, COMPLETED_TIME
+    public enum Properties {
+        PDO_NAME, ALIQUOT_ID, COMPLETED_TIME
     }
 
-    WorkCompleteMessage() {
+    protected WorkCompleteMessage() {
     }
 
     public WorkCompleteMessage(
-        @Nonnull String pdoName, @Nonnull String sampleName, int sampleIndex, @Nonnull Date completedDate,
-        @Nonnull Map<String, Object> dataMap) {
+            @Nonnull String pdoName, @Nonnull String aliquotId, @Nonnull Date completedDate,
+            @Nonnull Map<String, Object> dataMap) {
 
         this.pdoName = pdoName;
-        this.sampleName = sampleName;
-        this.sampleIndex = sampleIndex;
+        this.aliquotId = aliquotId;
         this.completedDate = completedDate;
 
         data = new HashMap<String, MessageDataValue>();
@@ -46,13 +46,9 @@ public class WorkCompleteMessage {
     @Nonnull
     private String pdoName;
 
-    @Column(name = "SAMPLE_NAME", length = 255, nullable = false)
+    @Column(name = "ALIQUOT_ID", length = 255, nullable = false)
     @Nonnull
-    private String sampleName;
-
-    // If the same sample exists multiple times in the PDO, this will let us know which was meant
-    @Column(name = "SAMPLE_INDEX", nullable = false)
-    private int sampleIndex;
+    private String aliquotId;
 
     @Column(name = "COMPLETED_DATE", nullable = false)
     @Nonnull
@@ -61,6 +57,7 @@ public class WorkCompleteMessage {
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true, fetch = FetchType.LAZY)
     @MapKeyColumn(name="KEY")
     @JoinColumn(name = "WORK_COMPLETE_MESSAGE", nullable = false)
+    @AuditJoinTable(name = "WORK_COMPLETE_MESSAGE_JOIN_AUD")
     @Nonnull
     private Map<String, MessageDataValue> data;
 
@@ -74,12 +71,8 @@ public class WorkCompleteMessage {
     }
 
     @Nonnull
-    public String getSampleName() {
-        return sampleName;
-    }
-
-    public Integer getSampleIndex() {
-        return sampleIndex;
+    public String getAliquotId() {
+        return aliquotId;
     }
 
     @Nonnull

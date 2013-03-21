@@ -2,47 +2,53 @@ package org.broadinstitute.gpinformatics.mercury.control.run;
 
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
+import org.broadinstitute.gpinformatics.mercury.entity.run.OutputDataLocation;
 
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.io.File;
 import java.io.Serializable;
+import java.text.MessageFormat;
 
 /**
  * Creates a sequencing run from a JAX-RS DTO.  Implements Serializable because it's used by a Stateful session bean.
  */
 public class IlluminaSequencingRunFactory implements Serializable {
-    @Inject
-    private IlluminaFlowcellDao illuminaFlowcellDao;
 
-    public IlluminaSequencingRun build(SolexaRunBean solexaRunBean) {
-        // todo jmt how to get operator?
-        IlluminaFlowcell illuminaFlowcell = illuminaFlowcellDao.findByBarcode(solexaRunBean.getFlowcellBarcode());
-        return buildDbFree(solexaRunBean, illuminaFlowcell);
+    private JiraCommentUtil jiraCommentUtil;
+
+    @Inject
+    public IlluminaSequencingRunFactory(JiraCommentUtil jiraCommentUtil) {
+        this.jiraCommentUtil = jiraCommentUtil;
+    }
+
+    public IlluminaSequencingRun build(SolexaRunBean solexaRunBean, IlluminaFlowcell illuminaFlowcell) {
+        IlluminaSequencingRun builtRun = buildDbFree(solexaRunBean, illuminaFlowcell);
+        jiraCommentUtil.postUpdate(MessageFormat.format("Registered new Solexa run {0} located at {1}",
+                                                               builtRun.getRunName(),
+                                                               builtRun.getRunDirectory()),
+                                          illuminaFlowcell);
+
+        return builtRun;
     }
 
     @DaoFree
-    public IlluminaSequencingRun buildDbFree(SolexaRunBean solexaRunBean, IlluminaFlowcell illuminaFlowcell) {
-        if (illuminaFlowcell == null) {
-            throw new RuntimeException("Flowcell with barcode '" + solexaRunBean.getFlowcellBarcode() + "' does not exist");
-        }
+    public IlluminaSequencingRun buildDbFree(@Nonnull SolexaRunBean solexaRunBean,
+                                             @Nonnull IlluminaFlowcell illuminaFlowcell) {
 
         if (solexaRunBean.getRunDate() == null) {
             throw new RuntimeException("runDate must be specified");
         }
 
-        File runDirectory = new File(solexaRunBean.getRunDirectory());
-        if (!runDirectory.exists()) {
-            throw new RuntimeException("runDirectory '" + solexaRunBean.getRunDirectory() + "' does not exist");
-        }
+        String runName = new File(solexaRunBean.getRunDirectory()).getName();
 
-        // todo what about directory path?
-        return new IlluminaSequencingRun(illuminaFlowcell, runDirectory.getName(), solexaRunBean.getRunBarcode(),
-                solexaRunBean.getMachineName(), null /*TODO Add call to ServiceAccessUtility.getBean ( BSPUserList.class );
-
-                */,
-                false, solexaRunBean.getRunDate());
+        return new IlluminaSequencingRun(illuminaFlowcell, runName, solexaRunBean.getRunBarcode(),
+                                                solexaRunBean.getMachineName(),
+                                                null
+                                                /* TODO SGM -- Operator information is always missing.  may revisit later*/,
+                                                false, solexaRunBean.getRunDate(), null, solexaRunBean.getRunDirectory());
     }
 }

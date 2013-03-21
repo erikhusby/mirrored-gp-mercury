@@ -52,7 +52,7 @@ public class LabEventFactory implements Serializable {
      */
     public static final String PHYS_TYPE_STRIP_TUBE = "StripTube";
     /**
-     * Physical type for a flowcell
+     * Physical type for an 8-lane flowcell
      */
     public static final String PHYS_TYPE_FLOWCELL = "Flowcell";
     /**
@@ -815,8 +815,8 @@ public class LabEventFactory implements Serializable {
     public LabEvent buildFromBettaLimsPlateEventDbFree(PlateEventType plateEvent, IlluminaFlowcell flowcell) {
         LabEvent labEvent = constructReferenceData(plateEvent, labEventRefDataFetcher);
         if (flowcell == null) {
-            flowcell = new IlluminaFlowcell(IlluminaFlowcell.FLOWCELL_TYPE.EIGHT_LANE,
-                    plateEvent.getPlate().getBarcode(), null);
+            flowcell = new IlluminaFlowcell(IlluminaFlowcell.FlowcellType.HiSeqFlowcell,
+                    plateEvent.getPlate().getBarcode());
         }
 
         flowcell.addInPlaceEvent(labEvent);
@@ -891,8 +891,8 @@ public class LabEventFactory implements Serializable {
         if (targetFlowcell == null) {
             // todo jmt what about MiSeq?
             // todo jmt how to populate run configuration?
-            targetFlowcell = new IlluminaFlowcell(IlluminaFlowcell.FLOWCELL_TYPE.EIGHT_LANE,
-                    plateTransferEvent.getPlate().getBarcode(), null);
+            targetFlowcell = new IlluminaFlowcell(IlluminaFlowcell.FlowcellType.HiSeqFlowcell,
+                    plateTransferEvent.getPlate().getBarcode());
         }
 
         labEvent.getSectionTransfers().add(new SectionTransfer(
@@ -903,20 +903,30 @@ public class LabEventFactory implements Serializable {
 
     @DaoFree
     public LabEvent buildVesselToSectionDbFree(ReceptaclePlateTransferEvent receptaclePlateTransferEvent,
-                                               TwoDBarcodedTube sourceTube, @Nullable StaticPlate targetPlate,
+                                               TwoDBarcodedTube sourceTube,
+                                               @Nullable VesselContainerEmbedder targetVessel,
                                                String targetSection) {
         LabEvent labEvent = constructReferenceData(receptaclePlateTransferEvent, labEventRefDataFetcher);
         if (sourceTube == null) {
             throw new RuntimeException("Source tube not found for " + receptaclePlateTransferEvent.getSourceReceptacle().getBarcode());
         }
-        if (targetPlate == null) {
-            targetPlate = new StaticPlate(receptaclePlateTransferEvent.getDestinationPlate().getBarcode(),
-                    StaticPlate.PlateType.getByDisplayName(
-                            receptaclePlateTransferEvent.getDestinationPlate()
-                                    .getPhysType()));
+        if (targetVessel == null) {
+            String physType = receptaclePlateTransferEvent.getDestinationPlate().getPhysType();
+            if (StaticPlate.PlateType.getByAutomationName(physType) != null) {
+                targetVessel = new StaticPlate(receptaclePlateTransferEvent.getDestinationPlate().getBarcode(),
+                        StaticPlate.PlateType.getByAutomationName(physType));
+            } else if (IlluminaFlowcell.FlowcellType.getByAutomationName(physType) != null) {
+                targetVessel = new IlluminaFlowcell(IlluminaFlowcell.FlowcellType.getByAutomationName(physType),
+                        receptaclePlateTransferEvent.getDestinationPlate().getBarcode());
+            } else if (physType.equals(PHYS_TYPE_FLOWCELL)) {
+                // Guard against the possibility that automation scripts send us bare "Flowcell" types.
+                // Assume it to mean an 8-lane HiSeq flowcell.
+                targetVessel = new IlluminaFlowcell(IlluminaFlowcell.FlowcellType.HiSeqFlowcell,
+                        receptaclePlateTransferEvent.getDestinationPlate().getBarcode());
+            }
         }
         labEvent.getVesselToSectionTransfers().add(new VesselToSectionTransfer(sourceTube,
-                SBSSection.getBySectionName(targetSection), targetPlate.getContainerRole(), labEvent));
+                SBSSection.getBySectionName(targetSection), targetVessel.getContainerRole(), labEvent));
         return labEvent;
     }
 

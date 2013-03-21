@@ -23,8 +23,9 @@ public class BSPSampleSearchServiceProducer {
     @SessionScoped
     public BSPSampleSearchService produce(@New BSPSampleSearchServiceStub stub, @New BSPSampleSearchServiceImpl impl) {
 
-        if ( deployment == STUBBY )
+        if (deployment == STUBBY) {
             return stub;
+        }
 
         return impl;
     }
@@ -37,14 +38,14 @@ public class BSPSampleSearchServiceProducer {
     /**
      * Creates a BSPSampleSearchService with plain old new operator for container-free testing,
      * not a managed bean!
-     *
-     * @return
+     * <p/>
+     * This is also needed to get a real copy of the BSP services in container testing, since by default
+     * injection will give you a Stub BSP service, not an Impl.
      */
     public static BSPSampleSearchService qaInstance() {
 
-        BSPConfig bspConfig = BSPConfigProducer.getConfig(QA);
+        BSPConfig bspConfig = BSPConfig.produce(QA);
 
-        return new BSPSampleSearchServiceImpl( bspConfig );
-
+        return new BSPSampleSearchServiceImpl(bspConfig);
     }
 }

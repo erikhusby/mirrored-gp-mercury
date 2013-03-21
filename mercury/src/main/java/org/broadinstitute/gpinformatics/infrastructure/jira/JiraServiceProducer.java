@@ -11,30 +11,23 @@ import javax.inject.Inject;
 
 public class JiraServiceProducer {
 
-
     @Inject
     private Deployment deployment;
 
-
     private static JiraService testInstance;
-
 
     public static JiraService testInstance() {
 
-        if (testInstance == null)
-
+        if (testInstance == null) {
             synchronized (JiraService.class) {
-
                 if (testInstance == null) {
-
-                    JiraConfig jiraConfig = JiraConfigProducer.getConfig(Deployment.TEST);
-
+                    JiraConfig jiraConfig = JiraConfig.produce(Deployment.TEST);
                     testInstance = new JiraServiceImpl(jiraConfig);
                 }
             }
+        }
 
         return testInstance;
-
     }
 
 
@@ -44,16 +37,15 @@ public class JiraServiceProducer {
     }
 
 
-
     @Produces
     @Default
     @SessionScoped
     public JiraService produce(@New JiraServiceStub stub, @New JiraServiceImpl impl) {
 
-        if ( deployment == Deployment.STUBBY )
+        if (deployment == Deployment.STUBBY) {
             return stub;
+        }
 
         return impl;
-
     }
 }

@@ -4,10 +4,10 @@ import org.apache.commons.collections15.CollectionUtils;
 import org.apache.commons.collections15.Predicate;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
-import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
-import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
@@ -39,11 +39,12 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
     private ProductDao productDao;
 
     @Inject
-    private BillingLedgerDao billingLedgerDao;
+    private LedgerEntryDao ledgerEntryDao;
 
     @Inject
     private BillingSessionDao billingSessionDao;
 
+    @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private UserTransaction utx;
 
@@ -62,9 +63,11 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
         order = ProductOrderDaoTest.createTestProductOrder(researchProjectDao, productDao);
 
         // need to initialize the price items here as we will be exercising their hashCode methods when we create
-        // BillingLedger entities in some of our tests
+        // LedgerEntry entities in some of our tests
+        //noinspection ResultOfMethodCallIgnored
         order.getProduct().getPrimaryPriceItem().hashCode();
         for (PriceItem priceItem : order.getProduct().getOptionalPriceItems()) {
+            //noinspection ResultOfMethodCallIgnored
             priceItem.hashCode();
         }
         productOrderDao.persist(order);
@@ -89,7 +92,7 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
     /**
      * Sanity check: should not see any PDOs represented more than once.
      *
-     * @param productOrderListEntries
+     * @param productOrderListEntries Collection of ProductOrderListEntries to be checked for uniqueness.
      */
     private static void assertPDOUniqueness(Collection<ProductOrderListEntry> productOrderListEntries) {
 
@@ -157,12 +160,13 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
 
     public void testOneLedgerEntryNoBillingSession() {
 
-        BillingLedger billingLedger =
-                new BillingLedger(order.getSamples().iterator().next(), order.getProduct().getPrimaryPriceItem(), new Date(), 2);
+        LedgerEntry ledgerEntry =
+                new LedgerEntry(order.getSamples().iterator().next(), order.getProduct().getPrimaryPriceItem(),
+                        new Date(), 2);
 
-        billingLedgerDao.persist(billingLedger);
-        billingLedgerDao.flush();
-        billingLedgerDao.clear();
+        ledgerEntryDao.persist(ledgerEntry);
+        ledgerEntryDao.flush();
+        ledgerEntryDao.clear();
 
         ProductOrderListEntry productOrderListEntry = sanityCheckAndGetTestOrderListEntry();
 
@@ -173,10 +177,11 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
 
 
     public void testOneLedgerEntryWithBillingSession() {
-        BillingLedger billingLedger =
-                new BillingLedger(order.getSamples().iterator().next(), order.getProduct().getPrimaryPriceItem(), new Date(), 2);
+        LedgerEntry ledgerEntry =
+                new LedgerEntry(order.getSamples().iterator().next(), order.getProduct().getPrimaryPriceItem(),
+                        new Date(), 2);
 
-        BillingSession billingSession = new BillingSession(1L, Collections.singleton(billingLedger));
+        BillingSession billingSession = new BillingSession(1L, Collections.singleton(ledgerEntry));
 
         billingSessionDao.persist(billingSession);
         billingSessionDao.flush();
@@ -195,7 +200,7 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
     // the db so this isn't currently possible.  We should ideally generate our own rich product / product order test
     // fixture data instead.
 
-    // TODO MLC rewrite this to not use real data as the real data changed out from under me as real data is wont to do
+    // TODO MLC rewrite this to not use real data as the real data changed out from under me as real data is wont to do.
     @Test(enabled = false)
     public void testSingle() {
         ProductOrderListEntry entry = productOrderListEntryDao.findSingle("PDO-41");

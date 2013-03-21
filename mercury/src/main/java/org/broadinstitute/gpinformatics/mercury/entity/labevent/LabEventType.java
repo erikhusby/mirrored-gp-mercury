@@ -89,9 +89,15 @@ public enum LabEventType {
             PlasticToValidate.SOURCE),
     STRIP_TUBE_B_TRANSFER("StripTubeBTransfer", true, false, SystemOfRecord.SQUID, false,
             PlasticToValidate.SOURCE),
+
+    // HiSeq 2000
     FLOWCELL_TRANSFER("FlowcellTransfer", true, false, SystemOfRecord.SQUID, false,
             PlasticToValidate.SOURCE),
     FLOWCELL_LOADED("FlowcellLoaded", true, false, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE),
+
+    // For HiSeq 2500
+    DENATURE_TO_FLOWCELL_TRANSFER("DenatureToFlowcellTransfer", false, true, SystemOfRecord.MERCURY, false,
+            PlasticToValidate.SOURCE),
 
     // Sage
     SAGE_LOADING("SageLoading", true, false, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE),
@@ -254,6 +260,8 @@ public enum LabEventType {
     SAMPLES_PLATING_TO_COVARIS("SamplesPlatingToCovaris", false, true, SystemOfRecord.MERCURY, false,
             PlasticToValidate.SOURCE),
     SAMPLES_DAUGHTER_PLATE_CREATION("SamplesDaughterPlateCreation", false, false, SystemOfRecord.MERCURY, true, PlasticToValidate.BOTH),
+    SAMPLE_IMPORT("SampleImport", false, true, SystemOfRecord.MERCURY, false,
+            PlasticToValidate.SOURCE),
 
     // mRRBS
     MRRBS_GENOMIC_TRANSFER("mRRBSGenomicTransfer", false, true, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE),

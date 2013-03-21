@@ -2,9 +2,13 @@ package org.broadinstitute.gpinformatics.athena.entity.products;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -23,17 +27,19 @@ public class OnRiskCriteriaTest {
      */
     @Test
     public void testConcentrationOnRisk() {
+        Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
+            put(BSPSampleSearchColumn.CONCENTRATION, LOW_NUMBER);
+            put(BSPSampleSearchColumn.SAMPLE_ID, "TST-1234");
+        }};
 
-        // Create one sample with LOW_NUMBER for the conc, and one with the HIGH_NUMBER for the conc to be tested
-        BSPSampleDTO lowNumSample = BSPSampleDTO.createDummy();
-        lowNumSample.setConcentration(Double.parseDouble(LOW_NUMBER));
-        lowNumSample.setSampleId("TST-1234");
+        BSPSampleDTO lowNumSample = new BSPSampleDTO(dataMap);
+        dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
+            put(BSPSampleSearchColumn.CONCENTRATION, HIGH_NUMBER);
+            put(BSPSampleSearchColumn.SAMPLE_ID, "TST-1234");
+        }};
+        BSPSampleDTO highNumSample = new BSPSampleDTO(dataMap);
 
-        BSPSampleDTO highNumSample = BSPSampleDTO.createDummy();
-        highNumSample.setConcentration(Double.parseDouble(HIGH_NUMBER));
-        highNumSample.setSampleId("TST-1235");
-
-        handleNumericOnRisk(lowNumSample, highNumSample, RiskCriteria.RiskCriteriaType.CONCENTRATION);
+        handleNumericOnRisk(lowNumSample, highNumSample, RiskCriterion.RiskCriteriaType.CONCENTRATION);
     }
 
     /**
@@ -42,16 +48,39 @@ public class OnRiskCriteriaTest {
     @Test
     public void testVolumeOnRisk() {
 
-        // Create one sample with LOW_NUMBER for the vol, and one with the HIGH_NUMBER for the vol to be tested
-        BSPSampleDTO lowNumSample = BSPSampleDTO.createDummy();
-        lowNumSample.setVolume(Double.parseDouble(LOW_NUMBER));
-        lowNumSample.setSampleId("TST-1234");
+        Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
+            put(BSPSampleSearchColumn.VOLUME, LOW_NUMBER);
+            put(BSPSampleSearchColumn.SAMPLE_ID, "TST-1234");
+        }};
+        BSPSampleDTO lowNumSample = new BSPSampleDTO(dataMap);
 
-        BSPSampleDTO highNumSample = BSPSampleDTO.createDummy();
-        highNumSample.setVolume(Double.parseDouble(HIGH_NUMBER));
-        highNumSample.setSampleId("TST-1235");
+        dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
+            put(BSPSampleSearchColumn.VOLUME, HIGH_NUMBER);
+            put(BSPSampleSearchColumn.SAMPLE_ID, "TST-1235");
+        }};
 
-        handleNumericOnRisk(lowNumSample, highNumSample, RiskCriteria.RiskCriteriaType.VOLUME);
+        BSPSampleDTO highNumSample =  new BSPSampleDTO(dataMap);
+        handleNumericOnRisk(lowNumSample, highNumSample, RiskCriterion.RiskCriteriaType.VOLUME);
+    }
+
+    /**
+     * test RIN risk
+     */
+    @Test
+    public void testRin() {
+        Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
+            put(BSPSampleSearchColumn.RIN, LOW_NUMBER);
+            put(BSPSampleSearchColumn.SAMPLE_ID, "TST-1234");
+        }};
+        BSPSampleDTO lowNumSample = new BSPSampleDTO(dataMap);
+
+        dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
+            put(BSPSampleSearchColumn.RIN, HIGH_NUMBER);
+            put(BSPSampleSearchColumn.SAMPLE_ID, "TST-1235");
+        }};
+        BSPSampleDTO highNumSample =  new BSPSampleDTO(dataMap);
+
+        handleNumericOnRisk(lowNumSample, highNumSample, RiskCriterion.RiskCriteriaType.RIN);
     }
 
     /**
@@ -59,18 +88,19 @@ public class OnRiskCriteriaTest {
      */
     @Test
     public void testTotalDnaOnRisk() {
+        Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
+            put(BSPSampleSearchColumn.TOTAL_DNA, LOW_NUMBER);
+            put(BSPSampleSearchColumn.SAMPLE_ID, "TST-1234");
+        }};
+        BSPSampleDTO lowNumSample = new BSPSampleDTO(dataMap);
 
-        // Create one sample with LOW_NUMBER for the total DNA, and one with the HIGH_NUMBER for the totalDNA
-        // to be tested
-        BSPSampleDTO lowNumSample = BSPSampleDTO.createDummy();
-        lowNumSample.setTotal(Double.parseDouble(LOW_NUMBER));
-        lowNumSample.setSampleId("TST-1234");
+        dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
+            put(BSPSampleSearchColumn.TOTAL_DNA, HIGH_NUMBER);
+            put(BSPSampleSearchColumn.SAMPLE_ID, "TST-1235");
+        }};
+        BSPSampleDTO highNumSample =  new BSPSampleDTO(dataMap);
 
-        BSPSampleDTO highNumSample = BSPSampleDTO.createDummy();
-        highNumSample.setTotal(Double.parseDouble(HIGH_NUMBER));
-        highNumSample.setSampleId("TST-1235");
-
-        handleNumericOnRisk(lowNumSample, highNumSample, RiskCriteria.RiskCriteriaType.TOTAL_DNA);
+        handleNumericOnRisk(lowNumSample, highNumSample, RiskCriterion.RiskCriteriaType.TOTAL_DNA);
     }
 
     /**
@@ -80,15 +110,19 @@ public class OnRiskCriteriaTest {
     public void testWGAOnRisk() {
 
         // Create one sample with WGA for material and one with non-WGA for material
-        BSPSampleDTO hasWgaDummy = BSPSampleDTO.createDummy();
-        hasWgaDummy.setMaterialType("DNA:DNA WGA Cleaned");
-        hasWgaDummy.setSampleId("TST-1234");
+        Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
+            put(BSPSampleSearchColumn.MATERIAL_TYPE, "DNA:DNA WGA Cleaned");
+            put(BSPSampleSearchColumn.SAMPLE_ID, "TST-1234");
+        }};
+        BSPSampleDTO hasWgaDummy = new BSPSampleDTO(dataMap);
 
-        BSPSampleDTO nonWgaDummy = BSPSampleDTO.createDummy();
-        nonWgaDummy.setMaterialType("DNA:DNA Genomic");
-        nonWgaDummy.setSampleId("TST-1235");
+        dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
+            put(BSPSampleSearchColumn.MATERIAL_TYPE, "DNA:DNA Genomic");
+            put(BSPSampleSearchColumn.SAMPLE_ID, "TST-1235");
+        }};
+        BSPSampleDTO nonWgaDummy = new BSPSampleDTO(dataMap);
 
-        handleBooleanOnRisk(hasWgaDummy, nonWgaDummy, RiskCriteria.RiskCriteriaType.WGA);
+        handleBooleanOnRisk(hasWgaDummy, nonWgaDummy, RiskCriterion.RiskCriteriaType.WGA);
     }
 
     /**
@@ -97,16 +131,22 @@ public class OnRiskCriteriaTest {
     @Test
     public void testFFPEOnRisk() {
 
-        // Create one sample with FFPE status of true, and one FFPE status of false
-        BSPSampleDTO hasWgaDummy = BSPSampleDTO.createDummy();
+        Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
+            put(BSPSampleSearchColumn.MATERIAL_TYPE, "DNA:DNA WGA Cleaned");
+            put(BSPSampleSearchColumn.SAMPLE_ID, "TST-1234");
+        }};
+        BSPSampleDTO hasWgaDummy = new BSPSampleDTO(dataMap);
         hasWgaDummy.setFfpeStatus(true);
-        hasWgaDummy.setSampleId("TST-1234");
 
-        BSPSampleDTO nonWgaDummy = BSPSampleDTO.createDummy();
+        dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
+            put(BSPSampleSearchColumn.TOTAL_DNA, "DNA:DNA WGA Cleaned");
+            put(BSPSampleSearchColumn.SAMPLE_ID, "TST-1235");
+        }};
+        BSPSampleDTO nonWgaDummy =  new BSPSampleDTO(dataMap);
         nonWgaDummy.setFfpeStatus(false);
-        nonWgaDummy.setSampleId("TST-1235");
 
-        handleBooleanOnRisk(hasWgaDummy, nonWgaDummy, RiskCriteria.RiskCriteriaType.FFPE);
+        // Create one sample with FFPE status of true, and one FFPE status of false
+        handleBooleanOnRisk(hasWgaDummy, nonWgaDummy, RiskCriterion.RiskCriteriaType.FFPE);
     }
 
     ////////////////////////////////////////////////////////////
@@ -121,7 +161,7 @@ public class OnRiskCriteriaTest {
      * @param riskCriteriaType Risk Criteria Type to test with.  Fails on non-boolean based
      */
     private void handleBooleanOnRisk(BSPSampleDTO onRiskSample, BSPSampleDTO notOnRiskSample,
-                                     RiskCriteria.RiskCriteriaType riskCriteriaType) {
+                                     RiskCriterion.RiskCriteriaType riskCriteriaType) {
 
         Assert.assertEquals(riskCriteriaType.getOperatorType(), Operator.OperatorType.BOOLEAN);
 
@@ -130,53 +170,53 @@ public class OnRiskCriteriaTest {
         ProductOrderSample notOnRisk = new ProductOrderSample(notOnRiskSample.getSampleId(), notOnRiskSample);
 
         // Test with sample where expect on risk
-        RiskCriteria wgaRiskCriteria = new RiskCriteria(riskCriteriaType, Operator.IS, "true");
-        boolean actual = wgaRiskCriteria.onRisk(expectedOnRisk);
+        RiskCriterion wgaRiskCriterion = new RiskCriterion(riskCriteriaType, Operator.IS, "true");
+        boolean actual = wgaRiskCriterion.onRisk(expectedOnRisk);
         Assert.assertEquals(actual, true, "Sample should have been on risk due to a wga material.");
 
         // Test with sample where expected to not be on risk
-        actual = wgaRiskCriteria.onRisk(notOnRisk);
+        actual = wgaRiskCriterion.onRisk(notOnRisk);
         Assert.assertEquals(actual, false, "Sample should not have been on risk due to  wga material.");
 
         // Create an invalid risk criteria of each type
         try {
-            new RiskCriteria(riskCriteriaType, Operator.LESS_THAN, "true");
+            new RiskCriterion(riskCriteriaType, Operator.LESS_THAN, "true");
             Assert.fail("Can't create a wga Risk criterion with a boolean operator.");
         } catch (Exception e) {
             // npe exception expected
         }
         try {
-            new RiskCriteria(riskCriteriaType, Operator.EQUALS, "true");
+            new RiskCriterion(riskCriteriaType, Operator.EQUALS, "true");
             Assert.fail("Can't create a wga Risk criterion with a boolean operator.");
         } catch (Exception e) {
             // npe exception expected
         }
         try {
-            new RiskCriteria(riskCriteriaType, Operator.EXACT_MATCH, "true");
+            new RiskCriterion(riskCriteriaType, Operator.EXACT_MATCH, "true");
             Assert.fail("Can't create a wga Risk criterion with a boolean operator.");
         } catch (Exception e) {
             // npe exception expected
         }
         try {
-            new RiskCriteria(riskCriteriaType, Operator.GREATER_THAN, "true");
+            new RiskCriterion(riskCriteriaType, Operator.GREATER_THAN, "true");
             Assert.fail("Can't create a wga Risk criterion with a boolean operator.");
         } catch (Exception e) {
             // npe exception expected
         }
         try {
-            new RiskCriteria(riskCriteriaType, Operator.GREATER_THAN_OR_EQUAL_TO, "true");
+            new RiskCriterion(riskCriteriaType, Operator.GREATER_THAN_OR_EQUAL_TO, "true");
             Assert.fail("Can't create a wga Risk criterion with a boolean operator.");
         } catch (Exception e) {
             // npe exception expected
         }
         try {
-            new RiskCriteria(riskCriteriaType, Operator.IS_IN, "true");
+            new RiskCriterion(riskCriteriaType, Operator.IS_IN, "true");
             Assert.fail("Can't create a wga Risk criterion with a boolean operator.");
         } catch (Exception e) {
             // npe exception expected
         }
         try {
-            new RiskCriteria(riskCriteriaType, Operator.LESS_THAN_OR_EQUAL_TO, "true");
+            new RiskCriterion(riskCriteriaType, Operator.LESS_THAN_OR_EQUAL_TO, "true");
             Assert.fail("Can't create a wga Risk criterion with a boolean operator.");
         } catch (Exception e) {
             // npe exception expected
@@ -191,7 +231,7 @@ public class OnRiskCriteriaTest {
      * @param riskCriteriaType Risk Criteria Type to test with.  Fails on non-numeric based
      */
     private void handleNumericOnRisk(BSPSampleDTO lowNumSample, BSPSampleDTO highNumSample,
-                                     RiskCriteria.RiskCriteriaType riskCriteriaType) {
+                                     RiskCriterion.RiskCriteriaType riskCriteriaType) {
 
         Assert.assertEquals(riskCriteriaType.getOperatorType(), Operator.OperatorType.NUMERIC);
 
@@ -201,38 +241,38 @@ public class OnRiskCriteriaTest {
         //  EXPECT TO BE ON RISK START
 
         // Test less than with a high test value and the value being tested is low.
-        RiskCriteria numericRiskCriteria = new RiskCriteria(riskCriteriaType, Operator.LESS_THAN, HIGH_NUMBER);
-        boolean actual = numericRiskCriteria.onRisk(lowNumberPOSample);
+        RiskCriterion numericRiskCriterion = new RiskCriterion(riskCriteriaType, Operator.LESS_THAN, HIGH_NUMBER);
+        boolean actual = numericRiskCriterion.onRisk(lowNumberPOSample);
         Assert.assertEquals(actual, true, "Sample should have been on risk due to a low sample conc.");
 
         // Test greater than with a low test value and the value being tested is high.
-        numericRiskCriteria = new RiskCriteria(riskCriteriaType, Operator.GREATER_THAN, LOW_NUMBER);
-        actual = numericRiskCriteria.onRisk(highNumberPOSample);
+        numericRiskCriterion = new RiskCriterion(riskCriteriaType, Operator.GREATER_THAN, LOW_NUMBER);
+        actual = numericRiskCriterion.onRisk(highNumberPOSample);
         Assert.assertEquals(actual, true, "Sample should not have been on risk due to high conc.");
 
         // Test Greater than or equal to with a low test value and the value being testing being equal
-        numericRiskCriteria = new RiskCriteria(riskCriteriaType, Operator.GREATER_THAN_OR_EQUAL_TO, LOW_NUMBER);
-        actual = numericRiskCriteria.onRisk(lowNumberPOSample);
+        numericRiskCriterion = new RiskCriterion(riskCriteriaType, Operator.GREATER_THAN_OR_EQUAL_TO, LOW_NUMBER);
+        actual = numericRiskCriterion.onRisk(lowNumberPOSample);
         Assert.assertEquals(actual, true, "Sample should have been on risk due to high conc.");
 
         // Test Greater than or equal to with a low test value and the value being testing being high
-        numericRiskCriteria = new RiskCriteria(riskCriteriaType, Operator.GREATER_THAN_OR_EQUAL_TO, LOW_NUMBER);
-        actual = numericRiskCriteria.onRisk(highNumberPOSample);
+        numericRiskCriterion = new RiskCriterion(riskCriteriaType, Operator.GREATER_THAN_OR_EQUAL_TO, LOW_NUMBER);
+        actual = numericRiskCriterion.onRisk(highNumberPOSample);
         Assert.assertEquals(actual, true, "Sample should have been on risk due to high conc.");
 
         // Test Less than or Equal to with a high test value and the value being tested being equal
-        numericRiskCriteria = new RiskCriteria(riskCriteriaType, Operator.LESS_THAN_OR_EQUAL_TO, LOW_NUMBER);
-        actual = numericRiskCriteria.onRisk(lowNumberPOSample);
+        numericRiskCriterion = new RiskCriterion(riskCriteriaType, Operator.LESS_THAN_OR_EQUAL_TO, LOW_NUMBER);
+        actual = numericRiskCriterion.onRisk(lowNumberPOSample);
         Assert.assertEquals(actual, true, "Sample should have been on risk due to high conc.");
 
         // Test Less than or Equal To with a high test value and the value being tested is low
-        numericRiskCriteria = new RiskCriteria(riskCriteriaType, Operator.LESS_THAN_OR_EQUAL_TO, HIGH_NUMBER);
-        actual = numericRiskCriteria.onRisk(lowNumberPOSample);
+        numericRiskCriterion = new RiskCriterion(riskCriteriaType, Operator.LESS_THAN_OR_EQUAL_TO, HIGH_NUMBER);
+        actual = numericRiskCriterion.onRisk(lowNumberPOSample);
         Assert.assertEquals(actual, true, "Sample should have been on risk due to high conc.");
 
         // Test equals with two values that are equal
-        numericRiskCriteria = new RiskCriteria(riskCriteriaType, Operator.EQUALS, LOW_NUMBER);
-        actual = numericRiskCriteria.onRisk(lowNumberPOSample);
+        numericRiskCriterion = new RiskCriterion(riskCriteriaType, Operator.EQUALS, LOW_NUMBER);
+        actual = numericRiskCriterion.onRisk(lowNumberPOSample);
         Assert.assertEquals(actual, true, "Sample should have been on risk due to high conc.");
 
         // EXPECT TO BE ON RISK END
@@ -241,35 +281,35 @@ public class OnRiskCriteriaTest {
         // EXPECT TO NOT BE ON RISK START
 
         // test Less than with a low test value and the value being tested is high
-        numericRiskCriteria = new RiskCriteria(riskCriteriaType, Operator.LESS_THAN, LOW_NUMBER);
-        actual = numericRiskCriteria.onRisk(highNumberPOSample);
+        numericRiskCriterion = new RiskCriterion(riskCriteriaType, Operator.LESS_THAN, LOW_NUMBER);
+        actual = numericRiskCriterion.onRisk(highNumberPOSample);
         Assert.assertEquals(actual, false, "Sample should have been on risk due to a low sample conc.");
 
         // test Greater than with a high test value and the value being tested is low
-        numericRiskCriteria = new RiskCriteria(riskCriteriaType, Operator.GREATER_THAN, HIGH_NUMBER);
-        actual = numericRiskCriteria.onRisk(lowNumberPOSample);
+        numericRiskCriterion = new RiskCriterion(riskCriteriaType, Operator.GREATER_THAN, HIGH_NUMBER);
+        actual = numericRiskCriterion.onRisk(lowNumberPOSample);
         Assert.assertEquals(actual, false, "Sample should not have been on risk due to high conc.");
 
         // test Greater than or equal to with a high test value and the value being tested is low
-        numericRiskCriteria = new RiskCriteria(riskCriteriaType, Operator.GREATER_THAN_OR_EQUAL_TO, HIGH_NUMBER);
-        actual = numericRiskCriteria.onRisk(lowNumberPOSample);
+        numericRiskCriterion = new RiskCriterion(riskCriteriaType, Operator.GREATER_THAN_OR_EQUAL_TO, HIGH_NUMBER);
+        actual = numericRiskCriterion.onRisk(lowNumberPOSample);
         Assert.assertEquals(actual, false, "Sample should have been on risk due to high conc.");
 
         // test Less than or equal to with the test value being low and the value being tested is high
-        numericRiskCriteria = new RiskCriteria(riskCriteriaType, Operator.LESS_THAN_OR_EQUAL_TO, LOW_NUMBER);
-        actual = numericRiskCriteria.onRisk(highNumberPOSample);
+        numericRiskCriterion = new RiskCriterion(riskCriteriaType, Operator.LESS_THAN_OR_EQUAL_TO, LOW_NUMBER);
+        actual = numericRiskCriterion.onRisk(highNumberPOSample);
         Assert.assertEquals(actual, false, "Sample should have been on risk due to high conc.");
 
         // test equals with different values
-        numericRiskCriteria = new RiskCriteria(riskCriteriaType, Operator.EQUALS, LOW_NUMBER);
-        actual = numericRiskCriteria.onRisk(highNumberPOSample);
+        numericRiskCriterion = new RiskCriterion(riskCriteriaType, Operator.EQUALS, LOW_NUMBER);
+        actual = numericRiskCriterion.onRisk(highNumberPOSample);
         Assert.assertEquals(actual, false, "Sample should have been on risk due to high conc.");
 
         // EXPECT TO NOT BE ON RISK END
 
         // Create an invalid risk criteria
         try {
-            new RiskCriteria(riskCriteriaType, Operator.IS, LOW_NUMBER);
+            new RiskCriterion(riskCriteriaType, Operator.IS, LOW_NUMBER);
             Assert.fail("Can't create a concentration Risk criterion with a boolean operator.");
         } catch (Exception e) {
             // npe exception expected
@@ -277,7 +317,7 @@ public class OnRiskCriteriaTest {
 
         // Create an invalid risk criteria
         try {
-            new RiskCriteria(riskCriteriaType, Operator.IS_IN, LOW_NUMBER);
+            new RiskCriterion(riskCriteriaType, Operator.IS_IN, LOW_NUMBER);
             Assert.fail("Can't create a concentration Risk criterion with a boolean operator.");
         } catch (Exception e) {
             // npe exception expected
@@ -285,7 +325,7 @@ public class OnRiskCriteriaTest {
 
         // Create an invalid risk criteria
         try {
-            new RiskCriteria(riskCriteriaType, Operator.EXACT_MATCH, LOW_NUMBER);
+            new RiskCriterion(riskCriteriaType, Operator.EXACT_MATCH, LOW_NUMBER);
             Assert.fail("Can't create a concentration Risk criterion with a boolean operator.");
         } catch (Exception e) {
             // npe exception expected

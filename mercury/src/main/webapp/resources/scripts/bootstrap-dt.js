@@ -1,9 +1,21 @@
+/**
+ * Various Bootstrap and DataTables interaction fixes and improvements.  It also includes specific DataTables
+ * extended functionality.
+ *
+ * @author <a href="mailto:dinsmore@broadinstitute.org">Michael Dinsmore</a>
+ */
+
+/*
+ * Define the TableTools export resources and types.
+ */
 var ttExportDefines = {
     "sSwfPath": "/Mercury/resources/scripts/DataTables-1.9.4/extras/TableTools/media/swf/copy_csv_xls.swf",
     "aButtons": [ "copy", "csv", "print" ]
 };
 
-/* Set the defaults for DataTables initialization */
+/**
+ *  Set the defaults for DataTables initialization
+ */
 $j.extend( true, $j.fn.dataTable.defaults, {
     "sDom": "<'row-fluid'<'span6'f><'span6'T>r>t<'row-fluid'<'span6'i><'span6'p>>",
     "bAutoWidth": false,
@@ -24,10 +36,63 @@ $j.extend( $j.fn.dataTableExt.oStdClasses, {
     "sWrapper": "dataTables_wrapper form-inline"
 } );
 
+var filterDropdownHtml = "<div class='filterOptions'>using <select class='filterDropdown'><option value='all'>All of the words</option><option value='any'>Any of the words</option></select></div>";
+
+/**
+ * Dynamically add the HTML element for the dropdown and the choices, as well as define the
+ * dropdown behavior when the user changes it (clicks on it and selects another item).
+ *
+ * @param oTable
+ * @param tableID
+ */
+function includeAdvancedFilter(oTable, tableID) {
+    $j(tableID + "_filter").append(filterDropdownHtml);
+    $j(tableID + "_filter").find(".filterDropdown").change(function() {
+        chooseFilterForData(oTable);
+    });
+
+    $j(".dataTables_filter input").keyup();
+}
+
+/**
+ * Define the regular expression for the AND and OR filter.  The OR filter needs to create
+ * the regex on the fly as the user adds characters into the filter input textbox.
+ *
+ * @param oTable
+ */
+function chooseFilterForData(oTable) {
+    $j(".dataTables_filter input").unbind('keyup');
+    $j(".dataTables_filter input").keyup(function() {
+        var tab = RegExp("\\t", "g");
+        var useOr = false;
+        var dataTableName = $j(this).attr("aria-controls");
+        if ($j("#" + dataTableName + "_filter").find(".filterDropdown").val() == "any") {
+            useOr = true;
+        }
+
+        var filterInput = $j(".dataTables_filter input").val().replace(tab, " ");
+        if (useOr) {
+            // OR
+            var searchRegex = ".";
+            if (filterInput != '') {
+                var searchRegex = "(" + filterInput.trim().split(" ").join("+|") + "+)";
+            }
+            oTable.fnFilter( searchRegex, null, true, false );
+        } else {
+            // AND
+            if (filterInput != '') {
+                oTable.fnFilter(filterInput, null, false, true);
+            }
+        }
+        $j(".dataTables_filter input").val( filterInput );
+    });
+
+    $j(".dataTables_filter input").keyup();
+}
+
 
 /* API method to get paging information */
-$j.fn.dataTableExt.oApi.fnPagingInfo = function ( oSettings )
-{
+$j.fn.dataTableExt.oApi.fnPagingInfo = function ( oSettings ) {
     return {
         "iStart":         oSettings._iDisplayStart,
         "iEnd":           oSettings.fnDisplayEnd(),
@@ -117,6 +182,33 @@ $j.extend( $j.fn.dataTableExt.oPagination, {
     }
 } );
 
+/**
+ * Clear the filter contents.
+ *
+ * @param oSettings
+ */
+$j.fn.dataTableExt.oApi.fnFilterClear = function (oSettings) {
+    /* Remove global filter */
+    oSettings.oPreviousSearch.sSearch = "";
+
+    /* Remove the text of the global filter in the input boxes */
+    if (typeof oSettings.aanFeatures.f != 'undefined') {
+        var n = oSettings.aanFeatures.f;
+        for (var i = 0, iLen = n.length; i < iLen; i++) {
+            $('input', n[i]).val('');
+        }
+    }
+
+    /* Remove the search text for the column filters - NOTE - if you have input boxes for these
+     * filters, these will need to be reset
+     */
+    for (var i = 0, iLen = oSettings.aoPreSearchCols.length; i < iLen; i++) {
+        oSettings.aoPreSearchCols[i].sSearch = "";
+    }
+
+    /* Redraw */
+    oSettings.oApi._fnReDraw(oSettings);
+};
 
 /*
  * TableTools Bootstrap compatibility

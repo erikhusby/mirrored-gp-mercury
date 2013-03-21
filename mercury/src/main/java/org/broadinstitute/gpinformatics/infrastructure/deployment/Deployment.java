@@ -11,5 +11,7 @@ public enum Deployment {
     QA,
     RC,
     PROD,
-    STUBBY
+    STUBBY,
+    /** Used when running tests on the automated build server. */
+    AUTO_BUILD
 }

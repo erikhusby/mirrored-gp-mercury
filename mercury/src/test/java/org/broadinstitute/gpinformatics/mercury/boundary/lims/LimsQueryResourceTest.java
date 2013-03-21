@@ -29,8 +29,6 @@ import static org.hamcrest.Matchers.*;
  */
 public class LimsQueryResourceTest extends RestServiceContainerTest {
 
-    private static final String PROD_BADGES_SOURCE = "User_badges_prod.csv";
-
     @Deployment
     public static WebArchive buildMercuryWar() {
         // need TEST here for now because there's no STUBBY version of ThriftConfig
@@ -165,32 +163,6 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
 //        String result = get(resource);
 ////        assertThat(result, equalTo("tester"));
 //        assertThat(result, equalTo("QADudeTest"));
-    }
-
-    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = false)
-    @RunAsClient
-    public void validateBadgeIds(@ArquillianResource URL baseUrl) throws IOException {
-
-        WebResource resource;
-
-        FileInputStream badgesList = new FileInputStream("src/test/resources/testdata/" + PROD_BADGES_SOURCE);
-
-        BufferedReader badgesReader = new BufferedReader(new InputStreamReader(badgesList));
-        while (badgesReader.ready()) {
-            String[] columns = badgesReader.readLine().split(",");
-            //remove outer ' and trim
-            String username = columns[0].replace('\'', ' ').trim();
-            String badgeId = columns[1].replace('\'', ' ').trim();
-            String termination = columns[2].replace('\'', ' ').trim();
-
-            if(StringUtils.isBlank(termination)) {
-                resource = makeWebResource(baseUrl, "fetchUserIdForBadgeId").queryParam("badgeId", badgeId);
-
-                String result = get(resource);
-
-                assertThat(result, equalTo(username));
-            }
-        }
     }
 
     @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)

@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
-import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
@@ -31,7 +31,7 @@ public class ProductOrderTest {
 
     @BeforeMethod
     public void setUp() throws Exception {
-        productOrder = AthenaClientServiceStub.createDummyProductOrder ();
+        productOrder = AthenaClientServiceStub.createDummyProductOrder(PDO_JIRA_KEY);
     }
 
     @AfterMethod
@@ -84,30 +84,9 @@ public class ProductOrderTest {
 
     @Test
     public void testOrder() throws Exception {
-
-        //TODO hmc To be completed commented out now for change of priority.
-        /**
-        List<OrderSample> orderSamples = orderTest.createSampleList(
-                "SM-2ACGC,SM-2ABDD,SM-2ACKV,SM-2AB1B,SM-2ACJC,SM-2AD5D", billableItems ) ;
-
-        ProductOrder productOrder = new ProductOrder("title", orderSamples, "quoteId", product, "researchProjectName" );
-
-        //TODO hmc Under construction
-        Assert.assertEquals(productOrder.getSamples().size(), 6);
-        Assert.assertTrue(productOrder.getSamples().get(0).getLedgerItems().size() == 1);
-
-         **/
-
-        Assert.assertNull(productOrder.getJiraTicketKey());
-
         Assert.assertEquals(productOrder.fetchJiraIssueType(), CreateFields.IssueType.PRODUCT_ORDER);
-
         Assert.assertEquals(productOrder.fetchJiraProject(), CreateFields.ProjectType.Product_Ordering);
-
-        productOrder.setJiraTicketKey(PDO_JIRA_KEY);
-
         Assert.assertNotNull(productOrder.getJiraTicketKey());
-
         Assert.assertEquals(productOrder.getJiraTicketKey(), PDO_JIRA_KEY);
     }
 
@@ -163,11 +142,11 @@ public class ProductOrderTest {
     }
 
     public static List<ProductOrderSample> createSampleList(String... sampleList) {
-        return ProductOrderSampleTest.createSampleList(sampleList, new HashSet<BillingLedger>(), false);
+        return ProductOrderSampleTest.createSampleList(sampleList, new HashSet<LedgerEntry>(), false);
     }
 
     public static List<ProductOrderSample> createDBFreeSampleList(String... sampleList) {
-        return ProductOrderSampleTest.createSampleList(sampleList, new HashSet<BillingLedger>(), true);
+        return ProductOrderSampleTest.createSampleList(sampleList, new HashSet<LedgerEntry>(), true);
     }
 
 }

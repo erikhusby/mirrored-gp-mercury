@@ -4,10 +4,12 @@ import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.hibernate.annotations.Parent;
+import org.jetbrains.annotations.Nullable;
 
 import javax.persistence.*;
 import java.util.*;
@@ -51,6 +53,9 @@ public class VesselContainer<T extends LabVessel> {
     @OneToMany(mappedBy = "targetVessel")
     private Set<CherryPickTransfer> cherryPickTransfersTo = new HashSet<CherryPickTransfer>();
 
+    @OneToMany(mappedBy = "targetVessel")
+    private Set<VesselToSectionTransfer> vesselToSectionTransfersTo = new HashSet<VesselToSectionTransfer>();
+
     @SuppressWarnings("InstanceVariableMayNotBeInitialized")
     @Parent
     private LabVessel embedder;
@@ -86,11 +91,14 @@ public class VesselContainer<T extends LabVessel> {
         for (CherryPickTransfer cherryPickTransfer : cherryPickTransfersTo) {
             transfersTo.add(cherryPickTransfer.getLabEvent());
         }
+        for (VesselToSectionTransfer vesselToSectionTransfer : vesselToSectionTransfersTo) {
+            transfersTo.add(vesselToSectionTransfer.getLabEvent());
+        }
         return transfersTo;
     }
 
-    public Collection<LabBatch> getNearestLabBatches(VesselPosition position) {
-        TransferTraverserCriteria.NearestLabBatchFinder batchCriteria = new TransferTraverserCriteria.NearestLabBatchFinder();
+    public Collection<LabBatch> getNearestLabBatches(VesselPosition position, @Nullable LabBatch.LabBatchType type) {
+        TransferTraverserCriteria.NearestLabBatchFinder batchCriteria = new TransferTraverserCriteria.NearestLabBatchFinder(type);
         evaluateCriteria(position, batchCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors, null, 0);
         return batchCriteria.getNearestLabBatches();
     }
@@ -206,6 +214,13 @@ public class VesselContainer<T extends LabVessel> {
                         cherryPickTransfer.getLabEvent(), hopCount + 1);
             }
         }
+        for (VesselToSectionTransfer vesselToSectionTransfer : vesselToSectionTransfersTo) {
+            if (vesselToSectionTransfer.getTargetVesselContainer().equals(this)) {
+                vesselToSectionTransfer.getSourceVessel()
+                        .evaluateCriteria(transferTraverserCriteria, traversalDirection,
+                                vesselToSectionTransfer.getLabEvent(), hopCount + 1);
+            }
+        }
     }
 
     private void traverseDescendants(VesselPosition position, TransferTraverserCriteria transferTraverserCriteria,
@@ -227,6 +242,13 @@ public class VesselContainer<T extends LabVessel> {
                 VesselPosition targetPosition = cherryPickTransfer.getTargetPosition();
                 targetVesselContainer.evaluateCriteria(targetPosition, transferTraverserCriteria, traversalDirection,
                         cherryPickTransfer.getLabEvent(), hopCount + 1);
+            }
+        }
+        // handle un-racked VesselToSectionTransfers
+        T vessel = getVesselAtPosition(position);
+        if (vessel != null) {
+            for (VesselToSectionTransfer vesselToSectionTransfer : vessel.getVesselToSectionTransfersThisAsSource()) {
+                vessel.evaluateCriteria(transferTraverserCriteria, traversalDirection, vesselToSectionTransfer.getLabEvent(), hopCount);
             }
         }
     }
@@ -257,6 +279,8 @@ public class VesselContainer<T extends LabVessel> {
                         sampleInstances.addAll(vesselContainer.getSampleInstances());
                         // todo arz fix this, probably by using LabBatch properly
 //                        applyProjectPlanOverrideIfPresent(labEvent,sampleInstances);
+                    } else {
+                        sampleInstances.addAll(sourceLabVessel.getSampleInstances());
                     }
                 }
             }
@@ -319,6 +343,10 @@ public class VesselContainer<T extends LabVessel> {
         return cherryPickTransfersTo;
     }
 
+    public Set<VesselToSectionTransfer> getVesselToSectionTransfersTo() {
+        return vesselToSectionTransfersTo;
+    }
+
     public List<LabVessel.VesselEvent> getAncestors(VesselPosition position) {
         List<LabVessel.VesselEvent> vesselEvents = new ArrayList<LabVessel.VesselEvent>();
         for (SectionTransfer sectionTransfer : sectionTransfersTo) {
@@ -342,6 +370,16 @@ public class VesselContainer<T extends LabVessel> {
                         sourceVesselContainer, sourcePosition, cherryPickTransfer.getLabEvent()));
             }
 
+        }
+        for (VesselToSectionTransfer vesselToSectionTransfer : vesselToSectionTransfersTo) {
+            // todo jmt replace indexOf with map lookup
+            int targetWellIndex = vesselToSectionTransfer.getTargetSection().getWells().indexOf(position);
+            if (targetWellIndex < 0) {
+                // the position parameter isn't in the section, so skip the transfer
+                continue;
+            }
+            vesselEvents.add(new LabVessel.VesselEvent(vesselToSectionTransfer.getSourceVessel(), null, null,
+                    vesselToSectionTransfer.getLabEvent()));
         }
         return vesselEvents;
     }
@@ -383,10 +421,10 @@ public class VesselContainer<T extends LabVessel> {
 
     public boolean hasAnonymousVessels() {
         boolean anonymousVessels = false;
-        LabVessel.CONTAINER_TYPE type = embedder.getType();
-        if (type == LabVessel.CONTAINER_TYPE.STATIC_PLATE
-                || type == LabVessel.CONTAINER_TYPE.FLOWCELL
-                || type == LabVessel.CONTAINER_TYPE.STRIP_TUBE) {
+        LabVessel.ContainerType type = embedder.getType();
+        if (type == LabVessel.ContainerType.STATIC_PLATE
+                || type == LabVessel.ContainerType.FLOWCELL
+                || type == LabVessel.ContainerType.STRIP_TUBE) {
             anonymousVessels = true;
         }
         return anonymousVessels;
@@ -403,8 +441,12 @@ public class VesselContainer<T extends LabVessel> {
     }
 
     public Collection<LabBatch> getNearestLabBatches() {
+        return getNearestLabBatches(null);
+    }
+
+    public Collection<LabBatch> getNearestLabBatches(@Nullable LabBatch.LabBatchType type) {
         TransferTraverserCriteria.NearestLabBatchFinder batchCriteria =
-                new TransferTraverserCriteria.NearestLabBatchFinder();
+                new TransferTraverserCriteria.NearestLabBatchFinder(type);
         applyCriteriaToAllPositions(batchCriteria);
         return batchCriteria.getNearestLabBatches();
     }

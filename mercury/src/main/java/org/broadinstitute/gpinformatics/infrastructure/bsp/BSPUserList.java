@@ -39,7 +39,7 @@ public class BSPUserList extends AbstractCache implements Serializable {
     /**
      * @return list of bsp users, sorted by lastname, firstname, username, email.
      */
-    public Map<Long, BspUser> getUsers() {
+    public synchronized Map<Long, BspUser> getUsers() {
         if (users == null) {
             refreshCache();
         }
@@ -136,7 +136,7 @@ public class BSPUserList extends AbstractCache implements Serializable {
     }
 
     @Inject
-    public BSPUserList(BSPManagerFactory bspManagerFactory) {
+    public BSPUserList(@SuppressWarnings("CdiInjectionPointsInspection") BSPManagerFactory bspManagerFactory) {
         this.bspManagerFactory = bspManagerFactory;
     }
 
@@ -215,7 +215,7 @@ public class BSPUserList extends AbstractCache implements Serializable {
     private static void addQADudeUsers(List<BspUser> users) {
         // FIXME: should instead generate this dynamically based on current users.properties settings on the server.
         // Could also create QADude entries on demand during login.
-        String[] types = {"Test", "PM", "PDM", "LU", "LM"};
+        String[] types = {"Test", "PM", "PDM", "LU", "LM", "BM"};
         long userIdSeq = 101010101L;
         for (String type : types) {
             users.add(new QADudeUser(type, userIdSeq++));

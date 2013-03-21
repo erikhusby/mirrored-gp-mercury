@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientHandlerException;
-import com.sun.jersey.api.client.config.ClientConfig;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
@@ -10,10 +9,7 @@ import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientServ
 import javax.inject.Inject;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 @Impl
 public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService implements
@@ -34,17 +30,12 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
     }
 
     @Override
-    protected void customizeConfig(ClientConfig clientConfig) {
-        // no-op
-    }
-
-    @Override
     protected void customizeClient(Client client) {
         specifyHttpAuthCredentials(client, bspConfig);
     }
 
     @Override
-    public List<String[]> runSampleSearch(Collection<String> sampleIDs, BSPSampleSearchColumn... queryColumns) {
+    public List<Map<BSPSampleSearchColumn, String>> runSampleSearch(Collection<String> sampleIDs, final BSPSampleSearchColumn... queryColumns) {
 
         if (queryColumns == null || queryColumns.length == 0) {
             throw new IllegalArgumentException("No query columns supplied!");
@@ -58,14 +49,13 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
             return Collections.emptyList();
         }
 
-        final List<String[]> ret = new ArrayList<String[]>();
+        final List<Map<BSPSampleSearchColumn, String>> ret = new ArrayList<Map<BSPSampleSearchColumn, String>>();
 
         String urlString = bspConfig.getWSUrl(SEARCH_RUN_SAMPLE_SEARCH);
 
         List<String> parameters = new ArrayList<String>();
 
         try {
-
             for (BSPSampleSearchColumn column : queryColumns) {
                 parameters.add("columns=" + URLEncoder.encode(column.columnName(), "UTF-8"));
             }
@@ -77,7 +67,16 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
             post(urlString, parameterString, ExtraTab.TRUE, new PostCallback() {
                 @Override
                 public void callback(String[] bspData) {
-                    ret.add(bspData);
+                    Map<BSPSampleSearchColumn, String> newMap = new HashMap<BSPSampleSearchColumn, String>();
+
+                    // There is an assumption built in here that all columns queried will come back in order. That
+                    // appears to be the case.
+                    int i = 0;
+                    for (BSPSampleSearchColumn column : queryColumns) {
+                        newMap.put(column, bspData[i]);
+                    }
+
+                    ret.add(newMap);
                 }
             });
 
@@ -88,11 +87,5 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
         }
 
         return ret;
-    }
-
-    @Override
-    public List<String[]> runSampleSearch(Collection<String> sampleIDs, List<BSPSampleSearchColumn> resultColumns) {
-        BSPSampleSearchColumn [] dummy = new BSPSampleSearchColumn[resultColumns.size()];
-        return runSampleSearch(sampleIDs, resultColumns.toArray(dummy));
     }
 }

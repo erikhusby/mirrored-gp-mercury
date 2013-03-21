@@ -43,18 +43,16 @@ public class MercuryClientEjb {
 
     private BucketDao bucketDao;
 
-    public MercuryClientEjb() {
-        logger.error("Huh?!?");
-    }
+    public MercuryClientEjb() {}
 
     @Inject
     public MercuryClientEjb(BucketBean bucketBean, BucketDao bucketDao,
-                            WorkflowLoader workflowLoader, BSPUserList bspUserList,
+                            WorkflowLoader workflowLoader, BSPUserList userList,
                             LabVesselDao labVesselDao) {
         this.bucketBean = bucketBean;
         this.bucketDao = bucketDao;
         this.workflowLoader = workflowLoader;
-        this.userList = bspUserList;
+        this.userList = userList;
         this.labVesselDao = labVesselDao;
     }
 
@@ -71,7 +69,7 @@ public class MercuryClientEjb {
         for (ProductOrderSample pdoSample : samples) {
             nameToSampleMap.put(pdoSample.getSampleName(), pdoSample);
         }
-        List<String> listOfSampleNames = new ArrayList(nameToSampleMap.keySet());
+        List<String> listOfSampleNames = new ArrayList<String>(nameToSampleMap.keySet());
         List<LabVessel> vessels = labVesselDao.findBySampleKeyList(listOfSampleNames);
 
         // Determines if the vessel is in receiving, by finding its active batch
@@ -79,9 +77,12 @@ public class MercuryClientEjb {
 
         // Finds the pico bucket from workflow config for this product.
         WorkflowBucketDef picoBucketDef = findPicoBucketDef(pdo.getProduct());
-        Bucket picoBucket = findPicoBucket(picoBucketDef);
+        Bucket picoBucket = null;
+        if (picoBucketDef != null) {
+            picoBucket = findPicoBucket(picoBucketDef);
+        }
         if (picoBucket == null) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
 
         for (LabVessel vessel : vessels) {
@@ -97,6 +98,7 @@ public class MercuryClientEjb {
                     for (MercurySample mercurySample : vessel.getMercurySamples()) {
                         String sampleKey = mercurySample.getSampleKey();
                         assert(nameToSampleMap.containsKey(sampleKey));
+                        mercurySample.setProductOrderKey(pdo.getBusinessKey());
                         samplesAdded.add(nameToSampleMap.get(sampleKey));
                     }
                 }
@@ -115,6 +117,9 @@ public class MercuryClientEjb {
         bucketBean.add(vesselsAdded, picoBucket, username, LabEvent.UI_EVENT_LOCATION, LabEventType.PICO_PLATING_BUCKET,
                 pdo.getBusinessKey());
 
+        if (picoBucket.getBucketId() == null) {
+            bucketDao.persist(picoBucket);
+        }
         return samplesAdded;
     }
 
@@ -129,7 +134,13 @@ public class MercuryClientEjb {
         ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(product.getWorkflowName());
         ProductWorkflowDefVersion versionResult = productWorkflowDef.getEffectiveVersion();
 
-        return (WorkflowBucketDef) versionResult.findStepByEventType(LabEventType.PICO_PLATING_BUCKET.getName()).getStepDef();
+        ProductWorkflowDefVersion.LabEventNode labEventNode =
+                versionResult.findStepByEventType(LabEventType.PICO_PLATING_BUCKET.getName());
+        if (labEventNode == null) {
+            return null;
+        } else {
+            return (WorkflowBucketDef) labEventNode.getStepDef();
+        }
     }
 
     private Bucket findPicoBucket(WorkflowBucketDef bucketStep) {

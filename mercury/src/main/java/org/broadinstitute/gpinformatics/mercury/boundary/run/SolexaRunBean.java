@@ -3,13 +3,14 @@ package org.broadinstitute.gpinformatics.mercury.boundary.run;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 
 import javax.xml.bind.annotation.XmlRootElement;
+import java.io.Serializable;
 import java.util.Date;
 
 /**
  * JAX-RS DTO for Solexa sequencing run
  */
 @XmlRootElement
-public class SolexaRunBean {
+public class SolexaRunBean implements Serializable {
     private String flowcellBarcode;
     private String runBarcode;
     private Date runDate;
@@ -78,16 +79,17 @@ public class SolexaRunBean {
         this.reagentBlockBarcode = reagentBlockBarcode;
     }
 
+
     public SolexaRunBean(IlluminaSequencingRun illuminaSequencingRun) {
-        flowcellBarcode = illuminaSequencingRun.getSampleCartridge().iterator().next().getCartridgeBarcode();
+        flowcellBarcode = illuminaSequencingRun.getSampleCartridge().getCartridgeBarcode();
         runBarcode = illuminaSequencingRun.getRunBarcode();
-        // todo jmt why no runDate in IlluminaSequencingRun?
-//        runDate = illuminaSequencingRun.getRunDate();
+        runDate = illuminaSequencingRun.getRunDate();
         if (illuminaSequencingRun.getMachineName() != null) {
             machineName = illuminaSequencingRun.getMachineName();
         }
-        // todo jmt fix this
-//        runDirectory = illuminaSequencingRun.getDirectoryPath();
+        runDirectory = illuminaSequencingRun.getRunDirectory();
+
+        //TODO SGM  Revisit the following when we add MiSeq
 //        reagentBlockBarcode = illuminaSequencingRun.getNewFlowcell().getBarcode();
     }
 }

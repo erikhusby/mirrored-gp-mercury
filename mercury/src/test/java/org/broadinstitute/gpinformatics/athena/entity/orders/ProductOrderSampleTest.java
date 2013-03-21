@@ -1,14 +1,15 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
-import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriteria;
+import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
@@ -16,13 +17,7 @@ import org.testng.annotations.Test;
 
 import java.util.*;
 
-import static org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO.*;
 
-/**
- * A test.
- *
- * @author mccory
- */
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ProductOrderSampleTest {
 
@@ -37,13 +32,14 @@ public class ProductOrderSampleTest {
     }
 
     public static List<ProductOrderSample> createSampleList(String[] sampleArray,
-                                                            Collection<BillingLedger> billableItems,
+                                                            Collection<LedgerEntry> billableItems,
                                                             boolean dbFree) {
         List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>(sampleArray.length);
         for (String sampleName : sampleArray) {
             ProductOrderSample productOrderSample;
             if (dbFree) {
-                productOrderSample = new ProductOrderSample(sampleName, BSPSampleDTO.DUMMY);
+                productOrderSample = new ProductOrderSample(sampleName,
+                        new BSPSampleDTO(new HashMap<BSPSampleSearchColumn, String>()));
             } else {
                 productOrderSample = new ProductOrderSample(sampleName);
             }
@@ -63,8 +59,11 @@ public class ProductOrderSampleTest {
         final ProductOrderSample sample1;
         final ProductOrderSample sample2;
 
-        public TestPDOData() {
+        public TestPDOData(String quoteId) {
             ProductOrder order = AthenaClientServiceStub.createDummyProductOrder();
+
+            order.setQuoteId(quoteId);
+
             product = order.getProduct();
             MaterialType materialType = new MaterialType(BSP_MATERIAL_TYPE.getCategory(), BSP_MATERIAL_TYPE.getName());
             addOn = AthenaClientServiceStub.createDummyProduct("Exome Express", "partNumber");
@@ -72,15 +71,16 @@ public class ProductOrderSampleTest {
             addOn.setPrimaryPriceItem(new PriceItem("A", "B", "C", "D"));
             product.addAddOn(addOn);
 
-            BSPSampleDTO bspSampleDTO1 = BSPSampleDTO.createDummy();
-            bspSampleDTO1.setMaterialType(BSP_MATERIAL_TYPE.getFullName());
-            sample1 = new ProductOrderSample("Sample1", bspSampleDTO1);
+            Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
+                put(BSPSampleSearchColumn.MATERIAL_TYPE, BSP_MATERIAL_TYPE.getFullName());
+            }};
+            sample1 = new ProductOrderSample("Sample1", new BSPSampleDTO(dataMap));
 
-            BSPSampleDTO bspSampleDTO2 = BSPSampleDTO.createDummy();
-            bspSampleDTO2.setMaterialType("XXX:XXX");
-            sample2 = new ProductOrderSample("Sample2", bspSampleDTO2);
+            dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
+                put(BSPSampleSearchColumn.MATERIAL_TYPE, "XXX:XXX");
+            }};
+            sample2 = new ProductOrderSample("Sample2", new BSPSampleDTO(dataMap));
 
-            order.setSamples(Collections.singletonList(sample1));
             List<ProductOrderSample> samples = new ArrayList<ProductOrderSample>();
             samples.add(sample1);
             samples.add(sample2);
@@ -90,7 +90,7 @@ public class ProductOrderSampleTest {
 
     @DataProvider(name = "getBillablePriceItems")
     public static Object[][] makeGetBillablePriceItemsData() {
-        TestPDOData data = new TestPDOData();
+        TestPDOData data = new TestPDOData("GSP-123");
         Product product = data.product;
         Product addOn = data.addOn;
 
@@ -114,31 +114,34 @@ public class ProductOrderSampleTest {
 
     @DataProvider(name = "autoBillSample")
     public static Object[][] makeAutoBillSampleData() {
-        TestPDOData data = new TestPDOData();
+        TestPDOData data = new TestPDOData("GSP-123");
         Date completedDate = new Date();
-        Set<BillingLedger> ledgers = new HashSet<BillingLedger>();
-        ledgers.add(new BillingLedger(data.sample1, data.product.getPrimaryPriceItem(),  completedDate, 1));
-        ledgers.add(new BillingLedger(data.sample1, data.addOn.getPrimaryPriceItem(),  completedDate, 1));
+        Set<LedgerEntry> ledgers = new HashSet<LedgerEntry>();
+        ledgers.add(new LedgerEntry(data.sample1, data.product.getPrimaryPriceItem(), completedDate, 1));
+        ledgers.add(new LedgerEntry(data.sample1, data.addOn.getPrimaryPriceItem(), completedDate, 1));
 
         data.sample2.addLedgerItem(completedDate, data.product.getPrimaryPriceItem(), 1);
-        BillingLedger ledger = data.sample2.getLedgerItems().iterator().next();
+        LedgerEntry ledger = data.sample2.getLedgerItems().iterator().next();
         ledger.setBillingMessage(BillingSession.SUCCESS);
         ledger.setBillingSession(new BillingSession(0L, Collections.singleton(ledger)));
 
         return new Object[][] {
-                new Object[] { data.sample1, completedDate, ledgers, BillingStatus.EligibleForBilling },
-                new Object[] { data.sample1, completedDate, ledgers, BillingStatus.EligibleForBilling },
-                new Object[] { data.sample2, completedDate, Collections.emptySet(), BillingStatus.EligibleForBilling }
+                // Create ledger items from a single sample.
+                new Object[] { data.sample1, completedDate, ledgers },
+                // Update existing ledger items with "new" bill count.
+                new Object[] { data.sample1, completedDate, ledgers },
+                // If sample is already billed, don't create any ledger items.
+                new Object[] { data.sample2, completedDate, Collections.emptySet() }
         };
     }
 
     @DataProvider(name = "riskSample")
     public static Object[][] makeRiskSample() {
-        TestPDOData data = new TestPDOData();
+        TestPDOData data = new TestPDOData("GSP-123");
 
         // sample 1 has risk items and sample 2 does not
-        RiskCriteria riskCriteria = new RiskCriteria(RiskCriteria.RiskCriteriaType.CONCENTRATION, Operator.LESS_THAN, "250.0");
-        RiskItem riskItem = new RiskItem(riskCriteria, "240.0");
+        RiskCriterion riskCriterion = new RiskCriterion(RiskCriterion.RiskCriteriaType.CONCENTRATION, Operator.LESS_THAN, "250.0");
+        RiskItem riskItem = new RiskItem(riskCriterion, "240.0");
         riskItem.setRemark("Bad Concentration found");
 
         data.sample1.setRiskItems(Collections.singletonList(riskItem));
@@ -149,9 +152,9 @@ public class ProductOrderSampleTest {
     }
 
     @Test(dataProvider = "autoBillSample")
-    public void testAutoBillSample(ProductOrderSample sample, Date completedDate, Set<BillingLedger> billingLedgers, BillingStatus billingStatus) {
+    public void testAutoBillSample(ProductOrderSample sample, Date completedDate, Set<LedgerEntry> ledgerEntries) {
         sample.autoBillSample(completedDate, 1);
-        Assert.assertEquals(sample.getBillableLedgerItems(), billingLedgers);
+        Assert.assertEquals(sample.getBillableLedgerItems(), ledgerEntries);
     }
 
     @Test(dataProvider = "riskSample")

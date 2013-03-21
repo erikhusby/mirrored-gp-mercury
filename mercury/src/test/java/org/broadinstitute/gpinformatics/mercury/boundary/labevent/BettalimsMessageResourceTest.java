@@ -17,10 +17,12 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMes
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunResource;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.IndexedPlateFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
@@ -101,11 +103,15 @@ public class BettalimsMessageResourceTest extends Arquillian {
     @Inject
     private ReagentDesignDao reagentDesignDao;
 
+    @Inject
+    IlluminaFlowcellDao flowcellDao;
+
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private UserTransaction utx;
 
     private final SimpleDateFormat testPrefixDateFormat=new SimpleDateFormat("MMddHHmmss");
+    private Date runDate;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -228,7 +234,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
 
         LabEventTest.HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder=new LabEventTest.HybridSelectionJaxbBuilder(bettaLimsMessageFactory,
                 testPrefix, libraryConstructionJaxbBuilder.getPondRegRackBarcode(),
-                libraryConstructionJaxbBuilder.getPondRegTubeBarcodes()).invoke();
+                libraryConstructionJaxbBuilder.getPondRegTubeBarcodes(), "Bait" + testPrefix).invoke();
         final List<ReagentDesign> reagentDesigns=reagentDesignDao.findAll(ReagentDesign.class, 0, 1);
         ReagentDesign baitDesign=null;
         if(reagentDesigns != null && !reagentDesigns.isEmpty()) {
@@ -245,22 +251,32 @@ public class BettalimsMessageResourceTest extends Arquillian {
         }
 
         LabEventTest.QtpJaxbBuilder qtpJaxbBuilder=new LabEventTest.QtpJaxbBuilder(bettaLimsMessageFactory, testPrefix,
-                hybridSelectionJaxbBuilder.getNormCatchBarcodes(), hybridSelectionJaxbBuilder.getNormCatchRackBarcode()).invoke();
+                hybridSelectionJaxbBuilder.getNormCatchBarcodes(), hybridSelectionJaxbBuilder.getNormCatchRackBarcode(),
+                WorkflowName.HYBRID_SELECTION).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : qtpJaxbBuilder.getMessageList()) {
             sendMessage(bettaLIMSMessage);
         }
+
 //        Controller.stopCPURecording();
         TwoDBarcodedTube poolTube = twoDBarcodedTubeDAO.findByBarcode(qtpJaxbBuilder.getPoolTubeBarcode());
         Assert.assertEquals(poolTube.getSampleInstances().size(), LabEventTest.NUM_POSITIONS_IN_RACK,
                 "Wrong number of sample instances");
 
-        String runName="TestRun" + testPrefix;
-        try {
-            solexaRunResource.registerRun(new SolexaRunBean(qtpJaxbBuilder.getFlowcellBarcode(), runName, new Date(), "SL-HAL",
-                    File.createTempFile("RunDir", ".txt").getAbsolutePath(), null));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        runDate = new Date();
+        SimpleDateFormat format = new SimpleDateFormat("yyMMdd");
+        String runName="TestRun" + testPrefix + runDate.getTime();
+
+            String runPath = "/tmp/file/run/path/"+ runName + ".txt";
+
+            IlluminaFlowcell flowcell = flowcellDao.findByBarcode(qtpJaxbBuilder.getFlowcellBarcode());
+
+            solexaRunResource.registerRun(new SolexaRunBean(qtpJaxbBuilder.getFlowcellBarcode(),
+                                                                   qtpJaxbBuilder.getFlowcellBarcode()
+                                                                           + format.format(runDate),
+                                                                   runDate, "SL-HAL",
+                                                                   runPath,
+                                                                   null),
+                                                 flowcell);
         System.out.println("Test run name " + runName);
     }
 

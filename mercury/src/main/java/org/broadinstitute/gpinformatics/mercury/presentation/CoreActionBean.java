@@ -24,7 +24,9 @@ import org.broadinstitute.gpinformatics.athena.boundary.BuildInfoBean;
 import org.broadinstitute.gpinformatics.athena.presentation.links.JiraLink;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
+import org.broadinstitute.gpinformatics.mercury.entity.DB;
 
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
@@ -67,7 +69,7 @@ public class CoreActionBean implements ActionBean {
     private BuildInfoBean buildInfoBean;
 
     @Inject
-    private UserBean userBean;
+    protected UserBean userBean;
 
     @Inject
     private BSPUserList bspUserList;
@@ -102,12 +104,15 @@ public class CoreActionBean implements ActionBean {
     public void getErrorAndMessage() {
         if (context != null) {
             List<ValidationError> errors = (List<ValidationError>) context.getRequest().getAttribute(FLASH_ERROR);
+
             if (errors != null) {
                 for (ValidationError error : errors) {
                     context.getValidationErrors().addGlobalError(error);
                 }
             }
+
             List<Message> messages = (List<Message>) context.getRequest().getAttribute(FLASH_MESSAGE);
+
             if (messages != null) {
                 for (Message message : messages) {
                     context.getMessages().add(message);
@@ -141,10 +146,8 @@ public class CoreActionBean implements ActionBean {
      *
      * @return returns true if any errors are found in either place.  Returns false otherwise.
      */
-    protected boolean hasErrors() {
-
+    public boolean hasErrors() {
         FlashScope scope = FlashScope.getCurrent(context.getRequest(), true);
-
         List<ValidationError> errors = (List<ValidationError>) scope.get(FLASH_ERROR);
 
         return ! (getContext().getValidationErrors().isEmpty() && (errors == null || errors.isEmpty()));
@@ -173,6 +176,7 @@ public class CoreActionBean implements ActionBean {
      */
     public Resolution getSourcePageResolution() {
         Resolution res;
+
         try {
             res = getContext().getSourcePageResolution();
         } catch (SourcePageNotFoundException spnfe) {
@@ -211,12 +215,44 @@ public class CoreActionBean implements ActionBean {
     }
 
     /**
+     * Create a 'safe' message for stripes message reporting. If no arguments are supplied, we format the entire
+     * string as an argument to MessageFormat, to avoid issues with strings that inadvertently include format
+     * patterns, such as {, }, or '.
+     *
+     * @param message the message to format safely
+     * @param arguments the arguments to the message format string
+     * @return the stripes message object
+     */
+    protected static Message createSafeMessage(String message, Object... arguments) {
+        if (arguments.length == 0) {
+            return new SimpleMessage("{0}", message);
+        }
+        return new SimpleMessage(message, arguments);
+    }
+
+    /**
+     * Create a 'safe' message for stripes message reporting. If no arguments are supplied, we format the entire
+     * string as an argument to MessageFormat, to avoid issues with strings that inadvertently include format
+     * patterns, such as {, }, or '.
+     *
+     * @param message the message to format safely
+     * @param arguments the arguments to the message format string
+     * @return the stripes message object
+     */
+    protected static SimpleError createSafeErrorMessage(String message, Object... arguments) {
+        if (arguments.length == 0) {
+            return new SimpleError("{2}", message);
+        }
+        return new SimpleError(message, arguments);
+    }
+
+    /**
      * Convenience method for adding a SimpleMessage to the context.
      *
      * @param message The message to put into a SimpleMessage
      */
     protected void addMessage(String message, Object... arguments) {
-        getContext().getMessages().add(new SimpleMessage(message, arguments));
+        getContext().getMessages().add(createSafeMessage(message, arguments));
     }
 
     /**
@@ -226,7 +262,7 @@ public class CoreActionBean implements ActionBean {
      * @param errorMessage The message to put into a SimpleError
      */
     protected void addValidationError(String field, String errorMessage, Object... arguments) {
-        getContext().getValidationErrors().add(field, new SimpleError(errorMessage, arguments));
+        getContext().getValidationErrors().add(field, createSafeErrorMessage(errorMessage, arguments));
     }
 
     /**
@@ -237,7 +273,7 @@ public class CoreActionBean implements ActionBean {
      * @param arguments optional message parameters
      */
     public void addGlobalValidationError(String errorMessage, Object... arguments) {
-        getContext().getValidationErrors().addGlobalError(new SimpleError(errorMessage, arguments));
+        getContext().getValidationErrors().addGlobalError(createSafeErrorMessage(errorMessage, arguments));
     }
 
     /**
@@ -321,6 +357,11 @@ public class CoreActionBean implements ActionBean {
         }
 
         return bspUser.getFullName();
+    }
+
+    public String getUserFullNameOrBlank(long userId) {
+        BspUser bspUser = bspUserList.getById(userId);
+        return (bspUser != null) ? bspUser.getFullName() : "";
     }
 
     /**
@@ -408,5 +449,9 @@ public class CoreActionBean implements ActionBean {
      */
     public String jiraUrl(String jiraTicketKey) {
         return jiraLink.browseUrl(jiraTicketKey);
+    }
+
+    public String[] getRoles(@Nonnull DB.Role... roles) {
+        return DB.roles(roles);
     }
 }
