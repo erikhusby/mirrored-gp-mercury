@@ -3,20 +3,15 @@ package org.broadinstitute.gpinformatics.infrastructure.datawh;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn_;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
 import javax.ejb.Stateful;
 import javax.inject.Inject;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
-import java.util.List;
 
 @Stateful
-public class ProductOrderAddOnEtl extends GenericEntityEtl {
+public class ProductOrderAddOnEtl extends GenericEntityEtl<ProductOrderAddOn, ProductOrderAddOn> {
 
     private ProductOrderDao dao;
 
@@ -25,77 +20,32 @@ public class ProductOrderAddOnEtl extends GenericEntityEtl {
         this.dao = dao;
     }
 
-    /** {@inheritDoc} */
-    @Override
-    Class getEntityClass() {
-        return ProductOrderAddOn.class;
+    public ProductOrderAddOnEtl() {
+        entityClass = ProductOrderAddOn.class;
+        baseFilename = "product_order_add_on";
     }
 
-    /** {@inheritDoc} */
     @Override
-    String getBaseFilename() {
-        return "product_order_add_on";
+    Long entityId(ProductOrderAddOn entity) {
+        return entity.getProductOrderAddOnId();
     }
 
-    /** {@inheritDoc} */
     @Override
-    Long entityId(Object entity) {
-        return ((ProductOrderAddOn)entity).getProductOrderAddOnId();
+    Path rootId(Root root) {
+        return root.get(ProductOrderAddOn_.productOrderAddOnId);
     }
 
-    /** {@inheritDoc} */
     @Override
-    Collection<String> entityRecords(String etlDateStr, boolean isDelete, Long entityId) {
-        Collection<String> recordList = new ArrayList<String>();
-        ProductOrderAddOn entity = dao.findById(ProductOrderAddOn.class, entityId);
-        if (entity != null) {
-            recordList.add(entityRecord(etlDateStr, isDelete, entity));
-        } else {
-            logger.info("Cannot export. " + getEntityClass().getSimpleName() + " having id " + entityId + " no longer exists.");
-        }
-        return recordList;
+    Collection<String> dataRecords(String etlDateStr, boolean isDelete, Long entityId) {
+        return dataRecords(etlDateStr, isDelete, dao.findById(ProductOrderAddOn.class, entityId));
     }
 
-    /** {@inheritDoc} */
     @Override
-    Collection<String> entityRecordsInRange(final long startId, final long endId, String etlDateStr, boolean isDelete) {
-        Collection<String> recordList = new ArrayList<String>();
-        List<ProductOrderAddOn> entityList = dao.findAll(getEntityClass(),
-                new GenericDao.GenericDaoCallback<ProductOrderAddOn>() {
-                    @Override
-                    public void callback(CriteriaQuery<ProductOrderAddOn> cq, Root<ProductOrderAddOn> root) {
-                        CriteriaBuilder cb = dao.getEntityManager().getCriteriaBuilder();
-                        cq.where(cb.between(root.get(ProductOrderAddOn_.productOrderAddOnId), startId, endId));
-                    }
-                });
-        for (ProductOrderAddOn entity : entityList) {
-            recordList.add(entityRecord(etlDateStr, isDelete, entity));
-        }
-        return recordList;
-    }
-
-    /**
-     * Makes a data record from an entity, in a format that matches the corresponding SqlLoader control file.
-     * @param entity Mercury Entity
-     * @return delimited SqlLoader record
-     */
-    String entityRecord(String etlDateStr, boolean isDelete, ProductOrderAddOn entity) {
+    String dataRecord(String etlDateStr, boolean isDelete, ProductOrderAddOn entity) {
         return genericRecord(etlDateStr, isDelete,
                 entity.getProductOrderAddOnId(),
                 format(entity.getProductOrder() != null ? entity.getProductOrder().getProductOrderId() : null),
                 format(entity.getAddOn().getProductId())
         );
-    }
-
-    /** This entity does not make status records. */
-    @Override
-    String entityStatusRecord(String etlDateStr, Date revDate, Object entity, boolean isDelete) {
-        return null;
-    }
-
-    /** This entity does support add/modify records via primary key. */
-    @Override
-    boolean isEntityEtl() {
-        return true;
     }
 }

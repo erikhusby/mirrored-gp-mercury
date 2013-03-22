@@ -52,15 +52,9 @@ public class ProductOrderAddOnEtlDbFreeTest {
         expect(obj.getProductOrderAddOnId()).andReturn(entityId);
         replay(mocks);
 
-        assertEquals(tst.getEntityClass(), ProductOrderAddOn.class);
-
-        assertEquals(tst.getBaseFilename(), "product_order_add_on");
-
+        assertEquals(tst.entityClass, ProductOrderAddOn.class);
+        assertEquals(tst.baseFilename, "product_order_add_on");
         assertEquals(tst.entityId(obj), (Long) entityId);
-
-        assertNull(tst.entityStatusRecord(etlDateStr, null, null, false));
-
-        assertTrue(tst.isEntityEtl());
 
         verify(mocks);
     }
@@ -70,7 +64,7 @@ public class ProductOrderAddOnEtlDbFreeTest {
 
         replay(mocks);
 
-        assertEquals(tst.entityRecords(etlDateStr, false, -1L).size(), 0);
+        assertEquals(tst.dataRecords(etlDateStr, false, -1L).size(), 0);
 
         verify(mocks);
     }
@@ -85,27 +79,7 @@ public class ProductOrderAddOnEtlDbFreeTest {
 
         replay(mocks);
 
-        Collection<String> records = tst.entityRecords(etlDateStr, false, entityId);
-        assertEquals(records.size(), 1);
-        verifyRecord(records.iterator().next());
-
-        verify(mocks);
-    }
-
-    public void testBackfillEtl() throws Exception {
-        List<ProductOrderAddOn> list = new ArrayList<ProductOrderAddOn>();
-        list.add(obj);
-        expect(dao.findAll(eq(ProductOrderAddOn.class), (GenericDao.GenericDaoCallback<ProductOrderAddOn>) anyObject())).andReturn(list);
-
-        expect(obj.getProductOrderAddOnId()).andReturn(entityId);
-        expect(obj.getProductOrder()).andReturn(pdo).times(2);
-        expect(pdo.getProductOrderId()).andReturn(pdoId);
-        expect(obj.getAddOn()).andReturn(product);
-        expect(product.getProductId()).andReturn(productId);
-
-        replay(mocks);
-
-        Collection<String> records = tst.entityRecordsInRange(entityId, entityId, etlDateStr, false);
+        Collection<String> records = tst.dataRecords(etlDateStr, false, entityId);
         assertEquals(records.size(), 1);
         verifyRecord(records.iterator().next());
 

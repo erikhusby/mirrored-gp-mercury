@@ -46,14 +46,11 @@ public class ExtractTransformDbFreeTest {
     private final ProductOrderAddOnEtl productOrderAddOnEtl = createMock(ProductOrderAddOnEtl.class);
     private final ProductOrderEtl productOrderEtl = createMock(ProductOrderEtl.class);
     private final ProductOrderSampleEtl productOrderSampleEtl = createMock(ProductOrderSampleEtl.class);
-    private final ProductOrderSampleStatusEtl productOrderSampleStatusEtl = createMock(ProductOrderSampleStatusEtl.class);
-    private final ProductOrderStatusEtl productOrderStatusEtl = createMock(ProductOrderStatusEtl.class);
     private final ProjectPersonEtl projectPersonEtl = createMock(ProjectPersonEtl.class);
     private final ResearchProjectCohortEtl researchProjectCohortEtl = createMock(ResearchProjectCohortEtl.class);
     private final ResearchProjectEtl researchProjectEtl = createMock(ResearchProjectEtl.class);
     private final ResearchProjectFundingEtl researchProjectFundingEtl = createMock(ResearchProjectFundingEtl.class);
     private final ResearchProjectIrbEtl researchProjectIrbEtl = createMock(ResearchProjectIrbEtl.class);
-    private final ResearchProjectStatusEtl researchProjectStatusEtl = createMock(ResearchProjectStatusEtl.class);
     private final WorkflowConfigEtl workflowConfigEtl = createMock(WorkflowConfigEtl.class);
     private final RiskItemEtl riskItemEtl = createMock(RiskItemEtl.class);
     private final LedgerEntryEtl ledgerEntryEtl = createMock(LedgerEntryEtl.class);
@@ -68,14 +65,11 @@ public class ExtractTransformDbFreeTest {
             productOrderAddOnEtl,
             productOrderEtl,
             productOrderSampleEtl,
-            productOrderSampleStatusEtl,
-            productOrderStatusEtl,
             projectPersonEtl,
             researchProjectCohortEtl,
             researchProjectEtl,
             researchProjectFundingEtl,
             researchProjectIrbEtl,
-            researchProjectStatusEtl,
             workflowConfigEtl,
             riskItemEtl,
             ledgerEntryEtl
@@ -96,14 +90,11 @@ public class ExtractTransformDbFreeTest {
                 productOrderAddOnEtl,
                 productOrderEtl,
                 productOrderSampleEtl,
-                productOrderSampleStatusEtl,
-                productOrderStatusEtl,
                 projectPersonEtl,
                 researchProjectCohortEtl,
                 researchProjectEtl,
                 researchProjectFundingEtl,
                 researchProjectIrbEtl,
-                researchProjectStatusEtl,
                 workflowConfigEtl,
                 riskItemEtl,
                 ledgerEntryEtl);
@@ -239,25 +230,22 @@ public class ExtractTransformDbFreeTest {
 
     public void testOnDemandBackfill() {
         Class testClass = LabBatch.class;
-        expect(productEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(priceItemEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(researchProjectEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(researchProjectStatusEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(projectPersonEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(researchProjectIrbEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(researchProjectFundingEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(researchProjectCohortEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(productOrderSampleEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(productOrderSampleStatusEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(productOrderEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(productOrderStatusEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(productOrderAddOnEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(labBatchEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(labVesselEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(workflowConfigEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(eventEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(riskItemEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(ledgerEntryEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(productEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(priceItemEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(researchProjectEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(projectPersonEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(researchProjectIrbEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(researchProjectFundingEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(researchProjectCohortEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(productOrderSampleEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(productOrderEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(productOrderAddOnEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(labBatchEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(labVesselEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(workflowConfigEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(eventEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(riskItemEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(ledgerEntryEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
 
         replay(mocks);
         extractTransform.writeLastEtlRun(0L);
@@ -269,25 +257,22 @@ public class ExtractTransformDbFreeTest {
     public void testBackfillDefaultEnd() {
         long startEtl = System.currentTimeMillis();
         Class testClass = LabBatch.class;
-        expect(productEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(1);
-        expect(priceItemEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(researchProjectEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(researchProjectStatusEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(projectPersonEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(researchProjectIrbEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(researchProjectFundingEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(researchProjectCohortEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(productOrderSampleEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(productOrderSampleStatusEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(productOrderEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(productOrderStatusEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(productOrderAddOnEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(labBatchEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(labVesselEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(workflowConfigEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(eventEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(riskItemEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(ledgerEntryEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(productEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(1);
+        expect(priceItemEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(researchProjectEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(projectPersonEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(researchProjectIrbEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(researchProjectFundingEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(researchProjectCohortEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(productOrderSampleEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(productOrderEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(productOrderAddOnEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(labBatchEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(labVesselEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(workflowConfigEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(eventEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(riskItemEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(ledgerEntryEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
 
         replay(mocks);
         extractTransform.writeLastEtlRun(0L);
@@ -325,15 +310,12 @@ public class ExtractTransformDbFreeTest {
         expect(productEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(1);
         expect(priceItemEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
         expect(researchProjectEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
-        expect(researchProjectStatusEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
         expect(projectPersonEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
         expect(researchProjectIrbEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
         expect(researchProjectFundingEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
         expect(researchProjectCohortEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
         expect(productOrderSampleEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
-        expect(productOrderSampleStatusEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
         expect(productOrderEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
-        expect(productOrderStatusEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
         expect(productOrderAddOnEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
         expect(labBatchEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
         expect(labVesselEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);

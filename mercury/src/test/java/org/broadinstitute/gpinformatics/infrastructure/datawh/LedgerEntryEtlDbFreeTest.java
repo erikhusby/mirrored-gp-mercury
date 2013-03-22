@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -35,7 +36,7 @@ public class LedgerEntryEtlDbFreeTest {
 
     private AuditReaderDao auditReader = createMock(AuditReaderDao.class);
     private LedgerEntry obj = createMock(LedgerEntry.class);
-    private LedgerEntryDao dao = createMock(LedgerEntryDao.class);
+    private ProductOrderSampleDao dao = createMock(ProductOrderSampleDao.class);
     private ProductOrderSample pos = createMock(ProductOrderSample.class);
     private Object[] mocks = new Object[]{auditReader, obj, dao, pos};
 
@@ -46,7 +47,7 @@ public class LedgerEntryEtlDbFreeTest {
         EtlTestUtilities.deleteEtlFiles(datafileDir);
 
         tst = new LedgerEntryEtl();
-        tst.setLedgerEntryDao(dao);
+        tst.setProductOrderSampleDao(dao);
         tst.setAuditReaderDao(auditReader);
 
         reset(mocks);
@@ -61,13 +62,9 @@ public class LedgerEntryEtlDbFreeTest {
         expect(obj.getLedgerId()).andReturn(entityId);
         replay(mocks);
 
-        assertEquals(tst.getEntityClass(), LedgerEntry.class);
-
-        assertEquals(tst.getBaseFilename(), "product_order_sample_bill");
-
+        assertEquals(tst.entityClass, LedgerEntry.class);
+        assertEquals(tst.baseFilename, "product_order_sample_bill");
         assertEquals(tst.entityId(obj), (Long) entityId);
-
-        assertNull(tst.entityStatusRecord(etlDateStr, null, null, false));
 
         verify(mocks);
     }
@@ -77,7 +74,7 @@ public class LedgerEntryEtlDbFreeTest {
 
         replay(mocks);
 
-        assertEquals(tst.entityRecords(etlDateStr, false, -1L).size(), 0);
+        assertEquals(tst.dataRecords(etlDateStr, false, -1L).size(), 0);
 
         verify(mocks);
     }
@@ -88,7 +85,7 @@ public class LedgerEntryEtlDbFreeTest {
         expect(pos.getBillableLedgerItems()).andReturn(ledgerItems);
         replay(mocks);
 
-        Collection<String> records = tst.entityRecords(etlDateStr, false, posId);
+        Collection<String> records = tst.dataRecords(etlDateStr, false, posId);
         assertEquals(records.size(), 1);
 
         verifyRecord(records.iterator().next());

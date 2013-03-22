@@ -52,15 +52,9 @@ public class ResearchProjectIrbEtlDbFreeTest {
         expect(obj.getResearchProjectIRBId()).andReturn(entityId);
         replay(mocks);
 
-        assertEquals(tst.getEntityClass(), ResearchProjectIRB.class);
-
-        assertEquals(tst.getBaseFilename(), "research_project_irb");
-
+        assertEquals(tst.entityClass, ResearchProjectIRB.class);
+        assertEquals(tst.baseFilename, "research_project_irb");
         assertEquals(tst.entityId(obj), (Long) entityId);
-
-        assertNull(tst.entityStatusRecord(etlDateStr, null, null, false));
-
-        assertTrue(tst.isEntityEtl());
 
         verify(mocks);
     }
@@ -70,7 +64,7 @@ public class ResearchProjectIrbEtlDbFreeTest {
 
         replay(mocks);
 
-        assertEquals(tst.entityRecords(etlDateStr, false, -1L).size(), 0);
+        assertEquals(tst.dataRecords(etlDateStr, false, -1L).size(), 0);
 
         verify(mocks);
     }
@@ -85,7 +79,7 @@ public class ResearchProjectIrbEtlDbFreeTest {
 
         replay(mocks);
 
-        Collection<String> records = tst.entityRecords(etlDateStr, false, entityId);
+        Collection<String> records = tst.dataRecords(etlDateStr, false, entityId);
         assertEquals(records.size(), 1);
 
         verifyRecord(records.iterator().next());
@@ -102,31 +96,12 @@ public class ResearchProjectIrbEtlDbFreeTest {
 
         replay(mocks);
 
-        Collection<String> records = tst.entityRecords(etlDateStr, false, entityId);
+        Collection<String> records = tst.dataRecords(etlDateStr, false, entityId);
         assertEquals(records.size(), 1);
 
         String[] parts = records.iterator().next().split(",");
         assertEquals(parts[3], "\"\"");
         assertEquals(parts[5], "\"\"");
-
-        verify(mocks);
-    }
-
-    public void testBackfillEtl() throws Exception {
-        List<ResearchProjectIRB> list = new ArrayList<ResearchProjectIRB>();
-        list.add(obj);
-        expect(dao.findAll(eq(ResearchProjectIRB.class), (GenericDao.GenericDaoCallback<ResearchProjectIRB>) anyObject())).andReturn(list);
-        expect(obj.getResearchProjectIRBId()).andReturn(entityId);
-        expect(obj.getResearchProject()).andReturn(project).times(2);
-        expect(project.getResearchProjectId()).andReturn(researchProjectId);
-        expect(obj.getIrb()).andReturn(irb);
-        expect(obj.getIrbType()).andReturn(irbType).times(2);
-
-        replay(mocks);
-
-        Collection<String> records = tst.entityRecordsInRange(entityId, entityId, etlDateStr, false);
-        assertEquals(records.size(), 1);
-        verifyRecord(records.iterator().next());
 
         verify(mocks);
     }

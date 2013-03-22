@@ -51,15 +51,9 @@ public class ResearchProjectEtlDbFreeTest {
         expect(obj.getResearchProjectId()).andReturn(entityId);
         replay(mocks);
 
-        assertEquals(tst.getEntityClass(), ResearchProject.class);
-
-        assertEquals(tst.getBaseFilename(), "research_project");
-
+        assertEquals(tst.entityClass, ResearchProject.class);
+        assertEquals(tst.baseFilename, "research_project");
         assertEquals(tst.entityId(obj), (Long) entityId);
-
-        assertNull(tst.entityStatusRecord(etlDateStr, null, null, false));
-
-        assertTrue(tst.isEntityEtl());
 
         verify(mocks);
     }
@@ -69,7 +63,7 @@ public class ResearchProjectEtlDbFreeTest {
 
         replay(mocks);
 
-        assertEquals(tst.entityRecords(etlDateStr, false, -1L).size(), 0);
+        assertEquals(tst.dataRecords(etlDateStr, false, -1L).size(), 0);
 
         verify(mocks);
     }
@@ -86,30 +80,9 @@ public class ResearchProjectEtlDbFreeTest {
 
         replay(mocks);
 
-        Collection<String> records = tst.entityRecords(etlDateStr, false, entityId);
+        Collection<String> records = tst.dataRecords(etlDateStr, false, entityId);
         assertEquals(records.size(), 1);
 
-        verifyRecord(records.iterator().next());
-
-        verify(mocks);
-    }
-
-    public void testBackfillEtl() throws Exception {
-        List<ResearchProject> list = new ArrayList<ResearchProject>();
-        list.add(obj);
-        expect(dao.findAll(eq(ResearchProject.class), (GenericDao.GenericDaoCallback<ResearchProject>) anyObject())).andReturn(list);
-
-        expect(obj.getResearchProjectId()).andReturn(entityId);
-        expect(obj.getStatus()).andReturn(status).times(2);
-        expect(obj.getCreatedDate()).andReturn(createdDate);
-        expect(obj.getTitle()).andReturn(title);
-        expect(obj.getIrbNotEngaged()).andReturn(irbNotEngaged);
-        expect(obj.getJiraTicketKey()).andReturn(jiraTicketKey);
-
-        replay(mocks);
-
-        Collection<String> records = tst.entityRecordsInRange(entityId, entityId, etlDateStr, false);
-        assertEquals(records.size(), 1);
         verifyRecord(records.iterator().next());
 
         verify(mocks);

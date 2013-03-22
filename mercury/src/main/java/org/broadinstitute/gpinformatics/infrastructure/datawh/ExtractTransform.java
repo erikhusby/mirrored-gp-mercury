@@ -83,10 +83,6 @@ public class ExtractTransform {
     @Inject
     private ProductOrderSampleEtl productOrderSampleEtl;
     @Inject
-    private ProductOrderSampleStatusEtl productOrderSampleStatusEtl;
-    @Inject
-    private ProductOrderStatusEtl productOrderStatusEtl;
-    @Inject
     private ProjectPersonEtl projectPersonEtl;
     @Inject
     private ResearchProjectCohortEtl researchProjectCohortEtl;
@@ -96,8 +92,6 @@ public class ExtractTransform {
     private ResearchProjectFundingEtl researchProjectFundingEtl;
     @Inject
     private ResearchProjectIrbEtl researchProjectIrbEtl;
-    @Inject
-    private ResearchProjectStatusEtl researchProjectStatusEtl;
     @Inject
     private WorkflowConfigEtl workflowConfigEtl;
     @Inject
@@ -117,14 +111,11 @@ public class ExtractTransform {
                             ProductOrderAddOnEtl productOrderAddOnEtl,
                             ProductOrderEtl productOrderEtl,
                             ProductOrderSampleEtl productOrderSampleEtl,
-                            ProductOrderSampleStatusEtl productOrderSampleStatusEtl,
-                            ProductOrderStatusEtl productOrderStatusEtl,
                             ProjectPersonEtl projectPersonEtl,
                             ResearchProjectCohortEtl researchProjectCohortEtl,
                             ResearchProjectEtl researchProjectEtl,
                             ResearchProjectFundingEtl researchProjectFundingEtl,
                             ResearchProjectIrbEtl researchProjectIrbEtl,
-                            ResearchProjectStatusEtl researchProjectStatusEtl,
                             WorkflowConfigEtl workflowConfigEtl,
                             RiskItemEtl riskItemEtl,
                             LedgerEntryEtl ledgerEntryEtl) {
@@ -137,14 +128,11 @@ public class ExtractTransform {
         this.productOrderAddOnEtl = productOrderAddOnEtl;
         this.productOrderEtl = productOrderEtl;
         this.productOrderSampleEtl = productOrderSampleEtl;
-        this.productOrderSampleStatusEtl = productOrderSampleStatusEtl;
-        this.productOrderStatusEtl = productOrderStatusEtl;
         this.projectPersonEtl = projectPersonEtl;
         this.researchProjectCohortEtl = researchProjectCohortEtl;
         this.researchProjectEtl = researchProjectEtl;
         this.researchProjectFundingEtl = researchProjectFundingEtl;
         this.researchProjectIrbEtl = researchProjectIrbEtl;
-        this.researchProjectStatusEtl = researchProjectStatusEtl;
         this.workflowConfigEtl = workflowConfigEtl;
         this.riskItemEtl = riskItemEtl;
         this.ledgerEntryEtl = ledgerEntryEtl;
@@ -255,15 +243,12 @@ public class ExtractTransform {
         recordCount += productEtl.doEtl(revIds, etlDateStr);
         recordCount += priceItemEtl.doEtl(revIds, etlDateStr);
         recordCount += researchProjectEtl.doEtl(revIds, etlDateStr);
-        recordCount += researchProjectStatusEtl.doEtl(revIds, etlDateStr);
         recordCount += projectPersonEtl.doEtl(revIds, etlDateStr);
         recordCount += researchProjectIrbEtl.doEtl(revIds, etlDateStr);
         recordCount += researchProjectFundingEtl.doEtl(revIds, etlDateStr);
         recordCount += researchProjectCohortEtl.doEtl(revIds, etlDateStr);
         recordCount += productOrderSampleEtl.doEtl(revIds, etlDateStr);
-        recordCount += productOrderSampleStatusEtl.doEtl(revIds, etlDateStr);
         recordCount += productOrderEtl.doEtl(revIds, etlDateStr);
-        recordCount += productOrderStatusEtl.doEtl(revIds, etlDateStr);
         recordCount += productOrderAddOnEtl.doEtl(revIds, etlDateStr);
         // event datamart
         recordCount += labBatchEtl.doEtl(revIds, etlDateStr);
@@ -327,27 +312,24 @@ public class ExtractTransform {
 
         int recordCount = 0;
         // The one of these that matches the entityClass will make ETL records, others are no-ops.
-        recordCount += productEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += priceItemEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += researchProjectEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += researchProjectStatusEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += projectPersonEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += researchProjectIrbEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += researchProjectFundingEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += researchProjectCohortEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += productOrderSampleEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += productOrderSampleStatusEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += productOrderEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += productOrderStatusEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += productOrderAddOnEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += productEtl.doEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += priceItemEtl.doEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += researchProjectEtl.doEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += projectPersonEtl.doEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += researchProjectIrbEtl.doEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += researchProjectFundingEtl.doEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += researchProjectCohortEtl.doEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += productOrderSampleEtl.doEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += productOrderEtl.doEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += productOrderAddOnEtl.doEtl(entityClass, startId, endId, etlDateStr);
         // event datamart
-        recordCount += labBatchEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += labVesselEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += workflowConfigEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += eventEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += labBatchEtl.doEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += labVesselEtl.doEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += workflowConfigEtl.doEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += eventEtl.doEtl(entityClass, startId, endId, etlDateStr);
 
-        recordCount += riskItemEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += ledgerEntryEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += riskItemEtl.doEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += ledgerEntryEtl.doEtl(entityClass, startId, endId, etlDateStr);
 
         if (recordCount > 0) {
             writeIsReadyFile(etlDateStr);

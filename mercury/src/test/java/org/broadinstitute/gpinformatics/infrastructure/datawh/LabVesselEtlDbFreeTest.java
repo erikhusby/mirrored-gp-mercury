@@ -48,15 +48,9 @@ public class LabVesselEtlDbFreeTest {
         expect(obj.getLabVesselId()).andReturn(entityId);
         replay(mocks);
 
-        assertEquals(tst.getEntityClass(), LabVessel.class);
-
-        assertEquals(tst.getBaseFilename(), "lab_vessel");
-
+        assertEquals(tst.entityClass, LabVessel.class);
+        assertEquals(tst.baseFilename, "lab_vessel");
         assertEquals(tst.entityId(obj), (Long) entityId);
-
-        assertNull(tst.entityStatusRecord(etlDateStr, null, null, false));
-
-        assertTrue(tst.isEntityEtl());
 
         verify(mocks);
     }
@@ -66,7 +60,7 @@ public class LabVesselEtlDbFreeTest {
 
         replay(mocks);
 
-        assertEquals(tst.entityRecords(etlDateStr, false, -1L).size(), 0);
+        assertEquals(tst.dataRecords(etlDateStr, false, -1L).size(), 0);
 
         verify(mocks);
     }
@@ -80,25 +74,7 @@ public class LabVesselEtlDbFreeTest {
 
         replay(mocks);
 
-        Collection<String> records = tst.entityRecords(etlDateStr, false, entityId);
-        assertEquals(records.size(), 1);
-        verifyRecord(records.iterator().next());
-
-        verify(mocks);
-    }
-
-    public void testBackfillEtl() throws Exception {
-        List<LabVessel> list = new ArrayList<LabVessel>();
-        list.add(obj);
-        expect(dao.findAll(eq(LabVessel.class), (GenericDao.GenericDaoCallback<LabVessel>) anyObject())).andReturn(list);
-
-        expect(obj.getLabVesselId()).andReturn(entityId);
-        expect(obj.getLabel()).andReturn(vesselLabel);
-        expect(obj.getType()).andReturn(vesselType);
-
-        replay(mocks);
-
-        Collection<String> records = tst.entityRecordsInRange(entityId, entityId, etlDateStr, false);
+        Collection<String> records = tst.dataRecords(etlDateStr, false, entityId);
         assertEquals(records.size(), 1);
         verifyRecord(records.iterator().next());
 

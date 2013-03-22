@@ -1,23 +1,18 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 
-import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel_;
 
 import javax.ejb.Stateful;
 import javax.inject.Inject;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
-import java.util.List;
 
 @Stateful
-public class LabVesselEtl extends GenericEntityEtl {
+public class LabVesselEtl extends GenericEntityEtl<LabVessel, LabVessel> {
 
     private LabVesselDao dao;
 
@@ -26,79 +21,32 @@ public class LabVesselEtl extends GenericEntityEtl {
         this.dao = dao;
     }
 
-    /** {@inheritDoc} */
-    @Override
-    Class getEntityClass() {
-        return LabVessel.class;
+    public LabVesselEtl() {
+        entityClass = LabVessel.class;
+        baseFilename = "lab_vessel";
     }
 
-    /** {@inheritDoc} */
     @Override
-    String getBaseFilename() {
-        return "lab_vessel";
+    Long entityId(LabVessel entity) {
+        return entity.getLabVesselId();
     }
 
-    /** {@inheritDoc} */
     @Override
-    Long entityId(Object entity) {
-        return ((LabVessel)entity).getLabVesselId();
+    Path rootId(Root root) {
+        return root.get(LabVessel_.labVesselId);
     }
 
-    /** {@inheritDoc} */
     @Override
-    Collection<String> entityRecords(String etlDateStr, boolean isDelete, Long entityId) {
-        Collection<String> recordList = new ArrayList<String>();
-        LabVessel entity = dao.findById(LabVessel.class, entityId);
-        if (entity != null) {
-            recordList.add(entityRecord(etlDateStr, isDelete, entity));
-        } else {
-            logger.info("Cannot export. " + getEntityClass().getSimpleName() + " having id " + entityId + " no longer exists.");
-        }
-        return recordList;
+    Collection<String> dataRecords(String etlDateStr, boolean isDelete, Long entityId) {
+        return dataRecords(etlDateStr, isDelete, dao.findById(LabVessel.class, entityId));
     }
 
-    /** {@inheritDoc} */
     @Override
-    public Collection<String> entityRecordsInRange(final long startId, final long endId, String etlDateStr, boolean isDelete) {
-        Collection<String> recordList = new ArrayList<String>();
-        List<LabVessel> entityList = dao.findAll(getEntityClass(),
-                new GenericDao.GenericDaoCallback<LabVessel>() {
-                    @Override
-                    public void callback(CriteriaQuery<LabVessel> cq, Root<LabVessel> root) {
-                        if (startId > 0 || endId < Long.MAX_VALUE) {
-                            CriteriaBuilder cb = dao.getEntityManager().getCriteriaBuilder();
-                            cq.where(cb.between(root.get(LabVessel_.labVesselId), startId, endId));
-                        }
-                    }
-                });
-        for (LabVessel entity : entityList) {
-            recordList.add(entityRecord(etlDateStr, isDelete, entity));
-        }
-        return recordList;
-    }
-
-    /**
-     * Makes a data record from an entity, in a format that matches the corresponding SqlLoader control file.
-     * @param entity Mercury Entity
-     * @return delimited SqlLoader record
-     */
-    String entityRecord(String etlDateStr, boolean isDelete, LabVessel entity) {
+    String dataRecord(String etlDateStr, boolean isDelete, LabVessel entity) {
         return genericRecord(etlDateStr, isDelete,
                 entity.getLabVesselId(),
                 format(entity.getLabel()),
                 format(entity.getType().getName())
         );
-    }
-
-    /** This entity does not make status records. */
-    @Override
-    String entityStatusRecord(String etlDateStr, Date revDate, Object entity, boolean isDelete) {
-        return null;
-    }
-
-    /** This entity does support add/modify records via primary key. */
-    @Override
-    boolean isEntityEtl() {
-        return true;
     }
 }

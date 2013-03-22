@@ -52,15 +52,9 @@ public class ProductOrderSampleEtlDbFreeTest {
         expect(obj.getProductOrderSampleId()).andReturn(entityId);
         replay(mocks);
 
-        assertEquals(tst.getEntityClass(), ProductOrderSample.class);
-
-        assertEquals(tst.getBaseFilename(), "product_order_sample");
-
+        assertEquals(tst.entityClass, ProductOrderSample.class);
+        assertEquals(tst.baseFilename, "product_order_sample");
         assertEquals(tst.entityId(obj), (Long) entityId);
-
-        assertNull(tst.entityStatusRecord(etlDateStr, null, null, false));
-
-        assertTrue(tst.isEntityEtl());
 
         verify(mocks);
     }
@@ -70,7 +64,7 @@ public class ProductOrderSampleEtlDbFreeTest {
 
         replay(mocks);
 
-        assertEquals(tst.entityRecords(etlDateStr, false, -1L).size(), 0);
+        assertEquals(tst.dataRecords(etlDateStr, false, -1L).size(), 0);
 
         verify(mocks);
     }
@@ -86,28 +80,7 @@ public class ProductOrderSampleEtlDbFreeTest {
 
         replay(mocks);
 
-        Collection<String> records = tst.entityRecords(etlDateStr, false, entityId);
-        assertEquals(records.size(), 1);
-        verifyRecord(records.iterator().next());
-
-        verify(mocks);
-    }
-
-    public void testBackfillEtl() throws Exception {
-        List<ProductOrderSample> list = new ArrayList<ProductOrderSample>();
-        list.add(obj);
-        expect(dao.findAll(eq(ProductOrderSample.class), (GenericDao.GenericDaoCallback<ProductOrderSample>) anyObject())).andReturn(list);
-
-        expect(obj.getProductOrderSampleId()).andReturn(entityId);
-        expect(obj.getProductOrder()).andReturn(pdo).times(2);
-        expect(pdo.getProductOrderId()).andReturn(pdoId);
-        expect(obj.getSampleName()).andReturn(sampleName);
-        expect(obj.getDeliveryStatus()).andReturn(deliveryStatus);
-        expect(obj.getSamplePosition()).andReturn(position);
-
-        replay(mocks);
-
-        Collection<String> records = tst.entityRecordsInRange(entityId, entityId, etlDateStr, false);
+        Collection<String> records = tst.dataRecords(etlDateStr, false, entityId);
         assertEquals(records.size(), 1);
         verifyRecord(records.iterator().next());
 
