@@ -11,6 +11,9 @@ import org.testng.annotations.Test;
 
 import java.util.Collections;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
+
 
 /**
  * Simple test of the research project without any database connection.
@@ -30,43 +33,42 @@ public class ResearchProjectTest {
 
     @Test
     public void manageRPTest() {
-        Assert.assertNotNull(researchProject.getPeople(RoleType.SCIENTIST));
+        assertThat(researchProject.getPeople(RoleType.SCIENTIST), is(not(nullValue())));
         // A new RP is initialized with the creator as its PM.
-        Assert.assertTrue(researchProject.getPeople(RoleType.PM).length == 1);
+        assertThat(researchProject.getPeople(RoleType.PM), is(arrayWithSize(1)));
 
         // Add a collection.
         ResearchProjectCohort collection = new ResearchProjectCohort(researchProject, "BSPCollection");
         researchProject.addCohort(collection);
-        Assert.assertTrue(researchProject.getCohortIds().length == 1);
+        assertThat(researchProject.getCohortIds(), is(arrayWithSize(1)));
 
         // Add a second and check size.
         collection = new ResearchProjectCohort(researchProject, "AlxCollection2");
         researchProject.addCohort(collection);
-        Assert.assertTrue(researchProject.getCohortIds().length == 2);
+        assertThat(researchProject.getCohortIds(), is(arrayWithSize(2)));
 
         // Remove second and check size.
         researchProject.removeCohort(collection);
-        Assert.assertTrue(researchProject.getCohortIds().length == 1);
+        assertThat(researchProject.getCohortIds(), is(arrayWithSize(1)));
 
-        Assert.assertNull(researchProject.getJiraTicketKey());
+        assertThat(researchProject.getJiraTicketKey(), is(nullValue()));
 
-        Assert.assertEquals(researchProject.fetchJiraIssueType(), CreateFields.IssueType.RESEARCH_PROJECT );
+        assertThat(researchProject.fetchJiraIssueType(), is(equalTo(CreateFields.IssueType.RESEARCH_PROJECT)));
 
-        Assert.assertEquals(researchProject.fetchJiraProject(), CreateFields.ProjectType.Research_Projects);
+        assertThat(researchProject.fetchJiraProject(), is(equalTo(CreateFields.ProjectType.Research_Projects)));
 
-        Assert.assertTrue(researchProject.getProjectManagers().length > 0);
-        Assert.assertTrue(researchProject.getBroadPIs().length > 0);
-        Assert.assertTrue(researchProject.getScientists().length > 0);
-        Assert.assertTrue(researchProject.getExternalCollaborators().length == 0);
+        assertThat(researchProject.getProjectManagers(), is(arrayWithSize(greaterThan(0))));
+        assertThat(researchProject.getBroadPIs(), is(arrayWithSize(greaterThan(0))));
+        assertThat(researchProject.getScientists(), is(arrayWithSize(greaterThan(0))));
+        assertThat(researchProject.getExternalCollaborators(), is(arrayWithSize(0)));
 
-        Assert.assertTrue(researchProject.getStatus() == ResearchProject.Status.Open);
+        assertThat(researchProject.getStatus(), is(equalTo(ResearchProject.Status.Open)));
 
         researchProject.clearPeople();
         researchProject.addPeople(RoleType.PM, Collections.singletonList(new BspUser()));
-        Assert.assertTrue(researchProject.getProjectManagers().length == 1);
-        Assert.assertTrue(researchProject.getBroadPIs().length == 0);
-
-        Assert.assertEquals(researchProject, researchProject);
+        assertThat(researchProject.getProjectManagers(), is(arrayWithSize(1)));
+        assertThat(researchProject.getBroadPIs(), is(arrayWithSize(0)));
+        assertThat(researchProject, is(equalTo(researchProject)));
 
         try {
             researchProject.setJiraTicketKey(null);
@@ -77,8 +79,8 @@ public class ResearchProjectTest {
             researchProject.setJiraTicketKey(RESEARCH_PROJ_JIRA_KEY);
         }
 
-        Assert.assertNotNull(researchProject.getJiraTicketKey());
+        assertThat(researchProject.getJiraTicketKey(), is(notNullValue()));
 
-        Assert.assertEquals(researchProject.getJiraTicketKey(), RESEARCH_PROJ_JIRA_KEY);
+        assertThat(researchProject.getJiraTicketKey(), is(equalTo(RESEARCH_PROJ_JIRA_KEY)));
     }
 }
