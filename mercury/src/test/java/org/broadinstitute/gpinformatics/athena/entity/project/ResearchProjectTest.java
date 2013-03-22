@@ -2,8 +2,8 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
 
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
+import org.broadinstitute.gpinformatics.infrastructure.test.ResearchProjectFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
@@ -24,7 +24,7 @@ public class ResearchProjectTest {
 
     @BeforeMethod
     public void setUp() throws Exception {
-        researchProject = AthenaClientServiceStub
+        researchProject = ResearchProjectFactory
                 .createDummyResearchProject(10950, "MyResearchProject", "To Study Stuff", ResearchProject.IRB_ENGAGED);
     }
 

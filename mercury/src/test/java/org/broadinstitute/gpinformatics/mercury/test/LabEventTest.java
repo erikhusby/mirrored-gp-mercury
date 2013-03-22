@@ -6,7 +6,6 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProducer;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
@@ -14,6 +13,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.monitoring.HipChatMessageSender;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnectorProducer;
 import org.broadinstitute.gpinformatics.infrastructure.test.BettaLimsMessageFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.ProductOrderFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.*;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.graph.Graph;
@@ -171,7 +171,7 @@ public class LabEventTest {
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
 
         ProductOrder productOrder =
-                AthenaClientServiceStub.buildHybridSelectionProductOrder(NUM_POSITIONS_IN_RACK);
+                ProductOrderFactory.buildHybridSelectionProductOrder(NUM_POSITIONS_IN_RACK);
         int rackPosition=1;
 
         for(ProductOrderSample poSample:productOrder.getSamples()) {
@@ -315,7 +315,7 @@ public class LabEventTest {
         labBatchEJB.setLabBatchDao(labBatchDAO);
 
 
-        ProductOrder productOrder = AthenaClientServiceStub.buildExExProductOrder(96);
+        ProductOrder productOrder = ProductOrderFactory.buildExExProductOrder(96);
         String jiraTicketKey = productOrder.getBusinessKey();
 
         mapKeyToProductOrder.put(productOrder.getBusinessKey(), productOrder);
@@ -495,7 +495,7 @@ public class LabEventTest {
         labBatchEJB.setLabBatchDao(labBatchDAO);
 
 
-        ProductOrder productOrder = AthenaClientServiceStub.buildWholeGenomeProductOrder(NUM_POSITIONS_IN_RACK);
+        ProductOrder productOrder = ProductOrderFactory.buildWholeGenomeProductOrder(NUM_POSITIONS_IN_RACK);
         String jiraTicketKey = productOrder.getBusinessKey();
 
         mapKeyToProductOrder.put(jiraTicketKey, productOrder);

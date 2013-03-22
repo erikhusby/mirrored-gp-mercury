@@ -5,11 +5,11 @@ import org.hamcrest.Factory;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 
-public class IsInBspFormat extends TypeSafeMatcher<String> {
+public class IsInBspFormatSample extends TypeSafeMatcher<ProductOrderSample> {
 
     @Override
-    public boolean matchesSafely(String s) {
-        return ProductOrderSample.isInBspFormat(s);
+    public boolean matchesSafely(ProductOrderSample sample) {
+        return ProductOrderSample.isInBspFormat(sample.getSampleName());
     }
 
     @Override
@@ -18,7 +18,7 @@ public class IsInBspFormat extends TypeSafeMatcher<String> {
     }
 
     @Factory
-    public static <T> Matcher<String> inBspFormat() {
-        return new IsInBspFormat();
+    public static <T> Matcher<ProductOrderSample> inBspFormat() {
+        return new IsInBspFormatSample();
     }
 }

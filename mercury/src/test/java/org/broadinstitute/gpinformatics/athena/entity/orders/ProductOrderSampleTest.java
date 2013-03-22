@@ -7,9 +7,10 @@ import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
+import org.broadinstitute.gpinformatics.infrastructure.test.ProductFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.ProductOrderFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -25,6 +26,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.athena.entity.orders.IsInBspFormat.inBspFormat;
+import static org.broadinstitute.gpinformatics.infrastructure.common.EmptyOrNullString.emptyOrNullString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
@@ -52,13 +54,13 @@ public class ProductOrderSampleTest {
         final ProductOrderSample sample2;
 
         public TestPDOData(String quoteId) {
-            ProductOrder order = AthenaClientServiceStub.createDummyProductOrder();
+            ProductOrder order = ProductOrderFactory.createDummyProductOrder();
 
             order.setQuoteId(quoteId);
 
             product = order.getProduct();
             MaterialType materialType = new MaterialType(BSP_MATERIAL_TYPE.getCategory(), BSP_MATERIAL_TYPE.getName());
-            addOn = AthenaClientServiceStub.createDummyProduct("Exome Express", "partNumber");
+            addOn = ProductFactory.createDummyProduct("Exome Express", "partNumber");
             addOn.addAllowableMaterialType(materialType);
             addOn.setPrimaryPriceItem(new PriceItem("A", "B", "C", "D"));
             product.addAddOn(addOn);
@@ -157,15 +159,12 @@ public class ProductOrderSampleTest {
             String message =
                     MessageFormat.format("Sample {0} is on risk but has no risk string.", sample.getSampleName());
 
-            assertThat(message,
-                    sample.getRiskString(), is(not(isEmptyOrNullString())));
-
+            assertThat(message, sample.getRiskString(), is(not(emptyOrNullString())));
         } else {
             String message =
                     MessageFormat.format("Sample {0} is not on risk but has a risk string.", sample.getSampleName());
 
-            assertThat(message, sample.getRiskString(), is(isEmptyOrNullString()));
-
+            assertThat(message, sample.getRiskString(), is(emptyOrNullString()));
         }
     }
 }
