@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
@@ -18,14 +19,13 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
-import org.broadinstitute.gpinformatics.mercury.entity.run.OutputDataLocation;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.*;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
-import org.broadinstitute.gpinformatics.mercury.test.BettaLimsMessageFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.BettaLimsMessageFactory;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -175,7 +175,36 @@ public class ZimsIlluminaRunFactoryTest {
 
     @Test(groups = DATABASE_FREE)
     public void testMakeLibraryBean() {
-        BSPSampleDTO sampleDTO = new BSPSampleDTO("BspContainer", "Stock1", "RootSample", "Aliquot1", "Spencer", "Hamster", "first_sample", "collection1", "7", "9", "ZimsIlluminaRunFactoryTest.testMakeLibraryBean.sampleDTO", "participant1", "Test Material", "42", "Test Sample", "Test failure", "M", "Stock Type", "fingerprint", "sample1", "ZimsIlluminaRunFactoryTest", "N/A", "unknown", "false");
+
+        Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
+            put(BSPSampleSearchColumn.CONTAINER_ID, "BspContainer");
+            put(BSPSampleSearchColumn.STOCK_SAMPLE, "Stock1");
+            put(BSPSampleSearchColumn.ROOT_SAMPLE, "RootSample");
+            put(BSPSampleSearchColumn.SAMPLE_ID, "Aliquot1");
+            put(BSPSampleSearchColumn.PARTICIPANT_ID, "Spencer");
+            put(BSPSampleSearchColumn.SPECIES, "Hamster");
+            put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, "first_sample");
+            put(BSPSampleSearchColumn.COLLECTION, "collection1");
+            put(BSPSampleSearchColumn.VOLUME, "7");
+            put(BSPSampleSearchColumn.CONCENTRATION, "9");
+            put(BSPSampleSearchColumn.LSID, "ZimsIlluminaRunFactoryTest.testMakeLibraryBean.sampleDTO");
+            put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, "participant1");
+            put(BSPSampleSearchColumn.MATERIAL_TYPE, "Test Material");
+            put(BSPSampleSearchColumn.TOTAL_DNA, "42");
+            put(BSPSampleSearchColumn.SAMPLE_TYPE, "Test Sample");
+            put(BSPSampleSearchColumn.PRIMARY_DISEASE, "Test failure");
+            put(BSPSampleSearchColumn.GENDER, "M");
+            put(BSPSampleSearchColumn.STOCK_TYPE, "Stock Type");
+            put(BSPSampleSearchColumn.FINGERPRINT, "fingerprint");
+            put(BSPSampleSearchColumn.SAMPLE_ID, "sample1");
+            put(BSPSampleSearchColumn.SAMPLE_TYPE, "ZimsIlluminaRunFactoryTest");
+            put(BSPSampleSearchColumn.RACE, "N/A");
+            put(BSPSampleSearchColumn.ETHNICITY, "unknown");
+            put(BSPSampleSearchColumn.RACKSCAN_MISMATCH ,"false");
+            put(BSPSampleSearchColumn.RIN, "8.4");
+        }};
+
+        BSPSampleDTO sampleDTO = new BSPSampleDTO(dataMap);
         when(mockBSPSampleDataFetcher.fetchSingleSampleFromBSP("TestSM-1")).thenReturn(sampleDTO);
 
         LibraryBean libraryBean = zimsIlluminaRunFactory.makeLibraryBean(testTube);

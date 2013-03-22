@@ -19,7 +19,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * This class supports all the actions done on products
+ * This class supports all the actions done on products.
  */
 @UrlBinding(ProductActionBean.ACTIONBEAN_URL_BINDING)
 public class ProductActionBean extends CoreActionBean {
@@ -51,14 +51,13 @@ public class ProductActionBean extends CoreActionBean {
     @Inject
     private MaterialTypeTokenInput materialTypeTokenInput;
 
-    // Data needed for displaying the view
+    // Data needed for displaying the view.
     private List<ProductFamily> productFamilies;
     private List<Product> allProducts;
 
     @Validate(required = true, on = {VIEW_ACTION, EDIT_ACTION})
     private String product;
 
-    // Risk criteria
     private String[] criteria = new String[0];
     private String[] operators = new String[0];
     private String[] values = new String[0];
@@ -72,7 +71,6 @@ public class ProductActionBean extends CoreActionBean {
     })
     private Product editProduct;
 
-    // The search query
     private String q;
 
     public String getQ() {
@@ -84,7 +82,7 @@ public class ProductActionBean extends CoreActionBean {
     }
 
     /**
-     * Initialize the product with the passed in key for display in the form
+     * Initialize the product with the passed in key for display in the form.
      */
     @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, EDIT_ACTION, CREATE_ACTION, SAVE_ACTION, "addOnsAutocomplete", "materialTypesAutocomplete"})
     public void init() {
@@ -98,7 +96,7 @@ public class ProductActionBean extends CoreActionBean {
     }
 
     /**
-     * Need to get this for setting up create and edit and for any errors on save
+     * Need to get this for setting up create and edit and for any errors on save.
      */
     @Before(stages = LifecycleStage.BindingAndValidation, on = {CREATE_ACTION, EDIT_ACTION, SAVE_ACTION})
     public void setupFamilies() {
@@ -112,7 +110,7 @@ public class ProductActionBean extends CoreActionBean {
     }
 
     /**
-     * Validate information on the product being edited or created
+     * Validate information on the product being edited or created.
      */
     @ValidationMethod(on = SAVE_ACTION)
     public void validatePriceItems() {
@@ -121,7 +119,7 @@ public class ProductActionBean extends CoreActionBean {
             addGlobalValidationError("Cannot save with duplicate price items: " + StringUtils.join(duplicatePriceItems, ", "));
         }
 
-        // check for existing name for create or name change on edit
+        // check for existing name for create or name change on edit.
         if ((editProduct.getOriginalPartNumber() == null) ||
             (!editProduct.getPartNumber().equalsIgnoreCase(editProduct.getOriginalPartNumber()))) {
 
@@ -131,7 +129,7 @@ public class ProductActionBean extends CoreActionBean {
             }
         }
 
-        // Check that the dates are consistent
+        // Check that the dates are consistent.
         if ((editProduct.getAvailabilityDate() != null) &&
             (editProduct.getDiscontinuedDate() != null) &&
             (editProduct.getAvailabilityDate().after(editProduct.getDiscontinuedDate()))) {
@@ -154,7 +152,14 @@ public class ProductActionBean extends CoreActionBean {
                 }
             }
 
-            // Only increment the matching value if it is not boolean or if this is old style boolean where all indexes match
+            // If this is a RIN criterion and the product does not support RIN, give an error. This was still parsed
+            // and validated as any other criterion.
+            if ((type == RiskCriterion.RiskCriteriaType.RIN) && !editProduct.isSupportsRin()) {
+                addGlobalValidationError("Cannot add a RIN criterion for product: {2} of family {3}",
+                    editProduct.getDisplayName(), editProduct.getProductFamily().getName());
+            }
+
+            // Only increment the matching value if it is not boolean or if this is old style boolean where all indexes match.
             if ((type.getOperatorType() != Operator.OperatorType.BOOLEAN) || allLengthsMatch()) {
                 matchingValueIndex++;
             }
@@ -219,7 +224,13 @@ public class ProductActionBean extends CoreActionBean {
         return createTextResolution(priceItemTokenInput.getJsonString(getQ()));
     }
 
-    /* This method retrieves all possible material types */
+
+    /**
+     * This method retrieves all possible material types.
+     *
+     * @return The autocomplete text.
+     * @throws Exception Any errors.
+     */
     @HandlesEvent("materialTypesAutocomplete")
     public Resolution materialTypesAutocomplete() throws Exception {
         return createTextResolution(materialTypeTokenInput.getJsonString(getQ()));
@@ -231,15 +242,15 @@ public class ProductActionBean extends CoreActionBean {
 
         editProduct.setProductFamily(productFamilyDao.find(editProduct.getProductFamily().getProductFamilyId()));
 
-        // If all lengths match, just send it
+        // If all lengths match, just send it.
         if (allLengthsMatch()) {
             editProduct.updateRiskCriteria(criteria, operators, values);
         } else {
-            // Otherwise, there must be a boolean and we need to make them synchronized
+            // Otherwise, there must be a boolean and we need to make them synchronized.
             String[] fullOperators = new String[criteria.length];
             String[] fullValues = new String[criteria.length];
 
-            // insert the operators and values for booleans, otherwise, use the next item
+            // insert the operators and values for booleans, otherwise, use the next item.
             int fullPosition = 0;
             int originalPosition = 0;
             for (String criterion : criteria) {
@@ -251,11 +262,11 @@ public class ProductActionBean extends CoreActionBean {
                     fullOperators[fullPosition] = operators[originalPosition];
                     fullValues[fullPosition] = values[originalPosition];
 
-                    // Only increment original position for values that are not boolean
+                    // Only increment original position for values that are not boolean.
                     originalPosition++;
                 }
 
-                // Always increment full position
+                // Always increment full position.
                 fullPosition++;
             }
 

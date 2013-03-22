@@ -6,7 +6,9 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServic
 import javax.enterprise.inject.Alternative;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Mock {@link BSPSampleSearchService} that finds everything
@@ -16,17 +18,19 @@ import java.util.List;
 @Alternative
 public class EverythingYouAskForYouGetAndItsHuman implements BSPSampleSearchService {
     @Override
-    public List<String[]> runSampleSearch(Collection<String> sampleIDs, BSPSampleSearchColumn... resultColumns) {
-        final List<String[]> samples = new ArrayList<String[]>();
-        for (String sampleID : sampleIDs) {
-            samples.add(new String[] {"Bill the Cat","2",sampleID,"4","5","6","7",
-                    "8","9","10","11","12","13","14","15","16","17","18","19","20"});
-        }
-        return samples;
-    }
+    public List<Map<BSPSampleSearchColumn, String>> runSampleSearch(Collection<String> sampleIDs, BSPSampleSearchColumn... resultColumns) {
 
-    @Override
-    public List<String[]> runSampleSearch(Collection<String> sampleIDs, List<BSPSampleSearchColumn> resultColumns) {
-        return null;
+        Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
+            put(BSPSampleSearchColumn.SAMPLE_ID, "Bill the Cat");
+            put(BSPSampleSearchColumn.PARTICIPANT_ID, "2");
+            put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, "2");
+        }};
+
+        final List<Map<BSPSampleSearchColumn, String>> samples = new ArrayList<Map<BSPSampleSearchColumn, String>>();
+        for (String sampleID : sampleIDs) {
+            samples.add(dataMap);
+        }
+
+        return samples;
     }
 }

@@ -35,6 +35,10 @@ public class LabVesselPosition {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_LV_POS")
     private Long labVesselPositionId;
 
+    // this should not cause n+1 select performance issue if it is LAZY and mandatory
+    @OneToOne(mappedBy = "labVesselPosition", optional = false)
+    private RapSheetEntry rapSheetEntry;
+
     @NotNull
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private List<MercurySample> mercurySamples;
@@ -69,5 +73,13 @@ public class LabVesselPosition {
 
     public void setVesselPosition(VesselPosition vesselPosition) {
         this.vesselPosition = vesselPosition;
+    }
+
+    public RapSheetEntry getRapSheetEntry() {
+        return rapSheetEntry;
+    }
+
+    public void setRapSheetEntry(RapSheetEntry rapSheetEntry) {
+        this.rapSheetEntry = rapSheetEntry;
     }
 }

@@ -684,6 +684,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 item.put("collaboratorParticipantId", sample.getBspDTO().getCollaboratorParticipantId());
                 item.put("volume", sample.getBspDTO().getVolume());
                 item.put("concentration", sample.getBspDTO().getConcentration());
+                item.put("rin", sample.getBspDTO().getRin());
                 item.put("total", sample.getBspDTO().getTotal());
                 item.put("hasFingerprint", sample.getBspDTO().getHasFingerprint());
                 item.put("hasSampleKitUploadRackscanMismatch", sample.getBspDTO().getHasSampleKitUploadRackscanMismatch());
@@ -1216,5 +1217,9 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     public void setAbandonWarning(boolean abandonWarning) {
         this.abandonWarning = abandonWarning;
+    }
+
+    public boolean isSupportsRin() {
+        return editOrder.getProduct().isSupportsRin();
     }
 }

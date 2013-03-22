@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.mercury.test;
+package org.broadinstitute.gpinformatics.infrastructure.test;
 
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.CherryPickSourceType;

@@ -15,17 +15,14 @@ import static org.broadinstitute.gpinformatics.athena.entity.products.Operator.O
 import static org.broadinstitute.gpinformatics.athena.entity.products.Operator.OperatorType.NUMERIC;
 
 /**
- * This base class represents the OnRisk criteria thresholds for a product
- *
- * @author mccrory
+ * This class handles all the needs for defining an item of a criteria list. Each item has a type, which defines
+ * what the user will compare, an operator, which defines the comparison performed and a value, which is what the
+ * user value will be compared to.
  */
 @Entity
 @Audited
 @Table(schema = "ATHENA", name = "RISK_CRITERIA")
 public class RiskCriterion {
-
-    private static final boolean DISPLAYED = true;
-    private static final boolean NOT_DISPLAYED = false;
 
     @Id
     @SequenceGenerator(name = "SEQ_RISK_CRITERIA", schema = "ATHENA", sequenceName = "SEQ_RISK_CRITERIA")
@@ -46,6 +43,14 @@ public class RiskCriterion {
     protected RiskCriterion() {
     }
 
+    /**
+     * This provides a way to create a fully specified criterion. On the product page, the user adds to a criteria
+     * list and specifies all of this information.
+     *
+     * @param type The type of criterion from the RiskCriteriaType enum.
+     * @param operator The operator that will be used to make the comparison.
+     * @param value The value.
+     */
     public RiskCriterion(@Nonnull RiskCriteriaType type, @Nonnull Operator operator, @Nullable String value) {
         if (!type.getOperators().contains(operator)) {
             throw new RuntimeException("operator: " + operator.getLabel() + " is not allowed on type: " + type.getLabel());
@@ -59,6 +64,7 @@ public class RiskCriterion {
     /**
      * Check to see if this risk criteria threshold has been crossed is satisfied with the data.
      * @param sample name
+     *
      * @return true if the sample is on risk
      */
     public boolean onRisk(ProductOrderSample sample) {
@@ -104,11 +110,20 @@ public class RiskCriterion {
         return type.valueProvider;
     }
 
+    /**
+     * This creates a manual type criterion, which is a special boolean that lets the user say force a sample
+     * to be on risk. For that reason, the value is always compared to 'true' so the result will be true or false based
+     * on being true or false.
+     *
+     * @return The newly created criterion.
+     */
     public static RiskCriterion createManual() {
-        // Boolean does not use the value, so just set to true so that the answer is always that the operation is true
         return new RiskCriterion(RiskCriterion.RiskCriteriaType.MANUAL, Operator.IS, "true");
     }
 
+    /**
+     * @return The string form of the criterion.
+     */
     public String getCalculationString() {
         if (operator.getType() == BOOLEAN) {
             return MessageFormat.format("{0}", type.getLabel());
@@ -121,55 +136,83 @@ public class RiskCriterion {
         return operator.getType();
     }
 
+    /**
+     * An enumeration of all the types that a criterion can take on. If the value provider states that this is
+     * displayable (default in base class) it will be shown in the Product create page UI.
+     */
     public enum RiskCriteriaType {
-        VOLUME("Volume", NUMERIC, DISPLAYED, new ValueProvider() {
+        VOLUME("Volume", NUMERIC, new ValueProvider() {
+            private static final long serialVersionUID = -5141795597813734321L;
+
             @Override
             public String getValue(ProductOrderSample sample) {
                 return String.valueOf(sample.getBspDTO().getVolume());
             }
         }),
-        CONCENTRATION("Concentration", NUMERIC, DISPLAYED, new ValueProvider() {
+        CONCENTRATION("Concentration", NUMERIC, new ValueProvider() {
+            private static final long serialVersionUID = -6601133301434326498L;
+
             @Override
             public String getValue(ProductOrderSample sample) {
                 return String.valueOf(sample.getBspDTO().getConcentration());
             }
         }),
-        WGA("Is WGA", BOOLEAN, DISPLAYED, new ValueProvider() {
+        WGA("Is WGA", BOOLEAN, new ValueProvider() {
+            private static final long serialVersionUID = -4849732345451486536L;
+
             @Override
             public String getValue(ProductOrderSample sample) {
                 return String.valueOf(sample.getBspDTO().getMaterialType().contains("WGA"));
             }
         }),
-        FFPE("Is FFPE", BOOLEAN, DISPLAYED, new ValueProvider() {
+        FFPE("Is FFPE", BOOLEAN, new ValueProvider() {
+            private static final long serialVersionUID = -8406086522548244907L;
+
             @Override
             public String getValue(ProductOrderSample sample) {
                 return String.valueOf(sample.getBspDTO().getFfpeStatus());
             }
         }),
-        MANUAL("Manual", BOOLEAN, NOT_DISPLAYED, new ValueProvider() {
+        MANUAL("Manual", BOOLEAN, new ValueProvider() {
+            private static final long serialVersionUID = 1909671711388135931L;
+
             @Override
             public String getValue(ProductOrderSample sample) {
                 // Manual is used for manually failing a sample.
                 return String.valueOf(true);
             }
+
+            @Override
+            public boolean isDisplayed(Product product) {
+                return false;
+            }
+
         }),
-        TOTAL_DNA("Total DNA", NUMERIC, DISPLAYED, new ValueProvider() {
+        TOTAL_DNA("Total DNA", NUMERIC, new ValueProvider() {
+            private static final long serialVersionUID = 5755357964417458956L;
+
             @Override
             public String getValue(ProductOrderSample sample) {
                 return String.valueOf(sample.getBspDTO().getTotal());
+            }
+        }),
+        RIN("RIN", NUMERIC, new ValueProvider() {
+            private static final long serialVersionUID = 1601375635726290926L;
+
+            @Override
+            public String getValue(ProductOrderSample sample) {
+                return String.valueOf(sample.getBspDTO().getRin());
             }
         });
 
         private final OperatorType operatorType;
         private final String label;
         private final ValueProvider valueProvider;
-        private final boolean isDisplayed;
 
-        RiskCriteriaType(String label, OperatorType operatorType, boolean isDisplayed, ValueProvider valueProvider) {
+        RiskCriteriaType(String label, OperatorType operatorType, ValueProvider valueProvider) {
             this.label = label;
             this.operatorType = operatorType;
             this.valueProvider = valueProvider;
-            this.isDisplayed = isDisplayed;
         }
 
         public OperatorType getOperatorType() {
@@ -180,8 +223,8 @@ public class RiskCriterion {
             return label;
         }
 
-        public boolean isDisplayed() {
-            return isDisplayed;
+        public boolean getDisplayed(Product product) {
+            return valueProvider.isDisplayed(product);
         }
 
         public boolean getRiskStatus(ProductOrderSample sample, Operator operator, String value) {
@@ -207,5 +250,12 @@ public class RiskCriterion {
         private static final long serialVersionUID = 746447531515367731L;
 
         public abstract String getValue(ProductOrderSample sample);
+
+        /**
+         * @return This determines whether the particular provider should be displayed based on the product
+         */
+        public boolean isDisplayed(Product product) {
+            return true;
+        }
     }
 }

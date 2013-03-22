@@ -295,7 +295,7 @@ public class LibraryBean {
             this.collaboratorSampleId = bspSampleDTO.getCollaboratorsSampleName();
             this.materialType = bspSampleDTO.getMaterialType();
             this.participantId = bspSampleDTO.getPatientId();
-            this.population = bspSampleDTO.getPopulation();
+            this.population = bspSampleDTO.getEthnicity();
             this.race = bspSampleDTO.getRace();
             this.collaboratorParticipantId = bspSampleDTO.getCollaboratorParticipantId();
             isGssrSample = false;

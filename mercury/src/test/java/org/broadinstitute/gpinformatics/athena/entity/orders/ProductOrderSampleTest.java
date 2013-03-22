@@ -1,51 +1,47 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
-import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
+import org.broadinstitute.gpinformatics.infrastructure.test.ProductFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.ProductOrderFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import java.util.*;
+import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import static org.broadinstitute.gpinformatics.athena.entity.orders.IsInBspFormat.inBspFormat;
+import static org.broadinstitute.gpinformatics.infrastructure.common.EmptyOrNullString.emptyOrNullString;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
 
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ProductOrderSampleTest {
 
+
     @Test
     public void testIsInBspFormat() throws Exception {
-        Assert.assertTrue(ProductOrderSample.isInBspFormat("SM-2ACG"));
-        Assert.assertTrue(ProductOrderSample.isInBspFormat("SM-2ACG5"));
-        Assert.assertTrue(ProductOrderSample.isInBspFormat("SM-2ACG6"));
-        Assert.assertFalse(ProductOrderSample.isInBspFormat("Blahblahblah"));
-        Assert.assertFalse(ProductOrderSample.isInBspFormat("12345"));
-
-    }
-
-    public static List<ProductOrderSample> createSampleList(String[] sampleArray,
-                                                            Collection<LedgerEntry> billableItems,
-                                                            boolean dbFree) {
-        List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>(sampleArray.length);
-        for (String sampleName : sampleArray) {
-            ProductOrderSample productOrderSample;
-            if (dbFree) {
-                productOrderSample = new ProductOrderSample(sampleName, BSPSampleDTO.DUMMY);
-            } else {
-                productOrderSample = new ProductOrderSample(sampleName);
-            }
-            productOrderSample.setSampleComment("athenaComment");
-            productOrderSample.getLedgerItems().addAll(billableItems);
-            productOrderSamples.add(productOrderSample);
-        }
-        return productOrderSamples;
+        assertThat("SM-2ACG", is(inBspFormat()));
+        assertThat("SM-2ACG5", is(inBspFormat()));
+        assertThat("SM-2ACG6", is(inBspFormat()));
+        assertThat("Blahblahblah", is(not(inBspFormat())));
+        assertThat("12345", is(not(inBspFormat())));
     }
 
     static final org.broadinstitute.bsp.client.sample.MaterialType BSP_MATERIAL_TYPE =
@@ -58,24 +54,26 @@ public class ProductOrderSampleTest {
         final ProductOrderSample sample2;
 
         public TestPDOData(String quoteId) {
-            ProductOrder order = AthenaClientServiceStub.createDummyProductOrder();
+            ProductOrder order = ProductOrderFactory.createDummyProductOrder();
 
             order.setQuoteId(quoteId);
 
             product = order.getProduct();
             MaterialType materialType = new MaterialType(BSP_MATERIAL_TYPE.getCategory(), BSP_MATERIAL_TYPE.getName());
-            addOn = AthenaClientServiceStub.createDummyProduct("Exome Express", "partNumber");
+            addOn = ProductFactory.createDummyProduct("Exome Express", "partNumber");
             addOn.addAllowableMaterialType(materialType);
             addOn.setPrimaryPriceItem(new PriceItem("A", "B", "C", "D"));
             product.addAddOn(addOn);
 
-            BSPSampleDTO bspSampleDTO1 = BSPSampleDTO.createDummy();
-            bspSampleDTO1.setMaterialType(BSP_MATERIAL_TYPE.getFullName());
-            sample1 = new ProductOrderSample("Sample1", bspSampleDTO1);
+            Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>() {{
+                put(BSPSampleSearchColumn.MATERIAL_TYPE, BSP_MATERIAL_TYPE.getFullName());
+            }};
+            sample1 = new ProductOrderSample("Sample1", new BSPSampleDTO(dataMap));
 
-            BSPSampleDTO bspSampleDTO2 = BSPSampleDTO.createDummy();
-            bspSampleDTO2.setMaterialType("XXX:XXX");
-            sample2 = new ProductOrderSample("Sample2", bspSampleDTO2);
+            dataMap = new HashMap<BSPSampleSearchColumn, String>() {{
+                put(BSPSampleSearchColumn.MATERIAL_TYPE, "XXX:XXX");
+            }};
+            sample2 = new ProductOrderSample("Sample2", new BSPSampleDTO(dataMap));
 
             List<ProductOrderSample> samples = new ArrayList<ProductOrderSample>();
             samples.add(sample1);
@@ -94,18 +92,19 @@ public class ProductOrderSampleTest {
         expectedItems.add(product.getPrimaryPriceItem());
         expectedItems.add(addOn.getPrimaryPriceItem());
 
-        return new Object[][] {
-                new Object[] { data.sample1, expectedItems },
-                new Object[] { data.sample2, Collections.singletonList(product.getPrimaryPriceItem()) }
+        return new Object[][]{
+                new Object[]{data.sample1, expectedItems},
+                new Object[]{data.sample2, Collections.singletonList(product.getPrimaryPriceItem())}
         };
     }
 
     @Test(dataProvider = "getBillablePriceItems")
     public void testGetBillablePriceItems(ProductOrderSample sample, List<PriceItem> priceItems) {
         List<PriceItem> generatedItems = sample.getBillablePriceItems();
-        Assert.assertEquals(generatedItems.size(), priceItems.size());
+        assertThat(generatedItems.size(), equalTo(priceItems.size()));
+
         generatedItems.removeAll(priceItems);
-        Assert.assertTrue(generatedItems.isEmpty());
+        assertThat(generatedItems, is(empty()));
     }
 
     @DataProvider(name = "autoBillSample")
@@ -121,13 +120,13 @@ public class ProductOrderSampleTest {
         ledger.setBillingMessage(BillingSession.SUCCESS);
         ledger.setBillingSession(new BillingSession(0L, Collections.singleton(ledger)));
 
-        return new Object[][] {
+        return new Object[][]{
                 // Create ledger items from a single sample.
-                new Object[] { data.sample1, completedDate, ledgers },
+                new Object[]{data.sample1, completedDate, ledgers},
                 // Update existing ledger items with "new" bill count.
-                new Object[] { data.sample1, completedDate, ledgers },
+                new Object[]{data.sample1, completedDate, ledgers},
                 // If sample is already billed, don't create any ledger items.
-                new Object[] { data.sample2, completedDate, Collections.emptySet() }
+                new Object[]{data.sample2, completedDate, Collections.emptySet()}
         };
     }
 
@@ -136,31 +135,36 @@ public class ProductOrderSampleTest {
         TestPDOData data = new TestPDOData("GSP-123");
 
         // sample 1 has risk items and sample 2 does not
-        RiskCriterion riskCriterion = new RiskCriterion(RiskCriterion.RiskCriteriaType.CONCENTRATION, Operator.LESS_THAN, "250.0");
+        RiskCriterion riskCriterion =
+                new RiskCriterion(RiskCriterion.RiskCriteriaType.CONCENTRATION, Operator.LESS_THAN, "250.0");
         RiskItem riskItem = new RiskItem(riskCriterion, "240.0");
         riskItem.setRemark("Bad Concentration found");
 
         data.sample1.setRiskItems(Collections.singletonList(riskItem));
-        return new Object[][] {
-            new Object[] { data.sample1 },
-            new Object[] { data.sample2 }
+        return new Object[][]{
+                new Object[]{data.sample1},
+                new Object[]{data.sample2}
         };
     }
 
     @Test(dataProvider = "autoBillSample")
     public void testAutoBillSample(ProductOrderSample sample, Date completedDate, Set<LedgerEntry> ledgerEntries) {
         sample.autoBillSample(completedDate, 1);
-        Assert.assertEquals(sample.getBillableLedgerItems(), ledgerEntries);
+        assertThat(sample.getBillableLedgerItems(), is(equalTo(ledgerEntries)));
     }
 
     @Test(dataProvider = "riskSample")
     public void testRisk(ProductOrderSample sample) {
         if (sample.isOnRisk()) {
-            Assert.assertTrue(!sample.getRiskString().isEmpty(), "Sample: " + sample.getSampleName() +
-                    " is on risk but has no risk string");
+            String message =
+                    MessageFormat.format("Sample {0} is on risk but has no risk string.", sample.getSampleName());
+
+            assertThat(message, sample.getRiskString(), is(not(emptyOrNullString())));
         } else {
-            Assert.assertTrue(sample.getRiskString().isEmpty(), "Sample: " + sample.getSampleName() +
-                    " is not on risk but has a risk string: " + sample.getRiskString());
+            String message =
+                    MessageFormat.format("Sample {0} is not on risk but has a risk string.", sample.getSampleName());
+
+            assertThat(message, sample.getRiskString(), is(emptyOrNullString()));
         }
     }
 }
