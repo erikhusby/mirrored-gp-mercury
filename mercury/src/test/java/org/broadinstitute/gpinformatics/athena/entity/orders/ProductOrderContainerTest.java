@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
+import org.broadinstitute.gpinformatics.infrastructure.test.ProductOrderSampleFactory;
 import org.testng.Assert;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
@@ -35,7 +36,7 @@ public class ProductOrderContainerTest extends Arquillian {
 
     public ProductOrder createSimpleProductOrder() throws Exception {
         return new ProductOrder(TEST_CREATOR, "containerTest Product Order Test1",
-                ProductOrderTest.createSampleList("SM-1P3X9", "SM-1P3WY", "SM-1P3XN"),
+                ProductOrderSampleFactory.createSampleList("SM-1P3X9", "SM-1P3WY", "SM-1P3XN"),
                 "newQuote", AthenaClientServiceStub.createDummyProduct("Exome Express", "partNumber"),
                 createDummyResearchProject(userList, "Test Research Project"));
     }
@@ -81,7 +82,7 @@ public class ProductOrderContainerTest extends Arquillian {
 
         ProductOrder testOrder =
                 new ProductOrder(TEST_CREATOR, "containerTest Product Order Test2",
-                        ProductOrderTest.createSampleList("SM_12CO4", "SM_1P3WY", "SM_1P3XN"),
+                        ProductOrderSampleFactory.createSampleList("SM_12CO4", "SM_1P3WY", "SM_1P3XN"),
                         "newQuote",
                         AthenaClientServiceStub.createDummyProduct("Exome Express", "partNumber"),
                         createDummyResearchProject(userList, "Test Research Project"));

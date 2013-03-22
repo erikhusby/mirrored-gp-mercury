@@ -17,36 +17,25 @@ import org.testng.annotations.Test;
 
 import java.util.*;
 
+import static org.broadinstitute.gpinformatics.athena.entity.orders.IsInBspFormat.inBspFormat;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.testng.Assert.assertTrue;
+
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ProductOrderSampleTest {
 
+
     @Test
     public void testIsInBspFormat() throws Exception {
-        Assert.assertTrue(ProductOrderSample.isInBspFormat("SM-2ACG"));
-        Assert.assertTrue(ProductOrderSample.isInBspFormat("SM-2ACG5"));
-        Assert.assertTrue(ProductOrderSample.isInBspFormat("SM-2ACG6"));
-        Assert.assertFalse(ProductOrderSample.isInBspFormat("Blahblahblah"));
-        Assert.assertFalse(ProductOrderSample.isInBspFormat("12345"));
-
-    }
-
-    public static List<ProductOrderSample> createSampleList(String[] sampleArray,
-                                                            Collection<LedgerEntry> billableItems,
-                                                            boolean dbFree) {
-        List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>(sampleArray.length);
-        for (String sampleName : sampleArray) {
-            ProductOrderSample productOrderSample;
-            if (dbFree) {
-                productOrderSample = new ProductOrderSample(sampleName, new BSPSampleDTO());
-            } else {
-                productOrderSample = new ProductOrderSample(sampleName);
-            }
-            productOrderSample.setSampleComment("athenaComment");
-            productOrderSample.getLedgerItems().addAll(billableItems);
-            productOrderSamples.add(productOrderSample);
-        }
-        return productOrderSamples;
+        assertThat("SM-2ACG", is(inBspFormat()));
+        assertThat("SM-2ACG5", is(inBspFormat()));
+        assertThat("SM-2ACG6", is(inBspFormat()));
+        assertThat("Blahblahblah", is(not(inBspFormat())));
+        assertThat("12345", is(not(inBspFormat())));
     }
 
     static final org.broadinstitute.bsp.client.sample.MaterialType BSP_MATERIAL_TYPE =
@@ -106,9 +95,10 @@ public class ProductOrderSampleTest {
     @Test(dataProvider = "getBillablePriceItems")
     public void testGetBillablePriceItems(ProductOrderSample sample, List<PriceItem> priceItems) {
         List<PriceItem> generatedItems = sample.getBillablePriceItems();
-        Assert.assertEquals(generatedItems.size(), priceItems.size());
+        assertThat(generatedItems.size(), equalTo(priceItems.size()));
+
         generatedItems.removeAll(priceItems);
-        Assert.assertTrue(generatedItems.isEmpty());
+        assertTrue(generatedItems.isEmpty());
     }
 
     @DataProvider(name = "autoBillSample")
@@ -159,11 +149,12 @@ public class ProductOrderSampleTest {
     @Test(dataProvider = "riskSample")
     public void testRisk(ProductOrderSample sample) {
         if (sample.isOnRisk()) {
-            Assert.assertTrue(!sample.getRiskString().isEmpty(), "Sample: " + sample.getSampleName() +
-                    " is on risk but has no risk string");
+            assertTrue(!sample.getRiskString().isEmpty(), "Sample: " + sample.getSampleName() +
+                                                          " is on risk but has no risk string");
         } else {
-            Assert.assertTrue(sample.getRiskString().isEmpty(), "Sample: " + sample.getSampleName() +
-                    " is not on risk but has a risk string: " + sample.getRiskString());
+            assertTrue(sample.getRiskString().isEmpty(), "Sample: " + sample.getSampleName() +
+                                                         " is not on risk but has a risk string: " + sample
+                    .getRiskString());
         }
     }
 }
