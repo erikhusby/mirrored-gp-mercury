@@ -38,8 +38,7 @@ public class LabBatchEtlDbFreeTest {
     public void beforeMethod() {
         reset(mocks);
 
-        tst = new LabBatchEtl();
-        tst.setLabBatchDAO(dao);
+        tst = new LabBatchEtl(dao);
         tst.setAuditReaderDao(auditReader);
     }
 

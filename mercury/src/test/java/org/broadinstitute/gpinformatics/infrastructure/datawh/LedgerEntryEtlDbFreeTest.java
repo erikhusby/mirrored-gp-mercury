@@ -46,8 +46,7 @@ public class LedgerEntryEtlDbFreeTest {
         ExtractTransform.setDatafileDir(datafileDir);
         EtlTestUtilities.deleteEtlFiles(datafileDir);
 
-        tst = new LedgerEntryEtl();
-        tst.setProductOrderSampleDao(dao);
+        tst = new LedgerEntryEtl(dao);
         tst.setAuditReaderDao(auditReader);
 
         reset(mocks);

@@ -15,23 +15,18 @@ import java.util.Collection;
 
 @Stateful
 public class ProjectPersonEtl extends GenericEntityEtl<ProjectPerson, ProjectPerson> {
-
-    private ResearchProjectDao dao;
     private BSPUserList userList;
-
-    @Inject
-    public void setResearchProjectDao(ResearchProjectDao dao) {
-        this.dao = dao;
-    }
-
-    @Inject
-    public void setBSPUserList(BSPUserList userList) {
-        this.userList = userList;
-    }
 
     public ProjectPersonEtl() {
         entityClass = ProjectPerson.class;
         baseFilename = "research_project_person";
+    }
+
+    @Inject
+    public ProjectPersonEtl(ResearchProjectDao d, BSPUserList ul) {
+        this();
+        dao = d;
+        userList = ul;
     }
 
     @Override

@@ -50,8 +50,7 @@ public class ProductEtlDbFreeTest {
     public void beforeMethod() {
         reset(mocks);
 
-        tst = new ProductEtl();
-        tst.setProductDao(dao);
+        tst = new ProductEtl(dao);
         tst.setAuditReaderDao(auditReader);
     }
 

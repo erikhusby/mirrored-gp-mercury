@@ -15,24 +15,19 @@ import java.util.Date;
 
 @Stateful
 public class ProductOrderEtl extends GenericEntityAndStatusEtl<ProductOrder, ProductOrder> {
-
-    private ProductOrderDao dao;
     private BSPUserList userList;
-
-    @Inject
-    public void setProductOrderDao(ProductOrderDao dao) {
-        this.dao = dao;
-    }
-
-    @Inject
-    public void setBSPUserList(BSPUserList userList) {
-        this.userList = userList;
-    }
 
     public ProductOrderEtl() {
         entityClass = ProductOrder.class;
         baseFilename = "product_order";
         baseStatusFilename = "product_order_status";
+    }
+
+    @Inject
+    public ProductOrderEtl(ProductOrderDao d, BSPUserList ul) {
+        this();
+        dao = d;
+        userList = ul;
     }
 
     @Override

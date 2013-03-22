@@ -15,17 +15,16 @@ import java.util.Date;
 @Stateful
 public class ResearchProjectEtl extends GenericEntityAndStatusEtl<ResearchProject, ResearchProject> {
 
-    private ResearchProjectDao dao;
-
-    @Inject
-    public void setResearchProjectDao(ResearchProjectDao dao) {
-        this.dao = dao;
-    }
-
     public ResearchProjectEtl() {
         entityClass = ResearchProject.class;
         baseFilename = "research_project";
         baseStatusFilename = "research_project_status";
+    }
+
+    @Inject
+    public ResearchProjectEtl(ResearchProjectDao d) {
+        this();
+        dao = d;
     }
 
     @Override

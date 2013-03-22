@@ -44,9 +44,8 @@ public class WorkflowConfigEtlDbFreeTest {
 
         reset(mocks);
 
-        tst = new WorkflowConfigEtl();
+        tst = new WorkflowConfigEtl(loader);
         tst.setAuditReaderDao(auditReader);
-        tst.setWorkflowLoader(loader);
     }
 
     public void testEtlFlags() throws Exception {

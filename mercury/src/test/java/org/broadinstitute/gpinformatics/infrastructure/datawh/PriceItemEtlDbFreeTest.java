@@ -43,8 +43,7 @@ public class PriceItemEtlDbFreeTest {
     public void beforeMethod() {
         reset(mocks);
 
-        tst = new PriceItemEtl();
-        tst.setPriceItemDao(dao);
+        tst = new PriceItemEtl(dao);
         tst.setAuditReaderDao(auditReader);
     }
 

@@ -22,13 +22,15 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 
-// Class <T> is what gets audited and backfilled.
-// Class <C> is what is used to create sqlLoader records.
-// Usually these are the same class.
-
+/**
+ * Base class for entity etl.
+ *
+ * @param <T> the class that gets audited and referenced by backfill entity id range.
+ * @param <C> the class that is used to create sqlLoader records.  Typically C is the same class as T,
+ *            and only differs from T in cross-entity etl subclasses.
+ */
 public abstract class GenericEntityEtl<T, C> {
-    /** The type of entity handled by this class */
-    public Class entityClass;
+    public Class entityClass;  // equivalent to T.class
 
     /** The entity-related name of the data file, and must sync with the ETL cron script and control file. */
     public String baseFilename;

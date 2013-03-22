@@ -13,19 +13,20 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+// This is a "cross etl" class that takes in LedgerEntry and outputs ProductOrderSample updates.
+
 @Stateful
 public class LedgerEntryEtl extends GenericEntityEtl<LedgerEntry, ProductOrderSample> {
-
-    private ProductOrderSampleDao dao;
-
-    @Inject
-    public void setProductOrderSampleDao(ProductOrderSampleDao dao) {
-        this.dao = dao;
-    }
 
     public LedgerEntryEtl() {
         entityClass = LedgerEntry.class;
         baseFilename = "product_order_sample_bill";
+    }
+
+    @Inject
+    public LedgerEntryEtl(ProductOrderSampleDao d) {
+        this();
+        dao = d;
     }
 
     @Override

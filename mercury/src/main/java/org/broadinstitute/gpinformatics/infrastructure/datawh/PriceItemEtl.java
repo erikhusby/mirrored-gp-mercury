@@ -13,16 +13,15 @@ import java.util.Collection;
 @Stateful
 public class PriceItemEtl extends GenericEntityEtl<PriceItem, PriceItem> {
 
-    private PriceItemDao dao;
-
-    @Inject
-    public void setPriceItemDao(PriceItemDao dao) {
-        this.dao = dao;
-    }
-
     public PriceItemEtl() {
         entityClass = PriceItem.class;
         baseFilename = "price_item";
+    }
+
+    @Inject
+    public PriceItemEtl(PriceItemDao d) {
+        this();
+        dao = d;
     }
 
     @Override

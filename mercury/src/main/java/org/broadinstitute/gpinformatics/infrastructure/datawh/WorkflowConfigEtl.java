@@ -15,7 +15,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
+/*
  * This entity etl class draws Workflow info from WorkflowConfig.
  * WorkflowConfig does not have a primary key, so ETL adds one from the hash of fields,
  * and because of this, ETL cannot update existing records, only add new records.
@@ -27,14 +27,15 @@ public class WorkflowConfigEtl extends GenericEntityEtl<Object, Object> {
     static final String WORKFLOW_BASE_FILENAME = "workflow";
     static final String PROCESS_BASE_FILENAME = "workflow_process";
 
-    @Inject
-    public void setWorkflowLoader(WorkflowLoader workflowLoader) {
-        this.workflowLoader = workflowLoader;
-    }
-
     public WorkflowConfigEtl() {
         entityClass = WorkflowConfig.class;
         baseFilename = WORKFLOW_BASE_FILENAME;
+    }
+
+    @Inject
+    public WorkflowConfigEtl(WorkflowLoader wl) {
+        this();
+        workflowLoader = wl;
     }
 
     @Override

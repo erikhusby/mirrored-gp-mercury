@@ -14,16 +14,15 @@ import java.util.Collection;
 @Stateful
 public class ProductEtl extends GenericEntityEtl<Product, Product> {
 
-    private ProductDao dao;
-
-    @Inject
-    public void setProductDao(ProductDao dao) {
-        this.dao = dao;
-    }
-
     public ProductEtl() {
         entityClass = Product.class;
         baseFilename = "product";
+    }
+
+    @Inject
+    public ProductEtl(ProductDao d) {
+        this();
+        dao = d;
     }
 
     @Override

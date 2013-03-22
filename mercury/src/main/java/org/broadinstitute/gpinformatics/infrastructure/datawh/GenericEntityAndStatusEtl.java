@@ -7,6 +7,12 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.util.*;
 
+/**
+ * Base class for etl'ing entities that also have status etl.
+ * @param <T> the class that gets audited and referenced by backfill entity id range.
+ * @param <C> the class that is used to create sqlLoader records.  Typically C is the same class as T,
+ *            and only differs from T in cross-entity etl subclasses.
+ */
 public abstract class GenericEntityAndStatusEtl<T, C> extends GenericEntityEtl<T, C> {
 
     /** The entity-related name of the data file, and must sync with the ETL cron script and control file. */

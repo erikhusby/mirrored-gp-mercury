@@ -39,8 +39,7 @@ public class LabVesselEtlDbFreeTest {
     public void beforeMethod() {
         reset(mocks);
 
-        tst = new LabVesselEtl();
-        tst.setLabVesselDao(dao);
+        tst = new LabVesselEtl(dao);
         tst.setAuditReaderDao(auditReader);
     }
 

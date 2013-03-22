@@ -43,8 +43,7 @@ public class ProductOrderAddOnEtlDbFreeTest {
     public void setUp() {
         reset(mocks);
 
-        tst = new ProductOrderAddOnEtl();
-        tst.setProductOrderDao(dao);
+        tst = new ProductOrderAddOnEtl(dao);
         tst.setAuditReaderDao(auditReader);
     }
 

@@ -56,10 +56,8 @@ public class ProductOrderEtlDbFreeTest {
     public void setUp() {
         reset(mocks);
 
-        tst = new ProductOrderEtl();
-        tst.setProductOrderDao(dao);
+        tst = new ProductOrderEtl(dao, userList);
         tst.setAuditReaderDao(auditReader);
-        tst.setBSPUserList(userList);
     }
 
     public void testEtlFlags() throws Exception {

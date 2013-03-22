@@ -43,7 +43,7 @@ public class GenericEntityEtlDbFreeTest {
     LabBatchDAO dao = createMock(LabBatchDAO.class);
     Object[] mocks = new Object[]{auditReader, dao, obj};
     
-    LabBatchEtl tst = new LabBatchEtl();
+    LabBatchEtl tst = new LabBatchEtl(dao);
     RevInfo[] revInfo = new RevInfo[] {new RevInfo(), new RevInfo(), new RevInfo()};
 
     @BeforeClass(groups = TestGroups.DATABASE_FREE)
@@ -83,7 +83,6 @@ public class GenericEntityEtlDbFreeTest {
 
         replay(mocks);
 
-        tst.setLabBatchDAO(dao);
         tst.setAuditReaderDao(auditReader);
 
         int recordCount = tst.doEtl(revIds, etlDateStr);
@@ -111,7 +110,6 @@ public class GenericEntityEtlDbFreeTest {
 
         replay(mocks);
 
-        tst.setLabBatchDAO(dao);
         tst.setAuditReaderDao(auditReader);
 
         int recordCount = tst.doEtl(revIds, etlDateStr);

@@ -13,16 +13,15 @@ import java.util.Collection;
 @Stateful
 public class LabBatchEtl extends GenericEntityEtl<LabBatch, LabBatch> {
 
-    private LabBatchDAO dao;
-
-    @Inject
-    public void setLabBatchDAO(LabBatchDAO dao) {
-        this.dao = dao;
-    }
-
     public LabBatchEtl() {
         entityClass = LabBatch.class;
         baseFilename = "lab_batch";
+    }
+
+    @Inject
+    public LabBatchEtl(LabBatchDAO d) {
+        this();
+        dao = d;
     }
 
     @Override

@@ -46,9 +46,7 @@ public class RiskItemEtlDbFreeTest {
 
         reset(mocks);
 
-        tst = new RiskItemEtl();
-        tst.setRiskItemDao(dao);
-        tst.setProductOrderSampleDao(pdoDao);
+        tst = new RiskItemEtl(dao, pdoDao);
         tst.setAuditReaderDao(auditReader);
     }
 

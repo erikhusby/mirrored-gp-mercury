@@ -43,8 +43,7 @@ public class ResearchProjectIrbEtlDbFreeTest {
     public void beforeMethod() {
         reset(mocks);
 
-        tst = new ResearchProjectIrbEtl();
-        tst.setResearchProjectDao(dao);
+        tst = new ResearchProjectIrbEtl(dao);
         tst.setAuditReaderDao(auditReader);
     }
 

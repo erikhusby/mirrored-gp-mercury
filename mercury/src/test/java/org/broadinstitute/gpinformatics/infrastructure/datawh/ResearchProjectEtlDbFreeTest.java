@@ -42,8 +42,7 @@ public class ResearchProjectEtlDbFreeTest {
     public void beforeMethod() {
         reset(mocks);
 
-        tst = new ResearchProjectEtl();
-        tst.setResearchProjectDao(dao);
+        tst = new ResearchProjectEtl(dao);
         tst.setAuditReaderDao(auditReader);
     }
 

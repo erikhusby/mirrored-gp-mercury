@@ -51,10 +51,8 @@ public class ProjectPersonEtlDbFreeTest {
     public void beforeMethod() {
         reset(mocks);
 
-        tst = new ProjectPersonEtl();
-        tst.setResearchProjectDao(dao);
+        tst = new ProjectPersonEtl(dao, userList);
         tst.setAuditReaderDao(auditReader);
-        tst.setBSPUserList(userList);
     }
 
     public void testEtlFlags() throws Exception {

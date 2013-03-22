@@ -15,16 +15,15 @@ import java.util.Collection;
 @Stateful
 public class ResearchProjectCohortEtl extends GenericEntityEtl<ResearchProjectCohort, ResearchProjectCohort> {
 
-    private ResearchProjectDao dao;
-
-    @Inject
-    public void setResearchProjectDao(ResearchProjectDao dao) {
-        this.dao = dao;
-    }
-
     public ResearchProjectCohortEtl() {
         entityClass = ResearchProjectCohort.class;
         baseFilename = "research_project_cohort";
+    }
+
+    @Inject
+    public ResearchProjectCohortEtl(ResearchProjectDao d) {
+        this();
+        dao = d;
     }
 
     @Override

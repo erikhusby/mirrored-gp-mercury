@@ -19,23 +19,19 @@ import java.util.*;
 
 @Stateful
 public class EventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
-
-    @Inject
-    LabEventDao dao;
-    @Inject
-    ProductOrderDao pdoDao;
-    @Inject
-    WorkflowConfigLookup workflowConfigLookup;
+    protected ProductOrderDao pdoDao;
+    protected WorkflowConfigLookup workflowConfigLookup;
 
     public EventEtl() {
         entityClass = LabEvent.class;
         baseFilename = "event_fact";
     }
 
-    public EventEtl(WorkflowConfigLookup workflowConfigLookup, LabEventDao dao, ProductOrderDao pdoDao) {
+    @Inject
+    public EventEtl(WorkflowConfigLookup workflowConfigLookup, LabEventDao d, ProductOrderDao pdoDao) {
         this();
+        dao = d;
         this.workflowConfigLookup = workflowConfigLookup;
-        this.dao = dao;
         this.pdoDao = pdoDao;
     }
 
