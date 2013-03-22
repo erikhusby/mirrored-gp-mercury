@@ -133,7 +133,6 @@ public class MercuryConfiguration {
         return AuthorizationFilter.getServletContext();
     }
 
-    @SuppressWarnings("unchecked")
     private Class<? extends AbstractConfig> getConfigClass(String configKey) {
 
         if (configKeyToClassMap == null) {
@@ -159,6 +158,7 @@ public class MercuryConfiguration {
                 }
                 // Add any found config classes to our Map.
                 for (String annotatedClassName : annotatedClassNames) {
+                    @SuppressWarnings("unchecked")
                     Class<? extends AbstractConfig> annotatedClass = (Class<? extends AbstractConfig>) Class.forName(annotatedClassName);
                     configKeyToClassMap.put(getConfigKey(annotatedClass), annotatedClass);
                 }
@@ -192,7 +192,6 @@ public class MercuryConfiguration {
      *
      * @param doc Top-level YAML document.
      */
-    @SuppressWarnings("unchecked")
     private void loadExternalSystems(Map<String, Map> doc) {
         for (Map.Entry<String, Map> section : doc.entrySet()) {
             String systemKey = section.getKey();
@@ -209,7 +208,9 @@ public class MercuryConfiguration {
             }
 
             // Iterate the deployments for this external system.
-            for (Map.Entry<String, Map> deploymentEntry : ((Map<String, Map>) section.getValue()).entrySet()) {
+            @SuppressWarnings("unchecked")
+            Set<Map.Entry<String, Map>> entrySet = ((Map<String, Map>) section.getValue()).entrySet();
+            for (Map.Entry<String, Map> deploymentEntry : entrySet) {
                 String deploymentString = deploymentEntry.getKey();
 
                 if (Deployment.valueOf(deploymentString) == null) {
@@ -228,7 +229,9 @@ public class MercuryConfiguration {
 
                 config.setExternalDeployment(deployment);
 
-                setPropertiesIntoConfig(deploymentEntry.getValue(), config);
+                @SuppressWarnings("unchecked")
+                Map<String, String> deploymentEntryValue = deploymentEntry.getValue();
+                setPropertiesIntoConfig(deploymentEntryValue, config);
 
                 externalSystems.set(systemKey, deployment, config);
 
@@ -288,7 +291,6 @@ public class MercuryConfiguration {
      * @param globalConfig Whether this invocation represents the parsing of the global configuration file
      *                     (mercury-config.yaml) or the local overrides file (mercury-config-local.yaml).
      */
-    @SuppressWarnings("unchecked")
     private void loadMercuryConnections(Map<String, Map> doc, boolean globalConfig) {
 
         if (!doc.containsKey(MERCURY_STANZA)) {
@@ -299,6 +301,7 @@ public class MercuryConfiguration {
             return;
         }
 
+        @SuppressWarnings("unchecked")
         Map<String, Map> deploymentsMap = doc.get(MERCURY_STANZA);
 
         for (Map.Entry<String, Map> deployments : deploymentsMap.entrySet()) {
@@ -308,7 +311,8 @@ public class MercuryConfiguration {
             }
 
             Deployment mercuryDeployment = Deployment.valueOf(mercuryDeploymentString);
-            Map<String, String> systemsMappings = (Map<String, String>) deployments.getValue();
+            @SuppressWarnings("unchecked")
+            Map<String, String> systemsMappings = deployments.getValue();
 
             for (Map.Entry<String, String> systemsMapping : systemsMappings.entrySet()) {
                 String externalDeploymentString = systemsMapping.getValue();
