@@ -19,7 +19,7 @@ import static org.easymock.EasyMock.*;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.collection.IsCollectionContaining.hasItem;
+import static org.hamcrest.Matchers.hasItem;
 
 /**
  * Tests for LimsQueries boundary interface.

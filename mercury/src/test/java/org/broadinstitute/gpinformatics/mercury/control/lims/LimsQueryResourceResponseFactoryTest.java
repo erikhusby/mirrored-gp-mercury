@@ -161,10 +161,10 @@ public class LimsQueryResourceResponseFactoryTest {
         assertThat(outSampleInfo.getReferenceSequence(), equalTo(expected.getReferenceSequence()));
     }
 
-    public static class WellAndSourceTubeMatcher extends BaseMatcher {
+    public static class WellAndSourceTubeMatcher extends BaseMatcher<WellAndSourceTubeType> {
         private WellAndSourceTube other;
 
-        public static Matcher<WellAndSourceTubeType> matchesWellAndSourceTube(WellAndSourceTube other) {
+        public static Matcher matchesWellAndSourceTube(WellAndSourceTube other) {
             return new WellAndSourceTubeMatcher(other);
         }
 
