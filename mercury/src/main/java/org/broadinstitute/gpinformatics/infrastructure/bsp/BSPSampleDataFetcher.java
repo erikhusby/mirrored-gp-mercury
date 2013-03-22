@@ -32,11 +32,10 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
     public BSPSampleDataFetcher() {
     }
 
-
     /**
      * New one up using the given service.
      *
-     * @param service
+     * @param service The search service object.
      */
     public BSPSampleDataFetcher(@Nonnull BSPSampleSearchService service) {
         if (service == null) {
@@ -48,8 +47,9 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
     /**
      * Fetch the data from BSP for the given sample.
      *
-     * @param sampleName
-     * @return
+     * @param sampleName The sample name.
+     *
+     * @return The sample DTO that was fetched.
      */
     public BSPSampleDTO fetchSingleSampleFromBSP(String sampleName) {
         if (service == null) {
@@ -70,160 +70,29 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
     /**
      * Fetch the data from bsp for multiple samples.
      *
-     * @param sampleNames
-     * @return
+     * @param sampleNames The sample names
+     *
+     * @return Mapping of sample id to its bsp data
      */
     public Map<String, BSPSampleDTO> fetchSamplesFromBSP(@Nonnull Collection<String> sampleNames) {
         if (sampleNames == null) {
             throw new NullPointerException("sampleNames cannot be null.");
         }
+
         if (sampleNames.isEmpty()) {
             return Collections.emptyMap();
         }
-        Map<String, BSPSampleDTO> sampleNameToDTO = new HashMap<String, BSPSampleDTO>();
-        List<String[]> results = getBSPResponse(sampleNames);
 
-        for (String[] result : results) {
-            BSPSampleDTO bspDTO = toDTO(result);
+        Map<String, BSPSampleDTO> sampleNameToDTO = new HashMap<String, BSPSampleDTO>();
+        List<Map<BSPSampleSearchColumn, String>> results =
+                service.runSampleSearch(sampleNames, BSPSampleSearchColumn.PDO_SEARCH_COLUMNS);
+        for (Map<BSPSampleSearchColumn, String> result : results) {
+            BSPSampleDTO bspDTO = new BSPSampleDTO(result);
             sampleNameToDTO.put(bspDTO.getSampleId(), bspDTO);
         }
+
         return sampleNameToDTO;
     }
-
-    private static BSPSampleDTO toDTO(String[] bspColumns) {
-        String patientId = null;
-        String rootSample = null;
-        String stockSample = null;
-        String collaboratorSampleId = null;
-        String collection = null;
-        String volume = null;
-        String concentration = null;
-        String organism = null;
-        String sampleLsid = null;
-        String gender = null;
-        String collaboratorParticipantId = null;
-        String materialType = null;
-        String total = null;
-        String sampleType = null;
-        String primaryDisease = null;
-        String stockType = null;
-        String fingerprint = null;
-        String containerId = null;
-        String sampleId = null;
-        String collaboratorName = null;
-        String population = null;
-        String ethnicity = null;
-
-        if (bspColumns.length > 0) {
-            patientId = getIfNotNullAndNotEmpty(bspColumns[0]);
-        }
-        if (bspColumns.length > 1) {
-            rootSample = getIfNotNullAndNotEmpty(bspColumns[1]);
-        }
-        if (bspColumns.length > 2) {
-            stockSample = getIfNotNullAndNotEmpty(bspColumns[2]);
-        }
-        if (bspColumns.length > 3) {
-            collaboratorSampleId = getIfNotNullAndNotEmpty(bspColumns[3]);
-        }
-        if (bspColumns.length > 4) {
-            collection = getIfNotNullAndNotEmpty(bspColumns[4]);
-        }
-        if (bspColumns.length > 5) {
-            volume = getIfNotNullAndNotEmpty(bspColumns[5]);
-        }
-        if (bspColumns.length > 6) {
-            concentration = getIfNotNullAndNotEmpty(bspColumns[6]);
-        }
-        if (bspColumns.length > 7) {
-            organism = getIfNotNullAndNotEmpty(bspColumns[7]);
-        }
-        if (bspColumns.length > 8) {
-            sampleLsid = getIfNotNullAndNotEmpty(bspColumns[8]);
-        }
-        if (bspColumns.length > 9) {
-            collaboratorParticipantId = getIfNotNullAndNotEmpty(bspColumns[9]);
-        }
-        if (bspColumns.length > 10) {
-            materialType = getIfNotNullAndNotEmpty(bspColumns[10]);
-        }
-        if (bspColumns.length > 11) {
-            total = getIfNotNullAndNotEmpty(bspColumns[11]);
-        }
-        if (bspColumns.length > 12) {
-            sampleType = getIfNotNullAndNotEmpty(bspColumns[12]);
-        }
-        if (bspColumns.length > 13) {
-            primaryDisease = getIfNotNullAndNotEmpty(bspColumns[13]);
-        }
-        if (bspColumns.length > 14) {
-            gender = getIfNotNullAndNotEmpty(bspColumns[14]);
-        }
-        if (bspColumns.length > 15) {
-            stockType = getIfNotNullAndNotEmpty(bspColumns[15]);
-        }
-        if (bspColumns.length > 16) {
-            fingerprint = getIfNotNullAndNotEmpty(bspColumns[16]);
-        }
-        if (bspColumns.length > 17) {
-            containerId = getIfNotNullAndNotEmpty(bspColumns[17]);
-        }
-        if (bspColumns.length > 18) {
-            sampleId = getIfNotNullAndNotEmpty(bspColumns[18]);
-        }
-        if (bspColumns.length > 19) {
-            collaboratorName = getIfNotNullAndNotEmpty(bspColumns[19]);
-        }
-        if (bspColumns.length > 20) {
-            ethnicity = getIfNotNullAndNotEmpty(bspColumns[20]);
-        }
-        if (bspColumns.length > 21) {
-            population = getIfNotNullAndNotEmpty(bspColumns[21]);
-        }
-        /** beware of DBFreeBSPSampleTest: if you add columns here, you'll need to add them to the mock **/
-
-        return new BSPSampleDTO(containerId, stockSample, rootSample, null, patientId, organism, collaboratorSampleId, collection,
-                volume, concentration, sampleLsid, collaboratorParticipantId, materialType, total,
-                sampleType, primaryDisease, gender, stockType, fingerprint, sampleId, collaboratorName,
-                ethnicity, population);
-
-    }
-
-    private static String getIfNotNullAndNotEmpty(String value) {
-        if (value != null) {
-            if (value.trim().length() > 0) {
-                return value.trim();
-            }
-        }
-        return null;
-    }
-
-    private List<String[]> getBSPResponse(Collection<String> sampleNames) {
-        return service.runSampleSearch(sampleNames,
-                BSPSampleSearchColumn.PARTICIPANT_ID,
-                BSPSampleSearchColumn.ROOT_SAMPLE,
-                BSPSampleSearchColumn.STOCK_SAMPLE,
-                BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID,
-                BSPSampleSearchColumn.COLLECTION,
-                BSPSampleSearchColumn.VOLUME,
-                BSPSampleSearchColumn.CONCENTRATION,
-                BSPSampleSearchColumn.SPECIES,
-                BSPSampleSearchColumn.LSID,
-                BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID,
-                BSPSampleSearchColumn.MATERIAL_TYPE,
-                BSPSampleSearchColumn.TOTAL_DNA,
-                BSPSampleSearchColumn.SAMPLE_TYPE,
-                BSPSampleSearchColumn.PRIMARY_DISEASE,
-                BSPSampleSearchColumn.GENDER,
-                BSPSampleSearchColumn.STOCK_TYPE,
-                BSPSampleSearchColumn.FINGERPRINT,
-                BSPSampleSearchColumn.CONTAINER_ID,
-                BSPSampleSearchColumn.SAMPLE_ID,
-                BSPSampleSearchColumn.COLLABORATOR_NAME,
-                BSPSampleSearchColumn.ETHNICITY,
-                BSPSampleSearchColumn.RACE);
-    }
-
 
     @Override
     protected void customizeConfig(ClientConfig clientConfig) {
@@ -236,7 +105,6 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
         specifyHttpAuthCredentials(client, bspConfig);
     }
 
-
     /**
      * There is much copying and pasting of code from BSPSampleSearchServiceImpl into here, a refactoring is needed
      *
@@ -244,7 +112,6 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
      *                      be filled with the ffpeDerived value returned by the FFPE webservice
      */
     public void fetchFFPEDerived(@Nonnull Collection<BSPSampleDTO> bspSampleDTOs) {
-
         if (bspSampleDTOs.isEmpty()) {
             return;
         }
@@ -299,4 +166,16 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
 
     }
 
+    /**
+     * Given an aliquot ID, return its stock sample ID.
+     */
+    public String getStockIdForAliquotId(@Nonnull String aliquotId) {
+        List<Map<BSPSampleSearchColumn, String>> results =
+                service.runSampleSearch(Collections.singletonList(aliquotId), BSPSampleSearchColumn.STOCK_SAMPLE);
+        if (results.isEmpty()) {
+            return null;
+        }
+
+        return results.get(0).get(BSPSampleSearchColumn.STOCK_SAMPLE);
+    }
 }

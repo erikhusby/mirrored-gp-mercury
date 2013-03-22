@@ -87,7 +87,7 @@ public class SolexaRunBean implements Serializable {
         if (illuminaSequencingRun.getMachineName() != null) {
             machineName = illuminaSequencingRun.getMachineName();
         }
-        runDirectory = illuminaSequencingRun.getRunLocation().getDataLocation();
+        runDirectory = illuminaSequencingRun.getRunDirectory();
 
         //TODO SGM  Revisit the following when we add MiSeq
 //        reagentBlockBarcode = illuminaSequencingRun.getNewFlowcell().getBarcode();

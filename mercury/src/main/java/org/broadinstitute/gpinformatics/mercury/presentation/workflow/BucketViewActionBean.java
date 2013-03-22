@@ -1,12 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.workflow;
 
-import net.sourceforge.stripes.action.Before;
-import net.sourceforge.stripes.action.DefaultHandler;
-import net.sourceforge.stripes.action.ForwardResolution;
-import net.sourceforge.stripes.action.HandlesEvent;
-import net.sourceforge.stripes.action.RedirectResolution;
-import net.sourceforge.stripes.action.Resolution;
-import net.sourceforge.stripes.action.UrlBinding;
+import net.sourceforge.stripes.action.*;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidationMethod;
@@ -22,6 +16,7 @@ import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.rework.ReworkEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.*;
@@ -38,11 +33,11 @@ public class BucketViewActionBean extends CoreActionBean {
 
     private static final String VIEW_PAGE = "/resources/workflow/bucketView.jsp";
     @Inject
-    private LabEventHandler     labEventHandler;
+    private LabEventHandler labEventHandler;
     @Inject
-    private WorkflowLoader      workflowLoader;
+    private WorkflowLoader workflowLoader;
     @Inject
-    private BucketDao           bucketDao;
+    private BucketDao bucketDao;
     @Inject
     private AthenaClientService athenaClientService;
     @Inject
@@ -54,18 +49,20 @@ public class BucketViewActionBean extends CoreActionBean {
     @Inject
     private UserBean userBean;
 
-    public static final String EXISTING_TICKET     = "existingTicket";
-    public static final String NEW_TICKET          = "newTicket";
+    public static final String EXISTING_TICKET = "existingTicket";
+    public static final String NEW_TICKET = "newTicket";
     public static final String CREATE_BATCH_ACTION = "createBatch";
 
     private List<WorkflowBucketDef> buckets = new ArrayList<WorkflowBucketDef>();
-    private List<String>    selectedVesselLabels;
+    private List<String> selectedVesselLabels;
     private List<LabVessel> selectedBatchVessels;
+    private List<String> selectedReworks;
 
     @Validate(required = true, on = {CREATE_BATCH_ACTION, "viewBucket"})
     private String selectedBucket;
 
     private Collection<BucketEntry> bucketEntries;
+    private Collection<ReworkEntry> reworkEntries;
 
     private Map<String, ProductOrder> pdoByKeyMap = new HashMap<String, ProductOrder>();
 
@@ -76,7 +73,7 @@ public class BucketViewActionBean extends CoreActionBean {
     private String important;
     private String description;
     private String summary;
-    private Date   dueDate;
+    private Date dueDate;
 
     @Before(stages = LifecycleStage.BindingAndValidation)
     public void init() {
@@ -123,6 +120,22 @@ public class BucketViewActionBean extends CoreActionBean {
         this.jiraEnabled = jiraEnabled;
     }
 
+    public List<String> getSelectedReworks() {
+        return selectedReworks;
+    }
+
+    public void setSelectedReworks(List<String> selectedReworks) {
+        this.selectedReworks = selectedReworks;
+    }
+
+    public Collection<ReworkEntry> getReworkEntries() {
+        return reworkEntries;
+    }
+
+    public void setReworkEntries(Collection<ReworkEntry> reworkEntries) {
+        this.reworkEntries = reworkEntries;
+    }
+
     @DefaultHandler
     public Resolution view() {
         return new ForwardResolution(VIEW_PAGE);
@@ -163,6 +176,9 @@ public class BucketViewActionBean extends CoreActionBean {
                 }
             }
         }
+
+        //TODO jac populate the rework entries
+
         return view();
     }
 
@@ -171,6 +187,22 @@ public class BucketViewActionBean extends CoreActionBean {
             pdoByKeyMap.put(pdoKey, athenaClientService.retrieveProductOrderDetails(pdoKey));
         }
         return pdoByKeyMap.get(pdoKey);
+    }
+
+    public List<String> getPDOBusinessKeys(ReworkEntry entry) {
+        List<String> businessKeys = new ArrayList<String>();
+        for (MercurySample sample : entry.getLabVesselPosition().getMercurySamples()) {
+            businessKeys.add(sample.getProductOrderKey());
+        }
+        return businessKeys;
+    }
+
+    public String getSinglePDOBusinessKey(ReworkEntry entry) {
+        List<String> keys = getPDOBusinessKeys(entry);
+        if (keys.size() == 1) {
+            return keys.get(0);
+        }
+        return "Multiple PDOs";
     }
 
     public List<MercurySample> getMercurySamplesForBucketEntry(BucketEntry entry) {
@@ -200,17 +232,17 @@ public class BucketViewActionBean extends CoreActionBean {
            object acting as a DTO
         */
         batchObject = new LabBatch(summary.trim(), vesselSet, LabBatch.LabBatchType.WORKFLOW, description, dueDate,
-                                          important);
+                important);
 
         labBatchEjb.createLabBatchAndRemoveFromBucket(batchObject, userBean.getBspUser().getUsername(),
-                                                             selectedBucket, LabEvent.UI_EVENT_LOCATION);
+                selectedBucket, LabEvent.UI_EVENT_LOCATION);
 
         addMessage(MessageFormat.format("Lab batch ''{0}'' has been created.",
-                                               batchObject.getJiraTicket().getTicketName()));
+                batchObject.getJiraTicket().getTicketName()));
 
         //Forward
         return new RedirectResolution(CreateBatchActionBean.class, CreateBatchActionBean.CONFIRM_ACTION)
-                       .addParameter("batchLabel", batchObject.getBatchName());
+                .addParameter("batchLabel", batchObject.getBatchName());
     }
 
     public Date getDueDate() {

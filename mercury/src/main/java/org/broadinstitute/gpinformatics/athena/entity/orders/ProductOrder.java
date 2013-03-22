@@ -232,6 +232,7 @@ public class ProductOrder implements Serializable {
         private int receivedSampleCount;
         private int activeSampleCount;
         private int hasFPCount;
+        private int hasSampleKitUploadRackscanMismatch;
         private int missingBspMetaDataCount;
         private final Map<String, Integer> stockTypeCounts = new HashMap<String, Integer>();
         private final Map<String, Integer> primaryDiseaseCounts = new HashMap<String, Integer>();
@@ -262,6 +263,7 @@ public class ProductOrder implements Serializable {
             receivedSampleCount = 0;
             activeSampleCount = 0;
             hasFPCount = 0;
+            hasSampleKitUploadRackscanMismatch = 0;
             missingBspMetaDataCount = 0;
             onRiskCount = 0;
             stockTypeCounts.clear();
@@ -298,6 +300,10 @@ public class ProductOrder implements Serializable {
                         incrementCount(genderCounts, bspDTO.getGender());
                         if (bspDTO.getHasFingerprint()) {
                             hasFPCount++;
+                        }
+
+                        if (bspDTO.getHasSampleKitUploadRackscanMismatch()) {
+                            hasSampleKitUploadRackscanMismatch++;
                         }
 
                         incrementCount(sampleTypeCounts, bspDTO.getSampleType());
@@ -381,6 +387,10 @@ public class ProductOrder implements Serializable {
 
             if (hasFPCount != 0) {
                 formatSummaryNumber(output, "Fingerprint Data: {0}", hasFPCount, totalSampleCount);
+            }
+
+            if (hasSampleKitUploadRackscanMismatch != 0) {
+                formatSummaryNumber(output, "<div class='text-error'>Rackscan Mismatch: {0}</div>", hasSampleKitUploadRackscanMismatch, totalSampleCount);
             }
 
             return output;

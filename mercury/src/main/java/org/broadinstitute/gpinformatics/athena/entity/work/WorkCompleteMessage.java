@@ -57,7 +57,7 @@ public class WorkCompleteMessage {
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true, fetch = FetchType.LAZY)
     @MapKeyColumn(name="KEY")
     @JoinColumn(name = "WORK_COMPLETE_MESSAGE", nullable = false)
-    @AuditJoinTable(name = "work_complete_message_join_aud")
+    @AuditJoinTable(name = "WORK_COMPLETE_MESSAGE_JOIN_AUD")
     @Nonnull
     private Map<String, MessageDataValue> data;
 

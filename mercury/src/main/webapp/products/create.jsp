@@ -15,7 +15,7 @@
             // The jsp loads the criteria types into an associative array by type and then operators
             var criteriaTypeToOperatorList = [];
             <c:forEach items="${actionBean.criteriaTypes}" var="criteriaType">
-                <c:if test="${criteriaType.displayed}">
+                <c:if test="${criteriaType.getDisplayed(actionBean.editProduct)}">
                     <c:choose>
                         <c:when test="${criteriaType.operators[0].type == 'BOOLEAN'}">
                             defaultValues['${criteriaType.label}'] = 'true';

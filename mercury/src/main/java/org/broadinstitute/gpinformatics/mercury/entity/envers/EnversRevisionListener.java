@@ -19,7 +19,13 @@ public class EnversRevisionListener implements RevisionListener {
     @Override
     public void newRevision(Object revisionEntity) {
         RevInfo revInfo = (RevInfo) revisionEntity;
-        UserBean userBean = ServiceAccessUtility.getBean(UserBean.class);
+        UserBean userBean = null;
+        try {
+            userBean = ServiceAccessUtility.getBean(UserBean.class);
+        } catch (Exception e) {
+            // An exception can be thrown if a database operation occurs inside a JMS message handler, and
+            // Envers is called to write the audit entry.  In this case, the username would be empty anyway.
+        }
         if (userBean != null && userBean.getLoginUserName() != null) {
             revInfo.setUsername(userBean.getLoginUserName());
         }

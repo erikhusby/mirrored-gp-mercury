@@ -7,7 +7,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
 
 /**
- * Sends message to BettaLIMS, the deck message processor in the Squid suite of applications.
+ * Defines a set of Methods that provide a access to Squid JAX-RS Services
  */
 public interface SquidConnector extends Serializable {
 
@@ -41,5 +41,10 @@ public interface SquidConnector extends Serializable {
         }
     }
 
+    /**
+     * Encapsulates the logic for Mercury to be able to create a JAX-RS call for Squids createRun
+     * @param runInformation JAXB bean that encapsulates all information necessary to register a new run
+     * @return An object that represents the results of the JAX-RS Squid request
+     */
     SquidResponse createRun(SolexaRunBean runInformation);
 }

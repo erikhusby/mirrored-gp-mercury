@@ -12,8 +12,4 @@ public class PCRPrimerPairReagent extends Reagent {
 
     private static Log gLog = LogFactory.getLog(PCRPrimerPairReagent.class);
 
-    public PrimerPair getPrimerPair() {
-        throw new RuntimeException("Method not yet implemented.");
-    }
-
 }

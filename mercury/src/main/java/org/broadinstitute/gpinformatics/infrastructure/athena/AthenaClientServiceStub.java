@@ -18,15 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 
 import javax.annotation.Nonnull;
 import javax.enterprise.inject.Alternative;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Scott Matthews
@@ -121,7 +113,7 @@ public class AthenaClientServiceStub implements AthenaClientService {
         for (int sampleIndex = 1; sampleIndex <= sampleCount; sampleIndex++) {
             String bspStock = "SM-" + String.valueOf(sampleIndex) + String.valueOf(sampleIndex + 1) +
                                       String.valueOf(sampleIndex + 3) + String.valueOf(sampleIndex + 2);
-            productOrderSamples.add(new ProductOrderSample(bspStock, BSPSampleDTO.DUMMY));
+            productOrderSamples.add(new ProductOrderSample(bspStock, new BSPSampleDTO()));
         }
 
         ProductOrder productOrder = new ProductOrder(creatorId, "Test PO", productOrderSamples, "GSP-123", dummyProduct,

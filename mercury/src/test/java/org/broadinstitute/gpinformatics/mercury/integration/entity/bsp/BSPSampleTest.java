@@ -13,9 +13,7 @@ public class BSPSampleTest {
     public void test_patient_id_integration() {
         BSPSampleDataFetcher fetcher = new BSPSampleDataFetcher(new BSPSampleSearchServiceStub());
         String sampleName = "SM-12CO4";
-        MercurySample bspSample = new MercurySample(null, sampleName,
-//                null,
-                fetcher.fetchSingleSampleFromBSP(sampleName));
+        MercurySample bspSample = new MercurySample(null, sampleName, fetcher.fetchSingleSampleFromBSP(sampleName));
         String patientId = bspSample.getBspSampleDTO().getPatientId();
 
         Assert.assertNotNull(patientId);
