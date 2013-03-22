@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
-import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -11,18 +11,22 @@ import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServic
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import java.util.*;
+import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.athena.entity.orders.IsInBspFormat.inBspFormat;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.testng.Assert.assertTrue;
+import static org.hamcrest.Matchers.*;
 
 
 @Test(groups = TestGroups.DATABASE_FREE)
@@ -59,12 +63,12 @@ public class ProductOrderSampleTest {
             addOn.setPrimaryPriceItem(new PriceItem("A", "B", "C", "D"));
             product.addAddOn(addOn);
 
-            Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
+            Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>() {{
                 put(BSPSampleSearchColumn.MATERIAL_TYPE, BSP_MATERIAL_TYPE.getFullName());
             }};
             sample1 = new ProductOrderSample("Sample1", new BSPSampleDTO(dataMap));
 
-            dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
+            dataMap = new HashMap<BSPSampleSearchColumn, String>() {{
                 put(BSPSampleSearchColumn.MATERIAL_TYPE, "XXX:XXX");
             }};
             sample2 = new ProductOrderSample("Sample2", new BSPSampleDTO(dataMap));
@@ -86,9 +90,9 @@ public class ProductOrderSampleTest {
         expectedItems.add(product.getPrimaryPriceItem());
         expectedItems.add(addOn.getPrimaryPriceItem());
 
-        return new Object[][] {
-                new Object[] { data.sample1, expectedItems },
-                new Object[] { data.sample2, Collections.singletonList(product.getPrimaryPriceItem()) }
+        return new Object[][]{
+                new Object[]{data.sample1, expectedItems},
+                new Object[]{data.sample2, Collections.singletonList(product.getPrimaryPriceItem())}
         };
     }
 
@@ -98,7 +102,7 @@ public class ProductOrderSampleTest {
         assertThat(generatedItems.size(), equalTo(priceItems.size()));
 
         generatedItems.removeAll(priceItems);
-        assertTrue(generatedItems.isEmpty());
+        assertThat(generatedItems, is(empty()));
     }
 
     @DataProvider(name = "autoBillSample")
@@ -114,13 +118,13 @@ public class ProductOrderSampleTest {
         ledger.setBillingMessage(BillingSession.SUCCESS);
         ledger.setBillingSession(new BillingSession(0L, Collections.singleton(ledger)));
 
-        return new Object[][] {
+        return new Object[][]{
                 // Create ledger items from a single sample.
-                new Object[] { data.sample1, completedDate, ledgers },
+                new Object[]{data.sample1, completedDate, ledgers},
                 // Update existing ledger items with "new" bill count.
-                new Object[] { data.sample1, completedDate, ledgers },
+                new Object[]{data.sample1, completedDate, ledgers},
                 // If sample is already billed, don't create any ledger items.
-                new Object[] { data.sample2, completedDate, Collections.emptySet() }
+                new Object[]{data.sample2, completedDate, Collections.emptySet()}
         };
     }
 
@@ -129,32 +133,39 @@ public class ProductOrderSampleTest {
         TestPDOData data = new TestPDOData("GSP-123");
 
         // sample 1 has risk items and sample 2 does not
-        RiskCriterion riskCriterion = new RiskCriterion(RiskCriterion.RiskCriteriaType.CONCENTRATION, Operator.LESS_THAN, "250.0");
+        RiskCriterion riskCriterion =
+                new RiskCriterion(RiskCriterion.RiskCriteriaType.CONCENTRATION, Operator.LESS_THAN, "250.0");
         RiskItem riskItem = new RiskItem(riskCriterion, "240.0");
         riskItem.setRemark("Bad Concentration found");
 
         data.sample1.setRiskItems(Collections.singletonList(riskItem));
-        return new Object[][] {
-            new Object[] { data.sample1 },
-            new Object[] { data.sample2 }
+        return new Object[][]{
+                new Object[]{data.sample1},
+                new Object[]{data.sample2}
         };
     }
 
     @Test(dataProvider = "autoBillSample")
     public void testAutoBillSample(ProductOrderSample sample, Date completedDate, Set<LedgerEntry> ledgerEntries) {
         sample.autoBillSample(completedDate, 1);
-        Assert.assertEquals(sample.getBillableLedgerItems(), ledgerEntries);
+        assertThat(sample.getBillableLedgerItems(), is(equalTo(ledgerEntries)));
     }
 
     @Test(dataProvider = "riskSample")
     public void testRisk(ProductOrderSample sample) {
         if (sample.isOnRisk()) {
-            assertTrue(!sample.getRiskString().isEmpty(), "Sample: " + sample.getSampleName() +
-                                                          " is on risk but has no risk string");
+            String message =
+                    MessageFormat.format("Sample {0} is on risk but has no risk string.", sample.getSampleName());
+
+            assertThat(message,
+                    sample.getRiskString(), is(not(isEmptyOrNullString())));
+
         } else {
-            assertTrue(sample.getRiskString().isEmpty(), "Sample: " + sample.getSampleName() +
-                                                         " is not on risk but has a risk string: " + sample
-                    .getRiskString());
+            String message =
+                    MessageFormat.format("Sample {0} is not on risk but has a risk string.", sample.getSampleName());
+
+            assertThat(message, sample.getRiskString(), is(isEmptyOrNullString()));
+
         }
     }
 }
