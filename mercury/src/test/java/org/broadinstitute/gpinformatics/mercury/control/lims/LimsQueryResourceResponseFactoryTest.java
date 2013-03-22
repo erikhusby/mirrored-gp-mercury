@@ -99,13 +99,13 @@ public class LimsQueryResourceResponseFactoryTest {
         assertThat(outPlateTransfer.getSourceSection(), equalTo(plateTransfer.getSourceSection()));
         assertThat(outPlateTransfer.getSourcePositionMap().size(), equalTo(plateTransfer.getSourcePositionMap().size()));
         for (WellAndSourceTube tube : plateTransfer.getSourcePositionMap()) {
-            assertThat(outPlateTransfer.getSourcePositionMap(), (Matcher) hasItem(matchesWellAndSourceTube(tube)));
+            assertThat(outPlateTransfer.getSourcePositionMap(), hasItem(matchesWellAndSourceTube(tube)));
         }
         assertThat(outPlateTransfer.getDestinationBarcode(), equalTo(plateTransfer.getDestinationBarcode()));
         assertThat(outPlateTransfer.getDestinationSection(), equalTo(plateTransfer.getDestinationSection()));
         assertThat(outPlateTransfer.getDestinationPositionMap().size(), equalTo(plateTransfer.getDestinationPositionMap().size()));
         for (WellAndSourceTube tube : plateTransfer.getDestinationPositionMap()) {
-            assertThat(outPlateTransfer.getDestinationPositionMap(), (Matcher) hasItem(matchesWellAndSourceTube(tube)));
+            assertThat(outPlateTransfer.getDestinationPositionMap(), hasItem(matchesWellAndSourceTube(tube)));
         }
     }
 
@@ -161,10 +161,10 @@ public class LimsQueryResourceResponseFactoryTest {
         assertThat(outSampleInfo.getReferenceSequence(), equalTo(expected.getReferenceSequence()));
     }
 
-    public static class WellAndSourceTubeMatcher extends BaseMatcher {
+    public static class WellAndSourceTubeMatcher extends BaseMatcher<WellAndSourceTubeType> {
         private WellAndSourceTube other;
 
-        public static Matcher<WellAndSourceTubeType> matchesWellAndSourceTube(WellAndSourceTube other) {
+        public static Matcher matchesWellAndSourceTube(WellAndSourceTube other) {
             return new WellAndSourceTubeMatcher(other);
         }
 
