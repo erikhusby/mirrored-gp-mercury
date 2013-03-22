@@ -4,7 +4,6 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -17,7 +16,6 @@ import org.hibernate.envers.Audited;
 import javax.annotation.Nonnull;
 import javax.persistence.*;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.regex.Pattern;
 
 /**
@@ -121,8 +119,8 @@ public class MercurySample {
                 BSPSampleDataFetcher bspSampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
                 bspSampleDTO = bspSampleDataFetcher.fetchSingleSampleFromBSP(getSampleKey());
                 if (bspSampleDTO == null) {
-                    // no BSP sample exists with this name, but we still need a semblance of a BSP DTO
-                    bspSampleDTO = new BSPSampleDTO(new HashMap<BSPSampleSearchColumn, String>());
+                    // No BSP sample exists with this name, but we still need a semblance of a BSP DTO.
+                    bspSampleDTO = new BSPSampleDTO();
                 }
             }
 
@@ -137,6 +135,7 @@ public class MercurySample {
         if (this == o) {
             return true;
         }
+
         if (o == null || !(o instanceof MercurySample)) {
             return false;
         }

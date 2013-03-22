@@ -38,8 +38,7 @@ public class ProductOrderSampleTest {
         for (String sampleName : sampleArray) {
             ProductOrderSample productOrderSample;
             if (dbFree) {
-                productOrderSample = new ProductOrderSample(sampleName,
-                        new BSPSampleDTO(new HashMap<BSPSampleSearchColumn, String>()));
+                productOrderSample = new ProductOrderSample(sampleName, new BSPSampleDTO());
             } else {
                 productOrderSample = new ProductOrderSample(sampleName);
             }

@@ -21,8 +21,8 @@ public class BSPSampleDTO {
 
     private final Map<BSPSampleSearchColumn, String> columnToValue;
 
-    public boolean hasNoColumns() {
-        return columnToValue.isEmpty();
+    public boolean hasData() {
+        return !columnToValue.isEmpty();
     }
 
     public enum FFPEStatus {
@@ -66,6 +66,12 @@ public class BSPSampleDTO {
         return 0;
     }
 
+    /**
+     * This constructor creates a dto with no values. This is mainly for tests that don't care about the DTO
+     */
+    public BSPSampleDTO() {
+        columnToValue = Collections.emptyMap();
+    }
 
     /**
      * A constructor based upon the BSP sample search result data.  This would need to be updated is the BSP Sample Search gets changed.
@@ -194,7 +200,7 @@ public class BSPSampleDTO {
     }
 
     public String getCollaboratorName() {
-        return columnToValue.get(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID);
+        return columnToValue.get(BSPSampleSearchColumn.COLLABORATOR_NAME);
     }
 
     public String getEthnicity() {

@@ -10,7 +10,6 @@ import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.AuditJoinTable;
@@ -51,9 +50,10 @@ public class ProductOrderSample implements Serializable {
 
     public static final Pattern BSP_SAMPLE_NAME_PATTERN = Pattern.compile("SM-[A-Z1-9]{4,6}");
 
+    // This is the name of the BSP or Non-BSP sample.
     @Index(name = "ix_pos_sample_name")
     @Column(nullable = false)
-    private String sampleName;      // This is the name of the BSP or Non-BSP sample.
+    private String sampleName;
 
     private String sampleComment;
 
@@ -82,8 +82,9 @@ public class ProductOrderSample implements Serializable {
 
     /**
      * Convert a list of ProductOrderSamples into a list of sample names.
-     * @param samples the samples to convert
-     * @return the names of the samples, in the same order as the input
+     * @param samples the samples to convert.
+     *
+     * @return the names of the samples, in the same order as the input.
      */
     public static List<String> getSampleNames(Collection<ProductOrderSample> samples) {
         List<String> names = new ArrayList<String>(samples.size());
@@ -147,7 +148,7 @@ public class ProductOrderSample implements Serializable {
     private DeliveryStatus deliveryStatus = DeliveryStatus.NOT_STARTED;
 
     @Transient
-    private BSPSampleDTO bspDTO = new BSPSampleDTO(new HashMap<BSPSampleSearchColumn, String>());
+    private BSPSampleDTO bspDTO = new BSPSampleDTO();
 
     @Transient
     private boolean hasBspDTOBeenInitialized;
@@ -208,9 +209,7 @@ public class ProductOrderSample implements Serializable {
      * @return true if sample is a loaded BSP sample but BSP didn't have any data for it.
      */
     public boolean bspMetaDataMissing() {
-        // Use == here, we want to match the exact object.
-        //noinspection ObjectEquality
-        return isInBspFormat() && hasBspDTOBeenInitialized && bspDTO.hasNoColumns();
+        return isInBspFormat() && hasBspDTOBeenInitialized && !bspDTO.hasData();
     }
 
     public BSPSampleDTO getBspDTO() {
@@ -218,9 +217,10 @@ public class ProductOrderSample implements Serializable {
             if (isInBspFormat()) {
                 BSPSampleDataFetcher bspSampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
                 bspDTO = bspSampleDataFetcher.fetchSingleSampleFromBSP(getSampleName());
+
+                // If there is no DTO, create one with no data populated.
                 if (bspDTO == null) {
-                    // no BSP sample exists with this name, but we still need a semblance of a BSP DTO
-                    bspDTO = new BSPSampleDTO(new HashMap<BSPSampleSearchColumn, String>());
+                    bspDTO = new BSPSampleDTO();
                 }
             }
 
@@ -284,7 +284,7 @@ public class ProductOrderSample implements Serializable {
 
         if (getLedgerItems() != null) {
             for (LedgerEntry ledgerEntry : getLedgerItems() ) {
-                // If there is a message that is not success, add the message to the end
+                // If there is a message that is not success, add the message to the end.
                 if ((ledgerEntry.getBillingMessage() != null) && ledgerEntry.isBilled()) {
                     builder.append(ledgerEntry.getBillingMessage()).append("\n");
                 }
@@ -430,7 +430,7 @@ public class ProductOrderSample implements Serializable {
     }
 
     /**
-     * @return If there are any risk items with non-null criteria, then it is on risk
+     * @return If there are any risk items with non-null criteria, then it is on risk.
      */
     public boolean isOnRisk() {
         for (RiskItem item : riskItems) {

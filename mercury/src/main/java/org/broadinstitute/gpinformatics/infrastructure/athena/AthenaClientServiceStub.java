@@ -12,22 +12,13 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectFunding;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectIRB;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 
 import javax.annotation.Nonnull;
 import javax.enterprise.inject.Alternative;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Scott Matthews
@@ -122,8 +113,7 @@ public class AthenaClientServiceStub implements AthenaClientService {
         for (int sampleIndex = 1; sampleIndex <= sampleCount; sampleIndex++) {
             String bspStock = "SM-" + String.valueOf(sampleIndex) + String.valueOf(sampleIndex + 1) +
                                       String.valueOf(sampleIndex + 3) + String.valueOf(sampleIndex + 2);
-            productOrderSamples.add(
-                new ProductOrderSample(bspStock, new BSPSampleDTO(new HashMap<BSPSampleSearchColumn, String>())));
+            productOrderSamples.add(new ProductOrderSample(bspStock, new BSPSampleDTO()));
         }
 
         ProductOrder productOrder = new ProductOrder(creatorId, "Test PO", productOrderSamples, "GSP-123", dummyProduct,

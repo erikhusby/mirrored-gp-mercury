@@ -70,11 +70,12 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
                 public void callback(String[] bspData) {
                     Map<BSPSampleSearchColumn, String> newMap = new HashMap<BSPSampleSearchColumn, String>();
 
-                    // There is an assumption built in here that all columns queried will come back in order. That
-                    // appears to be the case.
+                    // It turns out that BSP truncates the rest of the columns, if there are no more values, which
+                    // is consistent with what Excel does, so it probably comes from that. SO, need to make all
+                    // values "", once i >= the length of the bspData
                     int i = 0;
                     for (BSPSampleSearchColumn column : queryColumns) {
-                        newMap.put(column, bspData[i++]);
+                        newMap.put(column, (i < bspData.length) ? bspData[i++] : "");
                     }
 
                     ret.add(newMap);
