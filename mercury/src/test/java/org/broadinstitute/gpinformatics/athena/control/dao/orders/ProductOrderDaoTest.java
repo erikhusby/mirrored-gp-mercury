@@ -4,9 +4,7 @@ import org.apache.commons.lang3.time.DateUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderTest;
+import org.broadinstitute.gpinformatics.athena.entity.orders.*;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -111,7 +109,7 @@ public class ProductOrderDaoTest extends ContainerTest {
         ResearchProject project = projects.get(new Random().nextInt(projects.size()));
 
         List<Product> products = productDao.findList(Product.class, Product_.workflowName,
-                                                            WorkflowName.EXOME_EXPRESS.getWorkflowName());
+                WorkflowName.EXOME_EXPRESS.getWorkflowName());
         Assert.assertTrue(products != null && !products.isEmpty());
         Product product = products.get(new Random().nextInt(products.size()));
 
@@ -198,6 +196,29 @@ public class ProductOrderDaoTest extends ContainerTest {
         Assert.assertFalse(orders.isEmpty());
     }
 
+    public void testSplitterCriteriaFind() throws Exception {
+        List<ProductOrder> allOrders = productOrderDao.findAll();
+
+        List<String> allBusinessKeys = new ArrayList<String>();
+        for (ProductOrder order : allOrders) {
+            if (order.getJiraTicketKey() != null) {
+                allBusinessKeys.add(order.getBusinessKey());
+            }
+        }
+
+        int originalSize = allBusinessKeys.size();
+
+        allBusinessKeys.addAll(allBusinessKeys);
+
+        Assert.assertTrue(allBusinessKeys.size() > 1000);
+
+        List<ProductOrder> pdoList =
+            productOrderDao.findListByList(ProductOrder.class, ProductOrder_.jiraTicketKey, allBusinessKeys);
+
+        Set<ProductOrder> uniqueOrders = new HashSet<ProductOrder> (pdoList);
+        Assert.assertEquals(
+            uniqueOrders.size(), originalSize, "The number of unique orders should be the same as original size");
+    }
 
     /**
      * Helper method for {@link #testFindBySampleBarcodes} test method.
@@ -216,9 +237,9 @@ public class ProductOrderDaoTest extends ContainerTest {
                 return;
             }
         }
+
         Assert.fail(MessageFormat.format("Sample {0} not found in {1}", sampleBarcode, productOrderKey));
     }
-
 
     /**
      * Ugly positive test method for finding {@link ProductOrder}s by sample barcode, uses real data.

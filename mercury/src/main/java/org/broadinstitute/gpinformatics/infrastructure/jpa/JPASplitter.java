@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.jpa;
 
 import org.broadinstitute.gpinformatics.infrastructure.common.BaseSplitter;
 
+import javax.annotation.Nonnull;
 import javax.persistence.Query;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -54,12 +55,11 @@ public class JPASplitter extends BaseSplitter {
         return result;
     }
 
-
     /**
      * Run the query in the standard way, without any special splits, etc.
      *
-     * @param query         The HQL query - null if a criteria query
-     * @param propertyName  The name of the parameter in the HQL query. null if a criteria query
+     * @param query         The SQL or JQL query - null if a criteria query
+     * @param propertyName  The name of the parameter in the query. null if a criteria query
      * @param parameterList The data to put into the query in the place of the
      *                      parameterListName
      *
@@ -67,20 +67,63 @@ public class JPASplitter extends BaseSplitter {
      */
     @SuppressWarnings("unchecked")
     private static <SPLIT_DATA_TYPE, RETURN_DATA_TYPE>
-    List<RETURN_DATA_TYPE> runQueryStandard(Query query,
-                                            String propertyName,
-                                            Collection<SPLIT_DATA_TYPE> parameterList) {
+    List<RETURN_DATA_TYPE> runQueryStandard(@Nonnull Query query,
+                                            @Nonnull String propertyName,
+                                            @Nonnull Collection<SPLIT_DATA_TYPE> parameterList) {
 
         if (parameterList.isEmpty()) {
             return Collections.emptyList();
         }
 
-        if (query != null) {
-            query.setParameter(propertyName, parameterList);
-            return query.getResultList();
-        }
-        return Collections.emptyList();
+        query.setParameter(propertyName, parameterList);
+        return query.getResultList();
     }
 
+    public static <SPLIT_DATA_TYPE, RETURN_DATA_TYPE> List<RETURN_DATA_TYPE> runCriteryQuery(
+            @Nonnull Collection<SPLIT_DATA_TYPE> parameterList,
+            @Nonnull CriteriaInClauseCreator<SPLIT_DATA_TYPE> criteriaCreator) {
+
+        // if the splitting is not needed, run the original query.
+        if (parameterList.size() < BaseSplitter.DEFAULT_SPLIT_SIZE) {
+            return runCriteriaQuery(criteriaCreator, parameterList);
+        }
+
+        if (parameterList.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<RETURN_DATA_TYPE> result = new ArrayList<RETURN_DATA_TYPE>();
+        List<Collection<SPLIT_DATA_TYPE>> temp = split(parameterList);
+        for (Collection<SPLIT_DATA_TYPE> data : temp) {
+            List<RETURN_DATA_TYPE> o = runCriteriaQuery(criteriaCreator, data);
+
+            System.out.println("input size: " + data.size() + " output size: " + o.size());
+
+            result.addAll(o);
+        }
+
+        return result;
+    }
+
+    /**
+     * Run a criteria query
+     *
+     * @param criteriaCreator  The engine to create the
+     * @param parameterList    The data to put into the query in the place of the
+     *                      parameterListName
+     *
+     * @return The list of the results, created by running the HQL query.
+     */
+    @SuppressWarnings("unchecked")
+    private static <SPLIT_DATA_TYPE, RETURN_DATA_TYPE>
+    List<RETURN_DATA_TYPE> runCriteriaQuery(@Nonnull CriteriaInClauseCreator<SPLIT_DATA_TYPE> criteriaCreator,
+                                            @Nonnull Collection<SPLIT_DATA_TYPE> parameterList) {
+
+        if (parameterList.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return criteriaCreator.createCriteriaInQuery(parameterList).getResultList();
+    }
 }
 

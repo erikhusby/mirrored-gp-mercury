@@ -1,14 +1,11 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderCompletionStatus;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
+import org.broadinstitute.gpinformatics.athena.entity.orders.*;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.JPASplitter;
 import org.hibernate.SQLQuery;
 import org.hibernate.type.StandardBasicTypes;
 
@@ -19,23 +16,9 @@ import javax.enterprise.context.RequestScoped;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.Query;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Join;
-import javax.persistence.criteria.JoinType;
-import javax.persistence.criteria.ListJoin;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
+import javax.persistence.criteria.*;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @Stateful
 @RequestScoped
@@ -308,15 +291,16 @@ public class ProductOrderDao extends GenericDao {
 
         Query query = getThreadEntityManager().getEntityManager().createNativeQuery(sqlString);
         query.unwrap(SQLQuery.class).addScalar("name", StandardBasicTypes.STRING)
-                .addScalar("id", StandardBasicTypes.LONG)
+             .addScalar("id", StandardBasicTypes.LONG)
              .addScalar("completed", StandardBasicTypes.INTEGER).addScalar("abandoned", StandardBasicTypes.INTEGER)
              .addScalar("total", StandardBasicTypes.INTEGER);
 
+        List<Object> results;
         if ((productOrderKeys != null) && (!productOrderKeys.isEmpty())) {
-            query.setParameter("businessKeys", productOrderKeys);
+            results = JPASplitter.runQuery(query, "businessKeys", productOrderKeys);
+        } else {
+            results = (List<Object>) query.getResultList();
         }
-
-        List<Object> results = (List<Object>) query.getResultList();
 
         Map<String, ProductOrderCompletionStatus> progressCounterMap =
                 new HashMap<String, ProductOrderCompletionStatus>(results.size());
