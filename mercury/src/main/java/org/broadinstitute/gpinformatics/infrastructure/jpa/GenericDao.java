@@ -29,8 +29,6 @@ import java.util.List;
 @RequestScoped
 public class GenericDao {
 
-    private static final int IN_CLAUSE_LIMIT = 1000;
-
     /**
      * Interface for callbacks that want to specify fetches from the specified {@link Root}, make the query distinct,
      * etc.
@@ -293,7 +291,6 @@ public class GenericDao {
             }
         );
     }
-
 
     public <VALUE_TYPE, METADATA_TYPE, ENTITY_TYPE extends METADATA_TYPE> List<ENTITY_TYPE> findListByList(
             Class<ENTITY_TYPE> entity, SingularAttribute<METADATA_TYPE, VALUE_TYPE> singularAttribute, List<VALUE_TYPE> values) {
