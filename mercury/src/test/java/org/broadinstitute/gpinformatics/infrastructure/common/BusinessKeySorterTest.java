@@ -1,8 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.common;
 
-import org.hamcrest.MatcherAssert;
-import org.hamcrest.Matchers;
-import org.testng.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.annotations.Test;
 

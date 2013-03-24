@@ -26,12 +26,14 @@ public class MaterialTypeTest {
         Assert.assertEquals(-1, materialTypeA1.compareTo(materialTypeB));
 
         try {
+            @SuppressWarnings({"UnusedDeclaration", "ConstantConditions"})
             MaterialType materialTypeC1 = new MaterialType("category", null);
             Assert.fail("expected npe exception");
         } catch (Exception e) {
         }
 
         try {
+            @SuppressWarnings({"UnusedDeclaration", "ConstantConditions"})
             MaterialType materialTypeC2 = new MaterialType(null, "nameb");
             Assert.fail("expected npe exception");
         } catch (Exception e) {
