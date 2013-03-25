@@ -272,13 +272,12 @@ public class ExomeExpressV2EndToEndTest {
         // Pooling calculator
         // Strip Tube B
         // Create Flowcell JIRA
-        LabEventTest.QtpEntityBuilder qtpEntityBuilder = new LabEventTest.QtpEntityBuilder(bettaLimsMessageTestFactory, labEventFactory,
-                leHandler,
-                hybridSelectionEntityBuilder.getNormCatchRack(),
-                hybridSelectionEntityBuilder.getNormCatchRackBarcode(),
-                hybridSelectionEntityBuilder.getNormCatchBarcodes(),
-                hybridSelectionEntityBuilder
-                        .getMapBarcodeToNormCatchTubes(), WorkflowName.EXOME_EXPRESS);
+        LabEventTest.QtpEntityBuilder qtpEntityBuilder = new LabEventTest.QtpEntityBuilder(
+                bettaLimsMessageFactory, labEventFactory, leHandler,
+                Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchRack()),
+                Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchRackBarcode()),
+                Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchBarcodes()),
+                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), WorkflowName.EXOME_EXPRESS);
         qtpEntityBuilder.invoke();
 
         String flowcellBarcode = "flowcell"+ new Date().getTime();

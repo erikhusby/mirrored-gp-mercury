@@ -16,8 +16,7 @@ import java.util.Set;
 @Audited
 public class GenericReagent extends Reagent {
 
-    @ManyToMany
-    @JoinTable(schema = "mercury")
+    @ManyToMany(mappedBy = "reagentContents")
     private Set<LabVessel> containers;
 
     public GenericReagent(String reagentName, String lot/*, MolecularEnvelope molecularEnvelope*/) {
