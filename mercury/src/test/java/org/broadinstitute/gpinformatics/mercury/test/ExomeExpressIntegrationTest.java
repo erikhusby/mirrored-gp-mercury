@@ -30,6 +30,9 @@ import java.util.Scanner;
 /**
  * Implementation of GPLIM-1070.  This test is run from its main method.  Before sending each group of messages, the
  * test it waits for the user to hit Enter, allowing the user to interact with the Mercury UI between messages.
+ *
+ * If you are hitting a local webservice, You will need to have directory named
+ * /seq/lims/mercury/dev/samplereceipt/inbox which is readable-writable
  */
 @SuppressWarnings({"OverlyCoupledMethod", "UseOfSystemOutOrSystemErr"})
 public class ExomeExpressIntegrationTest {
