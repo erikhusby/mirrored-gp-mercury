@@ -1,19 +1,21 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderCompletionStatus;
-import org.testng.Assert;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderCompletionStatus;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Test the progress object
@@ -119,6 +121,23 @@ public class CompletionStatusFetcherTest extends ContainerTest {
         }
 
         return new ProductOrderCompletionStatus(abandoned, completed, total);
+    }
+
+    public void testGetAllStatuses() throws Exception {
+        List<ProductOrder> allOrders = pdoDao.findAll();
+
+        List<String> allBusinessKeys = new ArrayList<String>();
+        for (ProductOrder order : allOrders) {
+            allBusinessKeys.add(order.getBusinessKey());
+        }
+
+        allBusinessKeys.addAll(allBusinessKeys);
+
+        Assert.assertTrue(allBusinessKeys.size() > 1000);
+
+        Map<String, ProductOrderCompletionStatus> statusMap = pdoDao.getProgressByBusinessKey(allBusinessKeys);
+
+        Assert.assertEquals(statusMap.size() * 2, allBusinessKeys.size(), "There should be statuses for every item");
     }
 
     public void testGetPercentInProgress() throws Exception {

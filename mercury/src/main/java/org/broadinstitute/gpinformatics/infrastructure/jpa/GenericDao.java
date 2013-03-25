@@ -8,10 +8,12 @@ import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
+import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.*;
 import javax.persistence.metamodel.SingularAttribute;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -26,8 +28,6 @@ import java.util.List;
 @TransactionAttribute(TransactionAttributeType.SUPPORTS)
 @RequestScoped
 public class GenericDao {
-
-    private static final int IN_CLAUSE_LIMIT = 1000;
 
     /**
      * Interface for callbacks that want to specify fetches from the specified {@link Root}, make the query distinct,
@@ -262,33 +262,35 @@ public class GenericDao {
      * @return list of entities that match the value, or empty list if not found
      */
     public <VALUE_TYPE, METADATA_TYPE, ENTITY_TYPE extends METADATA_TYPE> List<ENTITY_TYPE> findListByList(
-            Class<ENTITY_TYPE> entity, SingularAttribute<METADATA_TYPE, VALUE_TYPE> singularAttribute, List<VALUE_TYPE> values,
+            Class<ENTITY_TYPE> entity,
+            final SingularAttribute<METADATA_TYPE, VALUE_TYPE> singularAttribute,
+            List<VALUE_TYPE> values,
             @Nullable GenericDaoCallback<ENTITY_TYPE> genericDaoCallback) {
+
         List<ENTITY_TYPE> resultList = new ArrayList<ENTITY_TYPE>();
         if(values.isEmpty()) {
             return resultList;
         }
+
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
-        CriteriaQuery<ENTITY_TYPE> criteriaQuery = criteriaBuilder.createQuery(entity);
-        Root<ENTITY_TYPE> root = criteriaQuery.from(entity);
+        final CriteriaQuery<ENTITY_TYPE> criteriaQuery = criteriaBuilder.createQuery(entity);
+        final Root<ENTITY_TYPE> root = criteriaQuery.from(entity);
 
         if (genericDaoCallback != null) {
             genericDaoCallback.callback(criteriaQuery, root);
         }
 
-        // Break the list into chunks, because of the limit on the number of items in
-        // an Oracle IN clause
-        for (int i = 0; i < values.size(); i += IN_CLAUSE_LIMIT) {
-            criteriaQuery.where(root.get(singularAttribute).in(values.subList(i, Math.min(values.size(), i + IN_CLAUSE_LIMIT))));
-            try {
-                resultList.addAll(getEntityManager().createQuery(criteriaQuery).getResultList());
-            } catch (NoResultException ignored) {
-                return resultList;
+        return JPASplitter.runCriteryQuery(
+            values,
+            new CriteriaInClauseCreator<VALUE_TYPE>() {
+                @Override
+                public Query createCriteriaInQuery(Collection<VALUE_TYPE> parameterList) {
+                    criteriaQuery.where(root.get(singularAttribute).in(parameterList));
+                    return getEntityManager().createQuery(criteriaQuery);
+                }
             }
-        }
-        return resultList;
+        );
     }
-
 
     public <VALUE_TYPE, METADATA_TYPE, ENTITY_TYPE extends METADATA_TYPE> List<ENTITY_TYPE> findListByList(
             Class<ENTITY_TYPE> entity, SingularAttribute<METADATA_TYPE, VALUE_TYPE> singularAttribute, List<VALUE_TYPE> values) {

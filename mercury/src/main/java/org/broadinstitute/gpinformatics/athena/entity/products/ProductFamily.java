@@ -35,14 +35,16 @@ public class ProductFamily implements Serializable, Comparable<ProductFamily> {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PRODUCT_FAMILY")
     private Long productFamilyId;
 
+    @Nonnull
+    @Column(name ="NAME", nullable = false)
     private String name;
 
     /** Name of the Sequence Only Product Family.  Must be updated if the name is changed in the database! */
     private static final String SEQUENCE_ONLY_NAME = "Sequence Only";
-    private static final String RNA_FAMILY_NAME = "RNA";
+    public static final String RNA_FAMILY_NAME = "RNA";
 
     /**
-     * JPA package visible constructor. Need the empty constructor so that stripes can create this when needed
+     * JPA package visible constructor. Stripes requires the empty constructor.
      */
     public ProductFamily() {
     }
@@ -69,7 +71,7 @@ public class ProductFamily implements Serializable, Comparable<ProductFamily> {
     @Override
     public int compareTo(ProductFamily that) {
         CompareToBuilder builder = new CompareToBuilder();
-        builder.append(this.getName(), that.getName());
+        builder.append(getName(), that.getName());
         return builder.build();
     }
 
@@ -90,12 +92,7 @@ public class ProductFamily implements Serializable, Comparable<ProductFamily> {
         return new HashCodeBuilder().append(name).toHashCode();
     }
 
-    public void setProductFamilyId(Long productFamilyId) {
-        this.productFamilyId = productFamilyId;
-    }
-
-
-    public boolean isSupportsRIN() {
-        return RNA_FAMILY_NAME.equals(name);
+    public boolean isSupportsRin() {
+        return name.equals(RNA_FAMILY_NAME);
     }
 }

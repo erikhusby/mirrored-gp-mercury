@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.mercury.test;
+package org.broadinstitute.gpinformatics.infrastructure.test.dbfree;
 
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.CherryPickSourceType;
@@ -13,7 +13,6 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleTy
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
-import org.xml.sax.SAXException;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -27,7 +26,6 @@ import java.util.List;
 /**
  * This class is a factory for BettaLIMSMessage JAXB objects.  It is intended to facilitate building messages in test cases.
  */
-@SuppressWarnings("FeatureEnvy")
 public class BettaLimsMessageFactory {
     public static final int NUMBER_OF_RACK_COLUMNS = 12;
 
@@ -294,6 +292,7 @@ public class BettaLimsMessageFactory {
         return plateTransferEvent;
     }
 
+    @SuppressWarnings("UnusedDeclaration")
     public ReceptaclePlateTransferEvent buildDenatureTubeToFlowcell(String eventType, String denatureTubeBarcode,
                                                                     String flowcellBarcode, String flowcellType,
                                                                     String flowcellSection) {
@@ -314,6 +313,7 @@ public class BettaLimsMessageFactory {
         return event;
     }
 
+    @SuppressWarnings("UnusedDeclaration")
     public PlateEventType buildFlowcellEvent(String eventType, String flowcellBarcode) {
 
         PlateEventType flowcellEvent = new PlateEventType();

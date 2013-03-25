@@ -38,7 +38,7 @@ bsp:
 
       login:    seqsystem
       password: bspbsp
-      host:     gapqa.broadinstitute.org
+      host:     gapdev.broadinstitute.org
       port:     8080
 
 
@@ -46,7 +46,7 @@ bsp:
 
       login:    seqsystem
       password: bspbsp
-      host:     gapdev.broadinstitute.org
+      host:     gapqa.broadinstitute.org
       port:     8080
 
 
@@ -100,6 +100,12 @@ jira:
       urlBase:      https://labopsjira.broadinstitute.org
 
 quote:
+
+    DEV:
+
+      login:    rnordin@broadinstitute.org
+      password: Squ1d_us3r
+      url:      http://quotedev:8080
 
     QA:
 
@@ -250,7 +256,7 @@ mercury:
       bsp:      DEV
       gap:      DEV
       jira:     TEST
-      quote:    QA
+      quote:    DEV
       squid:    DEV
       thrift:   QA
       deckMsgs: DEV
@@ -279,10 +285,10 @@ mercury:
     TEST:
 
       app:      TEST
-      bsp:      QA
-      gap:      QA
+      bsp:      DEV
+      gap:      DEV
       jira:     TEST
-      quote:    QA
+      quote:    DEV
       squid:    TEST
       thrift:   TEST
       deckMsgs: DEV

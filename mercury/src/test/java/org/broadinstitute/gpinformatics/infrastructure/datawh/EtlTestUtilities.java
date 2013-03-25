@@ -4,7 +4,6 @@ import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.FilenameFilter;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class EtlTestUtilities {
@@ -40,7 +39,7 @@ public class EtlTestUtilities {
         final long yyyymmddHHMMSSstart = Long.parseLong(etlDateStringStart);
         final long yyyymmddHHMMSSend = Long.parseLong(etlDateStringEnd);
         File dir = new File(directoryName);
-        File[] list = dir.listFiles(new FilenameFilter() {
+        return dir.listFiles(new FilenameFilter() {
             @Override
             public boolean accept(File dirname, String filename) {
                 try {
@@ -53,7 +52,6 @@ public class EtlTestUtilities {
                 }
             }
         });
-        return list;
     }
 
     public static String format(boolean b) {

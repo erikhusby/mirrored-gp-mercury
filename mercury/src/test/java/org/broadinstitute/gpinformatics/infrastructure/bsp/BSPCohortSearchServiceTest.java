@@ -15,7 +15,7 @@ public class BSPCohortSearchServiceTest  extends ContainerTest {
     public void testBasic() {
         Set<Cohort> rawCohorts = null;
         try {
-            BSPCohortSearchService cohortSearchService = BSPCohortSearchServiceProducer.qaInstance();
+            BSPCohortSearchService cohortSearchService = BSPCohortSearchServiceProducer.testInstance();
             rawCohorts = cohortSearchService.getAllCohorts();
         } catch (Exception ex) {
             Assert.fail("Could not get BSP Cohorts from BSP QA");

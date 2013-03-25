@@ -124,171 +124,167 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
     public static final String ALIQUOT_ID_2 = "SM-ALIQUOT2";
     public static final String STOCK_ID = "SM-STOCK";
 
-    private final Map<String,String[]> samples = new HashMap<String,String[]>();
+    private final Map<String, Map<BSPSampleSearchColumn, String>> samples = new HashMap<String, Map<BSPSampleSearchColumn, String>>();
 
     public BSPSampleSearchServiceStub() {
-        addToMap( SM_12CO4,new String[] {
-                SM_12CO4_PATIENT_ID ,  // patient
-                SM_12CO4_ROOT_SAMP , // root
-                SM_12CO4_STOCK_SAMP , // stock
-                SM_12CO4_COLLAB_SAMP_ID , // collaborator sample id
-                SM_12CO4_COLL , // collection
-                SM_12CO4_VOLUME ,  // volume
-                SM_12CO4_CONC , // concentration
-                SM_12CO4_SPECIES ,  // species
-                SM_12CO4_LSID , // sampleLsid
-                SM_12CO4_COLLAB_PID ,//  COLLABORATOR_PARTICIPANT_ID
-                SM_12CO4_MAT_TYPE ,//  MATERIAL_TYPE
-                SM_12CO4_DNA ,//  TOTAL_DNA
-                BSPSampleDTO.TUMOR_IND,  //  SAMPLE_TYPE
-                SM_12CO4_DISEASE ,//  PRIMARY_DISEASE
-                BSPSampleDTO.FEMALE_IND,//  GENDER
-                "",//  STOCK_TYPE
-                SM_12CO4_FP,//  FINGERPRINT
-                SM_12CO4_CONTAINER_ID, //Container ID,
-                SM_12CO4, // Sample ID
-                SM_12CO4_COLLABORATOR
+        addToMap( SM_12CO4, new HashMap<BSPSampleSearchColumn, String>() {{
+            put(BSPSampleSearchColumn.PARTICIPANT_ID, SM_12CO4_PATIENT_ID);
+            put(BSPSampleSearchColumn.ROOT_SAMPLE, SM_12CO4_ROOT_SAMP);
+            put(BSPSampleSearchColumn.STOCK_SAMPLE, SM_12CO4_STOCK_SAMP);
+            put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, SM_12CO4_COLLAB_SAMP_ID);
+            put(BSPSampleSearchColumn.COLLECTION, SM_12CO4_COLL);
+            put(BSPSampleSearchColumn.VOLUME, SM_12CO4_VOLUME);
+            put(BSPSampleSearchColumn.CONCENTRATION, SM_12CO4_CONC);
+            put(BSPSampleSearchColumn.SPECIES, SM_12CO4_SPECIES);
+            put(BSPSampleSearchColumn.LSID, SM_12CO4_LSID);
+            put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, SM_12CO4_COLLAB_PID);
+            put(BSPSampleSearchColumn.MATERIAL_TYPE, SM_12CO4_MAT_TYPE);
+            put(BSPSampleSearchColumn.TOTAL_DNA, SM_12CO4_DNA);
+            put(BSPSampleSearchColumn.SAMPLE_TYPE, BSPSampleDTO.TUMOR_IND);
+            put(BSPSampleSearchColumn.PRIMARY_DISEASE, SM_12CO4_DISEASE);
+            put(BSPSampleSearchColumn.GENDER, BSPSampleDTO.FEMALE_IND);
+            put(BSPSampleSearchColumn.STOCK_TYPE, "");
+            put(BSPSampleSearchColumn.FINGERPRINT, SM_12CO4_FP);
+            put(BSPSampleSearchColumn.CONTAINER_ID, SM_12CO4_CONTAINER_ID);
+            put(BSPSampleSearchColumn.SAMPLE_ID, SM_12CO4);
+        }} );
 
-        });
-        addToMap( SM_1P3WY,new String[] {
-                SM_1P3WY_PATIENT_ID ,  // patient
-                SM_1P3WY_ROOT_SAMP , // root
-                SM_1P3WY_STOCK_SAMP , // stock
-                SM_1P3WY_COLLAB_SAMP_ID , // collaborator sample id
-                SM_1P3WY_COLL , // collection
-                SM_1P3WY_VOLUME ,  // volume
-                SM_1P3WY_CONC , // concentration
-                SM_1P3WY_SPECIES ,  // species
-                SM_1P3WY_LSID , // sampleLsid
-                SM_1P3WY_COLLAB_PID ,//  COLLABORATOR_PARTICIPANT_ID
-                SM_1P3WY_MAT_TYPE ,//  MATERIAL_TYPE
-                SM_1P3WY_DNA ,//  TOTAL_DNA
-                BSPSampleDTO.NORMAL_IND,  //  SAMPLE_TYPE
-                SM_1P3WY_DISEASE ,//  PRIMARY_DISEASE
-                BSPSampleDTO.MALE_IND,//  GENDER
-                BSPSampleDTO.ACTIVE_IND,//  STOCK_TYPE
-                SM_1P3WY_FP,//  FINGERPRINT
-                SM_1P3WY_CONTAINER_ID, //CONTAINER ID
-                SM_1P3WY // Sample ID
+        addToMap( SM_1P3WY, new HashMap<BSPSampleSearchColumn, String>() {{
+            put(BSPSampleSearchColumn.PARTICIPANT_ID, SM_1P3WY_PATIENT_ID);
+            put(BSPSampleSearchColumn.ROOT_SAMPLE, SM_1P3WY_ROOT_SAMP);
+            put(BSPSampleSearchColumn.STOCK_SAMPLE, SM_1P3WY_STOCK_SAMP);
+            put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, SM_1P3WY_COLLAB_SAMP_ID);
+            put(BSPSampleSearchColumn.COLLECTION, SM_1P3WY_COLL);
+            put(BSPSampleSearchColumn.VOLUME, SM_1P3WY_VOLUME);
+            put(BSPSampleSearchColumn.CONCENTRATION, SM_1P3WY_CONC);
+            put(BSPSampleSearchColumn.SPECIES, SM_1P3WY_SPECIES);
+            put(BSPSampleSearchColumn.LSID, SM_1P3WY_LSID);
+            put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, SM_1P3WY_COLLAB_PID);
+            put(BSPSampleSearchColumn.MATERIAL_TYPE, SM_1P3WY_MAT_TYPE);
+            put(BSPSampleSearchColumn.TOTAL_DNA, SM_1P3WY_DNA);
+            put(BSPSampleSearchColumn.SAMPLE_TYPE, BSPSampleDTO.NORMAL_IND);
+            put(BSPSampleSearchColumn.PRIMARY_DISEASE, SM_1P3WY_DISEASE);
+            put(BSPSampleSearchColumn.GENDER, BSPSampleDTO.MALE_IND);
+            put(BSPSampleSearchColumn.STOCK_TYPE, BSPSampleDTO.ACTIVE_IND);
+            put(BSPSampleSearchColumn.FINGERPRINT, SM_1P3WY_FP);
+            put(BSPSampleSearchColumn.CONTAINER_ID, SM_1P3WY_CONTAINER_ID);
+            put(BSPSampleSearchColumn.SAMPLE_ID, SM_1P3WY);
+        }} );
 
-        });
-        addToMap( SM_1P3XN,new String[] {
-                SM_1P3XN_PATIENT_ID ,  // patient
-                SM_1P3XN_ROOT_SAMP , // root
-                SM_1P3XN_STOCK_SAMP , // stock
-                SM_1P3XN_COLLAB_SAMP_ID , // collaborator sample id
-                SM_1P3XN_COLL , // collection
-                SM_1P3XN_VOLUME ,  // volume
-                SM_1P3XN_CONC , // concentration
-                SM_1P3XN_SPECIES ,  // species
-                SM_1P3XN_LSID , // sampleLsid
+        addToMap( SM_1P3XN, new HashMap<BSPSampleSearchColumn, String>() {{
+            put(BSPSampleSearchColumn.PARTICIPANT_ID, SM_1P3XN_PATIENT_ID);
+            put(BSPSampleSearchColumn.ROOT_SAMPLE, SM_1P3XN_ROOT_SAMP);
+            put(BSPSampleSearchColumn.STOCK_SAMPLE, SM_1P3XN_STOCK_SAMP);
+            put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, SM_1P3XN_COLLAB_SAMP_ID);
+            put(BSPSampleSearchColumn.COLLECTION, SM_1P3XN_COLL);
+            put(BSPSampleSearchColumn.VOLUME, SM_1P3XN_VOLUME);
+            put(BSPSampleSearchColumn.CONCENTRATION, SM_1P3XN_CONC);
+            put(BSPSampleSearchColumn.SPECIES, SM_1P3XN_SPECIES);
+            put(BSPSampleSearchColumn.LSID, SM_1P3XN_LSID);
+            put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, SM_1P3XN_COLLAB_PID);
+            put(BSPSampleSearchColumn.MATERIAL_TYPE, SM_1P3XN_MAT_TYPE);
+            put(BSPSampleSearchColumn.TOTAL_DNA, SM_1P3XN_DNA);
+            put(BSPSampleSearchColumn.SAMPLE_TYPE, BSPSampleDTO.NORMAL_IND);
+            put(BSPSampleSearchColumn.PRIMARY_DISEASE, SM_1P3XN_DISEASE);
+            put(BSPSampleSearchColumn.GENDER, BSPSampleDTO.MALE_IND);
+            put(BSPSampleSearchColumn.STOCK_TYPE, BSPSampleDTO.ACTIVE_IND);
+            put(BSPSampleSearchColumn.FINGERPRINT, SM_1P3XN_FP);
+            put(BSPSampleSearchColumn.CONTAINER_ID, SM_1P3XN_CONTAINER_ID);
+            put(BSPSampleSearchColumn.SAMPLE_ID, SM_1P3XN);
+        }} );
 
-                SM_1P3XN_COLLAB_PID ,//  COLLABORATOR_PARTICIPANT_ID
-                SM_1P3XN_MAT_TYPE ,//  MATERIAL_TYPE
-                SM_1P3XN_DNA ,//  TOTAL_DNA
-                BSPSampleDTO.NORMAL_IND,  //  SAMPLE_TYPE
-                SM_1P3XN_DISEASE ,//  PRIMARY_DISEASE
-                BSPSampleDTO.MALE_IND,//  GENDER
-                BSPSampleDTO.ACTIVE_IND,//  STOCK_TYPE
-                SM_1P3XN_FP,//  FINGERPRINT
-                SM_1P3XN_CONTAINER_ID, //CONTAINER ID
-                SM_1P3XN // Sample ID
-        });
-        addToMap( SM_12FO4,new String[] {
-                  SM_12FO4_PATIENT_ID ,  // patient
-                  SM_12FO4_ROOT_SAMP , // root
-                  SM_12FO4_STOCK_SAMP , // stock
-                  SM_12FO4_COLLAB_SAMP_ID , // collaborator sample id
-                  SM_12FO4_COLL , // collection
-                  SM_12FO4_VOLUME ,  // volume
-                  SM_12FO4_CONC , // concentration
-                  SM_12FO4_SPECIES ,  // species
-                  SM_12FO4_LSID , // sampleLsid
-                  SM_12FO4_COLLAB_PID ,//  COLLABORATOR_PARTICIPANT_ID
-                  SM_12FO4_MAT_TYPE ,//  MATERIAL_TYPE
-                  SM_12FO4_DNA ,//  TOTAL_DNA
-                  BSPSampleDTO.NORMAL_IND,  //  SAMPLE_TYPE
-                  SM_12FO4_DISEASE ,//  PRIMARY_DISEASE
-                  BSPSampleDTO.MALE_IND,//  GENDER
-                  BSPSampleDTO.ACTIVE_IND,//  STOCK_TYPE
-                  SM_12FO4_FP,//  FINGERPRINT
-                  SM_12FO4_CONTAINER_ID, //CONTAINER ID
-                  SM_12FO4 // Sample ID
+        addToMap( SM_12FO4, new HashMap<BSPSampleSearchColumn, String>() {{
+            put(BSPSampleSearchColumn.PARTICIPANT_ID, SM_12FO4_PATIENT_ID);
+            put(BSPSampleSearchColumn.ROOT_SAMPLE, SM_12FO4_ROOT_SAMP);
+            put(BSPSampleSearchColumn.STOCK_SAMPLE, SM_12FO4_STOCK_SAMP);
+            put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, SM_12FO4_COLLAB_SAMP_ID);
+            put(BSPSampleSearchColumn.COLLECTION, SM_12FO4_COLL);
+            put(BSPSampleSearchColumn.VOLUME, SM_12FO4_VOLUME);
+            put(BSPSampleSearchColumn.CONCENTRATION, SM_12FO4_CONC);
+            put(BSPSampleSearchColumn.SPECIES, SM_12FO4_SPECIES);
+            put(BSPSampleSearchColumn.LSID, SM_12FO4_LSID);
+            put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, SM_12FO4_COLLAB_PID);
+            put(BSPSampleSearchColumn.MATERIAL_TYPE, SM_12FO4_MAT_TYPE);
+            put(BSPSampleSearchColumn.TOTAL_DNA, SM_12FO4_DNA);
+            put(BSPSampleSearchColumn.SAMPLE_TYPE, BSPSampleDTO.NORMAL_IND);
+            put(BSPSampleSearchColumn.PRIMARY_DISEASE, SM_12FO4_DISEASE);
+            put(BSPSampleSearchColumn.GENDER, BSPSampleDTO.MALE_IND);
+            put(BSPSampleSearchColumn.STOCK_TYPE, BSPSampleDTO.ACTIVE_IND);
+            put(BSPSampleSearchColumn.FINGERPRINT, SM_12FO4_FP);
+            put(BSPSampleSearchColumn.CONTAINER_ID, SM_12FO4_CONTAINER_ID);
+            put(BSPSampleSearchColumn.SAMPLE_ID, SM_12FO4);
+        }} );
 
-        });
-        addToMap( SM_12DW4,new String[] {
-                  SM_12DW4_PATIENT_ID ,  // patient
-                  SM_12DW4_ROOT_SAMP , // root
-                  SM_12DW4_STOCK_SAMP , // stock
-                  SM_12DW4_COLLAB_SAMP_ID , // collaborator sample id
-                  SM_12DW4_COLL , // collection
-                  SM_12DW4_VOLUME ,  // volume
-                  SM_12DW4_CONC , // concentration
-                  SM_12DW4_SPECIES ,  // species
-                  SM_12DW4_LSID , // sampleLsid
-                  SM_12DW4_COLLAB_PID ,//  COLLABORATOR_PARTICIPANT_ID
-                  SM_12DW4_MAT_TYPE ,//  MATERIAL_TYPE
-                  SM_12DW4_DNA ,//  TOTAL_DNA
-                  BSPSampleDTO.NORMAL_IND,  //  SAMPLE_TYPE
-                  SM_12DW4_DISEASE ,//  PRIMARY_DISEASE
-                  BSPSampleDTO.MALE_IND,//  GENDER
-                  BSPSampleDTO.ACTIVE_IND,//  STOCK_TYPE
-                  SM_12DW4_FP,//  FINGERPRINT
-                  SM_12DW4_CONTAINER_ID, //CONTAINER ID
-                  SM_12DW4 // Sample ID
-        });
-        addToMap( SM_12MD2,new String[] {
-                  SM_12MD2_PATIENT_ID ,  // patient
-                   "" , // root
-                  SM_12MD2_STOCK_SAMP , // stock
-                  SM_12MD2_COLLAB_SAMP_ID , // collaborator sample id
-                  SM_12MD2_COLL , // collection
-                  SM_12MD2_VOLUME ,  // volume
-                  SM_12MD2_CONC , // concentration
-                  SM_12MD2_SPECIES ,  // species
-                  SM_12MD2_LSID , // sampleLsid
-                  SM_12MD2_COLLAB_PID ,//  COLLABORATOR_PARTICIPANT_ID
-                  SM_12MD2_MAT_TYPE ,//  MATERIAL_TYPE
-                  SM_12MD2_DNA ,//  TOTAL_DNA
-                  BSPSampleDTO.NORMAL_IND,  //  SAMPLE_TYPE
-                  SM_12MD2_DISEASE ,//  PRIMARY_DISEASE
-                  BSPSampleDTO.FEMALE_IND,//  GENDER
-                  BSPSampleDTO.ACTIVE_IND,//  STOCK_TYPE
-                  SM_12MD2_FP,//  FINGERPRINT
-                  SM_12MD2_CONTAINER_ID, //CONTAINER ID
-                  SM_12MD2 // Sample ID
-        });
+        addToMap( SM_12DW4, new HashMap<BSPSampleSearchColumn, String>() {{
+            put(BSPSampleSearchColumn.PARTICIPANT_ID, SM_12DW4_PATIENT_ID);
+            put(BSPSampleSearchColumn.ROOT_SAMPLE, SM_12DW4_ROOT_SAMP);
+            put(BSPSampleSearchColumn.STOCK_SAMPLE, SM_12DW4_STOCK_SAMP);
+            put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, SM_12DW4_COLLAB_SAMP_ID);
+            put(BSPSampleSearchColumn.COLLECTION, SM_12DW4_COLL);
+            put(BSPSampleSearchColumn.VOLUME, SM_12DW4_VOLUME);
+            put(BSPSampleSearchColumn.CONCENTRATION, SM_12DW4_CONC);
+            put(BSPSampleSearchColumn.SPECIES, SM_12DW4_SPECIES);
+            put(BSPSampleSearchColumn.LSID, SM_12DW4_LSID);
+            put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, SM_12DW4_COLLAB_PID);
+            put(BSPSampleSearchColumn.MATERIAL_TYPE, SM_12DW4_MAT_TYPE);
+            put(BSPSampleSearchColumn.TOTAL_DNA, SM_12DW4_DNA);
+            put(BSPSampleSearchColumn.SAMPLE_TYPE, BSPSampleDTO.NORMAL_IND);
+            put(BSPSampleSearchColumn.PRIMARY_DISEASE, SM_12DW4_DISEASE);
+            put(BSPSampleSearchColumn.GENDER, BSPSampleDTO.MALE_IND);
+            put(BSPSampleSearchColumn.STOCK_TYPE, BSPSampleDTO.ACTIVE_IND);
+            put(BSPSampleSearchColumn.FINGERPRINT, SM_12DW4_FP);
+            put(BSPSampleSearchColumn.CONTAINER_ID, SM_12DW4_CONTAINER_ID);
+            put(BSPSampleSearchColumn.SAMPLE_ID, SM_12DW4);
+        }} );
 
-        addToMap(ALIQUOT_ID_1, new String[] {
-                STOCK_ID
-        });
+        addToMap( SM_12MD2, new HashMap<BSPSampleSearchColumn, String>() {{
+            put(BSPSampleSearchColumn.PARTICIPANT_ID, SM_12MD2_PATIENT_ID);
+            put(BSPSampleSearchColumn.ROOT_SAMPLE, SM_12MD2_ROOT_SAMP);
+            put(BSPSampleSearchColumn.STOCK_SAMPLE, SM_12MD2_STOCK_SAMP);
+            put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, SM_12MD2_COLLAB_SAMP_ID);
+            put(BSPSampleSearchColumn.COLLECTION, SM_12MD2_COLL);
+            put(BSPSampleSearchColumn.VOLUME, SM_12MD2_VOLUME);
+            put(BSPSampleSearchColumn.CONCENTRATION, SM_12MD2_CONC);
+            put(BSPSampleSearchColumn.SPECIES, SM_12MD2_SPECIES);
+            put(BSPSampleSearchColumn.LSID, SM_12MD2_LSID);
+            put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, SM_12MD2_COLLAB_PID);
+            put(BSPSampleSearchColumn.MATERIAL_TYPE, SM_12MD2_MAT_TYPE);
+            put(BSPSampleSearchColumn.TOTAL_DNA, SM_12MD2_DNA);
+            put(BSPSampleSearchColumn.SAMPLE_TYPE, BSPSampleDTO.NORMAL_IND);
+            put(BSPSampleSearchColumn.PRIMARY_DISEASE, SM_12MD2_DISEASE);
+            put(BSPSampleSearchColumn.GENDER, BSPSampleDTO.FEMALE_IND);
+            put(BSPSampleSearchColumn.STOCK_TYPE, BSPSampleDTO.ACTIVE_IND);
+            put(BSPSampleSearchColumn.FINGERPRINT, SM_12MD2_FP);
+            put(BSPSampleSearchColumn.CONTAINER_ID, SM_12MD2_CONTAINER_ID);
+            put(BSPSampleSearchColumn.SAMPLE_ID, SM_12MD2);
+        }} );
 
-        addToMap(ALIQUOT_ID_2, new String[] {
-                STOCK_ID
-        });
+        addToMap( ALIQUOT_ID_1, new HashMap<BSPSampleSearchColumn, String>() {{
+            put(BSPSampleSearchColumn.STOCK_SAMPLE, STOCK_ID);
+        }} );
+
+        addToMap( ALIQUOT_ID_2, new HashMap<BSPSampleSearchColumn, String>() {{
+            put(BSPSampleSearchColumn.STOCK_SAMPLE, STOCK_ID);
+        }} );
     }
 
-    private void addToMap(String sampleName, String[] attributes) {
+    private void addToMap(String sampleName, Map<BSPSampleSearchColumn, String> attributes) {
         if (samples.containsKey(sampleName)) {
             throw new RuntimeException("The mock BSP service already contains " + sampleName);
         }
+
         samples.put(sampleName,attributes);
     }
 
     @Override
-    public List<String[]> runSampleSearch(Collection<String> sampleIDs, BSPSampleSearchColumn... resultColumns) {
-        List<String[]> sampleAttributes = new ArrayList<String[]>();
+    public List<Map<BSPSampleSearchColumn, String>> runSampleSearch(Collection<String> sampleIDs, BSPSampleSearchColumn... resultColumns) {
+        List<Map<BSPSampleSearchColumn, String>> sampleAttributes = new ArrayList<Map<BSPSampleSearchColumn, String>>();
         for (String sampleID : sampleIDs) {
             if (samples.containsKey(sampleID)) {
                 sampleAttributes.add(samples.get(sampleID));
             }
         }
+
         return sampleAttributes;
-    }
-
-
-    @Override
-    public List<String[]> runSampleSearch(Collection<String> sampleIDs, List<BSPSampleSearchColumn> resultColumns) {
-        return null;
     }
 }

@@ -27,7 +27,6 @@ import static org.testng.Assert.assertNull;
 @Test(groups = TestGroups.DATABASE_FREE)
 public class LedgerEntryEtlDbFreeTest {
     private String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
-    private long entityId = 1122334455L;
     private long posId = 2233445511L;
     private String datafileDir;
     private Set<LedgerEntry> ledgerItems = new HashSet<LedgerEntry>();
@@ -58,6 +57,7 @@ public class LedgerEntryEtlDbFreeTest {
     }
 
     public void testEtlFlags() throws Exception {
+        long entityId = 1122334455L;
         expect(obj.getLedgerId()).andReturn(entityId);
         replay(mocks);
 

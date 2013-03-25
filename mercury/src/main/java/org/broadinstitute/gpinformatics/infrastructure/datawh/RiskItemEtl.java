@@ -77,6 +77,7 @@ public class RiskItemEtl extends GenericEntityEtl {
     private Collection<BigDecimal> lookupSampleIds(Collection<Long> riskIds) {
         Set<BigDecimal> pdoSampleIds = new HashSet<BigDecimal>();
         // Chunks as necessary to limit sql "in" clause to 1000 elements.
+        // TODO Splitterize
         Long[] riskIdArray = riskIds.toArray(new Long[riskIds.size()]);
 
         int endIdx = riskIdArray.length - 1;

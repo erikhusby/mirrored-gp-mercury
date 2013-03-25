@@ -58,7 +58,6 @@ public class AutomatedBiller {
                     log.error(MessageFormat.format("Invalid PDO key ''{0}'', no billing will occur.",
                             message.getPdoName()));
                 }
-                workCompleteMessageDao.markMessageProcessed(message);
             } catch (Exception e) {
                 log.error(MessageFormat.format("Error while processing work complete message. PDO: {0}, Sample: {1}",
                         message.getPdoName(), message.getAliquotId()), e);

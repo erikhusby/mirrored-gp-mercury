@@ -9,6 +9,7 @@ import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.io.Serializable;
 
+@SuppressWarnings("UnusedDeclaration")
 @ConfigKey("quote")
 public class QuoteConfig extends AbstractConfig implements LoginAndPassword, Serializable {
     private String login;

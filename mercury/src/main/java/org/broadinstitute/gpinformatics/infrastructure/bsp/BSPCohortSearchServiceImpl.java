@@ -4,7 +4,6 @@ import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.api.client.config.ClientConfig;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -60,17 +59,11 @@ public class BSPCohortSearchServiceImpl extends AbstractJerseyClientService impl
     /**
      * Container free constructor, need to initialize all dependencies explicitly
      *
-     * @param bspConfig
+     * @param bspConfig The config object
      */
     public BSPCohortSearchServiceImpl(BSPConfig bspConfig) {
         this.bspConfig = bspConfig;
     }
-
-    @Override
-    protected void customizeConfig(ClientConfig clientConfig) {
-        // noop
-    }
-
 
     @Override
     protected void customizeClient(Client client) {

@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBFactory;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -16,7 +17,7 @@ import javax.transaction.UserTransaction;
 import java.util.List;
 
 @Test(enabled = true)
-public class ProductOrderSampleDaoTest  extends ContainerTest {
+public class ProductOrderSampleDaoTest extends ContainerTest {
 
     @Inject
     ProductOrderDao productOrderDao;
@@ -27,6 +28,7 @@ public class ProductOrderSampleDaoTest  extends ContainerTest {
     @Inject
     ResearchProjectDao researchProjectDao;
 
+    @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     UserTransaction utx;
 
@@ -54,7 +56,7 @@ public class ProductOrderSampleDaoTest  extends ContainerTest {
     public void testFindByProductOrder() throws Exception {
         String[] sampleNames = { "MS-1111", "MS-2222", "MS-3333" };
 
-        ProductOrder order = ProductOrderDaoTest.createTestProductOrder(researchProjectDao, productDao, sampleNames);
+        ProductOrder order = ProductOrderDBFactory.createTestProductOrder(researchProjectDao, productDao, sampleNames);
         String testProductOrderKey = order.getBusinessKey();
 
         productOrderDao.persist(order);

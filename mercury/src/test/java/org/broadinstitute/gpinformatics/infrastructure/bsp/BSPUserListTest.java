@@ -32,8 +32,7 @@ public class BSPUserListTest extends Arquillian {
         Collection<BspUser> users = bspUserList.getUsers().values();
         Assert.assertNotNull(users);
         Assert.assertTrue(!users.isEmpty());
-        // This is an arbitrary sanity check; the actual database has about 2k users.
-        Assert.assertTrue(users.size() > 1000);
+        Assert.assertTrue(users.size() > 400);
     }
 
     @Test

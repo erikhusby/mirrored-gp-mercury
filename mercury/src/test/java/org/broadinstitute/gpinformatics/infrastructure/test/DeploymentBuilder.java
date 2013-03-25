@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.test;
 
 import org.apache.commons.io.FileUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
-import org.broadinstitute.gpinformatics.mercury.test.BettaLimsMessageFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageFactory;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.StringAsset;
 import org.jboss.shrinkwrap.api.importer.ExplodedImporter;
@@ -28,9 +28,6 @@ public class DeploymentBuilder {
     /**
      * Called by default {@link #buildMercuryWar()}, and also useful explicitly in the rare case where you want an
      * in-container test to run as if it's really in another environment (for instance, to isolate a production bug).
-     *
-     * @param deployment
-     * @return
      */
     public static WebArchive buildMercuryWar(Deployment deployment) {
         return buildMercuryWar(deployment, "dev");
@@ -77,19 +74,18 @@ public class DeploymentBuilder {
 
 
     public static WebArchive buildMercuryWar(String beansXml) {
-        WebArchive war = ShrinkWrap.create(WebArchive.class, MERCURY_WAR)
+        return ShrinkWrap.create(WebArchive.class, MERCURY_WAR)
                 .addAsWebInfResource(new StringAsset(beansXml), "beans.xml")
                 .merge(buildMercuryWar());
-        return war;
     }
 
     private static WebArchive buildMercuryWar(String beansXml,Deployment deployment) {
-        WebArchive war = ShrinkWrap.create(WebArchive.class, MERCURY_WAR)
+        return ShrinkWrap.create(WebArchive.class, MERCURY_WAR)
                 .addAsWebInfResource(new StringAsset(beansXml), "beans.xml")
                 .merge(buildMercuryWar(deployment));
-        return war;
     }
 
+    @SuppressWarnings("UnusedDeclaration")
     public static WebArchive buildMercuryWarWithAlternatives(String... alternatives) {
         StringBuilder sb = new StringBuilder();
         sb.append("<beans>\n")
@@ -137,6 +133,7 @@ public class DeploymentBuilder {
         return buildMercuryWar(sb.toString(),deployment);
     }
 
+    @SuppressWarnings("UnusedDeclaration")
     private static JavaArchive addTestHelpers(JavaArchive archive) {
         // TODO: put all test helpers into a single package or two to import all at once
         return archive

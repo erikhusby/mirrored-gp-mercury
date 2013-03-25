@@ -10,16 +10,16 @@ import static org.testng.Assert.assertEquals;
 @Test(groups = EXTERNAL_INTEGRATION)
 public class BSPSampleDataFetcherTest extends ContainerTest {
 
-    BSPSampleSearchService sampleSearchService = BSPSampleSearchServiceProducer.qaInstance();
+    BSPSampleSearchService sampleSearchService = BSPSampleSearchServiceProducer.testInstance();
 
     /**
-     * BSP sometimes sends shorter result arrays when there are null fields
+     * BSP sometimes sends shorter result arrays when there are null fields.
      */
     public void testNPEOnSampleWithMultipleMatchesAndSomeNullData() {
         BSPSampleDataFetcher fetcher = new BSPSampleDataFetcher(sampleSearchService);
         BSPSampleDTO bspSampleDTO = fetcher.fetchSingleSampleFromBSP("SM-2NQU6");
 
-        Assert.assertNull(bspSampleDTO.getCollaboratorsSampleName());
+        Assert.assertEquals(bspSampleDTO.getCollaboratorsSampleName(), "");
         Assert.assertEquals(bspSampleDTO.getSampleLsid(), "Unassigned");
 
         bspSampleDTO = fetcher.fetchSingleSampleFromBSP("SM-1T7HE");

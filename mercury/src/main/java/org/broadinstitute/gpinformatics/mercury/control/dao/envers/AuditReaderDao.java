@@ -77,6 +77,7 @@ public class AuditReaderDao extends GenericDao {
         if (revIds == null || revIds.size() == 0) {
             return dataChanges;
         }
+        // TODO Splitterize
         // Chunks revIds as necessary to limit sql "in" clause to 1000 elements.
         final int IN_CLAUSE_LIMIT = 1000;
         Collection<Long> sublist = new ArrayList<Long>();

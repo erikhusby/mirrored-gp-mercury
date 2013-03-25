@@ -1,17 +1,14 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 
 import org.apache.commons.lang3.time.DateUtils;
-import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderTest;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -27,11 +24,6 @@ import java.util.*;
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
 public class ProductOrderDaoTest extends ContainerTest {
 
-    public static final String TEST_ORDER_TITLE_PREFIX = "TestProductOrder_";
-    public static final long TEST_CREATOR_ID = new Random().nextInt(Integer.MAX_VALUE);
-    public static final String MS_1111 = "MS-1111";
-    public static final String MS_1112 = "MS-1112";
-
     @Inject
     private ProductOrderDao productOrderDao;
 
@@ -45,8 +37,6 @@ public class ProductOrderDaoTest extends ContainerTest {
     @Inject
     private UserTransaction utx;
 
-    private static final String TEST_PRODUCT_ORDER_KEY_PREFIX = "DRAFT-";
-
     ProductOrder order;
 
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
@@ -58,7 +48,7 @@ public class ProductOrderDaoTest extends ContainerTest {
 
         utx.begin();
 
-        order = createTestProductOrder(researchProjectDao, productDao);
+        order = ProductOrderDBFactory.createTestProductOrder(researchProjectDao, productDao);
         productOrderDao.persist(order);
         productOrderDao.flush();
         productOrderDao.clear();
@@ -72,61 +62,6 @@ public class ProductOrderDaoTest extends ContainerTest {
         }
 
         utx.rollback();
-    }
-
-    public static ProductOrder createTestProductOrder(ResearchProjectDao researchProjectDao, ProductDao productDao) {
-        return createTestProductOrder(researchProjectDao, productDao, MS_1111, MS_1112);
-    }
-
-    public static ProductOrder createTestProductOrder(ResearchProjectDao researchProjectDao, ProductDao productDao,
-                                                      String... sampleNames) {
-        // Find a research project in the DB.
-        List<ResearchProject> projects = researchProjectDao.findAllResearchProjects();
-        Assert.assertTrue(projects != null && !projects.isEmpty());
-        ResearchProject project = projects.get(new Random().nextInt(projects.size()));
-
-        List<Product> products = productDao.findTopLevelProductsForProductOrder();
-        Assert.assertTrue(products != null && !products.isEmpty());
-        Product product = products.get(new Random().nextInt(products.size()));
-
-        // Try to create a Product Order and persist it.
-        String testProductOrderTitle = TEST_ORDER_TITLE_PREFIX + UUID.randomUUID();
-        ProductOrder order =
-                new ProductOrder(TEST_CREATOR_ID, testProductOrderTitle, ProductOrderTest.createSampleList(sampleNames),
-                                        "quoteId", product, project);
-
-        order.setJiraTicketKey(TEST_PRODUCT_ORDER_KEY_PREFIX + UUID.randomUUID());
-        BspUser testUser = new BspUser();
-        testUser.setUserId(TEST_CREATOR_ID);
-        order.prepareToSave(testUser, true);
-
-        return order;
-    }
-
-    public static ProductOrder createTestExExProductOrder(ResearchProjectDao researchProjectDao, ProductDao productDao,
-                                                          String... sampleNames) {
-        // Find a research project in the DB.
-        List<ResearchProject> projects = researchProjectDao.findAllResearchProjects();
-        Assert.assertTrue(projects != null && !projects.isEmpty());
-        ResearchProject project = projects.get(new Random().nextInt(projects.size()));
-
-        List<Product> products = productDao.findList(Product.class, Product_.workflowName,
-                                                            WorkflowName.EXOME_EXPRESS.getWorkflowName());
-        Assert.assertTrue(products != null && !products.isEmpty());
-        Product product = products.get(new Random().nextInt(products.size()));
-
-        // Try to create a Product Order and persist it.
-        String testProductOrderTitle = TEST_ORDER_TITLE_PREFIX + UUID.randomUUID();
-        ProductOrder order =
-                new ProductOrder(TEST_CREATOR_ID, testProductOrderTitle, ProductOrderTest.createSampleList(sampleNames),
-                                        "quoteId", product, project);
-
-        order.setJiraTicketKey(TEST_PRODUCT_ORDER_KEY_PREFIX + UUID.randomUUID());
-        BspUser testUser = new BspUser();
-        testUser.setUserId(TEST_CREATOR_ID);
-        order.prepareToSave(testUser, true);
-
-        return order;
     }
 
     public void testFindOrders() {
@@ -155,13 +90,13 @@ public class ProductOrderDaoTest extends ContainerTest {
     }
 
     public void testFindOrdersCreatedBy() {
-        List<ProductOrder> orders = productOrderDao.findByCreatedPersonId(TEST_CREATOR_ID);
+        List<ProductOrder> orders = productOrderDao.findByCreatedPersonId(ProductOrderDBFactory.TEST_CREATOR_ID);
         Assert.assertNotNull(orders);
         Assert.assertFalse(orders.isEmpty());
     }
 
     public void testFindOrdersModifiedBy() {
-        List<ProductOrder> orders = productOrderDao.findByModifiedPersonId(TEST_CREATOR_ID);
+        List<ProductOrder> orders = productOrderDao.findByModifiedPersonId(ProductOrderDBFactory.TEST_CREATOR_ID);
         Assert.assertNotNull(orders);
         Assert.assertFalse(orders.isEmpty());
     }
@@ -186,7 +121,7 @@ public class ProductOrderDaoTest extends ContainerTest {
     }
 
     public void testFindByWorkflow() {
-        ProductOrder testOrder = createTestExExProductOrder(researchProjectDao, productDao);
+        ProductOrder testOrder = ProductOrderDBFactory.createTestExExProductOrder(researchProjectDao, productDao);
 
         productOrderDao.persist(testOrder);
         productOrderDao.flush();
@@ -198,6 +133,29 @@ public class ProductOrderDaoTest extends ContainerTest {
         Assert.assertFalse(orders.isEmpty());
     }
 
+    public void testSplitterCriteriaFind() throws Exception {
+        List<ProductOrder> allOrders = productOrderDao.findAll();
+
+        List<String> allBusinessKeys = new ArrayList<String>();
+        for (ProductOrder order : allOrders) {
+            if (order.getJiraTicketKey() != null) {
+                allBusinessKeys.add(order.getBusinessKey());
+            }
+        }
+
+        int originalSize = allBusinessKeys.size();
+
+        allBusinessKeys.addAll(allBusinessKeys);
+
+        Assert.assertTrue(allBusinessKeys.size() > 1000);
+
+        List<ProductOrder> pdoList =
+            productOrderDao.findListByList(ProductOrder.class, ProductOrder_.jiraTicketKey, allBusinessKeys);
+
+        Set<ProductOrder> uniqueOrders = new HashSet<ProductOrder> (pdoList);
+        Assert.assertEquals(
+            uniqueOrders.size(), originalSize, "The number of unique orders should be the same as original size");
+    }
 
     /**
      * Helper method for {@link #testFindBySampleBarcodes} test method.
@@ -216,9 +174,9 @@ public class ProductOrderDaoTest extends ContainerTest {
                 return;
             }
         }
+
         Assert.fail(MessageFormat.format("Sample {0} not found in {1}", sampleBarcode, productOrderKey));
     }
-
 
     /**
      * Ugly positive test method for finding {@link ProductOrder}s by sample barcode, uses real data.

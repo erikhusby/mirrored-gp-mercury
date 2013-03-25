@@ -9,7 +9,8 @@ import javax.enterprise.inject.New;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.QA;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+
 
 public class QuoteServiceProducer {
 
@@ -17,9 +18,9 @@ public class QuoteServiceProducer {
     private Deployment deployment;
 
 
-    public static QuoteService qaInstance() {
+    public static QuoteService testInstance() {
 
-        QuoteConfig quoteConfig = QuoteConfig.produce(QA);
+        QuoteConfig quoteConfig = QuoteConfig.produce(DEV);
 
         return new QuoteServiceImpl(quoteConfig);
     }

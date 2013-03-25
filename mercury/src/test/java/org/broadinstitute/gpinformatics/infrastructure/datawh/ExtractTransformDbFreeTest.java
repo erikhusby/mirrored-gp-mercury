@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 import static org.easymock.EasyMock.*;
 
@@ -33,8 +34,6 @@ public class ExtractTransformDbFreeTest {
     private final Date now = new Date();
     private final String nowMsec = String.valueOf(now.getTime());
     private String badDataDir = datafileDir + nowMsec;
-    private String etlDateStr = "20130215091500";
-    private final long MSEC_IN_SEC = 1000L;
 
     private ExtractTransform extractTransform;
     private final AuditReaderDao auditReaderDao = createMock(AuditReaderDao.class);
@@ -111,7 +110,7 @@ public class ExtractTransformDbFreeTest {
 
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void beforeMethod() throws Exception {
-        extractTransform.setDatafileDir(datafileDir);
+        ExtractTransform.setDatafileDir(datafileDir);
         EtlTestUtilities.deleteEtlFiles(datafileDir);
         reset(mocks);
     }
@@ -189,7 +188,7 @@ public class ExtractTransformDbFreeTest {
      * Passes a non-existent directory for the last run file.
      */
     public void testInvalidLastEtlBadDir() {
-        extractTransform.setDatafileDir(badDataDir);
+        ExtractTransform.setDatafileDir(badDataDir);
         Assert.assertEquals(0L, extractTransform.readLastEtlRun());
     }
 
@@ -223,6 +222,7 @@ public class ExtractTransformDbFreeTest {
     }
 
     public void testIsReady() {
+        String etlDateStr = "20130215091500";
         File f = new File(datafileDir, etlDateStr + ExtractTransform.READY_FILE_SUFFIX);
         Assert.assertFalse(f.exists());
         extractTransform.writeIsReadyFile(etlDateStr);
@@ -347,7 +347,7 @@ public class ExtractTransformDbFreeTest {
         extractTransform.onDemandIncrementalEtl();
         long etlEnd = extractTransform.readLastEtlRun();
         Assert.assertTrue(etlEnd >= startEtlSec);
-        String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date(etlEnd * MSEC_IN_SEC));
+        String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date(TimeUnit.SECONDS.toMillis(etlEnd)));
         Assert.assertTrue((new File(datafileDir, etlDateStr + ExtractTransform.READY_FILE_SUFFIX)).exists());
 
         verify(mocks);

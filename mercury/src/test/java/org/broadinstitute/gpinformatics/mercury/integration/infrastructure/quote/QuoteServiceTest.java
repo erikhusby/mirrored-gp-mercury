@@ -23,7 +23,7 @@ public class QuoteServiceTest {
 
     @Test(groups = {EXTERNAL_INTEGRATION}, enabled = false)
     public void test_register_work() throws Exception {
-        QuoteService service = QuoteServiceProducer.qaInstance();
+        QuoteService service = QuoteServiceProducer.testInstance();
         Quote fetchedQuote = service.getQuoteByAlphaId(quote.getAlphanumericId());
         System.out.println(fetchedQuote.getQuoteFunding().getFundsRemaining());
         String workBatchId =

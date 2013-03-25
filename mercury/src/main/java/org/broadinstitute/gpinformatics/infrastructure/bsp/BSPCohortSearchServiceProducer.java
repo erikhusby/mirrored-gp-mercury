@@ -9,7 +9,7 @@ import javax.enterprise.inject.New;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.QA;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.STUBBY;
 
 public class BSPCohortSearchServiceProducer {
@@ -40,9 +40,9 @@ public class BSPCohortSearchServiceProducer {
      *
      * @return
      */
-    public static BSPCohortSearchService qaInstance() {
+    public static BSPCohortSearchService testInstance() {
 
-        BSPConfig bspConfig = BSPConfig.produce(QA);
+        BSPConfig bspConfig = BSPConfig.produce(DEV);
 
         return new BSPCohortSearchServiceImpl(bspConfig);
     }
