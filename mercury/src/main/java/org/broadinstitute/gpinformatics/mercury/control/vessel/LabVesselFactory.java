@@ -20,6 +20,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
+import javax.ejb.Stateful;
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -32,6 +34,8 @@ import java.util.Map;
 /**
  * Creates LabVessels for (initially) web services
  */
+@Stateful
+@RequestScoped
 public class LabVesselFactory implements Serializable {
 
     @Inject
@@ -109,7 +113,6 @@ public class LabVesselFactory implements Serializable {
             List<ParentVesselBean> parentVesselBeans,
             LabEventType labEventType) {
 
-        long disambiguator = 1L;
         List<LabVessel> labVessels = new ArrayList<LabVessel>();
         BspUser bspUser = bspUserList.getByUsername(userName);
         if (bspUser == null) {
@@ -117,6 +120,7 @@ public class LabVesselFactory implements Serializable {
         }
         Long operator = bspUser.getUserId();
 
+        long disambiguator = 1L;
         for (ParentVesselBean parentVesselBean : parentVesselBeans) {
             String sampleId = parentVesselBean.getSampleId();
             String barcode = parentVesselBean.getManufacturerBarcode() == null ? sampleId :
@@ -164,8 +168,8 @@ public class LabVesselFactory implements Serializable {
                         }
                         TwoDBarcodedTube twoDBarcodedTube = (TwoDBarcodedTube) mapBarcodeToVessel.get(
                                 childVesselBean.getManufacturerBarcode());
-                        if(twoDBarcodedTube == null) {
-                            twoDBarcodedTube =new TwoDBarcodedTube(childVesselBean.getManufacturerBarcode());
+                        if (twoDBarcodedTube == null) {
+                            twoDBarcodedTube = new TwoDBarcodedTube(childVesselBean.getManufacturerBarcode());
                         }
                         twoDBarcodedTube.addSample(getMercurySample(mapIdToListMercurySample, mapIdToListPdoSamples,
                                 childVesselBean.getSampleId()));
@@ -207,18 +211,16 @@ public class LabVesselFactory implements Serializable {
         if(productOrderSamples == null) {
             productOrderSamples = Collections.emptyList();
         }
-        if(productOrderSamples.size() > 1) {
-            throw new RuntimeException("More than one ProductOrderSample for " + sampleId);
-        }
 
-        MercurySample mercurySample;
+        MercurySample mercurySample = null;
         if(mercurySamples.isEmpty()) {
             if(productOrderSamples.isEmpty()) {
                 mercurySample = new MercurySample(sampleId);
             } else {
-                ProductOrderSample productOrderSample = productOrderSamples.get(0);
-                mercurySample = new MercurySample(productOrderSample.getProductOrder().getBusinessKey(),
-                        productOrderSample.getSampleName());
+                for (ProductOrderSample productOrderSample : productOrderSamples) {
+                    mercurySample = new MercurySample(productOrderSample.getProductOrder().getBusinessKey(),
+                            productOrderSample.getSampleName());
+                }
             }
         } else if(mercurySamples.size() > 1) {
             throw new RuntimeException("More than one MercurySample for " + sampleId);
