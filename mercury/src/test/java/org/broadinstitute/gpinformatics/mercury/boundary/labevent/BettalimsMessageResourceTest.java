@@ -37,7 +37,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
-import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -353,10 +352,11 @@ public class BettalimsMessageResourceTest extends Arquillian {
         return mapBarcodeToTube;
     }
 
-    @Test
     /**
-     * Test performance by creating a flowcell with a different 96 sample LCSET on each of 8 lanes
+     * Test performance by creating a flowcell with a different 96 sample LCSET on each of 8 lanes.
+     * Needs -Dorg.jboss.remoting-jmx.timeout=3000
      */
+    @Test(enabled = false)
     public void test8Lcsets() {
         String testPrefix;
         BettaLimsMessageTestFactory bettaLimsMessageFactory = new BettaLimsMessageTestFactory();
