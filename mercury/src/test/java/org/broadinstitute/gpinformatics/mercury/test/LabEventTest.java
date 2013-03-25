@@ -209,7 +209,7 @@ public class LabEventTest {
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
 
         final ProductOrder productOrder =
-                ProductOrderFactory.buildHybridSelectionProductOrder(NUM_POSITIONS_IN_RACK);
+                ProductOrderTestFactory.buildHybridSelectionProductOrder(NUM_POSITIONS_IN_RACK);
         int rackPosition=1;
 
         for(ProductOrderSample poSample:productOrder.getSamples()) {
@@ -261,7 +261,7 @@ public class LabEventTest {
                 libraryConstructionEntityBuilder.getPondRegTubeBarcodes()).invoke();
 
         QtpEntityBuilder qtpEntityBuilder = new QtpEntityBuilder(
-                bettaLimsMessageFactory, labEventFactory, labEventHandler,
+                bettaLimsMessageTestFactory, labEventFactory, labEventHandler,
                 Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchRack()),
                 Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchRackBarcode()),
                 Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchBarcodes()),
@@ -459,7 +459,7 @@ public class LabEventTest {
                 libraryConstructionEntityBuilder.getPondRegTubeBarcodes()).invoke();
 
         QtpEntityBuilder qtpEntityBuilder = new QtpEntityBuilder(
-                bettaLimsMessageFactory, labEventFactory, labEventHandler,
+                bettaLimsMessageTestFactory, labEventFactory, labEventHandler,
                 Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchRack()),
                 Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchRackBarcode()),
                 Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchBarcodes()),
@@ -469,7 +469,7 @@ public class LabEventTest {
         String flowcellBarcode = "flowcell" + runDate.getTime();
 
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
-            new HiSeq2500FlowcellEntityBuilder(bettaLimsMessageFactory, labEventFactory, labEventHandler,
+            new HiSeq2500FlowcellEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, labEventHandler,
                     qtpEntityBuilder.getDenatureRack(), flowcellBarcode).invoke();
 
         IlluminaFlowcell illuminaFlowcell = hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell();
@@ -627,7 +627,7 @@ public class LabEventTest {
         for (int i = 0; i < NUM_POSITIONS_IN_RACK / 4; i++) {
             // SageLoading
             String sageCassetteBarcode = "SageCassette" + i;
-            PlateTransferEventType sageLoadingJaxb = bettaLimsMessageFactory.buildRackToPlate("SageLoading",
+            PlateTransferEventType sageLoadingJaxb = bettaLimsMessageTestFactory.buildRackToPlate("SageLoading",
                     libraryConstructionEntityBuilder.getPondRegRackBarcode(),
                     libraryConstructionEntityBuilder.getPondRegTubeBarcodes().subList(i * 4, i * 4 + 4),
                     sageCassetteBarcode);
@@ -640,7 +640,7 @@ public class LabEventTest {
             // SageLoaded
 
             // SageUnloading
-            PlateTransferEventType sageUnloadingJaxb = bettaLimsMessageFactory.buildPlateToRack("SageUnloading",
+            PlateTransferEventType sageUnloadingJaxb = bettaLimsMessageTestFactory.buildPlateToRack("SageUnloading",
                     sageCassetteBarcode, sageUnloadBarcode, sageUnloadTubeBarcodes.subList(i * 4, i * 4 + 4));
             LabEvent sageUnloadEntity = labEventFactory.buildFromBettaLimsPlateToRackDbFree(sageUnloadingJaxb,
                     sageCassette, mapBarcodeToSageUnloadTubes, targetRackOfTubes);
@@ -659,7 +659,7 @@ public class LabEventTest {
         Map<VesselPosition, TwoDBarcodedTube> mapPositionToTube = new HashMap<VesselPosition, TwoDBarcodedTube>();
         List<TwoDBarcodedTube> sageUnloadTubes = new ArrayList<TwoDBarcodedTube>(mapBarcodeToSageUnloadTubes.values());
         for (int i = 0; i < NUM_POSITIONS_IN_RACK; i++) {
-            mapPositionToTube.put(VesselPosition.getByName(bettaLimsMessageFactory.buildWellName(i + 1)),
+            mapPositionToTube.put(VesselPosition.getByName(bettaLimsMessageTestFactory.buildWellName(i + 1)),
                     sageUnloadTubes.get(i));
         }
         TubeFormation sageUnloadRackRearrayed = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
@@ -671,7 +671,7 @@ public class LabEventTest {
         Assert.assertEquals(sageCleanupRack.getSampleInstances().size(), NUM_POSITIONS_IN_RACK, "Wrong number of sage cleanup samples");
 
         QtpEntityBuilder qtpEntityBuilder =
-                new QtpEntityBuilder(bettaLimsMessageFactory, labEventFactory, labEventHandler,
+                new QtpEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, labEventHandler,
                         Collections.singletonList(sageCleanupRack), Collections.singletonList(sageCleanupBarcode),
                         Collections.singletonList(sageCleanupTubeBarcodes), mapBarcodeToSageUnloadTubes,
                         WorkflowName.WHOLE_GENOME);
@@ -778,7 +778,7 @@ public class LabEventTest {
             ArrayList<String> tubeBarcodes = new ArrayList<String>(mapBarcodeToTube.keySet());
             chipBarcode = "Fluidigm" + testPrefix;
             rackBarcode = "InputRack" + testPrefix;
-            fluidigmSampleInputJaxb = bettaLimsMessageFactory.buildRackToPlate("FluidigmSampleInput", rackBarcode,
+            fluidigmSampleInputJaxb = bettaLimsMessageTestFactory.buildRackToPlate("FluidigmSampleInput", rackBarcode,
                     tubeBarcodes, chipBarcode);
             fluidigmSampleInputJaxb.getSourcePlate().setSection(SBSSection.P96COLS1_6BYROW.getSectionName());
             PositionMapType sourcePositionMap = buildFluidigmPositionMap(tubeBarcodes,
@@ -791,7 +791,7 @@ public class LabEventTest {
             addMessage(messageList, bettaLimsMessageTestFactory, fluidigmSampleInputJaxb);
 
             // FluidigmIndexedAdapterInput plate P96COLS1-6BYROW to chip P384COLS4-6BYROW
-            fluidigmIndexedAdapterInputJaxb = bettaLimsMessageFactory.buildPlateToPlate(
+            fluidigmIndexedAdapterInputJaxb = bettaLimsMessageTestFactory.buildPlateToPlate(
                     "FluidigmIndexedAdapterInput", indexPlate.getLabel(), chipBarcode);
             fluidigmIndexedAdapterInputJaxb.getSourcePlate().setPhysType(
                     StaticPlate.PlateType.IndexedAdapterPlate96.getDisplayName());
@@ -807,7 +807,7 @@ public class LabEventTest {
             for (int rackPosition = 1; rackPosition <= mapBarcodeToTube.size(); rackPosition++) {
                 harvestTubeBarcodes.add("Harvest" + testPrefix + rackPosition);
             }
-            fluidigmHarvestingToRackJaxb = bettaLimsMessageFactory.buildPlateToRack("FluidigmHarvestingToRack",
+            fluidigmHarvestingToRackJaxb = bettaLimsMessageTestFactory.buildPlateToRack("FluidigmHarvestingToRack",
                     chipBarcode,
                     harvestRackBarcode,
                     harvestTubeBarcodes);
@@ -1063,26 +1063,26 @@ public class LabEventTest {
 
         public PreFlightJaxbBuilder invoke() {
             rackBarcode = "PreflightRack" + testPrefix;
-            preflightPicoSetup1 = bettaLimsMessageFactory.buildRackToPlate("PreflightPicoSetup", rackBarcode,
+            preflightPicoSetup1 = bettaLimsMessageTestFactory.buildRackToPlate("PreflightPicoSetup", rackBarcode,
                     tubeBarcodes,
                     "PreflightPicoPlate1" + testPrefix);
             addMessage(messageList, bettaLimsMessageTestFactory, preflightPicoSetup1);
 
-            preflightPicoSetup2 = bettaLimsMessageFactory.buildRackToPlate("PreflightPicoSetup", rackBarcode,
+            preflightPicoSetup2 = bettaLimsMessageTestFactory.buildRackToPlate("PreflightPicoSetup", rackBarcode,
                     tubeBarcodes,
                     "PreflightPicoPlate2" + testPrefix);
             addMessage(messageList, bettaLimsMessageTestFactory, preflightPicoSetup2);
 
-            preflightNormalization = bettaLimsMessageFactory.buildRackEvent("PreflightNormalization", rackBarcode,
+            preflightNormalization = bettaLimsMessageTestFactory.buildRackEvent("PreflightNormalization", rackBarcode,
                     tubeBarcodes);
             addMessage(messageList, bettaLimsMessageTestFactory, preflightNormalization);
 
-            preflightPostNormPicoSetup1 = bettaLimsMessageFactory.buildRackToPlate("PreflightPostNormPicoSetup",
+            preflightPostNormPicoSetup1 = bettaLimsMessageTestFactory.buildRackToPlate("PreflightPostNormPicoSetup",
                     rackBarcode, tubeBarcodes,
                     "PreflightPostNormPicoPlate1" + testPrefix);
             addMessage(messageList, bettaLimsMessageTestFactory, preflightPostNormPicoSetup1);
 
-            preflightPostNormPicoSetup2 = bettaLimsMessageFactory.buildRackToPlate("PreflightPostNormPicoSetup",
+            preflightPostNormPicoSetup2 = bettaLimsMessageTestFactory.buildRackToPlate("PreflightPostNormPicoSetup",
                     rackBarcode, tubeBarcodes,
                     "PreflightPostNormPicoPlate2" + testPrefix);
             addMessage(messageList, bettaLimsMessageTestFactory, preflightPostNormPicoSetup2);
@@ -1355,33 +1355,33 @@ public class LabEventTest {
 
         public PicoPlatingJaxbBuilder invoke() {
 
-            picoPlatingBucket = bettaLimsMessageFactory
+            picoPlatingBucket = bettaLimsMessageTestFactory
                     .buildRackEvent(LabEventType.PICO_PLATING_BUCKET.getName(), rackBarcode, tubeBarcodes);
             addMessage(messageList, bettaLimsMessageTestFactory, picoPlatingBucket);
 
             picoPlatingQcBarcode = LabEventType.PICO_PLATING_QC.getName() + testPrefix;
-            picoPlatingQc = bettaLimsMessageFactory.buildRackToPlate(LabEventType.PICO_PLATING_QC.getName(),
+            picoPlatingQc = bettaLimsMessageTestFactory.buildRackToPlate(LabEventType.PICO_PLATING_QC.getName(),
                     rackBarcode, tubeBarcodes, picoPlatingQcBarcode);
             addMessage(messageList, bettaLimsMessageTestFactory, picoPlatingQc);
 
 
             picoPlatingSetup1Barcode = LabEventType.PICO_DILUTION_TRANSFER.getName() + testPrefix;
-            picoPlatingSetup1 = bettaLimsMessageFactory.buildPlateToPlate(LabEventType.PICO_DILUTION_TRANSFER
+            picoPlatingSetup1 = bettaLimsMessageTestFactory.buildPlateToPlate(LabEventType.PICO_DILUTION_TRANSFER
                     .getName(), picoPlatingQcBarcode, picoPlatingSetup1Barcode);
             addMessage(messageList, bettaLimsMessageTestFactory, picoPlatingSetup1);
 
             picoPlatingSetup2Barcode = LabEventType.PICO_BUFFER_ADDITION.getName() + testPrefix;
-            picoPlatingSetup2 = bettaLimsMessageFactory.buildPlateToPlate(LabEventType.PICO_BUFFER_ADDITION
+            picoPlatingSetup2 = bettaLimsMessageTestFactory.buildPlateToPlate(LabEventType.PICO_BUFFER_ADDITION
                     .getName(), picoPlatingSetup1Barcode, picoPlatingSetup2Barcode);
             addMessage(messageList, bettaLimsMessageTestFactory, picoPlatingSetup2);
 
             picoPlatingSetup3Barcode = LabEventType.PICO_MICROFLUOR_TRANSFER.getName() + testPrefix;
-            picoPlatingSetup3 = bettaLimsMessageFactory.buildPlateToPlate(LabEventType.PICO_MICROFLUOR_TRANSFER
+            picoPlatingSetup3 = bettaLimsMessageTestFactory.buildPlateToPlate(LabEventType.PICO_MICROFLUOR_TRANSFER
                     .getName(), picoPlatingSetup2Barcode, picoPlatingSetup3Barcode);
             addMessage(messageList, bettaLimsMessageTestFactory, picoPlatingSetup3);
 
             picoPlatingSetup4Barcode = LabEventType.PICO_STANDARDS_TRANSFER.getName() + testPrefix;
-            picoPlatingSetup4 = bettaLimsMessageFactory.buildPlateToPlate(LabEventType.PICO_STANDARDS_TRANSFER
+            picoPlatingSetup4 = bettaLimsMessageTestFactory.buildPlateToPlate(LabEventType.PICO_STANDARDS_TRANSFER
                     .getName(), picoPlatingSetup3Barcode, picoPlatingSetup4Barcode);
             addMessage(messageList, bettaLimsMessageTestFactory, picoPlatingSetup4);
 
@@ -1390,13 +1390,13 @@ public class LabEventTest {
                 picoPlateNormBarcodes.add("PicoPlateNorm" + testPrefix + rackPosition);
             }
             picoPlatingNormalizaionBarcode = LabEventType.SAMPLES_NORMALIZATION_TRANSFER.getName() + testPrefix;
-            picoPlatingNormalizaion = bettaLimsMessageFactory.buildRackToRack(LabEventType
+            picoPlatingNormalizaion = bettaLimsMessageTestFactory.buildRackToRack(LabEventType
                     .SAMPLES_NORMALIZATION_TRANSFER
                     .getName(), rackBarcode, tubeBarcodes, picoPlatingNormalizaionBarcode, picoPlateNormBarcodes);
             addMessage(messageList, bettaLimsMessageTestFactory, picoPlatingNormalizaion);
 
             picoPlatingPostNormSetupBarcode = LabEventType.PICO_PLATING_POST_NORM_PICO.getName() + testPrefix;
-            picoPlatingPostNormSetup = bettaLimsMessageFactory
+            picoPlatingPostNormSetup = bettaLimsMessageTestFactory
                     .buildRackToPlate(LabEventType.PICO_PLATING_POST_NORM_PICO
                             .getName(), picoPlatingNormalizaionBarcode, picoPlateNormBarcodes, picoPlatingPostNormSetupBarcode);
             addMessage(messageList, bettaLimsMessageTestFactory, picoPlatingPostNormSetup);
@@ -2078,7 +2078,7 @@ public class LabEventTest {
      */
     public static class HybridSelectionEntityBuilder {
         public static final String BAIT_DESIGN_NAME = "cancer_2000gene_shift170_undercovered";
-        private final BettaLimsMessageFactory bettaLimsMessageFactory;
+        private final BettaLimsMessageTestFactory bettaLimsMessageTestFactory;
         private final LabEventFactory labEventFactory;
         private final LabEventHandler labEventHandler;
         private final TubeFormation pondRegRack;
@@ -2511,8 +2511,8 @@ public class LabEventTest {
         }
 
         public void invoke() {
-            QtpJaxbBuilder qtpJaxbBuilder = new QtpJaxbBuilder(bettaLimsMessageFactory, "", normCatchBarcodes,
-                    normCatchRackBarcode,workflowName).invoke();
+            QtpJaxbBuilder qtpJaxbBuilder = new QtpJaxbBuilder(bettaLimsMessageTestFactory, "",
+                    listLcsetListNormCatchBarcodes, normCatchRackBarcodes, workflowName).invoke();
             PlateCherryPickEvent cherryPickJaxb = qtpJaxbBuilder.getPoolingTransferJaxb();
             final String poolRackBarcode = qtpJaxbBuilder.getPoolRackBarcode();
             PlateCherryPickEvent denatureJaxb = qtpJaxbBuilder.getDenatureJaxb();
@@ -2556,7 +2556,7 @@ public class LabEventTest {
             if (poolTubes.size() > 1) {
                 Map<VesselPosition, TwoDBarcodedTube> mapPositionToTube = new HashMap<VesselPosition, TwoDBarcodedTube>();
                 for (int j = 0; j < poolTubes.size(); j++) {
-                    mapPositionToTube.put(VesselPosition.getByName(bettaLimsMessageFactory.buildWellName(j + 1)),
+                    mapPositionToTube.put(VesselPosition.getByName(bettaLimsMessageTestFactory.buildWellName(j + 1)),
                             poolTubes.get(j));
                 }
                 rearrayedPoolingRack = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
@@ -2806,9 +2806,9 @@ public class LabEventTest {
         private final WorkflowName workflowName;
         private String denatureTubeBarcode;
 
-        public QtpJaxbBuilder(BettaLimsMessageFactory bettaLimsMessageFactory, String testPrefix,
+        public QtpJaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageFactory, String testPrefix,
                 List<List<String>> listLcsetListNormCatchBarcodes, List<String> normCatchRackBarcodes, WorkflowName workflowName) {
-            this.bettaLimsMessageFactory = bettaLimsMessageFactory;
+            this.bettaLimsMessageTestFactory = bettaLimsMessageFactory;
             this.testPrefix = testPrefix;
             this.listLcsetListNormCatchBarcodes = listLcsetListNormCatchBarcodes;
             this.normCatchRackBarcodes = normCatchRackBarcodes;
@@ -2872,45 +2872,45 @@ public class LabEventTest {
             for (List<String> normCatchBarcodes : listLcsetListNormCatchBarcodes) {
                 // PoolingTransfer
                 poolRackBarcode = "PoolRack" + testPrefix;
-                List<BettaLimsMessageFactory.CherryPick> poolingCherryPicks =
-                        new ArrayList<BettaLimsMessageFactory.CherryPick>();
+                List<BettaLimsMessageTestFactory.CherryPick> poolingCherryPicks =
+                        new ArrayList<BettaLimsMessageTestFactory.CherryPick>();
                 for (int rackPosition = 1; rackPosition <= normCatchBarcodes.size(); rackPosition++) {
-                    poolingCherryPicks.add(new BettaLimsMessageFactory.CherryPick(normCatchRackBarcodes.get(i),
-                            bettaLimsMessageFactory.buildWellName(rackPosition), poolRackBarcode,
+                    poolingCherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(normCatchRackBarcodes.get(i),
+                            bettaLimsMessageTestFactory.buildWellName(rackPosition), poolRackBarcode,
                             "A01"));
                 }
                 poolTubeBarcodes.add("Pool" + testPrefix + i);
-                poolingTransferJaxb = bettaLimsMessageFactory.buildCherryPick("PoolingTransfer",
+                poolingTransferJaxb = bettaLimsMessageTestFactory.buildCherryPick("PoolingTransfer",
                         Arrays.asList(normCatchRackBarcodes.get(i)), Collections.singletonList(normCatchBarcodes),
                         poolRackBarcode, Collections.singletonList(poolTubeBarcodes.get(i)), poolingCherryPicks);
-                addMessage(messageList, bettaLimsMessageFactory, poolingTransferJaxb);
+                addMessage(messageList, bettaLimsMessageTestFactory, poolingTransferJaxb);
                 i++;
             }
 
             // DenatureTransfer
             denatureRackBarcode = "DenatureRack" + testPrefix;
-            List<BettaLimsMessageFactory.CherryPick> denatureCherryPicks = new ArrayList<BettaLimsMessageFactory.CherryPick>();
+            List<BettaLimsMessageTestFactory.CherryPick> denatureCherryPicks = new ArrayList<BettaLimsMessageTestFactory.CherryPick>();
             List<String> denatureTubeBarcodes = new ArrayList<String>();
             for (int j = 0; j < poolTubeBarcodes.size(); j++) {
-                denatureCherryPicks.add(new BettaLimsMessageFactory.CherryPick(
-                        poolRackBarcode, bettaLimsMessageFactory.buildWellName(j + 1),
-                        denatureRackBarcode, bettaLimsMessageFactory.buildWellName(j + 1)));
+                denatureCherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(
+                        poolRackBarcode, bettaLimsMessageTestFactory.buildWellName(j + 1),
+                        denatureRackBarcode, bettaLimsMessageTestFactory.buildWellName(j + 1)));
                 denatureTubeBarcode = "DenatureTube" + testPrefix + j;
                 denatureTubeBarcodes.add(denatureTubeBarcode);
             }
-            denatureJaxb = bettaLimsMessageFactory.buildCherryPick("DenatureTransfer",
+            denatureJaxb = bettaLimsMessageTestFactory.buildCherryPick("DenatureTransfer",
                     Collections.singletonList(poolRackBarcode), Collections.singletonList(poolTubeBarcodes),
                     denatureRackBarcode, denatureTubeBarcodes, denatureCherryPicks);
-            addMessage(messageList, bettaLimsMessageFactory, denatureJaxb);
+            addMessage(messageList, bettaLimsMessageTestFactory, denatureJaxb);
 
             if (workflowName != WorkflowName.EXOME_EXPRESS) {
                 // StripTubeBTransfer
                 stripTubeHolderBarcode = "StripTubeHolder" + testPrefix;
-                List<BettaLimsMessageFactory.CherryPick> stripTubeCherryPicks = new ArrayList<BettaLimsMessageFactory.CherryPick>();
+                List<BettaLimsMessageTestFactory.CherryPick> stripTubeCherryPicks = new ArrayList<BettaLimsMessageTestFactory.CherryPick>();
                 int sourcePosition = 0;
                 // Transfer column 1 to 8 rows, using non-empty source rows
                 for (int destinationPosition = 0; destinationPosition < 8; destinationPosition++) {
-                    stripTubeCherryPicks.add(new BettaLimsMessageFactory.CherryPick(
+                    stripTubeCherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(
                             denatureRackBarcode, Character.toString((char) ('A' + sourcePosition)) + "01",
                             stripTubeHolderBarcode, Character.toString((char) ('A' + destinationPosition)) + "01"));
                     if (sourcePosition + 1 < poolTubeBarcodes.size()) {

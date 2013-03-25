@@ -273,7 +273,7 @@ public class ExomeExpressV2EndToEndTest {
         // Strip Tube B
         // Create Flowcell JIRA
         LabEventTest.QtpEntityBuilder qtpEntityBuilder = new LabEventTest.QtpEntityBuilder(
-                bettaLimsMessageFactory, labEventFactory, leHandler,
+                bettaLimsMessageTestFactory, labEventFactory, leHandler,
                 Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchRack()),
                 Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchRackBarcode()),
                 Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchBarcodes()),

@@ -261,7 +261,7 @@ public class SolexaRunRoutingTest {
                                    "Wrong number of sage cleanup samples");
 
         LabEventTest.QtpEntityBuilder qtpEntityBuilder =
-                new LabEventTest.QtpEntityBuilder(bettaLimsMessageFactory, labEventFactory, labEventHandler,
+                new LabEventTest.QtpEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, labEventHandler,
                         Collections.singletonList(sageCleanupRack), Collections.singletonList(sageCleanupBarcode),
                         Collections.singletonList(sageCleanupTubeBarcodes), mapBarcodeToSageUnloadTubes,
                         WorkflowName.WHOLE_GENOME);

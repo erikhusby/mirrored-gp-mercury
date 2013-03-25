@@ -381,7 +381,7 @@ public class ExomeExpressEndToEndTest {
             //            }
 
             LabEventTest.QtpEntityBuilder qtpEntityBuilder = new LabEventTest.QtpEntityBuilder(
-                    bettaLimsMessageFactory, labEventFactory, labEventHandler,
+                    bettaLimsMessageTestFactory, labEventFactory, labEventHandler,
                     Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchRack()),
                     Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchRackBarcode()),
                     Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchBarcodes()),
