@@ -10,7 +10,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.vessel.TubeBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselMetricBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselMetricRunBean;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.infrastructure.test.BettaLimsMessageFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageFactory;
 import org.testng.annotations.Test;
 
 import javax.persistence.EntityManager;

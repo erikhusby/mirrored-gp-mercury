@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
-import org.broadinstitute.gpinformatics.infrastructure.test.ResearchProjectFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectFactory;
 import org.testng.Assert;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;

@@ -1,11 +1,12 @@
-package org.broadinstitute.gpinformatics.athena.entity.orders;
+package org.broadinstitute.gpinformatics.infrastructure.matchers;
 
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.hamcrest.Description;
 import org.hamcrest.Factory;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 
-public class IsInBspFormatSample extends TypeSafeMatcher<ProductOrderSample> {
+public class InBspFormatSample extends TypeSafeMatcher<ProductOrderSample> {
 
     @Override
     public boolean matchesSafely(ProductOrderSample sample) {
@@ -19,6 +20,6 @@ public class IsInBspFormatSample extends TypeSafeMatcher<ProductOrderSample> {
 
     @Factory
     public static <T> Matcher<ProductOrderSample> inBspFormat() {
-        return new IsInBspFormatSample();
+        return new InBspFormatSample();
     }
 }

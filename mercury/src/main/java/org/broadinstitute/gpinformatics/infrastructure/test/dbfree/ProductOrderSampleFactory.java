@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.infrastructure.test;
+package org.broadinstitute.gpinformatics.infrastructure.test.dbfree;
 
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;

@@ -3,8 +3,8 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
-import org.broadinstitute.gpinformatics.infrastructure.test.ProductOrderFactory;
-import org.broadinstitute.gpinformatics.infrastructure.test.ProductOrderSampleFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderSampleFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.meanbean.lang.EquivalentFactory;
 import org.meanbean.test.BeanTester;
@@ -20,7 +20,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
-import static org.broadinstitute.gpinformatics.athena.entity.orders.IsInBspFormatSample.inBspFormat;
+import static org.broadinstitute.gpinformatics.infrastructure.matchers.InBspFormatSample.inBspFormat;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 

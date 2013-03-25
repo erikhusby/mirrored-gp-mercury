@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.athena;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
-import org.broadinstitute.gpinformatics.infrastructure.test.ProductOrderFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderFactory;
 
 import javax.enterprise.inject.Alternative;
 import java.util.*;

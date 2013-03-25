@@ -1,9 +1,9 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
-import org.broadinstitute.gpinformatics.mercury.control.LoginAndPassword;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.ConfigKey;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
+import org.broadinstitute.gpinformatics.mercury.control.LoginAndPassword;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -13,7 +13,6 @@ import java.io.Serializable;
 @SuppressWarnings("UnusedDeclaration")
 @ConfigKey("bsp")
 public class BSPConfig extends AbstractConfig implements LoginAndPassword, Serializable {
-
 
     private String login;
 

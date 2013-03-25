@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
-import org.broadinstitute.gpinformatics.infrastructure.test.ResearchProjectFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
