@@ -14,6 +14,7 @@ import static org.testng.AssertJUnit.assertEquals;
  * @author rob.dawson
  *
  */
+@SuppressWarnings("UnusedDeclaration")
 public class JavaBeanTester {
 	/**
 	 * Tests the get/set methods of the specified class.
@@ -53,7 +54,8 @@ public class JavaBeanTester {
 					 // Call the set method, then check the same value comes back out of the get method
 						setter.invoke(bean, value);
 
-						final Object expectedValue = value;
+						@SuppressWarnings("UnnecessaryLocalVariable")
+                        final Object expectedValue = value;
 						final Object actualValue = getter.invoke(bean);
 
 						assertEquals(String.format("Failed while testing property %s", prop.getName()), expectedValue, actualValue );

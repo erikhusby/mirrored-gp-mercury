@@ -29,6 +29,7 @@ public class TableauLinkTest {
         tableauConfig = new TableauConfig();
         tableauConfig.setTableauServer(SERVERNAME);
         List<Map<String, String>> list = new ArrayList<Map<String, String>>();
+        @SuppressWarnings("unchecked")
         Map<String, String>[] maps = new HashMap[] {
                 new HashMap<String, String>(),
                 new HashMap<String, String>(),
