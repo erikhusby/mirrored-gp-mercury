@@ -32,9 +32,6 @@ public class GenericEntityEtlDbFreeTest {
     String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
     long entityId = 1122334455L;
     String batchName = "LCSET-1235";
-    boolean isActive = true;
-    Date createdOn = new Date(1350000000000L);
-    Date dueDate = new Date(1354000000000L);
 
     String datafileDir = System.getProperty("java.io.tmpdir");
 

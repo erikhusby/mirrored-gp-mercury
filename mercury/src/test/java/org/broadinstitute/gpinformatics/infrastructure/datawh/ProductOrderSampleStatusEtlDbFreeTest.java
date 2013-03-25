@@ -21,7 +21,6 @@ import static org.testng.Assert.*;
 public class ProductOrderSampleStatusEtlDbFreeTest {
     private String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
     private long entityId = 1122334455L;
-    private long pdoId = 332891L;
     private Date revDate = new Date(1350000000000L);
     private ProductOrderSample.DeliveryStatus deliveryStatus = ProductOrderSample.DeliveryStatus.DELIVERED;
     private ProductOrderSampleStatusEtl tst;

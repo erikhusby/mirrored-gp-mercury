@@ -38,7 +38,6 @@ public class EventEtlDbFreeTest {
     private final long labBatchId = 4455112233L;
     private final String location = "Machine-XYZ";
     private final long vesselId = 5511223344L;
-    private final String vesselLabel = "03138970";
     private final Date eventDate = new Date(1350000000000L);
     private final LabEventType eventType = LabEventType.PICO_PLATING_BUCKET;
     private EventEtl tst;
@@ -135,6 +134,7 @@ public class EventEtlDbFreeTest {
         expect(obj.getTargetLabVessels()).andReturn(vesselList);
         expect(vessel.getSampleInstances()).andReturn(new HashSet<SampleInstance>());
         expect(obj.getLabEventId()).andReturn(entityId);
+        String vesselLabel = "03138970";
         expect(vessel.getLabel()).andReturn(vesselLabel);
 
         replay(mocks);
