@@ -285,8 +285,8 @@ mercury:
     TEST:
 
       app:      TEST
-      bsp:      QA
-      gap:      QA
+      bsp:      DEV
+      gap:      DEV
       jira:     TEST
       quote:    DEV
       squid:    TEST
