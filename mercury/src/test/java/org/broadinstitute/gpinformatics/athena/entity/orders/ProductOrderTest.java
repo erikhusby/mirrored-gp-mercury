@@ -20,7 +20,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
-import static org.broadinstitute.gpinformatics.athena.entity.orders.IsInBspFormatSample.inBspFormat;
+import static org.broadinstitute.gpinformatics.infrastructure.matchers.InBspFormatSample.inBspFormat;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 

@@ -1,13 +1,12 @@
-package org.broadinstitute.gpinformatics.infrastructure.common;
+package org.broadinstitute.gpinformatics.infrastructure.matchers;
 
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.hamcrest.Description;
 import org.hamcrest.Factory;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 
-public class EmptyOrNullString extends TypeSafeMatcher<String> {
+public class NullOrEmptyString extends TypeSafeMatcher<String> {
 
     @Override
     public boolean matchesSafely(String s) {
@@ -16,11 +15,11 @@ public class EmptyOrNullString extends TypeSafeMatcher<String> {
 
     @Override
     public void describeTo(Description description) {
-        description.appendText("empty or null String");
+        description.appendText("null or empty String");
     }
 
     @Factory
-    public static <T> Matcher<String> emptyOrNullString() {
-        return new EmptyOrNullString();
+    public static <T> Matcher<String> nullOrEmptyString() {
+        return new NullOrEmptyString();
     }
 }

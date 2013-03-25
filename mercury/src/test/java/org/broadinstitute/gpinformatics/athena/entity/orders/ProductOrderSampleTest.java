@@ -25,8 +25,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.broadinstitute.gpinformatics.athena.entity.orders.IsInBspFormat.inBspFormat;
-import static org.broadinstitute.gpinformatics.infrastructure.common.EmptyOrNullString.emptyOrNullString;
+import static org.broadinstitute.gpinformatics.infrastructure.matchers.InBspFormat.inBspFormat;
+import static org.broadinstitute.gpinformatics.infrastructure.matchers.NullOrEmptyString.nullOrEmptyString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
@@ -101,7 +101,7 @@ public class ProductOrderSampleTest {
     @Test(dataProvider = "getBillablePriceItems")
     public void testGetBillablePriceItems(ProductOrderSample sample, List<PriceItem> priceItems) {
         List<PriceItem> generatedItems = sample.getBillablePriceItems();
-        assertThat(generatedItems.size(), equalTo(priceItems.size()));
+        assertThat(generatedItems.size(), is(equalTo(priceItems.size())));
 
         generatedItems.removeAll(priceItems);
         assertThat(generatedItems, is(empty()));
@@ -159,12 +159,12 @@ public class ProductOrderSampleTest {
             String message =
                     MessageFormat.format("Sample {0} is on risk but has no risk string.", sample.getSampleName());
 
-            assertThat(message, sample.getRiskString(), is(not(emptyOrNullString())));
+            assertThat(message, sample.getRiskString(), is(not(nullOrEmptyString())));
         } else {
             String message =
                     MessageFormat.format("Sample {0} is not on risk but has a risk string.", sample.getSampleName());
 
-            assertThat(message, sample.getRiskString(), is(emptyOrNullString()));
+            assertThat(message, sample.getRiskString(), is(nullOrEmptyString()));
         }
     }
 }

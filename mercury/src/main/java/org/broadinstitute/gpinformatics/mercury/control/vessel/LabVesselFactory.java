@@ -1,4 +1,4 @@
- package org.broadinstitute.gpinformatics.mercury.control.vessel;
+package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
