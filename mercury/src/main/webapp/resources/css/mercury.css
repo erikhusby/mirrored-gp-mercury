@@ -121,3 +121,13 @@ textarea.controlledText { width: 550px; }
 
 /* The 'x' for clearing input */
 .clear-helper { color: #0000cd; cursor: pointer; font-size: 20px; font-weight: bold; margin: 8px 2px 0 -19px; padding: 1px 4px; }
+
+.simpletab { padding: 0; background: none; border-width: 0; }
+.simpletab .ui-tabs-nav { padding-left: 0; background: transparent; border-width: 0 0 1px 0; -moz-border-radius: 0; -webkit-border-radius: 0; border-radius: 0; }
+.simpletab .ui-state-default a { color: #b5b5b5; font-size: small; }
+.simpletab .ui-tabs-panel { background: #ffffff; border-width: 0 1px 1px 1px; }
+.simpletab .ui-state-active a { color: #0088cc; font-size: small; }
+.simpletab .ui-state-active { border: 1px solid #c2c2c2; }
+.simpletab .ui-widget-header { border-bottom: 1px solid #c2c2c2; }
+.simpletab .ui-state-hover { border: 1px solid #0088cc; color: #0088cc; background: #e6f7ff; }
+

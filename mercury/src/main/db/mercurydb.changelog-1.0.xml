@@ -1345,5 +1345,38 @@
         </preConditions>
         <dropUniqueConstraint constraintName="SYS_C0042392" tableName="LV_POS_MERCURY_SAMPLES" schemaName="mercury" />
     </changeSet>
+    <changeSet author="scottmat" id="GPLIM-1089-6">
+        <sql>
+            update sequencing_run run set run.RUN_CARTRIDGE = (select runjoin.RUN_CARTRIDGE as flowcell_join
+            from SEQUENCING_RUN run_view
+            join SEQ_RUN_RUN_CARTRIDGES runjoin on runjoin.SEQUENCING_RUN = run_view.SEQUENCING_RUN_ID
+            join lab_vessel flowcell on flowcell.LAB_VESSEL_ID = runjoin.RUN_CARTRIDGE
+            where run.SEQUENCING_RUN_ID = run_view.SEQUENCING_RUN_ID) ;
+
+
+            update sequencing_run_aud run set run.RUN_CARTRIDGE = (select runjoin.RUN_CARTRIDGE as flowcell_join
+            from SEQUENCING_RUN_aud run_view
+            join SEQ_RUN_RUN_CARTRIDGES_aud runjoin on runjoin.SEQUENCING_RUN = run_view.SEQUENCING_RUN_ID
+            join lab_vessel flowcell on flowcell.LAB_VESSEL_ID = runjoin.RUN_CARTRIDGE
+            where run.SEQUENCING_RUN_ID = run_view.SEQUENCING_RUN_ID) ;
+        </sql>
+    </changeSet>
+
+    <changeSet author="scottmat" id="GPLIM-1089-7">
+        <sql>
+            update sequencing_run run set run.RUN_DIRECTORY = (select loca.DATA_LOCATION
+            from sequencing_run run_view
+            join OUTPUT_DATA_LOCATION loca on run_view.RUN_LOCATION_ID = loca.DATA_LOCATION_ID
+            where run_view.SEQUENCING_RUN_ID = run.SEQUENCING_RUN_ID
+            );
+
+            update sequencing_run_aud run set run.RUN_DIRECTORY = (select loca.DATA_LOCATION
+            from sequencing_run_aud run_view
+            join OUTPUT_DATA_LOCATION_aud loca on run_view.RUN_LOCATION_ID = loca.DATA_LOCATION_ID
+            where run_view.SEQUENCING_RUN_ID = run.SEQUENCING_RUN_ID
+            );
+        </sql>
+    </changeSet>
+
 
 </databaseChangeLog>

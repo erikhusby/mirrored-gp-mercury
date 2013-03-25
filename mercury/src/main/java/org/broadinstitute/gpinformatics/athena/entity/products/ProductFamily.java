@@ -44,7 +44,7 @@ public class ProductFamily implements Serializable, Comparable<ProductFamily> {
     public static final String RNA_FAMILY_NAME = "RNA";
 
     /**
-     * JPA package visible constructor. Stripes requires the empty constructor
+     * JPA package visible constructor. Stripes requires the empty constructor.
      */
     public ProductFamily() {
     }

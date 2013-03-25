@@ -12,17 +12,18 @@ import java.net.URLEncoder;
 import java.util.*;
 
 @Impl
-public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService implements
-                                                BSPSampleSearchService {
+public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService implements BSPSampleSearchService {
+
+    private static final long serialVersionUID = 3432255750259397293L;
 
     public static final String SEARCH_RUN_SAMPLE_SEARCH = "search/runSampleSearch";
 
     private BSPConfig bspConfig;
 
     /**
-     * Container free constructor, need to initialize all dependencies explicitly
+     * Container free constructor, need to initialize all dependencies explicitly.
      *
-     * @param bspConfig
+     * @param bspConfig The configuration for connecting with bsp.
      */
     @Inject
     public BSPSampleSearchServiceImpl(BSPConfig bspConfig) {
@@ -69,17 +70,17 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
                 public void callback(String[] bspData) {
                     Map<BSPSampleSearchColumn, String> newMap = new HashMap<BSPSampleSearchColumn, String>();
 
-                    // There is an assumption built in here that all columns queried will come back in order. That
-                    // appears to be the case.
+                    // It turns out that BSP truncates the rest of the columns, if there are no more values, which
+                    // is consistent with what Excel does, so it probably comes from that. SO, need to make all
+                    // values "", once i >= the length of the bspData
                     int i = 0;
                     for (BSPSampleSearchColumn column : queryColumns) {
-                        newMap.put(column, bspData[i]);
+                        newMap.put(column, (i < bspData.length) ? bspData[i++] : "");
                     }
 
                     ret.add(newMap);
                 }
             });
-
         } catch (ClientHandlerException clientException) {
             throw new RuntimeException("Error connecting to BSP", clientException);
         } catch (UnsupportedEncodingException uex) {

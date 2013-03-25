@@ -4,11 +4,13 @@ import org.apache.commons.lang3.time.DateUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
-import org.broadinstitute.gpinformatics.athena.entity.orders.*;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.ProductOrderSampleFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.testng.Assert;
@@ -90,7 +92,8 @@ public class ProductOrderDaoTest extends ContainerTest {
         // Try to create a Product Order and persist it.
         String testProductOrderTitle = TEST_ORDER_TITLE_PREFIX + UUID.randomUUID();
         ProductOrder order =
-                new ProductOrder(TEST_CREATOR_ID, testProductOrderTitle, ProductOrderTest.createSampleList(sampleNames),
+                new ProductOrder(TEST_CREATOR_ID, testProductOrderTitle, ProductOrderSampleFactory
+                        .createSampleList(sampleNames),
                                         "quoteId", product, project);
 
         order.setJiraTicketKey(TEST_PRODUCT_ORDER_KEY_PREFIX + UUID.randomUUID());
@@ -116,7 +119,8 @@ public class ProductOrderDaoTest extends ContainerTest {
         // Try to create a Product Order and persist it.
         String testProductOrderTitle = TEST_ORDER_TITLE_PREFIX + UUID.randomUUID();
         ProductOrder order =
-                new ProductOrder(TEST_CREATOR_ID, testProductOrderTitle, ProductOrderTest.createSampleList(sampleNames),
+                new ProductOrder(TEST_CREATOR_ID, testProductOrderTitle, ProductOrderSampleFactory
+                        .createSampleList(sampleNames),
                                         "quoteId", product, project);
 
         order.setJiraTicketKey(TEST_PRODUCT_ORDER_KEY_PREFIX + UUID.randomUUID());

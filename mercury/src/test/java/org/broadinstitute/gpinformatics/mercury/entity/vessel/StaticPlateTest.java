@@ -5,20 +5,21 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.LabEventTestFactory.doSectionTransfer;
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.LabEventTestFactory.makeTubeFormation;
-import static org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate.PlateType.*;
-import static org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition.A01;
-import static org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition.B02;
-import static org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition.C03;
+import static org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate.PlateType.Eppendorf96;
+import static org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition.*;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.*;
-import static org.hamcrest.collection.IsCollectionContaining.hasItem;
-import static org.hamcrest.collection.IsCollectionContaining.hasItems;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasItems;
 
 /**
  * @author breilly
@@ -141,8 +142,8 @@ public class StaticPlateTest {
     @Test(groups = DATABASE_FREE)
     public void testGetNearestTubeAncestorsMultipleWellsSingleAncestors() {
         TubeFormation rack = makeTubeFormation(
-                new VesselPosition[]   { A01,   B02,   C03 },
-                new TwoDBarcodedTube[] { tube1, tube2, tube3 });
+                new VesselPosition[]{A01, B02, C03},
+                new TwoDBarcodedTube[]{tube1, tube2, tube3});
         doSectionTransfer(rack, plate1);
         List<VesselAndPosition> ancestors = plate1.getNearestTubeAncestors();
         assertThat(ancestors.size(), is(3));

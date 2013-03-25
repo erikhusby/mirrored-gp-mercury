@@ -48,14 +48,14 @@
     <div>
 
         <div class="control-group">
-            <div class="control">
+            <div class="controls">
                 <select id="heatField" onchange="applyHeatMap()">
                     <c:forEach items="${actionBean.heatMapFields}" var="field">
                         <option value="${field}">${field}</option>
                     </c:forEach>
                 </select>
             </div>
-            <div class="control">
+            <div class="controls">
                 <table class="simple">
                     <tr>
                         <td width="100">

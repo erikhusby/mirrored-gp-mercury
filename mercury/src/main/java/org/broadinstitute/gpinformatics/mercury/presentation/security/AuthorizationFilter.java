@@ -23,6 +23,8 @@ public class AuthorizationFilter implements Filter {
 
     private FilterConfig filterConfig;
 
+    private static ServletContext servletContext;
+
     @Inject
     AuthorizationManager authManager;
 
@@ -38,6 +40,11 @@ public class AuthorizationFilter implements Filter {
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
         this.filterConfig = filterConfig;
+        servletContext = filterConfig.getServletContext();
+    }
+
+    public static ServletContext getServletContext() {
+        return servletContext;
     }
 
     /**
