@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.test;
 
 import org.apache.commons.io.FileUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
-import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.StringAsset;
 import org.jboss.shrinkwrap.api.importer.ExplodedImporter;
@@ -138,7 +138,7 @@ public class DeploymentBuilder {
         // TODO: put all test helpers into a single package or two to import all at once
         return archive
                 .addClass(ContainerTest.class)
-                .addClass(BettaLimsMessageFactory.class);
+                .addClass(BettaLimsMessageTestFactory.class);
     }
 
     private static WebArchive addWarDependencies(WebArchive archive) {

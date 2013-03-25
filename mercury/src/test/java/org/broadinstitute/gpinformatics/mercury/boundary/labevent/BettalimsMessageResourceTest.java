@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunResource;
@@ -29,7 +30,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
-import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageFactory;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
@@ -199,15 +199,17 @@ public class BettalimsMessageResourceTest extends Arquillian {
         utx.commit();
         utx.begin();
 
-        BettaLimsMessageFactory bettaLimsMessageFactory=new BettaLimsMessageFactory();
+        BettaLimsMessageTestFactory bettaLimsMessageTestFactory =new BettaLimsMessageTestFactory();
 
-        LabEventTest.PreFlightJaxbBuilder preFlightJaxbBuilder=new LabEventTest.PreFlightJaxbBuilder(bettaLimsMessageFactory, testPrefix,
+        LabEventTest.PreFlightJaxbBuilder preFlightJaxbBuilder=new LabEventTest.PreFlightJaxbBuilder(
+                bettaLimsMessageTestFactory, testPrefix,
                 new ArrayList<String>(mapBarcodeToTube.keySet())).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : preFlightJaxbBuilder.getMessageList()) {
             sendMessage(bettaLIMSMessage);
         }
 
-        LabEventTest.ShearingJaxbBuilder shearingJaxbBuilder=new LabEventTest.ShearingJaxbBuilder(bettaLimsMessageFactory,
+        LabEventTest.ShearingJaxbBuilder shearingJaxbBuilder=new LabEventTest.ShearingJaxbBuilder(
+                bettaLimsMessageTestFactory,
                 new ArrayList<String>(mapBarcodeToTube.keySet()), testPrefix, preFlightJaxbBuilder.getRackBarcode()).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : shearingJaxbBuilder.getMessageList()) {
             sendMessage(bettaLIMSMessage);
@@ -225,14 +227,15 @@ public class BettalimsMessageResourceTest extends Arquillian {
         utx.commit();
         utx.begin();
         LabEventTest.LibraryConstructionJaxbBuilder libraryConstructionJaxbBuilder = new LabEventTest.LibraryConstructionJaxbBuilder(
-                bettaLimsMessageFactory, testPrefix, shearingJaxbBuilder.getShearCleanPlateBarcode(), indexPlate.getLabel(),
+                bettaLimsMessageTestFactory, testPrefix, shearingJaxbBuilder.getShearCleanPlateBarcode(), indexPlate.getLabel(),
                 LabEventTest.NUM_POSITIONS_IN_RACK).invoke();
 
         for (BettaLIMSMessage bettaLIMSMessage : libraryConstructionJaxbBuilder.getMessageList()) {
             sendMessage(bettaLIMSMessage);
         }
 
-        LabEventTest.HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder=new LabEventTest.HybridSelectionJaxbBuilder(bettaLimsMessageFactory,
+        LabEventTest.HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder=new LabEventTest.HybridSelectionJaxbBuilder(
+                bettaLimsMessageTestFactory,
                 testPrefix, libraryConstructionJaxbBuilder.getPondRegRackBarcode(),
                 libraryConstructionJaxbBuilder.getPondRegTubeBarcodes(), "Bait" + testPrefix).invoke();
         final List<ReagentDesign> reagentDesigns=reagentDesignDao.findAll(ReagentDesign.class, 0, 1);
@@ -250,7 +253,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
             sendMessage(bettaLIMSMessage);
         }
 
-        LabEventTest.QtpJaxbBuilder qtpJaxbBuilder=new LabEventTest.QtpJaxbBuilder(bettaLimsMessageFactory, testPrefix,
+        LabEventTest.QtpJaxbBuilder qtpJaxbBuilder=new LabEventTest.QtpJaxbBuilder(bettaLimsMessageTestFactory, testPrefix,
                 hybridSelectionJaxbBuilder.getNormCatchBarcodes(), hybridSelectionJaxbBuilder.getNormCatchRackBarcode(),
                 WorkflowName.HYBRID_SELECTION).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : qtpJaxbBuilder.getMessageList()) {

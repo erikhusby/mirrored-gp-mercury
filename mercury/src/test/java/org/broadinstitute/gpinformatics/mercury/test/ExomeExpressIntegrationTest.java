@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.test;
 
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.WebResource;
-import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
@@ -91,32 +91,32 @@ public class ExomeExpressIntegrationTest {
             System.out.println("Press enter to send dilution and plating");
             scanner.nextLine();
             // dilution.
-            BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
+            BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory();
             String dilutionTargetRackBarcode = "DilutionTarget" + testSuffix;
             List<String> dilutionTargetTubeBarcodes = new ArrayList<String>();
             List<String> platingTargetTubeBarcodes = new ArrayList<String>();
             for (int i = 0; i < tubeBarcodes.size(); i++) {
                 dilutionTargetTubeBarcodes.add(testSuffix + i);
             }
-            PlateTransferEventType dilutionTransferEvent = bettaLimsMessageFactory.buildRackToRack(
+            PlateTransferEventType dilutionTransferEvent = bettaLimsMessageTestFactory.buildRackToRack(
                     LabEventType.SAMPLES_DAUGHTER_PLATE_CREATION.getName(), "DilutionSource" + testSuffix, tubeBarcodes,
                     dilutionTargetRackBarcode, dilutionTargetTubeBarcodes);
             BettaLIMSMessage dilutionTransferMessage = new BettaLIMSMessage();
             dilutionTransferMessage.getPlateTransferEvent().add(dilutionTransferEvent);
             sendMessage(baseUrl, dilutionTransferMessage);
-            bettaLimsMessageFactory.advanceTime();
+            bettaLimsMessageTestFactory.advanceTime();
 
             // plating aliquot.
             for (int i = 0; i < tubeBarcodes.size(); i++) {
                 platingTargetTubeBarcodes.add("1" + testSuffix + i);
             }
-            PlateTransferEventType platingTransfer = bettaLimsMessageFactory.buildRackToRack(
+            PlateTransferEventType platingTransfer = bettaLimsMessageTestFactory.buildRackToRack(
                     LabEventType.SAMPLES_DAUGHTER_PLATE_CREATION.getName(), dilutionTargetRackBarcode,
                     dilutionTargetTubeBarcodes, "PlatingTarget" + testSuffix, platingTargetTubeBarcodes);
             BettaLIMSMessage platingTransferMessage = new BettaLIMSMessage();
             platingTransferMessage.getPlateTransferEvent().add(platingTransfer);
             sendMessage(baseUrl, platingTransferMessage);
-            bettaLimsMessageFactory.advanceTime();
+            bettaLimsMessageTestFactory.advanceTime();
 
             // User checks chain of custody.
             // User checks LCSET LIMS Activity Stream.
@@ -125,7 +125,7 @@ public class ExomeExpressIntegrationTest {
             scanner.nextLine();
             // export message.
             // Reconstruct the factory, to update the time.
-            bettaLimsMessageFactory = new BettaLimsMessageFactory();
+            bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory();
             parentVesselBeans = new ArrayList<ParentVesselBean>();
             ArrayList<ChildVesselBean> childVesselBeans = new ArrayList<ChildVesselBean>();
             // Need a 4 character base 36 ID.
@@ -133,7 +133,7 @@ public class ExomeExpressIntegrationTest {
             String partialSampleId = Integer.toString((int) (System.currentTimeMillis() % 1600000L), 36).toUpperCase();
             for (int i = 0; i < tubeBarcodes.size(); i++) {
                 childVesselBeans.add(new ChildVesselBean(platingTargetTubeBarcodes.get(i), "SM-" + partialSampleId + (i + 1),
-                        "tube", bettaLimsMessageFactory.buildWellName(i + 1)));
+                        "tube", bettaLimsMessageTestFactory.buildWellName(i + 1)));
             }
             String exportRackBarcode = "EX-" + testSuffix;
             parentVesselBeans.add(new ParentVesselBean(exportRackBarcode, null, "Rack", childVesselBeans));
@@ -151,14 +151,15 @@ public class ExomeExpressIntegrationTest {
             scanner.nextLine();
             // LC messages.
             // Reconstruct the factory, to update the time.
-            bettaLimsMessageFactory = new BettaLimsMessageFactory();
-            LabEventTest.ShearingJaxbBuilder shearingJaxbBuilder = new LabEventTest.ShearingJaxbBuilder(bettaLimsMessageFactory,
+            bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory();
+            LabEventTest.ShearingJaxbBuilder shearingJaxbBuilder = new LabEventTest.ShearingJaxbBuilder(
+                    bettaLimsMessageTestFactory,
                     platingTargetTubeBarcodes, testSuffix, exportRackBarcode).invoke();
             for (BettaLIMSMessage bettaLIMSMessage : shearingJaxbBuilder.getMessageList()) {
                 sendMessage(baseUrl, bettaLIMSMessage);
             }
             LabEventTest.LibraryConstructionJaxbBuilder libraryConstructionJaxbBuilder = new LabEventTest.LibraryConstructionJaxbBuilder(
-                    bettaLimsMessageFactory, testSuffix, shearingJaxbBuilder.getShearCleanPlateBarcode(), "000002453323",
+                    bettaLimsMessageTestFactory, testSuffix, shearingJaxbBuilder.getShearCleanPlateBarcode(), "000002453323",
                     sampleIds.size()).invoke();
 
             for (BettaLIMSMessage bettaLIMSMessage : libraryConstructionJaxbBuilder.getMessageList()) {
@@ -166,12 +167,12 @@ public class ExomeExpressIntegrationTest {
             }
 
             LabEventTest.HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = new LabEventTest.HybridSelectionJaxbBuilder(
-                    bettaLimsMessageFactory, testSuffix, libraryConstructionJaxbBuilder.getPondRegRackBarcode(),
+                    bettaLimsMessageTestFactory, testSuffix, libraryConstructionJaxbBuilder.getPondRegRackBarcode(),
                     libraryConstructionJaxbBuilder.getPondRegTubeBarcodes(), "0102692378").invoke();
             for (BettaLIMSMessage bettaLIMSMessage : hybridSelectionJaxbBuilder.getMessageList()) {
                 sendMessage(baseUrl, bettaLIMSMessage);
             }
-            LabEventTest.QtpJaxbBuilder qtpJaxbBuilder = new LabEventTest.QtpJaxbBuilder(bettaLimsMessageFactory, testSuffix,
+            LabEventTest.QtpJaxbBuilder qtpJaxbBuilder = new LabEventTest.QtpJaxbBuilder(bettaLimsMessageTestFactory, testSuffix,
                     hybridSelectionJaxbBuilder.getNormCatchBarcodes(), hybridSelectionJaxbBuilder.getNormCatchRackBarcode(),
                     WorkflowName.EXOME_EXPRESS).invoke();
             for (BettaLIMSMessage bettaLIMSMessage : qtpJaxbBuilder.getMessageList()) {

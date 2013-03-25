@@ -10,7 +10,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.vessel.TubeBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselMetricBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselMetricRunBean;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.testng.annotations.Test;
 
 import javax.persistence.EntityManager;
@@ -136,17 +136,17 @@ public class ImportFromBspTest extends ContainerTest {
         }
         LabBatchBean labBatchBean = new LabBatchBean("BP-ROOT-" + testSuffix, null, rootTubeBeans);
         createBatch(labBatchBean);
-        BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
+        BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory();
 
-        PlateTransferEventType plateTransferEventType = bettaLimsMessageFactory.buildRackToRack(
+        PlateTransferEventType plateTransferEventType = bettaLimsMessageTestFactory.buildRackToRack(
                 LabEventType.SAMPLES_NORMALIZATION_TRANSFER.getName(), "ROOT" + testSuffix, normSourceBarcodes,
                 "NORM" + testSuffix, normTargetBarcodes);
         BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
         bettaLIMSMessage.getPlateTransferEvent().add(plateTransferEventType);
         sendMessage(bettaLIMSMessage);
 
-        bettaLimsMessageFactory.advanceTime();
-        plateTransferEventType = bettaLimsMessageFactory.buildRackToRack(
+        bettaLimsMessageTestFactory.advanceTime();
+        plateTransferEventType = bettaLimsMessageTestFactory.buildRackToRack(
                 LabEventType.SAMPLES_PLATING_TO_COVARIS.getName(), "NORM" + testSuffix, normTargetBarcodes,
                 "EXPORT" + testSuffix, platingTargetBarcodes);
         bettaLIMSMessage = new BettaLIMSMessage();
