@@ -10,7 +10,7 @@ import static org.testng.Assert.assertEquals;
 @Test(groups = EXTERNAL_INTEGRATION)
 public class BSPSampleDataFetcherTest extends ContainerTest {
 
-    BSPSampleSearchService sampleSearchService = BSPSampleSearchServiceProducer.qaInstance();
+    BSPSampleSearchService sampleSearchService = BSPSampleSearchServiceProducer.devInstance();
 
     /**
      * BSP sometimes sends shorter result arrays when there are null fields.

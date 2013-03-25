@@ -9,6 +9,7 @@ import javax.enterprise.inject.New;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.QA;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.STUBBY;
 
@@ -34,6 +35,20 @@ public class BSPSampleSearchServiceProducer {
         return new BSPSampleSearchServiceStub();
     }
 
+
+    /**
+     * Creates a BSPSampleSearchService with plain old new operator for container-free testing,
+     * not a managed bean!
+     * <p/>
+     * This is also needed to get a real copy of the BSP services in container testing, since by default
+     * injection will give you a Stub BSP service, not an Impl.
+     */
+    public static BSPSampleSearchService devInstance() {
+
+        BSPConfig bspConfig = BSPConfig.produce(DEV);
+
+        return new BSPSampleSearchServiceImpl(bspConfig);
+    }
 
     /**
      * Creates a BSPSampleSearchService with plain old new operator for container-free testing,
