@@ -336,7 +336,7 @@ public class LabBatch {
 
         HashCodeBuilder hashCodeBuilder = new HashCodeBuilder();
 
-        hashCodeBuilder.append(isActive).append(batchName).append(jiraTicket).append(getStartingVesselsArray());
+        hashCodeBuilder.append(isActive).append(batchName).append(jiraTicket);
 
         return hashCodeBuilder.hashCode();
     }
