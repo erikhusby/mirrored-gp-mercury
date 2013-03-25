@@ -51,7 +51,7 @@ public class SampleReceiptMessageBean implements MessageListener {
     /**
      * Transaction is NOT_SUPPORTED because we don't want re-delivery in case of failure.  We store all messages
      * on the file system, and email in case of failure, so the recipient of the email can resubmit messages manually.
-     * @param message JMS message from deck
+     * @param message JMS message from BSP
      */
     @TransactionAttribute(value= TransactionAttributeType.NOT_SUPPORTED)
     @Override
