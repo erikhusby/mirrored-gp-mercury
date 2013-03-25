@@ -32,7 +32,7 @@ public class BusinessKeyComparatorTest {
 
         // It doesn't matter which end up first, just that the one
         // that looks like a business key is at the end.
-        assertThat(indexOf(actual, "TEST-1"), is(equalTo(actual.length - 1)));
+        assertThat("TEST-1", is(equalTo(actual[actual.length - 1])));
     }
 
 
