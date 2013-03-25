@@ -832,8 +832,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private void handleSamplesAdded(List<ProductOrderSample> newSamples) {
         Collection<ProductOrderSample> samples = mercuryClientService.addSampleToPicoBucket(editOrder, newSamples);
         if (!samples.isEmpty()) {
-            addMessage("{0} samples have been added to the pico bucket: {1}", samples.size(),
-                    StringUtils.join(ProductOrderSample.getSampleNames(samples), ", "));
+                addMessage("{0} samples have been added to the pico bucket.", samples.size());
         }
     }
 
