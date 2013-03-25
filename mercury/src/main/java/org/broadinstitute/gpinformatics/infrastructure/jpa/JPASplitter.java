@@ -79,7 +79,7 @@ public class JPASplitter extends BaseSplitter {
         return query.getResultList();
     }
 
-    public static <SPLIT_DATA_TYPE, RETURN_DATA_TYPE> List<RETURN_DATA_TYPE> runCriteryQuery(
+    public static <SPLIT_DATA_TYPE, RETURN_DATA_TYPE> List<RETURN_DATA_TYPE> runCriteriaQuery(
             @Nonnull Collection<SPLIT_DATA_TYPE> parameterList,
             @Nonnull CriteriaInClauseCreator<SPLIT_DATA_TYPE> criteriaCreator) {
 
