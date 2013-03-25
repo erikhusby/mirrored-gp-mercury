@@ -1,11 +1,14 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 
 import org.jboss.weld.context.bound.BoundSessionContext;
+import org.jboss.weld.context.ejb.EjbRequestContext;
 
 import javax.ejb.ActivationConfigProperty;
 import javax.ejb.MessageDriven;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
+import javax.enterprise.context.RequestScoped;
+import javax.enterprise.inject.spi.BeanManager;
 import javax.inject.Inject;
 import javax.jms.Message;
 import javax.jms.MessageListener;
@@ -29,6 +32,9 @@ public class BettalimsMessageBean implements MessageListener {
 
     @Inject
     private BoundSessionContext sessionContext;
+
+    @Inject
+    private BeanManager beanManager;
 
     @Inject
     private BettalimsMessageResource bettalimsMessageResource;
@@ -64,6 +70,13 @@ public class BettalimsMessageBean implements MessageListener {
                 //"Expected TextMessage, received " + message.getClass().getName()
             }
         } finally {
+            // There seems to be a bug in JBoss AS 7.1.1 that causes Stateful RequestScoped beans not to be destroyed
+            // at the end of onMessage.  This leads to a memory leak of org.hibernate.internal.util.collections.IdentityMap.
+            // Until this bug is fixed, we manually end the Request scope.
+            EjbRequestContext context = (EjbRequestContext) beanManager.getContext(RequestScoped.class);
+            context.invalidate();
+            context.deactivate();
+
             sessionContext.invalidate();
             sessionContext.deactivate();
         }
