@@ -9,7 +9,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFac
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.monitoring.HipChatMessageSender;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnectorProducer;
-import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
@@ -92,7 +92,7 @@ public class SolexaRunRoutingTest {
         LabBatchDAO labBatchDAO = EasyMock.createNiceMock(LabBatchDAO.class);
         labBatchEJB.setLabBatchDao(labBatchDAO);
 
-        ProductOrder productOrder = ProductOrderFactory.buildWholeGenomeProductOrder(NUM_POSITIONS_IN_RACK);
+        ProductOrder productOrder = ProductOrderTestFactory.buildWholeGenomeProductOrder(NUM_POSITIONS_IN_RACK);
         String jiraTicketKey = productOrder.getBusinessKey();
 
         mapKeyToProductOrder.put(jiraTicketKey, productOrder);

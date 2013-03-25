@@ -6,7 +6,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
-import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
@@ -80,7 +80,7 @@ public class SolexaRunResourceTest extends Arquillian {
 
         runDate = new Date();
 
-        ProductOrder exexOrder = ProductOrderFactory.buildExExProductOrder(96);
+        ProductOrder exexOrder = ProductOrderTestFactory.buildExExProductOrder(96);
 
         flowcellBarcode = "testcaseFlowcell" + runDate.getTime();
 

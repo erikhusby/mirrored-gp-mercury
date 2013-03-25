@@ -12,7 +12,6 @@ import org.jboss.shrinkwrap.resolver.api.maven.MavenDependency;
 import org.jboss.shrinkwrap.resolver.api.maven.MavenImporter;
 import org.jboss.shrinkwrap.resolver.api.maven.MavenResolutionFilter;
 
-//import java.io.File;
 import java.io.File;
 import java.util.Collection;
 
@@ -22,7 +21,6 @@ import java.util.Collection;
 public class DeploymentBuilder {
 
     private static final String MERCURY_WAR = "Mercury-Arquillian.war";
-
 
 
     /**
@@ -35,8 +33,10 @@ public class DeploymentBuilder {
 
     /**
      * Allows caller to specify environments for remote systems, and for the database
-     * @param deployment maps to settings in mercury-config.yaml
+     *
+     * @param deployment            maps to settings in mercury-config.yaml
      * @param dataSourceEnvironment which datasources to use: dev, qa or prod
+     *
      * @return war
      */
     public static WebArchive buildMercuryWar(Deployment deployment, String dataSourceEnvironment) {
@@ -47,10 +47,11 @@ public class DeploymentBuilder {
                 .addAsWebInfResource(new File("src/test/resources/squid-" + dataSourceEnvironment + "-ds.xml"))
                 .addAsResource(new File("src/main/resources/META-INF/persistence.xml"), "META-INF/persistence.xml")
                 .addAsWebInfResource(new File("src/main/webapp/WEB-INF/ejb-jar.xml"))
-                //TODO  Cherry Picking resources is not Ideal.  When we have more auto front end tests, we will need everything in resources.
+                        //TODO  Cherry Picking resources is not Ideal.  When we have more auto front end tests, we will need everything in resources.
                 .addAsResource(new File("src/main/resources/WorkflowConfig.xml"), "WorkflowConfig.xml")
                 .addPackages(true, "org.broadinstitute.gpinformatics")
-                .addAsWebInfResource(new StringAsset("MERCURY_DEPLOYMENT=" + deployment.name()), "classes/jndi.properties");
+                .addAsWebInfResource(new StringAsset("MERCURY_DEPLOYMENT=" + deployment.name()),
+                        "classes/jndi.properties");
         addWebResourcesTo(war, "src/test/resources/testdata");
         war = addWarDependencies(war);
         return war;
@@ -79,7 +80,7 @@ public class DeploymentBuilder {
                 .merge(buildMercuryWar());
     }
 
-    private static WebArchive buildMercuryWar(String beansXml,Deployment deployment) {
+    private static WebArchive buildMercuryWar(String beansXml, Deployment deployment) {
         return ShrinkWrap.create(WebArchive.class, MERCURY_WAR)
                 .addAsWebInfResource(new StringAsset(beansXml), "beans.xml")
                 .merge(buildMercuryWar(deployment));
@@ -97,7 +98,6 @@ public class DeploymentBuilder {
                 .append("</beans>");
         return buildMercuryWar(sb.toString());
     }
-
 
 
     public static WebArchive buildMercuryWarWithAlternatives(Class... alternatives) {
@@ -130,7 +130,7 @@ public class DeploymentBuilder {
         }
         sb.append("  </alternatives>\n")
                 .append("</beans>");
-        return buildMercuryWar(sb.toString(),deployment);
+        return buildMercuryWar(sb.toString(), deployment);
     }
 
     @SuppressWarnings("UnusedDeclaration")

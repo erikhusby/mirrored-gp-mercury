@@ -8,7 +8,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -48,7 +48,7 @@ public class ProductOrderDaoTest extends ContainerTest {
 
         utx.begin();
 
-        order = ProductOrderDBFactory.createTestProductOrder(researchProjectDao, productDao);
+        order = ProductOrderDBTestFactory.createTestProductOrder(researchProjectDao, productDao);
         productOrderDao.persist(order);
         productOrderDao.flush();
         productOrderDao.clear();
@@ -90,13 +90,13 @@ public class ProductOrderDaoTest extends ContainerTest {
     }
 
     public void testFindOrdersCreatedBy() {
-        List<ProductOrder> orders = productOrderDao.findByCreatedPersonId(ProductOrderDBFactory.TEST_CREATOR_ID);
+        List<ProductOrder> orders = productOrderDao.findByCreatedPersonId(ProductOrderDBTestFactory.TEST_CREATOR_ID);
         Assert.assertNotNull(orders);
         Assert.assertFalse(orders.isEmpty());
     }
 
     public void testFindOrdersModifiedBy() {
-        List<ProductOrder> orders = productOrderDao.findByModifiedPersonId(ProductOrderDBFactory.TEST_CREATOR_ID);
+        List<ProductOrder> orders = productOrderDao.findByModifiedPersonId(ProductOrderDBTestFactory.TEST_CREATOR_ID);
         Assert.assertNotNull(orders);
         Assert.assertFalse(orders.isEmpty());
     }
@@ -121,7 +121,7 @@ public class ProductOrderDaoTest extends ContainerTest {
     }
 
     public void testFindByWorkflow() {
-        ProductOrder testOrder = ProductOrderDBFactory.createTestExExProductOrder(researchProjectDao, productDao);
+        ProductOrder testOrder = ProductOrderDBTestFactory.createTestExExProductOrder(researchProjectDao, productDao);
 
         productOrderDao.persist(testOrder);
         productOrderDao.flush();

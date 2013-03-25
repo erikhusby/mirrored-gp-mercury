@@ -7,7 +7,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderSampleFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderSampleTestFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 
 import java.util.List;
@@ -18,7 +18,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.matchers.NullOrEmp
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
-public class ProductOrderDBFactory {
+public class ProductOrderDBTestFactory {
     public static final String TEST_ORDER_TITLE_PREFIX = "TestProductOrder_";
     public static final long TEST_CREATOR_ID = new Random().nextInt(Integer.MAX_VALUE);
     public static final String MS_1111 = "MS-1111";
@@ -40,7 +40,7 @@ public class ProductOrderDBFactory {
         // Try to create a Product Order and persist it.
         String testProductOrderTitle = TEST_ORDER_TITLE_PREFIX + UUID.randomUUID();
         ProductOrder order =
-                new ProductOrder(TEST_CREATOR_ID, testProductOrderTitle, ProductOrderSampleFactory
+                new ProductOrder(TEST_CREATOR_ID, testProductOrderTitle, ProductOrderSampleTestFactory
                         .createSampleList(sampleNames),
                                         "quoteId", product, project);
 
@@ -70,7 +70,7 @@ public class ProductOrderDBFactory {
         // Try to create a Product Order and persist it.
         String testProductOrderTitle = TEST_ORDER_TITLE_PREFIX + UUID.randomUUID();
         ProductOrder order =
-                new ProductOrder(TEST_CREATOR_ID, testProductOrderTitle, ProductOrderSampleFactory
+                new ProductOrder(TEST_CREATOR_ID, testProductOrderTitle, ProductOrderSampleTestFactory
                         .createSampleList(sampleNames),
                                         "quoteId", product, project);
 

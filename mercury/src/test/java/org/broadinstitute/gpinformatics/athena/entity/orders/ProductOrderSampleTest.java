@@ -9,8 +9,8 @@ import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
-import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductFactory;
-import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -54,13 +54,13 @@ public class ProductOrderSampleTest {
         final ProductOrderSample sample2;
 
         public TestPDOData(String quoteId) {
-            ProductOrder order = ProductOrderFactory.createDummyProductOrder();
+            ProductOrder order = ProductOrderTestFactory.createDummyProductOrder();
 
             order.setQuoteId(quoteId);
 
             product = order.getProduct();
             MaterialType materialType = new MaterialType(BSP_MATERIAL_TYPE.getCategory(), BSP_MATERIAL_TYPE.getName());
-            addOn = ProductFactory.createDummyProduct("Exome Express", "partNumber");
+            addOn = ProductTestFactory.createDummyProduct("Exome Express", "partNumber");
             addOn.addAllowableMaterialType(materialType);
             addOn.setPrimaryPriceItem(new PriceItem("A", "B", "C", "D"));
             product.addAddOn(addOn);

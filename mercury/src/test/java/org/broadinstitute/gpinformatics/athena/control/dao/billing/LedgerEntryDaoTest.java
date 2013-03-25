@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.billing;
 
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
-import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
 import org.testng.Assert;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
@@ -63,7 +63,7 @@ public class LedgerEntryDaoTest extends ContainerTest {
         PriceItem priceItem = priceItemDao.findAll().get(0);
 
         // Create an order and add samples to it.
-        ProductOrder order = ProductOrderDBFactory.createTestProductOrder(researchProjectDao, productDao);
+        ProductOrder order = ProductOrderDBTestFactory.createTestProductOrder(researchProjectDao, productDao);
         ProductOrderSample productOrderSample1 = order.getSamples().get(0);
 
         // Create first ledger item.
@@ -79,8 +79,8 @@ public class LedgerEntryDaoTest extends ContainerTest {
         orders[0] = order;
 
         // Create an order that contains duplicate sample names.
-        ProductOrder orderWithDupes = ProductOrderDBFactory.createTestProductOrder(researchProjectDao, productDao,
-                ProductOrderDBFactory.MS_1111 + "X", ProductOrderDBFactory.MS_1111 + "X");
+        ProductOrder orderWithDupes = ProductOrderDBTestFactory.createTestProductOrder(researchProjectDao, productDao,
+                ProductOrderDBTestFactory.MS_1111 + "X", ProductOrderDBTestFactory.MS_1111 + "X");
         ProductOrderSample productOrderSample1ForDupes = orderWithDupes.getSamples().get(0);
         ProductOrderSample productOrderSample2ForDupes = orderWithDupes.getSamples().get(1);
 

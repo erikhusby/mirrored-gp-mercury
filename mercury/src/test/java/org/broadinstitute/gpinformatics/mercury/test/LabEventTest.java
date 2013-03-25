@@ -13,7 +13,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.monitoring.HipChatMessageSender;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnectorProducer;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageFactory;
-import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.*;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.graph.Graph;
@@ -171,7 +171,7 @@ public class LabEventTest {
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
 
         ProductOrder productOrder =
-                ProductOrderFactory.buildHybridSelectionProductOrder(NUM_POSITIONS_IN_RACK);
+                ProductOrderTestFactory.buildHybridSelectionProductOrder(NUM_POSITIONS_IN_RACK);
         int rackPosition=1;
 
         for(ProductOrderSample poSample:productOrder.getSamples()) {
@@ -315,7 +315,7 @@ public class LabEventTest {
         labBatchEJB.setLabBatchDao(labBatchDAO);
 
 
-        ProductOrder productOrder = ProductOrderFactory.buildExExProductOrder(96);
+        ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
         String jiraTicketKey = productOrder.getBusinessKey();
 
         mapKeyToProductOrder.put(productOrder.getBusinessKey(), productOrder);
@@ -495,7 +495,7 @@ public class LabEventTest {
         labBatchEJB.setLabBatchDao(labBatchDAO);
 
 
-        ProductOrder productOrder = ProductOrderFactory.buildWholeGenomeProductOrder(NUM_POSITIONS_IN_RACK);
+        ProductOrder productOrder = ProductOrderTestFactory.buildWholeGenomeProductOrder(NUM_POSITIONS_IN_RACK);
         String jiraTicketKey = productOrder.getBusinessKey();
 
         mapKeyToProductOrder.put(jiraTicketKey, productOrder);
