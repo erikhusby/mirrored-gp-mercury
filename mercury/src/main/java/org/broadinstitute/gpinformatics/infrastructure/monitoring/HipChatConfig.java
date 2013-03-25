@@ -8,6 +8,7 @@ import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.io.Serializable;
 
+@SuppressWarnings("UnusedDeclaration")
 @ConfigKey("hipchat")
 public class HipChatConfig extends AbstractConfig implements Serializable {
 

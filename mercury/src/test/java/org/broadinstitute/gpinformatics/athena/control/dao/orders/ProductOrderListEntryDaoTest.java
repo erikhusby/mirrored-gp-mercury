@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEnt
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBFactory;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -60,7 +61,7 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
 
         utx.begin();
 
-        order = ProductOrderDaoTest.createTestProductOrder(researchProjectDao, productDao);
+        order = ProductOrderDBFactory.createTestProductOrder(researchProjectDao, productDao);
 
         // need to initialize the price items here as we will be exercising their hashCode methods when we create
         // LedgerEntry entities in some of our tests
