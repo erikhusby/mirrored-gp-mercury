@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.infrastructure.test;
+package org.broadinstitute.gpinformatics.infrastructure.test.dbfree;
 
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.Irb;

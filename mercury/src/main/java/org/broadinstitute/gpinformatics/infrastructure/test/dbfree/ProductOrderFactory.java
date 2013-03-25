@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.infrastructure.test;
+package org.broadinstitute.gpinformatics.infrastructure.test.dbfree;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
