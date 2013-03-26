@@ -533,7 +533,7 @@ public class LabEventTest {
                 TransferTraverserCriteria.TraversalDirection.Descendants);
         List<String> labEventNames = transferTraverserCriteria.getLabEventNames();
 
-        //todo: these need to be made to assert something useful, andn pass.
+        //todo: these need to be made to assert something useful, and pass.
         Assert.assertEquals(labEventNames.size(), 11, "Wrong number of transfers");
 
         /*
@@ -1259,9 +1259,9 @@ public class LabEventTest {
     }
 
     /**
-     * Refer to {@link SamplesPicoEndToEndTest} for expanded version
+     * Refer to {@link SamplesPicoEndToEndTest} for expanded version.
      * <p/>
-     * TODO SGM:  Merge to lesen code duplication
+     * TODO SGM:  Merge to lessen code duplication.
      */
     public static class PicoPlatingJaxbBuilder {
         private final BettaLimsMessageTestFactory bettaLimsMessageTestFactory;

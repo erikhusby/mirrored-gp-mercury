@@ -143,7 +143,7 @@ public class SolexaRunRoutingTest {
 
             @Override
             public LabBatch getLabBatch(String labBatchName) {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
+                return null;
             }
         });
 
@@ -273,6 +273,7 @@ public class SolexaRunRoutingTest {
         stringTwoDBarcodedTubeEntry.getValue()
                                    .evaluateCriteria(transferTraverserCriteria,
                                                             TransferTraverserCriteria.TraversalDirection.Descendants);
+        @SuppressWarnings("UnusedDeclaration")
         List<String> labEventNames = transferTraverserCriteria.getLabEventNames();
 
         IlluminaFlowcell flowcell = qtpEntityBuilder.getIlluminaFlowcell();
