@@ -16,6 +16,7 @@ import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServic
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunResource;
@@ -37,7 +38,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
-import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -171,7 +171,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
 
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = buildSamplesInPdo(testPrefix);
 
-        BettaLimsMessageFactory bettaLimsMessageFactory=new BettaLimsMessageFactory();
+        BettaLimsMessageTestFactory bettaLimsMessageFactory = new BettaLimsMessageTestFactory();
 
         LabEventTest.HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = sendMessagesUptoCatch(testPrefix,
                 mapBarcodeToTube, bettaLimsMessageFactory);
@@ -226,7 +226,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
      */
     private LabEventTest.HybridSelectionJaxbBuilder sendMessagesUptoCatch(String testPrefix,
             Map<String, TwoDBarcodedTube> mapBarcodeToTube,
-            BettaLimsMessageFactory bettaLimsMessageFactory) {
+            BettaLimsMessageTestFactory bettaLimsMessageFactory) {
         try {
             LabEventTest.PreFlightJaxbBuilder preFlightJaxbBuilder=new LabEventTest.PreFlightJaxbBuilder(
                     bettaLimsMessageFactory, testPrefix, new ArrayList<String>(mapBarcodeToTube.keySet())).invoke();
@@ -357,13 +357,14 @@ public class BettalimsMessageResourceTest extends Arquillian {
         return mapBarcodeToTube;
     }
 
-    @Test
     /**
-     * Test performance by creating a flowcell with a different 96 sample LCSET on each of 8 lanes
+     * Test performance by creating a flowcell with a different 96 sample LCSET on each of 8 lanes.
+     * Needs -Dorg.jboss.remoting-jmx.timeout=3000
      */
+    @Test(enabled = false)
     public void test8Lcsets() {
         String testPrefix;
-        BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
+        BettaLimsMessageTestFactory bettaLimsMessageFactory = new BettaLimsMessageTestFactory();
         List<List<String>> listLcsetListNormCatchBarcodes = new ArrayList<List<String>>();
         List<String> normCatchRackBarcodes = new ArrayList<String>();
 

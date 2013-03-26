@@ -1,7 +1,9 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.billing;
 
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
-import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBFactory;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry_;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
+import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
 import org.testng.Assert;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
@@ -17,6 +19,8 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Root;
 import javax.transaction.UserTransaction;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -43,6 +47,7 @@ public class LedgerEntryDaoTest extends ContainerTest {
     @Inject
     private PriceItemDao priceItemDao;
 
+    @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private UserTransaction utx;
 
@@ -63,7 +68,7 @@ public class LedgerEntryDaoTest extends ContainerTest {
         PriceItem priceItem = priceItemDao.findAll().get(0);
 
         // Create an order and add samples to it.
-        ProductOrder order = ProductOrderDBFactory.createTestProductOrder(researchProjectDao, productDao);
+        ProductOrder order = ProductOrderDBTestFactory.createTestProductOrder(researchProjectDao, productDao);
         ProductOrderSample productOrderSample1 = order.getSamples().get(0);
 
         // Create first ledger item.
@@ -79,8 +84,8 @@ public class LedgerEntryDaoTest extends ContainerTest {
         orders[0] = order;
 
         // Create an order that contains duplicate sample names.
-        ProductOrder orderWithDupes = ProductOrderDBFactory.createTestProductOrder(researchProjectDao, productDao,
-                ProductOrderDBFactory.MS_1111 + "X", ProductOrderDBFactory.MS_1111 + "X");
+        ProductOrder orderWithDupes = ProductOrderDBTestFactory.createTestProductOrder(researchProjectDao, productDao,
+                ProductOrderDBTestFactory.MS_1111 + "X", ProductOrderDBTestFactory.MS_1111 + "X");
         ProductOrderSample productOrderSample1ForDupes = orderWithDupes.getSamples().get(0);
         ProductOrderSample productOrderSample2ForDupes = orderWithDupes.getSamples().get(1);
 
@@ -114,7 +119,14 @@ public class LedgerEntryDaoTest extends ContainerTest {
 
     //
     public void testFindLedgerEntries() {
-        List<LedgerEntry> ledgerEntries = ledgerEntryDao.findAll();
+        // In one test run, execution time without join fetch callback was 227472 ms.
+        // Execution time with join fetch callback was 51921 ms.
+        List<LedgerEntry> ledgerEntries = ledgerEntryDao.findAll(LedgerEntry.class, new GenericDao.GenericDaoCallback<LedgerEntry>() {
+            @Override
+            public void callback(CriteriaQuery<LedgerEntry> criteriaQuery, Root<LedgerEntry> root) {
+                root.fetch(LedgerEntry_.productOrderSample);
+            }
+        });
         Assert.assertTrue(!ledgerEntries.isEmpty(), "The specified order should find at one test ledger");
     }
 

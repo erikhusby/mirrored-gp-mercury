@@ -14,7 +14,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
-public class ResearchProjectFactory {
+public class ResearchProjectTestFactory {
 
     public static final long TEST_CREATOR = 10950;
 

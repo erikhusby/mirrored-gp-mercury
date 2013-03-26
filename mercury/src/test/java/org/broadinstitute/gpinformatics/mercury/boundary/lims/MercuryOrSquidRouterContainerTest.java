@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.testng.Assert;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -31,7 +32,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
-import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageFactory;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.easymock.EasyMock;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -55,7 +55,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
-import static org.broadinstitute.gpinformatics.mercury.entity.vessel.LabEventTestFactory.makeTubeFormation;
+import static org.broadinstitute.gpinformatics.infrastructure.test.dbfree.LabEventTestFactory.makeTubeFormation;
 
 /**
  * @author Scott Matthews
@@ -76,7 +76,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
     private LabVesselDao vesselDao;
 
     @Inject
-    private BettaLimsMessageFactory bettaLimsMessageFactory;
+    private BettaLimsMessageTestFactory bettaLimsMessageTestFactory;
 
     @Inject
     private BettalimsMessageResource bettalimsMessageResource;
@@ -181,14 +181,14 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
         // Shearing Rack to Plate
         String postShearingPlateBarCode = "Shearing" + testPrefix;
         PlateTransferEventType shearingEventJaxb =
-                bettaLimsMessageFactory.buildRackToPlate(LabEventType.SHEARING_TRANSFER.getName(), rackBarcode,
+                bettaLimsMessageTestFactory.buildRackToPlate(LabEventType.SHEARING_TRANSFER.getName(), rackBarcode,
                                                                 new ArrayList<String>(mapBarcodeToTube.keySet()),
                                                                 postShearingPlateBarCode);
 
         BettaLIMSMessage msg = new BettaLIMSMessage();
         msg.getPlateTransferEvent().add(shearingEventJaxb);
-        bettaLimsMessageFactory.advanceTime();
-        String xmlMessage = BettaLimsMessageFactory.marshal(msg);
+        bettaLimsMessageTestFactory.advanceTime();
+        String xmlMessage = BettaLimsMessageTestFactory.marshal(msg);
 
         bettalimsMessageResource.processMessage(xmlMessage);
         vesselDao.flush();
@@ -201,14 +201,14 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
         // Adapter Ligation (Plate to Plate -- where the the Target is the item to validate, not the source)
         PlateTransferEventType ligationCleanupJaxb =
-                bettaLimsMessageFactory
+                bettaLimsMessageTestFactory
                         .buildPlateToPlate(LabEventType.INDEXED_ADAPTER_LIGATION.getName(), ligationBarcode,
                                                   shearingEventJaxb.getPlate().getBarcode());
 
         BettaLIMSMessage msgLigate = new BettaLIMSMessage();
         msgLigate.getPlateTransferEvent().add(ligationCleanupJaxb);
-        bettaLimsMessageFactory.advanceTime();
-        String ligateXmlMessage = BettaLimsMessageFactory.marshal(msgLigate);
+        bettaLimsMessageTestFactory.advanceTime();
+        String ligateXmlMessage = BettaLimsMessageTestFactory.marshal(msgLigate);
 
         bettalimsMessageResource.processMessage(ligateXmlMessage);
         vesselDao.flush();
@@ -227,14 +227,14 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 //
 //        String pondRegRackBarcode = "PondRegRack" + testPrefix;
 //        PlateTransferEventType pondRegJaxb =
-//                bettaLimsMessageFactory.buildPlateToRack(LabEventType.POND_REGISTRATION.getName(),
+//                bettaLimsMessageTestFactory.buildPlateToRack(LabEventType.POND_REGISTRATION.getName(),
 //                                                                shearPlate.getLabel(), pondRegRackBarcode,
 //                                                                pondRegBarcodes);
 //
 //        BettaLIMSMessage pondRegMsg = new BettaLIMSMessage();
 //        pondRegMsg.getPlateTransferEvent().add(pondRegJaxb);
-//        bettaLimsMessageFactory.advanceTime();
-//        String pondRegMessage = BettaLimsMessageFactory.marshal(pondRegMsg);
+//        bettaLimsMessageTestFactory.advanceTime();
+//        String pondRegMessage = BettaLimsMessageTestFactory.marshal(pondRegMsg);
 //
 //        bettalimsMessageResource.processMessage(pondRegMessage);
 //        vesselDao.flush();
@@ -247,10 +247,10 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 //
 //        // Strip Tube B Transfer  (Rack to Strip tube)
 //        String stripTubeHolderBarcode = "StripTubeHolder" + testPrefix;
-//        List<BettaLimsMessageFactory.CherryPick> stripTubeCherryPicks =
-//                new ArrayList<BettaLimsMessageFactory.CherryPick>();
+//        List<BettaLimsMessageTestFactory.CherryPick> stripTubeCherryPicks =
+//                new ArrayList<BettaLimsMessageTestFactory.CherryPick>();
 //        for (int rackPosition = 0; rackPosition < 8; rackPosition++) {
-//            stripTubeCherryPicks.add(new BettaLimsMessageFactory.CherryPick(pondRegJaxb.getPlate().getBarcode(), "A01",
+//            stripTubeCherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(pondRegJaxb.getPlate().getBarcode(), "A01",
 //                                                                                   stripTubeHolderBarcode,
 //                                                                                   Character.toString(
 //                                                                                                             (char) ('A' + rackPosition)) + "01"));
@@ -258,7 +258,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 //
 //        String stripTubeBarcode = "StripTube" + testPrefix + "1";
 //        PlateCherryPickEvent stripTubeTransferJaxb =
-//                bettaLimsMessageFactory.buildCherryPickToStripTube(LabEventType.STRIP_TUBE_B_TRANSFER.getName(),
+//                bettaLimsMessageTestFactory.buildCherryPickToStripTube(LabEventType.STRIP_TUBE_B_TRANSFER.getName(),
 //                                                                          Arrays.asList(pondRegJaxb.getPlate()
 //                                                                                                   .getBarcode()),
 //                                                                          Arrays.asList(Arrays.asList(pondRegJaxb
@@ -273,8 +273,8 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 //
 //        BettaLIMSMessage stBMsg = new BettaLIMSMessage();
 //        stBMsg.getPlateCherryPickEvent().add(stripTubeTransferJaxb);
-//        bettaLimsMessageFactory.advanceTime();
-//        String stBMessage = BettaLimsMessageFactory.marshal(stBMsg);
+//        bettaLimsMessageTestFactory.advanceTime();
+//        String stBMessage = BettaLimsMessageTestFactory.marshal(stBMsg);
 //
 //        bettalimsMessageResource.processMessage(stBMessage);
 //        vesselDao.flush();
@@ -286,13 +286,13 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 //        // FlowcellTransfer      (Strip tube to Flowcell)
 //        String flowcellBarcode = "Flowcell" + testPrefix;
 //        PlateTransferEventType flowcellTransferJaxb =
-//                bettaLimsMessageFactory.buildStripTubeToFlowcell(LabEventType.FLOWCELL_TRANSFER.getName(),
+//                bettaLimsMessageTestFactory.buildStripTubeToFlowcell(LabEventType.FLOWCELL_TRANSFER.getName(),
 //                                                                        stripTubeBarcode, flowcellBarcode);
 //
 //        BettaLIMSMessage fcellMsg = new BettaLIMSMessage();
 //        fcellMsg.getPlateTransferEvent().add(flowcellTransferJaxb);
-//        bettaLimsMessageFactory.advanceTime();
-//        String fcellMessage = BettaLimsMessageFactory.marshal(fcellMsg);
+//        bettaLimsMessageTestFactory.advanceTime();
+//        String fcellMessage = BettaLimsMessageTestFactory.marshal(fcellMsg);
 //
 //        bettalimsMessageResource.processMessage(fcellMessage);
 //        vesselDao.flush();
@@ -305,13 +305,13 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 //
 //                //Load Flowcell   (Just FLowcell)
 //                ReceptacleEventType flowcellLoadJaxb =
-//                        bettaLimsMessageFactory.buildReceptacleEvent(LabEventType.FLOWCELL_LOADED.getName(),
+//                        bettaLimsMessageTestFactory.buildReceptacleEvent(LabEventType.FLOWCELL_LOADED.getName(),
 //                                                                          flowcellTransferJaxb.getPlate().getBarcode(), LabEventFactory.PHYS_TYPE_FLOWCELL);
 //
 //                BettaLIMSMessage fcellLoadMsg = new BettaLIMSMessage();
 //                fcellLoadMsg.getReceptacleEvent().add(flowcellLoadJaxb);
-//                bettaLimsMessageFactory.advanceTime();
-//                String fcellLoadMessage = BettaLimsMessageFactory.marshal(fcellLoadMsg);
+//                bettaLimsMessageTestFactory.advanceTime();
+//                String fcellLoadMessage = BettaLimsMessageTestFactory.marshal(fcellLoadMsg);
 //
 //                bettalimsMessageResource.processMessage(fcellLoadMessage);
 //                vesselDao.flush();
@@ -361,7 +361,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
         // Shearing Rack to Plate
         String postShearingPlateBarCode = "Shearing" + testPrefix;
         PlateTransferEventType shearingEventJaxb =
-                bettaLimsMessageFactory.buildRackToPlate(LabEventType.SHEARING_TRANSFER.getName(), rackBarcode,
+                bettaLimsMessageTestFactory.buildRackToPlate(LabEventType.SHEARING_TRANSFER.getName(), rackBarcode,
                                                                 new ArrayList<String>(mapBarcodeToTube.keySet()),
                                                                 postShearingPlateBarCode);
 
@@ -370,8 +370,8 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
                                            add(shearingEventJaxb);
 
-        bettaLimsMessageFactory.advanceTime();
-        String xmlMessage = BettaLimsMessageFactory.marshal(msg);
+        bettaLimsMessageTestFactory.advanceTime();
+        String xmlMessage = BettaLimsMessageTestFactory.marshal(msg);
 
         bettalimsMessageResource.processMessage(xmlMessage);
         vesselDao.flush();
@@ -423,7 +423,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
          */
         String postShearingPlateBarCode = "Shearing" + testPrefix;
         PlateTransferEventType shearingEventJaxb =
-                bettaLimsMessageFactory.buildRackToPlate(LabEventType.SHEARING_TRANSFER.getName(), rackBarcode,
+                bettaLimsMessageTestFactory.buildRackToPlate(LabEventType.SHEARING_TRANSFER.getName(), rackBarcode,
                                                                 new ArrayList<String>(mapBarcodeToTube.keySet()),
                                                                 postShearingPlateBarCode);
 
@@ -432,7 +432,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
                                            add(shearingEventJaxb);
 
-        bettaLimsMessageFactory.advanceTime();
+        bettaLimsMessageTestFactory.advanceTime();
 
         bettalimsMessageResource.processMessage(msg);
         vesselDao.flush();
@@ -446,14 +446,14 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
          */
 
         PlateTransferEventType ligationCleanupJaxb =
-                bettaLimsMessageFactory
+                bettaLimsMessageTestFactory
                         .buildPlateToPlate(LabEventType.INDEXED_ADAPTER_LIGATION.getName(), ligationBarcode,
                                                   shearingEventJaxb.getPlate().getBarcode());
 
         BettaLIMSMessage msgLigate = new BettaLIMSMessage();
         msgLigate.getPlateTransferEvent().add(ligationCleanupJaxb);
-        bettaLimsMessageFactory.advanceTime();
-        String ligateXmlMessage = BettaLimsMessageFactory.marshal(msgLigate);
+        bettaLimsMessageTestFactory.advanceTime();
+        String ligateXmlMessage = BettaLimsMessageTestFactory.marshal(msgLigate);
 
         bettalimsMessageResource.processMessage(ligateXmlMessage);
         vesselDao.flush();
@@ -504,7 +504,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
          */
         String postShearingPlateBarCode = "Shearing" + testPrefix;
         PlateTransferEventType shearingEventJaxb =
-                bettaLimsMessageFactory.buildRackToPlate(LabEventType.SHEARING_TRANSFER.getName(), rackBarcode,
+                bettaLimsMessageTestFactory.buildRackToPlate(LabEventType.SHEARING_TRANSFER.getName(), rackBarcode,
                                                                 new ArrayList<String>(mapBarcodeToTube.keySet()),
                                                                 postShearingPlateBarCode);
 
@@ -513,7 +513,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
                                            add(shearingEventJaxb);
 
-        bettaLimsMessageFactory.advanceTime();
+        bettaLimsMessageTestFactory.advanceTime();
 
         bettalimsMessageResource.processMessage(msg);
         vesselDao.flush();
@@ -533,14 +533,14 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
         String pondRegRackBarcode = "PondRegRack" + testPrefix;
         PlateTransferEventType pondRegJaxb =
-                bettaLimsMessageFactory.buildPlateToRack(LabEventType.POND_REGISTRATION.getName(),
+                bettaLimsMessageTestFactory.buildPlateToRack(LabEventType.POND_REGISTRATION.getName(),
                                                                 shearPlate.getLabel(), pondRegRackBarcode,
                                                                 pondRegBarcodes);
 
         BettaLIMSMessage pondRegMsg = new BettaLIMSMessage();
         pondRegMsg.getPlateTransferEvent().add(pondRegJaxb);
-        bettaLimsMessageFactory.advanceTime();
-        String pondRegMessage = BettaLimsMessageFactory.marshal(pondRegMsg);
+        bettaLimsMessageTestFactory.advanceTime();
+        String pondRegMessage = BettaLimsMessageTestFactory.marshal(pondRegMsg);
 
         bettalimsMessageResource.processMessage(pondRegMessage);
         vesselDao.flush();
@@ -590,7 +590,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
          */
         String postShearingPlateBarCode = "Shearing" + testPrefix;
         PlateTransferEventType shearingEventJaxb =
-                bettaLimsMessageFactory.buildRackToPlate(LabEventType.SHEARING_TRANSFER.getName(), rackBarcode,
+                bettaLimsMessageTestFactory.buildRackToPlate(LabEventType.SHEARING_TRANSFER.getName(), rackBarcode,
                                                                 new ArrayList<String>(mapBarcodeToTube.keySet()),
                                                                 postShearingPlateBarCode);
 
@@ -599,7 +599,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
                                            add(shearingEventJaxb);
 
-        bettaLimsMessageFactory.advanceTime();
+        bettaLimsMessageTestFactory.advanceTime();
 
         bettalimsMessageResource.processMessage(msg);
         vesselDao.flush();
@@ -619,13 +619,13 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
         String pondRegRackBarcode = "PondRegRack" + testPrefix;
         PlateTransferEventType pondRegJaxb =
-                bettaLimsMessageFactory.buildPlateToRack(LabEventType.POND_REGISTRATION.getName(),
+                bettaLimsMessageTestFactory.buildPlateToRack(LabEventType.POND_REGISTRATION.getName(),
                                                                 shearPlate.getLabel(), pondRegRackBarcode,
                                                                 pondRegBarcodes);
 
         BettaLIMSMessage pondRegMsg = new BettaLIMSMessage();
         pondRegMsg.getPlateTransferEvent().add(pondRegJaxb);
-        bettaLimsMessageFactory.advanceTime();
+        bettaLimsMessageTestFactory.advanceTime();
 
         bettalimsMessageResource.processMessage(pondRegMsg);
         vesselDao.flush();
@@ -636,10 +636,10 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
          // Strip Tube B Transfer  (Rack to Strip tube)
         String stripTubeHolderBarcode = "StripTubeHolder" + testPrefix;
-        List<BettaLimsMessageFactory.CherryPick> stripTubeCherryPicks =
-                new ArrayList<BettaLimsMessageFactory.CherryPick>();
+        List<BettaLimsMessageTestFactory.CherryPick> stripTubeCherryPicks =
+                new ArrayList<BettaLimsMessageTestFactory.CherryPick>();
         for (int rackPosition = 0; rackPosition < 8; rackPosition++) {
-            stripTubeCherryPicks.add(new BettaLimsMessageFactory.CherryPick(pondRegJaxb.getPlate().getBarcode(), "A01",
+            stripTubeCherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(pondRegJaxb.getPlate().getBarcode(), "A01",
                                                                                    stripTubeHolderBarcode,
                                                                                    Character.toString(
                                                                                                              (char) ('A' + rackPosition)) + "01"));
@@ -647,7 +647,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
         String stripTubeBarcode = "StripTube" + testPrefix + "1";
         PlateCherryPickEvent stripTubeTransferJaxb =
-                bettaLimsMessageFactory.buildCherryPickToStripTube(LabEventType.STRIP_TUBE_B_TRANSFER.getName(),
+                bettaLimsMessageTestFactory.buildCherryPickToStripTube(LabEventType.STRIP_TUBE_B_TRANSFER.getName(),
                                                                           Arrays.asList(pondRegJaxb.getPlate()
                                                                                                    .getBarcode()),
                                                                           Arrays.asList(Arrays.asList(pondRegJaxb
@@ -662,8 +662,8 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
         BettaLIMSMessage stBMsg = new BettaLIMSMessage();
         stBMsg.getPlateCherryPickEvent().add(stripTubeTransferJaxb);
-        bettaLimsMessageFactory.advanceTime();
-        String stBMessage = BettaLimsMessageFactory.marshal(stBMsg);
+        bettaLimsMessageTestFactory.advanceTime();
+        String stBMessage = BettaLimsMessageTestFactory.marshal(stBMsg);
 
         bettalimsMessageResource.processMessage(stBMessage);
         vesselDao.flush();
@@ -714,7 +714,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
          */
         String postShearingPlateBarCode = "Shearing" + testPrefix;
         PlateTransferEventType shearingEventJaxb =
-                bettaLimsMessageFactory.buildRackToPlate(LabEventType.SHEARING_TRANSFER.getName(), rackBarcode,
+                bettaLimsMessageTestFactory.buildRackToPlate(LabEventType.SHEARING_TRANSFER.getName(), rackBarcode,
                                                                 new ArrayList<String>(mapBarcodeToTube.keySet()),
                                                                 postShearingPlateBarCode);
 
@@ -723,7 +723,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
                                            add(shearingEventJaxb);
 
-        bettaLimsMessageFactory.advanceTime();
+        bettaLimsMessageTestFactory.advanceTime();
 
         bettalimsMessageResource.processMessage(msg);
         vesselDao.flush();
@@ -743,13 +743,13 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
         String pondRegRackBarcode = "PondRegRack" + testPrefix;
         PlateTransferEventType pondRegJaxb =
-                bettaLimsMessageFactory.buildPlateToRack(LabEventType.POND_REGISTRATION.getName(),
+                bettaLimsMessageTestFactory.buildPlateToRack(LabEventType.POND_REGISTRATION.getName(),
                                                                 shearPlate.getLabel(), pondRegRackBarcode,
                                                                 pondRegBarcodes);
 
         BettaLIMSMessage pondRegMsg = new BettaLIMSMessage();
         pondRegMsg.getPlateTransferEvent().add(pondRegJaxb);
-        bettaLimsMessageFactory.advanceTime();
+        bettaLimsMessageTestFactory.advanceTime();
 
         bettalimsMessageResource.processMessage(pondRegMsg);
         vesselDao.flush();
@@ -759,10 +759,10 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
          // Strip Tube B Transfer  (Rack to Strip tube)
         String stripTubeHolderBarcode = "StripTubeHolder" + testPrefix;
-        List<BettaLimsMessageFactory.CherryPick> stripTubeCherryPicks =
-                new ArrayList<BettaLimsMessageFactory.CherryPick>();
+        List<BettaLimsMessageTestFactory.CherryPick> stripTubeCherryPicks =
+                new ArrayList<BettaLimsMessageTestFactory.CherryPick>();
         for (int rackPosition = 0; rackPosition < 8; rackPosition++) {
-            stripTubeCherryPicks.add(new BettaLimsMessageFactory.CherryPick(pondRegJaxb.getPlate().getBarcode(), "A01",
+            stripTubeCherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(pondRegJaxb.getPlate().getBarcode(), "A01",
                                                                                    stripTubeHolderBarcode,
                                                                                    Character.toString(
                                                                                                              (char) ('A' + rackPosition)) + "01"));
@@ -770,7 +770,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
         String stripTubeBarcode = "StripTube" + testPrefix + "1";
         PlateCherryPickEvent stripTubeTransferJaxb =
-                bettaLimsMessageFactory.buildCherryPickToStripTube(LabEventType.STRIP_TUBE_B_TRANSFER.getName(),
+                bettaLimsMessageTestFactory.buildCherryPickToStripTube(LabEventType.STRIP_TUBE_B_TRANSFER.getName(),
                                                                           Arrays.asList(pondRegJaxb.getPlate()
                                                                                                    .getBarcode()),
                                                                           Arrays.asList(Arrays.asList(pondRegJaxb
@@ -785,7 +785,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
         BettaLIMSMessage stBMsg = new BettaLIMSMessage();
         stBMsg.getPlateCherryPickEvent().add(stripTubeTransferJaxb);
-        bettaLimsMessageFactory.advanceTime();
+        bettaLimsMessageTestFactory.advanceTime();
 
         bettalimsMessageResource.processMessage(stBMsg);
         vesselDao.flush();
@@ -798,13 +798,13 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
         // FlowcellTransfer      (Strip tube to Flowcell)
         String flowcellBarcode = "Flowcell" + testPrefix;
         PlateTransferEventType flowcellTransferJaxb =
-                bettaLimsMessageFactory.buildStripTubeToFlowcell(LabEventType.FLOWCELL_TRANSFER.getName(),
+                bettaLimsMessageTestFactory.buildStripTubeToFlowcell(LabEventType.FLOWCELL_TRANSFER.getName(),
                                                                         stripTubeBarcode, flowcellBarcode);
 
         BettaLIMSMessage fcellMsg = new BettaLIMSMessage();
         fcellMsg.getPlateTransferEvent().add(flowcellTransferJaxb);
-        bettaLimsMessageFactory.advanceTime();
-        String fcellMessage = BettaLimsMessageFactory.marshal(fcellMsg);
+        bettaLimsMessageTestFactory.advanceTime();
+        String fcellMessage = BettaLimsMessageTestFactory.marshal(fcellMsg);
 
         bettalimsMessageResource.processMessage(fcellMessage);
         vesselDao.flush();
@@ -857,7 +857,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
          */
         String postShearingPlateBarCode = "Shearing" + testPrefix;
         PlateTransferEventType shearingEventJaxb =
-                bettaLimsMessageFactory.buildRackToPlate(LabEventType.SHEARING_TRANSFER.getName(), rackBarcode,
+                bettaLimsMessageTestFactory.buildRackToPlate(LabEventType.SHEARING_TRANSFER.getName(), rackBarcode,
                                                                 new ArrayList<String>(mapBarcodeToTube.keySet()),
                                                                 postShearingPlateBarCode);
 
@@ -866,7 +866,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
                                            add(shearingEventJaxb);
 
-        bettaLimsMessageFactory.advanceTime();
+        bettaLimsMessageTestFactory.advanceTime();
 
         bettalimsMessageResource.processMessage(msg);
         vesselDao.flush();
@@ -886,13 +886,13 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
         String pondRegRackBarcode = "PondRegRack" + testPrefix;
         PlateTransferEventType pondRegJaxb =
-                bettaLimsMessageFactory.buildPlateToRack(LabEventType.POND_REGISTRATION.getName(),
+                bettaLimsMessageTestFactory.buildPlateToRack(LabEventType.POND_REGISTRATION.getName(),
                                                                 shearPlate.getLabel(), pondRegRackBarcode,
                                                                 pondRegBarcodes);
 
         BettaLIMSMessage pondRegMsg = new BettaLIMSMessage();
         pondRegMsg.getPlateTransferEvent().add(pondRegJaxb);
-        bettaLimsMessageFactory.advanceTime();
+        bettaLimsMessageTestFactory.advanceTime();
 
         bettalimsMessageResource.processMessage(pondRegMsg);
         vesselDao.flush();
@@ -902,10 +902,10 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
          // Strip Tube B Transfer  (Rack to Strip tube)
         String stripTubeHolderBarcode = "StripTubeHolder" + testPrefix;
-        List<BettaLimsMessageFactory.CherryPick> stripTubeCherryPicks =
-                new ArrayList<BettaLimsMessageFactory.CherryPick>();
+        List<BettaLimsMessageTestFactory.CherryPick> stripTubeCherryPicks =
+                new ArrayList<BettaLimsMessageTestFactory.CherryPick>();
         for (int rackPosition = 0; rackPosition < 8; rackPosition++) {
-            stripTubeCherryPicks.add(new BettaLimsMessageFactory.CherryPick(pondRegJaxb.getPlate().getBarcode(), "A01",
+            stripTubeCherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(pondRegJaxb.getPlate().getBarcode(), "A01",
                                                                                    stripTubeHolderBarcode,
                                                                                    Character.toString(
                                                                                                              (char) ('A' + rackPosition)) + "01"));
@@ -913,7 +913,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
         String stripTubeBarcode = "StripTube" + testPrefix + "1";
         PlateCherryPickEvent stripTubeTransferJaxb =
-                bettaLimsMessageFactory.buildCherryPickToStripTube(LabEventType.STRIP_TUBE_B_TRANSFER.getName(),
+                bettaLimsMessageTestFactory.buildCherryPickToStripTube(LabEventType.STRIP_TUBE_B_TRANSFER.getName(),
                                                                           Arrays.asList(pondRegJaxb.getPlate()
                                                                                                    .getBarcode()),
                                                                           Arrays.asList(Arrays.asList(pondRegJaxb
@@ -928,7 +928,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
         BettaLIMSMessage stBMsg = new BettaLIMSMessage();
         stBMsg.getPlateCherryPickEvent().add(stripTubeTransferJaxb);
-        bettaLimsMessageFactory.advanceTime();
+        bettaLimsMessageTestFactory.advanceTime();
 
         bettalimsMessageResource.processMessage(stBMsg);
         vesselDao.flush();
@@ -941,12 +941,12 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
         // FlowcellTransfer      (Strip tube to Flowcell)
         String flowcellBarcode = "Flowcell" + testPrefix;
         PlateTransferEventType flowcellTransferJaxb =
-                bettaLimsMessageFactory.buildStripTubeToFlowcell(LabEventType.FLOWCELL_TRANSFER.getName(),
+                bettaLimsMessageTestFactory.buildStripTubeToFlowcell(LabEventType.FLOWCELL_TRANSFER.getName(),
                                                                         stripTubeBarcode, flowcellBarcode);
 
         BettaLIMSMessage fcellMsg = new BettaLIMSMessage();
         fcellMsg.getPlateTransferEvent().add(flowcellTransferJaxb);
-        bettaLimsMessageFactory.advanceTime();
+        bettaLimsMessageTestFactory.advanceTime();
 
         bettalimsMessageResource.processMessage(fcellMsg);
         vesselDao.flush();
@@ -957,13 +957,13 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
         //Load Flowcell   (Just Flowcell)
         ReceptacleEventType flowcellLoadJaxb =
-                bettaLimsMessageFactory.buildReceptacleEvent(LabEventType.FLOWCELL_LOADED.getName(),
+                bettaLimsMessageTestFactory.buildReceptacleEvent(LabEventType.FLOWCELL_LOADED.getName(),
                                                                   flowcellTransferJaxb.getPlate().getBarcode(), LabEventFactory.PHYS_TYPE_FLOWCELL);
 
         BettaLIMSMessage fcellLoadMsg = new BettaLIMSMessage();
         fcellLoadMsg.getReceptacleEvent().add(flowcellLoadJaxb);
-        bettaLimsMessageFactory.advanceTime();
-        String fcellLoadMessage = BettaLimsMessageFactory.marshal(fcellLoadMsg);
+        bettaLimsMessageTestFactory.advanceTime();
+        String fcellLoadMessage = BettaLimsMessageTestFactory.marshal(fcellLoadMsg);
 
         bettalimsMessageResource.processMessage(fcellLoadMessage);
         vesselDao.flush();

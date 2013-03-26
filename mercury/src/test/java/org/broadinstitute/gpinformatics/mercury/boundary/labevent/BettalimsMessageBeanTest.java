@@ -1,9 +1,9 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageFactory;
 import org.hornetq.api.core.TransportConfiguration;
 import org.hornetq.api.jms.HornetQJMSClient;
 import org.hornetq.api.jms.JMSFactoryType;
@@ -33,12 +33,12 @@ public class BettalimsMessageBeanTest {
 
     @Test(enabled = false)
     public void testJms() {
-        BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
-        PlateTransferEventType plateTransferEventType = bettaLimsMessageFactory.buildPlateToPlate(
+        BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory();
+        PlateTransferEventType plateTransferEventType = bettaLimsMessageTestFactory.buildPlateToPlate(
                 LabEventType.POST_SHEARING_TRANSFER_CLEANUP.getName(), "x", "y");
         BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
         bettaLIMSMessage.getPlateTransferEvent().add(plateTransferEventType);
-        String message = BettaLimsMessageFactory.marshal(bettaLIMSMessage);
+        String message = BettaLimsMessageTestFactory.marshal(bettaLIMSMessage);
         sendJmsMessage(message);
     }
 

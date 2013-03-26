@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
@@ -27,7 +28,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.*;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
-import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageFactory;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -102,7 +102,7 @@ public class ZimsIlluminaRunFactoryTest {
         lcSetBatch.setJiraTicket(lcSetTicket);
 
         // Record some events for the sample
-        BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
+        BettaLimsMessageTestFactory bettaLimsMessageFactory = new BettaLimsMessageTestFactory();
 
         // Normalized Catch Registration
         String catchTubeBarcode = "catchTube";
@@ -120,10 +120,10 @@ public class ZimsIlluminaRunFactoryTest {
         TwoDBarcodedTube catchTube = catchTubeFormation. getContainerRole().getVesselAtPosition(VesselPosition.A01);
 
         // Strip tube B transfer
-        List<BettaLimsMessageFactory.CherryPick> cherryPicks = new ArrayList<BettaLimsMessageFactory.CherryPick>();
+        List<BettaLimsMessageTestFactory.CherryPick> cherryPicks = new ArrayList<BettaLimsMessageTestFactory.CherryPick>();
         String[] stripTubeWells = {"A01", "B01", "C01", "D01", "E01", "F01", "G01", "H01"};
         for (int i = 0; i < 8; i++) {
-            cherryPicks.add(new BettaLimsMessageFactory.CherryPick(catchRackBarcode, "A01", "testStripTubeHolder", stripTubeWells[i]));
+            cherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(catchRackBarcode, "A01", "testStripTubeHolder", stripTubeWells[i]));
         }
         PlateCherryPickEvent stripTubeBTransferEvent = bettaLimsMessageFactory.buildCherryPickToStripTube(
                 LabEventType.STRIP_TUBE_B_TRANSFER.getName(), Collections.singletonList(catchRackBarcode),

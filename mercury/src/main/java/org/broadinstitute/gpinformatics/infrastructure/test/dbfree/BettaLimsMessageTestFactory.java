@@ -26,7 +26,7 @@ import java.util.List;
 /**
  * This class is a factory for BettaLIMSMessage JAXB objects.  It is intended to facilitate building messages in test cases.
  */
-public class BettaLimsMessageFactory {
+public class BettaLimsMessageTestFactory {
     public static final int NUMBER_OF_RACK_COLUMNS = 12;
 
     private long time = System.currentTimeMillis();

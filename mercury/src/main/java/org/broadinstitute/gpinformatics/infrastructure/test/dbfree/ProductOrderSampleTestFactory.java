@@ -9,9 +9,9 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
-public class ProductOrderSampleFactory {
+public class ProductOrderSampleTestFactory {
 
-    private ProductOrderSampleFactory() {}
+    private ProductOrderSampleTestFactory() {}
 
     public static List<ProductOrderSample> createSampleList(String... sampleList) {
         return createSampleList(sampleList, new HashSet<LedgerEntry>(), false);

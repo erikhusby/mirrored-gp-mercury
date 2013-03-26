@@ -1,8 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
-import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductFactory;
-import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderSampleFactory;
-import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderSampleTestFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.testng.Assert;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
@@ -30,10 +30,10 @@ public class ProductOrderContainerTest extends Arquillian {
     }
 
     public ProductOrder createSimpleProductOrder() throws Exception {
-        return new ProductOrder(ResearchProjectFactory.TEST_CREATOR, "containerTest Product Order Test1",
-                ProductOrderSampleFactory.createSampleList("SM-1P3X9", "SM-1P3WY", "SM-1P3XN"),
-                "newQuote", ProductFactory.createDummyProduct("Exome Express", "partNumber"),
-                ResearchProjectFactory.createDummyResearchProject(userList, "Test Research Project"));
+        return new ProductOrder(ResearchProjectTestFactory.TEST_CREATOR, "containerTest Product Order Test1",
+                ProductOrderSampleTestFactory.createSampleList("SM-1P3X9", "SM-1P3WY", "SM-1P3XN"),
+                "newQuote", ProductTestFactory.createDummyProduct("Exome Express", "partNumber"),
+                ResearchProjectTestFactory.createDummyResearchProject(userList, "Test Research Project"));
     }
 
     public void testSimpleProductOrder() throws Exception {
@@ -66,7 +66,7 @@ public class ProductOrderContainerTest extends Arquillian {
         Assert.assertEquals(testOrder.getActiveSampleCount(), 3);
 
         BspUser bspUser = new BspUser();
-        bspUser.setUserId(ResearchProjectFactory.TEST_CREATOR);
+        bspUser.setUserId(ResearchProjectTestFactory.TEST_CREATOR);
         testOrder.prepareToSave(bspUser, true);
         testOrder.placeOrder();
 
@@ -76,11 +76,11 @@ public class ProductOrderContainerTest extends Arquillian {
     public void testSimpleNonBspProductOrder() throws Exception {
 
         ProductOrder testOrder =
-                new ProductOrder(ResearchProjectFactory.TEST_CREATOR, "containerTest Product Order Test2",
-                        ProductOrderSampleFactory.createSampleList("SM_12CO4", "SM_1P3WY", "SM_1P3XN"),
+                new ProductOrder(ResearchProjectTestFactory.TEST_CREATOR, "containerTest Product Order Test2",
+                        ProductOrderSampleTestFactory.createSampleList("SM_12CO4", "SM_1P3WY", "SM_1P3XN"),
                         "newQuote",
-                        ProductFactory.createDummyProduct("Exome Express", "partNumber"),
-                        ResearchProjectFactory.createDummyResearchProject(userList, "Test Research Project"));
+                        ProductTestFactory.createDummyProduct("Exome Express", "partNumber"),
+                        ResearchProjectTestFactory.createDummyResearchProject(userList, "Test Research Project"));
 
         Assert.assertEquals(testOrder.getUniqueSampleCount(), 3);
 

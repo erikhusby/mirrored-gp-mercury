@@ -9,7 +9,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFac
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.monitoring.HipChatMessageSender;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnectorProducer;
-import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
@@ -38,7 +38,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
-import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.easymock.EasyMock;
 import org.testng.Assert;
@@ -72,7 +72,7 @@ public class SolexaRunRoutingTest {
     private static Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<String, ProductOrder>();
     private BucketBean                    bucketBeanEJB;
     private BucketDao                     mockBucketDao;
-    private BettaLimsMessageFactory       bettaLimsMessageFactory;
+    private BettaLimsMessageTestFactory bettaLimsMessageTestFactory;
     private LabEventFactory               labEventFactory;
     private Map<String, TwoDBarcodedTube> mapBarcodeToTube;
     private final SimpleDateFormat dateFormat = new SimpleDateFormat(IlluminaSequencingRun.RUN_FORMAT_PATTERN);
@@ -93,7 +93,7 @@ public class SolexaRunRoutingTest {
         LabBatchDAO labBatchDAO = EasyMock.createNiceMock(LabBatchDAO.class);
         labBatchEJB.setLabBatchDao(labBatchDAO);
 
-        ProductOrder productOrder = ProductOrderFactory.buildWholeGenomeProductOrder(NUM_POSITIONS_IN_RACK);
+        ProductOrder productOrder = ProductOrderTestFactory.buildWholeGenomeProductOrder(NUM_POSITIONS_IN_RACK);
         String jiraTicketKey = productOrder.getBusinessKey();
 
         mapKeyToProductOrder.put(jiraTicketKey, productOrder);
@@ -113,7 +113,7 @@ public class SolexaRunRoutingTest {
                                                            LabBatch.LabBatchType.WORKFLOW);
         labBatchEJB.createLabBatch(workflowBatch, "scottmat");
 
-        bettaLimsMessageFactory = new BettaLimsMessageFactory();
+        bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory();
         labEventFactory = new LabEventFactory();
         labEventFactory.setLabEventRefDataFetcher(new LabEventFactory.LabEventRefDataFetcher() {
             @Override
@@ -169,18 +169,18 @@ public class SolexaRunRoutingTest {
                                                                    .stubInstance()));
 
         LabEventTest.PreFlightEntityBuilder preFlightEntityBuilder =
-                new LabEventTest.PreFlightEntityBuilder(bettaLimsMessageFactory,
+                new LabEventTest.PreFlightEntityBuilder(bettaLimsMessageTestFactory,
                                                                labEventFactory, labEventHandler,
                                                                mapBarcodeToTube, mapKeyToProductOrder).invoke();
 
         LabEventTest.ShearingEntityBuilder shearingEntityBuilder =
                 new LabEventTest.ShearingEntityBuilder(mapBarcodeToTube, preFlightEntityBuilder.getTubeFormation(),
-                                                              bettaLimsMessageFactory, labEventFactory, labEventHandler,
+                        bettaLimsMessageTestFactory, labEventFactory, labEventHandler,
                                                               preFlightEntityBuilder.getRackBarcode()).invoke();
 
         LabEventTest.LibraryConstructionEntityBuilder libraryConstructionEntityBuilder =
                 new LabEventTest.LibraryConstructionEntityBuilder(
-                                                                         bettaLimsMessageFactory, labEventFactory,
+                        bettaLimsMessageTestFactory, labEventFactory,
                                                                          labEventHandler,
                                                                          shearingEntityBuilder
                                                                                  .getShearingCleanupPlate(),
@@ -199,7 +199,7 @@ public class SolexaRunRoutingTest {
         for (int i = 0; i < NUM_POSITIONS_IN_RACK / 4; i++) {
             // SageLoading
             String sageCassetteBarcode = "SageCassette" + i;
-            PlateTransferEventType sageLoadingJaxb = bettaLimsMessageFactory.buildRackToPlate("SageLoading",
+            PlateTransferEventType sageLoadingJaxb = bettaLimsMessageTestFactory.buildRackToPlate("SageLoading",
                                                                                                      libraryConstructionEntityBuilder
                                                                                                              .getPondRegRackBarcode(),
                                                                                                      libraryConstructionEntityBuilder
@@ -218,7 +218,7 @@ public class SolexaRunRoutingTest {
             // SageLoaded
 
             // SageUnloading
-            PlateTransferEventType sageUnloadingJaxb = bettaLimsMessageFactory.buildPlateToRack("SageUnloading",
+            PlateTransferEventType sageUnloadingJaxb = bettaLimsMessageTestFactory.buildPlateToRack("SageUnloading",
                                                                                                        sageCassetteBarcode,
                                                                                                        sageUnloadBarcode,
                                                                                                        sageUnloadTubeBarcodes
@@ -239,14 +239,14 @@ public class SolexaRunRoutingTest {
         }
         String sageCleanupBarcode = "SageCleanup";
         PlateTransferEventType sageCleanupJaxb =
-                bettaLimsMessageFactory.buildRackToRack("SageCleanup", sageUnloadBarcode,
+                bettaLimsMessageTestFactory.buildRackToRack("SageCleanup", sageUnloadBarcode,
                                                                sageUnloadTubeBarcodes, sageCleanupBarcode,
                                                                sageCleanupTubeBarcodes);
         Map<VesselPosition, TwoDBarcodedTube> mapPositionToTube = new HashMap<VesselPosition, TwoDBarcodedTube>();
         List<TwoDBarcodedTube> sageUnloadTubes = new ArrayList<TwoDBarcodedTube>(mapBarcodeToSageUnloadTubes.values());
         for (int i = 0; i < NUM_POSITIONS_IN_RACK; i++) {
             mapPositionToTube.put(VesselPosition
-                                          .getByName(bettaLimsMessageFactory.buildWellName(i + 1)),
+                                          .getByName(bettaLimsMessageTestFactory.buildWellName(i + 1)),
                                          sageUnloadTubes.get(i));
         }
         TubeFormation sageUnloadRackRearrayed = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
@@ -261,7 +261,7 @@ public class SolexaRunRoutingTest {
                                    "Wrong number of sage cleanup samples");
 
         LabEventTest.QtpEntityBuilder qtpEntityBuilder =
-                new LabEventTest.QtpEntityBuilder(bettaLimsMessageFactory, labEventFactory, labEventHandler,
+                new LabEventTest.QtpEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, labEventHandler,
                         Collections.singletonList(sageCleanupRack), Collections.singletonList(sageCleanupBarcode),
                         Collections.singletonList(sageCleanupTubeBarcodes), mapBarcodeToSageUnloadTubes,
                         WorkflowName.WHOLE_GENOME);
