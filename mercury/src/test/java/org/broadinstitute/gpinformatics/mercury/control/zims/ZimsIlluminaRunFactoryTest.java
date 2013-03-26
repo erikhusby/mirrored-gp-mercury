@@ -1,12 +1,13 @@
 package org.broadinstitute.gpinformatics.mercury.control.zims;
 
 import org.broadinstitute.bsp.client.users.BspUser;
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
+import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
@@ -46,13 +47,14 @@ public class ZimsIlluminaRunFactoryTest {
     private IlluminaFlowcell flowcell;
     private TwoDBarcodedTube testTube;
 
-    private ProductOrderDao mockProductOrderDao;
     private BSPSampleDataFetcher mockBSPSampleDataFetcher;
+    private AthenaClientService mockAthenaClientService;
+    private ProductOrder testProductOrder;
 
     @BeforeMethod(groups = DATABASE_FREE)
     public void setUp() {
-        mockProductOrderDao = mock(ProductOrderDao.class);
         mockBSPSampleDataFetcher = mock(BSPSampleDataFetcher.class);
+        mockAthenaClientService = mock(AthenaClientServiceImpl.class);
         JiraService mockJiraService = mock(JiraService.class);
         when(mockJiraService.createTicketUrl(anyString())).thenReturn("jira://LCSET-1");
 
@@ -61,7 +63,7 @@ public class ZimsIlluminaRunFactoryTest {
                 "P-TEST-1", new Date(), new Date(), 0, 0, 0, 0, "Test samples only", "None", true,
                 "Test Workflow", false);
 
-        zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(mockProductOrderDao, mockBSPSampleDataFetcher);
+        zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(mockBSPSampleDataFetcher, mockAthenaClientService);
         LabEventFactory labEventFactory = new LabEventFactory();
         labEventFactory.setLabEventRefDataFetcher(new LabEventFactory.LabEventRefDataFetcher() {
             @Override
@@ -85,10 +87,10 @@ public class ZimsIlluminaRunFactoryTest {
         testResearchProject.setJiraTicketKey("TestRP-1");
 
         // Create a test product order
-        ProductOrder testProductOrder = new ProductOrder(101L, "Test Order", Collections.singletonList(
+        testProductOrder = new ProductOrder(101L, "Test Order", Collections.singletonList(
                 new ProductOrderSample("TestSM-1")), "Quote-1", testProduct, testResearchProject);
         testProductOrder.setJiraTicketKey("TestPDO-1");
-        when(mockProductOrderDao.findByBusinessKey("TestPDO-1")).thenReturn(testProductOrder);
+        when(mockAthenaClientService.retrieveProductOrderDetails("TestPDO-1")).thenReturn(testProductOrder);
 
         // Create an LCSET lab batch
         final String sourceTubeBarcode = "testTube";
@@ -152,11 +154,8 @@ public class ZimsIlluminaRunFactoryTest {
     public void testMakeZimsIlluminaRun() {
         Date runDate = new Date(1358889107084L);
         String testRunDirectory = "TestRun";
-        IlluminaSequencingRun sequencingRun =
-                new IlluminaSequencingRun(flowcell, testRunDirectory, "Run-123", "IlluminaRunServiceImplTest", 101L, true,
-                        runDate,
-                        null,
-                                                 "/root/path/to/run/" + testRunDirectory);
+        IlluminaSequencingRun sequencingRun = new IlluminaSequencingRun(flowcell, testRunDirectory, "Run-123",
+                "IlluminaRunServiceImplTest", 101L, true, runDate, null, "/root/path/to/run/" + testRunDirectory);
         ZimsIlluminaRun zimsIlluminaRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(sequencingRun);
 
         assertThat(zimsIlluminaRun.getError(), nullValue());
@@ -206,12 +205,12 @@ public class ZimsIlluminaRunFactoryTest {
         }};
 
         BSPSampleDTO sampleDTO = new BSPSampleDTO(dataMap);
-        when(mockBSPSampleDataFetcher.fetchSingleSampleFromBSP("TestSM-1")).thenReturn(sampleDTO);
 
         Map<String, BSPSampleDTO> mapSampleIdToDto = new HashMap<String, BSPSampleDTO>();
         mapSampleIdToDto.put("TestSM-1", sampleDTO);
-        LibraryBean libraryBean = zimsIlluminaRunFactory.makeLibraryBeans(testTube, mapSampleIdToDto).get(0);
-        verify(mockProductOrderDao).findByBusinessKey("TestPDO-1");
+        Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<String, ProductOrder>();
+        mapKeyToProductOrder.put("TestPDO-1", testProductOrder);
+        LibraryBean libraryBean = zimsIlluminaRunFactory.makeLibraryBeans(testTube, mapSampleIdToDto, mapKeyToProductOrder).get(0);
         assertThat(libraryBean.getLibrary(), equalTo("testTube")); // TODO: expand with full definition of generated library name
         assertThat(libraryBean.getProject(), equalTo("TestRP-1"));
 //        assertThat(libraryBean.getMolecularIndexingScheme(), equalTo("???")); // TODO

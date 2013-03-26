@@ -3,10 +3,10 @@ package org.broadinstitute.gpinformatics.mercury.test;
 //import com.jprofiler.api.agent.Controller;
 
 import org.broadinstitute.bsp.client.users.BspUser;
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProducer;
+import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
@@ -286,12 +286,6 @@ public class LabEventTest {
             throw new RuntimeException(e);
         }
         ZimsIlluminaRunFactory zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(
-                new ProductOrderDao() {
-                    @Override
-                    public ProductOrder findByBusinessKey(String key) {
-                        return productOrder;
-                    }
-                },
                 new BSPSampleDataFetcher() {
                     @Override
                     public Map<String, BSPSampleDTO> fetchSamplesFromBSP(@Nonnull Collection<String> sampleNames) {
@@ -308,6 +302,17 @@ public class LabEventTest {
                             mapSampleIdToDto.put(sampleName, new BSPSampleDTO(dataMap));
                         }
                         return mapSampleIdToDto;
+                    }
+                },
+                new AthenaClientService() {
+                    @Override
+                    public ProductOrder retrieveProductOrderDetails(String poBusinessKey) {
+                        return productOrder;
+                    }
+
+                    @Override
+                    public Map<String, List<ProductOrderSample>> findMapSampleNameToPoSample(List<String> sampleNames) {
+                        return null;
                     }
                 }
         );
