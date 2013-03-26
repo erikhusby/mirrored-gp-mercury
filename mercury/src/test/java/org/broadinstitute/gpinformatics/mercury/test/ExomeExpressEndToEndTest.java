@@ -24,7 +24,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.designation.Registratio
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.squid.SequelLibrary;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
-import org.broadinstitute.gpinformatics.mercury.bsp.EverythingYouAskForYouGetAndItsHuman;
+import org.broadinstitute.gpinformatics.mocks.EverythingYouAskForYouGetAndItsHuman;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bsp.BSPSampleFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;

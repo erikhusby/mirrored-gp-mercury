@@ -1,4 +1,6 @@
-package org.broadinstitute.gpinformatics.infrastructure.quote;
+package org.broadinstitute.gpinformatics.mocks;
+
+import org.broadinstitute.gpinformatics.infrastructure.quote.*;
 
 import javax.enterprise.inject.Alternative;
 import java.util.Date;
