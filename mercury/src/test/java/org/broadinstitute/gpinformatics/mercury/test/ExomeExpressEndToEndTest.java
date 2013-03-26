@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.test;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProducer;
+import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.*;
@@ -490,7 +491,7 @@ public class ExomeExpressEndToEndTest {
             //            }
 
             // ZIMS
-            ZimsIlluminaRunFactory zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(new ProductOrderDao(), new BSPSampleDataFetcher());
+            ZimsIlluminaRunFactory zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(new BSPSampleDataFetcher(), new AthenaClientServiceStub());
             ZimsIlluminaRun zimsRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(illuminaSequencingRun);
 
             // how to populate BSPSampleDTO?  Ease of use from EL suggests an entity that can load itself, but this

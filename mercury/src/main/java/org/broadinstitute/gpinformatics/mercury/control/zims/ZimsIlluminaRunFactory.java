@@ -3,10 +3,11 @@ package org.broadinstitute.gpinformatics.mercury.control.zims;
 import edu.mit.broad.prodinfo.thrift.lims.IndexPosition;
 import org.apache.commons.collections15.Factory;
 import org.apache.commons.collections15.map.LazyMap;
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -40,14 +41,13 @@ import static org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTra
 @SuppressWarnings("FeatureEnvy")
 public class ZimsIlluminaRunFactory {
 
-    // todo jmt do these violate the Athena / Mercury wall?
-    private ProductOrderDao productOrderDao;
+    private AthenaClientService athenaClientService;
     private BSPSampleDataFetcher bspSampleDataFetcher;
 
     @Inject
-    public ZimsIlluminaRunFactory(ProductOrderDao productOrderDao, BSPSampleDataFetcher bspSampleDataFetcher) {
-        this.productOrderDao = productOrderDao;
+    public ZimsIlluminaRunFactory(BSPSampleDataFetcher bspSampleDataFetcher, AthenaClientService athenaClientService) {
         this.bspSampleDataFetcher = bspSampleDataFetcher;
+        this.athenaClientService = athenaClientService;
     }
 
     public ZimsIlluminaRun makeZimsIlluminaRun(SequencingRun sequencingRun) {
@@ -56,12 +56,20 @@ public class ZimsIlluminaRunFactory {
         }
         IlluminaSequencingRun illuminaRun = OrmUtil.proxySafeCast(sequencingRun, IlluminaSequencingRun.class);
         RunCartridge flowcell = illuminaRun.getSampleCartridge();
+
+        // Fetch samples and product orders
         Set<SampleInstance> sampleInstances = flowcell.getSampleInstances(true);
         Set<String> sampleIds = new HashSet<String>();
+        Set<String> productOrderKeys = new HashSet<String>();
         for (SampleInstance sampleInstance : sampleInstances) {
             sampleIds.add(sampleInstance.getStartingSample().getSampleKey());
+            productOrderKeys.add(sampleInstance.getStartingSample().getProductOrderKey());
         }
         Map<String, BSPSampleDTO> mapSampleIdToDto = bspSampleDataFetcher.fetchSamplesFromBSP(sampleIds);
+        Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<String, ProductOrder>();
+        for (String productOrderKey : productOrderKeys) {
+            mapKeyToProductOrder.put(productOrderKey, athenaClientService.retrieveProductOrderDetails(productOrderKey));
+        }
 
         DateFormat dateFormat = new SimpleDateFormat(ZimsIlluminaRun.DATE_FORMAT);
         // TODO: fill in sequencerModel and isPaired
@@ -78,7 +86,7 @@ public class ZimsIlluminaRunFactory {
             flowcell.getContainerRole().evaluateCriteria(vesselPosition, criteria, Ancestors, null, 0);
             ArrayList<LibraryBean> libraryBeans = new ArrayList<LibraryBean>();
             for (LabVessel labVessel : criteria.getNearestLabVessels()) {
-                libraryBeans.addAll(makeLibraryBeans(labVessel, mapSampleIdToDto));
+                libraryBeans.addAll(makeLibraryBeans(labVessel, mapSampleIdToDto, mapKeyToProductOrder));
             }
             ZimsIlluminaChamber lane = new ZimsIlluminaChamber(laneNum, libraryBeans, null, null);
             run.addLane(lane);
@@ -88,12 +96,14 @@ public class ZimsIlluminaRunFactory {
         return run;
     }
 
-    public List<LibraryBean> makeLibraryBeans(LabVessel labVessel, Map<String, BSPSampleDTO> mapSampleIdToDto) {
+    @DaoFree
+    public List<LibraryBean> makeLibraryBeans(LabVessel labVessel, Map<String, BSPSampleDTO> mapSampleIdToDto,
+            Map<String, ProductOrder> mapKeyToProductOrder) {
         List<LibraryBean> libraryBeans = new ArrayList<LibraryBean>();
         // todo jmt reuse the sampleInstances fetched in makeZimsIlluminaRun? Would save a few milliseconds.
         Set<SampleInstance> sampleInstances = labVessel.getSampleInstances(true);
         for (SampleInstance sampleInstance : sampleInstances) {
-            ProductOrder productOrder = productOrderDao.findByBusinessKey(sampleInstance.getStartingSample().getProductOrderKey());
+            ProductOrder productOrder = mapKeyToProductOrder.get(sampleInstance.getStartingSample().getProductOrderKey());
             BSPSampleDTO bspSampleDTO = mapSampleIdToDto.get(sampleInstance.getStartingSample().getSampleKey());
             LabBatch labBatch = labVessel.getNearestWorkflowLabBatches().iterator().next(); // TODO: change to use singular version
             String lcSet;

@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.*;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.ImportFromSquidTest;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.*;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -15,6 +16,7 @@ import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -30,17 +32,17 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 public class IlluminaRunResourceTest extends Arquillian {
 
     @Inject
-    IlluminaRunResource runLaneResource;
+    private IlluminaRunResource runLaneResource;
 
     @Inject
-    ProductOrderDao pdoDao;
+    private ProductOrderDao pdoDao;
 
     private TZamboniRun zamboniRun;
 
     public static final String RUN_NAME = "120320_SL-HBN_0159_AFCC0GHCACXX"; // has bsp samples
 
     private final String CHAMBER = "2";
-    
+
     private final String WEBSERVICE_URL = "rest/IlluminaRun/query";
 
     public static final String HUMAN = "Human";
@@ -176,6 +178,24 @@ public class IlluminaRunResourceTest extends Arquillian {
         // this is important: the pipeline hardcodes the "run isn't registered yet" response
         // and retries later
         assertTrue(run.getError().contains("Run Cheese ball doesn't appear to have been registered yet"));
+    }
+
+    /**
+     * Tests Mercury chain of custody, over HTTP.  BettalimsMessageResourceTest.test8Lcsets can be used to create
+     * test data.
+     *
+     */
+    @Test(groups = EXTERNAL_INTEGRATION, enabled = false)
+    public void testZimsMercury() throws Exception {
+        String url = ImportFromSquidTest.TEST_MERCURY_URL + "/rest/IlluminaRun/queryMercury";
+
+        DefaultClientConfig clientConfig = new DefaultClientConfig();
+        clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
+
+        ZimsIlluminaRun run = Client.create(clientConfig).resource(url)
+                .queryParam("runName", "TestRun03261516351364325439075.txt")
+                .accept(MediaType.APPLICATION_JSON).get(ZimsIlluminaRun.class);
+        Assert.assertEquals(run.getLanes().size(), 8, "Wrong number of lanes");
     }
 
     public static void doAssertions(TZamboniRun thriftRun,ZimsIlluminaRun runBean,Map<Long,ProductOrder> wrIdToPDO) {

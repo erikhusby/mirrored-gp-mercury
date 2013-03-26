@@ -12,13 +12,16 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunResource;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
@@ -105,6 +108,10 @@ public class BettalimsMessageResourceTest extends Arquillian {
     @Inject
     private ProductOrderDao productOrderDao;
 
+    @SuppressWarnings("CdiInjectionPointsInspection")
+    @Inject
+    private AthenaClientService athenaClientService;
+
     @Inject
     private ResearchProjectDao researchProjectDao;
 
@@ -119,6 +126,12 @@ public class BettalimsMessageResourceTest extends Arquillian {
 
     @Inject
     private IlluminaSequencingRunFactory illuminaSequencingRunFactory;
+
+    @Inject
+    private LabBatchEjb labBatchEjb;
+
+    @Inject
+    private BSPUserList bspUserList;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -185,7 +198,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
                 "Wrong number of sample instances");
 
         IlluminaSequencingRun illuminaSequencingRun = registerIlluminaSequencingRun(testPrefix, qtpJaxbBuilder.getFlowcellBarcode());
-        ZimsIlluminaRunFactory zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(productOrderDao, bspSampleDataFetcher);
+        ZimsIlluminaRunFactory zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(bspSampleDataFetcher, athenaClientService);
         ZimsIlluminaRun zimsIlluminaRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(illuminaSequencingRun);
         Assert.assertEquals(zimsIlluminaRun.getLanes().size(), 8, "Wrong number of lanes");
     }
@@ -291,27 +304,11 @@ public class BettalimsMessageResourceTest extends Arquillian {
      * @return map from tube barcode to sample tube
      */
     private Map<String, TwoDBarcodedTube> buildSamplesInPdo(String testPrefix) {
-        String jiraTicketKey="PDO-MsgTest" + testPrefix;
         List<ProductOrderSample> productOrderSamples=new ArrayList<ProductOrderSample>();
-        Map<String,TwoDBarcodedTube> mapBarcodeToTube=new LinkedHashMap<String,TwoDBarcodedTube>();
-        HashSet<LabVessel> starters = new HashSet<LabVessel>();
         for (int rackPosition=1; rackPosition <= LabEventTest.NUM_POSITIONS_IN_RACK; rackPosition++) {
-            String barcode="R" + testPrefix + rackPosition;
-
             String bspStock="SM-" + testPrefix + rackPosition;
-            TwoDBarcodedTube bspAliquot=new TwoDBarcodedTube(barcode);
-            bspAliquot.addSample(new MercurySample(jiraTicketKey, bspStock));
-            mapBarcodeToTube.put(barcode, bspAliquot);
             productOrderSamples.add(new ProductOrderSample(bspStock));
-
-            twoDBarcodedTubeDAO.persist(bspAliquot);
-            starters.add(bspAliquot);
         }
-
-        String batchName = "LCSET-MsgTest-" + testPrefix;
-        // This will be persisted by cascade
-        LabBatch labBatch = new LabBatch(batchName, starters, LabBatch.LabBatchType.WORKFLOW);
-        labBatch.setJiraTicket(new JiraTicket(JiraServiceProducer.stubInstance(), batchName));
 
         Product exomeExpressProduct=productDao.findByPartNumber("P-EX-0001");
         if(exomeExpressProduct == null) {
@@ -325,14 +322,37 @@ public class BettalimsMessageResourceTest extends Arquillian {
         }
         ResearchProject researchProject=researchProjectDao.findByBusinessKey("RP-19");
         if(researchProject == null) {
-            researchProject=new ResearchProject(101L, "SIGMA Sarcoma", "SIGMA Sarcoma", false);
+            researchProject=new ResearchProject(10950L, "SIGMA Sarcoma", "SIGMA Sarcoma", false);
             researchProjectDao.persist(researchProject);
         }
-        ProductOrder productOrder=new ProductOrder(101L, "Messaging Test " + testPrefix, productOrderSamples, "GSP-123",
+        ProductOrder productOrder=new ProductOrder(10950L, "Messaging Test " + testPrefix, productOrderSamples, "GSP-123",
                 exomeExpressProduct, researchProject);
-        productOrder.setJiraTicketKey(jiraTicketKey);
-        productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+        productOrder.prepareToSave(bspUserList.getByUsername("jowalsh"));
         productOrderDao.persist(productOrder);
+        try {
+            productOrder.placeOrder();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        Map<String,TwoDBarcodedTube> mapBarcodeToTube=new LinkedHashMap<String,TwoDBarcodedTube>();
+        HashSet<LabVessel> starters = new HashSet<LabVessel>();
+        for (int rackPosition=1; rackPosition <= LabEventTest.NUM_POSITIONS_IN_RACK; rackPosition++) {
+            String barcode="R" + testPrefix + rackPosition;
+            String bspStock="SM-" + testPrefix + rackPosition;
+            TwoDBarcodedTube bspAliquot=new TwoDBarcodedTube(barcode);
+            bspAliquot.addSample(new MercurySample(productOrder.getBusinessKey(), bspStock));
+            mapBarcodeToTube.put(barcode, bspAliquot);
+
+            twoDBarcodedTubeDAO.persist(bspAliquot);
+            starters.add(bspAliquot);
+        }
+
+        String batchName = "LCSET-MsgTest-" + testPrefix;
+        LabBatch labBatch = new LabBatch(batchName, starters, LabBatch.LabBatchType.WORKFLOW);
+        labBatch.setJiraTicket(new JiraTicket(JiraServiceProducer.stubInstance(), batchName));
+
+        labBatchEjb.createLabBatch(labBatch, "jowalsh");
         productOrderDao.flush();
         productOrderDao.clear();
         try {
@@ -384,7 +404,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
         }
 
         IlluminaSequencingRun illuminaSequencingRun = registerIlluminaSequencingRun(testPrefix, qtpJaxbBuilder.getFlowcellBarcode());
-        ZimsIlluminaRunFactory zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(productOrderDao, bspSampleDataFetcher);
+        ZimsIlluminaRunFactory zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(bspSampleDataFetcher, athenaClientService);
         ZimsIlluminaRun zimsIlluminaRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(illuminaSequencingRun);
         Assert.assertEquals(zimsIlluminaRun.getLanes().size(), 8, "Wrong number of lanes");
     }
