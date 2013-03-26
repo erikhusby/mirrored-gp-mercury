@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.billing;
 
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry_;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
 import org.testng.Assert;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
@@ -17,6 +19,8 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Root;
 import javax.transaction.UserTransaction;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -43,6 +47,7 @@ public class LedgerEntryDaoTest extends ContainerTest {
     @Inject
     private PriceItemDao priceItemDao;
 
+    @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private UserTransaction utx;
 
@@ -114,7 +119,14 @@ public class LedgerEntryDaoTest extends ContainerTest {
 
     //
     public void testFindLedgerEntries() {
-        List<LedgerEntry> ledgerEntries = ledgerEntryDao.findAll();
+        // In one test run, execution time without join fetch callback was 227472 ms.
+        // Execution time with join fetch callback was 51921 ms.
+        List<LedgerEntry> ledgerEntries = ledgerEntryDao.findAll(LedgerEntry.class, new GenericDao.GenericDaoCallback<LedgerEntry>() {
+            @Override
+            public void callback(CriteriaQuery<LedgerEntry> criteriaQuery, Root<LedgerEntry> root) {
+                root.fetch(LedgerEntry_.productOrderSample);
+            }
+        });
         Assert.assertTrue(!ledgerEntries.isEmpty(), "The specified order should find at one test ledger");
     }
 
