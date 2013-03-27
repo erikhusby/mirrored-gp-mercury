@@ -172,7 +172,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
     /**
      * Message one LCSET, and register run.
      */
-    @Test(enabled = true, groups = EXTERNAL_INTEGRATION)
+    @Test(enabled = false, groups = EXTERNAL_INTEGRATION)
     public void testProcessMessage() {
         String testPrefix = testPrefixDateFormat.format(new Date());
 //        Controller.startCPURecording(true);
