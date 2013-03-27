@@ -32,11 +32,13 @@ public class MercuryConfigurationTest {
         url = getClass().getResource(GLOBAL_YAML);
         is = new FileInputStream(url.getFile());
 
+        @SuppressWarnings("unchecked")
         final Map<String, Map> globalDoc = (Map<String, Map>) yaml.load(is);
 
         url = getClass().getResource(LOCAL_YAML);
         is = new FileInputStream(url.getFile());
 
+        @SuppressWarnings("unchecked")
         final Map<String, Map> localDoc = (Map<String, Map>) yaml.load(is);
 
         final MercuryConfiguration configuration = MercuryConfiguration.getInstance();

@@ -13,8 +13,11 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPLSIDUtil;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
+import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.zims.SquidThriftLibraryConverter;
 import org.broadinstitute.gpinformatics.mercury.control.zims.ThriftLibraryConverter;
+import org.broadinstitute.gpinformatics.mercury.control.zims.ZimsIlluminaRunFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
@@ -45,13 +48,19 @@ public class IlluminaRunResource implements Serializable {
     private static final Log LOG = LogFactory.getLog(IlluminaRunResource.class);
 
     @Inject
-    BSPSampleDataFetcher bspDataFetcher;
+    private BSPSampleDataFetcher bspDataFetcher;
 
     @Inject
-    ThriftService thriftService;
+    private ThriftService thriftService;
 
     @Inject
-    ProductOrderDao pdoDao;
+    private ProductOrderDao pdoDao;
+
+    @Inject
+    private ZimsIlluminaRunFactory zimsIlluminaRunFactory;
+
+    @Inject
+    private IlluminaSequencingRunDao illuminaSequencingRunDao;
 
     public IlluminaRunResource() {
     }
@@ -142,9 +151,13 @@ public class IlluminaRunResource implements Serializable {
             Map<String, BSPSampleDTO> lsidToBSPSample = fetchAllBSPDataAtOnce(tRun);
             runBean = getRun(tRun, lsidToBSPSample, new SquidThriftLibraryConverter(), pdoDao);
         } else {
-            runBean.setError("Run " + runName + " doesn't appear to have been registered yet.  Please try again later or contact the mercury team if the problem persists.");
+            setErrorNoRun(runName, runBean);
         }
         return runBean;
+    }
+
+    private void setErrorNoRun(String runName, ZimsIlluminaRun runBean) {
+        runBean.setError("Run " + runName + " doesn't appear to have been registered yet.  Please try again later or contact the mercury team if the problem persists.");
     }
 
     /**
@@ -203,5 +216,36 @@ public class IlluminaRunResource implements Serializable {
             }
         }
         return isBsp;
+    }
+
+    /**
+     * Returns a ZIMS DTO, based on chain of custody in Mercury (rather than Squid)
+     * @param runName registered run
+     * @return DTO based on Mercury chain of custody
+     */
+    @GET
+    @Path("/queryMercury")
+    @Produces({MediaType.APPLICATION_JSON})
+    public ZimsIlluminaRun getMercuryRun(
+            @QueryParam("runName") String runName) {
+        ZimsIlluminaRun runBean = new ZimsIlluminaRun();
+        if (runName == null) {
+            runBean.setError("runName cannot be null");
+        } else {
+            try {
+                IlluminaSequencingRun illuminaSequencingRun = illuminaSequencingRunDao.findByRunName(runName);
+                if (illuminaSequencingRun == null) {
+                    setErrorNoRun(runName, runBean);
+                } else {
+                    runBean = zimsIlluminaRunFactory.makeZimsIlluminaRun(illuminaSequencingRun);
+                }
+            } catch (Throwable t) {
+                String message = "Failed while running pipeline query for run " + runName;
+                LOG.error(message, t);
+                runBean.setError(message + ": " + t.getMessage());
+            }
+        }
+
+        return runBean;
     }
 }

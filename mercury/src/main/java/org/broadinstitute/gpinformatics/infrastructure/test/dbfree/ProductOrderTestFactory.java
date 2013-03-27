@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.infrastructure.test;
+package org.broadinstitute.gpinformatics.infrastructure.test.dbfree;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-public class ProductOrderFactory {
+public class ProductOrderTestFactory {
 
     public static ProductOrder createDummyProductOrder(int sampleCount, @Nonnull String jiraKey, WorkflowName workflowName,
                                                        long creatorId, String rpTitle, String rpSynopsis,
@@ -27,7 +27,7 @@ public class ProductOrderFactory {
         PriceItem priceItem = new PriceItem(PriceItem.PLATFORM_GENOMICS, PriceItem.CATEGORY_EXOME_SEQUENCING_ANALYSIS,
                                                    PriceItem.NAME_EXOME_EXPRESS, "testQuoteId");
         Product dummyProduct =
-                ProductFactory.createDummyProduct(workflowName.getWorkflowName(), productPartNumber);
+                ProductTestFactory.createDummyProduct(workflowName.getWorkflowName(), productPartNumber);
         dummyProduct.setPrimaryPriceItem(priceItem);
 
         List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>(sampleCount);
@@ -38,7 +38,7 @@ public class ProductOrderFactory {
         }
 
         ProductOrder productOrder = new ProductOrder(creatorId, "Test PO", productOrderSamples, "GSP-123", dummyProduct,
-                                                            ResearchProjectFactory
+                                                            ResearchProjectTestFactory
                                                                     .createDummyResearchProject(creatorId, rpTitle,
                                                                             rpSynopsis,
                                                                             irbNotEngaged));
@@ -49,7 +49,7 @@ public class ProductOrderFactory {
 
         productOrder
                 .updateAddOnProducts(Collections
-                        .singletonList(ProductFactory.createDummyProduct("DNA Extract from FFPE or Slides",
+                        .singletonList(ProductTestFactory.createDummyProduct("DNA Extract from FFPE or Slides",
                                 "partNumber")));
 
         return productOrder;

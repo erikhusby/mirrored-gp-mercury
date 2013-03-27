@@ -35,7 +35,8 @@ public class LabBatch {
 
     @ManyToMany(cascade = CascadeType.PERSIST)
     // have to specify name, generated aud name is too long for Oracle
-    @JoinTable(schema = "mercury", name = "lb_starting_lab_vessels")
+    @JoinTable(schema = "mercury", name = "lb_starting_lab_vessels", joinColumns = @JoinColumn(name = "lab_batch"),
+            inverseJoinColumns = @JoinColumn(name = "starting_lab_vessels"))
     private Set<LabVessel> startingLabVessels = new HashSet<LabVessel>();
 
     private boolean isActive = true;
@@ -335,7 +336,7 @@ public class LabBatch {
 
         HashCodeBuilder hashCodeBuilder = new HashCodeBuilder();
 
-        hashCodeBuilder.append(isActive).append(batchName).append(jiraTicket).append(getStartingVesselsArray());
+        hashCodeBuilder.append(isActive).append(batchName).append(jiraTicket);
 
         return hashCodeBuilder.hashCode();
     }

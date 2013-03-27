@@ -1379,4 +1379,24 @@
     </changeSet>
 
 
+    <changeSet id="GPLIM-1098-1" author="thompson">
+        <dropTable tableName="lab_vessel_lab_batches" schemaName="mercury"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1098-2" author="thompson">
+        <dropTable tableName="reagent_containers" schemaName="mercury"/>
+    </changeSet>
+    
+    <changeSet id="GPLIM-1098-3" author="thompson">
+        <createIndex schemaName="mercury" tableName="lab_event" indexName="IX_LE_IN_PLACE_LV">
+            <column name="IN_PLACE_LAB_VESSEL"/>
+        </createIndex>
+    </changeSet>
+    
+    <changeSet id="GPLIM-1098-4" author="thompson">
+        <createIndex schemaName="mercury" tableName="lb_starting_lab_vessels" indexName="ix_lbslv_starting_lvs">
+            <column name="starting_lab_vessels"/>
+        </createIndex>
+    </changeSet>
+
 </databaseChangeLog>

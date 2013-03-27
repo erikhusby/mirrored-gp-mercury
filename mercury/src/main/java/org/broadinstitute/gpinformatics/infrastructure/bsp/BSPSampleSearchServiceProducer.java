@@ -9,7 +9,7 @@ import javax.enterprise.inject.New;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.QA;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.STUBBY;
 
 public class BSPSampleSearchServiceProducer {
@@ -42,9 +42,9 @@ public class BSPSampleSearchServiceProducer {
      * This is also needed to get a real copy of the BSP services in container testing, since by default
      * injection will give you a Stub BSP service, not an Impl.
      */
-    public static BSPSampleSearchService qaInstance() {
+    public static BSPSampleSearchService testInstance() {
 
-        BSPConfig bspConfig = BSPConfig.produce(QA);
+        BSPConfig bspConfig = BSPConfig.produce(DEV);
 
         return new BSPSampleSearchServiceImpl(bspConfig);
     }

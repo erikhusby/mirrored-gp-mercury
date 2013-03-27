@@ -8,7 +8,7 @@ import javax.enterprise.inject.New;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.QA;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.STUBBY;
 
 public class PMBQuoteServiceProducer {
@@ -35,9 +35,9 @@ public class PMBQuoteServiceProducer {
      *
      * @return
      */
-    public static PMBQuoteService qaInstance() {
+    public static PMBQuoteService testInstance() {
 
-        QuoteConfig bspConfig = QuoteConfig.produce(QA);
+        QuoteConfig bspConfig = QuoteConfig.produce(DEV);
 
         return new PMBQuoteServiceImpl( bspConfig );
 

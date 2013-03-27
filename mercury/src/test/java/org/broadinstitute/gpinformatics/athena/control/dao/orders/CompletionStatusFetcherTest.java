@@ -18,13 +18,14 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Test the progress object
+ * Test the progress object.
  *
  * @author hrafal
  */
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
 public class CompletionStatusFetcherTest extends ContainerTest {
 
+    @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private UserTransaction utx;
 
@@ -34,7 +35,7 @@ public class CompletionStatusFetcherTest extends ContainerTest {
     private CompletionStatusFetcher allPDOFetcher;
 
     @BeforeMethod
-    public void setUp() throws Exception {        // Skip if no injections, meaning we're not running in container
+    public void setUp() throws Exception {        // Skip if no injections, meaning we're not running in container.
         if (utx == null) {
             return;
         }
@@ -48,7 +49,7 @@ public class CompletionStatusFetcherTest extends ContainerTest {
 
     @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void tearDown() throws Exception {
-        // Skip if no injections, meaning we're not running in container
+        // Skip if no injections, meaning we're not running in container.
         if (utx == null) {
             return;
         }
@@ -57,7 +58,7 @@ public class CompletionStatusFetcherTest extends ContainerTest {
     }
 
     public void testGetPercentAbandoned() throws Exception {
-        // Find the first PDO with abandoned samples
+        // Find the first PDO with abandoned samples.
         String firstAbandonedPDOKey = null;
         int fetcherPercentAbandoned = 0;
 
@@ -82,7 +83,7 @@ public class CompletionStatusFetcherTest extends ContainerTest {
     }
 
     public void testGetPercentComplete() throws Exception {
-        // Find the first PDO with abandoned samples
+        // Find the first PDO with abandoned samples.
         String firstCompletePDOKey = null;
         int fetcherPercentComplete = 0;
 
@@ -141,7 +142,7 @@ public class CompletionStatusFetcherTest extends ContainerTest {
     }
 
     public void testGetPercentInProgress() throws Exception {
-        // Find the first PDO with abandoned samples
+        // Find the first PDO with abandoned samples.
         String firstCompleteAndAbandonedKey = null;
         int fetcherInProgess = 0;
 

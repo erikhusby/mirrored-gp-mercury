@@ -21,6 +21,10 @@ public class QuoteFunding {
     private FundingLevel fundingLevel;
 
     public QuoteFunding() {}
+
+    public QuoteFunding(String fundsRemaining) {
+        this.fundsRemaining = fundsRemaining;
+    }
     
     public QuoteFunding(FundingLevel fundLevel) {
         this.fundingLevel = fundLevel;
@@ -33,5 +37,6 @@ public class QuoteFunding {
     public String getFundsRemaining() {
         return fundsRemaining;
     }
+
 
 }

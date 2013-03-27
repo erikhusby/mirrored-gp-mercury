@@ -24,7 +24,6 @@ import org.testng.annotations.Test;
 import java.util.*;
 
 import static org.easymock.EasyMock.*;
-import static org.easymock.EasyMock.verify;
 
 /**
  * DbFree test of MercuryClientEjb.

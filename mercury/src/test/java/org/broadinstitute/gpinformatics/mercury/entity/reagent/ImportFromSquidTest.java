@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.vessel.TubeBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselMetricBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselMetricRunBean;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexingSchemeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
@@ -29,6 +30,7 @@ import javax.ws.rs.core.MediaType;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -43,13 +45,13 @@ import java.util.Map;
 /**
  * A Test to import molecular indexes and LCSETs from Squid.  This prepares an empty database to accept messages.  This must
  * be in the same package as MolecularIndexingScheme, because it uses package visible methods on that class.
- * Use the following VM options: -Xmx1G -XX:MaxPermSize=128M -Dorg.jboss.remoting-jmx.timeout=3000
+ *
+ * Use the following VM options in the test: -Xmx1G -XX:MaxPermSize=128M -Dorg.jboss.remoting-jmx.timeout=3000
+ *
+ * Use -DlastImportDate=2013-01-31 for incremental imports (note, this has to supplied on the command line for the
+ * app server, not the test).
+ *
  * As of January 2013, the test takes about 35 minutes to run.
- * This test requires an XA-datasource, or the following in the <system-properties> element in standalone.xml
- *         <property name="com.arjuna.ats.arjuna.allowMultipleLastResources" value="true"/>
- * For XA in Postgres, in data/postgresql.conf, set max_prepared_transactions = 10
- * Increase the arjuna transaction timeout in jboss standalone/configuration/standalone.xml
- *             <coordinator-environment default-timeout="3000"/>
  */
 public class ImportFromSquidTest extends ContainerTest {
 
@@ -75,36 +77,14 @@ public class ImportFromSquidTest extends ContainerTest {
     @Inject
     private ProductOrderDao productOrderDao;
 
+    @Inject
+    private ReagentDesignDao reagentDesignDao;
+
     public static final String XML_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss";
     private SimpleDateFormat xmlDateFormat = new SimpleDateFormat(XML_DATE_FORMAT);
 
-/*
-    @SuppressWarnings("CdiInjectionPointsInspection")
-    @Inject
-    private UserTransaction utx;
-
-    @BeforeMethod(groups = EXTERNAL_INTEGRATION)
-    public void setUp() throws Exception {
-        // Skip if no injections, meaning we're not running in container
-        if (utx == null) {
-            return;
-        }
-
-        utx.begin();
-    }
-
-    @AfterMethod(groups = EXTERNAL_INTEGRATION)
-    public void tearDown() throws Exception {
-        // Skip if no injections, meaning we're not running in container
-        if (utx == null) {
-            return;
-        }
-
-        if(utx.getStatus() == Status.STATUS_ACTIVE) {
-            utx.commit();
-        }
-    }
-*/
+    public static final String IMPORT_DATE_FORMAT = "yyyy-MM-dd";
+    private SimpleDateFormat importDateFormat = new SimpleDateFormat(IMPORT_DATE_FORMAT);
 
     /**
      * Import index schemes from Squid.
@@ -125,6 +105,12 @@ public class ImportFromSquidTest extends ContainerTest {
                 "     mis.NAME ");
         List<?> resultList = nativeQuery.getResultList();
 
+        List<MolecularIndexingScheme> mercurySchemes = molecularIndexingSchemeDao.findAll(MolecularIndexingScheme.class);
+        Map<String, MolecularIndexingScheme> mapNameToScheme = new HashMap<String, MolecularIndexingScheme>();
+        for (MolecularIndexingScheme mercuryScheme : mercurySchemes) {
+            mapNameToScheme.put(mercuryScheme.getName(), mercuryScheme);
+        }
+
         String previousSchemeName = "";
         MolecularIndexingScheme molecularIndexingScheme = null;
         Map<String, MolecularIndex> mapSequenceToIndex = new HashMap<String, MolecularIndex>();
@@ -136,7 +122,7 @@ public class ImportFromSquidTest extends ContainerTest {
 
             if(!schemeName.equals(previousSchemeName)) {
                 previousSchemeName = schemeName;
-                if(molecularIndexingScheme != null) {
+                if(molecularIndexingScheme != null && !mapNameToScheme.containsKey(schemeName)) {
                     molecularIndexingSchemeDao.persist(molecularIndexingScheme);
                 }
                 molecularIndexingScheme = new MolecularIndexingScheme();
@@ -171,10 +157,14 @@ public class ImportFromSquidTest extends ContainerTest {
                 "          ON   wd.well_description_id = pssi.well_description_id " +
                 "     INNER JOIN molecular_indexing_scheme mis " +
                 "          ON   mis.ID = pssi.molecular_indexing_scheme_id " +
+                "WHERE " +
+                "     p.created_on > :lastImportDate " +
                 "ORDER BY " +
                 "     p.barcode, " +
                 "     wd.NAME");
+        nativeQuery.setParameter("lastImportDate", getLastImportDate());
         List<?> resultList = nativeQuery.getResultList();
+
         String previousPlateBarcode = "";
         StaticPlate staticPlate = null;
         List<StaticPlate> plates = new ArrayList<StaticPlate>();
@@ -200,7 +190,7 @@ public class ImportFromSquidTest extends ContainerTest {
                 staticPlate = new StaticPlate(plateBarcode, StaticPlate.PlateType.IndexedAdapterPlate96);
             }
             VesselPosition vesselPosition = VesselPosition.getByName(wellName);
-            final PlateWell plateWell = new PlateWell(staticPlate, vesselPosition);
+            PlateWell plateWell = new PlateWell(staticPlate, vesselPosition);
             MolecularIndexingScheme molecularIndexingScheme = mapNameToScheme.get(indexingSchemeName);
             if (molecularIndexingScheme == null) {
                 System.out.println("Fetching scheme " + indexingSchemeName);
@@ -217,6 +207,21 @@ public class ImportFromSquidTest extends ContainerTest {
         }
         staticPlateDAO.persistAll(plates);
         staticPlateDAO.clear();
+    }
+
+    private Date getLastImportDate() {
+        Date lastImportDate;
+        String lastImportDateString = System.getProperty("lastImportDate");
+        if (lastImportDateString == null) {
+            lastImportDate = new GregorianCalendar(2000, 5, 6).getTime();
+        } else {
+            try {
+                lastImportDate = importDateFormat.parse(lastImportDateString);
+            } catch (ParseException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return lastImportDate;
     }
 
     /**
@@ -356,6 +361,8 @@ public class ImportFromSquidTest extends ContainerTest {
      */
     @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testCreateBaits() {
+        // todo jmt for a bait to show up in this query, it must have been transferred to a plate at least once.
+        // Without this restriction, the number of tubes goes from ~40 to ~70,000
         Query nativeQuery = entityManager.createNativeQuery("SELECT DISTINCT " +
                 "    r.barcode, " +
                 "    hbd.design_name " +
@@ -388,6 +395,9 @@ public class ImportFromSquidTest extends ContainerTest {
                 "ORDER BY " +
                 "        hbd.design_name ");
         List<?> resultList = nativeQuery.getResultList();
+
+        Map<String, ReagentDesign> mapNameToReagentDesign = getMapNameToMercuryReagentDesign();
+
         String previousDesignName = "";
         ReagentDesign reagentDesign = null;
         for (Object o : resultList) {
@@ -400,9 +410,24 @@ public class ImportFromSquidTest extends ContainerTest {
             }
             TwoDBarcodedTube twoDBarcodedTube = new TwoDBarcodedTube(barcode);
             twoDBarcodedTube.addReagent(new DesignedReagent(reagentDesign));
-            twoDBarcodedTubeDAO.persist(twoDBarcodedTube);
+            if (!mapNameToReagentDesign.containsKey(designName)) {
+                twoDBarcodedTubeDAO.persist(twoDBarcodedTube);
+            }
         }
         twoDBarcodedTubeDAO.clear();
+    }
+
+    /**
+     * Get map of existing Mercury reagent designs
+     * @return map from name of reagent design to entity
+     */
+    private Map<String, ReagentDesign> getMapNameToMercuryReagentDesign() {
+        List<ReagentDesign> mercuryReagentDesigns = reagentDesignDao.findAll(ReagentDesign.class);
+        Map<String, ReagentDesign> mapNameToReagentDesign = new HashMap<String, ReagentDesign>();
+        for (ReagentDesign mercuryReagentDesign : mercuryReagentDesigns) {
+            mapNameToReagentDesign.put(mercuryReagentDesign.getBusinessKey(), mercuryReagentDesign);
+        }
+        return mapNameToReagentDesign;
     }
 
     /**
@@ -410,6 +435,8 @@ public class ImportFromSquidTest extends ContainerTest {
      */
     @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testCreateCats() {
+        // todo jmt for a CAT to show up in this query, it must have been transferred to a plate at least once.
+        // Without this restriction, the number of tubes rises from 122 to ~14,000
         Query nativeQuery = entityManager.createNativeQuery("SELECT " +
                 "     DISTINCT  " +
                 "     cas.design_name, " +
@@ -434,6 +461,9 @@ public class ImportFromSquidTest extends ContainerTest {
                 "     ORDER BY " +
                 "          cas.design_name ");
         List<?> resultList = nativeQuery.getResultList();
+
+        Map<String, ReagentDesign> mapNameToReagentDesign = getMapNameToMercuryReagentDesign();
+
         String previousDesignName = "";
         ReagentDesign reagentDesign = null;
         for (Object o : resultList) {
@@ -448,7 +478,9 @@ public class ImportFromSquidTest extends ContainerTest {
             }
             TwoDBarcodedTube twoDBarcodedTube = new TwoDBarcodedTube(barcode);
             twoDBarcodedTube.addReagent(new DesignedReagent(reagentDesign));
-            twoDBarcodedTubeDAO.persist(twoDBarcodedTube);
+            if (!mapNameToReagentDesign.containsKey(designName)) {
+                twoDBarcodedTubeDAO.persist(twoDBarcodedTube);
+            }
         }
         twoDBarcodedTubeDAO.clear();
     }

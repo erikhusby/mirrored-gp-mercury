@@ -78,8 +78,8 @@ public class WorkflowConfigEtlDbFreeTest {
         expect(loader.load()).andReturn(config);
         replay(mocks);
 
-        File workflowDatafile = new File(datafileDir, etlDateStr + "_" + tst.WORKFLOW_BASE_FILENAME + ".dat");
-        File processDatafile = new File(datafileDir, etlDateStr + "_" + tst.PROCESS_BASE_FILENAME + ".dat");
+        File workflowDatafile = new File(datafileDir, etlDateStr + "_" + WorkflowConfigEtl.WORKFLOW_BASE_FILENAME + ".dat");
+        File processDatafile = new File(datafileDir, etlDateStr + "_" + WorkflowConfigEtl.PROCESS_BASE_FILENAME + ".dat");
         assertFalse(workflowDatafile.exists());
         assertFalse(processDatafile.exists());
 
@@ -94,8 +94,8 @@ public class WorkflowConfigEtlDbFreeTest {
         expect(loader.load()).andReturn(config);
         replay(mocks);
 
-        File workflowDatafile = new File(datafileDir, etlDateStr + "_" + tst.WORKFLOW_BASE_FILENAME + ".dat");
-        File processDatafile = new File(datafileDir, etlDateStr + "_" + tst.PROCESS_BASE_FILENAME + ".dat");
+        File workflowDatafile = new File(datafileDir, etlDateStr + "_" + WorkflowConfigEtl.WORKFLOW_BASE_FILENAME + ".dat");
+        File processDatafile = new File(datafileDir, etlDateStr + "_" + WorkflowConfigEtl.PROCESS_BASE_FILENAME + ".dat");
         assertFalse(workflowDatafile.exists());
         assertFalse(processDatafile.exists());
 

@@ -76,7 +76,6 @@ public class MolecularIndexingSchemeFactory {
 
     static List<IndexPositionPair> getPairArray(MolecularIndexingScheme scheme, IndexPositionPair... indexPositionPairs) {
         List<IndexPositionPair> pairList = new ArrayList<IndexPositionPair>(); //new IndexPositionPair[scheme.getIndexes().size() + indexPositionPairs.length];
-        int index = 0;
 
         for (Map.Entry<MolecularIndexingScheme.IndexPosition, MolecularIndex> entry : scheme.getIndexes().entrySet()) {
             pairList.add(new IndexPositionPair(entry.getKey(), entry.getValue().getSequence()));

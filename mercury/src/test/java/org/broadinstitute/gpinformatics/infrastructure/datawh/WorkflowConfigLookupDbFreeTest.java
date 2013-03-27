@@ -28,14 +28,13 @@ public class WorkflowConfigLookupDbFreeTest {
     static final long[] MSEC_DATES = new long[]{1357016400000L, 1357016400000L + 86400000L, 1357016400000L + 2 * 86400000L};
 
     private WorkflowConfigLookup wfConfigLookup;
-    private WorkflowLoader workflowLoader;
     private WorkflowConfig workflowConfig = buildWorkflowConfig();
 
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void setUp() throws Exception {
 
-        workflowLoader = createMock(WorkflowLoader.class);
+        WorkflowLoader workflowLoader = createMock(WorkflowLoader.class);
         expect(workflowLoader.load()).andReturn(workflowConfig);
         replay(workflowLoader);
 

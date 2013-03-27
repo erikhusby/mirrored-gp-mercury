@@ -3,8 +3,8 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
-import org.broadinstitute.gpinformatics.infrastructure.test.ProductOrderFactory;
-import org.broadinstitute.gpinformatics.infrastructure.test.ProductOrderSampleFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderSampleTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.meanbean.lang.EquivalentFactory;
 import org.meanbean.test.BeanTester;
@@ -20,7 +20,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
-import static org.broadinstitute.gpinformatics.athena.entity.orders.IsInBspFormatSample.inBspFormat;
+import static org.broadinstitute.gpinformatics.infrastructure.matchers.InBspFormatSample.inBspFormat;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
@@ -35,7 +35,7 @@ public class ProductOrderTest {
 
     @BeforeMethod
     public void setUp() throws Exception {
-        productOrder = ProductOrderFactory.createDummyProductOrder(PDO_JIRA_KEY);
+        productOrder = ProductOrderTestFactory.createDummyProductOrder(PDO_JIRA_KEY);
     }
 
     @AfterMethod
@@ -97,20 +97,21 @@ public class ProductOrderTest {
     }
 
     private final List<ProductOrderSample> sixBspSamplesNoDupes =
-            ProductOrderSampleFactory
+            ProductOrderSampleTestFactory
                     .createDBFreeSampleList("SM-2ACGC", "SM-2ABDD", "SM-2ACKV", "SM-2AB1B", "SM-2ACJC", "SM-2AD5D");
 
     private final List<ProductOrderSample> fourBspSamplesWithDupes =
-            ProductOrderSampleFactory
+            ProductOrderSampleTestFactory
                     .createDBFreeSampleList("SM-2ACGC", "SM-2ABDD", "SM-2ACGC", "SM-2AB1B", "SM-2ACJC", "SM-2ACGC");
 
     private final List<ProductOrderSample> sixMixedSampleProducts =
-            ProductOrderSampleFactory
+            ProductOrderSampleTestFactory
                     .createDBFreeSampleList("SM-2ACGC", "SM2ABDD", "SM2ACKV", "SM-2AB1B", "SM-2ACJC", "SM-2AD5D");
 
     private final List<ProductOrderSample> nonBspSampleProducts =
-            ProductOrderSampleFactory
-                    .createDBFreeSampleList("SSM-2ACGC1", "SM--2ABDDD", "SM-2AB", "SM-2AB1B-", "SM-2ACJCACB", "SM-SM-SM");
+            ProductOrderSampleTestFactory
+                    .createDBFreeSampleList("SSM-2ACGC1", "SM--2ABDDD", "SM-2AB", "SM-2AB1B-", "SM-2ACJCACB",
+                            "SM-SM-SM");
 
     @Test
     public void testGetUniqueSampleCount() throws Exception {

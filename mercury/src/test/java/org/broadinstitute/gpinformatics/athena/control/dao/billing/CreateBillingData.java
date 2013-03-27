@@ -20,6 +20,7 @@ public class CreateBillingData extends ContainerTest {
     @Inject
     private ProductOrderDao productOrderDao;
 
+    @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private UserTransaction userTransaction;
 

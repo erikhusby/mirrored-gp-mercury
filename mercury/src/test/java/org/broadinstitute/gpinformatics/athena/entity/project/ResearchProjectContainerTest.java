@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
-import org.broadinstitute.gpinformatics.infrastructure.test.ResearchProjectFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.testng.Assert;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
@@ -30,7 +30,7 @@ public class ResearchProjectContainerTest extends Arquillian {
 
     public void testJiraSubmission() throws IOException {
 
-        ResearchProject dummy = ResearchProjectFactory
+        ResearchProject dummy = ResearchProjectTestFactory
                 .createDummyResearchProject(10950, "MyResearchProject", "To Study Stuff", ResearchProject.IRB_ENGAGED);
 
         dummy.submit();
