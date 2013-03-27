@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 import junit.framework.Assert;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDaoTest;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
@@ -11,6 +10,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -61,7 +61,7 @@ public class ProductOrderEjbTest extends ContainerTest {
     }
 
     public void testMapAliquotIdToSampleOne() throws Exception {
-        ProductOrder order = ProductOrderDaoTest.createTestProductOrder(researchProjectDao, productDao,
+        ProductOrder order = ProductOrderDBTestFactory.createTestProductOrder(researchProjectDao, productDao,
                 BSPSampleSearchServiceStub.STOCK_ID);
         String key = order.getBusinessKey();
         productOrderDao.persist(order);
@@ -96,7 +96,7 @@ public class ProductOrderEjbTest extends ContainerTest {
     public void testMapAliquotToSampleTwo() throws Exception {
         // Test case where there are multiple samples, where each one maps to a different aliquot.
 
-        ProductOrder order = ProductOrderDaoTest.createTestProductOrder(researchProjectDao, productDao,
+        ProductOrder order = ProductOrderDBTestFactory.createTestProductOrder(researchProjectDao, productDao,
                 BSPSampleSearchServiceStub.STOCK_ID, BSPSampleSearchServiceStub.STOCK_ID);
         String key = order.getBusinessKey();
         productOrderDao.persist(order);

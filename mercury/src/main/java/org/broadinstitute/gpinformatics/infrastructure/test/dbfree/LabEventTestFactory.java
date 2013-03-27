@@ -1,7 +1,11 @@
-package org.broadinstitute.gpinformatics.mercury.entity.vessel;
+package org.broadinstitute.gpinformatics.infrastructure.test.dbfree;
 
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
 import java.util.Date;
 import java.util.HashMap;

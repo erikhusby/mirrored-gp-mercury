@@ -1345,5 +1345,58 @@
         </preConditions>
         <dropUniqueConstraint constraintName="SYS_C0042392" tableName="LV_POS_MERCURY_SAMPLES" schemaName="mercury" />
     </changeSet>
+    <changeSet author="scottmat" id="GPLIM-1089-6">
+        <sql>
+            update sequencing_run run set run.RUN_CARTRIDGE = (select runjoin.RUN_CARTRIDGE as flowcell_join
+            from SEQUENCING_RUN run_view
+            join SEQ_RUN_RUN_CARTRIDGES runjoin on runjoin.SEQUENCING_RUN = run_view.SEQUENCING_RUN_ID
+            join lab_vessel flowcell on flowcell.LAB_VESSEL_ID = runjoin.RUN_CARTRIDGE
+            where run.SEQUENCING_RUN_ID = run_view.SEQUENCING_RUN_ID) ;
+
+
+            update sequencing_run_aud run set run.RUN_CARTRIDGE = (select runjoin.RUN_CARTRIDGE as flowcell_join
+            from SEQUENCING_RUN_aud run_view
+            join SEQ_RUN_RUN_CARTRIDGES_aud runjoin on runjoin.SEQUENCING_RUN = run_view.SEQUENCING_RUN_ID
+            join lab_vessel flowcell on flowcell.LAB_VESSEL_ID = runjoin.RUN_CARTRIDGE
+            where run.SEQUENCING_RUN_ID = run_view.SEQUENCING_RUN_ID) ;
+        </sql>
+    </changeSet>
+
+    <changeSet author="scottmat" id="GPLIM-1089-7">
+        <sql>
+            update sequencing_run run set run.RUN_DIRECTORY = (select loca.DATA_LOCATION
+            from sequencing_run run_view
+            join OUTPUT_DATA_LOCATION loca on run_view.RUN_LOCATION_ID = loca.DATA_LOCATION_ID
+            where run_view.SEQUENCING_RUN_ID = run.SEQUENCING_RUN_ID
+            );
+
+            update sequencing_run_aud run set run.RUN_DIRECTORY = (select loca.DATA_LOCATION
+            from sequencing_run_aud run_view
+            join OUTPUT_DATA_LOCATION_aud loca on run_view.RUN_LOCATION_ID = loca.DATA_LOCATION_ID
+            where run_view.SEQUENCING_RUN_ID = run.SEQUENCING_RUN_ID
+            );
+        </sql>
+    </changeSet>
+
+
+    <changeSet id="GPLIM-1098-1" author="thompson">
+        <dropTable tableName="lab_vessel_lab_batches" schemaName="mercury"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1098-2" author="thompson">
+        <dropTable tableName="reagent_containers" schemaName="mercury"/>
+    </changeSet>
+    
+    <changeSet id="GPLIM-1098-3" author="thompson">
+        <createIndex schemaName="mercury" tableName="lab_event" indexName="IX_LE_IN_PLACE_LV">
+            <column name="IN_PLACE_LAB_VESSEL"/>
+        </createIndex>
+    </changeSet>
+    
+    <changeSet id="GPLIM-1098-4" author="thompson">
+        <createIndex schemaName="mercury" tableName="lb_starting_lab_vessels" indexName="ix_lbslv_starting_lvs">
+            <column name="starting_lab_vessels"/>
+        </createIndex>
+    </changeSet>
 
 </databaseChangeLog>

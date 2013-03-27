@@ -1,16 +1,10 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabVesselBean;
-import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchBean;
-import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchResource;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -22,10 +16,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.annotation.Resource;
-import javax.ejb.SessionContext;
 import javax.inject.Inject;
-import javax.persistence.Query;
 import javax.transaction.Status;
 import javax.transaction.UserTransaction;
 import javax.ws.rs.core.Response;
@@ -45,7 +36,6 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 
 @Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION, singleThreaded = true)
 public class ExtractTransformTest extends Arquillian {
-    private Log logger = LogFactory.getLog(getClass());
     private String datafileDir;
     public final long MSEC_IN_SEC = 1000L;
     private final String barcode = "TEST" + System.currentTimeMillis();
@@ -56,6 +46,7 @@ public class ExtractTransformTest extends Arquillian {
     private AuditReaderDao auditReaderDao;
     @Inject
     private LabVesselDao labVesselDao;
+    @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private UserTransaction utx;
 
@@ -94,7 +85,6 @@ public class ExtractTransformTest extends Arquillian {
     public void testEtl() throws Exception {
         final TwoDBarcodedTube labVessel = new TwoDBarcodedTube(barcode);
         final String datFileEnding = "_lab_vessel.dat";
-        final String auditTableName = "MERCURY.LAB_VESSEL_AUD";
 
         // Writes and commits an entity to the db.  Envers requires the transaction to commit.
         long startSec = System.currentTimeMillis() / MSEC_IN_SEC;

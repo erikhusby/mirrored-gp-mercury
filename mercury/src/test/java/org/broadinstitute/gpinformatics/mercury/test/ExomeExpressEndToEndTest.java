@@ -1,7 +1,9 @@
 package org.broadinstitute.gpinformatics.mercury.test;
 
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProducer;
+import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.*;
@@ -15,7 +17,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceProducer;
-import org.broadinstitute.gpinformatics.infrastructure.test.BettaLimsMessageFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.designation.LibraryRegistrationSOAPService;
 import org.broadinstitute.gpinformatics.mercury.boundary.designation.LibraryRegistrationSOAPServiceProducer;
@@ -23,7 +25,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.designation.Registratio
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.squid.SequelLibrary;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
-import org.broadinstitute.gpinformatics.mercury.bsp.EverythingYouAskForYouGetAndItsHuman;
+import org.broadinstitute.gpinformatics.mocks.EverythingYouAskForYouGetAndItsHuman;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bsp.BSPSampleFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
@@ -34,7 +36,7 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
-import org.broadinstitute.gpinformatics.mercury.control.zims.LibraryBeanFactory;
+import org.broadinstitute.gpinformatics.mercury.control.zims.ZimsIlluminaRunFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingReceipt;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventName;
@@ -313,7 +315,7 @@ public class ExomeExpressEndToEndTest {
                             AthenaClientProducer
                                     .stubInstance(), bucketBeanEJB, mockBucketDao, new BSPUserList(BSPManagerFactoryProducer
                             .stubInstance()));
-            BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
+            BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory();
             Map<String, TwoDBarcodedTube> mapBarcodeToTube = new HashMap<String, TwoDBarcodedTube>();
 
             for (Map.Entry<String, LabVessel> stockToAliquotEntry : stockSampleAliquotMap.entrySet()) {
@@ -322,14 +324,14 @@ public class ExomeExpressEndToEndTest {
             }
 
             LabEventTest.PreFlightEntityBuilder preFlightEntityBuilder = new LabEventTest.PreFlightEntityBuilder(
-                    bettaLimsMessageFactory, labEventFactory, labEventHandler, mapBarcodeToTube);//.invoke();
+                    bettaLimsMessageTestFactory, labEventFactory, labEventHandler, mapBarcodeToTube);//.invoke();
 
             LabEventTest.ShearingEntityBuilder shearingEntityBuilder = new LabEventTest.ShearingEntityBuilder(
-                    mapBarcodeToTube, preFlightEntityBuilder.getTubeFormation(), bettaLimsMessageFactory, labEventFactory,
+                    mapBarcodeToTube, preFlightEntityBuilder.getTubeFormation(), bettaLimsMessageTestFactory, labEventFactory,
                     labEventHandler, preFlightEntityBuilder.getRackBarcode()).invoke();
 
             LabEventTest.LibraryConstructionEntityBuilder libraryConstructionEntityBuilder =
-                    new LabEventTest.LibraryConstructionEntityBuilder(bettaLimsMessageFactory, labEventFactory,
+                    new LabEventTest.LibraryConstructionEntityBuilder(bettaLimsMessageTestFactory, labEventFactory,
                             labEventHandler,
                             shearingEntityBuilder.getShearingCleanupPlate(),
                             shearingEntityBuilder.getShearCleanPlateBarcode(),
@@ -337,7 +339,7 @@ public class ExomeExpressEndToEndTest {
                             mapBarcodeToTube.size()).invoke();
 
             LabEventTest.HybridSelectionEntityBuilder hybridSelectionEntityBuilder =
-                    new LabEventTest.HybridSelectionEntityBuilder(bettaLimsMessageFactory, labEventFactory,
+                    new LabEventTest.HybridSelectionEntityBuilder(bettaLimsMessageTestFactory, labEventFactory,
                             labEventHandler,
                             libraryConstructionEntityBuilder.getPondRegRack(),
                             libraryConstructionEntityBuilder
@@ -379,17 +381,12 @@ public class ExomeExpressEndToEndTest {
             //
             //            }
 
-            LabEventTest.QtpEntityBuilder qtpEntityBuilder = new LabEventTest.QtpEntityBuilder(bettaLimsMessageFactory,
-                    labEventFactory,
-                    labEventHandler,
-                    hybridSelectionEntityBuilder
-                            .getNormCatchRack(),
-                    hybridSelectionEntityBuilder
-                            .getNormCatchRackBarcode(),
-                    hybridSelectionEntityBuilder
-                            .getNormCatchBarcodes(),
-                    hybridSelectionEntityBuilder
-                            .getMapBarcodeToNormCatchTubes(),
+            LabEventTest.QtpEntityBuilder qtpEntityBuilder = new LabEventTest.QtpEntityBuilder(
+                    bettaLimsMessageTestFactory, labEventFactory, labEventHandler,
+                    Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchRack()),
+                    Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchRackBarcode()),
+                    Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchBarcodes()),
+                    hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(),
                     WorkflowName.HYBRID_SELECTION);
             qtpEntityBuilder.invoke();
 
@@ -494,8 +491,8 @@ public class ExomeExpressEndToEndTest {
             //            }
 
             // ZIMS
-            LibraryBeanFactory libraryBeanFactory = new LibraryBeanFactory();
-            ZimsIlluminaRun zimsRun = libraryBeanFactory.buildLibraries(illuminaSequencingRun);
+            ZimsIlluminaRunFactory zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(new BSPSampleDataFetcher(), new AthenaClientServiceStub());
+            ZimsIlluminaRun zimsRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(illuminaSequencingRun);
 
             // how to populate BSPSampleDTO?  Ease of use from EL suggests an entity that can load itself, but this
             // would require injecting a service, or using a singleton

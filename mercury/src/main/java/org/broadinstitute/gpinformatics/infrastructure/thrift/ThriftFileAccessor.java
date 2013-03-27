@@ -11,7 +11,7 @@ import org.apache.thrift.transport.TTransport;
 import java.io.*;
 import java.util.Arrays;
 
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.QA;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
 public class ThriftFileAccessor {
 
@@ -27,7 +27,7 @@ public class ThriftFileAccessor {
      * @throws Exception
      */
     private static void writeRunFile() throws Exception {
-        ThriftConfig qaThrift = ThriftConfig.produce(QA);
+        ThriftConfig qaThrift = ThriftConfig.produce(DEV);
         TZamboniRun runFetchedFromService = fetchRun(qaThrift);
         serializeRun(runFetchedFromService,RUN_FILE);
     }

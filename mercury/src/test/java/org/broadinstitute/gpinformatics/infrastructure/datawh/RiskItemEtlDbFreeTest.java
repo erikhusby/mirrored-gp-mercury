@@ -26,7 +26,6 @@ import static org.testng.Assert.*;
 @Test(groups = TestGroups.DATABASE_FREE)
 public class RiskItemEtlDbFreeTest {
     private String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
-    private long entityId = 1122334455L;
     private long posId = 2233445511L;
     private String datafileDir;
     private RiskItemEtl tst;
@@ -56,6 +55,7 @@ public class RiskItemEtlDbFreeTest {
     }
 
     public void testEtlFlags() throws Exception {
+        long entityId = 1122334455L;
         expect(obj.getRiskItemId()).andReturn(entityId);
         replay(mocks);
 

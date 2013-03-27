@@ -2,11 +2,11 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDaoTest;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -59,7 +59,7 @@ public class ProductOrderSampleStatusTest extends ContainerTest {
             names[i] = "SM-TEST" + i;
         }
 
-        ProductOrder order = ProductOrderDaoTest.createTestProductOrder(researchProjectDao, productDao, names);
+        ProductOrder order = ProductOrderDBTestFactory.createTestProductOrder(researchProjectDao, productDao, names);
         testKey = order.getBusinessKey();
         productOrderDao.persist(order);
         productOrderDao.flush();

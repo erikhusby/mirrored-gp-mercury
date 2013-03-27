@@ -181,6 +181,7 @@ public class BSPPlatingRequestServiceImpl extends AbstractJerseyClientService im
                                                      String comments, String seqTechnology, String humanReadableBarcode) {
         final int SAMPLES_PER_PLATE = PLATE_WELL_COUNT - (controlWells == null ? 0 : controlWells.size());
 
+        // TODO Splitterize
         GroupingIterable<SeqWorkRequestAliquot> platesWorthGroupingsOfAliquots =
                 new GroupingIterable<SeqWorkRequestAliquot>(SAMPLES_PER_PLATE, seqAliquots);
 

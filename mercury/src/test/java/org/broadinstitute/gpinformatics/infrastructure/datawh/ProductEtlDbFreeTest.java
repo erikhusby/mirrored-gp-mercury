@@ -27,7 +27,6 @@ import static org.testng.Assert.*;
 public class ProductEtlDbFreeTest {
     private String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
     private long entityId = 1122334455L;
-    private long productId = 998877L;
     private String productName = "Test Product";
     private String partNumber = "TestNumber-5544";
     private Date availabilityDate = new Date(1350000000000L);

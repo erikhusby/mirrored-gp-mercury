@@ -1,24 +1,20 @@
 package org.broadinstitute.gpinformatics.infrastructure.deployment;
 
 import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
-import org.broadinstitute.gpinformatics.infrastructure.bettalims.BettalimsConfig;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
-import org.broadinstitute.gpinformatics.infrastructure.datawh.EtlConfig;
-import org.broadinstitute.gpinformatics.infrastructure.deckmsgs.DeckMessagesConfig;
-import org.broadinstitute.gpinformatics.infrastructure.gap.GAPConfig;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
-import org.broadinstitute.gpinformatics.infrastructure.monitoring.HipChatConfig;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteConfig;
-import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConfig;
-import org.broadinstitute.gpinformatics.infrastructure.tableau.TableauConfig;
-import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftConfig;
+import org.broadinstitute.gpinformatics.mercury.presentation.security.AuthorizationFilter;
+import org.scannotation.AnnotationDB;
+import org.scannotation.ClasspathUrlFinder;
+import org.scannotation.WarUrlFinder;
 import org.yaml.snakeyaml.Yaml;
 
+import javax.servlet.ServletContext;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -37,44 +33,18 @@ import java.util.*;
  * </ol>
  */
 public class MercuryConfiguration {
-    // Hopefully we can do something with portable extensions and @Observes ProcessAnnotatedType<T> to find these
-    // automatically, and maybe something really sneaky to create qualified bean instances of these types to
-    // support @TestInstance-style qualifier injection with producer classes.  But not in this version.
-    @SuppressWarnings("unchecked")
-    private static final Class<? extends AbstractConfig>[] CONFIG_CLASSES = array(
-            AppConfig.class,
-            SquidConfig.class,
-            BSPConfig.class,
-            JiraConfig.class,
-            QuoteConfig.class,
-            ThriftConfig.class,
-            GAPConfig.class,
-            DeckMessagesConfig.class,
-            EtlConfig.class,
-            BettalimsConfig.class,
-            TableauConfig.class,
-            HipChatConfig.class);
 
 
     private static final String MERCURY_CONFIG = "/mercury-config.yaml";
 
     private static final String MERCURY_CONFIG_LOCAL = "/mercury-config-local.yaml";
+    private static final String MERCURY_STANZA = "mercury";
 
     private static MercuryConfiguration instance;
 
     private static String MERCURY_BUILD_INFO;
 
-    /**
-     * Workaround for Java language limitations regarding creation of generic arrays, prevents classes not extending
-     * {@link AbstractConfig} from being entered into the array of configuration classes.
-     *
-     * @param classes Varargs list of {@link AbstractConfig} classes.
-     *
-     * @return Arguments are simply passed through this method unmodified.
-     */
-    private static Class<? extends AbstractConfig> [] array(Class<? extends AbstractConfig>... classes) {
-        return classes;
-    }
+    private static Map<String, Class<? extends AbstractConfig>> configKeyToClassMap;
 
 
     private class ExternalSystems {
@@ -137,11 +107,11 @@ public class MercuryConfiguration {
     }
 
     // Map of system key ("bsp", "squid", "thrift") to external system Deployments (TEST, QA, PROD) to
-    // AbstractConfigs describing those deployments
+    // AbstractConfigs describing those deployments.
     private ExternalSystems externalSystems = new ExternalSystems();
 
     // Map of system key ("bsp", "squid", "thrift") to *Mercury* Deployments to the corresponding external
-    // system Deployment
+    // system Deployment.
     private MercuryConnections mercuryConnections = new MercuryConnections();
 
     private String getConfigKey(Class<? extends AbstractConfig> configClass) {
@@ -152,14 +122,55 @@ public class MercuryConfiguration {
         return annotation.value();
     }
 
+    /**
+     * Abstract away getting the ServletContext.  Currently the {@link AuthorizationFilter} class has been
+     * leveraged to capture the ServletContext during its {@link AuthorizationFilter#init}, hopefully we can find a
+     * cleaner way of doing this if we still need the ServletContext.
+     *
+     * @return the ServletContext.
+     */
+    private ServletContext getServletContext() {
+        return AuthorizationFilter.getServletContext();
+    }
+
     private Class<? extends AbstractConfig> getConfigClass(String configKey) {
-        for (Class<? extends AbstractConfig> clazz : CONFIG_CLASSES) {
-            if (getConfigKey(clazz).equals(configKey)) {
-                return clazz;
+
+        if (configKeyToClassMap == null) {
+            configKeyToClassMap = new HashMap<String, Class<? extends AbstractConfig>>();
+
+            ServletContext servletContext = getServletContext();
+
+            // Check if we have a ServletContext to determine if running inside the container.
+            URL classPathUrl = (servletContext == null) ?
+                // Handle calls when running outside the container.
+                ClasspathUrlFinder.findClassBase(AbstractConfig.class) :
+                // Handle calls when running inside the container.
+                WarUrlFinder.findWebInfClassesPath(servletContext);
+
+            AnnotationDB annotationDB = new AnnotationDB();
+
+            try {
+                annotationDB.scanArchives(classPathUrl);
+                Set<String> annotatedClassNames = annotationDB.getAnnotationIndex().get(ConfigKey.class.getCanonicalName());
+
+                if (CollectionUtils.isEmpty(annotatedClassNames)) {
+                    throw new RuntimeException("No @ConfigKey annotated class names found!");
+                }
+                // Add any found config classes to our Map.
+                for (String annotatedClassName : annotatedClassNames) {
+                    @SuppressWarnings("unchecked")
+                    Class<? extends AbstractConfig> annotatedClass = (Class<? extends AbstractConfig>) Class.forName(annotatedClassName);
+                    configKeyToClassMap.put(getConfigKey(annotatedClass), annotatedClass);
+                }
+
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            } catch (ClassNotFoundException e) {
+                throw new RuntimeException(e);
             }
         }
 
-        return null;
+        return configKeyToClassMap.get(configKey);
     }
 
     /**
@@ -179,14 +190,14 @@ public class MercuryConfiguration {
     /**
      * Load the configuration of external systems only, not the Mercury connections to those systems.
      *
-     * @param doc Top-level YAML document
+     * @param doc Top-level YAML document.
      */
     private void loadExternalSystems(Map<String, Map> doc) {
         for (Map.Entry<String, Map> section : doc.entrySet()) {
             String systemKey = section.getKey();
 
-            // this method doesn't deal with mercury connections
-            if ("mercury".equals(systemKey)) {
+            // This method doesn't deal with Mercury connections to external systems.
+            if (MERCURY_STANZA.equals(systemKey)) {
                 continue;
             }
 
@@ -196,9 +207,10 @@ public class MercuryConfiguration {
                 throw new RuntimeException("Unrecognized top-level key: '" + systemKey + "'");
             }
 
-            // iterate the deployments for this external system
-            //noinspection unchecked
-            for (Map.Entry<String, Map> deploymentEntry : ((Map<String, Map>) section.getValue()).entrySet()) {
+            // Iterate the deployments for this external system.
+            @SuppressWarnings("unchecked")
+            Set<Map.Entry<String, Map>> entrySet = ((Map<String, Map>) section.getValue()).entrySet();
+            for (Map.Entry<String, Map> deploymentEntry : entrySet) {
                 String deploymentString = deploymentEntry.getKey();
 
                 if (Deployment.valueOf(deploymentString) == null) {
@@ -209,15 +221,17 @@ public class MercuryConfiguration {
 
                 AbstractConfig config = externalSystems.getConfig(systemKey, deployment);
 
+                // This method is called for both local and global configuration files.  If we're reading the local
+                // configuration file, it's quite likely the config will already exist.
                 if (config == null) {
                     config = newConfig(configClass);
                 }
-                // else roll with the preexisting config
 
                 config.setExternalDeployment(deployment);
 
-                //noinspection unchecked
-                setPropertiesIntoConfig(deploymentEntry.getValue(), config);
+                @SuppressWarnings("unchecked")
+                Map<String, String> deploymentEntryValue = deploymentEntry.getValue();
+                setPropertiesIntoConfig(deploymentEntryValue, config);
 
                 externalSystems.set(systemKey, deployment, config);
 
@@ -234,7 +248,7 @@ public class MercuryConfiguration {
     public String getBuildInformation() {
         String versionFilename = "build.properties";
 
-        // only do this once if it's not defined
+        // Only do this once if it's not defined.
         if (MERCURY_BUILD_INFO == null) {
             InputStream in = null;
             Properties props = new Properties();
@@ -271,42 +285,41 @@ public class MercuryConfiguration {
     }
 
     /**
-     * Load the Mercury connections to external system deployments
+     * Load the Mercury connections to external system deployments.
      *
      * @param doc The top level YAML document.
      * @param globalConfig Whether this invocation represents the parsing of the global configuration file
      *                     (mercury-config.yaml) or the local overrides file (mercury-config-local.yaml).
      */
     private void loadMercuryConnections(Map<String, Map> doc, boolean globalConfig) {
-        final String APP_KEY = "mercury";
 
-        if (!doc.containsKey(APP_KEY)) {
+        if (!doc.containsKey(MERCURY_STANZA)) {
             if (globalConfig) {
-                throw new RuntimeException("'" + APP_KEY + "' key not found in global configuration file!");
+                throw new RuntimeException("'" + MERCURY_STANZA + "' key not found in global configuration file!");
             }
-            // for local config, there is nothing to do if there's no 'mercury' key
+            // For local config, there is nothing to do in this method if there's no 'mercury' key.
             return;
         }
 
-        //noinspection unchecked
-        Map<String, Map> deploymentsMap = doc.get(APP_KEY);
+        @SuppressWarnings("unchecked")
+        Map<String, Map> deploymentsMap = doc.get(MERCURY_STANZA);
 
         for (Map.Entry<String, Map> deployments : deploymentsMap.entrySet()) {
             String mercuryDeploymentString = deployments.getKey();
             if (Deployment.valueOf(mercuryDeploymentString) == null) {
-                throw new RuntimeException("Unrecognized deployment '" + mercuryDeploymentString + "'");
+                throw new RuntimeException("Unrecognized deployment '" + mercuryDeploymentString + "'.");
             }
 
             Deployment mercuryDeployment = Deployment.valueOf(mercuryDeploymentString);
-            //noinspection unchecked
-            Map<String, String> systemsMappings = (Map<String, String>) deployments.getValue();
+            @SuppressWarnings("unchecked")
+            Map<String, String> systemsMappings = deployments.getValue();
 
             for (Map.Entry<String, String> systemsMapping : systemsMappings.entrySet()) {
                 String externalDeploymentString = systemsMapping.getValue();
 
-                // This must point to a known external deployment for this system
+                // This must point to a known external deployment for this system.
                 if (Deployment.valueOf(externalDeploymentString) == null) {
-                    throw new RuntimeException("Unrecognized deployment '" + externalDeploymentString + "'");
+                    throw new RuntimeException("Unrecognized deployment '" + externalDeploymentString + "'.");
                 }
 
                 Deployment externalDeployment = Deployment.valueOf(externalDeploymentString);
@@ -316,7 +329,7 @@ public class MercuryConfiguration {
                 final AbstractConfig config = externalSystems.getConfig(systemKey, externalDeployment);
 
                 if (config == null) {
-                    throw new RuntimeException("Unrecognized external system in mercury connections: '" + systemKey + "'");
+                    throw new RuntimeException("Unrecognized external system in mercury connections: '" + systemKey + "'.");
                 }
 
                 mercuryConnections.set(systemKey, mercuryDeployment, externalDeployment);
@@ -336,15 +349,16 @@ public class MercuryConfiguration {
 
     /* package */
     void load(Map<String, Map> globalConfigDoc, Map<String, Map> localConfigDoc) {
-        // load up external systems and overrides
+        // Load up external systems and overrides.
         loadExternalSystems(globalConfigDoc);
 
         if (localConfigDoc != null) {
             loadExternalSystems(localConfigDoc);
         }
 
-        // now process the mercury connections to those systems
-        // second parameter indicates whether global or not.  global config must have "mercury" section.
+        // Now process the Mercury connections to those systems.
+        // The second parameter indicates whether we're reading the global configuration file or not.  The global
+        // configuration file must have a "mercury" section.
         loadMercuryConnections(globalConfigDoc, true);
 
         if (localConfigDoc != null) {
@@ -362,7 +376,7 @@ public class MercuryConfiguration {
                         is = getClass().getResourceAsStream(MERCURY_CONFIG);
 
                         if (is == null) {
-                            throw new RuntimeException("Cannot find global config file '" + MERCURY_CONFIG + "'");
+                            throw new RuntimeException("Cannot find global config file '" + MERCURY_CONFIG + "'.");
                         }
 
                         Yaml yaml = new Yaml();
@@ -386,10 +400,10 @@ public class MercuryConfiguration {
 
             String systemKey = getConfigKey(clazz);
 
-            // Find the external deployment for this system key and Mercury deployment
+            // Find the external deployment for this system key and Mercury deployment.
             Deployment externalDeployment = mercuryConnections.getExternalDeployment(systemKey, deployment);
 
-            // Look up the config for this system
+            // Look up the config for this system.
             return externalSystems.getConfig(systemKey, externalDeployment);
         } finally {
             IOUtils.closeQuietly(is);
@@ -407,8 +421,8 @@ public class MercuryConfiguration {
      */
     private void setPropertiesIntoConfig(Map<String, String> propertyMap, AbstractConfig config) {
         try {
-            // Find the list of gettable properties on the bean to sanity check whether the specified property exists
-            // I would really like to validate settable properties too since this system doesn't work without setters
+            // Find the list of gettable properties on the bean to sanity check whether the specified property exists.
+            // We should really validate settable properties too since this system doesn't work without setters.
             //noinspection unchecked
             final Set<String> properties = BeanUtils.describe(config).keySet();
 

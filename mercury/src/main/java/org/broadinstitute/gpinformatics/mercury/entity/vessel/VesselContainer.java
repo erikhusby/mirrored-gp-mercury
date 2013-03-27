@@ -118,12 +118,12 @@ public class VesselContainer<T extends LabVessel> {
     }
 
     public Set<SampleInstance> getSampleInstancesAtPosition(VesselPosition position) {
-        LabVessel.TraversalResults traversalResults = traverseAncestors(position);
+        LabVessel.TraversalResults traversalResults = traverseAncestors(position, false);
         return traversalResults.getSampleInstances();
     }
 
     public List<SampleInstance> getSampleInstancesAtPositionList(VesselPosition position) {
-        LabVessel.TraversalResults traversalResults = traverseAncestors(position);
+        LabVessel.TraversalResults traversalResults = traverseAncestors(position, false);
         Map<String, SampleInstance> sampleInstanceMap = new TreeMap<String, SampleInstance>();
         for (SampleInstance sample : traversalResults.getSampleInstances()) {
             sampleInstanceMap.put(sample.getStartingSample().getSampleKey(), sample);
@@ -131,7 +131,7 @@ public class VesselContainer<T extends LabVessel> {
         return new ArrayList<SampleInstance>(sampleInstanceMap.values());
     }
 
-    LabVessel.TraversalResults traverseAncestors(VesselPosition position) {
+    LabVessel.TraversalResults traverseAncestors(VesselPosition position, boolean onlyWithPdos) {
         LabVessel.TraversalResults traversalResults = new LabVessel.TraversalResults();
         T vesselAtPosition = getVesselAtPosition(position);
 
@@ -141,13 +141,13 @@ public class VesselContainer<T extends LabVessel> {
                 LabVessel labVessel = ancestor.getLabVessel();
                 // todo jmt put this logic in VesselEvent?
                 if (labVessel == null) {
-                    traversalResults.add(ancestor.getVesselContainer().traverseAncestors(ancestor.getPosition()));
+                    traversalResults.add(ancestor.getVesselContainer().traverseAncestors(ancestor.getPosition(), onlyWithPdos));
                 } else {
-                    traversalResults.add(labVessel.traverseAncestors());
+                    traversalResults.add(labVessel.traverseAncestors(onlyWithPdos));
                 }
             }
         } else {
-            traversalResults.add(vesselAtPosition.traverseAncestors());
+            traversalResults.add(vesselAtPosition.traverseAncestors(onlyWithPdos));
         }
         traversalResults.completeLevel();
         return traversalResults;
@@ -265,7 +265,7 @@ public class VesselContainer<T extends LabVessel> {
     }
 
     @Transient
-    public Set<SampleInstance> getSampleInstances() {
+    public Set<SampleInstance> getSampleInstances(boolean onlyWithPdo) {
         Set<SampleInstance> sampleInstances = new LinkedHashSet<SampleInstance>();
         for (VesselPosition position : mapPositionToVessel.keySet()) {
             sampleInstances.addAll(getSampleInstancesAtPosition(position));
@@ -276,11 +276,11 @@ public class VesselContainer<T extends LabVessel> {
                     VesselContainer<?> vesselContainer = sourceLabVessel.getContainerRole();
                     if (vesselContainer != null) {
                         //noinspection unchecked
-                        sampleInstances.addAll(vesselContainer.getSampleInstances());
+                        sampleInstances.addAll(vesselContainer.getSampleInstances(onlyWithPdo));
                         // todo arz fix this, probably by using LabBatch properly
 //                        applyProjectPlanOverrideIfPresent(labEvent,sampleInstances);
                     } else {
-                        sampleInstances.addAll(sourceLabVessel.getSampleInstances());
+                        sampleInstances.addAll(sourceLabVessel.getSampleInstances(onlyWithPdo));
                     }
                 }
             }

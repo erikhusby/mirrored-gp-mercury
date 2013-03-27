@@ -1,11 +1,12 @@
-package org.broadinstitute.gpinformatics.athena.entity.orders;
+package org.broadinstitute.gpinformatics.infrastructure.matchers;
 
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.hamcrest.Description;
 import org.hamcrest.Factory;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 
-class IsInBspFormat extends TypeSafeMatcher<String> {
+public class InBspFormat extends TypeSafeMatcher<String> {
 
     @Override
     public boolean matchesSafely(String s) {
@@ -14,11 +15,11 @@ class IsInBspFormat extends TypeSafeMatcher<String> {
 
     @Override
     public void describeTo(Description description) {
-        description.appendText("is in BSP format");
+        description.appendText("in BSP format");
     }
 
     @Factory
     public static <T> Matcher<String> inBspFormat() {
-        return new IsInBspFormat();
+        return new InBspFormat();
     }
 }

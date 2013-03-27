@@ -1,28 +1,31 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderCompletionStatus;
-import org.testng.Assert;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderCompletionStatus;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
- * Test the progress object
+ * Test the progress object.
  *
  * @author hrafal
  */
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
 public class CompletionStatusFetcherTest extends ContainerTest {
 
+    @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private UserTransaction utx;
 
@@ -32,7 +35,7 @@ public class CompletionStatusFetcherTest extends ContainerTest {
     private CompletionStatusFetcher allPDOFetcher;
 
     @BeforeMethod
-    public void setUp() throws Exception {        // Skip if no injections, meaning we're not running in container
+    public void setUp() throws Exception {        // Skip if no injections, meaning we're not running in container.
         if (utx == null) {
             return;
         }
@@ -46,7 +49,7 @@ public class CompletionStatusFetcherTest extends ContainerTest {
 
     @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void tearDown() throws Exception {
-        // Skip if no injections, meaning we're not running in container
+        // Skip if no injections, meaning we're not running in container.
         if (utx == null) {
             return;
         }
@@ -55,7 +58,7 @@ public class CompletionStatusFetcherTest extends ContainerTest {
     }
 
     public void testGetPercentAbandoned() throws Exception {
-        // Find the first PDO with abandoned samples
+        // Find the first PDO with abandoned samples.
         String firstAbandonedPDOKey = null;
         int fetcherPercentAbandoned = 0;
 
@@ -80,7 +83,7 @@ public class CompletionStatusFetcherTest extends ContainerTest {
     }
 
     public void testGetPercentComplete() throws Exception {
-        // Find the first PDO with abandoned samples
+        // Find the first PDO with abandoned samples.
         String firstCompletePDOKey = null;
         int fetcherPercentComplete = 0;
 
@@ -121,8 +124,25 @@ public class CompletionStatusFetcherTest extends ContainerTest {
         return new ProductOrderCompletionStatus(abandoned, completed, total);
     }
 
+    public void testGetAllStatuses() throws Exception {
+        List<ProductOrder> allOrders = pdoDao.findAll();
+
+        List<String> allBusinessKeys = new ArrayList<String>();
+        for (ProductOrder order : allOrders) {
+            allBusinessKeys.add(order.getBusinessKey());
+        }
+
+        allBusinessKeys.addAll(allBusinessKeys);
+
+        Assert.assertTrue(allBusinessKeys.size() > 1000);
+
+        Map<String, ProductOrderCompletionStatus> statusMap = pdoDao.getProgressByBusinessKey(allBusinessKeys);
+
+        Assert.assertEquals(statusMap.size() * 2, allBusinessKeys.size(), "There should be statuses for every item");
+    }
+
     public void testGetPercentInProgress() throws Exception {
-        // Find the first PDO with abandoned samples
+        // Find the first PDO with abandoned samples.
         String firstCompleteAndAbandonedKey = null;
         int fetcherInProgess = 0;
 

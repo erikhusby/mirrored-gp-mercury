@@ -45,6 +45,7 @@ public class ResearchProjectDao extends GenericDao {
      *
      * @return Associated ResearchProjects.
      */
+    // TODO Splitterize
     public List<ResearchProject> findByProjectManagerIds(Long... ids) {
         CriteriaBuilder cb = getCriteriaBuilder();
         CriteriaQuery<ResearchProject> cq = cb.createQuery(ResearchProject.class);
