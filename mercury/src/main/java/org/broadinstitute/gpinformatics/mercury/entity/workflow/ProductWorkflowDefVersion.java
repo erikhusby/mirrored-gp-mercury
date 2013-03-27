@@ -3,8 +3,11 @@ package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
+import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlIDREF;
@@ -30,6 +33,7 @@ public class ProductWorkflowDefVersion implements Serializable {
     private List<String> entryPointsUsed = new ArrayList<String>();
     private transient Map<String, LabEventNode> mapNameToLabEvent;
     private transient LabEventNode rootLabEventNode;
+    private transient ProductWorkflowDef productWorkflowDef;
 
     /** For JAXB */
     @SuppressWarnings("UnusedDeclaration")
@@ -279,6 +283,84 @@ public class ProductWorkflowDefVersion implements Serializable {
 
         }
         return foundStep;
+    }
+
+    /**
+     * Determine whether the given next event is valid for the given lab vessel.
+     * @param labVessel vessel, typically with event history
+     * @param nextEventTypeName the event that the lab intends to do next
+     * @return list of errors, empty if event is valid
+     */
+    public List<String> validate(LabVessel labVessel, String nextEventTypeName) {
+        List<String> errors = new ArrayList<String>();
+
+        LabEventNode labEventNode = findStepByEventType(nextEventTypeName);
+        if(labEventNode == null) {
+            errors.add("Failed to find " + nextEventTypeName + " in " + productWorkflowDef.getName() + " version " + getVersion());
+        } else {
+            Set<String> actualEventNames = new HashSet<String>();
+
+            boolean start = labEventNode.getPredecessors().isEmpty();
+            Set<String> validPredecessorEventNames = new HashSet<String>();
+            for (LabEventNode predecessorNode : labEventNode.getPredecessors()) {
+                validPredecessorEventNames.add(predecessorNode.getLabEventType().getName());
+                // todo jmt recurse
+                if(predecessorNode.getStepDef().isOptional()) {
+                    start = predecessorNode.getPredecessors().isEmpty();
+                    for (LabEventNode predPredEventNode : predecessorNode.getPredecessors()) {
+                        validPredecessorEventNames.add(predPredEventNode.getLabEventType().getName());
+                    }
+                }
+            }
+
+            boolean found = false;
+            found = validateTransfers(nextEventTypeName, errors, validPredecessorEventNames, labVessel, actualEventNames,
+                    found, labVessel.getTransfersFrom(), labEventNode);
+
+            if (!found) {
+                found = validateTransfers(nextEventTypeName, errors, validPredecessorEventNames, labVessel, actualEventNames,
+                        found, labVessel.getTransfersTo(), labEventNode);
+            }
+            if(!found) {
+                found = validateTransfers(nextEventTypeName, errors, validPredecessorEventNames, labVessel, actualEventNames,
+                        found, labVessel.getInPlaceEvents(), labEventNode);
+            }
+            if(!found && !start) {
+                errors.add("Vessel " + labVessel.getLabCentricName() + ":" + labVessel.getType() + " has actual events " + actualEventNames +
+                        ", but none are predecessors to " + nextEventTypeName + ": " + validPredecessorEventNames);
+            }
+        }
+        return errors;
+    }
+
+    private boolean validateTransfers(String nextEventTypeName, List<String> errors, Set<String> validPredecessorEventNames,
+            LabVessel labVessel, Set<String> actualEventNames, boolean found, Set<LabEvent> transfers,
+            LabEventNode labEventNode) {
+        for (LabEvent labEvent : transfers) {
+            String actualEventName = labEvent.getLabEventType().getName();
+            actualEventNames.add(actualEventName);
+            if (false) {
+                if(actualEventName.equals(nextEventTypeName) && labEventNode.getStepDef().getNumberOfRepeats() == 0) {
+                    errors.add("For vessel " + labVessel.getLabCentricName() + ", event " + nextEventTypeName +
+                            " has already occurred");
+                }
+            }
+            if(actualEventName.equals(nextEventTypeName) || validPredecessorEventNames.contains(actualEventName)) {
+                found = true;
+                break;
+            }
+        }
+        return found;
+    }
+
+    /**
+     * Called by JAXB, sets relationship to parent.
+     * @param unmarshaller JAXB
+     * @param parent enclosing XML element
+     */
+    @SuppressWarnings("UnusedDeclaration")
+    void afterUnmarshal(Unmarshaller unmarshaller, Object parent) {
+        this.productWorkflowDef = (ProductWorkflowDef) parent;
     }
 
     @Override

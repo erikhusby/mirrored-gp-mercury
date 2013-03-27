@@ -907,7 +907,7 @@ public class LabEventTest {
                 // get workflow name from product order
                 ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(
                         productOrder.getProduct().getWorkflowName());
-                List<String> errors = productWorkflowDef.validate(labVessel, nextEventTypeName);
+                List<String> errors = productWorkflowDef.getEffectiveVersion().validate(labVessel, nextEventTypeName);
                 if (!errors.isEmpty()) {
                     Assert.fail(errors.get(0));
                 }

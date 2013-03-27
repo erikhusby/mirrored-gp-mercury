@@ -360,7 +360,7 @@ public class BettalimsMessageResource {
 
         for (PlateCherryPickEvent plateCherryPickEvent : bettaLIMSMessage.getPlateCherryPickEvent()) {
 
-            switch (labEventType.isExpectExistingTarget()) {
+            switch (labEventType.getPlasticToValidate()) {
                 case SOURCE:
                     for (PositionMapType positionMapType : plateCherryPickEvent.getSourcePositionMap()) {
                         for (ReceptacleType receptacle : positionMapType.getReceptacle()) {
@@ -373,7 +373,7 @@ public class BettalimsMessageResource {
         }
         for (PlateEventType plateEventType : bettaLIMSMessage.getPlateEvent()) {
 
-            switch (labEventType.isExpectExistingTarget()) {
+            switch (labEventType.getPlasticToValidate()) {
                 case SOURCE:
                     if (plateEventType.getPositionMap() == null) {
                         barcodes.add(plateEventType.getPlate().getBarcode());
@@ -388,7 +388,7 @@ public class BettalimsMessageResource {
         }
         for (PlateTransferEventType plateTransferEventType : bettaLIMSMessage.getPlateTransferEvent()) {
 
-            switch (labEventType.isExpectExistingTarget()) {
+            switch (labEventType.getPlasticToValidate()) {
                 case SOURCE:
                     if (plateTransferEventType.getSourcePositionMap() == null) {
                         barcodes.add(plateTransferEventType.getSourcePlate().getBarcode());
@@ -415,7 +415,7 @@ public class BettalimsMessageResource {
         }
         for (ReceptaclePlateTransferEvent receptaclePlateTransferEvent : bettaLIMSMessage
                                                                                  .getReceptaclePlateTransferEvent()) {
-            switch (labEventType.isExpectExistingTarget()) {
+            switch (labEventType.getPlasticToValidate()) {
                 case SOURCE:
                     barcodes.add(receptaclePlateTransferEvent.getSourceReceptacle().getBarcode());
                     break;
@@ -428,7 +428,7 @@ public class BettalimsMessageResource {
         }
         for (ReceptacleEventType receptacleEventType : bettaLIMSMessage.getReceptacleEvent()) {
 
-            switch (labEventType.isExpectExistingTarget()) {
+            switch (labEventType.getPlasticToValidate()) {
                 case SOURCE:
                     barcodes.add(receptacleEventType.getReceptacle().getBarcode());
                     break;
