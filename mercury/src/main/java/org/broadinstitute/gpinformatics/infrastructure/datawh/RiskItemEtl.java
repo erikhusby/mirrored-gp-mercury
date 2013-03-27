@@ -61,7 +61,7 @@ public class RiskItemEtl extends GenericEntityEtl<RiskItem, ProductOrderSample> 
         for (RiskItem auditedEntity : auditEntities) {
             riskIds.add(auditedEntity.getRiskItemId());
         }
-        List<Long> pdoSampleIds = (List<Long>)convertIdsTtoC(riskIds);
+        List<Long> pdoSampleIds = new ArrayList<Long>(convertIdsTtoC(riskIds));
         return pdoSampleDao.findListByList(ProductOrderSample.class, ProductOrderSample_.productOrderSampleId, pdoSampleIds);
     }
 

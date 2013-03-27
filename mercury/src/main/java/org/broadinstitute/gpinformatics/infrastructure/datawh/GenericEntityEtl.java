@@ -4,6 +4,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.infrastructure.common.BaseSplitter;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
@@ -114,6 +115,8 @@ public abstract class GenericEntityEtl<T, C> {
 
     /**
      * Does ETL by entity ids, such as for backfill.
+     *
+     * WILL NOT etl deleted entities -- must use incremental etl for that.
      *
      * @param requestedClass  the requested entity class, possibly one not handled by this etl class
      * @param startId entity id start of range, includes endpoint.
@@ -262,25 +265,22 @@ public abstract class GenericEntityEtl<T, C> {
      *  Given a set of entity ids, queries for associated ids.
      *  Chunks as necessary to limit sql "in" clause to 1000 elements.
      *
+     *  Cannot use JPASplitter because it doesn't support native query (fails querying PO_SAMPLE_RISK_JOIN_AUD).
+     *
      * @param ids  entity ids
      * @param queryString  containing 'entity_id' as returned column name, and IN_CLAUSE_PLACEHOLDER between parens.
      * @return Set of associated ids, deduplicated
      */
     public Collection<Long> lookupAssociatedIds(Collection<Long> ids, String queryString) {
-        Set<Long> associatedIds = new HashSet<Long>();
-        Long[] idArray = ids.toArray(new Long[ids.size()]);
+        Collection<Long> associatedIds = new HashSet<Long>();
 
-        int endIdx = idArray.length - 1;
-        while (endIdx >= 0) {
-            int startIdx = Math.max(0, endIdx - SQL_IN_CLAUSE_LIMIT + 1);
-            String inClause = StringUtils.join(idArray, ",", startIdx, endIdx);
-            endIdx = startIdx - 1;
-
+        for (Long[] split : BaseSplitter.split(ids.toArray(new Long[ids.size()]))) {
+            String inClause = StringUtils.join(split, ",");
             Query query = dao.getEntityManager().createNativeQuery(queryString.replaceFirst(IN_CLAUSE_PLACEHOLDER, inClause));
-            // Makes NUMBER(28) be a Long instead of BigDecimal
+            // Makes NUMBER(38) be a Long instead of BigDecimal
             query.unwrap(SQLQuery.class).addScalar("entity_id", LongType.INSTANCE);
 
-            associatedIds.addAll((Collection<Long>) query.getResultList());
+            associatedIds.addAll(query.getResultList());
         }
         return associatedIds;
     }

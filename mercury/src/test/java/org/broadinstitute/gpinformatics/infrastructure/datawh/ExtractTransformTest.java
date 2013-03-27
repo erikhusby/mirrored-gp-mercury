@@ -1,6 +1,9 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
+import com.google.common.primitives.Longs;
 import org.apache.commons.io.IOUtils;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
+import org.broadinstitute.gpinformatics.athena.entity.orders.RiskItem;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
@@ -148,15 +151,31 @@ public class ExtractTransformTest extends Arquillian {
 
     }
 
-    public void testSpecial() throws Exception {
+    @Test(enabled=true, groups=TestGroups.EXTERNAL_INTEGRATION)
+    public void testRiskOnDevDb() throws Exception {
         long startMsec = System.currentTimeMillis();
-        Response.Status status = extractTransform.backfillEtl(LabVessel.class.getName(), 1000, 1100);
+        long entityId = 53338L;
+        long pdoSampleId = 116079L;
+        Response.Status status = extractTransform.backfillEtl(RiskItem.class.getName(), entityId, entityId);
         Assert.assertEquals(status, Response.Status.NO_CONTENT);
         long endMsec = System.currentTimeMillis();
 
-        // Checks that the new data file contains the known entity id.
         final String datFileEnding = "_product_order_sample_risk.dat";
-        boolean found = searchEtlFile(startMsec, endMsec, datFileEnding, "F", 1000);
+        boolean found = searchEtlFile(startMsec, endMsec, datFileEnding, "F", pdoSampleId);
+        Assert.assertTrue(found);
+    }
+
+    @Test(enabled=true, groups=TestGroups.EXTERNAL_INTEGRATION)
+    public void testLedgerOnDevDb() throws Exception {
+        long startMsec = System.currentTimeMillis();
+        long entityId = 12366L;
+        long pdoSampleId = 23912L;
+        Response.Status status = extractTransform.backfillEtl(LedgerEntry.class.getName(), entityId, entityId);
+        Assert.assertEquals(status, Response.Status.NO_CONTENT);
+        long endMsec = System.currentTimeMillis();
+
+        final String datFileEnding = "product_order_sample_bill.dat";
+        boolean found = searchEtlFile(startMsec, endMsec, datFileEnding, "F", pdoSampleId);
         Assert.assertTrue(found);
     }
 
