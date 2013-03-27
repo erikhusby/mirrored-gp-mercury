@@ -158,6 +158,18 @@ public class ExtractTransformTest extends Arquillian {
 
     }
 
+    public void testSpecial() throws Exception {
+        long startMsec = System.currentTimeMillis();
+        Response.Status status = extractTransform.backfillEtl(LabVessel.class.getName(), 1000, 1100);
+        Assert.assertEquals(status, Response.Status.NO_CONTENT);
+        long endMsec = System.currentTimeMillis();
+
+        // Checks that the new data file contains the known entity id.
+        final String datFileEnding = "_product_order_sample_risk.dat";
+        boolean found = searchEtlFile(startMsec, endMsec, datFileEnding, "F", 1000);
+        Assert.assertTrue(found);
+    }
+
     /**
      * Looks for etl files having name timestamps in the given range, then searches them for a record having
      * the given isDelete and entityId values.

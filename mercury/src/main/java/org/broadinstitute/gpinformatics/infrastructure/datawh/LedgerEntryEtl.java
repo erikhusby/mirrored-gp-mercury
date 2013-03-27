@@ -46,7 +46,7 @@ public class LedgerEntryEtl extends GenericEntityEtl<LedgerEntry, ProductOrderSa
 
     @Override
     protected Collection<Long> convertIdsTtoC(Collection<Long> auditIds) {
-        String queryString = "select distinct product_order_sample_id from ATHENA.BILLING_LEDGER_AUD " +
+        String queryString = "select distinct product_order_sample_id entity_id from ATHENA.BILLING_LEDGER_AUD " +
                 " where ledger_id IN ( " + IN_CLAUSE_PLACEHOLDER + " )";
         return lookupAssociatedIds(auditIds, queryString);
     }

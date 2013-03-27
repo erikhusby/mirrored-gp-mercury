@@ -263,7 +263,7 @@ public abstract class GenericEntityEtl<T, C> {
      *  Chunks as necessary to limit sql "in" clause to 1000 elements.
      *
      * @param ids  entity ids
-     * @param queryString  containing 'entityId' as correlation name and an IN_CLAUSE_PLACEHOLDER
+     * @param queryString  containing 'entity_id' as returned column name, and IN_CLAUSE_PLACEHOLDER between parens.
      * @return Set of associated ids, deduplicated
      */
     public Collection<Long> lookupAssociatedIds(Collection<Long> ids, String queryString) {
@@ -277,8 +277,8 @@ public abstract class GenericEntityEtl<T, C> {
             endIdx = startIdx - 1;
 
             Query query = dao.getEntityManager().createNativeQuery(queryString.replaceFirst(IN_CLAUSE_PLACEHOLDER, inClause));
-            // Returns the NUMBER(28) as Long instead of BigDecimal
-            query.unwrap(SQLQuery.class).addScalar("entityId", LongType.INSTANCE);
+            // Makes NUMBER(28) be a Long instead of BigDecimal
+            query.unwrap(SQLQuery.class).addScalar("entity_id", LongType.INSTANCE);
 
             associatedIds.addAll((Collection<Long>) query.getResultList());
         }
