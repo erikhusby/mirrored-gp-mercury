@@ -17,6 +17,8 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import java.util.HashSet;
 import java.util.Set;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
 
 public class BatchToJiraTest extends Arquillian {
 
@@ -37,6 +39,7 @@ public class BatchToJiraTest extends Arquillian {
 
     @Test
     public void test_jira_creation_from_batch() throws Exception {
+        String expectedGssrText = "Starter1\nRework1 (rework)";
         Set<LabVessel> startingVessels = new HashSet<LabVessel>();
         startingVessels.add(new TwoDBarcodedTube("Starter1"));
         Set<LabVessel> reworkVessels = new HashSet<LabVessel>();
@@ -49,8 +52,9 @@ public class BatchToJiraTest extends Arquillian {
         JiraIssue ticket = jiraService.getIssue(batch.getJiraTicket().getTicketId());
 
         String gssrIdsText = (String)ticket.getFieldValue(LabBatch.RequiredSubmissionFields.GSSR_IDS.getFieldName());
-        System.out.println(gssrIdsText);
 
+        assertThat(gssrIdsText,notNullValue());
+        assertThat(gssrIdsText.trim(), equalTo(expectedGssrText.trim()));
     }
 
 }
