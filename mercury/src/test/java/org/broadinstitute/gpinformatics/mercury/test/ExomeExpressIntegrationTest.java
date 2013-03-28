@@ -2,10 +2,16 @@ package org.broadinstitute.gpinformatics.mercury.test;
 
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.WebResource;
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
+import org.broadinstitute.gpinformatics.infrastructure.squid.SampleKitSOAPService;
+import org.broadinstitute.gpinformatics.infrastructure.squid.SampleKitSOAPServiceImpl;
+import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConfig;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.squid.*;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ChildVesselBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ParentVesselBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleImportBean;
@@ -42,7 +48,7 @@ public class ExomeExpressIntegrationTest {
     private final SimpleDateFormat testSuffixDateFormat = new SimpleDateFormat("MMddHHmmss");
 
     @SuppressWarnings("FeatureEnvy")
-    public void testAll(String sampleFileName) {
+    public void testAll(String sampleFileName, Deployment deployment) {
         try {
             URL baseUrl = new URL("http", "localhost", 8080, "/Mercury");
             String testSuffix = testSuffixDateFormat.format(new Date());
@@ -109,7 +115,9 @@ public class ExomeExpressIntegrationTest {
 
             // plating aliquot.
             for (int i = 0; i < tubeBarcodes.size(); i++) {
-                platingTargetTubeBarcodes.add("1" + testSuffix + i);
+                String zeroPaddedMonth = testSuffix.substring(0, 2);
+                String dayHourMinuteSecond = testSuffix.substring(2);
+                platingTargetTubeBarcodes.add("EE" + zeroPaddedMonth + (Long.parseLong(dayHourMinuteSecond) + i));
             }
             PlateTransferEventType platingTransfer = bettaLimsMessageTestFactory.buildRackToRack(
                     LabEventType.SAMPLES_DAUGHTER_PLATE_CREATION.getName(), dilutionTargetRackBarcode,
@@ -145,6 +153,21 @@ public class ExomeExpressIntegrationTest {
                     .accept(MediaType.APPLICATION_XML)
                     .entity(sampleImportBean)
                     .post(String.class);
+
+            System.out.println("Send export to Squid? (y/n) [n]:");
+            String input = scanner.nextLine();
+            if (input.toLowerCase().startsWith("y")) {
+                GSSRSampleKitRequest request = makeGssrSampleKitRequest(platingTargetTubeBarcodes);
+                SampleKitSOAPService sampleKitSOAPService =
+                        new SampleKitSOAPServiceImpl(SquidConfig.produce(deployment));
+                GSSRSampleKitResponse response = sampleKitSOAPService.createGSSRSampleKit(request);
+
+                System.out.println("Exported tube barcodes (suitable for TubeRackScannerSimulator):");
+                System.out.println(StringUtils.join(platingTargetTubeBarcodes, " "));
+                System.out.println("Imported sample kit BISR ID (to find samples when creating a work request:");
+                System.out.println(response.getSampleKitName());
+                System.out.println();
+            }
 
             // User checks chain of custody, activity stream.
 
@@ -210,6 +233,73 @@ public class ExomeExpressIntegrationTest {
         }
     }
 
+    private GSSRSampleKitRequest makeGssrSampleKitRequest(List<String> platingTargetTubeBarcodes) {
+        GSSRSampleKitRequest request = new GSSRSampleKitRequest();
+        request.setGssrWorkGroup(SpfWorkGroupEnum.NEXT_GENERATION_SEQUENCING);
+        request.setRequestor(makeSampleKitRequestor("Brian", "Reilly"));
+        request.setBroadPI(makeSampleKitBroadPI("Brian", "Reilly"));
+        request.setCollaborator(makeSampleKitCollaboratorWithOrg("John", "Aquadro", "Broad Institute"));
+        request.setShipFrom(SpfShipFromEnum.BSP);
+        request.setShippingMethod(SpfShippingMethodEnum.HAND_DELIVERED);
+        request.setSampleKitMaterialType(SpfMaterialTypeEnum.GENOMIC_DNA);
+        RequestSampleSet sampleSet = makeRequestSampleSet(platingTargetTubeBarcodes);
+        request.getRequestSampleSet().add(sampleSet);
+        return request;
+    }
+
+    private SampleKitRequestor makeSampleKitRequestor(String firstName, String lastName) {
+        SampleKitRequestor requestor = new SampleKitRequestor();
+        requestor.setFirstName(firstName);
+        requestor.setLastName(lastName);
+        return requestor;
+    }
+
+    private SampleKitBroadPI makeSampleKitBroadPI(String firstName, String lastName) {
+        SampleKitBroadPI broadPI = new SampleKitBroadPI();
+        broadPI.setFirstName(firstName);
+        broadPI.setLastName(lastName);
+        return broadPI;
+    }
+
+    private SampleKitCollaboratorWithOrg makeSampleKitCollaboratorWithOrg(String firstName, String lastName,
+                                                                          String organization) {
+        SampleKitCollaboratorWithOrg collaborator = new SampleKitCollaboratorWithOrg();
+        collaborator.setFirstName(firstName);
+        collaborator.setLastName(lastName);
+        collaborator.setOrganization(organization);
+        return collaborator;
+    }
+
+    private RequestSampleSet makeRequestSampleSet(List<String> platingTargetTubeBarcodes) {
+        RequestSampleSet sampleSet = new RequestSampleSet();
+        sampleSet.setOrganism(makeOrganism("Homo", "sapien"));
+        sampleSet.setSampleKitReceptacleType(SpfMaterialFormatEnum.ZERO_POINT_FIVE_ML_2D_BARCODED_TUBE);
+        sampleSet.setSampleKitMaterialSuspensionType(SpfMaterialSuspensionEnum.UNSPECIFIED);
+        for (String tubeBarcode : platingTargetTubeBarcodes) {
+            sampleSet.getGssrSample().add(makeGssrSample(tubeBarcode));
+        }
+        sampleSet.setQcOptions(SpfQCOptionEnum.NONE);
+        return sampleSet;
+    }
+
+    private SpfOrganism makeOrganism(String genus, String species) {
+        SpfOrganism organism = new SpfOrganism();
+        organism.setGenus(genus);
+        organism.setSpecies(species);
+        return organism;
+    }
+
+    private GSSRSample makeGssrSample(String tubeBarcode) {
+        ObjectFactory objectFactory = new ObjectFactory();
+        GSSRSample gssrSample = new GSSRSample();
+        SpfSampleOrganismAttributes organismAttributes = new SpfSampleOrganismAttributes();
+        organismAttributes.setLSId("org.broadinstitute.gpinformatics.mercury.test.ExomeExpressIntegrationTest:"
+                                   + tubeBarcode);
+        gssrSample.setSampleOrganismAttributes(organismAttributes);
+        gssrSample.setFactoryBarcode(objectFactory.createGSSRSampleFactoryBarcode(tubeBarcode));
+        return gssrSample;
+    }
+
     private void sendMessage(URL baseUrl, BettaLIMSMessage bean) {
         Client.create().resource(baseUrl + "/rest/bettalimsmessage")
                 .type(MediaType.APPLICATION_XML_TYPE)
@@ -224,6 +314,12 @@ public class ExomeExpressIntegrationTest {
      * @param args path to file that was output by BSP CreateKitTest.createKit.
      */
     public static void main(String[] args) {
-        new ExomeExpressIntegrationTest().testAll(args[0]);
+        Deployment deployment;
+        if (args.length > 1) {
+            deployment = Deployment.valueOf(args[1]);
+        } else {
+            deployment = Deployment.DEV;
+        }
+        new ExomeExpressIntegrationTest().testAll(args[0], deployment);
     }
 }
