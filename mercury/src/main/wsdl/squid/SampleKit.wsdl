@@ -1,0 +1,274 @@
+<?xml version="1.0"?>
+<wsdl:definitions targetNamespace="urn:SpfSampleKit"
+                  xmlns:impl="urn:SpfSampleKit"
+                  xmlns:spftypes="urn:SpfTypes"
+                  xmlns="http://schemas.xmlsoap.org/wsdl/"
+                  xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+                  xmlns:wsdlsoap="http://schemas.xmlsoap.org/wsdl/soap/"
+                  xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+    <wsdl:types>
+
+        <xsd:schema targetNamespace="urn:SpfSampleKit"
+                    xmlns:spftypes="urn:SpfTypes"
+                    xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+            <xsd:import namespace="urn:SpfTypes" schemaLocation="SpfTypes.xsd"/>
+
+            <xsd:complexType name="SampleKitRequestor">
+                <xsd:sequence>
+                    <xsd:element name="firstName"
+                                 type="xsd:string"/>
+                    <xsd:element name="lastName"
+                                 type="xsd:string"/>
+                </xsd:sequence>
+            </xsd:complexType>
+
+            <xsd:complexType name="SampleKitBroadPI">
+                <xsd:sequence>
+                    <xsd:element name="firstName"
+                                 type="xsd:string"/>
+                    <xsd:element name="lastName"
+                                 type="xsd:string"/>
+                    <xsd:element name="gssrBroadPIID"
+                                 type="xsd:long" minOccurs="0" maxOccurs="1"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="GSSRSample">
+                <xsd:sequence>
+                    <xsd:element name="gssrBroadPIID" type="xsd:long" maxOccurs="1"
+                                 minOccurs="0"/>
+                    <xsd:element name="gssrCollaboratorID" type="xsd:long" maxOccurs="1"
+                                 minOccurs="0"/>
+                    <xsd:element name="sampleSource"
+                                 type="xsd:string" maxOccurs="1" minOccurs="0"/>
+                    <xsd:element name="stabilizerForPreservation" type="xsd:string" maxOccurs="1"
+                                 minOccurs="0"/>
+                    <xsd:element name="replacementSample" type="xsd:string" maxOccurs="1"
+                                 minOccurs="0"/>
+                    <xsd:element name="sampleOrganismAttributes" type="spftypes:SpfSampleOrganismAttributes"
+                                 maxOccurs="1"
+                                 minOccurs="0"/>
+                    <xsd:element name="sampleAmount" type="spftypes:SpfSampleAmountData"
+                                 maxOccurs="1"
+                                 minOccurs="0"/>
+                    <xsd:element name="gDNAData" type="spftypes:SpfGenomicDNASampleData"
+                                 maxOccurs="1"
+                                 minOccurs="0"/>
+                    <xsd:element name="viralcDNAData" type="spftypes:SpfViralcDNASampleData"
+                                 maxOccurs="1"
+                                 minOccurs="0"/>
+                    <xsd:element name="poolOligoData" type="spftypes:SpfPoolOligoData"
+                                 maxOccurs="1"
+                                 minOccurs="0"/>
+                     <xsd:element name="newTechLibData" type="spftypes:SpfNewTechLibData"
+                                 maxOccurs="1"
+                                 minOccurs="0"/>
+                    <xsd:element name="sampleCollectionData" type="spftypes:SpfSampleCollectionData"
+                                 maxOccurs="1"
+                                 minOccurs="0"/>
+                    <xsd:element name="freezerLocation" type="xsd:string" maxOccurs="1"
+                                 minOccurs="0"/>
+                    <xsd:element name="gssrBarcode" type="xsd:string" maxOccurs="1"
+                                 minOccurs="0"/>
+                    <xsd:element name="extraIdValuePairs" type="spftypes:SpfExtraIdValuePair" maxOccurs="unbounded"
+                                 minOccurs="0"/>
+                    <xsd:element name="sampleComment" type="xsd:string" maxOccurs="1"
+                                 minOccurs="0"/>
+                    <xsd:element name="factoryBarcode"
+                                 type="xsd:string" maxOccurs="1" minOccurs="0" nillable="true"/>
+                    <xsd:element name="sampleType" type="spftypes:SpfSampleTypeEnum" maxOccurs="1" minOccurs="0" />
+                </xsd:sequence>
+            </xsd:complexType>
+
+            <xsd:complexType name="RequestSampleSet">
+                <xsd:sequence>
+                    <xsd:element name="organism" type="spftypes:SpfOrganism"/>
+                    <xsd:element name="sampleKitReceptacleType"
+                                 type="spftypes:SpfMaterialFormatEnum"/>
+                    <xsd:element name="isVirtualSampleSet" type="xsd:boolean" maxOccurs="1"
+                                 minOccurs="0"></xsd:element>
+                    <xsd:element name="sampleKitMaterialSuspensionType"
+                                 type="spftypes:SpfMaterialSuspensionEnum"/>
+                    <xsd:element name="sampleReceptacleGroup"
+                                 type="spftypes:SpfSampleReceptacleGroupData" maxOccurs="1"
+                                 minOccurs="0"/>
+                    <xsd:element name="gssrSample"
+                                 type="impl:GSSRSample" maxOccurs="unbounded"
+                                 minOccurs="1"/>
+                    <xsd:element name="description"
+                                 type="xsd:string" maxOccurs="1"
+                                 minOccurs="0"/>
+                    <xsd:element name="qcOptions"
+                                 type="spftypes:SpfQCOptionEnum"/>
+                </xsd:sequence>
+            </xsd:complexType>
+
+            <xsd:complexType name="ResponseSampleSet">
+                <xsd:sequence>
+                    <xsd:element name="organism" type="spftypes:SpfOrganism"/>
+                    <xsd:element name="sampleKitReceptacleType"
+                                 type="xsd:string"/>
+                    <xsd:element name="sampleKitMaterialSuspensionType"
+                                 type="xsd:string"/>
+                    <xsd:element name="gssrSample"
+                                 type="impl:GSSRSample" maxOccurs="unbounded"
+                                 minOccurs="1"/>
+                    <xsd:element name="description"
+                                 type="xsd:string" maxOccurs="1" minOccurs="0"/>
+                    <xsd:element name="qcOptions" type="xsd:string" maxOccurs="1"
+                                 minOccurs="0"/>
+                </xsd:sequence>
+            </xsd:complexType>
+
+
+            <xsd:complexType name="GSSRSampleKitRequest">
+                <xsd:sequence>
+                    <xsd:element name="gssrWorkGroup"
+                                 type="spftypes:SpfWorkGroupEnum"/>
+                    <xsd:element name="requestor" type="impl:SampleKitRequestor"/>
+                    <xsd:element name="broadPI" type="impl:SampleKitBroadPI" maxOccurs="1"
+                                 minOccurs="0"/>
+                    <xsd:element name="collaborator" type="spftypes:SampleKitCollaboratorWithOrg" maxOccurs="1"
+                                 minOccurs="0"/>
+                    <xsd:element name="shipFrom" type="spftypes:SpfShipFromEnum"/>
+                    <xsd:element name="shippingMethod" type="spftypes:SpfShippingMethodEnum"/>
+                    <xsd:element name="sampleKitMaterialType"
+                                 type="spftypes:SpfMaterialTypeEnum"/>
+                    <xsd:element name="childParentSampleMap" type="spftypes:SpfChildParentSampleMap"
+                                 maxOccurs="unbounded" minOccurs="0"></xsd:element>
+                    <xsd:element name="requestSampleSet"
+                                 type="impl:RequestSampleSet" maxOccurs="10"
+                                 minOccurs="1"/>
+                    <xsd:element name="sampleKitComment" type="xsd:string" maxOccurs="1"
+                                 minOccurs="0"/>
+                      <xsd:element name="workRequestID" type="xsd:string" maxOccurs="1" minOccurs="0"/>
+                    <xsd:element name="platingRequestID" type="xsd:string" maxOccurs="1" minOccurs="0"/>
+                </xsd:sequence>
+            </xsd:complexType>
+
+            <xsd:complexType name="GSSRSampleKitResponse">
+                <xsd:sequence>
+                    <xsd:element name="sampleKitName" type="xsd:string"/>
+                    <xsd:element name="gssrWorkGroup" maxOccurs="1"
+                                 minOccurs="0" type="xsd:string"/>
+                    <xsd:element name="requestor" maxOccurs="1"
+                                 minOccurs="0" type="xsd:string"/>
+                    <xsd:element name="broadPI" type="impl:SampleKitBroadPI" maxOccurs="1"
+                                 minOccurs="0"/>
+                    <xsd:element name="sampleKitMaterialType"
+                                 type="xsd:string"/>
+                    <xsd:element name="collaborator" type="spftypes:SampleKitCollaboratorWithOrg" maxOccurs="1"
+                                 minOccurs="0"/>
+                    <xsd:element name="shippingMethod" type="xsd:string" maxOccurs="1"
+                                 minOccurs="0"/>
+                    <xsd:element name="responseSampleSet"
+                                 type="impl:ResponseSampleSet" maxOccurs="10"
+                                 minOccurs="1"/>
+                    <xsd:element name="sampleKitComment" type="xsd:string" maxOccurs="1"
+                                 minOccurs="0"/>
+                </xsd:sequence>
+            </xsd:complexType>
+
+            <xsd:complexType name="GSSRCollaboratorsResponse">
+                <xsd:sequence>
+                    <xsd:element name="gssrCollaborators"
+                                 type="spftypes:SampleKitCollaboratorWithOrg" maxOccurs="unbounded" minOccurs="1"/>
+                </xsd:sequence>
+            </xsd:complexType>
+
+            <xsd:complexType name="GSSRBroadPIsResponse">
+                <xsd:sequence>
+                    <xsd:element name="gssrBroadPIs"
+                                 type="impl:SampleKitBroadPI" maxOccurs="unbounded" minOccurs="1"/>
+                </xsd:sequence>
+            </xsd:complexType>
+        </xsd:schema>
+    </wsdl:types>
+
+    <wsdl:message name="createGSSRSampleKitRequest">
+        <wsdl:part name="gssrSampleKitRequest"
+                   type="impl:GSSRSampleKitRequest"/>
+    </wsdl:message>
+    <wsdl:message name="createGSSRSampleKitResponse">
+        <wsdl:part name="gssrSampleKitResponse"
+                   type="impl:GSSRSampleKitResponse"/>
+    </wsdl:message>
+    <wsdl:message name="listAllCollaboratorsResponse">
+        <wsdl:part name="listCollaboratorResponse"
+                   type="impl:GSSRCollaboratorsResponse"/>
+    </wsdl:message>
+    <wsdl:message name="notInputRequest"/>
+    <wsdl:message name="listAllBroadPIResponse">
+        <wsdl:part name="listBroadPIsResponse"
+                   type="impl:GSSRBroadPIsResponse"/>
+    </wsdl:message>
+    <wsdl:portType name="GSSRSampleKitPortType">
+        <wsdl:operation name="createGSSRSampleKit" parameterOrder="gssrSampleKitRequest">
+            <wsdl:input message="impl:createGSSRSampleKitRequest"
+                        name="createGSSRSampleKitRequest"/>
+            <wsdl:output message="impl:createGSSRSampleKitResponse"
+                         name="createGSSRSampleKitResponse"/>
+        </wsdl:operation>
+
+        <wsdl:operation name="getAllGSSRCollaborators" parameterOrder="">
+            <wsdl:input message="impl:notInputRequest" name="notInputRequest"/>
+            <wsdl:output message="impl:listAllCollaboratorsResponse"
+                         name="getAllCollaboratorsResponse"/>
+        </wsdl:operation>
+
+        <wsdl:operation name="getAllGSSRBroadPIs" parameterOrder="">
+            <wsdl:input message="impl:notInputRequest" name="notInputRequest"/>
+            <wsdl:output message="impl:listAllBroadPIResponse"
+                         name="getAllBroadPIsResponse"/>
+        </wsdl:operation>
+    </wsdl:portType>
+
+    <wsdl:binding name="SampleKitServiceSoapBinding"
+                  type="impl:GSSRSampleKitPortType">
+        <wsdlsoap:binding style="rpc"
+                          transport="http://schemas.xmlsoap.org/soap/http"/>
+        <wsdl:operation name="createGSSRSampleKit">
+            <wsdl:input name="createGSSRSampleKitRequest">
+                <wsdlsoap:body namespace="urn:SpfSampleKit" use="literal"/>
+            </wsdl:input>
+            <wsdl:output name="createGSSRSampleKitResponse">
+                <wsdlsoap:body namespace="urn:SpfSampleKit" use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+
+        <wsdl:operation name="getAllGSSRCollaborators">
+            <wsdl:input name="notInputRequest">
+                <wsdlsoap:body namespace="urn:SpfSampleKit" use="literal"/>
+            </wsdl:input>
+
+            <wsdl:output name="getAllCollaboratorsResponse">
+                <wsdlsoap:body namespace="urn:SpfSampleKit" use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+
+        <wsdl:operation name="getAllGSSRBroadPIs">
+            <wsdl:input name="notInputRequest">
+                <wsdlsoap:body namespace="urn:SpfSampleKit" use="literal"/>
+            </wsdl:input>
+
+            <wsdl:output name="getAllBroadPIsResponse">
+                <wsdlsoap:body namespace="urn:SpfSampleKit" use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+
+    </wsdl:binding>
+
+
+    <wsdl:service name="SampleKitService">
+
+        <wsdl:port binding="impl:SampleKitServiceSoapBinding"
+                   name="SampleKitService">
+
+            <wsdlsoap:address location="@tomcat.url@/services/SampleKitService"/>
+
+        </wsdl:port>
+
+    </wsdl:service>
+
+</wsdl:definitions>
