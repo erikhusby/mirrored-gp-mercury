@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.mercury.presentation.workflow;
 import net.sourceforge.stripes.action.*;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
-import net.sourceforge.stripes.validation.ValidateNestedProperties;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
@@ -12,7 +11,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDa
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
-import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.rework.ReworkLevel;
@@ -98,7 +96,7 @@ public class AddReworkActionBean extends CoreActionBean {
                                 bucketEntryDao.findByVesselAndPO(labVessel, mercurySample.getProductOrderKey());
                         if (bucketEntry != null) {
                             skipVessel = true;
-                            addGlobalValidationError("Sample {0} in {1} already exists in the {2} bucket.",
+                            addGlobalValidationError("Sample {2} in product order {3} already exists in the {4} bucket.",
                                     mercurySample.getSampleKey(), mercurySample.getProductOrderKey(),
                                     bucketEntry.getBucket().getBucketDefinitionName());
                         }
@@ -136,7 +134,7 @@ public class AddReworkActionBean extends CoreActionBean {
     @After(stages = LifecycleStage.BindingAndValidation, on = {REWORK_SAMPLE})
     public void setUpLabRework() {
 //        bucket=bucketDao.findByName(bucket.getName())
-        if (bucket.getName().equals("Pico/Plating Bucket")) {
+        if (bucketName.equals("Pico/Plating Bucket")) {
             reworkStep = LabEventType.PICO_PLATING_BUCKET;
         } else {
             reworkStep = LabEventType.SHEARING_BUCKET;
@@ -164,6 +162,9 @@ public class AddReworkActionBean extends CoreActionBean {
 
     @HandlesEvent(VESSEL_INFO)
     public ForwardResolution vesselInfo() {
+        if (labVessel==null){
+            addGlobalValidationError("Mercury does not recognize vessel with barcode {0}.",vesselLabel);
+        }
         return new ForwardResolution(VESSEL_INFO_PAGE);
     }
 
@@ -221,5 +222,13 @@ public class AddReworkActionBean extends CoreActionBean {
 
     public void setReworkReason(ReworkReason reworkReason) {
         this.reworkReason = reworkReason;
+    }
+
+    public String getBucketName() {
+        return bucketName;
+    }
+
+    public void setBucketName(String bucketName) {
+        this.bucketName = bucketName;
     }
 }

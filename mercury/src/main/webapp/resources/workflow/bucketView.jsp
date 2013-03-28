@@ -261,7 +261,7 @@
             <c:forEach items="${actionBean.reworkEntries}" var="entry">
                 <tr>
                     <td>
-                        <stripes:checkbox class="bucket-checkbox" name="selectedVesselLabels"
+                        <stripes:checkbox class="bucket-checkbox" name="selectedReworks"
                                           value="${entry.labVesselComment.labVessel.label}"/>
                     </td>
                     <td>
