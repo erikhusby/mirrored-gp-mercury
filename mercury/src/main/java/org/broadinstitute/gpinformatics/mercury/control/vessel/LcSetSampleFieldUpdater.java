@@ -31,7 +31,7 @@ public class LcSetSampleFieldUpdater {
         }
 
         if (!labBatch.getReworks().isEmpty()) {
-            samplesText.append("Reworks:\n");
+            samplesText.append("\n");
             for (LabVessel rework : labBatch.getReworks()) {
                 samplesText.append(rework.getLabel()).append(" (rework) ").append("\n");
             }
