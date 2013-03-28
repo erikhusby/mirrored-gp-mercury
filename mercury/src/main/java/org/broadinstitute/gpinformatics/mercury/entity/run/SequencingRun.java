@@ -36,11 +36,8 @@ public class SequencingRun {
     private Date runDate;
 
     @ManyToOne(cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "run_cartridge")
     private RunCartridge runCartridge;
-
-    @ManyToOne(cascade = {CascadeType.ALL})
-    @JoinColumn(name = "run_location_id")
-    private OutputDataLocation runLocation;
 
     /*
      *  Phased approach to removing the entity above (Output Location).  Adding data location here and then when the data
@@ -52,14 +49,13 @@ public class SequencingRun {
 
 
     public SequencingRun(String runName, String runBarcode, String machineName, Long operator, Boolean testRun,
-                         Date runDate, RunCartridge runCartridge, OutputDataLocation runLocation, String runDirectory) {
+                         Date runDate, RunCartridge runCartridge, String runDirectory) {
         this.runName = runName;
         this.runBarcode = runBarcode;
         this.machineName = machineName;
         this.operator = operator;
         this.testRun = testRun;
         this.runDate = runDate;
-        this.runLocation = runLocation;
         setRunCartridge(runCartridge);
         this.runDirectory = runDirectory;
     }
@@ -131,14 +127,6 @@ public class SequencingRun {
 
     public void setRunDate(Date runDate) {
         this.runDate = runDate;
-    }
-
-    public OutputDataLocation getRunLocation() {
-        return runLocation;
-    }
-
-    public void setRunLocation(OutputDataLocation runLocation) {
-        this.runLocation = runLocation;
     }
 
     public String getRunDirectory() {
