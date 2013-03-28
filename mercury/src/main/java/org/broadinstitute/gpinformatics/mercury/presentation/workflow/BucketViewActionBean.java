@@ -54,7 +54,7 @@ public class BucketViewActionBean extends CoreActionBean {
     private List<WorkflowBucketDef> buckets = new ArrayList<WorkflowBucketDef>();
     private List<String> selectedVesselLabels;
     private List<LabVessel> selectedBatchVessels;
-    private List<String> selectedReworks;
+    private List<String> selectedReworks=new ArrayList<String>();
 
     @Validate(required = true, on = {CREATE_BATCH_ACTION, "viewBucket"})
     private String selectedBucket;
