@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
-import com.google.common.primitives.Longs;
 import org.apache.commons.io.IOUtils;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.RiskItem;
@@ -27,7 +26,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
-import java.util.*;
+import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -101,7 +100,7 @@ public class ExtractTransformTest extends Arquillian {
         Thread.sleep(MSEC_IN_SEC);
 
         extractTransform.writeLastEtlRun(startSec);
-        int recordCount = extractTransform.incrementalEtl();
+        int recordCount = extractTransform.incrementalEtl("0", "0");
         long endEtlSec = extractTransform.readLastEtlRun();
         Assert.assertTrue(recordCount > 0);
 
@@ -140,7 +139,7 @@ public class ExtractTransformTest extends Arquillian {
         Thread.sleep(MSEC_IN_SEC);
 
         extractTransform.writeLastEtlRun(startSec);
-        recordCount = extractTransform.incrementalEtl();
+        recordCount = extractTransform.incrementalEtl("0", "0");
         endEtlSec = extractTransform.readLastEtlRun();
         Assert.assertTrue(recordCount > 0);
 
@@ -151,7 +150,8 @@ public class ExtractTransformTest extends Arquillian {
 
     }
 
-    @Test(enabled=true, groups=TestGroups.EXTERNAL_INTEGRATION)
+    // todo rewrite to not require specific item in db
+    @Test(enabled=false, groups=TestGroups.EXTERNAL_INTEGRATION)
     public void testRiskOnDevDb() throws Exception {
         long startMsec = System.currentTimeMillis();
         long entityId = 53338L;
@@ -165,7 +165,8 @@ public class ExtractTransformTest extends Arquillian {
         Assert.assertTrue(found);
     }
 
-    @Test(enabled=true, groups=TestGroups.EXTERNAL_INTEGRATION)
+    // todo rewrite to not require specific item in db
+    @Test(enabled=false, groups=TestGroups.EXTERNAL_INTEGRATION)
     public void testLedgerOnDevDb() throws Exception {
         long startMsec = System.currentTimeMillis();
         long entityId = 12366L;
@@ -204,4 +205,3 @@ public class ExtractTransformTest extends Arquillian {
     }
 
 }
-

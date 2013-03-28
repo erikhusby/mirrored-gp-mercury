@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
@@ -114,7 +115,7 @@ public class ExtractTransformDbFreeTest {
     public void testInvalidDir1() {
         replay(mocks);
         ExtractTransform.setDatafileDir(null);
-        Assert.assertEquals(-1, extractTransform.incrementalEtl());
+        Assert.assertEquals(extractTransform.incrementalEtl("0", "0"), -1);
         Assert.assertEquals(Response.Status.INTERNAL_SERVER_ERROR,
                 extractTransform.backfillEtl(ProductOrderSample.class.getName(), 0, Long.MAX_VALUE));
         verify(mocks);
@@ -123,7 +124,7 @@ public class ExtractTransformDbFreeTest {
     public void testInvalidDir2() {
         replay(mocks);
         ExtractTransform.setDatafileDir("");
-        Assert.assertEquals(-1, extractTransform.incrementalEtl());
+        Assert.assertEquals(extractTransform.incrementalEtl("0", "0"), -1);
         Assert.assertEquals(Response.Status.INTERNAL_SERVER_ERROR,
                 extractTransform.backfillEtl(ProductOrderSample.class.getName(), 0, Long.MAX_VALUE));
         verify(mocks);
@@ -132,7 +133,7 @@ public class ExtractTransformDbFreeTest {
     public void testInvalidDir3() {
         replay(mocks);
         ExtractTransform.setDatafileDir(badDataDir);
-        Assert.assertEquals(-1, extractTransform.incrementalEtl());
+        Assert.assertEquals(extractTransform.incrementalEtl("0", "0"), -1);
         Assert.assertEquals(Response.Status.INTERNAL_SERVER_ERROR,
                 extractTransform.backfillEtl(ProductOrderSample.class.getName(), 0, Long.MAX_VALUE));
         verify(mocks);
@@ -140,7 +141,7 @@ public class ExtractTransformDbFreeTest {
 
     public void testNoLastRun() {
         replay(mocks);
-        Assert.assertEquals(0, extractTransform.incrementalEtl(0, 1, null));
+        Assert.assertEquals(extractTransform.incrementalEtl("0", "0"), -1);
         Assert.assertTrue(ExtractTransform.getIncrementalRunStartTime() >= 0);
         verify(mocks);
     }
@@ -149,29 +150,32 @@ public class ExtractTransformDbFreeTest {
         long futureSec = 9999999999L;
         replay(mocks);
         extractTransform.writeLastEtlRun(futureSec);
-        Assert.assertEquals(0, extractTransform.incrementalEtl());
+        Assert.assertEquals(extractTransform.incrementalEtl("0", "0"), -1);
         Assert.assertTrue(ExtractTransform.getIncrementalRunStartTime() >= 0);
         verify(mocks);
     }
 
     public void testBadRange1() {
         replay(mocks);
-        Assert.assertEquals(Response.Status.BAD_REQUEST,
-                extractTransform.backfillEtl(ProductOrderSample.class.getName(), -1, Long.MAX_VALUE));
+        Assert.assertEquals(
+                extractTransform.backfillEtl(ProductOrderSample.class.getName(), -1, Long.MAX_VALUE),
+                Response.Status.BAD_REQUEST);
         verify(mocks);
     }
 
     public void testBadRange2() {
         replay(mocks);
-        Assert.assertEquals(Response.Status.BAD_REQUEST,
-                extractTransform.backfillEtl(ProductOrderSample.class.getName(), 1000, 999));
+        Assert.assertEquals(
+                extractTransform.backfillEtl(ProductOrderSample.class.getName(), 1000, 999),
+                Response.Status.BAD_REQUEST);
         verify(mocks);
     }
 
     public void testInvalidClassName() {
         replay(mocks);
-        Assert.assertEquals(Response.Status.NOT_FOUND,
-                extractTransform.backfillEtl("NoSuchClass_Ihope", 0, Long.MAX_VALUE));
+        Assert.assertEquals(
+                extractTransform.backfillEtl("NoSuchClass_Ihope", 0, Long.MAX_VALUE),
+                Response.Status.NOT_FOUND);
         verify(mocks);
     }
 
@@ -180,7 +184,7 @@ public class ExtractTransformDbFreeTest {
      */
     public void testInvalidLastEtlBadDir() {
         ExtractTransform.setDatafileDir(badDataDir);
-        Assert.assertEquals(0L, extractTransform.readLastEtlRun());
+        Assert.assertEquals(extractTransform.readLastEtlRun(), 0);
     }
 
     /**
@@ -191,10 +195,10 @@ public class ExtractTransformDbFreeTest {
         final long sec  = 1351112223L;
         final long mSec = 1351112223789L;
         FileUtils.write(file, String.valueOf(sec));
-        Assert.assertEquals(sec, extractTransform.readLastEtlRun());
+        Assert.assertEquals(extractTransform.readLastEtlRun(), sec);
 
         FileUtils.write(file, String.valueOf(mSec));
-        Assert.assertEquals(sec, extractTransform.readLastEtlRun());
+        Assert.assertEquals(extractTransform.readLastEtlRun(), sec);
     }
 
     /**
@@ -204,8 +208,8 @@ public class ExtractTransformDbFreeTest {
         replay(mocks);
         Assert.assertTrue(ExtractTransform.getMutex().tryAcquire());
         try {
-            int recordCount = extractTransform.incrementalEtl();
-            Assert.assertEquals(-1, recordCount);
+            int recordCount = extractTransform.incrementalEtl("20130327155950", "20130327160200");
+            Assert.assertEquals(recordCount, -1);
         } finally {
             ExtractTransform.getMutex().release();
         }
@@ -220,11 +224,34 @@ public class ExtractTransformDbFreeTest {
         Assert.assertTrue(f.exists());
     }
 
-    public void testOnDemandIncr() {
+    public void testOnDemandIncr1() {
+        long startEtl = 1364411920L;
+
+        expect(auditReaderDao.fetchAuditIds(eq(startEtl), anyLong())).andReturn(Collections.EMPTY_LIST);
         replay(mocks);
-        extractTransform.writeLastEtlRun(0L);
-        extractTransform.onDemandIncrementalEtl();
-        Assert.assertEquals(0L, extractTransform.readLastEtlRun());
+
+        extractTransform.writeLastEtlRun(startEtl);
+        Assert.assertEquals(extractTransform.readLastEtlRun(), startEtl);
+
+        Assert.assertEquals(extractTransform.incrementalEtl("0", "0"), 0);
+
+        Assert.assertTrue(extractTransform.readLastEtlRun() > startEtl);
+        verify(mocks);
+    }
+
+    public void testOnDemandIncr2() {
+        long startEtl = 1364411920L;
+        long endEtl = 1364411930L;
+        String endEtlStr = ExtractTransform.secTimestampFormat.format(new Date(endEtl * 1000L));
+
+        expect(auditReaderDao.fetchAuditIds(startEtl, endEtl)).andReturn(Collections.EMPTY_LIST);
+        replay(mocks);
+
+        extractTransform.writeLastEtlRun(startEtl);
+
+        Assert.assertEquals(extractTransform.incrementalEtl("0", endEtlStr), 0);
+        // Limited range etl should not update lastEtlRun file.
+        Assert.assertEquals(extractTransform.readLastEtlRun(), startEtl);
         verify(mocks);
     }
 
@@ -249,7 +276,7 @@ public class ExtractTransformDbFreeTest {
 
         replay(mocks);
         extractTransform.writeLastEtlRun(0L);
-        extractTransform.onDemandEtl(testClass.getName(), 0, 0);
+        extractTransform.entityIdRangeEtl(testClass.getName(), 0, 0);
         Assert.assertEquals(0L, extractTransform.readLastEtlRun());
         verify(mocks);
     }
@@ -276,7 +303,7 @@ public class ExtractTransformDbFreeTest {
 
         replay(mocks);
         extractTransform.writeLastEtlRun(0L);
-        extractTransform.onDemandEtl(testClass.getName(), 0, -1);
+        extractTransform.entityIdRangeEtl(testClass.getName(), 0, -1);
         long endEtl = System.currentTimeMillis();
         File[] files = EtlTestUtilities.getDirFiles(datafileDir, startEtl, endEtl);
         boolean readyFileFound = false;
@@ -297,7 +324,7 @@ public class ExtractTransformDbFreeTest {
 
         replay(mocks);
         extractTransform.writeLastEtlRun(startEtlSec);
-        extractTransform.onDemandIncrementalEtl();
+        extractTransform.auditDateRangeEtl("0", "0");
         Assert.assertTrue(extractTransform.readLastEtlRun() > startEtlSec);
         verify(mocks);
     }
@@ -326,7 +353,7 @@ public class ExtractTransformDbFreeTest {
 
         replay(mocks);
         extractTransform.writeLastEtlRun(startEtlSec);
-        extractTransform.onDemandIncrementalEtl();
+        extractTransform.auditDateRangeEtl("0", "0");
         long etlEnd = extractTransform.readLastEtlRun();
         Assert.assertTrue(etlEnd >= startEtlSec);
         String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date(TimeUnit.SECONDS.toMillis(etlEnd)));

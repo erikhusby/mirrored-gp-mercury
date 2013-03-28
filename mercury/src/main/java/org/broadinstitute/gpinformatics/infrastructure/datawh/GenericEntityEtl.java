@@ -274,7 +274,7 @@ public abstract class GenericEntityEtl<T, C> {
     public Collection<Long> lookupAssociatedIds(Collection<Long> ids, String queryString) {
         Collection<Long> associatedIds = new HashSet<Long>();
 
-        for (Long[] split : BaseSplitter.split(ids.toArray(new Long[ids.size()]))) {
+        for (Collection<Long> split : BaseSplitter.split(ids)) {
             String inClause = StringUtils.join(split, ",");
             Query query = dao.getEntityManager().createNativeQuery(queryString.replaceFirst(IN_CLAUSE_PLACEHOLDER, inClause));
             // Makes NUMBER(38) be a Long instead of BigDecimal
