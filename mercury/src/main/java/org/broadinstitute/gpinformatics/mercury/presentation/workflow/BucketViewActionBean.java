@@ -224,25 +224,18 @@ public class BucketViewActionBean extends CoreActionBean {
     public Resolution createBatch() throws Exception {
         LabBatch batchObject;
 
-        Set<LabVessel> vesselSet =
-                new HashSet<LabVessel>(labVesselDao.findByListIdentifiers(selectedVesselLabels));
+        Set<LabVessel> vesselSet = new HashSet<LabVessel>(labVesselDao.findByListIdentifiers(selectedVesselLabels));
 
-        /*
-           If a new ticket is to be created, pass the description, summary, due date and important info in a batch
-           object acting as a DTO
-        */
-        batchObject = new LabBatch(summary.trim(), vesselSet, LabBatch.LabBatchType.WORKFLOW, description, dueDate,
-                important);
+        Set<LabVessel> reworks = new HashSet<LabVessel>(labVesselDao.findByListIdentifiers(selectedReworks));
 
-        labBatchEjb.createLabBatchAndRemoveFromBucket(batchObject, userBean.getBspUser().getUsername(),
-                selectedBucket, LabEvent.UI_EVENT_LOCATION);
+        batchObject = new LabBatch(summary.trim(), vesselSet,LabBatch.LabBatchType.WORKFLOW, description, dueDate, important);
+        batchObject.addReworks(reworks);
 
-        addMessage(MessageFormat.format("Lab batch ''{0}'' has been created.",
-                batchObject.getJiraTicket().getTicketName()));
+        labBatchEjb.createLabBatchAndRemoveFromBucket(batchObject, userBean.getBspUser().getUsername(),selectedBucket, LabEvent.UI_EVENT_LOCATION);
 
-        //Forward
-        return new RedirectResolution(CreateBatchActionBean.class, CreateBatchActionBean.CONFIRM_ACTION)
-                .addParameter("batchLabel", batchObject.getBatchName());
+        addMessage(MessageFormat.format("Lab batch ''{0}'' has been created.",batchObject.getJiraTicket().getTicketName()));
+
+        return new RedirectResolution(CreateBatchActionBean.class, CreateBatchActionBean.CONFIRM_ACTION).addParameter("batchLabel", batchObject.getBatchName());
     }
 
     public Date getDueDate() {
