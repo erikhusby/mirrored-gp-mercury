@@ -286,7 +286,7 @@
                     </stripes:label>
                     <div class="controls">
                         <stripes:textarea readonly="${!actionBean.editOrder.draft}" id="comments" name="editOrder.comments" class="defaultText input-xlarge textarea"
-                            title="Enter description" cols="50" rows="3"/>
+                            title="Enter a description here, including any existing GAP or SQUID Initiative/Project/Experiment." cols="50" rows="3"/>
                     </div>
                 </div>
 
