@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
@@ -23,6 +24,7 @@ import java.util.Set;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
+@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class BatchToJiraTest extends Arquillian {
 
     @Inject
@@ -42,7 +44,6 @@ public class BatchToJiraTest extends Arquillian {
 
     private String getGssrFieldFromJiraTicket(JiraIssue issue) throws IOException {
         Map<String,CustomFieldDefinition> gssrField = jiraService.getCustomFields(LabBatch.RequiredSubmissionFields.GSSR_IDS.getFieldName());
-        // good lord, looking up a custom field in jira is hard
         String gssrIdsText = (String)jiraService.getIssueFields(issue.getKey(),gssrField.values()).getFields().values().iterator().next();
         return gssrIdsText;
     }
@@ -61,10 +62,7 @@ public class BatchToJiraTest extends Arquillian {
 
         JiraIssue ticket = jiraService.getIssue(batch.getJiraTicket().getTicketId());
 
-        //Map<String,CustomFieldDefinition> gssrField = jiraService.getCustomFields(LabBatch.RequiredSubmissionFields.GSSR_IDS.getFieldName());
-        // good lord, looking up a custom field in jira is hard
-        //String gssrIdsText = (String)jiraService.getIssueFields(ticket.getKey(),gssrField.values()).getFields().values().iterator().next();
-        String gssrIdsText = getGssrFieldFromJiraTicket(ticket);
+         String gssrIdsText = getGssrFieldFromJiraTicket(ticket);
 
         assertThat(gssrIdsText,notNullValue());
         assertThat(gssrIdsText.trim(), equalTo(expectedGssrText.trim()));
