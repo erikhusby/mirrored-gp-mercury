@@ -23,7 +23,7 @@ import javax.persistence.Table;
  */
 @Entity
 @Audited
-@Table(schema = "mercury", name = "MERCURY_CONTROL")
+@Table(schema = "mercury", name = "mercury_control")
 public class Control {
 
     /**
