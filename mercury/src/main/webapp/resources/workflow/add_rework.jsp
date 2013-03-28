@@ -7,6 +7,12 @@
 <stripes:layout-render name="/layout.jsp" pageTitle="Add Rework" sectionTitle="Add Rework">
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
+//            $(document).ready(function () {
+//                $j('#reworkSample').bind('submit', function(){
+//                $j('#hiddenBucket').val($j("#selectedBucket").value());
+//                });
+//            });
+
             function showVesselInfo() {
                 $j('#vesselInfo').html("<img src=\"${ctxpath}/images/spinner.gif\"/>");
                 var barcode = $j("#vesselBarcode").val();
@@ -19,6 +25,7 @@
             function updateDetails(data) {
                 $j("#vesselInfo").html(data);
             }
+
         </script>
     </stripes:layout-component>
 
@@ -30,9 +37,44 @@
                 <stripes:text id="vesselBarcode" name="vesselLabel" onchange="showVesselInfo()"/>
 
             </div>
-            <div id="vesselInfo"></div>
+            <div id="vesselInfo">
+                <c:choose>
+                    <c:when test="${actionBean.labVessel == null}">
+                        <div class="fourcolumn">
+                            Mercury does not recognize tube barcode ${actionBean.vesselLabel}.
+                        </div>
+                    </c:when>
+                    <c:otherwise>
+                        <c:forEach items="${actionBean.labVessel.nearestWorkflowLabBatches}" var="batch">
+                            <div class="fourcolumn">
+                                <div>Batch:</div>
+                                <div><stripes:link target="JIRA"
+                                                   href="${batch.jiraTicket.browserUrl}"
+                                                   class="external">${batch.batchName}</stripes:link>
+                                </div>
+                            </div>
+                        </c:forEach>
+                        <div class="fourcolumn">
+                            <div>Workflow Name:</div>
+                            <div>${actionBean.workflowName}</div>
+                        </div>
+                        <div class="fourcolumn">
+                            <div>Sample Count:</div>
+                            <div>${actionBean.labVessel.sampleInstanceCount}</div>
+                        </div>
+                        <div class="fourcolumn">
+                            <stripes:label name="Rework To Bucket" for="selectedBucket"/>
+                            <stripes:select id="selectedBucket" name="bucketName">
+                                    <stripes:options-collection collection="${actionBean.buckets}" value="name"
+                                                                label="name"/>
+
+                            </stripes:select>
+                        </div>
+                    </c:otherwise>
+                </c:choose>
+            </div>
             <div class="fourcolumn">
-                <stripes:label name="Rework Reason" for="reworkReason"/>
+                <stripes:label name="Reason for Rework" for="reworkReason"/>
                 <stripes:select name="reworkReason">
                     <stripes:options-enumeration
                             enum="org.broadinstitute.gpinformatics.mercury.entity.rework.ReworkReason" label="value"/>
@@ -41,6 +83,10 @@
             <div class="fourcolumn">
                 <stripes:label name="Comments" for="commentText"/>
                 <stripes:textarea name="commentText"/>
+            </div>
+            <%--<stripes:hidden name="bucket.name"  />--%>
+            <div class="fourcolumn">
+                <stripes:submit name="reworkSample" value="Rework Sample" />
             </div>
         </stripes:form>
     </stripes:layout-component>

@@ -38,7 +38,7 @@ public class RapSheet {
 
     @NotNull
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "rapSheet")
-    private List<RapSheetEntry> rapSheetEntries;
+    private List<RapSheetEntry> rapSheetEntries=new ArrayList<RapSheetEntry>();
 
     public RapSheet() {
     }
@@ -53,17 +53,17 @@ public class RapSheet {
     }
 
     public void addEntry(RapSheetEntry rapSheetEntry) {
-        rapSheetEntries = new ArrayList<RapSheetEntry>();
         rapSheetEntries.add(rapSheetEntry);
         rapSheetEntry.setRapSheet(this);
     }
 
-    public ReworkEntry addRework(ReworkReason reworkReason, ReworkLevel reworkLevel, LabEventType reworkStep,VesselPosition vesselPosition, MercurySample mercurySample) {
+
+    public ReworkEntry addRework(ReworkReason reworkReason, ReworkLevel reworkLevel, LabEventType reworkStep,
+                                 VesselPosition vesselPosition, MercurySample mercurySample) {
         LabVesselPosition labVesselPosition=new LabVesselPosition(vesselPosition,mercurySample);
         final ReworkEntry reworkEntry = new ReworkEntry(this,reworkReason, reworkLevel, reworkStep,labVesselPosition);
-        getRapSheetEntries().add(reworkEntry);
-        this.setSample(mercurySample);
-        reworkEntry.setRapSheet(this);
+        addEntry(reworkEntry);
+        setSample(mercurySample);
         return reworkEntry;
     }
 

@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.rework.ReworkEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
@@ -33,19 +34,17 @@ public class BucketViewActionBean extends CoreActionBean {
 
     private static final String VIEW_PAGE = "/resources/workflow/bucketView.jsp";
     @Inject
-    private LabEventHandler labEventHandler;
-    @Inject
     private WorkflowLoader workflowLoader;
     @Inject
     private BucketDao bucketDao;
+    @Inject
+    private ReworkEntryDao reworkEntryDao;
     @Inject
     private AthenaClientService athenaClientService;
     @Inject
     private LabBatchEjb labBatchEjb;
     @Inject
     private LabVesselDao labVesselDao;
-    @Inject
-    private LabBatchDAO labBatchDAO;
     @Inject
     private UserBean userBean;
 
@@ -175,6 +174,7 @@ public class BucketViewActionBean extends CoreActionBean {
                             athenaClientService.retrieveProductOrderDetails(bucketEntry.getPoBusinessKey()));
                 }
             }
+            reworkEntries = reworkEntryDao.findAll(ReworkEntry.class);
         }
 
         //TODO jac populate the rework entries
