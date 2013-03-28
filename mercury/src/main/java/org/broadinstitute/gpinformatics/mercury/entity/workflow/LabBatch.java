@@ -118,7 +118,7 @@ public class LabBatch {
 
     /**
      * Adds the given rework vessels to the list
-     * of reworks for the batch
+     * of reworks for the batch.
      * @param reworks
      */
     public void addReworks(Set<LabVessel> reworks) {

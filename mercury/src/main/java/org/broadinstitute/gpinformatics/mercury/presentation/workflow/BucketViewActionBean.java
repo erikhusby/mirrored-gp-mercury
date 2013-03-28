@@ -229,6 +229,8 @@ public class BucketViewActionBean extends CoreActionBean {
         Set<LabVessel> reworks = new HashSet<LabVessel>(labVesselDao.findByListIdentifiers(selectedReworks));
 
         batchObject = new LabBatch(summary.trim(), vesselSet,LabBatch.LabBatchType.WORKFLOW, description, dueDate, important);
+        // fixme here is where we just dump the reworks into the ticket
+        // this should be persistent
         batchObject.addReworks(reworks);
 
         labBatchEjb.createLabBatchAndRemoveFromBucket(batchObject, userBean.getBspUser().getUsername(),selectedBucket, LabEvent.UI_EVENT_LOCATION);
