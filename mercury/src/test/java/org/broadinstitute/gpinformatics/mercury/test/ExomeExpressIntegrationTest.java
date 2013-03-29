@@ -192,8 +192,13 @@ public class ExomeExpressIntegrationTest {
             System.out.println("Press enter to register run");
             scanner.nextLine();
             // Run registration web service call.
-            SolexaRunBean solexaRunBean = new SolexaRunBean(flowcellBarcode, "Run" + testSuffix, new Date(), "SL-HAL",
-                    File.createTempFile("RunDir", ".txt").getAbsolutePath(), null);
+            File runFile = File.createTempFile("RunDir", ".txt");
+            String runFilePath = runFile.getAbsolutePath();
+            String runName = "Run" + testSuffix;
+            SolexaRunBean solexaRunBean = new SolexaRunBean(flowcellBarcode, runName, new Date(), "SL-HAL",
+                    runFilePath, null);
+            System.out.println("Registering run " + runName + " with path " + runFilePath);
+            System.out.println("URL to preview the run will be " + baseUrl.toExternalForm() + "/rest/IlluminaRun/queryMercury?runName=" + runFile.getName());
             Client.create().resource(baseUrl.toExternalForm() + "/rest/solexarun")
                     .type(MediaType.APPLICATION_XML_TYPE)
                     .accept(MediaType.APPLICATION_XML)
