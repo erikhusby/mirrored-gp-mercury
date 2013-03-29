@@ -278,11 +278,12 @@ public class BettalimsMessageResource {
      */
     public static class WorkflowValidationError {
         private SampleInstance sampleInstance;
-        private List<String> errors;
+        private List<ProductWorkflowDefVersion.ValidationError> errors;
         private ProductOrder productOrder;
         private AppConfig appConfig;
 
-        public WorkflowValidationError(SampleInstance sampleInstance, List<String> errors, ProductOrder productOrder,
+        public WorkflowValidationError(SampleInstance sampleInstance,
+                List<ProductWorkflowDefVersion.ValidationError> errors, ProductOrder productOrder,
                 AppConfig appConfig) {
             this.sampleInstance = sampleInstance;
             this.errors = errors;
@@ -294,7 +295,7 @@ public class BettalimsMessageResource {
             return sampleInstance;
         }
 
-        public List<String> getErrors() {
+        public List<ProductWorkflowDefVersion.ValidationError> getErrors() {
             return errors;
         }
 
@@ -354,7 +355,7 @@ public class BettalimsMessageResource {
             for (SampleInstance sampleInstance : sampleInstances) {
                 ProductWorkflowDefVersion workflowVersion = getWorkflowVersion(sampleInstance.getStartingSample().getProductOrderKey());
                 if (workflowVersion != null) {
-                    List<String> errors = workflowVersion.validate(labVessel, eventType);
+                    List<ProductWorkflowDefVersion.ValidationError> errors = workflowVersion.validate(labVessel, eventType);
                     if (!errors.isEmpty()) {
                         validationErrors.add(new WorkflowValidationError(sampleInstance, errors,
                                 athenaClientService.retrieveProductOrderDetails(

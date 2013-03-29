@@ -66,13 +66,13 @@ public class ProductWorkflowDefVersion implements Serializable {
     }
 
     public void addWorkflowProcessDef(WorkflowProcessDef workflowProcessDef) {
-        this.workflowProcessDefs.add(workflowProcessDef);
-        this.processDefsByName.put ( workflowProcessDef.getName (), workflowProcessDef );
+        workflowProcessDefs.add(workflowProcessDef);
+        processDefsByName.put(workflowProcessDef.getName(), workflowProcessDef);
         workflowProcessDef.setProductWorkflowDef(this);
     }
 
     public void addEntryPointUsed(String entryPoint) {
-        this.entryPointsUsed.add(entryPoint);
+        entryPointsUsed.add(entryPoint);
     }
 
     public LabEventNode getRootLabEventNode() {
@@ -218,10 +218,9 @@ public class ProductWorkflowDefVersion implements Serializable {
 
         LabEventNode stepNode =findStepByEventType(eventTypeName);
 
-        WorkflowStepDef step = null;
         boolean result = false;
         if(stepNode != null) {
-             step = stepNode.getStepDef();
+            WorkflowStepDef step = stepNode.getStepDef();
             result = step.isDeadEndBranch();
         }
 
@@ -285,18 +284,49 @@ public class ProductWorkflowDefVersion implements Serializable {
         return foundStep;
     }
 
+    public static class ValidationError {
+        private String message;
+        private Set<String> actualEventNames;
+        private Set<String> expectedEventNames;
+
+        public ValidationError(String message, Set<String> actualEventNames, Set<String> expectedEventNames) {
+            this.message = message;
+            this.actualEventNames = actualEventNames;
+            this.expectedEventNames = expectedEventNames;
+        }
+
+        public ValidationError(String message) {
+            this.message = message;
+            actualEventNames = Collections.emptySet();
+            expectedEventNames = Collections.emptySet();
+        }
+
+        public String getMessage() {
+            return message;
+        }
+
+        public Set<String> getActualEventNames() {
+            return actualEventNames;
+        }
+
+        public Set<String> getExpectedEventNames() {
+            return expectedEventNames;
+        }
+    }
+
     /**
      * Determine whether the given next event is valid for the given lab vessel.
      * @param labVessel vessel, typically with event history
      * @param nextEventTypeName the event that the lab intends to do next
      * @return list of errors, empty if event is valid
      */
-    public List<String> validate(LabVessel labVessel, String nextEventTypeName) {
-        List<String> errors = new ArrayList<String>();
+    public List<ValidationError> validate(LabVessel labVessel, String nextEventTypeName) {
+        List<ValidationError> errors = new ArrayList<ValidationError>();
 
         LabEventNode labEventNode = findStepByEventType(nextEventTypeName);
         if(labEventNode == null) {
-            errors.add("Failed to find " + nextEventTypeName + " in " + productWorkflowDef.getName() + " version " + getVersion());
+            errors.add(new ValidationError("Failed to find " + nextEventTypeName + " in " +
+                    productWorkflowDef.getName() + " version " + getVersion()));
         } else {
             Set<String> actualEventNames = new HashSet<String>();
 
@@ -326,22 +356,21 @@ public class ProductWorkflowDefVersion implements Serializable {
                         found, labVessel.getInPlaceEvents(), labEventNode);
             }
             if(!found && !start) {
-                errors.add("Has actual events " + actualEventNames + ", but none are predecessors to " +
-                        nextEventTypeName + ": " + validPredecessorEventNames);
+                errors.add(new ValidationError("", actualEventNames, validPredecessorEventNames));
             }
         }
         return errors;
     }
 
-    private boolean validateTransfers(String nextEventTypeName, List<String> errors, Set<String> validPredecessorEventNames,
-            Set<String> actualEventNames, boolean found, Set<LabEvent> transfers,
+    private boolean validateTransfers(String nextEventTypeName, List<ValidationError> errors,
+            Set<String> validPredecessorEventNames, Set<String> actualEventNames, boolean found, Set<LabEvent> transfers,
             LabEventNode labEventNode) {
         for (LabEvent labEvent : transfers) {
             String actualEventName = labEvent.getLabEventType().getName();
             actualEventNames.add(actualEventName);
             if (false) {
                 if(actualEventName.equals(nextEventTypeName) && labEventNode.getStepDef().getNumberOfRepeats() == 0) {
-                    errors.add("Event " + nextEventTypeName + " has already occurred");
+                    errors.add(new ValidationError("Event " + nextEventTypeName + " has already occurred"));
                 }
             }
             if(/*actualEventName.equals(nextEventTypeName) || */validPredecessorEventNames.contains(actualEventName)) {
@@ -359,15 +388,17 @@ public class ProductWorkflowDefVersion implements Serializable {
      */
     @SuppressWarnings("UnusedDeclaration")
     void afterUnmarshal(Unmarshaller unmarshaller, Object parent) {
-        this.productWorkflowDef = (ProductWorkflowDef) parent;
+        productWorkflowDef = (ProductWorkflowDef) parent;
     }
 
     @Override
     public boolean equals ( Object o ) {
-        if ( this == o )
+        if ( this == o ) {
             return true;
-        if ( !( o instanceof ProductWorkflowDefVersion ) )
+        }
+        if ( !( o instanceof ProductWorkflowDefVersion ) ) {
             return false;
+        }
 
         ProductWorkflowDefVersion that = ( ProductWorkflowDefVersion ) o;
 

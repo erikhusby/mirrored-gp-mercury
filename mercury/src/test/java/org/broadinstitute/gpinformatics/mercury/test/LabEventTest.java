@@ -72,6 +72,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
@@ -933,9 +934,12 @@ public class LabEventTest {
                 // get workflow name from product order
                 ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(
                         productOrder.getProduct().getWorkflowName());
-                List<String> errors = productWorkflowDef.getEffectiveVersion().validate(labVessel, nextEventTypeName);
+                List<ProductWorkflowDefVersion.ValidationError> errors =
+                        productWorkflowDef.getEffectiveVersion().validate(labVessel, nextEventTypeName);
                 if (!errors.isEmpty()) {
-                    Assert.fail(errors.get(0));
+                    ProductWorkflowDefVersion.ValidationError validationError = errors.get(0);
+                    Assert.fail(validationError.getMessage() + " expected " + validationError.getExpectedEventNames() +
+                            " actual " + validationError.getActualEventNames());
                 }
             }
         }

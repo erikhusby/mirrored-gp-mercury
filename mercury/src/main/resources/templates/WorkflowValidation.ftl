@@ -15,7 +15,8 @@
     <tr>
         <th>Sample</th>
         <th>LCSET</th>
-        <th>Error</th>
+        <th>Expected Events</th>
+        <th>Actual Events</th>
         <th>PDO</th>
         <th>RP</th>
     </tr>
@@ -25,7 +26,16 @@
     <tr>
         <td>${validationError.sampleInstance.startingSample.sampleKey}</td>
         <td><a href="${validationError.sampleInstance.labBatch.jiraTicket.browserUrl}">${(validationError.sampleInstance.labBatch.batchName)!''}</a></td>
-        <td><#list validationError.errors as error>${error}<br/></#list></td>
+        <td>
+            <#list validationError.errors as error>${error.message}
+                <#list error.expectedEventNames as expectedEventName>${expectedEventName} </#list>
+            </#list>
+        </td>
+        <td>
+            <#list validationError.errors as error>
+                <#list error.actualEventNames as actualEventName>${actualEventName} </#list>
+            </#list>
+        </td>
         <td><a href="${validationError.linkToProductOrder}">${(validationError.productOrder.businessKey)!''}</a></td>
         <td><a href="${validationError.linkToResearchProject}">${(validationError.productOrder.researchProject.businessKey!'')}</a></td>
     </tr>
