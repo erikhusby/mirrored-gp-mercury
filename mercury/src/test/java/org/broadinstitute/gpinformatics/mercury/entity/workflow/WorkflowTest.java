@@ -195,7 +195,7 @@ public class WorkflowTest {
         Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
             put(BSPSampleSearchColumn.PRIMARY_DISEASE, "Cancer");
             put(BSPSampleSearchColumn.LSID, "org.broad:SM-1234");
-            put(BSPSampleSearchColumn.MATERIAL_TYPE, "DNA:DNA Genomic");
+            put(BSPSampleSearchColumn.MATERIAL_TYPE, new String("DNA:DNA Genomic"));
             put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, "4321");
             put(BSPSampleSearchColumn.SPECIES, "Homo Sapiens");
             put(BSPSampleSearchColumn.PARTICIPANT_ID, "PT-1234");
@@ -222,7 +222,7 @@ public class WorkflowTest {
         Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
             put(BSPSampleSearchColumn.PRIMARY_DISEASE, "Cancer");
             put(BSPSampleSearchColumn.LSID, "org.broad:SM-2345");
-            put(BSPSampleSearchColumn.MATERIAL_TYPE, "DNA:DNA WGA Cleaned");
+            put(BSPSampleSearchColumn.MATERIAL_TYPE, new String("DNA:DNA WGA Cleaned"));
             put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, "5432");
             put(BSPSampleSearchColumn.SPECIES, "Homo Sapiens");
             put(BSPSampleSearchColumn.PARTICIPANT_ID, "PT-2345");

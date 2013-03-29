@@ -46,7 +46,7 @@ public class WorkflowBucketDef extends WorkflowStepDef {
         // todo remove this code block when Bamboo works with MVEL
         if (entryExpression != null && entryExpression.contains("getMaterialType() == \"DNA:DNA Genomic\"")) {
             for (SampleInstance si : labVessel.getSampleInstances()) {
-                if (si.getStartingSample().getBspSampleDTO().getMaterialType() == "DNA:DNA Genomic") {
+                if (si.getStartingSample().getBspSampleDTO().getMaterialType().equals("DNA:DNA Genomic")) {
                     return true;
                 }
             }
