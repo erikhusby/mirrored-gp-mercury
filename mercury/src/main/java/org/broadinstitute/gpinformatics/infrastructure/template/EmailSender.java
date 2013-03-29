@@ -11,12 +11,13 @@ import javax.mail.Transport;
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
+import java.io.Serializable;
 import java.util.Date;
 
 /**
  * Encapsulates the mechanism for sending emails.
  */
-public class EmailSender {
+public class EmailSender implements Serializable {
     private static final Log LOG = LogFactory.getLog(EmailSender.class);
 
     @Resource(mappedName = "java:/mail/broadsmtp")

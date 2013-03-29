@@ -214,7 +214,6 @@ public class BettalimsMessageResource {
                 bettalimsResponse = bettalimsConnector.sendMessage(message);
             }
             if (processInMercury) {
-                validateWorkflow(bettaLIMSMessage);
                 processMessage(bettaLIMSMessage);
             }
             if (bettalimsResponse != null && bettalimsResponse.getCode() != 200) {
@@ -287,7 +286,7 @@ public class BettalimsMessageResource {
 
         if (!validationErrors.isEmpty()) {
             Map<String, Object> rootMap = new HashMap<String, Object>();
-            rootMap.put("labEvent", stationEventType); // todo stationEvent?
+            rootMap.put("labEvent", stationEventType);
             rootMap.put("bspUser", bspUserList.getByUsername(stationEventType.getOperator()));
             rootMap.put("validationErrors", validationErrors);
             StringWriter stringWriter = new StringWriter();
@@ -305,7 +304,6 @@ public class BettalimsMessageResource {
             for (SampleInstance sampleInstance : sampleInstances) {
                 ProductWorkflowDefVersion workflowVersion = getWorkflowVersion(sampleInstance.getStartingSample().getProductOrderKey());
                 if (workflowVersion != null) {
-                    // todo jmt should validate take the enum, rather than the name?
                     List<String> errors = workflowVersion.validate(labVessel, eventType);
                     if (!errors.isEmpty()) {
                         validationErrors.add(new WorkflowValidationError(sampleInstance, errors,
@@ -328,15 +326,12 @@ public class BettalimsMessageResource {
      */
     public ProductWorkflowDefVersion getWorkflowVersion(String productOrderKey) {
         WorkflowConfig workflowConfig = new WorkflowLoader().load();
-
         ProductWorkflowDefVersion versionResult = null;
-
         ProductOrder productOrder = athenaClientService.retrieveProductOrderDetails(productOrderKey);
 
         if (StringUtils.isNotBlank(productOrder.getProduct().getWorkflowName())) {
             ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(
                     productOrder.getProduct().getWorkflowName());
-
             versionResult = productWorkflowDef.getEffectiveVersion();
         }
         return versionResult;
@@ -567,6 +562,7 @@ public class BettalimsMessageResource {
      * @param message JAXB
      */
     public void processMessage(BettaLIMSMessage message) {
+        validateWorkflow(message);
         List<LabEvent> labEvents = labEventFactory.buildFromBettaLims(message);
         for (LabEvent labEvent : labEvents) {
             labEventHandler.processEvent(labEvent);
