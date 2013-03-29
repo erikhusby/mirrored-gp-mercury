@@ -7,7 +7,7 @@ app:
       host:     localhost
       port:     8080
       jmsPort:  5445
-      workflowValidationEmail: thompson@broadinstitute.org
+      workflowValidationEmail: andrew@broadinstitute.org
 
     AUTO_BUILD:
       host:     mercurydev.broadinstitute.org
