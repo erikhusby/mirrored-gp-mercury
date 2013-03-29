@@ -122,14 +122,7 @@ public class LabBatch {
      * @param reworks
      */
     public void addReworks(Set<LabVessel> reworks) {
-        for (LabVessel reworkVessel : reworks) {
-            if (reworkVessel != null) {
-                if (!this.reworks.contains(reworkVessel)) {
-                    this.reworks.add(reworkVessel);
-                }
-            }
-            // else skip it
-        }
+        this.reworks.addAll(reworks);
     }
 
     @Transient
