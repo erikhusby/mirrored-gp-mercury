@@ -13,6 +13,7 @@ import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 import java.io.*;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
@@ -83,10 +84,6 @@ public class ExtractTransform {
     @Inject
     private ProductOrderSampleEtl productOrderSampleEtl;
     @Inject
-    private ProductOrderSampleStatusEtl productOrderSampleStatusEtl;
-    @Inject
-    private ProductOrderStatusEtl productOrderStatusEtl;
-    @Inject
     private ProjectPersonEtl projectPersonEtl;
     @Inject
     private ResearchProjectCohortEtl researchProjectCohortEtl;
@@ -96,8 +93,6 @@ public class ExtractTransform {
     private ResearchProjectFundingEtl researchProjectFundingEtl;
     @Inject
     private ResearchProjectIrbEtl researchProjectIrbEtl;
-    @Inject
-    private ResearchProjectStatusEtl researchProjectStatusEtl;
     @Inject
     private WorkflowConfigEtl workflowConfigEtl;
     @Inject
@@ -117,14 +112,11 @@ public class ExtractTransform {
                             ProductOrderAddOnEtl productOrderAddOnEtl,
                             ProductOrderEtl productOrderEtl,
                             ProductOrderSampleEtl productOrderSampleEtl,
-                            ProductOrderSampleStatusEtl productOrderSampleStatusEtl,
-                            ProductOrderStatusEtl productOrderStatusEtl,
                             ProjectPersonEtl projectPersonEtl,
                             ResearchProjectCohortEtl researchProjectCohortEtl,
                             ResearchProjectEtl researchProjectEtl,
                             ResearchProjectFundingEtl researchProjectFundingEtl,
                             ResearchProjectIrbEtl researchProjectIrbEtl,
-                            ResearchProjectStatusEtl researchProjectStatusEtl,
                             WorkflowConfigEtl workflowConfigEtl,
                             RiskItemEtl riskItemEtl,
                             LedgerEntryEtl ledgerEntryEtl) {
@@ -137,32 +129,28 @@ public class ExtractTransform {
         this.productOrderAddOnEtl = productOrderAddOnEtl;
         this.productOrderEtl = productOrderEtl;
         this.productOrderSampleEtl = productOrderSampleEtl;
-        this.productOrderSampleStatusEtl = productOrderSampleStatusEtl;
-        this.productOrderStatusEtl = productOrderStatusEtl;
         this.projectPersonEtl = projectPersonEtl;
         this.researchProjectCohortEtl = researchProjectCohortEtl;
         this.researchProjectEtl = researchProjectEtl;
         this.researchProjectFundingEtl = researchProjectFundingEtl;
         this.researchProjectIrbEtl = researchProjectIrbEtl;
-        this.researchProjectStatusEtl = researchProjectStatusEtl;
         this.workflowConfigEtl = workflowConfigEtl;
         this.riskItemEtl = riskItemEtl;
         this.ledgerEntryEtl = ledgerEntryEtl;
     }
 
     /**
-     * Runs on-demand ETL on one entity class, to force a refresh the Data Warehouse, for example after
-     * adding a new field to be exported.
+     * Runs ETL on one entity class for the given range of entity ids (possibly all).
      *
      * @param entityClassname The fully qualified classname of the Mercury class to ETL.
-     * @param startId First entity id of a range of ids to backfill.  Optional query param that defaults to min id.
-     * @param endId Last entity id of a range of ids to backfill.  Optional query param that defaults to max id.
+     * @param startId First entity id of a range of ids to backfill.  Set to 0 for minimum.
+     * @param endId Last entity id of a range of ids to backfill.  Set to -1 for maximum.
      */
-    @Path("backfill/{entityClassname}")
+    @Path("backfill/{entityClassname}/{startId}/{endId}")
     @PUT
-    public Response onDemandEtl(@PathParam("entityClassname") String entityClassname,
-                                @DefaultValue("0") @QueryParam("startId") long startId,
-                                @DefaultValue("-1") @QueryParam("endId") long endId) {
+    public Response entityIdRangeEtl(@PathParam("entityClassname") String entityClassname,
+                                     @PathParam("startId") long startId,
+                                     @PathParam("endId") long endId) {
 
         initConfig();
         Response.Status status = backfillEtl(entityClassname, startId, endId);
@@ -170,23 +158,98 @@ public class ExtractTransform {
     }
 
     /**
-     * Runs a normal, incremental ETL to avoid waiting up to 15 minutes when testing.
+     * Runs ETL for audit changes that occurred in the specified time interval.
+     * Normally the range is from previous etl end time to the current second.
+     *
+     * @param startDateTime start of interval of audited changes, in yyyyMMddHHmmss format,
+     *                      or "0" to use previous end time.
+     * @param endDateTime end of interval of audited changes, in yyyyMMddHHmmss format, or "0" for now.
+     *                    Excludes endpoint.  "0" will withhold updating the lastEtlRun file.
      */
-    @Path("incremental")
+    @Path("incremental/{startDateTime}/{endDateTime}")
     @PUT
-    public Response onDemandIncrementalEtl() {
+    public Response auditDateRangeEtl(@PathParam("startDateTime") String startDateTime,
+                                      @PathParam("endDateTime") String endDateTime) {
         initConfig();
-        incrementalEtl();
+        incrementalEtl(startDateTime, endDateTime);
         return Response.status(ClientResponse.Status.ACCEPTED).build();
     }
 
     /**
-     * Extracts data from operational database, transforms the data to data warehouse records,
+     * Extracts data from operational database, transforms the data into data warehouse records,
      * and writes the records to files, one per DW table.
-     * @return record count, or -1 if could not run
+     *
+     * @param startEtl start of interval of audited changes, in yyyyMMddHHmmss format,
+     *                 or "0" to use previous end time.
+     * @param endEtl end of interval of audited changes, in yyyyMMddHHmmss format, or "0" for now.
+     *               Excludes endpoint.  "0" will withhold updating the lastEtlRun file.
+     * @return count of records created, or -1 if could not run
      */
-    public int incrementalEtl() {
+    public int incrementalEtl(String startEtl, String endEtl) {
 
+        // Bails if target directory is missing.
+        String dataDir = getDatafileDir();
+        if (null == dataDir || dataDir.length() == 0) {
+            if (!loggedConfigError) {
+                logger.info("ETL data file directory is not configured. ETL will not be run.");
+                loggedConfigError = true;
+            }
+            return -1;
+        } else if (!(new File(dataDir)).exists()) {
+            if (!loggedConfigError) {
+                logger.error("ETL data file directory is missing: " + dataDir);
+                loggedConfigError = true;
+            }
+            return -1;
+        }
+
+        // The same etl_date is used for all DW data processed by one ETL run.
+        // Forces start and end to be whole second boundaries, which the auditReaderDao needs.
+        try {
+            long startTimeSec;
+            if ("0".equals(startEtl)) {
+                startTimeSec = readLastEtlRun();
+                if (startTimeSec == 0L) {
+                    logger.warn("Cannot determine time of last incremental ETL.  ETL will not be run.");
+                    return -1;
+                }
+            } else {
+                startTimeSec = secTimestampFormat.parse(startEtl).getTime() / MSEC_IN_SEC;
+            }
+
+            long endTimeSec;
+            if ("0".equals(endEtl)) {
+                endTimeSec = System.currentTimeMillis() / MSEC_IN_SEC;
+            } else {
+                endTimeSec = secTimestampFormat.parse(endEtl).getTime() / MSEC_IN_SEC;
+            }
+
+            if (startTimeSec < endTimeSec) {
+                String etlDateStr = secTimestampFormat.format(new Date(endTimeSec * MSEC_IN_SEC));
+
+                int recordCount = incrementalEtl(startTimeSec, endTimeSec, etlDateStr);
+
+                // Withholds lastEtlRun file update if doing a limited range of changes.
+                if (recordCount >= 0 && "0".equals(endEtl)) {
+                    writeLastEtlRun(endTimeSec);
+                }
+
+                if (recordCount > 0) {
+                    writeIsReadyFile(etlDateStr);
+                    logger.debug("Incremental ETL created " + recordCount + " data records in " +
+                            minutesSince(incrementalRunStartTime) + " seconds.");
+                }
+
+                return recordCount;
+            }
+
+        } catch (ParseException e) {
+            logger.error("Cannot parse start time '" + startEtl + "' or end time '" + endEtl + "'");
+        }
+        return -1;
+    }
+
+    private int incrementalEtl(long startTimeSec, long endTimeSec, String etlDateStr) {
         // If previous run is still busy it is unusual but not an error.  Only one incrementalEtl
         // may run at a time.  Does not queue a new job if busy, to avoid snowball effect if system is
         // busy for a long time, for whatever reason.
@@ -198,89 +261,40 @@ public class ExtractTransform {
             return -1;
         }
         try {
-            // Bails if target directory is missing.
-            String dataDir = getDatafileDir();
-            if (null == dataDir || dataDir.length() == 0) {
-                if (!loggedConfigError) {
-                    logger.info("ETL data file directory is not configured. ETL will not be run.");
-                    loggedConfigError = true;
-                }
-                return -1;
-            } else if (!(new File(dataDir)).exists()) {
-                if (!loggedConfigError) {
-                    logger.error("ETL data file directory is missing: " + dataDir);
-                    loggedConfigError = true;
-                }
-                return -1;
-            }
-
-            // The same etl_date is used for all DW data processed by one ETL run.
-            final long currentEtlSec = System.currentTimeMillis() / MSEC_IN_SEC;
-            final String etlDateStr = secTimestampFormat.format(new Date(currentEtlSec * MSEC_IN_SEC));
             incrementalRunStartTime = System.currentTimeMillis();
 
-            final long lastEtlSec = readLastEtlRun();
-            // Allows last timestamp to be in the future thereby shutting off incremental etl.
-            if (lastEtlSec >= currentEtlSec) {
-                return 0;
+            // Gets the audit revision ids for the given interval.
+            Collection<Long> revIds = auditReaderDao.fetchAuditIds(startTimeSec, endTimeSec);
+            logger.debug("Incremental ETL found " + revIds.size() + " changes.");
+
+            int recordCount = 0;
+            if (revIds.size() > 0) {
+
+                // The order of ETL is not significant since import tables have no referential integrity.
+                recordCount += productEtl.doEtl(revIds, etlDateStr);
+                recordCount += priceItemEtl.doEtl(revIds, etlDateStr);
+                recordCount += researchProjectEtl.doEtl(revIds, etlDateStr);
+                recordCount += projectPersonEtl.doEtl(revIds, etlDateStr);
+                recordCount += researchProjectIrbEtl.doEtl(revIds, etlDateStr);
+                recordCount += researchProjectFundingEtl.doEtl(revIds, etlDateStr);
+                recordCount += researchProjectCohortEtl.doEtl(revIds, etlDateStr);
+                recordCount += productOrderSampleEtl.doEtl(revIds, etlDateStr);
+                recordCount += productOrderEtl.doEtl(revIds, etlDateStr);
+                recordCount += productOrderAddOnEtl.doEtl(revIds, etlDateStr);
+                recordCount += riskItemEtl.doEtl(revIds, etlDateStr);
+                recordCount += ledgerEntryEtl.doEtl(revIds, etlDateStr);
+
+                recordCount += labBatchEtl.doEtl(revIds, etlDateStr);
+                recordCount += labVesselEtl.doEtl(revIds, etlDateStr);
+                recordCount += workflowConfigEtl.doEtl(revIds, etlDateStr);
+                recordCount += eventEtl.doEtl(revIds, etlDateStr);
             }
-            return incrementalEtl(lastEtlSec, currentEtlSec, etlDateStr);
+
+            return recordCount;
+
         } finally {
             mutex.release();
         }
-    }
-
-    /**
-     * Testable helper method that does the incremental etl work, has no mutex.
-     * @param startTimeSec start of ETL interval, in seconds
-     * @param endTimeSec end of ETL interval, in seconds
-     * @param etlDateStr y-m-d formatted etl time, for filenames
-     * @return number of etl records
-     */
-    public int incrementalEtl(long startTimeSec, long endTimeSec, String etlDateStr) {
-        if (0L == startTimeSec) {
-            logger.warn("Cannot determine time of last incremental ETL.  ETL will not be run.");
-            return 0;
-        }
-        // Gets the audit revision ids for the given interval.
-        Collection<Long> revIds = auditReaderDao.fetchAuditIds(startTimeSec, endTimeSec);
-        logger.debug ("Incremental ETL found " + revIds.size() + " changes.");
-        if (revIds.size() == 0) {
-            writeLastEtlRun(endTimeSec);
-            return 0;
-        }
-
-        int recordCount = 0;
-        // The order of ETL is not significant since import tables have no referential integrity.
-        recordCount += productEtl.doEtl(revIds, etlDateStr);
-        recordCount += priceItemEtl.doEtl(revIds, etlDateStr);
-        recordCount += researchProjectEtl.doEtl(revIds, etlDateStr);
-        recordCount += researchProjectStatusEtl.doEtl(revIds, etlDateStr);
-        recordCount += projectPersonEtl.doEtl(revIds, etlDateStr);
-        recordCount += researchProjectIrbEtl.doEtl(revIds, etlDateStr);
-        recordCount += researchProjectFundingEtl.doEtl(revIds, etlDateStr);
-        recordCount += researchProjectCohortEtl.doEtl(revIds, etlDateStr);
-        recordCount += productOrderSampleEtl.doEtl(revIds, etlDateStr);
-        recordCount += productOrderSampleStatusEtl.doEtl(revIds, etlDateStr);
-        recordCount += productOrderEtl.doEtl(revIds, etlDateStr);
-        recordCount += productOrderStatusEtl.doEtl(revIds, etlDateStr);
-        recordCount += productOrderAddOnEtl.doEtl(revIds, etlDateStr);
-        // event datamart
-        recordCount += labBatchEtl.doEtl(revIds, etlDateStr);
-        recordCount += labVesselEtl.doEtl(revIds, etlDateStr);
-        recordCount += workflowConfigEtl.doEtl(revIds, etlDateStr);
-        recordCount += eventEtl.doEtl(revIds, etlDateStr);
-
-        recordCount += riskItemEtl.doEtl(revIds, etlDateStr);
-        recordCount += ledgerEntryEtl.doEtl(revIds, etlDateStr);
-
-        writeLastEtlRun(endTimeSec);
-        if (recordCount > 0) {
-            writeIsReadyFile(etlDateStr);
-            logger.debug("Incremental ETL created " + recordCount + " data records in " +
-                    minutesSince(incrementalRunStartTime) + " seconds.");
-        }
-        return recordCount;
     }
 
     /**
@@ -327,27 +341,24 @@ public class ExtractTransform {
 
         int recordCount = 0;
         // The one of these that matches the entityClass will make ETL records, others are no-ops.
-        recordCount += productEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += priceItemEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += researchProjectEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += researchProjectStatusEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += projectPersonEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += researchProjectIrbEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += researchProjectFundingEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += researchProjectCohortEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += productOrderSampleEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += productOrderSampleStatusEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += productOrderEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += productOrderStatusEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += productOrderAddOnEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += productEtl.doEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += priceItemEtl.doEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += researchProjectEtl.doEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += projectPersonEtl.doEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += researchProjectIrbEtl.doEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += researchProjectFundingEtl.doEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += researchProjectCohortEtl.doEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += productOrderSampleEtl.doEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += productOrderEtl.doEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += productOrderAddOnEtl.doEtl(entityClass, startId, endId, etlDateStr);
         // event datamart
-        recordCount += labBatchEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += labVesselEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += workflowConfigEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += eventEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += labBatchEtl.doEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += labVesselEtl.doEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += workflowConfigEtl.doEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += eventEtl.doEtl(entityClass, startId, endId, etlDateStr);
 
-        recordCount += riskItemEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += ledgerEntryEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += riskItemEtl.doEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += ledgerEntryEtl.doEtl(entityClass, startId, endId, etlDateStr);
 
         if (recordCount > 0) {
             writeIsReadyFile(etlDateStr);

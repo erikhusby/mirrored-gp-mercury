@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
@@ -45,14 +46,11 @@ public class ExtractTransformDbFreeTest {
     private final ProductOrderAddOnEtl productOrderAddOnEtl = createMock(ProductOrderAddOnEtl.class);
     private final ProductOrderEtl productOrderEtl = createMock(ProductOrderEtl.class);
     private final ProductOrderSampleEtl productOrderSampleEtl = createMock(ProductOrderSampleEtl.class);
-    private final ProductOrderSampleStatusEtl productOrderSampleStatusEtl = createMock(ProductOrderSampleStatusEtl.class);
-    private final ProductOrderStatusEtl productOrderStatusEtl = createMock(ProductOrderStatusEtl.class);
     private final ProjectPersonEtl projectPersonEtl = createMock(ProjectPersonEtl.class);
     private final ResearchProjectCohortEtl researchProjectCohortEtl = createMock(ResearchProjectCohortEtl.class);
     private final ResearchProjectEtl researchProjectEtl = createMock(ResearchProjectEtl.class);
     private final ResearchProjectFundingEtl researchProjectFundingEtl = createMock(ResearchProjectFundingEtl.class);
     private final ResearchProjectIrbEtl researchProjectIrbEtl = createMock(ResearchProjectIrbEtl.class);
-    private final ResearchProjectStatusEtl researchProjectStatusEtl = createMock(ResearchProjectStatusEtl.class);
     private final WorkflowConfigEtl workflowConfigEtl = createMock(WorkflowConfigEtl.class);
     private final RiskItemEtl riskItemEtl = createMock(RiskItemEtl.class);
     private final LedgerEntryEtl ledgerEntryEtl = createMock(LedgerEntryEtl.class);
@@ -67,14 +65,11 @@ public class ExtractTransformDbFreeTest {
             productOrderAddOnEtl,
             productOrderEtl,
             productOrderSampleEtl,
-            productOrderSampleStatusEtl,
-            productOrderStatusEtl,
             projectPersonEtl,
             researchProjectCohortEtl,
             researchProjectEtl,
             researchProjectFundingEtl,
             researchProjectIrbEtl,
-            researchProjectStatusEtl,
             workflowConfigEtl,
             riskItemEtl,
             ledgerEntryEtl
@@ -95,14 +90,11 @@ public class ExtractTransformDbFreeTest {
                 productOrderAddOnEtl,
                 productOrderEtl,
                 productOrderSampleEtl,
-                productOrderSampleStatusEtl,
-                productOrderStatusEtl,
                 projectPersonEtl,
                 researchProjectCohortEtl,
                 researchProjectEtl,
                 researchProjectFundingEtl,
                 researchProjectIrbEtl,
-                researchProjectStatusEtl,
                 workflowConfigEtl,
                 riskItemEtl,
                 ledgerEntryEtl);
@@ -123,7 +115,7 @@ public class ExtractTransformDbFreeTest {
     public void testInvalidDir1() {
         replay(mocks);
         ExtractTransform.setDatafileDir(null);
-        Assert.assertEquals(-1, extractTransform.incrementalEtl());
+        Assert.assertEquals(extractTransform.incrementalEtl("0", "0"), -1);
         Assert.assertEquals(Response.Status.INTERNAL_SERVER_ERROR,
                 extractTransform.backfillEtl(ProductOrderSample.class.getName(), 0, Long.MAX_VALUE));
         verify(mocks);
@@ -132,7 +124,7 @@ public class ExtractTransformDbFreeTest {
     public void testInvalidDir2() {
         replay(mocks);
         ExtractTransform.setDatafileDir("");
-        Assert.assertEquals(-1, extractTransform.incrementalEtl());
+        Assert.assertEquals(extractTransform.incrementalEtl("0", "0"), -1);
         Assert.assertEquals(Response.Status.INTERNAL_SERVER_ERROR,
                 extractTransform.backfillEtl(ProductOrderSample.class.getName(), 0, Long.MAX_VALUE));
         verify(mocks);
@@ -141,7 +133,7 @@ public class ExtractTransformDbFreeTest {
     public void testInvalidDir3() {
         replay(mocks);
         ExtractTransform.setDatafileDir(badDataDir);
-        Assert.assertEquals(-1, extractTransform.incrementalEtl());
+        Assert.assertEquals(extractTransform.incrementalEtl("0", "0"), -1);
         Assert.assertEquals(Response.Status.INTERNAL_SERVER_ERROR,
                 extractTransform.backfillEtl(ProductOrderSample.class.getName(), 0, Long.MAX_VALUE));
         verify(mocks);
@@ -149,7 +141,7 @@ public class ExtractTransformDbFreeTest {
 
     public void testNoLastRun() {
         replay(mocks);
-        Assert.assertEquals(0, extractTransform.incrementalEtl(0, 1, null));
+        Assert.assertEquals(extractTransform.incrementalEtl("0", "0"), -1);
         Assert.assertTrue(ExtractTransform.getIncrementalRunStartTime() >= 0);
         verify(mocks);
     }
@@ -158,29 +150,32 @@ public class ExtractTransformDbFreeTest {
         long futureSec = 9999999999L;
         replay(mocks);
         extractTransform.writeLastEtlRun(futureSec);
-        Assert.assertEquals(0, extractTransform.incrementalEtl());
+        Assert.assertEquals(extractTransform.incrementalEtl("0", "0"), -1);
         Assert.assertTrue(ExtractTransform.getIncrementalRunStartTime() >= 0);
         verify(mocks);
     }
 
     public void testBadRange1() {
         replay(mocks);
-        Assert.assertEquals(Response.Status.BAD_REQUEST,
-                extractTransform.backfillEtl(ProductOrderSample.class.getName(), -1, Long.MAX_VALUE));
+        Assert.assertEquals(
+                extractTransform.backfillEtl(ProductOrderSample.class.getName(), -1, Long.MAX_VALUE),
+                Response.Status.BAD_REQUEST);
         verify(mocks);
     }
 
     public void testBadRange2() {
         replay(mocks);
-        Assert.assertEquals(Response.Status.BAD_REQUEST,
-                extractTransform.backfillEtl(ProductOrderSample.class.getName(), 1000, 999));
+        Assert.assertEquals(
+                extractTransform.backfillEtl(ProductOrderSample.class.getName(), 1000, 999),
+                Response.Status.BAD_REQUEST);
         verify(mocks);
     }
 
     public void testInvalidClassName() {
         replay(mocks);
-        Assert.assertEquals(Response.Status.NOT_FOUND,
-                extractTransform.backfillEtl("NoSuchClass_Ihope", 0, Long.MAX_VALUE));
+        Assert.assertEquals(
+                extractTransform.backfillEtl("NoSuchClass_Ihope", 0, Long.MAX_VALUE),
+                Response.Status.NOT_FOUND);
         verify(mocks);
     }
 
@@ -189,7 +184,7 @@ public class ExtractTransformDbFreeTest {
      */
     public void testInvalidLastEtlBadDir() {
         ExtractTransform.setDatafileDir(badDataDir);
-        Assert.assertEquals(0L, extractTransform.readLastEtlRun());
+        Assert.assertEquals(extractTransform.readLastEtlRun(), 0);
     }
 
     /**
@@ -200,10 +195,10 @@ public class ExtractTransformDbFreeTest {
         final long sec  = 1351112223L;
         final long mSec = 1351112223789L;
         FileUtils.write(file, String.valueOf(sec));
-        Assert.assertEquals(sec, extractTransform.readLastEtlRun());
+        Assert.assertEquals(extractTransform.readLastEtlRun(), sec);
 
         FileUtils.write(file, String.valueOf(mSec));
-        Assert.assertEquals(sec, extractTransform.readLastEtlRun());
+        Assert.assertEquals(extractTransform.readLastEtlRun(), sec);
     }
 
     /**
@@ -213,8 +208,8 @@ public class ExtractTransformDbFreeTest {
         replay(mocks);
         Assert.assertTrue(ExtractTransform.getMutex().tryAcquire());
         try {
-            int recordCount = extractTransform.incrementalEtl();
-            Assert.assertEquals(-1, recordCount);
+            int recordCount = extractTransform.incrementalEtl("20130327155950", "20130327160200");
+            Assert.assertEquals(recordCount, -1);
         } finally {
             ExtractTransform.getMutex().release();
         }
@@ -229,39 +224,59 @@ public class ExtractTransformDbFreeTest {
         Assert.assertTrue(f.exists());
     }
 
-    public void testOnDemandIncr() {
+    public void testOnDemandIncr1() {
+        long startEtl = 1364411920L;
+
+        expect(auditReaderDao.fetchAuditIds(eq(startEtl), anyLong())).andReturn(Collections.EMPTY_LIST);
         replay(mocks);
-        extractTransform.writeLastEtlRun(0L);
-        extractTransform.onDemandIncrementalEtl();
-        Assert.assertEquals(0L, extractTransform.readLastEtlRun());
+
+        extractTransform.writeLastEtlRun(startEtl);
+        Assert.assertEquals(extractTransform.readLastEtlRun(), startEtl);
+
+        Assert.assertEquals(extractTransform.incrementalEtl("0", "0"), 0);
+
+        Assert.assertTrue(extractTransform.readLastEtlRun() > startEtl);
+        verify(mocks);
+    }
+
+    public void testOnDemandIncr2() {
+        long startEtl = 1364411920L;
+        long endEtl = 1364411930L;
+        String endEtlStr = ExtractTransform.secTimestampFormat.format(new Date(endEtl * 1000L));
+
+        expect(auditReaderDao.fetchAuditIds(startEtl, endEtl)).andReturn(Collections.EMPTY_LIST);
+        replay(mocks);
+
+        extractTransform.writeLastEtlRun(startEtl);
+
+        Assert.assertEquals(extractTransform.incrementalEtl("0", endEtlStr), 0);
+        // Limited range etl should not update lastEtlRun file.
+        Assert.assertEquals(extractTransform.readLastEtlRun(), startEtl);
         verify(mocks);
     }
 
     public void testOnDemandBackfill() {
         Class testClass = LabBatch.class;
-        expect(productEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(priceItemEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(researchProjectEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(researchProjectStatusEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(projectPersonEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(researchProjectIrbEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(researchProjectFundingEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(researchProjectCohortEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(productOrderSampleEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(productOrderSampleStatusEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(productOrderEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(productOrderStatusEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(productOrderAddOnEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(labBatchEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(labVesselEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(workflowConfigEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(eventEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(riskItemEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(ledgerEntryEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(productEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(priceItemEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(researchProjectEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(projectPersonEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(researchProjectIrbEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(researchProjectFundingEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(researchProjectCohortEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(productOrderSampleEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(productOrderEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(productOrderAddOnEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(labBatchEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(labVesselEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(workflowConfigEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(eventEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(riskItemEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(ledgerEntryEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
 
         replay(mocks);
         extractTransform.writeLastEtlRun(0L);
-        extractTransform.onDemandEtl(testClass.getName(), 0, 0);
+        extractTransform.entityIdRangeEtl(testClass.getName(), 0, 0);
         Assert.assertEquals(0L, extractTransform.readLastEtlRun());
         verify(mocks);
     }
@@ -269,29 +284,26 @@ public class ExtractTransformDbFreeTest {
     public void testBackfillDefaultEnd() {
         long startEtl = System.currentTimeMillis();
         Class testClass = LabBatch.class;
-        expect(productEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(1);
-        expect(priceItemEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(researchProjectEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(researchProjectStatusEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(projectPersonEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(researchProjectIrbEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(researchProjectFundingEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(researchProjectCohortEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(productOrderSampleEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(productOrderSampleStatusEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(productOrderEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(productOrderStatusEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(productOrderAddOnEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(labBatchEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(labVesselEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(workflowConfigEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(eventEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(riskItemEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(ledgerEntryEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(productEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(1);
+        expect(priceItemEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(researchProjectEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(projectPersonEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(researchProjectIrbEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(researchProjectFundingEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(researchProjectCohortEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(productOrderSampleEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(productOrderEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(productOrderAddOnEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(labBatchEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(labVesselEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(workflowConfigEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(eventEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(riskItemEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(ledgerEntryEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
 
         replay(mocks);
         extractTransform.writeLastEtlRun(0L);
-        extractTransform.onDemandEtl(testClass.getName(), 0, -1);
+        extractTransform.entityIdRangeEtl(testClass.getName(), 0, -1);
         long endEtl = System.currentTimeMillis();
         File[] files = EtlTestUtilities.getDirFiles(datafileDir, startEtl, endEtl);
         boolean readyFileFound = false;
@@ -312,7 +324,7 @@ public class ExtractTransformDbFreeTest {
 
         replay(mocks);
         extractTransform.writeLastEtlRun(startEtlSec);
-        extractTransform.onDemandIncrementalEtl();
+        extractTransform.auditDateRangeEtl("0", "0");
         Assert.assertTrue(extractTransform.readLastEtlRun() > startEtlSec);
         verify(mocks);
     }
@@ -325,15 +337,12 @@ public class ExtractTransformDbFreeTest {
         expect(productEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(1);
         expect(priceItemEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
         expect(researchProjectEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
-        expect(researchProjectStatusEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
         expect(projectPersonEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
         expect(researchProjectIrbEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
         expect(researchProjectFundingEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
         expect(researchProjectCohortEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
         expect(productOrderSampleEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
-        expect(productOrderSampleStatusEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
         expect(productOrderEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
-        expect(productOrderStatusEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
         expect(productOrderAddOnEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
         expect(labBatchEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
         expect(labVesselEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
@@ -344,7 +353,7 @@ public class ExtractTransformDbFreeTest {
 
         replay(mocks);
         extractTransform.writeLastEtlRun(startEtlSec);
-        extractTransform.onDemandIncrementalEtl();
+        extractTransform.auditDateRangeEtl("0", "0");
         long etlEnd = extractTransform.readLastEtlRun();
         Assert.assertTrue(etlEnd >= startEtlSec);
         String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date(TimeUnit.SECONDS.toMillis(etlEnd)));

@@ -26,6 +26,7 @@ import org.hibernate.envers.Audited;
 import org.hibernate.envers.NotAudited;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.*;
 
@@ -434,6 +435,35 @@ public abstract class LabVessel implements Serializable {
         public String getName() {
             return name;
         }
+    }
+
+    /**
+     * Returns a Collection of SampleInstances at given position
+     * @param positionName position in vessel, eg: A01
+     * @return
+     */
+    public Collection<SampleInstance> getSamplesAtPosition(@NotNull String positionName) {
+        VesselPosition position = VesselPosition.getByName(positionName);
+        return getSamplesAtPosition(position);
+    }
+
+    /**
+     * Returns a Collection of SampleInstances at given position
+     * @param vesselPosition position in vessel, eg: A01
+     * @return
+     */
+    public Collection<SampleInstance> getSamplesAtPosition(@NotNull VesselPosition vesselPosition) {
+        List<SampleInstance> sampleInstances;
+        VesselContainer<?> vesselContainer = getContainerRole();
+        if (vesselContainer != null) {
+            sampleInstances = vesselContainer.getSampleInstancesAtPositionList(vesselPosition);
+        } else {
+            sampleInstances = getSampleInstancesList();
+        }
+        if (sampleInstances == null) {
+            sampleInstances = Collections.emptyList();
+        }
+        return sampleInstances;
     }
 
     /**

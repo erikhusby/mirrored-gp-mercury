@@ -40,7 +40,7 @@ public class GenericEntityEtlDbFreeTest {
     LabBatchDAO dao = createMock(LabBatchDAO.class);
     Object[] mocks = new Object[]{auditReader, dao, obj};
     
-    LabBatchEtl tst = new LabBatchEtl();
+    LabBatchEtl tst = new LabBatchEtl(dao);
     RevInfo[] revInfo = new RevInfo[] {new RevInfo(), new RevInfo(), new RevInfo()};
 
     @BeforeClass(groups = TestGroups.DATABASE_FREE)
@@ -72,7 +72,7 @@ public class GenericEntityEtlDbFreeTest {
         List<Object[]> dataChanges = new ArrayList<Object[]>();
         dataChanges.add(new Object[]{obj, revInfo[0], RevisionType.ADD});
 
-        expect(auditReader.fetchDataChanges(revIds, tst.getEntityClass())).andReturn(dataChanges);
+        expect(auditReader.fetchDataChanges(revIds, tst.entityClass)).andReturn(dataChanges);
         expect(dao.findById(LabBatch.class, entityId)).andReturn(obj);
 
         expect(obj.getLabBatchId()).andReturn(entityId).times(2);
@@ -80,13 +80,12 @@ public class GenericEntityEtlDbFreeTest {
 
         replay(mocks);
 
-        tst.setLabBatchDAO(dao);
         tst.setAuditReaderDao(auditReader);
 
         int recordCount = tst.doEtl(revIds, etlDateStr);
         assertEquals(recordCount, 1);
 
-        String dataFilename = etlDateStr + "_" + tst.getBaseFilename() + ".dat";
+        String dataFilename = etlDateStr + "_" + tst.baseFilename + ".dat";
         File datafile = new File(datafileDir, dataFilename);
         Assert.assertTrue(datafile.exists());
 
@@ -103,43 +102,17 @@ public class GenericEntityEtlDbFreeTest {
         dataChanges.add(new Object[]{obj, revInfo[1], RevisionType.MOD});
         dataChanges.add(new Object[]{obj, revInfo[2], RevisionType.DEL});
 
-        expect(auditReader.fetchDataChanges(revIds, tst.getEntityClass())).andReturn(dataChanges);
-
+        expect(auditReader.fetchDataChanges(eq(revIds), (Class)anyObject())).andReturn(dataChanges);
         expect(obj.getLabBatchId()).andReturn(entityId).times(3);
 
         replay(mocks);
 
-        tst.setLabBatchDAO(dao);
         tst.setAuditReaderDao(auditReader);
 
         int recordCount = tst.doEtl(revIds, etlDateStr);
         assertEquals(recordCount, 1);
 
-        String dataFilename = etlDateStr + "_" + tst.getBaseFilename() + ".dat";
-        File datafile = new File(datafileDir, dataFilename);
-        Assert.assertTrue(datafile.exists());
-
-        verify(mocks);
-    }
-
-    public void testBackfillEtl() throws Exception {
-        List<LabBatch> list = new ArrayList<LabBatch>();
-        list.add(obj);
-        expect(dao.findAll(eq(LabBatch.class), (GenericDao.GenericDaoCallback<LabBatch>)anyObject())).andReturn(list);
-
-        expect(obj.getLabBatchId()).andReturn(entityId);
-        expect(obj.getBatchName()).andReturn(batchName);
-
-        replay(mocks);
-
-        LabBatchEtl tst = new LabBatchEtl();
-        tst.setLabBatchDAO(dao);
-        tst.setAuditReaderDao(auditReader);
-
-        int recordCount = tst.doBackfillEtl(tst.getEntityClass(), entityId, entityId, etlDateStr);
-        assertEquals(recordCount, 1);
-
-        String dataFilename = etlDateStr + "_" + tst.getBaseFilename() + ".dat";
+        String dataFilename = etlDateStr + "_" + tst.baseFilename + ".dat";
         File datafile = new File(datafileDir, dataFilename);
         Assert.assertTrue(datafile.exists());
 

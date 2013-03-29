@@ -4,14 +4,14 @@ import net.sourceforge.stripes.action.*;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidationMethod;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.rework.ReworkEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
-import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -33,19 +33,17 @@ public class BucketViewActionBean extends CoreActionBean {
 
     private static final String VIEW_PAGE = "/resources/workflow/bucketView.jsp";
     @Inject
-    private LabEventHandler labEventHandler;
-    @Inject
     private WorkflowLoader workflowLoader;
     @Inject
     private BucketDao bucketDao;
+    @Inject
+    private ReworkEntryDao reworkEntryDao;
     @Inject
     private AthenaClientService athenaClientService;
     @Inject
     private LabBatchEjb labBatchEjb;
     @Inject
     private LabVesselDao labVesselDao;
-    @Inject
-    private LabBatchDAO labBatchDAO;
     @Inject
     private UserBean userBean;
 
@@ -56,7 +54,7 @@ public class BucketViewActionBean extends CoreActionBean {
     private List<WorkflowBucketDef> buckets = new ArrayList<WorkflowBucketDef>();
     private List<String> selectedVesselLabels;
     private List<LabVessel> selectedBatchVessels;
-    private List<String> selectedReworks;
+    private List<String> selectedReworks=new ArrayList<String>();
 
     @Validate(required = true, on = {CREATE_BATCH_ACTION, "viewBucket"})
     private String selectedBucket;
@@ -149,7 +147,7 @@ public class BucketViewActionBean extends CoreActionBean {
             viewBucket();
         }
 
-        if (selectedVesselLabels == null || selectedVesselLabels.isEmpty()) {
+        if (CollectionUtils.isEmpty(selectedVesselLabels)) {
             addValidationError("selectedVesselLabels", "At least one vessel must be selected to create a batch");
             viewBucket();
         }
@@ -175,6 +173,7 @@ public class BucketViewActionBean extends CoreActionBean {
                             athenaClientService.retrieveProductOrderDetails(bucketEntry.getPoBusinessKey()));
                 }
             }
+            reworkEntries = reworkEntryDao.findAll(ReworkEntry.class);
         }
 
         //TODO jac populate the rework entries
@@ -224,25 +223,20 @@ public class BucketViewActionBean extends CoreActionBean {
     public Resolution createBatch() throws Exception {
         LabBatch batchObject;
 
-        Set<LabVessel> vesselSet =
-                new HashSet<LabVessel>(labVesselDao.findByListIdentifiers(selectedVesselLabels));
+        Set<LabVessel> vesselSet = new HashSet<LabVessel>(labVesselDao.findByListIdentifiers(selectedVesselLabels));
 
-        /*
-           If a new ticket is to be created, pass the description, summary, due date and important info in a batch
-           object acting as a DTO
-        */
-        batchObject = new LabBatch(summary.trim(), vesselSet, LabBatch.LabBatchType.WORKFLOW, description, dueDate,
-                important);
+        Set<LabVessel> reworks = new HashSet<LabVessel>(labVesselDao.findByListIdentifiers(selectedReworks));
 
-        labBatchEjb.createLabBatchAndRemoveFromBucket(batchObject, userBean.getBspUser().getUsername(),
-                selectedBucket, LabEvent.UI_EVENT_LOCATION);
+        batchObject = new LabBatch(summary.trim(), vesselSet,LabBatch.LabBatchType.WORKFLOW, description, dueDate, important);
+        // fixme here is where we just dump the reworks into the ticket
+        // this should be persistent
+        batchObject.addReworks(reworks);
 
-        addMessage(MessageFormat.format("Lab batch ''{0}'' has been created.",
-                batchObject.getJiraTicket().getTicketName()));
+        labBatchEjb.createLabBatchAndRemoveFromBucket(batchObject, userBean.getBspUser().getUsername(),selectedBucket, LabEvent.UI_EVENT_LOCATION);
 
-        //Forward
-        return new RedirectResolution(CreateBatchActionBean.class, CreateBatchActionBean.CONFIRM_ACTION)
-                .addParameter("batchLabel", batchObject.getBatchName());
+        addMessage(MessageFormat.format("Lab batch ''{0}'' has been created.",batchObject.getJiraTicket().getTicketName()));
+
+        return new RedirectResolution(CreateBatchActionBean.class, CreateBatchActionBean.CONFIRM_ACTION).addParameter("batchLabel", batchObject.getBatchName());
     }
 
     public Date getDueDate() {

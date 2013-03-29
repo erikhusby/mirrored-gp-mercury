@@ -18,6 +18,6 @@ import javax.enterprise.context.RequestScoped;
 
 @Stateful
 @RequestScoped
-public class LabVesselCommentDao extends GenericDao {
+public class ReworkEntryDao extends GenericDao {
 
 }

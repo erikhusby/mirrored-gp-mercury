@@ -3,8 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.test;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.WebResource;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.*;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ChildVesselBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ParentVesselBean;
@@ -148,8 +147,9 @@ public class ExomeExpressIntegrationTest {
 
             // User checks chain of custody, activity stream.
 
-            System.out.println("Press enter to send LC messages");
-            scanner.nextLine();
+            System.out.println("About to send LC messages.  Press y to skip end repair.  To include everything, just hit enter.");
+            String line = scanner.nextLine();
+            boolean shouldSkipEndRepair = line.contains("y");
             // LC messages.
             // Reconstruct the factory, to update the time.
             bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory();
@@ -164,7 +164,20 @@ public class ExomeExpressIntegrationTest {
                     sampleIds.size()).invoke();
 
             for (BettaLIMSMessage bettaLIMSMessage : libraryConstructionJaxbBuilder.getMessageList()) {
-                sendMessage(baseUrl, bettaLIMSMessage);
+                boolean willSkipEndRepair = false;
+                if (shouldSkipEndRepair) {
+                    for (PlateEventType plateEventType : bettaLIMSMessage.getPlateEvent()) {
+                        if ("EndRepair".equals(plateEventType.getEventType())) {
+                            willSkipEndRepair = true;
+                        }
+                    }
+                }
+                if (!willSkipEndRepair) {
+                    sendMessage(baseUrl, bettaLIMSMessage);
+                }
+                else {
+                    System.out.println("Skipped end repair.");
+                }
             }
 
             LabEventTest.HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = new LabEventTest.HybridSelectionJaxbBuilder(
@@ -192,8 +205,13 @@ public class ExomeExpressIntegrationTest {
             System.out.println("Press enter to register run");
             scanner.nextLine();
             // Run registration web service call.
-            SolexaRunBean solexaRunBean = new SolexaRunBean(flowcellBarcode, "Run" + testSuffix, new Date(), "SL-HAL",
-                    File.createTempFile("RunDir", ".txt").getAbsolutePath(), null);
+            File runFile = File.createTempFile("RunDir", ".txt");
+            String runFilePath = runFile.getAbsolutePath();
+            String runName = "Run" + testSuffix;
+            SolexaRunBean solexaRunBean = new SolexaRunBean(flowcellBarcode, runName, new Date(), "SL-HAL",
+                    runFilePath, null);
+            System.out.println("Registering run " + runName + " with path " + runFilePath);
+            System.out.println("URL to preview the run will be " + baseUrl.toExternalForm() + "/rest/IlluminaRun/queryMercury?runName=" + runFile.getName());
             Client.create().resource(baseUrl.toExternalForm() + "/rest/solexarun")
                     .type(MediaType.APPLICATION_XML_TYPE)
                     .accept(MediaType.APPLICATION_XML)

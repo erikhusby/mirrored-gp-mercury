@@ -56,25 +56,17 @@ public class ProductOrderEtlDbFreeTest {
     public void setUp() {
         reset(mocks);
 
-        tst = new ProductOrderEtl();
-        tst.setProductOrderDao(dao);
+        tst = new ProductOrderEtl(dao, userList);
         tst.setAuditReaderDao(auditReader);
-        tst.setBSPUserList(userList);
     }
 
     public void testEtlFlags() throws Exception {
         expect(pdo.getProductOrderId()).andReturn(entityId);
         replay(mocks);
 
-        assertEquals(tst.getEntityClass(), ProductOrder.class);
-
-        assertEquals(tst.getBaseFilename(), "product_order");
-
+        assertEquals(tst.entityClass, ProductOrder.class);
+        assertEquals(tst.baseFilename, "product_order");
         assertEquals(tst.entityId(pdo), (Long) entityId);
-
-        assertNull(tst.entityStatusRecord(etlDateStr, null, null, false));
-
-        assertTrue(tst.isEntityEtl());
 
         verify(mocks);
     }
@@ -84,7 +76,7 @@ public class ProductOrderEtlDbFreeTest {
 
         replay(mocks);
 
-        assertEquals(tst.entityRecords(etlDateStr, false, -1L).size(), 0);
+        assertEquals(tst.dataRecords(etlDateStr, false, -1L).size(), 0);
 
         verify(mocks);
     }
@@ -110,37 +102,7 @@ public class ProductOrderEtlDbFreeTest {
 
         replay(mocks);
 
-        Collection<String> records = tst.entityRecords(etlDateStr, false, entityId);
-        assertEquals(records.size(), 1);
-        verifyRecord(records.iterator().next());
-
-        verify(mocks);
-    }
-
-    public void testBackfillEtl() throws Exception {
-        List<ProductOrder> list = new ArrayList<ProductOrder>();
-        list.add(pdo);
-        expect(dao.findAll(eq(ProductOrder.class), (GenericDao.GenericDaoCallback<ProductOrder>) anyObject())).andReturn(list);
-
-        expect(pdo.getProductOrderId()).andReturn(entityId);
-        expect(pdo.getResearchProject()).andReturn(researchProject).times(2);
-        expect(pdo.getProduct()).andReturn(product).times(2);
-        expect(pdo.getOrderStatus()).andReturn(orderStatus);
-        expect(pdo.getCreatedDate()).andReturn(createdDate);
-        expect(pdo.getModifiedDate()).andReturn(modifiedDate);
-        expect(pdo.getTitle()).andReturn(title);
-        expect(pdo.getQuoteId()).andReturn(quoteId);
-        expect(pdo.getJiraTicketKey()).andReturn(jiraTicketKey);
-        expect(pdo.getCreatedBy()).andReturn(createdBy);
-        expect(userList.getById(createdBy)).andReturn(owner);
-        expect(owner.getUsername()).andReturn(ownerName);
-
-        expect(researchProject.getResearchProjectId()).andReturn(researchProjectId);
-        expect(product.getProductId()).andReturn(productId);
-
-        replay(mocks);
-
-        Collection<String> records = tst.entityRecordsInRange(entityId, entityId, etlDateStr, false);
+        Collection<String> records = tst.dataRecords(etlDateStr, false, entityId);
         assertEquals(records.size(), 1);
         verifyRecord(records.iterator().next());
 

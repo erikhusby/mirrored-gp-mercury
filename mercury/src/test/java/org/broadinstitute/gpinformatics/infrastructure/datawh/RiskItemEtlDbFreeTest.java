@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.RiskItemDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.RiskItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -31,8 +33,9 @@ public class RiskItemEtlDbFreeTest {
     private AuditReaderDao auditReader = createMock(AuditReaderDao.class);
     private RiskItem obj = createMock(RiskItem.class);
     private RiskItemDao dao = createMock(RiskItemDao.class);
+    private ProductOrderSampleDao pdoDao = createMock(ProductOrderSampleDao.class);
     private ProductOrderSample pos = createMock(ProductOrderSample.class);
-    private Object[] mocks = new Object[]{auditReader, obj, dao, pos};
+    private Object[] mocks = new Object[]{auditReader, obj, dao, pdoDao, pos};
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void beforeMethod() {
@@ -42,8 +45,7 @@ public class RiskItemEtlDbFreeTest {
 
         reset(mocks);
 
-        tst = new RiskItemEtl();
-        tst.setRiskItemDao(dao);
+        tst = new RiskItemEtl(dao, pdoDao);
         tst.setAuditReaderDao(auditReader);
     }
 
@@ -57,13 +59,9 @@ public class RiskItemEtlDbFreeTest {
         expect(obj.getRiskItemId()).andReturn(entityId);
         replay(mocks);
 
-        assertEquals(tst.getEntityClass(), RiskItem.class);
-
-        assertEquals(tst.getBaseFilename(), "product_order_sample_risk");
-
+        assertEquals(tst.entityClass, RiskItem.class);
+        assertEquals(tst.baseFilename, "product_order_sample_risk");
         assertEquals(tst.entityId(obj), (Long) entityId);
-
-        assertNull(tst.entityStatusRecord(etlDateStr, null, null, false));
 
         verify(mocks);
     }
@@ -73,7 +71,7 @@ public class RiskItemEtlDbFreeTest {
 
         replay(mocks);
 
-        assertEquals(tst.entityRecords(etlDateStr, false, -1L).size(), 0);
+        assertEquals(tst.dataRecords(etlDateStr, false, -1L).size(), 0);
 
         verify(mocks);
     }
@@ -84,7 +82,7 @@ public class RiskItemEtlDbFreeTest {
         expect(pos.isOnRisk()).andReturn(true);
         replay(mocks);
 
-        Collection<String> records = tst.entityRecords(etlDateStr, false, posId);
+        Collection<String> records = tst.dataRecords(etlDateStr, false, posId);
         assertEquals(records.size(), 1);
 
         verifyRecord(records.iterator().next());

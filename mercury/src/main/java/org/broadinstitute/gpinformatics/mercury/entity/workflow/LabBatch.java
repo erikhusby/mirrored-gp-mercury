@@ -50,6 +50,13 @@ public class LabBatch {
     @OneToMany(mappedBy = "labBatch")
     private Set<LabEvent> labEvents = new LinkedHashSet<LabEvent>();
 
+    @Transient // fixme, this should be persistent, probably as a boolean
+    // on the lb_starting_lab_vessels join table
+    // fixme reworks need to be included in the startingVessels
+    // list because they are starting vessels...but just
+    // marked as rework
+    private Set<LabVessel> reworks = new HashSet<LabVessel>();
+
     private Date createdOn;
 
     public enum LabBatchType {
@@ -106,6 +113,21 @@ public class LabBatch {
         this.batchDescription = batchDescription;
         this.dueDate = dueDate;
         this.important = important;
+    }
+
+
+    /**
+     * Adds the given rework vessels to the list
+     * of reworks for the batch.
+     * @param reworks
+     */
+    public void addReworks(Set<LabVessel> reworks) {
+        this.reworks.addAll(reworks);
+    }
+
+    @Transient
+    public Set<LabVessel> getReworks() {
+        return reworks;
     }
 
     protected LabBatch() {
@@ -260,7 +282,6 @@ public class LabBatch {
     public LabBatchType getLabBatchType() {
         return labBatchType;
     }
-
     /**
      * RequiredSubmissionFields is an enum intended to assist in the creation of a Jira ticket
      * for Product orders

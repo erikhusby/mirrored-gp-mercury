@@ -77,15 +77,9 @@ public class EventEtlDbFreeTest {
         expect(obj.getLabEventId()).andReturn(entityId);
         replay(mocks);
 
-        assertEquals(tst.getEntityClass(), LabEvent.class);
-
-        assertEquals(tst.getBaseFilename(), "event_fact");
-
+        assertEquals(tst.entityClass, LabEvent.class);
+        assertEquals(tst.baseFilename, "event_fact");
         assertEquals(tst.entityId(obj), (Long) entityId);
-
-        assertNull(tst.entityStatusRecord(etlDateStr, null, null, false));
-
-        assertTrue(tst.isEntityEtl());
 
         verify(mocks);
     }
@@ -95,7 +89,7 @@ public class EventEtlDbFreeTest {
 
         replay(mocks);
 
-        assertEquals(tst.entityRecords(etlDateStr, false, -1L).size(), 0);
+        assertEquals(tst.dataRecords(etlDateStr, false, -1L).size(), 0);
 
         verify(mocks);
     }
@@ -107,7 +101,7 @@ public class EventEtlDbFreeTest {
 
         replay(mocks);
 
-        assertEquals(tst.entityRecords(etlDateStr, false, entityId).size(), 0);
+        assertEquals(tst.dataRecords(etlDateStr, false, entityId).size(), 0);
 
         verify(mocks);
     }
@@ -122,7 +116,7 @@ public class EventEtlDbFreeTest {
 
         replay(mocks);
 
-        assertEquals(tst.entityRecords(etlDateStr, false, entityId).size(), 0);
+        assertEquals(tst.dataRecords(etlDateStr, false, entityId).size(), 0);
 
         verify(mocks);
     }
@@ -139,7 +133,7 @@ public class EventEtlDbFreeTest {
 
         replay(mocks);
 
-        Collection<String> records = tst.entityRecords(etlDateStr, false, entityId);
+        Collection<String> records = tst.dataRecords(etlDateStr, false, entityId);
         assertEquals(records.size(), 0);
 
         verify(mocks);
@@ -156,7 +150,7 @@ public class EventEtlDbFreeTest {
 
         replay(mocks);
 
-        assertEquals(tst.entityRecords(etlDateStr, false, entityId).size(), 0);
+        assertEquals(tst.dataRecords(etlDateStr, false, entityId).size(), 0);
 
         verify(mocks);
     }
@@ -169,12 +163,12 @@ public class EventEtlDbFreeTest {
         expect(vessel.getSampleInstances()).andReturn(sampleInstList);
         expect(sampleInst.getStartingSample()).andReturn(sample);
         expect(labBatch.getLabBatchId()).andReturn(labBatchId);
-        expect(sample.getSampleKey()).andReturn(sampleKey).times(2);
+        expect(sample.getSampleKey()).andReturn(sampleKey);
         expect(sample.getProductOrderKey()).andReturn(null);
 
         replay(mocks);
 
-        Collection<String> records = tst.entityRecords(etlDateStr, false, entityId);
+        Collection<String> records = tst.dataRecords(etlDateStr, false, entityId);
         assertEquals(records.size(), 0);
 
         verify(mocks);
@@ -188,13 +182,12 @@ public class EventEtlDbFreeTest {
         expect(vessel.getSampleInstances()).andReturn(sampleInstList);
         expect(sampleInst.getStartingSample()).andReturn(sample);
         expect(labBatch.getLabBatchId()).andReturn(labBatchId);
-        expect(sample.getSampleKey()).andReturn(sampleKey);
         expect(sample.getProductOrderKey()).andReturn(pdoKey);
         expect(pdoDao.findByBusinessKey(pdoKey)).andReturn(null);
 
         replay(mocks);
 
-        Collection<String> records = tst.entityRecords(etlDateStr, false, entityId);
+        Collection<String> records = tst.dataRecords(etlDateStr, false, entityId);
         assertEquals(records.size(), 0);
 
         verify(mocks);
@@ -223,7 +216,7 @@ public class EventEtlDbFreeTest {
 
         replay(mocks);
 
-        Collection<String> records = tst.entityRecords(etlDateStr, false, entityId);
+        Collection<String> records = tst.dataRecords(etlDateStr, false, entityId);
         assertEquals(records.size(), 1);
         verifyRecord(records.iterator().next());
 
@@ -255,41 +248,7 @@ public class EventEtlDbFreeTest {
 
         replay(mocks);
 
-        Collection<String> records = tst.entityRecords(etlDateStr, false, entityId);
-        assertEquals(records.size(), 1);
-        verifyRecord(records.iterator().next());
-
-        verify(mocks);
-    }
-
-    public void testBackfillEtl() throws Exception {
-        List<LabEvent> list = new ArrayList<LabEvent>();
-        list.add(obj);
-
-        expect(dao.findAll(eq(LabEvent.class), (GenericDao.GenericDaoCallback<LabEvent>) anyObject())).andReturn(list);
-        expect(obj.getLabEventType()).andReturn(eventType).times(2);
-        expect(obj.getLabBatch()).andReturn(null);
-        expect(obj.getTargetLabVessels()).andReturn(vesselList);
-        expect(vessel.getSampleInstances()).andReturn(sampleInstList);
-        expect(sampleInst.getLabBatch()).andReturn(labBatch);
-        expect(sampleInst.getStartingSample()).andReturn(sample);
-        expect(labBatch.getLabBatchId()).andReturn(labBatchId);
-        expect(sample.getSampleKey()).andReturn(sampleKey);
-        expect(sample.getProductOrderKey()).andReturn(pdoKey);
-        expect(pdoDao.findByBusinessKey(pdoKey)).andReturn(pdo);
-        expect(pdo.getProductOrderId()).andReturn(pdoId);
-        expect(obj.getEventDate()).andReturn(eventDate);
-        expect(wfLookup.lookupWorkflowConfig(eventType.getName(), pdo, eventDate)).andReturn(wfConfig);
-        expect(wfConfig.getWorkflowId()).andReturn(workflowId);
-        expect(wfConfig.getProcessId()).andReturn(processId);
-        expect(obj.getLabEventId()).andReturn(entityId);
-        expect(obj.getEventLocation()).andReturn(location);
-        expect(vessel.getLabVesselId()).andReturn(vesselId);
-        expect(obj.getEventDate()).andReturn(eventDate);
-
-        replay(mocks);
-
-        Collection<String> records = tst.entityRecordsInRange(entityId, entityId, etlDateStr, false);
+        Collection<String> records = tst.dataRecords(etlDateStr, false, entityId);
         assertEquals(records.size(), 1);
         verifyRecord(records.iterator().next());
 

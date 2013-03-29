@@ -261,7 +261,7 @@
             <c:forEach items="${actionBean.reworkEntries}" var="entry">
                 <tr>
                     <td>
-                        <stripes:checkbox class="bucket-checkbox" name="selectedVesselLabels"
+                        <stripes:checkbox class="bucket-checkbox" name="selectedReworks"
                                           value="${entry.labVesselComment.labVessel.label}"/>
                     </td>
                     <td>
@@ -272,16 +272,13 @@
                         </c:when><c:otherwise>${entry.labVesselComment.labVessel.label}</c:otherwise>
                         </c:choose></td>
                     <td>
-                        <c:forEach items="${actionBean.getMercurySamplesForBucketEntry(entry)}"
-                                   var="mercurySample"
-                                   varStatus="stat">
+                        <c:set var="mercurySample" value="${entry.rapSheet.sample}"/>
                             <c:choose><c:when test="${!readOnly}">
                                 <a href="${ctxpath}/search/all.action?search=&searchKey=${mercurySample.sampleKey}">
                                         ${mercurySample.sampleKey}
                                 </a>
                             </c:when><c:otherwise>${mercurySample.sampleKey}</c:otherwise></c:choose><c:if
                                 test="${!stat.last}">&nbsp;</c:if>
-                        </c:forEach>
                     </td>
                     <td>
                         <c:choose>

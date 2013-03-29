@@ -1219,6 +1219,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     public boolean isSupportsRin() {
-        return editOrder.getProduct().isSupportsRin();
+        return (editOrder != null) && (editOrder.getProduct() != null) && editOrder.getProduct().isSupportsRin();
     }
 }

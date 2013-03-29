@@ -1,11 +1,14 @@
 package org.broadinstitute.gpinformatics.infrastructure.mercury;
 
-import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -15,9 +18,10 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -34,112 +38,80 @@ import static org.easymock.EasyMock.*;
 // singleThreaded because EasyMock mocks are not thread-safe during recording.
 @Test(enabled = true, groups = TestGroups.DATABASE_FREE, singleThreaded = true)
 public class MercuryClientEjbDbFreeTest {
-    private String workflowName = "Exome Express";
-    private Long userId = 10400L;
-    private String userName = "testUser";
-    private String sampleKey = "SM-0000-0225135703";
-    private String pdoKey = "PDO-0000";
-    private List<LabVessel> labVessels = new ArrayList<LabVessel>();
-    private Set<MercurySample> samples = new HashSet<MercurySample>();
-    private Set<LabBatch> batches = new HashSet<LabBatch>();
-    private LabEventType eventType = LabEventType.PICO_PLATING_BUCKET;
-    private String eventLocation = LabEvent.UI_EVENT_LOCATION;
+    private String PICO_PLATING_BUCKET = "Pico/Plating Bucket";
+    private LabEventType EVENT_TYPE = LabEventType.PICO_PLATING_BUCKET;
+    private String EVENT_LOCATION = LabEvent.UI_EVENT_LOCATION;
 
+    private List<LabVessel> labVessels = new ArrayList<LabVessel>();
     private MercuryClientEjb service;
-    private ProductOrder pdo = createMock(ProductOrder.class);
-    private List<ProductOrderSample> pdoSamples = new ArrayList<ProductOrderSample>();
-    private ProductOrderSample pdoSample1 = createMock(ProductOrderSample.class);
-    private ProductOrderSample pdoSample2 = createMock(ProductOrderSample.class);
-    private Product product = createMock(Product.class);
-    private BSPUserList bspUserList = createMock(BSPUserList.class);
-    private BspUser bspUser = createMock(BspUser.class);
+    private ProductOrder pdo;
+    private LabBatch labBatch;
+    private Map<BSPSampleSearchColumn, String> bspData;
+    private WorkflowLoader workflowLoader = new WorkflowLoader();
+    private BSPUserList bspUserList;
+    private Bucket bucket;
+    private String pdoCreator;
+
     private BucketBean bucketBean = createMock(BucketBean.class);
     private BucketDao bucketDao = createMock(BucketDao.class);
-    private Bucket bucket = createMock(Bucket.class);
-    private WorkflowLoader workflowLoader = new WorkflowLoader(); // = createMock(WorkflowLoader.class);
-    private LabBatch labBatch = createMock(LabBatch.class);
-    private LabVessel labVessel = createMock(LabVessel.class);
-    private MercurySample mercurySample = createMock(MercurySample.class);
     private LabVesselDao labVesselDao = createMock(LabVesselDao.class);
 
-    private Object[] mocks = new Object[]{pdo, pdoSample1, pdoSample2, product, bspUserList, bspUser, bucketBean,
-            bucketDao, bucket, labBatch, labVessel, mercurySample, labVesselDao};
+    private Object[] mocks = new Object[]{bucketBean, bucketDao, labVesselDao};
 
-    @BeforeClass
-    public void beforeClass() throws Exception {
-        service = new MercuryClientEjb(bucketBean, bucketDao, workflowLoader, bspUserList, labVesselDao);
-        labVessels.add(labVessel);
-        samples.add(mercurySample);
-        batches.add(labBatch);
-    }
-
-    @BeforeMethod(groups = TestGroups.DATABASE_FREE)
+    @BeforeMethod
     public void setUp() {
-        pdoSamples = new ArrayList<ProductOrderSample>();
-        pdoSamples.add(pdoSample1);
+
         reset(mocks);
+
+        bspData = new HashMap<BSPSampleSearchColumn, String>() {{
+            put(BSPSampleSearchColumn.PRIMARY_DISEASE, "Cancer");
+            put(BSPSampleSearchColumn.LSID, "org.broad:SM-2345");
+            put(BSPSampleSearchColumn.MATERIAL_TYPE, "DNA:DNA WGA Cleaned");
+            put(BSPSampleSearchColumn.MATERIAL_TYPE, "DNA:DNA Genomic");
+            put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, "5432");
+            put(BSPSampleSearchColumn.SPECIES, "Homo Sapiens");
+            put(BSPSampleSearchColumn.PARTICIPANT_ID, "PT-2345");
+        }};
+
+        bspUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
+        labBatch = new LabBatch("ExEx Receipt Batch", new HashSet<LabVessel>(), LabBatch.LabBatchType.SAMPLES_RECEIPT);
+        bucket = new Bucket(new WorkflowStepDef(PICO_PLATING_BUCKET));
+
+        final int SAMPLE_SIZE = 2;
+
+        pdo = ProductOrderTestFactory.buildExExProductOrder(SAMPLE_SIZE);
+        pdo.setCreatedBy(BSPManagerFactoryStub.QA_DUDE_USER_ID);
+        pdoCreator = bspUserList.getById(BSPManagerFactoryStub.QA_DUDE_USER_ID).getUsername();
+
+        int rackPosition = 1;
+        for (ProductOrderSample pdoSample : pdo.getSamples()) {
+            LabVessel labVessel = new TwoDBarcodedTube("R" + rackPosition++);
+
+            MercurySample mercurySample =
+                    new MercurySample(pdo.getBusinessKey(), pdoSample.getSampleName(), new BSPSampleDTO(bspData));
+
+            labVessel.addSample(mercurySample);
+            labBatch.addLabVessel(labVessel);
+            labVessels.add(labVessel);
+        }
+
+        service = new MercuryClientEjb(bucketBean, bucketDao, workflowLoader, bspUserList, labVesselDao);
     }
 
-    public void testSampleToPicoBucket() throws Exception {
-        // subtle differences from testAddSampleToPicoBucketSubset: pdoSamples contains only pdoSample1, and pdo.getSamples() is expected and returns pdoSamples
-        expect(pdo.getSamples()).andReturn(pdoSamples);
-        expect(pdoSample1.getSampleName()).andReturn(sampleKey);
-        expect(labVesselDao.findBySampleKeyList((List<String>)anyObject())).andReturn(labVessels);
-        expect(labVessel.getLabBatches()).andReturn(batches);
-        //if (batches.size() == 0)   batches = vessel.getNearestLabBatches();
-        expect(labBatch.getLabBatchType()).andReturn(LabBatch.LabBatchType.SAMPLES_RECEIPT);
-        expect(labVessel.getMercurySamples()).andReturn(samples);
-        expect(mercurySample.getSampleKey()).andReturn(sampleKey);
-        mercurySample.setProductOrderKey(pdoKey);
 
-        expect(pdo.getProduct()).andReturn(product);
-        expect(product.getWorkflowName()).andReturn(workflowName).anyTimes();
-        expect(bucketDao.findByName("Pico/Plating Bucket")).andReturn(bucket);
-        expect(pdo.getCreatedBy()).andReturn(userId);
-        expect(bspUserList.getById(userId)).andReturn(bspUser);
-        expect(bspUser.getUsername()).andReturn(userName);
+    public void testSamplesToPicoBucket() throws Exception {
 
-        expect(pdo.getBusinessKey()).andReturn(pdoKey).anyTimes();
+        expect(labVesselDao.findBySampleKeyList((List<String>) anyObject())).andReturn(labVessels);
+        expect(bucketDao.findByName(PICO_PLATING_BUCKET)).andReturn(bucket);
+        bucketDao.persist(bucket);
+        bucketBean.add(labVessels, bucket, pdoCreator, EVENT_LOCATION, EVENT_TYPE, pdo.getBusinessKey());
 
-        bucketBean.add(labVessels, bucket, userName, eventLocation, eventType, pdoKey);
-        expect(bucket.getBucketId()).andReturn(10L);
         replay(mocks);
 
         Collection<ProductOrderSample> addedSamples = service.addFromProductOrder(pdo);
-        Assert.assertEquals(addedSamples.size(), 1);
+        Assert.assertEquals(addedSamples, pdo.getSamples());
 
         verify(mocks);
     }
 
-    public void testAddSampleToPicoBucketSubset() {
-        // subtle differences from testSampleToPicoBucket: pdoSamples contains pdoSample1 and pdoSample2, and pdo.getSamples() is not expected
-        pdoSamples.add(pdoSample2);
-        expect(pdoSample1.getSampleName()).andReturn(sampleKey);
-        expect(labVesselDao.findBySampleKeyList((List<String>)anyObject())).andReturn(labVessels);
-        expect(labVessel.getLabBatches()).andReturn(batches);
-        expect(labBatch.getLabBatchType()).andReturn(LabBatch.LabBatchType.SAMPLES_RECEIPT);
-        expect(labVessel.getMercurySamples()).andReturn(samples);
-        expect(mercurySample.getSampleKey()).andReturn(sampleKey);
-        mercurySample.setProductOrderKey(pdoKey);
-
-        expect(pdo.getProduct()).andReturn(product);
-        expect(product.getWorkflowName()).andReturn(workflowName).anyTimes();
-        expect(bucketDao.findByName("Pico/Plating Bucket")).andReturn(bucket);
-        expect(pdo.getCreatedBy()).andReturn(userId);
-        expect(bspUserList.getById(userId)).andReturn(bspUser);
-        expect(bspUser.getUsername()).andReturn(userName);
-
-        expect(pdo.getBusinessKey()).andReturn(pdoKey).anyTimes();
-
-        Collection<LabVessel> bucketVessels = new ArrayList<LabVessel>();
-        bucketVessels.add(labVessel);
-        bucketBean.add(bucketVessels, bucket, userName, eventLocation, eventType, pdoKey);
-        expect(bucket.getBucketId()).andReturn(10L);
-        replay(mocks);
-
-        Collection<ProductOrderSample> addedSamples = service.addFromProductOrder(pdo, Collections.singleton(pdoSample1));
-        Assert.assertEquals(addedSamples.size(), 1);
-
-        verify(mocks);
-    }
 }

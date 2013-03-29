@@ -17,7 +17,7 @@ import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Null;
+
 import java.util.Date;
 import java.util.List;
 
@@ -39,7 +39,7 @@ public class LabVesselComment<T extends RapSheetEntry> {
     private String comment;
 
     @NotNull
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.REFRESH)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.REFRESH,optional = false)
     private LabVessel labVessel;
 
     @NotNull

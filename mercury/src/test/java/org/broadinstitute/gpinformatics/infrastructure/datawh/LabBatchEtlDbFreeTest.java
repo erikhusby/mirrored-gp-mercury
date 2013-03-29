@@ -38,8 +38,7 @@ public class LabBatchEtlDbFreeTest {
     public void beforeMethod() {
         reset(mocks);
 
-        tst = new LabBatchEtl();
-        tst.setLabBatchDAO(dao);
+        tst = new LabBatchEtl(dao);
         tst.setAuditReaderDao(auditReader);
     }
 
@@ -47,15 +46,9 @@ public class LabBatchEtlDbFreeTest {
         expect(obj.getLabBatchId()).andReturn(entityId);
         replay(mocks);
 
-        assertEquals(tst.getEntityClass(), LabBatch.class);
-
-        assertEquals(tst.getBaseFilename(), "lab_batch");
-
+        assertEquals(tst.entityClass, LabBatch.class);
+        assertEquals(tst.baseFilename, "lab_batch");
         assertEquals(tst.entityId(obj), (Long) entityId);
-
-        assertNull(tst.entityStatusRecord(etlDateStr, null, null, false));
-
-        assertTrue(tst.isEntityEtl());
 
         verify(mocks);
     }
@@ -65,7 +58,7 @@ public class LabBatchEtlDbFreeTest {
 
         replay(mocks);
 
-        assertEquals(tst.entityRecords(etlDateStr, false, -1L).size(), 0);
+        assertEquals(tst.dataRecords(etlDateStr, false, -1L).size(), 0);
 
         verify(mocks);
     }
@@ -78,24 +71,7 @@ public class LabBatchEtlDbFreeTest {
 
         replay(mocks);
 
-        Collection<String> records = tst.entityRecords(etlDateStr, false, entityId);
-        assertEquals(records.size(), 1);
-        verifyRecord(records.iterator().next());
-
-        verify(mocks);
-    }
-
-    public void testBackfillEtl() throws Exception {
-        List<LabBatch> list = new ArrayList<LabBatch>();
-        list.add(obj);
-        expect(dao.findAll(eq(LabBatch.class), (GenericDao.GenericDaoCallback<LabBatch>) anyObject())).andReturn(list);
-
-        expect(obj.getLabBatchId()).andReturn(entityId);
-        expect(obj.getBatchName()).andReturn(batchName);
-
-        replay(mocks);
-
-        Collection<String> records = tst.entityRecordsInRange(entityId, entityId, etlDateStr, false);
+        Collection<String> records = tst.dataRecords(etlDateStr, false, entityId);
         assertEquals(records.size(), 1);
         verifyRecord(records.iterator().next());
 

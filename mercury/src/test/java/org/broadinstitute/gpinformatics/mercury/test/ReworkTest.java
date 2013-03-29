@@ -109,7 +109,6 @@ public class ReworkTest extends ContainerTest {
         Assert.assertNotNull(rapSheetEntry.getReworkStep(), "getReworkStep cannot be null.");
         Assert.assertNotNull(rapSheetEntry.getRapSheet(), "rework.getRapSheet cannot be null.");
         Assert.assertNotNull(rapSheetEntry.getRapSheet().getSample(), "RapSheet.sample cannot be null.");
-
     }
 
     private SampleInstance getRandomSample(List<SampleInstance> sampleInstances) {

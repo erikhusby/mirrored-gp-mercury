@@ -280,15 +280,15 @@ public class GenericDao {
             genericDaoCallback.callback(criteriaQuery, root);
         }
 
-        return JPASplitter.runCriteryQuery(
-            values,
-            new CriteriaInClauseCreator<VALUE_TYPE>() {
-                @Override
-                public Query createCriteriaInQuery(Collection<VALUE_TYPE> parameterList) {
-                    criteriaQuery.where(root.get(singularAttribute).in(parameterList));
-                    return getEntityManager().createQuery(criteriaQuery);
+        return JPASplitter.runCriteriaQuery(
+                values,
+                new CriteriaInClauseCreator<VALUE_TYPE>() {
+                    @Override
+                    public Query createCriteriaInQuery(Collection<VALUE_TYPE> parameterList) {
+                        criteriaQuery.where(root.get(singularAttribute).in(parameterList));
+                        return getEntityManager().createQuery(criteriaQuery);
+                    }
                 }
-            }
         );
     }
 

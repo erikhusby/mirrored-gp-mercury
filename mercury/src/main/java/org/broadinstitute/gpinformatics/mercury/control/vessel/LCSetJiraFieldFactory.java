@@ -80,6 +80,28 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
 
     }
 
+    /**
+     * Takes the initial samples and the rework samples
+     * from the batch and builds a string to display
+     * on the batch ticket
+     * @param labBatch
+     * @return
+     */
+    public static String buildSamplesListString(LabBatch labBatch) {
+        StringBuilder samplesText = new StringBuilder();
+        for (LabVessel labVessel : labBatch.getStartingLabVessels()) {
+            samplesText.append(labVessel.getLabel()).append("\n");
+        }
+
+        if (!labBatch.getReworks().isEmpty()) {
+            samplesText.append("\n");
+            for (LabVessel rework : labBatch.getReworks()) {
+                samplesText.append(rework.getLabel()).append(" (rework) ").append("\n");
+            }
+        }
+        return samplesText.toString();
+    }
+
     @Override
     public Collection<CustomField> getCustomFields(Map<String, CustomFieldDefinition> submissionFields) {
 
@@ -98,26 +120,11 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
 
         StringBuilder sampleList = new StringBuilder();
 
-        int sampleCount = 0;
+        int sampleCount = batch.getReworks().size() + batch.getStartingLabVessels().size();
 
-        for (LabVessel currVessel : batch.getStartingLabVessels()) {
-            sampleCount += currVessel.getSampleInstanceCount();
-            for (SampleInstance currSample:currVessel.getSampleInstances()) {
-                sampleList.append(currSample.getStartingSample().getSampleKey()).append("\n");
-            }
-        }
+        customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.GSSR_IDS,buildSamplesListString(batch)));
 
-        customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.GSSR_IDS,
-                sampleList.toString()));
-
-        customFields.add(new CustomField(submissionFields
-                .get(LabBatch.RequiredSubmissionFields.NUMBER_OF_SAMPLES.getFieldName()), sampleCount ));
-
-/*
-        customFields.add(new CustomField(
-                submissionFields.get(LabBatch.RequiredSubmissionFields.POOLING_STATUS.getFieldName()),
-                new CustomField.CascadingSelectList(POOLING_STATUS, LIB_QC_SEQ_REQUIRED_DEFAULT)));
-*/
+        customFields.add(new CustomField(submissionFields.get(LabBatch.RequiredSubmissionFields.NUMBER_OF_SAMPLES.getFieldName()), sampleCount ));
 
         if (batch.getDueDate() != null) {
 
