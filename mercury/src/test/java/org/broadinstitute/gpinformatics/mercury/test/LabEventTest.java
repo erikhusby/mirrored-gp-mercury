@@ -1844,10 +1844,10 @@ public class LabEventTest {
             labEventHandler.processEvent(endRepairEntity);
 
             // EndRepairCleanup
-//            validateWorkflow("EndRepairCleanup", shearingCleanupPlate);
-//            LabEvent endRepairCleanupEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
-//                    libraryConstructionJaxbBuilder.getEndRepairCleanupJaxb(), shearingCleanupPlate);
-//            labEventHandler.processEvent(endRepairCleanupEntity);
+            validateWorkflow("EndRepairCleanup", shearingCleanupPlate);
+            LabEvent endRepairCleanupEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
+                    libraryConstructionJaxbBuilder.getEndRepairCleanupJaxb(), shearingCleanupPlate);
+            labEventHandler.processEvent(endRepairCleanupEntity);
 
             // ABase
             validateWorkflow("ABase", shearingCleanupPlate);
@@ -2066,9 +2066,9 @@ public class LabEventTest {
             endRepairJaxb = bettaLimsMessageTestFactory.buildPlateEvent("EndRepair", shearCleanPlateBarcode);
             addMessage(messageList, bettaLimsMessageTestFactory, endRepairJaxb);
 
-//            endRepairCleanupJaxb = bettaLimsMessageTestFactory.buildPlateEvent("EndRepairCleanup", shearCleanPlateBarcode);
-//            addMessage(messageList, bettaLimsMessageTestFactory, endRepairCleanupJaxb);
-//
+            endRepairCleanupJaxb = bettaLimsMessageTestFactory.buildPlateEvent("EndRepairCleanup", shearCleanPlateBarcode);
+            addMessage(messageList, bettaLimsMessageTestFactory, endRepairCleanupJaxb);
+
             aBaseJaxb = bettaLimsMessageTestFactory.buildPlateEvent("ABase", shearCleanPlateBarcode);
             addMessage(messageList, bettaLimsMessageTestFactory, aBaseJaxb);
 
