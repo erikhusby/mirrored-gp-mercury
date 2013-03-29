@@ -228,6 +228,11 @@ public class BettalimsMessageResource {
     }
 
     // todo jmt move this to a Control class, this Boundary class is getting too big
+
+    /**
+     * Validate workflow for all events in a message.
+     * @param bettaLIMSMessage JAXB from deck
+     */
     private void validateWorkflow(BettaLIMSMessage bettaLIMSMessage) {
         for (PlateCherryPickEvent plateCherryPickEvent : bettaLIMSMessage.getPlateCherryPickEvent()) {
             validateWorkflow(plateCherryPickEvent, new ArrayList<String>(getBarcodesForCherryPick(plateCherryPickEvent)));
@@ -251,11 +256,19 @@ public class BettalimsMessageResource {
         }
     }
 
+    /**
+     * Validate workflow for barcodes in an event.
+     * @param stationEventType JAXB from deck
+     * @param barcodes plastic to be validated
+     */
     private void validateWorkflow(StationEventType stationEventType, List<String> barcodes) {
         Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
         validateWorkflow(mapBarcodeToVessel.values(), stationEventType);
     }
 
+    /**
+     * Parameter to email template.
+     */
     public static class WorkflowValidationError {
         private SampleInstance sampleInstance;
         private List<String> errors;
@@ -280,13 +293,18 @@ public class BettalimsMessageResource {
         }
     }
 
+    /**
+     * Validate workflow for the LabVessels in an event
+     * @param labVessels entities
+     * @param stationEventType JAXB from deck
+     */
     private void validateWorkflow(Collection<LabVessel> labVessels, StationEventType stationEventType) {
 
         List<WorkflowValidationError> validationErrors = validateWorkflow(labVessels, stationEventType.getEventType());
 
         if (!validationErrors.isEmpty()) {
             Map<String, Object> rootMap = new HashMap<String, Object>();
-            rootMap.put("labEvent", stationEventType);
+            rootMap.put("stationEvent", stationEventType);
             rootMap.put("bspUser", bspUserList.getByUsername(stationEventType.getOperator()));
             rootMap.put("validationErrors", validationErrors);
             StringWriter stringWriter = new StringWriter();
@@ -295,6 +313,12 @@ public class BettalimsMessageResource {
         }
     }
 
+    /**
+     * Validate the next action for a collection of lab vessels.
+     * @param labVessels entities
+     * @param eventType name
+     * @return list of errors
+     */
     public List<WorkflowValidationError> validateWorkflow(Collection<LabVessel> labVessels, String eventType) {
         List<SampleInstance> allSampleInstances = new ArrayList<SampleInstance>();
         List<WorkflowValidationError> validationErrors = new ArrayList<WorkflowValidationError>();
