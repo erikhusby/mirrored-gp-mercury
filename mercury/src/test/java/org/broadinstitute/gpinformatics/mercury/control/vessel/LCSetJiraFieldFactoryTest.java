@@ -27,14 +27,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Scott Matthews
@@ -101,6 +94,13 @@ public class LCSetJiraFieldFactoryTest {
         LabBatch testBatch = new LabBatch(LabBatch.generateBatchName(workflowName, pdoNames),
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
 
+        Set<LabVessel> reworks = new HashSet<LabVessel>();
+        reworks.add(new TwoDBarcodedTube("Rework1"));
+        reworks.add(new TwoDBarcodedTube("Rework2"));
+        testBatch.addReworks(reworks);
+
+        int numSamples = testBatch.getStartingLabVessels().size() + testBatch.getReworks().size();
+
         AbstractBatchJiraFieldFactory testBuilder = AbstractBatchJiraFieldFactory
                 .getInstance(CreateFields.ProjectType.LCSET_PROJECT, testBatch, AthenaClientProducer.stubInstance());
 
@@ -118,9 +118,11 @@ public class LCSetJiraFieldFactoryTest {
             if (currField.getFieldDefinition().getName()
                          .equals(LabBatch.RequiredSubmissionFields.GSSR_IDS.getFieldName())) {
                 for (LabVessel currVessel : testBatch.getStartingLabVessels()) {
-                    for(SampleInstance currSample:currVessel.getSampleInstances()) {
-                        Assert.assertTrue(((String) currField.getValue()).contains(currSample.getStartingSample().getSampleKey()));
-                    }
+                    Assert.assertTrue(((String) currField.getValue()).contains(currVessel.getLabel()));
+                }
+                Assert.assertFalse(testBatch.getReworks().isEmpty());
+                for (LabVessel currVessel : testBatch.getReworks()) {
+                    Assert.assertTrue(((String) currField.getValue()).contains(currVessel.getLabel()));
                 }
             }
             if (currField.getFieldDefinition().getName()
@@ -128,11 +130,8 @@ public class LCSetJiraFieldFactoryTest {
                 Assert.assertEquals(((CustomField.SelectOption) currField.getValue()).getId(), "-1");
             }
             if (currField.getFieldDefinition().getName().equals(LabBatch.RequiredSubmissionFields.NUMBER_OF_SAMPLES.getFieldName())) {
-                Assert.assertEquals(testBatch.getStartingLabVessels().size(), currField.getValue());
+                Assert.assertEquals(numSamples, currField.getValue());
             }
-//            if (currField.getFieldDefinition().getName().equals(LabBatch.RequiredSubmissionFields.POOLING_STATUS.getFieldName())) {
-//                Assert.assertEquals(LCSetJiraFieldFactory.POOLING_STATUS, currField.getValue());
-//            }
             if (currField.getFieldDefinition().getName().equals(LabBatch.RequiredSubmissionFields.PROGRESS_STATUS.getFieldName())) {
                 Assert.assertEquals(LCSetJiraFieldFactory.PROGRESS_STATUS, ((CustomField.ValueContainer)currField.getValue()).getValue());
             }
