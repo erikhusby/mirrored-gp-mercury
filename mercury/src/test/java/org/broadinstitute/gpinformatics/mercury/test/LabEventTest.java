@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.infrastructure.monitoring.HipChatMessage
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnectorProducer;
 import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.*;
@@ -103,6 +104,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 import static org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign.ReagentType;
 
 /**
@@ -190,7 +192,7 @@ public class LabEventTest {
         }
     }
 
-    @BeforeClass
+    @BeforeClass(groups = TestGroups.DATABASE_FREE)
     public void setUp() {
         templateEngine.postConstruct();
     }
