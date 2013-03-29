@@ -9,7 +9,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFac
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.monitoring.HipChatMessageSender;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnectorProducer;
-import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -170,7 +169,7 @@ public class SolexaRunRoutingTest {
         templateEngine.postConstruct();
         LabEventHandler labEventHandler = new LabEventHandler(new WorkflowLoader(),
                 AthenaClientProducer.stubInstance(), bucketBeanEJB, mockBucketDao,
-                new BSPUserList(BSPManagerFactoryProducer.stubInstance()), templateEngine, new EmailSender());
+                new BSPUserList(BSPManagerFactoryProducer.stubInstance()));
 
         LabEventTest.PreFlightEntityBuilder preFlightEntityBuilder =
                 new LabEventTest.PreFlightEntityBuilder(bettaLimsMessageTestFactory,

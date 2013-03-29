@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.test;
 
-import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
@@ -108,8 +107,7 @@ public class ExomeExpressV2EndToEndTest {
         TemplateEngine templateEngine = new TemplateEngine();
         templateEngine.postConstruct();
         LabEventHandler leHandler = new LabEventHandler(new WorkflowLoader(), AthenaClientProducer.stubInstance(),
-                bucketBean, mockBucketDao, new BSPUserList(BSPManagerFactoryProducer.stubInstance()), templateEngine,
-                new EmailSender());
+                bucketBean, mockBucketDao, new BSPUserList(BSPManagerFactoryProducer.stubInstance()));
 
 
         // Bucket for Shearing - enters from workflow?

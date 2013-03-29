@@ -60,47 +60,17 @@ public class LabEventHandler implements Serializable {
     @Inject
     private JiraCommentUtil jiraCommentUtil;
 
-    private TemplateEngine templateEngine;
-
-    private EmailSender emailSender;
-
     LabEventHandler() {
     }
 
     @Inject
     public LabEventHandler(WorkflowLoader workflowLoader, AthenaClientService athenaClientService, BucketBean bucketBean,
-            BucketDao bucketDao, BSPUserList bspUserList, TemplateEngine templateEngine, EmailSender emailSender) {
+            BucketDao bucketDao, BSPUserList bspUserList) {
         this.workflowLoader = workflowLoader;
         this.athenaClientService = athenaClientService;
         this.bucketBean = bucketBean;
         this.bucketDao = bucketDao;
         this.bspUserList = bspUserList;
-        this.templateEngine = templateEngine;
-        this.emailSender = emailSender;
-    }
-
-    public static class WorkflowValidationError {
-        private SampleInstance sampleInstance;
-        private List<String> errors;
-        private ProductOrder productOrder;
-
-        public WorkflowValidationError(SampleInstance sampleInstance, List<String> errors, ProductOrder productOrder) {
-            this.sampleInstance = sampleInstance;
-            this.errors = errors;
-            this.productOrder = productOrder;
-        }
-
-        public SampleInstance getSampleInstance() {
-            return sampleInstance;
-        }
-
-        public List<String> getErrors() {
-            return errors;
-        }
-
-        public ProductOrder getProductOrder() {
-            return productOrder;
-        }
     }
 
     public HandlerResponse processEvent(LabEvent labEvent) {
@@ -113,57 +83,6 @@ public class LabEventHandler implements Serializable {
              this action happened
 
         */
-
-        Set<LabVessel> labVessels = new HashSet<LabVessel>();
-        switch (labEvent.getLabEventType().getPlasticToValidate()) {
-            case SOURCE:
-                labVessels.addAll(labEvent.getSourceLabVessels());
-                if (labEvent.getInPlaceLabVessel() != null) {
-                    labVessels.add(labEvent.getInPlaceLabVessel());
-                }
-                break;
-            case TARGET:
-                labVessels = labEvent.getTargetLabVessels();
-                break;
-            case BOTH:
-                labVessels = new HashSet<LabVessel>();
-                labVessels.addAll(labEvent.getSourceLabVessels());
-                if (labEvent.getInPlaceLabVessel() != null) {
-                    labVessels.add(labEvent.getInPlaceLabVessel());
-                }
-                labVessels.addAll(labEvent.getTargetLabVessels());
-                break;
-            default:
-                throw new RuntimeException("Unknown validation " + labEvent.getLabEventType().getPlasticToValidate());
-        }
-
-        List<SampleInstance> allSampleInstances = new ArrayList<SampleInstance>();
-        List<WorkflowValidationError> validationErrors = new ArrayList<WorkflowValidationError>();
-        for (LabVessel labVessel : labVessels) {
-            Set<SampleInstance> sampleInstances = labVessel.getSampleInstances();
-            allSampleInstances.addAll(sampleInstances);
-            for (SampleInstance sampleInstance : sampleInstances) {
-                ProductWorkflowDefVersion workflowVersion = getWorkflowVersion(sampleInstance.getStartingSample().getProductOrderKey());
-                if (workflowVersion != null) {
-                    // todo jmt should validate take the enum, rather than the name?
-                    List<String> errors = workflowVersion.validate(labVessel, labEvent.getLabEventType().getName());
-                    if (!errors.isEmpty()) {
-                        validationErrors.add(new WorkflowValidationError(sampleInstance, errors,
-                                athenaClientService.retrieveProductOrderDetails(sampleInstance.getStartingSample().getProductOrderKey())));
-                    }
-                }
-            }
-        }
-
-        if (!validationErrors.isEmpty()) {
-            Map<String, Object> rootMap = new HashMap<String, Object>();
-            rootMap.put("labEvent", labEvent);
-            rootMap.put("bspUser", bspUserList.getById(labEvent.getEventOperator()));
-            rootMap.put("validationErrors", validationErrors);
-            StringWriter stringWriter = new StringWriter();
-            templateEngine.processTemplate("WorkflowValidation.ftl", rootMap, stringWriter);
-            emailSender.sendHtmlEmail("thompson@broadinstitute.org", "Workflow validation failure", stringWriter.toString());
-        }
 
         if (jiraCommentUtil != null) {
             try {
