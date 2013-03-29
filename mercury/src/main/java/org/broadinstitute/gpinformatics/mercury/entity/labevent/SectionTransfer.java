@@ -78,52 +78,6 @@ public class SectionTransfer extends VesselTransfer {
         this.targetSection = targetSection;
     }
 
-    public void applyTransfer() {
-        // todo jmt remove this method?
-/*
-        List<VesselPosition> wells = this.sourceSection.getWells();
-        for (int wellIndex = 0; wellIndex < wells.size(); wellIndex++) {
-            VesselPosition sourceVesselPosition = wells.get(wellIndex);
-            VesselPosition targetVesselPosition = this.targetSection.getWells().get(wellIndex);
-            if (!this.getSourceVesselContainer().getContainedVessels().isEmpty()) {
-                LabVessel sourceWell = this.getSourceVesselContainer().getVesselAtPosition(sourceVesselPosition.toString());
-                if (sourceWell != null) {
-                    Collection<Reagent> reagents = sourceWell.getReagentContents();
-                    // todo jmt is it necessary to copy the reagent into the target, or would it be better to navigate?
-                    for (Reagent reagent : reagents) {
-                        LabVessel plateWell = this.getTargetVesselContainer().getVesselAtPosition(targetVesselPosition.toString());
-                        if (plateWell == null) {
-                            plateWell = new PlateWell((StaticPlate) this.getTargetVesselContainer().getEmbedder(), targetVesselPosition);
-                            this.getTargetVesselContainer().addContainedVessel(plateWell, targetVesselPosition.toString());
-                        }
-                        plateWell.applyReagent(reagent);
-                    }
-                }
-            }
-        }
-*/
-/*
-        LabVessel sourceVessel = this.getSourceVesselContainer().getEmbedder();
-        // todo jmt, rather than checking for incoming transfers, check for other position maps?
-        if(Hibernate.getClass(this.getSourceVesselContainer().getEmbedder()).equals(TubeFormation.class) && !sourceVessel.getTransfersTo().isEmpty() ||
-                this.sourceSection != this.targetSection) {
-            List<VesselPosition> positions = this.sourceSection.getWells();
-            for (int wellIndex = 0; wellIndex < positions.size(); wellIndex++) {
-                VesselPosition sourceVesselPosition = positions.get(wellIndex);
-                VesselPosition targetVesselPosition = this.targetSection.getWells().get(wellIndex);
-                if (this.getSourceVesselContainer().getContainedVessels().isEmpty()) {
-                    throw new RuntimeException("Vessel " + sourceVessel.getLabel()  + " has contained vessels");
-                }
-                LabVessel sourceContainedVessel = this.getSourceVesselContainer().getVesselAtPosition(sourceVesselPosition.toString());
-                if (sourceContainedVessel != null) {
-                    LabVessel targetContainedVessel = this.getTargetVesselContainer().getVesselAtPosition(
-                            targetVesselPosition.toString());
-                }
-            }
-        }
-*/
-    }
-
     public LabEvent getLabEvent() {
         return labEvent;
     }

@@ -1353,6 +1353,12 @@
             <version>1.0.2</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.freemarker</groupId>
+            <artifactId>freemarker</artifactId>
+            <version>2.3.19</version>
+        </dependency>
+
     </dependencies>
 
     <build>

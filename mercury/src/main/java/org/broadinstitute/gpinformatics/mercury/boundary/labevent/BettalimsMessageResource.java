@@ -1,8 +1,17 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean;
+import org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean;
+import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.bettalims.BettalimsConnector;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
+import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
+import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
 import org.broadinstitute.gpinformatics.infrastructure.ws.WsMessageStore;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
@@ -13,14 +22,22 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapT
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
+import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -33,12 +50,6 @@ import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import javax.mail.Message;
-import javax.mail.MessagingException;
-import javax.mail.Session;
-import javax.mail.Transport;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -49,20 +60,22 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.transform.sax.SAXSource;
 import java.io.StringReader;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-//import javax.xml.XMLConstants;
-//import javax.xml.bind.ValidationEvent;
-//import javax.xml.bind.ValidationEventHandler;
-//import javax.xml.validation.Schema;
-//import javax.xml.validation.SchemaFactory;
-//import java.io.File;
+import javax.xml.XMLConstants;
+import javax.xml.bind.ValidationEvent;
+import javax.xml.bind.ValidationEventHandler;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
+import java.io.File;
 
 /**
  * Allows BettaLIMS messages to be submitted through JAX-RS.  In this context, BettaLIMS refers to the message format,
@@ -79,6 +92,7 @@ public class BettalimsMessageResource {
     private static final String WORKFLOW_MESSAGE = " error(s) processing workflows for ";
 
     private static final Log LOG = LogFactory.getLog(BettalimsMessageResource.class);
+    private static final boolean VALIDATE_SCHEMA = false;
 
     @Inject
     private LabEventFactory labEventFactory;
@@ -89,9 +103,6 @@ public class BettalimsMessageResource {
     @Inject
     private WsMessageStore wsMessageStore;
 
-    //    @Resource(name = "mail/broadsmtp")
-    private Session mailSession;
-
     @Inject
     private BettalimsConnector bettalimsConnector;
 
@@ -100,6 +111,24 @@ public class BettalimsMessageResource {
 
     @Inject
     private MercuryOrSquidRouter mercuryOrSquidRouter;
+
+    @Inject
+    private LabVesselDao labVesselDao;
+
+    @Inject
+    private BSPUserList bspUserList;
+
+    @Inject
+    private TemplateEngine templateEngine;
+
+    @Inject
+    private EmailSender emailSender;
+
+    @Inject
+    private AthenaClientService athenaClientService;
+
+    @Inject
+    private AppConfig appConfig;
 
     /**
      * Accepts a message from (typically) a liquid handling deck.  We unmarshal ourselves, rather than letting JAX-RS
@@ -164,6 +193,7 @@ public class BettalimsMessageResource {
 
                         Collection<String> barcodesToBeVerified = getRegisteredBarcodesFromMessage(bettaLIMSMessage);
 
+                        // todo jmt revisit performance of this - fetch all barcodes at once, and fetch unique PDOs from Athena
                         for (String testEvent : barcodesToBeVerified) {
                             if (MercuryOrSquidRouter.MercuryOrSquid.MERCURY == mercuryOrSquidRouter
                                                                                            .routeForVessel(testEvent)) {
@@ -173,7 +203,8 @@ public class BettalimsMessageResource {
                             }
                         }
                         if (processInMercury && processInSquid) {
-                            throw new InformaticsServiceException("For Product Dependent processing, we cannot process in both Mercury and Squid");
+                            throw new InformaticsServiceException(
+                                    "For Product Dependent processing, we cannot process in both Mercury and Squid");
                         }
                         break;
                     case BOTH:
@@ -203,42 +234,159 @@ public class BettalimsMessageResource {
         }
     }
 
-    private void notifySupport(Exception e) {
-        if (mailSession != null) {
-            try {
-                // Create the message object
-                Message message = new MimeMessage(mailSession);
+    // todo jmt move workflow validation to a Control class, this Boundary class is getting too big
 
-                // Adjust the recipients. Here we have only one
-                // recipient. The recipient's address must be
-                // an object of the InternetAddress class.
-                message.setRecipients(Message.RecipientType.TO,
-                                             InternetAddress.parse("limsoddities@broadinstitute.org", false));
-
-                // Set the message's subject
-                message.setSubject("[Mercury] Failed to process message");
-
-                // Insert the message's body
-                message.setText(e.getMessage());
-
-                // This is not mandatory, however, it is a good
-                // practice to indicate the software which
-                // constructed the message.
-                message.setHeader("X-Mailer", "My Mailer");
-
-                // Adjust the date of sending the message
-                Date timeStamp = new Date();
-                message.setSentDate(timeStamp);
-
-                // Use the 'send' static method of the Transport
-                // class to send the message
-                Transport.send(message);
-            } catch (MessagingException msgException) {
-                LOG.error("Failed to send email", msgException);
-                // Don't rethrow, we don't want to obscure the original exception
-            }
+    /**
+     * Validate workflow for all events in a message.
+     * @param bettaLIMSMessage JAXB from deck
+     */
+    private void validateWorkflow(BettaLIMSMessage bettaLIMSMessage) {
+        for (PlateCherryPickEvent plateCherryPickEvent : bettaLIMSMessage.getPlateCherryPickEvent()) {
+            validateWorkflow(plateCherryPickEvent, new ArrayList<String>(getBarcodesForCherryPick(plateCherryPickEvent)));
         }
 
+        for (PlateEventType plateEventType : bettaLIMSMessage.getPlateEvent()) {
+            validateWorkflow(plateEventType, new ArrayList<String>(getBarcodesForPlateEvent(plateEventType)));
+        }
+
+        for (PlateTransferEventType plateTransferEventType : bettaLIMSMessage.getPlateTransferEvent()) {
+            validateWorkflow(plateTransferEventType, new ArrayList<String>(getBarcodesForPlateTransfer(plateTransferEventType)));
+        }
+
+        for (ReceptacleEventType receptacleEventType : bettaLIMSMessage.getReceptacleEvent()) {
+            validateWorkflow(receptacleEventType, new ArrayList<String>(getBarcodesForReceptacleEvent(receptacleEventType)));
+        }
+
+        for (ReceptaclePlateTransferEvent receptaclePlateTransferEvent : bettaLIMSMessage.getReceptaclePlateTransferEvent()) {
+            validateWorkflow(receptaclePlateTransferEvent,
+                    new ArrayList<String>(getBarcodesForReceptaclePlateTransfer(receptaclePlateTransferEvent)));
+        }
+    }
+
+    /**
+     * Validate workflow for barcodes in an event.
+     * @param stationEventType JAXB from deck
+     * @param barcodes plastic to be validated
+     */
+    private void validateWorkflow(StationEventType stationEventType, List<String> barcodes) {
+        Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
+        validateWorkflow(mapBarcodeToVessel.values(), stationEventType);
+    }
+
+    /**
+     * Parameter to email template.
+     */
+    public static class WorkflowValidationError {
+        private SampleInstance sampleInstance;
+        private List<ProductWorkflowDefVersion.ValidationError> errors;
+        private ProductOrder productOrder;
+        private AppConfig appConfig;
+
+        public WorkflowValidationError(SampleInstance sampleInstance,
+                List<ProductWorkflowDefVersion.ValidationError> errors, ProductOrder productOrder,
+                AppConfig appConfig) {
+            this.sampleInstance = sampleInstance;
+            this.errors = errors;
+            this.productOrder = productOrder;
+            this.appConfig = appConfig;
+        }
+
+        public SampleInstance getSampleInstance() {
+            return sampleInstance;
+        }
+
+        public List<ProductWorkflowDefVersion.ValidationError> getErrors() {
+            return errors;
+        }
+
+        public ProductOrder getProductOrder() {
+            return productOrder;
+        }
+
+        public String getLinkToProductOrder() {
+            return appConfig.getUrl() + ProductOrderActionBean.ACTIONBEAN_URL_BINDING + "?" +
+                    ProductOrderActionBean.VIEW_ACTION + "&" + ProductOrderActionBean.PRODUCT_ORDER_PARAMETER +
+                    "=" + productOrder.getBusinessKey();
+        }
+
+        public String getLinkToResearchProject() {
+            return appConfig.getUrl() + ResearchProjectActionBean.ACTIONBEAN_URL_BINDING + "?" +
+                    ResearchProjectActionBean.VIEW_ACTION + "&" + ResearchProjectActionBean.RESEARCH_PROJECT_PARAMETER +
+                    "=" + productOrder.getResearchProject().getBusinessKey();
+        }
+    }
+
+    /**
+     * Validate workflow for the LabVessels in an event
+     * @param labVessels entities
+     * @param stationEventType JAXB from deck
+     */
+    private void validateWorkflow(Collection<LabVessel> labVessels, StationEventType stationEventType) {
+
+        List<WorkflowValidationError> validationErrors = validateWorkflow(labVessels, stationEventType.getEventType());
+
+        if (!validationErrors.isEmpty()) {
+            Map<String, Object> rootMap = new HashMap<String, Object>();
+            String linkToPlastic = appConfig.getUrl() + SearchActionBean.ACTIONBEAN_URL_BINDING + "?" +
+                    SearchActionBean.SEARCH_ACTION + "=&searchKey=" + labVessels.iterator().next().getLabel();
+            rootMap.put("linkToPlastic", linkToPlastic);
+            rootMap.put("stationEvent", stationEventType);
+            rootMap.put("bspUser", bspUserList.getByUsername(stationEventType.getOperator()));
+            rootMap.put("validationErrors", validationErrors);
+            StringWriter stringWriter = new StringWriter();
+            templateEngine.processTemplate("WorkflowValidation.ftl", rootMap, stringWriter);
+            emailSender.sendHtmlEmail(appConfig.getWorkflowValidationEmail(), "Workflow validation failure for " +
+                    stationEventType.getEventType(), stringWriter.toString());
+        }
+    }
+
+    /**
+     * Validate the next action for a collection of lab vessels.
+     * @param labVessels entities
+     * @param eventType name
+     * @return list of errors
+     */
+    public List<WorkflowValidationError> validateWorkflow(Collection<LabVessel> labVessels, String eventType) {
+        List<SampleInstance> allSampleInstances = new ArrayList<SampleInstance>();
+        List<WorkflowValidationError> validationErrors = new ArrayList<WorkflowValidationError>();
+        for (LabVessel labVessel : labVessels) {
+            Set<SampleInstance> sampleInstances = labVessel.getSampleInstances();
+            allSampleInstances.addAll(sampleInstances);
+            for (SampleInstance sampleInstance : sampleInstances) {
+                ProductWorkflowDefVersion workflowVersion = getWorkflowVersion(sampleInstance.getStartingSample().getProductOrderKey());
+                if (workflowVersion != null) {
+                    List<ProductWorkflowDefVersion.ValidationError> errors = workflowVersion.validate(labVessel, eventType);
+                    if (!errors.isEmpty()) {
+                        validationErrors.add(new WorkflowValidationError(sampleInstance, errors,
+                                athenaClientService.retrieveProductOrderDetails(
+                                        sampleInstance.getStartingSample().getProductOrderKey()), appConfig));
+                    }
+                }
+            }
+        }
+        return validationErrors;
+    }
+
+    // todo jmt copy/pasted from LabEventHandler, decide where to put it so it can be shared
+    /**
+     * Based on the BusinessKey of a product order, find the defined Workflow Version.  Query to the "Athena" side of
+     * Mercury for the ProductOrder Definition and look up the workflow definition based on the workflow name defined
+     * on the ProductOrder
+     *
+     * @param productOrderKey Business Key for a previously defined product order
+     * @return Workflow Definition for the defined workflow for the product order represented by productOrderKey
+     */
+    public ProductWorkflowDefVersion getWorkflowVersion(String productOrderKey) {
+        WorkflowConfig workflowConfig = new WorkflowLoader().load();
+        ProductWorkflowDefVersion versionResult = null;
+        ProductOrder productOrder = athenaClientService.retrieveProductOrderDetails(productOrderKey);
+
+        if (StringUtils.isNotBlank(productOrder.getProduct().getWorkflowName())) {
+            ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(
+                    productOrder.getProduct().getWorkflowName());
+            versionResult = productWorkflowDef.getEffectiveVersion();
+        }
+        return versionResult;
     }
 
     /**
@@ -252,27 +400,29 @@ public class BettalimsMessageResource {
      * @throws SAXException
      */
     BettaLIMSMessage unmarshal(String message) throws JAXBException, SAXException {
-        // todo jmt move so done only once
-        //        SchemaFactory sf = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-        //        Schema schema = sf.newSchema(new File("e:/java/mercury/mercury/src/main/xsd/bettalims.xsd"));
 
         JAXBContext jc = JAXBContext.newInstance(BettaLIMSMessage.class);
         Unmarshaller unmarshaller = jc.createUnmarshaller();
-        //        unmarshaller.setSchema(schema);
-        //        unmarshaller.setEventHandler(new ValidationEventHandler() {
-        //            @Override
-        //            public boolean handleEvent(ValidationEvent event) {
-        //                throw new RuntimeException("XSD Validation failure: "+
-        //                        "SEVERITY: " + event.getSeverity() + "MESSAGE: " + event.getMessage() +
-        //                        "LINKED EXCEPTION:  " + event.getLinkedException() +
-        //                        "LINE NUMBER:  " + event.getLocator().getLineNumber() +
-        //                        "COLUMN NUMBER:  " + event.getLocator().getColumnNumber() +
-        //                        "OFFSET:  " + event.getLocator().getOffset() +
-        //                        "OBJECT:  " + event.getLocator().getObject() +
-        //                        "NODE:  " + event.getLocator().getNode() +
-        //                        "URL:  " + event.getLocator().getURL());
-        //            }
-        //        });
+        if (VALIDATE_SCHEMA) {
+            // todo jmt move so done only once
+            SchemaFactory sf = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+            Schema schema = sf.newSchema(new File("e:/java/mercury/mercury/src/main/xsd/bettalims.xsd"));
+            unmarshaller.setSchema(schema);
+            unmarshaller.setEventHandler(new ValidationEventHandler() {
+                @Override
+                public boolean handleEvent(ValidationEvent event) {
+                    throw new RuntimeException("XSD Validation failure: "+
+                            "SEVERITY: " + event.getSeverity() + "MESSAGE: " + event.getMessage() +
+                            "LINKED EXCEPTION:  " + event.getLinkedException() +
+                            "LINE NUMBER:  " + event.getLocator().getLineNumber() +
+                            "COLUMN NUMBER:  " + event.getLocator().getColumnNumber() +
+                            "OFFSET:  " + event.getLocator().getOffset() +
+                            "OBJECT:  " + event.getLocator().getObject() +
+                            "NODE:  " + event.getLocator().getNode() +
+                            "URL:  " + event.getLocator().getURL());
+                }
+            });
+        }
 
         //Create an XMLReader to use with our filter
         XMLReader reader = XMLReaderFactory.createXMLReader();
@@ -356,144 +506,106 @@ public class BettalimsMessageResource {
 
         Set<String> barcodes = new HashSet<String>();
 
-        LabEventType labEventType = getLabEventType(bettaLIMSMessage);
-
         for (PlateCherryPickEvent plateCherryPickEvent : bettaLIMSMessage.getPlateCherryPickEvent()) {
-
-            switch (labEventType.isExpectExistingTarget()) {
-                case SOURCE:
-                    for (PositionMapType positionMapType : plateCherryPickEvent.getSourcePositionMap()) {
-                        for (ReceptacleType receptacle : positionMapType.getReceptacle()) {
-                            barcodes.add(receptacle.getBarcode());
-                        }
-                    }
-                    break;
-            }
-
+            barcodes.addAll(getBarcodesForCherryPick(plateCherryPickEvent));
         }
         for (PlateEventType plateEventType : bettaLIMSMessage.getPlateEvent()) {
-
-            switch (labEventType.isExpectExistingTarget()) {
-                case SOURCE:
-                    if (plateEventType.getPositionMap() == null) {
-                        barcodes.add(plateEventType.getPlate().getBarcode());
-                    } else {
-                        for (ReceptacleType position : plateEventType.getPositionMap().getReceptacle()) {
-                            barcodes.add(position.getBarcode());
-                        }
-                    }
-                    break;
-            }
-
+            barcodes.addAll(getBarcodesForPlateEvent(plateEventType));
         }
         for (PlateTransferEventType plateTransferEventType : bettaLIMSMessage.getPlateTransferEvent()) {
-
-            switch (labEventType.isExpectExistingTarget()) {
-                case SOURCE:
-                    if (plateTransferEventType.getSourcePositionMap() == null) {
-                        barcodes.add(plateTransferEventType.getSourcePlate().getBarcode());
-                    } else {
-                        for (ReceptacleType receptacleType : plateTransferEventType.getSourcePositionMap()
-                                                                                   .getReceptacle()) {
-                            barcodes.add(receptacleType.getBarcode());
-                        }
-                    }
-                    break;
-                case TARGET:
-
-                    if (plateTransferEventType.getPositionMap() == null) {
-                        barcodes.add(plateTransferEventType.getPlate().getBarcode());
-                    } else {
-                        for (ReceptacleType targetReceptacle : plateTransferEventType.getPositionMap()
-                                                                                     .getReceptacle()) {
-                            barcodes.add(targetReceptacle.getBarcode());
-                        }
-                    }
-                    break;
-            }
-
+            barcodes.addAll(getBarcodesForPlateTransfer(plateTransferEventType));
         }
-        for (ReceptaclePlateTransferEvent receptaclePlateTransferEvent : bettaLIMSMessage
-                                                                                 .getReceptaclePlateTransferEvent()) {
-            switch (labEventType.isExpectExistingTarget()) {
-                case SOURCE:
-                    barcodes.add(receptaclePlateTransferEvent.getSourceReceptacle().getBarcode());
-                    break;
-
-                case TARGET:
-                    barcodes.add(receptaclePlateTransferEvent.getDestinationPlate().getBarcode());
-                    break;
-            }
-
+        for (ReceptaclePlateTransferEvent receptaclePlateTransferEvent :
+                bettaLIMSMessage.getReceptaclePlateTransferEvent()) {
+            barcodes.addAll(getBarcodesForReceptaclePlateTransfer(receptaclePlateTransferEvent));
         }
         for (ReceptacleEventType receptacleEventType : bettaLIMSMessage.getReceptacleEvent()) {
-
-            switch (labEventType.isExpectExistingTarget()) {
-                case SOURCE:
-                    barcodes.add(receptacleEventType.getReceptacle().getBarcode());
-                    break;
-            }
-
+            barcodes.addAll(getBarcodesForReceptacleEvent(receptacleEventType));
         }
 
         return barcodes;
     }
 
-    /**
-     * Not needed until March 1st.
-     * Determine whether BettaLIMS/Squid is responsible for the plastic referred to by the message.
-     *
-     * @param bettaLIMSMessage from deck
-     *
-     * @return true if the message should be routed to BettaLIMS/Squid
-     */
-    private boolean sourcesExistInSquid(BettaLIMSMessage bettaLIMSMessage) {
-        List<String> sourceTubeBarcodes = new ArrayList<String>();
-        List<String> sourcePlateBarcodes = new ArrayList<String>();
-        for (PlateCherryPickEvent plateCherryPickEvent : bettaLIMSMessage.getPlateCherryPickEvent()) {
-            for (PositionMapType positionMapType : plateCherryPickEvent.getSourcePositionMap()) {
-                for (ReceptacleType receptacleType : positionMapType.getReceptacle()) {
-                    sourceTubeBarcodes.add(receptacleType.getBarcode());
+    private Set<String> getBarcodesForCherryPick(PlateCherryPickEvent plateCherryPickEvent) {
+        Set<String> barcodes = new HashSet<String>();
+        switch (LabEventType.getByName(plateCherryPickEvent.getEventType()).getPlasticToValidate()) {
+            case SOURCE:
+                for (PositionMapType positionMapType : plateCherryPickEvent.getSourcePositionMap()) {
+                    for (ReceptacleType receptacle : positionMapType.getReceptacle()) {
+                        barcodes.add(receptacle.getBarcode());
+                    }
                 }
-            }
+                break;
         }
-        for (PlateEventType plateEventType : bettaLIMSMessage.getPlateEvent()) {
-            if (plateEventType.getPlate() != null) {
-                sourcePlateBarcodes.add(plateEventType.getPlate().getBarcode());
-            }
-            if (plateEventType.getPositionMap() != null) {
-                for (ReceptacleType receptacleType : plateEventType.getPositionMap().getReceptacle()) {
-                    sourceTubeBarcodes.add(receptacleType.getBarcode());
+        return barcodes;
+    }
+
+    private Set<String> getBarcodesForPlateEvent(PlateEventType plateEventType) {
+        Set<String> barcodes = new HashSet<String>();
+        switch (LabEventType.getByName(plateEventType.getEventType()).getPlasticToValidate()) {
+            case SOURCE:
+                if (plateEventType.getPositionMap() == null) {
+                    barcodes.add(plateEventType.getPlate().getBarcode());
+                } else {
+                    for (ReceptacleType position : plateEventType.getPositionMap().getReceptacle()) {
+                        barcodes.add(position.getBarcode());
+                    }
                 }
-            }
+                break;
         }
-        for (PlateTransferEventType plateTransferEventType : bettaLIMSMessage.getPlateTransferEvent()) {
-            if (plateTransferEventType.getSourcePlate() != null) {
-                sourcePlateBarcodes.add(plateTransferEventType.getSourcePlate().getBarcode());
-            }
-            if (plateTransferEventType.getSourcePositionMap() != null) {
-                for (ReceptacleType receptacleType : plateTransferEventType.getSourcePositionMap().getReceptacle()) {
-                    sourceTubeBarcodes.add(receptacleType.getBarcode());
+        return barcodes;
+    }
+
+    private Set<String> getBarcodesForPlateTransfer(PlateTransferEventType plateTransferEventType) {
+        Set<String> barcodes = new HashSet<String>();
+        switch (LabEventType.getByName(plateTransferEventType.getEventType()).getPlasticToValidate()) {
+            case SOURCE:
+                if (plateTransferEventType.getSourcePositionMap() == null) {
+                    barcodes.add(plateTransferEventType.getSourcePlate().getBarcode());
+                } else {
+                    for (ReceptacleType receptacleType : plateTransferEventType.getSourcePositionMap()
+                            .getReceptacle()) {
+                        barcodes.add(receptacleType.getBarcode());
+                    }
                 }
-            }
+                break;
+            case TARGET:
+
+                if (plateTransferEventType.getPositionMap() == null) {
+                    barcodes.add(plateTransferEventType.getPlate().getBarcode());
+                } else {
+                    for (ReceptacleType targetReceptacle : plateTransferEventType.getPositionMap()
+                            .getReceptacle()) {
+                        barcodes.add(targetReceptacle.getBarcode());
+                    }
+                }
+                break;
         }
-        for (ReceptaclePlateTransferEvent receptaclePlateTransferEvent : bettaLIMSMessage
-                                                                                 .getReceptaclePlateTransferEvent()) {
-            sourceTubeBarcodes.add(receptaclePlateTransferEvent.getSourceReceptacle().getBarcode());
+        return barcodes;
+    }
+
+    private Set<String> getBarcodesForReceptaclePlateTransfer(ReceptaclePlateTransferEvent receptaclePlateTransferEvent) {
+        Set<String> barcodes = new HashSet<String>();
+        switch (LabEventType.getByName(receptaclePlateTransferEvent.getEventType()).getPlasticToValidate()) {
+            case SOURCE:
+                barcodes.add(receptaclePlateTransferEvent.getSourceReceptacle().getBarcode());
+                break;
+
+            case TARGET:
+                barcodes.add(receptaclePlateTransferEvent.getDestinationPlate().getBarcode());
+                break;
         }
-        if (sourceTubeBarcodes.isEmpty() && sourcePlateBarcodes.isEmpty()) {
-            throw new RuntimeException("Failed to find any sources");
+        return barcodes;
+    }
+
+    private Set<String> getBarcodesForReceptacleEvent(ReceptacleEventType receptacleEventType) {
+        Set<String> barcodes = new HashSet<String>();
+        switch (LabEventType.getByName(receptacleEventType.getEventType()).getPlasticToValidate()) {
+            case SOURCE:
+                barcodes.add(receptacleEventType.getReceptacle().getBarcode());
+                break;
         }
-        boolean squidRecognizesTubes = false;
-        Map<String, Boolean> mapPositionToOccupied = null;
-        if (!sourceTubeBarcodes.isEmpty()) {
-            squidRecognizesTubes = thriftService.doesSquidRecognizeAllLibraries(sourceTubeBarcodes);
-        } else if (!sourcePlateBarcodes.isEmpty()) {
-            // todo jmt fetchPlateInfo would be more efficient
-            // todo jmt catch exception
-            mapPositionToOccupied = thriftService.fetchParentRackContentsForPlate(sourcePlateBarcodes.get(0));
-        }
-        return (squidRecognizesTubes || (mapPositionToOccupied != null));
+        return barcodes;
     }
 
     /**
@@ -502,6 +614,12 @@ public class BettalimsMessageResource {
      * @param message JAXB
      */
     public void processMessage(BettaLIMSMessage message) {
+        try {
+            validateWorkflow(message);
+        } catch (Exception e) {
+            LOG.error("Failed to validate workflow", e);
+            // Don't rethrow, workflow must not stop persistence of the message
+        }
         List<LabEvent> labEvents = labEventFactory.buildFromBettaLims(message);
         for (LabEvent labEvent : labEvents) {
             labEventHandler.processEvent(labEvent);
@@ -569,4 +687,7 @@ public class BettalimsMessageResource {
         this.bettalimsConnector = connector;
     }
 
+    public void setAthenaClientService(AthenaClientService athenaClientService) {
+        this.athenaClientService = athenaClientService;
+    }
 }

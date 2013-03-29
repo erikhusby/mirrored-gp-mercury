@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.test;
 
+import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
 import org.testng.Assert;
@@ -103,10 +104,10 @@ public class ExomeExpressV2EndToEndTest {
 
         final String testActor = "hrafal";
 
-        LabEventHandler leHandler =
-                new LabEventHandler(new WorkflowLoader(), AthenaClientProducer
-                        .stubInstance(), bucketBean, mockBucketDao, new BSPUserList(BSPManagerFactoryProducer
-                        .stubInstance()));
+        TemplateEngine templateEngine = new TemplateEngine();
+        templateEngine.postConstruct();
+        LabEventHandler leHandler = new LabEventHandler(new WorkflowLoader(), AthenaClientProducer.stubInstance(),
+                bucketBean, mockBucketDao, new BSPUserList(BSPManagerFactoryProducer.stubInstance()));
 
 
         // Bucket for Shearing - enters from workflow?

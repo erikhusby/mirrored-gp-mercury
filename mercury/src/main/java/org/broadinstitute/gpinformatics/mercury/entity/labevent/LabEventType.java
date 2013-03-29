@@ -339,7 +339,7 @@ public enum LabEventType {
         BOTH
     }
 
-    private final PlasticToValidate expectExistingTarget;
+    private final PlasticToValidate plasticToValidate;
 
     /** The type of transformation, from the analysis pipeline's perspective. */
     public enum PipelineTransformation {
@@ -361,18 +361,18 @@ public enum LabEventType {
      * @param expectSourcesEmpty   whether it's an error for the source vessels to have content
      * @param expectTargetsEmpty   whether it's an error for the target vessels to have content
      * @param systemOfRecord       which system is responsible for handling the message
-     * @param createSources        whether sources should be create, if they don't exist
-     * @param expectExistingTarget
+     * @param createSources        whether sources should be created, if they don't exist
+     * @param plasticToValidate    determines whether sources and / or targets are validated
      * @param pipelineTransformation type of transformation, from the analysis pipeline's perspective
      */
     LabEventType(String name, boolean expectSourcesEmpty, boolean expectTargetsEmpty, SystemOfRecord systemOfRecord,
-            boolean createSources, PlasticToValidate expectExistingTarget, PipelineTransformation pipelineTransformation) {
+            boolean createSources, PlasticToValidate plasticToValidate, PipelineTransformation pipelineTransformation) {
         this.name = name;
         this.expectedEmptySources = expectSourcesEmpty;
         this.expectedEmptyTargets = expectTargetsEmpty;
         this.systemOfRecord = systemOfRecord;
         this.createSources = createSources;
-        this.expectExistingTarget = expectExistingTarget;
+        this.plasticToValidate = plasticToValidate;
         this.pipelineTransformation = pipelineTransformation;
     }
 
@@ -396,8 +396,8 @@ public enum LabEventType {
         return createSources;
     }
 
-    public PlasticToValidate isExpectExistingTarget() {
-        return expectExistingTarget;
+    public PlasticToValidate getPlasticToValidate() {
+        return plasticToValidate;
     }
 
     public static LabEventType getByName(String name) {

@@ -225,7 +225,6 @@ public class LabEventFactory implements Serializable {
      */
     public List<LabEvent> buildFromBettaLims(BettaLIMSMessage bettaLIMSMessage) {
         List<LabEvent> labEvents = new ArrayList<LabEvent>();
-        bettaLIMSMessage.getMode();
         Set<UniqueEvent> uniqueEvents = new HashSet<UniqueEvent>();
 
         // Have to persist and flush inside each loop, because the first event may create
@@ -808,18 +807,6 @@ public class LabEventFactory implements Serializable {
         labEvent.getSectionTransfers().add(new SectionTransfer(
                 sourcePlate.getContainerRole(), SBSSection.getBySectionName(plateTransferEvent.getSourcePlate().getSection()),
                 tubeFormation.getContainerRole(), SBSSection.getBySectionName(plateTransferEvent.getPlate().getSection()), labEvent));
-        return labEvent;
-    }
-
-    @DaoFree
-    public LabEvent buildFromBettaLimsPlateEventDbFree(PlateEventType plateEvent, IlluminaFlowcell flowcell) {
-        LabEvent labEvent = constructReferenceData(plateEvent, labEventRefDataFetcher);
-        if (flowcell == null) {
-            flowcell = new IlluminaFlowcell(IlluminaFlowcell.FlowcellType.HiSeqFlowcell,
-                    plateEvent.getPlate().getBarcode());
-        }
-
-        flowcell.addInPlaceEvent(labEvent);
         return labEvent;
     }
 

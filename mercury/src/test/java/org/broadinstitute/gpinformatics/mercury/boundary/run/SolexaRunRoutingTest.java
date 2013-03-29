@@ -9,8 +9,10 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFac
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.monitoring.HipChatMessageSender;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnectorProducer;
+import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
@@ -26,6 +28,7 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -162,11 +165,11 @@ public class SolexaRunRoutingTest {
     public void testWholeGenomeFlowcell() throws Exception {
 
 
-        LabEventHandler labEventHandler =
-                new LabEventHandler(new WorkflowLoader(), AthenaClientProducer
-                                                                  .stubInstance(), bucketBeanEJB, mockBucketDao,
-                                           new BSPUserList(BSPManagerFactoryProducer
-                                                                   .stubInstance()));
+        TemplateEngine templateEngine = new TemplateEngine();
+        templateEngine.postConstruct();
+        LabEventHandler labEventHandler = new LabEventHandler(new WorkflowLoader(),
+                AthenaClientProducer.stubInstance(), bucketBeanEJB, mockBucketDao,
+                new BSPUserList(BSPManagerFactoryProducer.stubInstance()));
 
         LabEventTest.PreFlightEntityBuilder preFlightEntityBuilder =
                 new LabEventTest.PreFlightEntityBuilder(bettaLimsMessageTestFactory,
@@ -189,6 +192,7 @@ public class SolexaRunRoutingTest {
                                                                          shearingEntityBuilder.getShearingPlate(),
                                                                          NUM_POSITIONS_IN_RACK).invoke();
 
+        // todo jmt reduce duplication wrt LabEventTest
         List<String> sageUnloadTubeBarcodes = new ArrayList<String>();
         for (int i = 1; i <= NUM_POSITIONS_IN_RACK; i++) {
             sageUnloadTubeBarcodes.add("SageUnload" + i);
@@ -200,34 +204,26 @@ public class SolexaRunRoutingTest {
             // SageLoading
             String sageCassetteBarcode = "SageCassette" + i;
             PlateTransferEventType sageLoadingJaxb = bettaLimsMessageTestFactory.buildRackToPlate("SageLoading",
-                                                                                                     libraryConstructionEntityBuilder
-                                                                                                             .getPondRegRackBarcode(),
-                                                                                                     libraryConstructionEntityBuilder
-                                                                                                             .getPondRegTubeBarcodes()
-                                                                                                             .subList(i * 4,
-                                                                                                                             i * 4 + 4),
-                                                                                                     sageCassetteBarcode);
+                    libraryConstructionEntityBuilder.getPondRegRackBarcode(),
+                    libraryConstructionEntityBuilder.getPondRegTubeBarcodes().subList(i * 4, i * 4 + 4),
+                    sageCassetteBarcode);
             // todo jmt SAGE section
             LabEvent sageLoadingEntity = labEventFactory.buildFromBettaLimsRackToPlateDbFree(sageLoadingJaxb,
-                                                                                                    libraryConstructionEntityBuilder
-                                                                                                            .getPondRegRack(),
-                                                                                                    null);
+                    libraryConstructionEntityBuilder.getPondRegRack(), null);
             labEventHandler.processEvent(sageLoadingEntity);
             StaticPlate sageCassette = (StaticPlate) sageLoadingEntity.getTargetLabVessels().iterator().next();
 
             // SageLoaded
+            PlateEventType sageLoadedJaxb = bettaLimsMessageTestFactory.buildPlateEvent(
+                    LabEventType.SAGE_LOADED.getName(), sageCassetteBarcode);
+            LabEvent sageLoadedEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(sageLoadedJaxb, sageCassette);
+            labEventHandler.processEvent(sageLoadedEntity);
 
             // SageUnloading
             PlateTransferEventType sageUnloadingJaxb = bettaLimsMessageTestFactory.buildPlateToRack("SageUnloading",
-                                                                                                       sageCassetteBarcode,
-                                                                                                       sageUnloadBarcode,
-                                                                                                       sageUnloadTubeBarcodes
-                                                                                                               .subList(i * 4,
-                                                                                                                               i * 4 + 4));
+                    sageCassetteBarcode, sageUnloadBarcode, sageUnloadTubeBarcodes.subList(i * 4, i * 4 + 4));
             LabEvent sageUnloadEntity = labEventFactory.buildFromBettaLimsPlateToRackDbFree(sageUnloadingJaxb,
-                                                                                                   sageCassette,
-                                                                                                   mapBarcodeToSageUnloadTubes,
-                                                                                                   targetRackOfTubes);
+                    sageCassette, mapBarcodeToSageUnloadTubes, targetRackOfTubes);
             labEventHandler.processEvent(sageUnloadEntity);
             sageUnloadEntity.getTargetLabVessels().iterator().next();
         }
@@ -245,16 +241,13 @@ public class SolexaRunRoutingTest {
         Map<VesselPosition, TwoDBarcodedTube> mapPositionToTube = new HashMap<VesselPosition, TwoDBarcodedTube>();
         List<TwoDBarcodedTube> sageUnloadTubes = new ArrayList<TwoDBarcodedTube>(mapBarcodeToSageUnloadTubes.values());
         for (int i = 0; i < NUM_POSITIONS_IN_RACK; i++) {
-            mapPositionToTube.put(VesselPosition
-                                          .getByName(bettaLimsMessageTestFactory.buildWellName(i + 1)),
-                                         sageUnloadTubes.get(i));
+            mapPositionToTube.put(VesselPosition.getByName(bettaLimsMessageTestFactory.buildWellName(i + 1)),
+                    sageUnloadTubes.get(i));
         }
         TubeFormation sageUnloadRackRearrayed = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
         sageUnloadRackRearrayed.addRackOfTubes(new RackOfTubes("sageUnloadRearray", RackOfTubes.RackType.Matrix96));
         LabEvent sageCleanupEntity = labEventFactory.buildFromBettaLimsRackToRackDbFree(sageCleanupJaxb,
-                                                                                               sageUnloadRackRearrayed,
-                                                                                               new HashMap<String, TwoDBarcodedTube>(),
-                                                                                               targetRackOfTubes);
+                sageUnloadRackRearrayed, new HashMap<String, TwoDBarcodedTube>(), targetRackOfTubes);
         labEventHandler.processEvent(sageCleanupEntity);
         TubeFormation sageCleanupRack = (TubeFormation) sageCleanupEntity.getTargetLabVessels().iterator().next();
         Assert.assertEquals(sageCleanupRack.getSampleInstances().size(), NUM_POSITIONS_IN_RACK,
@@ -270,9 +263,8 @@ public class SolexaRunRoutingTest {
 
         Map.Entry<String, TwoDBarcodedTube> stringTwoDBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
         LabEventTest.ListTransfersFromStart transferTraverserCriteria = new LabEventTest.ListTransfersFromStart();
-        stringTwoDBarcodedTubeEntry.getValue()
-                                   .evaluateCriteria(transferTraverserCriteria,
-                                                            TransferTraverserCriteria.TraversalDirection.Descendants);
+        stringTwoDBarcodedTubeEntry.getValue().evaluateCriteria(transferTraverserCriteria,
+                TransferTraverserCriteria.TraversalDirection.Descendants);
         @SuppressWarnings("UnusedDeclaration")
         List<String> labEventNames = transferTraverserCriteria.getLabEventNames();
 

@@ -16,11 +16,14 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFac
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.monitoring.HipChatMessageSender;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnectorProducer;
+import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.*;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.graph.Graph;
+import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettalimsMessageResource;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunResource;
@@ -69,6 +72,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
@@ -78,6 +82,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.gpinformatics.mercury.presentation.transfervis.TransferVisualizerFrame;
 import org.easymock.EasyMock;
 import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import javax.annotation.Nonnull;
@@ -121,6 +126,8 @@ public class LabEventTest {
 
     public static final String POND_REGISTRATION_TUBE_PREFIX = "PondReg";
     private static Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<String, ProductOrder>();
+
+    private final TemplateEngine templateEngine = new TemplateEngine();
 
     private final LabEventFactory.LabEventRefDataFetcher labEventRefDataFetcher =
             new LabEventFactory.LabEventRefDataFetcher() {
@@ -185,6 +192,11 @@ public class LabEventTest {
         }
     }
 
+    @BeforeClass(groups = TestGroups.DATABASE_FREE)
+    public void setUp() {
+        templateEngine.postConstruct();
+    }
+
     /**
      * Build object graph for Hybrid Selection messages, verify chain of events.
      */
@@ -210,6 +222,7 @@ public class LabEventTest {
 
         final ProductOrder productOrder =
                 ProductOrderTestFactory.buildHybridSelectionProductOrder(NUM_POSITIONS_IN_RACK);
+        productOrder.getResearchProject().setJiraTicketKey("RP-123");
         int rackPosition=1;
 
         for(ProductOrderSample poSample:productOrder.getSamples()) {
@@ -238,9 +251,8 @@ public class LabEventTest {
         EasyMock.replay(mockBucketDao, labBatchDAO, tubeDao, mockJira);
 
         LabEventHandler labEventHandler =
-                new LabEventHandler(new WorkflowLoader(), AthenaClientProducer
-                        .stubInstance(), bucketBeanEJB, mockBucketDao, new BSPUserList(BSPManagerFactoryProducer
-                        .stubInstance()));
+                new LabEventHandler(new WorkflowLoader(), AthenaClientProducer.stubInstance(), bucketBeanEJB,
+                        mockBucketDao, new BSPUserList(BSPManagerFactoryProducer.stubInstance()));
 
         PreFlightEntityBuilder preFlightEntityBuilder = new PreFlightEntityBuilder(bettaLimsMessageTestFactory,
                 labEventFactory, labEventHandler,
@@ -605,10 +617,8 @@ public class LabEventTest {
         BucketBean bucketBeanEJB = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB);
         EasyMock.replay(mockBucketDao, tubeDao, mockJira, labBatchDAO);
 
-        LabEventHandler labEventHandler =
-                new LabEventHandler(new WorkflowLoader(), AthenaClientProducer
-                        .stubInstance(), bucketBeanEJB, mockBucketDao, new BSPUserList(BSPManagerFactoryProducer
-                        .stubInstance()));
+        LabEventHandler labEventHandler = new LabEventHandler(new WorkflowLoader(), AthenaClientProducer.stubInstance(),
+                bucketBeanEJB, mockBucketDao, new BSPUserList(BSPManagerFactoryProducer.stubInstance()));
 
         PreFlightEntityBuilder preFlightEntityBuilder = new PreFlightEntityBuilder(bettaLimsMessageTestFactory,
                 labEventFactory, labEventHandler,
@@ -643,6 +653,10 @@ public class LabEventTest {
             StaticPlate sageCassette = (StaticPlate) sageLoadingEntity.getTargetLabVessels().iterator().next();
 
             // SageLoaded
+            PlateEventType sageLoadedJaxb = bettaLimsMessageTestFactory.buildPlateEvent(
+                    LabEventType.SAGE_LOADED.getName(), sageCassetteBarcode);
+            LabEvent sageLoadedEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(sageLoadedJaxb, sageCassette);
+            labEventHandler.processEvent(sageLoadedEntity);
 
             // SageUnloading
             PlateTransferEventType sageUnloadingJaxb = bettaLimsMessageTestFactory.buildPlateToRack("SageUnloading",
@@ -898,6 +912,19 @@ public class LabEventTest {
     }
 
     static void validateWorkflow(String nextEventTypeName, List<LabVessel> labVessels) {
+        BettalimsMessageResource bettalimsMessageResource = new BettalimsMessageResource();
+        bettalimsMessageResource.setAthenaClientService(new AthenaClientService() {
+            @Override
+            public ProductOrder retrieveProductOrderDetails(String poBusinessKey) {
+                return mapKeyToProductOrder.get(poBusinessKey);
+            }
+
+            @Override
+            public Map<String, List<ProductOrderSample>> findMapSampleNameToPoSample(List<String> sampleNames) {
+                return null;
+            }
+        });
+        bettalimsMessageResource.validateWorkflow(labVessels, nextEventTypeName);
         WorkflowLoader workflowLoader = new WorkflowLoader();
         WorkflowConfig workflowConfig = workflowLoader.load();
         for (LabVessel labVessel : labVessels) {
@@ -907,9 +934,12 @@ public class LabEventTest {
                 // get workflow name from product order
                 ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(
                         productOrder.getProduct().getWorkflowName());
-                List<String> errors = productWorkflowDef.validate(labVessel, nextEventTypeName);
+                List<ProductWorkflowDefVersion.ValidationError> errors =
+                        productWorkflowDef.getEffectiveVersion().validate(labVessel, nextEventTypeName);
                 if (!errors.isEmpty()) {
-                    Assert.fail(errors.get(0));
+                    ProductWorkflowDefVersion.ValidationError validationError = errors.get(0);
+                    Assert.fail(validationError.getMessage() + " expected " + validationError.getExpectedEventNames() +
+                            " actual " + validationError.getActualEventNames());
                 }
             }
         }
@@ -1814,10 +1844,10 @@ public class LabEventTest {
             labEventHandler.processEvent(endRepairEntity);
 
             // EndRepairCleanup
-            validateWorkflow("EndRepairCleanup", shearingCleanupPlate);
-            LabEvent endRepairCleanupEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
-                    libraryConstructionJaxbBuilder.getEndRepairCleanupJaxb(), shearingCleanupPlate);
-            labEventHandler.processEvent(endRepairCleanupEntity);
+//            validateWorkflow("EndRepairCleanup", shearingCleanupPlate);
+//            LabEvent endRepairCleanupEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
+//                    libraryConstructionJaxbBuilder.getEndRepairCleanupJaxb(), shearingCleanupPlate);
+//            labEventHandler.processEvent(endRepairCleanupEntity);
 
             // ABase
             validateWorkflow("ABase", shearingCleanupPlate);
@@ -2036,9 +2066,9 @@ public class LabEventTest {
             endRepairJaxb = bettaLimsMessageTestFactory.buildPlateEvent("EndRepair", shearCleanPlateBarcode);
             addMessage(messageList, bettaLimsMessageTestFactory, endRepairJaxb);
 
-            endRepairCleanupJaxb = bettaLimsMessageTestFactory.buildPlateEvent("EndRepairCleanup", shearCleanPlateBarcode);
-            addMessage(messageList, bettaLimsMessageTestFactory, endRepairCleanupJaxb);
-
+//            endRepairCleanupJaxb = bettaLimsMessageTestFactory.buildPlateEvent("EndRepairCleanup", shearCleanPlateBarcode);
+//            addMessage(messageList, bettaLimsMessageTestFactory, endRepairCleanupJaxb);
+//
             aBaseJaxb = bettaLimsMessageTestFactory.buildPlateEvent("ABase", shearCleanPlateBarcode);
             addMessage(messageList, bettaLimsMessageTestFactory, aBaseJaxb);
 

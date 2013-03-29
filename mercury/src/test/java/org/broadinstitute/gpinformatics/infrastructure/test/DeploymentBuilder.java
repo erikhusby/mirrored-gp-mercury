@@ -49,6 +49,7 @@ public class DeploymentBuilder {
                 .addAsWebInfResource(new File("src/main/webapp/WEB-INF/ejb-jar.xml"))
                         //TODO  Cherry Picking resources is not Ideal.  When we have more auto front end tests, we will need everything in resources.
                 .addAsResource(new File("src/main/resources/WorkflowConfig.xml"), "WorkflowConfig.xml")
+                .addAsResource(new File("src/main/resources/templates/WorkflowValidation.ftl"), "templates/WorkflowValidation.ftl")
                 .addPackages(true, "org.broadinstitute.gpinformatics")
                 .addAsWebInfResource(new StringAsset("MERCURY_DEPLOYMENT=" + deployment.name()),
                         "classes/jndi.properties");
