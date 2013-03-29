@@ -215,4 +215,31 @@ public class WorkflowTest {
         }
         Assert.assertTrue(meetsCriteria, "Meets criteria is not true");
     }
+
+    @Test
+    public void testBucketEntryFail() {
+
+        Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
+            put(BSPSampleSearchColumn.PRIMARY_DISEASE, "Cancer");
+            put(BSPSampleSearchColumn.LSID, "org.broad:SM-2345");
+            put(BSPSampleSearchColumn.MATERIAL_TYPE, "DNA:DNA WGA Cleaned");
+            put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, "5432");
+            put(BSPSampleSearchColumn.SPECIES, "Homo Sapiens");
+            put(BSPSampleSearchColumn.PARTICIPANT_ID, "PT-2345");
+        }};
+
+        TwoDBarcodedTube twoDBarcodedTube = new TwoDBarcodedTube("00002345");
+        twoDBarcodedTube.addSample(new MercurySample("PDO-123", "SM-2345", new BSPSampleDTO(dataMap)));
+
+        WorkflowLoader workflowLoader = new WorkflowLoader();
+        WorkflowConfig workflowConfig1 = workflowLoader.load();
+        ProductWorkflowDef exomeExpressWorkflow = workflowConfig1.getWorkflowByName("Exome Express");
+        boolean meetsCriteria = true;
+        for (WorkflowBucketDef workflowBucketDef : exomeExpressWorkflow.getEffectiveVersion().getBuckets()) {
+            if (workflowBucketDef.getName().equals("Pico/Plating Bucket")) {
+                meetsCriteria = workflowBucketDef.meetsBucketCriteria(twoDBarcodedTube);
+            }
+        }
+        Assert.assertFalse(meetsCriteria, "Bucket criteria should have failed.");
+    }
 }

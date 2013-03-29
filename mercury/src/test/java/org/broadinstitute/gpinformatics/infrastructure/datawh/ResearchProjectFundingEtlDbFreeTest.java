@@ -42,8 +42,7 @@ public class ResearchProjectFundingEtlDbFreeTest {
     public void beforeMethod() {
         reset(mocks);
 
-        tst = new ResearchProjectFundingEtl();
-        tst.setResearchProjectDao(dao);
+        tst = new ResearchProjectFundingEtl(dao);
         tst.setAuditReaderDao(auditReader);
     }
 
@@ -51,15 +50,9 @@ public class ResearchProjectFundingEtlDbFreeTest {
         expect(obj.getResearchProjectFundingId()).andReturn(entityId);
         replay(mocks);
 
-        assertEquals(tst.getEntityClass(), ResearchProjectFunding.class);
-
-        assertEquals(tst.getBaseFilename(), "research_project_funding");
-
+        assertEquals(tst.entityClass, ResearchProjectFunding.class);
+        assertEquals(tst.baseFilename, "research_project_funding");
         assertEquals(tst.entityId(obj), (Long) entityId);
-
-        assertNull(tst.entityStatusRecord(etlDateStr, null, null, false));
-
-        assertTrue(tst.isEntityEtl());
 
         verify(mocks);
     }
@@ -69,7 +62,7 @@ public class ResearchProjectFundingEtlDbFreeTest {
 
         replay(mocks);
 
-        assertEquals(tst.entityRecords(etlDateStr, false, -1L).size(), 0);
+        assertEquals(tst.dataRecords(etlDateStr, false, -1L).size(), 0);
 
         verify(mocks);
     }
@@ -83,7 +76,7 @@ public class ResearchProjectFundingEtlDbFreeTest {
 
         replay(mocks);
 
-        Collection<String> records = tst.entityRecords(etlDateStr, false, entityId);
+        Collection<String> records = tst.dataRecords(etlDateStr, false, entityId);
         assertEquals(records.size(), 1);
 
         verifyRecord(records.iterator().next());
@@ -99,29 +92,11 @@ public class ResearchProjectFundingEtlDbFreeTest {
 
         replay(mocks);
 
-        Collection<String> records = tst.entityRecords(etlDateStr, false, entityId);
+        Collection<String> records = tst.dataRecords(etlDateStr, false, entityId);
         assertEquals(records.size(), 1);
 
         String[] parts = records.iterator().next().split(",");
         assertEquals(parts[3], "\"\"");
-
-        verify(mocks);
-    }
-
-    public void testBackfillEtl() throws Exception {
-        List<ResearchProjectFunding> list = new ArrayList<ResearchProjectFunding>();
-        list.add(obj);
-        expect(dao.findAll(eq(ResearchProjectFunding.class), (GenericDao.GenericDaoCallback<ResearchProjectFunding>) anyObject())).andReturn(list);
-        expect(obj.getResearchProjectFundingId()).andReturn(entityId);
-        expect(obj.getResearchProject()).andReturn(project).times(2);
-        expect(project.getResearchProjectId()).andReturn(researchProjectId);
-        expect(obj.getFundingId()).andReturn(fundingId);
-
-        replay(mocks);
-
-        Collection<String> records = tst.entityRecordsInRange(entityId, entityId, etlDateStr, false);
-        assertEquals(records.size(), 1);
-        verifyRecord(records.iterator().next());
 
         verify(mocks);
     }

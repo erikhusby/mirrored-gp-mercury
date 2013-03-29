@@ -44,32 +44,45 @@ public class WorkflowConfigEtlDbFreeTest {
 
         reset(mocks);
 
-        tst = new WorkflowConfigEtl();
+        tst = new WorkflowConfigEtl(loader);
         tst.setAuditReaderDao(auditReader);
-        tst.setWorkflowLoader(loader);
     }
 
     public void testEtlFlags() throws Exception {
 
         replay(mocks);
 
-        assertEquals(tst.getEntityClass(), WorkflowConfig.class);
+        assertEquals(tst.entityClass, WorkflowConfig.class);
+        assertEquals(tst.baseFilename, WorkflowConfigEtl.WORKFLOW_BASE_FILENAME);
 
-        assertNull(tst.getBaseFilename(), null);
-        assertNull(tst.entityId(config));
-        assertNull(tst.entityStatusRecord(etlDateStr, null, null, false));
-
-        assertTrue(tst.isEntityEtl());
+        boolean gotIt = false;
+        try {
+            tst.entityId(config);
+        } catch (RuntimeException e) {
+            gotIt = true;
+        }
+        assert(gotIt);
 
         verify(mocks);
     }
 
     public void testEntityRecord() throws Exception {
         replay(mocks);
+        boolean gotIt = false;
+        try {
+            tst.dataRecords(etlDateStr, false, 1L);
+        } catch (RuntimeException e) {
+            gotIt = true;
+        }
+        assert(gotIt);
 
-        // These always return empty collections.
-        assertEquals(tst.entityRecords(etlDateStr, false, 1L).size(), 0);
-        assertEquals(tst.entityRecordsInRange(0L, 9999999999999999L, etlDateStr, false).size(), 0);
+        gotIt = false;
+        try {
+            tst.entitiesInRange(0L, 9999999999999999L);
+        } catch (RuntimeException e) {
+            gotIt = true;
+        }
+        assert(gotIt);
 
         verify(mocks);
     }
@@ -84,22 +97,6 @@ public class WorkflowConfigEtlDbFreeTest {
         assertFalse(processDatafile.exists());
 
         assertEquals(tst.doEtl(null, etlDateStr), EXPECTED_RECORD_COUNT);
-
-        verifyWorkflowFile(workflowDatafile);
-        verifyProcessFile(processDatafile);
-        verify(mocks);
-    }
-
-    public void testBackfillEtl() throws Exception {
-        expect(loader.load()).andReturn(config);
-        replay(mocks);
-
-        File workflowDatafile = new File(datafileDir, etlDateStr + "_" + WorkflowConfigEtl.WORKFLOW_BASE_FILENAME + ".dat");
-        File processDatafile = new File(datafileDir, etlDateStr + "_" + WorkflowConfigEtl.PROCESS_BASE_FILENAME + ".dat");
-        assertFalse(workflowDatafile.exists());
-        assertFalse(processDatafile.exists());
-
-        assertEquals(tst.doBackfillEtl(tst.getEntityClass(), 0, 9999999999999L, etlDateStr), EXPECTED_RECORD_COUNT);
 
         verifyWorkflowFile(workflowDatafile);
         verifyProcessFile(processDatafile);

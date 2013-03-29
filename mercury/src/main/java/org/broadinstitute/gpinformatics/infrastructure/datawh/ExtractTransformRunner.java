@@ -21,6 +21,6 @@ public class ExtractTransformRunner {
      */
     @Schedule(hour = "*", minute = "*/15", persistent = false)
     void scheduledEtl() {
-        extractTransform.onDemandIncrementalEtl();
+        extractTransform.auditDateRangeEtl("0", "0");
     }
 }

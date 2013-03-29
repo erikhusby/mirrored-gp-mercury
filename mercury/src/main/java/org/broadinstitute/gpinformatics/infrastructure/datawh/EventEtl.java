@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
@@ -13,90 +13,109 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import javax.ejb.Stateful;
 import javax.inject.Inject;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
 import java.util.*;
 
 @Stateful
-public class EventEtl extends GenericEntityEtl {
+public class EventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
+    protected ProductOrderDao pdoDao;
+    protected WorkflowConfigLookup workflowConfigLookup;
+
+    public EventEtl() {
+        entityClass = LabEvent.class;
+        baseFilename = "event_fact";
+    }
 
     @Inject
-    private LabEventDao dao;
-    @Inject
-    private ProductOrderDao pdoDao;
-    @Inject
-    private WorkflowConfigLookup workflowConfigLookup;
-
-    public EventEtl() {}
-
-    public EventEtl(WorkflowConfigLookup workflowConfigLookup, LabEventDao dao, ProductOrderDao pdoDao) {
+    public EventEtl(WorkflowConfigLookup workflowConfigLookup, LabEventDao d, ProductOrderDao pdoDao) {
+        this();
+        dao = d;
         this.workflowConfigLookup = workflowConfigLookup;
-        this.dao = dao;
         this.pdoDao = pdoDao;
     }
 
-    /** {@inheritDoc} */
     @Override
-    Class getEntityClass() {
-        return LabEvent.class;
+    Long entityId(LabEvent entity) {
+        return entity.getLabEventId();
     }
 
-    /** {@inheritDoc} */
     @Override
-    String getBaseFilename() {
-        return "event_fact";
+    Path rootId(Root root) {
+        return root.get(LabEvent_.labEventId);
     }
 
-    /** {@inheritDoc} */
     @Override
-    Long entityId(Object entity) {
-        return ((LabEvent) entity).getLabEventId();
+    Collection<String> dataRecords(String etlDateStr, boolean isDelete, Long entityId) {
+        return dataRecords(etlDateStr, isDelete, dao.findById(LabEvent.class, entityId));
     }
 
-    /** {@inheritDoc} */
     @Override
-    Collection<String> entityRecords(String etlDateStr, boolean isDelete, Long entityId) {
-        Collection<String> recordList = new ArrayList<String>();
-        LabEvent entity = dao.findById(LabEvent.class, entityId);
-        if (entity != null) {
-            recordList.addAll(entityRecord(etlDateStr, isDelete, entity));
-        } else {
-            logger.info("Cannot export. " + getEntityClass().getSimpleName() + " having id " + entityId + " no longer exists.");
-        }
-        return recordList;
+    String dataRecord(String etlDateStr, boolean isDelete, LabEvent entity) {
+        throw new RuntimeException("This method cannot apply to this etl class.");
     }
 
-    /** {@inheritDoc} */
     @Override
-    Collection<String> entityRecordsInRange(final long startId, final long endId, String etlDateStr, boolean isDelete) {
-        Collection<String> recordList = new ArrayList<String>();
-        List<LabEvent> entityList = dao.findAll(getEntityClass(),
-                new GenericDao.GenericDaoCallback<LabEvent>() {
-                    @Override
-                    public void callback(CriteriaQuery<LabEvent> cq, Root<LabEvent> root) {
-                        CriteriaBuilder cb = dao.getEntityManager().getCriteriaBuilder();
-                        cq.where(cb.between(root.get(LabEvent_.labEventId), startId, endId));
-                    }
-                });
-        for (LabEvent entity : entityList) {
-            recordList.addAll(entityRecord(etlDateStr, isDelete, entity));
-        }
-        return recordList;
-    }
+    Collection<String> dataRecords(String etlDateStr, boolean isDelete, LabEvent entity) {
 
-    /**
-     * Makes a data record from an entity, in a format that matches the corresponding SqlLoader control file.
-     *
-     * @param entity Mercury Entity
-     * @return delimited SqlLoader record
-     */
-    Collection<String> entityRecord(String etlDateStr, boolean isDelete, LabEvent entity) {
+        Collection<EventFactDto> facts = traverseGraph(entity);
+        updateIds(facts);
+
         Collection<String> records = new ArrayList<String>();
+        for (EventFactDto fact : facts) {
+            records.add(genericRecord(etlDateStr, isDelete,
+                    fact.labEvent.getLabEventId(),
+                    format(fact.wfDenorm.getWorkflowId()),
+                    format(fact.wfDenorm.getProcessId()),
+                    format(fact.productOrder.getProductOrderId()),
+                    format(fact.sample.getSampleKey()),
+                    format(fact.labBatchId),
+                    format(fact.labEvent.getEventLocation()),
+                    format(fact.labVessel.getLabVesselId()),
+                    format(ExtractTransform.secTimestampFormat.format(fact.labEvent.getEventDate()))
+            ));
+        }
+        return records;
+    }
+
+    private class EventFactDto {
+        LabEvent labEvent;
+        boolean noLabBatch;
+        LabVessel labVessel;
+        String eventName;
+        SampleInstance sampleInstance;
+        LabBatch labBatch;
+        Long labBatchId;
+        MercurySample sample;
+        String productOrderKey;
+        ProductOrder productOrder;
+        WorkflowConfigDenorm wfDenorm;
+
+        private EventFactDto(LabEvent labEvent, boolean noLabBatch, LabVessel labVessel, String eventName,
+                             SampleInstance sampleInstance, LabBatch labBatch, Long labBatchId, MercurySample sample,
+                             String productOrderKey) {
+            this.labEvent = labEvent;
+            this.noLabBatch = noLabBatch;
+            this.labVessel = labVessel;
+            this.eventName = eventName;
+            this.sampleInstance = sampleInstance;
+            this.labBatch = labBatch;
+            this.labBatchId = labBatchId;
+            this.sample = sample;
+            this.productOrderKey = productOrderKey;
+        }
+    }
+
+    @DaoFree
+    private Collection<EventFactDto> traverseGraph(LabEvent entity) {
+        Collection<EventFactDto> facts = new ArrayList<EventFactDto>();
+        if (entity == null) {
+            return facts;
+        }
 
         if (entity.getLabEventType() == null) {
             logger.warn("Cannot ETL labEvent " + entity.getLabEventId() + " that has no LabEventType.");
-            return records;
+            return facts;
         }
 
         boolean noLabBatch = entity.getLabBatch() == null;
@@ -107,7 +126,7 @@ public class EventEtl extends GenericEntityEtl {
         }
         if (vessels.size() == 0) {
             logger.warn("Cannot ETL event " + entity.getLabEventId() + " that has no vessels.");
-            return records;
+            return facts;
         }
 
         String eventName = entity.getLabEventType().getName();
@@ -130,51 +149,62 @@ public class EventEtl extends GenericEntityEtl {
                     logger.warn("Cannot find starting sample for sampleInstance " + si.toString());
                     continue;
                 }
-                String sampleKey = sample.getSampleKey();
                 String productOrderKey = sample.getProductOrderKey();
                 if (productOrderKey == null) {
                     logger.warn("Sample " + sample.getSampleKey() + " has null productOrderKey");
                     continue;
                 }
-                ProductOrder productOrder = pdoDao.findByBusinessKey(productOrderKey);
-                if (productOrder == null) {
-                    logger.warn("Product " + productOrderKey + " has no entity");
+
+                facts.add(new EventFactDto(entity, noLabBatch, vessel, eventName, si, labBatch, labBatchId,
+                        sample, productOrderKey));
+
+            }
+        }
+        return facts;
+    }
+
+    private void updateIds(Collection<EventFactDto> facts) {
+
+        Map<String, ProductOrder> pdoMap = new HashMap<String, ProductOrder>();
+        Map<String, WorkflowConfigDenorm> wfMap = new HashMap<String, WorkflowConfigDenorm>();
+
+        // Spins through and updates pdo and workflow, reusing already looked up values.
+        for (Iterator<EventFactDto> iter = facts.iterator(); iter.hasNext(); ) {
+            EventFactDto fact = iter.next();
+
+            if (pdoMap.containsKey(fact.productOrderKey)) {
+                fact.productOrder = pdoMap.get(fact.productOrderKey);
+                fact.wfDenorm = wfMap.get(fact.productOrderKey);
+
+                if (fact.productOrder == null || fact.wfDenorm == null) {
+                    iter.remove();
                     continue;
                 }
 
-                WorkflowConfigDenorm denorm = workflowConfigLookup.lookupWorkflowConfig(eventName, productOrder, entity.getEventDate());
+            } else {
+                fact.productOrder = pdoDao.findByBusinessKey(fact.productOrderKey);
+                pdoMap.put(fact.productOrderKey, fact.productOrder);
 
-                records.add(genericRecord(etlDateStr, isDelete,
-                        entity.getLabEventId(),
-                        format(denorm.getWorkflowId()),
-                        format(denorm.getProcessId()),
-                        format(productOrder.getProductOrderId()),
-                        format(sampleKey),
-                        format(labBatchId),
-                        format(entity.getEventLocation()),
-                        format(vessel.getLabVesselId()),
-                        format(ExtractTransform.secTimestampFormat.format(entity.getEventDate()))
-                ));
+                if (fact.productOrder == null) {
+                    logger.warn("ProductOrder " + fact.productOrderKey + " is missing.");
+                    iter.remove();
+                    continue;
+                }
+
+                fact.wfDenorm = workflowConfigLookup.lookupWorkflowConfig(fact.eventName, fact.productOrder,
+                        fact.labEvent.getEventDate());
+                wfMap.put(fact.productOrderKey, fact.wfDenorm);
+
+                if (fact.wfDenorm == null) {
+                    logger.warn("No workflow config for" +
+                            " event " + fact.eventName +
+                            " productOrder " + fact.productOrderKey +
+                            " eventDate " + fact.labEvent.getEventDate());
+                    iter.remove();
+                    continue;
+                }
             }
         }
-
-        return records;
-    }
-
-    /**
-     * This entity does not make status records.
-     */
-    @Override
-    String entityStatusRecord(String etlDateStr, Date revDate, Object entity, boolean isDelete) {
-        return null;
-    }
-
-    /**
-     * This entity does support add/modify records via primary key.
-     */
-    @Override
-    boolean isEntityEtl() {
-        return true;
     }
 
 }

@@ -49,8 +49,7 @@ public class ProductEtlDbFreeTest {
     public void beforeMethod() {
         reset(mocks);
 
-        tst = new ProductEtl();
-        tst.setProductDao(dao);
+        tst = new ProductEtl(dao);
         tst.setAuditReaderDao(auditReader);
     }
 
@@ -58,15 +57,9 @@ public class ProductEtlDbFreeTest {
         expect(obj.getProductId()).andReturn(entityId);
         replay(mocks);
 
-        assertEquals(tst.getEntityClass(), Product.class);
-
-        assertEquals(tst.getBaseFilename(), "product");
-
+        assertEquals(tst.entityClass, Product.class);
+        assertEquals(tst.baseFilename, "product");
         assertEquals(tst.entityId(obj), (Long) entityId);
-
-        assertNull(tst.entityStatusRecord(etlDateStr, null, null, false));
-
-        assertTrue(tst.isEntityEtl());
 
         verify(mocks);
     }
@@ -76,7 +69,7 @@ public class ProductEtlDbFreeTest {
 
         replay(mocks);
 
-        assertEquals(tst.entityRecords(etlDateStr, false, -1L).size(), 0);
+        assertEquals(tst.dataRecords(etlDateStr, false, -1L).size(), 0);
 
         verify(mocks);
     }
@@ -100,37 +93,9 @@ public class ProductEtlDbFreeTest {
 
         replay(mocks);
 
-        Collection<String> records = tst.entityRecords(etlDateStr, false, entityId);
+        Collection<String> records = tst.dataRecords(etlDateStr, false, entityId);
         assertEquals(records.size(), 1);
 
-        verifyRecord(records.iterator().next());
-
-        verify(mocks);
-    }
-
-    public void testBackfillEtl() throws Exception {
-        List<Product> list = new ArrayList<Product>();
-        list.add(obj);
-        expect(dao.findAll(eq(Product.class), (GenericDao.GenericDaoCallback<Product>) anyObject())).andReturn(list);
-
-        expect(obj.getProductId()).andReturn(entityId);
-        expect(obj.getProductName()).andReturn(productName);
-        expect(obj.getPartNumber()).andReturn(partNumber);
-        expect(obj.getAvailabilityDate()).andReturn(availabilityDate);
-        expect(obj.getDiscontinuedDate()).andReturn(discontinuedDate);
-        expect(obj.getExpectedCycleTimeSeconds()).andReturn(expectedCycleTimeSeconds);
-        expect(obj.getGuaranteedCycleTimeSeconds()).andReturn(guaranteedCycleTimeSeconds);
-        expect(obj.getSamplesPerWeek()).andReturn(samplesPerWeek);
-        expect(obj.isTopLevelProduct()).andReturn(isTopLevelProduct);
-        expect(obj.getWorkflowName()).andReturn(workflowName);
-        expect(obj.getProductFamily()).andReturn(family).times(2);
-
-        expect(family.getName()).andReturn(productFamilyName);
-
-        replay(mocks);
-
-        Collection<String> records = tst.entityRecordsInRange(entityId, entityId, etlDateStr, false);
-        assertEquals(records.size(), 1);
         verifyRecord(records.iterator().next());
 
         verify(mocks);

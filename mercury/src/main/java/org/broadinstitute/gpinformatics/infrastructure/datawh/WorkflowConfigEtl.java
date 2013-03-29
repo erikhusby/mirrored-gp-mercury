@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
+import com.sun.tools.javac.resources.version;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
@@ -7,53 +8,62 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
 import javax.ejb.Stateful;
 import javax.inject.Inject;
+import javax.persistence.criteria.Path;
+import javax.persistence.criteria.Root;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
-/**
+/*
  * This entity etl class draws Workflow info from WorkflowConfig.
  * WorkflowConfig does not have a primary key, so ETL adds one from the hash of fields,
  * and because of this, ETL cannot update existing records, only add new records.
  */
 @Stateful
-public class WorkflowConfigEtl extends GenericEntityEtl {
+public class WorkflowConfigEtl extends GenericEntityEtl<Object, Object> {
     private Log logger = LogFactory.getLog(getClass());
     private WorkflowLoader workflowLoader;
     static final String WORKFLOW_BASE_FILENAME = "workflow";
     static final String PROCESS_BASE_FILENAME = "workflow_process";
 
+    public WorkflowConfigEtl() {
+        entityClass = WorkflowConfig.class;
+        baseFilename = WORKFLOW_BASE_FILENAME;
+    }
+
     @Inject
-    public void setWorkflowLoader(WorkflowLoader workflowLoader) {
-        this.workflowLoader = workflowLoader;
+    public WorkflowConfigEtl(WorkflowLoader wl) {
+        this();
+        workflowLoader = wl;
     }
 
-    /** {@inheritDoc} */
-    @Override
-    Class getEntityClass() {
-        return WorkflowConfig.class;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    String getBaseFilename() {
-        return null;
-    }
-
-    /**
-     * This is unused, and it is meaningless for derived class WorkflowConfigDenorm.
-     */
     @Override
     Long entityId(Object entity) {
-        return null;
+        throw new RuntimeException("This method cannot apply to this etl class.");
     }
 
-    /**
-     * Does an etl of workflow config if the current version has changed since last etl.
-     * Keeps a hash of the config contents in a file to know when there was a change.
-     * @param revIds ignored
-     * @param etlDateStr used in the sqlloader filename
-     * @return number of records exported
-     */
+    @Override
+    Path rootId(Root root) {
+        throw new RuntimeException("This method cannot apply to this etl class.");
+    }
+
+    @Override
+    Collection<String> dataRecords(String etlDateStr, boolean isDelete, Long entityId) {
+        throw new RuntimeException("This method cannot apply to this etl class.");
+    }
+
+    @Override
+    Collection<String> dataRecords(String etlDateStr, boolean isDelete, Object entity) {
+        throw new RuntimeException("This method cannot apply to this etl class.");
+    }
+
+    @Override
+    String dataRecord(String etlDateStr, boolean isDelete, Object entity) {
+        throw new RuntimeException("This method cannot apply to this etl class.");
+    }
+
+    // Ignores revIds param and does an etl of workflow config if the current version has changed since last etl.
     @Override
     public int doEtl(Collection<Long> revIds, String etlDateStr) {
         // Does nothing if no change in WorkflowConfig, indicated by the hash.
@@ -63,23 +73,19 @@ public class WorkflowConfigEtl extends GenericEntityEtl {
         }
 
         int count = doEtlFiles(res.denormConfig, etlDateStr);
+
+        // Keeps a hash of the config contents in a file to know when there was a change.
         writeWorkflowConfigHash(res.hashValue);
 
         return count;
     }
 
-    /**
-     * Does an unconditional etl of workflow config.
-     * @param entityClass this class
-     * @param startId ignored
-     * @param endId ignored
-     * @param etlDateStr used in the sqlloader filenam
-     * @return number of records exported
-     */
+
+    // Ignores the id range and does an unconditional etl of workflow config.
     @Override
-    public int doBackfillEtl(Class entityClass, long startId, long endId, String etlDateStr) {
+    public int doEtl(Class requestedClass, long startId, long endId, String etlDateStr) {
         // No-op unless the implementing class is the requested entity class.
-        if (!getEntityClass().equals(entityClass) || !isEntityEtl()) {
+        if (!entityClass.equals(requestedClass)) {
             return 0;
         }
         Collection<WorkflowConfigDenorm> denormConfig = WorkflowConfigDenorm.parse(workflowLoader.load());
@@ -91,9 +97,8 @@ public class WorkflowConfigEtl extends GenericEntityEtl {
         int count = 0;
 
         String filename = dataFilename(etlDateStr, WORKFLOW_BASE_FILENAME);
-        DataFile dataFile = null;
+        DataFile dataFile = new DataFile(filename);
         try {
-            dataFile = new DataFile(filename);
             exportWorkflow(denorms, dataFile, etlDateStr);
             count += dataFile.getRecordCount();
         } catch (IOException e) {
@@ -116,21 +121,6 @@ public class WorkflowConfigEtl extends GenericEntityEtl {
         return count;
     }
 
-    /**
-     * Unused method since we've overridden the caller.
-     */
-    @Override
-    Collection<String> entityRecords(String etlDateStr, boolean isDelete, Long entityId) {
-        return Collections.EMPTY_LIST;
-    }
-
-    /**
-     * Unused method since we've overridden the caller.
-     */
-    @Override
-    Collection<String> entityRecordsInRange(final long startId, final long endId, String etlDateStr, boolean isDelete) {
-        return Collections.EMPTY_LIST;
-    }
 
     /** Writes the Workflow records to a sqlLoader file */
     private void exportWorkflow(Collection<WorkflowConfigDenorm>flatConfig, DataFile dataFile, String etlDateStr)
@@ -190,19 +180,6 @@ public class WorkflowConfigEtl extends GenericEntityEtl {
                     entity.getWorkflowStepEventName()
             );
     }
-
-    /** This entity does not make status records. */
-    @Override
-    String entityStatusRecord(String etlDateStr, Date revDate, Object entity, boolean isDelete) {
-        return null;
-    }
-
-    /** This entity does support add/modify records via primary key. */
-    @Override
-    boolean isEntityEtl() {
-        return true;
-    }
-
 
 
     /** Reads the persisted magic number representing the last known workflow config, for versioning purposes. */

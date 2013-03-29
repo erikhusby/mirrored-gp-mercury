@@ -5,90 +5,62 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
 import javax.ejb.Stateful;
 import javax.inject.Inject;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.List;
 
 @Stateful
-public class ProductOrderEtl extends GenericEntityEtl {
-
-    private ProductOrderDao dao;
+public class ProductOrderEtl extends GenericEntityAndStatusEtl<ProductOrder, ProductOrder> {
     private BSPUserList userList;
 
+    public ProductOrderEtl() {
+        entityClass = ProductOrder.class;
+        baseFilename = "product_order";
+        baseStatusFilename = "product_order_status";
+    }
+
     @Inject
-    public void setProductOrderDao(ProductOrderDao dao) {
-        this.dao = dao;
-    }
-    @Inject
-    public void setBSPUserList(BSPUserList userList) {
-        this.userList = userList;
+    public ProductOrderEtl(ProductOrderDao d, BSPUserList ul) {
+        this();
+        dao = d;
+        userList = ul;
     }
 
-    /** {@inheritDoc} */
     @Override
-    Class getEntityClass() {
-        return ProductOrder.class;
+    Long entityId(ProductOrder entity) {
+        return entity.getProductOrderId();
     }
 
-    /** {@inheritDoc} */
     @Override
-    String getBaseFilename() {
-        return "product_order";
+    Path rootId(Root root) {
+        return root.get(ProductOrder_.productOrderId);
     }
 
-    /** {@inheritDoc} */
     @Override
-    Long entityId(Object entity) {
-        return ((ProductOrder)entity).getProductOrderId();
+    Collection<String> dataRecords(String etlDateStr, boolean isDelete, Long entityId) {
+        return dataRecords(etlDateStr, isDelete, dao.findById(ProductOrder.class, entityId));
     }
 
-    /** {@inheritDoc} */
     @Override
-    Collection<String> entityRecords(String etlDateStr, boolean isDelete, Long entityId) {
-        Collection<String> recordList = new ArrayList<String>();
-        ProductOrder entity = dao.findById(ProductOrder.class, entityId);
-        if (entity != null) {
-            recordList.add(entityRecord(etlDateStr, isDelete, entity));
+    String statusRecord(String etlDateStr, Date statusDate, ProductOrder entity, boolean isDelete) {
+        if (entity != null && entity.getOrderStatus() != null) {
+            return genericRecord(etlDateStr, isDelete,
+                    entity.getProductOrderId(),
+                    format(statusDate),
+                    format(entity.getOrderStatus().getDisplayName())
+            );
         } else {
-            logger.info("Cannot export. " + getEntityClass().getSimpleName() + " having id " + entityId + " no longer exists.");
+            return null;
         }
-        return recordList;
     }
 
-    /** {@inheritDoc} */
+
     @Override
-    Collection<String> entityRecordsInRange(final long startId, final long endId, String etlDateStr, boolean isDelete) {
-        Collection<String> recordList = new ArrayList<String>();
-        List<ProductOrder> entityList = dao.findAll(getEntityClass(),
-                new GenericDao.GenericDaoCallback<ProductOrder>() {
-                    @Override
-                    public void callback(CriteriaQuery<ProductOrder> cq, Root<ProductOrder> root) {
-                        if (startId > 0 || endId < Long.MAX_VALUE) {
-                            CriteriaBuilder cb = dao.getEntityManager().getCriteriaBuilder();
-                            cq.where(cb.between(root.get(ProductOrder_.productOrderId), startId, endId));
-                        }
-                    }
-                });
-        for (ProductOrder entity : entityList) {
-            recordList.add(entityRecord(etlDateStr, isDelete, entity));
-        }
-        return recordList;
-    }
-
-    /**
-     * Makes a data record from an entity, in a format that matches the corresponding SqlLoader control file.
-     * @param entity Mercury Entity
-     * @return delimited SqlLoader record
-     */
-    String entityRecord(String etlDateStr, boolean isDelete, ProductOrder entity) {
+    String dataRecord(String etlDateStr, boolean isDelete, ProductOrder entity) {
         Long personId = entity.getCreatedBy();
         BspUser bspUser = personId != null ? userList.getById(personId) : null;
 
@@ -105,17 +77,4 @@ public class ProductOrderEtl extends GenericEntityEtl {
                 format(bspUser != null ? bspUser.getUsername() : null)
         );
     }
-
-    /** This entity does not make status records. */
-    @Override
-    String entityStatusRecord(String etlDateStr, Date revDate, Object entity, boolean isDelete) {
-        return null;
-    }
-
-    /** This entity does support add/modify records via primary key. */
-    @Override
-    boolean isEntityEtl() {
-        return true;
-    }
-
 }

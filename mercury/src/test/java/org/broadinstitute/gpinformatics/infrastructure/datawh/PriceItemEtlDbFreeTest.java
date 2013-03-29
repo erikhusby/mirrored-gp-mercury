@@ -43,8 +43,7 @@ public class PriceItemEtlDbFreeTest {
     public void beforeMethod() {
         reset(mocks);
 
-        tst = new PriceItemEtl();
-        tst.setPriceItemDao(dao);
+        tst = new PriceItemEtl(dao);
         tst.setAuditReaderDao(auditReader);
     }
 
@@ -52,15 +51,9 @@ public class PriceItemEtlDbFreeTest {
         expect(obj.getPriceItemId()).andReturn(entityId);
         replay(mocks);
 
-        assertEquals(tst.getEntityClass(), PriceItem.class);
-
-        assertEquals(tst.getBaseFilename(), "price_item");
-
+        assertEquals(tst.entityClass, PriceItem.class);
+        assertEquals(tst.baseFilename, "price_item");
         assertEquals(tst.entityId(obj), (Long) entityId);
-
-        assertNull(tst.entityStatusRecord(etlDateStr, null, null, false));
-
-        assertTrue(tst.isEntityEtl());
 
         verify(mocks);
     }
@@ -70,7 +63,7 @@ public class PriceItemEtlDbFreeTest {
 
         replay(mocks);
 
-        assertEquals(tst.entityRecords(etlDateStr, false, -1L).size(), 0);
+        assertEquals(tst.dataRecords(etlDateStr, false, -1L).size(), 0);
 
         verify(mocks);
     }
@@ -88,31 +81,9 @@ public class PriceItemEtlDbFreeTest {
 
         replay(mocks);
 
-        Collection<String> records = tst.entityRecords(etlDateStr, false, entityId);
+        Collection<String> records = tst.dataRecords(etlDateStr, false, entityId);
         assertEquals(records.size(), 1);
 
-        verifyRecord(records.iterator().next());
-
-        verify(mocks);
-    }
-
-    public void testBackfillEtl() throws Exception {
-        List<PriceItem> list = new ArrayList<PriceItem>();
-        list.add(obj);
-        expect(dao.findAll(eq(PriceItem.class), (GenericDao.GenericDaoCallback<PriceItem>) anyObject())).andReturn(list);
-
-        expect(obj.getPriceItemId()).andReturn(entityId);
-        expect(obj.getPlatform()).andReturn(platform);
-        expect(obj.getCategory()).andReturn(category).times(2);
-        expect(obj.getName()).andReturn(name);
-        expect(obj.getQuoteServerId()).andReturn(quoteServerId);
-        expect(obj.getPrice()).andReturn(price);
-        expect(obj.getUnits()).andReturn(units);
-
-        replay(mocks);
-
-        Collection<String> records = tst.entityRecordsInRange(entityId, entityId, etlDateStr, false);
-        assertEquals(records.size(), 1);
         verifyRecord(records.iterator().next());
 
         verify(mocks);

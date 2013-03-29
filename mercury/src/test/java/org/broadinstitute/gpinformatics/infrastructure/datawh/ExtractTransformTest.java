@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.apache.commons.io.IOUtils;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
+import org.broadinstitute.gpinformatics.athena.entity.orders.RiskItem;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
@@ -24,7 +26,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
-import java.util.*;
+import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -98,7 +100,7 @@ public class ExtractTransformTest extends Arquillian {
         Thread.sleep(MSEC_IN_SEC);
 
         extractTransform.writeLastEtlRun(startSec);
-        int recordCount = extractTransform.incrementalEtl();
+        int recordCount = extractTransform.incrementalEtl("0", "0");
         long endEtlSec = extractTransform.readLastEtlRun();
         Assert.assertTrue(recordCount > 0);
 
@@ -137,7 +139,7 @@ public class ExtractTransformTest extends Arquillian {
         Thread.sleep(MSEC_IN_SEC);
 
         extractTransform.writeLastEtlRun(startSec);
-        recordCount = extractTransform.incrementalEtl();
+        recordCount = extractTransform.incrementalEtl("0", "0");
         endEtlSec = extractTransform.readLastEtlRun();
         Assert.assertTrue(recordCount > 0);
 
@@ -146,6 +148,36 @@ public class ExtractTransformTest extends Arquillian {
         found = searchEtlFile(startSec * MSEC_IN_SEC, endEtlSec * MSEC_IN_SEC, datFileEnding, "T", entityId);
         Assert.assertTrue(found);
 
+    }
+
+    // todo rewrite to not require specific item in db
+    @Test(enabled=false, groups=TestGroups.EXTERNAL_INTEGRATION)
+    public void testRiskOnDevDb() throws Exception {
+        long startMsec = System.currentTimeMillis();
+        long entityId = 53338L;
+        long pdoSampleId = 116079L;
+        Response.Status status = extractTransform.backfillEtl(RiskItem.class.getName(), entityId, entityId);
+        Assert.assertEquals(status, Response.Status.NO_CONTENT);
+        long endMsec = System.currentTimeMillis();
+
+        final String datFileEnding = "_product_order_sample_risk.dat";
+        boolean found = searchEtlFile(startMsec, endMsec, datFileEnding, "F", pdoSampleId);
+        Assert.assertTrue(found);
+    }
+
+    // todo rewrite to not require specific item in db
+    @Test(enabled=false, groups=TestGroups.EXTERNAL_INTEGRATION)
+    public void testLedgerOnDevDb() throws Exception {
+        long startMsec = System.currentTimeMillis();
+        long entityId = 12366L;
+        long pdoSampleId = 23912L;
+        Response.Status status = extractTransform.backfillEtl(LedgerEntry.class.getName(), entityId, entityId);
+        Assert.assertEquals(status, Response.Status.NO_CONTENT);
+        long endMsec = System.currentTimeMillis();
+
+        final String datFileEnding = "product_order_sample_bill.dat";
+        boolean found = searchEtlFile(startMsec, endMsec, datFileEnding, "F", pdoSampleId);
+        Assert.assertTrue(found);
     }
 
     /**
@@ -173,4 +205,3 @@ public class ExtractTransformTest extends Arquillian {
     }
 
 }
-
