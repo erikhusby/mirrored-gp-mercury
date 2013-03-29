@@ -80,6 +80,28 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
 
     }
 
+    /**
+     * Takes the initial samples and the rework samples
+     * from the batch and builds a string to display
+     * on the batch ticket
+     * @param labBatch
+     * @return
+     */
+    public static String buildSamplesListString(LabBatch labBatch) {
+        StringBuilder samplesText = new StringBuilder();
+        for (LabVessel labVessel : labBatch.getStartingLabVessels()) {
+            samplesText.append(labVessel.getLabel()).append("\n");
+        }
+
+        if (!labBatch.getReworks().isEmpty()) {
+            samplesText.append("\n");
+            for (LabVessel rework : labBatch.getReworks()) {
+                samplesText.append(rework.getLabel()).append(" (rework) ").append("\n");
+            }
+        }
+        return samplesText.toString();
+    }
+
     @Override
     public Collection<CustomField> getCustomFields(Map<String, CustomFieldDefinition> submissionFields) {
 
@@ -100,7 +122,7 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
 
         int sampleCount = batch.getReworks().size() + batch.getStartingLabVessels().size();
 
-        customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.GSSR_IDS,new LcSetSampleFieldUpdater().buildSamplesListString(batch)));
+        customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.GSSR_IDS,buildSamplesListString(batch)));
 
         customFields.add(new CustomField(submissionFields.get(LabBatch.RequiredSubmissionFields.NUMBER_OF_SAMPLES.getFieldName()), sampleCount ));
 
