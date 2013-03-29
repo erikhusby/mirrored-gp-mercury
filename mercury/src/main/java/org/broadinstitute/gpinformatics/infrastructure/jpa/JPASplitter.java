@@ -79,7 +79,7 @@ public class JPASplitter extends BaseSplitter {
         return query.getResultList();
     }
 
-    public static <SPLIT_DATA_TYPE, RETURN_DATA_TYPE> List<RETURN_DATA_TYPE> runCriteryQuery(
+    public static <SPLIT_DATA_TYPE, RETURN_DATA_TYPE> List<RETURN_DATA_TYPE> runCriteriaQuery(
             @Nonnull Collection<SPLIT_DATA_TYPE> parameterList,
             @Nonnull CriteriaInClauseCreator<SPLIT_DATA_TYPE> criteriaCreator) {
 
@@ -96,9 +96,6 @@ public class JPASplitter extends BaseSplitter {
         List<Collection<SPLIT_DATA_TYPE>> temp = split(parameterList);
         for (Collection<SPLIT_DATA_TYPE> data : temp) {
             List<RETURN_DATA_TYPE> o = runCriteriaQuery(criteriaCreator, data);
-
-            System.out.println("input size: " + data.size() + " output size: " + o.size());
-
             result.addAll(o);
         }
 
