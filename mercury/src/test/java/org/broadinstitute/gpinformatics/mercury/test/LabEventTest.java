@@ -16,6 +16,8 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFac
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.monitoring.HipChatMessageSender;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnectorProducer;
+import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
+import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.*;
@@ -78,6 +80,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.gpinformatics.mercury.presentation.transfervis.TransferVisualizerFrame;
 import org.easymock.EasyMock;
 import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import javax.annotation.Nonnull;
@@ -121,6 +124,8 @@ public class LabEventTest {
 
     public static final String POND_REGISTRATION_TUBE_PREFIX = "PondReg";
     private static Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<String, ProductOrder>();
+
+    private final TemplateEngine templateEngine = new TemplateEngine();
 
     private final LabEventFactory.LabEventRefDataFetcher labEventRefDataFetcher =
             new LabEventFactory.LabEventRefDataFetcher() {
@@ -185,6 +190,11 @@ public class LabEventTest {
         }
     }
 
+    @BeforeClass
+    public void setUp() {
+        templateEngine.postConstruct();
+    }
+
     /**
      * Build object graph for Hybrid Selection messages, verify chain of events.
      */
@@ -210,6 +220,7 @@ public class LabEventTest {
 
         final ProductOrder productOrder =
                 ProductOrderTestFactory.buildHybridSelectionProductOrder(NUM_POSITIONS_IN_RACK);
+        productOrder.getResearchProject().setJiraTicketKey("RP-123");
         int rackPosition=1;
 
         for(ProductOrderSample poSample:productOrder.getSamples()) {
@@ -240,7 +251,7 @@ public class LabEventTest {
         LabEventHandler labEventHandler =
                 new LabEventHandler(new WorkflowLoader(), AthenaClientProducer
                         .stubInstance(), bucketBeanEJB, mockBucketDao, new BSPUserList(BSPManagerFactoryProducer
-                        .stubInstance()));
+                        .stubInstance()), templateEngine, new EmailSender());
 
         PreFlightEntityBuilder preFlightEntityBuilder = new PreFlightEntityBuilder(bettaLimsMessageTestFactory,
                 labEventFactory, labEventHandler,
@@ -441,7 +452,8 @@ public class LabEventTest {
         EasyMock.replay(mockBucketDao, tubeDao, mockJira, labBatchDAO);
         LabEventHandler labEventHandler =
                 new LabEventHandler(new WorkflowLoader(), AthenaClientProducer.stubInstance(), bucketBeanEJB,
-                        mockBucketDao, new BSPUserList(BSPManagerFactoryProducer.stubInstance()));
+                        mockBucketDao, new BSPUserList(BSPManagerFactoryProducer.stubInstance()), templateEngine,
+                        new EmailSender());
 
         PicoPlatingEntityBuilder pplatingEntityBuilder = new PicoPlatingEntityBuilder(bettaLimsMessageTestFactory,
                 labEventFactory, labEventHandler,
@@ -605,10 +617,9 @@ public class LabEventTest {
         BucketBean bucketBeanEJB = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB);
         EasyMock.replay(mockBucketDao, tubeDao, mockJira, labBatchDAO);
 
-        LabEventHandler labEventHandler =
-                new LabEventHandler(new WorkflowLoader(), AthenaClientProducer
-                        .stubInstance(), bucketBeanEJB, mockBucketDao, new BSPUserList(BSPManagerFactoryProducer
-                        .stubInstance()));
+        LabEventHandler labEventHandler = new LabEventHandler(new WorkflowLoader(), AthenaClientProducer.stubInstance(),
+                bucketBeanEJB, mockBucketDao, new BSPUserList(BSPManagerFactoryProducer.stubInstance()), templateEngine,
+                new EmailSender());
 
         PreFlightEntityBuilder preFlightEntityBuilder = new PreFlightEntityBuilder(bettaLimsMessageTestFactory,
                 labEventFactory, labEventHandler,
@@ -643,6 +654,10 @@ public class LabEventTest {
             StaticPlate sageCassette = (StaticPlate) sageLoadingEntity.getTargetLabVessels().iterator().next();
 
             // SageLoaded
+            PlateEventType sageLoadedJaxb = bettaLimsMessageTestFactory.buildPlateEvent(
+                    LabEventType.SAGE_LOADED.getName(), sageCassetteBarcode);
+            LabEvent sageLoadedEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(sageLoadedJaxb, sageCassette);
+            labEventHandler.processEvent(sageLoadedEntity);
 
             // SageUnloading
             PlateTransferEventType sageUnloadingJaxb = bettaLimsMessageTestFactory.buildPlateToRack("SageUnloading",
@@ -737,7 +752,8 @@ public class LabEventTest {
         EasyMock.replay(mockBucketDao, tubeDao, mockJira, labBatchDAO);
 
         LabEventHandler labEventHandler = new LabEventHandler(new WorkflowLoader(), AthenaClientProducer.stubInstance(),
-                bucketBeanEJB, mockBucketDao, new BSPUserList(BSPManagerFactoryProducer.stubInstance()));
+                bucketBeanEJB, mockBucketDao, new BSPUserList(BSPManagerFactoryProducer.stubInstance()), templateEngine,
+                new EmailSender());
         BuildIndexPlate buildIndexPlate = new BuildIndexPlate("IndexPlate").invoke(null);
         FluidigmMessagesBuilder fluidigmMessagesBuilder = new FluidigmMessagesBuilder("", bettaLimsMessageTestFactory,
                 labEventFactory, labEventHandler,

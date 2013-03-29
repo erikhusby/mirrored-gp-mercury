@@ -314,38 +314,37 @@ public class ProductWorkflowDefVersion implements Serializable {
             }
 
             boolean found = false;
-            found = validateTransfers(nextEventTypeName, errors, validPredecessorEventNames, labVessel, actualEventNames,
+            found = validateTransfers(nextEventTypeName, errors, validPredecessorEventNames, actualEventNames,
                     found, labVessel.getTransfersFrom(), labEventNode);
 
             if (!found) {
-                found = validateTransfers(nextEventTypeName, errors, validPredecessorEventNames, labVessel, actualEventNames,
+                found = validateTransfers(nextEventTypeName, errors, validPredecessorEventNames, actualEventNames,
                         found, labVessel.getTransfersTo(), labEventNode);
             }
             if(!found) {
-                found = validateTransfers(nextEventTypeName, errors, validPredecessorEventNames, labVessel, actualEventNames,
+                found = validateTransfers(nextEventTypeName, errors, validPredecessorEventNames, actualEventNames,
                         found, labVessel.getInPlaceEvents(), labEventNode);
             }
             if(!found && !start) {
-                errors.add("Vessel " + labVessel.getLabCentricName() + ":" + labVessel.getType() + " has actual events " + actualEventNames +
-                        ", but none are predecessors to " + nextEventTypeName + ": " + validPredecessorEventNames);
+                errors.add("Has actual events " + actualEventNames + ", but none are predecessors to " +
+                        nextEventTypeName + ": " + validPredecessorEventNames);
             }
         }
         return errors;
     }
 
     private boolean validateTransfers(String nextEventTypeName, List<String> errors, Set<String> validPredecessorEventNames,
-            LabVessel labVessel, Set<String> actualEventNames, boolean found, Set<LabEvent> transfers,
+            Set<String> actualEventNames, boolean found, Set<LabEvent> transfers,
             LabEventNode labEventNode) {
         for (LabEvent labEvent : transfers) {
             String actualEventName = labEvent.getLabEventType().getName();
             actualEventNames.add(actualEventName);
             if (false) {
                 if(actualEventName.equals(nextEventTypeName) && labEventNode.getStepDef().getNumberOfRepeats() == 0) {
-                    errors.add("For vessel " + labVessel.getLabCentricName() + ", event " + nextEventTypeName +
-                            " has already occurred");
+                    errors.add("Event " + nextEventTypeName + " has already occurred");
                 }
             }
-            if(actualEventName.equals(nextEventTypeName) || validPredecessorEventNames.contains(actualEventName)) {
+            if(/*actualEventName.equals(nextEventTypeName) || */validPredecessorEventNames.contains(actualEventName)) {
                 found = true;
                 break;
             }

@@ -6,13 +6,14 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
+import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.PartiallyProcessedLabEventCache;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
@@ -22,6 +23,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 
 import javax.inject.Inject;
 import java.io.Serializable;
+import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -33,15 +36,16 @@ import java.util.Set;
 // Implements Serializable because it's used by a Stateful session bean.
 public class LabEventHandler implements Serializable {
 
-
-    public enum HANDLER_RESPONSE {
+    public enum HandlerResponse {
         OK,
         ERROR /* further refine to "out of order", "bad molecular envelope", critical, warning, etc. */
     }
 
-    private PartiallyProcessedLabEventCache unanchored;
+    private static final Log LOG = LogFactory.getLog(LabEventHandler.class);
 
-    private PartiallyProcessedLabEventCache invalidMolecularState;
+//    private PartiallyProcessedLabEventCache unanchored;
+
+//    private PartiallyProcessedLabEventCache invalidMolecularState;
 
     private WorkflowLoader workflowLoader;
 
@@ -53,26 +57,53 @@ public class LabEventHandler implements Serializable {
 
     private BucketDao bucketDao;
 
-
-    private static final Log LOG = LogFactory.getLog(LabEventHandler.class);
-
     @Inject
     private JiraCommentUtil jiraCommentUtil;
+
+    private TemplateEngine templateEngine;
+
+    private EmailSender emailSender;
 
     LabEventHandler() {
     }
 
     @Inject
-    public LabEventHandler(WorkflowLoader workflowLoader, AthenaClientService clientService, BucketBean bucketBean,
-                           BucketDao bucketDao, BSPUserList bspUserList) {
+    public LabEventHandler(WorkflowLoader workflowLoader, AthenaClientService athenaClientService, BucketBean bucketBean,
+            BucketDao bucketDao, BSPUserList bspUserList, TemplateEngine templateEngine, EmailSender emailSender) {
         this.workflowLoader = workflowLoader;
-        this.athenaClientService = clientService;
+        this.athenaClientService = athenaClientService;
         this.bucketBean = bucketBean;
         this.bucketDao = bucketDao;
         this.bspUserList = bspUserList;
+        this.templateEngine = templateEngine;
+        this.emailSender = emailSender;
     }
 
-    public HANDLER_RESPONSE processEvent(LabEvent labEvent) {
+    public static class WorkflowValidationError {
+        private SampleInstance sampleInstance;
+        private List<String> errors;
+        private ProductOrder productOrder;
+
+        public WorkflowValidationError(SampleInstance sampleInstance, List<String> errors, ProductOrder productOrder) {
+            this.sampleInstance = sampleInstance;
+            this.errors = errors;
+            this.productOrder = productOrder;
+        }
+
+        public SampleInstance getSampleInstance() {
+            return sampleInstance;
+        }
+
+        public List<String> getErrors() {
+            return errors;
+        }
+
+        public ProductOrder getProductOrder() {
+            return productOrder;
+        }
+    }
+
+    public HandlerResponse processEvent(LabEvent labEvent) {
         /*
            Happens after the message is actually recorded but before the message is processed (?)
            if the previous step in the workflow is a Bucket, the message will attempt to drain the Bucket
@@ -83,10 +114,13 @@ public class LabEventHandler implements Serializable {
 
         */
 
-        Set<LabVessel> labVessels;
+        Set<LabVessel> labVessels = new HashSet<LabVessel>();
         switch (labEvent.getLabEventType().getPlasticToValidate()) {
             case SOURCE:
-                labVessels = labEvent.getSourceLabVessels();
+                labVessels.addAll(labEvent.getSourceLabVessels());
+                if (labEvent.getInPlaceLabVessel() != null) {
+                    labVessels.add(labEvent.getInPlaceLabVessel());
+                }
                 break;
             case TARGET:
                 labVessels = labEvent.getTargetLabVessels();
@@ -94,24 +128,41 @@ public class LabEventHandler implements Serializable {
             case BOTH:
                 labVessels = new HashSet<LabVessel>();
                 labVessels.addAll(labEvent.getSourceLabVessels());
+                if (labEvent.getInPlaceLabVessel() != null) {
+                    labVessels.add(labEvent.getInPlaceLabVessel());
+                }
                 labVessels.addAll(labEvent.getTargetLabVessels());
                 break;
             default:
                 throw new RuntimeException("Unknown validation " + labEvent.getLabEventType().getPlasticToValidate());
         }
 
+        List<SampleInstance> allSampleInstances = new ArrayList<SampleInstance>();
+        List<WorkflowValidationError> validationErrors = new ArrayList<WorkflowValidationError>();
         for (LabVessel labVessel : labVessels) {
-            for (SampleInstance sampleInstance : labVessel.getSampleInstances()) {
+            Set<SampleInstance> sampleInstances = labVessel.getSampleInstances();
+            allSampleInstances.addAll(sampleInstances);
+            for (SampleInstance sampleInstance : sampleInstances) {
                 ProductWorkflowDefVersion workflowVersion = getWorkflowVersion(sampleInstance.getStartingSample().getProductOrderKey());
                 if (workflowVersion != null) {
                     // todo jmt should validate take the enum, rather than the name?
                     List<String> errors = workflowVersion.validate(labVessel, labEvent.getLabEventType().getName());
                     if (!errors.isEmpty()) {
-                        throw new RuntimeException(errors.toString());
-                        // todo jmt email
+                        validationErrors.add(new WorkflowValidationError(sampleInstance, errors,
+                                athenaClientService.retrieveProductOrderDetails(sampleInstance.getStartingSample().getProductOrderKey())));
                     }
                 }
             }
+        }
+
+        if (!validationErrors.isEmpty()) {
+            Map<String, Object> rootMap = new HashMap<String, Object>();
+            rootMap.put("labEvent", labEvent);
+            rootMap.put("bspUser", bspUserList.getById(labEvent.getEventOperator()));
+            rootMap.put("validationErrors", validationErrors);
+            StringWriter stringWriter = new StringWriter();
+            templateEngine.processTemplate("WorkflowValidation.ftl", rootMap, stringWriter);
+            emailSender.sendHtmlEmail("thompson@broadinstitute.org", "Workflow validation failure", stringWriter.toString());
         }
 
         if (jiraCommentUtil != null) {
@@ -193,7 +244,7 @@ public class LabEventHandler implements Serializable {
                     labEvent.getEventLocation(), workingBucketIdentifier.getLabEventTypes().iterator().next());
         }
 
-        return HANDLER_RESPONSE.OK;
+        return HandlerResponse.OK;
 
     }
 
@@ -246,11 +297,11 @@ public class LabEventHandler implements Serializable {
      *
      * @param labEvent
      */
-    private void retryInvalidMolecularState(LabEvent labEvent) {
-        for (LabEvent partiallyProcessedEvent : invalidMolecularState.findRelatedEvents(labEvent)) {
-            processEvent(partiallyProcessedEvent);
-        }
-    }
+//    private void retryInvalidMolecularState(LabEvent labEvent) {
+//        for (LabEvent partiallyProcessedEvent : invalidMolecularState.findRelatedEvents(labEvent)) {
+//            processEvent(partiallyProcessedEvent);
+//        }
+//    }
 
     /**
      * When we receive a lab event which references an
@@ -276,30 +327,30 @@ public class LabEventHandler implements Serializable {
      *
      * @param labEvent
      */
-    private void retryUnanchoredCache(LabEvent labEvent) {
-        // beware that this iteration may recurse to a stack overflow,
-        // as every event that is processed as the potential to
-        // pull back a pile of partially processed events and
-        // reprocess them.
-        for (LabEvent partiallyProcessedEvent : unanchored.findRelatedEvents(labEvent)) {
-            processEvent(partiallyProcessedEvent);
-
-            /*
-            interesting problems arise here.  if you have a compound out of order
-            situation, how do you know the order in which you should process the
-            3 messages you need in order to make sense of the newly arrived
-            message?  with a workflow system, things might become easier.
-            but you can do a pretty good job just relying on the molecular state
-            validation in the event itself.
-
-            maybe findRelatedEvents sorts thing by event time order; pretty good
-            but not perfect.  maybe we randomly sort the list and assume
-            that eventually the molecular envelope validation for each
-            lab event will help you get things processed in the right order.
-             */
-
-        }
-    }
+//    private void retryUnanchoredCache(LabEvent labEvent) {
+//        // beware that this iteration may recurse to a stack overflow,
+//        // as every event that is processed as the potential to
+//        // pull back a pile of partially processed events and
+//        // reprocess them.
+//        for (LabEvent partiallyProcessedEvent : unanchored.findRelatedEvents(labEvent)) {
+//            processEvent(partiallyProcessedEvent);
+//
+//            /*
+//            interesting problems arise here.  if you have a compound out of order
+//            situation, how do you know the order in which you should process the
+//            3 messages you need in order to make sense of the newly arrived
+//            message?  with a workflow system, things might become easier.
+//            but you can do a pretty good job just relying on the molecular state
+//            validation in the event itself.
+//
+//            maybe findRelatedEvents sorts thing by event time order; pretty good
+//            but not perfect.  maybe we randomly sort the list and assume
+//            that eventually the molecular envelope validation for each
+//            lab event will help you get things processed in the right order.
+//             */
+//
+//        }
+//    }
 
     /**
      * Sends an alert message to the lab somehow.  Email list?
@@ -406,7 +457,7 @@ public class LabEventHandler implements Serializable {
         for (LabVessel currVessel : labEvent.getTargetVesselTubes()) {
 
             /*
-                Retrieve product orders related to the lab vessle
+                Retrieve product orders related to the lab vessel
              */
             Collection<String> productOrders = currVessel.getNearestProductOrders();
             WorkflowStepDef workingBucketName = null;

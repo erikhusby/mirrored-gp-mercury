@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.test;
 
+import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
+import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.testng.Assert;
 import org.broadinstitute.bsp.client.users.BspUser;
@@ -363,12 +365,11 @@ public class SamplesPicoEndToEndTest {
             BucketBean bucketBeanEJB = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB);
             EasyMock.replay(mockBucketDao, tubeDao, mockJira, labBatchDAO);
 
-
-            LabEventHandler labEventHandler =
-                    new LabEventHandler(new WorkflowLoader(),
-                            AthenaClientProducer
-                                    .stubInstance(), bucketBeanEJB, mockBucketDao, new BSPUserList(BSPManagerFactoryProducer
-                            .stubInstance()));
+            TemplateEngine templateEngine = new TemplateEngine();
+            templateEngine.postConstruct();
+            LabEventHandler labEventHandler = new LabEventHandler(new WorkflowLoader(),
+                    AthenaClientProducer.stubInstance(), bucketBeanEJB, mockBucketDao,
+                    new BSPUserList(BSPManagerFactoryProducer.stubInstance()), templateEngine, new EmailSender());
 
             LabEvent picoDilutionTransferEntityA1 = labEventFactory.buildFromBettaLimsRackToPlateDbFree(
                     samplesPicoJaxbBuilder.getPicoDilutionTransferJaxbA1(), mapBarcodeToTube, null, null);

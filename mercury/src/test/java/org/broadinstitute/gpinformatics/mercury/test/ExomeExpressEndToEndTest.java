@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.test;
 
 import org.broadinstitute.bsp.client.users.BspUser;
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProducer;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
@@ -17,6 +16,8 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceProducer;
+import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
+import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.designation.LibraryRegistrationSOAPService;
@@ -310,11 +311,11 @@ public class ExomeExpressEndToEndTest {
             EasyMock.replay(mockBucketDao, mockJira, labBatchDAO, tubeDao);
 
 
-            LabEventHandler labEventHandler =
-                    new LabEventHandler(new WorkflowLoader(),
-                            AthenaClientProducer
-                                    .stubInstance(), bucketBeanEJB, mockBucketDao, new BSPUserList(BSPManagerFactoryProducer
-                            .stubInstance()));
+            TemplateEngine templateEngine = new TemplateEngine();
+            templateEngine.postConstruct();
+            LabEventHandler labEventHandler = new LabEventHandler(new WorkflowLoader(),
+                    AthenaClientProducer.stubInstance(), bucketBeanEJB, mockBucketDao,
+                    new BSPUserList(BSPManagerFactoryProducer.stubInstance()), templateEngine, new EmailSender());
             BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory();
             Map<String, TwoDBarcodedTube> mapBarcodeToTube = new HashMap<String, TwoDBarcodedTube>();
 
