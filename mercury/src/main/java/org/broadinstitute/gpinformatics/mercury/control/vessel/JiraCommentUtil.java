@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -65,8 +66,8 @@ public class JiraCommentUtil {
             }
         }
         message += labEvent.getLabEventType().getName() + " for <a href=\"" + appConfig.getUrl() +
-                "/search/all.action?search=&searchKey=" + messageLabVessel.getLabel() +
-                "\">" + messageLabVessel.getLabel() + "</a>" +
+                SearchActionBean.ACTIONBEAN_URL_BINDING + "?" + SearchActionBean.SEARCH_ACTION + "=&searchKey=" +
+                messageLabVessel.getLabel() + "\">" + messageLabVessel.getLabel() + "</a>" +
                 " on " + labEvent.getEventLocation() + " at " + labEvent.getEventDate();
 
         Set<LabVessel> labVessels;

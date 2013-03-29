@@ -4,9 +4,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean;
+import org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.bettalims.BettalimsConnector;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
@@ -34,6 +37,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
+import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -122,6 +126,9 @@ public class BettalimsMessageResource {
 
     @Inject
     private AthenaClientService athenaClientService;
+
+    @Inject
+    private AppConfig appConfig;
 
     /**
      * Accepts a message from (typically) a liquid handling deck.  We unmarshal ourselves, rather than letting JAX-RS
@@ -227,7 +234,7 @@ public class BettalimsMessageResource {
         }
     }
 
-    // todo jmt move this to a Control class, this Boundary class is getting too big
+    // todo jmt move workflow validation to a Control class, this Boundary class is getting too big
 
     /**
      * Validate workflow for all events in a message.
@@ -273,11 +280,14 @@ public class BettalimsMessageResource {
         private SampleInstance sampleInstance;
         private List<String> errors;
         private ProductOrder productOrder;
+        private AppConfig appConfig;
 
-        public WorkflowValidationError(SampleInstance sampleInstance, List<String> errors, ProductOrder productOrder) {
+        public WorkflowValidationError(SampleInstance sampleInstance, List<String> errors, ProductOrder productOrder,
+                AppConfig appConfig) {
             this.sampleInstance = sampleInstance;
             this.errors = errors;
             this.productOrder = productOrder;
+            this.appConfig = appConfig;
         }
 
         public SampleInstance getSampleInstance() {
@@ -290,6 +300,18 @@ public class BettalimsMessageResource {
 
         public ProductOrder getProductOrder() {
             return productOrder;
+        }
+
+        public String getLinkToProductOrder() {
+            return appConfig.getUrl() + ProductOrderActionBean.ACTIONBEAN_URL_BINDING + "?" +
+                    ProductOrderActionBean.VIEW_ACTION + "&" + ProductOrderActionBean.PRODUCT_ORDER_PARAMETER +
+                    "=" + productOrder.getBusinessKey();
+        }
+
+        public String getLinkToResearchProject() {
+            return appConfig.getUrl() + ResearchProjectActionBean.ACTIONBEAN_URL_BINDING + "?" +
+                    ResearchProjectActionBean.VIEW_ACTION + "&" + ResearchProjectActionBean.RESEARCH_PROJECT_PARAMETER +
+                    "=" + productOrder.getResearchProject().getBusinessKey();
         }
     }
 
@@ -304,12 +326,16 @@ public class BettalimsMessageResource {
 
         if (!validationErrors.isEmpty()) {
             Map<String, Object> rootMap = new HashMap<String, Object>();
+            String linkToPlastic = appConfig.getUrl() + SearchActionBean.ACTIONBEAN_URL_BINDING + "?" +
+                    SearchActionBean.SEARCH_ACTION + "=&searchKey=" + labVessels.iterator().next().getLabel();
+            rootMap.put("linkToPlastic", linkToPlastic);
             rootMap.put("stationEvent", stationEventType);
             rootMap.put("bspUser", bspUserList.getByUsername(stationEventType.getOperator()));
             rootMap.put("validationErrors", validationErrors);
             StringWriter stringWriter = new StringWriter();
             templateEngine.processTemplate("WorkflowValidation.ftl", rootMap, stringWriter);
-            emailSender.sendHtmlEmail("thompson@broadinstitute.org", "Workflow validation failure", stringWriter.toString());
+            emailSender.sendHtmlEmail(appConfig.getWorkflowValidationEmail(), "Workflow validation failure for " +
+                    stationEventType.getEventType(), stringWriter.toString());
         }
     }
 
@@ -331,7 +357,8 @@ public class BettalimsMessageResource {
                     List<String> errors = workflowVersion.validate(labVessel, eventType);
                     if (!errors.isEmpty()) {
                         validationErrors.add(new WorkflowValidationError(sampleInstance, errors,
-                                athenaClientService.retrieveProductOrderDetails(sampleInstance.getStartingSample().getProductOrderKey())));
+                                athenaClientService.retrieveProductOrderDetails(
+                                        sampleInstance.getStartingSample().getProductOrderKey()), appConfig));
                     }
                 }
             }
@@ -586,7 +613,12 @@ public class BettalimsMessageResource {
      * @param message JAXB
      */
     public void processMessage(BettaLIMSMessage message) {
-        validateWorkflow(message);
+        try {
+            validateWorkflow(message);
+        } catch (Exception e) {
+            LOG.error("Failed to validate workflow", e);
+            // Don't rethrow, workflow must not stop persistence of the message
+        }
         List<LabEvent> labEvents = labEventFactory.buildFromBettaLims(message);
         for (LabEvent labEvent : labEvents) {
             labEventHandler.processEvent(labEvent);

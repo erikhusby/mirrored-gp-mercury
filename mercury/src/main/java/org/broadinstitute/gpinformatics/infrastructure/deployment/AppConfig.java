@@ -26,6 +26,8 @@ public class AppConfig extends AbstractConfig implements Serializable {
 
     private int jmsPort;
 
+    private String workflowValidationEmail;
+
     public String getUrl() {
         if (!StringUtils.isBlank(port)) {
             return "http://" + host + ":" + port + "/Mercury/";
@@ -55,6 +57,14 @@ public class AppConfig extends AbstractConfig implements Serializable {
 
     public String getPort() {
         return port;
+    }
+
+    public String getWorkflowValidationEmail() {
+        return workflowValidationEmail;
+    }
+
+    public void setWorkflowValidationEmail(String workflowValidationEmail) {
+        this.workflowValidationEmail = workflowValidationEmail;
     }
 
     public static AppConfig produce(Deployment deployment) {
