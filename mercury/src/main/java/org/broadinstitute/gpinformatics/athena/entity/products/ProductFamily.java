@@ -68,6 +68,10 @@ public class ProductFamily implements Serializable, Comparable<ProductFamily> {
         return name;
     }
 
+    public void setProductFamilyId(Long productFamilyId) {
+        this.productFamilyId = productFamilyId;
+    }
+
     @Override
     public int compareTo(ProductFamily that) {
         CompareToBuilder builder = new CompareToBuilder();
