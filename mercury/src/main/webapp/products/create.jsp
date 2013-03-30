@@ -208,7 +208,7 @@
                         Product Family *
                     </stripes:label>
                     <div class="controls">
-                        <stripes:select name="editProduct.productFamily.productFamilyId" id="productFamily">
+                        <stripes:select name="productFamilyId" id="productFamily">
                             <stripes:option value="">Select a Product Family</stripes:option>
                             <stripes:options-collection collection="${actionBean.productFamilies}" label="name"
                                                         value="productFamilyId"/>

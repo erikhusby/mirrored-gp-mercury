@@ -62,8 +62,10 @@ public class ProductActionBean extends CoreActionBean {
     private String[] operators = new String[0];
     private String[] values = new String[0];
 
+    @Validate(required = true, on = {SAVE_ACTION})
+    private Long productFamilyId;
+
     @ValidateNestedProperties({
-        @Validate(field="productFamily.productFamilyId", required = true, maxlength=255, on={SAVE_ACTION}, label="Product Family"),
         @Validate(field="productName", required = true, maxlength=255, on={SAVE_ACTION}, label = "Product Name"),
         @Validate(field="partNumber", required = true, maxlength=255, on={SAVE_ACTION}, label="Part Number"),
         @Validate(field="description", required = true, maxlength = 2000, on={SAVE_ACTION}, label = "Description"),
@@ -102,6 +104,16 @@ public class ProductActionBean extends CoreActionBean {
     public void setupFamilies() {
         productFamilies = productFamilyDao.findAll();
         Collections.sort(productFamilies);
+    }
+
+    /**
+     * If the product exists then set the family id so that the selection option will be selected correctly
+     */
+    @After(stages = LifecycleStage.EventHandling, on = {CREATE_ACTION, EDIT_ACTION})
+    public void populateFamilyId() {
+        if (editProduct != null) {
+            productFamilyId = editProduct.getProductFamily().getProductFamilyId();
+        }
     }
 
     @After(stages = LifecycleStage.BindingAndValidation, on = {LIST_ACTION})
@@ -240,7 +252,12 @@ public class ProductActionBean extends CoreActionBean {
     public Resolution save() {
         populateTokenListFields();
 
-        editProduct.setProductFamily(productFamilyDao.find(editProduct.getProductFamily().getProductFamilyId()));
+        // The productFamilyId is required, so if the original is null or the id is different, set the product to the
+        // product family that is represented by the new id.
+        if ((editProduct.getProductFamily() == null) ||
+            productFamilyId.equals(editProduct.getProductFamily().getProductFamilyId())) {
+            editProduct.setProductFamily(productFamilyDao.find(productFamilyId));
+        }
 
         // If all lengths match, just send it.
         if (allLengthsMatch()) {
@@ -378,5 +395,13 @@ public class ProductActionBean extends CoreActionBean {
 
     public void setCriteria(String[] criteria) {
         this.criteria = criteria;
+    }
+
+    public Long getProductFamilyId() {
+        return productFamilyId;
+    }
+
+    public void setProductFamilyId(Long productFamilyId) {
+        this.productFamilyId = productFamilyId;
     }
 }
