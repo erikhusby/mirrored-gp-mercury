@@ -217,6 +217,9 @@
             <mail-session jndi-name="java:jboss/mail/Default">
                 <smtp-server outbound-socket-binding-ref="mail-smtp"/>
             </mail-session>
+            <mail-session jndi-name="java:/mail/broadsmtp" from="gplims@broadinstitute.org">
+                <smtp-server outbound-socket-binding-ref="broadmail-smtp"/>
+            </mail-session>
         </subsystem>
         <subsystem xmlns="urn:jboss:domain:messaging:1.1">
             <hornetq-server>
@@ -441,6 +444,9 @@
         <socket-binding name="txn-status-manager" port="${jboss.socket.txn-status-manager:4713}"/>
         <outbound-socket-binding name="mail-smtp">
             <remote-destination host="localhost" port="25"/>
+        </outbound-socket-binding>
+        <outbound-socket-binding name="broadmail-smtp">
+            <remote-destination host="smtp.broadinstitute.org" port="587"/>
         </outbound-socket-binding>
     </socket-binding-group>
 
