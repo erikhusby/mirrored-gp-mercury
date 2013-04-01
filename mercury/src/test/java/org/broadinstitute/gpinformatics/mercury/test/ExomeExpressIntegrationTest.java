@@ -157,7 +157,11 @@ public class ExomeExpressIntegrationTest {
             System.out.println("Send export to Squid? (y/n) [n]:");
             String input = scanner.nextLine();
             if (input.toLowerCase().startsWith("y")) {
-                GSSRSampleKitRequest request = makeGssrSampleKitRequest(platingTargetTubeBarcodes);
+
+                System.out.println("Enter the Generated Work Request ID");
+                String workRequestID = scanner.nextLine();
+
+                GSSRSampleKitRequest request = makeGssrSampleKitRequest(platingTargetTubeBarcodes, workRequestID);
                 SampleKitSOAPService sampleKitSOAPService =
                         new SampleKitSOAPServiceImpl(SquidConfig.produce(deployment));
                 GSSRSampleKitResponse response = sampleKitSOAPService.createGSSRSampleKit(request);
@@ -233,7 +237,7 @@ public class ExomeExpressIntegrationTest {
         }
     }
 
-    private GSSRSampleKitRequest makeGssrSampleKitRequest(List<String> platingTargetTubeBarcodes) {
+    private GSSRSampleKitRequest makeGssrSampleKitRequest(List<String> platingTargetTubeBarcodes, String wrId) {
         GSSRSampleKitRequest request = new GSSRSampleKitRequest();
         request.setGssrWorkGroup(SpfWorkGroupEnum.NEXT_GENERATION_SEQUENCING);
         request.setRequestor(makeSampleKitRequestor("Brian", "Reilly"));
@@ -244,6 +248,8 @@ public class ExomeExpressIntegrationTest {
         request.setSampleKitMaterialType(SpfMaterialTypeEnum.GENOMIC_DNA);
         RequestSampleSet sampleSet = makeRequestSampleSet(platingTargetTubeBarcodes);
         request.getRequestSampleSet().add(sampleSet);
+
+        request.setWorkRequestID(wrId);
         return request;
     }
 
@@ -296,6 +302,7 @@ public class ExomeExpressIntegrationTest {
         organismAttributes.setLSId("org.broadinstitute.gpinformatics.mercury.test.ExomeExpressIntegrationTest:"
                                    + tubeBarcode);
         gssrSample.setSampleOrganismAttributes(organismAttributes);
+        gssrSample.setSampleType(SpfSampleTypeEnum.BSP_SAMPLE);
         gssrSample.setFactoryBarcode(objectFactory.createGSSRSampleFactoryBarcode(tubeBarcode));
         return gssrSample;
     }
