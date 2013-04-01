@@ -6,18 +6,17 @@ import net.sourceforge.stripes.validation.Validate;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
-import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
-import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.rework.ReworkLevel;
-import org.broadinstitute.gpinformatics.mercury.entity.rework.ReworkReason;
+import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkReason;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
@@ -32,19 +31,14 @@ import java.util.List;
 public class AddReworkActionBean extends CoreActionBean {
     @Inject
     private LabVesselDao labVesselDao;
-
     @Inject
     private MercurySampleDao mercurySampleDao;
-
     @Inject
     private BucketEntryDao bucketEntryDao;
-
     @Inject
-    private BucketDao bucketDao;
-
+    private ReworkEjb reworkEjb;
     @Inject
     private AthenaClientService athenaClientService;
-
     @Inject
     private LabEventHandler labEventHandler;
 
@@ -77,45 +71,23 @@ public class AddReworkActionBean extends CoreActionBean {
     @HandlesEvent(REWORK_SAMPLE)
     public Resolution reworkSample() {
         if (getBuckets().isEmpty()) {
-            addValidationError("vesselLabel", "{0} is not in a bucket.", vesselLabel);
+            addValidationError("vesselLabel", "{2} is not in a bucket.", vesselLabel);
+        }
+        if (bucketName.equals("Pico/Plating Bucket")) {
+            reworkStep = LabEventType.PICO_PLATING_BUCKET;
+        } else {
+            reworkStep = LabEventType.SHEARING_BUCKET;
+        }
+        Collection<MercurySample> reworks = new ArrayList<MercurySample>();
+        try {
+            reworks = reworkEjb.addReworks(labVessel, reworkReason, reworkStep, commentText);
+        } catch (InformaticsServiceException e) {
+            addGlobalValidationError(e.getMessage());
         }
 
-        List<MercurySample> reworks = new ArrayList<MercurySample>();
-        for (VesselContainer vesselContainer : labVessel.getContainerList()) {
-            boolean skipVessel = false;
-            for (VesselPosition vesselPosition : vesselContainer.getEmbedder().getVesselGeometry()
-                    .getVesselPositions()) {
-                if (!skipVessel) {
-                    final Collection<SampleInstance> samplesAtPosition =
-                            labVessel.getSamplesAtPosition(vesselPosition.name());
-
-                    for (SampleInstance sampleInstance : samplesAtPosition) {
-                        final MercurySample mercurySample = sampleInstance.getStartingSample();
-
-                        final BucketEntry bucketEntry =
-                                bucketEntryDao.findByVesselAndPO(labVessel, mercurySample.getProductOrderKey());
-                        if (bucketEntry != null) {
-                            skipVessel = true;
-                            addGlobalValidationError("Sample {2} in product order {3} already exists in the {4} bucket.",
-                                    mercurySample.getSampleKey(), mercurySample.getProductOrderKey(),
-                                    bucketEntry.getBucket().getBucketDefinitionName());
-                        }
-                        if (!reworks.contains(mercurySample) && !skipVessel) {
-                            mercurySample.reworkSample(
-                                    reworkReason, ReworkLevel.ONE_SAMPLE_RELEASE_REST_BATCH,
-                                    labVessel.getLatestEvent(),
-                                    reworkStep, labVessel, vesselPosition, commentText
-                            );
-                            reworks.add(mercurySample);
-                        }
-                    }
-                }
-            }
-        }
-        if (!reworks.isEmpty()) {
-            mercurySampleDao.persistAll(reworks);
-        }
-        return new ForwardResolution(VIEW_PAGE);
+        final String pluralIfAppropriate = reworks.size() > 1 ? "s have" : " has";
+        addMessage("{0} sample{1} been added to the {2} bucket.", reworks.size(), pluralIfAppropriate, bucketName);
+        return new RedirectResolution(this.getClass());
     }
 
 
@@ -129,16 +101,6 @@ public class AddReworkActionBean extends CoreActionBean {
     public Resolution findVessel() {
         labVessel = labVesselDao.findByIdentifier(vesselLabel);
         return new ForwardResolution(VIEW_PAGE);
-    }
-
-    @After(stages = LifecycleStage.BindingAndValidation, on = {REWORK_SAMPLE})
-    public void setUpLabRework() {
-//        bucket=bucketDao.findByName(bucket.getName())
-        if (bucketName.equals("Pico/Plating Bucket")) {
-            reworkStep = LabEventType.PICO_PLATING_BUCKET;
-        } else {
-            reworkStep = LabEventType.SHEARING_BUCKET;
-        }
     }
 
     @After(stages = LifecycleStage.BindingAndValidation, on = {VESSEL_INFO, REWORK_SAMPLE})
@@ -162,8 +124,8 @@ public class AddReworkActionBean extends CoreActionBean {
 
     @HandlesEvent(VESSEL_INFO)
     public ForwardResolution vesselInfo() {
-        if (labVessel==null){
-            addGlobalValidationError("Mercury does not recognize vessel with barcode {0}.",vesselLabel);
+        if (labVessel == null) {
+            addGlobalValidationError("Mercury does not recognize vessel with barcode {0}.", vesselLabel);
         }
         return new ForwardResolution(VESSEL_INFO_PAGE);
     }

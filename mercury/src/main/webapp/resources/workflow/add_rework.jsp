@@ -43,7 +43,7 @@
                 <div class="controls">
                     <stripes:select name="reworkReason">
                         <stripes:options-enumeration
-                                enum="org.broadinstitute.gpinformatics.mercury.entity.rework.ReworkReason"
+                                enum="org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkReason"
                                 label="value"/>
                     </stripes:select>
                 </div>

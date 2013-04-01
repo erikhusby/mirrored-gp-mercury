@@ -9,7 +9,7 @@
  * use, misuse, or functionality.
  */
 
-package org.broadinstitute.gpinformatics.mercury.entity.rework;
+package org.broadinstitute.gpinformatics.mercury.entity.rapsheet;
 
 public enum ReworkLevel {
     ONE_SAMPLE_HOLD_REST_BATCH("Type 1", "Rework one sample and hold up the rest of the batch."),

@@ -9,13 +9,12 @@
  * use, misuse, or functionality.
  */
 
-package org.broadinstitute.gpinformatics.mercury.entity.rework;
+package org.broadinstitute.gpinformatics.mercury.entity.rapsheet;
 
 import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
-import java.util.List;
 
 @Entity
 @Audited

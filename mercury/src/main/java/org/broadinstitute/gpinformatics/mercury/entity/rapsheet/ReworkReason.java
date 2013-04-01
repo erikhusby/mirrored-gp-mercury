@@ -9,15 +9,19 @@
  * use, misuse, or functionality.
  */
 
-package org.broadinstitute.gpinformatics.mercury.control.dao.rework;
+package org.broadinstitute.gpinformatics.mercury.entity.rapsheet;
 
-import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
+public enum ReworkReason {
+    MACHINE_ERROR("Machine Error"),
+    UNKNOWN_ERROR("Unknown Error");
 
-import javax.ejb.Stateful;
-import javax.enterprise.context.RequestScoped;
+    private String value;
 
-@Stateful
-@RequestScoped
-public class ReworkEntryDao extends GenericDao {
+    ReworkReason(String value) {
+        this.value = value;
+    }
 
+    public String getValue() {
+        return value;
+    }
 }

@@ -9,7 +9,7 @@
  * use, misuse, or functionality.
  */
 
-package org.broadinstitute.gpinformatics.mercury.entity.rework;
+package org.broadinstitute.gpinformatics.mercury.entity.rapsheet;
 
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;

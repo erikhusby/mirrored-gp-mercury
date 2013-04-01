@@ -10,7 +10,7 @@
  */
 
 
-package org.broadinstitute.gpinformatics.mercury.entity.rework;
+package org.broadinstitute.gpinformatics.mercury.entity.rapsheet;
 
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.hibernate.envers.Audited;
