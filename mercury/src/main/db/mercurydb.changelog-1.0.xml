@@ -1407,4 +1407,23 @@
         <dropTable tableName="reagent_containers_aud" schemaName="mercury"/>
     </changeSet>
 
+    <changeSet id="GPLIM-765-a02" author="dryan">
+        <sql splitStatements="false">
+BEGIN
+    FOR r IN (
+        SELECT TABLE_NAME, CONSTRAINT_NAME, OWNER
+            FROM USER_CONSTRAINTS
+            WHERE TABLE_NAME = 'LV_POS_MERCURY_SAMPLES'
+            AND CONSTRAINT_TYPE = 'U'
+        )
+        LOOP
+            EXECUTE IMMEDIATE REPLACE(REPLACE(REPLACE(
+                'ALTER TABLE #OWNER#.#TABLE# DROP CONSTRAINT #CON#' ,
+            '#TABLE#',r.TABLE_NAME) ,
+            '#CON#',r.CONSTRAINT_NAME),'#OWNER#',r.OWNER);
+        END LOOP;
+END;
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>
