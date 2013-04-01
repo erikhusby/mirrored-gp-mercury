@@ -100,7 +100,7 @@ public class AddReworkActionBean extends CoreActionBean {
                                     mercurySample.getSampleKey(), mercurySample.getProductOrderKey(),
                                     bucketEntry.getBucket().getBucketDefinitionName());
                         }
-                        if (!reworks.contains(mercurySample) && skipVessel) {
+                        if (!reworks.contains(mercurySample) && !skipVessel) {
                             mercurySample.reworkSample(
                                     reworkReason, ReworkLevel.ONE_SAMPLE_RELEASE_REST_BATCH,
                                     labVessel.getLatestEvent(),
