@@ -100,6 +100,9 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
 
     /**
      * Test to make sure that messages are stored as DB objects.
+     * <p/>
+     * This test doesn't actually connect to the JMS queue.  The test hands the message directly
+     * to the MDB handler method.
      */
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testOnMessage() throws Exception {
@@ -134,8 +137,6 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
     }
 
     public Session createSession() throws JMSException {
-        // This test doesn't (yet) actually connect to the JMS queue.  The test hands the message directly
-        // to the MDB handler method.  So the values used here are not important and may not be correct.
         HornetQConnectionFactory cf = HornetQJMSClient.createConnectionFactoryWithoutHA(JMSFactoryType.CF,
                 new TransportConfiguration(NettyConnectorFactory.class.getName(),
                         new HashMap<String, Object>() {{
@@ -143,7 +144,7 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
                             put(TransportConstants.HOST_PROP_NAME, appConfig.getHost());
                         }}
                 ));
-        // This connection is never closed, which may be Bad but it doesn't seem to break anything.
+        // This connection is never closed, which is probably Bad but it doesn't seem to break anything.
         Connection connection = cf.createConnection();
         return connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
     }
