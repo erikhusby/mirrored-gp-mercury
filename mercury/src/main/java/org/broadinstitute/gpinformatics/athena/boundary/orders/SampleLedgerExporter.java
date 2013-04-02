@@ -6,6 +6,7 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingTrackerUtils;
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -258,10 +259,14 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         // Any messages for items that are not billed yet
         String billingError = sample.getUnbilledLedgerItemMessages();
 
-        // Only use error style when there is an error in the string
         if (StringUtils.isBlank(billingError)) {
+            // no value, so just empty a blank line
             getWriter().nextCell();
+        } else if (billingError.equals(BillingSession.SUCCESS)) {
+            // Give the success message with no special style
+            getWriter().writeCell(billingError);
         } else {
+            // Only use error style when there is an error in the string
             getWriter().writeCell(billingError, getErrorMessageStyle());
         }
 
