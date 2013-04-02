@@ -164,14 +164,13 @@ public class UploadTrackerActionBean extends CoreActionBean {
             addMessage("Updated the billing ledger for " + orderIdsUpdated.size() + " product order(s) across " +
                             numberOfProducts + " primary product(s).");
 
-            // Since everything worked, delete the file
-            IOUtils.closeQuietly(inputStream);
+            // Since everything worked, delete the file.
             FileUtils.deleteQuietly(previewFile);
         } catch (Exception e) {
             logger.error(e);
             addGlobalValidationError(e.getMessage());
         } finally {
-            // No matter what, close the file but it will be ignored if everything was closed and deleted
+            // No matter what, close the file but it will be ignored if everything was closed and deleted.
             IOUtils.closeQuietly(inputStream);
         }
     }
