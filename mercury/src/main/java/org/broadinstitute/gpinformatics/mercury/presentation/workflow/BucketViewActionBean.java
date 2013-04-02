@@ -143,17 +143,17 @@ public class BucketViewActionBean extends CoreActionBean {
     public void createBatchValidation() {
 
         if (!getUserBean().isValidJiraUser()) {
-            addValidationError("jiraTicketId", "You must be A valid Jira user to create an LCSet");
+            addValidationError("jiraTicketId", "You must be A valid Jira user to create an LCSet.");
             viewBucket();
         }
 
         if (CollectionUtils.isEmpty(selectedVesselLabels)) {
-            addValidationError("selectedVesselLabels", "At least one vessel must be selected to create a batch");
+            addValidationError("selectedVesselLabels", "At least one vessel must be selected to create a batch.");
             viewBucket();
         }
 
         if (StringUtils.isBlank(summary)) {
-            addValidationError("summary", "You must provide at least a summary to create a Jira Ticket");
+            addValidationError("summary", "You must provide at least a summary to create a Jira Ticket.");
             viewBucket();
         }
     }
