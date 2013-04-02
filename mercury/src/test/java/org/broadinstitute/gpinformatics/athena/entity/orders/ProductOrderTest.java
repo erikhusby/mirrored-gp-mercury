@@ -50,6 +50,7 @@ public class ProductOrderTest {
         Configuration configuration = new ConfigurationBuilder()
                 .ignoreProperty("samples")
                 .ignoreProperty("title")
+                // TODO: jiraTicketKey is part of businessKey which is what equals() uses. should it really be ignored?
                 .ignoreProperty("jiraTicketKey")
                 .ignoreProperty("orderStatus")
                 .ignoreProperty("count")
@@ -62,7 +63,9 @@ public class ProductOrderTest {
                 .ignoreProperty("product")
                 .ignoreProperty("researchProject")
                 .ignoreProperty("comments")
-                .ignoreProperty("sampleList").build();
+                .ignoreProperty("sampleList")
+                .ignoreProperty("fundingDeadline")
+                .ignoreProperty("publicationDeadline").build();
         tester.testBean(ProductOrder.class, configuration);
 
         class ProductOrderFactory implements EquivalentFactory<ProductOrder> {
@@ -79,14 +82,12 @@ public class ProductOrderTest {
 
                 ProductOrder order =
                     new ProductOrder(ID, "PO title", sixBspSamplesNoDupes, "quoteId", product, researchProject);
-                order.setFundingDeadline(new Date());
-                order.setPublicationDeadline(new Date());
 
                 return order;
             }
         }
 
-        // Currently ProductOrder is equivalent based only on RP and title.
+        // Currently ProductOrder is equivalent based only on business key (productOrderId, jiraTicketKey)
         new EqualsMethodTester().testEqualsMethod(new ProductOrderFactory(), configuration);
 
         new HashCodeMethodTester().testHashCodeMethod(new ProductOrderFactory());
