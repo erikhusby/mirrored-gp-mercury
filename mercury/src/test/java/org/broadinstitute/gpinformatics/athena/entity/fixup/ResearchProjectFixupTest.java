@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.fixup;
 
-import org.testng.Assert;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
@@ -43,24 +44,22 @@ public class ResearchProjectFixupTest extends Arquillian {
     public void fixupGpLim95() throws IOException{
         List<ResearchProject> rpList = rpDao.findAllResearchProjects();
         List<ResearchProject> rpListToPersist = new ArrayList<ResearchProject>();
-        int count =0;
+        int count = 0;
         StringBuilder userTitleList = new StringBuilder();
-        for (ResearchProject rp : rpList)
-        {
-            if (rp.getJiraTicketKey() == null || rp.getJiraTicketKey().trim().length() == 0)
-            {
+        for (ResearchProject rp : rpList) {
+            if (StringUtils.isBlank(rp.getJiraTicketKey())) {
                 // Create the JIRA
                 try {
                     rp.submit();
                     rpListToPersist.add(rp);
-                } catch ( Exception e ) {
+                } catch (Exception e) {
                     count++;
-                    userTitleList.append(rp.getTitle() +":" + rp.getCreatedBy() +" , ");
+                    userTitleList.append(rp.getTitle()).append(":").append(rp.getCreatedBy()).append(" , ");
                 }
             }
         }
-        if (count > 0 ) {
-            Assert.fail(count + " exceptions occurred. " + userTitleList.toString());
+        if (count > 0) {
+            Assert.fail(count + " exceptions occurred. " + userTitleList);
         }
 
         // The entity is already persistent, this call to persist is solely to begin and end a transaction, so the
@@ -68,38 +67,28 @@ public class ResearchProjectFixupTest extends Arquillian {
         rpDao.persistAll(rpListToPersist);
     }
 
+    /**
+     * Helper method to change the owner of a research project.
+     * @param newOwnerUsername new owner's username
+     * @param projectKeys list of RP keys
+     */
+    private void changeProjectOwner(String newOwnerUsername, String... projectKeys) {
+        for (BspUser user : bspUserList.find(newOwnerUsername)) {
+            if (user.getUsername().equals(newOwnerUsername)) {
+                for (String key : projectKeys) {
+                    ResearchProject researchProject = rpDao.findByBusinessKey(key);
+                    researchProject.setCreatedBy(user.getUserId());
+                    rpDao.persist(researchProject);
+                }
+                return;
+            }
+        }
+
+        throw new RuntimeException("No " + newOwnerUsername + " Found!");
+    }
+
     @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
     public void reassignRPUser() {
-        String[] jiraKeys = new String[]{
-                "RP-28",
-                "RP-30",
-                "RP-80",
-                "RP-81"
-        };
-
-        // at the time of this writing this resolves to the one user we want, but add some checks to make sure that
-        // remains the case
-        List<BspUser> bspUsers = bspUserList.find("Christine Stevens");
-
-        if (bspUsers == null || bspUsers.isEmpty()) {
-            throw new RuntimeException("No Christine Stevens Found!");
-        }
-
-        if (bspUsers.size() > 1) {
-            throw new RuntimeException("Too many Christine Stevens found!");
-        }
-
-        BspUser bspUser = bspUsers.get(0);
-        if (!bspUser.getFirstName().equals("Christine") || !bspUser.getLastName().equals("Stevens")) {
-            throw new RuntimeException("Wrong person found: " + bspUser);
-        }
-
-        for (String jiraKey : jiraKeys) {
-            ResearchProject researchProject = rpDao.findByBusinessKey(jiraKey);
-            researchProject.setCreatedBy(bspUser.getUserId());
-
-            rpDao.persist(researchProject);
-        }
-
+        changeProjectOwner("stevens", "RP-28", "RP-30", "RP-80", "RP-81");
     }
 }

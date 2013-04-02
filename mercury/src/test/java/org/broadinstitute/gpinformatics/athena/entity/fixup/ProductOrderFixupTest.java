@@ -21,7 +21,14 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.persistence.Query;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -88,43 +95,30 @@ public class ProductOrderFixupTest extends Arquillian {
     }
 
 
+    /**
+     * Helper method to change the owner of a product order.
+     * @param newOwnerUsername new owner's username
+     * @param orderKeys list of PDO keys
+     */
+    private void changePDOOwner(String newOwnerUsername, String... orderKeys) {
+        for (BspUser user : bspUserList.find(newOwnerUsername)) {
+            if (user.getUsername().equals(newOwnerUsername)) {
+                for (String key : orderKeys) {
+                    ProductOrder productOrder = productOrderDao.findByBusinessKey(key);
+                    productOrder.prepareToSave(user);
+                    productOrderDao.persist(productOrder);
+                }
+                return;
+            }
+        }
+
+        throw new RuntimeException("No " + newOwnerUsername + " Found!");
+    }
+
     @Test(enabled = false)
     public void reassignPDOsToElizabethNickerson() {
-        String[] jiraKeys = new String[]{
-                "PDO-132",
-                "PDO-131",
-                "PDO-130",
-                "PDO-112",
-                "PDO-108",
-                "PDO-107",
-                "PDO-13",
-                "PDO-12",
-                "PDO-9",
-        };
-
-        // at the time of this writing this resolves to the one user we want, but add some checks to make sure that
-        // remains the case
-        List<BspUser> bspUsers = bspUserList.find("Nickerson");
-        if (bspUsers == null || bspUsers.isEmpty()) {
-            throw new RuntimeException("No Nickersons found!");
-        }
-
-        if (bspUsers.size() > 1) {
-            throw new RuntimeException("Too many Nickersons found!");
-        }
-
-        BspUser bspUser = bspUsers.get(0);
-        if (!bspUser.getFirstName().equals("Elizabeth") || !bspUser.getLastName().equals("Nickerson")) {
-            throw new RuntimeException("Wrong person found: " + bspUser);
-        }
-
-        for (String jiraKey : jiraKeys) {
-            ProductOrder productOrder = productOrderDao.findByBusinessKey(jiraKey);
-            productOrder.prepareToSave(bspUser, false);
-
-            productOrderDao.persist(productOrder);
-        }
-
+        changePDOOwner("enickers", "PDO-132", "PDO-131", "PDO-130", "PDO-112", "PDO-108", "PDO-107", "PDO-13", "PDO-12",
+                "PDO-9");
     }
 
     @Test(enabled = false)

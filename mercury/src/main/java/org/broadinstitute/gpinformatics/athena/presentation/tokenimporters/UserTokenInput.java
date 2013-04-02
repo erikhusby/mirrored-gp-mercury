@@ -7,7 +7,6 @@ import org.json.JSONException;
 
 import javax.inject.Inject;
 import java.text.MessageFormat;
-import java.util.List;
 
 /**
  * Token Input support for users.
@@ -30,8 +29,7 @@ public class UserTokenInput extends TokenInput<BspUser> {
     }
 
     public String getJsonString(String query) throws JSONException {
-        List<BspUser> bspUsers = bspUserList.find(query);
-        return createItemListString(bspUsers);
+        return createItemListString(bspUserList.find(query));
     }
 
     @Override

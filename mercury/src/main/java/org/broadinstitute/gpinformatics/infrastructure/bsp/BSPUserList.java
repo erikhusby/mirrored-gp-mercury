@@ -10,11 +10,17 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFac
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCache;
 
+import javax.annotation.Nonnull;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Application wide access to BSP's user list. The list is regularly refreshed by ExternalDataCacheControl.
@@ -92,6 +98,7 @@ public class BSPUserList extends AbstractCache implements Serializable {
      * @param query the query string to match on
      * @return a list of matching users
      */
+    @Nonnull
     public List<BspUser> find(String query) {
         if (StringUtils.isBlank(query)) {
             // no query string supplied
