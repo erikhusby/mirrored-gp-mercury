@@ -121,7 +121,7 @@ public class BillingTrackerUtils {
         return result;
     }
 
-    static RuntimeException getRuntimeException(String errMsg) {
+    private static RuntimeException getRuntimeException(String errMsg) {
         logger.error(errMsg);
         return new RuntimeException(errMsg);
     }

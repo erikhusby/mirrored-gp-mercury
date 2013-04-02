@@ -35,6 +35,11 @@ public class BillingTrackerManager {
     @Inject
     private ProductOrderDao productOrderDao;
 
+    private static RuntimeException getRuntimeException(String errMsg) {
+        logger.error(errMsg);
+        return new RuntimeException(errMsg);
+    }
+
     public Map<String, List<ProductOrder>> parseFileForBilling(InputStream fis) throws Exception {
 
         Map<String, List<ProductOrder>> trackerBillingMap = new HashMap<String, List<ProductOrder>>();
@@ -78,18 +83,19 @@ public class BillingTrackerManager {
             String productPartNumberStr = sheet.getSheetName();
 
             // Just reparsing for fun and checking that we are dealing with the correct file.
-            List<TrackerColumnInfo> trackerHeaderList = BillingTrackerUtils.parseTrackerSheetHeader(sheet.getRow(0), productPartNumberStr);
+            BillingTrackerUtils.parseTrackerSheetHeader(sheet.getRow(0), productPartNumberStr);
 
-            //Get a list of Product OrderIds for this sheet.
+            // Get a list of Product OrderIds for this sheet.
             List<String> sheetOrderIdMap = extractOrderIdsFromSheet(sheet);
 
             for (String pdoIdStr : sheetOrderIdMap) {
-                // Check if this PDO has any locked Ledger rows
+                // Check if this PDO has any locked Ledger rows.
                 Set<LedgerEntry> lockedLedgerEntrySet = ledgerEntryDao.findLockedOutByOrderList(
                         Collections.singletonList(pdoIdStr));
                 if (!lockedLedgerEntrySet.isEmpty()) {
-                    throw BillingTrackerUtils.getRuntimeException("Product Order " + pdoIdStr + " of sheet " + productPartNumberStr +
-                            " is locked out and has " + lockedLedgerEntrySet.size() + " rows that are locked in the DB.");
+                    throw getRuntimeException("Product Order " + pdoIdStr + " of sheet " + productPartNumberStr +
+                                              " is locked out and has " + lockedLedgerEntrySet.size()
+                                              + " rows that are locked in the DB.");
                 }
             }
             result.put(productPartNumberStr, sheetOrderIdMap);
@@ -99,7 +105,7 @@ public class BillingTrackerManager {
         return result;
     }
 
-    private List<String> extractOrderIdsFromSheet(Sheet sheet) {
+    private static List<String> extractOrderIdsFromSheet(Sheet sheet) {
         List<String> result = new ArrayList<String>();
 
         for (Iterator<Row> rit = sheet.rowIterator(); rit.hasNext(); ) {
@@ -110,7 +116,7 @@ public class BillingTrackerManager {
 
             Cell pdoCell = row.getCell(BillingTrackerUtils.PDO_ID_COL_POS);
             if (pdoCell == null) {
-                //Break out of this loop since there is no PDO for this row. Assuming at the end of the valued rows.
+                // Break out of this loop since there is no PDO for this row. Assuming at the end of the valued rows.
                 break;
             }
             String rowPdoIdStr = pdoCell.getStringCellValue();
@@ -169,8 +175,9 @@ public class BillingTrackerManager {
                 // Find the order in the DB
                 productOrder = productOrderDao.findByBusinessKey(currentPdoId);
                 if (productOrder == null) {
-                    throw BillingTrackerUtils.getRuntimeException("Product Order " + currentPdoId + " on row " + (row.getRowNum() + 1) +
-                            " of sheet " + primaryProductPartNumber + " is not found in the database.");
+                    throw getRuntimeException("Product Order " + currentPdoId + " on row " + (row.getRowNum() + 1) +
+                                              " of sheet " + primaryProductPartNumber
+                                              + " is not found in the database.");
                 }
 
                 product = productOrder.getProduct();
@@ -192,17 +199,19 @@ public class BillingTrackerManager {
             // The samples in the order must be the same as the spreadsheet samples, so the size must be the same
             assert samples != null;
             if (sampleIndexInOrder >= samples.size()) {
-                throw BillingTrackerUtils.getRuntimeException("Sample " + currentSampleName + " on row " + (row.getRowNum() + 1) +
-                        " of spreadsheet " + primaryProductPartNumber +
-                        " is not in the expected position. The Order <" + productOrder.getTitle() + " (Id: " + currentPdoId +
-                        ")> has only " + samples.size() + " samples.");
+                throw getRuntimeException("Sample " + currentSampleName + " on row " + (row.getRowNum() + 1) +
+                                          " of spreadsheet " + primaryProductPartNumber +
+                                          " is not in the expected position. The Order <" + productOrder.getTitle()
+                                          + " (Id: " + currentPdoId +
+                                          ")> has only " + samples.size() + " samples.");
             }
 
             productOrderSample = samples.get(sampleIndexInOrder);
             if (!productOrderSample.getSampleName().equals(currentSampleName)) {
-                throw BillingTrackerUtils.getRuntimeException("Sample " + currentSampleName + " on row " + (row.getRowNum() + 1) +
-                        " of spreadsheet " + primaryProductPartNumber +
-                        " is in different position than expected. Expected value from Order is " + productOrderSample.getSampleName());
+                throw getRuntimeException("Sample " + currentSampleName + " on row " + (row.getRowNum() + 1) +
+                                          " of spreadsheet " + primaryProductPartNumber +
+                                          " is in different position than expected. Expected value from Order is "
+                                          + productOrderSample.getSampleName());
             }
 
             // Create a list of LedgerEntry objs for this ProductOrderSample that is part of the current PDO.
@@ -220,9 +229,9 @@ public class BillingTrackerManager {
         return sheetBillingMap;
     }
 
-    private void parseSampleRowForBilling(Row row, ProductOrderSample productOrderSample, Product product,
-                                          List<TrackerColumnInfo> trackerColumnInfos,
-                                          Map<TrackerColumnInfo, PriceItem> priceItemMap) {
+    private static void parseSampleRowForBilling(Row row, ProductOrderSample productOrderSample, Product product,
+                                                 List<TrackerColumnInfo> trackerColumnInfos,
+                                                 Map<TrackerColumnInfo, PriceItem> priceItemMap) {
 
         // Get the date complete cell for changes.
         Cell workCompleteDateCell = row.getCell(BillingTrackerUtils.WORK_COMPLETE_DATE_COL_POS);
@@ -257,15 +266,17 @@ public class BillingTrackerManager {
                     // This is exactly the same validation as in the preview, a refactoring is in order.
                     Cell cell = row.getCell(BillingTrackerUtils.QUOTE_ID_COL_POS);
                     if (cell == null || cell.getStringCellValue() == null) {
-                        throw BillingTrackerUtils.getRuntimeException(String.format(
+                        throw getRuntimeException(String.format(
                                 "Found empty %s value for updated sample %s in %s, price item '%s', in Product sheet %s",
-                                BillingTrackerUtils.QUOTE_ID_HEADING, row.getCell(BillingTrackerUtils.SAMPLE_ID_COL_POS), row.getCell(BillingTrackerUtils.PDO_ID_COL_POS),
+                                BillingTrackerUtils.QUOTE_ID_HEADING,
+                                row.getCell(BillingTrackerUtils.SAMPLE_ID_COL_POS),
+                                row.getCell(BillingTrackerUtils.PDO_ID_COL_POS),
                                 billableRef.getPriceItemName(), product.getPartNumber()));
                     }
 
                     String uploadedQuoteId = cell.getStringCellValue().trim();
                     if (!productOrderSample.getProductOrder().getQuoteId().equals(uploadedQuoteId)) {
-                        throw BillingTrackerUtils.getRuntimeException(MessageFormat
+                        throw getRuntimeException(MessageFormat
                                 .format("Found quote ID ''{0}'' for updated sample ''{1}'' in ''{2}'' in Product sheet ''{3}'', this differs from quote ''{4}'' currently associated with ''{2}''.",
                                         uploadedQuoteId,
                                         row.getCell(BillingTrackerUtils.SAMPLE_ID_COL_POS),
@@ -276,7 +287,8 @@ public class BillingTrackerManager {
 
                     // Only need to check date existence when newQuantity is different than Billed Quantity.
                     if (workCompleteDate == null) {
-                        throw BillingTrackerUtils.getRuntimeException("Sample " + productOrderSample.getSampleName() + " on row " + (row.getRowNum() + 1) +
+                        throw getRuntimeException(
+                                "Sample " + productOrderSample.getSampleName() + " on row " + (row.getRowNum() + 1) +
                                 " of spreadsheet " + product.getPartNumber() +
                                 " has an invalid Date Completed value. Please correct and try again.");
                     } else {
@@ -292,13 +304,13 @@ public class BillingTrackerManager {
         }
     }
 
-    private Double getCellValueAsNonNullDouble(Row row, ProductOrderSample productOrderSample, Product product,
+    private static Double getCellValueAsNonNullDouble(Row row, ProductOrderSample productOrderSample, Product product,
                                                       Cell cell) {
         Double quantity = null;
         if (BillingTrackerUtils.isNonNullNumericCell(cell)) {
             quantity = cell.getNumericCellValue();
             if (quantity == null) {
-                throw BillingTrackerUtils.getRuntimeException(
+                throw getRuntimeException(
                         "Sample " + productOrderSample.getSampleName() + " on row " + (row.getRowNum() + 1) +
                         " of spreadsheet " + product.getPartNumber() +
                         " has a blank value. Please re-download the tracker to populate this.");
@@ -332,7 +344,7 @@ public class BillingTrackerManager {
         }
     }
 
-    private boolean isNonNullDateCell(Cell cell) {
+    private static boolean isNonNullDateCell(Cell cell) {
         return ((cell != null) && (HSSFDateUtil.isCellDateFormatted(cell)));
     }
 
