@@ -222,21 +222,21 @@
                             </div>
                         </div>
 
-                        <div class="view-control-group control-group">
+                        <div class="control-group">
                             <stripes:label for="fundingDeadline" class="control-label">
                                 Funding Deadline
                             </stripes:label>
-                            <div class="form-value">
+                            <div class="controls">
                                 <stripes:text id="fundingDeadline" name="editOrder.fundingDeadline" class="defaultText"
                                               title="Enter date (MM/dd/yyyy)" formatPattern="MM/dd/yyyy" />
                             </div>
                         </div>
 
-                        <div class="view-control-group control-group">
+                        <div class="control-group">
                             <stripes:label for="publicationDeadline" class="control-label">
                                 Publication Deadline
                             </stripes:label>
-                            <div class="form-value">
+                            <div class="controls">
                                 <stripes:text id="publicationDeadline" name="editOrder.publicationDeadline" class="defaultText"
                                               title="Enter date (MM/dd/yyyy)" formatPattern="MM/dd/yyyy" />
                             </div>
