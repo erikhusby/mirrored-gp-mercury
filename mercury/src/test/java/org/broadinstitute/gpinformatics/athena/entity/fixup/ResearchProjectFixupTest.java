@@ -91,4 +91,9 @@ public class ResearchProjectFixupTest extends Arquillian {
     public void reassignRPUser() {
         changeProjectOwner("stevens", "RP-28", "RP-30", "RP-80", "RP-81");
     }
+
+    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
+    public void reassignRPUserGPLIM_1156() {
+        changeProjectOwner("namrata", "RP-57");
+    }
 }
