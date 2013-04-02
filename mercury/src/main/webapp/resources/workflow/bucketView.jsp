@@ -277,8 +277,7 @@
                                 <a href="${ctxpath}/search/all.action?search=&searchKey=${mercurySample.sampleKey}">
                                         ${mercurySample.sampleKey}
                                 </a>
-                            </c:when><c:otherwise>${mercurySample.sampleKey}</c:otherwise></c:choose><c:if
-                                test="${!stat.last}">&nbsp;</c:if>
+                            </c:when><c:otherwise>${mercurySample.sampleKey}</c:otherwise></c:choose>
                     </td>
                     <td>
                         <c:choose>

@@ -42,25 +42,25 @@ public class AddReworkActionBean extends CoreActionBean {
     @Inject
     private LabEventHandler labEventHandler;
 
-    private static final String FIND_VESSEL = "viewVessel";
-    private static final String VESSEL_INFO = "vesselInfo";
-    private static final String REWORK_SAMPLE = "reworkSample";
+    private static final String FIND_VESSEL_ACTION = "viewVessel";
+    private static final String VESSEL_INFO_ACTION = "vesselInfo";
+    private static final String REWORK_SAMPLE_ACTION = "reworkSample";
 
     private String workflowName;
     private LabVessel labVessel;
     private List<WorkflowBucketDef> buckets;
 
-    @Validate(required = true, on = {VESSEL_INFO, REWORK_SAMPLE})
+    @Validate(required = true, on = {VESSEL_INFO_ACTION, REWORK_SAMPLE_ACTION})
     private String vesselLabel;
 
-    @Validate(required = true, on = REWORK_SAMPLE)
+    @Validate(required = true, on = REWORK_SAMPLE_ACTION)
     private String bucketName;
 
     private WorkflowBucketDef bucket;
 
-    @Validate(required = true, on = REWORK_SAMPLE)
+    @Validate(required = true, on = REWORK_SAMPLE_ACTION)
     private ReworkReason reworkReason;
-    @Validate(required = true, on = REWORK_SAMPLE)
+    @Validate(required = true, on = REWORK_SAMPLE_ACTION)
     private String commentText;
 
     private static final String VIEW_PAGE = "/resources/workflow/add_rework.jsp";
@@ -68,7 +68,7 @@ public class AddReworkActionBean extends CoreActionBean {
     private LabEventType reworkStep;
 
 
-    @HandlesEvent(REWORK_SAMPLE)
+    @HandlesEvent(REWORK_SAMPLE_ACTION)
     public Resolution reworkSample() {
         if (getBuckets().isEmpty()) {
             addValidationError("vesselLabel", "{2} is not in a bucket.", vesselLabel);
@@ -97,13 +97,13 @@ public class AddReworkActionBean extends CoreActionBean {
         return new ForwardResolution(VIEW_PAGE);
     }
 
-    @HandlesEvent(FIND_VESSEL)
+    @HandlesEvent(FIND_VESSEL_ACTION)
     public Resolution findVessel() {
         labVessel = labVesselDao.findByIdentifier(vesselLabel);
         return new ForwardResolution(VIEW_PAGE);
     }
 
-    @After(stages = LifecycleStage.BindingAndValidation, on = {VESSEL_INFO, REWORK_SAMPLE})
+    @After(stages = LifecycleStage.BindingAndValidation, on = {VESSEL_INFO_ACTION, REWORK_SAMPLE_ACTION})
     public void setUpLabVessel() {
         labVessel = labVesselDao.findByIdentifier(vesselLabel);
         if (labVessel != null) {
@@ -122,7 +122,7 @@ public class AddReworkActionBean extends CoreActionBean {
         }
     }
 
-    @HandlesEvent(VESSEL_INFO)
+    @HandlesEvent(VESSEL_INFO_ACTION)
     public ForwardResolution vesselInfo() {
         if (labVessel == null) {
             addGlobalValidationError("Mercury does not recognize vessel with barcode {0}.", vesselLabel);
