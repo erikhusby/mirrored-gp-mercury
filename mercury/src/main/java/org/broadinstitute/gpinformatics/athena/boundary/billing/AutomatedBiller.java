@@ -45,7 +45,7 @@ public class AutomatedBiller {
     }
 
     // The schedule "minute = */15, hour = *" means every 15 minutes on the hour.
-    @Schedule(minute = "*/15", hour = "*")
+    @Schedule(minute = "*/15", hour = "*", persistent = false)
     public void processMessages() {
         for (WorkCompleteMessage message : workCompleteMessageDao.getNewMessages()) {
             try {
