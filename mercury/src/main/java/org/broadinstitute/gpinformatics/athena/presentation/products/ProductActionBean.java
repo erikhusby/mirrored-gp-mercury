@@ -111,7 +111,7 @@ public class ProductActionBean extends CoreActionBean {
      */
     @After(stages = LifecycleStage.EventHandling, on = {CREATE_ACTION, EDIT_ACTION})
     public void populateFamilyId() {
-        if (editProduct != null) {
+        if ((editProduct != null) && (editProduct.getProductFamily() != null)) {
             productFamilyId = editProduct.getProductFamily().getProductFamilyId();
         }
     }

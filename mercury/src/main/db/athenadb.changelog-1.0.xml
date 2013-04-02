@@ -2819,4 +2819,28 @@
         <addPrimaryKey schemaName="athena" tableName="WORK_COMPLETE_MESSAGE_AUD" columnNames="rev, WORK_COMPLETE_MESSAGE_ID"/>
     </changeSet>
 
+    <changeSet id="GPLIM-1122" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="PRODUCT_ORDER" columnName="FUNDING_DEADLINE" schemaName="ATHENA"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="PRODUCT_ORDER">
+            <column name="FUNDING_DEADLINE" type="timestamp"/>
+            <column name="PUBLICATION_DEADLINE" type="timestamp"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-1122-1" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="PRODUCT_ORDER_AUD" columnName="FUNDING_DEADLINE" schemaName="ATHENA"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="PRODUCT_ORDER_AUD">
+            <column name="FUNDING_DEADLINE" type="timestamp"/>
+            <column name="PUBLICATION_DEADLINE" type="timestamp"/>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

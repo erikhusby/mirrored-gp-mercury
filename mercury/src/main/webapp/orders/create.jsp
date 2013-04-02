@@ -57,6 +57,9 @@
                         }
                     );
 
+                    $j("#fundingDeadline").datepicker();
+                    $j("#publicationDeadline").datepicker();
+
                     updateUIForProductChoice();
                     updateFundsRemaining();
                 }
@@ -195,51 +198,89 @@
                     </div>
                 </div>
 
-            <div class="control-group">
-                <stripes:label for="owner" class="control-label">
-                    Owner *
-                </stripes:label>
-                <div class="controls">
-                    <stripes:text id="owner" name="owner.listOfKeys" />
-                </div>
-            </div>
-
-            <c:choose>
-                <c:when test="${actionBean.editOrder.draft}">
-                    <div class="control-group">
-                        <stripes:label for="researchProject" class="control-label">
-                            Research Project
-                        </stripes:label>
-                        <div class="controls">
-                            <stripes:text
-                                    readonly="${not actionBean.editOrder.draft}"
-                                    id="researchProject" name="projectTokenInput.listOfKeys"
-                                    class="defaultText"
-                                    title="Enter the research project for this order"/>
-                        </div>
+                <div class="control-group">
+                    <stripes:label for="owner" class="control-label">
+                        Owner *
+                    </stripes:label>
+                    <div class="controls">
+                        <stripes:text id="owner" name="owner.listOfKeys" />
                     </div>
-                </c:when>
-                <c:otherwise>
-                    <div class="view-control-group control-group" style="margin-bottom: 20px;">
-                        <label class="control-label">Research Project</label>
-                        <div class="controls">
-                            <div class="form-value">
-                                <stripes:hidden name="projectTokenInput.listOfKeys" value="${actionBean.editOrder.researchProject.jiraTicketKey}"/>
-                                <stripes:link title="Research Project"
-                                              beanclass="<%=ResearchProjectActionBean.class.getName()%>"
-                                              event="view">
-                                    <stripes:param name="<%=ResearchProjectActionBean.RESEARCH_PROJECT_PARAMETER%>"
-                                                   value="${actionBean.editOrder.researchProject.businessKey}"/>
-                                    ${actionBean.editOrder.researchProject.title}
-                                </stripes:link>
-                                (<a target="JIRA" href="${actionBean.jiraUrl(actionBean.editOrder.researchProject.jiraTicketKey)}" class="external" target="JIRA">
-                                ${actionBean.editOrder.researchProject.jiraTicketKey}
-                                </a>)
+                </div>
+
+                <c:choose>
+                    <c:when test="${actionBean.editOrder.draft}">
+                        <div class="control-group">
+                            <stripes:label for="researchProject" class="control-label">
+                                Research Project
+                            </stripes:label>
+                            <div class="controls">
+                                <stripes:text
+                                        readonly="${not actionBean.editOrder.draft}"
+                                        id="researchProject" name="projectTokenInput.listOfKeys"
+                                        class="defaultText"
+                                        title="Enter the research project for this order"/>
                             </div>
                         </div>
-                    </div>
-                </c:otherwise>
-            </c:choose>
+
+                        <div class="control-group">
+                            <stripes:label for="fundingDeadline" class="control-label">
+                                Funding Deadline
+                            </stripes:label>
+                            <div class="controls">
+                                <stripes:text id="fundingDeadline" name="editOrder.fundingDeadline" class="defaultText"
+                                              title="Enter date (MM/dd/yyyy)" formatPattern="MM/dd/yyyy" />
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <stripes:label for="publicationDeadline" class="control-label">
+                                Publication Deadline
+                            </stripes:label>
+                            <div class="controls">
+                                <stripes:text id="publicationDeadline" name="editOrder.publicationDeadline" class="defaultText"
+                                              title="Enter date (MM/dd/yyyy)" formatPattern="MM/dd/yyyy" />
+                            </div>
+                        </div>
+                    </c:when>
+                    <c:otherwise>
+                        <div class="view-control-group control-group" style="margin-bottom: 20px;">
+                            <label class="control-label">Research Project</label>
+                            <div class="controls">
+                                <div class="form-value">
+                                    <stripes:hidden name="projectTokenInput.listOfKeys" value="${actionBean.editOrder.researchProject.jiraTicketKey}"/>
+                                    <stripes:link title="Research Project"
+                                                  beanclass="<%=ResearchProjectActionBean.class.getName()%>"
+                                                  event="view">
+                                        <stripes:param name="<%=ResearchProjectActionBean.RESEARCH_PROJECT_PARAMETER%>"
+                                                       value="${actionBean.editOrder.researchProject.businessKey}"/>
+                                        ${actionBean.editOrder.researchProject.title}
+                                    </stripes:link>
+                                    (<a target="JIRA" href="${actionBean.jiraUrl(actionBean.editOrder.researchProject.jiraTicketKey)}" class="external" target="JIRA">
+                                        ${actionBean.editOrder.researchProject.jiraTicketKey}
+                                    </a>)
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="view-control-group control-group">
+                            <label class="control-label label-form">Funding Deadline</label>
+                            <div class="controls">
+                                <div class="form-value">
+                                    <fmt:formatDate value="${actionBean.editOrder.fundingDeadline}"/>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="view-control-group control-group">
+                            <label class="control-label label-form">Publication Deadline</label>
+                            <div class="controls">
+                                <div class="form-value">
+                                    <fmt:formatDate value="${actionBean.editOrder.publicationDeadline}"/>
+                                </div>
+                            </div>
+                        </div>
+                    </c:otherwise>
+                </c:choose>
 
                 <div class="control-group">
                     <stripes:label for="product" class="control-label">

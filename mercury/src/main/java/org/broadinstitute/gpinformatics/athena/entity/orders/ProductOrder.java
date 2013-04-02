@@ -95,6 +95,12 @@ public class ProductOrder implements Serializable {
     @Column(length = 2000)
     private String comments;
 
+    @Column(name="FUNDING_DEADLINE")
+    private Date fundingDeadline;
+
+    @Column(name="PUBLICATION_DEADLINE")
+    private Date publicationDeadline;
+
     /** Reference to the Jira Ticket created when the order is placed. Null means that the order is a draft */
     @Column(name = "JIRA_TICKET_KEY", nullable = true)
     private String jiraTicketKey;
@@ -559,9 +565,27 @@ public class ProductOrder implements Serializable {
         this.comments = comments;
     }
 
+    public Date getFundingDeadline() {
+        return fundingDeadline;
+    }
+
+    public void setFundingDeadline(Date fundingDeadline) {
+        this.fundingDeadline = fundingDeadline;
+    }
+
+    public Date getPublicationDeadline() {
+        return publicationDeadline;
+    }
+
+    public void setPublicationDeadline(Date publicationDeadline) {
+        this.publicationDeadline = publicationDeadline;
+    }
+
     public List<ProductOrderSample> getSamples() {
         return samples;
     }
+
+
 
     private void addSamplesInternal(List<ProductOrderSample> newSamples, int samplePos) {
         for (ProductOrderSample sample : newSamples) {
@@ -924,7 +948,18 @@ public class ProductOrder implements Serializable {
         if (quoteId != null && !quoteId.isEmpty()) {
             listOfFields.add(new CustomField(submissionFields, JiraField.QUOTE_ID, quoteId));
         }
+
         listOfFields.add(new CustomField(submissionFields, JiraField.SAMPLE_IDS, getSampleString()));
+
+        if (publicationDeadline != null) {
+            listOfFields.add(new CustomField(submissionFields, JiraField.PUBLICATION_DEADLINE,
+                    JiraService.JIRA_DATE_FORMAT.format(publicationDeadline)));
+        }
+
+        if (fundingDeadline != null) {
+            listOfFields.add(new CustomField(submissionFields, JiraField.FUNDING_DEADLINE,
+                    JiraService.JIRA_DATE_FORMAT.format(getFundingDeadline())));
+        }
 
         BSPUserList bspUserList = ServiceAccessUtility.getBean(BSPUserList.class);
 
@@ -1012,7 +1047,9 @@ public class ProductOrder implements Serializable {
         QUOTE_ID("Quote ID"),
         MERCURY_URL("Mercury URL"),
         SAMPLE_IDS("Sample IDs"),
-        REPORTER("Reporter");
+        REPORTER("Reporter"),
+        FUNDING_DEADLINE("Funding Deadline"),
+        PUBLICATION_DEADLINE("Publication Deadline");
 
         private final String fieldName;
 

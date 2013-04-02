@@ -487,6 +487,24 @@
                 </div>
             </c:if>
 
+            <div class="view-control-group control-group">
+                <label class="control-label label-form">Funding Deadline</label>
+                <div class="controls">
+                    <div class="form-value">
+                        <fmt:formatDate value="${actionBean.editOrder.fundingDeadline}"/>
+                    </div>
+                </div>
+            </div>
+
+            <div class="view-control-group control-group">
+                <label class="control-label label-form">Publication Deadline</label>
+                <div class="controls">
+                    <div class="form-value">
+                        <fmt:formatDate value="${actionBean.editOrder.publicationDeadline}"/>
+                    </div>
+                </div>
+            </div>
+
             <c:if test="${actionBean.editOrder.product.productFamily.supportsNumberOfLanes}">
                 <div class="view-control-group control-group">
                     <label class="control-label label-form">Number of Lanes Per Sample</label>
@@ -561,7 +579,6 @@
                     </div>
                 </div>
             </div>
-
 
             <div class="view-control-group control-group">
                 <label class="control-label label-form">Description</label>
