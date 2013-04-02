@@ -77,7 +77,12 @@ public class ProductOrderTest {
                 ResearchProject researchProject =
                         new ResearchProject(ID, title, "RP title", ResearchProject.IRB_NOT_ENGAGED);
 
-                return new ProductOrder(ID, "PO title", sixBspSamplesNoDupes, "quoteId", product, researchProject);
+                ProductOrder order =
+                    new ProductOrder(ID, "PO title", sixBspSamplesNoDupes, "quoteId", product, researchProject);
+                order.setFundingDeadline(new Date());
+                order.setPublicationDeadline(new Date());
+
+                return order;
             }
         }
 

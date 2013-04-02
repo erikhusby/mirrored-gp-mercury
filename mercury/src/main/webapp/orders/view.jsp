@@ -515,7 +515,6 @@
                 </div>
             </c:if>
 
-
             <div class="view-control-group control-group">
                 <label class="control-label label-form">Add-ons</label>
                 <div class="controls">

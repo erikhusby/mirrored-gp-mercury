@@ -222,21 +222,21 @@
                             </div>
                         </div>
 
-                        <div class="control-group">
+                        <div class="view-control-group control-group">
                             <stripes:label for="fundingDeadline" class="control-label">
                                 Funding Deadline
                             </stripes:label>
-                            <div class="controls">
+                            <div class="form-value">
                                 <stripes:text id="fundingDeadline" name="editOrder.fundingDeadline" class="defaultText"
                                               title="Enter date (MM/dd/yyyy)" formatPattern="MM/dd/yyyy" />
                             </div>
                         </div>
 
-                        <div class="control-group">
+                        <div class="view-control-group control-group">
                             <stripes:label for="publicationDeadline" class="control-label">
                                 Publication Deadline
                             </stripes:label>
-                            <div class="controls">
+                            <div class="form-value">
                                 <stripes:text id="publicationDeadline" name="editOrder.publicationDeadline" class="defaultText"
                                               title="Enter date (MM/dd/yyyy)" formatPattern="MM/dd/yyyy" />
                             </div>
@@ -262,8 +262,8 @@
                             </div>
                         </div>
 
-                        <div class="view-control-group control-group">
-                            <label class="control-label label-form">Funding Deadline</label>
+                        <div class="view-control-group control-group" style="margin-bottom: 20px;">
+                            <label class="control-label">Funding Deadline</label>
                             <div class="controls">
                                 <div class="form-value">
                                     <fmt:formatDate value="${actionBean.editOrder.fundingDeadline}"/>
@@ -271,8 +271,8 @@
                             </div>
                         </div>
 
-                        <div class="view-control-group control-group">
-                            <label class="control-label label-form">Publication Deadline</label>
+                        <div class="view-control-group control-group" style="margin-bottom: 20px;">
+                            <label class="control-label">Publication Deadline</label>
                             <div class="controls">
                                 <div class="form-value">
                                     <fmt:formatDate value="${actionBean.editOrder.publicationDeadline}"/>
