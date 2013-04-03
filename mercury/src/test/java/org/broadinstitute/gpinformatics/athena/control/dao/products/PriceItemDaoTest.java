@@ -20,16 +20,18 @@ public class PriceItemDaoTest extends ContainerTest {
     @Inject
     private PriceItemDao dao;
 
+    @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private Log log;
 
+    @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private UserTransaction utx;
 
 
     @BeforeMethod
     public void beforeMethod() throws Exception {
-        // Skip if no injections, meaning we're not running in container
+        // Skip if no injections, meaning we're not running in container.
         if (utx == null) {
             return;
         }
@@ -41,7 +43,7 @@ public class PriceItemDaoTest extends ContainerTest {
 
     @AfterMethod
     public void afterMethod() throws Exception {
-        // Skip if no injections, meaning we're not running in container
+        // Skip if no injections, meaning we're not running in container.
         if (utx == null) {
             return;
         }

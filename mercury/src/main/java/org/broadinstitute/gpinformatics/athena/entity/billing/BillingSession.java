@@ -46,7 +46,7 @@ public class BillingSession implements Serializable {
     @OneToMany(mappedBy = "billingSession", cascade = {CascadeType.PERSIST})
     private List<LedgerEntry> ledgerEntryItems;
 
-    BillingSession() {}
+    protected BillingSession() {}
 
     public BillingSession(@Nonnull Long createdBy, Set<LedgerEntry> ledgerItems) {
         this.createdBy = createdBy;
@@ -62,6 +62,7 @@ public class BillingSession implements Serializable {
         return createdDate;
     }
 
+    @SuppressWarnings("UnusedDeclaration")
     public void setCreatedDate(Date createdDate) {
         this.createdDate = createdDate;
     }
@@ -70,6 +71,7 @@ public class BillingSession implements Serializable {
         return createdBy;
     }
 
+    @SuppressWarnings("UnusedDeclaration")
     public void setCreatedBy(Long createdBy) {
         this.createdBy = createdBy;
     }
@@ -170,5 +172,9 @@ public class BillingSession implements Serializable {
         }
 
         return ret;
+    }
+
+    public List<LedgerEntry> getLedgerEntryItems() {
+        return ledgerEntryItems;
     }
 }

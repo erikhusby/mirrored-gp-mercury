@@ -11,6 +11,7 @@ import java.text.NumberFormat;
 @RequestScoped
 public class ProductOrderUtil {
 
+    @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private QuoteService quoteService;
 

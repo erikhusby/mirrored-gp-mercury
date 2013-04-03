@@ -46,7 +46,7 @@ public class ProductOrderDao extends GenericDao {
         @Override
         public void callback(CriteriaQuery<ProductOrder> criteriaQuery, Root<ProductOrder> productOrder) {
             if (fetchSpecs.contains(FetchSpec.Samples)) {
-                // one to many so set distinct
+                // This is one to many so set it to be distinct.
                 criteriaQuery.distinct(true);
                 productOrder.fetch(ProductOrder_.samples, JoinType.LEFT);
             }
@@ -127,13 +127,6 @@ public class ProductOrderDao extends GenericDao {
      */
     public ProductOrder findByResearchProjectAndTitle(@Nonnull ResearchProject researchProject,
                                                       @Nonnull String orderTitle) {
-        if (researchProject == null) {
-            throw new NullPointerException("Null Research Project.");
-        }
-
-        if (orderTitle == null) {
-            throw new NullPointerException("Null Product Order Title.");
-        }
 
         EntityManager entityManager = getEntityManager();
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
@@ -157,9 +150,6 @@ public class ProductOrderDao extends GenericDao {
     }
 
     public List<ProductOrder> findByWorkflowName(@Nonnull String workflowName) {
-        if (workflowName == null) {
-            throw new NullPointerException("Null workflowName");
-        }
 
         EntityManager entityManager = getEntityManager();
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
@@ -191,6 +181,18 @@ public class ProductOrderDao extends GenericDao {
         return findAll(ProductOrder.class);
     }
 
+    public List<ProductOrder> findByProductName(@Nonnull final String productName) {
+        return findAll(ProductOrder.class, new GenericDaoCallback<ProductOrder>() {
+            @Override
+            public void callback(CriteriaQuery<ProductOrder> criteriaQuery, Root<ProductOrder> root) {
+                CriteriaBuilder criteriaBuilder = getCriteriaBuilder();
+                Join<ProductOrder, Product> productJoin = root.join(ProductOrder_.product);
+
+                criteriaQuery.where(criteriaBuilder.equal(productJoin.get(Product_.productName), productName));
+            }
+        });
+    }
+
     public List<ProductOrder> findAll(FetchSpec... fetchSpecs) {
         return findAll(ProductOrder.class, new ProductOrderDaoCallback(fetchSpecs));
     }
@@ -204,9 +206,6 @@ public class ProductOrderDao extends GenericDao {
      * @return The products for this person
      */
     public List<ProductOrder> findByCreatedPersonId(@Nonnull Long personId) {
-        if (personId == null) {
-            throw new NullPointerException("Null Person Id.");
-        }
 
         return findList(ProductOrder.class, ProductOrder_.createdBy, personId);
     }
@@ -220,9 +219,6 @@ public class ProductOrderDao extends GenericDao {
      * @return The products for this person
      */
     public List<ProductOrder> findByModifiedPersonId(@Nonnull Long personId) {
-        if (personId == null) {
-            throw new NullPointerException("Null Person Id.");
-        }
 
         return findList(ProductOrder.class, ProductOrder_.modifiedBy, personId);
     }
@@ -235,18 +231,8 @@ public class ProductOrderDao extends GenericDao {
      * @return the order that matches
      */
     public ProductOrder findById(@Nonnull Long orderId) {
-        if (orderId == null) {
-            throw new NullPointerException("Null ProductOrder Id.");
-        }
 
         return findSingle(ProductOrder.class, ProductOrder_.productOrderId, orderId);
-    }
-
-    /**
-     * @return Get the completion status information for all product orders
-     */
-    public Map<String, ProductOrderCompletionStatus> getProgressByBusinessKey() {
-        return getProgressByBusinessKey(null);
     }
 
     /**

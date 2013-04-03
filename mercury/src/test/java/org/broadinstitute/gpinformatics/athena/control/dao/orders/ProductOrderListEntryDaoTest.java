@@ -63,8 +63,9 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
 
         order = ProductOrderDBTestFactory.createTestProductOrder(researchProjectDao, productDao);
 
-        // need to initialize the price items here as we will be exercising their hashCode methods when we create
-        // LedgerEntry entities in some of our tests
+        // We need to initialize the price items here as we will be exercising their hashCode methods when we create
+        // LedgerEntry entities in some of our tests.
+
         //noinspection ResultOfMethodCallIgnored
         order.getProduct().getPrimaryPriceItem().hashCode();
         for (PriceItem priceItem : order.getProduct().getOptionalPriceItems()) {
@@ -99,7 +100,7 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
 
         Map<String, Long> countsMap = new HashMap<String, Long>();
         for (ProductOrderListEntry productOrderListEntry : productOrderListEntries) {
-            if (! countsMap.containsKey(productOrderListEntry.getJiraTicketKey())) {
+            if (!countsMap.containsKey(productOrderListEntry.getJiraTicketKey())) {
                 countsMap.put(productOrderListEntry.getJiraTicketKey(), 1L);
             }
             else {
@@ -116,7 +117,7 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
             }
         });
 
-        if ( ! countsEntries.isEmpty()) {
+        if (!countsEntries.isEmpty()) {
             List<String> strings = new ArrayList<String>();
             for (Map.Entry<String, Long> countEntry : countsEntries) {
                 strings.add(countEntry.getKey() + ": " + countEntry.getValue());
@@ -131,7 +132,7 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
 
         Assert.assertNotNull(productOrderListEntries);
 
-        // this is a container test so there is data in there beyond our test data.  if that turns up bugs for us, great!
+        // This is a container test so there is data in there beyond our test data.  if that turns up bugs for us, great!
         assertPDOUniqueness(productOrderListEntries);
 
         CollectionUtils.filter(productOrderListEntries, new Predicate<ProductOrderListEntry>() {

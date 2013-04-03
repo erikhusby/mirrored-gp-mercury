@@ -23,16 +23,18 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 
 
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled=true)
-public class BillingTrackerImporterContainerTest  extends Arquillian {
+public class BillingTrackerImporterContainerTest extends Arquillian {
 
     public static final String BILLING_TRACKER_TEST_FILENAME = "BillingTracker-ContainerTest.xlsx";
 
     @Inject
     private ProductOrderDao productOrderDao;
 
+    @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private UserTransaction utx;
 
+    @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private Log logger;
 
@@ -43,7 +45,7 @@ public class BillingTrackerImporterContainerTest  extends Arquillian {
 
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void setUp() throws Exception {
-        // Skip if no injections, meaning we're not running in container
+        // Skip if no injections, meaning we're not running in container.
         if (utx == null) {
             return;
         }
@@ -53,7 +55,7 @@ public class BillingTrackerImporterContainerTest  extends Arquillian {
 
     @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void tearDown() throws Exception {
-        // Skip if no injections, meaning we're not running in container
+        // Skip if no injections, meaning we're not running in container.
         if (utx == null) {
             return;
         }
@@ -89,9 +91,8 @@ public class BillingTrackerImporterContainerTest  extends Arquillian {
             Assert.assertFalse(rnaBillingOrderDataByBillableRef.isEmpty());
 
             // Primary Product data
-            String rnaProductName = rnaSheetName;
             String rnaPriceItemName = "Strand Specific RNA-Seq (high coverage-50M paired reads)";
-            BillableRef rnaBillableRef = new BillableRef(rnaProductName, rnaPriceItemName);
+            BillableRef rnaBillableRef = new BillableRef(rnaSheetName, rnaPriceItemName);
             OrderBillSummaryStat rnaPrimaryProductStatData = rnaBillingOrderDataByBillableRef.get(rnaBillableRef);
             Assert.assertEquals(3.0, rnaPrimaryProductStatData.getCharge());
             Assert.assertEquals(0.0, rnaPrimaryProductStatData.getCredit());

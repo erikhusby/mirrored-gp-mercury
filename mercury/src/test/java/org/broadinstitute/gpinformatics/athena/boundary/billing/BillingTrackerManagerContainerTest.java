@@ -26,20 +26,19 @@ public class BillingTrackerManagerContainerTest extends ContainerTest {
 
     public static final String BILLING_TRACKER_TEST_FILENAME = "BillingTracker-ContainerTest.xlsx";
 
-    private static final Log logger = LogFactory.getLog(BillingTrackerManagerContainerTest.class);
-
     @Inject
     BillingTrackerManager billingTrackerManager;
 
     @Inject
     LedgerEntryDao ledgerEntryDao;
 
+    @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private UserTransaction utx;
 
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void setUp() throws Exception {
-        // Skip if no injections, meaning we're not running in container
+        // Skip if no injections, meaning we're not running in container.
         if (utx == null) {
             return;
         }
@@ -49,7 +48,7 @@ public class BillingTrackerManagerContainerTest extends ContainerTest {
 
     @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void tearDown() throws Exception {
-        // Skip if no injections, meaning we're not running in container
+        // Skip if no injections, meaning we're not running in container.
         if (utx == null) {
             return;
         }
@@ -58,31 +57,31 @@ public class BillingTrackerManagerContainerTest extends ContainerTest {
     }
 
     // This test is too sensitive to actual data and broke because some new ledger entries were added on prod. Need
-    // to create product order and upload as part of a more complete test
+    // to create product order and upload as part of a more complete test.
     @Test(enabled = false)
     public void testImport() throws Exception {
 
         FileInputStream fis = null;
 
-        // Create a copy of the deployed test data file
+        // Create a copy of the deployed test data file.
         try {
             fis = (FileInputStream) Thread.currentThread().getContextClassLoader().getResourceAsStream(BILLING_TRACKER_TEST_FILENAME);
 
             Map<String, List<ProductOrder>>  billedProductOrdersMapByPartNumber = billingTrackerManager.parseFileForBilling(fis);
             Assert.assertNotNull(billedProductOrdersMapByPartNumber);
-            // Should only be one sheet
+            // Should only be one sheet.
             Assert.assertEquals(1, billedProductOrdersMapByPartNumber.size());
 
-            // Check the RNA sheet
+            // Check the RNA sheet.
             String rnaSheetName = "P-RNA-0004";
             List<ProductOrder> rnaProductOrders = billedProductOrdersMapByPartNumber.get(rnaSheetName);
             Assert.assertNotNull(rnaProductOrders);
 
-            // There should be one Order for the RNA product data
+            // There should be one Order for the RNA product data.
             Assert.assertEquals(1, rnaProductOrders.size());
             ProductOrder productOrder = rnaProductOrders.get(0);
             Set<LedgerEntry> ledgerSet = ledgerEntryDao.findByOrderList(productOrder);
-            // There should be ledger entries
+            // There should be ledger entries.
             Assert.assertFalse(ledgerSet.isEmpty());
             List<LedgerEntry> ledgerList = new ArrayList<LedgerEntry>(ledgerSet);
             Collections.sort(ledgerList, new Comparator<LedgerEntry>() {

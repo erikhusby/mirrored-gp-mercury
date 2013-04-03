@@ -58,7 +58,7 @@ public class LedgerEntry implements Serializable {
      * Package private constructor for JPA use.
      */
     @SuppressWarnings("UnusedDeclaration")
-    LedgerEntry() {}
+    protected LedgerEntry() {}
 
     public LedgerEntry(@Nonnull ProductOrderSample productOrderSample,
                        @Nonnull PriceItem priceItem,
