@@ -176,7 +176,7 @@ public class BillingSessionActionBean extends CoreActionBean {
     public Resolution bill() {
 
         String pageUrl = getContext().getRequest().getRequestURL().toString();
-        List<BillingEjb.BillingResult> billingResults = billingEjb.bill(editSession, pageUrl, sessionKey);
+        List<BillingEjb.BillingResult> billingResults = billingEjb.bill(editSession.getBusinessKey(), pageUrl, sessionKey);
 
         boolean errorsInBilling = false;
 

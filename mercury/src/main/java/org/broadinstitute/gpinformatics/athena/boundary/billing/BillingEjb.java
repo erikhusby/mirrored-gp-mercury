@@ -99,15 +99,18 @@ public class BillingEjb {
      * {@link org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb.BillingResult#getWorkId()} will contain
      * the work id result.
      *
-     * @param billingSession BillingSession to be billed.
+     *
+     * @param billingSessionKey Billing Session's business key that will be billed.
      * @param pageUrl        URL to be included in the call to the quote server.
      * @param sessionKey     Key to be included in the call to the quote server.
      *
      * @return List of BillingResults describing the success or failure of billing for each previously unbilled QuoteImportItem
      *         associated with the BillingSession.
      */
-    public List<BillingResult> bill(@Nonnull BillingSession billingSession,
+    public List<BillingResult> bill(@Nonnull String billingSessionKey,
                                     @Nonnull String pageUrl, @Nonnull String sessionKey) {
+
+        BillingSession billingSession = billingSessionDao.findByBusinessKey(sessionKey);
 
         boolean errorsInBilling = false;
 
