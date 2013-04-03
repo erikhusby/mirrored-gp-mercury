@@ -17,6 +17,7 @@ import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -112,6 +113,7 @@ public class ReworkIntegrationTest extends Arquillian {
         throw new RuntimeException("I haven't been written yet.");
     }
 
+    @Test
     public void test_rework() throws Exception {
         // create first PDO
         ProductOrder pdo1 = createPdo1FromActionBean();
