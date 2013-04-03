@@ -125,7 +125,7 @@ public class ProductActionBean extends CoreActionBean {
      * Validate information on the product being edited or created.
      */
     @ValidationMethod(on = SAVE_ACTION)
-    public void validatePriceItems() {
+    public void validateForSave() {
         String[] duplicatePriceItems = editProduct.getDuplicatePriceItemNames();
         if (duplicatePriceItems != null) {
             addGlobalValidationError("Cannot save with duplicate price items: " + StringUtils.join(duplicatePriceItems, ", "));
@@ -152,7 +152,18 @@ public class ProductActionBean extends CoreActionBean {
             addValidationError("token-input-primaryPriceItem", "Primary price item is required");
         }
 
-        // Ensure that numeric criteria have valid data.
+        // The productFamilyId is required, so if the original is null or the id is different, set the product to the
+        // product family that is represented by the new id.
+        // We set product family here because we need it to validate the risk criteria.
+        if ((editProduct.getProductFamily() == null) ||
+            productFamilyId.equals(editProduct.getProductFamily().getProductFamilyId())) {
+            editProduct.setProductFamily(productFamilyDao.find(productFamilyId));
+        }
+        checkValidCriteria();
+    }
+
+    private void checkValidCriteria() {
+        // Ensure that numeric criteria have valid data, and that the product supports the requested criteria.
         int matchingValueIndex = 0;
         for (String criterion : criteria) {
             RiskCriterion.RiskCriteriaType type = RiskCriterion.RiskCriteriaType.findByLabel(criterion);
@@ -160,7 +171,9 @@ public class ProductActionBean extends CoreActionBean {
                 try {
                     Double.parseDouble(values[matchingValueIndex]);
                 } catch (NumberFormatException e) {
-                    addGlobalValidationError("Not a valid number for risk calculation: {2}", values[matchingValueIndex]);
+                    addGlobalValidationError("Not a valid number for risk calculation: ''{2}''", values[matchingValueIndex]);
+                } catch (NullPointerException e) {
+                    addGlobalValidationError("Need to provide a value for risk criterion ''{2}''", criterion);
                 }
             }
 
@@ -252,13 +265,6 @@ public class ProductActionBean extends CoreActionBean {
     public Resolution save() {
         populateTokenListFields();
 
-        // The productFamilyId is required, so if the original is null or the id is different, set the product to the
-        // product family that is represented by the new id.
-        if ((editProduct.getProductFamily() == null) ||
-            productFamilyId.equals(editProduct.getProductFamily().getProductFamilyId())) {
-            editProduct.setProductFamily(productFamilyDao.find(productFamilyId));
-        }
-
         // If all lengths match, just send it.
         if (allLengthsMatch()) {
             editProduct.updateRiskCriteria(criteria, operators, values);
@@ -267,7 +273,7 @@ public class ProductActionBean extends CoreActionBean {
             String[] fullOperators = new String[criteria.length];
             String[] fullValues = new String[criteria.length];
 
-            // insert the operators and values for booleans, otherwise, use the next item.
+            // Insert the operators and values for booleans, otherwise, use the next item.
             int fullPosition = 0;
             int originalPosition = 0;
             for (String criterion : criteria) {
