@@ -25,6 +25,11 @@ import org.broadinstitute.gpinformatics.mercury.boundary.designation.Registratio
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.squid.SequelLibrary;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
+import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.PreFlightEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mocks.EverythingYouAskForYouGetAndItsHuman;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bsp.BSPSampleFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
@@ -323,23 +328,23 @@ public class ExomeExpressEndToEndTest {
                         (TwoDBarcodedTube) stockToAliquotEntry.getValue());
             }
 
-            LabEventTest.PreFlightEntityBuilder preFlightEntityBuilder = new LabEventTest.PreFlightEntityBuilder(
+            PreFlightEntityBuilder preFlightEntityBuilder = new PreFlightEntityBuilder(
                     bettaLimsMessageTestFactory, labEventFactory, labEventHandler, mapBarcodeToTube);//.invoke();
 
-            LabEventTest.ShearingEntityBuilder shearingEntityBuilder = new LabEventTest.ShearingEntityBuilder(
+            ShearingEntityBuilder shearingEntityBuilder = new ShearingEntityBuilder(
                     mapBarcodeToTube, preFlightEntityBuilder.getTubeFormation(), bettaLimsMessageTestFactory, labEventFactory,
                     labEventHandler, preFlightEntityBuilder.getRackBarcode()).invoke();
 
-            LabEventTest.LibraryConstructionEntityBuilder libraryConstructionEntityBuilder =
-                    new LabEventTest.LibraryConstructionEntityBuilder(bettaLimsMessageTestFactory, labEventFactory,
+            LibraryConstructionEntityBuilder libraryConstructionEntityBuilder =
+                    new LibraryConstructionEntityBuilder(bettaLimsMessageTestFactory, labEventFactory,
                             labEventHandler,
                             shearingEntityBuilder.getShearingCleanupPlate(),
                             shearingEntityBuilder.getShearCleanPlateBarcode(),
                             shearingEntityBuilder.getShearingPlate(),
                             mapBarcodeToTube.size()).invoke();
 
-            LabEventTest.HybridSelectionEntityBuilder hybridSelectionEntityBuilder =
-                    new LabEventTest.HybridSelectionEntityBuilder(bettaLimsMessageTestFactory, labEventFactory,
+            HybridSelectionEntityBuilder hybridSelectionEntityBuilder =
+                    new HybridSelectionEntityBuilder(bettaLimsMessageTestFactory, labEventFactory,
                             labEventHandler,
                             libraryConstructionEntityBuilder.getPondRegRack(),
                             libraryConstructionEntityBuilder
@@ -381,7 +386,7 @@ public class ExomeExpressEndToEndTest {
             //
             //            }
 
-            LabEventTest.QtpEntityBuilder qtpEntityBuilder = new LabEventTest.QtpEntityBuilder(
+            QtpEntityBuilder qtpEntityBuilder = new QtpEntityBuilder(
                     bettaLimsMessageTestFactory, labEventFactory, labEventHandler,
                     Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchRack()),
                     Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchRackBarcode()),

@@ -4,6 +4,7 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProducer;
+import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
@@ -43,6 +44,10 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
+import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.PreFlightEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingEntityBuilder;
 import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
@@ -72,7 +77,7 @@ public class SolexaRunRoutingTest {
 
     private static final int NUM_POSITIONS_IN_RACK = 96;
 
-    private static Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<String, ProductOrder>();
+//    private static Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<String, ProductOrder>();
     private BucketBean                    bucketBeanEJB;
     private BucketDao                     mockBucketDao;
     private BettaLimsMessageTestFactory bettaLimsMessageTestFactory;
@@ -99,7 +104,7 @@ public class SolexaRunRoutingTest {
         ProductOrder productOrder = ProductOrderTestFactory.buildWholeGenomeProductOrder(NUM_POSITIONS_IN_RACK);
         String jiraTicketKey = productOrder.getBusinessKey();
 
-        mapKeyToProductOrder.put(jiraTicketKey, productOrder);
+        AthenaClientServiceStub.addProductOrder(productOrder);
 
         // starting rack
         mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
@@ -171,18 +176,18 @@ public class SolexaRunRoutingTest {
                 AthenaClientProducer.stubInstance(), bucketBeanEJB, mockBucketDao,
                 new BSPUserList(BSPManagerFactoryProducer.stubInstance()));
 
-        LabEventTest.PreFlightEntityBuilder preFlightEntityBuilder =
-                new LabEventTest.PreFlightEntityBuilder(bettaLimsMessageTestFactory,
+        PreFlightEntityBuilder preFlightEntityBuilder =
+                new PreFlightEntityBuilder(bettaLimsMessageTestFactory,
                                                                labEventFactory, labEventHandler,
-                                                               mapBarcodeToTube, mapKeyToProductOrder).invoke();
+                                                               mapBarcodeToTube).invoke();
 
-        LabEventTest.ShearingEntityBuilder shearingEntityBuilder =
-                new LabEventTest.ShearingEntityBuilder(mapBarcodeToTube, preFlightEntityBuilder.getTubeFormation(),
+        ShearingEntityBuilder shearingEntityBuilder =
+                new ShearingEntityBuilder(mapBarcodeToTube, preFlightEntityBuilder.getTubeFormation(),
                         bettaLimsMessageTestFactory, labEventFactory, labEventHandler,
                                                               preFlightEntityBuilder.getRackBarcode()).invoke();
 
-        LabEventTest.LibraryConstructionEntityBuilder libraryConstructionEntityBuilder =
-                new LabEventTest.LibraryConstructionEntityBuilder(
+        LibraryConstructionEntityBuilder libraryConstructionEntityBuilder =
+                new LibraryConstructionEntityBuilder(
                         bettaLimsMessageTestFactory, labEventFactory,
                                                                          labEventHandler,
                                                                          shearingEntityBuilder
@@ -253,8 +258,8 @@ public class SolexaRunRoutingTest {
         Assert.assertEquals(sageCleanupRack.getSampleInstances().size(), NUM_POSITIONS_IN_RACK,
                                    "Wrong number of sage cleanup samples");
 
-        LabEventTest.QtpEntityBuilder qtpEntityBuilder =
-                new LabEventTest.QtpEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, labEventHandler,
+        QtpEntityBuilder qtpEntityBuilder =
+                new QtpEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, labEventHandler,
                         Collections.singletonList(sageCleanupRack), Collections.singletonList(sageCleanupBarcode),
                         Collections.singletonList(sageCleanupTubeBarcodes), mapBarcodeToSageUnloadTubes,
                         WorkflowName.WHOLE_GENOME);

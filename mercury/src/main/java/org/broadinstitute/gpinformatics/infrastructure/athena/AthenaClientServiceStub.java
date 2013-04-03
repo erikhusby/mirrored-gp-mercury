@@ -5,6 +5,8 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 
+import javax.ejb.Stateful;
+import javax.enterprise.context.RequestScoped;
 import javax.enterprise.inject.Alternative;
 import java.util.*;
 
@@ -20,11 +22,12 @@ public class AthenaClientServiceStub implements AthenaClientService {
     private static final Long   TEST_CREATOR = 1111L;
     public static final  String rpSynopsis   = "Test synopsis";
     public static final String otherRpSynopsis = "To Study Stuff";
+    private static Map<String,ProductOrder> productOrderByBusinessKeyMap = new HashMap<String, ProductOrder>();
 
     @Override
-    public ProductOrder retrieveProductOrderDetails(String poBusinessKey) {
+    public synchronized ProductOrder retrieveProductOrderDetails(String poBusinessKey) {
 
-        Map<String, ProductOrder> productOrderByBusinessKeyMap = ProductOrderTestFactory.buildTestProductOrderMap();
+        productOrderByBusinessKeyMap = ProductOrderTestFactory.buildTestProductOrderMap();
 
         ProductOrder testOrder1 = productOrderByBusinessKeyMap.get(poBusinessKey);
         if (testOrder1 == null) {
@@ -49,6 +52,10 @@ public class AthenaClientServiceStub implements AthenaClientService {
                     new ArrayList<ProductOrderSample>(Collections.singletonList(productOrderSample)));
         }
         return mapSampleIdToPdoSample;
+    }
+
+    public static synchronized void addProductOrder(ProductOrder productOrder) {
+        productOrderByBusinessKeyMap.put(productOrder.getBusinessKey(), productOrder);
     }
 
 }
