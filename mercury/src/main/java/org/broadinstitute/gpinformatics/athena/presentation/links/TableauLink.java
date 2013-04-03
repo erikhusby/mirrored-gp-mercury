@@ -31,7 +31,7 @@ public class TableauLink {
                     tableauConfig.getReportUrl(reportName) +
                     URLEncoder.encode(param1, "UTF-8");
         } catch (UnsupportedEncodingException e) {
-            //can't happen, UTF-8 is always supported
+            // This can't happen, UTF-8 is always supported.
         }
         return url;
     }

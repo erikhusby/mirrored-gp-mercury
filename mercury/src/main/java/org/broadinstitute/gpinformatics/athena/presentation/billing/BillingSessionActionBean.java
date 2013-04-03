@@ -29,7 +29,7 @@ import java.util.*;
 import static org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao.FetchSpec.*;
 
 /**
- * This handles all the needed interface processing elements
+ * This handles all the needed interface processing elements.
  */
 @UrlBinding("/billing/session.action")
 public class BillingSessionActionBean extends CoreActionBean {
@@ -72,7 +72,7 @@ public class BillingSessionActionBean extends CoreActionBean {
     private BillingSession editSession;
 
     /**
-     * Initialize the session with the passed in key for display in the form. Creation happens from a gesture in the
+     * Initialize the session with the passed in key for display in the form.  Creation happens from a gesture in the
      * order list, so create is not needed here.
      */
     @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, "downloadTracker", "downloadQuoteItems", "bill", "endSession"})
@@ -91,7 +91,7 @@ public class BillingSessionActionBean extends CoreActionBean {
     @DefaultHandler
     @HandlesEvent(LIST_ACTION)
     public Resolution list() {
-        // If a billing session is sent, then this is coming from the quote server and it needs to be redirected to view
+        // If a billing session is sent, then this is coming from the quote server and it needs to be redirected to view.
         if (!StringUtils.isBlank(billingSession)) {
             return new RedirectResolution(BillingSessionActionBean.class, VIEW_ACTION).addParameter("sessionKey", billingSession);
         }
@@ -114,13 +114,13 @@ public class BillingSessionActionBean extends CoreActionBean {
         Resolution downloadResolution =
             ProductOrderActionBean.getTrackerForOrders(this, productOrders, bspUserList);
 
-        // If there is no file to download, just pass on the errors
+        // If there is no file to download, just pass on the errors.
         // FIXME: this logic is bogus, getTrackerForOrders doesn't return null on error.
         if (downloadResolution == null) {
             return new ForwardResolution(SESSION_VIEW_PAGE);
         }
 
-        // Do the download
+        // Do the download.
         return downloadResolution;
     }
 
@@ -209,7 +209,7 @@ public class BillingSessionActionBean extends CoreActionBean {
 
         billingEjb.endSession(editSession);
 
-        // Default is list
+        // The default Resolution is LIST_ACTION.
         return new RedirectResolution(BillingSessionActionBean.class);
     }
 
