@@ -78,7 +78,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * This handles all the needed interface processing elements
+ * This handles all the needed interface processing elements.
  */
 @UrlBinding(ProductOrderActionBean.ACTIONBEAN_URL_BINDING)
 public class ProductOrderActionBean extends CoreActionBean {
@@ -173,7 +173,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     })
     private ProductOrder editOrder;
 
-    // For create, we can also have a research project key to default
+    // For create, we can also have a research project key to default.
     private String researchProjectKey;
 
     private List<String> selectedProductOrderBusinessKeys;
@@ -201,10 +201,10 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Validate(required = true, on = SET_RISK)
     private String riskComment;
 
-    //This is used for prompting why the abandon button is disabled
+    // This is used for prompting why the abandon button is disabled.
     private String abandonDisabledReason;
 
-    //This is used to determine whether a special warning message needs to be confirmed before normal abandon;
+    // This is used to determine whether a special warning message needs to be confirmed before normal abandon.
     private boolean abandonWarning = false;
     /**
      * Single {@link ProductOrderListEntry} for the view page, gives us billing session information.
@@ -221,7 +221,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private UserTokenInput owner;
 
     /**
-     * Initialize the product with the passed in key for display in the form or create it, if not specified
+     * Initialize the product with the passed in key for display in the form or create it, if not specified.
      */
     @Before(stages = LifecycleStage.BindingAndValidation, on = {"!" + LIST_ACTION, "!getQuoteFunding"})
     public void init() {
@@ -240,11 +240,11 @@ public class ProductOrderActionBean extends CoreActionBean {
     @ValidationMethod(on = SAVE_ACTION)
     public void saveValidations() throws Exception {
         // If the research project has no original title, then it was not fetched from hibernate, so this is a create
-        // OR if this was fetched and the title has been changed
+        // OR if this was fetched and the title has been changed.
         if ((editOrder.getOriginalTitle() == null) ||
                 (!editOrder.getTitle().equalsIgnoreCase(editOrder.getOriginalTitle()))) {
 
-            // Check if there is an existing research project and error out if it already exists
+            // Check if there is an existing research project and error out if it already exists.
             ProductOrder existingOrder = productOrderDao.findByTitle(editOrder.getTitle());
             if (existingOrder != null) {
                 addValidationError("title", "A product order already exists with this name.");
@@ -254,7 +254,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         // Whether we are draft or not, we should populate the proper edit fields for validation.
         updateTokenInputFields();
 
-        // If this is not a draft, some fields are required
+        // If this is not a draft, some fields are required.
         if (!editOrder.isDraft()) {
             doValidation("save");
         } else {
@@ -265,7 +265,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     /**
-     * Validate a required field
+     * Validate a required field.
      * @param value if null, field is missing
      * @param name name of field
      */
@@ -274,7 +274,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     /**
-     * Validate a required field
+     * Validate a required field.
      * @param hasValue if false, field is missing
      * @param name name of field
      */
@@ -310,7 +310,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         // Since we are only validating from view, we can persist without worry of saving something bad.
-        // We are doing on risk calculation only when everything passes, but informing the user no matter what
+        // We are doing on risk calculation only when everything passes, but informing the user no matter what.
         if (!hasErrors()) {
             int numSamplesOnRisk = editOrder.calculateRisk();
             editOrder.prepareToSave(getUserBean().getBspUser());
@@ -358,7 +358,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 products.add(order.getProduct());
             }
 
-            // Go through each products and report invalid duplicate price item names
+            // Go through each products and report invalid duplicate price item names.
             for (Product product : products) {
                 String[] duplicatePriceItems = product.getDuplicatePriceItemNames();
                 if (duplicatePriceItems != null) {
@@ -384,7 +384,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             }
         }
 
-        // If there are errors, will reload the page, so need to fetch the list
+        // If there are errors, will reload the page, so need to fetch the list.
         if (hasErrors()) {
             listInit();
         }
@@ -399,7 +399,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @After(stages = LifecycleStage.BindingAndValidation, on = EDIT_ACTION)
     public void createInit() {
         // Once validation is all set for edit (so that any errors can show the originally Checked Items),
-        // set the add ons to the current
+        // set the add ons to the current.
         addOnKeys.clear();
         for (ProductOrderAddOn addOnProduct : editOrder.getAddOns()) {
             addOnKeys.add(addOnProduct.getAddOn().getBusinessKey());
@@ -434,7 +434,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             try {
                 item.put("error", ex.getMessage());
             } catch (Exception ex1) {
-                // Don't really care if this gets an exception
+                // Don't really care if this gets an exception.
             }
         }
 
@@ -480,7 +480,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         String[] productKey = (editOrder.getProduct() == null) ? new String[0] : new String[] { editOrder.getProduct().getBusinessKey() };
         productTokenInput.setup(productKey);
 
-        // If a research project key was specified then use that as the default
+        // If a research project key was specified then use that as the default.
         String[] projectKey;
         if (!StringUtils.isBlank(researchProjectKey)) {
             projectKey = new String[] { researchProjectKey };
@@ -498,7 +498,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             editOrder.placeOrder();
             editOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
-            // save it!
+            // Save it!
             productOrderDao.persist(editOrder);
         } catch (Exception e) {
             // Need to quote the message contents to prevent errors.
@@ -563,7 +563,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             productOrderEjb.updateJiraIssue(editOrder);
         }
 
-        // save it!
+        // Save it!
         productOrderDao.persist(editOrder);
 
         addMessage("Product Order \"{0}\" has been saved.", editOrder.getTitle());
@@ -571,7 +571,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     private void updateTokenInputFields() {
-        // set the project, product and addOns for the order
+        // Set the project, product and addOns for the order.
         ResearchProject project = projectDao.findByBusinessKey(projectTokenInput.getTokenObject());
         Product product = productDao.findByPartNumber(productTokenInput.getTokenObject());
         List<Product> addOnProducts = productDao.findByPartNumbers(addOnKeys);
@@ -671,7 +671,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         JSONArray itemList = new JSONArray();
 
         if (samples != null) {
-            // assuming all samples come from same product order here
+            // Assuming all samples come from same product order here.
             List<String> sampleNames = ProductOrderSample.getSampleNames(samples);
             ProductOrder.loadBspData(sampleNames, samples);
 
@@ -769,7 +769,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent(SET_RISK)
     public Resolution setRisk() throws Exception {
 
-        // If we are creating a manual on risk, then need to set it up and persist it for reuse
+        // If we are creating a manual on risk, then need to set it up and persist it for reuse.
         RiskCriterion criterion = null;
         if (riskStatus) {
             criterion = RiskCriterion.createManual();
@@ -1211,7 +1211,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     /**
-     * Update whether to use special warning
+     * Update whether to use special warning.
      * @param abandonWarning Boolean flag used to determine whether we need to use special message confirmation
      */
     public void setAbandonWarning(boolean abandonWarning) {
