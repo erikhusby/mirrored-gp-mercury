@@ -68,13 +68,22 @@ public class BillingEjb {
     @Inject
     private BillingSessionDao billingSessionDao;
 
+    /**
+     * Transactional method to end a billing session with appropriate handling for complete or partial failure.
+     *
+     * @param sessionKey The billing session's key
+     */
+    public void endSession(@Nonnull String sessionKey) {
+        BillingSession billingSession = billingSessionDao.findByBusinessKey(sessionKey);
+        endSession(billingSession);
+    }
 
     /**
      * Transactional method to end a billing session with appropriate handling for complete or partial failure.
      *
      * @param billingSession BillingSession to be ended.
      */
-    public void endSession(@Nonnull BillingSession billingSession) {
+    private void endSession(@Nonnull BillingSession billingSession) {
 
         // Remove all the sessions from the non-billed items.
         boolean allFailed = billingSession.cancelSession();
@@ -100,15 +109,13 @@ public class BillingEjb {
      * the work id result.
      *
      *
-     * @param billingSessionKey Billing Session's business key that will be billed.
      * @param pageUrl        URL to be included in the call to the quote server.
      * @param sessionKey     Key to be included in the call to the quote server.
      *
      * @return List of BillingResults describing the success or failure of billing for each previously unbilled QuoteImportItem
      *         associated with the BillingSession.
      */
-    public List<BillingResult> bill(@Nonnull String billingSessionKey,
-                                    @Nonnull String pageUrl, @Nonnull String sessionKey) {
+    public List<BillingResult> bill(@Nonnull String pageUrl, @Nonnull String sessionKey) {
 
         BillingSession billingSession = billingSessionDao.findByBusinessKey(sessionKey);
 

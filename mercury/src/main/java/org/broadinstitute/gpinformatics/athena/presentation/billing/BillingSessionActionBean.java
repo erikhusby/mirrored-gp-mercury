@@ -2,13 +2,14 @@ package org.broadinstitute.gpinformatics.athena.presentation.billing;
 
 import net.sourceforge.stripes.action.*;
 import net.sourceforge.stripes.controller.LifecycleStage;
+import net.sourceforge.stripes.validation.Validate;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteWorkItemsExporter;
-import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -64,6 +65,7 @@ public class BillingSessionActionBean extends CoreActionBean {
 
     private List<BillingSession> billingSessions;
 
+    @Validate(required = true, on = {"bill", "endSession"})
     private String sessionKey;
 
     // parameter from quote server
@@ -176,7 +178,7 @@ public class BillingSessionActionBean extends CoreActionBean {
     public Resolution bill() {
 
         String pageUrl = getContext().getRequest().getRequestURL().toString();
-        List<BillingEjb.BillingResult> billingResults = billingEjb.bill(editSession.getBusinessKey(), pageUrl, sessionKey);
+        List<BillingEjb.BillingResult> billingResults = billingEjb.bill(pageUrl, sessionKey);
 
         boolean errorsInBilling = false;
 
@@ -206,8 +208,7 @@ public class BillingSessionActionBean extends CoreActionBean {
 
     @HandlesEvent("endSession")
     public Resolution endSession() {
-
-        billingEjb.endSession(editSession);
+        billingEjb.endSession(sessionKey);
 
         // The default Resolution is LIST_ACTION.
         return new RedirectResolution(BillingSessionActionBean.class);
