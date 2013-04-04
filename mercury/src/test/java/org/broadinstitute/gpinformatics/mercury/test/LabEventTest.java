@@ -31,9 +31,12 @@ import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferEnt
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVisualizer;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.RapSheetEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexingSchemeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
@@ -47,6 +50,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.RapSheetEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.DesignedReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
@@ -54,7 +58,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexing
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.LabVesselComment;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
-import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkLevel;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkReason;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
@@ -351,27 +354,40 @@ public class LabEventTest {
         Map.Entry<String, TwoDBarcodedTube> twoDBarcodedTubeForRework = mapBarcodeToTube.entrySet().iterator().next();
         int lastEventIndex = transferTraverserCriteria.getVisitedLabEvents().size();
         LabEvent catchEvent =
-                transferTraverserCriteria.getVisitedLabEvents().toArray(new LabEvent[lastEventIndex])[lastEventIndex - 1];
+                transferTraverserCriteria.getVisitedLabEvents().toArray(new LabEvent[lastEventIndex])[lastEventIndex
+                                                                                                      - 1];
+        RapSheetEjb rapSheetEjb = new RapSheetEjb();
+        BucketEntryDao bucketEntryDao = EasyMock.createNiceMock(BucketEntryDao.class);
+
+        EasyMock.expect(bucketEntryDao.findByVesselAndPO(twoDBarcodedTubeForRework.getValue(),twoDBarcodedTubeForRework.getValue().getLabel()))
+                .andReturn(new BucketEntry(twoDBarcodedTubeForRework.getValue(),
+                        twoDBarcodedTubeForRework.getValue().getLabel()));
+        final BucketEntryDao bucketEntryMock = EasyMock.createNiceMock(BucketEntryDao.class);
+        EasyMock.replay(bucketEntryMock);
+        rapSheetEjb.setBucketEntryDao(bucketEntryMock);
+        rapSheetEjb.setMercurySampleDao(EasyMock.createNiceMock(MercurySampleDao.class));
+
+
+
+        Collection<MercurySample> vesselRapSheet =
+                rapSheetEjb.getVesselRapSheet(twoDBarcodedTubeForRework.getValue(),
+                        ReworkReason.MACHINE_ERROR, catchEvent.getLabEventType(), "this is a comment");
+        List<MercurySample> vesselRapSheetDaoFree =
+                new ArrayList<MercurySample>(vesselRapSheet);
+//        EasyMock.verify(rapSheetEjb);
+
         MercurySample startingSample =
-                twoDBarcodedTubeForRework.getValue().getAllSamples().iterator().next().getStartingSample();
+                vesselRapSheetDaoFree.iterator().next();
 
-        ReworkEntry reworkEntry = startingSample.getRapSheet().addRework(ReworkReason.MACHINE_ERROR, ReworkLevel.ONE_SAMPLE_HOLD_REST_BATCH,
-                                catchEvent.getLabEventType(),VesselPosition.TUBE1,startingSample);
-
-        LabVesselComment reworkComment =
-                new LabVesselComment<ReworkEntry>(catchEvent, twoDBarcodedTubeForRework.getValue(), "rework comment",
-                        Arrays.asList(reworkEntry));
+        final ReworkEntry rapSheetEntry =
+                (ReworkEntry) startingSample.getRapSheet().getRapSheetEntries().iterator().next();
+        final LabVesselComment reworkComment = rapSheetEntry.getLabVesselComment();
         Assert.assertNotNull(reworkComment.getLabEvent(),"Lab event is required.");
         Assert.assertNotNull(reworkComment.getLabVessel(),"Lab Vessel is required.");
-        Assert.assertNotNull(reworkComment.getRapSheetEntries(),"Rap Sheet Entries should not be null.");
-        Assert.assertFalse(reworkComment.getRapSheetEntries().isEmpty(), "Should have some Rap Sheet Entries.");
-        Assert.assertTrue(reworkComment.getRapSheetEntries().get(0) instanceof ReworkEntry, "Entry should be ReworkEntry.");
-        ReworkEntry rework = (ReworkEntry)reworkComment.getRapSheetEntries().get(0);
-        Assert.assertNotNull(rework.getReworkLevel(), "ReworkLevel cannot be null.");
-        Assert.assertNotNull(rework.getReworkReason(), "ReworkReason cannot be null.");
-        Assert.assertNotNull(rework.getReworkStep(), "getReworkStep cannot be null.");
-        Assert.assertNotNull(rework.getRapSheet(), "rework.getRapSheet cannot be null.");
-        Assert.assertNotNull(rework.getRapSheet().getSample(), "RapSheet.sample cannot be null.");
+        Assert.assertNotNull(rapSheetEntry.getReworkLevel(), "ReworkLevel cannot be null.");
+        Assert.assertNotNull(rapSheetEntry.getReworkReason(), "ReworkReason cannot be null.");
+        Assert.assertNotNull(rapSheetEntry.getReworkStep(), "getReworkStep cannot be null.");
+        Assert.assertNotNull(rapSheetEntry.getRapSheet(), "rework.getRapSheet cannot be null.");
 
         if (false) {
             TransferVisualizerFrame transferVisualizerFrame = new TransferVisualizerFrame();

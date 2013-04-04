@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.test;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.RapSheetEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -23,6 +24,8 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 
@@ -33,7 +36,8 @@ import java.util.Random;
 public class ReworkTest extends ContainerTest {
     @Inject
     private UserTransaction utx;
-
+    @Inject
+    RapSheetEjb rapSheetEjb;
     @Inject
     LabEventDao labEventDao;
     @Inject
@@ -69,41 +73,23 @@ public class ReworkTest extends ContainerTest {
     @Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testRework() {
 
-        final LabEvent pondEntichmentEvent =
-                labEventDao.findList(LabEvent.class, LabEvent_.labEventType, LabEventType.POND_ENRICHMENT).iterator()
+        final LabEvent pondEnrichmentEvent =
+                labEventDao.findList(LabEvent.class, LabEvent_.labEventId, 1043L).iterator()
                         .next();
-        final LabVessel testTube = pondEntichmentEvent.getInPlaceLabVessel();
+        final LabVessel testTube = pondEnrichmentEvent.getInPlaceLabVessel();
         final String position =
                 testTube.getVesselGeometry().getRowNames()[0] + testTube.getVesselGeometry().getColumnNames()[0];
         final VesselPosition vesselPosition = VesselPosition.getByName(position);
         VesselContainer<?> vesselContainer = testTube.getContainerRole();
 
-        List<SampleInstance> sampleInstances;
+        Collection<MercurySample> reworks = rapSheetEjb
+                .addRework(testTube, ReworkReason.MACHINE_ERROR, pondEnrichmentEvent.getLabEventType(), "test");
+        Assert.assertFalse(reworks.isEmpty(), "No reworks done.");
+        MercurySample startingSample = getRandomSample(reworks);
 
-        if (vesselContainer != null) {
-            sampleInstances = vesselContainer.getSampleInstancesAtPositionList(vesselPosition);
-        } else {
-            sampleInstances = testTube.getSampleInstancesList();
-        }
-
-        MercurySample startingSample = getRandomSample(sampleInstances).getStartingSample();
-        startingSample.reworkSample(ReworkReason.MACHINE_ERROR,
-                ReworkLevel.ONE_SAMPLE_RELEASE_REST_BATCH, pondEntichmentEvent,
-                pondEntichmentEvent.getLabEventType(), testTube, vesselPosition, "");
-
-        mercurySampleDao.persist(startingSample);
-        mercurySampleDao.flush();
-
-        final ReworkEntry rapSheetEntry = (ReworkEntry)startingSample.getRapSheet().getRapSheetEntries().get(0);
+        final ReworkEntry rapSheetEntry = (ReworkEntry) startingSample.getRapSheet().getRapSheetEntries().get(0);
         Assert.assertNotNull(rapSheetEntry.getLabVesselComment().getLabEvent(), "Lab event is required.");
         Assert.assertNotNull(rapSheetEntry.getLabVesselComment().getLabVessel(), "Lab Vessel is required.");
-        Assert.assertNotNull(rapSheetEntry.getLabVesselComment().getRapSheetEntries(),
-                "Rap Sheet Entries should not be null.");
-        Assert.assertFalse(rapSheetEntry.getLabVesselComment().getRapSheetEntries().isEmpty(),
-                "Should have some Rap Sheet Entries.");
-        Assert.assertTrue(rapSheetEntry.getLabVesselComment().getRapSheetEntries().get(0) instanceof ReworkEntry,
-                "Entry should be ReworkEntry.");
-
         Assert.assertNotNull(rapSheetEntry.getReworkLevel(), "ReworkLevel cannot be null.");
         Assert.assertNotNull(rapSheetEntry.getReworkReason(), "ReworkReason cannot be null.");
         Assert.assertNotNull(rapSheetEntry.getReworkStep(), "getReworkStep cannot be null.");
@@ -111,9 +97,11 @@ public class ReworkTest extends ContainerTest {
         Assert.assertNotNull(rapSheetEntry.getRapSheet().getSample(), "RapSheet.sample cannot be null.");
     }
 
-    private SampleInstance getRandomSample(List<SampleInstance> sampleInstances) {
+    private <ENTITY_TYPE> ENTITY_TYPE getRandomSample(Collection<ENTITY_TYPE> sampleInstances) {
+        Assert.assertFalse(sampleInstances.isEmpty(), "Collection was empty.");
         Random rand = new Random(System.currentTimeMillis());
         final int index = rand.nextInt(sampleInstances.size());
-        return sampleInstances.get(index);
+        return (ENTITY_TYPE) sampleInstances.toArray(new ArrayList[sampleInstances.size()])[index];
     }
+
 }

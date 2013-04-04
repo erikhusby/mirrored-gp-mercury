@@ -52,16 +52,18 @@ public class RapSheet {
         setSample(sample);
     }
 
-    public void addEntry(RapSheetEntry rapSheetEntry) {
-        rapSheetEntries.add(rapSheetEntry);
-        rapSheetEntry.setRapSheet(this);
+    public void addEntry(RapSheetEntry ... entries) {
+        for (RapSheetEntry rapSheetEntry : entries) {
+            rapSheetEntries.add(rapSheetEntry);
+            rapSheetEntry.setRapSheet(this);
+        }
     }
 
 
     public ReworkEntry addRework(ReworkReason reworkReason, ReworkLevel reworkLevel, LabEventType reworkStep,
                                  VesselPosition vesselPosition, MercurySample mercurySample) {
         LabVesselPosition labVesselPosition=new LabVesselPosition(vesselPosition,mercurySample);
-        final ReworkEntry reworkEntry = new ReworkEntry(this,reworkReason, reworkLevel, reworkStep,labVesselPosition);
+        final ReworkEntry reworkEntry = new ReworkEntry(reworkReason, reworkLevel, reworkStep,labVesselPosition);
         addEntry(reworkEntry);
         setSample(mercurySample);
         return reworkEntry;

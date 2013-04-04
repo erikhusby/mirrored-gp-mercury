@@ -19,7 +19,7 @@ import javax.validation.constraints.NotNull;
 @Entity
 @Audited
 @Table(schema = "mercury")
-public abstract class RapSheetEntry {
+public class RapSheetEntry {
     @SuppressWarnings("UnusedDeclaration")
     @Id
     @SequenceGenerator(name = "SEQ_RAP_SHEET_ENTRY", schema = "mercury", sequenceName = "SEQ_RAP_SHEET_ENTRY")
@@ -43,9 +43,9 @@ public abstract class RapSheetEntry {
     public RapSheetEntry() {
     }
 
-    public RapSheetEntry(RapSheet rapSheet,LabVesselPosition labVesselPosition) {
-        this.rapSheet = rapSheet;
+    public RapSheetEntry(LabVesselPosition labVesselPosition, LabVesselComment labVesselComment) {
         this.labVesselPosition = labVesselPosition;
+        this.labVesselComment=labVesselComment;
     }
 
     public RapSheet getRapSheet() {

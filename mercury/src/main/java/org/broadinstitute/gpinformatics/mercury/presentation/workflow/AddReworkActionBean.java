@@ -8,7 +8,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
+import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.RapSheetEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
@@ -36,7 +36,7 @@ public class AddReworkActionBean extends CoreActionBean {
     @Inject
     private BucketEntryDao bucketEntryDao;
     @Inject
-    private ReworkEjb reworkEjb;
+    private RapSheetEjb rapSheetEjb;
     @Inject
     private AthenaClientService athenaClientService;
     @Inject
@@ -80,7 +80,7 @@ public class AddReworkActionBean extends CoreActionBean {
         }
         Collection<MercurySample> reworks = new ArrayList<MercurySample>();
         try {
-            reworks = reworkEjb.addReworks(labVessel, reworkReason, reworkStep, commentText);
+            reworks = rapSheetEjb.addRework(labVessel, reworkReason, reworkStep, commentText);
         } catch (InformaticsServiceException e) {
             addGlobalValidationError(e.getMessage());
         }

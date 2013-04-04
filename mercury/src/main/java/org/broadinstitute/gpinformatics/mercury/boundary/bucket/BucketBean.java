@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
@@ -36,6 +37,7 @@ public class BucketBean {
 
     public BucketBean() {
     }
+
 
     @Inject
     public BucketBean(LabEventFactory labEventFactoryIn, JiraService testjiraService, LabBatchEjb batchEjb) {
@@ -219,6 +221,7 @@ public class BucketBean {
 
     }
 
+
     /**
      * Returns a Set of bucket entries that correspond to a given collection of vessels in the context of a given
      * bucket
@@ -245,6 +248,7 @@ public class BucketBean {
         }
         return bucketEntrySet;
     }
+
 
     /**
      * a pared down version of
@@ -394,7 +398,6 @@ public class BucketBean {
 
         for (BucketEntry currEntry : bucketEntries) {
             batchVessels.add(currEntry.getLabVessel());
-
         }
 
         if (!batchVessels.isEmpty()) {
@@ -438,12 +441,23 @@ public class BucketBean {
                         " and PDO " + currEntry.getPoBusinessKey() + " to be popped from bucket.");
 
             currEntry.getBucket().removeEntry(currEntry);
-
+            removeRework(currEntry.getLabVessel());
             jiraRemovalUpdate(currEntry, "Extracted for Batch");
 
         }
     }
 
+    /**
+     * All the samples in this vessel are being reworked, so mark them as such
+     * so they don't show up in the bucket.
+     * @param labVessel vessel full of samples for rework.
+     */
+    public void removeRework(LabVessel labVessel){
+        for (SampleInstance sampleInstance : labVessel.getAllSamples()) {
+            sampleInstance.getStartingSample().getRapSheet();
+        }
+
+    }
     /**
      * For whatever reason, sometimes the lab can't
      * do something, or PDMs decide that they shouldn't
