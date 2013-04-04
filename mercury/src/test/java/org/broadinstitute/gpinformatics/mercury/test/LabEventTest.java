@@ -125,13 +125,7 @@ public class LabEventTest {
                                        new Factory<SortedSet<LabEvent>>() {
                                             @Override
                                             public SortedSet<LabEvent> create() {
-                                                return new TreeSet<LabEvent>(new Comparator<LabEvent>() {
-                                                    @Override
-                                                    public int compare(LabEvent labEvent1, LabEvent labEvent2) {
-                                                        return labEvent1.getEventDate()
-                                                                .compareTo(labEvent2.getEventDate());
-                                                    }
-                                                });
+                                                return new TreeSet<LabEvent>(LabEvent.byEventDate);
                                             }
                                        });
 
