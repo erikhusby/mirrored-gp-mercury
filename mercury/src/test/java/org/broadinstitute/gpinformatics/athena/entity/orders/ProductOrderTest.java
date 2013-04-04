@@ -53,7 +53,7 @@ public class ProductOrderTest {
                 // TODO: jiraTicketKey is part of businessKey which is what equals() uses. should it really be ignored?
                 .ignoreProperty("jiraTicketKey")
                 .ignoreProperty("orderStatus")
-                .ignoreProperty("count")
+                .ignoreProperty("laneCount")
                 .ignoreProperty("modifiedBy")
                 .ignoreProperty("createdBy")
                 .ignoreProperty("createdDate")
