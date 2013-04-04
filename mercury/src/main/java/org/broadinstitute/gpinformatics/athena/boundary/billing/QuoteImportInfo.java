@@ -22,7 +22,8 @@ public class QuoteImportInfo {
      * <p/>
      *      Billing Ledger - We keep the whole ledger so we can place any errors on each item AND it has the count
      */
-    private final Map<String, Map<PriceItem, Map<Date, List<LedgerEntry>>>> quantitiesByQuotePriceItem = new HashMap<String, Map<PriceItem, Map<Date, List<LedgerEntry>>>>();
+    private final Map<String, Map<PriceItem, Map<Date, List<LedgerEntry>>>> quantitiesByQuotePriceItem =
+            new HashMap<String, Map<PriceItem, Map<Date, List<LedgerEntry>>>>();
 
     /**
      * Take the ledger item and bucket it into the nasty structure we use here.
@@ -74,19 +75,11 @@ public class QuoteImportInfo {
     }
 
     private static Date getBucketDate(Date billedDate) {
-        Calendar cal = new GregorianCalendar();
-        cal.setTime(billedDate);
-        int day = cal.get(Calendar.DAY_OF_MONTH);
-
+        // Get the end of the period.
         Calendar endOfPeriod = Calendar.getInstance();
         endOfPeriod.setTime(billedDate);
-        if (day <= 15) {
-            endOfPeriod.set(Calendar.DAY_OF_MONTH, 15);
-        } else {
-            endOfPeriod.set(Calendar.DAY_OF_MONTH, endOfPeriod.getActualMaximum(Calendar.DAY_OF_MONTH));
-        }
 
-        // Set to the end of the day.
+        // Set to the end of the day so anything that is ever sent with time will normalize to the same bucket.
         endOfPeriod.set(Calendar.HOUR_OF_DAY, 23);
         endOfPeriod.set(Calendar.MINUTE, 59);
         endOfPeriod.set(Calendar.SECOND, 59);

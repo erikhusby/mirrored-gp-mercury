@@ -101,12 +101,7 @@
                     <td width="50">${item.priceItem.category}</td>
                     <td>${actionBean.quotePriceItemNameMap[item.priceItem.quoteServerId]}</td>
                     <td width="50">${item.quantity}</td>
-                    <td>
-                            ${item.numSamples}<br/>
-                        <fmt:formatDate value="${item.startRange}"/>
-                        -
-                        <fmt:formatDate value="${item.endRange}"/>
-                    </td>
+                    <td>${item.numSamples}</td>
                     <td>
                         <fmt:formatDate value="${item.workCompleteDate}"/>
                     </td>
