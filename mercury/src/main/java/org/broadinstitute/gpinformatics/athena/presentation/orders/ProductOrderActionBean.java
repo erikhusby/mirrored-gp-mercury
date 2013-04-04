@@ -298,7 +298,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         requireField(editOrder.getQuoteId() != null, "a quote specified", action);
         requireField(editOrder.getProduct(), "a product", action);
         if (editOrder.getProduct() != null && editOrder.getProduct().getSupportsNumberOfLanes()) {
-            requireField(editOrder.getCount() > 0, "a specified number of lanes", action);
+            requireField(editOrder.getLaneCount() > 0, "a specified number of lanes", action);
         }
 
         try {

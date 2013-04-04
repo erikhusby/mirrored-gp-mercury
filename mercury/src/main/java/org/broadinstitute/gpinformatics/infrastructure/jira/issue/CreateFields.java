@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CreateJ
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 /**
@@ -46,7 +47,7 @@ public class CreateFields extends UpdateFields {
         public Reporter() {
         }
 
-        public Reporter(String name) {
+        public Reporter(@Nonnull String name) {
             if (name == null) {
                 throw new RuntimeException("name cannot be null");
             }
@@ -54,13 +55,15 @@ public class CreateFields extends UpdateFields {
             this.name = name;
         }
 
+        @Nonnull
         private String name;
 
+        @Nonnull
         public String getName() {
             return name;
         }
 
-        public void setName(String name) {
+        public void setName(@Nonnull String name) {
             this.name = name;
         }
     }
@@ -69,15 +72,15 @@ public class CreateFields extends UpdateFields {
     public enum ProjectType {
 
         LCSET_PROJECT("Illumina Library Construction Tracking", "LCSET"),
-        Product_Ordering("Product Ordering", "PDO"),
+        PRODUCT_ORDERING("Product Ordering", "PDO"),
         Research_Projects("Research Projects", "RP");
 
         private final String projectName;
         private final String keyPrefix;
 
-        private ProjectType(String projectNameIn, String keyPrefixIn) {
-            projectName = projectNameIn;
-            this.keyPrefix = keyPrefixIn;
+        private ProjectType(String projectName, String keyPrefix) {
+            this.projectName = projectName;
+            this.keyPrefix = keyPrefix;
         }
 
         public String getProjectName() {

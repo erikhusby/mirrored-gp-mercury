@@ -97,7 +97,7 @@ public class ProductOrderTest {
     @Test
     public void testOrder() throws Exception {
         assertThat(productOrder.fetchJiraIssueType(), is(equalTo(CreateFields.IssueType.PRODUCT_ORDER)));
-        assertThat(productOrder.fetchJiraProject(), is(equalTo(CreateFields.ProjectType.Product_Ordering)));
+        assertThat(productOrder.fetchJiraProject(), is(equalTo(CreateFields.ProjectType.PRODUCT_ORDERING)));
         assertThat(productOrder.getJiraTicketKey(), is(notNullValue()));
         assertThat(productOrder.getJiraTicketKey(), is(equalTo(PDO_JIRA_KEY)));
     }

@@ -510,7 +510,7 @@
                     <label class="control-label label-form">Number of Lanes Per Sample</label>
 
                     <div class="controls">
-                        <div class="form-value">${actionBean.editOrder.count}</div>
+                        <div class="form-value">${actionBean.editOrder.laneCount}</div>
                     </div>
                 </div>
             </c:if>
