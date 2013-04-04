@@ -812,7 +812,6 @@ public class ProductOrder implements Serializable {
         return updateSampleCounts().genderCounter.get(ProductOrderSample.MALE_IND);
     }
 
-
     /**
      * getFingerprintCount calculates how many samples registered to this product order have a fingerprint associated
      * with it
@@ -832,23 +831,6 @@ public class ProductOrder implements Serializable {
      */
     public Map<String, Integer> getCountsByStockType() {
         return updateSampleCounts().stockTypeCounter.countMap;
-    }
-
-    /**
-     * getSampleTypeCount is a helper method to expose the sum of all samples, registered to this product order,
-     * based on a given sample type
-     *
-     * @param sampleTypeInd a String representing the type of sample for which we wish to get a count
-     * @return a count of all samples that have a sample type matching the value passed in.
-     */
-    private int getSampleTypeCount(String sampleTypeInd) {
-        int counter = 0;
-        for (ProductOrderSample sample : samples) {
-            if (sample.isInBspFormat() && sampleTypeInd.equals(sample.getBspDTO().getSampleType())) {
-                counter++;
-            }
-        }
-        return counter;
     }
 
     /**
@@ -970,7 +952,6 @@ public class ProductOrder implements Serializable {
         return updateSampleCounts().sampleValidation();
     }
 
-
     /**
      * @return true if all samples are of BSP Format. Note:
      * will return false if there are no samples on the sheet.
@@ -988,7 +969,6 @@ public class ProductOrder implements Serializable {
     private boolean isSheetEmpty() {
         return samples.isEmpty();
     }
-
 
     /**
      * This is a helper method that binds a specific Jira project to an ProductOrder entity.  This
