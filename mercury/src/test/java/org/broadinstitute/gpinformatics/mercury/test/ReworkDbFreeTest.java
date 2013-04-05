@@ -32,9 +32,11 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
 import org.easymock.EasyMock;
+import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -42,7 +44,7 @@ import javax.annotation.Nonnull;
 import java.util.*;
 
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotEquals;
+import static org.testng.Assert.assertNotNull;
 
 /**
  * Test that samples can go partway through a workflow, be marked for rework, go to a previous
@@ -145,155 +147,134 @@ public class ReworkDbFreeTest {
 
     // Advance to Pond Pico, rework 2 samples from the start.
     @Test(enabled = true, groups = TestGroups.DATABASE_FREE)
-    public void testRework() {
+    public void testRework() throws Exception {
+
+        ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
+
+        // Creates the mocks.
+        JiraTicketDao mockJira = EasyMock.createNiceMock(JiraTicketDao.class);
+        LabVesselDao tubeDao = EasyMock.createNiceMock(LabVesselDao.class);
+        LabBatchDAO labBatchDAO = EasyMock.createNiceMock(LabBatchDAO.class);
+        BucketDao mockBucketDao = EasyMock.createMock(BucketDao.class);
+
+        EasyMock.expect(mockBucketDao.findByName(EasyMock.eq("Shearing Bucket"))).andReturn(
+                new MockBucket(new WorkflowStepDef("Shearing Bucket"), productOrder.getBusinessKey())).times(2);
+        EasyMock.expect(mockBucketDao.findByName(EasyMock.eq("Shearing Bucket"))).andReturn(
+                new MockBucket(new WorkflowStepDef("Shearing Bucket"), productOrder.getBusinessKey())).times(2);
+        EasyMock.expect(mockBucketDao.findByName(EasyMock.eq("Pico/Plating Bucket"))).andReturn(
+                new MockBucket(new WorkflowStepDef("Pico/Plating Bucket"), productOrder.getBusinessKey())).times(2);
+
+        EasyMock.replay(mockBucketDao, tubeDao, mockJira, labBatchDAO);
+
 
         LabBatchEjb labBatchEJB = new LabBatchEjb();
         labBatchEJB.setAthenaClientService(AthenaClientProducer.stubInstance());
         labBatchEJB.setJiraService(JiraServiceProducer.stubInstance());
-
-        LabVesselDao tubeDao = EasyMock.createNiceMock(LabVesselDao.class);
         labBatchEJB.setTubeDAO(tubeDao);
-
-        JiraTicketDao mockJira = EasyMock.createNiceMock(JiraTicketDao.class);
         labBatchEJB.setJiraTicketDao(mockJira);
-
-        LabBatchDAO labBatchDAO = EasyMock.createNiceMock(LabBatchDAO.class);
         labBatchEJB.setLabBatchDao(labBatchDAO);
 
-
-        ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
-
-        TwoDBarcodedTube reworkTube = null;
-        final int REWORK_POSITION = (int)Math.ceil((double)productOrder.getSamples().size() / 2);
-        assert(REWORK_POSITION > 1);
-
-        // Creates the rack.
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
-        int rackPosition = 1;
-        for(ProductOrderSample poSample:productOrder.getSamples()) {
-            String barcode = "R" + rackPosition;
-            TwoDBarcodedTube bspAliquot = new TwoDBarcodedTube(barcode);
-            bspAliquot.addSample(new MercurySample(productOrder.getBusinessKey(), poSample.getSampleName()));
-            mapBarcodeToTube.put(barcode, bspAliquot);
-            if (rackPosition == REWORK_POSITION) {
-                reworkTube = bspAliquot;
-            }
-            rackPosition++;
-        }
-
-        String origIssueSuffix = JiraServiceStub.CREATED_ISSUE_SUFFIX;
-        String firstSuffix = "-111";
-        JiraServiceStub.CREATED_ISSUE_SUFFIX = firstSuffix;
-        LabBatch workflowBatch = new LabBatch("overwritten", new HashSet<LabVessel>(mapBarcodeToTube.values()),
-                LabBatch.LabBatchType.WORKFLOW);
-        labBatchEJB.createLabBatch(workflowBatch, "scottmat");
-
-        final long now = System.currentTimeMillis();
-        String rackBarcode = "REXEX" + (new Date(now)).toString();
-
-        // Sends the messages.
-        BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory();
         LabEventFactory labEventFactory = new LabEventFactory();
         labEventFactory.setLabEventRefDataFetcher(labEventRefDataFetcher);
 
-        BucketDao mockBucketDao = EasyMock.createMock(BucketDao.class);
-        EasyMock.expect(mockBucketDao.findByName(EasyMock.eq("Shearing Bucket")))
-                .andReturn(new MockBucket(new WorkflowStepDef("Shearing Bucket"), productOrder.getBusinessKey()));
-        EasyMock.expect(mockBucketDao.findByName(EasyMock.eq("Shearing Bucket")))
-                .andReturn(new MockBucket(new WorkflowStepDef("Shearing Bucket"), productOrder.getBusinessKey()));
-        EasyMock.expect(mockBucketDao.findByName(EasyMock.eq("Pico/Plating Bucket")))
-                .andReturn(new MockBucket(new WorkflowStepDef("Pico/Plating Bucket"), productOrder.getBusinessKey()));
-
         BucketBean bucketBeanEJB = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB);
-        EasyMock.replay(mockBucketDao, tubeDao, mockJira, labBatchDAO);
 
         LabEventHandler labEventHandler =
                 new LabEventHandler(new WorkflowLoader(), AthenaClientProducer.stubInstance(), bucketBeanEJB,
                         mockBucketDao, new BSPUserList(BSPManagerFactoryProducer.stubInstance()));
 
+        BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory();
+
+        String origLcsetSuffix = "-111";
+        String reworkLcsetSuffix = "-222";
+
+        long now = System.currentTimeMillis();
+        String origRackBarcode = "REXEX" + (new Date(now)).toString();
+        String reworkRackBarcode = "REXEX" + (new Date(now + 1011L)).toString();
+
+        String origTubePrefix = "999999";
+        int reworkIdx = 5; // arbitrary choice
+
+        Map<String, TwoDBarcodedTube> origRackMap = createRack(productOrder, origTubePrefix, reworkIdx, null);
+        LabBatch origBatch = createBatch(origRackMap, labBatchEJB, origLcsetSuffix);
+        sendMsgs(origRackMap, labEventFactory, labEventHandler, bettaLimsMessageTestFactory, origRackBarcode, false);
+
+        // Selects the rework tube and verifies its lcset.
+        TwoDBarcodedTube reworkTube = origRackMap.get(origTubePrefix + reworkIdx);
+        assertNotNull(reworkTube);
+        assertEquals(reworkTube.getLabBatchesList().size(), 1);
+        assertEquals(reworkTube.getLabBatchesList().get(0).getBatchName(), "LCSET" + origLcsetSuffix);
+
+
+        // Starts the rework with a new rack of tubes and includes the rework tube.
+        Thread.sleep(1011L);
+
+        Map<String, TwoDBarcodedTube> reworkRackMap = createRack(productOrder, "888888", reworkIdx, reworkTube);
+        LabBatch reworkBatch = createBatch(reworkRackMap, labBatchEJB, reworkLcsetSuffix);
+        sendMsgs(reworkRackMap, labEventFactory, labEventHandler, bettaLimsMessageTestFactory, reworkRackBarcode, true);
+
+        // After rework tube should be on second lcset.
+        assertEquals(reworkTube.getLabBatchesList().size(), 2);
+        assert (reworkTube.getLabBatchesList().get(0).getBatchName().equals("LCSET" + origLcsetSuffix)
+                && reworkTube.getLabBatchesList().get(1).getBatchName().equals("LCSET" + reworkLcsetSuffix)
+                || reworkTube.getLabBatchesList().get(0).getBatchName().equals("LCSET" + reworkLcsetSuffix)
+                && reworkTube.getLabBatchesList().get(1).getBatchName().equals("LCSET" + origLcsetSuffix));
+
+
+        ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
+        reworkTube.evaluateCriteria(transferTraverserCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+        List<String> labEventNames = transferTraverserCriteria.getLabEventNames();
+        Assert.assertEquals(labEventNames.size(), 5);
+
+    }
+
+
+    private Map<String, TwoDBarcodedTube> createRack(ProductOrder productOrder, String tubePrefix, int reworkIdx, TwoDBarcodedTube reworkTube) {
+        // Creates the rack.
+        Map<String, TwoDBarcodedTube> rackMap = new LinkedHashMap<String, TwoDBarcodedTube>();
+        int rackPosition = 1;
+        for (ProductOrderSample poSample : productOrder.getSamples()) {
+            TwoDBarcodedTube bspAliquot;
+            if (rackPosition == reworkIdx && reworkTube != null) {
+                bspAliquot = reworkTube;
+            } else {
+                String barcode = tubePrefix + rackPosition;
+                bspAliquot = new TwoDBarcodedTube(barcode);
+                bspAliquot.addSample(new MercurySample(productOrder.getBusinessKey(), poSample.getSampleName()));
+            }
+            rackMap.put(bspAliquot.getLabel(), bspAliquot);
+            rackPosition++;
+        }
+        return rackMap;
+    }
+
+    private LabBatch createBatch(Map<String, TwoDBarcodedTube> rackMap, LabBatchEjb labBatchEJB, String lcsetSuffix) {
+        String defaultLcsetSuffix = JiraServiceStub.getCreatedIssueSuffix();
+        JiraServiceStub.setCreatedIssueSuffix(lcsetSuffix);
+        LabBatch batch = new LabBatch("x", new HashSet<LabVessel>(rackMap.values()), LabBatch.LabBatchType.WORKFLOW);
+        labBatchEJB.createLabBatch(batch, "scottmat");
+        JiraServiceStub.setCreatedIssueSuffix(defaultLcsetSuffix);
+        return batch;
+    }
+
+    private void sendMsgs(Map<String, TwoDBarcodedTube> rackMap, LabEventFactory labEventFactory,
+                          LabEventHandler labEventHandler, BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
+                          String rackBarcode, boolean sendLc) {
+
         PicoPlatingEntityBuilder pplatingEntityBuilder = new PicoPlatingEntityBuilder(bettaLimsMessageTestFactory,
-                labEventFactory, labEventHandler,
-                mapBarcodeToTube, rackBarcode).invoke();
+                labEventFactory, labEventHandler, rackMap, rackBarcode).invoke();
 
         ExomeExpressShearingEntityBuilder shearingEntityBuilder =
                 new ExomeExpressShearingEntityBuilder(pplatingEntityBuilder.getNormBarcodeToTubeMap(),
                         pplatingEntityBuilder.getNormTubeFormation(), bettaLimsMessageTestFactory, labEventFactory,
                         labEventHandler, pplatingEntityBuilder.getNormalizationBarcode()).invoke();
 
-        LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = new LibraryConstructionEntityBuilder(
-                bettaLimsMessageTestFactory, labEventFactory, labEventHandler,
-                shearingEntityBuilder.getShearingCleanupPlate(), shearingEntityBuilder.getShearCleanPlateBarcode(),
-                shearingEntityBuilder.getShearingPlate(), NUM_POSITIONS_IN_RACK).invoke();
-
-        // Prior to rework tube should be on first lcset.
-        assertEquals(reworkTube.getLabBatchesList().size(), 1);
-        assertEquals(reworkTube.getLabBatchesList().get(0).getBatchName(), "LCSET" + firstSuffix);
-
-
-        // Starts the rework.
-
-        // Creates the rework rack with one tube from initial rack.
-        ProductOrder reworkProductOrder = ProductOrderTestFactory.buildExExProductOrder(96);
-
-        Map<String, TwoDBarcodedTube> reworkMapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
-        rackPosition = 1;
-        for(ProductOrderSample poSample : reworkProductOrder.getSamples()) {
-            String barcode = "RW" + rackPosition;
-            TwoDBarcodedTube bspAliquot = (rackPosition == REWORK_POSITION) ? reworkTube : new TwoDBarcodedTube(barcode);
-            bspAliquot.addSample(new MercurySample(productOrder.getBusinessKey(), poSample.getSampleName()));
-            reworkMapBarcodeToTube.put(barcode, bspAliquot);
-            rackPosition++;
+        if (sendLc) {
+            LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = new LibraryConstructionEntityBuilder(
+                    bettaLimsMessageTestFactory, labEventFactory, labEventHandler,
+                    shearingEntityBuilder.getShearingCleanupPlate(), shearingEntityBuilder.getShearCleanPlateBarcode(),
+                    shearingEntityBuilder.getShearingPlate(), NUM_POSITIONS_IN_RACK).invoke();
         }
-
-        String reworkSuffix = "-222";
-        JiraServiceStub.CREATED_ISSUE_SUFFIX = reworkSuffix;
-        LabBatch reworkBatch = new LabBatch("dummy name", new HashSet<LabVessel>(reworkMapBarcodeToTube.values()),
-                LabBatch.LabBatchType.WORKFLOW);
-        labBatchEJB.createLabBatch(reworkBatch, "scottmat");
-        JiraServiceStub.CREATED_ISSUE_SUFFIX = origIssueSuffix;
-
-        String reworkRackBarcode = "REXEX" + (new Date(now + 1000L)).toString();
-
-        EasyMock.reset(mockBucketDao, tubeDao, mockJira, labBatchDAO);
-        EasyMock.expect(mockBucketDao.findByName(EasyMock.eq("Shearing Bucket")))
-                .andReturn(new MockBucket(new WorkflowStepDef("Shearing Bucket"), productOrder.getBusinessKey()));
-        EasyMock.expect(mockBucketDao.findByName(EasyMock.eq("Shearing Bucket")))
-                .andReturn(new MockBucket(new WorkflowStepDef("Shearing Bucket"), productOrder.getBusinessKey()));
-        EasyMock.expect(mockBucketDao.findByName(EasyMock.eq("Pico/Plating Bucket")))
-                .andReturn(new MockBucket(new WorkflowStepDef("Pico/Plating Bucket"), productOrder.getBusinessKey()));
-        EasyMock.replay(mockBucketDao, tubeDao, mockJira, labBatchDAO);
-
-        // Sends the messages.
-        LabBatchEjb reworkLabBatchEJB = new LabBatchEjb();
-        reworkLabBatchEJB.setAthenaClientService(AthenaClientProducer.stubInstance());
-        reworkLabBatchEJB.setJiraService(JiraServiceProducer.stubInstance());
-        reworkLabBatchEJB.setTubeDAO(tubeDao);
-        reworkLabBatchEJB.setJiraTicketDao(mockJira);
-        reworkLabBatchEJB.setLabBatchDao(labBatchDAO);
-        reworkLabBatchEJB.createLabBatch(reworkBatch, "scottmat");
-
-        BucketBean reworkBucketBeanEJB = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance(), reworkLabBatchEJB);
-
-        LabEventHandler reworkLabEventHandler = new LabEventHandler(
-                new WorkflowLoader(),
-                AthenaClientProducer.stubInstance(),
-                reworkBucketBeanEJB,
-                mockBucketDao,
-                new BSPUserList(BSPManagerFactoryProducer.stubInstance())
-        );
-
-        PicoPlatingEntityBuilder reworkPplatingEntityBuilder = new PicoPlatingEntityBuilder(
-                bettaLimsMessageTestFactory,
-                labEventFactory,
-                reworkLabEventHandler,
-                reworkMapBarcodeToTube,
-                reworkRackBarcode
-        ).invoke();
-
-        // After rework tube should be on second lcset.
-        assertEquals(reworkTube.getLabBatchesList().size(), 1);
-        assertNotEquals(workflowBatch.getBatchName(), reworkBatch.getBatchName());
-        assertEquals(reworkTube.getLabBatchesList().get(0).getBatchName(), "LCSET" + reworkSuffix);
     }
 
 }
