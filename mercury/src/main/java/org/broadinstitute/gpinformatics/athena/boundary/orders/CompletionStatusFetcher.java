@@ -1,11 +1,11 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
+import org.apache.commons.collections.map.DefaultedMap;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderCompletionStatus;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -16,56 +16,40 @@ import java.util.Set;
  */
 public class CompletionStatusFetcher {
 
-    private Map<String, ProductOrderCompletionStatus> progressByBusinessKey =
-            new HashMap<String, ProductOrderCompletionStatus>();
+    private static final ProductOrderCompletionStatus DEFAULT = new ProductOrderCompletionStatus(0, 0, 0);
+
+    @SuppressWarnings("unchecked")
+    private Map<String, ProductOrderCompletionStatus> progressByBusinessKey = new DefaultedMap(DEFAULT);
 
 
+    @SuppressWarnings("unchecked")
     public void loadProgress(ProductOrderDao productOrderDao, Collection<String> productOrderKeys) {
-        progressByBusinessKey = productOrderDao.getProgressByBusinessKey(productOrderKeys);
+        progressByBusinessKey = DefaultedMap.decorate(productOrderDao.getProgressByBusinessKey(productOrderKeys), DEFAULT);
     }
 
+    @SuppressWarnings("unchecked")
     public void loadProgress(ProductOrderDao productOrderDao) {
-        progressByBusinessKey = productOrderDao.getAllProgressByBusinessKey();
+        progressByBusinessKey = DefaultedMap.decorate(productOrderDao.getAllProgressByBusinessKey(), DEFAULT);
     }
 
     @DaoFree
     public int getPercentAbandoned(String orderKey) {
-        ProductOrderCompletionStatus counter = progressByBusinessKey.get(orderKey);
-        if (counter == null) {
-            return 0;
-        }
-
-        return counter.getPercentAbandoned();
+        return progressByBusinessKey.get(orderKey).getPercentAbandoned();
     }
 
     @DaoFree
     public int getPercentCompleted(String orderKey) {
-        ProductOrderCompletionStatus counter = progressByBusinessKey.get(orderKey);
-        if (counter == null) {
-            return 0;
-        }
-
-        return counter.getPercentCompleted();
+        return progressByBusinessKey.get(orderKey).getPercentCompleted();
     }
 
     @DaoFree
     public int getPercentInProgress(String orderKey) {
-        ProductOrderCompletionStatus counter = progressByBusinessKey.get(orderKey);
-        if (counter == null) {
-            return 0;
-        }
-
-        return counter.getPercentInProgress();
+        return progressByBusinessKey.get(orderKey).getPercentInProgress();
     }
 
     @DaoFree
     public int getNumberOfSamples(String orderKey) {
-        ProductOrderCompletionStatus counter = progressByBusinessKey.get(orderKey);
-        if (counter == null) {
-            return 0;
-        }
-
-        return counter.getTotal();
+        return progressByBusinessKey.get(orderKey).getTotal();
     }
 
     @DaoFree
