@@ -18,6 +18,7 @@ import org.hibernate.envers.Audited;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -54,14 +55,15 @@ public class LabVesselComment<T extends RapSheetEntry> {
     public LabVesselComment() {
     }
 
-    public LabVesselComment(LabEvent labEvent, LabVessel labVessel, String comment,
-                            List<T> rapSheetEntries) {
+    public LabVesselComment(LabEvent labEvent, LabVessel labVessel, String comment) {
         this.labEvent = labEvent;
         this.comment = comment;
         this.labVessel = labVessel;
-        this.rapSheetEntries = rapSheetEntries;
     }
 
+    public void addRapSheetEntry(T entry){
+        getRapSheetEntries().add(entry);
+    }
     @PrePersist
     private void prePersist() {
         logDate = new Date();

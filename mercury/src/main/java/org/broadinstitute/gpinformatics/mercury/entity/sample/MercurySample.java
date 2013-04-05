@@ -71,17 +71,6 @@ public class MercurySample {
         hasBspDTOBeenInitialized = true;
     }
 
-    public ReworkEntry reworkSample(ReworkReason reworkReason, ReworkLevel reworkLevel, LabEvent labEvent,
-                                    LabEventType reworkStep, LabVessel labVessel, VesselPosition vesselPosition,
-                                    String comment) {
-        final ReworkEntry reworkEntry =
-                getRapSheet().addRework(reworkReason, reworkLevel, reworkStep, vesselPosition, this);
-        LabVesselComment reworkComment =
-                new LabVesselComment<ReworkEntry>(labEvent, labVessel, comment, Arrays.asList(reworkEntry));
-        reworkEntry.setLabVesselComment(reworkComment);
-        return reworkEntry;
-    }
-
     public RapSheet getRapSheet() {
         if (rapSheet == null) {
             rapSheet = new RapSheet();

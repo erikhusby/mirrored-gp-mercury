@@ -438,6 +438,20 @@ public abstract class LabVessel implements Serializable {
     }
 
     /**
+     * Is this vessel rework? IF it is in a batch then yes it is.
+     *
+     * @return boolean; true if it is rework, or false if it is not
+     */
+    public boolean isRework(){
+        for (LabBatch labBatch : this.getNearestLabBatches()) {
+            if (labBatch.getActive()) {
+                return labBatch.getReworks().contains(this);
+            }
+        }
+        return false;
+    }
+
+    /**
      * Returns a Collection of SampleInstances at given position
      * @param positionName position in vessel, eg: A01
      * @return
