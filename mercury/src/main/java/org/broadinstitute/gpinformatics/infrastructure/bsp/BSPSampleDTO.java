@@ -1,10 +1,14 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
+import org.apache.commons.collections.map.DefaultedMap;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
  * A simple DTO for fetching commonly used data from BSP.
@@ -69,8 +73,10 @@ public class BSPSampleDTO {
     /**
      * This constructor creates a dto with no values. This is mainly for tests that don't care about the DTO
      */
+    @SuppressWarnings("unchecked")
     public BSPSampleDTO() {
-        columnToValue = Collections.emptyMap();
+        //noinspection MapReplaceableByEnumMap
+        columnToValue = new DefaultedMap("");
     }
 
     /**
@@ -78,23 +84,9 @@ public class BSPSampleDTO {
      *
      * @param dataMap The BSP Sample Search results mapped by the columns
      */
+    @SuppressWarnings("unchecked")
     public BSPSampleDTO(Map<BSPSampleSearchColumn, String> dataMap) {
-        columnToValue = dataMap;
-    }
-
-    /**
-     * Trim off any empty white space after the string value.
-     *
-     * @param value The string to trim
-     * @return Trimmed value
-     */
-    private static String trim(String value) {
-        if (value != null) {
-            if (value.trim().length() > 0) {
-                return value.trim();
-            }
-        }
-        return null;
+        columnToValue = DefaultedMap.decorate(dataMap, "");
     }
 
     public double getRin() {
