@@ -25,12 +25,6 @@ import org.broadinstitute.gpinformatics.mercury.boundary.designation.Registratio
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.squid.SequelLibrary;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
-import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.PreFlightEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingEntityBuilder;
-import org.broadinstitute.gpinformatics.mocks.EverythingYouAskForYouGetAndItsHuman;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bsp.BSPSampleFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
@@ -61,7 +55,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
+import org.broadinstitute.gpinformatics.mercury.test.builders.*;
 import org.broadinstitute.gpinformatics.mercury.test.entity.bsp.BSPSampleExportTest;
+import org.broadinstitute.gpinformatics.mocks.EverythingYouAskForYouGetAndItsHuman;
 import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -318,7 +314,7 @@ public class ExomeExpressEndToEndTest {
             TemplateEngine templateEngine = new TemplateEngine();
             templateEngine.postConstruct();
             LabEventHandler labEventHandler = new LabEventHandler(new WorkflowLoader(),
-                    AthenaClientProducer.stubInstance(), bucketBeanEJB, mockBucketDao,
+                    AthenaClientProducer.stubInstance(), bucketBeanEJB, null,
                     new BSPUserList(BSPManagerFactoryProducer.stubInstance()));
             BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory();
             Map<String, TwoDBarcodedTube> mapBarcodeToTube = new HashMap<String, TwoDBarcodedTube>();

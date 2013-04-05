@@ -14,15 +14,7 @@ import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
 import org.broadinstitute.gpinformatics.infrastructure.ws.WsMessageStore;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.*;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
@@ -55,27 +47,15 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
-import javax.xml.transform.sax.SAXSource;
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import javax.xml.XMLConstants;
-import javax.xml.bind.ValidationEvent;
-import javax.xml.bind.ValidationEventHandler;
+import javax.xml.bind.*;
+import javax.xml.transform.sax.SAXSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import java.io.File;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.util.*;
 
 /**
  * Allows BettaLIMS messages to be submitted through JAX-RS.  In this context, BettaLIMS refers to the message format,
@@ -196,7 +176,7 @@ public class BettalimsMessageResource {
                         // todo jmt revisit performance of this - fetch all barcodes at once, and fetch unique PDOs from Athena
                         for (String testEvent : barcodesToBeVerified) {
                             if (MercuryOrSquidRouter.MercuryOrSquid.MERCURY == mercuryOrSquidRouter
-                                                                                           .routeForVessel(testEvent)) {
+                                                                                           .routeForVessel(labVesselDao.findByIdentifier(testEvent))) {
                                 processInMercury = true;
                             } else {
                                 processInSquid = true;

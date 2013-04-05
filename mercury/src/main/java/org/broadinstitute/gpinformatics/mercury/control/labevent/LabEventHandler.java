@@ -6,10 +6,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
-import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
-import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
@@ -23,15 +20,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 
 import javax.inject.Inject;
 import java.io.Serializable;
-import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 // Implements Serializable because it's used by a Stateful session bean.
 public class LabEventHandler implements Serializable {
@@ -55,7 +44,7 @@ public class LabEventHandler implements Serializable {
 
     private BucketBean bucketBean;
 
-    private BucketDao bucketDao;
+    private Bucket workingBucket;
 
     @Inject
     private JiraCommentUtil jiraCommentUtil;
@@ -65,12 +54,12 @@ public class LabEventHandler implements Serializable {
 
     @Inject
     public LabEventHandler(WorkflowLoader workflowLoader, AthenaClientService athenaClientService, BucketBean bucketBean,
-            BucketDao bucketDao, BSPUserList bspUserList) {
+             Bucket workingBucket, BSPUserList bspUserList) {
         this.workflowLoader = workflowLoader;
         this.athenaClientService = athenaClientService;
         this.bucketBean = bucketBean;
-        this.bucketDao = bucketDao;
         this.bspUserList = bspUserList;
+        this.workingBucket = workingBucket;
     }
 
     public HandlerResponse processEvent(LabEvent labEvent) {
@@ -111,7 +100,6 @@ public class LabEventHandler implements Serializable {
                 If the bucket previously existed, retrieve it, otherwise create a new one based on the workflow step
                 definition
              */
-            Bucket workingBucket = bucketDao.findByName(workingBucketIdentifier.getName());
             if (workingBucket == null) {
 
                 //TODO SGM, JMT:  this check should probably be part of the pre process Validation call from the decks
@@ -148,7 +136,6 @@ public class LabEventHandler implements Serializable {
                definition
             */
 
-            Bucket workingBucket = bucketDao.findByName(workingBucketIdentifier.getName());
             if (workingBucket == null) {
                 workingBucket = new Bucket(workingBucketIdentifier);
             }
