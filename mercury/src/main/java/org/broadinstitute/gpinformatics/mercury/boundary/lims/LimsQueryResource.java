@@ -4,11 +4,10 @@ import edu.mit.broad.prodinfo.thrift.lims.*;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.control.lims.LimsQueryResourceResponseFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
-import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.*;
 
 import javax.inject.Inject;
@@ -18,7 +17,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -46,16 +44,21 @@ public class LimsQueryResource {
     @Inject
     private BSPUserList bspUserList;
 
+    @Inject
+    private StaticPlateDAO staticPlateDAO;
+
     public LimsQueryResource() {}
 
     public LimsQueryResource(ThriftService thriftService, LimsQueries limsQueries,
                              LimsQueryResourceResponseFactory responseFactory,
-                             MercuryOrSquidRouter mercuryOrSquidRouter, BSPUserList bspUserList) {
+                             MercuryOrSquidRouter mercuryOrSquidRouter, BSPUserList bspUserList,
+                             StaticPlateDAO staticPlateDAO) {
         this.thriftService = thriftService;
         this.limsQueries = limsQueries;
         this.responseFactory = responseFactory;
         this.mercuryOrSquidRouter = mercuryOrSquidRouter;
         this.bspUserList = bspUserList;
+        this.staticPlateDAO = staticPlateDAO;
     }
 
     @GET
@@ -131,7 +134,8 @@ public class LimsQueryResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/findImmediatePlateParents")
     public List<String> findImmediatePlateParents(@QueryParam("plateBarcode") String plateBarcode) {
-        switch (mercuryOrSquidRouter.routeForVessel(plateBarcode)) {
+        StaticPlate plate = staticPlateDAO.findByBarcode(plateBarcode);
+        switch (mercuryOrSquidRouter.routeForVessel(plate)) {
         case MERCURY:
             return limsQueries.findImmediatePlateParents(plateBarcode);
         case SQUID:
@@ -204,7 +208,8 @@ public class LimsQueryResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchParentRackContentsForPlate")
     public Map<String, Boolean> fetchParentRackContentsForPlate(@QueryParam("plateBarcode") String plateBarcode) {
-        switch (mercuryOrSquidRouter.routeForVessel(plateBarcode)) {
+        StaticPlate plate = staticPlateDAO.findByBarcode(plateBarcode);
+        switch (mercuryOrSquidRouter.routeForVessel(plate)) {
         case MERCURY:
             return limsQueries.fetchParentRackContentsForPlate(plateBarcode);
         case SQUID:
@@ -236,7 +241,8 @@ public class LimsQueryResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchSourceTubesForPlate")
     public List<WellAndSourceTubeType> fetchSourceTubesForPlate(@QueryParam("plateBarcode") String plateBarcode) {
-        switch (mercuryOrSquidRouter.routeForVessel(plateBarcode)) {
+        StaticPlate plate = staticPlateDAO.findByBarcode(plateBarcode);
+        switch (mercuryOrSquidRouter.routeForVessel(plate)) {
         case MERCURY:
             return limsQueries.fetchSourceTubesForPlate(plateBarcode);
         case SQUID:
@@ -257,7 +263,8 @@ public class LimsQueryResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchTransfersForPlate")
     public List<PlateTransferType> fetchTransfersForPlate(@QueryParam("plateBarcode") String plateBarcode, @QueryParam("depth") short depth) {
-        switch (mercuryOrSquidRouter.routeForVessel(plateBarcode)) {
+        StaticPlate plate = staticPlateDAO.findByBarcode(plateBarcode);
+        switch (mercuryOrSquidRouter.routeForVessel(plate)) {
         case MERCURY:
             return limsQueries.fetchTransfersForPlate(plateBarcode, depth);
         case SQUID:

@@ -10,20 +10,12 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.StripTube;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.testng.Assert;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Builds entity graph for Qtp events
@@ -58,7 +50,7 @@ public class QtpEntityBuilder {
         this.workflowName = workflowName;
     }
 
-    public void invoke() {
+    public QtpEntityBuilder invoke() {
         QtpJaxbBuilder qtpJaxbBuilder = new QtpJaxbBuilder(bettaLimsMessageTestFactory, "",
                 listLcsetListNormCatchBarcodes, normCatchRackBarcodes, workflowName).invoke();
         PlateCherryPickEvent cherryPickJaxb = qtpJaxbBuilder.getPoolingTransferJaxb();
@@ -181,6 +173,7 @@ public class QtpEntityBuilder {
                     .buildReceptacleEventDbFree(flowcellLoadJaxb, illuminaFlowcell);
             labEventHandler.processEvent(flowcellLoadEntity);
         }
+        return this;
     }
 
     public TubeFormation getDenatureRack() {

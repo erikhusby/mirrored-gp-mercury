@@ -33,8 +33,6 @@ import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexingSchemeDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
@@ -46,47 +44,22 @@ import org.broadinstitute.gpinformatics.mercury.control.zims.ZimsIlluminaRunFact
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.DesignedReagent;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.LabVesselComment;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkLevel;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkReason;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.*;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.*;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.gpinformatics.mercury.presentation.transfervis.TransferVisualizerFrame;
-import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.PreFlightEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.*;
 import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
@@ -99,17 +72,7 @@ import javax.ws.rs.core.UriInfo;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
 import static org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign.ReagentType;
@@ -118,7 +81,7 @@ import static org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDes
  * Test messaging
  */
 @SuppressWarnings({"FeatureEnvy", "OverlyCoupledClass", "OverlyCoupledMethod", "OverlyLongMethod"})
-public class LabEventTest {
+public class LabEventTest extends BaseEventTest{
     public static final int NUM_POSITIONS_IN_RACK = 96;
 
     /**
@@ -201,6 +164,7 @@ public class LabEventTest {
     @BeforeClass(groups = TestGroups.DATABASE_FREE)
     public void setUp() {
         templateEngine.postConstruct();
+        super.setUp();
     }
 
     /**
@@ -208,83 +172,23 @@ public class LabEventTest {
      */
     @Test(groups = {DATABASE_FREE})
     public void testHybridSelection() {
-//        Controller.startCPURecording(true);
-
-        AthenaClientService athenaClientService = AthenaClientProducer.stubInstance();
-
-        LabBatchEjb labBatchEJB = new LabBatchEjb();
-        labBatchEJB.setAthenaClientService(AthenaClientProducer.stubInstance());
-        labBatchEJB.setJiraService(JiraServiceProducer.stubInstance());
-
-        LabVesselDao tubeDao = EasyMock.createNiceMock(LabVesselDao.class);
-        labBatchEJB.setTubeDAO(tubeDao);
-
-        JiraTicketDao mockJira = EasyMock.createNiceMock(JiraTicketDao.class);
-        labBatchEJB.setJiraTicketDao(mockJira);
-
-        LabBatchDAO labBatchDAO = EasyMock.createNiceMock(LabBatchDAO.class);
-        labBatchEJB.setLabBatchDao(labBatchDAO);
-
-        // starting rack
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
 
         final ProductOrder productOrder =
                 ProductOrderTestFactory.buildHybridSelectionProductOrder(NUM_POSITIONS_IN_RACK);
         productOrder.getResearchProject().setJiraTicketKey("RP-123");
-        int rackPosition=1;
 
-        for(ProductOrderSample poSample:productOrder.getSamples()) {
-            String barcode = "R" +rackPosition;
-
-            TwoDBarcodedTube aliquot = new TwoDBarcodedTube(barcode);
-            aliquot.addSample(new MercurySample(productOrder.getBusinessKey(), poSample.getSampleName()));
-            mapBarcodeToTube.put(barcode, aliquot);
-            rackPosition++;
-        }
+        Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder);
 
         LabBatch workflowBatch = new LabBatch("Hybrid Selection Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
-        labBatchEJB.createLabBatch(workflowBatch, "scottmat");
-
-        // Messaging
-        BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory();
-        LabEventFactory labEventFactory = new LabEventFactory();
-        labEventFactory.setLabEventRefDataFetcher(labEventRefDataFetcher);
 
 
-        BucketDao mockBucketDao = EasyMock.createNiceMock(BucketDao.class);
-        BucketBean bucketBeanEJB = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB);
-        EasyMock.replay(mockBucketDao, labBatchDAO, tubeDao, mockJira);
-
-        LabEventHandler labEventHandler =
-                new LabEventHandler(new WorkflowLoader(), AthenaClientProducer.stubInstance(), bucketBeanEJB,
-                        mockBucketDao, new BSPUserList(BSPManagerFactoryProducer.stubInstance()));
-
-        PreFlightEntityBuilder preFlightEntityBuilder = new PreFlightEntityBuilder(bettaLimsMessageTestFactory,
-                labEventFactory, labEventHandler,
-                mapBarcodeToTube).invoke();
-
-        ShearingEntityBuilder shearingEntityBuilder = new ShearingEntityBuilder(mapBarcodeToTube, preFlightEntityBuilder.getTubeFormation(),
-                bettaLimsMessageTestFactory, labEventFactory, labEventHandler, preFlightEntityBuilder.getRackBarcode()).invoke();
-
-        LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = new LibraryConstructionEntityBuilder(
-                bettaLimsMessageTestFactory, labEventFactory, labEventHandler,
-                shearingEntityBuilder.getShearingCleanupPlate(), shearingEntityBuilder.getShearCleanPlateBarcode(),
-                shearingEntityBuilder.getShearingPlate(), NUM_POSITIONS_IN_RACK).invoke();
-
-        HybridSelectionEntityBuilder hybridSelectionEntityBuilder = new HybridSelectionEntityBuilder(
-                bettaLimsMessageTestFactory, labEventFactory, labEventHandler,
-                libraryConstructionEntityBuilder.getPondRegRack(),
-                libraryConstructionEntityBuilder.getPondRegRackBarcode(),
-                libraryConstructionEntityBuilder.getPondRegTubeBarcodes()).invoke();
-
-        QtpEntityBuilder qtpEntityBuilder = new QtpEntityBuilder(
-                bettaLimsMessageTestFactory, labEventFactory, labEventHandler,
-                Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchRack()),
-                Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchRackBarcode()),
-                Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchBarcodes()),
+        PreFlightEntityBuilder preFlightEntityBuilder = runPreflightProcess(mapBarcodeToTube, productOrder, workflowBatch);
+        ShearingEntityBuilder shearingEntityBuilder = runShearingProcess(mapBarcodeToTube, preFlightEntityBuilder);
+        LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = runLibraryConstructionProcess(shearingEntityBuilder);
+        HybridSelectionEntityBuilder hybridSelectionEntityBuilder = runHybridSelectionProcess(libraryConstructionEntityBuilder);
+        QtpEntityBuilder qtpEntityBuilder = runQtpProcess(hybridSelectionEntityBuilder.getNormCatchRack(), hybridSelectionEntityBuilder.getNormCatchBarcodes(),
                 hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), WorkflowName.HYBRID_SELECTION);
-        qtpEntityBuilder.invoke();
 
         IlluminaFlowcell illuminaFlowcell = qtpEntityBuilder.getIlluminaFlowcell();
         Set<SampleInstance> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
@@ -403,95 +307,19 @@ public class LabEventTest {
      */
     @Test(groups = {DATABASE_FREE})
     public void testExomeExpress() throws Exception {
-//        Controller.startCPURecording(true);
-
-        LabBatchEjb labBatchEJB = new LabBatchEjb();
-        labBatchEJB.setAthenaClientService(AthenaClientProducer.stubInstance());
-        labBatchEJB.setJiraService(JiraServiceProducer.stubInstance());
-
-        LabVesselDao tubeDao = EasyMock.createNiceMock(LabVesselDao.class);
-        labBatchEJB.setTubeDAO(tubeDao);
-
-        JiraTicketDao mockJira = EasyMock.createNiceMock(JiraTicketDao.class);
-        labBatchEJB.setJiraTicketDao(mockJira);
-
-        LabBatchDAO labBatchDAO = EasyMock.createNiceMock(LabBatchDAO.class);
-        labBatchEJB.setLabBatchDao(labBatchDAO);
-
-
         ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
-        String jiraTicketKey = productOrder.getBusinessKey();
-
-        // starting rack
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
-        int rackPosition = 1;
-        for(ProductOrderSample poSample:productOrder.getSamples()) {
-            String barcode = "R" + rackPosition;
-            TwoDBarcodedTube bspAliquot = new TwoDBarcodedTube(barcode);
-            bspAliquot.addSample(new MercurySample(productOrder.getBusinessKey(), poSample.getSampleName()));
-            mapBarcodeToTube.put(barcode, bspAliquot);
-            rackPosition++;
-        }
-
+        final Date runDate = new Date();
+        Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder);
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
-        labBatchEJB.createLabBatch(workflowBatch, "scottmat");
 
-        final Date runDate = new Date();
-        String rackBarcode = "REXEX" + runDate.toString();
-
-        // Messaging
-        BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory();
-        LabEventFactory labEventFactory = new LabEventFactory();
-        labEventFactory.setLabEventRefDataFetcher(labEventRefDataFetcher);
-
-
-        BucketDao mockBucketDao = EasyMock.createMock(BucketDao.class);
-        EasyMock.expect(mockBucketDao.findByName(EasyMock.eq("Shearing Bucket")))
-                .andReturn(new MockBucket(new WorkflowStepDef("Shearing Bucket"), jiraTicketKey));
-        EasyMock.expect(mockBucketDao.findByName(EasyMock.eq("Shearing Bucket")))
-                .andReturn(new MockBucket(new WorkflowStepDef("Shearing Bucket"), jiraTicketKey));
-        EasyMock.expect(mockBucketDao.findByName(EasyMock.eq("Pico/Plating Bucket")))
-                .andReturn(new MockBucket(new WorkflowStepDef("Pico/Plating Bucket"), jiraTicketKey));
-        BucketBean bucketBeanEJB = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB);
-        EasyMock.replay(mockBucketDao, tubeDao, mockJira, labBatchDAO);
-        LabEventHandler labEventHandler =
-                new LabEventHandler(new WorkflowLoader(), AthenaClientProducer.stubInstance(), bucketBeanEJB,
-                        mockBucketDao, new BSPUserList(BSPManagerFactoryProducer.stubInstance()));
-
-        PicoPlatingEntityBuilder pplatingEntityBuilder = new PicoPlatingEntityBuilder(bettaLimsMessageTestFactory,
-                labEventFactory, labEventHandler,
-                mapBarcodeToTube, rackBarcode).invoke();
-
-        ExomeExpressShearingEntityBuilder shearingEntityBuilder =
-                new ExomeExpressShearingEntityBuilder(pplatingEntityBuilder.getNormBarcodeToTubeMap(),
-                        pplatingEntityBuilder.getNormTubeFormation(), bettaLimsMessageTestFactory, labEventFactory,
-                        labEventHandler, pplatingEntityBuilder.getNormalizationBarcode()).invoke();
-
-        LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = new LibraryConstructionEntityBuilder(
-                bettaLimsMessageTestFactory, labEventFactory, labEventHandler,
-                shearingEntityBuilder.getShearingCleanupPlate(), shearingEntityBuilder.getShearCleanPlateBarcode(),
-                shearingEntityBuilder.getShearingPlate(), NUM_POSITIONS_IN_RACK).invoke();
-
-        HybridSelectionEntityBuilder hybridSelectionEntityBuilder = new HybridSelectionEntityBuilder(
-                bettaLimsMessageTestFactory, labEventFactory, labEventHandler,
-                libraryConstructionEntityBuilder.getPondRegRack(),
-                libraryConstructionEntityBuilder.getPondRegRackBarcode(),
-                libraryConstructionEntityBuilder.getPondRegTubeBarcodes()).invoke();
-
-        QtpEntityBuilder qtpEntityBuilder = new QtpEntityBuilder(
-                bettaLimsMessageTestFactory, labEventFactory, labEventHandler,
-                Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchRack()),
-                Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchRackBarcode()),
-                Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchBarcodes()),
+        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube, productOrder, workflowBatch);
+        ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder = runExomeExpressShearingProcess(productOrder, picoPlatingEntityBuilder);
+        LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = runLibraryConstructionProcess(exomeExpressShearingEntityBuilder);
+        HybridSelectionEntityBuilder hybridSelectionEntityBuilder = runHybridSelectionProcess(libraryConstructionEntityBuilder);
+        QtpEntityBuilder qtpEntityBuilder = runQtpProcess(hybridSelectionEntityBuilder.getNormCatchRack(), hybridSelectionEntityBuilder.getNormCatchBarcodes(),
                 hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), WorkflowName.EXOME_EXPRESS);
-        qtpEntityBuilder.invoke();
-
-        String flowcellBarcode = "flowcell" + runDate.getTime();
-
-        HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
-            new HiSeq2500FlowcellEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, labEventHandler,
-                    qtpEntityBuilder.getDenatureRack(), flowcellBarcode).invoke();
+        HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder = runHiSeq2500FlowcellProcess(qtpEntityBuilder);
 
         IlluminaFlowcell illuminaFlowcell = hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell();
         Set<SampleInstance> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
@@ -503,50 +331,34 @@ public class LabEventTest {
         Assert.assertEquals(lane2SampleInstances.iterator().next().getReagents().size(), 2,
                 "Wrong number of reagents");
 
-
-
-
         final String machineName = "Superman";
 
         SimpleDateFormat dateFormat = new SimpleDateFormat(IlluminaSequencingRun.RUN_FORMAT_PATTERN);
 
         final File runPath = File.createTempFile("tempRun" +dateFormat.format(runDate), ".txt");
+        String flowcellBarcode = hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell().getCartridgeBarcode();
+
         SolexaRunBean runBean = new SolexaRunBean(flowcellBarcode,
                                          flowcellBarcode + dateFormat.format(runDate),
                                          runDate, machineName,
                                          runPath.getAbsolutePath(), null);
 
-        IlluminaSequencingRunDao runDao = EasyMock.createNiceMock(IlluminaSequencingRunDao.class);
-
-        EasyMock.expect(runDao.findByRunName(EasyMock.anyObject(String.class))).andReturn(null);
-
-        IlluminaSequencingRunFactory runFactory = EasyMock.createMock(IlluminaSequencingRunFactory.class);
-        EasyMock.expect(runFactory.build(EasyMock.anyObject(SolexaRunBean.class),
-                                                EasyMock.anyObject(IlluminaFlowcell.class)))
-                .andReturn(new IlluminaSequencingRun(hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell(),
-                                                            runPath.getName(), runBean.getRunBarcode(), machineName,
-                                                            null, false, runDate,
-                                                            null,
-                                                            runPath.getAbsolutePath()));
-
-        IlluminaFlowcellDao flowcellDao = EasyMock.createMock(IlluminaFlowcellDao.class);
-        EasyMock.expect(flowcellDao.findByBarcode(EasyMock.anyObject(String.class)))
-                .andReturn(hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell());
-
-
-        LabVesselDao vesselDao = EasyMock.createNiceMock(LabVesselDao.class);
+        IlluminaSequencingRunFactory runFactory = new IlluminaSequencingRunFactory(EasyMock.createNiceMock(JiraCommentUtil.class));
 
         HipChatMessageSender hipChatMsgSender = EasyMock.createNiceMock(HipChatMessageSender.class);
 
-        MercuryOrSquidRouter router = new MercuryOrSquidRouter(vesselDao, AthenaClientProducer.stubInstance());
+        MercuryOrSquidRouter router = new MercuryOrSquidRouter( AthenaClientProducer.stubInstance());
 
-        SolexaRunResource runResource = new SolexaRunResource(runDao, runFactory, flowcellDao, router,
+        SolexaRunResource runResource = new SolexaRunResource(runFactory, router,
                                                                      SquidConnectorProducer.stubInstance(),
                                                                      hipChatMsgSender);
 
         UriInfo uriInfoMock = EasyMock.createNiceMock(UriInfo.class);
         EasyMock.expect(uriInfoMock.getAbsolutePathBuilder()).andReturn(UriBuilder.fromPath(""));
-        EasyMock.replay(runDao, runFactory, flowcellDao, vesselDao, uriInfoMock,hipChatMsgSender);
+        EasyMock.replay(uriInfoMock, hipChatMsgSender);
+
+        javax.ws.rs.core.Response response = runResource.createRun(runBean, uriInfoMock, hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell());
+        Assert.assertEquals(IlluminaSequencingRun.class, response.getEntity().getClass());
 
         Map.Entry<String, TwoDBarcodedTube> stringTwoDBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
         ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
@@ -568,7 +380,6 @@ public class LabEventTest {
         Assert.assertEquals(illuminaSequencingRun.getSampleCartridge(),
                 hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell(), "Wrong flowcell");
 
-        EasyMock.verify(mockBucketDao);
 //        Controller.stopCPURecording();
     }
 
@@ -577,126 +388,26 @@ public class LabEventTest {
      */
     @Test(groups = {DATABASE_FREE})
     public void testWholeGenomeShotgun() {
-//        Controller.startCPURecording(true);
 
-        LabBatchEjb labBatchEJB = new LabBatchEjb();
-        labBatchEJB.setAthenaClientService(AthenaClientProducer.stubInstance());
-        labBatchEJB.setJiraService(JiraServiceProducer.stubInstance());
+        final ProductOrder productOrder =
+                ProductOrderTestFactory.buildWholeGenomeProductOrder(NUM_POSITIONS_IN_RACK);
+        productOrder.getResearchProject().setJiraTicketKey("RP-123");
 
-        LabVesselDao tubeDao = EasyMock.createNiceMock(LabVesselDao.class);
-        labBatchEJB.setTubeDAO(tubeDao);
+        Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder);
 
-        JiraTicketDao mockJira = EasyMock.createNiceMock(JiraTicketDao.class);
-        labBatchEJB.setJiraTicketDao(mockJira);
-
-        LabBatchDAO labBatchDAO = EasyMock.createNiceMock(LabBatchDAO.class);
-        labBatchEJB.setLabBatchDao(labBatchDAO);
-
-
-        ProductOrder productOrder = ProductOrderTestFactory.buildWholeGenomeProductOrder(NUM_POSITIONS_IN_RACK);
-        String jiraTicketKey = productOrder.getBusinessKey();
-
-        // starting rack
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
-        int rackPosition = 1;
-        for(ProductOrderSample poSample: productOrder.getSamples()) {
-            String barcode = "R" + rackPosition;
-            TwoDBarcodedTube bspAliquot = new TwoDBarcodedTube(barcode);
-            bspAliquot.addSample(new MercurySample(jiraTicketKey, poSample.getSampleName()));
-            mapBarcodeToTube.put(barcode, bspAliquot);
-            rackPosition++;
-        }
         LabBatch workflowBatch = new LabBatch("whole Genome Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
-        labBatchEJB.createLabBatch(workflowBatch, "scottmat");
-
-        BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory();
-        LabEventFactory labEventFactory = new LabEventFactory();
-        labEventFactory.setLabEventRefDataFetcher(labEventRefDataFetcher);
 
 
-        BucketDao mockBucketDao = EasyMock.createNiceMock(BucketDao.class);
-        BucketBean bucketBeanEJB = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB);
-        EasyMock.replay(mockBucketDao, tubeDao, mockJira, labBatchDAO);
+        PreFlightEntityBuilder preFlightEntityBuilder = runPreflightProcess(mapBarcodeToTube, productOrder, workflowBatch);
+        ShearingEntityBuilder shearingEntityBuilder = runShearingProcess(mapBarcodeToTube, preFlightEntityBuilder);
+        LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = runLibraryConstructionProcess(shearingEntityBuilder);
+        SageEntityBuilder sageEntityBuilder = runSageProcess(libraryConstructionEntityBuilder);
 
-        LabEventHandler labEventHandler = new LabEventHandler(new WorkflowLoader(), AthenaClientProducer.stubInstance(),
-                bucketBeanEJB, mockBucketDao, new BSPUserList(BSPManagerFactoryProducer.stubInstance()));
+        Assert.assertEquals(sageEntityBuilder.getSageCleanupRack().getSampleInstances().size(), NUM_POSITIONS_IN_RACK, "Wrong number of sage cleanup samples");
 
-        PreFlightEntityBuilder preFlightEntityBuilder = new PreFlightEntityBuilder(bettaLimsMessageTestFactory,
-                labEventFactory, labEventHandler,
-                mapBarcodeToTube).invoke();
-
-        ShearingEntityBuilder shearingEntityBuilder = new ShearingEntityBuilder(mapBarcodeToTube, preFlightEntityBuilder.getTubeFormation(),
-                bettaLimsMessageTestFactory, labEventFactory, labEventHandler, preFlightEntityBuilder.getRackBarcode()).invoke();
-
-        LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = new LibraryConstructionEntityBuilder(
-                bettaLimsMessageTestFactory, labEventFactory, labEventHandler,
-                shearingEntityBuilder.getShearingCleanupPlate(), shearingEntityBuilder.getShearCleanPlateBarcode(),
-                shearingEntityBuilder.getShearingPlate(), NUM_POSITIONS_IN_RACK).invoke();
-
-        List<String> sageUnloadTubeBarcodes = new ArrayList<String>();
-        for (int i = 1; i <= NUM_POSITIONS_IN_RACK; i++) {
-            sageUnloadTubeBarcodes.add("SageUnload" + i);
-        }
-        String sageUnloadBarcode = "SageUnload";
-        Map<String, TwoDBarcodedTube> mapBarcodeToSageUnloadTubes = new HashMap<String, TwoDBarcodedTube>();
-        RackOfTubes targetRackOfTubes = null;
-        for (int i = 0; i < NUM_POSITIONS_IN_RACK / 4; i++) {
-            // SageLoading
-            String sageCassetteBarcode = "SageCassette" + i;
-            PlateTransferEventType sageLoadingJaxb = bettaLimsMessageTestFactory.buildRackToPlate("SageLoading",
-                    libraryConstructionEntityBuilder.getPondRegRackBarcode(),
-                    libraryConstructionEntityBuilder.getPondRegTubeBarcodes().subList(i * 4, i * 4 + 4),
-                    sageCassetteBarcode);
-            // todo jmt SAGE section
-            LabEvent sageLoadingEntity = labEventFactory.buildFromBettaLimsRackToPlateDbFree(sageLoadingJaxb,
-                    libraryConstructionEntityBuilder.getPondRegRack(), null);
-            labEventHandler.processEvent(sageLoadingEntity);
-            StaticPlate sageCassette = (StaticPlate) sageLoadingEntity.getTargetLabVessels().iterator().next();
-
-            // SageLoaded
-            PlateEventType sageLoadedJaxb = bettaLimsMessageTestFactory.buildPlateEvent(
-                    LabEventType.SAGE_LOADED.getName(), sageCassetteBarcode);
-            LabEvent sageLoadedEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(sageLoadedJaxb, sageCassette);
-            labEventHandler.processEvent(sageLoadedEntity);
-
-            // SageUnloading
-            PlateTransferEventType sageUnloadingJaxb = bettaLimsMessageTestFactory.buildPlateToRack("SageUnloading",
-                    sageCassetteBarcode, sageUnloadBarcode, sageUnloadTubeBarcodes.subList(i * 4, i * 4 + 4));
-            LabEvent sageUnloadEntity = labEventFactory.buildFromBettaLimsPlateToRackDbFree(sageUnloadingJaxb,
-                    sageCassette, mapBarcodeToSageUnloadTubes, targetRackOfTubes);
-            labEventHandler.processEvent(sageUnloadEntity);
-            sageUnloadEntity.getTargetLabVessels().iterator().next();
-        }
-
-        // SageCleanup
-        List<String> sageCleanupTubeBarcodes = new ArrayList<String>();
-        for (int i = 1; i <= NUM_POSITIONS_IN_RACK; i++) {
-            sageCleanupTubeBarcodes.add("SageCleanup" + i);
-        }
-        String sageCleanupBarcode = "SageCleanup";
-        PlateTransferEventType sageCleanupJaxb = bettaLimsMessageTestFactory.buildRackToRack("SageCleanup", sageUnloadBarcode,
-                sageUnloadTubeBarcodes, sageCleanupBarcode, sageCleanupTubeBarcodes);
-        Map<VesselPosition, TwoDBarcodedTube> mapPositionToTube = new HashMap<VesselPosition, TwoDBarcodedTube>();
-        List<TwoDBarcodedTube> sageUnloadTubes = new ArrayList<TwoDBarcodedTube>(mapBarcodeToSageUnloadTubes.values());
-        for (int i = 0; i < NUM_POSITIONS_IN_RACK; i++) {
-            mapPositionToTube.put(VesselPosition.getByName(bettaLimsMessageTestFactory.buildWellName(i + 1)),
-                    sageUnloadTubes.get(i));
-        }
-        TubeFormation sageUnloadRackRearrayed = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
-        sageUnloadRackRearrayed.addRackOfTubes(new RackOfTubes("sageUnloadRearray", RackOfTubes.RackType.Matrix96));
-        LabEvent sageCleanupEntity = labEventFactory.buildFromBettaLimsRackToRackDbFree(sageCleanupJaxb,
-                sageUnloadRackRearrayed, new HashMap<String, TwoDBarcodedTube>(), targetRackOfTubes);
-        labEventHandler.processEvent(sageCleanupEntity);
-        TubeFormation sageCleanupRack = (TubeFormation) sageCleanupEntity.getTargetLabVessels().iterator().next();
-        Assert.assertEquals(sageCleanupRack.getSampleInstances().size(), NUM_POSITIONS_IN_RACK, "Wrong number of sage cleanup samples");
-
-        QtpEntityBuilder qtpEntityBuilder =
-                new QtpEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, labEventHandler,
-                        Collections.singletonList(sageCleanupRack), Collections.singletonList(sageCleanupBarcode),
-                        Collections.singletonList(sageCleanupTubeBarcodes), mapBarcodeToSageUnloadTubes,
-                        WorkflowName.WHOLE_GENOME);
-        qtpEntityBuilder.invoke();
+        QtpEntityBuilder qtpEntityBuilder = runQtpProcess(sageEntityBuilder.getSageCleanupRack(), sageEntityBuilder.getSageCleanupTubeBarcodes(),
+                sageEntityBuilder.getMapBarcodeToSageUnloadTubes(), WorkflowName.WHOLE_GENOME);
 
         IlluminaFlowcell illuminaFlowcell = qtpEntityBuilder.getIlluminaFlowcell();
         Set<SampleInstance> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
@@ -753,7 +464,7 @@ public class LabEventTest {
         EasyMock.replay(mockBucketDao, tubeDao, mockJira, labBatchDAO);
 
         LabEventHandler labEventHandler = new LabEventHandler(new WorkflowLoader(), AthenaClientProducer.stubInstance(),
-                bucketBeanEJB, mockBucketDao, new BSPUserList(BSPManagerFactoryProducer.stubInstance()));
+                bucketBeanEJB, null,  new BSPUserList(BSPManagerFactoryProducer.stubInstance()));
         BuildIndexPlate buildIndexPlate = new BuildIndexPlate("IndexPlate").invoke(null);
         FluidigmMessagesBuilder fluidigmMessagesBuilder = new FluidigmMessagesBuilder("", bettaLimsMessageTestFactory,
                 labEventFactory, labEventHandler,

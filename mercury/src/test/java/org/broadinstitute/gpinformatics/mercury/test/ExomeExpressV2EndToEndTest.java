@@ -1,50 +1,40 @@
 package org.broadinstitute.gpinformatics.mercury.test;
 
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
-import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
-import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
-import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
-import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingJaxbBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
-import org.testng.Assert;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProducer;
+import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
+import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
-import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
-import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.*;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
+import org.broadinstitute.gpinformatics.mercury.test.builders.*;
 import org.easymock.EasyMock;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.io.File;
@@ -56,7 +46,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DA
 /**
  * Test Exome Express in Mercury
  */
-public class ExomeExpressV2EndToEndTest {
+public class ExomeExpressV2EndToEndTest extends BaseEventTest {
 
     public static List<String> RACK_COLUMNS = Arrays.asList("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11",
             "12");
@@ -95,27 +85,10 @@ public class ExomeExpressV2EndToEndTest {
         labBatchEJB.setLabBatchDao(labBatchDAO);
 
 
-//        LabEventTest.MockBucket workingShearingBucket= new LabEventTest.MockBucket("Shearing Bucket",jiraTicketKey);
-        LabEventTest.MockBucket workingPicoBucket= new LabEventTest.MockBucket("Pico/Plating Bucket",jiraTicketKey);
-        Bucket workingShearingBucket= new Bucket(new WorkflowStepDef("Shearing Bucket"));
-
-        BucketDao mockBucketDao = EasyMock.createMock(BucketDao.class);
-        EasyMock.expect(mockBucketDao.findByName(EasyMock.eq("Shearing Bucket")))
-                .andReturn(workingShearingBucket);
-        EasyMock.expect(mockBucketDao.findByName(EasyMock.eq("Shearing Bucket")))
-                .andReturn(workingShearingBucket);
-        EasyMock.expect(mockBucketDao.findByName(EasyMock.eq("Pico/Plating Bucket")))
-                .andReturn(workingPicoBucket);
-        BucketBean bucketBean = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB);
-        EasyMock.replay(mockBucketDao, tubeDao, mockJira, labBatchDAO);
-
         final String testActor = "hrafal";
 
         TemplateEngine templateEngine = new TemplateEngine();
         templateEngine.postConstruct();
-        LabEventHandler leHandler = new LabEventHandler(new WorkflowLoader(), AthenaClientProducer.stubInstance(),
-                bucketBean, mockBucketDao, new BSPUserList(BSPManagerFactoryProducer.stubInstance()));
-
 
         // Bucket for Shearing - enters from workflow?
         WorkflowLoader workflowLoader = new WorkflowLoader();
@@ -184,15 +157,18 @@ public class ExomeExpressV2EndToEndTest {
             Rack of tubes "Taken out of" bucket.  Run through all pico steps.  Awaits final
           */
 
-        AthenaClientServiceStub.addProductOrder(productOrder1);
+        Bucket workingBucket = createAndPopulateBucket(mapBarcodeToTube, productOrder1, "Pico/Plating Bucket");
 
+        AthenaClientServiceStub.addProductOrder(productOrder1);
+        LabEventHandler leHandler = getLabEventHandler(workingBucket);
         PicoPlatingEntityBuilder pplatingEntityBuilder =
                 new PicoPlatingEntityBuilder(bettaLimsMessageTestFactory,
                 labEventFactory, leHandler, mapBarcodeToTube, rackBarcode).invoke();
 
+        workingBucket = createAndPopulateBucket(pplatingEntityBuilder.getNormBarcodeToTubeMap(), productOrder1, "Shearing Bucket");
         // Lab Event Factory should have put tubes into the Bucket after normalization
-        Assert.assertEquals(LabEventTest.NUM_POSITIONS_IN_RACK,workingShearingBucket.getBucketEntries().size());
-
+        Assert.assertEquals(LabEventTest.NUM_POSITIONS_IN_RACK, workingBucket.getBucketEntries().size());
+        leHandler = getLabEventHandler(workingBucket);
         // Bucket for Shearing - enters from workflow?
 
         ExomeExpressShearingJaxbBuilder exexJaxbBuilder =
@@ -214,7 +190,7 @@ public class ExomeExpressV2EndToEndTest {
 
 
         // Bucket should have been drained after Plating to Shearing Tubes
-        Assert.assertEquals(0,workingShearingBucket.getBucketEntries().size());
+        Assert.assertEquals(0,workingBucket.getBucketEntries().size());
 
 
         LabEventTest.validateWorkflow(LabEventType.COVARIS_LOADED.getName(),
@@ -317,7 +293,7 @@ public class ExomeExpressV2EndToEndTest {
         // Submissions
         // Reporting
 
-        EasyMock.verify(mockBucketDao);
+        //EasyMock.verify(mockBucketDao);
 
     }
 

@@ -964,6 +964,13 @@ public abstract class LabVessel implements Serializable {
         return descendantCriteria.getLabVesselDescendants();
     }
 
+    public Collection<LabVessel> getDescendantVesselsAtHopCount(int hopCount) {
+        TransferTraverserCriteria.LabVesselDescendantCriteria descendantCriteria =
+                new TransferTraverserCriteria.LabVesselDescendantCriteria();
+        evaluateCriteria(descendantCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+        return descendantCriteria.getLabVesselDescendants(hopCount);
+    }
+
     /**
      * This method get index information for all samples in this vessel.
      *
