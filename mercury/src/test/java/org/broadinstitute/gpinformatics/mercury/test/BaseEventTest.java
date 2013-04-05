@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
+import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
@@ -24,7 +25,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.broadinstitute.gpinformatics.mercury.test.builders.*;
 import org.easymock.EasyMock;
-import org.jetbrains.annotations.Nullable;
 import org.testng.annotations.BeforeClass;
 
 import java.util.*;
@@ -146,8 +146,13 @@ public class BaseEventTest {
 
         Bucket workingBucket = createAndPopulateBucket(mapBarcodeToTube, productOrder, "Pico/Plating Bucket");
 
+        BucketDao mockBucketDao = EasyMock.createMock(BucketDao.class);
+        EasyMock.expect(mockBucketDao.findByName("Pico/Plating Bucket")).andReturn(workingBucket);
+        EasyMock.expect(mockBucketDao.findByName(EasyMock.anyObject(String.class))).andReturn(new Bucket("FAKEBUCKET"));
+        EasyMock.replay(mockBucketDao);
+
         return new PicoPlatingEntityBuilder(bettaLimsMessageTestFactory,
-                labEventFactory, getLabEventHandler(workingBucket),
+                labEventFactory, getLabEventHandler(mockBucketDao),
                 mapBarcodeToTube, rackBarcode).invoke();
     }
 
@@ -156,9 +161,14 @@ public class BaseEventTest {
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = picoPlatingEntityBuilder.getNormBarcodeToTubeMap();
         Bucket workingBucket = createAndPopulateBucket(mapBarcodeToTube, productOrder, "Shearing Bucket");
 
+        BucketDao mockBucketDao = EasyMock.createNiceMock(BucketDao.class);
+        EasyMock.expect(mockBucketDao.findByName("Shearing Bucket")).andReturn(workingBucket);
+        EasyMock.expect(mockBucketDao.findByName(EasyMock.anyObject(String.class))).andReturn(new Bucket("FAKEBUCKET"));
+        EasyMock.replay(mockBucketDao);
+
         return new ExomeExpressShearingEntityBuilder(mapBarcodeToTube,
                 picoPlatingEntityBuilder.getNormTubeFormation(), bettaLimsMessageTestFactory, labEventFactory,
-                getLabEventHandler(workingBucket), picoPlatingEntityBuilder.getNormalizationBarcode()).invoke();
+                getLabEventHandler(mockBucketDao), picoPlatingEntityBuilder.getNormalizationBarcode()).invoke();
     }
 
     public PreFlightEntityBuilder runPreflightProcess(Map<String, TwoDBarcodedTube> mapBarcodeToTube, ProductOrder productOrder,
@@ -167,8 +177,13 @@ public class BaseEventTest {
 
         Bucket workingBucket = createAndPopulateBucket(mapBarcodeToTube, productOrder, "Preflight Bucket");
 
+        BucketDao mockBucketDao = EasyMock.createNiceMock(BucketDao.class);
+        EasyMock.expect(mockBucketDao.findByName("Preflight Bucket")).andReturn(workingBucket);
+        EasyMock.expect(mockBucketDao.findByName(EasyMock.anyObject(String.class))).andReturn(new Bucket("FAKEBUCKET"));
+        EasyMock.replay(mockBucketDao);
+
         return new PreFlightEntityBuilder(bettaLimsMessageTestFactory,
-                labEventFactory, getLabEventHandler(workingBucket),
+                labEventFactory, getLabEventHandler(mockBucketDao),
                 mapBarcodeToTube).invoke();
     }
 
@@ -205,8 +220,8 @@ public class BaseEventTest {
                 mapBarcodeToTube, workflowName).invoke();
     }
 
-    protected LabEventHandler getLabEventHandler(@Nullable Bucket workingBucket) {
-        return new LabEventHandler(new WorkflowLoader(), AthenaClientProducer.stubInstance(), bucketBeanEJB, workingBucket,
+    protected LabEventHandler getLabEventHandler(BucketDao bucketDAO) {
+        return new LabEventHandler(new WorkflowLoader(), AthenaClientProducer.stubInstance(), bucketBeanEJB, bucketDAO,
                         new BSPUserList(BSPManagerFactoryProducer.stubInstance()));
     }
 

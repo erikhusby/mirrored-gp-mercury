@@ -9,6 +9,8 @@ import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
+import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
@@ -103,11 +105,20 @@ public class SolexaRunRoutingTest extends BaseEventTest{
                                          File.createTempFile("tempRun" + dateFormat.format(runDate), ".txt")
                                              .getAbsolutePath(), null);
 
-        IlluminaSequencingRunFactory runFactory = new IlluminaSequencingRunFactory(EasyMock.createNiceMock(JiraCommentUtil.class));
+        IlluminaSequencingRunDao runDao = EasyMock.createMock(IlluminaSequencingRunDao.class);
+
+        EasyMock.expect(runDao.findByRunName(EasyMock.anyObject(String.class))).andReturn(null);
+
+        IlluminaSequencingRunFactory runFactory = EasyMock.createMock(IlluminaSequencingRunFactory.class);
+
+        IlluminaFlowcellDao flowcellDao = EasyMock.createNiceMock(IlluminaFlowcellDao.class);
+        EasyMock.expect(flowcellDao.findByBarcode(EasyMock.anyObject(String.class))).andReturn(flowcell);
+
+
         MercuryOrSquidRouter router = new MercuryOrSquidRouter(AthenaClientProducer.stubInstance());
         HipChatMessageSender hipChatMsgSender = EasyMock.createNiceMock(HipChatMessageSender.class);
 
-        SolexaRunResource runResource = new SolexaRunResource( runFactory, router,
+        SolexaRunResource runResource = new SolexaRunResource(runDao, runFactory, flowcellDao, router,
                                                                      SquidConnectorProducer.stubInstance(),
                                                                      hipChatMsgSender);
 
@@ -115,7 +126,7 @@ public class SolexaRunRoutingTest extends BaseEventTest{
         EasyMock.expect(uriInfoMock.getAbsolutePathBuilder()).andReturn(UriBuilder.fromPath(""));
         EasyMock.replay(uriInfoMock, hipChatMsgSender);
 
-        javax.ws.rs.core.Response response = runResource.createRun(runBean, uriInfoMock, flowcell);
+        javax.ws.rs.core.Response response = runResource.createRun(runBean, uriInfoMock);
         Assert.assertEquals(SolexaRunBean.class, response.getEntity().getClass());
     }
 
@@ -132,19 +143,27 @@ public class SolexaRunRoutingTest extends BaseEventTest{
                                          File.createTempFile("tempRun" + dateFormat.format(runDate), ".txt")
                                              .getAbsolutePath(), null);
 
+        IlluminaSequencingRunDao runDao = EasyMock.createMock(IlluminaSequencingRunDao.class);
+
+        EasyMock.expect(runDao.findByRunName(EasyMock.anyObject(String.class))).andReturn(null);
+
+        IlluminaFlowcellDao flowcellDao = EasyMock.createNiceMock(IlluminaFlowcellDao.class);
+        EasyMock.expect(flowcellDao.findByBarcode(EasyMock.anyObject(String.class))).andReturn(flowcell);
+
         IlluminaSequencingRunFactory runFactory = new IlluminaSequencingRunFactory(EasyMock.createNiceMock(JiraCommentUtil.class));
         MercuryOrSquidRouter router = new MercuryOrSquidRouter( AthenaClientProducer.stubInstance());
 
         HipChatMessageSender hipChatMsgSender = EasyMock.createNiceMock(HipChatMessageSender.class);
 
-        SolexaRunResource runResource = new SolexaRunResource( runFactory, router,
-                                                                     SquidConnectorProducer.stubInstance(),
-                                                                     hipChatMsgSender);
+        SolexaRunResource runResource = new SolexaRunResource(runDao, runFactory, flowcellDao, router,
+                SquidConnectorProducer.stubInstance(),
+                hipChatMsgSender);
+
         UriInfo uriInfoMock = EasyMock.createNiceMock(UriInfo.class);
         EasyMock.expect(uriInfoMock.getAbsolutePathBuilder()).andReturn(UriBuilder.fromPath(""));
         EasyMock.replay(uriInfoMock, hipChatMsgSender);
 
-        javax.ws.rs.core.Response response = runResource.createRun(runBean, uriInfoMock, flowcell);
+        javax.ws.rs.core.Response response = runResource.createRun(runBean, uriInfoMock);
         Assert.assertEquals(SolexaRunBean.class, response.getEntity().getClass());
     }
 

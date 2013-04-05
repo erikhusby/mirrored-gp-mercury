@@ -14,8 +14,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
-import org.broadinstitute.gpinformatics.infrastructure.monitoring.HipChatMessageSender;
-import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnectorProducer;
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
@@ -24,15 +22,14 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.*;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.graph.Graph;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettalimsMessageResource;
-import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
-import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunResource;
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferEntityGrapher;
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVisualizer;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexingSchemeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
@@ -67,8 +64,6 @@ import org.testng.annotations.Test;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriInfo;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -343,22 +338,11 @@ public class LabEventTest extends BaseEventTest{
                                          runDate, machineName,
                                          runPath.getAbsolutePath(), null);
 
-        IlluminaSequencingRunFactory runFactory = new IlluminaSequencingRunFactory(EasyMock.createNiceMock(JiraCommentUtil.class));
+        IlluminaSequencingRunDao runDao = EasyMock.createNiceMock(IlluminaSequencingRunDao.class);
+        EasyMock.expect(runDao.findByRunName(EasyMock.anyObject(String.class))).andReturn(null);
 
-        HipChatMessageSender hipChatMsgSender = EasyMock.createNiceMock(HipChatMessageSender.class);
-
-        MercuryOrSquidRouter router = new MercuryOrSquidRouter( AthenaClientProducer.stubInstance());
-
-        SolexaRunResource runResource = new SolexaRunResource(runFactory, router,
-                                                                     SquidConnectorProducer.stubInstance(),
-                                                                     hipChatMsgSender);
-
-        UriInfo uriInfoMock = EasyMock.createNiceMock(UriInfo.class);
-        EasyMock.expect(uriInfoMock.getAbsolutePathBuilder()).andReturn(UriBuilder.fromPath(""));
-        EasyMock.replay(uriInfoMock, hipChatMsgSender);
-
-        javax.ws.rs.core.Response response = runResource.createRun(runBean, uriInfoMock, hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell());
-        Assert.assertEquals(IlluminaSequencingRun.class, response.getEntity().getClass());
+        IlluminaSequencingRunFactory runFactory = new IlluminaSequencingRunFactory(EasyMock.createMock(JiraCommentUtil.class));
+        IlluminaSequencingRun run = runFactory.buildDbFree(runBean,hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell());
 
         Map.Entry<String, TwoDBarcodedTube> stringTwoDBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
         ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();

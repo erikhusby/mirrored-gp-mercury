@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
+import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
@@ -44,7 +45,7 @@ public class LabEventHandler implements Serializable {
 
     private BucketBean bucketBean;
 
-    private Bucket workingBucket;
+    private BucketDao bucketDao;
 
     @Inject
     private JiraCommentUtil jiraCommentUtil;
@@ -54,12 +55,12 @@ public class LabEventHandler implements Serializable {
 
     @Inject
     public LabEventHandler(WorkflowLoader workflowLoader, AthenaClientService athenaClientService, BucketBean bucketBean,
-             Bucket workingBucket, BSPUserList bspUserList) {
+             BucketDao bucketDao, BSPUserList bspUserList) {
         this.workflowLoader = workflowLoader;
         this.athenaClientService = athenaClientService;
         this.bucketBean = bucketBean;
         this.bspUserList = bspUserList;
-        this.workingBucket = workingBucket;
+        this.bucketDao = bucketDao;
     }
 
     public HandlerResponse processEvent(LabEvent labEvent) {
@@ -100,12 +101,11 @@ public class LabEventHandler implements Serializable {
                 If the bucket previously existed, retrieve it, otherwise create a new one based on the workflow step
                 definition
              */
-            if (workingBucket == null) {
+            if (bucketDao == null) {
 
                 //TODO SGM, JMT:  this check should probably be part of the pre process Validation call from the decks
                 LOG.error("Bucket " + workingBucketIdentifier.getName() +
                         " is expected to have vessels but no instance of the bucket can be found.");
-                workingBucket = new Bucket(workingBucketIdentifier);
             }
 
             /*
@@ -113,9 +113,9 @@ public class LabEventHandler implements Serializable {
                 themselves.  Extract them and use that to pull from the bucket.
              */
             Set<LabVessel> eventVessels = labEvent.getSourceVesselTubes();
-
+            Bucket bucket = bucketDao.findByName(workingBucketIdentifier.getName());
             bucketBean.start(bspUserList.getById(labEvent.getEventOperator()).getUsername(), eventVessels,
-                    workingBucket, labEvent.getEventLocation());
+                    bucket, labEvent.getEventLocation());
         }
 
         /*
@@ -136,9 +136,7 @@ public class LabEventHandler implements Serializable {
                definition
             */
 
-            if (workingBucket == null) {
-                workingBucket = new Bucket(workingBucketIdentifier);
-            }
+            Bucket workingBucket = bucketDao.findByName(workingBucketIdentifier.getName());
 
             /*
                 If the Target item is a TubeFormation (for a rack) we really only want to deal with the Tubes

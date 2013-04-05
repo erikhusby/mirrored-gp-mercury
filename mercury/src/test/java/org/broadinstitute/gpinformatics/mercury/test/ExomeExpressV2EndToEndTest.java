@@ -16,6 +16,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventTy
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
+import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
@@ -160,7 +161,13 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
         Bucket workingBucket = createAndPopulateBucket(mapBarcodeToTube, productOrder1, "Pico/Plating Bucket");
 
         AthenaClientServiceStub.addProductOrder(productOrder1);
-        LabEventHandler leHandler = getLabEventHandler(workingBucket);
+
+        BucketDao mockBucketDao = EasyMock.createMock(BucketDao.class);
+        EasyMock.expect(mockBucketDao.findByName("Pico/Plating Bucket")).andReturn(workingBucket);
+        EasyMock.expect(mockBucketDao.findByName(EasyMock.anyObject(String.class))).andReturn(new Bucket("FAKEBUCKET"));
+        EasyMock.replay(mockBucketDao);
+
+        LabEventHandler leHandler = getLabEventHandler(mockBucketDao);
         PicoPlatingEntityBuilder pplatingEntityBuilder =
                 new PicoPlatingEntityBuilder(bettaLimsMessageTestFactory,
                 labEventFactory, leHandler, mapBarcodeToTube, rackBarcode).invoke();
@@ -168,7 +175,13 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
         workingBucket = createAndPopulateBucket(pplatingEntityBuilder.getNormBarcodeToTubeMap(), productOrder1, "Shearing Bucket");
         // Lab Event Factory should have put tubes into the Bucket after normalization
         Assert.assertEquals(LabEventTest.NUM_POSITIONS_IN_RACK, workingBucket.getBucketEntries().size());
-        leHandler = getLabEventHandler(workingBucket);
+
+
+        mockBucketDao = EasyMock.createMock(BucketDao.class);
+        EasyMock.expect(mockBucketDao.findByName("Shearing Bucket")).andReturn(workingBucket);
+        EasyMock.replay(mockBucketDao);
+
+        leHandler = getLabEventHandler(mockBucketDao);
         // Bucket for Shearing - enters from workflow?
 
         ExomeExpressShearingJaxbBuilder exexJaxbBuilder =

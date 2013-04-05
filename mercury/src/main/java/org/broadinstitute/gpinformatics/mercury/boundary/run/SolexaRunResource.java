@@ -4,7 +4,10 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.monitoring.HipChatMessageSender;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnector;
+import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
+import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
@@ -38,11 +41,11 @@ public class SolexaRunResource {
 
     private static final Log LOG = LogFactory.getLog(SolexaRunResource.class);
 
-   // private IlluminaSequencingRunDao illuminaSequencingRunDao;
+    private IlluminaSequencingRunDao illuminaSequencingRunDao;
 
     private IlluminaSequencingRunFactory illuminaSequencingRunFactory;
 
-   // private IlluminaFlowcellDao illuminaFlowcellDao;
+    private IlluminaFlowcellDao illuminaFlowcellDao;
 
     private MercuryOrSquidRouter router;
 
@@ -51,12 +54,13 @@ public class SolexaRunResource {
     private HipChatMessageSender messageSender;
 
     @Inject
-    public SolexaRunResource(IlluminaSequencingRunFactory illuminaSequencingRunFactory,
-                             MercuryOrSquidRouter router,
+    public SolexaRunResource(IlluminaSequencingRunDao illuminaSequencingRunDao,
+                             IlluminaSequencingRunFactory illuminaSequencingRunFactory,
+                             IlluminaFlowcellDao illuminaFlowcellDao, MercuryOrSquidRouter router,
                              SquidConnector connector, HipChatMessageSender messageSender) {
-        //this.illuminaSequencingRunDao = illuminaSequencingRunDao;
+        this.illuminaSequencingRunDao = illuminaSequencingRunDao;
         this.illuminaSequencingRunFactory = illuminaSequencingRunFactory;
-      //  this.illuminaFlowcellDao = illuminaFlowcellDao;
+        this.illuminaFlowcellDao = illuminaFlowcellDao;
         this.router = router;
         this.connector = connector;
         this.messageSender = messageSender;
@@ -71,10 +75,19 @@ public class SolexaRunResource {
     @POST
     @Consumes({"application/xml", "application/json"})
     @Produces({"application/xml", "application/json"})
-    public Response createRun(SolexaRunBean solexaRunBean, @Context UriInfo uriInfo,
-                              IlluminaFlowcell flowcell) {
+    public Response createRun(SolexaRunBean solexaRunBean, @Context UriInfo uriInfo) {
 
         String runname = new File(solexaRunBean.getRunDirectory()).getName();
+
+        IlluminaSequencingRun run = illuminaSequencingRunDao.findByRunName(runname);
+
+        if (run != null) {
+            throw new ResourceException("Attempting to create a run that is already registered in the system",
+                                               Response.Status.INTERNAL_SERVER_ERROR);
+        }
+
+        IlluminaFlowcell flowcell =
+                illuminaFlowcellDao.findByBarcode(solexaRunBean.getFlowcellBarcode());
 
         Response callerResponse;
 
@@ -97,7 +110,7 @@ public class SolexaRunResource {
 
         if (router.routeForVessel(flowcell) == MercuryOrSquidRouter.MercuryOrSquid.MERCURY) {
             try {
-                IlluminaSequencingRun run = registerRun(solexaRunBean, flowcell);
+                run = registerRun(solexaRunBean, flowcell);
                 URI createdUri = absolutePathBuilder.path(run.getRunName()).build();
                 if (callerResponse.getStatus() == Response.Status.CREATED.getStatusCode()) {
                     callerResponse = Response.created(createdUri).entity(run).build();
@@ -125,9 +138,9 @@ public class SolexaRunResource {
          * Will be another story.
          */
 
-        illuminaSequencingRun = illuminaSequencingRunFactory.buildDbFree(solexaRunBean, illuminaFlowcell);
+        illuminaSequencingRun = illuminaSequencingRunFactory.build(solexaRunBean, illuminaFlowcell);
 
-      //  illuminaSequencingRunDao.persist(illuminaSequencingRun);
+        illuminaSequencingRunDao.persist(illuminaSequencingRun);
         return illuminaSequencingRun;
     }
 }
