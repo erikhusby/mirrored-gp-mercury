@@ -143,16 +143,11 @@ public class ProductOrderTest {
         assertThat(productOrder.getDuplicateCount(), is(equalTo(2)));
     }
 
-
     @Test
     public void testAreAllSampleBSPFormat() throws Exception {
         assertThat(fourBspSamplesWithDupes, everyItem(is(inBspFormat())));
-
         assertThat(sixBspSamplesNoDupes, everyItem(is(inBspFormat())));
-
         assertThat(nonBspSampleProducts, everyItem(is(not(inBspFormat()))));
-
         assertThat(sixMixedSampleProducts, not(everyItem(is(inBspFormat()))));
     }
-
 }
