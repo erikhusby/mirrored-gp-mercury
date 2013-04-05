@@ -164,7 +164,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private List<Long> sampleIdsForGetBspData;
 
-    private CompletionStatusFetcher progressFetcher = new CompletionStatusFetcher();
+    private final CompletionStatusFetcher progressFetcher = new CompletionStatusFetcher();
 
     @ValidateNestedProperties({
         @Validate(field="comments", maxlength=2000, on={SAVE_ACTION}),
@@ -229,7 +229,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (!StringUtils.isBlank(productOrder)) {
             editOrder = productOrderDao.findByBusinessKey(productOrder);
 
-            progressFetcher.setupProgress(productOrderDao, Collections.singletonList(editOrder.getBusinessKey()));
+            progressFetcher.loadProgress(productOrderDao, Collections.singletonList(editOrder.getBusinessKey()));
         } else {
             // If this was a create with research project specified, find that.
             // This is only used for save, when creating a new product order.
@@ -393,7 +393,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @After(stages = LifecycleStage.BindingAndValidation, on = LIST_ACTION)
     public void listInit() {
         allProductOrderListEntries = orderListEntryDao.findProductOrderListEntries();
-        progressFetcher.setupProgress(productOrderDao);
+        progressFetcher.loadProgress(productOrderDao);
     }
 
     @After(stages = LifecycleStage.BindingAndValidation, on = EDIT_ACTION)
