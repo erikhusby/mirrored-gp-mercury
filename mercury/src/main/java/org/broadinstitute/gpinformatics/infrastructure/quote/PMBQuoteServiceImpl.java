@@ -25,7 +25,7 @@ public class PMBQuoteServiceImpl extends AbstractJerseyClientService implements 
         ALL_SEQUENCING_QUOTES("/quotes/ws/portals/private/getquotes?platform_name=DNA+Sequencing&with_funding=true"),
         ALL_QUOTES("/quotes/ws/portals/private/getquotes?with_funding=true"),
         ALL_FUNDINGS("/quotes/rest/sql_report/41"),
-        ALL_PRICE_ITEMS("/quotes/rest/price_list/10"),
+        ALL_PRICE_ITEMS("/quotes/rest/price_list/10/true"),
         REGISTER_WORK("/quotes/ws/portals/private/createworkitem"),
         //TODO this next enum value will be removed soon.
         SINGLE_NUMERIC_QUOTE("/portal/Quote/ws/portals/private/getquotes?with_funding=true&quote_ids=")
@@ -42,7 +42,6 @@ public class PMBQuoteServiceImpl extends AbstractJerseyClientService implements 
         }
 
     }
-
 
     @Inject
     private QuoteConfig quoteConfig;

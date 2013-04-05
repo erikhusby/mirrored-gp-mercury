@@ -28,10 +28,6 @@ public class Quote {
         this.approvalStatus = approvalStatus;
     }
 
-//    Quote(String alphanumericId) {
-//        this(alphanumericId, null, null);
-//    }
-
     @XmlElement(name = "QuoteFunding")
     public QuoteFunding getQuoteFunding() {
         return quoteFunding;

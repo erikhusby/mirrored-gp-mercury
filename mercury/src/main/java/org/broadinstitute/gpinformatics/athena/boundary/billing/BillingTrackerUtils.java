@@ -9,6 +9,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 
 import java.util.*;
 
@@ -147,16 +148,16 @@ public class BillingTrackerUtils {
     }
 
     public static Map<TrackerColumnInfo, PriceItem> createPriceItemMapForSheet(
-            List<TrackerColumnInfo> trackerColumnInfos, Product product) {
+            List<TrackerColumnInfo> trackerColumnInfos, Product product, PriceListCache priceListCache) {
         Map<TrackerColumnInfo, PriceItem> resultMap = new HashMap<TrackerColumnInfo, PriceItem>();
 
-        List<PriceItem> productPriceItems = SampleLedgerExporter.getPriceItems(product);
+        List<PriceItem> productPriceItems = SampleLedgerExporter.getPriceItems(product, priceListCache);
         Set<Product> productAddOns = product.getAddOns();
 
         for (TrackerColumnInfo trackerColumnInfo : trackerColumnInfos) {
 
             PriceItem targetPriceItem = findPriceItemForTrackerColumnInfo(trackerColumnInfo, product,
-                    productPriceItems, productAddOns);
+                    productPriceItems, productAddOns, priceListCache);
 
             resultMap.put(trackerColumnInfo, targetPriceItem);
         }
@@ -166,7 +167,7 @@ public class BillingTrackerUtils {
 
     private static PriceItem findPriceItemForTrackerColumnInfo(
             TrackerColumnInfo trackerColumnInfo, Product product, List<PriceItem> productPriceItems,
-            Set<Product> productAddOns) {
+            Set<Product> productAddOns, PriceListCache priceListCache) {
 
         String parsedProductPartNumber = trackerColumnInfo.getBillableRef().getProductPartNumber();
         String parsedPriceItemName = trackerColumnInfo.getBillableRef().getPriceItemName();
@@ -185,7 +186,7 @@ public class BillingTrackerUtils {
         for (Product productAddOn : productAddOns) {
             if (productAddOn.getPartNumber().equals(parsedProductPartNumber)) {
                 PriceItem targetPriceItem =
-                        findTargetPriceItem(SampleLedgerExporter.getPriceItems(productAddOn), parsedPriceItemName);
+                        findTargetPriceItem(SampleLedgerExporter.getPriceItems(productAddOn, priceListCache), parsedPriceItemName);
                 if (targetPriceItem == null) {
                     throw getRuntimeException("Cannot find PriceItem for Product Add-on part number  : " +
                             parsedProductPartNumber + " and PriceItem name : " + parsedPriceItemName);

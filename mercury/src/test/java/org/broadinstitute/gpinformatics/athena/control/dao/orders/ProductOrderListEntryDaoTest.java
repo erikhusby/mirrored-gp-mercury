@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
@@ -35,6 +36,9 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
 
     @Inject
     private ProductOrderDao productOrderDao;
+
+    @Inject
+    private PriceListCache priceListCache;
 
     @Inject
     private ProductDao productDao;
@@ -68,7 +72,7 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
 
         //noinspection ResultOfMethodCallIgnored
         order.getProduct().getPrimaryPriceItem().hashCode();
-        for (PriceItem priceItem : order.getProduct().getOptionalPriceItems()) {
+        for (PriceItem priceItem : order.getProduct().getOptionalPriceItems(priceListCache)) {
             //noinspection ResultOfMethodCallIgnored
             priceItem.hashCode();
         }

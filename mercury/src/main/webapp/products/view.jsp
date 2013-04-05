@@ -211,7 +211,7 @@
                 </tr>
             </thead>
             <tbody>
-                <c:forEach items="${actionBean.editProduct.optionalPriceItems}" var="optionalPriceItem">
+                <c:forEach items="${actionBean.optionalPriceItems}" var="optionalPriceItem">
                     <tr>
                         <td>${optionalPriceItem.platform}</td>
                         <td>${optionalPriceItem.category}</td>

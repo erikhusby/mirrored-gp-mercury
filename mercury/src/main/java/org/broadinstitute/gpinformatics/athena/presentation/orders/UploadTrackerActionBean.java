@@ -10,9 +10,9 @@ import org.broadinstitute.gpinformatics.athena.boundary.billing.BillableRef;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingTrackerImporter;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingTrackerManager;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.OrderBillSummaryStat;
-import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
@@ -34,7 +34,7 @@ public class UploadTrackerActionBean extends CoreActionBean {
     private ProductOrderDao productOrderDao;
 
     @Inject
-    private LedgerEntryDao ledgerEntryDao;
+    private PriceListCache priceListCache;
 
     @Validate(required = true, on = "preview")
     private FileBean trackerFile;
@@ -59,7 +59,8 @@ public class UploadTrackerActionBean extends CoreActionBean {
         try {
             inputStream = trackerFile.getInputStream();
 
-            BillingTrackerImporter importer = new BillingTrackerImporter(productOrderDao, getContext().getValidationErrors());
+            BillingTrackerImporter importer =
+                new BillingTrackerImporter(productOrderDao, priceListCache, getContext().getValidationErrors());
             Map<String, Map<String, Map<BillableRef, OrderBillSummaryStat>>> productProductOrderPriceItemChargesMap =
                     importer.parseFileForSummaryMap(inputStream);
 

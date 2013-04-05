@@ -28,6 +28,7 @@ public class PriceItem {
     private String priceListName;
     private String priceListLink;
 
+    private ReplacementItems replacementItems;
 
     public PriceItem() {}
 
@@ -199,6 +200,16 @@ public class PriceItem {
 
     public void setPriceListLink(String priceListLink) {
         this.priceListLink = priceListLink;
+    }
+
+
+    @XmlElement(name = "replacementItems")
+    public ReplacementItems getReplacementItems() {
+        return replacementItems;
+    }
+
+    public void setReplacementItems(ReplacementItems replacementItems) {
+        this.replacementItems = replacementItems;
     }
 
     @Override

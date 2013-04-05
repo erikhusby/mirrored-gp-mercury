@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.*;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.MaterialTypeTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.PriceItemTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProductTokenInput;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
@@ -46,7 +47,7 @@ public class ProductActionBean extends CoreActionBean {
     private PriceItemTokenInput priceItemTokenInput;
 
     @Inject
-    private PriceItemTokenInput optionalPriceItemTokenInput;
+    private PriceListCache priceListCache;
 
     @Inject
     private MaterialTypeTokenInput materialTypeTokenInput;
@@ -236,7 +237,6 @@ public class ProductActionBean extends CoreActionBean {
         if (primaryPriceItem != null) {
             priceItemTokenInput.setup(PriceItem.getPriceItemKeys(Collections.singletonList(primaryPriceItem)));
         }
-        optionalPriceItemTokenInput.setup(PriceItem.getPriceItemKeys(editProduct.getOptionalPriceItems()));
     }
 
     @HandlesEvent("addOnsAutocomplete")
@@ -310,9 +310,6 @@ public class ProductActionBean extends CoreActionBean {
 
         editProduct.getAllowableMaterialTypes().clear();
         editProduct.getAllowableMaterialTypes().addAll(materialTypeTokenInput.getMercuryTokenObjects());
-
-        editProduct.getOptionalPriceItems().clear();
-        editProduct.getOptionalPriceItems().addAll(optionalPriceItemTokenInput.getMercuryTokenObjects());
     }
 
     public Product getEditProduct() {
@@ -345,14 +342,6 @@ public class ProductActionBean extends CoreActionBean {
 
     public void setMaterialTypeTokenInput(MaterialTypeTokenInput materialTypeTokenInput) {
         this.materialTypeTokenInput = materialTypeTokenInput;
-    }
-
-    public PriceItemTokenInput getOptionalPriceItemTokenInput() {
-        return optionalPriceItemTokenInput;
-    }
-
-    public void setOptionalPriceItemTokenInput(PriceItemTokenInput optionalPriceItemTokenInput) {
-        this.optionalPriceItemTokenInput = optionalPriceItemTokenInput;
     }
 
     public PriceItemTokenInput getPriceItemTokenInput() {
@@ -409,5 +398,9 @@ public class ProductActionBean extends CoreActionBean {
 
     public void setProductFamilyId(Long productFamilyId) {
         this.productFamilyId = productFamilyId;
+    }
+
+    public List<PriceItem> getOptionalPriceItems() {
+        return editProduct.getOptionalPriceItems(priceListCache);
     }
 }

@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,17 +23,20 @@ import java.util.Map;
 
 public class BillingTrackerImporter {
 
-    private ProductOrderDao productOrderDao;
+    private final ProductOrderDao productOrderDao;
+    private final PriceListCache priceListCache;
 
     private ValidationErrors validationErrors;
 
-    public BillingTrackerImporter(ProductOrderDao productOrderDao, ValidationErrors validationErrors) {
-        this(productOrderDao);
+    public BillingTrackerImporter(
+        ProductOrderDao productOrderDao, PriceListCache priceListCache, ValidationErrors validationErrors) {
+        this(productOrderDao, priceListCache);
         this.validationErrors = validationErrors;
     }
 
-    public BillingTrackerImporter(ProductOrderDao productOrderDao) {
+    public BillingTrackerImporter(ProductOrderDao productOrderDao, PriceListCache priceListCache) {
         this.productOrderDao = productOrderDao;
+        this.priceListCache = priceListCache;
     }
 
     public Map<String, Map<String, Map<BillableRef, OrderBillSummaryStat>>> parseFileForSummaryMap(
@@ -59,7 +63,7 @@ public class BillingTrackerImporter {
                 List<TrackerColumnInfo> trackerHeaderList = BillingTrackerUtils.parseTrackerSheetHeader(sheet.getRow(0), productPartNumberStr);
 
                 // Get a map (by PDOId) of a map of OrderBillSummaryStat objects (by BillableRef) for this sheet.
-                Map<String, Map<BillableRef, OrderBillSummaryStat>> sheetSummaryMap = parseSheetForSummaryMap(sheet, trackerHeaderList);
+                Map<String, Map<BillableRef, OrderBillSummaryStat>> sheetSummaryMap = parseSheetForSummaryMap(sheet, trackerHeaderList, priceListCache);
                 if (!validationErrors.isEmpty()) {
                     return null;
                 }
@@ -133,7 +137,8 @@ public class BillingTrackerImporter {
         }
     }
 
-    Map<String, Map<BillableRef, OrderBillSummaryStat>> parseSheetForSummaryMap(Sheet sheet, List<TrackerColumnInfo> trackerColumnInfos) {
+    Map<String, Map<BillableRef, OrderBillSummaryStat>> parseSheetForSummaryMap(
+        Sheet sheet, List<TrackerColumnInfo> trackerColumnInfos, PriceListCache priceListCache) {
         ProductOrder productOrder = null;
         Product product = null;
         List<ProductOrderSample> samples = null;
@@ -185,13 +190,11 @@ public class BillingTrackerImporter {
                 product = productOrder.getProduct();
                 samples = productOrder.getSamples();
                 if (priceItemMap == null) {
-                    priceItemMap = BillingTrackerUtils.createPriceItemMapForSheet(trackerColumnInfos, product);
+                    priceItemMap = BillingTrackerUtils.createPriceItemMapForSheet(trackerColumnInfos, product, priceListCache);
                 }
-
             }
 
-            // TODO hmc We are assuming ( for now ) that the order is the same
-            // in the spreadsheet as returned in the productOrder !
+            // The ordwr in the spreadsheet is the same as returned in the productOrder !
             if (sampleIndexInOrder >= samples.size()) {
                 String error = "Sample " + currentSampleName + " on row " +  (row.getRowNum() + 1 ) +
                         " of spreadsheet "  + primaryProductPartNumber +

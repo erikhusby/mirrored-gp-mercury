@@ -112,7 +112,7 @@ quote:
 
       login:    rnordin@broadinstitute.org
       password: Squ1d_us3r
-      url:      http://quotedev:8080
+      url:      http://localhost:8282
 
     QA:
 

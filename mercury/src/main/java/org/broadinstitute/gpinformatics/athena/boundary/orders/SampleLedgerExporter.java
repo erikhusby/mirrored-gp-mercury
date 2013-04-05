@@ -5,7 +5,6 @@ import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingTrackerUtils;
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -13,12 +12,11 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.*;
-
-import static org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao.FetchSpec.*;
 
 /**
  * This class creates a spreadsheet version of a product order's sample billing status, also called the sample
@@ -39,9 +37,11 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
     private static final int COMMENTS_WIDTH = 259 * 60;
 
     private final BSPUserList bspUserList;
+    private final PriceListCache priceListCache;
 
-    public SampleLedgerExporter(BSPUserList bspUserList, List<ProductOrder> productOrders) {
+    public SampleLedgerExporter(BSPUserList bspUserList, PriceListCache priceListCache, List<ProductOrder> productOrders) {
         this.bspUserList = bspUserList;
+        this.priceListCache = priceListCache;
 
         for (ProductOrder productOrder : productOrders) {
             if (!orderMap.containsKey(productOrder.getProduct())) {
@@ -50,10 +50,6 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
             orderMap.get(productOrder.getProduct()).add(productOrder);
         }
-    }
-
-    public SampleLedgerExporter(List<String> pdoBusinessKeys, BSPUserList bspUserList, ProductOrderDao productOrderDao) {
-        this(bspUserList, productOrderDao.findListByBusinessKeyList(pdoBusinessKeys, Product, ResearchProject, Samples));
     }
 
     private String getBspFullName(long id) {
@@ -85,9 +81,9 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         return null;
     }
 
-    public static List<PriceItem> getPriceItems(Product product) {
+    public static List<PriceItem> getPriceItems(Product product, PriceListCache priceItemListCache) {
         // Create a copy of the product's price items list in order to impose an order on it.
-        List<PriceItem> allPriceItems = new ArrayList<PriceItem>(product.getOptionalPriceItems());
+        List<PriceItem> allPriceItems = new ArrayList<PriceItem>(product.getOptionalPriceItems(priceItemListCache));
         Collections.sort(allPriceItems, new Comparator<PriceItem>() {
             @Override
             public int compare(PriceItem o1, PriceItem o2) {
@@ -135,19 +131,6 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
             List<ProductOrder> productOrders = orderMap.get(currentProduct);
 
-            // Write preamble.
-            // mlc removing preamble as not being consistent with sample spreadsheet on Confluence
-            /*
-            String preambleText = "Orders: ";
-            for (ProductOrder productOrder : productOrders) {
-                preambleText += productOrder.getJiraTicketKey() + "_" +
-                                productOrder.getTitle() + "_" +
-                                productOrder.getProduct().getProductName() + "; ";
-            }
-
-            getWriter().writePreamble(preambleText);
-            */
-
             // Write headers after placing an extra line
             getWriter().nextRow();
             for (String header : BillingTrackerUtils.FIXED_HEADERS) {
@@ -156,7 +139,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             }
 
             // Get the ordered price items for the current product, add the spanning price item + product headers
-            List<PriceItem> sortedPriceItems = getPriceItems(currentProduct);
+            List<PriceItem> sortedPriceItems = getPriceItems(currentProduct, priceListCache);
 
             // add on products
             List<Product> sortedAddOns = new ArrayList<Product>(currentProduct.getAddOns());
@@ -239,7 +222,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
         // And for add-ons
         for (Product addOn : sortedAddOns) {
-            List<PriceItem> sortedAddOnPriceItems = getPriceItems(addOn);
+            List<PriceItem> sortedAddOnPriceItems = getPriceItems(addOn, priceListCache);
             for (PriceItem item : sortedAddOnPriceItems) {
                 writeCountsForPriceItems(billCounts, item);
             }
@@ -296,7 +279,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
         // Repeat the process for add ons
         for (Product addOn : sortedAddOns) {
-            List<PriceItem> sortedAddOnPriceItems = getPriceItems(addOn);
+            List<PriceItem> sortedAddOnPriceItems = getPriceItems(addOn, priceListCache);
             for (PriceItem priceItem : sortedAddOnPriceItems) {
                 writePriceItemProductHeader(priceItem, addOn);
             }
@@ -307,10 +290,10 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         getWriter().writeCell("Billing Errors", getFixedHeaderStyle());
         getWriter().setColumnWidth(ERRORS_WIDTH);
 
-        writeAllBillAndNewHeaders(currentProduct.getOptionalPriceItems(), currentProduct.getAddOns());
+        writeAllBillAndNewHeaders(currentProduct.getOptionalPriceItems(priceListCache), currentProduct.getAddOns());
     }
 
-    private void writeAllBillAndNewHeaders(Set<PriceItem> priceItems, Set<Product> addOns) {
+    private void writeAllBillAndNewHeaders(List<PriceItem> priceItems, Set<Product> addOns) {
         // The new row
         getWriter().nextRow();
 
@@ -327,7 +310,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             // primary price item for this add-on
             writeBillAndNewHeaders();
 
-            for (PriceItem priceItem : addOn.getOptionalPriceItems()) {
+            for (PriceItem priceItem : addOn.getOptionalPriceItems(priceListCache)) {
                 writeBillAndNewHeaders();
             }
         }

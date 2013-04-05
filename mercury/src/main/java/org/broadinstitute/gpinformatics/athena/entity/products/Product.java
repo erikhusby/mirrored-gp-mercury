@@ -2,6 +2,8 @@ package org.broadinstitute.gpinformatics.athena.entity.products;
 
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
+import org.broadinstitute.gpinformatics.infrastructure.quote.ReplacementItems;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
 
@@ -62,13 +64,6 @@ public class Product implements Serializable, Comparable<Product> {
      */
     @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST}, optional = false)
     private PriceItem primaryPriceItem;
-
-    /**
-     * OPTIONAL price items for the product. Should NOT include defaultPriceItem.
-     */
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
-    @JoinTable(schema = "athena", name = "PRODUCT_OPT_PRICE_ITEMS")
-    private final Set<PriceItem> optionalPriceItems = new HashSet<PriceItem>();
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     @JoinTable(schema = "athena")
@@ -226,7 +221,22 @@ public class Product implements Serializable, Comparable<Product> {
         this.primaryPriceItem = primaryPriceItem;
     }
 
-    public Set<PriceItem> getOptionalPriceItems() {
+    public List<PriceItem> getOptionalPriceItems(PriceListCache priceListCache) {
+        ReplacementItems replacementItemList =
+                priceListCache.findByKeyFields(
+                        primaryPriceItem.getPlatform(),
+                        primaryPriceItem.getCategory(),
+                        primaryPriceItem.getName()).getReplacementItems();
+
+        List<PriceItem> optionalPriceItems = new ArrayList<PriceItem> ();
+        for (org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem quotePriceItem : replacementItemList.getPriceItems()) {
+            PriceItem optionalPriceItem =
+                    new PriceItem(quotePriceItem.getId(), quotePriceItem.getPlatformName(),
+                            quotePriceItem.getCategoryName(), quotePriceItem.getName());
+
+            optionalPriceItems.add(optionalPriceItem);
+        }
+
         return optionalPriceItems;
     }
 
@@ -288,10 +298,6 @@ public class Product implements Serializable, Comparable<Product> {
 
     public void setWorkflowName(String workflowName) {
         this.workflowName = workflowName;
-    }
-
-    public void addPriceItem(PriceItem priceItem) {
-        optionalPriceItems.add(priceItem);
     }
 
     public void addAllowableMaterialType(MaterialType materialType) {
@@ -422,12 +428,6 @@ public class Product implements Serializable, Comparable<Product> {
         if (primaryPriceItem != null) {
             // No price items yet, so can just add it
             priceItemNames.add(primaryPriceItem.getName());
-        }
-
-        for (PriceItem optionalPriceItem : optionalPriceItems) {
-            if (!priceItemNames.add(optionalPriceItem.getName())) {
-                duplicates.add(optionalPriceItem.getName());
-            }
         }
     }
 
