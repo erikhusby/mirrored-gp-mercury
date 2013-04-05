@@ -190,7 +190,7 @@ public class BillingTrackerImporter {
 
             }
 
-            // TODO hmc We are assuming ( for now ) that the order is the same
+            // TODO hmc We are assuming (for now) that the order is the same
             // in the spreadsheet as returned in the productOrder !
             if (sampleIndexInOrder >= samples.size()) {
                 String error = "Sample " + currentSampleName + " on row " +  (row.getRowNum() + 1 ) +
@@ -261,6 +261,12 @@ public class BillingTrackerImporter {
                                     "The billed quantity in the spreadsheet is '%f', please download a recent copy of the BillingTracker spreadsheet.",
                                     quantities.getBilled(), row.getCell(BillingTrackerUtils.SAMPLE_ID_COL_POS), row.getCell(BillingTrackerUtils.PDO_ID_COL_POS),
                                 billableRef.getPriceItemName(), product.getPartNumber(), previouslyBilledQuantity );
+                }
+                if (quantities == null && previouslyBilledQuantity != 0) {
+                    return String.format("No billed quantity found in the database for sample %s in %s, price item '%s', in Product sheet %s. " +
+                                         "However the billed quantity in the spreadsheet is '%f', indicating the Billed column of this spreadsheet has accidentally been edited.",
+                            row.getCell(BillingTrackerUtils.SAMPLE_ID_COL_POS), row.getCell(BillingTrackerUtils.PDO_ID_COL_POS),
+                            billableRef.getPriceItemName(), product.getPartNumber(), previouslyBilledQuantity );
                 }
             }
 
