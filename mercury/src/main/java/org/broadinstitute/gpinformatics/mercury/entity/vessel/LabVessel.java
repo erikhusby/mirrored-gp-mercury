@@ -442,14 +442,14 @@ public abstract class LabVessel implements Serializable {
      *
      * @return boolean; true if it is rework, or false if it is not
      */
-//    public boolean isRework(){
-//        for (LabBatch labBatch : this.getNearestLabBatches()) {
-//            if (labBatch.getActive()) {
-//                return labBatch.getReworks().contains(this);
-//            }
-//        }
-//        return false;
-//    }
+    public boolean isRework(){
+        for (LabBatch labBatch : this.getNearestLabBatches()) {
+            if (labBatch.getActive()) {
+                return labBatch.getReworks().contains(this);
+            }
+        }
+        return false;
+    }
 
     /**
      * Returns a Collection of SampleInstances at given position
