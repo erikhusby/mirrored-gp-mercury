@@ -32,7 +32,15 @@ public class PriceItem {
 
     public PriceItem() {}
 
+    public static PriceItem convertMercuryPriceItem(
+            org.broadinstitute.gpinformatics.athena.entity.products.PriceItem priceItem) {
 
+        PriceItem quotePriceItem = new PriceItem();
+        quotePriceItem.setName(priceItem.getName());
+        quotePriceItem.setCategoryName(priceItem.getCategory());
+        quotePriceItem.setPlatformName(priceItem.getPlatform());
+        return quotePriceItem;
+    }
     public PriceItem(String quoteServerId, String platformName, String categoryName, String name) {
         this.id = quoteServerId;
         this.platformName = platformName;

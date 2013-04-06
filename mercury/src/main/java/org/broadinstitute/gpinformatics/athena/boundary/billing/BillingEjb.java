@@ -4,6 +4,7 @@ package org.broadinstitute.gpinformatics.athena.boundary.billing;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 
@@ -64,6 +65,8 @@ public class BillingEjb {
     @Inject
     private QuoteService quoteService;
 
+    @Inject
+    private PriceListCache priceListCache;
 
     @Inject
     private BillingSessionDao billingSessionDao;
@@ -132,14 +135,15 @@ public class BillingEjb {
             Quote quote = new Quote();
             quote.setAlphanumericId(item.getQuoteId());
 
-            PriceItem quotePriceItem = new PriceItem();
-            quotePriceItem.setName(item.getPriceItem().getName());
-            quotePriceItem.setCategoryName(item.getPriceItem().getCategory());
-            quotePriceItem.setPlatformName(item.getPriceItem().getPlatform());
+            PriceItem quotePriceItem = PriceItem.convertMercuryPriceItem(item.getPriceItem());
+
+            // Calculate whether this is a replacement item and if it is, send the itemIsReplacing field, otherwise
+            // the itemIsReplacing field will be null.
+            PriceItem itemIsReplacing = PriceItem.convertMercuryPriceItem(item.calculateIsReplacing(priceListCache));
 
             try {
                 String workId = quoteService.registerNewWork(
-                        quote, quotePriceItem, item.getWorkCompleteDate(), item.getQuantity(), pageUrl,
+                        quote, quotePriceItem, itemIsReplacing, item.getWorkCompleteDate(), item.getQuantity(), pageUrl,
                         "billingSession",
                         sessionKey);
 
@@ -167,4 +171,5 @@ public class BillingEjb {
 
         return results;
     }
+
 }

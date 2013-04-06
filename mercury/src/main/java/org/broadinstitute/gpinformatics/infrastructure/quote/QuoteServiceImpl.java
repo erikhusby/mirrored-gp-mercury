@@ -57,7 +57,8 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
     }
 
     @Override
-    public String registerNewWork(Quote quote, PriceItem priceItem, Date reportedCompletionDate, double numWorkUnits,
+    public String registerNewWork(Quote quote, PriceItem priceItem, PriceItem itemIsReplacing,
+                                  Date reportedCompletionDate, double numWorkUnits,
                                   String callbackUrl, String callbackParameterName, String callbackParameterValue) {
 
         SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
@@ -69,7 +70,17 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         params.add("quote_alpha_id", quote.getAlphanumericId());
         params.add("platform_name", priceItem.getPlatformName());
         params.add("category_name", priceItem.getCategoryName());
-        params.add("price_item_name", priceItem.getName());
+
+        // Handle replacement item logic
+        if (itemIsReplacing == null) {
+            // This is not a replacement item, so just send the price item through
+            params.add("price_item_name", priceItem.getName());
+        } else {
+            // This IS a replacement item, so send the original price through and the real price item as a replacement
+            params.add("price_item_name", itemIsReplacing.getName());
+            params.add("replacement_item_name", priceItem.getName());
+        }
+
         params.add("quantity", String.valueOf(numWorkUnits));
         params.add("complete", Boolean.TRUE.toString());
         params.add("completion_date", dateFormat.format(reportedCompletionDate));
@@ -192,11 +203,6 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         }
 
         return quotes;
-    }
-
-    @Override
-    public Quote getQuoteByNumericId(String numericId) throws QuoteServerException, QuoteNotFoundException {
-        return getSingleQuoteById(numericId, url(Endpoint.SINGLE_NUMERIC_QUOTE));
     }
 
     @Override

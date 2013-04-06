@@ -2,6 +2,8 @@ package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 
 import java.text.MessageFormat;
 import java.util.Date;
@@ -98,5 +100,25 @@ public class QuoteImportItem {
         for (LedgerEntry ledgerEntry : ledgerItems) {
             ledgerEntry.setQuoteId(quoteId);
         }
+    }
+
+    /**
+     * Calculate if this item's price item is an optional price item on this product.
+     *
+     * @param priceListCache The cache of the price list.
+     *
+     * @return null if this is not a replacement item or the primary price item if it is one.
+     */
+    public PriceItem calculateIsReplacing(PriceListCache priceListCache) {
+        Product product = ledgerItems.get(0).getProductOrderSample().getProductOrder().getProduct();
+
+        // There should always be ledger entries and if not, this failing will be fine.
+        for (PriceItem optional : product.getOptionalPriceItems(priceListCache)) {
+            if (priceItem.equals(optional)) {
+                return product.getPrimaryPriceItem();
+            }
+        }
+
+        return null;
     }
 }

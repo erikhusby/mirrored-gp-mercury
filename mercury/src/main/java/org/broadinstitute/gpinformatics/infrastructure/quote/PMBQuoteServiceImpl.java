@@ -3,8 +3,6 @@ package org.broadinstitute.gpinformatics.infrastructure.quote;
 import com.sun.jersey.api.client.*;
 import com.sun.jersey.api.client.config.ClientConfig;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
 import org.w3c.dom.Document;
@@ -17,8 +15,6 @@ import java.util.Set;
 @Impl
 public class PMBQuoteServiceImpl extends AbstractJerseyClientService implements PMBQuoteService {
 
-    private Log logger = LogFactory.getLog(PMBQuoteServiceImpl.class);
-
     enum Endpoint {
 
         SINGLE_QUOTE("/portal/Quote/ws/portals/private/getquotes?with_funding=true&quote_alpha_ids="),
@@ -26,10 +22,7 @@ public class PMBQuoteServiceImpl extends AbstractJerseyClientService implements 
         ALL_QUOTES("/quotes/ws/portals/private/getquotes?with_funding=true"),
         ALL_FUNDINGS("/quotes/rest/sql_report/41"),
         ALL_PRICE_ITEMS("/quotes/rest/price_list/10/true"),
-        REGISTER_WORK("/quotes/ws/portals/private/createworkitem"),
-        //TODO this next enum value will be removed soon.
-        SINGLE_NUMERIC_QUOTE("/portal/Quote/ws/portals/private/getquotes?with_funding=true&quote_ids=")
-        ;
+        REGISTER_WORK("/quotes/ws/portals/private/createworkitem");
 
         String suffixUrl;
 
@@ -67,12 +60,6 @@ public class PMBQuoteServiceImpl extends AbstractJerseyClientService implements 
     @Override
     public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException {
         return getSingleQuoteById(alphaId, url( Endpoint.SINGLE_QUOTE) );
-    }
-
-
-    @Override
-    public Quote getQuoteByNumericId(String numericId) throws QuoteServerException, QuoteNotFoundException {
-        return getSingleQuoteById(numericId, url(Endpoint.SINGLE_NUMERIC_QUOTE));
     }
 
     private String url(Endpoint endpoint) {

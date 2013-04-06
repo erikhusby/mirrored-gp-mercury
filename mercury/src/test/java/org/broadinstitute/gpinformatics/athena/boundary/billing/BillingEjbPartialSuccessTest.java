@@ -118,7 +118,9 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         }
 
         @Override
-        public String registerNewWork(Quote quote, org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem priceItem,
+        public String registerNewWork(Quote quote,
+                                      org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem priceItem,
+                                      org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem itemIsReplacing,
                                       Date reportedCompletionDate,
                                       double numWorkUnits,
                                       String callbackUrl, String callbackParameterName, String callbackParameterValue) {
@@ -128,12 +130,6 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
             }
 
             return "workItemId\t1000";
-        }
-
-        @Override
-        public Quote getQuoteByNumericId(String numericId) throws QuoteServerException, QuoteNotFoundException {
-            newNotImplementedException("getQuoteByNumericId");
-            return null;
         }
 
         @Override
