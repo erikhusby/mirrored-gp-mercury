@@ -47,7 +47,7 @@ public class BillingSessionFixupTest extends Arquillian {
      * Largely copy/pasted from #backfillLedgerQuotes above, used to null out ledger quote IDs when we
      * discover we didn't assign them properly before and need to revise the assignments.
      */
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void createCompleteBillingSession() {
 
         // Setting the date will end the session.
