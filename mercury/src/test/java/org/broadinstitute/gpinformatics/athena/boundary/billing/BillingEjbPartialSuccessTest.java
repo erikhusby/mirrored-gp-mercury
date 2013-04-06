@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.athena.boundary.billing;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
-import com.google.common.collect.ImmutableListMultimap;
+import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimaps;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.logging.Log;
@@ -100,7 +100,8 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         }
 
         @Override
-        public String registerNewWork(Quote quote, org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem priceItem,
+        public String registerNewWork(Quote quote,
+                                      org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem priceItem,
                                       Date reportedCompletionDate,
                                       double numWorkUnits,
                                       String callbackUrl, String callbackParameterName, String callbackParameterValue) {
@@ -152,22 +153,6 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
     }
 
 
-    /**
-     * Partition the persisted LedgerEntries by whether they represent the Exome Express Price Item or not.
-     */
-    private ImmutableListMultimap<Boolean, LedgerEntry> getExExPartition(Collection<LedgerEntry> ledgerEntries) {
-
-        return Multimaps.index(ledgerEntries, new Function<LedgerEntry, Boolean>() {
-            @Override
-            public Boolean apply(LedgerEntry ledgerEntry) {
-                @SuppressWarnings("ConstantConditions")
-                PriceItem priceItem = ledgerEntry.getPriceItem();
-                return NAME_EXOME_EXPRESS.equals(priceItem.getName());
-            }
-        });
-    }
-
-
     private Set<LedgerEntry> getLedgerEntrySet() {
 
         @SuppressWarnings("ConstantConditions")
@@ -185,6 +170,33 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         }};
     }
 
+    private class ExExPartition {
+        private final LedgerEntry exEx;
+        private final LedgerEntry standardEx;
+
+        public ExExPartition(List<LedgerEntry> ledgerEntries) {
+            ListMultimap<Boolean, LedgerEntry> partition = Multimaps.index(ledgerEntries,
+                    new Function<LedgerEntry, Boolean>() {
+                        @Override
+                        public Boolean apply(LedgerEntry ledgerEntry) {
+                            @SuppressWarnings("ConstantConditions")
+                            PriceItem priceItem = ledgerEntry.getPriceItem();
+                            return NAME_EXOME_EXPRESS.equals(priceItem.getName());
+                        }
+                    });
+
+            this.exEx = partition.get(true).get(0);
+            this.standardEx = partition.get(false).get(0);
+        }
+
+        private LedgerEntry getExEx() {
+            return exEx;
+        }
+
+        private LedgerEntry getStandardEx() {
+            return standardEx;
+        }
+    }
 
 
     public void test()
@@ -216,13 +228,9 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         assertThat(ledgerEntryItems, is(not(nullOrEmptyCollection())));
         assertThat(ledgerEntryItems, hasSize(2));
 
+        ExExPartition exExPartition = new ExExPartition(ledgerEntryItems);
 
-        ImmutableListMultimap<Boolean, LedgerEntry> exExPartition = getExExPartition(ledgerEntryItems);
-        LedgerEntry persistedExExLedgerEntry = exExPartition.get(true).get(0);
-        LedgerEntry persistedStandardExLedgerEntry = exExPartition.get(false).get(0);
-
-        assertThat(persistedStandardExLedgerEntry.getBillingMessage(), is(equalTo(BillingSession.SUCCESS)));
-        assertThat(persistedExExLedgerEntry.getBillingMessage(), is(not(equalTo(BillingSession.SUCCESS))));
-
+        assertThat(exExPartition.getStandardEx().getBillingMessage(), is(equalTo(BillingSession.SUCCESS)));
+        assertThat(exExPartition.getExEx().getBillingMessage(), is(not(equalTo(BillingSession.SUCCESS))));
     }
 }
