@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
@@ -46,7 +47,7 @@ public class BillingSessionFixupTest extends Arquillian {
      * Largely copy/pasted from #backfillLedgerQuotes above, used to null out ledger quote IDs when we
      * discover we didn't assign them properly before and need to revise the assignments.
      */
-    @Test(enabled = false)
+    @Test(enabled = true)
     public void createCompleteBillingSession() {
 
         // Setting the date will end the session.
@@ -59,13 +60,16 @@ public class BillingSessionFixupTest extends Arquillian {
         Set<LedgerEntry> ledgerItems =
             ledgerEntryDao.findWithoutBillingSessionByOrderList(Collections.singletonList("PDO-222"));
 
-        // Trying to fix up exactly 9 items on PDO-222, so this is a nice test case.
-        if ((ledgerItems == null) || (ledgerItems.size() != 9)) {
-            logger.error("PDO-222 should have exactly 9 unbilled ledger entries");
+        Assert.assertNotNull(ledgerItems);
+        Assert.assertEquals(ledgerItems.size(), 9, "PDO-222 should have exactly 9 unbilled ledger entries");
+
+        for (LedgerEntry entry : ledgerItems) {
+            entry.setQuoteId("DNA32K");
         }
 
         // save the session with the appropriate id, all ledger entries get the billing session tied to it.
-        BillingSession billingSession = new BillingSession(341L, billedDate, user.getDomainUserId(), ledgerItems);
+        BillingSession billingSession = new BillingSession(billedDate, user.getUserId(), ledgerItems);
+
         billingSessionDao.persist(billingSession);
         logger.info("Registered Manual billing");
     }
