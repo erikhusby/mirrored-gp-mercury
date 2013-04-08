@@ -91,7 +91,7 @@ public class ProductOrderDao extends GenericDao {
      *
      * @return The matching order
      */
-    public ProductOrder findByBusinessKey(String key) {
+    public ProductOrder findByBusinessKey(@Nonnull String key) {
         ProductOrder.JiraOrId jiraOrId = ProductOrder.convertBusinessKeyToJiraOrId(key);
         if (jiraOrId.jiraTicketKey != null) {
             return findSingle(ProductOrder.class, ProductOrder_.jiraTicketKey, jiraOrId.jiraTicketKey);

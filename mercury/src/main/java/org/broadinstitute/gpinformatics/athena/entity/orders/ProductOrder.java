@@ -216,7 +216,7 @@ public class ProductOrder implements Serializable {
      * @param businessKey the key to convert
      * @return either a JIRA ID or a product order ID.
      */
-    public static JiraOrId convertBusinessKeyToJiraOrId(String businessKey) {
+    public static JiraOrId convertBusinessKeyToJiraOrId(@Nonnull String businessKey) {
         if (businessKey.startsWith(DRAFT_PREFIX)) {
             return new JiraOrId(Long.parseLong(businessKey.substring(DRAFT_PREFIX.length())), null);
         }
