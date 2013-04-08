@@ -26,25 +26,25 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.VesselEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
 import org.easymock.EasyMock;
-import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import javax.annotation.Nonnull;
 import java.util.*;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.*;
 
 /**
  * Test that samples can go partway through a workflow, be marked for rework, go to a previous
@@ -145,7 +145,7 @@ public class ReworkDbFreeTest {
         templateEngine.postConstruct();
     }
 
-    // Advance to Pond Pico, rework 2 samples from the start.
+    // Advance to Pond Pico, rework a sample from the start.
     @Test(enabled = true, groups = TestGroups.DATABASE_FREE)
     public void testRework() throws Exception {
 
@@ -158,9 +158,7 @@ public class ReworkDbFreeTest {
         BucketDao mockBucketDao = EasyMock.createMock(BucketDao.class);
 
         EasyMock.expect(mockBucketDao.findByName(EasyMock.eq("Shearing Bucket"))).andReturn(
-                new MockBucket(new WorkflowStepDef("Shearing Bucket"), productOrder.getBusinessKey())).times(2);
-        EasyMock.expect(mockBucketDao.findByName(EasyMock.eq("Shearing Bucket"))).andReturn(
-                new MockBucket(new WorkflowStepDef("Shearing Bucket"), productOrder.getBusinessKey())).times(2);
+                new MockBucket(new WorkflowStepDef("Shearing Bucket"), productOrder.getBusinessKey())).times(4);
         EasyMock.expect(mockBucketDao.findByName(EasyMock.eq("Pico/Plating Bucket"))).andReturn(
                 new MockBucket(new WorkflowStepDef("Pico/Plating Bucket"), productOrder.getBusinessKey())).times(2);
 
@@ -189,48 +187,78 @@ public class ReworkDbFreeTest {
         String reworkLcsetSuffix = "-222";
 
         long now = System.currentTimeMillis();
-        String origRackBarcode = "REXEX" + (new Date(now)).toString();
-        String reworkRackBarcode = "REXEX" + (new Date(now + 1011L)).toString();
+        String origRackBarcode   = "REXEX" + (new Date(now)).toString();
+        String reworkRackBarcode = "REXEX" + (new Date(now + 137L)).toString();
 
         String origTubePrefix = "999999";
+        String reworkTubePrefix = "888888";
         int reworkIdx = 5; // arbitrary choice
 
         Map<String, TwoDBarcodedTube> origRackMap = createRack(productOrder, origTubePrefix, reworkIdx, null);
         LabBatch origBatch = createBatch(origRackMap, labBatchEJB, origLcsetSuffix);
-        sendMsgs(origRackMap, labEventFactory, labEventHandler, bettaLimsMessageTestFactory, origRackBarcode, false);
+        VesselContainer origContainer = sendMsgs(origRackMap, labEventFactory, labEventHandler,
+                bettaLimsMessageTestFactory, origRackBarcode, false);
 
         // Selects the rework tube and verifies its lcset.
         TwoDBarcodedTube reworkTube = origRackMap.get(origTubePrefix + reworkIdx);
         assertNotNull(reworkTube);
         assertEquals(reworkTube.getLabBatchesList().size(), 1);
         assertEquals(reworkTube.getLabBatchesList().get(0).getBatchName(), "LCSET" + origLcsetSuffix);
-
+        assertEquals(reworkTube.getMercurySamplesList().size(), 1);
+        String reworkSampleKey = reworkTube.getMercurySamplesList().get(0).getSampleKey();
 
         // Starts the rework with a new rack of tubes and includes the rework tube.
-        Thread.sleep(1011L);
-
-        Map<String, TwoDBarcodedTube> reworkRackMap = createRack(productOrder, "888888", reworkIdx, reworkTube);
+        Map<String, TwoDBarcodedTube> reworkRackMap = createRack(productOrder, reworkTubePrefix, reworkIdx, reworkTube);
         LabBatch reworkBatch = createBatch(reworkRackMap, labBatchEJB, reworkLcsetSuffix);
-        sendMsgs(reworkRackMap, labEventFactory, labEventHandler, bettaLimsMessageTestFactory, reworkRackBarcode, true);
+        VesselContainer reworkContainer = sendMsgs(reworkRackMap, labEventFactory, labEventHandler,
+                bettaLimsMessageTestFactory, reworkRackBarcode, true);
 
-        // After rework tube should be on second lcset.
+        // After rework, tube should be in two lcsets.
         assertEquals(reworkTube.getLabBatchesList().size(), 2);
-        assert (reworkTube.getLabBatchesList().get(0).getBatchName().equals("LCSET" + origLcsetSuffix)
-                && reworkTube.getLabBatchesList().get(1).getBatchName().equals("LCSET" + reworkLcsetSuffix)
-                || reworkTube.getLabBatchesList().get(0).getBatchName().equals("LCSET" + reworkLcsetSuffix)
-                && reworkTube.getLabBatchesList().get(1).getBatchName().equals("LCSET" + origLcsetSuffix));
+        boolean foundOrig = false;
+        boolean foundRework = false;
+        for (LabBatch tubeBatch : reworkTube.getLabBatchesList()) {
+            if (tubeBatch.getBatchName().equals("LCSET" + origLcsetSuffix)) {
+                foundOrig = true;
+            } else if (tubeBatch.getBatchName().equals("LCSET" + reworkLcsetSuffix)) {
+                foundRework = true;
+            } else {
+                fail("Found unexpected batch " + tubeBatch.getBatchName());
+            }
+        }
+        assert(foundOrig);
+        assert(foundRework);
 
+        // From the vessel that contains the rework sample on the original plate, verifies lcset in context of the plate.
+        LabVessel origDescendant = null;
+        for (LabVessel vessel : (Collection<LabVessel>)origContainer.getContainedVessels()) {
+            for (SampleInstance sampleInstance : vessel.getAllSamples()) {
+                if (sampleInstance.getStartingSample().getSampleKey().equals(reworkSampleKey)) {
+                    origDescendant = vessel;
+                }
+            }
+        }
+        assertNotNull(origDescendant);
+        assertEquals(origDescendant.getNearestLabBatches().size(), 2);
+        assert(origDescendant.getLikeliestLabBatch(origContainer).getBatchName().endsWith(origLcsetSuffix));
 
-        ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
-        reworkTube.evaluateCriteria(transferTraverserCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
-        List<String> labEventNames = transferTraverserCriteria.getLabEventNames();
-        Assert.assertEquals(labEventNames.size(), 5);
+        // From the vessel that contains the rework sample on the rework plate, verifies lcset in context of the plate.
+        LabVessel reworkDescendant = null;
+        for (LabVessel vessel : (Collection<LabVessel>)reworkContainer.getContainedVessels()) {
+            for (SampleInstance sampleInstance : vessel.getAllSamples()) {
+                if (sampleInstance.getStartingSample().getSampleKey().equals(reworkSampleKey)) {
+                    reworkDescendant = vessel;
+                }
+            }
+        }
+        assertNotNull(reworkDescendant);
+        assertEquals(reworkDescendant.getNearestLabBatches().size(), 2);
+        assert(reworkDescendant.getLikeliestLabBatch(reworkContainer).getBatchName().endsWith(reworkLcsetSuffix));
 
     }
 
 
     private Map<String, TwoDBarcodedTube> createRack(ProductOrder productOrder, String tubePrefix, int reworkIdx, TwoDBarcodedTube reworkTube) {
-        // Creates the rack.
         Map<String, TwoDBarcodedTube> rackMap = new LinkedHashMap<String, TwoDBarcodedTube>();
         int rackPosition = 1;
         for (ProductOrderSample poSample : productOrder.getSamples()) {
@@ -257,9 +285,11 @@ public class ReworkDbFreeTest {
         return batch;
     }
 
-    private void sendMsgs(Map<String, TwoDBarcodedTube> rackMap, LabEventFactory labEventFactory,
+    private VesselContainer sendMsgs(Map<String, TwoDBarcodedTube> rackMap, LabEventFactory labEventFactory,
                           LabEventHandler labEventHandler, BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
                           String rackBarcode, boolean sendLc) {
+
+        VesselContainer lastContainer = null;
 
         PicoPlatingEntityBuilder pplatingEntityBuilder = new PicoPlatingEntityBuilder(bettaLimsMessageTestFactory,
                 labEventFactory, labEventHandler, rackMap, rackBarcode).invoke();
@@ -269,12 +299,18 @@ public class ReworkDbFreeTest {
                         pplatingEntityBuilder.getNormTubeFormation(), bettaLimsMessageTestFactory, labEventFactory,
                         labEventHandler, pplatingEntityBuilder.getNormalizationBarcode()).invoke();
 
+        lastContainer = (VesselContainer)pplatingEntityBuilder.getNormTubeFormation().getContainerRole();
+
         if (sendLc) {
             LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = new LibraryConstructionEntityBuilder(
                     bettaLimsMessageTestFactory, labEventFactory, labEventHandler,
                     shearingEntityBuilder.getShearingCleanupPlate(), shearingEntityBuilder.getShearCleanPlateBarcode(),
                     shearingEntityBuilder.getShearingPlate(), NUM_POSITIONS_IN_RACK).invoke();
+
+            lastContainer = (VesselContainer)shearingEntityBuilder.getShearingPlate().getContainerRole();
         }
+
+        return lastContainer;
     }
 
 }

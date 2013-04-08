@@ -20,6 +20,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer.LabBatchComposition;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Formula;
 import org.hibernate.envers.Audited;
@@ -924,6 +925,22 @@ public abstract class LabVessel implements Serializable {
             evaluateCriteria(nearestProductOrderCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
             return nearestProductOrderCriteria.getNearestProductOrders();
         }
+    }
+
+    /**
+     * Returns the most likely lab batch for a vessel in the given container.
+     *
+     * @param container contains the vessel
+     * @return the batch
+     */
+    public LabBatch getLikeliestLabBatch(VesselContainer container) {
+        Collection<LabBatch> vesselBatches = getNearestLabBatches();
+        for (LabBatchComposition labBatchComposition : (List<LabBatchComposition>)container.getLabBatchCompositions()) {
+            if (vesselBatches.contains(labBatchComposition.getLabBatch())) {
+                return labBatchComposition.getLabBatch();
+            }
+        }
+        return null;
     }
 
     public Collection<LabBatch> getNearestLabBatches() {

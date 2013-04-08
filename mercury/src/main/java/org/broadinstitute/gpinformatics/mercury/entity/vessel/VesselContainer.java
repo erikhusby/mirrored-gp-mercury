@@ -458,5 +458,35 @@ public class VesselContainer<T extends LabVessel> {
         return productOrderCriteria.getNearestProductOrders();
     }
 
+    /**
+     * Finds all the lab batches represented in this container, and determines how many vessels in this
+     * container belong to each of the batches.
+     *
+     * @return list of lab batches sorted by vessel count (descending).
+     */
+    public List<LabBatchComposition> getLabBatchCompositions() {
+        // todo no implementation yet
+        throw new RuntimeException("No implementation yet");
+    }
 
+    /**
+     * DTO for one lab batch and the number of vessels in that batch, for a given container.
+     */
+    public class LabBatchComposition {
+        private LabBatch labBatch;
+        private int count;
+
+        public LabBatchComposition(LabBatch labBatch, int count) {
+            this.labBatch = labBatch;
+            this.count = count;
+        }
+
+        public LabBatch getLabBatch() {
+            return labBatch;
+        }
+
+        public int getCount() {
+            return count;
+        }
+    }
 }
