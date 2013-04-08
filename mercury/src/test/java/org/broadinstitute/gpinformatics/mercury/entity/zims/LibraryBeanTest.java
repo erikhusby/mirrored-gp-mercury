@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.zims;
 
+import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
@@ -81,11 +82,11 @@ public class LibraryBeanTest {
 
         LibraryBean libraryBean = new LibraryBean(null, null, null, null, null, null, null, sampleDTO);
 
-        assertEquals(libraryBean.getGender(),sampleDTO.getGender());
-        assertEquals(libraryBean.getLsid(),sampleDTO.getSampleLsid());
-        assertEquals(libraryBean.getCollection(),sampleDTO.getCollection());
-        assertEquals(libraryBean.getRootSample(),sampleDTO.getRootSample());
-        assertEquals(libraryBean.getSpecies(),sampleDTO.getOrganism());
-        assertEquals(libraryBean.getSampleId(),sampleDTO.getSampleId());
+        assertEquals(libraryBean.getGender(), StringUtils.trimToNull(sampleDTO.getGender()));
+        assertEquals(libraryBean.getLsid(), StringUtils.trimToNull(sampleDTO.getSampleLsid()));
+        assertEquals(libraryBean.getCollection(), StringUtils.trimToNull(sampleDTO.getCollection()));
+        assertEquals(libraryBean.getRootSample(), StringUtils.trimToNull(sampleDTO.getRootSample()));
+        assertEquals(libraryBean.getSpecies(), StringUtils.trimToNull(sampleDTO.getOrganism()));
+        assertEquals(libraryBean.getSampleId(), StringUtils.trimToNull(sampleDTO.getSampleId()));
     }
 }

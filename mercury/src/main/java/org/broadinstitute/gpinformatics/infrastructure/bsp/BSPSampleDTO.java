@@ -11,7 +11,15 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * A simple DTO for fetching commonly used data from BSP.
+ * A class that stores data fetched from BSP. In the case of Plastic Barcodes and FFPE, the data will be retrieved
+ * from BSP if it isn't already present.
+ * <p/>
+ * If a value is missing the following default values are returned, based on the object type:
+ * <ul>
+ *     <li>double - 0</li>
+ *     <li>String - ""</li>
+ *     <li>boolean - false</li>
+ * </ul>
  */
 public class BSPSampleDTO {
 
@@ -75,6 +83,7 @@ public class BSPSampleDTO {
      */
     @SuppressWarnings("unchecked")
     public BSPSampleDTO() {
+        // Create a map where any missing values will return "" instead of null.
         //noinspection MapReplaceableByEnumMap
         columnToValue = new DefaultedMap("");
     }
@@ -86,6 +95,7 @@ public class BSPSampleDTO {
      */
     @SuppressWarnings("unchecked")
     public BSPSampleDTO(Map<BSPSampleSearchColumn, String> dataMap) {
+        // Create a map where any missing values will return "" instead of null.
         columnToValue = DefaultedMap.decorate(dataMap, "");
     }
 
