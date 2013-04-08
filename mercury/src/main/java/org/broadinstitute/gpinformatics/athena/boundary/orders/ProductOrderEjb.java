@@ -443,7 +443,6 @@ public class ProductOrderEjb {
         }
     }
 
-
     /**
      * Utility method to find PDO by JIRA ticket key and throw exception if it is not found.
      *
@@ -453,7 +452,8 @@ public class ProductOrderEjb {
      *
      * @throws NoSuchPDOException
      */
-    private ProductOrder findProductOrder(String jiraTicketKey) throws NoSuchPDOException {
+    @Nonnull
+    private ProductOrder findProductOrder(@Nonnull String jiraTicketKey) throws NoSuchPDOException {
         ProductOrder productOrder = productOrderDao.findByBusinessKey(jiraTicketKey);
 
         if (productOrder == null) {
@@ -462,7 +462,6 @@ public class ProductOrderEjb {
 
         return productOrder;
     }
-
 
     /**
      * Transition the delivery statuses of the specified samples in the DB.
@@ -503,7 +502,6 @@ public class ProductOrderEjb {
         order.prepareToSave(userBean.getBspUser());
     }
 
-
     /**
      * Transition the specified samples to the specified target status, adding a comment to the JIRA ticket, does NOT
      * transition the JIRA ticket status as this is called from sample transition methods only and not whole PDO transition
@@ -543,6 +541,23 @@ public class ProductOrderEjb {
         return user == null ? "Mercury" : user;
     }
 
+    public void updateCompleteStatus(@Nonnull String jiraTicketKey)
+            throws NoSuchPDOException, IOException, NoTransitionException {
+        ProductOrder order = findProductOrder(jiraTicketKey);
+        if (order.updateOrderStatus()) {
+            Collection<String> alreadyResolvedResolutions;
+            ProductOrder.TransitionStates transitionStates;
+            if (order.getOrderStatus() == ProductOrder.OrderStatus.Completed) {
+                alreadyResolvedResolutions = Collections.singleton("Complete");
+                transitionStates = ProductOrder.TransitionStates.Complete;
+            } else {
+                alreadyResolvedResolutions = Collections.singleton("Complete");
+                transitionStates = ProductOrder.TransitionStates.StartProgress;
+            }
+            transitionJiraTicket(jiraTicketKey, alreadyResolvedResolutions, transitionStates, null);
+        }
+    }
+
     /**
      * Transition the specified JIRA ticket using the specified transition, adding the specified comment.
      *
@@ -554,27 +569,24 @@ public class ProductOrderEjb {
      * @throws IOException
      * @throws NoTransitionException Thrown if the specified transition is not available on the specified issue.
      */
-    private void transitionJiraTicket(String jiraTicketKey, Set<String> alreadyResolvedResolutions,
+    private void transitionJiraTicket(String jiraTicketKey, Collection<String> alreadyResolvedResolutions,
                                       ProductOrder.TransitionStates transitionState,
-                                      String transitionComments) throws IOException, NoTransitionException {
+                                      @Nullable String transitionComments) throws IOException, NoTransitionException {
         String resolution = jiraService.getResolution(jiraTicketKey);
-
         if (!alreadyResolvedResolutions.contains(resolution)) {
-
-            Transition transition = jiraService.findAvailableTransitionByName(jiraTicketKey, transitionState.getStateName());
-
+            Transition transition = jiraService.findAvailableTransitionByName(jiraTicketKey,
+                    transitionState.getStateName());
             if (transition == null) {
                 throw new NoTransitionException(
                         "Cannot " + transitionState.getStateName() + " " + jiraTicketKey +
-                                " in resolution '" + resolution + "': no " + transitionState.getStateName() + " transition found");
+                        " in resolution '" + resolution + "': no " + transitionState.getStateName()
+                        + " transition found");
             }
-
-            String jiraCommentText = getUserName() + " performed " + transitionState.getStateName() + " transition on " + jiraTicketKey;
-
+            String jiraCommentText = getUserName() + " performed " + transitionState.getStateName() + " transition on "
+                                     + jiraTicketKey;
             if (transitionComments != null) {
                 jiraCommentText = jiraCommentText + ": " + transitionComments;
             }
-
             jiraService.postNewTransition(jiraTicketKey, transition, jiraCommentText);
         }
     }
