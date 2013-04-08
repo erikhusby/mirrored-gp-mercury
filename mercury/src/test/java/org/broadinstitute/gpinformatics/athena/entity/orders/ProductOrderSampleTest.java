@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntryTest;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -13,6 +14,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
 import org.hamcrest.Matcher;
+import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -34,6 +36,34 @@ import static org.hamcrest.Matchers.*;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ProductOrderSampleTest {
+
+    public static ProductOrderSample createBilledSample(String name) {
+        ProductOrderSample sample = new ProductOrderSample(name);
+        LedgerEntry billedEntry = LedgerEntryTest.createBilledLedgerEntry(sample);
+        sample.getLedgerItems().add(billedEntry);
+        return sample;
+    }
+
+    public static ProductOrderSample createUnbilledSampleWithLedger(String name) {
+        ProductOrderSample sample = new ProductOrderSample(name);
+        LedgerEntry billedEntry = LedgerEntryTest.createOneLedgerEntry(sample, "price item", 1, new Date());
+        sample.getLedgerItems().add(billedEntry);
+        return sample;
+    }
+
+    @DataProvider(name = "testIsBilled")
+    public Object[][] createIsBilledData() {
+        return new Object[][]{
+                {createBilledSample("ABC"), true},
+                {createUnbilledSampleWithLedger("ABC"), false},
+                {new ProductOrderSample("ABC"), false}
+        };
+    }
+
+    @Test(dataProvider = "testIsBilled")
+    public void testIsBilled(ProductOrderSample sample, boolean isBilled) {
+        Assert.assertEquals(sample.isBilled(), isBilled);
+    }
 
     @DataProvider(name = "testIsInBspFormat")
     public Object[][] createIsInBspFormatData() {
@@ -139,6 +169,12 @@ public class ProductOrderSampleTest {
         };
     }
 
+    @Test(dataProvider = "autoBillSample")
+    public void testAutoBillSample(ProductOrderSample sample, Date completedDate, Set<LedgerEntry> ledgerEntries) {
+        sample.autoBillSample(completedDate, 1);
+        assertThat(sample.getBillableLedgerItems(), is(equalTo(ledgerEntries)));
+    }
+
     @DataProvider(name = "riskSample")
     public static Object[][] makeRiskSample() {
         TestPDOData data = new TestPDOData("GSP-123");
@@ -154,12 +190,6 @@ public class ProductOrderSampleTest {
                 new Object[]{data.sample1},
                 new Object[]{data.sample2}
         };
-    }
-
-    @Test(dataProvider = "autoBillSample")
-    public void testAutoBillSample(ProductOrderSample sample, Date completedDate, Set<LedgerEntry> ledgerEntries) {
-        sample.autoBillSample(completedDate, 1);
-        assertThat(sample.getBillableLedgerItems(), is(equalTo(ledgerEntries)));
     }
 
     @Test(dataProvider = "riskSample")
