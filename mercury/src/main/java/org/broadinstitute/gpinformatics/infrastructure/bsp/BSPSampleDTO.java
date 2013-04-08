@@ -1,13 +1,25 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
+import org.apache.commons.collections.map.DefaultedMap;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
- * A simple DTO for fetching commonly used data from BSP.
+ * A class that stores data fetched from BSP. In the case of Plastic Barcodes and FFPE, the data will be retrieved
+ * from BSP if it isn't already present.
+ * <p/>
+ * If a value is missing the following default values are returned, based on the object type:
+ * <ul>
+ *     <li>double - 0</li>
+ *     <li>String - ""</li>
+ *     <li>boolean - false</li>
+ * </ul>
  */
 public class BSPSampleDTO {
 
@@ -69,8 +81,11 @@ public class BSPSampleDTO {
     /**
      * This constructor creates a dto with no values. This is mainly for tests that don't care about the DTO
      */
+    @SuppressWarnings("unchecked")
     public BSPSampleDTO() {
-        columnToValue = Collections.emptyMap();
+        // Create a map where any missing values will return "" instead of null.
+        //noinspection MapReplaceableByEnumMap
+        columnToValue = new DefaultedMap("");
     }
 
     /**
@@ -78,23 +93,10 @@ public class BSPSampleDTO {
      *
      * @param dataMap The BSP Sample Search results mapped by the columns
      */
+    @SuppressWarnings("unchecked")
     public BSPSampleDTO(Map<BSPSampleSearchColumn, String> dataMap) {
-        columnToValue = dataMap;
-    }
-
-    /**
-     * Trim off any empty white space after the string value.
-     *
-     * @param value The string to trim
-     * @return Trimmed value
-     */
-    private static String trim(String value) {
-        if (value != null) {
-            if (value.trim().length() > 0) {
-                return value.trim();
-            }
-        }
-        return null;
+        // Create a map where any missing values will return "" instead of null.
+        columnToValue = DefaultedMap.decorate(dataMap, "");
     }
 
     public double getRin() {

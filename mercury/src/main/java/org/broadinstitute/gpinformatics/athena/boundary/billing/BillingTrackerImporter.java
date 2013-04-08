@@ -265,6 +265,12 @@ public class BillingTrackerImporter {
                                     quantities.getBilled(), row.getCell(BillingTrackerUtils.SAMPLE_ID_COL_POS), row.getCell(BillingTrackerUtils.PDO_ID_COL_POS),
                                 billableRef.getPriceItemName(), product.getPartNumber(), previouslyBilledQuantity );
                 }
+                if (quantities == null && previouslyBilledQuantity != 0) {
+                    return String.format("No billed quantity found in the database for sample %s in %s, price item '%s', in Product sheet %s. " +
+                                         "However the billed quantity in the spreadsheet is '%f', indicating the Billed column of this spreadsheet has accidentally been edited.",
+                            row.getCell(BillingTrackerUtils.SAMPLE_ID_COL_POS), row.getCell(BillingTrackerUtils.PDO_ID_COL_POS),
+                            billableRef.getPriceItemName(), product.getPartNumber(), previouslyBilledQuantity );
+                }
             }
 
             // Get the newQuantity cell value

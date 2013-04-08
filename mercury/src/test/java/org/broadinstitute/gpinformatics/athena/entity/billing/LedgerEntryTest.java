@@ -12,6 +12,7 @@ import org.testng.annotations.Test;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -48,6 +49,30 @@ public class LedgerEntryTest {
                                                    Date workCompleteDate) {
         return new LedgerEntry(sample,
                 new PriceItem("quoteServerId", "platform", "category", priceItemName), workCompleteDate, quantity);
+    }
+
+    public static LedgerEntry createBilledLedgerEntry(ProductOrderSample sample) {
+        LedgerEntry entry = new LedgerEntry(sample,
+                new PriceItem("quoteServerId", "platform", "category", "priceItem"), new Date(), 1);
+        entry.setBillingMessage(BillingSession.SUCCESS);
+        return entry;
+    }
+
+    @DataProvider(name = "testIsBilled")
+    public Object[][] createTestIsBilledData() {
+        LedgerEntry billedEntry = createOneLedgerEntry("test", "priceItem", 1);
+        BillingSession session = new BillingSession(0L, Collections.singleton(billedEntry));
+        session.setBilledDate(new Date());
+        return new Object[][] {
+                {createBilledLedgerEntry(createSample("test")), true},
+                {billedEntry, true},
+                {createOneLedgerEntry("test", "price item", 1), false}
+        };
+    }
+
+    @Test(dataProvider = "testIsBilled")
+    public void testIsBilled(LedgerEntry entry, boolean isBilled) {
+        Assert.assertEquals(entry.isBilled(), isBilled);
     }
 
     @DataProvider(name = "testEquals")

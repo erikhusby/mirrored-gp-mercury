@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.athena.entity.fixup;
+package org.broadinstitute.gpinformatics.athena.entity.billing.fixup;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

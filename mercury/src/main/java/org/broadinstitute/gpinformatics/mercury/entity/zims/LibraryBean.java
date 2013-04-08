@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.zims;
 
 import edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme;
 import edu.mit.broad.prodinfo.thrift.lims.TZDevExperimentData;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
@@ -279,28 +280,30 @@ public class LibraryBean {
      * {@link BSPSampleDTO} says.  In other words,
      * ignore any GSSR parameters and overwrite them
      * with what BSP says.
-     * @param bspSampleDTO
+     * @param bspSampleDTO BSP data for sample
      */
-    private final void overrideSampleFieldsFromBSP(BSPSampleDTO bspSampleDTO) {
+    private void overrideSampleFieldsFromBSP(BSPSampleDTO bspSampleDTO) {
         if (bspSampleDTO != null) {
-            this.species = bspSampleDTO.getOrganism();
-            this.primaryDisease = bspSampleDTO.getPrimaryDisease();
-            this.sampleType = bspSampleDTO.getSampleType();
-            this.rootSample = bspSampleDTO.getRootSample();
-            this.sampleLSID = bspSampleDTO.getSampleLsid();
-            this.sampleId = bspSampleDTO.getSampleId();
-            this.gender = bspSampleDTO.getGender();
+            // We force all empty fields to null, because this is the format that the web service client (the
+            // Picard pipeline) expects.  The raw results from BSP provide the empty string for missing data,
+            // so there is no way to tell missing data from empty data.
+            species = StringUtils.trimToNull(bspSampleDTO.getOrganism());
+            primaryDisease = StringUtils.trimToNull(bspSampleDTO.getPrimaryDisease());
+            sampleType = StringUtils.trimToNull(bspSampleDTO.getSampleType());
+            rootSample = StringUtils.trimToNull(bspSampleDTO.getRootSample());
+            sampleLSID = StringUtils.trimToNull(bspSampleDTO.getSampleLsid());
+            sampleId = StringUtils.trimToNull(bspSampleDTO.getSampleId());
+            gender = StringUtils.trimToNull(bspSampleDTO.getGender());
             // todo arz pop/ethnicity,
-            this.collection = bspSampleDTO.getCollection();
-            this.collaboratorSampleId = bspSampleDTO.getCollaboratorsSampleName();
-            this.materialType = bspSampleDTO.getMaterialType();
-            this.participantId = bspSampleDTO.getPatientId();
-            this.population = bspSampleDTO.getEthnicity();
-            this.race = bspSampleDTO.getRace();
-            this.collaboratorParticipantId = bspSampleDTO.getCollaboratorParticipantId();
+            collection = StringUtils.trimToNull(bspSampleDTO.getCollection());
+            collaboratorSampleId = StringUtils.trimToNull(bspSampleDTO.getCollaboratorsSampleName());
+            materialType = StringUtils.trimToNull(bspSampleDTO.getMaterialType());
+            participantId = StringUtils.trimToNull(bspSampleDTO.getPatientId());
+            population = StringUtils.trimToNull(bspSampleDTO.getEthnicity());
+            race = StringUtils.trimToNull(bspSampleDTO.getRace());
+            collaboratorParticipantId = StringUtils.trimToNull(bspSampleDTO.getCollaboratorParticipantId());
             isGssrSample = false;
-        }
-        else {
+        } else {
             isGssrSample = true;
         }
     }

@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.*;
@@ -56,6 +57,20 @@ public class BillingSession implements Serializable {
         }
 
         ledgerEntryItems = new ArrayList<LedgerEntry>(ledgerItems);
+    }
+
+    /**
+     * This is a 'special' constructor to recreate a billing session that may have been deleted. It is being built for
+     * fixup tests. The billing session is considered billed even though nothing has gone to thequote server.
+     *
+     * @param billedDate If the desire is to set this as already billed (if something was billed arleady
+     *                   in the quote server). If null, this is left open to bill and end.
+     * @param createdBy The user who is creating this.
+     * @param ledgerItems Allthe ledger entries that will be added to this session
+     */
+    BillingSession(@Nullable Date billedDate, @Nonnull Long createdBy, Set<LedgerEntry> ledgerItems) {
+        this(createdBy, ledgerItems);
+        this.billedDate = billedDate;
     }
 
     public Date getCreatedDate() {
