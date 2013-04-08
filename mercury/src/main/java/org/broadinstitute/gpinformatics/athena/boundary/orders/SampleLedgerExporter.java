@@ -259,19 +259,6 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         }
     }
 
-    private static String getBillingError(Set<LedgerEntry> billableItems) {
-        Set<String> errors = new HashSet<String>();
-
-        // Collect all unique errors
-        for (LedgerEntry ledger : billableItems) {
-            if (!StringUtils.isBlank(ledger.getBillingMessage())) {
-                errors.add(ledger.getBillingMessage());
-            }
-        }
-
-        return StringUtils.join(errors.iterator(), ", ");
-    }
-
     private void writeHeaders(Product currentProduct, List<PriceItem> sortedPriceItems, List<Product> sortedAddOns) {
         for (PriceItem priceItem : sortedPriceItems) {
             writePriceItemProductHeader(priceItem, currentProduct);
