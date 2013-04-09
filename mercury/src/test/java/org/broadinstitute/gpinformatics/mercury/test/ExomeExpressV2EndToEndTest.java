@@ -306,7 +306,7 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
         // Submissions
         // Reporting
 
-        //EasyMock.verify(mockBucketDao);
+        EasyMock.verify(mockBucketDao);
 
     }
 
