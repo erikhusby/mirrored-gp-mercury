@@ -10,7 +10,6 @@ import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.control.lims.LimsQueryResourceResponseFactory;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.FlowcellDesignationType;
 import org.testng.Assert;
@@ -52,7 +51,8 @@ public class LimsQueryResourceUnitTest {
         mockTwoDBarcodedTubeDAO = createMock(TwoDBarcodedTubeDAO.class);
         mockStaticPlateDAO = createMock(StaticPlateDAO.class);
         BSPUserList bspUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
-        resource = new LimsQueryResource(mockThriftService, mockLimsQueries, mockResponseFactory, mockMercuryOrSquidRouter, bspUserList, mockStaticPlateDAO);
+        resource = new LimsQueryResource(mockThriftService, mockLimsQueries, mockResponseFactory, mockMercuryOrSquidRouter, bspUserList);
+
     }
 
     /*
@@ -193,10 +193,8 @@ public class LimsQueryResourceUnitTest {
 
     @Test(groups = DATABASE_FREE)
     public void testFindImmediatePlateParentsFromMercury() {
-        StaticPlate plate = new StaticPlate("mercuryPlate", StaticPlate.PlateType.Eppendorf96);
-        expect(mockMercuryOrSquidRouter.routeForVessel(plate)).andReturn(MERCURY);
+        expect(mockMercuryOrSquidRouter.routeForVessel("mercuryPlate")).andReturn(MERCURY);
         expect(mockLimsQueries.findImmediatePlateParents("mercuryPlate")).andReturn(Arrays.asList("mp1", "mp2"));
-        expect(mockStaticPlateDAO.findByBarcode("mercuryPlate")).andReturn(plate);
         replayAll();
 
         List<String> result = resource.findImmediatePlateParents("mercuryPlate");
@@ -207,10 +205,8 @@ public class LimsQueryResourceUnitTest {
 
     @Test(groups = DATABASE_FREE)
     public void testFindImmediatePlateParentsFromSquid() {
-        StaticPlate plate = new StaticPlate("squidPlate", StaticPlate.PlateType.Eppendorf96);
-        expect(mockMercuryOrSquidRouter.routeForVessel(plate)).andReturn(SQUID);
+        expect(mockMercuryOrSquidRouter.routeForVessel("squidPlate")).andReturn(SQUID);
         expect(mockThriftService.findImmediatePlateParents("squidPlate")).andReturn(Arrays.asList("sp1", "sp2"));
-        expect(mockStaticPlateDAO.findByBarcode("squidPlate")).andReturn(plate);
         replayAll();
 
         List<String> result = resource.findImmediatePlateParents("squidPlate");
@@ -260,15 +256,12 @@ public class LimsQueryResourceUnitTest {
 
     @Test(groups = DATABASE_FREE)
     public void testFetchParentRackContentsForPlateFromMercury() {
-        StaticPlate plate = new StaticPlate("mercuryPlate", StaticPlate.PlateType.Eppendorf96);
-        expect(mockMercuryOrSquidRouter.routeForVessel(plate)).andReturn(MERCURY);
+        expect(mockMercuryOrSquidRouter.routeForVessel("mercuryPlate")).andReturn(MERCURY);
         Map<String, Boolean> map = new HashMap<String, Boolean>();
         map.put("A01", true);
         map.put("A02", false);
         expect(mockLimsQueries.fetchParentRackContentsForPlate("mercuryPlate")).andReturn(map);
-        expect(mockStaticPlateDAO.findByBarcode("mercuryPlate")).andReturn(plate);
         replayAll();
-
 
         Map<String, Boolean> result = resource.fetchParentRackContentsForPlate("mercuryPlate");
         assertThat(result, equalTo(map));
@@ -278,13 +271,11 @@ public class LimsQueryResourceUnitTest {
 
     @Test(groups = DATABASE_FREE)
     public void testFetchParentRackContentsForPlateFromSquid() {
-        StaticPlate plate = new StaticPlate("squidPlate", StaticPlate.PlateType.Eppendorf96);
-        expect(mockMercuryOrSquidRouter.routeForVessel(plate)).andReturn(SQUID);
+        expect(mockMercuryOrSquidRouter.routeForVessel("squidPlate")).andReturn(SQUID);
         Map<String, Boolean> map = new HashMap<String, Boolean>();
         map.put("A01", true);
         map.put("A02", false);
         expect(mockThriftService.fetchParentRackContentsForPlate("squidPlate")).andReturn(map);
-        expect(mockStaticPlateDAO.findByBarcode("squidPlate")).andReturn(plate);
         replayAll();
 
         Map<String, Boolean> result = resource.fetchParentRackContentsForPlate("squidPlate");
