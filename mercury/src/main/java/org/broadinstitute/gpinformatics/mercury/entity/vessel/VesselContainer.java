@@ -118,12 +118,12 @@ public class VesselContainer<T extends LabVessel> {
     }
 
     public Set<SampleInstance> getSampleInstancesAtPosition(VesselPosition position) {
-        LabVessel.TraversalResults traversalResults = traverseAncestors(position, false);
+        LabVessel.TraversalResults traversalResults = traverseAncestors(position, LabVessel.SampleType.ANY, null);
         return traversalResults.getSampleInstances();
     }
 
     public List<SampleInstance> getSampleInstancesAtPositionList(VesselPosition position) {
-        LabVessel.TraversalResults traversalResults = traverseAncestors(position, false);
+        LabVessel.TraversalResults traversalResults = traverseAncestors(position, LabVessel.SampleType.ANY, null);
         Map<String, SampleInstance> sampleInstanceMap = new TreeMap<String, SampleInstance>();
         for (SampleInstance sample : traversalResults.getSampleInstances()) {
             sampleInstanceMap.put(sample.getStartingSample().getSampleKey(), sample);
@@ -131,7 +131,8 @@ public class VesselContainer<T extends LabVessel> {
         return new ArrayList<SampleInstance>(sampleInstanceMap.values());
     }
 
-    LabVessel.TraversalResults traverseAncestors(VesselPosition position, boolean onlyWithPdos) {
+    LabVessel.TraversalResults traverseAncestors(VesselPosition position, LabVessel.SampleType sampleType,
+            LabBatch.LabBatchType labBatchType) {
         LabVessel.TraversalResults traversalResults = new LabVessel.TraversalResults();
         T vesselAtPosition = getVesselAtPosition(position);
 
@@ -141,13 +142,14 @@ public class VesselContainer<T extends LabVessel> {
                 LabVessel labVessel = ancestor.getLabVessel();
                 // todo jmt put this logic in VesselEvent?
                 if (labVessel == null) {
-                    traversalResults.add(ancestor.getVesselContainer().traverseAncestors(ancestor.getPosition(), onlyWithPdos));
+                    traversalResults.add(ancestor.getVesselContainer().traverseAncestors(ancestor.getPosition(),
+                            sampleType, labBatchType));
                 } else {
-                    traversalResults.add(labVessel.traverseAncestors(onlyWithPdos));
+                    traversalResults.add(labVessel.traverseAncestors(sampleType, labBatchType));
                 }
             }
         } else {
-            traversalResults.add(vesselAtPosition.traverseAncestors(onlyWithPdos));
+            traversalResults.add(vesselAtPosition.traverseAncestors(sampleType, labBatchType));
         }
         traversalResults.completeLevel();
         return traversalResults;
@@ -265,7 +267,7 @@ public class VesselContainer<T extends LabVessel> {
     }
 
     @Transient
-    public Set<SampleInstance> getSampleInstances(boolean onlyWithPdo) {
+    public Set<SampleInstance> getSampleInstances(LabVessel.SampleType sampleType, LabBatch.LabBatchType labBatchType) {
         Set<SampleInstance> sampleInstances = new LinkedHashSet<SampleInstance>();
         for (VesselPosition position : mapPositionToVessel.keySet()) {
             sampleInstances.addAll(getSampleInstancesAtPosition(position));
@@ -276,11 +278,11 @@ public class VesselContainer<T extends LabVessel> {
                     VesselContainer<?> vesselContainer = sourceLabVessel.getContainerRole();
                     if (vesselContainer != null) {
                         //noinspection unchecked
-                        sampleInstances.addAll(vesselContainer.getSampleInstances(onlyWithPdo));
+                        sampleInstances.addAll(vesselContainer.getSampleInstances(sampleType, labBatchType));
                         // todo arz fix this, probably by using LabBatch properly
 //                        applyProjectPlanOverrideIfPresent(labEvent,sampleInstances);
                     } else {
-                        sampleInstances.addAll(sourceLabVessel.getSampleInstances(onlyWithPdo));
+                        sampleInstances.addAll(sourceLabVessel.getSampleInstances(sampleType, labBatchType));
                     }
                 }
             }
