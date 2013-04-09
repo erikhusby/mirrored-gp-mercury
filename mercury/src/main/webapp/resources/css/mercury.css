@@ -87,7 +87,7 @@ input[type='checkbox'].checkAll { margin-left: -8px; }
 .form-horizontal .view-control-group .controls { margin-top: 5px; }
 .controls-text { margin-top: 5px; }
 
-.tableBar { border-bottom: 2px solid #644436; }
+.tableBar { border-bottom: 2px solid #644436; font-weight: bold; font-size:medium; }
 .borderHeader { font-size: 16px; border-bottom: 2px solid #644436; margin-top: 15px; padding-bottom: 3px; }
 
 textarea.controlledText { width: 550px; }

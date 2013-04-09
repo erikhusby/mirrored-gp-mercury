@@ -7,6 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.*;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.OrderBillSummaryStat;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
@@ -24,18 +25,20 @@ import java.util.Map;
 public class BillingTrackerImporter {
 
     private final ProductOrderDao productOrderDao;
+    private final PriceItemDao priceItemDao;
     private final PriceListCache priceListCache;
 
     private ValidationErrors validationErrors;
 
     public BillingTrackerImporter(
-        ProductOrderDao productOrderDao, PriceListCache priceListCache, ValidationErrors validationErrors) {
-        this(productOrderDao, priceListCache);
+        ProductOrderDao productOrderDao, PriceItemDao priceItemDao, PriceListCache priceListCache, ValidationErrors validationErrors) {
+        this(productOrderDao, priceItemDao, priceListCache);
         this.validationErrors = validationErrors;
     }
 
-    public BillingTrackerImporter(ProductOrderDao productOrderDao, PriceListCache priceListCache) {
+    public BillingTrackerImporter(ProductOrderDao productOrderDao, PriceItemDao priceItemDao, PriceListCache priceListCache) {
         this.productOrderDao = productOrderDao;
+        this.priceItemDao = priceItemDao;
         this.priceListCache = priceListCache;
     }
 
@@ -190,7 +193,7 @@ public class BillingTrackerImporter {
                 product = productOrder.getProduct();
                 samples = productOrder.getSamples();
                 if (priceItemMap == null) {
-                    priceItemMap = BillingTrackerUtils.createPriceItemMapForSheet(trackerColumnInfos, product, priceListCache);
+                    priceItemMap = BillingTrackerUtils.createPriceItemMapForSheet(trackerColumnInfos, product, priceItemDao, priceListCache);
                 }
             }
 

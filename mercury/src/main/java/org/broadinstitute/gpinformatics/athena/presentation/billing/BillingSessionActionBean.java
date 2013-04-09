@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteWorkItemsExporter;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
@@ -42,6 +43,9 @@ public class BillingSessionActionBean extends CoreActionBean {
 
     @Inject
     private ProductOrderDao productOrderDao;
+
+    @Inject
+    private PriceItemDao priceItemDao;
 
     @Inject
     private BSPUserList bspUserList;
@@ -110,7 +114,7 @@ public class BillingSessionActionBean extends CoreActionBean {
                 productOrderDao.findListByBusinessKeyList(productOrderBusinessKeys, Product, ResearchProject, Samples);
 
         Resolution downloadResolution =
-            ProductOrderActionBean.getTrackerForOrders(this, productOrders, bspUserList, priceListCache);
+            ProductOrderActionBean.getTrackerForOrders(this, productOrders, priceItemDao, bspUserList, priceListCache);
 
         // If there is no file to download, just pass on the errors.
         // FIXME: this logic is bogus, getTrackerForOrders doesn't return null on error.

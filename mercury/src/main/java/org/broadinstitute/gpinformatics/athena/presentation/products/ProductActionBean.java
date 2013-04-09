@@ -16,6 +16,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -400,7 +401,7 @@ public class ProductActionBean extends CoreActionBean {
         this.productFamilyId = productFamilyId;
     }
 
-    public List<PriceItem> getOptionalPriceItems() {
-        return editProduct.getOptionalPriceItems(priceListCache);
+    public Collection<org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem> getReplacementPriceItems() {
+        return editProduct.getReplacementPriceItems(priceListCache);
     }
 }

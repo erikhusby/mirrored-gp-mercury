@@ -2843,4 +2843,18 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="GPLIM-1180.1" author="hrafal">
+        <preConditions onFail="WARN">
+            <tableExists schemaName="athena" tableName="product_opt_price_items"  />
+        </preConditions>
+        <renameTable schemaName="athena" oldTableName="product_opt_price_items" newTableName="old_opt_price_items"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1180.2" author="hrafal">
+        <preConditions onFail="WARN">
+            <tableExists schemaName="athena" tableName="product_opt_price_items_aud"  />
+        </preConditions>
+        <dropTable schemaName="athena" tableName="product_opt_price_items_aud"/>
+    </changeSet>
+
 </databaseChangeLog>

@@ -1,10 +1,10 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingTrackerUtils;
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -36,10 +36,17 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
     private static final int ERRORS_WIDTH = 259 * 100;
     private static final int COMMENTS_WIDTH = 259 * 60;
 
+    private final PriceItemDao priceItemDao;
     private final BSPUserList bspUserList;
     private final PriceListCache priceListCache;
 
-    public SampleLedgerExporter(BSPUserList bspUserList, PriceListCache priceListCache, List<ProductOrder> productOrders) {
+    public SampleLedgerExporter(
+            PriceItemDao priceItemDao,
+            BSPUserList bspUserList,
+            PriceListCache priceListCache,
+            List<ProductOrder> productOrders) {
+
+        this.priceItemDao = priceItemDao;
         this.bspUserList = bspUserList;
         this.priceListCache = priceListCache;
 
@@ -81,20 +88,42 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         return null;
     }
 
-    public static List<PriceItem> getPriceItems(Product product, PriceListCache priceItemListCache) {
-        // Create a copy of the product's price items list in order to impose an order on it.
-        List<PriceItem> allPriceItems = new ArrayList<PriceItem>(product.getOptionalPriceItems(priceItemListCache));
-        Collections.sort(allPriceItems, new Comparator<PriceItem>() {
-            @Override
-            public int compare(PriceItem o1, PriceItem o2) {
-                return new CompareToBuilder().append(o1.getPlatform(), o2.getPlatform())
-                        .append(o1.getCategory(), o2.getCategory())
-                        .append(o1.getName(), o2.getName()).build();
-            }
-        });
+    /**
+     * This gets the product price item and then its list of optional price items. If the price items are not
+     * yet stored in the price items table, it will create it there because that is really needed for true referencing.
+     *
+     * @param product The product items.
+     * @param priceItemListCache The price list cache
+     *
+     * @return The real price item objects.
+     */
+    public static List<PriceItem> getPriceItems(Product product, PriceItemDao priceItemDao, PriceListCache priceItemListCache) {
 
-        // primary price item always goes first
-        allPriceItems.add(0, product.getPrimaryPriceItem());
+        List<PriceItem> allPriceItems = new ArrayList<PriceItem>();
+
+        // First add the primary price item
+        allPriceItems.add(product.getPrimaryPriceItem());
+
+        // Get the replacement items from the quote cache.
+        Collection<org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem> quotePriceItems =
+                product.getReplacementPriceItems(priceItemListCache);
+
+        // Now add the replacement items as mercury price item objects
+        for (org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem quotePriceItem : quotePriceItems) {
+            // Find the price item object.
+            PriceItem priceItem =
+                priceItemDao.find(
+                    quotePriceItem.getPlatformName(), quotePriceItem.getCategoryName(), quotePriceItem.getName());
+
+            // If it does not exist create it.
+            if (priceItem == null) {
+                priceItem = new PriceItem(quotePriceItem.getId(), quotePriceItem.getPlatformName(),
+                                          quotePriceItem.getCategoryName(), quotePriceItem.getName());
+                priceItemDao.persist(priceItem);
+            }
+
+            allPriceItems.add(priceItem);
+        }
 
         return allPriceItems;
     }
@@ -139,7 +168,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             }
 
             // Get the ordered price items for the current product, add the spanning price item + product headers
-            List<PriceItem> sortedPriceItems = getPriceItems(currentProduct, priceListCache);
+            List<PriceItem> sortedPriceItems = getPriceItems(currentProduct, priceItemDao, priceListCache);
 
             // add on products
             List<Product> sortedAddOns = new ArrayList<Product>(currentProduct.getAddOns());
@@ -222,7 +251,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
         // And for add-ons
         for (Product addOn : sortedAddOns) {
-            List<PriceItem> sortedAddOnPriceItems = getPriceItems(addOn, priceListCache);
+            List<PriceItem> sortedAddOnPriceItems = getPriceItems(addOn, priceItemDao, priceListCache);
             for (PriceItem item : sortedAddOnPriceItems) {
                 writeCountsForPriceItems(billCounts, item);
             }
@@ -266,7 +295,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
         // Repeat the process for add ons
         for (Product addOn : sortedAddOns) {
-            List<PriceItem> sortedAddOnPriceItems = getPriceItems(addOn, priceListCache);
+            List<PriceItem> sortedAddOnPriceItems = getPriceItems(addOn, priceItemDao, priceListCache);
             for (PriceItem priceItem : sortedAddOnPriceItems) {
                 writePriceItemProductHeader(priceItem, addOn);
             }
@@ -277,10 +306,12 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         getWriter().writeCell("Billing Errors", getFixedHeaderStyle());
         getWriter().setColumnWidth(ERRORS_WIDTH);
 
-        writeAllBillAndNewHeaders(currentProduct.getOptionalPriceItems(priceListCache), currentProduct.getAddOns());
+        writeAllBillAndNewHeaders(currentProduct.getReplacementPriceItems(priceListCache), currentProduct.getAddOns());
     }
 
-    private void writeAllBillAndNewHeaders(List<PriceItem> priceItems, Set<Product> addOns) {
+    private void writeAllBillAndNewHeaders(
+        Collection<org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem> priceItems, Set<Product> addOns) {
+
         // The new row
         getWriter().nextRow();
 
@@ -289,7 +320,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
         // primary price item for main product
         writeBillAndNewHeaders();
-        for (PriceItem priceItem : priceItems) {
+        for (org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem priceItem : priceItems) {
             writeBillAndNewHeaders();
         }
 
@@ -297,7 +328,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             // primary price item for this add-on
             writeBillAndNewHeaders();
 
-            for (PriceItem priceItem : addOn.getOptionalPriceItems(priceListCache)) {
+            for (org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem priceItem : addOn.getReplacementPriceItems(priceListCache)) {
                 writeBillAndNewHeaders();
             }
         }

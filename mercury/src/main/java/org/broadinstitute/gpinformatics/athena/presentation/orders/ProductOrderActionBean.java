@@ -1,13 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
-import net.sourceforge.stripes.action.After;
-import net.sourceforge.stripes.action.Before;
-import net.sourceforge.stripes.action.DefaultHandler;
-import net.sourceforge.stripes.action.ForwardResolution;
-import net.sourceforge.stripes.action.HandlesEvent;
-import net.sourceforge.stripes.action.RedirectResolution;
-import net.sourceforge.stripes.action.Resolution;
-import net.sourceforge.stripes.action.UrlBinding;
+import net.sourceforge.stripes.action.*;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidateNestedProperties;
@@ -21,20 +14,17 @@ import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusF
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
-import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderListEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
-import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
+import org.broadinstitute.gpinformatics.athena.entity.orders.*;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -62,21 +52,9 @@ import org.jvnet.inflector.Noun;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * This handles all the needed interface processing elements.
@@ -135,6 +113,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Inject
     private BillingSessionDao billingSessionDao;
+
+    @Inject
+    private PriceItemDao priceItemDao;
 
     @Inject
     private LedgerEntryDao ledgerEntryDao;
@@ -591,7 +572,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent("downloadBillingTracker")
     public Resolution downloadBillingTracker() {
         Resolution resolution =
-            ProductOrderActionBean.getTrackerForOrders(this, selectedProductOrders, bspUserList, priceListCache);
+            ProductOrderActionBean.getTrackerForOrders(this, selectedProductOrders, priceItemDao, bspUserList, priceListCache);
         if (hasErrors()) {
             // Need to regenerate the list so it's displayed along with the errors.
             listInit();
@@ -880,6 +861,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public static Resolution getTrackerForOrders(
         final CoreActionBean actionBean,
         List<ProductOrder> productOrderList,
+        PriceItemDao priceItemDao,
         BSPUserList bspUserList,
         PriceListCache priceListCache) {
 
@@ -896,7 +878,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             outputStream = new FileOutputStream(tempFile);
 
             SampleLedgerExporter sampleLedgerExporter =
-                new SampleLedgerExporter(bspUserList, priceListCache, productOrderList);
+                new SampleLedgerExporter(priceItemDao, bspUserList, priceListCache, productOrderList);
             sampleLedgerExporter.writeToStream(outputStream);
             IOUtils.closeQuietly(outputStream);
 

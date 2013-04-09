@@ -41,6 +41,7 @@ public class PriceItem {
         quotePriceItem.setPlatformName(priceItem.getPlatform());
         return quotePriceItem;
     }
+
     public PriceItem(String quoteServerId, String platformName, String categoryName, String name) {
         this.id = quoteServerId;
         this.platformName = platformName;
@@ -251,5 +252,11 @@ public class PriceItem {
                 ", name='" + name + '\'' +
                 ", categoryName='" + categoryName + '\'' +
                 '}';
+    }
+
+    public boolean isMercuryPriceItemEqual(org.broadinstitute.gpinformatics.athena.entity.products.PriceItem priceItem) {
+        return platformName.equals(priceItem.getPlatform()) &&
+               categoryName.equals(priceItem.getCategory()) &&
+               name.equals(priceItem.getName());
     }
 }

@@ -7,6 +7,7 @@ import org.apache.poi.hssf.usermodel.HSSFDateUtil;
 import org.apache.poi.ss.usermodel.*;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -32,6 +33,9 @@ public class BillingTrackerManager {
 
     @Inject
     LedgerEntryDao ledgerEntryDao;
+
+    @Inject
+    PriceItemDao priceItemDao;
 
     @Inject
     private PriceListCache priceListCache;
@@ -190,7 +194,7 @@ public class BillingTrackerManager {
                 // Find the target priceItems for the data that was parsed from the header, happens one per sheet parse.
                 // create a map (by trackerColumnInfo) of PriceItems
                 if (priceItemMap == null) {
-                    priceItemMap = BillingTrackerUtils.createPriceItemMapForSheet(trackerColumnInfos, product, priceListCache);
+                    priceItemMap = BillingTrackerUtils.createPriceItemMapForSheet(trackerColumnInfos, product, priceItemDao, priceListCache);
                 }
 
                 //Remove any pending billable Items from the ledger for all samples in this PDO

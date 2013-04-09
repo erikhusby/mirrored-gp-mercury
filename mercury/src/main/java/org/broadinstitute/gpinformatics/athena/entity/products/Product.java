@@ -221,23 +221,14 @@ public class Product implements Serializable, Comparable<Product> {
         this.primaryPriceItem = primaryPriceItem;
     }
 
-    public List<PriceItem> getOptionalPriceItems(PriceListCache priceListCache) {
+    public Collection<org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem> getReplacementPriceItems(PriceListCache priceListCache) {
         ReplacementItems replacementItemList =
                 priceListCache.findByKeyFields(
                         primaryPriceItem.getPlatform(),
                         primaryPriceItem.getCategory(),
                         primaryPriceItem.getName()).getReplacementItems();
 
-        List<PriceItem> optionalPriceItems = new ArrayList<PriceItem> ();
-        for (org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem quotePriceItem : replacementItemList.getPriceItems()) {
-            PriceItem optionalPriceItem =
-                    new PriceItem(quotePriceItem.getId(), quotePriceItem.getPlatformName(),
-                            quotePriceItem.getCategoryName(), quotePriceItem.getName());
-
-            optionalPriceItems.add(optionalPriceItem);
-        }
-
-        return optionalPriceItems;
+        return replacementItemList.getPriceItems();
     }
 
     public Set<MaterialType> getAllowableMaterialTypes() {

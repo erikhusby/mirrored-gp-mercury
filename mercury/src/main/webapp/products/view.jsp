@@ -200,7 +200,7 @@
         </table>
 
         <div class="tableBar">
-            Optional Price Items
+            Replacement Price Items
         </div>
         <table id="optionPriceList" class="table table-striped table-bordered">
             <thead>
@@ -211,11 +211,11 @@
                 </tr>
             </thead>
             <tbody>
-                <c:forEach items="${actionBean.optionalPriceItems}" var="optionalPriceItem">
+                <c:forEach items="${actionBean.replacementPriceItems}" var="replacementPriceItem">
                     <tr>
-                        <td>${optionalPriceItem.platform}</td>
-                        <td>${optionalPriceItem.category}</td>
-                        <td>${optionalPriceItem.name}</td>
+                        <td>${replacementPriceItem.platformName}</td>
+                        <td>${replacementPriceItem.categoryName}</td>
+                        <td>${replacementPriceItem.name}</td>
                     </tr>
                 </c:forEach>
             </tbody>
