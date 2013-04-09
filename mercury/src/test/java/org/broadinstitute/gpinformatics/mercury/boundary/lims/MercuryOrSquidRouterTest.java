@@ -30,10 +30,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.AdditionalMatchers.or;
 import static org.mockito.Mockito.*;
 
-//import static org.easymock.EasyMock.*;
-
-//import static org.easymock.EasyMock.*;
-
 /**
  * Test of logic to route messages and queries to Mercury or Squid as appropriate.
  * <p>
