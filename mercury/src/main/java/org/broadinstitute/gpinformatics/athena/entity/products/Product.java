@@ -222,13 +222,18 @@ public class Product implements Serializable, Comparable<Product> {
     }
 
     public Collection<org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem> getReplacementPriceItems(PriceListCache priceListCache) {
-        ReplacementItems replacementItemList =
-                priceListCache.findByKeyFields(
-                        primaryPriceItem.getPlatform(),
-                        primaryPriceItem.getCategory(),
-                        primaryPriceItem.getName()).getReplacementItems();
+        try {
+            ReplacementItems replacementItemList =
+                    priceListCache.findByKeyFields(
+                            primaryPriceItem.getPlatform(),
+                            primaryPriceItem.getCategory(),
+                            primaryPriceItem.getName()).getReplacementItems();
 
-        return replacementItemList.getPriceItems();
+            return replacementItemList.getPriceItems();
+        } catch (Throwable t) {
+            // Since this is coming from the quote server, we will just show nothing when there are any errors
+            return Collections.emptyList();
+        }
     }
 
     public Set<MaterialType> getAllowableMaterialTypes() {
