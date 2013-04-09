@@ -183,8 +183,8 @@ public class LedgerEntry implements Serializable {
      * The price item status on the ledger entry.
      */
     public static enum PriceItemType {
-        PrimaryPriceItem,
-        ReplacementPriceItem,
-        AddOnPriceItem;
+        PRIMARY_PRICE_ITEM,
+        REPLACEMENT_PRICE_ITEM,
+        ADD_ON_PRICE_ITEM
     }
 }

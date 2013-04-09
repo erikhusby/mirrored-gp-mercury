@@ -143,12 +143,12 @@ public class QuoteImportItem {
     public LedgerEntry.PriceItemType getPriceItemType(org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem itemIsReplacing) {
         LedgerEntry.PriceItemType type;
         if (itemIsReplacing != null) {
-            type = LedgerEntry.PriceItemType.ReplacementPriceItem;
+            type = LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM;
         } else if (getProduct().getPrimaryPriceItem().getName().equals(getPriceItem().getName())) {
-            type = LedgerEntry.PriceItemType.PrimaryPriceItem;
+            type = LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM;
         } else {
             // If it is not the primary or replacement right now, it has to be considered add on
-            type = LedgerEntry.PriceItemType.AddOnPriceItem;
+            type = LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM;
         }
 
         return type;

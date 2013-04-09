@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderCompletionStatus;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -277,13 +278,25 @@ public class ProductOrderDao extends GenericDao {
             return Collections.emptyMap();
         }
 
+        /**
+         * This SQL query looks up the product orders specified by the order keys (all, if the keys are null) and then
+         * projects out three count queries along with the jira ticket and the order id:
+         *
+         *       1. The number of non abandoned samples that have ledger items with price items that
+         *          were primary or replacement on each pdo.
+         *       2. The number of abandoned samples on each pdo.
+         *       3. The total number of samples on each pdo.
+         */
         String sqlString = "SELECT JIRA_TICKET_KEY AS name, PRODUCT_ORDER_ID as ID, " +
                            "    ( SELECT count( DISTINCT pos.PRODUCT_ORDER_SAMPLE_ID) " +
                            "      FROM athena.product_order_sample pos " +
-                           "           INNER JOIN athena.BILLING_LEDGER ledger ON ledger.PRODUCT_ORDER_SAMPLE_ID = pos.PRODUCT_ORDER_SAMPLE_ID" +
+                           "           INNER JOIN athena.BILLING_LEDGER ledger " +
+                           "           ON ledger.PRODUCT_ORDER_SAMPLE_ID = pos.PRODUCT_ORDER_SAMPLE_ID" +
                            "      WHERE pos.product_order = ord.product_order_id " +
                            "      AND pos.DELIVERY_STATUS != 'ABANDONED' " +
-                           "      AND (ledger.price_item_type = 'PrimaryPriceItem' OR ledger.price_item_type = 'ReplacementPriceItem') " +
+                           "      AND (ledger.price_item_type = " + LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM.name() +
+                           "             OR " +
+                           "           ledger.price_item_type = " + LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM.name() +
                            "    ) AS completed, " +
                            "    (SELECT count(pos.PRODUCT_ORDER_SAMPLE_ID) FROM athena.product_order_sample pos" +
                            "        WHERE pos.product_order = ord.product_order_id AND pos.DELIVERY_STATUS = 'ABANDONED' " +

@@ -28,12 +28,8 @@ public class LedgerEntryDao extends GenericDao {
 
     private enum BillingSessionInclusion { ALL, NO_SESSION_STARTED, SESSION_STARTED, SESSION_BILLED }
 
-    public List<LedgerEntry> findAll() {
-        return findAll(LedgerEntry.class);
-    }
-
     /**
-     * Fetch the billed LedgerEntries with null quote IDs, join fetching their associated {@link ProductOrderSample}s
+     * Fetch the billed LedgerEntries with null quote IDs, join fetching their associated {@link org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample}s
      * for performance purposes (i.e. avoiding singleton-selects of what are probably nearly unique
      * {@link javax.persistence.ManyToOne} ProductOrderSamples).
      *
@@ -60,11 +56,39 @@ public class LedgerEntryDao extends GenericDao {
                         // Only select ledger entries that were successfully billed.
                         cb.equal(root.get(LedgerEntry_.billingMessage), BillingSession.SUCCESS));
 
-                // This test runs very slowly without this fetch as we would singleton select thousands of
-                // ProductOrderSamples.
+                // This runs very slowly without this fetch as we would singleton select thousands of ProductOrderSamples.
                 root.fetch(LedgerEntry_.productOrderSample);
             }
         });
+    }
+
+    /**
+     * Fetch the billed LedgerEntries so we can populate any new data.
+     *
+     * @return List of entries that were billed to the quote server
+     */
+    public List<LedgerEntry> findAllBilledEntries() {
+        return findAll(LedgerEntry.class, new GenericDaoCallback<LedgerEntry>() {
+            @Override
+            public void callback(CriteriaQuery<LedgerEntry> criteriaQuery, Root<LedgerEntry> root) {
+
+                CriteriaBuilder cb = getCriteriaBuilder();
+
+                Join<LedgerEntry, BillingSession> ledgerBillingSessionJoin = root.join(LedgerEntry_.billingSession);
+
+                // If it has a session and there is a quote, then this was billed to the quote server
+                criteriaQuery.where(
+                        cb.isNotNull(root.get(LedgerEntry_.quoteId)),
+                        cb.isNotNull(ledgerBillingSessionJoin.get(BillingSession_.billedDate)));
+
+                // This runs very slowly without this fetch as we would singleton select thousands of ProductOrderSamples.
+                root.fetch(LedgerEntry_.productOrderSample);
+            }
+        });
+    }
+
+    public List<LedgerEntry> findAll() {
+        return findAll(LedgerEntry.class);
     }
 
     /**
