@@ -7,7 +7,6 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.JPASplitter;
 import org.hibernate.SQLQuery;
@@ -124,49 +123,6 @@ public class ProductOrderDao extends GenericDao {
                 new ProductOrderDaoCallback(fs));
     }
 
-    /**
-     * Find ProductOrders by Research Project
-     *
-     * @param researchProject The project
-     *
-     * @return The matching list of orders
-     */
-    public List<ProductOrder> findByResearchProject(ResearchProject researchProject) {
-        return findList(ProductOrder.class, ProductOrder_.researchProject, researchProject);
-    }
-
-    /**
-     * Find a productOrder by its containing ResearchProject and title
-     *
-     * @param orderTitle      The title to look up
-     * @param researchProject The project
-     *
-     * @return The order that matches the project and title
-     */
-    public ProductOrder findByResearchProjectAndTitle(@Nonnull ResearchProject researchProject,
-                                                      @Nonnull String orderTitle) {
-
-        EntityManager entityManager = getEntityManager();
-        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
-
-        CriteriaQuery<ProductOrder> criteriaQuery = criteriaBuilder.createQuery(ProductOrder.class);
-
-        List<Predicate> predicateList = new ArrayList<Predicate>();
-
-        Root<ProductOrder> productOrderRoot = criteriaQuery.from(ProductOrder.class);
-        predicateList.add(criteriaBuilder.equal(productOrderRoot.get(ProductOrder_.researchProject), researchProject));
-        predicateList.add(criteriaBuilder.equal(productOrderRoot.get(ProductOrder_.title), orderTitle));
-
-        Predicate[] predicates = new Predicate[predicateList.size()];
-        criteriaQuery.where(predicateList.toArray(predicates));
-
-        try {
-            return entityManager.createQuery(criteriaQuery).getSingleResult();
-        } catch (NoResultException ignored) {
-            return null;
-        }
-    }
-
     public List<ProductOrder> findByWorkflowName(@Nonnull String workflowName) {
 
         EntityManager entityManager = getEntityManager();
@@ -213,32 +169,6 @@ public class ProductOrderDao extends GenericDao {
 
     public List<ProductOrder> findAll(FetchSpec... fetchSpecs) {
         return findAll(ProductOrder.class, new ProductOrderDaoCallback(fetchSpecs));
-    }
-
-    /**
-     * Find all the ProductOrders for a person who is
-     * associated ( as the creator ) with the ProductOrders
-     *
-     * @param personId The person to filter on
-     *
-     * @return The products for this person
-     */
-    public List<ProductOrder> findByCreatedPersonId(@Nonnull Long personId) {
-
-        return findList(ProductOrder.class, ProductOrder_.createdBy, personId);
-    }
-
-    /**
-     * Find all the ProductOrders for a person who is
-     * associated ( as the modifier ) with the ProductOrders
-     *
-     * @param personId The person to filter on
-     *
-     * @return The products for this person
-     */
-    public List<ProductOrder> findByModifiedPersonId(@Nonnull Long personId) {
-
-        return findList(ProductOrder.class, ProductOrder_.modifiedBy, personId);
     }
 
     /**
