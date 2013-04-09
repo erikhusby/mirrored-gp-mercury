@@ -13,7 +13,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequenci
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
-import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -129,10 +128,11 @@ public class SolexaRunRoutingTest extends BaseEventTest{
 
         UriInfo uriInfoMock = EasyMock.createNiceMock(UriInfo.class);
         EasyMock.expect(uriInfoMock.getAbsolutePathBuilder()).andReturn(UriBuilder.fromPath(""));
-        EasyMock.replay(uriInfoMock, hipChatMsgSender, vesselDao);
+        EasyMock.replay(runDao, runFactory, flowcellDao, vesselDao, uriInfoMock, hipChatMsgSender);
 
         javax.ws.rs.core.Response response = runResource.createRun(runBean, uriInfoMock);
         Assert.assertEquals(SolexaRunBean.class, response.getEntity().getClass());
+        EasyMock.verify(runDao, flowcellDao, vesselDao, runFactory);
     }
 
     public void testNoChainOfCustodyRegistration() throws Exception {
@@ -156,7 +156,7 @@ public class SolexaRunRoutingTest extends BaseEventTest{
         EasyMock.expect(flowcellDao.findByBarcode(EasyMock.anyObject(String.class))).andReturn(flowcell);
         LabVesselDao vesselDao = EasyMock.createNiceMock(LabVesselDao.class);
 
-        IlluminaSequencingRunFactory runFactory = new IlluminaSequencingRunFactory(EasyMock.createNiceMock(JiraCommentUtil.class));
+        IlluminaSequencingRunFactory runFactory = EasyMock.createMock(IlluminaSequencingRunFactory.class);
         MercuryOrSquidRouter router = new MercuryOrSquidRouter(vesselDao, AthenaClientProducer.stubInstance());
 
         HipChatMessageSender hipChatMsgSender = EasyMock.createNiceMock(HipChatMessageSender.class);
@@ -167,10 +167,11 @@ public class SolexaRunRoutingTest extends BaseEventTest{
 
         UriInfo uriInfoMock = EasyMock.createNiceMock(UriInfo.class);
         EasyMock.expect(uriInfoMock.getAbsolutePathBuilder()).andReturn(UriBuilder.fromPath(""));
-        EasyMock.replay(uriInfoMock, hipChatMsgSender, vesselDao);
+        EasyMock.replay(runDao, runFactory, flowcellDao, vesselDao, uriInfoMock, hipChatMsgSender);
 
         javax.ws.rs.core.Response response = runResource.createRun(runBean, uriInfoMock);
         Assert.assertEquals(SolexaRunBean.class, response.getEntity().getClass());
+        EasyMock.verify(runDao, flowcellDao, vesselDao, runFactory);
     }
 
     /*
