@@ -4,6 +4,7 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProducer;
+import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
@@ -25,6 +26,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.broadinstitute.gpinformatics.mercury.test.builders.*;
 import org.easymock.EasyMock;
+import org.jetbrains.annotations.Nullable;
 import org.testng.annotations.BeforeClass;
 
 import java.util.*;
@@ -220,8 +222,9 @@ public class BaseEventTest {
                 mapBarcodeToTube, workflowName).invoke();
     }
 
-    protected LabEventHandler getLabEventHandler(BucketDao bucketDAO) {
-        return new LabEventHandler(new WorkflowLoader(), AthenaClientProducer.stubInstance(), bucketBeanEJB, bucketDAO,
+    protected LabEventHandler getLabEventHandler(@Nullable BucketDao bucketDAO) {
+        AthenaClientService athenaClientService = AthenaClientProducer.stubInstance();
+        return new LabEventHandler(new WorkflowLoader(), athenaClientService, bucketBeanEJB, bucketDAO,
                         new BSPUserList(BSPManagerFactoryProducer.stubInstance()));
     }
 

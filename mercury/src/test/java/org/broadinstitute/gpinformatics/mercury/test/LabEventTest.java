@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProducer;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
+import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
@@ -170,6 +171,7 @@ public class LabEventTest extends BaseEventTest{
 
         final ProductOrder productOrder =
                 ProductOrderTestFactory.buildHybridSelectionProductOrder(NUM_POSITIONS_IN_RACK);
+        AthenaClientServiceStub.addProductOrder(productOrder);
         productOrder.getResearchProject().setJiraTicketKey("RP-123");
 
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder);
@@ -303,6 +305,7 @@ public class LabEventTest extends BaseEventTest{
     @Test(groups = {DATABASE_FREE})
     public void testExomeExpress() throws Exception {
         ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
+        AthenaClientServiceStub.addProductOrder(productOrder);
         final Date runDate = new Date();
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder);
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
@@ -375,6 +378,7 @@ public class LabEventTest extends BaseEventTest{
 
         final ProductOrder productOrder =
                 ProductOrderTestFactory.buildWholeGenomeProductOrder(NUM_POSITIONS_IN_RACK);
+        AthenaClientServiceStub.addProductOrder(productOrder);
         productOrder.getResearchProject().setJiraTicketKey("RP-123");
 
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder);
