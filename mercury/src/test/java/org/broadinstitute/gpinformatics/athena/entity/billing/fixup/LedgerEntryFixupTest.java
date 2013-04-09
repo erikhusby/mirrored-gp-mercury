@@ -119,21 +119,19 @@ public class LedgerEntryFixupTest extends Arquillian {
     /**
      * Add all appropriate price item types to any ledger entry items that were billed to the quote server.
      */
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void populatePriceItemTypes() {
         int counter = 1;
         final int BATCH_SIZE = 2000;
         for (LedgerEntry ledger : ledgerEntryFixupDao.findAllBilledEntries()) {
-            if (ledger.getQuoteId() != null) {
-                if (ledger.getPriceItem().equals(
-                        ledger.getProductOrderSample().getProductOrder().getProduct().getPrimaryPriceItem())) {
-                    // This is a primary price item.
-                    ledger.setPriceItemType(LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
-                } else if (isEntryAReplacementItem(ledger)) {
-                    ledger.setPriceItemType(LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM);
-                } else {
-                    ledger.setPriceItemType(LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM);
-                }
+            if (ledger.getPriceItem().equals(
+                    ledger.getProductOrderSample().getProductOrder().getProduct().getPrimaryPriceItem())) {
+                // This is a primary price item.
+                ledger.setPriceItemType(LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
+            } else if (isEntryAReplacementItem(ledger)) {
+                ledger.setPriceItemType(LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM);
+            } else {
+                ledger.setPriceItemType(LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM);
             }
 
             if (counter % BATCH_SIZE == 0) {
