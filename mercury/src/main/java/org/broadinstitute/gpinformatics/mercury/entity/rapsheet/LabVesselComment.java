@@ -18,7 +18,7 @@ import org.hibernate.envers.Audited;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 
-import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
@@ -44,9 +44,8 @@ public class LabVesselComment<T extends RapSheetEntry> {
     private LabVessel labVessel;
 
     @NotNull
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, targetEntity = RapSheetEntry.class,
-            mappedBy = "labVesselComment")
-    private List<T> rapSheetEntries;
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<ReworkEntry> reworkEntries;
 
     @NotNull
     @Temporal(TemporalType.DATE)
@@ -61,9 +60,6 @@ public class LabVesselComment<T extends RapSheetEntry> {
         this.labVessel = labVessel;
     }
 
-    public void addRapSheetEntry(T entry){
-        getRapSheetEntries().add(entry);
-    }
     @PrePersist
     private void prePersist() {
         logDate = new Date();
@@ -101,11 +97,24 @@ public class LabVesselComment<T extends RapSheetEntry> {
         this.labVessel = labVessel;
     }
 
-    public List<T> getRapSheetEntries() {
-        return rapSheetEntries;
+    public List<ReworkEntry> getReworkEntries() {
+        return reworkEntries;
     }
 
-    public void setRapSheetEntries(List<T> rapSheetEntries) {
-        this.rapSheetEntries = rapSheetEntries;
+    public void setReworkEntries(List<ReworkEntry> reworkEntries) {
+        this.reworkEntries = reworkEntries;
     }
+
+    /**
+     * This class is here primarily so RapSheet can return the most recent RapSheetEntry/ReworkEntry.
+     * Normally we implement comparators as static methods, but Hibernates @Sort expects a class.
+     */
+    public static final class byLogDate implements Comparator<LabVesselComment> {
+        @Override
+        public int compare(LabVesselComment first, LabVesselComment second) {
+            int result;
+            result = first.getLogDate().compareTo(second.getLogDate());
+            return result;
+        }
+    };
 }

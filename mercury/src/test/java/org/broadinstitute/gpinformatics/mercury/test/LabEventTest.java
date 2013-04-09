@@ -33,7 +33,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.RapSheetEjb;
+import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexingSchemeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
@@ -50,7 +50,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.RapSheetEntry;
+import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkLevel;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.DesignedReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
@@ -250,8 +250,11 @@ public class LabEventTest {
 
 
         BucketDao mockBucketDao = EasyMock.createNiceMock(BucketDao.class);
-        BucketBean bucketBeanEJB = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB);
-        EasyMock.replay(mockBucketDao, labBatchDAO, tubeDao, mockJira);
+        ReworkEjb reworkEjb = EasyMock.createNiceMock(ReworkEjb.class);
+
+        BucketBean bucketBeanEJB = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB,
+                reworkEjb);
+        EasyMock.replay(mockBucketDao, labBatchDAO, tubeDao, mockJira, reworkEjb);
 
         LabEventHandler labEventHandler =
                 new LabEventHandler(new WorkflowLoader(), AthenaClientProducer.stubInstance(), bucketBeanEJB,
@@ -356,7 +359,6 @@ public class LabEventTest {
         LabEvent catchEvent =
                 transferTraverserCriteria.getVisitedLabEvents().toArray(new LabEvent[lastEventIndex])[lastEventIndex
                                                                                                       - 1];
-        RapSheetEjb rapSheetEjb = new RapSheetEjb();
         BucketEntryDao bucketEntryDao = EasyMock.createNiceMock(BucketEntryDao.class);
 
         EasyMock.expect(bucketEntryDao.findByVesselAndPO(twoDBarcodedTubeForRework.getValue(),twoDBarcodedTubeForRework.getValue().getLabel()))
@@ -364,14 +366,14 @@ public class LabEventTest {
                         twoDBarcodedTubeForRework.getValue().getLabel()));
         final BucketEntryDao bucketEntryMock = EasyMock.createNiceMock(BucketEntryDao.class);
         EasyMock.replay(bucketEntryMock);
-        rapSheetEjb.setBucketEntryDao(bucketEntryMock);
-        rapSheetEjb.setMercurySampleDao(EasyMock.createNiceMock(MercurySampleDao.class));
+        reworkEjb.setBucketEntryDao(bucketEntryMock);
+        reworkEjb.setMercurySampleDao(EasyMock.createNiceMock(MercurySampleDao.class));
 
 
 
         Collection<MercurySample> vesselRapSheet =
-                rapSheetEjb.getVesselRapSheet(twoDBarcodedTubeForRework.getValue(),
-                        ReworkReason.MACHINE_ERROR, catchEvent.getLabEventType(), "this is a comment");
+                reworkEjb.getVesselRapSheet(twoDBarcodedTubeForRework.getValue(),
+                        ReworkReason.MACHINE_ERROR, ReworkLevel.ONE_SAMPLE_RELEASE_REST_BATCH, catchEvent.getLabEventType(), "this is a comment");
         List<MercurySample> vesselRapSheetDaoFree =
                 new ArrayList<MercurySample>(vesselRapSheet);
 //        EasyMock.verify(rapSheetEjb);
@@ -380,7 +382,7 @@ public class LabEventTest {
                 vesselRapSheetDaoFree.iterator().next();
 
         final ReworkEntry rapSheetEntry =
-                (ReworkEntry) startingSample.getRapSheet().getRapSheetEntries().iterator().next();
+                (ReworkEntry) startingSample.getRapSheet().getReworkEntries().iterator().next();
         final LabVesselComment reworkComment = rapSheetEntry.getLabVesselComment();
         Assert.assertNotNull(reworkComment.getLabEvent(),"Lab event is required.");
         Assert.assertNotNull(reworkComment.getLabVessel(),"Lab Vessel is required.");
@@ -465,7 +467,10 @@ public class LabEventTest {
                 .andReturn(new MockBucket(new WorkflowStepDef("Shearing Bucket"), jiraTicketKey));
         EasyMock.expect(mockBucketDao.findByName(EasyMock.eq("Pico/Plating Bucket")))
                 .andReturn(new MockBucket(new WorkflowStepDef("Pico/Plating Bucket"), jiraTicketKey));
-        BucketBean bucketBeanEJB = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB);
+        ReworkEjb reworkEjb = EasyMock.createNiceMock(ReworkEjb.class);
+
+        BucketBean bucketBeanEJB = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB,
+                reworkEjb);
         EasyMock.replay(mockBucketDao, tubeDao, mockJira, labBatchDAO);
         LabEventHandler labEventHandler =
                 new LabEventHandler(new WorkflowLoader(), AthenaClientProducer.stubInstance(), bucketBeanEJB,
@@ -630,7 +635,9 @@ public class LabEventTest {
 
 
         BucketDao mockBucketDao = EasyMock.createNiceMock(BucketDao.class);
-        BucketBean bucketBeanEJB = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB);
+        ReworkEjb reworkEjb = EasyMock.createNiceMock(ReworkEjb.class);
+        BucketBean bucketBeanEJB = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB,
+                reworkEjb);
         EasyMock.replay(mockBucketDao, tubeDao, mockJira, labBatchDAO);
 
         LabEventHandler labEventHandler = new LabEventHandler(new WorkflowLoader(), AthenaClientProducer.stubInstance(),
@@ -763,7 +770,9 @@ public class LabEventTest {
 
 
         BucketDao mockBucketDao = EasyMock.createNiceMock(BucketDao.class);
-        BucketBean bucketBeanEJB = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB);
+        ReworkEjb reworkEjb = EasyMock.createNiceMock(ReworkEjb.class);
+        BucketBean bucketBeanEJB = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB,
+                reworkEjb);
         EasyMock.replay(mockBucketDao, tubeDao, mockJira, labBatchDAO);
 
         LabEventHandler labEventHandler = new LabEventHandler(new WorkflowLoader(), AthenaClientProducer.stubInstance(),

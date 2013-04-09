@@ -19,7 +19,7 @@ import javax.validation.constraints.NotNull;
 @Entity
 @Audited
 @Table(schema = "mercury")
-public class RapSheetEntry {
+public abstract class RapSheetEntry {
     @SuppressWarnings("UnusedDeclaration")
     @Id
     @SequenceGenerator(name = "SEQ_RAP_SHEET_ENTRY", schema = "mercury", sequenceName = "SEQ_RAP_SHEET_ENTRY")
@@ -29,7 +29,6 @@ public class RapSheetEntry {
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY,cascade = CascadeType.ALL)
     private RapSheet rapSheet;
-
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)

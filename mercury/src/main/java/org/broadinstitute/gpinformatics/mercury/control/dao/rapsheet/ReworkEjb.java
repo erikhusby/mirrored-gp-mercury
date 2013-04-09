@@ -30,10 +30,7 @@ import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Encapsulates the business logic related to {@link RapSheet}s. and Rework This includes the creation
@@ -41,21 +38,29 @@ import java.util.Set;
  */
 @Stateful
 @RequestScoped
-public class RapSheetEjb {
-    private final static Log logger = LogFactory.getLog(RapSheetEjb.class);
-
+public class ReworkEjb {
+    private final static Log logger = LogFactory.getLog(ReworkEjb.class);
     @Inject
     BucketEntryDao bucketEntryDao;
-
     @Inject
     MercurySampleDao mercurySampleDao;
 
-    public void setBucketEntryDao(BucketEntryDao bucketEntryDao) {
-        this.bucketEntryDao = bucketEntryDao;
-    }
-
-    public void setMercurySampleDao(MercurySampleDao mercurySampleDao) {
-        this.mercurySampleDao = mercurySampleDao;
+    /**
+     * Create rework for all samples in a LabVessel;
+     *
+     * @param labVessel any type of LabVessel, with samples in it.
+     * @param comment   text describing why you are doing this.
+     *
+     * @throws InformaticsServiceException
+     */
+    public Collection<MercurySample> addRapSheet(@NotNull LabVessel labVessel, @NotNull String comment)
+            throws InformaticsServiceException {
+        List<MercurySample> reworks = new ArrayList<MercurySample>(getVesselRapSheet(labVessel, null,
+                ReworkLevel.ONE_SAMPLE_RELEASE_REST_BATCH, null, comment));
+        if (!reworks.isEmpty()) {
+            mercurySampleDao.persistAll(reworks);
+        }
+        return reworks;
     }
 
     /**
@@ -63,13 +68,14 @@ public class RapSheetEjb {
      *
      * @param labVessel      the labVessel where the sample is located.
      * @param reworkReason   Why is the rework being done.
+     * @param reworkLevel    What level to rework to
      * @param reworkFromStep Where should the rework be reworked from.
      * @param comment        text describing why you are doing this.
      *
      * @throws InformaticsServiceException
      */
     public Collection<MercurySample> getVesselRapSheet(@NotNull LabVessel labVessel, ReworkReason reworkReason,
-                                                       @NotNull LabEventType reworkFromStep,
+                                                       ReworkLevel reworkLevel, @NotNull LabEventType reworkFromStep,
                                                        @NotNull String comment)
             throws InformaticsServiceException {
         Set<MercurySample> reworks = new HashSet<MercurySample>();
@@ -92,17 +98,10 @@ public class RapSheetEjb {
                         logger.error(error);
                         throw new InformaticsServiceException(error);
                     }
-                    /*
-                     * IF this is a rework, get a ReworkEntry, otherwise get a RapSheetEntry
-                     */
-                    if (reworkReason == null && reworkFromStep == null) {
-                        mercurySample = getRapSheetEntryDaoFree(mercurySample, labVessel, vesselPosition, comment);
-                    } else {
-                        mercurySample =
-                                getReworkEntryDaoFree(mercurySample, labVessel, vesselPosition, reworkReason,
-                                        reworkFromStep,
-                                        comment);
-                    }
+
+                    mercurySample = getReworkEntryDaoFree(mercurySample, labVessel, vesselPosition,
+                            reworkReason, reworkLevel, reworkFromStep, comment);
+
                     reworks.add(mercurySample);
                 }
             }
@@ -110,22 +109,56 @@ public class RapSheetEjb {
         return reworks;
     }
 
+    /**
+     * Create a @link ReworkEntry for one Sample
+     *
+     * @param mercurySample  the sample to be reworked.
+     * @param labVessel      the labVessel where the sample is located.
+     * @param vesselPosition Where on the vessel the sample is located.
+     * @param reworkReason   Why is the rework being done.
+     * @param reworkLevel    What level to rework to
+     * @param reworkFromStep Where should the rework be reworked from.
+     * @param comment        text describing why you are doing this.
+     *
+     * @return a sample with ReworkEntry added
+     */
+    @DaoFree
+    public MercurySample getReworkEntryDaoFree(@NotNull MercurySample mercurySample, @NotNull LabVessel labVessel,
+                                               @NotNull VesselPosition vesselPosition,
+                                               @NotNull ReworkReason reworkReason,
+                                               ReworkLevel reworkLevel, @NotNull LabEventType reworkFromStep,
+                                               String comment) {
+        LabVesselPosition labVesselPosition = new LabVesselPosition(vesselPosition, mercurySample);
+        LabVesselComment<ReworkEntry> reworkComment =
+                new LabVesselComment<ReworkEntry>(labVessel.getLatestEvent(), labVessel, comment);
+        final ReworkEntry reworkEntry = new ReworkEntry(labVesselPosition, reworkComment, reworkReason,
+                reworkLevel, reworkFromStep);
+        mercurySample.getRapSheet().addRework(reworkEntry);
+        reworkEntry.getRapSheet().setSample(mercurySample);
+        return mercurySample;
+    }
 
     /**
-     * Create rework for all samples in a LabVessel;
+     * Create a @link RapSheet for one Sample
      *
-     * @param labVessel any type of LabVessel, with samples in it.
-     * @param comment   text describing why you are doing this.
+     * @param mercurySample  the sample to be reworked.
+     * @param labVessel      the labVessel where the sample is located.
+     * @param vesselPosition Where on the vessel the sample is located.
+     * @param comment        text describing why you are doing this.
      *
-     * @throws InformaticsServiceException
+     * @return a sample with RapSheetEntry added
      */
-    public Collection<MercurySample> addRapSheet(@NotNull LabVessel labVessel, @NotNull String comment)
-            throws InformaticsServiceException {
-        Collection<MercurySample> reworks = getVesselRapSheet(labVessel, null, null, comment);
-        if (!reworks.isEmpty()) {
-            mercurySampleDao.persistAll((List<MercurySample>) reworks);
-        }
-        return reworks;
+    @DaoFree
+    public MercurySample getReworkEntryDaoFree(@NotNull MercurySample mercurySample, @NotNull LabVessel labVessel,
+                                               @NotNull VesselPosition vesselPosition,
+                                               String comment) {
+        LabVesselPosition labVesselPosition = new LabVesselPosition(vesselPosition, mercurySample);
+        LabVesselComment<ReworkEntry> rapSheetComment =
+                new LabVesselComment<ReworkEntry>(labVessel.getLatestEvent(), labVessel, comment);
+        final ReworkEntry rapSheetEntry = new ReworkEntry(labVesselPosition, rapSheetComment);
+        mercurySample.getRapSheet().addRework(rapSheetEntry);
+        rapSheetEntry.getRapSheet().setSample(mercurySample);
+        return mercurySample;
     }
 
     /**
@@ -141,59 +174,35 @@ public class RapSheetEjb {
     public Collection<MercurySample> addRework(@NotNull LabVessel labVessel, @NotNull ReworkReason reworkReason,
                                                @NotNull LabEventType reworkFromStep, @NotNull String comment)
             throws InformaticsServiceException {
-        Collection<MercurySample> reworks = getVesselRapSheet(labVessel, reworkReason, reworkFromStep, comment);
+        List<MercurySample> reworks =
+                new ArrayList<MercurySample>(getVesselRapSheet(labVessel, reworkReason,
+                        ReworkLevel.ONE_SAMPLE_RELEASE_REST_BATCH, reworkFromStep, comment));
         if (!reworks.isEmpty()) {
-            mercurySampleDao.persistAll((List<MercurySample>) reworks);
+            mercurySampleDao.persistAll(reworks);
         }
         return reworks;
     }
 
-
-    /**
-     * Create a @link RapSheet for one Sample
-     *
-     * @param mercurySample  the sample to be reworked.
-     * @param labVessel      the labVessel where the sample is located.
-     * @param vesselPosition Where on the vessel the sample is located.
-     * @param comment        text describing why you are doing this.
-     *
-     * @return a sample with RapSheetEntry added
-     */
-    @DaoFree
-    public MercurySample getRapSheetEntryDaoFree(@NotNull MercurySample mercurySample, @NotNull LabVessel labVessel,
-                                                  @NotNull VesselPosition vesselPosition,
-                                                  String comment) {
-        LabVesselPosition labVesselPosition = new LabVesselPosition(vesselPosition, mercurySample);
-        LabVesselComment<RapSheetEntry> rapSheetComment =
-                new LabVesselComment<RapSheetEntry>(labVessel.getLatestEvent(), labVessel, comment);
-        final RapSheetEntry rapSheetEntry = new RapSheetEntry(labVesselPosition, rapSheetComment);
-        mercurySample.getRapSheet().addEntry(rapSheetEntry);
-        return mercurySample;
+    public void setBucketEntryDao(BucketEntryDao bucketEntryDao) {
+        this.bucketEntryDao = bucketEntryDao;
     }
 
-    /**
-     * Create a @link ReworkEntry for one Sample
-     *
-     * @param mercurySample  the sample to be reworked.
-     * @param labVessel      the labVessel where the sample is located.
-     * @param vesselPosition Where on the vessel the sample is located.
-     * @param reworkReason   Why is the rework being done.
-     * @param reworkFromStep Where should the rework be reworked from.
-     * @param comment        text describing why you are doing this.
-     *
-     * @return a sample with ReworkEntry added
-     */
-    @DaoFree
-    public MercurySample getReworkEntryDaoFree(@NotNull MercurySample mercurySample, @NotNull LabVessel labVessel,
-                                                @NotNull VesselPosition vesselPosition,
-                                                @NotNull ReworkReason reworkReason,
-                                                @NotNull LabEventType reworkFromStep, String comment) {
-        LabVesselPosition labVesselPosition = new LabVesselPosition(vesselPosition, mercurySample);
-        LabVesselComment<ReworkEntry> reworkComment =
-                new LabVesselComment<ReworkEntry>(labVessel.getLatestEvent(), labVessel, comment);
-        final ReworkEntry reworkEntry = new ReworkEntry(labVesselPosition, reworkComment, reworkReason,
-                ReworkLevel.ONE_SAMPLE_RELEASE_REST_BATCH, reworkFromStep);
-        mercurySample.getRapSheet().addEntry(reworkEntry);
-        return mercurySample;
+    public void setMercurySampleDao(MercurySampleDao mercurySampleDao) {
+        this.mercurySampleDao = mercurySampleDao;
     }
+
+
+    public void startRework(@NotNull LabVessel labVessel) throws InformaticsServiceException {
+        for (MercurySample mercurySample : labVessel.getMercurySamples()) {
+            mercurySample.getRapSheet().startRework();
+        }
+    }
+
+    public void stopRework(@NotNull LabVessel labVessel) throws InformaticsServiceException {
+        for (MercurySample mercurySample : labVessel.getMercurySamples()) {
+            mercurySample.getRapSheet().stopRework();
+        }
+    }
+
+
 }

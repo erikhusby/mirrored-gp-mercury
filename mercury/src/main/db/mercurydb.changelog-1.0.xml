@@ -1514,4 +1514,25 @@ END;
                                  referencedColumnNames="rev_info_id" />
     </changeSet>
 
+    <changeSet id="GPLIM-1134-07" author="dryan">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists schemaName="mercury" tableName="rap_sheet_entry" columnName="ACTIVE_REWORK"/>
+            </not>
+        </preConditions>
+        <addColumn schemaName="mercury" tableName="rap_sheet_entry">
+            <column name="ACTIVE_REWORK" type="number(1,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-1134-08" author="dryan">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists schemaName="mercury" tableName="rap_sheet_entry_aud" columnName="ACTIVE_REWORK"/>
+            </not>
+        </preConditions>
+        <addColumn schemaName="mercury" tableName="rap_sheet_entry_aud">
+            <column name="ACTIVE_REWORK" type="number(1,0)"/>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

@@ -18,6 +18,7 @@ import org.hibernate.envers.Audited;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.Transient;
 import javax.validation.constraints.NotNull;
 
 @Entity
@@ -34,6 +35,8 @@ public class ReworkEntry extends RapSheetEntry {
     @NotNull
     @Enumerated(EnumType.STRING)
     private LabEventType reworkStep;
+
+    private boolean activeRework=false;
 
     public ReworkEntry(ReworkReason reworkReason, ReworkLevel reworkLevel, LabEventType reworkStep,
                        LabVesselPosition labVesselPosition) {
@@ -53,6 +56,10 @@ public class ReworkEntry extends RapSheetEntry {
         this.reworkReason = reason;
         this.reworkLevel = reworkLevel;
         this.reworkStep = reworkStep;
+    }
+
+    public ReworkEntry(LabVesselPosition labVesselPosition, LabVesselComment<ReworkEntry> rapSheetComment) {
+        super(labVesselPosition, rapSheetComment);
     }
 
     public ReworkReason getReworkReason() {
@@ -77,5 +84,13 @@ public class ReworkEntry extends RapSheetEntry {
 
     public void setReworkStep(LabEventType reworkStep) {
         this.reworkStep = reworkStep;
+    }
+
+    public boolean isActiveRework() {
+        return activeRework;
+    }
+
+    public void setActiveRework(boolean activeRework) {
+        this.activeRework = activeRework;
     }
 }

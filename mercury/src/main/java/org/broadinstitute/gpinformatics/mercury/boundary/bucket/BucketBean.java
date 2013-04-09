@@ -5,13 +5,14 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
-import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
+import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -33,6 +34,8 @@ public class BucketBean {
 
     LabBatchEjb batchEjb;
 
+    ReworkEjb reworkEjb;
+
     private final static Log logger = LogFactory.getLog(BucketBean.class);
 
     public BucketBean() {
@@ -40,10 +43,12 @@ public class BucketBean {
 
 
     @Inject
-    public BucketBean(LabEventFactory labEventFactoryIn, JiraService testjiraService, LabBatchEjb batchEjb) {
+    public BucketBean(LabEventFactory labEventFactoryIn, JiraService testjiraService, LabBatchEjb batchEjb,
+                      ReworkEjb reworkEjb) {
         this.labEventFactory = labEventFactoryIn;
         this.jiraService = testjiraService;
         this.batchEjb = batchEjb;
+        this.reworkEjb = reworkEjb;
     }
 
     /**
@@ -439,7 +444,6 @@ public class BucketBean {
             logger.info("Adding entry " + currEntry.getBucketEntryId() + " for vessel " + currEntry.getLabVessel()
                     .getLabCentricName() +
                         " and PDO " + currEntry.getPoBusinessKey() + " to be popped from bucket.");
-
             currEntry.getBucket().removeEntry(currEntry);
             removeRework(currEntry.getLabVessel());
             jiraRemovalUpdate(currEntry, "Extracted for Batch");
@@ -454,10 +458,13 @@ public class BucketBean {
      */
     public void removeRework(LabVessel labVessel){
         for (SampleInstance sampleInstance : labVessel.getAllSamples()) {
-            sampleInstance.getStartingSample().getRapSheet();
+            for (ReworkEntry reworkEntry : sampleInstance.getStartingSample().getRapSheet().getReworkEntries()){
+                reworkEntry.setActiveRework(false);
+            }
         }
-
     }
+
+
     /**
      * For whatever reason, sometimes the lab can't
      * do something, or PDMs decide that they shouldn't

@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTr
 import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.UserRemarks;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
+import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
@@ -438,14 +439,16 @@ public abstract class LabVessel implements Serializable {
     }
 
     /**
-     * Is this vessel rework? IF it is in a batch then yes it is.
+     * Is this vessel rework? If it has samples with active rework then it is.
      *
      * @return boolean; true if it is rework, or false if it is not
      */
-    public boolean isRework(){
-        for (LabBatch labBatch : this.getNearestLabBatches()) {
-            if (labBatch.getActive()) {
-                return labBatch.getReworks().contains(this);
+    public boolean hasRework() {
+        for (MercurySample mercurySample : this.getMercurySamples()) {
+            for (ReworkEntry reworkEntry : mercurySample.getRapSheet().getReworkEntries()) {
+                if (reworkEntry.isActiveRework()) {
+                    return true;
+                }
             }
         }
         return false;

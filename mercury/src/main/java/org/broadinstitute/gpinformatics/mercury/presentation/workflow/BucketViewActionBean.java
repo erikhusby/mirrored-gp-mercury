@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
@@ -42,6 +43,8 @@ public class BucketViewActionBean extends CoreActionBean {
     private AthenaClientService athenaClientService;
     @Inject
     private LabBatchEjb labBatchEjb;
+    @Inject
+    private ReworkEjb reworkEjb;
     @Inject
     private LabVesselDao labVesselDao;
     @Inject
@@ -228,8 +231,6 @@ public class BucketViewActionBean extends CoreActionBean {
         Set<LabVessel> reworks = new HashSet<LabVessel>(labVesselDao.findByListIdentifiers(selectedReworks));
 
         batchObject = new LabBatch(summary.trim(), vesselSet,LabBatch.LabBatchType.WORKFLOW, description, dueDate, important);
-        // fixme here is where we just dump the reworks into the ticket
-        // this should be persistent
         batchObject.addReworks(reworks);
 
         labBatchEjb.createLabBatchAndRemoveFromBucket(batchObject, userBean.getBspUser().getUsername(),selectedBucket, LabEvent.UI_EVENT_LOCATION);
