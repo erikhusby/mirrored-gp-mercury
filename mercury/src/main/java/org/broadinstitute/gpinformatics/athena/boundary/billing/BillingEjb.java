@@ -143,33 +143,30 @@ public class BillingEjb {
 
             try {
                 String workId = quoteService.registerNewWork(
-                        quote, quotePriceItem, itemIsReplacing, item.getWorkCompleteDate(), item.getQuantity(), pageUrl,
-                        "billingSession",
-                        sessionKey);
+                        quote, quotePriceItem, itemIsReplacing, item.getWorkCompleteDate(), item.getQuantity(),
+                        pageUrl, "billingSession", sessionKey);
 
                 result.setWorkId(workId);
 
-                item.setBillingMessages(BillingSession.SUCCESS);
                 // Now that we have successfully billed, update the Ledger Entries associated with this QuoteImportItem
-                // with the quote for the QuoteImportItem.
-                item.updateQuoteIntoLedgerEntries();
+                // with the quote for the QuoteImportItem, add the priceItemType, and the success message.
+                item.updateQuoteIntoLedgerEntries(itemIsReplacing, BillingSession.SUCCESS);
 
             } catch (Exception ex) {
-                // Any exceptions in sending to the quote server will just be reported and will continue on to the next one.
-
+                // Any exceptions in sending to the quote server will just be reported and will continue
+                // on to the next one.
                 item.setBillingMessages(ex.getMessage());
                 result.setErrorMessage(ex.getMessage());
                 errorsInBilling = true;
             }
         }
 
-        // If there were no errors in billing, then end the session, which will add the billed date and remove all sessions
-        // from the ledger.
+        // If there were no errors in billing, then end the session, which will add the billed date and remove
+        // all sessions from the ledger.
         if (!errorsInBilling) {
             endSession(billingSession);
         }
 
         return results;
     }
-
 }

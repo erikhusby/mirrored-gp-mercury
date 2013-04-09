@@ -95,11 +95,28 @@ public class QuoteImportItem {
     /**
      * This method should be invoked upon successful billing to update ledger entries with the quote to which they were
      * billed.
+     *
+     * @param itemIsReplacing The item that is replacing the primary price item.
+     * @param billingMessage The message to be assigned to all entries.
      */
-    public void updateQuoteIntoLedgerEntries() {
+    public void updateQuoteIntoLedgerEntries(
+        org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem itemIsReplacing,
+        String billingMessage) {
+
+        LedgerEntry.PriceItemType priceItemType = getPriceItemType(itemIsReplacing);
+
         for (LedgerEntry ledgerEntry : ledgerItems) {
             ledgerEntry.setQuoteId(quoteId);
+            ledgerEntry.setPriceItemType(priceItemType);
+            ledgerEntry.setBillingMessage(billingMessage);
         }
+    }
+
+    /**
+     * @return There should always be ledger entries and if not, this failing will be fine.
+     */
+    public Product getProduct() {
+        return ledgerItems.get(0).getProductOrderSample().getProductOrder().getProduct();
     }
 
     /**
@@ -110,8 +127,7 @@ public class QuoteImportItem {
      * @return null if this is not a replacement item or the primary price item if it is one.
      */
     public PriceItem calculateIsReplacing(PriceListCache priceListCache) {
-        // There should always be ledger entries and if not, this failing will be fine.
-        Product product = ledgerItems.get(0).getProductOrderSample().getProductOrder().getProduct();
+        Product product = getProduct();
 
         // If this is optional, then return the primary as the 'is replacing.' This is comparing the quote price item
         // to the values on the product's price item, so do the item by item compare
@@ -122,5 +138,19 @@ public class QuoteImportItem {
         }
 
         return null;
+    }
+
+    public LedgerEntry.PriceItemType getPriceItemType(org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem itemIsReplacing) {
+        LedgerEntry.PriceItemType type;
+        if (itemIsReplacing != null) {
+            type = LedgerEntry.PriceItemType.ReplacementPriceItem;
+        } else if (getProduct().getPrimaryPriceItem().getName().equals(getPriceItem().getName())) {
+            type = LedgerEntry.PriceItemType.PrimaryPriceItem;
+        } else {
+            // If it is not the primary or replacement right now, it has to be considered add on
+            type = LedgerEntry.PriceItemType.AddOnPriceItem;
+        }
+
+        return type;
     }
 }

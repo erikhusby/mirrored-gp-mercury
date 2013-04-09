@@ -15,6 +15,8 @@ import java.util.Set;
 @Impl
 public class PMBQuoteServiceImpl extends AbstractJerseyClientService implements PMBQuoteService {
 
+    private static final long serialVersionUID = 1824099036573894112L;
+
     enum Endpoint {
 
         SINGLE_QUOTE("/portal/Quote/ws/portals/private/getquotes?with_funding=true&quote_alpha_ids="),
@@ -33,7 +35,6 @@ public class PMBQuoteServiceImpl extends AbstractJerseyClientService implements 
         public String getSuffixUrl() {
             return suffixUrl;
         }
-
     }
 
     @Inject

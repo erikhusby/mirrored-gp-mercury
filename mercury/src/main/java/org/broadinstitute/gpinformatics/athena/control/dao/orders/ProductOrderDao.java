@@ -283,11 +283,7 @@ public class ProductOrderDao extends GenericDao {
                            "           INNER JOIN athena.BILLING_LEDGER ledger ON ledger.PRODUCT_ORDER_SAMPLE_ID = pos.PRODUCT_ORDER_SAMPLE_ID" +
                            "      WHERE pos.product_order = ord.product_order_id " +
                            "      AND pos.DELIVERY_STATUS != 'ABANDONED' " +
-                           "      AND (ledger.PRICE_ITEM_ID = prod.PRIMARY_PRICE_ITEM " +
-                           "           OR ledger.price_item_id IN ( " +
-                           "               SELECT OPTIONAL_PRICE_ITEMS FROM athena.PRODUCT_OPT_PRICE_ITEMS opt WHERE opt.PRODUCT = prod.PRODUCT_ID " +
-                           "           ) " +
-                           "      ) " +
+                           "      AND (ledger.price_item_type = 'PrimaryPriceItem' OR ledger.price_item_type = 'ReplacementPriceItem') " +
                            "    ) AS completed, " +
                            "    (SELECT count(pos.PRODUCT_ORDER_SAMPLE_ID) FROM athena.product_order_sample pos" +
                            "        WHERE pos.product_order = ord.product_order_id AND pos.DELIVERY_STATUS = 'ABANDONED' " +
