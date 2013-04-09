@@ -44,6 +44,8 @@ public class ReworkEjb {
     BucketEntryDao bucketEntryDao;
     @Inject
     MercurySampleDao mercurySampleDao;
+    @Inject
+    ReworkEntryDao reworkEntryDao;
 
     /**
      * Create rework for all samples in a LabVessel;
@@ -205,4 +207,7 @@ public class ReworkEjb {
     }
 
 
+    public Collection<ReworkEntry> getNonActiveReworkEntries() {
+        return reworkEntryDao.getNonActiveReworkEntries();
+    }
 }

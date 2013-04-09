@@ -5,6 +5,7 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.envers.Audited;
 
@@ -122,6 +123,10 @@ public class LabBatch {
      * @param reworks
      */
     public void addReworks(Collection<LabVessel> reworks) {
+        for (LabVessel vessel : reworks) {
+            vessel.startRework();
+        }
+
         this.reworks.addAll(reworks);
     }
 

@@ -12,8 +12,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.rapsheet;
 
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.hibernate.annotations.Sort;
-import org.hibernate.annotations.SortType;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
@@ -25,6 +23,7 @@ import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -46,7 +45,6 @@ public class RapSheet {
 
     @NotNull
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @Sort (type = SortType.COMPARATOR, comparator = LabVesselComment.byLogDate.class)
     private List<ReworkEntry> reworkEntries = new ArrayList<ReworkEntry>();
 
     public RapSheet() {
@@ -59,6 +57,11 @@ public class RapSheet {
         }
     }
 
+    @Transient
+    /**
+     * Sort the reworkEntries
+     */
+    private boolean reworkEntriesSorted =false;
 
     public void setSample(MercurySample sample) {
         getSamples().add(0, sample);
@@ -83,10 +86,15 @@ public class RapSheet {
     }
 
     public List<ReworkEntry> getReworkEntries() {
+        if (!reworkEntriesSorted){
+            Collections.sort(reworkEntries);
+            reworkEntriesSorted =true;
+        }
         return reworkEntries;
     }
 
     public void setReworkEntries(List<ReworkEntry> reworkEntries) {
+        Collections.sort(reworkEntries);
         this.reworkEntries = reworkEntries;
     }
 
@@ -114,9 +122,12 @@ public class RapSheet {
 
     /**
      * Get all the active rework and make it inactive.
+     * If there is no ReworkEntries, it will do nothing.
      */
     public void stopRework() {
-        getActiveRework().setActiveRework(false);
+        if (getActiveRework() != null) {
+            getActiveRework().setActiveRework(false);
+        }
     }
 
 

@@ -20,10 +20,12 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
+
 
 /**
  * Test that samples can go partway through a workflow, be marked for rework, go to a previous
@@ -75,28 +77,30 @@ public class ReworkTest extends ContainerTest {
         LabEvent pondEnrichmentEvent = getRandomFromCollection(eventList.toArray(new LabEvent[eventList.size()]));
 
         final LabVessel testTube = pondEnrichmentEvent.getInPlaceLabVessel();
-
-        Collection<MercurySample> reworks = reworkEjb
-                .addRework(testTube, ReworkReason.MACHINE_ERROR, pondEnrichmentEvent.getLabEventType(), "test");
-
+        Collection<MercurySample> reworks = new ArrayList<MercurySample>();
         reworks.addAll(reworkEjb
-                .addRework(testTube, ReworkReason.MACHINE_ERROR, pondEnrichmentEvent.getLabEventType(), "test2"));
+                .addRework(testTube, ReworkReason.MACHINE_ERROR, pondEnrichmentEvent.getLabEventType(),
+                        "test"));
+
         Assert.assertFalse(reworks.isEmpty(), "No reworks done.");
+
         MercurySample startingSample = getRandomFromCollection(reworks.toArray(new MercurySample[reworks.size()]));
 
-        Assert.assertTrue(startingSample.getRapSheet().getReworkEntries().size() > 1,
+        final List<ReworkEntry> reworkEntries = startingSample.getRapSheet().getReworkEntries();
+        Assert.assertTrue(reworkEntries.size() > 1,
                 "Should be at least two entries.");
-        ReworkEntry firstEntry = startingSample.getRapSheet().getReworkEntries().remove(0);
-        for (ReworkEntry entry : startingSample.getRapSheet().getReworkEntries()) {
-            final Date date1 = firstEntry.getLabVesselComment().getLogDate();
-            final Date date2 = entry.getLabVesselComment().getLogDate();
-            Assert.assertTrue(date1.before(date2), String.format(
-                    "Rework entries not returned in the correct order. %s should be more recent than %s",
-                    date2, date1));
-            firstEntry = entry;
-        }
+        ReworkEntry firstEntry = reworkEntries.remove(0);
+        ReworkEntry lastEntry= reworkEntries.remove(reworkEntries.size()-1);
 
-        final ReworkEntry rapSheetEntry = startingSample.getRapSheet().getReworkEntries().get(0);
+        final Date newest = firstEntry.getLabVesselComment().getLogDate();
+        final Date oldest = lastEntry.getLabVesselComment()
+                .getLogDate();
+        Assert.assertTrue(oldest.before(newest) || oldest.equals(newest),
+                String.format("Rework entries not returned in the correct order. %s should be more recent than %s",
+                        oldest.getTime(), newest.getTime()));
+
+
+        final ReworkEntry rapSheetEntry = reworkEntries.get(0);
         Assert.assertNotNull(rapSheetEntry.getLabVesselComment().getLabEvent(), "Lab event is required.");
         Assert.assertNotNull(rapSheetEntry.getLabVesselComment().getLabVessel(), "Lab Vessel is required.");
         Assert.assertNotNull(rapSheetEntry.getReworkLevel(), "ReworkLevel cannot be null.");
@@ -105,6 +109,7 @@ public class ReworkTest extends ContainerTest {
         Assert.assertNotNull(rapSheetEntry.getRapSheet(), "rework.getRapSheet cannot be null.");
         Assert.assertNotNull(rapSheetEntry.getRapSheet().getSample(), "RapSheet.sample cannot be null.");
     }
+
 
     private <ENTITY_TYPE> ENTITY_TYPE getRandomFromCollection(ENTITY_TYPE[] sampleInstances) {
         Assert.assertTrue(sampleInstances.length > 0, "Collection was empty.");

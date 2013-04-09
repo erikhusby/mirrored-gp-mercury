@@ -176,7 +176,8 @@ public class BucketViewActionBean extends CoreActionBean {
                             athenaClientService.retrieveProductOrderDetails(bucketEntry.getPoBusinessKey()));
                 }
             }
-            reworkEntries = reworkEntryDao.findAll(ReworkEntry.class);
+            reworkEntries =
+                    reworkEjb.getNonActiveReworkEntries();
         }
 
         //TODO jac populate the rework entries
@@ -233,7 +234,8 @@ public class BucketViewActionBean extends CoreActionBean {
         batchObject = new LabBatch(summary.trim(), vesselSet,LabBatch.LabBatchType.WORKFLOW, description, dueDate, important);
         batchObject.addReworks(reworks);
 
-        labBatchEjb.createLabBatchAndRemoveFromBucket(batchObject, userBean.getBspUser().getUsername(),selectedBucket, LabEvent.UI_EVENT_LOCATION);
+        labBatchEjb.createLabBatchAndRemoveFromBucket(batchObject, userBean.getBspUser().getUsername(), selectedBucket,
+                LabEvent.UI_EVENT_LOCATION);
 
         addMessage(MessageFormat.format("Lab batch ''{0}'' has been created.",batchObject.getJiraTicket().getTicketName()));
 

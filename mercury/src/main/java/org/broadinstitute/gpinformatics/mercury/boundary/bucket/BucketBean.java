@@ -457,11 +457,7 @@ public class BucketBean {
      * @param labVessel vessel full of samples for rework.
      */
     public void removeRework(LabVessel labVessel){
-        for (SampleInstance sampleInstance : labVessel.getAllSamples()) {
-            for (ReworkEntry reworkEntry : sampleInstance.getStartingSample().getRapSheet().getReworkEntries()){
-                reworkEntry.setActiveRework(false);
-            }
-        }
+        labVessel.stopRework();
     }
 
 

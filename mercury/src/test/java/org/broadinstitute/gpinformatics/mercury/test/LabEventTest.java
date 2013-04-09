@@ -252,9 +252,8 @@ public class LabEventTest {
         BucketDao mockBucketDao = EasyMock.createNiceMock(BucketDao.class);
         ReworkEjb reworkEjb = EasyMock.createNiceMock(ReworkEjb.class);
 
-        BucketBean bucketBeanEJB = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB,
-                reworkEjb);
-        EasyMock.replay(mockBucketDao, labBatchDAO, tubeDao, mockJira, reworkEjb);
+        BucketBean bucketBeanEJB = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB, reworkEjb);
+        EasyMock.replay(mockBucketDao, labBatchDAO, tubeDao, mockJira);
 
         LabEventHandler labEventHandler =
                 new LabEventHandler(new WorkflowLoader(), AthenaClientProducer.stubInstance(), bucketBeanEJB,
@@ -366,30 +365,6 @@ public class LabEventTest {
                         twoDBarcodedTubeForRework.getValue().getLabel()));
         final BucketEntryDao bucketEntryMock = EasyMock.createNiceMock(BucketEntryDao.class);
         EasyMock.replay(bucketEntryMock);
-        reworkEjb.setBucketEntryDao(bucketEntryMock);
-        reworkEjb.setMercurySampleDao(EasyMock.createNiceMock(MercurySampleDao.class));
-
-
-
-        Collection<MercurySample> vesselRapSheet =
-                reworkEjb.getVesselRapSheet(twoDBarcodedTubeForRework.getValue(),
-                        ReworkReason.MACHINE_ERROR, ReworkLevel.ONE_SAMPLE_RELEASE_REST_BATCH, catchEvent.getLabEventType(), "this is a comment");
-        List<MercurySample> vesselRapSheetDaoFree =
-                new ArrayList<MercurySample>(vesselRapSheet);
-//        EasyMock.verify(rapSheetEjb);
-
-        MercurySample startingSample =
-                vesselRapSheetDaoFree.iterator().next();
-
-        final ReworkEntry rapSheetEntry =
-                (ReworkEntry) startingSample.getRapSheet().getReworkEntries().iterator().next();
-        final LabVesselComment reworkComment = rapSheetEntry.getLabVesselComment();
-        Assert.assertNotNull(reworkComment.getLabEvent(),"Lab event is required.");
-        Assert.assertNotNull(reworkComment.getLabVessel(),"Lab Vessel is required.");
-        Assert.assertNotNull(rapSheetEntry.getReworkLevel(), "ReworkLevel cannot be null.");
-        Assert.assertNotNull(rapSheetEntry.getReworkReason(), "ReworkReason cannot be null.");
-        Assert.assertNotNull(rapSheetEntry.getReworkStep(), "getReworkStep cannot be null.");
-        Assert.assertNotNull(rapSheetEntry.getRapSheet(), "rework.getRapSheet cannot be null.");
 
         if (false) {
             TransferVisualizerFrame transferVisualizerFrame = new TransferVisualizerFrame();

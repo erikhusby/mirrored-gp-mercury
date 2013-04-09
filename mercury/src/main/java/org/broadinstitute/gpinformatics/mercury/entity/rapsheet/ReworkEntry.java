@@ -12,6 +12,7 @@
 
 package org.broadinstitute.gpinformatics.mercury.entity.rapsheet;
 
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.hibernate.envers.Audited;
 
@@ -20,10 +21,11 @@ import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.Transient;
 import javax.validation.constraints.NotNull;
+import java.util.Comparator;
 
 @Entity
 @Audited
-public class ReworkEntry extends RapSheetEntry {
+public class ReworkEntry extends RapSheetEntry implements Comparable<ReworkEntry> {
     @Enumerated(EnumType.STRING)
     @NotNull
     private ReworkReason reworkReason;
@@ -92,5 +94,17 @@ public class ReworkEntry extends RapSheetEntry {
 
     public void setActiveRework(boolean activeRework) {
         this.activeRework = activeRework;
+    }
+
+    public static final Comparator<ReworkEntry> byDateAsc = new Comparator<ReworkEntry>() {
+        @Override
+        public int compare ( ReworkEntry first, ReworkEntry second ) {
+            return first.getLabVesselComment().getLogDate().compareTo(second.getLabVesselComment().getLogDate());
+        }
+    };
+
+    @Override
+    public int compareTo(ReworkEntry reworkEntry) {
+        return byDateAsc.compare(reworkEntry,this);
     }
 }

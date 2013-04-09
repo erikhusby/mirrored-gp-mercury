@@ -415,6 +415,23 @@ public abstract class LabVessel implements Serializable {
         return nearest.size();
     }
 
+    /**
+     * Set the current rework entry to active for this vessel;
+     */
+    public void startRework(){
+        for (MercurySample sample : getMercurySamples()) {
+            sample.getRapSheet().startRework();
+        }
+    }
+    /**
+     * deactivates the current rework entry.
+     */
+    public void stopRework(){
+        for (MercurySample sample : getMercurySamples()) {
+            sample.getRapSheet().stopRework();
+        }
+    }
+
     public enum ContainerType {
         STATIC_PLATE("Plate"),
         PLATE_WELL("Plate Well"),
