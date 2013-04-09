@@ -14,6 +14,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * This class handles setting up entites for the Sage process events.
+ */
 public class SageEntityBuilder {
     private static final int NUM_POSITIONS_IN_RACK = 96;
     private final BettaLimsMessageTestFactory bettaLimsMessageTestFactory;
@@ -27,6 +30,16 @@ public class SageEntityBuilder {
     private List<String> sageCleanupTubeBarcodes;
     private Map<String, TwoDBarcodedTube> mapBarcodeToSageUnloadTubes;
 
+    /**
+     * Constructs a new SageEntityBuilder with entities from the previous process.
+     *
+     * @param bettaLimsMessageTestFactory The betta lims message factory that will create betta lims messages for this process.
+     * @param labEventFactory             The lab event factory that will create the events for this process.
+     * @param labEventHandler             The lab event handler that will process the events.
+     * @param pondRegRack                 The pond registration rack coming out of the library construction process.
+     * @param pondRegRackBarcode          The pond registration rack barcode.
+     * @param pondRegTubeBarcodes         A list of pond registration tube barcodes.
+     */
     public SageEntityBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory, LabEventFactory labEventFactory,
                              LabEventHandler labEventHandler, String pondRegRackBarcode, TubeFormation pondRegRack, List<String> pondRegTubeBarcodes) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
@@ -37,7 +50,11 @@ public class SageEntityBuilder {
         this.pondRegTubeBarcodes = pondRegTubeBarcodes;
     }
 
-
+    /**
+     * Runs the entities passed in to the constructor through the Sage process.
+     *
+     * @return Returns the entity builder that contains the entities after this process has been invoked.
+     */
     public SageEntityBuilder invoke() {
         List<String> sageUnloadTubeBarcodes = new ArrayList<String>();
         for (int i = 1; i <= NUM_POSITIONS_IN_RACK; i++) {
