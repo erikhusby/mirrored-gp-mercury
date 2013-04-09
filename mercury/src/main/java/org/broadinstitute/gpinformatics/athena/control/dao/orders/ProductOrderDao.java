@@ -291,7 +291,7 @@ public class ProductOrderDao extends GenericDao {
                            "    (SELECT count(pos.PRODUCT_ORDER_SAMPLE_ID) FROM athena.product_order_sample pos" +
                            "        WHERE pos.product_order = ord.product_order_id" +
                            "    ) AS total" +
-                           " FROM athena.PRODUCT_ORDER ord LEFT JOIN athena.PRODUCT prod ON ord.PRODUCT = prod.PRODUCT_ID ";
+                           " FROM athena.PRODUCT_ORDER ord ";
 
         // Add the business key, if we are only doing one
         if (productOrderKeys != null) {
