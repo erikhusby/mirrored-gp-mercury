@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
@@ -50,10 +51,6 @@ public class BaseEventTest {
 
     private BucketBean bucketBeanEJB;
 
-    public LabBatchEjb getLabBatchEJB() {
-        return labBatchEJB;
-    }
-
     protected final LabEventFactory.LabEventRefDataFetcher labEventRefDataFetcher =
             new LabEventFactory.LabEventRefDataFetcher() {
 
@@ -78,11 +75,12 @@ public class BaseEventTest {
         labBatchEJB = new LabBatchEjb();
         labBatchEJB.setAthenaClientService(AthenaClientProducer.stubInstance());
         labBatchEJB.setJiraService(JiraServiceProducer.stubInstance());
+        labBatchEJB.setLabBatchDao(EasyMock.createMock(LabBatchDAO.class));
 
         JiraTicketDao mockJira = EasyMock.createNiceMock(JiraTicketDao.class);
         labBatchEJB.setJiraTicketDao(mockJira);
         labEventFactory.setLabEventRefDataFetcher(labEventRefDataFetcher);
-        bucketBeanEJB = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance(), getLabBatchEJB());
+        bucketBeanEJB = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB);
     }
 
     /**
@@ -139,7 +137,7 @@ public class BaseEventTest {
     public PicoPlatingEntityBuilder runPicoPlatingProcess(Map<String, TwoDBarcodedTube> mapBarcodeToTube, ProductOrder productOrder,
                                                           LabBatch workflowBatch) {
         String rackBarcode = "REXEX" + new Date().toString();
-        getLabBatchEJB().createLabBatch(workflowBatch, "scottmat");
+        labBatchEJB.createLabBatch(workflowBatch, "scottmat");
 
         Bucket workingBucket = createAndPopulateBucket(mapBarcodeToTube, productOrder, "Pico/Plating Bucket");
 
@@ -187,7 +185,7 @@ public class BaseEventTest {
      */
     public PreFlightEntityBuilder runPreflightProcess(Map<String, TwoDBarcodedTube> mapBarcodeToTube, ProductOrder productOrder,
                                                       LabBatch workflowBatch) {
-        getLabBatchEJB().createLabBatch(workflowBatch, "scotmatt");
+        labBatchEJB.createLabBatch(workflowBatch, "scotmatt");
 
         Bucket workingBucket = createAndPopulateBucket(mapBarcodeToTube, productOrder, "Preflight Bucket");
 
