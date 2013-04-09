@@ -55,12 +55,12 @@ public class LabEventHandler implements Serializable {
 
     @Inject
     public LabEventHandler(WorkflowLoader workflowLoader, AthenaClientService athenaClientService, BucketBean bucketBean,
-             BucketDao bucketDao, BSPUserList bspUserList) {
+            BucketDao bucketDao, BSPUserList bspUserList) {
         this.workflowLoader = workflowLoader;
         this.athenaClientService = athenaClientService;
         this.bucketBean = bucketBean;
-        this.bspUserList = bspUserList;
         this.bucketDao = bucketDao;
+        this.bspUserList = bspUserList;
     }
 
     public HandlerResponse processEvent(LabEvent labEvent) {
@@ -101,11 +101,13 @@ public class LabEventHandler implements Serializable {
                 If the bucket previously existed, retrieve it, otherwise create a new one based on the workflow step
                 definition
              */
-            if (bucketDao == null) {
+            Bucket workingBucket = bucketDao.findByName(workingBucketIdentifier.getName());
+            if (workingBucket == null) {
 
                 //TODO SGM, JMT:  this check should probably be part of the pre process Validation call from the decks
                 LOG.error("Bucket " + workingBucketIdentifier.getName() +
                         " is expected to have vessels but no instance of the bucket can be found.");
+                workingBucket = new Bucket(workingBucketIdentifier);
             }
 
             /*
@@ -113,9 +115,9 @@ public class LabEventHandler implements Serializable {
                 themselves.  Extract them and use that to pull from the bucket.
              */
             Set<LabVessel> eventVessels = labEvent.getSourceVesselTubes();
-            Bucket bucket = bucketDao.findByName(workingBucketIdentifier.getName());
+
             bucketBean.start(bspUserList.getById(labEvent.getEventOperator()).getUsername(), eventVessels,
-                    bucket, labEvent.getEventLocation());
+                    workingBucket, labEvent.getEventLocation());
         }
 
         /*
@@ -137,6 +139,9 @@ public class LabEventHandler implements Serializable {
             */
 
             Bucket workingBucket = bucketDao.findByName(workingBucketIdentifier.getName());
+            if (workingBucket == null) {
+                workingBucket = new Bucket(workingBucketIdentifier);
+            }
 
             /*
                 If the Target item is a TubeFormation (for a rack) we really only want to deal with the Tubes
