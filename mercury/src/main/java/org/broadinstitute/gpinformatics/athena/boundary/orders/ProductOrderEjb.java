@@ -46,7 +46,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.OrderStatus.Abandoned;
-import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.OrderStatus.Complete;
+import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.OrderStatus.Completed;
 import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.TransitionStates.Cancel;
 import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample.DeliveryStatus.*;
 
@@ -616,7 +616,7 @@ public class ProductOrderEjb {
             throws SampleDeliveryStatusChangeException, IOException, NoTransitionException, NoSuchPDOException {
 
         ProductOrder productOrder = findProductOrder(jiraTicketKey);
-        productOrder.setOrderStatus(Complete);
+        productOrder.setOrderStatus(Completed);
 
         transitionSamples(productOrder, EnumSet.of(DELIVERED, NOT_STARTED), DELIVERED, productOrder.getSamples());
 

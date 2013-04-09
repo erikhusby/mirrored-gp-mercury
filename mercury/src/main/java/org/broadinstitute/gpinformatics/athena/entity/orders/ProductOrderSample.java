@@ -127,6 +127,18 @@ public class ProductOrderSample implements Serializable {
         riskItems.add(new RiskItem(comment));
     }
 
+    /**
+     * @return true if this sample has been billed.
+     */
+    public boolean isBilled() {
+        for (LedgerEntry entry : ledgerItems) {
+            if (entry.isBilled()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static enum DeliveryStatus implements StatusType {
         NOT_STARTED(""),
         DELIVERED("Delivered"),
@@ -164,8 +176,9 @@ public class ProductOrderSample implements Serializable {
         this.productOrder = productOrder;
     }
 
+    // Required by JPA.
     @SuppressWarnings("UnusedDeclaration")
-    ProductOrderSample() {
+    protected ProductOrderSample() {
     }
 
     public ProductOrderSample(@Nonnull String sampleName) {

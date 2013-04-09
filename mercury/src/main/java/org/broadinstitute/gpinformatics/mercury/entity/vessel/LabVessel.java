@@ -1055,4 +1055,25 @@ public abstract class LabVessel implements Serializable {
         }
         return allSamples;
     }
+
+    /**
+     * Goes through all the {@link #getSampleInstances()} and creates
+     * a collection of the unique String sample names from {@link org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample#getSampleKey()}
+     * @return
+     */
+    public Collection<String> getSampleNames() {
+        List<String> sampleNames = new ArrayList<String>();
+        for (SampleInstance sampleInstance : getSampleInstances()) {
+            if (sampleInstance.getStartingSample() != null) {
+                String sampleKey = sampleInstance.getStartingSample().getSampleKey();
+                if (sampleKey != null) {
+                    sampleKey = sampleKey.trim();
+                    if (!sampleKey.isEmpty()) {
+                        sampleNames.add(sampleKey);
+                    }
+                }
+            }
+        }
+        return sampleNames;
+    }
 }

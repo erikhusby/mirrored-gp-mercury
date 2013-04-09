@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntryTest;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -9,9 +10,11 @@ import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
-import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.hamcrest.Matcher;
+import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -19,7 +22,7 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -34,14 +37,50 @@ import static org.hamcrest.Matchers.*;
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ProductOrderSampleTest {
 
+    public static ProductOrderSample createBilledSample(String name) {
+        ProductOrderSample sample = new ProductOrderSample(name);
+        LedgerEntry billedEntry = LedgerEntryTest.createBilledLedgerEntry(sample);
+        sample.getLedgerItems().add(billedEntry);
+        return sample;
+    }
 
-    @Test
-    public void testIsInBspFormat() throws Exception {
-        assertThat("SM-2ACG", is(inBspFormat()));
-        assertThat("SM-2ACG5", is(inBspFormat()));
-        assertThat("SM-2ACG6", is(inBspFormat()));
-        assertThat("Blahblahblah", is(not(inBspFormat())));
-        assertThat("12345", is(not(inBspFormat())));
+    public static ProductOrderSample createUnbilledSampleWithLedger(String name) {
+        ProductOrderSample sample = new ProductOrderSample(name);
+        LedgerEntry billedEntry = LedgerEntryTest.createOneLedgerEntry(sample, "price item", 1, new Date());
+        sample.getLedgerItems().add(billedEntry);
+        return sample;
+    }
+
+    @DataProvider(name = "testIsBilled")
+    public Object[][] createIsBilledData() {
+        return new Object[][]{
+                {createBilledSample("ABC"), true},
+                {createUnbilledSampleWithLedger("ABC"), false},
+                {new ProductOrderSample("ABC"), false}
+        };
+    }
+
+    @Test(dataProvider = "testIsBilled")
+    public void testIsBilled(ProductOrderSample sample, boolean isBilled) {
+        Assert.assertEquals(sample.isBilled(), isBilled);
+    }
+
+    @DataProvider(name = "testIsInBspFormat")
+    public Object[][] createIsInBspFormatData() {
+        return new Object[][] {
+                {"SM-2ACG", inBspFormat()},
+                {"SM-2ACG5", inBspFormat()},
+                {"SM-2ACG6", inBspFormat()},
+                {"Blahblahblah", not(inBspFormat())},
+                {"12345", not(inBspFormat())},
+                {"SM-ABC0", not(inBspFormat())},
+                {"SM-ABCO", inBspFormat()}
+        };
+    }
+
+    @Test(dataProvider = "testIsInBspFormat")
+    public void testIsInBspFormat(String sampleName, Matcher<String> matcher) throws Exception {
+        assertThat(sampleName, is(matcher));
     }
 
     static final org.broadinstitute.bsp.client.sample.MaterialType BSP_MATERIAL_TYPE =
@@ -65,12 +104,12 @@ public class ProductOrderSampleTest {
             addOn.setPrimaryPriceItem(new PriceItem("A", "B", "C", "D"));
             product.addAddOn(addOn);
 
-            Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>() {{
+            Map<BSPSampleSearchColumn, String> dataMap = new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
                 put(BSPSampleSearchColumn.MATERIAL_TYPE, BSP_MATERIAL_TYPE.getFullName());
             }};
             sample1 = new ProductOrderSample("Sample1", new BSPSampleDTO(dataMap));
 
-            dataMap = new HashMap<BSPSampleSearchColumn, String>() {{
+            dataMap = new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
                 put(BSPSampleSearchColumn.MATERIAL_TYPE, "XXX:XXX");
             }};
             sample2 = new ProductOrderSample("Sample2", new BSPSampleDTO(dataMap));
@@ -130,6 +169,12 @@ public class ProductOrderSampleTest {
         };
     }
 
+    @Test(dataProvider = "autoBillSample")
+    public void testAutoBillSample(ProductOrderSample sample, Date completedDate, Set<LedgerEntry> ledgerEntries) {
+        sample.autoBillSample(completedDate, 1);
+        assertThat(sample.getBillableLedgerItems(), is(equalTo(ledgerEntries)));
+    }
+
     @DataProvider(name = "riskSample")
     public static Object[][] makeRiskSample() {
         TestPDOData data = new TestPDOData("GSP-123");
@@ -145,12 +190,6 @@ public class ProductOrderSampleTest {
                 new Object[]{data.sample1},
                 new Object[]{data.sample2}
         };
-    }
-
-    @Test(dataProvider = "autoBillSample")
-    public void testAutoBillSample(ProductOrderSample sample, Date completedDate, Set<LedgerEntry> ledgerEntries) {
-        sample.autoBillSample(completedDate, 1);
-        assertThat(sample.getBillableLedgerItems(), is(equalTo(ledgerEntries)));
     }
 
     @Test(dataProvider = "riskSample")
