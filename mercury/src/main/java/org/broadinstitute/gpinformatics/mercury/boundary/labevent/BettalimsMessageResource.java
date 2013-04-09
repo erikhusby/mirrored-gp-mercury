@@ -34,6 +34,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
@@ -350,7 +351,8 @@ public class BettalimsMessageResource {
         List<SampleInstance> allSampleInstances = new ArrayList<SampleInstance>();
         List<WorkflowValidationError> validationErrors = new ArrayList<WorkflowValidationError>();
         for (LabVessel labVessel : labVessels) {
-            Set<SampleInstance> sampleInstances = labVessel.getSampleInstances();
+            Set<SampleInstance> sampleInstances = labVessel.getSampleInstances(LabVessel.SampleType.WITH_PDO,
+                    LabBatch.LabBatchType.WORKFLOW);
             allSampleInstances.addAll(sampleInstances);
             for (SampleInstance sampleInstance : sampleInstances) {
                 ProductWorkflowDefVersion workflowVersion = getWorkflowVersion(sampleInstance.getStartingSample().getProductOrderKey());
