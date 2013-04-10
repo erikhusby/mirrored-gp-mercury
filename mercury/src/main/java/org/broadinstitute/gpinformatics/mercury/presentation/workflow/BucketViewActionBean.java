@@ -147,8 +147,8 @@ public class BucketViewActionBean extends CoreActionBean {
             viewBucket();
         }
 
-        if (CollectionUtils.isEmpty(selectedVesselLabels)) {
-            addValidationError("selectedVesselLabels", "At least one vessel must be selected to create a batch.");
+        if (CollectionUtils.isEmpty(selectedVesselLabels) && CollectionUtils.isEmpty(selectedReworks)) {
+            addValidationError("selectedVesselLabels", "At least one vessel or rework must be selected to create a batch.");
             viewBucket();
         }
 
