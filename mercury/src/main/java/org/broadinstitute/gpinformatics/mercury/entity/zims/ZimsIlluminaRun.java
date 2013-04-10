@@ -89,10 +89,17 @@ public class ZimsIlluminaRun {
         this.imagedAreaPerLaneMM2 = ThriftConversionUtil.zeroAsNull(imagedAreaPerLaneMM2);
     }
 
+    /**
+     * Converts the thrift bean {@link TZamboniRead} to mercury's {@link ZamboniRead}.
+     * In thrift, zero is a dual use value that might mean zero or might
+     * mean null.  In the context of {@link TZamboniRead}, 0 is really null,
+     * so we do a zero-to-null conversion here.
+     * @param thriftRead
+     */
     public void addRead(TZamboniRead thriftRead) {
-        reads.add(new ZamboniRead(ThriftConversionUtil.zeroAsNull(thriftRead.getFirstCycle()),
-                ThriftConversionUtil.zeroAsNull(thriftRead.getLength()),
-                thriftRead.getReadType().toString()));
+        Integer firstCycle = ThriftConversionUtil.zeroAsNull(thriftRead.getFirstCycle());
+        Integer length = ThriftConversionUtil.zeroAsNull(thriftRead.getLength());
+        reads.add(new ZamboniRead(firstCycle,length,thriftRead.getReadType().toString()));
     }
 
     public List<ZamboniRead> getReads() {

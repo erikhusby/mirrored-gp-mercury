@@ -338,7 +338,7 @@ public class BettaLimsMessageTestFactory {
             throw new RuntimeException(e);
         }
         plateTransferEvent.setDisambiguator(1L);
-        plateTransferEvent.setOperator("hrafal");
+        plateTransferEvent.setOperator("pdunlea");
         plateTransferEvent.setStation("ZAN");
         plateTransferEvent.setProgram("Bravo");
     }

@@ -66,10 +66,11 @@ public class LabEventResource {
 //        BSPUserList bspUserList = ServiceAccessUtility.getBean(BSPUserList.class);
 
         for (LabEvent labEvent : labEvents) {
+            BspUser operator = dataFetcherHelper.getOperator(labEvent.getEventOperator());
             LabEventBean labEventBean = new LabEventBean(
                     labEvent.getLabEventType().getName(),
                     labEvent.getEventLocation(),
-                    dataFetcherHelper.getOperator(labEvent.getEventOperator()).getUsername(),
+                    operator == null ? "Unknown user: " + labEvent.getEventOperator() : operator.getUsername(),
                     labEvent.getEventDate());
             labEventBean.setBatchId(labEvent.getLabBatch().getBatchName());
 
