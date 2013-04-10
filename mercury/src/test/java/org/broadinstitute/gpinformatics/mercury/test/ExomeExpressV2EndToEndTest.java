@@ -101,8 +101,8 @@ public class ExomeExpressV2EndToEndTest {
         EasyMock.expect(mockBucketDao.findByName(EasyMock.eq("Pico/Plating Bucket")))
                 .andReturn(workingPicoBucket);
         ReworkEjb reworkEjb = EasyMock.createNiceMock(ReworkEjb.class);
-        BucketBean bucketBean = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB,
-                reworkEjb);
+        BucketBean bucketBean = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB
+        );
         EasyMock.replay(mockBucketDao, tubeDao, mockJira, labBatchDAO, reworkEjb);
 
         final String testActor = "hrafal";

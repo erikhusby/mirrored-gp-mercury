@@ -153,7 +153,7 @@ public class SolexaRunRoutingTest {
 
         mockBucketDao = EasyMock.createNiceMock(BucketDao.class);
         ReworkEjb reworkEjb = EasyMock.createNiceMock(ReworkEjb.class);
-        bucketBeanEJB = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB, reworkEjb);
+        bucketBeanEJB = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB);
         EasyMock.replay(mockBucketDao, tubeDao, mockJira, labBatchDAO);
     }
 

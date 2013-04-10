@@ -34,8 +34,6 @@ public class BucketBean {
 
     LabBatchEjb batchEjb;
 
-    ReworkEjb reworkEjb;
-
     private final static Log logger = LogFactory.getLog(BucketBean.class);
 
     public BucketBean() {
@@ -43,12 +41,10 @@ public class BucketBean {
 
 
     @Inject
-    public BucketBean(LabEventFactory labEventFactoryIn, JiraService testjiraService, LabBatchEjb batchEjb,
-                      ReworkEjb reworkEjb) {
+    public BucketBean(LabEventFactory labEventFactoryIn, JiraService testjiraService, LabBatchEjb batchEjb) {
         this.labEventFactory = labEventFactoryIn;
         this.jiraService = testjiraService;
         this.batchEjb = batchEjb;
-        this.reworkEjb = reworkEjb;
     }
 
     /**
