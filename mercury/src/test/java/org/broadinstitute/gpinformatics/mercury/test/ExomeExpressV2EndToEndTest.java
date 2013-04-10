@@ -170,7 +170,7 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
         LabEventHandler leHandler = getLabEventHandler(mockBucketDao);
         PicoPlatingEntityBuilder pplatingEntityBuilder =
                 new PicoPlatingEntityBuilder(bettaLimsMessageTestFactory,
-                labEventFactory, leHandler, mapBarcodeToTube, rackBarcode).invoke();
+                labEventFactory, leHandler, mapBarcodeToTube, rackBarcode, "testPrefix").invoke();
 
         workingBucket = createAndPopulateBucket(pplatingEntityBuilder.getNormBarcodeToTubeMap(), productOrder1, "Shearing Bucket");
         // Lab Event Factory should have put tubes into the Bucket after normalization
@@ -233,7 +233,7 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
         LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = new LibraryConstructionEntityBuilder(
                 bettaLimsMessageTestFactory, labEventFactory, leHandler,
                 shearingCleanupPlate,  postShearingTransferCleanupEntity.getTargetLabVessels().iterator().next().getLabel(),
-                                                                                                                                                  sheerPlate, LabEventTest.NUM_POSITIONS_IN_RACK).invoke();
+                sheerPlate, LabEventTest.NUM_POSITIONS_IN_RACK, "testPrefix").invoke();
 
 
 
@@ -263,7 +263,7 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
                 bettaLimsMessageTestFactory, labEventFactory, leHandler,
                 libraryConstructionEntityBuilder.getPondRegRack(),
                 libraryConstructionEntityBuilder.getPondRegRackBarcode(),
-                libraryConstructionEntityBuilder.getPondRegTubeBarcodes()).invoke();
+                libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), "testPrefix").invoke();
 
         // Pooling calculator
         // Strip Tube B
@@ -273,16 +273,16 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
                 Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchRack()),
                 Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchRackBarcode()),
                 Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchBarcodes()),
-                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), WorkflowName.EXOME_EXPRESS);
+                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), WorkflowName.EXOME_EXPRESS, "testPrefix");
         qtpEntityBuilder.invoke();
 
         String flowcellBarcode = "flowcell"+ new Date().getTime();
 
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
             new HiSeq2500FlowcellEntityBuilder(bettaLimsMessageTestFactory, labEventFactory,
-                            leHandler,
+                    leHandler,
                     qtpEntityBuilder.getDenatureRack(),
-                            flowcellBarcode).invoke();
+                    flowcellBarcode, "testPrefix").invoke();
         // MiSeq reagent block transfer message
         // Register run
         IlluminaSequencingRunFactory illuminaSequencingRunFactory =

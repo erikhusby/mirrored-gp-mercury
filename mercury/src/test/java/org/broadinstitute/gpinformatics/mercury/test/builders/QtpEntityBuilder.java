@@ -33,13 +33,14 @@ public class QtpEntityBuilder {
     private TubeFormation denatureRack;
     private IlluminaFlowcell illuminaFlowcell;
     private StripTube        stripTube;
+    private String testPrefix;
 
     public QtpEntityBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
                             LabEventFactory labEventFactory, LabEventHandler labEventHandler,
                             List<TubeFormation> normCatchRacks,
                             List<String> normCatchRackBarcodes, List<List<String>> listLcsetListNormCatchBarcodes,
                             Map<String, TwoDBarcodedTube> mapBarcodeToNormCatchTubes,
-                            WorkflowName workflowName) {
+                            WorkflowName workflowName, String testPrefix) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.labEventFactory = labEventFactory;
         this.labEventHandler = labEventHandler;
@@ -48,10 +49,11 @@ public class QtpEntityBuilder {
         this.listLcsetListNormCatchBarcodes = listLcsetListNormCatchBarcodes;
         this.mapBarcodeToNormCatchTubes = mapBarcodeToNormCatchTubes;
         this.workflowName = workflowName;
+        this.testPrefix = testPrefix;
     }
 
     public QtpEntityBuilder invoke() {
-        QtpJaxbBuilder qtpJaxbBuilder = new QtpJaxbBuilder(bettaLimsMessageTestFactory, "",
+        QtpJaxbBuilder qtpJaxbBuilder = new QtpJaxbBuilder(bettaLimsMessageTestFactory, testPrefix,
                 listLcsetListNormCatchBarcodes, normCatchRackBarcodes, workflowName).invoke();
         PlateCherryPickEvent cherryPickJaxb = qtpJaxbBuilder.getPoolingTransferJaxb();
         final String poolRackBarcode = qtpJaxbBuilder.getPoolRackBarcode();

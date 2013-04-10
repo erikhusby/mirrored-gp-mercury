@@ -154,7 +154,7 @@ public class BaseEventTest {
 
         return new PicoPlatingEntityBuilder(bettaLimsMessageTestFactory,
                 labEventFactory, getLabEventHandler(mockBucketDao),
-                mapBarcodeToTube, rackBarcode).invoke();
+                mapBarcodeToTube, rackBarcode, "testPrefix").invoke();
     }
 
     /**
@@ -178,7 +178,7 @@ public class BaseEventTest {
         EasyMock.replay(mockBucketDao);
 
         return new ExomeExpressShearingEntityBuilder(normBarcodeToTubeMap, normTubeFormation, bettaLimsMessageTestFactory, labEventFactory,
-                getLabEventHandler(mockBucketDao), normBarcode).invoke();
+                getLabEventHandler(mockBucketDao), normBarcode, "testPrefix").invoke();
     }
 
     /**
@@ -202,7 +202,7 @@ public class BaseEventTest {
 
         return new PreFlightEntityBuilder(bettaLimsMessageTestFactory,
                 labEventFactory, getLabEventHandler(mockBucketDao),
-                mapBarcodeToTube).invoke();
+                mapBarcodeToTube, "testPrefix").invoke();
     }
 
     /**
@@ -217,7 +217,8 @@ public class BaseEventTest {
                                                     String rackBarcode) {
 
         return new ShearingEntityBuilder(mapBarcodeToTube, tubeFormation,
-                bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(EasyMock.createNiceMock(BucketDao.class)), rackBarcode).invoke();
+                bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(EasyMock.createNiceMock(BucketDao.class)),
+                rackBarcode, "testPrefix").invoke();
     }
 
     /**
@@ -234,7 +235,7 @@ public class BaseEventTest {
         return new LibraryConstructionEntityBuilder(
                 bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(EasyMock.createNiceMock(BucketDao.class)),
                 shearingCleanupPlate, shearCleanPlateBarcode,
-                shearingPlate, NUM_POSITIONS_IN_RACK).invoke();
+                shearingPlate, NUM_POSITIONS_IN_RACK, "testPrefix").invoke();
     }
 
     /**
@@ -250,7 +251,7 @@ public class BaseEventTest {
 
         return new HybridSelectionEntityBuilder(
                 bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(EasyMock.createNiceMock(BucketDao.class)),
-                pondRegRack, pondRegRackBarcode, pondRegTubeBarcodes).invoke();
+                pondRegRack, pondRegRackBarcode, pondRegTubeBarcodes, "testPrefix").invoke();
     }
 
     /**
@@ -270,7 +271,7 @@ public class BaseEventTest {
                 Collections.singletonList(rack),
                 Collections.singletonList(rack.getLabel()),
                 Collections.singletonList(tubeBarcodes),
-                mapBarcodeToTube, workflowName).invoke();
+                mapBarcodeToTube, workflowName, "testPrefix").invoke();
     }
 
     /**
@@ -283,7 +284,7 @@ public class BaseEventTest {
 
         String flowcellBarcode = "flowcell" + new Date().getTime();
         return new HiSeq2500FlowcellEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(EasyMock.createNiceMock(BucketDao.class)),
-                denatureRack, flowcellBarcode).invoke();
+                denatureRack, flowcellBarcode, "testPrefix").invoke();
     }
 
     /**

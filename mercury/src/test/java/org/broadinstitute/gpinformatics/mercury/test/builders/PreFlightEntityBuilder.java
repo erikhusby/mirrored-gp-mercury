@@ -24,19 +24,21 @@ public class PreFlightEntityBuilder {
     private final Map<String, TwoDBarcodedTube> mapBarcodeToTube;
     private       TubeFormation                 tubeFormation;
     private String rackBarcode;
+    private String testPrefix;
 
     public PreFlightEntityBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
-                                  LabEventFactory labEventFactory,
-                                  LabEventHandler labEventHandler, Map<String, TwoDBarcodedTube> mapBarcodeToTube) {
+                                  LabEventFactory labEventFactory, LabEventHandler labEventHandler,
+                                  Map<String, TwoDBarcodedTube> mapBarcodeToTube, String testPrefix) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.labEventFactory = labEventFactory;
         this.labEventHandler = labEventHandler;
         this.mapBarcodeToTube = mapBarcodeToTube;
+        this.testPrefix = testPrefix;
     }
 
     public PreFlightEntityBuilder invoke() {
         PreFlightJaxbBuilder
-                preFlightJaxbBuilder = new PreFlightJaxbBuilder(bettaLimsMessageTestFactory, "",
+                preFlightJaxbBuilder = new PreFlightJaxbBuilder(bettaLimsMessageTestFactory, testPrefix,
                 new ArrayList<String>(
                         mapBarcodeToTube.keySet()));
         preFlightJaxbBuilder.invoke();

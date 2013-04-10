@@ -30,17 +30,19 @@ public class ShearingEntityBuilder {
     private       StaticPlate                   shearingPlate;
     private String shearCleanPlateBarcode;
     private StaticPlate shearingCleanupPlate;
+    private String testPrefix;
 
     public ShearingEntityBuilder(Map<String, TwoDBarcodedTube> mapBarcodeToTube, TubeFormation preflightRack,
                                  BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
                                  LabEventFactory labEventFactory,
-                                 LabEventHandler labEventHandler, String rackBarcode) {
+                                 LabEventHandler labEventHandler, String rackBarcode, String testPrefix) {
         this.mapBarcodeToTube = mapBarcodeToTube;
         this.preflightRack = preflightRack;
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.labEventFactory = labEventFactory;
         this.labEventHandler = labEventHandler;
         this.rackBarcode = rackBarcode;
+        this.testPrefix = testPrefix;
     }
 
     public StaticPlate getShearingPlate() {
@@ -58,7 +60,7 @@ public class ShearingEntityBuilder {
     public ShearingEntityBuilder invoke() {
         ShearingJaxbBuilder shearingJaxbBuilder = new ShearingJaxbBuilder(bettaLimsMessageTestFactory,
                 new ArrayList<String>(
-                        mapBarcodeToTube.keySet()), "",
+                        mapBarcodeToTube.keySet()), testPrefix,
                 rackBarcode).invoke();
         shearPlateBarcode = shearingJaxbBuilder.getShearPlateBarcode();
         shearCleanPlateBarcode = shearingJaxbBuilder.getShearCleanPlateBarcode();

@@ -29,21 +29,23 @@ public class HiSeq2500FlowcellEntityBuilder {
     private       IlluminaFlowcell            illuminaFlowcell;
     private       LabEvent                    flowcellTransferEntity;
     private final TubeFormation               denatureRack;
+    private String testPrefix;
 
     public HiSeq2500FlowcellEntityBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
                                           LabEventFactory labEventFactory, LabEventHandler labEventHandler,
-                                          TubeFormation denatureRack, String flowcellBarcode){
+                                          TubeFormation denatureRack, String flowcellBarcode, String testPrefix){
 
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.labEventFactory = labEventFactory;
         this.labEventHandler = labEventHandler;
         this.denatureRack = denatureRack;
         this.flowcellBarcode = flowcellBarcode;
+        this.testPrefix = testPrefix;
     }
 
     public HiSeq2500FlowcellEntityBuilder invoke() {
         HiSeq2500JaxbBuilder hiSeq2500JaxbBuilder =
-                new HiSeq2500JaxbBuilder(bettaLimsMessageTestFactory, "",
+                new HiSeq2500JaxbBuilder(bettaLimsMessageTestFactory, testPrefix,
                         denatureRack.getContainerRole().getContainedVessels().iterator().next().getLabel())
                         .invoke();
         ReceptaclePlateTransferEvent flowcellTransferJaxb = hiSeq2500JaxbBuilder.getFlowcellTransferJaxb();

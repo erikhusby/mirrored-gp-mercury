@@ -33,6 +33,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
+import org.broadinstitute.gpinformatics.mercury.presentation.transfervis.TransferVisualizerFrame;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
@@ -196,7 +197,7 @@ public class ReworkDbFreeTest {
         Map<String, TwoDBarcodedTube> origRackMap = createRack(productOrder, origTubePrefix, reworkIdx, null);
         LabBatch origBatch = createBatch(origRackMap, labBatchEJB, origLcsetSuffix);
         VesselContainer origContainer = sendMsgs(origRackMap, labEventFactory, labEventHandler,
-                bettaLimsMessageTestFactory, origRackBarcode, false);
+                bettaLimsMessageTestFactory, origRackBarcode, "1", false);
 
         // Selects the rework tube and verifies its lcset.
         TwoDBarcodedTube reworkTube = origRackMap.get(origTubePrefix + reworkIdx);
@@ -210,7 +211,7 @@ public class ReworkDbFreeTest {
         Map<String, TwoDBarcodedTube> reworkRackMap = createRack(productOrder, reworkTubePrefix, reworkIdx, reworkTube);
         LabBatch reworkBatch = createBatch(reworkRackMap, labBatchEJB, reworkLcsetSuffix);
         VesselContainer reworkContainer = sendMsgs(reworkRackMap, labEventFactory, labEventHandler,
-                bettaLimsMessageTestFactory, reworkRackBarcode, true);
+                bettaLimsMessageTestFactory, reworkRackBarcode, "2", true);
 
         // After rework, tube should be in two lcsets.
         assertEquals(reworkTube.getLabBatchesList().size(), 2);
@@ -245,10 +246,26 @@ public class ReworkDbFreeTest {
         }
         assert(foundOrig);
         assert(foundRework);
+        assertEquals(reworkContainer.getLabBatchCompositions().size(), 1);
+        VesselContainer.LabBatchComposition labBatchComposition =
+                (VesselContainer.LabBatchComposition)origContainer.getLabBatchCompositions().get(0);
+        assertEquals(labBatchComposition.getDenominator(), NUM_POSITIONS_IN_RACK);
+        assertEquals(labBatchComposition.getCount(), NUM_POSITIONS_IN_RACK);
+
 
         // Checks the final destination vessels on the rework chain.
         assertEquals(reworkContainer.getContainedVessels().size(), 0);
         assertEquals(reworkContainer.getAllLabBatches().size(), 2);
+        assertEquals(reworkContainer.getLabBatchCompositions().size(), 2);
+
+        VesselContainer.LabBatchComposition reworkComposition;
+        reworkComposition = (VesselContainer.LabBatchComposition)reworkContainer.getLabBatchCompositions().get(0);
+        assertEquals(reworkComposition.getDenominator(), NUM_POSITIONS_IN_RACK);
+        assertEquals(reworkComposition.getCount() , NUM_POSITIONS_IN_RACK);
+        reworkComposition = (VesselContainer.LabBatchComposition)reworkContainer.getLabBatchCompositions().get(1);
+        assertEquals(reworkComposition.getDenominator(), NUM_POSITIONS_IN_RACK);
+        assertEquals(reworkComposition.getCount() , 1);
+
         assert(reworkContainer.getEmbedder().getPluralityLabBatch(origContainer).getBatchName().endsWith(origLcsetSuffix));
 
     }
@@ -283,17 +300,17 @@ public class ReworkDbFreeTest {
 
     private VesselContainer sendMsgs(Map<String, TwoDBarcodedTube> rackMap, LabEventFactory labEventFactory,
                           LabEventHandler labEventHandler, BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
-                          String rackBarcode, boolean sendLc) {
+                          String rackBarcode, String testPrefix, boolean sendLc) {
 
         VesselContainer lastContainer = null;
 
         PicoPlatingEntityBuilder pplatingEntityBuilder = new PicoPlatingEntityBuilder(bettaLimsMessageTestFactory,
-                labEventFactory, labEventHandler, rackMap, rackBarcode).invoke();
+                labEventFactory, labEventHandler, rackMap, rackBarcode, testPrefix).invoke();
 
         ExomeExpressShearingEntityBuilder shearingEntityBuilder =
                 new ExomeExpressShearingEntityBuilder(pplatingEntityBuilder.getNormBarcodeToTubeMap(),
                         pplatingEntityBuilder.getNormTubeFormation(), bettaLimsMessageTestFactory, labEventFactory,
-                        labEventHandler, pplatingEntityBuilder.getNormalizationBarcode()).invoke();
+                        labEventHandler, pplatingEntityBuilder.getNormalizationBarcode(), testPrefix).invoke();
 
         lastContainer = (VesselContainer)pplatingEntityBuilder.getNormTubeFormation().getContainerRole();
 
@@ -301,9 +318,20 @@ public class ReworkDbFreeTest {
             LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = new LibraryConstructionEntityBuilder(
                     bettaLimsMessageTestFactory, labEventFactory, labEventHandler,
                     shearingEntityBuilder.getShearingCleanupPlate(), shearingEntityBuilder.getShearCleanPlateBarcode(),
-                    shearingEntityBuilder.getShearingPlate(), NUM_POSITIONS_IN_RACK).invoke();
+                    shearingEntityBuilder.getShearingPlate(), NUM_POSITIONS_IN_RACK, testPrefix).invoke();
 
             lastContainer = (VesselContainer)shearingEntityBuilder.getShearingPlate().getContainerRole();
+
+            if (false) {
+                TransferVisualizerFrame transferVisualizerFrame = new TransferVisualizerFrame();
+                transferVisualizerFrame.renderVessel(rackMap.values().iterator().next());
+                try {
+                    Thread.sleep(500000L);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
         }
 
         return lastContainer;

@@ -30,18 +30,20 @@ public class ExomeExpressShearingEntityBuilder {
     private       StaticPlate                   shearingPlate;
     private String shearCleanPlateBarcode;
     private StaticPlate shearingCleanupPlate;
+    private String testPrefix;
 
     public ExomeExpressShearingEntityBuilder(Map<String, TwoDBarcodedTube> mapBarcodeToTube,
                                              TubeFormation preflightRack,
                                              BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
                                              LabEventFactory labEventFactory, LabEventHandler labEventHandler,
-                                             String rackBarcode) {
+                                             String rackBarcode, String testPrefix) {
         this.mapBarcodeToTube = mapBarcodeToTube;
         this.preflightRack = preflightRack;
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.labEventFactory = labEventFactory;
         this.labEventHandler = labEventHandler;
         this.rackBarcode = rackBarcode;
+        this.testPrefix = testPrefix;
     }
 
     public StaticPlate getShearingPlate() {
@@ -59,7 +61,7 @@ public class ExomeExpressShearingEntityBuilder {
     public ExomeExpressShearingEntityBuilder invoke() {
         ExomeExpressShearingJaxbBuilder
                 exomeExpressShearingJaxbBuilder = new ExomeExpressShearingJaxbBuilder(
-                bettaLimsMessageTestFactory, new ArrayList<String>(mapBarcodeToTube.keySet()), "", rackBarcode)
+                bettaLimsMessageTestFactory, new ArrayList<String>(mapBarcodeToTube.keySet()), testPrefix, rackBarcode)
                 .invoke();
 
 

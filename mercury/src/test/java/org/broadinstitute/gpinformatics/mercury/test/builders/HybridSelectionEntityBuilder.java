@@ -36,18 +36,19 @@ public class HybridSelectionEntityBuilder {
     private List<String> normCatchBarcodes;
     private       Map<String, TwoDBarcodedTube> mapBarcodeToNormCatchTubes;
     private TubeFormation normCatchRack;
-
+    private String testPrefix;
 
     public HybridSelectionEntityBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
                                         LabEventFactory labEventFactory, LabEventHandler labEventHandler,
-                                        TubeFormation pondRegRack,
-                                        String pondRegRackBarcode, List<String> pondRegTubeBarcodes) {
+                                        TubeFormation pondRegRack, String pondRegRackBarcode,
+                                        List<String> pondRegTubeBarcodes, String testPrefix) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.labEventFactory = labEventFactory;
         this.labEventHandler = labEventHandler;
         this.pondRegRack = pondRegRack;
         this.pondRegRackBarcode = pondRegRackBarcode;
         this.pondRegTubeBarcodes = pondRegTubeBarcodes;
+        this.testPrefix = testPrefix;
     }
 
     public List<String> getNormCatchBarcodes() {
@@ -69,7 +70,7 @@ public class HybridSelectionEntityBuilder {
     public HybridSelectionEntityBuilder invoke() {
         HybridSelectionJaxbBuilder
                 hybridSelectionJaxbBuilder = new HybridSelectionJaxbBuilder(
-                bettaLimsMessageTestFactory, "", pondRegRackBarcode, pondRegTubeBarcodes, "Bait").invoke();
+                bettaLimsMessageTestFactory, testPrefix, pondRegRackBarcode, pondRegTubeBarcodes, "Bait").invoke();
         normCatchRackBarcode = hybridSelectionJaxbBuilder.getNormCatchRackBarcode();
         normCatchBarcodes = hybridSelectionJaxbBuilder.getNormCatchBarcodes();
 

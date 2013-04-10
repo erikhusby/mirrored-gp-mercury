@@ -35,6 +35,7 @@ public class PicoPlatingEntityBuilder {
     private       StaticPlate                   postNormPicoPlate;
     private String normalizationBarcode;
     private Map<String,TwoDBarcodedTube> normBarcodedTubeMap;
+    private String testPrefix;
 
     public TubeFormation getNormTubeFormation() {
         return normTubeFormation;
@@ -64,19 +65,20 @@ public class PicoPlatingEntityBuilder {
     public PicoPlatingEntityBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
                                     LabEventFactory labEventFactory,
                                     LabEventHandler labEventHandler, Map<String, TwoDBarcodedTube> mapBarcodeToTube,
-                                    String rackBarcode) {
+                                    String rackBarcode, String testPrefix) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.labEventFactory = labEventFactory;
         this.labEventHandler = labEventHandler;
         this.mapBarcodeToTube = mapBarcodeToTube;
         this.rackBarcode = rackBarcode;
+        this.testPrefix = testPrefix;
     }
 
     public PicoPlatingEntityBuilder invoke() {
 
         PicoPlatingJaxbBuilder jaxbBuilder =
                 new PicoPlatingJaxbBuilder(rackBarcode, new ArrayList<String>(mapBarcodeToTube
-                        .keySet()), "", bettaLimsMessageTestFactory);
+                        .keySet()), testPrefix, bettaLimsMessageTestFactory);
         jaxbBuilder.invoke();
 
 
@@ -135,12 +137,10 @@ public class PicoPlatingEntityBuilder {
                 new HashMap<VesselPosition, TwoDBarcodedTube>(initialTubeFormation.getContainerRole()
                         .getContainedVessels().size());
 
-        SimpleDateFormat timestampFormat = new SimpleDateFormat("MMddHHmmss");
-        String timestamp = timestampFormat.format(new Date());
         for (TwoDBarcodedTube currTube : initialTubeFormation.getContainerRole().getContainedVessels()) {
             VesselPosition currTubePositon = initialTubeFormation.getContainerRole().getPositionOfVessel(currTube);
 
-            TwoDBarcodedTube currNormTube = new TwoDBarcodedTube("Norm" + currTubePositon.name() + timestamp);
+            TwoDBarcodedTube currNormTube = new TwoDBarcodedTube("Norm" + currTubePositon.name() + testPrefix);
 
             normPositionToTube.put(currTubePositon, currNormTube);
         }

@@ -32,11 +32,12 @@ public class LibraryConstructionEntityBuilder {
     private       List<String>                pondRegTubeBarcodes;
     private       TubeFormation               pondRegRack;
     private int numSamples;
+    private String testPrefix;
 
     public LibraryConstructionEntityBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
                                             LabEventFactory labEventFactory, LabEventHandler labEventHandler,
                                             StaticPlate shearingCleanupPlate, String shearCleanPlateBarcode,
-                                            StaticPlate shearingPlate, int numSamples) {
+                                            StaticPlate shearingPlate, int numSamples, String testPrefix) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.labEventFactory = labEventFactory;
         this.labEventHandler = labEventHandler;
@@ -44,6 +45,7 @@ public class LibraryConstructionEntityBuilder {
         this.shearCleanPlateBarcode = shearCleanPlateBarcode;
         this.shearingPlate = shearingPlate;
         this.numSamples = numSamples;
+        this.testPrefix = testPrefix;
     }
 
     public List<String> getPondRegTubeBarcodes() {
@@ -61,7 +63,7 @@ public class LibraryConstructionEntityBuilder {
     public LibraryConstructionEntityBuilder invoke() {
         LibraryConstructionJaxbBuilder
                 libraryConstructionJaxbBuilder = new LibraryConstructionJaxbBuilder(
-                bettaLimsMessageTestFactory, "", shearCleanPlateBarcode, "IndexPlate", numSamples).invoke();
+                bettaLimsMessageTestFactory, testPrefix, shearCleanPlateBarcode, "IndexPlate", numSamples).invoke();
         pondRegRackBarcode = libraryConstructionJaxbBuilder.getPondRegRackBarcode();
         pondRegTubeBarcodes = libraryConstructionJaxbBuilder.getPondRegTubeBarcodes();
 

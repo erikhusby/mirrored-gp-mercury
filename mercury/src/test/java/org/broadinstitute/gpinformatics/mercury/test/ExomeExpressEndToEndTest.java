@@ -337,11 +337,11 @@ public class ExomeExpressEndToEndTest {
             }
 
             PreFlightEntityBuilder preFlightEntityBuilder = new PreFlightEntityBuilder(
-                    bettaLimsMessageTestFactory, labEventFactory, labEventHandler, mapBarcodeToTube);//.invoke();
+                    bettaLimsMessageTestFactory, labEventFactory, labEventHandler, mapBarcodeToTube, "testPrefix");//.invoke();
 
             ShearingEntityBuilder shearingEntityBuilder = new ShearingEntityBuilder(
                     mapBarcodeToTube, preFlightEntityBuilder.getTubeFormation(), bettaLimsMessageTestFactory, labEventFactory,
-                    labEventHandler, preFlightEntityBuilder.getRackBarcode()).invoke();
+                    labEventHandler, preFlightEntityBuilder.getRackBarcode(), "testPrefix").invoke();
 
             LibraryConstructionEntityBuilder libraryConstructionEntityBuilder =
                     new LibraryConstructionEntityBuilder(bettaLimsMessageTestFactory, labEventFactory,
@@ -349,7 +349,7 @@ public class ExomeExpressEndToEndTest {
                             shearingEntityBuilder.getShearingCleanupPlate(),
                             shearingEntityBuilder.getShearCleanPlateBarcode(),
                             shearingEntityBuilder.getShearingPlate(),
-                            mapBarcodeToTube.size()).invoke();
+                            mapBarcodeToTube.size(), "testPrefix").invoke();
 
             HybridSelectionEntityBuilder hybridSelectionEntityBuilder =
                     new HybridSelectionEntityBuilder(bettaLimsMessageTestFactory, labEventFactory,
@@ -358,7 +358,7 @@ public class ExomeExpressEndToEndTest {
                             libraryConstructionEntityBuilder
                                     .getPondRegRackBarcode(),
                             libraryConstructionEntityBuilder
-                                    .getPondRegTubeBarcodes()).invoke();
+                                    .getPondRegTubeBarcodes(), "testPrefix").invoke();
 
             TubeFormation pondRack = libraryConstructionEntityBuilder.getPondRegRack();
             Assert.assertEquals(pondRack.getSampleInstances().size(), 2);
@@ -400,7 +400,7 @@ public class ExomeExpressEndToEndTest {
                     Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchRackBarcode()),
                     Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchBarcodes()),
                     hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(),
-                    WorkflowName.HYBRID_SELECTION);
+                    WorkflowName.HYBRID_SELECTION, "testPrefix");
             qtpEntityBuilder.invoke();
 
             TubeFormation poolingResult = qtpEntityBuilder.getDenatureRack();
