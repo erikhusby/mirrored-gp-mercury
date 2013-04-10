@@ -28,7 +28,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.VesselEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
@@ -233,7 +232,7 @@ public class ReworkDbFreeTest {
         foundOrig = false;
         foundRework = false;
         for (LabVessel vessel : (Collection<LabVessel>)origContainer.getContainedVessels()) {
-            assert(vessel.getLikeliestLabBatch(origContainer).getBatchName().endsWith(origLcsetSuffix));
+            assert(vessel.getPluralityLabBatch(origContainer).getBatchName().endsWith(origLcsetSuffix));
             for (SampleInstance sampleInstance : vessel.getAllSamples()) {
                 if (sampleInstance.getStartingSample().getSampleKey().equals(reworkSampleKey)) {
                     assertEquals(vessel.getAllLabBatches().size(), 2);
@@ -250,7 +249,7 @@ public class ReworkDbFreeTest {
         // Checks the final destination vessels on the rework chain.
         assertEquals(reworkContainer.getContainedVessels().size(), 0);
         assertEquals(reworkContainer.getAllLabBatches().size(), 2);
-        assert(reworkContainer.getEmbedder().getLikeliestLabBatch(origContainer).getBatchName().endsWith(origLcsetSuffix));
+        assert(reworkContainer.getEmbedder().getPluralityLabBatch(origContainer).getBatchName().endsWith(origLcsetSuffix));
 
     }
 
