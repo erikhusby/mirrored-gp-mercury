@@ -7,6 +7,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb;
+import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteWorkItemsExporter;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
@@ -144,7 +145,7 @@ public class BillingSessionActionBean extends CoreActionBean {
             outputStream = new FileOutputStream(tempFile);
 
             QuoteWorkItemsExporter exporter =
-                    new QuoteWorkItemsExporter(editSession, editSession.getQuoteImportItems());
+                    new QuoteWorkItemsExporter(editSession, getQuoteImportItems());
 
             exporter.writeToStream(outputStream, bspUserList);
             IOUtils.closeQuietly(outputStream);
@@ -173,6 +174,9 @@ public class BillingSessionActionBean extends CoreActionBean {
         }
     }
 
+    public List<QuoteImportItem> getQuoteImportItems() {
+        return editSession.getQuoteImportItems(priceListCache);
+    }
 
     @HandlesEvent("bill")
     public Resolution bill() {

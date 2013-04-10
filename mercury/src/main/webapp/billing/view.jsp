@@ -95,7 +95,7 @@
             </tr>
             </thead>
             <tbody>
-            <c:forEach items="${actionBean.editSession.quoteImportItems}" var="item">
+            <c:forEach items="${actionBean.quoteImportItems}" var="item">
                 <tr>
                     <td width="50">${item.quoteId}</td>
                     <td width="100">${item.priceItem.platform}</td>

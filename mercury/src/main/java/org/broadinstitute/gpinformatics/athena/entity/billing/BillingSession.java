@@ -6,6 +6,7 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportInfo;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
@@ -43,6 +44,10 @@ public class BillingSession implements Serializable {
     @Column(name="BILLED_DATE")
     private Date billedDate;
 
+    @Column(name="BILLING_SESSION_TYPE")
+    @Enumerated(EnumType.STRING)
+    private BillingSessionType billingSessionType;
+
     // Do NOT cascade removes because we want the ledger items to stay, but just have their billing session removed.
     @OneToMany(mappedBy = "billingSession", cascade = {CascadeType.PERSIST})
     private List<LedgerEntry> ledgerEntryItems;
@@ -57,6 +62,9 @@ public class BillingSession implements Serializable {
         }
 
         ledgerEntryItems = new ArrayList<LedgerEntry>(ledgerItems);
+
+        // Anything new is a daily rollup.
+        billingSessionType = BillingSessionType.ROLLUP_DAILY;
     }
 
     /**
@@ -106,18 +114,18 @@ public class BillingSession implements Serializable {
     /**
      * @return A list of only the unbilled quote items for this session.
      */
-    public List<QuoteImportItem> getUnBilledQuoteImportItems() {
-        return getQuoteImportItems(false);
+    public List<QuoteImportItem> getUnBilledQuoteImportItems(PriceListCache priceListCache) {
+        return getQuoteImportItems(priceListCache, false);
     }
 
     /**
      * @return A list of all the quote items for this session.
      */
-    public List<QuoteImportItem> getQuoteImportItems() {
-        return getQuoteImportItems(true);
+    public List<QuoteImportItem> getQuoteImportItems(PriceListCache priceListCache) {
+        return getQuoteImportItems(priceListCache, true);
     }
 
-    private List<QuoteImportItem> getQuoteImportItems(boolean includeAll) {
+    private List<QuoteImportItem> getQuoteImportItems(PriceListCache priceListCache, boolean includeAll) {
         QuoteImportInfo quoteImportInfo = new QuoteImportInfo();
 
         for (LedgerEntry ledger : ledgerEntryItems) {
@@ -127,7 +135,7 @@ public class BillingSession implements Serializable {
             }
         }
 
-        return quoteImportInfo.getQuoteImportItems();
+        return quoteImportInfo.getQuoteImportItems(priceListCache);
     }
 
     public boolean cancelSession() {
@@ -191,5 +199,71 @@ public class BillingSession implements Serializable {
 
     public List<LedgerEntry> getLedgerEntryItems() {
         return ledgerEntryItems;
+    }
+
+    public Date getBucketDate(Date workCompleteDate) {
+        return billingSessionType.getBucketDate(workCompleteDate);
+    }
+
+    public BillingSessionType getBillingSessionType() {
+        return billingSessionType;
+    }
+
+    public void setBillingSessionType(BillingSessionType billingSessionType) {
+        this.billingSessionType = billingSessionType;
+    }
+
+    /**
+     * The session type supplies the method for rolling up a date into an appropriate bucket
+     */
+    public static enum BillingSessionType {
+        ROLLUP_SEMI_MONTHLY(new DateRollupCalculator() {
+            @Override
+            public Date getBucketDate(Date workCompleteDate) {
+                Calendar cal = new GregorianCalendar();
+                cal.setTime(workCompleteDate);
+                int day = cal.get(Calendar.DAY_OF_MONTH);
+
+                Calendar endOfPeriod = Calendar.getInstance();
+                endOfPeriod.setTime(workCompleteDate);
+                if (day <= 15) {
+                    endOfPeriod.set(Calendar.DAY_OF_MONTH, 15);
+                } else {
+                    endOfPeriod.set(Calendar.DAY_OF_MONTH, endOfPeriod.getActualMaximum(Calendar.DAY_OF_MONTH));
+                }
+
+                return endOfDay(endOfPeriod);
+            }
+        }),
+        ROLLUP_DAILY(new DateRollupCalculator() {
+            @Override
+            public Date getBucketDate(Date workCompleteDate) {
+                Calendar endOfPeriod = Calendar.getInstance();
+                endOfPeriod.setTime(workCompleteDate);
+
+                // Set to the end of the day so anything that is ever sent with time will normalize to the same bucket.
+                return endOfDay(endOfPeriod);
+            }
+        });
+
+        private static Date endOfDay(Calendar endOfPeriod) {
+            // set to end of day
+            endOfPeriod.set(Calendar.HOUR_OF_DAY, 23);
+            endOfPeriod.set(Calendar.MINUTE, 59);
+            endOfPeriod.set(Calendar.SECOND, 59);
+            endOfPeriod.set(Calendar.MILLISECOND, 999);
+
+            return endOfPeriod.getTime();
+        }
+
+        private final DateRollupCalculator rollupCalculator;
+
+        BillingSessionType(DateRollupCalculator rollupCalculator) {
+            this.rollupCalculator = rollupCalculator;
+        }
+
+        public Date getBucketDate(Date workCompleteDate) {
+            return rollupCalculator.getBucketDate(workCompleteDate);
+        }
     }
 }

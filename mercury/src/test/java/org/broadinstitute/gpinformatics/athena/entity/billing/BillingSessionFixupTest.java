@@ -20,6 +20,7 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
@@ -71,6 +72,25 @@ public class BillingSessionFixupTest extends Arquillian {
         BillingSession billingSession = new BillingSession(billedDate, user.getUserId(), ledgerItems);
 
         billingSessionDao.persist(billingSession);
+        logger.info("Registered Manual billing");
+    }
+
+    /**
+     * This adds the semi-monthly rollup date type to the sessions that were billed that way (everything in the past).
+     */
+    @Test(enabled = true)
+    public void addBillingSessionType() {
+        List<BillingSession> sessions  = billingSessionDao.findAll();
+
+        for (BillingSession session : sessions) {
+            // If there is a billed date but no type, the type must be old style 15 day billing
+            if ((session.getBilledDate() != null) && (session.getBillingSessionType() == null)) {
+                session.setBillingSessionType(BillingSession.BillingSessionType.ROLLUP_SEMI_MONTHLY);
+            }
+        }
+
+        billingSessionDao.persistAll(Collections.emptyList());
+
         logger.info("Registered Manual billing");
     }
 }

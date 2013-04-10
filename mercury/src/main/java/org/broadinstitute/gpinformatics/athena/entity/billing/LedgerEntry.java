@@ -179,6 +179,10 @@ public class LedgerEntry implements Serializable {
                 .append(billingSession).toHashCode();
     }
 
+    public Date getBucketDate() {
+        return billingSession.getBucketDate(workCompleteDate);
+    }
+
     /**
      * The price item status on the ledger entry.
      */

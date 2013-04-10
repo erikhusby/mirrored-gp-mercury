@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.quote;
 
+import javax.annotation.Nonnull;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
@@ -33,7 +34,7 @@ public class PriceItem {
     public PriceItem() {}
 
     public static PriceItem convertMercuryPriceItem(
-            org.broadinstitute.gpinformatics.athena.entity.products.PriceItem priceItem) {
+        @Nonnull org.broadinstitute.gpinformatics.athena.entity.products.PriceItem priceItem) {
 
         PriceItem quotePriceItem = new PriceItem();
         quotePriceItem.setName(priceItem.getName());

@@ -2878,4 +2878,25 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="GPLIM-1180.5" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists schemaName="athena" tableName="billing_session" columnName="billing_session_type" />
+            </not>
+        </preConditions>
+        <addColumn tableName="billing_session" schemaName="athena">
+            <column name="billing_session_type" type="varchar2(50)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-1180.6" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists schemaName="athena" tableName="billing_session_aud" columnName="billing_session_type" />
+            </not>
+        </preConditions>
+        <addColumn tableName="billing_session_aud" schemaName="athena">
+            <column name="billing_session_type" type="varchar2(50)"/>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>

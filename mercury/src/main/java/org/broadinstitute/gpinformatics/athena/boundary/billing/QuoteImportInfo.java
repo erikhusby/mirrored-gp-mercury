@@ -5,16 +5,12 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 
-import javax.inject.Inject;
 import java.util.*;
 
 /**
  * This is the information needed to import a quantity of some price item on a quote
  */
 public class QuoteImportInfo {
-
-    @Inject
-    private PriceListCache priceListCache;
 
     /**
      * What the heck is this complicated structure? It is used to take in ledger items and bucket them
@@ -55,7 +51,8 @@ public class QuoteImportInfo {
         }
 
         // Get the date bucket for this price item.
-        Date bucketDate = getBucketDate(ledger.getWorkCompleteDate());
+        Date bucketDate = ledger.getBucketDate();
+
         if (!quantitiesByQuotePriceItem.get(quoteId).get(priceItem).containsKey(bucketDate)) {
             quantitiesByQuotePriceItem.get(quoteId).get(priceItem).put(bucketDate, new ArrayList<LedgerEntry> ());
         }
@@ -80,21 +77,7 @@ public class QuoteImportInfo {
         return ledger.getProductOrderSample().getProductOrder().getQuoteId();
     }
 
-    private static Date getBucketDate(Date billedDate) {
-        // Get the end of the period.
-        Calendar endOfPeriod = Calendar.getInstance();
-        endOfPeriod.setTime(billedDate);
-
-        // Set to the end of the day so anything that is ever sent with time will normalize to the same bucket.
-        endOfPeriod.set(Calendar.HOUR_OF_DAY, 23);
-        endOfPeriod.set(Calendar.MINUTE, 59);
-        endOfPeriod.set(Calendar.SECOND, 59);
-        endOfPeriod.set(Calendar.MILLISECOND, 999);
-
-        return endOfPeriod.getTime();
-    }
-
-    public List<QuoteImportItem> getQuoteImportItems() {
+    public List<QuoteImportItem> getQuoteImportItems(PriceListCache priceListCache) {
         List<QuoteImportItem> quoteItems = new ArrayList<QuoteImportItem> ();
 
         for (String quoteId : quantitiesByQuotePriceItem.keySet()) {
@@ -111,13 +94,13 @@ public class QuoteImportInfo {
                     // Separate the items into debits and credits so that the quote server will not cancel out items.
                     for (LedgerEntry ledger : ledgerItems) {
                         if (ledger.getQuantity() < 0) {
-                            if (isReplacementPriceItem(ledger)) {
+                            if (isReplacementPriceItem(priceListCache, ledger)) {
                                 replacementCreditLedgerItems.add(ledger);
                             } else {
                                 creditLedgerItems.add(ledger);
                             }
                         } else {
-                            if (isReplacementPriceItem(ledger)) {
+                            if (isReplacementPriceItem(priceListCache, ledger)) {
                                 replacementDebitLedgerItems.add(ledger);
                             } else {
                                 debitLedgerItems.add(ledger);
@@ -165,7 +148,7 @@ public class QuoteImportInfo {
      * @param ledger The ledger entry.
      * @return Is the entry a replacement or not.
      */
-    private boolean isReplacementPriceItem(LedgerEntry ledger) {
+    private boolean isReplacementPriceItem(PriceListCache priceListCache, LedgerEntry ledger) {
         if (ledger.getQuoteId() != null) {
             return LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM == ledger.getPriceItemType();
         } else {

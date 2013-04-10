@@ -126,7 +126,7 @@ public class BillingEjb {
 
         List<BillingResult> results = new ArrayList<BillingResult>();
 
-        for (QuoteImportItem item : billingSession.getUnBilledQuoteImportItems()) {
+        for (QuoteImportItem item : billingSession.getUnBilledQuoteImportItems(priceListCache)) {
 
             BillingResult result = new BillingResult();
             results.add(result);
@@ -139,18 +139,25 @@ public class BillingEjb {
 
             // Calculate whether this is a replacement item and if it is, send the itemIsReplacing field, otherwise
             // the itemIsReplacing field will be null.
-            PriceItem itemIsReplacing = PriceItem.convertMercuryPriceItem(item.calculateIsReplacing(priceListCache));
+            org.broadinstitute.gpinformatics.athena.entity.products.PriceItem mercuryIsReplacing =
+                    item.calculateIsReplacing(priceListCache);
+
+            // Get the quote version of the price item for the item that is being replaced.
+            PriceItem quoteIsReplacing = null;
+            if (mercuryIsReplacing != null) {
+                quoteIsReplacing = PriceItem.convertMercuryPriceItem(mercuryIsReplacing);
+            }
 
             try {
                 String workId = quoteService.registerNewWork(
-                        quote, quotePriceItem, itemIsReplacing, item.getWorkCompleteDate(), item.getQuantity(),
+                        quote, quotePriceItem, quoteIsReplacing, item.getWorkCompleteDate(), item.getQuantity(),
                         pageUrl, "billingSession", sessionKey);
 
                 result.setWorkId(workId);
 
                 // Now that we have successfully billed, update the Ledger Entries associated with this QuoteImportItem
                 // with the quote for the QuoteImportItem, add the priceItemType, and the success message.
-                item.updateQuoteIntoLedgerEntries(itemIsReplacing, BillingSession.SUCCESS);
+                item.updateQuoteIntoLedgerEntries(quoteIsReplacing, BillingSession.SUCCESS);
 
             } catch (Exception ex) {
                 // Any exceptions in sending to the quote server will just be reported and will continue
