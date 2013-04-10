@@ -157,13 +157,26 @@ public class QuoteImportInfo {
         }
     }
 
+    /**
+     * This tests whether the ledger entry is a quote item or a quote replacement item. If the session was
+     * already billed (a quote is applied), then pull this right off the ledger. If this has not been billed, then
+     * calculate it from the product order.
+     *
+     * @param ledger The ledger entry.
+     * @return Is the entry a replacement or not.
+     */
     private boolean isReplacementPriceItem(LedgerEntry ledger) {
-        Collection<org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem> quotePriceItems =
-            ledger.getProductOrderSample().getProductOrder().getProduct().getReplacementPriceItems(priceListCache);
+        if (ledger.getQuoteId() != null) {
+            return LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM == ledger.getPriceItemType();
+        } else {
+            // No quote, so calculate what it would be given the state of things now.
+            Collection<org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem> quotePriceItems =
+                ledger.getProductOrderSample().getProductOrder().getProduct().getReplacementPriceItems(priceListCache);
 
-        for (org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem quotePriceItem : quotePriceItems) {
-            if (ledger.getPriceItem().getName().equals(quotePriceItem.getName())) {
-                return true;
+            for (org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem quotePriceItem : quotePriceItems) {
+                if (ledger.getPriceItem().getName().equals(quotePriceItem.getName())) {
+                    return true;
+                }
             }
         }
 
