@@ -934,13 +934,24 @@ public abstract class LabVessel implements Serializable {
      * @return the batch
      */
     public LabBatch getLikeliestLabBatch(VesselContainer container) {
-        Collection<LabBatch> vesselBatches = getNearestLabBatches();
+        Collection<LabBatch> vesselBatches = getAllLabBatches();
         for (LabBatchComposition labBatchComposition : (List<LabBatchComposition>)container.getLabBatchCompositions()) {
             if (vesselBatches.contains(labBatchComposition.getLabBatch())) {
                 return labBatchComposition.getLabBatch();
             }
         }
         return null;
+    }
+
+    public Collection<LabBatch> getAllLabBatches() {
+        if (getContainerRole() != null) {
+            return getContainerRole().getAllLabBatches();
+        } else {
+            TransferTraverserCriteria.NearestLabBatchFinder batchCriteria =
+                    new TransferTraverserCriteria.NearestLabBatchFinder(null);
+            evaluateCriteria(batchCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+            return batchCriteria.getAllLabBatches();
+        }
     }
 
     public Collection<LabBatch> getNearestLabBatches() {

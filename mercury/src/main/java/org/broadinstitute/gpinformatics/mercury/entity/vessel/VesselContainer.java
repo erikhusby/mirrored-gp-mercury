@@ -440,6 +440,17 @@ public class VesselContainer<T extends LabVessel> {
 
     }
 
+    public Collection<LabBatch> getAllLabBatches() {
+        return getAllLabBatches(null);
+    }
+
+    public Collection<LabBatch> getAllLabBatches(@Nullable LabBatch.LabBatchType type) {
+        TransferTraverserCriteria.NearestLabBatchFinder batchCriteria =
+                new TransferTraverserCriteria.NearestLabBatchFinder(type);
+        applyCriteriaToAllPositions(batchCriteria);
+        return batchCriteria.getAllLabBatches();
+    }
+
     public Collection<LabBatch> getNearestLabBatches() {
         return getNearestLabBatches(null);
     }
@@ -465,9 +476,40 @@ public class VesselContainer<T extends LabVessel> {
      * @return list of lab batches sorted by vessel count (descending).
      */
     public List<LabBatchComposition> getLabBatchCompositions() {
-        // todo no implementation yet
-        throw new RuntimeException("No implementation yet");
+        // Collects all sample instances.
+        List<SampleInstance> sampleInstances = new ArrayList<SampleInstance>();
+        for (VesselPosition position : getPositions()) {
+            LabVessel.TraversalResults results = traverseAncestors(position, false);
+            sampleInstances.addAll(results.getSampleInstances());
+        }
+
+        List<LabBatchComposition> batchCompositions = new ArrayList<LabBatchComposition>();
+        for (SampleInstance sampleInstance : sampleInstances) {
+            LabBatch labBatch = sampleInstance.getLabBatch();
+            if (labBatch != null) {
+                boolean found = false;
+                for (LabBatchComposition batchComposition : batchCompositions) {
+                    if (labBatch.equals(batchComposition.getLabBatch())) {
+                        found = true;
+                        batchComposition.addCount();
+                    }
+                }
+                if (!found) {
+                    batchCompositions.add(new LabBatchComposition(labBatch, 1, sampleInstances.size()));
+                }
+            }
+        }
+
+        Collections.sort(batchCompositions, HIGHEST_COUNT_FIRST);
+
+        return batchCompositions;
     }
+
+    /** Ranks LabBatchCompositions by decreasing vessel count. */
+    public Comparator HIGHEST_COUNT_FIRST = new Comparator<LabBatchComposition>() {
+        public int compare(LabBatchComposition lbc1, LabBatchComposition lbc2) {
+            return lbc1.getCount() - lbc2.getCount();
+        }};
 
     /**
      * DTO for one lab batch and the number of vessels in that batch, for a given container.
@@ -475,10 +517,12 @@ public class VesselContainer<T extends LabVessel> {
     public class LabBatchComposition {
         private LabBatch labBatch;
         private int count;
+        private int denominator;
 
-        public LabBatchComposition(LabBatch labBatch, int count) {
+        public LabBatchComposition(LabBatch labBatch, int count, int denominator) {
             this.labBatch = labBatch;
             this.count = count;
+            this.denominator = denominator;
         }
 
         public LabBatch getLabBatch() {
@@ -488,5 +532,15 @@ public class VesselContainer<T extends LabVessel> {
         public int getCount() {
             return count;
         }
+
+        public void addCount() {
+            ++count;
+        }
+
+        public int getDenominator() {
+            return denominator;
+        }
     }
+
+
 }

@@ -52,7 +52,7 @@ import static org.testng.Assert.*;
  */
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ReworkDbFreeTest {
-    public static final int NUM_POSITIONS_IN_RACK = 96;
+    public static final int NUM_POSITIONS_IN_RACK = 2;
     private final TemplateEngine templateEngine = new TemplateEngine();
 
     private final LabEventFactory.LabEventRefDataFetcher labEventRefDataFetcher =
@@ -145,11 +145,11 @@ public class ReworkDbFreeTest {
         templateEngine.postConstruct();
     }
 
-    // Advance to Pond Pico, rework a sample from the start.
+    // Advance to Pond Pico, rework a sample from the start
     @Test(enabled = true, groups = TestGroups.DATABASE_FREE)
     public void testRework() throws Exception {
 
-        ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
+        ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(NUM_POSITIONS_IN_RACK);
 
         // Creates the mocks.
         JiraTicketDao mockJira = EasyMock.createNiceMock(JiraTicketDao.class);
@@ -192,7 +192,7 @@ public class ReworkDbFreeTest {
 
         String origTubePrefix = "999999";
         String reworkTubePrefix = "888888";
-        int reworkIdx = 5; // arbitrary choice
+        int reworkIdx = NUM_POSITIONS_IN_RACK - 1; // arbitrary choice
 
         Map<String, TwoDBarcodedTube> origRackMap = createRack(productOrder, origTubePrefix, reworkIdx, null);
         LabBatch origBatch = createBatch(origRackMap, labBatchEJB, origLcsetSuffix);
@@ -229,31 +229,28 @@ public class ReworkDbFreeTest {
         assert(foundOrig);
         assert(foundRework);
 
-        // From the vessel that contains the rework sample on the original plate, verifies lcset in context of the plate.
-        LabVessel origDescendant = null;
+        // On the non-rework chain, checks the final destination vessels, one of which contains the rework sample.
+        foundOrig = false;
+        foundRework = false;
         for (LabVessel vessel : (Collection<LabVessel>)origContainer.getContainedVessels()) {
+            assert(vessel.getLikeliestLabBatch(origContainer).getBatchName().endsWith(origLcsetSuffix));
             for (SampleInstance sampleInstance : vessel.getAllSamples()) {
                 if (sampleInstance.getStartingSample().getSampleKey().equals(reworkSampleKey)) {
-                    origDescendant = vessel;
+                    assertEquals(vessel.getAllLabBatches().size(), 2);
+                    foundRework = true;
+                } else {
+                    assertEquals(vessel.getAllLabBatches().size(), 1);
+                    foundOrig = true;
                 }
             }
         }
-        assertNotNull(origDescendant);
-        assertEquals(origDescendant.getNearestLabBatches().size(), 2);
-        assert(origDescendant.getLikeliestLabBatch(origContainer).getBatchName().endsWith(origLcsetSuffix));
+        assert(foundOrig);
+        assert(foundRework);
 
-        // From the vessel that contains the rework sample on the rework plate, verifies lcset in context of the plate.
-        LabVessel reworkDescendant = null;
-        for (LabVessel vessel : (Collection<LabVessel>)reworkContainer.getContainedVessels()) {
-            for (SampleInstance sampleInstance : vessel.getAllSamples()) {
-                if (sampleInstance.getStartingSample().getSampleKey().equals(reworkSampleKey)) {
-                    reworkDescendant = vessel;
-                }
-            }
-        }
-        assertNotNull(reworkDescendant);
-        assertEquals(reworkDescendant.getNearestLabBatches().size(), 2);
-        assert(reworkDescendant.getLikeliestLabBatch(reworkContainer).getBatchName().endsWith(reworkLcsetSuffix));
+        // Checks the final destination vessels on the rework chain.
+        assertEquals(reworkContainer.getContainedVessels().size(), 0);
+        assertEquals(reworkContainer.getAllLabBatches().size(), 2);
+        assert(reworkContainer.getEmbedder().getLikeliestLabBatch(origContainer).getBatchName().endsWith(origLcsetSuffix));
 
     }
 
