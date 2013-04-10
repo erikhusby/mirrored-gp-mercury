@@ -2843,4 +2843,16 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="GPLIM-1179-1" author="pshapiro">
+        <sql>
+            ALTER TABLE athena.product_order
+            drop CONSTRAINT check_order_status
+        </sql>
+        <sql>
+            ALTER TABLE athena.product_order
+            add CONSTRAINT check_order_status
+            CHECK (order_status IN ('Draft', 'Submitted', 'Abandoned', 'Completed'));
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>
