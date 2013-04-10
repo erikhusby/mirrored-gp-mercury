@@ -176,7 +176,7 @@ public class BettalimsMessageResource {
                         // todo jmt revisit performance of this - fetch all barcodes at once, and fetch unique PDOs from Athena
                         for (String testEvent : barcodesToBeVerified) {
                             if (MercuryOrSquidRouter.MercuryOrSquid.MERCURY == mercuryOrSquidRouter
-                                                                                           .routeForVessel(labVesselDao.findByIdentifier(testEvent))) {
+                                                                                           .routeForVessel(testEvent)) {
                                 processInMercury = true;
                             } else {
                                 processInSquid = true;

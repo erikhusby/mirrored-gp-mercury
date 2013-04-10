@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 
@@ -31,23 +32,45 @@ public class MercuryOrSquidRouter implements Serializable {
 
     public enum MercuryOrSquid {MERCURY, SQUID}
 
+    private LabVesselDao        labVesselDao;
     private AthenaClientService athenaClientService;
 
     MercuryOrSquidRouter() {
     }
 
     @Inject
-    public MercuryOrSquidRouter(AthenaClientService athenaClientService) {
+    public MercuryOrSquidRouter(LabVesselDao labVesselDao, AthenaClientService athenaClientService) {
+        this.labVesselDao = labVesselDao;
         this.athenaClientService = athenaClientService;
     }
 
-    public MercuryOrSquid routeForVessels(List<LabVessel> vessels) {
-        for (LabVessel vessel : vessels) {
-            if (routeForVessel(vessel) == MERCURY) {
+    /**
+     * Building on {@link #routeForVessel(String)}, this method takes a list of barcodes for which a user wishes to
+     * determine the system of record.  The work is delegated to {@link #routeForVessel(String)}
+     *
+     * @param barcodes
+     *
+     * @return
+     */
+    public MercuryOrSquid routeForVessels(List<String> barcodes) {
+        for (String vesselBarcode : barcodes) {
+            if (routeForVessel(vesselBarcode) == MERCURY) {
                 return MERCURY;
             }
         }
         return SQUID;
+    }
+
+    /**
+     * Determines if a tube belongs to Mercury or Squid. See {@link MercuryOrSquid} for a description of "belongs".
+     *
+     * @param barcode the barcode of the tube to check
+     *
+     * @return system that should process messages/queries for the tube
+     */
+    public MercuryOrSquid routeForVessel(String barcode) {
+        LabVessel vessel = labVesselDao.findByIdentifier(barcode);
+        return routeForVessel(vessel);
     }
 
     // TODO: figure out how to handle libraryNames for fetchLibraryDetailsByLibraryName

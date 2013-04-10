@@ -362,7 +362,7 @@ public class SamplesPicoEndToEndTest {
             TemplateEngine templateEngine = new TemplateEngine();
             templateEngine.postConstruct();
             LabEventHandler labEventHandler = new LabEventHandler(new WorkflowLoader(),
-                    AthenaClientProducer.stubInstance(), bucketBeanEJB, null,
+                    AthenaClientProducer.stubInstance(), bucketBeanEJB, mockBucketDao,
                     new BSPUserList(BSPManagerFactoryProducer.stubInstance()));
 
             LabEvent picoDilutionTransferEntityA1 = labEventFactory.buildFromBettaLimsRackToPlateDbFree(

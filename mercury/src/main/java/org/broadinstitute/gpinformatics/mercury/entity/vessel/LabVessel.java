@@ -19,8 +19,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexing
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer.LabBatchComposition;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Formula;
 import org.hibernate.envers.Audited;
@@ -990,13 +990,6 @@ public abstract class LabVessel implements Serializable {
                 new TransferTraverserCriteria.LabVesselDescendantCriteria();
         evaluateCriteria(descendantCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
         return descendantCriteria.getLabVesselDescendants();
-    }
-
-    public Collection<LabVessel> getDescendantVesselsAtHopCount(int hopCount) {
-        TransferTraverserCriteria.LabVesselDescendantCriteria descendantCriteria =
-                new TransferTraverserCriteria.LabVesselDescendantCriteria();
-        evaluateCriteria(descendantCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
-        return descendantCriteria.getLabVesselDescendants(hopCount);
     }
 
     /**

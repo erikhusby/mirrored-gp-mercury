@@ -5,8 +5,6 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 
-import javax.ejb.Stateful;
-import javax.enterprise.context.RequestScoped;
 import javax.enterprise.inject.Alternative;
 import java.util.*;
 
@@ -26,14 +24,15 @@ public class AthenaClientServiceStub implements AthenaClientService {
 
     @Override
     public synchronized ProductOrder retrieveProductOrderDetails(String poBusinessKey) {
-
-        productOrderByBusinessKeyMap = ProductOrderTestFactory.buildTestProductOrderMap();
+        if(productOrderByBusinessKeyMap.size() == 0){
+            productOrderByBusinessKeyMap = ProductOrderTestFactory.buildTestProductOrderMap();
+        }
 
         ProductOrder testOrder1 = productOrderByBusinessKeyMap.get(poBusinessKey);
         if (testOrder1 == null) {
             testOrder1 = ProductOrderTestFactory.createDummyProductOrder(poBusinessKey);
+            productOrderByBusinessKeyMap.put(poBusinessKey, testOrder1);
         }
-        productOrderByBusinessKeyMap.put(poBusinessKey, testOrder1);
 
         if (poBusinessKey == null) {
             testOrder1.getProduct().setWorkflowName(null);

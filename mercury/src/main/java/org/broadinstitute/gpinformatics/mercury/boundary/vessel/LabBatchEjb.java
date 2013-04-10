@@ -116,6 +116,8 @@ public class LabBatchEjb {
             throw new InformaticsServiceException("The Name for the batch Object cannot be null");
         }
 
+        labBatchDao.persist(batchObject);
+
         batchToJira(reporter, null, batchObject);
 
         jiraBatchNotification(batchObject);

@@ -380,9 +380,5 @@ public interface TransferTraverserCriteria {
             }
             return new ArrayList<LabVessel>(sortedTreeMap.values());
         }
-
-        public Collection<LabVessel> getLabVesselDescendants(int hopCount) {
-            return labVesselAtHopCount.get(hopCount);
-        }
     }
 }
