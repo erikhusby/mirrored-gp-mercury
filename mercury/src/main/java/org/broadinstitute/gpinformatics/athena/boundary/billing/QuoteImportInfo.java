@@ -3,13 +3,19 @@ package org.broadinstitute.gpinformatics.athena.boundary.billing;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 
+import javax.inject.Inject;
 import java.util.*;
 
 /**
  * This is the information needed to import a quantity of some price item on a quote
  */
 public class QuoteImportInfo {
+
+    @Inject
+    private PriceListCache priceListCache;
+
     /**
      * What the heck is this complicated structure? It is used to take in ledger items and bucket them
      * in a way that makes getQuoteImportItems easy later. The buckets (the map keys) are:
@@ -97,33 +103,70 @@ public class QuoteImportInfo {
                 for (Date bucketDate : quotePriceItems.get(priceItem).keySet()) {
                     List<LedgerEntry> ledgerItems = quotePriceItems.get(priceItem).get(bucketDate);
 
-                    // Separate the ledger items into debits and credits so that the quote server will not cancel
-                    // out items.
                     List<LedgerEntry> creditLedgerItems = new ArrayList<LedgerEntry>();
                     List<LedgerEntry> debitLedgerItems = new ArrayList<LedgerEntry>();
+                    List<LedgerEntry> replacementCreditLedgerItems = new ArrayList<LedgerEntry>();
+                    List<LedgerEntry> replacementDebitLedgerItems = new ArrayList<LedgerEntry>();
+
+                    // Separate the items into debits and credits so that the quote server will not cancel out items.
                     for (LedgerEntry ledger : ledgerItems) {
                         if (ledger.getQuantity() < 0) {
-                            creditLedgerItems.add(ledger);
+                            if (isReplacementPriceItem(ledger)) {
+                                replacementCreditLedgerItems.add(ledger);
+                            } else {
+                                creditLedgerItems.add(ledger);
+                            }
                         } else {
-                            debitLedgerItems.add(ledger);
+                            if (isReplacementPriceItem(ledger)) {
+                                replacementDebitLedgerItems.add(ledger);
+                            } else {
+                                debitLedgerItems.add(ledger);
+                            }
                         }
                     }
 
-                    // Add the debit items to the list of quote import items.
-                    if (!debitLedgerItems.isEmpty()) {
-                        QuoteImportItem debitItems = new QuoteImportItem(quoteId, priceItem, debitLedgerItems, bucketDate);
-                        quoteItems.add(debitItems);
-                    }
+                    addQuoteItemsForLedgerItems(quoteItems, quoteId, priceItem,
+                            LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM.getQuoteType(),
+                            debitLedgerItems, bucketDate);
 
-                    // Add the credit items to the list of quote import items.
-                    if (!creditLedgerItems.isEmpty()) {
-                        QuoteImportItem creditItems = new QuoteImportItem(quoteId, priceItem, creditLedgerItems, bucketDate);
-                        quoteItems.add(creditItems);
-                    }
+                    addQuoteItemsForLedgerItems(quoteItems, quoteId, priceItem,
+                            LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM.getQuoteType(),
+                            replacementDebitLedgerItems, bucketDate);
+
+                    addQuoteItemsForLedgerItems(quoteItems, quoteId, priceItem,
+                            LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM.getQuoteType(),
+                            creditLedgerItems, bucketDate);
+
+                    addQuoteItemsForLedgerItems(quoteItems, quoteId, priceItem,
+                            LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM.getQuoteType(),
+                            replacementCreditLedgerItems, bucketDate);
                 }
             }
         }
 
         return quoteItems;
+    }
+
+    private void addQuoteItemsForLedgerItems(
+        List<QuoteImportItem> quoteItems, String quoteId, PriceItem priceItem, String quoteType,
+        List<LedgerEntry> ledgerItems, Date bucketDate) {
+
+        if (!ledgerItems.isEmpty()) {
+            QuoteImportItem newQuoteItem = new QuoteImportItem(quoteId, priceItem, quoteType, ledgerItems, bucketDate);
+            quoteItems.add(newQuoteItem);
+        }
+    }
+
+    private boolean isReplacementPriceItem(LedgerEntry ledger) {
+        Collection<org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem> quotePriceItems =
+            ledger.getProductOrderSample().getProductOrder().getProduct().getReplacementPriceItems(priceListCache);
+
+        for (org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem quotePriceItem : quotePriceItems) {
+            if (ledger.getPriceItem().getName().equals(quotePriceItem.getName())) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

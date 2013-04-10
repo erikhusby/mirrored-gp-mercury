@@ -15,16 +15,18 @@ import java.util.List;
 public class QuoteImportItem {
     private final String quoteId;
     private final PriceItem priceItem;
+    private String quotePriceType;
     private final Date billToDate;
     private final List<LedgerEntry> ledgerItems;
     private Date startRange;
     private Date endRange;
 
     public QuoteImportItem(
-        String quoteId, PriceItem priceItem, List<LedgerEntry> ledgerItems, Date billToDate) {
+            String quoteId, PriceItem priceItem, String quotePriceType, List<LedgerEntry> ledgerItems, Date billToDate) {
 
         this.quoteId = quoteId;
         this.priceItem = priceItem;
+        this.quotePriceType = quotePriceType;
         this.ledgerItems = ledgerItems;
         this.billToDate = billToDate;
 
@@ -152,5 +154,13 @@ public class QuoteImportItem {
         }
 
         return type;
+    }
+
+    public String getQuotePriceType() {
+        return quotePriceType;
+    }
+
+    public void setQuotePriceType(String quotePriceType) {
+        this.quotePriceType = quotePriceType;
     }
 }
