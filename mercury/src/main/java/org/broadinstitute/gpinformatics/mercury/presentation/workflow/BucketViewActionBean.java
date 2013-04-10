@@ -38,8 +38,6 @@ public class BucketViewActionBean extends CoreActionBean {
     @Inject
     private BucketDao bucketDao;
     @Inject
-    private ReworkEntryDao reworkEntryDao;
-    @Inject
     private AthenaClientService athenaClientService;
     @Inject
     private LabBatchEjb labBatchEjb;

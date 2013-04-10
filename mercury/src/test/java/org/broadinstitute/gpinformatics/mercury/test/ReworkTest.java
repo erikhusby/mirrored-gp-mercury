@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.test;
 
+import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
@@ -69,7 +70,7 @@ public class ReworkTest extends ContainerTest {
     // Re-enter 2 samples at Pre-LC? (Re-entry points in a process are enabled / disabled on a per product basis)
     // Can rework one sample in a pool?  No.
     @Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION)
-    public void testRework() {
+    public void testRework()  {
 
         final List<LabEvent> eventList =
                 labEventDao.findList(LabEvent.class, LabEvent_.labEventType, LabEventType.SAMPLE_IMPORT);
@@ -78,9 +79,11 @@ public class ReworkTest extends ContainerTest {
 
         final LabVessel testTube = pondEnrichmentEvent.getInPlaceLabVessel();
         Collection<MercurySample> reworks = new ArrayList<MercurySample>();
-        reworks.addAll(reworkEjb
-                .addRework(testTube, ReworkReason.MACHINE_ERROR, pondEnrichmentEvent.getLabEventType(),
-                        "test"));
+        try {
+            reworkEjb.addRework(testTube, ReworkReason.MACHINE_ERROR, pondEnrichmentEvent.getLabEventType(), "test");
+        } catch (ValidationException e) {
+            Assert.fail(e.getMessage());
+        }
 
         Assert.assertFalse(reworks.isEmpty(), "No reworks done.");
 

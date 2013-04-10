@@ -5,6 +5,7 @@ import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
@@ -31,10 +32,6 @@ import java.util.List;
 public class AddReworkActionBean extends CoreActionBean {
     @Inject
     private LabVesselDao labVesselDao;
-    @Inject
-    private MercurySampleDao mercurySampleDao;
-    @Inject
-    private BucketEntryDao bucketEntryDao;
     @Inject
     private ReworkEjb reworkEjb;
     @Inject
@@ -80,12 +77,13 @@ public class AddReworkActionBean extends CoreActionBean {
         }
         Collection<MercurySample> reworks = new ArrayList<MercurySample>();
         try {
-            reworks = reworkEjb.addRework(labVessel, reworkReason, reworkStep, commentText);
-        } catch (InformaticsServiceException e) {
+            reworkEjb.addRework(labVessel, reworkReason, reworkStep, commentText);
+        } catch (ValidationException e) {
             addGlobalValidationError(e.getMessage());
+            return view();
         }
 
-        final String pluralIfAppropriate = reworks.size() > 1 ? "s have" : " has";
+        final String pluralIfAppropriate = reworks.size() != 1 ? "s have" : " has";
         addMessage("{0} sample{1} been added to the {2} bucket.", reworks.size(), pluralIfAppropriate, bucketName);
         return new RedirectResolution(this.getClass());
     }
