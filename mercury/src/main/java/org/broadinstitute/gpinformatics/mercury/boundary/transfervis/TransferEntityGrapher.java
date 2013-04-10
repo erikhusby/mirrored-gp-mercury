@@ -45,7 +45,7 @@ import java.util.Set;
 @Remote(TransferVisualizer.class)
 public class TransferEntityGrapher implements TransferVisualizer {
 
-    private int maxNumVesselsPerRequest = 1000;
+    private int maxNumVesselsPerRequest = 1;
 
     @Inject
     private StaticPlateDAO staticPlateDAO;
