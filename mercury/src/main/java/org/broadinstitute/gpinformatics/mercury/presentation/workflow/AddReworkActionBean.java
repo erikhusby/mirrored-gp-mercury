@@ -80,7 +80,7 @@ public class AddReworkActionBean extends CoreActionBean {
         }
         Collection<MercurySample> reworks = new ArrayList<MercurySample>();
         try {
-            reworks = reworkEjb.addReworks(labVessel, reworkReason, reworkStep, commentText);
+            reworks = reworkEjb.addRework(labVessel, reworkReason, reworkStep, commentText);
         } catch (InformaticsServiceException e) {
             addGlobalValidationError(e.getMessage());
         }
@@ -114,7 +114,7 @@ public class AddReworkActionBean extends CoreActionBean {
                     workflowName = order.getProduct().getWorkflowName();
                     ProductWorkflowDefVersion workflowDef = labEventHandler.getWorkflowVersion(order.getBusinessKey());
                     if (workflowName.equals(WorkflowName.EXOME_EXPRESS.getWorkflowName())) {
-                        buckets = workflowDef.getBuckets();
+                    buckets = workflowDef.getBuckets();
                     }
                     break;
                 }
@@ -123,7 +123,7 @@ public class AddReworkActionBean extends CoreActionBean {
     }
 
     @HandlesEvent(VESSEL_INFO_ACTION)
-    public ForwardResolution vesselInfo() {
+    public ForwardResolution vesselInfo() throws Exception  {
         if (labVessel == null) {
             addGlobalValidationError("Mercury does not recognize vessel with barcode {0}.", vesselLabel);
         }

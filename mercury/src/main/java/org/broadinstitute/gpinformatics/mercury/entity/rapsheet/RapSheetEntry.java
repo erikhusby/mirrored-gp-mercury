@@ -30,7 +30,6 @@ public abstract class RapSheetEntry {
     @ManyToOne(fetch = FetchType.LAZY,cascade = CascadeType.ALL)
     private RapSheet rapSheet;
 
-
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private LabVesselComment labVesselComment;
@@ -43,9 +42,9 @@ public abstract class RapSheetEntry {
     public RapSheetEntry() {
     }
 
-    public RapSheetEntry(RapSheet rapSheet,LabVesselPosition labVesselPosition) {
-        this.rapSheet = rapSheet;
+    public RapSheetEntry(LabVesselPosition labVesselPosition, LabVesselComment labVesselComment) {
         this.labVesselPosition = labVesselPosition;
+        this.labVesselComment=labVesselComment;
     }
 
     public RapSheet getRapSheet() {

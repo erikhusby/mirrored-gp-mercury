@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTr
 import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.UserRemarks;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
+import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
@@ -414,6 +415,23 @@ public abstract class LabVessel implements Serializable {
         return nearest.size();
     }
 
+    /**
+     * Set the current rework entry to active for this vessel;
+     */
+    public void startRework(){
+        for (MercurySample sample : getMercurySamples()) {
+            sample.getRapSheet().startRework();
+        }
+    }
+    /**
+     * deactivates the current rework entry.
+     */
+    public void stopRework(){
+        for (MercurySample sample : getMercurySamples()) {
+            sample.getRapSheet().stopRework();
+        }
+    }
+
     public enum ContainerType {
         STATIC_PLATE("Plate"),
         PLATE_WELL("Plate Well"),
@@ -435,6 +453,22 @@ public abstract class LabVessel implements Serializable {
         public String getName() {
             return name;
         }
+    }
+
+    /**
+     * Is this vessel rework? If it has samples with active rework then it is.
+     *
+     * @return boolean; true if it is rework, or false if it is not
+     */
+    public boolean hasRework() {
+        for (MercurySample mercurySample : this.getMercurySamples()) {
+            for (ReworkEntry reworkEntry : mercurySample.getRapSheet().getReworkEntries()) {
+                if (reworkEntry.isActiveRework()) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**
