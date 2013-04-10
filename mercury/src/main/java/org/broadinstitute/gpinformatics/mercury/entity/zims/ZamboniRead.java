@@ -22,8 +22,14 @@ public class ZamboniRead {
     public ZamboniRead(Integer firstCycle,
                        Integer length,
                        String readType) {
-        this.firstCycle = ThriftConversionUtil.zeroAsNull(firstCycle);
-        this.length = ThriftConversionUtil.zeroAsNull(length);
+        this.firstCycle = null;
+        this.length = null;
+        if (firstCycle != null) {
+            this.firstCycle = ThriftConversionUtil.zeroAsNull(firstCycle);
+        }
+        if (length != null) {
+            this.length = ThriftConversionUtil.zeroAsNull(length);
+        }
         if (readType != null) {
             if (TEMPLATE.equals(readType)) {
                 this.readType = ZamboniReadType.TEMPLATE;

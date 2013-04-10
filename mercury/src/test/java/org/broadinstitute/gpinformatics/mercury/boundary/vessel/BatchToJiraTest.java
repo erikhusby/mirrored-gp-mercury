@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -50,11 +51,15 @@ public class BatchToJiraTest extends Arquillian {
 
     @Test
     public void test_jira_creation_from_batch() throws Exception {
-        String expectedGssrText = "Starter1\n\nRework1 (rework)";
+        String expectedGssrText = "SM-1\n\nSM-2 (rework)";
         Set<LabVessel> startingVessels = new HashSet<LabVessel>();
-        startingVessels.add(new TwoDBarcodedTube("Starter1"));
+        LabVessel tube1 = new TwoDBarcodedTube("Starter1");
+        tube1.addSample(new MercurySample("SM-1"));
+        startingVessels.add(tube1);
         Set<LabVessel> reworkVessels = new HashSet<LabVessel>();
-        reworkVessels.add(new TwoDBarcodedTube("Rework1"));
+        LabVessel tube2 = new TwoDBarcodedTube("Rework1");
+        tube2.addSample(new MercurySample("SM-2"));
+        reworkVessels.add(tube2);
 
         LabBatch batch = new LabBatch("Test batch",startingVessels, LabBatch.LabBatchType.WORKFLOW);
         batch.addReworks(reworkVessels);
@@ -73,7 +78,7 @@ public class BatchToJiraTest extends Arquillian {
 
         ticket = jiraService.getIssue(batch.getJiraTicket().getTicketId());
         gssrIdsText = getGssrFieldFromJiraTicket(ticket);
-        assertThat("Starter1",equalTo(gssrIdsText.trim()));
+        assertThat("SM-1",equalTo(gssrIdsText.trim()));
     }
 
 }

@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.athena.boundary.billing;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
-import com.google.common.collect.ImmutableListMultimap;
+import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimaps;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.logging.Log;
@@ -27,12 +27,15 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
 import java.util.Collection;
 import java.util.Date;
@@ -72,27 +75,6 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
     private Log logger;
 
 
-    @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
-    public void setUp() throws Exception {
-        // Skip if no injections, meaning we're not running in container.
-        if (utx == null) {
-            return;
-        }
-
-        utx.begin();
-    }
-
-    @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
-    public void tearDown() throws Exception {
-        // Skip if no injections, meaning we're not running in container.
-        if (utx == null) {
-            return;
-        }
-
-        utx.rollback();
-    }
-
-
     /**
      * This will succeed in billing some but not all work to make sure our Billing Session is left in the state we
      * expect.
@@ -118,7 +100,8 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         }
 
         @Override
-        public String registerNewWork(Quote quote, org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem priceItem,
+        public String registerNewWork(Quote quote,
+                                      org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem priceItem,
                                       Date reportedCompletionDate,
                                       double numWorkUnits,
                                       String callbackUrl, String callbackParameterName, String callbackParameterValue) {
@@ -149,9 +132,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         return DeploymentBuilder.buildMercuryWarWithAlternatives(PartiallySuccessfulQuoteServiceStub.class);
     }
 
-
-    public void test() {
-
+    private ProductOrder getExExProductOrder() {
         // We want a ProductOrder with multiple ProductOrderSamples for a Product with a Primary and at least one
         // Optional PriceItem.  Specifically, this test requires there to be one ExEx ProductOrder with more than one
         // PDO Sample.
@@ -167,35 +148,71 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
                 });
 
         assertThat(productOrderList, is(not(nullOrEmptyCollection())));
-        ProductOrder productOrder = productOrderList.iterator().next();
 
-        PriceItem exExPriceItem =
-                priceItemDao.find(PLATFORM_GENOMICS, CATEGORY_EXOME_SEQUENCING_ANALYSIS, NAME_EXOME_EXPRESS);
+        return productOrderList.iterator().next();
+    }
 
-        PriceItem standardExomePriceItem =
-                priceItemDao.find(PLATFORM_GENOMICS, CATEGORY_EXOME_SEQUENCING_ANALYSIS, NAME_STANDARD_WHOLE_EXOME);
+
+    private Set<LedgerEntry> getLedgerEntrySet() {
 
         @SuppressWarnings("ConstantConditions")
-        List<ProductOrderSample> productOrderSamples = productOrder.getSamples();
+        final List<ProductOrderSample> productOrderSamples = getExExProductOrder().getSamples();
 
-        final LedgerEntry exExLedgerEntry =
-                new LedgerEntry(productOrderSamples.get(0), exExPriceItem, new Date(), 5000);
-        final LedgerEntry standardExLedgerEntry =
-                new LedgerEntry(productOrderSamples.get(1), standardExomePriceItem, new Date(), 8000);
+        return new HashSet<LedgerEntry>() {{
+            PriceItem exExPriceItem =
+                    priceItemDao.find(PLATFORM_GENOMICS, CATEGORY_EXOME_SEQUENCING_ANALYSIS, NAME_EXOME_EXPRESS);
 
-        Set<LedgerEntry> ledgerEntries = new HashSet<LedgerEntry>() {{
-            add(exExLedgerEntry);
-            add(standardExLedgerEntry);
+            PriceItem standardExomePriceItem =
+                    priceItemDao.find(PLATFORM_GENOMICS, CATEGORY_EXOME_SEQUENCING_ANALYSIS, NAME_STANDARD_WHOLE_EXOME);
+
+            add(new LedgerEntry(productOrderSamples.get(0), exExPriceItem, new Date(), 5000));
+            add(new LedgerEntry(productOrderSamples.get(1), standardExomePriceItem, new Date(), 8000));
         }};
+    }
 
+    private class ExExPartition {
+        private final LedgerEntry exEx;
+        private final LedgerEntry standardEx;
+
+        public ExExPartition(List<LedgerEntry> ledgerEntries) {
+            ListMultimap<Boolean, LedgerEntry> partition = Multimaps.index(ledgerEntries,
+                    new Function<LedgerEntry, Boolean>() {
+                        @Override
+                        public Boolean apply(LedgerEntry ledgerEntry) {
+                            @SuppressWarnings("ConstantConditions")
+                            PriceItem priceItem = ledgerEntry.getPriceItem();
+                            return NAME_EXOME_EXPRESS.equals(priceItem.getName());
+                        }
+                    });
+
+            this.exEx = partition.get(true).get(0);
+            this.standardEx = partition.get(false).get(0);
+        }
+
+        private LedgerEntry getExEx() {
+            return exEx;
+        }
+
+        private LedgerEntry getStandardEx() {
+            return standardEx;
+        }
+    }
+
+
+    public void test()
+            throws SystemException, NotSupportedException, HeuristicRollbackException, HeuristicMixedException,
+            RollbackException {
+
+        Set<LedgerEntry> ledgerEntries = getLedgerEntrySet();
+
+        utx.begin();
         for (LedgerEntry ledgerEntry : ledgerEntries) {
             ledgerEntryDao.persist(ledgerEntry);
         }
-        ledgerEntryDao.flush();
 
         BillingSession billingSession = new BillingSession(-1L, ledgerEntries);
         billingSessionDao.persist(billingSession);
-        billingSessionDao.flush();
+        utx.commit();
 
         // TODO Check that the results of the #bill call are consistent with what's going into the DB as these results
         // TODO are used to render the confirmation page.
@@ -211,22 +228,9 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         assertThat(ledgerEntryItems, is(not(nullOrEmptyCollection())));
         assertThat(ledgerEntryItems, hasSize(2));
 
-        // Partition the persisted LedgerEntries by whether they represent the Exome Express Price Item or not.
-        ImmutableListMultimap<Boolean,LedgerEntry> exExPartition =
-                Multimaps.index(ledgerEntryItems, new Function<LedgerEntry, Boolean>() {
-                    @Override
-                    public Boolean apply(LedgerEntry ledgerEntry) {
-                        @SuppressWarnings("ConstantConditions")
-                        PriceItem priceItem = ledgerEntry.getPriceItem();
-                        return NAME_EXOME_EXPRESS.equals(priceItem.getName());
-                    }
-                });
+        ExExPartition exExPartition = new ExExPartition(ledgerEntryItems);
 
-        LedgerEntry persistedExExLedgerEntry = exExPartition.get(true).get(0);
-        LedgerEntry persistedStandardExLedgerEntry = exExPartition.get(false).get(0);
-
-        assertThat(persistedStandardExLedgerEntry.getBillingMessage(), is(equalTo(BillingSession.SUCCESS)));
-        assertThat(persistedExExLedgerEntry.getBillingMessage(), is(not(equalTo(BillingSession.SUCCESS))));
-
+        assertThat(exExPartition.getStandardEx().getBillingMessage(), is(equalTo(BillingSession.SUCCESS)));
+        assertThat(exExPartition.getExEx().getBillingMessage(), is(not(equalTo(BillingSession.SUCCESS))));
     }
 }

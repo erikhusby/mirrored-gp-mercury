@@ -1019,7 +1019,7 @@ public class ProductOrder implements Serializable {
         Draft,
         Submitted,
         Abandoned,
-        Complete;
+        Completed;
 
         @Override
         public String getDisplayName() {
@@ -1073,4 +1073,29 @@ public class ProductOrder implements Serializable {
         return originalTitle;
     }
 
+    /**
+     * Update this order's status based on the state of its samples.  The status is only changed if the current
+     * status is Submitted or Completed.
+     * <p/>
+     * A order is complete if all samples are either billed or abandoned.
+     *
+     * @return true if the status was changed.
+     */
+    public boolean updateOrderStatus() {
+        if (orderStatus != OrderStatus.Submitted && orderStatus != OrderStatus.Completed) {
+            // We only support automatic status transitions from Submitted or Complete states.
+            return false;
+        }
+        OrderStatus oldStatus = orderStatus;
+        orderStatus = OrderStatus.Completed;
+        for (ProductOrderSample sample : samples) {
+            if (sample.getDeliveryStatus() != ProductOrderSample.DeliveryStatus.ABANDONED && !sample.isBilled()) {
+                // Found an incomplete item.
+                orderStatus = OrderStatus.Submitted;
+                break;
+            }
+        }
+
+        return orderStatus != oldStatus;
+    }
 }

@@ -146,9 +146,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
             businessKeys.add(order.getBusinessKey());
         }
 
-        if (!businessKeys.isEmpty()) {
-            progressFetcher.setupProgress(productOrderDao, businessKeys);
-        }
+        progressFetcher.loadProgress(productOrderDao, businessKeys);
     }
 
     /**

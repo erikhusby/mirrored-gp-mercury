@@ -44,7 +44,7 @@ public class CompletionStatusFetcherTest extends ContainerTest {
 
         // Get all statuses
         allPDOFetcher = new CompletionStatusFetcher();
-        allPDOFetcher.setupProgress(pdoDao);
+        allPDOFetcher.loadProgress(pdoDao);
     }
 
     @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)

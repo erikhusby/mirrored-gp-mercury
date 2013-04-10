@@ -1,6 +1,10 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 
-import org.broadinstitute.gpinformatics.athena.entity.orders.*;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderCompletionStatus;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -10,15 +14,29 @@ import org.hibernate.SQLQuery;
 import org.hibernate.type.StandardBasicTypes;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.Query;
-import javax.persistence.criteria.*;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Join;
+import javax.persistence.criteria.JoinType;
+import javax.persistence.criteria.ListJoin;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Stateful
 @RequestScoped
@@ -31,7 +49,7 @@ public class ProductOrderDao extends GenericDao {
         Samples
     }
 
-    private class ProductOrderDaoCallback implements GenericDaoCallback<ProductOrder> {
+    private static class ProductOrderDaoCallback implements GenericDaoCallback<ProductOrder> {
 
         private Set<FetchSpec> fetchSpecs;
 
@@ -235,43 +253,52 @@ public class ProductOrderDao extends GenericDao {
         return findSingle(ProductOrder.class, ProductOrder_.productOrderId, orderId);
     }
 
+    @SuppressWarnings("unchecked")
+    public Map<String, ProductOrderCompletionStatus> getAllProgressByBusinessKey() {
+        return getProgressByBusinessKey(null);
+    }
+
     /**
      * This gets the completion status for the product orders. There are four pieces of information returned for each
      * order:
-     *
-     * 'name' - Simply the jira ticket key
-     * 'completed' - The number of NOT abandoned samples that have ledger items for any primary or optional price item
-     * 'abandoned' - The number of samples that ARE abandoned
-     * 'total' - The total number of samples
-     *
+     * <dl>
+     * <dt>name</dt><dd>Simply the jira ticket key</dd>
+     * <dt>completed</dt><dd>The number of NOT abandoned samples that have ledger items for any primary or optional price item</dd>
+     * <dt>abandoned</dt><dd>The number of samples that ARE abandoned</dd>
+     * <dt>total</dt><dd>The total number of samples</dd>
+     * </dl>
      * @param productOrderKeys null if returning info for all orders, the list of keys for specific ones
      *
      * @return The mapping of business keys to the completion status object for each order
      */
     @SuppressWarnings("unchecked")
-    public Map<String, ProductOrderCompletionStatus> getProgressByBusinessKey(@Nullable Collection<String> productOrderKeys) {
+    public Map<String, ProductOrderCompletionStatus> getProgressByBusinessKey(Collection<String> productOrderKeys) {
+        if (productOrderKeys != null && productOrderKeys.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
         String sqlString = "SELECT JIRA_TICKET_KEY AS name, PRODUCT_ORDER_ID as ID, " +
-                                   "    ( SELECT count( DISTINCT pos.PRODUCT_ORDER_SAMPLE_ID) " +
-                                   "      FROM athena.product_order_sample pos " +
-                                   "           INNER JOIN athena.BILLING_LEDGER ledger ON ledger.PRODUCT_ORDER_SAMPLE_ID = pos.PRODUCT_ORDER_SAMPLE_ID" +
-                                   "      WHERE pos.product_order = ord.product_order_id " +
-                                   "      AND pos.DELIVERY_STATUS != 'ABANDONED' " +
-                                   "      AND (ledger.PRICE_ITEM_ID = prod.PRIMARY_PRICE_ITEM " +
-                                   "           OR ledger.price_item_id IN ( " +
-                                   "               SELECT OPTIONAL_PRICE_ITEMS FROM athena.PRODUCT_OPT_PRICE_ITEMS opt WHERE opt.PRODUCT = prod.PRODUCT_ID " +
-                                   "           ) " +
-                                   "      ) " +
-                                   "    ) AS completed, " +
-                                   "    (SELECT count(pos.PRODUCT_ORDER_SAMPLE_ID) FROM athena.product_order_sample pos" +
-                                   "        WHERE pos.product_order = ord.product_order_id AND pos.DELIVERY_STATUS = 'ABANDONED' " +
-                                   "    ) AS abandoned, " +
-                                   "    (SELECT count(pos.PRODUCT_ORDER_SAMPLE_ID) FROM athena.product_order_sample pos" +
-                                   "        WHERE pos.product_order = ord.product_order_id" +
-                                   "    ) AS total" +
-                                   " FROM athena.PRODUCT_ORDER ord LEFT JOIN athena.PRODUCT prod ON ord.PRODUCT = prod.PRODUCT_ID ";
+                           "    ( SELECT count( DISTINCT pos.PRODUCT_ORDER_SAMPLE_ID) " +
+                           "      FROM athena.product_order_sample pos " +
+                           "           INNER JOIN athena.BILLING_LEDGER ledger ON ledger.PRODUCT_ORDER_SAMPLE_ID = pos.PRODUCT_ORDER_SAMPLE_ID" +
+                           "      WHERE pos.product_order = ord.product_order_id " +
+                           "      AND pos.DELIVERY_STATUS != 'ABANDONED' " +
+                           "      AND (ledger.PRICE_ITEM_ID = prod.PRIMARY_PRICE_ITEM " +
+                           "           OR ledger.price_item_id IN ( " +
+                           "               SELECT OPTIONAL_PRICE_ITEMS FROM athena.PRODUCT_OPT_PRICE_ITEMS opt WHERE opt.PRODUCT = prod.PRODUCT_ID " +
+                           "           ) " +
+                           "      ) " +
+                           "    ) AS completed, " +
+                           "    (SELECT count(pos.PRODUCT_ORDER_SAMPLE_ID) FROM athena.product_order_sample pos" +
+                           "        WHERE pos.product_order = ord.product_order_id AND pos.DELIVERY_STATUS = 'ABANDONED' " +
+                           "    ) AS abandoned, " +
+                           "    (SELECT count(pos.PRODUCT_ORDER_SAMPLE_ID) FROM athena.product_order_sample pos" +
+                           "        WHERE pos.product_order = ord.product_order_id" +
+                           "    ) AS total" +
+                           " FROM athena.PRODUCT_ORDER ord LEFT JOIN athena.PRODUCT prod ON ord.PRODUCT = prod.PRODUCT_ID ";
 
         // Add the business key, if we are only doing one
-        if ((productOrderKeys != null) && (!productOrderKeys.isEmpty())) {
+        if (productOrderKeys != null) {
             sqlString += " AND ord.JIRA_TICKET_KEY in (:businessKeys)";
         }
 
@@ -282,7 +309,7 @@ public class ProductOrderDao extends GenericDao {
              .addScalar("total", StandardBasicTypes.INTEGER);
 
         List<Object> results;
-        if ((productOrderKeys != null) && (!productOrderKeys.isEmpty())) {
+        if (productOrderKeys != null) {
             results = JPASplitter.runQuery(query, "businessKeys", productOrderKeys);
         } else {
             results = (List<Object>) query.getResultList();

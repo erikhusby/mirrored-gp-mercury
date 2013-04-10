@@ -86,7 +86,7 @@ public class ProductOrderSampleStatusTest extends ContainerTest {
     public void testCompletePDO() throws Exception {
         productOrderEjb.complete(testKey, "This has been completed by my test!");
         ProductOrder order = productOrderDao.findByBusinessKey(testKey);
-        Assert.assertEquals(order.getOrderStatus(), ProductOrder.OrderStatus.Complete);
+        Assert.assertEquals(order.getOrderStatus(), ProductOrder.OrderStatus.Completed);
         for (ProductOrderSample sample : order.getSamples()) {
             Assert.assertEquals(sample.getDeliveryStatus(), ProductOrderSample.DeliveryStatus.DELIVERED);
         }
