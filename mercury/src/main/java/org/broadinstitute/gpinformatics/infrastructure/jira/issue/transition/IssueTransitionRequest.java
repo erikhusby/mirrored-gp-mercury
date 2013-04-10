@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.UpdateFields;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Collection;
 
@@ -23,12 +24,11 @@ public class IssueTransitionRequest {
         this.comment = comment;
     }
 
-
-    public IssueTransitionRequest(Transition transition, Collection<CustomField> customFields, @Nullable String comment) {
+    public IssueTransitionRequest(Transition transition,
+                                  @Nonnull Collection<CustomField> customFields,
+                                  @Nullable String comment) {
         this.transition = transition;
-        if (customFields != null) {
-            fields.getCustomFields().addAll(customFields);
-        }
+        fields.getCustomFields().addAll(customFields);
         this.comment = comment;
     }
 
