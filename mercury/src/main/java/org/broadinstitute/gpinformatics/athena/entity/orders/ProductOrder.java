@@ -1001,7 +1001,8 @@ public class ProductOrder implements Serializable {
         SAMPLE_IDS("Sample IDs"),
         REPORTER("Reporter"),
         FUNDING_DEADLINE("Funding Deadline"),
-        PUBLICATION_DEADLINE("Publication Deadline");
+        PUBLICATION_DEADLINE("Publication Deadline"),
+        STATUS("Status");
 
         private final String fieldName;
 
@@ -1024,24 +1025,6 @@ public class ProductOrder implements Serializable {
         @Override
         public String getDisplayName() {
             return name();
-        }
-    }
-
-    public enum TransitionStates {
-        Complete("Order Complete"),
-        Cancel("Cancel"),
-        StartProgress("Start Progress"),
-        PutOnHold("Put On Hold"),
-        DeveloperEdit("Developer Edit");
-
-        private final String stateName;
-
-        private TransitionStates(String stateName) {
-            this.stateName = stateName;
-        }
-
-        public String getStateName() {
-            return stateName;
         }
     }
 
