@@ -6,14 +6,12 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
-import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
@@ -38,7 +36,6 @@ public class BucketBean {
 
     public BucketBean() {
     }
-
 
     @Inject
     public BucketBean(LabEventFactory labEventFactoryIn, JiraService testjiraService, LabBatchEjb batchEjb) {
@@ -222,7 +219,6 @@ public class BucketBean {
 
     }
 
-
     /**
      * Returns a Set of bucket entries that correspond to a given collection of vessels in the context of a given
      * bucket
@@ -249,7 +245,6 @@ public class BucketBean {
         }
         return bucketEntrySet;
     }
-
 
     /**
      * a pared down version of
@@ -453,7 +448,9 @@ public class BucketBean {
      * @param labVessel vessel full of samples for rework.
      */
     public void removeRework(LabVessel labVessel){
-        labVessel.stopRework();
+        for (MercurySample sample : labVessel.getMercurySamples()){
+            sample.getRapSheet().stopRework();
+        }
     }
 
 

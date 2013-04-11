@@ -11,22 +11,13 @@
 
 package org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet;
 
-import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
-import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry_;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
-import javax.persistence.NoResultException;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 @Stateful
 @RequestScoped

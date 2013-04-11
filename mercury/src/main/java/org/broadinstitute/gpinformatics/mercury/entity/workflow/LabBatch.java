@@ -124,9 +124,10 @@ public class LabBatch {
      */
     public void addReworks(Collection<LabVessel> reworks) {
         for (LabVessel vessel : reworks) {
-            vessel.startRework();
+            for (MercurySample sample : vessel.getMercurySamples()) {
+                sample.getRapSheet().startRework();
+            }
         }
-
         this.reworks.addAll(reworks);
     }
 

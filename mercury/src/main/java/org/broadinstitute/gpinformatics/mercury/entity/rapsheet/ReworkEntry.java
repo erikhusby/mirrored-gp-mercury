@@ -12,21 +12,17 @@
 
 package org.broadinstitute.gpinformatics.mercury.entity.rapsheet;
 
-import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.Table;
-import javax.persistence.Transient;
 import javax.validation.constraints.NotNull;
-import java.util.Comparator;
 
 @Entity
 @Audited
-public class ReworkEntry extends RapSheetEntry implements Comparable<ReworkEntry> {
+public class ReworkEntry extends RapSheetEntry {
     @Enumerated(EnumType.STRING)
     @NotNull
     private ReworkReason reworkReason;
@@ -39,15 +35,15 @@ public class ReworkEntry extends RapSheetEntry implements Comparable<ReworkEntry
     @Enumerated(EnumType.STRING)
     private LabEventType reworkStep;
 
-    private boolean activeRework=false;
-
-    public ReworkEntry(ReworkReason reworkReason, ReworkLevel reworkLevel, LabEventType reworkStep,
-                       LabVesselPosition labVesselPosition) {
-        setLabVesselPosition(labVesselPosition);
-        this.reworkReason = reworkReason;
-        this.reworkLevel = reworkLevel;
-        this.reworkStep = reworkStep;
-    }
+    /**
+     * Active rework is work that is in a bucket, pdo, lcset, or whatever.
+     * IE, It is Actively being worked on, and is not available to put into
+     * a bucket.
+     *
+     * This is a Big B Boolean, because hibernate was complaining about not being able
+     * so assign null to a primitive.
+     */
+    private Boolean activeRework=false;
 
     public ReworkEntry() {
 
@@ -89,23 +85,11 @@ public class ReworkEntry extends RapSheetEntry implements Comparable<ReworkEntry
         this.reworkStep = reworkStep;
     }
 
-    public boolean isActiveRework() {
+    public Boolean isActiveRework() {
         return activeRework;
     }
 
-    public void setActiveRework(boolean activeRework) {
+    public void setActiveRework(Boolean activeRework) {
         this.activeRework = activeRework;
-    }
-
-    public static final Comparator<ReworkEntry> byDateAsc = new Comparator<ReworkEntry>() {
-        @Override
-        public int compare ( ReworkEntry first, ReworkEntry second ) {
-            return first.getLabVesselComment().getLogDate().compareTo(second.getLabVesselComment().getLogDate());
-        }
-    };
-
-    @Override
-    public int compareTo(ReworkEntry reworkEntry) {
-        return byDateAsc.compare(reworkEntry,this);
     }
 }

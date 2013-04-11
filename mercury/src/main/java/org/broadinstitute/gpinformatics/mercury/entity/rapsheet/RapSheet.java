@@ -40,19 +40,22 @@ public class RapSheet {
     private Long rapSheetId;
 
     @NotNull
-    @OneToMany(mappedBy = "rapSheet", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<MercurySample> samples;
+    @OneToMany(mappedBy = "rapSheet", cascade = CascadeType.ALL, fetch = FetchType.LAZY )
+    private List<MercurySample> samples=new ArrayList<MercurySample>();
 
     @NotNull
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<ReworkEntry> reworkEntries = new ArrayList<ReworkEntry>();
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY,mappedBy = "rapSheet")
+    private List<RapSheetEntry> rapSheets = new ArrayList<RapSheetEntry>();
 
     public RapSheet() {
+    }
+    public RapSheet(MercurySample sample) {
+        setSample(sample);
     }
 
     public void addRework(ReworkEntry... entries) {
         for (ReworkEntry reworkEntry : entries) {
-            reworkEntries.add(reworkEntry);
+            rapSheets.add(reworkEntry);
             reworkEntry.setRapSheet(this);
         }
     }
@@ -64,7 +67,8 @@ public class RapSheet {
     private boolean reworkEntriesSorted =false;
 
     public void setSample(MercurySample sample) {
-        getSamples().add(0, sample);
+        samples.clear();
+        samples.add(sample);
     }
 
     public void setSamples(List<MercurySample> samples) {
@@ -75,27 +79,24 @@ public class RapSheet {
     }
 
     public MercurySample getSample() {
-        return getSamples().get(0);
+        return getSamples().iterator().next();
     }
 
     private List<MercurySample> getSamples() {
-        if (samples == null) {
-            samples = new ArrayList<MercurySample>(1);
-        }
         return samples;
     }
 
-    public List<ReworkEntry> getReworkEntries() {
+    public List<RapSheetEntry> getRapSheets() {
         if (!reworkEntriesSorted){
-            Collections.sort(reworkEntries);
+            Collections.sort(rapSheets);
             reworkEntriesSorted =true;
         }
-        return reworkEntries;
+        return rapSheets;
     }
 
-    public void setReworkEntries(List<ReworkEntry> reworkEntries) {
+    public void setRapSheets(List<RapSheetEntry> reworkEntries) {
         Collections.sort(reworkEntries);
-        this.reworkEntries = reworkEntries;
+        this.rapSheets = reworkEntries;
     }
 
     public void startRework() {
@@ -104,7 +105,13 @@ public class RapSheet {
 
 
     public ReworkEntry getCurrentReworkEntry(){
-        return getReworkEntries().iterator().next();
+        for (RapSheetEntry rapSheetEntry : getRapSheets()) {
+            if (rapSheetEntry instanceof ReworkEntry) {
+                return (ReworkEntry) rapSheetEntry;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -112,9 +119,11 @@ public class RapSheet {
      * @return Active Rework or null;
      */
     public ReworkEntry getActiveRework() {
-        for (ReworkEntry reworkEntry : getReworkEntries()) {
-            if (reworkEntry.isActiveRework()){
-                return reworkEntry;
+        for (RapSheetEntry rapSheetEntry : getRapSheets()) {
+            if (rapSheetEntry instanceof ReworkEntry) {
+                if (((ReworkEntry)rapSheetEntry).isActiveRework()) {
+                    return (ReworkEntry) rapSheetEntry;
+                }
             }
         }
         return null;
@@ -129,6 +138,4 @@ public class RapSheet {
             getActiveRework().setActiveRework(false);
         }
     }
-
-
 }

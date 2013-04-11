@@ -77,7 +77,7 @@ public class MercurySample {
 
     public RapSheet getRapSheet() {
         if (rapSheet == null) {
-            rapSheet = new RapSheet();
+            rapSheet = new RapSheet(this);
         }
         return rapSheet;
     }
