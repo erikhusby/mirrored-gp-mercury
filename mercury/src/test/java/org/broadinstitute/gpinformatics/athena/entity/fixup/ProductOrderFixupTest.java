@@ -289,7 +289,7 @@ public class ProductOrderFixupTest extends Arquillian {
         }
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void fixupPDOCompleteStatus()
             throws JiraIssue.NoTransitionException, ProductOrderEjb.NoSuchPDOException, IOException {
         // Loop through all PDOs and update their status to complete where necessary.  The API can in theory
