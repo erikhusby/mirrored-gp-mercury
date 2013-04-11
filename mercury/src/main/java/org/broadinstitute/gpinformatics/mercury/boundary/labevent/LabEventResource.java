@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.*;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
@@ -63,8 +64,6 @@ public class LabEventResource {
                                                  LabEventFactory.LabEventRefDataFetcher dataFetcherHelper) {
         List<LabEventBean> labEventBeans = new ArrayList<LabEventBean>();
 
-//        BSPUserList bspUserList = ServiceAccessUtility.getBean(BSPUserList.class);
-
         for (LabEvent labEvent : labEvents) {
             BspUser operator = dataFetcherHelper.getOperator(labEvent.getEventOperator());
             LabEventBean labEventBean = new LabEventBean(
@@ -72,6 +71,10 @@ public class LabEventResource {
                     labEvent.getEventLocation(),
                     operator == null ? "Unknown user: " + labEvent.getEventOperator() : operator.getUsername(),
                     labEvent.getEventDate());
+            for (Reagent reagent : labEvent.getReagents()) {
+                labEventBean.getReagents().add(new ReagentBean(reagent.getReagentName(), reagent.getLot()));
+            }
+
             labEventBean.setBatchId(labEvent.getLabBatch().getBatchName());
 
             // todo jmt rationalize these?  Each side can be a vessel, or a vessel + section, or a vessel + position

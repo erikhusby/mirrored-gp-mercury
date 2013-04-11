@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.test;
 
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReagentType;
 import org.testng.Assert;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProducer;
@@ -171,6 +172,10 @@ public class SamplesPicoEndToEndTest {
             picoDilutionTransferJaxbA1.getPlate().setSection(SBSSection.P384_96TIP_1INTERVAL_A1.getSectionName());
             picoDilutionTransferJaxbA1.getPlate().setPhysType(StaticPlate.PlateType.Eppendorf384.getDisplayName());
             picoDilutionTransferJaxbA1.setBatchId(labBatchId);
+            ReagentType reagentType = new ReagentType();
+            reagentType.setBarcode("RG-3082");
+            reagentType.setKitType("WashBuffer");
+            picoDilutionTransferJaxbA1.getReagent().add(reagentType);
 
             picoDilutionTransferJaxbA2 = bettaLimsMessageTestFactory.buildRackToPlate("PicoDilutionTransfer",
                     "PicoRack" + timestamp, tubeBarcodes, picoDilutionPlateBarcode);
