@@ -1069,16 +1069,19 @@ public class ProductOrder implements Serializable {
             // We only support automatic status transitions from Submitted or Complete states.
             return false;
         }
-        OrderStatus oldStatus = orderStatus;
-        orderStatus = OrderStatus.Completed;
+        OrderStatus newStatus = OrderStatus.Completed;
         for (ProductOrderSample sample : samples) {
             if (sample.getDeliveryStatus() != ProductOrderSample.DeliveryStatus.ABANDONED && !sample.isBilled()) {
                 // Found an incomplete item.
-                orderStatus = OrderStatus.Submitted;
+                newStatus = OrderStatus.Submitted;
                 break;
             }
         }
 
-        return orderStatus != oldStatus;
+        if (newStatus != orderStatus) {
+            orderStatus = newStatus;
+            return true;
+        }
+        return false;
     }
 }
