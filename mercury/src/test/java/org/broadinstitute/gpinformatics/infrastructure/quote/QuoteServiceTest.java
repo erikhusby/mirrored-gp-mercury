@@ -48,7 +48,7 @@ public class QuoteServiceTest {
         EasyMock.expect(mockResponse.getClientResponseStatus()).andReturn(ClientResponse.Status.BAD_REQUEST).atLeastOnce();
         EasyMock.replay(mockResponse);
         try {
-            service.registerNewWork(mockResponse,quote,priceItem,0.0001,"http://www.MercuryTesting","paramName","paramValue");
+            service.registerNewWork(mockResponse,quote,priceItem,0.0001);
             Assert.fail("Should have thrown an exception when bad http response returned");
         }
         catch(Exception e) {}
@@ -63,7 +63,7 @@ public class QuoteServiceTest {
         EasyMock.expect(mockResponse.getClientResponseStatus()).andReturn(null).atLeastOnce();
         EasyMock.replay(mockResponse);
         try {
-            service.registerNewWork(mockResponse,quote,priceItem,0.0001,"http://www.MercuryTesting","paramName","paramValue");
+            service.registerNewWork(mockResponse,quote,priceItem,0.0001);
             Assert.fail("Should have thrown an exception when no client response was returned");
         }
         catch(Exception e) {}
@@ -75,7 +75,7 @@ public class QuoteServiceTest {
 
         EasyMock.replay(mockResponse);
         try {
-            service.registerNewWork(mockResponse,quote,priceItem,0.0001,"http://www.MercuryTesting","paramName","paramValue");
+            service.registerNewWork(mockResponse,quote,priceItem,0.0001);
             Assert.fail("Should have thrown an exception when string returned was null");
         }
         catch(Exception e) {}
@@ -93,7 +93,7 @@ public class QuoteServiceTest {
 
         EasyMock.replay(mockResponse);
         try {
-            service.registerNewWork(mockResponse,quote,priceItem,0.0001,"http://www.MercuryTesting","paramName","paramValue");
+            service.registerNewWork(mockResponse,quote,priceItem,0.0001);
             Assert.fail("Should have thrown an exception when string returned was null");
         }
         catch(Exception e) {}
@@ -105,7 +105,7 @@ public class QuoteServiceTest {
 
         EasyMock.replay(mockResponse);
         try {
-            service.registerNewWork(mockResponse,quote,priceItem,0.0001,"http://www.MercuryTesting","paramName","paramValue");
+            service.registerNewWork(mockResponse,quote,priceItem,0.0001);
             Assert.fail("Should have thrown an exception when string returned was null");
         }
         catch(Exception e) {}
@@ -117,7 +117,7 @@ public class QuoteServiceTest {
 
         EasyMock.replay(mockResponse);
         try {
-            service.registerNewWork(mockResponse,quote,priceItem,0.0001,"http://www.MercuryTesting","paramName","paramValue");
+            service.registerNewWork(mockResponse,quote,priceItem,0.0001);
             Assert.fail("Should have thrown an exception when string returned was null");
         }
         catch(Exception e) {}

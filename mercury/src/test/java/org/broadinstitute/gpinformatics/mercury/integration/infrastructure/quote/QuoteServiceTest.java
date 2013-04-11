@@ -27,7 +27,7 @@ public class QuoteServiceTest {
         Quote fetchedQuote = service.getQuoteByAlphaId(quote.getAlphanumericId());
         System.out.println(fetchedQuote.getQuoteFunding().getFundsRemaining());
         String workBatchId =
-            service.registerNewWork(quote, priceItem, new Date(), 0.0001,
+            service.registerNewWork(quote, priceItem, null, new Date(), 0.0001,
                                     "http://www.MercuryTesting","paramName","paramValue");
         System.out.println(fetchedQuote.getQuoteFunding().getFundsRemaining());
 

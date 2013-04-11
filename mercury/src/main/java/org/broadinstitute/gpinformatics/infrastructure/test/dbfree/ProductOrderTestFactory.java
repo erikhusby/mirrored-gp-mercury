@@ -30,10 +30,6 @@ public class ProductOrderTestFactory {
                 ProductTestFactory.createDummyProduct(workflowName.getWorkflowName(), productPartNumber);
         dummyProduct.setPrimaryPriceItem(exExPriceItem);
 
-        PriceItem standardExPriceItem = new PriceItem("StandardExQuoteId", PriceItem.PLATFORM_GENOMICS, PriceItem.CATEGORY_EXOME_SEQUENCING_ANALYSIS,
-                PriceItem.NAME_STANDARD_WHOLE_EXOME);
-        dummyProduct.getOptionalPriceItems().add(standardExPriceItem);
-
         List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>(sampleCount);
         for (int sampleIndex = 1; sampleIndex <= sampleCount; sampleIndex++) {
             String bspStock = "SM-" + String.valueOf(sampleIndex) + String.valueOf(sampleIndex + 1) +

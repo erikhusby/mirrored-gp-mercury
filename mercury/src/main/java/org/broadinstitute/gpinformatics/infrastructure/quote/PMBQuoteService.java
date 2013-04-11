@@ -20,14 +20,6 @@ public interface PMBQuoteService {
     public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException;
 
     /**
-     * Method tries to retrieve the quote using the alphaNumeric quoteId.
-     *
-     * @param numericId Numeric ID for the quote
-     * @return If the quote exists the return value will be a quote object. Otherwise null.
-     */
-    public Quote getQuoteByNumericId(String numericId) throws QuoteServerException, QuoteNotFoundException;
-
-    /**
      * Method to return all sources of funding from the quote server
      * @return The set of funding objects
      *

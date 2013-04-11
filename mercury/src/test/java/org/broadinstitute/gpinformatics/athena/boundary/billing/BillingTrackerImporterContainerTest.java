@@ -1,15 +1,17 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
-import org.testng.Assert;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.OrderBillSummaryStat;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -29,6 +31,12 @@ public class BillingTrackerImporterContainerTest extends Arquillian {
 
     @Inject
     private ProductOrderDao productOrderDao;
+
+    @Inject
+    private PriceItemDao priceItemDao;
+
+    @Inject
+    private PriceListCache priceListCache;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -67,7 +75,7 @@ public class BillingTrackerImporterContainerTest extends Arquillian {
     public void testImport() throws Exception {
 
         InputStream inputStream = null;
-        BillingTrackerImporter billingTrackerImporter = new BillingTrackerImporter(productOrderDao);
+        BillingTrackerImporter billingTrackerImporter = new BillingTrackerImporter(productOrderDao, priceItemDao, priceListCache);
 
         try {
             inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(BILLING_TRACKER_TEST_FILENAME);

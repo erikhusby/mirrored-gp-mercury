@@ -7,10 +7,11 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb;
+import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteWorkItemsExporter;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
-import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
@@ -42,10 +43,10 @@ public class BillingSessionActionBean extends CoreActionBean {
     private BillingSessionDao billingSessionDao;
 
     @Inject
-    private LedgerEntryDao ledgerEntryDao;
+    private ProductOrderDao productOrderDao;
 
     @Inject
-    private ProductOrderDao productOrderDao;
+    private PriceItemDao priceItemDao;
 
     @Inject
     private BSPUserList bspUserList;
@@ -114,7 +115,7 @@ public class BillingSessionActionBean extends CoreActionBean {
                 productOrderDao.findListByBusinessKeyList(productOrderBusinessKeys, Product, ResearchProject, Samples);
 
         Resolution downloadResolution =
-            ProductOrderActionBean.getTrackerForOrders(this, productOrders, bspUserList);
+            ProductOrderActionBean.getTrackerForOrders(this, productOrders, priceItemDao, bspUserList, priceListCache);
 
         // If there is no file to download, just pass on the errors.
         // FIXME: this logic is bogus, getTrackerForOrders doesn't return null on error.
@@ -144,7 +145,7 @@ public class BillingSessionActionBean extends CoreActionBean {
             outputStream = new FileOutputStream(tempFile);
 
             QuoteWorkItemsExporter exporter =
-                    new QuoteWorkItemsExporter(editSession, editSession.getQuoteImportItems());
+                    new QuoteWorkItemsExporter(editSession, getQuoteImportItems());
 
             exporter.writeToStream(outputStream, bspUserList);
             IOUtils.closeQuietly(outputStream);
@@ -173,6 +174,9 @@ public class BillingSessionActionBean extends CoreActionBean {
         }
     }
 
+    public List<QuoteImportItem> getQuoteImportItems() {
+        return editSession.getQuoteImportItems(priceListCache);
+    }
 
     @HandlesEvent("bill")
     public Resolution bill() {
