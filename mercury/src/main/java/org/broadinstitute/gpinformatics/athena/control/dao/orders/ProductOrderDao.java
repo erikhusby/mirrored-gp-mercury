@@ -283,7 +283,9 @@ public class ProductOrderDao extends GenericDao {
          * projects out three count queries along with the jira ticket and the order id:
          *
          *       1. The number of non abandoned samples that have ledger items with price items that
-         *          were primary or replacement on each pdo.
+         *          were primary or replacement on each pdo. Note that this could include items that are billed
+         *          positive and negative, leaving a 0 billed total. We still are calling this complete and that
+         *          was deemed OK.
          *       2. The number of abandoned samples on each pdo.
          *       3. The total number of samples on each pdo.
          */
@@ -297,7 +299,6 @@ public class ProductOrderDao extends GenericDao {
                            "      AND (ledger.price_item_type = '" + LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM.name() + "'" +
                            "             OR " +
                            "           ledger.price_item_type = '" + LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM.name() + "')" +
-                "" +
                            "    ) AS completed, " +
                            "    (SELECT count(pos.PRODUCT_ORDER_SAMPLE_ID) FROM athena.product_order_sample pos" +
                            "        WHERE pos.product_order = ord.product_order_id AND pos.DELIVERY_STATUS = 'ABANDONED' " +
@@ -307,7 +308,7 @@ public class ProductOrderDao extends GenericDao {
                            "    ) AS total" +
                            " FROM athena.PRODUCT_ORDER ord ";
 
-        // Add the business key, if we are only doing one
+        // Add the business key, if we are only doing one.
         if (productOrderKeys != null) {
             sqlString += " AND ord.JIRA_TICKET_KEY in (:businessKeys)";
         }
@@ -339,8 +340,8 @@ public class ProductOrderDao extends GenericDao {
 
     /**
      * Find all PDOs modified after a specified date.
-     * @param modifiedAfter date to compare
-     * @return list of PDOs
+     * @param modifiedAfter date to compare.
+     * @return list of PDOs.
      */
     public List<ProductOrder> findModifiedAfter(final Date modifiedAfter) {
         return findAll(ProductOrder.class, new GenericDaoCallback<ProductOrder>() {

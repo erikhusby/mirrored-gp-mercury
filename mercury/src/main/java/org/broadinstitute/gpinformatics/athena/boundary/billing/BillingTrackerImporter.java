@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
 import net.sourceforge.stripes.validation.SimpleError;
 import net.sourceforge.stripes.validation.ValidationErrors;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.*;
@@ -174,7 +175,7 @@ public class BillingTrackerImporter {
             String currentSampleName = row.getCell(BillingTrackerUtils.SAMPLE_ID_COL_POS).getStringCellValue();
             Map<BillableRef, OrderBillSummaryStat> pdoSummaryStatsMap  = sheetSummaryMap.get(rowPdoIdStr);
 
-            // For a newly found PdoId create a new map for it and add it to the sheet summary map
+            // For a newly found PDO Id, create a new map for it and add it to the sheet summary map
             if (!currentPdoId.equalsIgnoreCase(rowPdoIdStr) && pdoSummaryStatsMap == null) {
                 pdoSummaryStatsMap = new HashMap<BillableRef, OrderBillSummaryStat>(maxNumberOfProductsInSheet);
                 sheetSummaryMap.put(rowPdoIdStr, pdoSummaryStatsMap);
@@ -193,16 +194,23 @@ public class BillingTrackerImporter {
                 product = productOrder.getProduct();
                 samples = productOrder.getSamples();
                 if (priceItemMap == null) {
-                    priceItemMap = BillingTrackerUtils.createPriceItemMapForSheet(trackerColumnInfos, product, priceItemDao, priceListCache);
+                    priceItemMap =
+                        BillingTrackerUtils.createPriceItemMapForSheet(
+                            trackerColumnInfos, product, priceItemDao, priceListCache);
                 }
             }
 
-            // The ordwr in the spreadsheet is the same as returned in the productOrder !
+            // There must always be a sample and a product order, so go to the next line, if this does not get one.
+            if ((CollectionUtils.isEmpty(samples)) || (productOrder == null)) {
+                break;
+            }
+
+            // The order in the spreadsheet is the same as returned in the productOrder !
             if (sampleIndexInOrder >= samples.size()) {
                 String error = "Sample " + currentSampleName + " on row " +  (row.getRowNum() + 1 ) +
                         " of spreadsheet "  + primaryProductPartNumber +
-                        " is not in the expected position. The Order <" + productOrder.getTitle() + " (Id: " + currentPdoId +
-                        ")> has only " + samples.size() + " samples.";
+                        " is not in the expected position. The Order <" + productOrder.getTitle() +
+                        " (Id: " + currentPdoId + ")> has only " + samples.size() + " samples.";
                 addError(error);
                 return null;
             }
@@ -217,7 +225,9 @@ public class BillingTrackerImporter {
                 return null;
             }
 
-            String error = parseRowForSummaryMap(row, pdoSummaryStatsMap, trackerColumnInfos, product, productOrderSample, priceItemMap);
+            String error =
+                parseRowForSummaryMap(
+                    row, pdoSummaryStatsMap, trackerColumnInfos, product, productOrderSample, priceItemMap);
             if (!StringUtils.isBlank(error)) {
                 addError(error);
                 return null;

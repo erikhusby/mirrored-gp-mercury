@@ -10,7 +10,7 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * A flattened structure of information needed to import an item into the quote server
+ * A flattened structure of information needed to import an item into the quote server.
  */
 public class QuoteImportItem {
     private final String quoteId;
@@ -72,7 +72,7 @@ public class QuoteImportItem {
     }
 
     public String getBillingMessage() {
-        // Since the quote message will apply to all items, just pull the message off the first item
+        // Since the quote message will apply to all items, just pull the message off the first item.
         return ledgerItems.get(0).getBillingMessage();
     }
 
@@ -132,7 +132,7 @@ public class QuoteImportItem {
         Product product = getProduct();
 
         // If this is optional, then return the primary as the 'is replacing.' This is comparing the quote price item
-        // to the values on the product's price item, so do the item by item compare
+        // to the values on the product's price item, so do the item by item compare.
         for (org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem optional : product.getReplacementPriceItems(priceListCache)) {
             if (optional.isMercuryPriceItemEqual(priceItem)) {
                 return product.getPrimaryPriceItem();
@@ -149,7 +149,7 @@ public class QuoteImportItem {
         } else if (getProduct().getPrimaryPriceItem().getName().equals(getPriceItem().getName())) {
             type = LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM;
         } else {
-            // If it is not the primary or replacement right now, it has to be considered add on
+            // If it is not the primary or replacement right now, it has to be considered add on.
             type = LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM;
         }
 

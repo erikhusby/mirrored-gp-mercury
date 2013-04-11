@@ -74,7 +74,7 @@ public class BillingSession implements Serializable {
      * @param billedDate If the desire is to set this as already billed (if something was billed arleady
      *                   in the quote server). If null, this is left open to bill and end.
      * @param createdBy The user who is creating this.
-     * @param ledgerItems Allthe ledger entries that will be added to this session
+     * @param ledgerItems All the ledger entries that will be added to this session.
      */
     BillingSession(@Nullable Date billedDate, @Nonnull Long createdBy, Set<LedgerEntry> ledgerItems) {
         this(createdBy, ledgerItems);
@@ -183,7 +183,7 @@ public class BillingSession implements Serializable {
     }
 
     public List<String> getProductOrderBusinessKeys() {
-        // Get all unique product Orders across all ledger items
+        // Get all unique product Orders across all ledger items.
         Set<ProductOrder> productOrders = new HashSet<ProductOrder>();
         for (LedgerEntry ledgerEntry : ledgerEntryItems) {
             productOrders.add(ledgerEntry.getProductOrderSample().getProductOrder());
@@ -214,7 +214,7 @@ public class BillingSession implements Serializable {
     }
 
     /**
-     * The session type supplies the method for rolling up a date into an appropriate bucket
+     * The session type supplies the method for rolling up a date into an appropriate bucket.
      */
     public static enum BillingSessionType {
         ROLLUP_SEMI_MONTHLY(new DateRollupCalculator() {
@@ -247,7 +247,7 @@ public class BillingSession implements Serializable {
         });
 
         private static Date endOfDay(Calendar endOfPeriod) {
-            // set to end of day
+            // Set the calendar item to be the last millisecond of the day so that all dates on that day will be the same.
             endOfPeriod.set(Calendar.HOUR_OF_DAY, 23);
             endOfPeriod.set(Calendar.MINUTE, 59);
             endOfPeriod.set(Calendar.SECOND, 59);

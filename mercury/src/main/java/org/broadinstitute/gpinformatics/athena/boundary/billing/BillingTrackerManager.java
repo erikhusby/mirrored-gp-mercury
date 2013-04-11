@@ -32,10 +32,10 @@ public class BillingTrackerManager {
     private static final Log logger = LogFactory.getLog(BillingTrackerManager.class);
 
     @Inject
-    LedgerEntryDao ledgerEntryDao;
+    private LedgerEntryDao ledgerEntryDao;
 
     @Inject
-    PriceItemDao priceItemDao;
+    private PriceItemDao priceItemDao;
 
     @Inject
     private PriceListCache priceListCache;

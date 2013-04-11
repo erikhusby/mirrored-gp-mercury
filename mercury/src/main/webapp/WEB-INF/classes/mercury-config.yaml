@@ -264,7 +264,7 @@ mercury:
       gap:      DEV
       jira:     TEST
       quote:    QA
-      squid:    QA
+      squid:    DEV
       thrift:   QA
       deckMsgs: DEV
       datawhEtl: DEV

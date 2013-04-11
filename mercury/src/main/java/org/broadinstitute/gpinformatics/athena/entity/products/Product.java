@@ -13,7 +13,7 @@ import java.io.Serializable;
 import java.util.*;
 
 /**
- * Core entity for Products.
+ * This entity represents all the stored information for a Mercury Project.
  *
  * @author mcovarr
  *
@@ -56,7 +56,8 @@ public class Product implements Serializable, Comparable<Product> {
     private String deliverables;
 
     /**
-     * Whether this Product should show as a top-level product */
+     * Whether this Product should show as a top-level product .
+     **/
     private boolean topLevelProduct;
 
     /**
@@ -73,8 +74,9 @@ public class Product implements Serializable, Comparable<Product> {
 
     private boolean pdmOrderableOnly;
 
+    // This is used for edit to keep track of changes to the object.
     @Transient
-    private String originalPartNumber;   // This is used for edit to keep track of changes to the object.
+    private String originalPartNumber;
 
     public static final String DEFAULT_WORKFLOW_NAME = "";
     public static final Boolean DEFAULT_TOP_LEVEL = Boolean.TRUE;
@@ -85,7 +87,7 @@ public class Product implements Serializable, Comparable<Product> {
         originalPartNumber = partNumber;
     }
 
-    /** True if this product/add-on supports automated billing. */
+    // True if this product/add-on supports automated billing.
     @Column(name = "USE_AUTOMATED_BILLING", nullable = false)
     private boolean useAutomatedBilling;
 
@@ -97,9 +99,7 @@ public class Product implements Serializable, Comparable<Product> {
     @AuditJoinTable(name = "product_requirement_join_aud")
     private List<BillingRequirement> requirements;
 
-    /**
-     * Allowable Material Types for the product.
-     */
+    // Allowable Material Types for the product.
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     @JoinTable(schema = "athena", name = "PRODUCT_MATERIAL_TYPES",
             joinColumns=@JoinColumn(name="PRODUCT_ID"),
@@ -107,9 +107,7 @@ public class Product implements Serializable, Comparable<Product> {
     )
     private Set<MaterialType> allowableMaterialTypes = new HashSet<MaterialType>();
 
-    /**
-     * The onRisk criteria that are associated with the Product. When creating new, default to empty list
-     */
+    // The onRisk criteria that are associated with the Product. When creating new, default to empty list.
     @OneToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     @JoinColumn(name = "product", nullable = true)
     @AuditJoinTable(name = "product_risk_criteria_join_aud")
@@ -231,7 +229,7 @@ public class Product implements Serializable, Comparable<Product> {
 
             return replacementItemList.getPriceItems();
         } catch (Throwable t) {
-            // Since this is coming from the quote server, we will just show nothing when there are any errors
+            // Since this is coming from the quote server, we will just show nothing when there are any errors.
             return Collections.emptyList();
         }
     }
@@ -405,10 +403,10 @@ public class Product implements Serializable, Comparable<Product> {
         List<String> duplicates = new ArrayList<String> ();
         Set<String> priceItemNames = new HashSet<String> ();
 
-        // Add the duplicates for this product
+        // Add the duplicates for this product/
         addProductDuplicates(duplicates, priceItemNames);
 
-        // Add the duplicates for addOns
+        // Add the duplicates for addOns/
         for (Product addOn : addOns) {
             addOn.addProductDuplicates(duplicates, priceItemNames);
         }
@@ -422,7 +420,7 @@ public class Product implements Serializable, Comparable<Product> {
 
     private void addProductDuplicates(List<String> duplicates, Set<String> priceItemNames) {
         if (primaryPriceItem != null) {
-            // No price items yet, so can just add it
+            // No price items yet, so can just add it/
             priceItemNames.add(primaryPriceItem.getName());
         }
     }
@@ -443,6 +441,7 @@ public class Product implements Serializable, Comparable<Product> {
 
     /**
      * Converts cycle times from days to seconds.
+     *
      * @return the number of seconds.
      */
     public static int convertCycleTimeDaysToSeconds(Integer cycleTimeDays) {
@@ -450,10 +449,9 @@ public class Product implements Serializable, Comparable<Product> {
     }
 
     /**
-     * Converts cycle times from seconds to days.
-     * This method rounds down to the nearest day
+     * Converts cycle times from seconds to days. This method rounds down to the nearest day.
      *
-     * @param cycleTimeSeconds The cycle time in seconds
+     * @param cycleTimeSeconds The cycle time in seconds/
      *
      * @return the number of days.
      */

@@ -30,7 +30,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
     /**
      * Non CDI constructor, all dependencies must be explicitly initialized!
      *
-     * @param quoteConfig The configuration
+     * @param quoteConfig The configuration.
      */
     public QuoteServiceImpl(QuoteConfig quoteConfig) {
         this.quoteConfig = quoteConfig;
@@ -63,7 +63,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
 
         SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
 
-        // see https://iwww.broadinstitute.org/blogs/quote/?page_id=272 for details
+        // see https://iwww.broadinstitute.org/blogs/quote/?page_id=272 for details.
         String url = url(Endpoint.REGISTER_WORK);
         MultivaluedMap<String, String> params = new MultivaluedMapImpl();
 
@@ -71,12 +71,12 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         params.add("platform_name", priceItem.getPlatformName());
         params.add("category_name", priceItem.getCategoryName());
 
-        // Handle replacement item logic
+        // Handle replacement item logic.
         if (itemIsReplacing == null) {
-            // This is not a replacement item, so just send the price item through
+            // This is not a replacement item, so just send the price item through.
             params.add("price_item_name", priceItem.getName());
         } else {
-            // This IS a replacement item, so send the original price through and the real price item as a replacement
+            // This IS a replacement item, so send the original price through and the real price item as a replacement.
             params.add("price_item_name", itemIsReplacing.getName());
             params.add("replacement_item_name", priceItem.getName());
         }
@@ -92,22 +92,20 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         resource.accept(MediaType.TEXT_PLAIN);
         resource.queryParams(params);
         ClientResponse response = resource.queryParams(params).get(ClientResponse.class);
-
-        return registerNewWork(response, quote, priceItem, numWorkUnits, callbackUrl, callbackParameterName, callbackParameterValue);
-    }
-
-    /**
-     * Package visibility for negative testing
-     *
-     * @return The work item id returned (as a string)
-     */
-    String registerNewWork(@Nonnull ClientResponse response, Quote quote, PriceItem priceItem,
-                           double numWorkUnits, String callbackUrl, String callbackParameterName,
-                           String callbackParameterValue) {
-
         if (response == null) {
             throw newQuoteServerFailureException(quote, priceItem, numWorkUnits);
         }
+
+        return registerNewWork(response, quote, priceItem, numWorkUnits);
+    }
+
+    /**
+     * Package visibility for negative testing.
+     *
+     * @return The work item id returned (as a string).
+     */
+    String registerNewWork(@Nonnull ClientResponse response, Quote quote, PriceItem priceItem, double numWorkUnits) {
+
         if (response.getClientResponseStatus() != ClientResponse.Status.OK) {
             throw new RuntimeException(
                     "Quote server returned " + response.getClientResponseStatus() + ".  registering work for "
@@ -210,15 +208,16 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         return getSingleQuoteById(alphaId, url(Endpoint.SINGLE_QUOTE));
     }
 
-    /*
-    * private method to get a single quote.
-    * Can be overridden by mocks.
-    * @param id
-    * @param queryUrl
-    * @return
-    * @throws QuoteNotFoundException
-    * @throws QuoteServerException
-    */
+    /**
+    * private method to get a single quote. Can be overridden by mocks.
+    *
+    * @param id The quote identifier.
+    * @param url The url to use for the quote server.
+     *
+    * @return The quote found.
+    * @throws QuoteNotFoundException Error when quote is not found.
+    * @throws QuoteServerException Any other error with the quote server.
+    **/
     private Quote getSingleQuoteById(String id, String url) throws QuoteNotFoundException, QuoteServerException {
         Quote quote;
         if (StringUtils.isEmpty(id)) {

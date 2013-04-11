@@ -45,8 +45,7 @@ public class BillingSessionFixupTest extends Arquillian {
     }
 
     /**
-     * Largely copy/pasted from #backfillLedgerQuotes above, used to null out ledger quote IDs when we
-     * discover we didn't assign them properly before and need to revise the assignments.
+     * create a completed billing session.
      */
     @Test(enabled = false)
     public void createCompleteBillingSession() {
@@ -57,7 +56,7 @@ public class BillingSessionFixupTest extends Arquillian {
         // The user is needed for annotating the session
         BspUser user = userList.getByUsername("hrafal");
 
-        // Add the ledger entries that we want to this billing session
+        // Add the ledger entries that we want to this billing session.
         Set<LedgerEntry> ledgerItems =
             ledgerEntryDao.findWithoutBillingSessionByOrderList(Collections.singletonList("PDO-222"));
 
@@ -68,7 +67,7 @@ public class BillingSessionFixupTest extends Arquillian {
             entry.setQuoteId("DNA32K");
         }
 
-        // save the session with the appropriate id, all ledger entries get the billing session tied to it.
+        // Save the session with the appropriate id, all ledger entries get the billing session tied to it.
         BillingSession billingSession = new BillingSession(billedDate, user.getUserId(), ledgerItems);
 
         billingSessionDao.persist(billingSession);
@@ -78,12 +77,12 @@ public class BillingSessionFixupTest extends Arquillian {
     /**
      * This adds the semi-monthly rollup date type to the sessions that were billed that way (everything in the past).
      */
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void addBillingSessionType() {
         List<BillingSession> sessions  = billingSessionDao.findAll();
 
         for (BillingSession session : sessions) {
-            // If there is a billed date but no type, the type must be old style 15 day billing
+            // If there is a billed date but no type, the type must be old style 15 day billing.
             if ((session.getBilledDate() != null) && (session.getBillingSessionType() == null)) {
                 session.setBillingSessionType(BillingSession.BillingSessionType.ROLLUP_SEMI_MONTHLY);
             }
