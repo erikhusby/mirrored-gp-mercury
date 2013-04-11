@@ -7,7 +7,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.CriteriaInClauseCreator;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.JPASplitter;
 import org.hibernate.SQLQuery;
@@ -26,7 +26,6 @@ import javax.persistence.criteria.JoinType;
 import javax.persistence.criteria.ListJoin;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -287,18 +286,18 @@ public class ProductOrderDao extends GenericDao {
         final CriteriaQuery<ProductOrder> query = cb.createQuery(ProductOrder.class);
         query.distinct(true);
 
-        final Root<ProductOrder> root = query.from(ProductOrder.class);
+        Root<ProductOrder> root = query.from(ProductOrder.class);
         final ListJoin<ProductOrder,ProductOrderSample> sampleListJoin = root.join(ProductOrder_.samples);
 
         return JPASplitter.runCriteriaQuery(
-            Arrays.asList(barcodes),
-            new CriteriaInClauseCreator<String>() {
-                @Override
-                public Query createCriteriaInQuery(Collection<String> parameterList) {
-                    query.where(sampleListJoin.get(ProductOrderSample_.sampleName).in(parameterList));
-                    return getEntityManager().createQuery(query);
+                Arrays.asList(barcodes),
+                new CriteriaInClauseCreator<String>() {
+                    @Override
+                    public Query createCriteriaInQuery(Collection<String> parameterList) {
+                        query.where(sampleListJoin.get(ProductOrderSample_.sampleName).in(parameterList));
+                        return getEntityManager().createQuery(query);
+                    }
                 }
-            }
         );
     }
 }
