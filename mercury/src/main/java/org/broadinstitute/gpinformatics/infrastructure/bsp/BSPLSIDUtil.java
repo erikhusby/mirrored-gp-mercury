@@ -9,6 +9,11 @@ import java.util.Map;
  */
 public class BSPLSIDUtil {
 
+    public static String lsidToBareId(String lsid) {
+        String [] chunks = lsid.split(":");
+        return chunks[chunks.length - 1];
+    }
+
     /**
      * Return a mapping from each LSID in the input collection to a bare Sample ID
      * (ID without an SM- or SP- prefix) suitable for feeding to the runSampleSearch method
@@ -22,11 +27,9 @@ public class BSPLSIDUtil {
         Map<String, String> ret = new HashMap<String, String>();
 
         for (String lsid : lsids) {
-            String [] chunks = lsid.split(":");
-            ret.put(lsid, chunks[chunks.length-1]);
+            ret.put(lsid, lsidToBareId(lsid));
         }
 
         return ret;
-
     }
 }

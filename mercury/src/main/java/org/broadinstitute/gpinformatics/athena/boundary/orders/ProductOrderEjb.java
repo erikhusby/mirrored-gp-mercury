@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.work.MessageDataValue;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPLSIDUtil;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
@@ -166,7 +167,14 @@ public class ProductOrderEjb {
      * </ol>
      */
     @Nonnull
-    public ProductOrderSample mapAliquotIdToSample(@Nonnull ProductOrder order, @Nonnull String aliquotId) {
+    public ProductOrderSample mapAliquotIdToSample(@Nonnull ProductOrder order, @Nonnull String aliquotId)
+            throws Exception {
+
+        // Convert aliquotId to BSP ID, if it's an LSID.
+        if (!ProductOrderSample.isInBspFormat(aliquotId)) {
+            aliquotId = BSPLSIDUtil.lsidToBareId(aliquotId);
+        }
+
         for (ProductOrderSample sample : order.getSamples()) {
             if (aliquotId.equals(sample.getAliquotId())) {
                 return sample;
@@ -175,16 +183,15 @@ public class ProductOrderEjb {
 
         String sampleName = sampleDataFetcher.getStockIdForAliquotId(aliquotId);
         if (sampleName == null) {
-            throw new RuntimeException("Couldn't find a sample for aliquot: " + aliquotId);
+            throw new Exception("Couldn't find a sample for aliquot: " + aliquotId);
         }
         for (ProductOrderSample sample : order.getSamples()) {
             if (sample.getSampleName().equals(sampleName) && sample.getAliquotId() == null) {
                 sample.setAliquotId(aliquotId);
-                productOrderSampleDao.persist(sample);
                 return sample;
             }
         }
-        throw new RuntimeException(
+        throw new Exception(
                 MessageFormat.format("Could not bill PDO {0}, Sample {1}, Aliquot {2}, all" +
                                      " samples have been assigned aliquots already.",
                         order.getBusinessKey(), sampleName, aliquotId));
@@ -199,7 +206,8 @@ public class ProductOrderEjb {
      * @param completedDate the date completed to use when billing
      * @param data used to check and see if billing can occur
      */
-    public void autoBillSample(ProductOrder order, String aliquotId, Date completedDate, Map<String, MessageDataValue> data) {
+    public void autoBillSample(ProductOrder order, String aliquotId, Date completedDate, Map<String, MessageDataValue> data)
+            throws Exception {
 
         Product product = order.getProduct();
 
@@ -207,8 +215,8 @@ public class ProductOrderEjb {
             log.error(MessageFormat.format("Can''t auto-bill order {0} because it''s currently locked out.",
                     order.getJiraTicketKey()));
             // Return early to avoid marking the message as processed.
-            // TODO: This code should be wrapped in a beginLockout()/endLockout() block to avoid collisions with
-            // a mercury user starting a billing session during this process.
+            // TODO This code should be wrapped in a beginLockout()/endLockout() block to avoid collisions with
+            // TODO a mercury user starting a billing session during this process.
             return;
         }
 
