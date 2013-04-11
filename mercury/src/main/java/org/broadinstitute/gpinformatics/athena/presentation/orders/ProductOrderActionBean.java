@@ -762,6 +762,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             issue.setCustomFieldUsingTransition(ProductOrder.JiraField.SAMPLE_IDS,
                     editOrder.getSampleString(),
                     ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
+            productOrderEjb.updateOrderStatus(editOrder.getJiraTicketKey());
         }
         return createViewResolution();
     }
@@ -806,6 +807,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
         if (!selectedProductOrderSamples.isEmpty()) {
             productOrderEjb.abandonSamples(editOrder.getJiraTicketKey(), selectedProductOrderSamples);
+            productOrderEjb.updateOrderStatus(editOrder.getJiraTicketKey());
         }
         return createViewResolution();
     }
@@ -825,6 +827,8 @@ public class ProductOrderActionBean extends CoreActionBean {
                 ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
 
         handleSamplesAdded(samplesToAdd);
+
+        productOrderEjb.updateOrderStatus(editOrder.getJiraTicketKey());
 
         return createViewResolution();
     }

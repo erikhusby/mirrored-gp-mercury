@@ -4,8 +4,11 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 
 import java.text.MessageFormat;
+import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * A flattened structure of information needed to import an item into the quote server
@@ -98,5 +101,16 @@ public class QuoteImportItem {
         for (LedgerEntry ledgerEntry : ledgerItems) {
             ledgerEntry.setQuoteId(quoteId);
         }
+    }
+
+    /**
+     * @return a list of keys of all PDOs that are affected by this collection of ledger items.
+     */
+    public Collection<String> getOrderKeys() {
+        Set<String> keys = new HashSet<String>();
+        for (LedgerEntry entry : ledgerItems) {
+            keys.add(entry.getProductOrderSample().getProductOrder().getJiraTicketKey());
+        }
+        return keys;
     }
 }

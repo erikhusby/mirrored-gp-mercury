@@ -619,6 +619,25 @@ public class ProductOrderEjb {
     }
 
     /**
+     * Update the order status of a list of PDOs, based on the rules in {@link ProductOrder#updateOrderStatus}.  Any
+     * status changes are pushed to JIRA as well, with a comment about the change and the current user.
+     *
+     * @param jiraTicketKeys the keys to update
+     * @return true if any PDO status was changed
+     * @throws NoSuchPDOException
+     * @throws IOException
+     * @throws JiraIssue.NoTransitionException
+     */
+    public boolean updateOrderStatus(Collection<String> jiraTicketKeys)
+            throws NoSuchPDOException, IOException, JiraIssue.NoTransitionException {
+        boolean anyChanged = false;
+        for (String key : jiraTicketKeys) {
+            anyChanged |= updateOrderStatus(key);
+        }
+        return anyChanged;
+    }
+
+    /**
      * Update the order status of a PDO, based on the rules in {@link ProductOrder#updateOrderStatus}.  Any status
      * changes are pushed to JIRA as well, with a comment about the change and the current user.
      *
