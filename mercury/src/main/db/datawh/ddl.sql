@@ -178,6 +178,7 @@ CREATE TABLE product_order_sample (
   sample_position NUMERIC(19) NOT NULL,
   on_risk CHAR(1) DEFAULT 'F' NOT NULL CHECK (on_risk IN ('T','F')),
   is_billed CHAR(1) DEFAULT 'F' NOT NULL CHECK (on_risk IN ('T','F')),
+  is_abandoned CHAR(1) generated always as (case when delivery_status = 'ABANDONED' then 'T' else 'F' end) virtual,
   etl_date DATE NOT NULL
 );
 
