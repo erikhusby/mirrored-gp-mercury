@@ -166,6 +166,7 @@ public class LedgerEntry implements Serializable {
         return new EqualsBuilder()
                 .append(productOrderSample, castOther.getProductOrderSample())
                 .append(priceItem, castOther.getPriceItem())
+                .append(priceItemType, castOther.getPriceItemType())
                 .append(quoteId, castOther.getQuoteId())
                 .append(billingSession, castOther.getBillingSession()).isEquals();
     }
@@ -175,6 +176,7 @@ public class LedgerEntry implements Serializable {
         return new HashCodeBuilder()
                 .append(productOrderSample)
                 .append(priceItem)
+                .append(priceItemType)
                 .append(quoteId)
                 .append(billingSession).toHashCode();
     }
