@@ -31,9 +31,11 @@ import java.util.Set;
  */
 public class JiraCommentUtil {
 
-    private JiraService jiraService;
-    private AppConfig appConfig;
-    private BSPUserList bspUserList;
+    private final JiraService jiraService;
+
+    private final AppConfig appConfig;
+
+    private final BSPUserList bspUserList;
 
     @Inject
     public JiraCommentUtil(JiraService jiraService, AppConfig appConfig, BSPUserList bspUserList) {
@@ -112,11 +114,11 @@ public class JiraCommentUtil {
             try {
                 JiraIssue jiraIssue = ticket.getJiraDetails();
                 Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
-                String fieldValue = (String) jiraIssue.getFieldValue(submissionFields.get("LIMS Activity Stream").getJiraCustomFieldId());
-                if(fieldValue == null) {
+                String fieldValue = (String) jiraIssue.getFieldValue(submissionFields.get(LabBatch.RequiredSubmissionFields.LIMS_ACTIVITY_STREAM.getFieldName()).getJiraCustomFieldId());
+                if (fieldValue == null) {
                     fieldValue = "";
                 }
-                fieldValue = new StringBuilder().append(fieldValue).append("{html}").append(message).append("<br/>{html}").toString();
+                fieldValue = fieldValue + "{html}" + message + "<br/>{html}";
 
                 CustomField mercuryUrlField = new CustomField(
                         submissionFields, LabBatch.RequiredSubmissionFields.LIMS_ACTIVITY_STREAM, fieldValue);
@@ -145,12 +147,7 @@ public class JiraCommentUtil {
      * @param message the text of the message
      * @param vessel  the container used in the operation
      */
-    public void postUpdate(String message,
-                           LabVessel vessel) {
-        Collection<LabVessel> vessels = new HashSet<LabVessel>();
-        vessels.add(vessel);
-        postUpdate(message, vessels);
-
+    public void postUpdate(String message, LabVessel vessel) {
+        postUpdate(message, Collections.singleton(vessel));
     }
-
 }

@@ -31,7 +31,11 @@ import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
-import org.broadinstitute.gpinformatics.athena.entity.orders.*;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -209,7 +213,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private String abandonDisabledReason;
 
     // This is used to determine whether a special warning message needs to be confirmed before normal abandon.
-    private boolean abandonWarning = false;
+    private boolean abandonWarning;
     /**
      * Single {@link ProductOrderListEntry} for the view page, gives us billing session information.
      */
@@ -621,7 +625,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         for (String businessKey : selectedProductOrderBusinessKeys) {
             try {
                 productOrderEjb.abandon(businessKey, businessKey + " abandoned by " + userBean.getLoginUserName());
-            } catch (ProductOrderEjb.NoTransitionException e) {
+            } catch (JiraIssue.NoTransitionException e) {
                 throw new RuntimeException(e);
             } catch (ProductOrderEjb.NoSuchPDOException e) {
                 throw new RuntimeException(e);
@@ -766,7 +770,8 @@ public class ProductOrderActionBean extends CoreActionBean {
             issue.addComment(MessageFormat.format("{0} deleted samples: {1}.", userBean.getLoginUserName(), nameList));
             issue.setCustomFieldUsingTransition(ProductOrder.JiraField.SAMPLE_IDS,
                     editOrder.getSampleString(),
-                    ProductOrder.TransitionStates.DeveloperEdit.getStateName());
+                    ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
+            productOrderEjb.updateOrderStatus(editOrder.getJiraTicketKey());
         }
         return createViewResolution();
     }
@@ -811,6 +816,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
         if (!selectedProductOrderSamples.isEmpty()) {
             productOrderEjb.abandonSamples(editOrder.getJiraTicketKey(), selectedProductOrderSamples);
+            productOrderEjb.updateOrderStatus(editOrder.getJiraTicketKey());
         }
         return createViewResolution();
     }
@@ -827,9 +833,11 @@ public class ProductOrderActionBean extends CoreActionBean {
         issue.addComment(MessageFormat.format("{0} added samples: {1}.", userBean.getLoginUserName(), nameList));
         issue.setCustomFieldUsingTransition(ProductOrder.JiraField.SAMPLE_IDS,
                 editOrder.getSampleString(),
-                ProductOrder.TransitionStates.DeveloperEdit.getStateName());
+                ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
 
         handleSamplesAdded(samplesToAdd);
+
+        productOrderEjb.updateOrderStatus(editOrder.getJiraTicketKey());
 
         return createViewResolution();
     }

@@ -216,7 +216,7 @@ public class ProductOrder implements Serializable {
      * @param businessKey the key to convert
      * @return either a JIRA ID or a product order ID.
      */
-    public static JiraOrId convertBusinessKeyToJiraOrId(String businessKey) {
+    public static JiraOrId convertBusinessKeyToJiraOrId(@Nonnull String businessKey) {
         if (businessKey.startsWith(DRAFT_PREFIX)) {
             return new JiraOrId(Long.parseLong(businessKey.substring(DRAFT_PREFIX.length())), null);
         }
@@ -1001,7 +1001,8 @@ public class ProductOrder implements Serializable {
         SAMPLE_IDS("Sample IDs"),
         REPORTER("Reporter"),
         FUNDING_DEADLINE("Funding Deadline"),
-        PUBLICATION_DEADLINE("Publication Deadline");
+        PUBLICATION_DEADLINE("Publication Deadline"),
+        STATUS("Status");
 
         private final String fieldName;
 
@@ -1024,24 +1025,6 @@ public class ProductOrder implements Serializable {
         @Override
         public String getDisplayName() {
             return name();
-        }
-    }
-
-    public enum TransitionStates {
-        Complete("Order Complete"),
-        Cancel("Cancel"),
-        StartProgress("Start Progress"),
-        PutOnHold("Put On Hold"),
-        DeveloperEdit("Developer Edit");
-
-        private final String stateName;
-
-        private TransitionStates(String stateName) {
-            this.stateName = stateName;
-        }
-
-        public String getStateName() {
-            return stateName;
         }
     }
 
@@ -1086,16 +1069,19 @@ public class ProductOrder implements Serializable {
             // We only support automatic status transitions from Submitted or Complete states.
             return false;
         }
-        OrderStatus oldStatus = orderStatus;
-        orderStatus = OrderStatus.Completed;
+        OrderStatus newStatus = OrderStatus.Completed;
         for (ProductOrderSample sample : samples) {
             if (sample.getDeliveryStatus() != ProductOrderSample.DeliveryStatus.ABANDONED && !sample.isBilled()) {
                 // Found an incomplete item.
-                orderStatus = OrderStatus.Submitted;
+                newStatus = OrderStatus.Submitted;
                 break;
             }
         }
 
-        return orderStatus != oldStatus;
+        if (newStatus != orderStatus) {
+            orderStatus = newStatus;
+            return true;
+        }
+        return false;
     }
 }

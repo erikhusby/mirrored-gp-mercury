@@ -8,7 +8,6 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.CriteriaInClauseCreator;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.JPASplitter;
@@ -28,7 +27,6 @@ import javax.persistence.criteria.JoinType;
 import javax.persistence.criteria.ListJoin;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -93,7 +91,7 @@ public class ProductOrderDao extends GenericDao {
      *
      * @return The matching order
      */
-    public ProductOrder findByBusinessKey(String key) {
+    public ProductOrder findByBusinessKey(@Nonnull String key) {
         ProductOrder.JiraOrId jiraOrId = ProductOrder.convertBusinessKeyToJiraOrId(key);
         if (jiraOrId.jiraTicketKey != null) {
             return findSingle(ProductOrder.class, ProductOrder_.jiraTicketKey, jiraOrId.jiraTicketKey);
@@ -124,49 +122,6 @@ public class ProductOrderDao extends GenericDao {
     public List<ProductOrder> findListByBusinessKeyList(List<String> businessKeyList, FetchSpec... fs) {
         return findListByList(ProductOrder.class, ProductOrder_.jiraTicketKey, businessKeyList,
                 new ProductOrderDaoCallback(fs));
-    }
-
-    /**
-     * Find ProductOrders by Research Project
-     *
-     * @param researchProject The project
-     *
-     * @return The matching list of orders
-     */
-    public List<ProductOrder> findByResearchProject(ResearchProject researchProject) {
-        return findList(ProductOrder.class, ProductOrder_.researchProject, researchProject);
-    }
-
-    /**
-     * Find a productOrder by its containing ResearchProject and title
-     *
-     * @param orderTitle      The title to look up
-     * @param researchProject The project
-     *
-     * @return The order that matches the project and title
-     */
-    public ProductOrder findByResearchProjectAndTitle(@Nonnull ResearchProject researchProject,
-                                                      @Nonnull String orderTitle) {
-
-        EntityManager entityManager = getEntityManager();
-        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
-
-        CriteriaQuery<ProductOrder> criteriaQuery = criteriaBuilder.createQuery(ProductOrder.class);
-
-        List<Predicate> predicateList = new ArrayList<Predicate>();
-
-        Root<ProductOrder> productOrderRoot = criteriaQuery.from(ProductOrder.class);
-        predicateList.add(criteriaBuilder.equal(productOrderRoot.get(ProductOrder_.researchProject), researchProject));
-        predicateList.add(criteriaBuilder.equal(productOrderRoot.get(ProductOrder_.title), orderTitle));
-
-        Predicate[] predicates = new Predicate[predicateList.size()];
-        criteriaQuery.where(predicateList.toArray(predicates));
-
-        try {
-            return entityManager.createQuery(criteriaQuery).getSingleResult();
-        } catch (NoResultException ignored) {
-            return null;
-        }
     }
 
     public List<ProductOrder> findByWorkflowName(@Nonnull String workflowName) {
@@ -215,32 +170,6 @@ public class ProductOrderDao extends GenericDao {
 
     public List<ProductOrder> findAll(FetchSpec... fetchSpecs) {
         return findAll(ProductOrder.class, new ProductOrderDaoCallback(fetchSpecs));
-    }
-
-    /**
-     * Find all the ProductOrders for a person who is
-     * associated ( as the creator ) with the ProductOrders
-     *
-     * @param personId The person to filter on
-     *
-     * @return The products for this person
-     */
-    public List<ProductOrder> findByCreatedPersonId(@Nonnull Long personId) {
-
-        return findList(ProductOrder.class, ProductOrder_.createdBy, personId);
-    }
-
-    /**
-     * Find all the ProductOrders for a person who is
-     * associated ( as the modifier ) with the ProductOrders
-     *
-     * @param personId The person to filter on
-     *
-     * @return The products for this person
-     */
-    public List<ProductOrder> findByModifiedPersonId(@Nonnull Long personId) {
-
-        return findList(ProductOrder.class, ProductOrder_.modifiedBy, personId);
     }
 
     /**
@@ -368,18 +297,18 @@ public class ProductOrderDao extends GenericDao {
         final CriteriaQuery<ProductOrder> query = cb.createQuery(ProductOrder.class);
         query.distinct(true);
 
-        final Root<ProductOrder> root = query.from(ProductOrder.class);
+        Root<ProductOrder> root = query.from(ProductOrder.class);
         final ListJoin<ProductOrder,ProductOrderSample> sampleListJoin = root.join(ProductOrder_.samples);
 
         return JPASplitter.runCriteriaQuery(
-            Arrays.asList(barcodes),
-            new CriteriaInClauseCreator<String>() {
-                @Override
-                public Query createCriteriaInQuery(Collection<String> parameterList) {
-                    query.where(sampleListJoin.get(ProductOrderSample_.sampleName).in(parameterList));
-                    return getEntityManager().createQuery(query);
+                Arrays.asList(barcodes),
+                new CriteriaInClauseCreator<String>() {
+                    @Override
+                    public Query createCriteriaInQuery(Collection<String> parameterList) {
+                        query.where(sampleListJoin.get(ProductOrderSample_.sampleName).in(parameterList));
+                        return getEntityManager().createQuery(query);
+                    }
                 }
-            }
         );
     }
 }
