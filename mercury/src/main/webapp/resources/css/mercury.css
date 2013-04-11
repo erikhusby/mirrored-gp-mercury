@@ -131,3 +131,19 @@ textarea.controlledText { width: 550px; }
 .simpletab .ui-widget-header { border-bottom: 1px solid #c2c2c2; }
 .simpletab .ui-state-hover { border: 1px solid #0088cc; color: #0088cc; background: #e6f7ff; }
 
+
+.search-select { width: auto; font-weight: bold; font-size: x-small; height: 20px; padding: 0; margin-right: 10px; }
+input.search-input { width: auto; font-weight: bold; font-size: x-small; height: 25px;  padding: 0; }
+.search-checkbox-label { float: left; font-weight: bold; font-size: x-small; }
+input.search-checkbox { float: left; margin-right: 3px; }
+
+.search-horizontal .control-group { margin-bottom: 3px; *zoom: 1; }
+.search-horizontal .control-group:before,
+.search-horizontal .control-group:after { display: table; line-height: 0; content: ""; }
+.search-horizontal .control-group:after { clear: both; }
+.search-horizontal .control-label { float: left; width: 110px; padding-top: 5px; text-align: right; }
+.search-horizontal .controls { *display: inline-block; *padding-left: 8px; margin-left: 130px; *margin-left: 0; }
+.search-horizontal .controls:first-child { *padding-left: 180px; }
+.search-horizontal .help-block { margin-bottom: 0; }
+.search-horizontal input + .help-block, .search-horizontal select + .help-block, .search-horizontal textarea + .help-block { margin-top: 0px; }
+.search-horizontal .form-actions { padding-left: 180px; }

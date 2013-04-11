@@ -28,11 +28,13 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderLi
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.*;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean;
@@ -120,6 +122,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Inject
     private SampleSearchLink sampleSearchLink;
+
+    @Inject
+    private ProductFamilyDao productFamilyDao;
 
     @Inject
     private ProductOrderDao productOrderDao;
@@ -223,6 +228,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     /** The owner of the Product Order, stored as createdBy in ProductOrder and Reporter in JIRA */
     @Inject
     private UserTokenInput owner;
+
+    // Search uses product family list.
+    private List<ProductFamily> productFamilies;
 
     /**
      * Initialize the product with the passed in key for display in the form or create it, if not specified.
@@ -398,6 +406,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     public void listInit() {
         allProductOrderListEntries = orderListEntryDao.findProductOrderListEntries();
         progressFetcher.loadProgress(productOrderDao);
+
+        productFamilies = productFamilyDao.findAll();
+        Collections.sort(productFamilies);
     }
 
     @After(stages = LifecycleStage.BindingAndValidation, on = EDIT_ACTION)
@@ -1228,5 +1239,13 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public boolean isSupportsRin() {
         return (editOrder != null) && (editOrder.getProduct() != null) && editOrder.getProduct().isSupportsRin();
+    }
+
+    public void setProductFamilies(List<ProductFamily> productFamilies) {
+        this.productFamilies = productFamilies;
+    }
+
+    public Object getProductFamilies() {
+        return productFamilies;
     }
 }

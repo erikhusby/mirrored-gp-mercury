@@ -1,6 +1,7 @@
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" %>
 <%@ page import="static org.broadinstitute.gpinformatics.mercury.entity.DB.roles" %>
 <%@ page import="static org.broadinstitute.gpinformatics.mercury.entity.DB.Role.*" %>
+<%@ page import="org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -10,6 +11,24 @@
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
             $j(document).ready(function() {
+
+                $j("#owner").tokenInput(
+                        "${ctxpath}/projects/project.action?usersAutocomplete=", {
+                            hintText: "Type a name",
+                            prePopulate: ${actionBean.ensureStringResult(actionBean.owner.completeData)},
+                            tokenLimit: 1,
+                            resultsFormatter: formatInput
+                        }
+                );
+
+                $j("#product").tokenInput(
+                        "${ctxpath}/orders/order.action?productAutocomplete=", {
+                            hintText: "Type a Product name or Part Number   ",
+                            resultsFormatter: formatInput,
+                            prePopulate: ${actionBean.ensureStringResult(actionBean.productTokenInput.completeData)},
+                            tokenLimit: 1
+                        }
+                );
 
                 $j('#productOrderList').dataTable( {
                     "oTableTools": ttExportDefines,
@@ -32,6 +51,11 @@
 
                 setupDialogs();
             });
+
+            function formatInput(item) {
+                var extraCount = (item.extraCount == undefined) ? "" : item.extraCount;
+                return "<li>" + item.dropdownItem + extraCount + '</li>';
+            }
 
             function setupDialogs() {
                 $j("#confirmDialog").dialog({
@@ -98,6 +122,77 @@
                 <span class="icon-shopping-cart"></span> <%=ProductOrderActionBean.CREATE_ORDER%>
             </stripes:link>
         </p>
+
+        <stripes:form beanclass="${actionBean.class.name}" id="searchForm">
+            <div class="search-horizontal">
+
+                <div class="control-group">
+                    <stripes:label for="productFamily" class="control-label">
+                        Product Family *
+                    </stripes:label>
+                    <div class="controls">
+                        <stripes:select name="productFamilyId" id="productFamily" class="search-select">
+                            <stripes:option value="">Select a Product Family</stripes:option>
+                            <stripes:options-collection collection="${actionBean.productFamilies}" label="name"
+                                                        value="productFamilyId"/>
+                        </stripes:select>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <stripes:label for="product" class="control-label">
+                        Product
+                    </stripes:label>
+                    <div class="controls">
+                        <stripes:text id="product" name="productTokenInput.listOfKeys" class="defaultText search-input"
+                                      style="width: 250px;" title="Enter the product name for this order"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <stripes:label for="statusGroup" class="control-label">
+                        Status
+                    </stripes:label>
+                    <div class="controls">
+                        <c:forEach items="<%=ProductOrder.OrderStatus.values()%>" var="orderStatus">
+                            <div style="margin-top: 5px; margin-right: 15px; float: left; width: auto;">
+                                <stripes:checkbox class="search-checkbox" name="selectedStatus" value="${orderStatus}" id="${orderStatus}-id"/>
+                                <stripes:label class="search-checkbox-label" for="${orderStatus}-id">
+                                    ${orderStatus.displayName}
+                                </stripes:label>
+                            </div>
+                        </c:forEach>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <stripes:label for="dateRangeDiv" class="control-label">
+                        Date Placed
+                    </stripes:label>
+                    <div class="controls">
+                        <div id="dateRangeDiv"> </div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <stripes:label for="owner" class="control-label">
+                        Owner
+                    </stripes:label>
+                    <div class="controls">
+                        <stripes:text id="owner" name="owner.listOfKeys" class="search-input" style="width:250px"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <div class="control-label">&nbsp;</div>
+                    <div class="controls actionButtons">
+                        <stripes:submit name="search" value="Search" style="margin-right: 10px;margin-top:10px;" class="btn btn-mini"/>
+                    </div>
+                </div>
+            </div>
+
+        </stripes:form>
+
 
         <div class="clearfix"></div>
 
