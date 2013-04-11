@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.CriteriaInClauseCreator;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.JPASplitter;
 import org.hibernate.SQLQuery;
@@ -341,7 +342,6 @@ public class ProductOrderDao extends GenericDao {
         });
     }
 
-
     /**
      * Find all ProductOrders for the specified varargs array of barcodes, will throw {@link IllegalArgumentException}
      * if given more than 1000 barcodes.
@@ -352,21 +352,23 @@ public class ProductOrderDao extends GenericDao {
      */
     public List<ProductOrder> findBySampleBarcodes(@Nonnull String... barcodes) throws IllegalArgumentException {
 
-        // TODO Splitterize
-        if (barcodes.length > 1000) {
-            throw new IllegalArgumentException(MessageFormat
-                    .format("Received {0} barcodes but Oracle in expression limit is 1000.", barcodes.length));
-        }
-
         CriteriaBuilder cb = getCriteriaBuilder();
 
-        CriteriaQuery<ProductOrder> query = cb.createQuery(ProductOrder.class);
+        final CriteriaQuery<ProductOrder> query = cb.createQuery(ProductOrder.class);
         query.distinct(true);
 
-        Root<ProductOrder> root = query.from(ProductOrder.class);
-        ListJoin<ProductOrder,ProductOrderSample> sampleListJoin = root.join(ProductOrder_.samples);
-        query.where(sampleListJoin.get(ProductOrderSample_.sampleName).in((Object []) barcodes));
+        final Root<ProductOrder> root = query.from(ProductOrder.class);
+        final ListJoin<ProductOrder,ProductOrderSample> sampleListJoin = root.join(ProductOrder_.samples);
 
-        return getEntityManager().createQuery(query).getResultList();
+        return JPASplitter.runCriteriaQuery(
+            Arrays.asList(barcodes),
+            new CriteriaInClauseCreator<String>() {
+                @Override
+                public Query createCriteriaInQuery(Collection<String> parameterList) {
+                    query.where(sampleListJoin.get(ProductOrderSample_.sampleName).in(parameterList));
+                    return getEntityManager().createQuery(query);
+                }
+            }
+        );
     }
 }
