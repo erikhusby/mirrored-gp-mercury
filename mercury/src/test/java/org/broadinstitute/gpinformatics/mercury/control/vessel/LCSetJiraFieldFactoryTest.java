@@ -156,7 +156,7 @@ public class LCSetJiraFieldFactoryTest {
         }
     }
 
-    @Test
+    @Test(enabled = false)
     public void test_sample_field_text_with_reworks() {
         String expectedText = "SM-1\n\nSM-2 (rework)";
 
@@ -170,6 +170,7 @@ public class LCSetJiraFieldFactoryTest {
         reworks.add(tube2);
 
         LabBatch batch = new LabBatch("test",newTubes, LabBatch.LabBatchType.WORKFLOW);
+
         batch.addReworks(reworks);
 
         String actualText = LCSetJiraFieldFactory.buildSamplesListString(batch);
