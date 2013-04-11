@@ -26,6 +26,7 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -87,9 +88,17 @@ public class RapSheet {
     }
 
     public List<RapSheetEntry> getRapSheets() {
-        if (!reworkEntriesSorted){
+        return rapSheets;
+    }
+
+    /**
+     * RapSheets needs to be sorted so the most recent is on top.
+     * @return A list of RapSheets sorted
+     */
+    public List<RapSheetEntry> getSortedRapSheets() {
+        if (!reworkEntriesSorted) {
             Collections.sort(rapSheets);
-            reworkEntriesSorted =true;
+            reworkEntriesSorted = true;
         }
         return rapSheets;
     }
@@ -105,12 +114,9 @@ public class RapSheet {
 
 
     public ReworkEntry getCurrentReworkEntry(){
-        for (RapSheetEntry rapSheetEntry : getRapSheets()) {
-            if (rapSheetEntry instanceof ReworkEntry) {
+        for (RapSheetEntry rapSheetEntry : getReworkEntries()) {
                 return (ReworkEntry) rapSheetEntry;
-            }
         }
-
         return null;
     }
 
@@ -119,16 +125,25 @@ public class RapSheet {
      * @return Active Rework or null;
      */
     public ReworkEntry getActiveRework() {
-        for (RapSheetEntry rapSheetEntry : getRapSheets()) {
-            if (rapSheetEntry instanceof ReworkEntry) {
-                if (((ReworkEntry)rapSheetEntry).isActiveRework()) {
-                    return (ReworkEntry) rapSheetEntry;
-                }
+        for (RapSheetEntry rapSheetEntry : getReworkEntries()) {
+            if (((ReworkEntry) rapSheetEntry).isActiveRework()) {
+                return (ReworkEntry) rapSheetEntry;
             }
         }
         return null;
     }
 
+    public Collection<ReworkEntry> getReworkEntries(){
+        Collection<ReworkEntry> entries=new ArrayList<ReworkEntry>();
+        for (RapSheetEntry rapSheetEntry : getSortedRapSheets()) {
+            if (rapSheetEntry instanceof ReworkEntry) {
+                if (((ReworkEntry)rapSheetEntry).isActiveRework()) {
+                    entries.add((ReworkEntry) rapSheetEntry);
+                }
+            }
+        }
+        return entries;
+    }
     /**
      * Get all the active rework and make it inactive.
      * If there is no ReworkEntries, it will do nothing.

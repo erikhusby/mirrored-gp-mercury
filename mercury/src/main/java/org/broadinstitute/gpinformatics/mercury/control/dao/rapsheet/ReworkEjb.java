@@ -46,6 +46,13 @@ import java.util.Set;
 /**
  * Encapsulates the business logic related to {@link RapSheet}s. and Rework This includes the creation
  * of a new batch entity and saving that to Jira
+ *
+ * More information about Rework can be found here:
+ * https://confluence.broadinstitute.org/display/GPI/Rework
+ *
+ * Some info on Rap sheets can be found here:
+ * https://confluence.broadinstitute.org/display/GPI/January+Demo
+ *
  */
 @Stateful
 @RequestScoped
@@ -110,7 +117,7 @@ public class ReworkEjb {
     }
 
     /**
-     * Create a @link ReworkEntry for one Sample
+     * Create a @link(ReworkEntry) for one Sample
      *
      * @param mercurySample  the sample to be reworked.
      * @param labVessel      the labVessel where the sample is located.
@@ -150,9 +157,8 @@ public class ReworkEjb {
     public List<MercurySample> addRework(@NotNull LabVessel labVessel, @NotNull ReworkReason reworkReason,
                                                @NotNull LabEventType reworkFromStep, @NotNull String comment)
             throws ValidationException {
-        LabVessel v = labVesselDao.findByIdentifier(labVessel.getLabel());
         List<MercurySample> reworks =
-                new ArrayList<MercurySample>(getVesselRapSheet(v, reworkReason,
+                new ArrayList<MercurySample>(getVesselRapSheet(labVessel, reworkReason,
                         ReworkLevel.ONE_SAMPLE_RELEASE_REST_BATCH, reworkFromStep, comment));
         if (!reworks.isEmpty()) {
             mercurySampleDao.persistAll(reworks);
