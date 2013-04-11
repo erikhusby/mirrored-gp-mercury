@@ -125,7 +125,7 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
     }
 
     // TODO: expand to test creating ledger entries from message
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
     public void testOnMessageReadBack() throws Exception {
         deliverMessage();
         AutomatedBiller automatedBiller =
