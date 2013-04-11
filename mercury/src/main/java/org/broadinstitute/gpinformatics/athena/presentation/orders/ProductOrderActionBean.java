@@ -21,20 +21,17 @@ import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusF
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
-import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderListEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
-import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
+import org.broadinstitute.gpinformatics.athena.entity.orders.*;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -48,6 +45,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.mercury.MercuryClientService;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
@@ -106,6 +104,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     private ProductOrderUtil productOrderUtil;
 
     @Inject
+    private PriceListCache priceListCache;
+
+    @Inject
     private ProductOrderSampleDao sampleDao;
 
     @Inject
@@ -131,6 +132,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Inject
     private BillingSessionDao billingSessionDao;
+
+    @Inject
+    private PriceItemDao priceItemDao;
 
     @Inject
     private LedgerEntryDao ledgerEntryDao;
@@ -586,7 +590,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent("downloadBillingTracker")
     public Resolution downloadBillingTracker() {
-        Resolution resolution = ProductOrderActionBean.getTrackerForOrders(this, selectedProductOrders, bspUserList);
+        Resolution resolution =
+            ProductOrderActionBean.getTrackerForOrders(this, selectedProductOrders, priceItemDao, bspUserList, priceListCache);
         if (hasErrors()) {
             // Need to regenerate the list so it's displayed along with the errors.
             listInit();
@@ -875,13 +880,15 @@ public class ProductOrderActionBean extends CoreActionBean {
     public static Resolution getTrackerForOrders(
         final CoreActionBean actionBean,
         List<ProductOrder> productOrderList,
-        BSPUserList bspUserList) {
+        PriceItemDao priceItemDao,
+        BSPUserList bspUserList,
+        PriceListCache priceListCache) {
 
         OutputStream outputStream = null;
 
         try {
             String filename =
-                    "BillingTracker-" + AbstractSpreadsheetExporter.DATE_FORMAT.format(Calendar.getInstance().getTime());
+                "BillingTracker-" + AbstractSpreadsheetExporter.DATE_FORMAT.format(Calendar.getInstance().getTime());
 
             // Colon is a metacharacter in Windows separating the drive letter from the rest of the path.
             filename = filename.replaceAll(":", "_");
@@ -889,7 +896,8 @@ public class ProductOrderActionBean extends CoreActionBean {
             final File tempFile = File.createTempFile(filename, ".xls");
             outputStream = new FileOutputStream(tempFile);
 
-            SampleLedgerExporter sampleLedgerExporter = new SampleLedgerExporter(bspUserList, productOrderList);
+            SampleLedgerExporter sampleLedgerExporter =
+                new SampleLedgerExporter(priceItemDao, bspUserList, priceListCache, productOrderList);
             sampleLedgerExporter.writeToStream(outputStream);
             IOUtils.closeQuietly(outputStream);
 

@@ -54,6 +54,10 @@ public class LedgerEntry implements Serializable {
     @Column(name ="QUOTE_ID")
     private String quoteId;
 
+    @Column(name = "PRICE_ITEM_TYPE")
+    @Enumerated(EnumType.STRING)
+    private PriceItemType priceItemType;
+
     /**
      * Package private constructor for JPA use.
      */
@@ -140,6 +144,14 @@ public class LedgerEntry implements Serializable {
         this.quoteId = quoteId;
     }
 
+    public PriceItemType getPriceItemType() {
+        return priceItemType;
+    }
+
+    public void setPriceItemType(PriceItemType priceItemType) {
+        this.priceItemType = priceItemType;
+    }
+
     @Override
     public boolean equals(Object other) {
         if (this == other) {
@@ -165,5 +177,28 @@ public class LedgerEntry implements Serializable {
                 .append(priceItem)
                 .append(quoteId)
                 .append(billingSession).toHashCode();
+    }
+
+    public Date getBucketDate() {
+        return billingSession.getBucketDate(workCompleteDate);
+    }
+
+    /**
+     * The price item status on the ledger entry.
+     */
+    public static enum PriceItemType {
+        PRIMARY_PRICE_ITEM("Quote Item"),
+        REPLACEMENT_PRICE_ITEM("Replacement Item"),
+        ADD_ON_PRICE_ITEM("Quote Item");
+
+        private final String quoteType;
+
+        PriceItemType(String quoteType) {
+            this.quoteType = quoteType;
+        }
+
+        public String getQuoteType() {
+            return quoteType;
+        }
     }
 }

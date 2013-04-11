@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.quote;
 
+import javax.annotation.Nonnull;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
@@ -28,9 +29,19 @@ public class PriceItem {
     private String priceListName;
     private String priceListLink;
 
+    private ReplacementItems replacementItems;
 
     public PriceItem() {}
 
+    public static PriceItem convertMercuryPriceItem(
+        @Nonnull org.broadinstitute.gpinformatics.athena.entity.products.PriceItem priceItem) {
+
+        PriceItem quotePriceItem = new PriceItem();
+        quotePriceItem.setName(priceItem.getName());
+        quotePriceItem.setCategoryName(priceItem.getCategory());
+        quotePriceItem.setPlatformName(priceItem.getPlatform());
+        return quotePriceItem;
+    }
 
     public PriceItem(String quoteServerId, String platformName, String categoryName, String name) {
         this.id = quoteServerId;
@@ -201,6 +212,16 @@ public class PriceItem {
         this.priceListLink = priceListLink;
     }
 
+
+    @XmlElement(name = "replacementItems")
+    public ReplacementItems getReplacementItems() {
+        return replacementItems;
+    }
+
+    public void setReplacementItems(ReplacementItems replacementItems) {
+        this.replacementItems = replacementItems;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -232,5 +253,11 @@ public class PriceItem {
                 ", name='" + name + '\'' +
                 ", categoryName='" + categoryName + '\'' +
                 '}';
+    }
+
+    public boolean isMercuryPriceItemEqual(org.broadinstitute.gpinformatics.athena.entity.products.PriceItem priceItem) {
+        return platformName.equals(priceItem.getPlatform()) &&
+               categoryName.equals(priceItem.getCategory()) &&
+               name.equals(priceItem.getName());
     }
 }

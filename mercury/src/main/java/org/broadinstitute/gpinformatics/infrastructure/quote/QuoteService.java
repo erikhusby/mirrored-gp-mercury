@@ -20,13 +20,12 @@ public interface QuoteService extends Serializable {
 
     public String registerNewWork(Quote quote,
                                   PriceItem priceItem,
+                                  PriceItem itemIsReplacing,
                                   Date reportedCompletionDate,
                                   double numWorkUnits,
                                   String callbackUrl,
                                   String callbackParameterName,
                                   String callbackParameterValue);
-
-    public Quote getQuoteByNumericId(final String numericId) throws QuoteServerException, QuoteNotFoundException;
 
     public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException;
 }

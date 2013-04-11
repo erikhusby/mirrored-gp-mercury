@@ -1,10 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 /**
- * Created by IntelliJ IDEA.
- * User: mccrory
- * Date: 11/21/12
- * Time: 1:04 PM
+ * This class holds the charges and credits for ledger entry groupings.
  */
 public class OrderBillSummaryStat {
 
@@ -12,8 +9,10 @@ public class OrderBillSummaryStat {
     private double credit;
 
     public void applyDelta(double delta) {
+
+        // If the delta is negative, then we want to INCREASE the credits a POSITIVE amount.
         if (delta < 0) {
-            credit += delta;
+            credit += (-1 * delta);
         } else {
             charge += delta;
         }

@@ -21,6 +21,7 @@ import java.util.List;
 @ApplicationScoped
 public class PriceListCache extends AbstractCache implements Serializable {
     private static final long serialVersionUID = 1843525203075284455L;
+    public static final PriceListCache DUMMY_CACHE = new PriceListCache(new ArrayList<PriceItem> ());
 
     private Collection<PriceItem> priceItems = new ArrayList<PriceItem>();
 

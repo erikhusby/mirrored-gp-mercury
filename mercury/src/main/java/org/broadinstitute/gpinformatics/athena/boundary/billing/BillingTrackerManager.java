@@ -7,11 +7,13 @@ import org.apache.poi.hssf.usermodel.HSSFDateUtil;
 import org.apache.poi.ss.usermodel.*;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -30,12 +32,18 @@ public class BillingTrackerManager {
     private static final Log logger = LogFactory.getLog(BillingTrackerManager.class);
 
     @Inject
-    LedgerEntryDao ledgerEntryDao;
+    private LedgerEntryDao ledgerEntryDao;
+
+    @Inject
+    private PriceItemDao priceItemDao;
+
+    @Inject
+    private PriceListCache priceListCache;
 
     @Inject
     private ProductOrderDao productOrderDao;
 
-    private static RuntimeException getRuntimeException(String errMsg) {
+    private RuntimeException getRuntimeException(String errMsg) {
         logger.error(errMsg);
         return new RuntimeException(errMsg);
     }
@@ -105,7 +113,7 @@ public class BillingTrackerManager {
         return result;
     }
 
-    private static List<String> extractOrderIdsFromSheet(Sheet sheet) {
+    private List<String> extractOrderIdsFromSheet(Sheet sheet) {
         List<String> result = new ArrayList<String>();
 
         for (Iterator<Row> rit = sheet.rowIterator(); rit.hasNext(); ) {
@@ -186,7 +194,7 @@ public class BillingTrackerManager {
                 // Find the target priceItems for the data that was parsed from the header, happens one per sheet parse.
                 // create a map (by trackerColumnInfo) of PriceItems
                 if (priceItemMap == null) {
-                    priceItemMap = BillingTrackerUtils.createPriceItemMapForSheet(trackerColumnInfos, product);
+                    priceItemMap = BillingTrackerUtils.createPriceItemMapForSheet(trackerColumnInfos, product, priceItemDao, priceListCache);
                 }
 
                 //Remove any pending billable Items from the ledger for all samples in this PDO
@@ -229,7 +237,7 @@ public class BillingTrackerManager {
         return sheetBillingMap;
     }
 
-    private static void parseSampleRowForBilling(Row row, ProductOrderSample productOrderSample, Product product,
+    private void parseSampleRowForBilling(Row row, ProductOrderSample productOrderSample, Product product,
                                                  List<TrackerColumnInfo> trackerColumnInfos,
                                                  Map<TrackerColumnInfo, PriceItem> priceItemMap) {
 
@@ -304,7 +312,7 @@ public class BillingTrackerManager {
         }
     }
 
-    private static Double getCellValueAsNonNullDouble(Row row, ProductOrderSample productOrderSample, Product product,
+    private Double getCellValueAsNonNullDouble(Row row, ProductOrderSample productOrderSample, Product product,
                                                       Cell cell) {
         Double quantity = null;
         if (BillingTrackerUtils.isNonNullNumericCell(cell)) {
@@ -344,7 +352,7 @@ public class BillingTrackerManager {
         }
     }
 
-    private static boolean isNonNullDateCell(Cell cell) {
+    private boolean isNonNullDateCell(Cell cell) {
         return ((cell != null) && (HSSFDateUtil.isCellDateFormatted(cell)));
     }
 
