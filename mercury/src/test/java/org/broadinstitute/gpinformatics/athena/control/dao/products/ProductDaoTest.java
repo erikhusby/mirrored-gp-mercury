@@ -103,7 +103,6 @@ public class ProductDaoTest extends ContainerTest {
         PriceItem priceItem2 = new PriceItem (uuid2.toString(), PriceItem.PLATFORM_GENOMICS, "Pony Genomics", "Pony Express-" + uuid2);
 
         product.setPrimaryPriceItem(priceItem1);
-        product.addPriceItem(priceItem2);
 
         MaterialType materialType1 = new MaterialType("DNA", "DNA Genomic");
         product.addAllowableMaterialType(materialType1);

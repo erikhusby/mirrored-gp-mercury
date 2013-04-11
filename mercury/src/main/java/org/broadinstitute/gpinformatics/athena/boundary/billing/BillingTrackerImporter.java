@@ -2,15 +2,18 @@ package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
 import net.sourceforge.stripes.validation.SimpleError;
 import net.sourceforge.stripes.validation.ValidationErrors;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.*;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.OrderBillSummaryStat;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,17 +25,22 @@ import java.util.Map;
 
 public class BillingTrackerImporter {
 
-    private ProductOrderDao productOrderDao;
+    private final ProductOrderDao productOrderDao;
+    private final PriceItemDao priceItemDao;
+    private final PriceListCache priceListCache;
 
     private ValidationErrors validationErrors;
 
-    public BillingTrackerImporter(ProductOrderDao productOrderDao, ValidationErrors validationErrors) {
-        this(productOrderDao);
+    public BillingTrackerImporter(
+        ProductOrderDao productOrderDao, PriceItemDao priceItemDao, PriceListCache priceListCache, ValidationErrors validationErrors) {
+        this(productOrderDao, priceItemDao, priceListCache);
         this.validationErrors = validationErrors;
     }
 
-    public BillingTrackerImporter(ProductOrderDao productOrderDao) {
+    public BillingTrackerImporter(ProductOrderDao productOrderDao, PriceItemDao priceItemDao, PriceListCache priceListCache) {
         this.productOrderDao = productOrderDao;
+        this.priceItemDao = priceItemDao;
+        this.priceListCache = priceListCache;
     }
 
     public Map<String, Map<String, Map<BillableRef, OrderBillSummaryStat>>> parseFileForSummaryMap(
@@ -59,7 +67,7 @@ public class BillingTrackerImporter {
                 List<TrackerColumnInfo> trackerHeaderList = BillingTrackerUtils.parseTrackerSheetHeader(sheet.getRow(0), productPartNumberStr);
 
                 // Get a map (by PDOId) of a map of OrderBillSummaryStat objects (by BillableRef) for this sheet.
-                Map<String, Map<BillableRef, OrderBillSummaryStat>> sheetSummaryMap = parseSheetForSummaryMap(sheet, trackerHeaderList);
+                Map<String, Map<BillableRef, OrderBillSummaryStat>> sheetSummaryMap = parseSheetForSummaryMap(sheet, trackerHeaderList, priceListCache);
                 if (!validationErrors.isEmpty()) {
                     return null;
                 }
@@ -133,7 +141,8 @@ public class BillingTrackerImporter {
         }
     }
 
-    Map<String, Map<BillableRef, OrderBillSummaryStat>> parseSheetForSummaryMap(Sheet sheet, List<TrackerColumnInfo> trackerColumnInfos) {
+    Map<String, Map<BillableRef, OrderBillSummaryStat>> parseSheetForSummaryMap(
+        Sheet sheet, List<TrackerColumnInfo> trackerColumnInfos, PriceListCache priceListCache) {
         ProductOrder productOrder = null;
         Product product = null;
         List<ProductOrderSample> samples = null;
@@ -166,7 +175,7 @@ public class BillingTrackerImporter {
             String currentSampleName = row.getCell(BillingTrackerUtils.SAMPLE_ID_COL_POS).getStringCellValue();
             Map<BillableRef, OrderBillSummaryStat> pdoSummaryStatsMap  = sheetSummaryMap.get(rowPdoIdStr);
 
-            // For a newly found PdoId create a new map for it and add it to the sheet summary map
+            // For a newly found PDO Id, create a new map for it and add it to the sheet summary map
             if (!currentPdoId.equalsIgnoreCase(rowPdoIdStr) && pdoSummaryStatsMap == null) {
                 pdoSummaryStatsMap = new HashMap<BillableRef, OrderBillSummaryStat>(maxNumberOfProductsInSheet);
                 sheetSummaryMap.put(rowPdoIdStr, pdoSummaryStatsMap);
@@ -185,18 +194,23 @@ public class BillingTrackerImporter {
                 product = productOrder.getProduct();
                 samples = productOrder.getSamples();
                 if (priceItemMap == null) {
-                    priceItemMap = BillingTrackerUtils.createPriceItemMapForSheet(trackerColumnInfos, product);
+                    priceItemMap =
+                        BillingTrackerUtils.createPriceItemMapForSheet(
+                            trackerColumnInfos, product, priceItemDao, priceListCache);
                 }
-
             }
 
-            // TODO hmc We are assuming (for now) that the order is the same
-            // in the spreadsheet as returned in the productOrder !
+            // There must always be a sample and a product order, so go to the next line, if this does not get one.
+            if ((CollectionUtils.isEmpty(samples)) || (productOrder == null)) {
+                break;
+            }
+
+            // The order in the spreadsheet is the same as returned in the productOrder !
             if (sampleIndexInOrder >= samples.size()) {
                 String error = "Sample " + currentSampleName + " on row " +  (row.getRowNum() + 1 ) +
                         " of spreadsheet "  + primaryProductPartNumber +
-                        " is not in the expected position. The Order <" + productOrder.getTitle() + " (Id: " + currentPdoId +
-                        ")> has only " + samples.size() + " samples.";
+                        " is not in the expected position. The Order <" + productOrder.getTitle() +
+                        " (Id: " + currentPdoId + ")> has only " + samples.size() + " samples.";
                 addError(error);
                 return null;
             }
@@ -211,7 +225,9 @@ public class BillingTrackerImporter {
                 return null;
             }
 
-            String error = parseRowForSummaryMap(row, pdoSummaryStatsMap, trackerColumnInfos, product, productOrderSample, priceItemMap);
+            String error =
+                parseRowForSummaryMap(
+                    row, pdoSummaryStatsMap, trackerColumnInfos, product, productOrderSample, priceItemMap);
             if (!StringUtils.isBlank(error)) {
                 addError(error);
                 return null;

@@ -2451,7 +2451,6 @@
         </createIndex>
     </changeSet>
 
-
     <changeSet id="GPLIM-1054" author="mcovarr">
         <preConditions onFail="MARK_RAN">
             <not>
@@ -2843,6 +2842,63 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="GPLIM-1180.1" author="hrafal">
+        <preConditions onFail="WARN">
+            <tableExists schemaName="athena" tableName="product_opt_price_items"  />
+        </preConditions>
+        <renameTable schemaName="athena" oldTableName="product_opt_price_items" newTableName="old_opt_price_items"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1180.2" author="hrafal">
+        <preConditions onFail="WARN">
+            <tableExists schemaName="athena" tableName="product_opt_price_items_aud"  />
+        </preConditions>
+        <dropTable schemaName="athena" tableName="product_opt_price_items_aud"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1180.3" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists schemaName="athena" tableName="billing_ledger" columnName="price_item_type" />
+            </not>
+        </preConditions>
+        <addColumn tableName="billing_ledger" schemaName="athena">
+            <column name="price_item_type" type="varchar2(50)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-1180.4" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists schemaName="athena" tableName="billing_ledger_aud" columnName="price_item_type" />
+            </not>
+        </preConditions>
+        <addColumn tableName="billing_ledger_aud" schemaName="athena">
+            <column name="price_item_type" type="varchar2(50)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-1180.5" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists schemaName="athena" tableName="billing_session" columnName="billing_session_type" />
+            </not>
+        </preConditions>
+        <addColumn tableName="billing_session" schemaName="athena">
+            <column name="billing_session_type" type="varchar2(50)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-1180.6" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists schemaName="athena" tableName="billing_session_aud" columnName="billing_session_type" />
+            </not>
+        </preConditions>
+        <addColumn tableName="billing_session_aud" schemaName="athena">
+            <column name="billing_session_type" type="varchar2(50)"/>
+        </addColumn>
+    </changeSet>
     <changeSet id="GPLIM-1179-1" author="pshapiro">
         <sql>
             ALTER TABLE athena.product_order
