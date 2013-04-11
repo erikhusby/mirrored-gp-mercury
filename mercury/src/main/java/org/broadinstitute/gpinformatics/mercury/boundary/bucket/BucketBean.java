@@ -5,13 +5,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
-import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
@@ -394,7 +394,6 @@ public class BucketBean {
 
         for (BucketEntry currEntry : bucketEntries) {
             batchVessels.add(currEntry.getLabVessel());
-
         }
 
         if (!batchVessels.isEmpty()) {
@@ -436,13 +435,24 @@ public class BucketBean {
             logger.info("Adding entry " + currEntry.getBucketEntryId() + " for vessel " + currEntry.getLabVessel()
                     .getLabCentricName() +
                         " and PDO " + currEntry.getPoBusinessKey() + " to be popped from bucket.");
-
             currEntry.getBucket().removeEntry(currEntry);
-
+            removeRework(currEntry.getLabVessel());
             jiraRemovalUpdate(currEntry, "Extracted for Batch");
 
         }
     }
+
+    /**
+     * All the samples in this vessel are being reworked, so mark them as such
+     * so they don't show up in the bucket.
+     * @param labVessel vessel full of samples for rework.
+     */
+    public void removeRework(LabVessel labVessel){
+        for (MercurySample sample : labVessel.getMercurySamples()){
+            sample.getRapSheet().stopRework();
+        }
+    }
+
 
     /**
      * For whatever reason, sometimes the lab can't

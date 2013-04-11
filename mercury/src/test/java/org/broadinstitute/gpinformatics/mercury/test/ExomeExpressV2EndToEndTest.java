@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.test;
 
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
+import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
 import org.testng.Assert;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -99,8 +100,10 @@ public class ExomeExpressV2EndToEndTest {
                 .andReturn(workingShearingBucket);
         EasyMock.expect(mockBucketDao.findByName(EasyMock.eq("Pico/Plating Bucket")))
                 .andReturn(workingPicoBucket);
-        BucketBean bucketBean = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB);
-        EasyMock.replay(mockBucketDao, tubeDao, mockJira, labBatchDAO);
+        ReworkEjb reworkEjb = EasyMock.createNiceMock(ReworkEjb.class);
+        BucketBean bucketBean = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB
+        );
+        EasyMock.replay(mockBucketDao, tubeDao, mockJira, labBatchDAO, reworkEjb);
 
         final String testActor = "hrafal";
 
