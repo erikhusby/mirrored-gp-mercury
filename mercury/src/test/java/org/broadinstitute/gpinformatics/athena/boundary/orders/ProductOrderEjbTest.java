@@ -88,7 +88,7 @@ public class ProductOrderEjbTest extends ContainerTest {
         try {
             sample = productOrderEjb.mapAliquotIdToSample(order, BSPSampleSearchServiceStub.ALIQUOT_ID_2);
             Assert.fail("Exception should be thrown");
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             // Error is expected.
         }
     }
