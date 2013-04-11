@@ -636,8 +636,8 @@ public class ProductOrderEjb {
         if (order.updateOrderStatus()) {
             String operation;
             JiraIssue issue = jiraService.getIssue(jiraTicketKey);
-            JiraStatus status = JiraStatus.fromString((String) issue.getField(
-                    ProductOrder.JiraField.STATUS.getFieldName()));
+            Object statusValue = issue.getField(ProductOrder.JiraField.STATUS.getFieldName());
+            JiraStatus status = JiraStatus.fromString(((Map<?, ?>)statusValue).get("name").toString());
             JiraTransition transition;
             if (order.getOrderStatus() == ProductOrder.OrderStatus.Completed) {
                 operation = "Completed";
