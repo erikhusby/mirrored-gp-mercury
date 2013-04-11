@@ -478,37 +478,34 @@ public class VesselContainer<T extends LabVessel> {
     public List<LabBatchComposition> getLabBatchCompositions() {
         // Collects all sample instances.
         List<SampleInstance> sampleInstances = new ArrayList<SampleInstance>();
-        for (VesselPosition position : getPositions()) {
-            LabVessel.TraversalResults results = traverseAncestors(position, false);
-            sampleInstances.addAll(results.getSampleInstances());
-        }
+        sampleInstances.addAll(getSampleInstances(false));
+        //for (VesselPosition position : getPositions()) {
+        //    LabVessel.TraversalResults results = traverseAncestors(position, false);
+        //    sampleInstances.addAll(results.getSampleInstances());
+        //}
 
-        List<LabBatchComposition> batchCompositions = new ArrayList<LabBatchComposition>();
+        Map<LabBatch, LabBatchComposition> batchMap = new HashMap<LabBatch, LabBatchComposition>();
         for (SampleInstance sampleInstance : sampleInstances) {
-            LabBatch labBatch = sampleInstance.getLabBatch();
-            if (labBatch != null) {
-                boolean found = false;
-                for (LabBatchComposition batchComposition : batchCompositions) {
-                    if (labBatch.equals(batchComposition.getLabBatch())) {
-                        found = true;
-                        batchComposition.addCount();
-                    }
-                }
-                if (!found) {
-                    batchCompositions.add(new LabBatchComposition(labBatch, 1, sampleInstances.size()));
+            for (LabBatch labBatch : sampleInstance.getAllLabBatches()) {
+                LabBatchComposition batchComposition = batchMap.get(labBatch);
+                if (batchComposition == null) {
+                    batchMap.put(labBatch, new LabBatchComposition(labBatch, 1, sampleInstances.size()));
+                } else {
+                    batchComposition.addCount();
                 }
             }
         }
 
-        Collections.sort(batchCompositions, HIGHEST_COUNT_FIRST);
+        List<LabBatchComposition> batchList = new ArrayList<LabBatchComposition>(batchMap.values());
+        Collections.sort(batchList, HIGHEST_COUNT_FIRST);
 
-        return batchCompositions;
+        return batchList;
     }
 
     /** Ranks LabBatchCompositions by decreasing vessel count. */
     public Comparator HIGHEST_COUNT_FIRST = new Comparator<LabBatchComposition>() {
         public int compare(LabBatchComposition lbc1, LabBatchComposition lbc2) {
-            return lbc1.getCount() - lbc2.getCount();
+            return lbc2.getCount() - lbc1.getCount();
         }};
 
     /**

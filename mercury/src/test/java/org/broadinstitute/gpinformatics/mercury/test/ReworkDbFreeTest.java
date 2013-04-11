@@ -45,6 +45,7 @@ import javax.annotation.Nonnull;
 import java.util.*;
 
 import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
 
 /**
  * Test that samples can go partway through a workflow, be marked for rework, go to a previous
@@ -213,48 +214,20 @@ public class ReworkDbFreeTest {
         VesselContainer reworkContainer = sendMsgs(reworkRackMap, labEventFactory, labEventHandler,
                 bettaLimsMessageTestFactory, reworkRackBarcode, "2", true);
 
-        // After rework, tube should be in two lcsets.
-        assertEquals(reworkTube.getLabBatchesList().size(), 2);
-        boolean foundOrig = false;
-        boolean foundRework = false;
-        for (LabBatch tubeBatch : reworkTube.getLabBatchesList()) {
-            if (tubeBatch.getBatchName().equals("LCSET" + origLcsetSuffix)) {
-                foundOrig = true;
-            } else if (tubeBatch.getBatchName().equals("LCSET" + reworkLcsetSuffix)) {
-                foundRework = true;
-            } else {
-                fail("Found unexpected batch " + tubeBatch.getBatchName());
-            }
-        }
-        assert(foundOrig);
-        assert(foundRework);
-
-        // On the non-rework chain, checks the final destination vessels, one of which contains the rework sample.
-        foundOrig = false;
-        foundRework = false;
-        for (LabVessel vessel : (Collection<LabVessel>)origContainer.getContainedVessels()) {
-            assert(vessel.getPluralityLabBatch(origContainer).getBatchName().endsWith(origLcsetSuffix));
-            for (SampleInstance sampleInstance : vessel.getAllSamples()) {
-                if (sampleInstance.getStartingSample().getSampleKey().equals(reworkSampleKey)) {
-                    assertEquals(vessel.getAllLabBatches().size(), 2);
-                    foundRework = true;
-                } else {
-                    assertEquals(vessel.getAllLabBatches().size(), 1);
-                    foundOrig = true;
-                }
-            }
-        }
-        assert(foundOrig);
-        assert(foundRework);
-        assertEquals(reworkContainer.getLabBatchCompositions().size(), 1);
-        VesselContainer.LabBatchComposition labBatchComposition =
+        // Checks the lab batch composition of the non-rework container.
+        assertEquals(origContainer.getAllLabBatches().size(), 2);
+        assertEquals(origContainer.getLabBatchCompositions().size(), 2);
+        VesselContainer.LabBatchComposition origComposition =
                 (VesselContainer.LabBatchComposition)origContainer.getLabBatchCompositions().get(0);
-        assertEquals(labBatchComposition.getDenominator(), NUM_POSITIONS_IN_RACK);
-        assertEquals(labBatchComposition.getCount(), NUM_POSITIONS_IN_RACK);
+        assertEquals(origComposition.getDenominator(), NUM_POSITIONS_IN_RACK);
+        assertEquals(origComposition.getCount(), NUM_POSITIONS_IN_RACK);
+        assert(origComposition.getLabBatch().getBatchName().endsWith(origLcsetSuffix));
+        origComposition = (VesselContainer.LabBatchComposition)origContainer.getLabBatchCompositions().get(1);
+        assertEquals(origComposition.getDenominator(), NUM_POSITIONS_IN_RACK);
+        assertEquals(origComposition.getCount() , 1);
+        assertFalse(origComposition.getLabBatch().getBatchName().endsWith(origLcsetSuffix));
 
-
-        // Checks the final destination vessels on the rework chain.
-        assertEquals(reworkContainer.getContainedVessels().size(), 0);
+        // Checks the lab batch composition of the rework container.
         assertEquals(reworkContainer.getAllLabBatches().size(), 2);
         assertEquals(reworkContainer.getLabBatchCompositions().size(), 2);
 
@@ -262,13 +235,20 @@ public class ReworkDbFreeTest {
         reworkComposition = (VesselContainer.LabBatchComposition)reworkContainer.getLabBatchCompositions().get(0);
         assertEquals(reworkComposition.getDenominator(), NUM_POSITIONS_IN_RACK);
         assertEquals(reworkComposition.getCount() , NUM_POSITIONS_IN_RACK);
+        assert(reworkComposition.getLabBatch().getBatchName().endsWith(reworkLcsetSuffix));
         reworkComposition = (VesselContainer.LabBatchComposition)reworkContainer.getLabBatchCompositions().get(1);
         assertEquals(reworkComposition.getDenominator(), NUM_POSITIONS_IN_RACK);
         assertEquals(reworkComposition.getCount() , 1);
+        assertFalse(reworkComposition.getLabBatch().getBatchName().endsWith(reworkLcsetSuffix));
 
-        assert(reworkContainer.getEmbedder().getPluralityLabBatch(origContainer).getBatchName().endsWith(origLcsetSuffix));
+        // Rework tube should be in two lcsets.
+        assertEquals(reworkTube.getAllLabBatches().size(), 2);
 
+        // Checks the correct batch identifier for the rework tube, which depends on the end container.
+        assert(reworkTube.getPluralityLabBatch(origContainer).getBatchName().endsWith(origLcsetSuffix));
+        assert(reworkTube.getPluralityLabBatch(reworkContainer).getBatchName().endsWith(reworkLcsetSuffix));
     }
+
 
 
     private Map<String, TwoDBarcodedTube> createRack(ProductOrder productOrder, String tubePrefix, int reworkIdx, TwoDBarcodedTube reworkTube) {
