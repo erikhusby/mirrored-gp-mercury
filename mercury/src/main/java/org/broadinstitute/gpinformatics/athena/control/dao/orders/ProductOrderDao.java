@@ -311,7 +311,7 @@ public class ProductOrderDao extends GenericDao {
 
         // Add the business key, if we are only doing one.
         if (productOrderKeys != null) {
-            sqlString += " AND ord.JIRA_TICKET_KEY in (:businessKeys)";
+            sqlString += " WHERE ord.JIRA_TICKET_KEY in (:businessKeys)";
         }
 
         Query query = getThreadEntityManager().getEntityManager().createNativeQuery(sqlString);
