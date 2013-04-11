@@ -21,17 +21,17 @@ import java.util.concurrent.Semaphore;
 
 /**
  * Performs the extract and transform parts of ETL for the data warehouse.
- *
+ * <p/>
  * For incremental etl, Envers AuditReader is used to get relevant data from the _AUD tables which contain
  * changed data and a revision number.  ETL only wants the latest (current) version of an entity,
  * but for status history, it's necessary to iterate over the relevant range of revisions (all
  * changes since the last ETL run), and extract the status from the entity and obtain the status
  * date from the corresponding Envers rev info.
- *
+ * <p/>
  * Entity data is then converted to sqlLoader records.  Record format is defined in the
  * sqlLoader control files (located in mercury/src/main/db/datawh/control), one for each type of
  * data file created by ETL.
- *
+ * <p/>
  * For backfill etl, the entities are obtained from the EntityManager, regardless of their audit history.
  */
 
