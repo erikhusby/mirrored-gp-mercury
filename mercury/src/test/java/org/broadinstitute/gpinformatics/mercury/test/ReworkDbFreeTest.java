@@ -26,11 +26,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.broadinstitute.gpinformatics.mercury.presentation.transfervis.TransferVisualizerFrame;
@@ -45,7 +41,6 @@ import javax.annotation.Nonnull;
 import java.util.*;
 
 import static org.testng.Assert.*;
-import static org.testng.Assert.assertEquals;
 
 /**
  * Test that samples can go partway through a workflow, be marked for rework, go to a previous
@@ -217,12 +212,11 @@ public class ReworkDbFreeTest {
         // Checks the lab batch composition of the non-rework container.
         assertEquals(origContainer.getAllLabBatches().size(), 2);
         assertEquals(origContainer.getLabBatchCompositions().size(), 2);
-        VesselContainer.LabBatchComposition origComposition =
-                (VesselContainer.LabBatchComposition)origContainer.getLabBatchCompositions().get(0);
+        LabBatchComposition origComposition = (LabBatchComposition) origContainer.getLabBatchCompositions().get(0);
         assertEquals(origComposition.getDenominator(), NUM_POSITIONS_IN_RACK);
         assertEquals(origComposition.getCount(), NUM_POSITIONS_IN_RACK);
         assert(origComposition.getLabBatch().getBatchName().endsWith(origLcsetSuffix));
-        origComposition = (VesselContainer.LabBatchComposition)origContainer.getLabBatchCompositions().get(1);
+        origComposition = (LabBatchComposition) origContainer.getLabBatchCompositions().get(1);
         assertEquals(origComposition.getDenominator(), NUM_POSITIONS_IN_RACK);
         assertEquals(origComposition.getCount() , 1);
         assertFalse(origComposition.getLabBatch().getBatchName().endsWith(origLcsetSuffix));
@@ -231,12 +225,12 @@ public class ReworkDbFreeTest {
         assertEquals(reworkContainer.getAllLabBatches().size(), 2);
         assertEquals(reworkContainer.getLabBatchCompositions().size(), 2);
 
-        VesselContainer.LabBatchComposition reworkComposition;
-        reworkComposition = (VesselContainer.LabBatchComposition)reworkContainer.getLabBatchCompositions().get(0);
+        LabBatchComposition reworkComposition;
+        reworkComposition = (LabBatchComposition) reworkContainer.getLabBatchCompositions().get(0);
         assertEquals(reworkComposition.getDenominator(), NUM_POSITIONS_IN_RACK);
         assertEquals(reworkComposition.getCount() , NUM_POSITIONS_IN_RACK);
         assert(reworkComposition.getLabBatch().getBatchName().endsWith(reworkLcsetSuffix));
-        reworkComposition = (VesselContainer.LabBatchComposition)reworkContainer.getLabBatchCompositions().get(1);
+        reworkComposition = (LabBatchComposition) reworkContainer.getLabBatchCompositions().get(1);
         assertEquals(reworkComposition.getDenominator(), NUM_POSITIONS_IN_RACK);
         assertEquals(reworkComposition.getCount() , 1);
         assertFalse(reworkComposition.getLabBatch().getBatchName().endsWith(reworkLcsetSuffix));

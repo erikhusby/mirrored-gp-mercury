@@ -143,12 +143,16 @@
                         ${vessel.indexesCount}
                 </td>
                 <td>
-                    <c:forEach items="${vessel.nearestWorkflowLabBatches}" var="batch">
-                        <stripes:link target="JIRA"
-                                      href="${batch.jiraTicket.browserUrl}"
-                                      class="external">
-                            ${batch.businessKey}
-                        </stripes:link>
+                    <c:forEach items="${vessel.labBatchCompositions}" var="composition">
+                        <span style="white-space:nowrap;">
+                            <stripes:link target="JIRA"
+                                          href="${composition.labBatch.jiraTicket.browserUrl}"
+                                          class="external">
+                                ${composition.labBatch.businessKey}
+                            </stripes:link>
+                            ${composition.count}/${composition.denominator}
+                        </span>
+                        <br/>
                     </c:forEach>
                 </td>
                 <td>

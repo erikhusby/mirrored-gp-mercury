@@ -19,7 +19,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexing
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer.LabBatchComposition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Formula;
@@ -947,6 +946,35 @@ public abstract class LabVessel implements Serializable {
             }
         }
         return null;
+    }
+
+    /**
+     * Finds all the lab batches represented in this container, and determines how many vessels in this
+     * container belong to each of the batches.
+     *
+     * @return list of lab batches sorted by vessel count (descending).
+     */
+    public List<LabBatchComposition> getLabBatchCompositions() {
+
+        List<SampleInstance> sampleInstances = new ArrayList<SampleInstance>();
+        sampleInstances.addAll(getSampleInstances(false));
+
+        Map<LabBatch, LabBatchComposition> batchMap = new HashMap<LabBatch, LabBatchComposition>();
+        for (SampleInstance sampleInstance : sampleInstances) {
+            for (LabBatch labBatch : sampleInstance.getAllLabBatches()) {
+                LabBatchComposition batchComposition = batchMap.get(labBatch);
+                if (batchComposition == null) {
+                    batchMap.put(labBatch, new LabBatchComposition(labBatch, 1, sampleInstances.size()));
+                } else {
+                    batchComposition.addCount();
+                }
+            }
+        }
+
+        List<LabBatchComposition> batchList = new ArrayList<LabBatchComposition>(batchMap.values());
+        Collections.sort(batchList, LabBatchComposition.HIGHEST_COUNT_FIRST);
+
+        return batchList;
     }
 
     public Collection<LabBatch> getAllLabBatches() {

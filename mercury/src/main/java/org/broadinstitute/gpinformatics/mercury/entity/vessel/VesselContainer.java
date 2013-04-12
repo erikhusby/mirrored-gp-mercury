@@ -469,20 +469,11 @@ public class VesselContainer<T extends LabVessel> {
         return productOrderCriteria.getNearestProductOrders();
     }
 
-    /**
-     * Finds all the lab batches represented in this container, and determines how many vessels in this
-     * container belong to each of the batches.
-     *
-     * @return list of lab batches sorted by vessel count (descending).
-     */
     public List<LabBatchComposition> getLabBatchCompositions() {
-        // Collects all sample instances.
         List<SampleInstance> sampleInstances = new ArrayList<SampleInstance>();
-        sampleInstances.addAll(getSampleInstances(false));
-        //for (VesselPosition position : getPositions()) {
-        //    LabVessel.TraversalResults results = traverseAncestors(position, false);
-        //    sampleInstances.addAll(results.getSampleInstances());
-        //}
+        for(VesselPosition position : getEmbedder().getVesselGeometry().getVesselPositions()){
+            sampleInstances.addAll(getSampleInstancesAtPosition(position));
+        }
 
         Map<LabBatch, LabBatchComposition> batchMap = new HashMap<LabBatch, LabBatchComposition>();
         for (SampleInstance sampleInstance : sampleInstances) {
@@ -497,48 +488,8 @@ public class VesselContainer<T extends LabVessel> {
         }
 
         List<LabBatchComposition> batchList = new ArrayList<LabBatchComposition>(batchMap.values());
-        Collections.sort(batchList, HIGHEST_COUNT_FIRST);
+        Collections.sort(batchList, LabBatchComposition.HIGHEST_COUNT_FIRST);
 
         return batchList;
     }
-
-    @Transient
-    /** Ranks LabBatchCompositions by decreasing vessel count. */
-    public Comparator HIGHEST_COUNT_FIRST = new Comparator<LabBatchComposition>() {
-        public int compare(LabBatchComposition lbc1, LabBatchComposition lbc2) {
-            return lbc2.getCount() - lbc1.getCount();
-        }};
-
-    /**
-     * DTO for one lab batch and the number of vessels in that batch, for a given container.
-     */
-    public class LabBatchComposition {
-        private LabBatch labBatch;
-        private int count;
-        private int denominator;
-
-        public LabBatchComposition(LabBatch labBatch, int count, int denominator) {
-            this.labBatch = labBatch;
-            this.count = count;
-            this.denominator = denominator;
-        }
-
-        public LabBatch getLabBatch() {
-            return labBatch;
-        }
-
-        public int getCount() {
-            return count;
-        }
-
-        public void addCount() {
-            ++count;
-        }
-
-        public int getDenominator() {
-            return denominator;
-        }
-    }
-
-
 }
