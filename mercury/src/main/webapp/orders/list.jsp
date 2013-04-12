@@ -156,7 +156,7 @@
                     <div class="controls">
                         <c:forEach items="<%=ProductOrder.OrderStatus.values()%>" var="orderStatus">
                             <div style="margin-top: 5px; margin-right: 15px; float: left; width: auto;">
-                                <stripes:checkbox class="search-checkbox" name="selectedStatus" value="${orderStatus}" id="${orderStatus}-id"/>
+                                <stripes:checkbox class="search-checkbox" name="selectedStatuses" value="${orderStatus}" id="${orderStatus}-id"/>
                                 <stripes:label class="search-checkbox-label" for="${orderStatus}-id">
                                     ${orderStatus.displayName}
                                 </stripes:label>
@@ -186,7 +186,7 @@
                 <div class="control-group">
                     <div class="control-label">&nbsp;</div>
                     <div class="controls actionButtons">
-                        <stripes:submit name="search" value="Search" style="margin-right: 10px;margin-top:10px;" class="btn btn-mini"/>
+                        <stripes:submit name="list" value="Search" style="margin-right: 10px;margin-top:10px;" class="btn btn-mini"/>
                     </div>
                 </div>
             </div>

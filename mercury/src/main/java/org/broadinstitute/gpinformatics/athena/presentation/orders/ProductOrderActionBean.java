@@ -224,6 +224,10 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     private ProductOrderListEntry productOrderListEntry;
 
+    private Long productFamilyId;
+
+    private List<ProductOrder.OrderStatus> selectedStatuses;
+
     /*
      * The search query.
      */
@@ -406,9 +410,26 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
+    /**
+     * Set up defaults before binding and validation and then let any binding override that.
+     */
+    @Before(stages = LifecycleStage.BindingAndValidation, on = LIST_ACTION)
+    public void setupSearchDefaults() {
+        selectedStatuses = new ArrayList<ProductOrder.OrderStatus> ();
+        selectedStatuses.add(ProductOrder.OrderStatus.Draft);
+        selectedStatuses.add(ProductOrder.OrderStatus.Submitted);
+    }
+
     @After(stages = LifecycleStage.BindingAndValidation, on = LIST_ACTION)
     public void listInit() {
-        allProductOrderListEntries = orderListEntryDao.findProductOrderListEntries();
+        Product searchProduct = productDao.findByPartNumber(productTokenInput.getTokenObject());
+        List<BspUser> users = owner.getTokenObjects();
+        BspUser user = (CollectionUtils.isEmpty(users)) ? null : users.get(0);
+
+        allProductOrderListEntries =
+            orderListEntryDao.findProductOrderListEntries(
+                productFamilyId, searchProduct.getBusinessKey(), selectedStatuses, getDateRange(), user);
+
         progressFetcher.loadProgress(productOrderDao);
 
         productFamilies = productFamilyDao.findAll();
@@ -1255,5 +1276,21 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public Object getProductFamilies() {
         return productFamilies;
+    }
+
+    public Long getProductFamilyId() {
+        return productFamilyId;
+    }
+
+    public void setProductFamilyId(Long productFamilyId) {
+        this.productFamilyId = productFamilyId;
+    }
+
+    public List<ProductOrder.OrderStatus> getSelectedStatuses() {
+        return selectedStatuses;
+    }
+
+    public void setSelectedStatuses(List<ProductOrder.OrderStatus> selectedStatuses) {
+        this.selectedStatuses = selectedStatuses;
     }
 }

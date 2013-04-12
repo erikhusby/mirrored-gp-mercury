@@ -1,5 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.ArrayUtils;
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession_;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
@@ -12,6 +15,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
+import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -113,10 +117,12 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
     /**
      * Call the worker method with a null parameter indicating all ProductOrderListEntries should be fetched.
      *
+     * @param jiraTicketKey The jira ticket.
+     *
      * @return List of all ProductOrderListEntries.
      */
-    private List<ProductOrderListEntry> findBaseProductOrderListEntries() {
-        return findBaseProductOrderListEntries(null);
+    private List<ProductOrderListEntry> findBaseProductOrderListEntries(@Nullable String jiraTicketKey) {
+        return findBaseProductOrderListEntries(jiraTicketKey, null, null, null, null, null);
     }
 
 
@@ -127,9 +133,22 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
      *                      otherwise only the ProductOrderListEntry corresponding to the specific JIRA ticket key
      *                      is fetched.
      *
+     * @param productFamilyId The identifier for the product family.
+     * @param productBusinessKey The business key for the product (part number).
+     * @param orderStatuses The list of order statuses to filter on.
+     * @param placedDate The date range selector object for search.
+     * @param owner The BSP user to use for placed.
+     *
      * @return The order list.
      */
-    private List<ProductOrderListEntry> findBaseProductOrderListEntries(@Nullable String jiraTicketKey) {
+    private List<ProductOrderListEntry> findBaseProductOrderListEntries(
+            @Nullable String jiraTicketKey,
+            @Nullable Long productFamilyId,
+            @Nullable String productBusinessKey,
+            @Nullable List<ProductOrder.OrderStatus> orderStatuses,
+            @Nullable DateRangeSelector placedDate,
+            @Nullable BspUser owner) {
+
         CriteriaBuilder cb = getCriteriaBuilder();
         CriteriaQuery<ProductOrderListEntry> cq = cb.createQuery(ProductOrderListEntry.class);
 
@@ -153,10 +172,49 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
                         productOrderRoot.get(ProductOrder_.createdBy),
                         productOrderRoot.get(ProductOrder_.placedDate)));
 
+        Predicate fullExpression = null;
+
+        List<Predicate> queryItems = new ArrayList<Predicate>();
+
         // Only taking a single JIRA ticket key as I don't want to worry about Splitter-like issues for
         // a varargs array of keys as there is currently no need for that functionality.
         if (jiraTicketKey != null) {
-            cq.where(cb.equal(productOrderRoot.get(ProductOrder_.jiraTicketKey), jiraTicketKey));
+            queryItems.add(cb.equal(productOrderRoot.get(ProductOrder_.jiraTicketKey), jiraTicketKey));
+        }
+
+        if (productFamilyId != null) {
+            queryItems.add(cb.equal(productProductFamilyJoin.get(ProductFamily_.productFamilyId), productFamilyId));
+        }
+
+        if (productBusinessKey != null) {
+            queryItems.add(cb.equal(productOrderProductJoin.get(Product_.partNumber), productBusinessKey));
+        }
+
+        if (orderStatuses != null) {
+            for (ProductOrder.OrderStatus status : orderStatuses) {
+                queryItems.add(cb.equal(productOrderRoot.get(ProductOrder_.orderStatus), status));
+            }
+        }
+
+        // If there is a placed date range and the range has at least a start or end date, then add a date range.
+        if ((placedDate != null) && ((placedDate.getStart() != null) || (placedDate.getEnd() != null))) {
+            if (placedDate.getStart() == null) {
+                queryItems.add(cb.lessThan(productOrderRoot.get(ProductOrder_.placedDate), placedDate.getEnd()));
+            } else if (placedDate.getEnd() == null) {
+                queryItems.add(cb.greaterThan(productOrderRoot.get(ProductOrder_.placedDate), placedDate.getStart()));
+            } else {
+                queryItems.add(
+                    cb.between(productOrderRoot.get(
+                        ProductOrder_.placedDate), placedDate.getStart(), placedDate.getEnd()));
+            }
+        }
+
+        if (owner != null) {
+            queryItems.add(cb.equal(productOrderRoot.get(ProductOrder_.createdBy), owner.getDomainUserId()));
+        }
+
+        if (CollectionUtils.isEmpty(queryItems)) {
+            cq.where(cb.and(queryItems.toArray(new Predicate[queryItems.size()])));
         }
 
         return getEntityManager().createQuery(cq).getResultList();
@@ -170,13 +228,25 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
      */
     public List<ProductOrderListEntry> findProductOrderListEntries() {
 
-        List<ProductOrderListEntry> productOrderListEntries = findBaseProductOrderListEntries();
+        List<ProductOrderListEntry> productOrderListEntries = findBaseProductOrderListEntries(null);
         fetchUnbilledLedgerEntryCounts(productOrderListEntries);
 
         return productOrderListEntries;
-
     }
 
+    public List<ProductOrderListEntry> findProductOrderListEntries(
+            @Nullable Long productFamilyId,
+            @Nullable String productBusinessKey,
+            @Nullable List<ProductOrder.OrderStatus> orderStatuses,
+            @Nullable DateRangeSelector placedDate,
+            @Nullable BspUser owner) {
+
+        List<ProductOrderListEntry> productOrderListEntries =
+            findBaseProductOrderListEntries(null, productFamilyId, productBusinessKey, orderStatuses, placedDate, owner);
+        fetchUnbilledLedgerEntryCounts(productOrderListEntries);
+
+        return productOrderListEntries;
+    }
 
     /**
      * Find the single ProductOrderListEntry corresponding to the specified JIRA ticket key.
@@ -187,7 +257,8 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
      */
     public ProductOrderListEntry findSingle(@Nonnull String jiraTicketKey) {
 
-        List<ProductOrderListEntry> productOrderListEntries = findBaseProductOrderListEntries(jiraTicketKey);
+        List<ProductOrderListEntry> productOrderListEntries =
+            findBaseProductOrderListEntries(jiraTicketKey);
 
         if (productOrderListEntries.isEmpty()) {
             return null;
