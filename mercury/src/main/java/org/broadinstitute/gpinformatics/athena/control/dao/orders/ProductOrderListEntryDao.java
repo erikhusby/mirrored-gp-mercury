@@ -1,8 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession_;
@@ -17,7 +15,6 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
-import org.hibernate.criterion.Disjunction;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -146,7 +143,7 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
      * @param productBusinessKeys The business key for the product (part number).
      * @param orderStatuses The list of order statuses to filter on.
      * @param placedDate The date range selector object for search.
-     * @param owners The BSP user to use for placed.
+     * @param ownerIds The BSP user to use for placed.
      *
      * @return The order list.
      */
@@ -156,7 +153,7 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
             @Nullable List<String> productBusinessKeys,
             @Nullable List<ProductOrder.OrderStatus> orderStatuses,
             @Nullable DateRangeSelector placedDate,
-            @Nullable List<BspUser> owners) {
+            @Nullable List<Long> ownerIds) {
 
         CriteriaBuilder cb = getCriteriaBuilder();
         CriteriaQuery<ProductOrderListEntry> cq = cb.createQuery(ProductOrderListEntry.class);
@@ -181,60 +178,45 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
                         productOrderRoot.get(ProductOrder_.createdBy),
                         productOrderRoot.get(ProductOrder_.placedDate)));
 
-        List<Predicate> queryItems = new ArrayList<Predicate>();
+        List<Predicate> listOfAndTerms = new ArrayList<Predicate>();
 
         // Only taking a single JIRA ticket key as I don't want to worry about Splitter-like issues for
         // a varargs array of keys as there is currently no need for that functionality.
         if (jiraTicketKey != null) {
-            queryItems.add(cb.equal(productOrderRoot.get(ProductOrder_.jiraTicketKey), jiraTicketKey));
+            listOfAndTerms.add(cb.equal(productOrderRoot.get(ProductOrder_.jiraTicketKey), jiraTicketKey));
         }
 
         if (productFamilyId != null) {
-            queryItems.add(cb.equal(productProductFamilyJoin.get(ProductFamily_.productFamilyId), productFamilyId));
+            listOfAndTerms.add(cb.equal(productProductFamilyJoin.get(ProductFamily_.productFamilyId), productFamilyId));
         }
 
         if (!CollectionUtils.isEmpty(productBusinessKeys)) {
-            Predicate productKeyDisjunction = cb.disjunction();
-            for (String productBusinessKey : productBusinessKeys) {
-                productKeyDisjunction.getExpressions().add(cb.equal(productOrderProductJoin.get(Product_.partNumber), productBusinessKey));
-            }
-
-            queryItems.add(productKeyDisjunction);
+            listOfAndTerms.add(createOrTerms(cb, productOrderProductJoin.get(Product_.partNumber), productBusinessKeys));
         }
 
         if (!CollectionUtils.isEmpty(orderStatuses)) {
-            Predicate statusDisjunction = cb.disjunction();
-            for (ProductOrder.OrderStatus status : orderStatuses) {
-                statusDisjunction.getExpressions().add(cb.equal(productOrderRoot.get(ProductOrder_.orderStatus), status));
-            }
-
-            queryItems.add(statusDisjunction);
+            listOfAndTerms.add(createOrTerms(cb, productOrderRoot.get(ProductOrder_.orderStatus), orderStatuses));
         }
 
         // If there is a placed date range and the range has at least a start or end date, then add a date range.
         if ((placedDate != null) && ((placedDate.getStart() != null) || (placedDate.getEnd() != null))) {
             if (placedDate.getStart() == null) {
-                queryItems.add(cb.lessThan(productOrderRoot.get(ProductOrder_.placedDate), placedDate.getEndTime()));
+                listOfAndTerms.add(cb.lessThan(productOrderRoot.get(ProductOrder_.placedDate), placedDate.getEndTime()));
             } else if (placedDate.getEnd() == null) {
-                queryItems.add(cb.greaterThan(productOrderRoot.get(ProductOrder_.placedDate), placedDate.getStartTime()));
+                listOfAndTerms.add(cb.greaterThan(productOrderRoot.get(ProductOrder_.placedDate), placedDate.getStartTime()));
             } else {
-                queryItems.add(
+                listOfAndTerms.add(
                     cb.between(productOrderRoot.get(
                         ProductOrder_.placedDate), placedDate.getStart(), placedDate.getEndTime()));
             }
         }
 
-        if (!CollectionUtils.isEmpty(owners)) {
-            Predicate ownerDisjunction = cb.disjunction();
-            for (BspUser owner : owners) {
-                ownerDisjunction.getExpressions().add(cb.equal(productOrderRoot.get(ProductOrder_.createdBy), owner.getUserId()));
-            }
-
-            queryItems.add(ownerDisjunction);
+        if (!CollectionUtils.isEmpty(ownerIds)) {
+            listOfAndTerms.add(createOrTerms(cb, productOrderRoot.get(ProductOrder_.createdBy), ownerIds));
         }
 
-        if (!CollectionUtils.isEmpty(queryItems)) {
-            cq.where(cb.and(queryItems.toArray(new Predicate[queryItems.size()])));
+        if (!CollectionUtils.isEmpty(listOfAndTerms)) {
+            cq.where(cb.and(listOfAndTerms.toArray(new Predicate[listOfAndTerms.size()])));
         }
 
         return getEntityManager().createQuery(cq).getResultList();
@@ -259,10 +241,17 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
             @Nullable List<String> productBusinessKey,
             @Nullable List<ProductOrder.OrderStatus> orderStatuses,
             @Nullable DateRangeSelector placedDate,
-            @Nullable List<BspUser> owner) {
+            @Nullable List<BspUser> owners) {
+
+        List<Long> ownerIds  = new ArrayList<Long> ();
+        if (owners != null) {
+            for (BspUser user : owners) {
+                ownerIds.add(user.getUserId());
+            }
+        }
 
         List<ProductOrderListEntry> productOrderListEntries =
-            findBaseProductOrderListEntries(null, productFamilyId, productBusinessKey, orderStatuses, placedDate, owner);
+            findBaseProductOrderListEntries(null, productFamilyId, productBusinessKey, orderStatuses, placedDate, ownerIds);
         fetchUnbilledLedgerEntryCounts(productOrderListEntries);
 
         return productOrderListEntries;

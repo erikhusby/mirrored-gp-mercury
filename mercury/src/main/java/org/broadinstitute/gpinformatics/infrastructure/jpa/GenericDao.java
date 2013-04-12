@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.jpa;
 
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+
 import javax.annotation.Nullable;
 import javax.ejb.Stateful;
 import javax.ejb.TransactionAttribute;
@@ -371,4 +373,12 @@ public class GenericDao {
         }
     }
 
+    protected Predicate createOrTerms(CriteriaBuilder cb, Path fieldExpression, List values) {
+        List<Predicate> listOfOrTerms = new ArrayList<Predicate>(values.size());
+        for (Object value : values) {
+            listOfOrTerms.add(cb.equal(fieldExpression, value));
+        }
+
+        return cb.or(listOfOrTerms.toArray(new Predicate[listOfOrTerms.size()]));
+    }
 }
