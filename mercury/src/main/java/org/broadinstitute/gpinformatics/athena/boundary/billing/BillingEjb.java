@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
 
+import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
@@ -13,7 +14,9 @@ import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 
 @Stateful
@@ -60,7 +63,6 @@ public class BillingEjb {
         }
     }
 
-
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private QuoteService quoteService;
@@ -70,6 +72,9 @@ public class BillingEjb {
 
     @Inject
     private BillingSessionDao billingSessionDao;
+
+    @Inject
+    private ProductOrderEjb productOrderEjb;
 
     /**
      * Transactional method to end a billing session with appropriate handling for complete or partial failure.
@@ -125,6 +130,7 @@ public class BillingEjb {
         boolean errorsInBilling = false;
 
         List<BillingResult> results = new ArrayList<BillingResult>();
+        Set<String> updatedPDOs = new HashSet<String>();
 
         for (QuoteImportItem item : billingSession.getUnBilledQuoteImportItems(priceListCache)) {
 
@@ -159,6 +165,8 @@ public class BillingEjb {
                 // with the quote for the QuoteImportItem, add the priceItemType, and the success message.
                 item.updateQuoteIntoLedgerEntries(quoteIsReplacing, BillingSession.SUCCESS);
 
+                updatedPDOs.addAll(item.getOrderKeys());
+
             } catch (Exception ex) {
                 // Any exceptions in sending to the quote server will just be reported and will continue
                 // on to the next one.
@@ -172,6 +180,13 @@ public class BillingEjb {
         // all sessions from the ledger.
         if (!errorsInBilling) {
             endSession(billingSession);
+        }
+
+        // Update the state of all PDOs affected by this billing session.
+        try {
+            productOrderEjb.updateOrderStatus(updatedPDOs);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
 
         return results;

@@ -89,7 +89,7 @@ public class ImportFromSquidTest extends ContainerTest {
     /**
      * Import index schemes from Squid.
      */
-    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testImportIndexingSchemes() {
         Query nativeQuery = entityManager.createNativeQuery("SELECT " +
                 "     mis.NAME, " +
@@ -143,7 +143,7 @@ public class ImportFromSquidTest extends ContainerTest {
     /**
      * Import index plates from Squid.  This takes about 15 minutes.
      */
-    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION, dependsOnMethods = {"testImportIndexingSchemes"})
+    @Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION, dependsOnMethods = {"testImportIndexingSchemes"})
     public void testImportIndexPlates() {
         Query nativeQuery = entityManager.createNativeQuery("SELECT " +
                 "     p.barcode AS plate_barcode, " +
@@ -228,7 +228,7 @@ public class ImportFromSquidTest extends ContainerTest {
      * To prepare for sending past production BettaLIMS messages into Mercury, this method creates LC Sets and associated
      * batches of tubes that are stored in Squid.
      */
-    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testCreateLcSets() {
 //        Map<String, String> mapWorkflowToPartNum = new HashMap<String, String>();
 //        mapWorkflowToPartNum.put("Custom Amplicon", "P-VAL-0002");
@@ -359,7 +359,7 @@ public class ImportFromSquidTest extends ContainerTest {
     /**
      * To prepare for sending past production BettaLIMS messages into Mercury, this method creates bait tubes.
      */
-    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testCreateBaits() {
         // todo jmt for a bait to show up in this query, it must have been transferred to a plate at least once.
         // Without this restriction, the number of tubes goes from ~40 to ~70,000
@@ -433,7 +433,7 @@ public class ImportFromSquidTest extends ContainerTest {
     /**
      * To prepare for sending past production BettaLIMS messages into Mercury, this method creates Custom Amplicon Tubes.
      */
-    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testCreateCats() {
         // todo jmt for a CAT to show up in this query, it must have been transferred to a plate at least once.
         // Without this restriction, the number of tubes rises from 122 to ~14,000
@@ -492,7 +492,7 @@ public class ImportFromSquidTest extends ContainerTest {
      * BettalimsMessageResourceTest.testFileList to send the messages to Mercury.
      * Note: later discovered that this misses many events after PoolingTransfer, because of workflow validation errors.
      */
-    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testFindMessageFilesForLcSet() {
         try {
             Query nativeQuery = entityManager.createNativeQuery("SELECT " +
@@ -649,7 +649,7 @@ public class ImportFromSquidTest extends ContainerTest {
         }
     }
 
-    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testImportQuants() {
         Query nativeQuery = entityManager.createNativeQuery("SELECT " +
                 "     lqr.run_name, " +
@@ -698,7 +698,7 @@ public class ImportFromSquidTest extends ContainerTest {
         ImportFromBspTest.recordMetrics(vesselMetricRunBean);
     }
 
-    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testImportRuns() {
         Query nativeQuery = entityManager.createNativeQuery("SELECT " +
                 "    r.barcode AS flowcell_barcode, " +

@@ -35,16 +35,30 @@ public class ReworkEntry extends RapSheetEntry {
     @Enumerated(EnumType.STRING)
     private LabEventType reworkStep;
 
-    public ReworkEntry(RapSheet rapSheet, ReworkReason reworkReason, ReworkLevel reworkLevel, LabEventType reworkStep,
-                       LabVesselPosition labVesselPosition) {
-        super(rapSheet, labVesselPosition);
-        this.reworkReason = reworkReason;
+    /**
+     * Active rework is work that is in a bucket, pdo, lcset, or whatever.
+     * IE, It is Actively being worked on, and is not available to put into
+     * a bucket.
+     *
+     * This is a Big B Boolean, because hibernate was complaining about not being able
+     * so assign null to a primitive.
+     */
+    private Boolean activeRework=false;
+
+    public ReworkEntry() {
+
+    }
+
+    public ReworkEntry(LabVesselPosition labVesselPosition, LabVesselComment<ReworkEntry> labVesselComment,
+                       ReworkReason reason, ReworkLevel reworkLevel, LabEventType reworkStep) {
+        super(labVesselPosition, labVesselComment);
+        this.reworkReason = reason;
         this.reworkLevel = reworkLevel;
         this.reworkStep = reworkStep;
     }
 
-    public ReworkEntry() {
-
+    public ReworkEntry(LabVesselPosition labVesselPosition, LabVesselComment<ReworkEntry> rapSheetComment) {
+        super(labVesselPosition, rapSheetComment);
     }
 
     public ReworkReason getReworkReason() {
@@ -69,5 +83,13 @@ public class ReworkEntry extends RapSheetEntry {
 
     public void setReworkStep(LabEventType reworkStep) {
         this.reworkStep = reworkStep;
+    }
+
+    public Boolean isActiveRework() {
+        return activeRework;
+    }
+
+    public void setActiveRework(Boolean activeRework) {
+        this.activeRework = activeRework;
     }
 }

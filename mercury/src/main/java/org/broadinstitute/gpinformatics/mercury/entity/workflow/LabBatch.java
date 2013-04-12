@@ -5,6 +5,7 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.envers.Audited;
 
@@ -50,12 +51,12 @@ public class LabBatch {
     @OneToMany(mappedBy = "labBatch")
     private Set<LabEvent> labEvents = new LinkedHashSet<LabEvent>();
 
-    @Transient // fixme, this should be persistent, probably as a boolean
     // on the lb_starting_lab_vessels join table
     // fixme reworks need to be included in the startingVessels
     // list because they are starting vessels...but just
     // marked as rework
-    private Set<LabVessel> reworks = new HashSet<LabVessel>();
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Collection<LabVessel> reworks = new HashSet<LabVessel>();
 
     private Date createdOn;
 
@@ -121,12 +122,20 @@ public class LabBatch {
      * of reworks for the batch.
      * @param reworks
      */
-    public void addReworks(Set<LabVessel> reworks) {
+    public void addReworks(Collection<LabVessel> reworks) {
+        for (LabVessel vessel : reworks) {
+            for (MercurySample sample : vessel.getMercurySamples()) {
+                sample.getRapSheet().startRework();
+            }
+        }
         this.reworks.addAll(reworks);
     }
 
-    @Transient
-    public Set<LabVessel> getReworks() {
+    public void setReworks(Collection<LabVessel> reworks) {
+        this.reworks = reworks;
+    }
+
+    public Collection<LabVessel> getReworks() {
         return reworks;
     }
 

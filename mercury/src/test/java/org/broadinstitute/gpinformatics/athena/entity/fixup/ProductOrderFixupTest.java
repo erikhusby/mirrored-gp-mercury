@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.entity.fixup;
 
 import org.apache.commons.logging.Log;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
@@ -13,6 +14,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -21,6 +23,7 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.persistence.Query;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -46,6 +49,9 @@ public class ProductOrderFixupTest extends Arquillian {
 
     @Inject
     private ProductOrderSampleDao productOrderSampleDao;
+
+    @Inject
+    private ProductOrderEjb productOrderEjb;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -244,8 +250,6 @@ public class ProductOrderFixupTest extends Arquillian {
         }
     }
 
-
-
     @Test(enabled = false)
     public void setPlacedDate() {
 
@@ -281,6 +285,19 @@ public class ProductOrderFixupTest extends Arquillian {
             if (keyToDateMap.containsKey(productOrder.getBusinessKey())) {
                 productOrder.setPlacedDate(keyToDateMap.get(productOrder.getBusinessKey()));
                 productOrderDao.persist(productOrder);
+            }
+        }
+    }
+
+    @Test(enabled = false)
+    public void fixupPDOCompleteStatus()
+            throws JiraIssue.NoTransitionException, ProductOrderEjb.NoSuchPDOException, IOException {
+        // Loop through all PDOs and update their status to complete where necessary.  The API can in theory
+        // un-complete PDOs but no PDOs in the database should be completed yet.
+        List<ProductOrder> orders = productOrderDao.findAll();
+        for (ProductOrder order : orders) {
+            if (productOrderEjb.updateOrderStatus(order.getJiraTicketKey())) {
+                break;
             }
         }
     }

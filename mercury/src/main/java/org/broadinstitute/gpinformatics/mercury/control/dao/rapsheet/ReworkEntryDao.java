@@ -12,12 +12,18 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet;
 
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
+import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
+import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry_;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
+import java.util.Collection;
 
 @Stateful
 @RequestScoped
 public class ReworkEntryDao extends GenericDao {
 
+    public Collection<ReworkEntry> getNonActiveReworkEntries() {
+        return super.findList(ReworkEntry.class, ReworkEntry_.activeRework,false);
+    }
 }
