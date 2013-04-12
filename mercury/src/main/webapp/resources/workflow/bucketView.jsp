@@ -55,6 +55,7 @@
                     {"bSortable":true},
                     {"bSortable":true},
                     {"bSortable":true},
+                    {"bSortable":true},
                     {"bSortable":true, "sType":"date"}
                 ]
             });
@@ -149,8 +150,8 @@
         </tr>
     </table>
 </c:if>
-
-        <table id="bucketEntryView" class="table simple">
+        <div class="borderHeader"> Samples</div><br/>
+<table id="bucketEntryView" class="table simple">
             <thead>
             <tr>
                 <th width="10">
@@ -228,14 +229,15 @@
             </tbody>
         </table>
 
+        <div class="borderHeader">Samples for Rework</div><br/>
         <table id="reworkEntryView" class="table simple">
             <thead>
             <tr>
                 <th width="10">
-                    <input type="checkbox" class="rework-checkAll"/><span id="reworkCount"
-                                                                          class="rework-checkedCount"></span>
+                    <input type="checkbox" class="rework-checkAll"/>
                 </th>
                 <th width="60">Vessel Name</th>
+                <th width="50">Sample Name</th>
                 <th width="50">PDO</th>
                 <th width="300">PDO Name</th>
                 <th width="200">PDO Owner</th>
@@ -260,14 +262,14 @@
                             </a>
                         </c:when><c:otherwise>${entry.key}</c:otherwise>
                         </c:choose></td>
-                    <%--<td>--%>
-                        <%--<c:set var="mercurySample" value="${entry.rapSheet.sample}"/>--%>
-                            <%--<c:choose><c:when test="${!readOnly}">--%>
-                                <%--<a href="${ctxpath}/search/all.action?search=&searchKey=${entry.}">--%>
-                                        <%--${mercurySample.sampleKey}--%>
-                                <%--</a>--%>
-                            <%--</c:when><c:otherwise>${mercurySample.sampleKey}</c:otherwise></c:choose>--%>
-                    <%--</td>--%>
+                    <td>
+                        <c:forEach items="${actionBean.getSampleNames(entry.value)}" var="sampleName" varStatus="loopstatus">
+                            <c:choose><c:when test="${!readOnly}">
+                                <a href="${ctxpath}/search/all.action?search=&searchKey=${sampleName}"> ${sampleName} </a>
+                            </c:when><c:otherwise>${sampleName}</c:otherwise></c:choose>
+                            <c:if test="${!loopstatus.last}">, </c:if>
+                        </c:forEach>
+                    </td>
                     <td>
                         <c:choose>
                             <c:when test="${!readOnly}"><a

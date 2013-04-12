@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.*;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
@@ -221,6 +222,15 @@ public class BucketViewActionBean extends CoreActionBean {
     public String getReworkComment(LabVessel vessel) {
         return vessel.getAllSamples().iterator().next().getStartingSample().getRapSheet()
                 .getCurrentReworkEntry().getLabVesselComment().getComment();
+    }
+
+    public Set<String> getSampleNames(LabVessel vessel) {
+        final Set<SampleInstance> allSamples = vessel.getAllSamples();
+        Set<String> sampleNames=new HashSet<String>();
+        for (SampleInstance sampleInstance : allSamples) {
+            sampleNames.add(sampleInstance.getStartingSample().getSampleKey());
+        }
+        return sampleNames;
     }
 
     public Long getReworkOperator(LabVessel vessel) {
