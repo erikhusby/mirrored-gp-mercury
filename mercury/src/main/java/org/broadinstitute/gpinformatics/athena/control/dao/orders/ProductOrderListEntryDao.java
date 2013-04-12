@@ -143,20 +143,20 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
      *                      is fetched.
      *
      * @param productFamilyId The identifier for the product family.
-     * @param productBusinessKey The business key for the product (part number).
+     * @param productBusinessKeys The business key for the product (part number).
      * @param orderStatuses The list of order statuses to filter on.
      * @param placedDate The date range selector object for search.
-     * @param owner The BSP user to use for placed.
+     * @param owners The BSP user to use for placed.
      *
      * @return The order list.
      */
     private List<ProductOrderListEntry> findBaseProductOrderListEntries(
             @Nullable String jiraTicketKey,
             @Nullable Long productFamilyId,
-            @Nullable String productBusinessKey,
+            @Nullable List<String> productBusinessKeys,
             @Nullable List<ProductOrder.OrderStatus> orderStatuses,
             @Nullable DateRangeSelector placedDate,
-            @Nullable BspUser owner) {
+            @Nullable List<BspUser> owners) {
 
         CriteriaBuilder cb = getCriteriaBuilder();
         CriteriaQuery<ProductOrderListEntry> cq = cb.createQuery(ProductOrderListEntry.class);
@@ -193,8 +193,13 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
             queryItems.add(cb.equal(productProductFamilyJoin.get(ProductFamily_.productFamilyId), productFamilyId));
         }
 
-        if (!StringUtils.isBlank(productBusinessKey)) {
-            queryItems.add(cb.equal(productOrderProductJoin.get(Product_.partNumber), productBusinessKey));
+        if (!CollectionUtils.isEmpty(productBusinessKeys)) {
+            Predicate productKeyDisjunction = cb.disjunction();
+            for (String productBusinessKey : productBusinessKeys) {
+                productKeyDisjunction.getExpressions().add(cb.equal(productOrderProductJoin.get(Product_.partNumber), productBusinessKey));
+            }
+
+            queryItems.add(productKeyDisjunction);
         }
 
         if (!CollectionUtils.isEmpty(orderStatuses)) {
@@ -219,8 +224,13 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
             }
         }
 
-        if (owner != null) {
-            queryItems.add(cb.equal(productOrderRoot.get(ProductOrder_.createdBy), owner.getUserId()));
+        if (!CollectionUtils.isEmpty(owners)) {
+            Predicate ownerDisjunction = cb.disjunction();
+            for (BspUser owner : owners) {
+                ownerDisjunction.getExpressions().add(cb.equal(productOrderRoot.get(ProductOrder_.createdBy), owner.getUserId()));
+            }
+
+            queryItems.add(ownerDisjunction);
         }
 
         if (!CollectionUtils.isEmpty(queryItems)) {
@@ -246,10 +256,10 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
 
     public List<ProductOrderListEntry> findProductOrderListEntries(
             @Nullable Long productFamilyId,
-            @Nullable String productBusinessKey,
+            @Nullable List<String> productBusinessKey,
             @Nullable List<ProductOrder.OrderStatus> orderStatuses,
             @Nullable DateRangeSelector placedDate,
-            @Nullable BspUser owner) {
+            @Nullable List<BspUser> owner) {
 
         List<ProductOrderListEntry> productOrderListEntries =
             findBaseProductOrderListEntries(null, productFamilyId, productBusinessKey, orderStatuses, placedDate, owner);

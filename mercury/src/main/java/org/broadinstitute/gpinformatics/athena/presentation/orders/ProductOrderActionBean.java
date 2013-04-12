@@ -422,12 +422,17 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @After(stages = LifecycleStage.BindingAndValidation, on = LIST_ACTION)
     public void listInit() {
-        List<BspUser> users = owner.getTokenObjects();
-        BspUser user = (CollectionUtils.isEmpty(users)) ? null : users.get(0);
+
+        List<Product> tokenProducts = productTokenInput.getTokenObjects();
+
+        List<String> productKeys = new ArrayList<String> ();
+        for (Product tokenProduct : tokenProducts) {
+            productKeys.add(tokenProduct.getBusinessKey());
+        }
 
         allProductOrderListEntries =
             orderListEntryDao.findProductOrderListEntries(
-                productFamilyId, productTokenInput.getTokenObject(), selectedStatuses, getDateRange(), user);
+                productFamilyId, productKeys, selectedStatuses, getDateRange(), owner.getTokenObjects());
 
         progressFetcher.loadProgress(productOrderDao);
 

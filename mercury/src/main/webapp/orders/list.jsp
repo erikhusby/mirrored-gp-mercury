@@ -16,7 +16,6 @@
                         "${ctxpath}/projects/project.action?usersAutocomplete=", {
                             hintText: "Type a name",
                             prePopulate: ${actionBean.ensureStringResult(actionBean.owner.completeData)},
-                            tokenLimit: 1,
                             resultsFormatter: formatInput
                         }
                 );
@@ -25,8 +24,7 @@
                         "${ctxpath}/orders/order.action?productAutocomplete=", {
                             hintText: "Type a Product name or Part Number   ",
                             resultsFormatter: formatInput,
-                            prePopulate: ${actionBean.ensureStringResult(actionBean.productTokenInput.completeData)},
-                            tokenLimit: 1
+                            prePopulate: ${actionBean.ensureStringResult(actionBean.productTokenInput.completeData)}
                         }
                 );
 
