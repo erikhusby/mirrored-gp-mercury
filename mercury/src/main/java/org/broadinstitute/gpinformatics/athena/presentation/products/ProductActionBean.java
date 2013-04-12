@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.Mater
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.PriceItemTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProductTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
@@ -401,7 +402,7 @@ public class ProductActionBean extends CoreActionBean {
         this.productFamilyId = productFamilyId;
     }
 
-    public Collection<org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem> getReplacementPriceItems() {
+    public Collection<QuotePriceItem> getReplacementPriceItems() {
         return editProduct.getReplacementPriceItems(priceListCache);
     }
 }

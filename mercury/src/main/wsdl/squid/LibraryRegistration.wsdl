@@ -2,14 +2,12 @@
 <wsdl:definitions
         targetNamespace="urn:ExtLibraryRegistration"
         xmlns:libreg="urn:ExtLibraryRegistration"
-        xmlns:topic ="urn:Topic"
         xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
         xmlns:wsdlsoap="http://schemas.xmlsoap.org/wsdl/soap/"
         xmlns:xsd="http://www.w3.org/2001/XMLSchema">
 
     <wsdl:types>
-        <xsd:schema targetNamespace="urn:ExtLibraryRegistration" xmlns:topic="urn:Topic" >
-            <xsd:import namespace="urn:Topic" schemaLocation="../../xsd/Topic.xsd" />
+        <xsd:schema targetNamespace="urn:ExtLibraryRegistration">
 
             <xsd:simpleType name="IndexPosition">
                 <xsd:restriction base="xsd:string">
@@ -22,6 +20,15 @@
                     <xsd:enumeration value="ILLUMINA_IS5" />
                     <xsd:enumeration value="ILLUMINA_IS6" />
                 </xsd:restriction>
+            </xsd:simpleType>
+
+            <xsd:simpleType name="SequencingTechnology">
+              <xsd:restriction base="xsd:string">
+                <xsd:enumeration value="ILLUMINA" />
+                <xsd:enumeration value="FOUR_FIVE_FOUR" />
+                <xsd:enumeration value="ION_TORRENT" />
+                <xsd:enumeration value="PACBIO" />
+              </xsd:restriction>
             </xsd:simpleType>
 
             <xsd:complexType name="LibraryMolecularIndex">
@@ -59,7 +66,7 @@ will have a creation origin in the SequeL system only to be eventually registere
                 </xsd:annotation>
 
                 <xsd:sequence>
-                    <xsd:element type="topic:SequencingTechnology" name="technology"/>
+                    <xsd:element type="libreg:SequencingTechnology" name="technology"/>
                     <xsd:element name="bspContextReference" type="xsd:string"/>
                     <xsd:sequence minOccurs="0" maxOccurs="unbounded">
                         <xsd:element name="molecularIndexes" type="libreg:LibraryMolecularIndex"/>

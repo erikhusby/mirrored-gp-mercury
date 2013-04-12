@@ -794,6 +794,14 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
+    private void updateOrderStatus()
+            throws ProductOrderEjb.NoSuchPDOException, IOException, JiraIssue.NoTransitionException {
+        if (productOrderEjb.updateOrderStatus(editOrder.getJiraTicketKey())) {
+            // If the status was changed, let the user know.
+            addMessage("The order status is now {0}.", editOrder.getOrderStatus());
+        }
+    }
+
     @HandlesEvent(DELETE_SAMPLES_ACTION)
     public Resolution deleteSamples() throws Exception {
         // If removeAll returns false, no samples were removed -- should never happen.
@@ -807,7 +815,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             issue.setCustomFieldUsingTransition(ProductOrder.JiraField.SAMPLE_IDS,
                     editOrder.getSampleString(),
                     ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
-            productOrderEjb.updateOrderStatus(editOrder.getJiraTicketKey());
+            updateOrderStatus();
         }
         return createViewResolution();
     }
@@ -852,7 +860,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
         if (!selectedProductOrderSamples.isEmpty()) {
             productOrderEjb.abandonSamples(editOrder.getJiraTicketKey(), selectedProductOrderSamples);
-            productOrderEjb.updateOrderStatus(editOrder.getJiraTicketKey());
+            updateOrderStatus();
         }
         return createViewResolution();
     }
@@ -873,7 +881,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         handleSamplesAdded(samplesToAdd);
 
-        productOrderEjb.updateOrderStatus(editOrder.getJiraTicketKey());
+        updateOrderStatus();
 
         return createViewResolution();
     }

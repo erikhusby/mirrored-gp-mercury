@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.integration.quotes;
 
-import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -31,17 +31,17 @@ public class PriceListCacheContainerTest extends Arquillian {
 
         Assert.assertNotNull(priceListCache);
 
-        Collection<PriceItem> priceItems = priceListCache.getPriceItems();
-        Assert.assertNotNull(priceItems);
-        Assert.assertTrue(priceItems.size() > 10);
+        Collection<QuotePriceItem> quotePriceItems = priceListCache.getQuotePriceItems();
+        Assert.assertNotNull(quotePriceItems);
+        Assert.assertTrue(quotePriceItems.size() > 10);
 
-        for (PriceItem priceItem : priceItems) {
-            Assert.assertNotNull(priceItem.getPlatformName(), priceItem.toString());
+        for (QuotePriceItem quotePriceItem : quotePriceItems) {
+            Assert.assertNotNull(quotePriceItem.getPlatformName(), quotePriceItem.toString());
             // category actually can be null
-            // Assert.assertNotNull(priceItem.getCategoryName(), priceItem.toString());
-            Assert.assertNotNull(priceItem.getName(), priceItem.toString());
-            Assert.assertNotNull(priceItem.getSubmittedDate(), priceItem.toString());
-            Assert.assertNotNull(priceItem.getEffectiveDate(), priceItem.toString());
+            // Assert.assertNotNull(quotePriceItem.getCategoryName(), quotePriceItem.toString());
+            Assert.assertNotNull(quotePriceItem.getName(), quotePriceItem.toString());
+            Assert.assertNotNull(quotePriceItem.getSubmittedDate(), quotePriceItem.toString());
+            Assert.assertNotNull(quotePriceItem.getEffectiveDate(), quotePriceItem.toString());
         }
 
     }

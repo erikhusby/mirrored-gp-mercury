@@ -126,7 +126,7 @@
 
                 <div class="control-group">
                     <stripes:label for="productFamily" class="control-label">
-                        Product Family *
+                        Product Family
                     </stripes:label>
                     <div class="controls">
                         <stripes:select name="productFamilyId" id="productFamily" class="search-select" style="margin-top:3px;">

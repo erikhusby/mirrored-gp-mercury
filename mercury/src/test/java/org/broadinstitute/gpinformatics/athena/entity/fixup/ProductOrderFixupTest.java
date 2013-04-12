@@ -296,8 +296,8 @@ public class ProductOrderFixupTest extends Arquillian {
         // un-complete PDOs but no PDOs in the database should be completed yet.
         List<ProductOrder> orders = productOrderDao.findAll();
         for (ProductOrder order : orders) {
-            if (productOrderEjb.updateOrderStatus(order.getJiraTicketKey())) {
-                break;
+            if (productOrderEjb.updateOrderStatus(order.getBusinessKey())) {
+                log.info(String.format("Changed %s to status %s", order.getJiraTicketKey(), order.getOrderStatus()));
             }
         }
     }

@@ -23,7 +23,7 @@ public class HappyQuoteServiceMock implements QuoteService {
     }
 
     @Override
-    public String registerNewWork(Quote quote, PriceItem priceItem, PriceItem itemIsReplacing,
+    public String registerNewWork(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
                                   Date reportedCompletionDate, double numWorkUnits, String callbackUrl,
                                   String callbackParameterName, String callbackParameterValue) {
         throw new RuntimeException("happy mock can't do this");

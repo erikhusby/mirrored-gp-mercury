@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 
 import java.text.MessageFormat;
 import java.util.Collection;
@@ -105,7 +106,7 @@ public class QuoteImportItem {
      * @param billingMessage The message to be assigned to all entries.
      */
     public void updateQuoteIntoLedgerEntries(
-        org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem itemIsReplacing,
+        QuotePriceItem itemIsReplacing,
         String billingMessage) {
 
         LedgerEntry.PriceItemType priceItemType = getPriceItemType(itemIsReplacing);
@@ -136,7 +137,7 @@ public class QuoteImportItem {
 
         // If this is optional, then return the primary as the 'is replacing.' This is comparing the quote price item
         // to the values on the product's price item, so do the item by item compare.
-        for (org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem optional : product.getReplacementPriceItems(priceListCache)) {
+        for (QuotePriceItem optional : product.getReplacementPriceItems(priceListCache)) {
             if (optional.isMercuryPriceItemEqual(priceItem)) {
                 return product.getPrimaryPriceItem();
             }
@@ -145,7 +146,7 @@ public class QuoteImportItem {
         return null;
     }
 
-    public LedgerEntry.PriceItemType getPriceItemType(org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem itemIsReplacing) {
+    public LedgerEntry.PriceItemType getPriceItemType(QuotePriceItem itemIsReplacing) {
         LedgerEntry.PriceItemType type;
         if (itemIsReplacing != null) {
             type = LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM;
