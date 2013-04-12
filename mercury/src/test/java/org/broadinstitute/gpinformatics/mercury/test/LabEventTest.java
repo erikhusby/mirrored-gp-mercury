@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.test;
 
 //import com.jprofiler.api.agent.Controller;
 
-import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProducer;
@@ -11,8 +10,6 @@ import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServic
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -76,8 +73,6 @@ import static org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDes
  */
 @SuppressWarnings({"FeatureEnvy", "OverlyCoupledClass", "OverlyCoupledMethod", "OverlyLongMethod"})
 public class LabEventTest extends BaseEventTest{
-    public static final int NUM_POSITIONS_IN_RACK = 96;
-
     /**
      * Physical type for a 2-lane flowcell
      */
@@ -92,24 +87,6 @@ public class LabEventTest extends BaseEventTest{
 
     private final TemplateEngine templateEngine = new TemplateEngine();
 
-    private final LabEventFactory.LabEventRefDataFetcher labEventRefDataFetcher =
-            new LabEventFactory.LabEventRefDataFetcher() {
-
-                @Override
-                public BspUser getOperator(String userId) {
-                    return new BSPUserList.QADudeUser("Test", BSPManagerFactoryStub.QA_DUDE_USER_ID);
-                }
-
-                @Override
-                public BspUser getOperator(Long bspUserId) {
-                    return new BSPUserList.QADudeUser("Test", BSPManagerFactoryStub.QA_DUDE_USER_ID);
-                }
-
-                @Override
-                public LabBatch getLabBatch(String labBatchName) {
-                    return null;
-                }
-            };
 
     /**
      * Used in test verification, accumulates the events in a chain of transfers
@@ -155,6 +132,7 @@ public class LabEventTest extends BaseEventTest{
         }
     }
 
+    @Override
     @BeforeClass(groups = TestGroups.DATABASE_FREE)
     public void setUp() {
         templateEngine.postConstruct();
