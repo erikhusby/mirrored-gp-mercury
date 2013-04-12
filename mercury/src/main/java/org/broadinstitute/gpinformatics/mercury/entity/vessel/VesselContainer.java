@@ -502,6 +502,7 @@ public class VesselContainer<T extends LabVessel> {
         return batchList;
     }
 
+    @Transient
     /** Ranks LabBatchCompositions by decreasing vessel count. */
     public Comparator HIGHEST_COUNT_FIRST = new Comparator<LabBatchComposition>() {
         public int compare(LabBatchComposition lbc1, LabBatchComposition lbc2) {
