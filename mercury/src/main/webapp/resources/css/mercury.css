@@ -132,7 +132,7 @@ textarea.controlledText { width: 550px; }
 .simpletab .ui-state-hover { border: 1px solid #0088cc; color: #0088cc; background: #e6f7ff; }
 
 
-.search-select { width: auto; font-weight: bold; font-size: x-small; height: 20px; padding: 0; margin-right: 10px; }
+.search-select { width: auto; font-weight: bold; font-size: x-small; height: 25px; padding: 0; margin-right: 10px; }
 input.search-input { width: auto; font-weight: bold; font-size: x-small; height: 25px;  padding: 0; }
 .search-checkbox-label { float: left; font-weight: bold; font-size: x-small; }
 input.search-checkbox { float: left; margin-right: 3px; }

@@ -129,7 +129,7 @@
                         Product Family *
                     </stripes:label>
                     <div class="controls">
-                        <stripes:select name="productFamilyId" id="productFamily" class="search-select">
+                        <stripes:select name="productFamilyId" id="productFamily" class="search-select" style="margin-top:3px;">
                             <stripes:option value="">Select a Product Family</stripes:option>
                             <stripes:options-collection collection="${actionBean.productFamilies}" label="name"
                                                         value="productFamilyId"/>
@@ -168,7 +168,11 @@
                         Date Placed
                     </stripes:label>
                     <div class="controls">
-                        <div id="dateRangeDiv"> </div>
+                        <div id="dateRangeDiv"
+                             rangeSelector="${actionBean.dateRange.rangeSelector}"
+                             startString="${actionBean.dateRange.startStr}"
+                             endString="${actionBean.dateRange.endStr}">
+                        </div>
                     </div>
                 </div>
 
