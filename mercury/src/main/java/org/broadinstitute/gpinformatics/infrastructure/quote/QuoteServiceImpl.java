@@ -57,7 +57,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
     }
 
     @Override
-    public String registerNewWork(Quote quote, PriceItem priceItem, PriceItem itemIsReplacing,
+    public String registerNewWork(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
                                   Date reportedCompletionDate, double numWorkUnits,
                                   String callbackUrl, String callbackParameterName, String callbackParameterValue) {
 
@@ -68,17 +68,17 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         MultivaluedMap<String, String> params = new MultivaluedMapImpl();
 
         params.add("quote_alpha_id", quote.getAlphanumericId());
-        params.add("platform_name", priceItem.getPlatformName());
-        params.add("category_name", priceItem.getCategoryName());
+        params.add("platform_name", quotePriceItem.getPlatformName());
+        params.add("category_name", quotePriceItem.getCategoryName());
 
         // Handle replacement item logic.
         if (itemIsReplacing == null) {
             // This is not a replacement item, so just send the price item through.
-            params.add("price_item_name", priceItem.getName());
+            params.add("price_item_name", quotePriceItem.getName());
         } else {
             // This IS a replacement item, so send the original price through and the real price item as a replacement.
             params.add("price_item_name", itemIsReplacing.getName());
-            params.add("replacement_item_name", priceItem.getName());
+            params.add("replacement_item_name", quotePriceItem.getName());
         }
 
         params.add("quantity", String.valueOf(numWorkUnits));
@@ -93,10 +93,10 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         resource.queryParams(params);
         ClientResponse response = resource.queryParams(params).get(ClientResponse.class);
         if (response == null) {
-            throw newQuoteServerFailureException(quote, priceItem, numWorkUnits);
+            throw newQuoteServerFailureException(quote, quotePriceItem, numWorkUnits);
         }
 
-        return registerNewWork(response, quote, priceItem, numWorkUnits);
+        return registerNewWork(response, quote, quotePriceItem, numWorkUnits);
     }
 
     /**
@@ -104,12 +104,12 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
      *
      * @return The work item id returned (as a string).
      */
-    String registerNewWork(@Nonnull ClientResponse response, Quote quote, PriceItem priceItem, double numWorkUnits) {
+    String registerNewWork(@Nonnull ClientResponse response, Quote quote, QuotePriceItem quotePriceItem, double numWorkUnits) {
 
         if (response.getClientResponseStatus() != ClientResponse.Status.OK) {
             throw new RuntimeException(
                     "Quote server returned " + response.getClientResponseStatus() + ".  registering work for "
-                    + numWorkUnits + " of " + priceItem.getName() + " against quote " + quote.getAlphanumericId()
+                    + numWorkUnits + " of " + quotePriceItem.getName() + " against quote " + quote.getAlphanumericId()
                     + " appears to have failed.");
         }
 
@@ -117,32 +117,32 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         String workItemId;
 
         if (output == null) {
-            throw newQuoteServerFailureException(quote, priceItem, numWorkUnits);
+            throw newQuoteServerFailureException(quote, quotePriceItem, numWorkUnits);
         }
 
         if (!output.contains(WORK_ITEM_ID)) {
             StringBuilder builder = new StringBuilder();
             builder.append("Quote server returned:\n").append(output).append("\n")
-                    .append(" for ").append(numWorkUnits).append(" of ").append(priceItem.getName())
+                    .append(" for ").append(numWorkUnits).append(" of ").append(quotePriceItem.getName())
                     .append(" against quote ").append(quote.getAlphanumericId());
             throw new RuntimeException(builder.toString());
         }
         String[] split = output.split(WORK_ITEM_ID);
         if (split.length != 2) {
-            throw newQuoteServerFailureException(quote, priceItem, numWorkUnits);
+            throw newQuoteServerFailureException(quote, quotePriceItem, numWorkUnits);
         }
         workItemId = split[1].trim();
         if (workItemId.isEmpty()) {
-            throw newQuoteServerFailureException(quote, priceItem, numWorkUnits);
+            throw newQuoteServerFailureException(quote, quotePriceItem, numWorkUnits);
         }
         return workItemId;
     }
 
-    private static RuntimeException newQuoteServerFailureException(Quote quote, PriceItem priceItem,
+    private static RuntimeException newQuoteServerFailureException(Quote quote, QuotePriceItem quotePriceItem,
                                                                    double numWorkUnits) {
         return new RuntimeException(
                 "Quote server did not return the appropriate response.  Registering work for " + numWorkUnits +
-                " of " + priceItem.getName() + " against quote " + quote.getAlphanumericId() +
+                " of " + quotePriceItem.getName() + " against quote " + quote.getAlphanumericId() +
                 " appears to have failed.");
     }
 

@@ -19,8 +19,8 @@ public interface QuoteService extends Serializable {
     public Quotes getAllSequencingPlatformQuotes() throws QuoteServerException, QuoteNotFoundException;
 
     public String registerNewWork(Quote quote,
-                                  PriceItem priceItem,
-                                  PriceItem itemIsReplacing,
+                                  QuotePriceItem quotePriceItem,
+                                  QuotePriceItem itemIsReplacing,
                                   Date reportedCompletionDate,
                                   double numWorkUnits,
                                   String callbackUrl,

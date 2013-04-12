@@ -15,13 +15,13 @@ public class QuoteServiceTest {
 
     private Quote quote;
 
-    private  PriceItem priceItem;
+    private QuotePriceItem quotePriceItem;
 
 
     @BeforeClass
     private void setupLargeQuoteAndPriceItem() {
         quote = new Quote("DNA4JD",new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION, "NHGRI", "NHGRI"))), ApprovalStatus.FUNDED);
-        priceItem = new PriceItem("Illumina Sequencing","1","Illumina HiSeq Run 44 Base","15","bannan","DNA Sequencing");
+        quotePriceItem = new QuotePriceItem("Illumina Sequencing","1","Illumina HiSeq Run 44 Base","15","bannan","DNA Sequencing");
     }
 
     /**
@@ -36,7 +36,7 @@ public class QuoteServiceTest {
     public void test_get_all_price_items() throws Exception {
         QuoteService service = new QuoteServiceStub();
         PriceList priceList = service.getAllPriceItems();
-        Assert.assertFalse(priceList.getPriceItems().isEmpty());
+        Assert.assertFalse(priceList.getQuotePriceItems().isEmpty());
 
     }
 
@@ -48,7 +48,7 @@ public class QuoteServiceTest {
         EasyMock.expect(mockResponse.getClientResponseStatus()).andReturn(ClientResponse.Status.BAD_REQUEST).atLeastOnce();
         EasyMock.replay(mockResponse);
         try {
-            service.registerNewWork(mockResponse,quote,priceItem,0.0001);
+            service.registerNewWork(mockResponse,quote, quotePriceItem,0.0001);
             Assert.fail("Should have thrown an exception when bad http response returned");
         }
         catch(Exception e) {}
@@ -63,7 +63,7 @@ public class QuoteServiceTest {
         EasyMock.expect(mockResponse.getClientResponseStatus()).andReturn(null).atLeastOnce();
         EasyMock.replay(mockResponse);
         try {
-            service.registerNewWork(mockResponse,quote,priceItem,0.0001);
+            service.registerNewWork(mockResponse,quote, quotePriceItem,0.0001);
             Assert.fail("Should have thrown an exception when no client response was returned");
         }
         catch(Exception e) {}
@@ -75,7 +75,7 @@ public class QuoteServiceTest {
 
         EasyMock.replay(mockResponse);
         try {
-            service.registerNewWork(mockResponse,quote,priceItem,0.0001);
+            service.registerNewWork(mockResponse,quote, quotePriceItem,0.0001);
             Assert.fail("Should have thrown an exception when string returned was null");
         }
         catch(Exception e) {}
@@ -93,7 +93,7 @@ public class QuoteServiceTest {
 
         EasyMock.replay(mockResponse);
         try {
-            service.registerNewWork(mockResponse,quote,priceItem,0.0001);
+            service.registerNewWork(mockResponse,quote, quotePriceItem,0.0001);
             Assert.fail("Should have thrown an exception when string returned was null");
         }
         catch(Exception e) {}
@@ -105,7 +105,7 @@ public class QuoteServiceTest {
 
         EasyMock.replay(mockResponse);
         try {
-            service.registerNewWork(mockResponse,quote,priceItem,0.0001);
+            service.registerNewWork(mockResponse,quote, quotePriceItem,0.0001);
             Assert.fail("Should have thrown an exception when string returned was null");
         }
         catch(Exception e) {}
@@ -117,7 +117,7 @@ public class QuoteServiceTest {
 
         EasyMock.replay(mockResponse);
         try {
-            service.registerNewWork(mockResponse,quote,priceItem,0.0001);
+            service.registerNewWork(mockResponse,quote, quotePriceItem,0.0001);
             Assert.fail("Should have thrown an exception when string returned was null");
         }
         catch(Exception e) {}
