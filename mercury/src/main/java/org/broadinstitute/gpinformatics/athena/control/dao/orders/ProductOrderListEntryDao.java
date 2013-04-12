@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession_;
@@ -16,6 +17,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
+import org.hibernate.criterion.Disjunction;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -52,9 +54,12 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
      */
     private void fetchUnbilledLedgerEntryCounts(List<ProductOrderListEntry> productOrderListEntries, @Nullable String jiraTicketKey) {
 
+        if (CollectionUtils.isEmpty(productOrderListEntries)) {
+            return;
+        }
+
         // Build map of input productOrderListEntries jira key to DTO.
-        Map<String, ProductOrderListEntry> jiraKeyToProductOrderListEntryMap =
-                new HashMap<String, ProductOrderListEntry>();
+        Map<String, ProductOrderListEntry> jiraKeyToProductOrderListEntryMap = new HashMap<String, ProductOrderListEntry>();
 
         for (ProductOrderListEntry productOrderListEntry : productOrderListEntries) {
             jiraKeyToProductOrderListEntryMap.put(productOrderListEntry.getJiraTicketKey(), productOrderListEntry);
@@ -106,9 +111,13 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
 
         // Merge these counts into the objects from the first-pass query.
         for (ProductOrderListEntry result : resultList) {
-            ProductOrderListEntry productOrderListEntry = jiraKeyToProductOrderListEntryMap.get(result.getJiraTicketKey());
-            productOrderListEntry.setBillingSessionId(result.getBillingSessionId());
-            productOrderListEntry.setUnbilledLedgerEntryCount(result.getUnbilledLedgerEntryCount());
+            if ((result.getJiraTicketKey() != null) &&
+                (jiraKeyToProductOrderListEntryMap.containsKey(result.getJiraTicketKey()))) {
+
+                ProductOrderListEntry productOrderListEntry = jiraKeyToProductOrderListEntryMap.get(result.getJiraTicketKey());
+                productOrderListEntry.setBillingSessionId(result.getBillingSessionId());
+                productOrderListEntry.setUnbilledLedgerEntryCount(result.getUnbilledLedgerEntryCount());
+            }
         }
 
     }
@@ -172,8 +181,6 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
                         productOrderRoot.get(ProductOrder_.createdBy),
                         productOrderRoot.get(ProductOrder_.placedDate)));
 
-        Predicate fullExpression = null;
-
         List<Predicate> queryItems = new ArrayList<Predicate>();
 
         // Only taking a single JIRA ticket key as I don't want to worry about Splitter-like issues for
@@ -186,14 +193,17 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
             queryItems.add(cb.equal(productProductFamilyJoin.get(ProductFamily_.productFamilyId), productFamilyId));
         }
 
-        if (productBusinessKey != null) {
+        if (!StringUtils.isBlank(productBusinessKey)) {
             queryItems.add(cb.equal(productOrderProductJoin.get(Product_.partNumber), productBusinessKey));
         }
 
-        if (orderStatuses != null) {
+        if (!CollectionUtils.isEmpty(orderStatuses)) {
+            Predicate statusDisjunction = cb.disjunction();
             for (ProductOrder.OrderStatus status : orderStatuses) {
-                queryItems.add(cb.equal(productOrderRoot.get(ProductOrder_.orderStatus), status));
+                statusDisjunction.getExpressions().add(cb.equal(productOrderRoot.get(ProductOrder_.orderStatus), status));
             }
+
+            queryItems.add(statusDisjunction);
         }
 
         // If there is a placed date range and the range has at least a start or end date, then add a date range.
@@ -201,19 +211,19 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
             if (placedDate.getStart() == null) {
                 queryItems.add(cb.lessThan(productOrderRoot.get(ProductOrder_.placedDate), placedDate.getEnd()));
             } else if (placedDate.getEnd() == null) {
-                queryItems.add(cb.greaterThan(productOrderRoot.get(ProductOrder_.placedDate), placedDate.getStart()));
+                queryItems.add(cb.greaterThan(productOrderRoot.get(ProductOrder_.placedDate), placedDate.getStartTime()));
             } else {
                 queryItems.add(
                     cb.between(productOrderRoot.get(
-                        ProductOrder_.placedDate), placedDate.getStart(), placedDate.getEnd()));
+                        ProductOrder_.placedDate), placedDate.getStart(), placedDate.getEndTime()));
             }
         }
 
         if (owner != null) {
-            queryItems.add(cb.equal(productOrderRoot.get(ProductOrder_.createdBy), owner.getDomainUserId()));
+            queryItems.add(cb.equal(productOrderRoot.get(ProductOrder_.createdBy), owner.getUserId()));
         }
 
-        if (CollectionUtils.isEmpty(queryItems)) {
+        if (!CollectionUtils.isEmpty(queryItems)) {
             cq.where(cb.and(queryItems.toArray(new Predicate[queryItems.size()])));
         }
 
@@ -257,8 +267,7 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
      */
     public ProductOrderListEntry findSingle(@Nonnull String jiraTicketKey) {
 
-        List<ProductOrderListEntry> productOrderListEntries =
-            findBaseProductOrderListEntries(jiraTicketKey);
+        List<ProductOrderListEntry> productOrderListEntries = findBaseProductOrderListEntries(jiraTicketKey);
 
         if (productOrderListEntries.isEmpty()) {
             return null;
