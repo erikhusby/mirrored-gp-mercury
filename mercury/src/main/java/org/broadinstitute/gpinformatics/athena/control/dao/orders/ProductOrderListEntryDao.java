@@ -214,7 +214,7 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
         // If there is a placed date range and the range has at least a start or end date, then add a date range.
         if ((placedDate != null) && ((placedDate.getStart() != null) || (placedDate.getEnd() != null))) {
             if (placedDate.getStart() == null) {
-                queryItems.add(cb.lessThan(productOrderRoot.get(ProductOrder_.placedDate), placedDate.getEnd()));
+                queryItems.add(cb.lessThan(productOrderRoot.get(ProductOrder_.placedDate), placedDate.getEndTime()));
             } else if (placedDate.getEnd() == null) {
                 queryItems.add(cb.greaterThan(productOrderRoot.get(ProductOrder_.placedDate), placedDate.getStartTime()));
             } else {
