@@ -30,14 +30,15 @@ import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkReason;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -46,13 +47,12 @@ import java.util.Set;
 /**
  * Encapsulates the business logic related to {@link RapSheet}s. and Rework This includes the creation
  * of a new batch entity and saving that to Jira
- *
+ * <p/>
  * More information about Rework can be found here:
  * https://confluence.broadinstitute.org/display/GPI/Rework
- *
+ * <p/>
  * Some info on Rap sheets can be found here:
  * https://confluence.broadinstitute.org/display/GPI/January+Demo
- *
  */
 @Stateful
 @RequestScoped
@@ -70,6 +70,7 @@ public class ReworkEjb {
 
     @Inject
     LabVesselDao labVesselDao;
+
     /**
      * Create rework for all samples in a LabVessel;
      *
@@ -86,31 +87,31 @@ public class ReworkEjb {
                                                        @NotNull String comment)
             throws ValidationException {
         Set<MercurySample> reworks = new HashSet<MercurySample>();
+        VesselPosition[] vesselPositions=labVessel.getVesselGeometry().getVesselPositions();
+        if (vesselPositions==null){
+            vesselPositions = new VesselPosition[]{VesselPosition.TUBE1};
+        }
+        for (VesselPosition vesselPosition : vesselPositions) {
+            final Collection<SampleInstance> samplesAtPosition =
+                    labVessel.getSamplesAtPosition(vesselPosition.name());
+            for (SampleInstance sampleInstance : samplesAtPosition) {
+                MercurySample mercurySample = sampleInstance.getStartingSample();
+                final BucketEntry bucketEntry =
+                        bucketEntryDao.findByVesselAndPO(labVessel, mercurySample.getProductOrderKey());
 
-        for (VesselContainer vesselContainer : labVessel.getContainerList()) {
-            for (VesselPosition vesselPosition : vesselContainer.getEmbedder().getVesselGeometry()
-                    .getVesselPositions()) {
-                final Collection<SampleInstance> samplesAtPosition =
-                        labVessel.getSamplesAtPosition(vesselPosition.name());
-
-                for (SampleInstance sampleInstance : samplesAtPosition) {
-                    MercurySample mercurySample = sampleInstance.getStartingSample();
-                    final BucketEntry bucketEntry =
-                            bucketEntryDao.findByVesselAndPO(labVessel, mercurySample.getProductOrderKey());
-
-                    if (bucketEntry != null) {
-                        String error = String.format("Sample %s in product order %s already exists in the %s bucket.",
-                                mercurySample.getSampleKey(), mercurySample.getProductOrderKey(),
-                                bucketEntry.getBucket().getBucketDefinitionName());
-                        logger.error(error);
-                        throw new ValidationException(error);
-                    }
-
-                    mercurySample = getReworkEntryDaoFree(mercurySample, labVessel, vesselPosition,
-                            reworkReason, reworkLevel, reworkFromStep, comment);
-
-                    reworks.add(mercurySample);
+                if (bucketEntry != null) {
+                    String error =
+                            String.format("Sample %s in product order %s already exists in the %s bucket.",
+                                    mercurySample.getSampleKey(), mercurySample.getProductOrderKey(),
+                                    bucketEntry.getBucket().getBucketDefinitionName());
+                    logger.error(error);
+                    throw new ValidationException(error);
                 }
+
+                mercurySample = getReworkEntryDaoFree(mercurySample, labVessel, vesselPosition,
+                        reworkReason, reworkLevel, reworkFromStep, comment);
+
+                reworks.add(mercurySample);
             }
         }
         return reworks;
@@ -154,17 +155,29 @@ public class ReworkEjb {
      *
      * @throws ValidationException
      */
-    public List<MercurySample> addRework(@NotNull LabVessel labVessel, @NotNull ReworkReason reworkReason,
-                                               @NotNull LabEventType reworkFromStep, @NotNull String comment)
+    public LabVessel addRework(@NotNull LabVessel labVessel, @NotNull ReworkReason reworkReason,
+                               @NotNull LabEventType reworkFromStep, @NotNull String comment)
             throws ValidationException {
-        List<MercurySample> reworks =
-                new ArrayList<MercurySample>(getVesselRapSheet(labVessel, reworkReason,
-                        ReworkLevel.ONE_SAMPLE_RELEASE_REST_BATCH, reworkFromStep, comment));
+        List<MercurySample> reworks = new ArrayList<MercurySample>(
+                getVesselRapSheet(labVessel, reworkReason, ReworkLevel.ONE_SAMPLE_RELEASE_REST_BATCH, reworkFromStep,
+                        comment));
+
         if (!reworks.isEmpty()) {
             mercurySampleDao.persistAll(reworks);
+            mercurySampleDao.flush();
         }
-        return reworks;
+        return labVesselDao.findByIdentifier(labVessel.getLabel());
     }
+
+    public LabBatch addReworkToBatch(@NotNull LabBatch batch, @NotNull LabVessel labVessel,
+                                     @NotNull ReworkReason reworkReason,
+                                     @NotNull LabEventType reworkFromStep, @NotNull String comment)
+            throws ValidationException {
+        LabVessel vessel = addRework(labVessel, reworkReason, reworkFromStep, comment);
+        batch.addReworks(Arrays.asList(vessel));
+        return batch;
+    }
+
 
     public void setBucketEntryDao(BucketEntryDao bucketEntryDao) {
         this.bucketEntryDao = bucketEntryDao;
@@ -191,4 +204,5 @@ public class ReworkEjb {
     public Collection<ReworkEntry> getNonActiveReworkEntries() {
         return reworkEntryDao.getNonActiveReworkEntries();
     }
+
 }

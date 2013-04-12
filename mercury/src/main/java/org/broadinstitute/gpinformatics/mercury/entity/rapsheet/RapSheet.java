@@ -46,7 +46,7 @@ public class RapSheet {
 
     @NotNull
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY,mappedBy = "rapSheet")
-    private List<RapSheetEntry> rapSheets = new ArrayList<RapSheetEntry>();
+    private List<RapSheetEntry> rapSheetEntries = new ArrayList<RapSheetEntry>();
 
     public RapSheet() {
     }
@@ -56,7 +56,7 @@ public class RapSheet {
 
     public void addRework(ReworkEntry... entries) {
         for (ReworkEntry reworkEntry : entries) {
-            rapSheets.add(reworkEntry);
+            rapSheetEntries.add(reworkEntry);
             reworkEntry.setRapSheet(this);
         }
     }
@@ -87,8 +87,8 @@ public class RapSheet {
         return samples;
     }
 
-    public List<RapSheetEntry> getRapSheets() {
-        return rapSheets;
+    public List<RapSheetEntry> getRapSheetEntries() {
+        return rapSheetEntries;
     }
 
     /**
@@ -97,15 +97,15 @@ public class RapSheet {
      */
     public List<RapSheetEntry> getSortedRapSheets() {
         if (!reworkEntriesSorted) {
-            Collections.sort(rapSheets);
+            Collections.sort(rapSheetEntries);
             reworkEntriesSorted = true;
         }
-        return rapSheets;
+        return rapSheetEntries;
     }
 
-    public void setRapSheets(List<RapSheetEntry> reworkEntries) {
+    public void setRapSheetEntries(List<RapSheetEntry> reworkEntries) {
         Collections.sort(reworkEntries);
-        this.rapSheets = reworkEntries;
+        this.rapSheetEntries = reworkEntries;
     }
 
     public void startRework() {
@@ -115,7 +115,7 @@ public class RapSheet {
 
     public ReworkEntry getCurrentReworkEntry(){
         for (RapSheetEntry rapSheetEntry : getReworkEntries()) {
-                return (ReworkEntry) rapSheetEntry;
+            return (ReworkEntry) rapSheetEntry;
         }
         return null;
     }
@@ -137,9 +137,7 @@ public class RapSheet {
         Collection<ReworkEntry> entries=new ArrayList<ReworkEntry>();
         for (RapSheetEntry rapSheetEntry : getSortedRapSheets()) {
             if (rapSheetEntry instanceof ReworkEntry) {
-                if (((ReworkEntry)rapSheetEntry).isActiveRework()) {
-                    entries.add((ReworkEntry) rapSheetEntry);
-                }
+                entries.add((ReworkEntry) rapSheetEntry);
             }
         }
         return entries;

@@ -72,16 +72,15 @@ public class AddReworkActionBean extends CoreActionBean {
         } else {
             reworkStep = LabEventType.SHEARING_BUCKET;
         }
-        Collection<MercurySample> reworks = new ArrayList<MercurySample>();
         try {
-            reworks = reworkEjb.addRework(labVessel, reworkReason, reworkStep, commentText);
+            reworkEjb.addRework(labVessel, reworkReason, reworkStep, commentText);
         } catch (ValidationException e) {
             addGlobalValidationError(e.getMessage());
             return view();
         }
 
-        final String pluralIfAppropriate = reworks.size() != 1 ? "s have" : " has";
-        addMessage("{0} sample{1} been added to the {2} bucket.", reworks.size(), pluralIfAppropriate, bucketName);
+//        final String pluralIfAppropriate = reworks.size() != 1 ? "s have" : " has";
+        addMessage("Vessel {0} been added to the {1} bucket.", labVessel.getLabel(), bucketName);
         return new RedirectResolution(this.getClass());
     }
 
