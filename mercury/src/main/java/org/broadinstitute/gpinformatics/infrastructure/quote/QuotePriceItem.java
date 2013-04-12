@@ -3,7 +3,9 @@ package org.broadinstitute.gpinformatics.infrastructure.quote;
 import javax.annotation.Nonnull;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.adapters.XmlAdapter;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 @XmlRootElement(name = "priceItem")
@@ -117,7 +119,7 @@ public class QuotePriceItem {
     }
 
     @XmlElement(name = "submittedDate")
-    @XmlJavaTypeAdapter(PriceItemDateAdapter.class)
+    @XmlJavaTypeAdapter(DateAdapter.class)
     public Date getSubmittedDate() {
         return submittedDate;
     }
@@ -127,7 +129,7 @@ public class QuotePriceItem {
     }
 
     @XmlElement(name = "effectiveDate")
-    @XmlJavaTypeAdapter(PriceItemDateAdapter.class)
+    @XmlJavaTypeAdapter(DateAdapter.class)
     public Date getEffectiveDate() {
         return effectiveDate;
     }
@@ -255,5 +257,25 @@ public class QuotePriceItem {
         return platformName.equals(priceItem.getPlatform()) &&
                categoryName.equals(priceItem.getCategory()) &&
                name.equals(priceItem.getName());
+    }
+
+    /**
+     * It would be nice if quote server dates were formatted consistently so we didn't need multiple date conversion
+     * classes.
+     */
+    public static class DateAdapter extends XmlAdapter<String, Date> {
+
+        private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
+
+        @Override
+        public String marshal(Date v) throws Exception {
+            return dateFormat.format(v);
+        }
+
+        @Override
+        public Date unmarshal(String v) throws Exception {
+            return dateFormat.parse(v);
+        }
+
     }
 }
