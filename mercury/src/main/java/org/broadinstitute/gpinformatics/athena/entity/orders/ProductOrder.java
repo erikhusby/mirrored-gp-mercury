@@ -1026,6 +1026,25 @@ public class ProductOrder implements Serializable {
         public String getDisplayName() {
             return name();
         }
+
+        public static OrderStatus findByName(String name) {
+            for (OrderStatus status : values()) {
+                if (status.name().equals(name)) {
+                    return status;
+                }
+            }
+
+            return null;
+        }
+
+        public static List<OrderStatus> getStatusesFromStrings(@Nonnull List<String> statusStrings) {
+            List<OrderStatus> statuses = new ArrayList<OrderStatus>();
+            for (String statusString : statusStrings) {
+                statuses.add(OrderStatus.findByName(statusString));
+            }
+
+            return statuses;
+        }
     }
 
     @Override

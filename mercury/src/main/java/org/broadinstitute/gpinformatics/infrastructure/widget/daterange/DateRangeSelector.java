@@ -13,8 +13,10 @@ import org.hibernate.Criteria;
 import org.hibernate.criterion.Restrictions;
 
 import java.io.Serializable;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 
 /**
  * This simple class handles the date range selector data created by the date range selector javascript
@@ -258,10 +260,18 @@ public class DateRangeSelector implements Serializable {
         }
     }
 
-    private DateRangeSelector(String naturalLanguageString,
-                              int rangeSelector,
-                              Date start,
-                              Date end) {
+    public DateRangeSelector(List<String> rangeSelectorStrings) throws ParseException {
+        int rangeSelectorValue = Integer.parseInt(rangeSelectorStrings.get(0));
+        Date startDate = DateUtils.parseDate(rangeSelectorStrings.get(1));
+        Date endDate = DateUtils.parseDate(rangeSelectorStrings.get(2));
+        setupRangeSelector(null, rangeSelectorValue, startDate, endDate);
+    }
+
+    private DateRangeSelector(String naturalLanguageString, int rangeSelector, Date start, Date end) {
+        setupRangeSelector(naturalLanguageString, rangeSelector, start, end);
+    }
+
+    private void setupRangeSelector(String naturalLanguageString, int rangeSelector, Date start, Date end) {
         if ((null != naturalLanguageString) && (!naturalLanguageString.isEmpty())) {
             Integer var = toRangeSelector(naturalLanguageString);
             if (var != null) {

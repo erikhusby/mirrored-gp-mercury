@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
-
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
@@ -17,7 +16,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
 
 @Stateful
 @RequestScoped
@@ -104,7 +102,6 @@ public class BillingEjb {
             billingSessionDao.persist(billingSession);
         }
     }
-
 
     /**
      * Transactional method to bill each previously unbilled {@link QuoteImportItem} on the BillingSession to the quote

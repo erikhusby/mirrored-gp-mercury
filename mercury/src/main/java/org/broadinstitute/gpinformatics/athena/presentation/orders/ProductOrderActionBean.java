@@ -26,6 +26,8 @@ import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDa
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderListEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceDAO;
+import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
@@ -37,6 +39,9 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
+import org.broadinstitute.gpinformatics.athena.entity.preference.NameValuePreferenceDefinition;
+import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
+import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
@@ -55,6 +60,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
@@ -72,14 +78,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.text.ParseException;
+import java.util.*;
 
 /**
  * This handles all the needed interface processing elements.
@@ -101,6 +101,40 @@ public class ProductOrderActionBean extends CoreActionBean {
     private static final String DELETE_SAMPLES_ACTION = "deleteSamples";
     private static final String SET_RISK = "setRisk";
     private static final String PLACE_ORDER = "placeOrder";
+
+    // Search field constants
+    private static final String FAMILY = "productFamily";
+    private static final String PRODUCT = "product";
+    private static final String STATUS = "status";
+    private static final String DATE = "date";
+    private static final String OWNER = "owner";
+
+    @Inject
+    private ProductFamilyDao productFamilyDao;
+
+    @Inject
+    private ProductOrderDao productOrderDao;
+
+    @Inject
+    private ProductDao productDao;
+
+    @Inject
+    private ResearchProjectDao projectDao;
+
+    @Inject
+    private BillingSessionDao billingSessionDao;
+
+    @Inject
+    private PriceItemDao priceItemDao;
+
+    @Inject
+    private LedgerEntryDao ledgerEntryDao;
+
+    @Inject
+    private ProductOrderSampleDao productOrderSampleDao;
+
+    @Inject
+    private PreferenceEjb preferenceEjb;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -126,30 +160,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Inject
     private SampleSearchLink sampleSearchLink;
-
-    @Inject
-    private ProductFamilyDao productFamilyDao;
-
-    @Inject
-    private ProductOrderDao productOrderDao;
-
-    @Inject
-    private ProductDao productDao;
-
-    @Inject
-    private ResearchProjectDao projectDao;
-
-    @Inject
-    private BillingSessionDao billingSessionDao;
-
-    @Inject
-    private PriceItemDao priceItemDao;
-
-    @Inject
-    private LedgerEntryDao ledgerEntryDao;
-
-    @Inject
-    private ProductOrderSampleDao productOrderSampleDao;
 
     @Inject
     private ProductOrderEjb productOrderEjb;
@@ -355,7 +365,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     @ValidationMethod(on = {"startBilling", "downloadBillingTracker"})
-    public void validateOrderSelection() {
+    public void validateOrderSelection() throws Exception {
         String validatingFor = getContext().getEventName().equals("startBilling") ? "billing session" :
                 "tracker download";
 
@@ -414,30 +424,86 @@ public class ProductOrderActionBean extends CoreActionBean {
      * Set up defaults before binding and validation and then let any binding override that.
      */
     @Before(stages = LifecycleStage.BindingAndValidation, on = LIST_ACTION)
-    public void setupSearchDefaults() {
-        selectedStatuses = new ArrayList<ProductOrder.OrderStatus> ();
-        selectedStatuses.add(ProductOrder.OrderStatus.Draft);
-        selectedStatuses.add(ProductOrder.OrderStatus.Submitted);
+    public void setupSearchCriteria() throws Exception {
+        // get the saved search for the user.
+        List<Preference> preferences =
+            preferenceEjb.getUserPreferences(getUserBean().getBspUser().getUserId(), PreferenceType.PDO_SEARCH);
+
+        productFamilyId = null;
+
+        if (CollectionUtils.isEmpty(preferences)) {
+            selectedStatuses = new ArrayList<ProductOrder.OrderStatus> ();
+            selectedStatuses.add(ProductOrder.OrderStatus.Draft);
+            selectedStatuses.add(ProductOrder.OrderStatus.Submitted);
+        } else {
+            populateSearchFromPreferences(preferences);
+        }
+    }
+
+    private void populateSearchFromPreferences(List<Preference> preferences) throws Exception {
+        // Since we have a preference and there is only one, grab it and set up all the search terms
+        Preference preference = preferences.get(0);
+        Map<String, List<String>> preferenceData =
+            ((NameValuePreferenceDefinition) preference.getPreferenceDefinition()).getDataMap();
+
+        // The family id. By default there is now choice.
+        List<String> productFamilyIds = preferenceData.get(FAMILY);
+        if (!CollectionUtils.isEmpty(productFamilyIds)) {
+            String familyId = preferenceData.get(FAMILY).get(0);
+            if (!StringUtils.isBlank(familyId)){
+                productFamilyId = Long.parseLong(familyId);
+            }
+        }
+
+        productTokenInput.setListOfKeys(StringUtils.join(preferenceData.get(PRODUCT), ","));
+        selectedStatuses = ProductOrder.OrderStatus.getStatusesFromStrings(preferenceData.get(STATUS));
+        setDateRange(new DateRangeSelector(preferenceData.get(DATE)));
+        owner.setListOfKeys(StringUtils.join(preferenceData.get(OWNER), ","));
     }
 
     @After(stages = LifecycleStage.BindingAndValidation, on = LIST_ACTION)
-    public void listInit() {
+    public void listInit() throws Exception {
 
-        List<Product> tokenProducts = productTokenInput.getTokenObjects();
-
-        List<String> productKeys = new ArrayList<String> ();
-        for (Product tokenProduct : tokenProducts) {
-            productKeys.add(tokenProduct.getBusinessKey());
-        }
-
+        // Do the specified find and then add all the % complete info for the progress bars.
         allProductOrderListEntries =
             orderListEntryDao.findProductOrderListEntries(
-                productFamilyId, productKeys, selectedStatuses, getDateRange(), owner.getTokenObjects());
-
+                productFamilyId, productTokenInput.getBusinessKeyList(), selectedStatuses, getDateRange(), owner.getOwnerIds());
         progressFetcher.loadProgress(productOrderDao);
 
+        // Get the sorted family list.
         productFamilies = productFamilyDao.findAll();
         Collections.sort(productFamilies);
+    }
+
+    /**
+     * If we have successfully run the search, save the selected values to the preference.
+     *
+     * @throws Exception
+     */
+    @After(stages = LifecycleStage.EventHandling, on = LIST_ACTION)
+    private void saveSearchPreference() throws Exception {
+        NameValuePreferenceDefinition definition =
+                (NameValuePreferenceDefinition) PreferenceType.PDO_SEARCH.getCreator().create();
+
+        definition.put(FAMILY, productFamilyId == null ? "" : productFamilyId.toString());
+
+        definition.put(PRODUCT, productTokenInput.getBusinessKeyList());
+
+        List<String> statusStrings = new ArrayList<String> ();
+        for (ProductOrder.OrderStatus status : selectedStatuses) {
+            statusStrings.add(status.name());
+        }
+        definition.put(STATUS, statusStrings);
+
+        List<String> dateStrings = new ArrayList<String> ();
+        dateStrings.add(String.valueOf(getDateRange().getRangeSelector()));
+        dateStrings.add(getDateRange().getStartStr());
+        dateStrings.add(getDateRange().getEndStr());
+        definition.put(DATE, dateStrings);
+
+        definition.put(OWNER, owner.getBusinessKeyList());
+
+        preferenceEjb.add(userBean.getBspUser().getUserId(), PreferenceType.PDO_SEARCH, definition);
     }
 
     @After(stages = LifecycleStage.BindingAndValidation, on = EDIT_ACTION)
@@ -629,7 +695,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     @HandlesEvent("downloadBillingTracker")
-    public Resolution downloadBillingTracker() {
+    public Resolution downloadBillingTracker() throws Exception {
         Resolution resolution =
             ProductOrderActionBean.getTrackerForOrders(this, selectedProductOrders, priceItemDao, bspUserList, priceListCache);
         if (hasErrors()) {

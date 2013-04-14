@@ -130,7 +130,7 @@
                     </stripes:label>
                     <div class="controls">
                         <stripes:select name="productFamilyId" id="productFamily" class="search-select" style="margin-top:3px;">
-                            <stripes:option value="">Select a Product Family</stripes:option>
+                            <stripes:option value="">Any</stripes:option>
                             <stripes:options-collection collection="${actionBean.productFamilies}" label="name"
                                                         value="productFamilyId"/>
                         </stripes:select>

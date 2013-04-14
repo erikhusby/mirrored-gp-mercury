@@ -7,6 +7,7 @@ import org.json.JSONException;
 
 import javax.inject.Inject;
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -54,12 +55,23 @@ public class ProductTokenInput extends TokenInput<Product> {
     }
 
     public String getTokenObject() {
-        List<Product> projects = getTokenObjects();
+        List<Product> products = getTokenObjects();
 
-        if ((projects == null) || projects.isEmpty()) {
+        if ((products == null) || products.isEmpty()) {
             return "";
         }
 
-        return projects.get(0).getBusinessKey();
+        return products.get(0).getBusinessKey();
+    }
+
+    public List<String> getBusinessKeyList() {
+        List<Product> products = getTokenObjects();
+
+        List<String> businessKeyList = new ArrayList<String> ();
+        for (Product product : products) {
+            businessKeyList.add(product.getBusinessKey());
+        }
+
+        return businessKeyList;
     }
 }

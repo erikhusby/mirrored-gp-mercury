@@ -238,20 +238,13 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
 
     public List<ProductOrderListEntry> findProductOrderListEntries(
             @Nullable Long productFamilyId,
-            @Nullable List<String> productBusinessKey,
+            @Nullable List<String> productKeys,
             @Nullable List<ProductOrder.OrderStatus> orderStatuses,
             @Nullable DateRangeSelector placedDate,
-            @Nullable List<BspUser> owners) {
-
-        List<Long> ownerIds  = new ArrayList<Long> ();
-        if (owners != null) {
-            for (BspUser user : owners) {
-                ownerIds.add(user.getUserId());
-            }
-        }
+            @Nullable List<Long> ownerIds) {
 
         List<ProductOrderListEntry> productOrderListEntries =
-            findBaseProductOrderListEntries(null, productFamilyId, productBusinessKey, orderStatuses, placedDate, ownerIds);
+            findBaseProductOrderListEntries(null, productFamilyId, productKeys, orderStatuses, placedDate, ownerIds);
         fetchUnbilledLedgerEntryCounts(productOrderListEntries);
 
         return productOrderListEntries;

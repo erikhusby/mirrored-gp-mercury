@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.common;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -82,6 +83,11 @@ public abstract class TokenInput<TOKEN_OBJECT> {
     }
 
     public List<TOKEN_OBJECT> getTokenObjects() {
+        // If there is data AND the objects have not been set up, do the set up.
+        if (!StringUtils.isBlank(listOfKeys) && (CollectionUtils.isEmpty(tokenObjects))) {
+            setListOfKeys(listOfKeys);
+        }
+
         return tokenObjects;
     }
 
