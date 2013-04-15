@@ -10,10 +10,10 @@
 package org.broadinstitute.gpinformatics.infrastructure.widget.daterange;
 
 import clover.org.apache.commons.lang.StringUtils;
-import com.sun.istack.Nullable;
 import org.hibernate.Criteria;
 import org.hibernate.criterion.Restrictions;
 
+import javax.annotation.Nullable;
 import java.io.Serializable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
