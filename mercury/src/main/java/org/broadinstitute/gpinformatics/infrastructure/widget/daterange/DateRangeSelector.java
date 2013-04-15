@@ -274,7 +274,8 @@ public class DateRangeSelector implements Serializable {
         setupRangeSelector(null, rangeSelectorValue, startDate, endDate);
     }
 
-    private DateRangeSelector(String naturalLanguageString, int rangeSelector, Date start, Date end) {
+    private DateRangeSelector(
+        @Nullable String naturalLanguageString, int rangeSelector, @Nullable Date start, @Nullable Date end) {
         setupRangeSelector(naturalLanguageString, rangeSelector, start, end);
     }
 
