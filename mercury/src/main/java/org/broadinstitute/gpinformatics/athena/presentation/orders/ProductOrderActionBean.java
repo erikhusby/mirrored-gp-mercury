@@ -1,13 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
-import net.sourceforge.stripes.action.After;
-import net.sourceforge.stripes.action.Before;
-import net.sourceforge.stripes.action.DefaultHandler;
-import net.sourceforge.stripes.action.ForwardResolution;
-import net.sourceforge.stripes.action.HandlesEvent;
-import net.sourceforge.stripes.action.RedirectResolution;
-import net.sourceforge.stripes.action.Resolution;
-import net.sourceforge.stripes.action.UrlBinding;
+import net.sourceforge.stripes.action.*;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidateNestedProperties;
@@ -26,7 +19,6 @@ import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDa
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderListEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
-import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceDAO;
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
@@ -34,11 +26,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamil
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
+import org.broadinstitute.gpinformatics.athena.entity.orders.*;
 import org.broadinstitute.gpinformatics.athena.entity.preference.NameValuePreferenceDefinition;
 import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
@@ -78,8 +66,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.text.MessageFormat;
-import java.text.ParseException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * This handles all the needed interface processing elements.
@@ -178,7 +173,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     private MercuryClientService mercuryClientService;
 
-    private List<ProductOrderListEntry> allProductOrderListEntries;
+    private List<ProductOrderListEntry> displayedProductOrderListEntries;
 
     private String sampleList;
 
@@ -421,7 +416,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     /**
-     * Set up defaults before binding and validation and then let any binding override that.
+     * Set up defaults before binding and validation and then let any binding override that. Note that the Core Action
+     * Bean sets up the single date range obect to be this month.
      */
     @Before(stages = LifecycleStage.BindingAndValidation, on = LIST_ACTION)
     public void setupSearchCriteria() throws Exception {
@@ -440,8 +436,14 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
+    /**
+     * This populates all the search date from the first preference object.
+     *
+     * @param preferences All preferences found.
+     * @throws Exception Any errors.
+     */
     private void populateSearchFromPreferences(List<Preference> preferences) throws Exception {
-        // Since we have a preference and there is only one, grab it and set up all the search terms
+        // Since we have a preference and there is only one, grab it and set up all the search terms.
         Preference preference = preferences.get(0);
         Map<String, List<String>> preferenceData =
             ((NameValuePreferenceDefinition) preference.getPreferenceDefinition()).getDataMap();
@@ -455,6 +457,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             }
         }
 
+        // Set up all the simple fields from the values in the preference data.
         productTokenInput.setListOfKeys(StringUtils.join(preferenceData.get(PRODUCT), ","));
         selectedStatuses = ProductOrder.OrderStatus.getStatusesFromStrings(preferenceData.get(STATUS));
         setDateRange(new DateRangeSelector(preferenceData.get(DATE)));
@@ -465,7 +468,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public void listInit() throws Exception {
 
         // Do the specified find and then add all the % complete info for the progress bars.
-        allProductOrderListEntries =
+        displayedProductOrderListEntries =
             orderListEntryDao.findProductOrderListEntries(
                 productFamilyId, productTokenInput.getBusinessKeyList(), selectedStatuses, getDateRange(), owner.getOwnerIds());
         progressFetcher.loadProgress(productOrderDao);
@@ -478,7 +481,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     /**
      * If we have successfully run the search, save the selected values to the preference.
      *
-     * @throws Exception
+     * @throws Exception Any errors
      */
     @After(stages = LifecycleStage.EventHandling, on = LIST_ACTION)
     private void saveSearchPreference() throws Exception {
@@ -975,8 +978,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.selectedProductOrderSampleIds = selectedProductOrderSampleIds;
     }
 
-    public List<ProductOrderListEntry> getAllProductOrderListEntries() {
-        return allProductOrderListEntries;
+    public List<ProductOrderListEntry> getDisplayedProductOrderListEntries() {
+        return displayedProductOrderListEntries;
     }
 
     public ProductOrder getEditOrder() {
@@ -1021,8 +1024,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
             return new Resolution() {
                 @Override
-                public void execute(HttpServletRequest request, HttpServletResponse response)
-                        throws Exception {
+                public void execute(HttpServletRequest request, HttpServletResponse response) throws Exception {
                     InputStream inputStream = new FileInputStream(tempFile);
 
                     try {

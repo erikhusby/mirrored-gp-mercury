@@ -371,12 +371,13 @@ public class GenericDao {
         }
     }
 
-    protected Predicate createOrTerms(CriteriaBuilder cb, Path fieldExpression, List values) {
-        List<Predicate> listOfOrTerms = new ArrayList<Predicate>(values.size());
+    protected Predicate createOrTerms(CriteriaBuilder cb, Path fieldExpression, List<?> values) {
+        Predicate[] listOfOrTerms = new Predicate[values.size()];
+        int i=0;
         for (Object value : values) {
-            listOfOrTerms.add(cb.equal(fieldExpression, value));
+            listOfOrTerms[i++] = cb.equal(fieldExpression, value);
         }
 
-        return cb.or(listOfOrTerms.toArray(new Predicate[listOfOrTerms.size()]));
+        return cb.or(listOfOrTerms);
     }
 }

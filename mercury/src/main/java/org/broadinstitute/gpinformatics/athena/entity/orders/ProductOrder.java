@@ -51,7 +51,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-
 @Entity
 @Audited
 @Table(name = "PRODUCT_ORDER", schema = "athena")
@@ -666,9 +665,10 @@ public class ProductOrder implements Serializable {
     /**
      * Call this method to change the 'owner' attribute of a Product Order.  We are currently storing this
      * attribute in the created by column in the database.
+     *
      * @param userId the owner ID
      */
-    public void setCreatedBy(Long userId) {
+    public void setCreatedBy(@Nullable Long userId) {
         createdBy = userId;
     }
 
