@@ -31,7 +31,7 @@ public abstract class PreferenceDefinition {
 
     public abstract void convertPreference(Preference preference) throws JAXBException;
 
-    public String convertToXml() throws JAXBException {
+    private String convertToXml() throws JAXBException {
         StringWriter sw = new StringWriter();
         Marshaller marshaller = getContext().createMarshaller();
         marshaller.marshal(this, sw);

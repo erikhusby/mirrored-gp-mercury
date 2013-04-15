@@ -49,7 +49,7 @@ public class PreferenceEjb {
         @Nonnull PreferenceType preferenceType,
         @Nonnull PreferenceDefinition definition) throws Exception {
 
-        String data = definition.convertToXml();
+        String data = definition.getPreferenceData();
         List<Preference> userPreferences = preferenceDAO.getUserPreferences(associatedUser, preferenceType);
 
         // If the preference is the same as any of the existing preferences, then just update it and return.
@@ -88,7 +88,7 @@ public class PreferenceEjb {
             @Nonnull PreferenceType preferenceType,
             @Nonnull PreferenceDefinition definition) throws Exception {
 
-        String data = definition.convertToXml();
+        String data = definition.getPreferenceData();
         List<Preference> userPreferences = preferenceDAO.getPreferencesByObjects(object1Id, object2Id, preferenceType);
 
         // If the preference is the same as any of the existing preferences, then just update it and return.
