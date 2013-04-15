@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import com.google.common.collect.ImmutableList;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -42,14 +43,7 @@ import javax.persistence.Transient;
 import java.io.IOException;
 import java.io.Serializable;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @Entity
 @Audited
@@ -1038,6 +1032,10 @@ public class ProductOrder implements Serializable {
         }
 
         public static List<OrderStatus> getStatusesFromStrings(@Nonnull List<String> statusStrings) {
+            if (CollectionUtils.isEmpty(statusStrings)) {
+                return Collections.emptyList();
+            }
+
             List<OrderStatus> statuses = new ArrayList<OrderStatus>();
             for (String statusString : statusStrings) {
                 statuses.add(OrderStatus.findByName(statusString));

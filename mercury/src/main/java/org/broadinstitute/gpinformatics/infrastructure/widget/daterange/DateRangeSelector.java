@@ -9,6 +9,8 @@
  */
 package org.broadinstitute.gpinformatics.infrastructure.widget.daterange;
 
+import clover.org.apache.commons.lang.StringUtils;
+import com.sun.istack.Nullable;
 import org.hibernate.Criteria;
 import org.hibernate.criterion.Restrictions;
 
@@ -262,8 +264,13 @@ public class DateRangeSelector implements Serializable {
 
     public DateRangeSelector(List<String> rangeSelectorStrings) throws ParseException {
         int rangeSelectorValue = Integer.parseInt(rangeSelectorStrings.get(0));
-        Date startDate = DateUtils.parseDate(rangeSelectorStrings.get(1));
-        Date endDate = DateUtils.parseDate(rangeSelectorStrings.get(2));
+
+        String start = rangeSelectorStrings.get(1);
+        Date startDate = StringUtils.isBlank(start) ? null : DateUtils.parseDate(start);
+
+        String end = rangeSelectorStrings.get(2);
+        Date endDate = StringUtils.isBlank(end) ? null : DateUtils.parseDate(end);
+
         setupRangeSelector(null, rangeSelectorValue, startDate, endDate);
     }
 
@@ -271,7 +278,8 @@ public class DateRangeSelector implements Serializable {
         setupRangeSelector(naturalLanguageString, rangeSelector, start, end);
     }
 
-    private void setupRangeSelector(String naturalLanguageString, int rangeSelector, Date start, Date end) {
+    private void setupRangeSelector(
+        @Nullable String naturalLanguageString, int rangeSelector, @Nullable Date start, @Nullable Date end) {
         if ((null != naturalLanguageString) && (!naturalLanguageString.isEmpty())) {
             Integer var = toRangeSelector(naturalLanguageString);
             if (var != null) {
