@@ -96,7 +96,7 @@ public enum LabEventType {
     FLOWCELL_LOADED("FlowcellLoaded", true, false, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
 
     // For HiSeq 2500
-    DENATURE_TO_FLOWCELL_TRANSFER("DenatureToFlowcellTransfer", false, true, SystemOfRecord.MERCURY, false,
+    DENATURE_TO_FLOWCELL_TRANSFER("DenatureToFlowcellTransfer", false, true, SystemOfRecord.SQUID, false,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE),
 
     // Sage
