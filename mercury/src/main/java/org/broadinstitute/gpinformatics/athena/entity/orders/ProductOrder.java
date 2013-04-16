@@ -1027,7 +1027,7 @@ public class ProductOrder implements Serializable {
          * @param statusStrings The desired list of statuses.
          * @return The statuses that are listed.
          */
-        public static List<OrderStatus> getStatusesFromStrings(@Nonnull List<String> statusStrings) {
+        public static List<OrderStatus> getFromName(@Nonnull List<String> statusStrings) {
             if (CollectionUtils.isEmpty(statusStrings)) {
                 return Collections.emptyList();
             }
