@@ -255,7 +255,7 @@ public class ReworkDbFreeTest {
             } else {
                 String barcode = tubePrefix + rackPosition;
                 bspAliquot = new TwoDBarcodedTube(barcode);
-                bspAliquot.addSample(new MercurySample(productOrder.getBusinessKey(), poSample.getSampleName()));
+                bspAliquot.addSample(new MercurySample(poSample.getSampleName()));
             }
             rackMap.put(bspAliquot.getLabel(), bspAliquot);
             rackPosition++;

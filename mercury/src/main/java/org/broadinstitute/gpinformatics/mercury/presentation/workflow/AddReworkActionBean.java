@@ -108,7 +108,7 @@ public class AddReworkActionBean extends CoreActionBean {
         labVessel = labVesselDao.findByIdentifier(vesselLabel);
         if (labVessel != null) {
             for (SampleInstance sample : labVessel.getAllSamples()) {
-                String productOrderKey = sample.getStartingSample().getProductOrderKey();
+                String productOrderKey = sample.getProductOrderKey();
                 if (StringUtils.isNotEmpty(productOrderKey)) {
                     ProductOrder order = athenaClientService.retrieveProductOrderDetails(productOrderKey);
                     workflowName = order.getProduct().getWorkflowName();

@@ -346,7 +346,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
             String barcode="R" + testPrefix + rackPosition;
             String bspStock="SM-" + testPrefix + rackPosition;
             TwoDBarcodedTube bspAliquot=new TwoDBarcodedTube(barcode);
-            bspAliquot.addSample(new MercurySample(productOrder.getBusinessKey(), bspStock));
+            bspAliquot.addSample(new MercurySample(bspStock));
             mapBarcodeToTube.put(barcode, bspAliquot);
 
             twoDBarcodedTubeDAO.persist(bspAliquot);

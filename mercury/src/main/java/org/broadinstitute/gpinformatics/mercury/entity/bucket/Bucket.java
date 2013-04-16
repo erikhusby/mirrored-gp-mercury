@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.bucket;
 
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
+import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
@@ -25,6 +26,7 @@ public class Bucket {
     private Long bucketId;
 
     @OneToMany (mappedBy = "bucket", cascade = CascadeType.PERSIST, orphanRemoval = true)
+// todo jmt    @Where(clause = "batched_date is null")
     private Set<BucketEntry> bucketEntries = new HashSet<BucketEntry>();
 
     @Column ()

@@ -95,7 +95,7 @@ public class BaseEventTest {
         for (ProductOrderSample poSample : productOrder.getSamples()) {
             String barcode = "R" + rackPosition;
             TwoDBarcodedTube bspAliquot = new TwoDBarcodedTube(barcode);
-            bspAliquot.addSample(new MercurySample(productOrder.getBusinessKey(), poSample.getSampleName()));
+            bspAliquot.addSample(new MercurySample(poSample.getSampleName()));
             mapBarcodeToTube.put(barcode, bspAliquot);
             if (rackPosition > NUM_POSITIONS_IN_RACK) {
                 log.error("More product order samples than allowed in a single rack. " + productOrder.getSamples().size()

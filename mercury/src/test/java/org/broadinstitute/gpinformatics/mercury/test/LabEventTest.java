@@ -289,6 +289,10 @@ public class LabEventTest extends BaseEventTest{
         AthenaClientServiceStub.addProductOrder(productOrder);
         final Date runDate = new Date();
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder);
+        for (TwoDBarcodedTube twoDBarcodedTube : mapBarcodeToTube.values()) {
+            twoDBarcodedTube.addBucketEntry(new BucketEntry(twoDBarcodedTube, productOrder.getBusinessKey()));
+        }
+
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
 
@@ -413,7 +417,7 @@ public class LabEventTest extends BaseEventTest{
 
             String bspStock = "SM-" + rackPosition;
             TwoDBarcodedTube bspAliquot = new TwoDBarcodedTube(barcode);
-            bspAliquot.addSample(new MercurySample(null, bspStock));
+            bspAliquot.addSample(new MercurySample(bspStock));
             mapBarcodeToTube.put(barcode, bspAliquot);
         }
 
@@ -608,7 +612,7 @@ public class LabEventTest extends BaseEventTest{
         for (LabVessel labVessel : labVessels) {
             for (SampleInstance sampleInstance : labVessel.getSampleInstances()) {
                 ProductOrder productOrder = athenaClientService.retrieveProductOrderDetails(
-                        sampleInstance.getStartingSample().getProductOrderKey());
+                        sampleInstance.getProductOrderKey());
                 // get workflow name from product order
                 ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(
                         productOrder.getProduct().getWorkflowName());

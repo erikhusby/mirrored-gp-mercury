@@ -63,7 +63,7 @@ public class LabBatchEjbDBFreeTest {
             String barcode = "R" + sampleIndex + sampleIndex + sampleIndex + sampleIndex + sampleIndex + sampleIndex;
             String bspStock = sampleName;
             TwoDBarcodedTube bspAliquot = new TwoDBarcodedTube(barcode);
-            bspAliquot.addSample(new MercurySample(STUB_TEST_PDO_KEY, bspStock));
+            bspAliquot.addSample(new MercurySample(bspStock));
             mapBarcodeToTube.put(barcode, bspAliquot);
             sampleIndex++;
         }

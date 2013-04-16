@@ -257,7 +257,7 @@ public class MercuryOrSquidRouterTest {
         String jiraTicketKey = "PDO-" + productOrderSequence++;
         order.setJiraTicketKey(jiraTicketKey);
         when(mockAthenaClientService.retrieveProductOrderDetails(jiraTicketKey)).thenReturn(order);
-        tube.addSample(new MercurySample(jiraTicketKey, "SM-1"));
+        tube.addSample(new MercurySample("SM-1"));
         return order;
     }
 }

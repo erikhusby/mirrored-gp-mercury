@@ -188,7 +188,7 @@ public class ReworkIntegrationTest extends Arquillian {
                 if (sample.equals(reworkedSampleInstance.getStartingSample().getSampleKey())) {
                     foundSample = true;
                     // now verify that the PDO is the right PDO
-                    assertThat(pdo1.getJiraTicketKey(),equalTo(reworkedSampleInstance.getStartingSample().getProductOrderKey()));
+                    assertThat(pdo1.getJiraTicketKey(),equalTo(reworkedSampleInstance.getProductOrderKey()));
                 }
             }
             assertThat("Could not find reworked " + sample + " in sample instance list for reworked plate.",foundSample);
@@ -209,7 +209,7 @@ public class ReworkIntegrationTest extends Arquillian {
                 if (sample.equals(reworkedSampleInstance.getStartingSample().getSampleKey())) {
                     foundSample = true;
                     // now verify that the PDO is the right PDO
-                    assertThat(pdo2.getJiraTicketKey(),equalTo(reworkedSampleInstance.getStartingSample().getProductOrderKey()));
+                    assertThat(pdo2.getJiraTicketKey(),equalTo(reworkedSampleInstance.getProductOrderKey()));
                 }
             }
             assertThat("Could not find reworked " + sample + " in sample instance list for reworked plate.",foundSample);

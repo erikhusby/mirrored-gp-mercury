@@ -88,7 +88,7 @@ public class MercuryClientEjbDbFreeTest {
             LabVessel labVessel = new TwoDBarcodedTube("R" + rackPosition++);
 
             MercurySample mercurySample =
-                    new MercurySample(pdo.getBusinessKey(), pdoSample.getSampleName(), new BSPSampleDTO(bspData));
+                    new MercurySample(pdoSample.getSampleName(), new BSPSampleDTO(bspData));
 
             labVessel.addSample(mercurySample);
             labBatch.addLabVessel(labVessel);

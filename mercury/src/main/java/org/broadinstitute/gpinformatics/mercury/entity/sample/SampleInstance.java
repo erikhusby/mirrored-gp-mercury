@@ -92,6 +92,12 @@ import java.util.List;
  * */
 public class SampleInstance {
 
+    private String productOrderKey;
+
+    public String getProductOrderKey() {
+        return productOrderKey;
+    }
+
     public enum GSP_CONTROL_ROLE {
         NEGATIVE,POSITIVE,NONE
     }
@@ -258,5 +264,6 @@ public class SampleInstance {
     public void setAllLabBatches(Collection<LabBatch> allLabBatches) {
         this.allLabBatches = allLabBatches;
     }
+
 
 }

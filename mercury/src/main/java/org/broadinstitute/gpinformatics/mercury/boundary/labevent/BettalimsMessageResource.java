@@ -333,13 +333,13 @@ public class BettalimsMessageResource {
             Set<SampleInstance> sampleInstances = labVessel.getSampleInstances();
             allSampleInstances.addAll(sampleInstances);
             for (SampleInstance sampleInstance : sampleInstances) {
-                ProductWorkflowDefVersion workflowVersion = getWorkflowVersion(sampleInstance.getStartingSample().getProductOrderKey());
+                ProductWorkflowDefVersion workflowVersion = getWorkflowVersion(sampleInstance.getProductOrderKey());
                 if (workflowVersion != null) {
                     List<ProductWorkflowDefVersion.ValidationError> errors = workflowVersion.validate(labVessel, eventType);
                     if (!errors.isEmpty()) {
                         validationErrors.add(new WorkflowValidationError(sampleInstance, errors,
                                 athenaClientService.retrieveProductOrderDetails(
-                                        sampleInstance.getStartingSample().getProductOrderKey()), appConfig));
+                                        sampleInstance.getProductOrderKey()), appConfig));
                     }
                 }
             }

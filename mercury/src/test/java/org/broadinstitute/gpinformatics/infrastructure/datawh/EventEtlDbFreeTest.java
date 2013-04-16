@@ -164,7 +164,7 @@ public class EventEtlDbFreeTest {
         expect(sampleInst.getStartingSample()).andReturn(sample);
         expect(labBatch.getLabBatchId()).andReturn(labBatchId);
         expect(sample.getSampleKey()).andReturn(sampleKey);
-        expect(sample.getProductOrderKey()).andReturn(null);
+//        expect(sample.getProductOrderKey()).andReturn(null);
 
         replay(mocks);
 
@@ -182,7 +182,7 @@ public class EventEtlDbFreeTest {
         expect(vessel.getSampleInstances()).andReturn(sampleInstList);
         expect(sampleInst.getStartingSample()).andReturn(sample);
         expect(labBatch.getLabBatchId()).andReturn(labBatchId);
-        expect(sample.getProductOrderKey()).andReturn(pdoKey);
+//        expect(sample.getProductOrderKey()).andReturn(pdoKey);
         expect(pdoDao.findByBusinessKey(pdoKey)).andReturn(null);
 
         replay(mocks);
@@ -202,7 +202,7 @@ public class EventEtlDbFreeTest {
         expect(sampleInst.getStartingSample()).andReturn(sample);
         expect(labBatch.getLabBatchId()).andReturn(labBatchId);
         expect(sample.getSampleKey()).andReturn(sampleKey);
-        expect(sample.getProductOrderKey()).andReturn(pdoKey);
+//        expect(sample.getProductOrderKey()).andReturn(pdoKey);
         expect(pdoDao.findByBusinessKey(pdoKey)).andReturn(pdo);
         expect(pdo.getProductOrderId()).andReturn(pdoId);
         expect(obj.getEventDate()).andReturn(eventDate);
@@ -234,7 +234,7 @@ public class EventEtlDbFreeTest {
         expect(labBatch.getLabBatchId()).andReturn(labBatchId);
         expect(sampleInst.getStartingSample()).andReturn(sample);
         expect(sample.getSampleKey()).andReturn(sampleKey);
-        expect(sample.getProductOrderKey()).andReturn(pdoKey);
+//        expect(sample.getProductOrderKey()).andReturn(pdoKey);
         expect(pdoDao.findByBusinessKey(pdoKey)).andReturn(pdo);
         expect(pdo.getProductOrderId()).andReturn(pdoId);
         expect(obj.getEventDate()).andReturn(eventDate);

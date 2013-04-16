@@ -534,6 +534,7 @@ public abstract class LabVessel implements Serializable {
         private final Set<Reagent> reagents = new HashSet<Reagent>();
         private LabBatch unambiguousLabBatch = null;
         private final Set<LabBatch> labBatches = new HashSet<LabBatch>();
+        // todo jmt bucketEntries
 
         void add(TraversalResults traversalResults) {
             sampleInstances.addAll(traversalResults.getSampleInstances());
@@ -612,9 +613,10 @@ public abstract class LabVessel implements Serializable {
 
         Set<MercurySample> filteredMercurySamples = new HashSet<MercurySample>();
         if (onlyWithPdo) {
-            for (MercurySample mercurySample : mercurySamples) {
-                if (mercurySample.getProductOrderKey() != null) {
-                    filteredMercurySamples.add(mercurySample);
+            for (BucketEntry bucketEntry : bucketEntries) {
+                if(bucketEntry.getPoBusinessKey() != null) {
+                    filteredMercurySamples = mercurySamples;
+                    break;
                 }
             }
         } else {
@@ -636,6 +638,7 @@ public abstract class LabVessel implements Serializable {
                 }
             }
         }
+        bucketEntries
         for (Reagent reagent : getReagentContents()) {
             traversalResults.add(reagent);
         }
@@ -760,6 +763,10 @@ public abstract class LabVessel implements Serializable {
 
     public Set<BucketEntry> getBucketEntries() {
         return Collections.unmodifiableSet(bucketEntries);
+    }
+
+    public void addBucketEntry(BucketEntry bucketEntry) {
+        bucketEntries.add(bucketEntry);
     }
 
     public void addLabBatch(LabBatch labBatch) {
@@ -1077,7 +1084,7 @@ public abstract class LabVessel implements Serializable {
     public Set<String> getPdoKeys() {
         Set<String> pdoKeys = new HashSet<String>();
         for (SampleInstance sample : getAllSamples()) {
-            String productOrderKey = sample.getStartingSample().getProductOrderKey();
+            String productOrderKey = sample.getProductOrderKey();
             if (productOrderKey != null) {
                 pdoKeys.add(productOrderKey);
             }

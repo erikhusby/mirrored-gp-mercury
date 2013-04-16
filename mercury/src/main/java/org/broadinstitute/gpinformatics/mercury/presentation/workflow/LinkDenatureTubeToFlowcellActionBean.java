@@ -113,7 +113,7 @@ public class LinkDenatureTubeToFlowcellActionBean extends CoreActionBean {
         denatureTube = (TwoDBarcodedTube) labVesselDao.findByIdentifier(denatureTubeBarcode);
         if (denatureTube != null) {
             for (SampleInstance sample : denatureTube.getAllSamples()) {
-                String productOrderKey = sample.getStartingSample().getProductOrderKey();
+                String productOrderKey = sample.getProductOrderKey();
                 if (StringUtils.isNotEmpty(productOrderKey)) {
                     ProductOrder order = athenaClientService.retrieveProductOrderDetails(productOrderKey);
                     workflowName = order.getProduct().getWorkflowName();

@@ -190,8 +190,8 @@ public class BucketViewActionBean extends CoreActionBean {
 
     public List<String> getPDOBusinessKeys(ReworkEntry entry) {
         List<String> businessKeys = new ArrayList<String>();
-        for (MercurySample sample : entry.getLabVesselPosition().getMercurySamples()) {
-            businessKeys.add(sample.getProductOrderKey());
+        for (BucketEntry bucketEntry : entry.getLabVesselComment().getLabVessel().getBucketEntries()) {
+            businessKeys.add(bucketEntry.getPoBusinessKey());
         }
         return businessKeys;
     }
@@ -207,9 +207,9 @@ public class BucketViewActionBean extends CoreActionBean {
     public List<MercurySample> getMercurySamplesForBucketEntry(BucketEntry entry) {
         List<MercurySample> mercurySamplesForEntry = new ArrayList<MercurySample>();
         for (MercurySample sample : entry.getLabVessel().getMercurySamples()) {
-            if (StringUtils.equals(entry.getPoBusinessKey(), sample.getProductOrderKey())) {
+//            if (StringUtils.equals(entry.getPoBusinessKey(), sample.getProductOrderKey())) {
                 mercurySamplesForEntry.add(sample);
-            }
+//            }
         }
         return mercurySamplesForEntry;
     }
