@@ -1,7 +1,7 @@
 /*
  * The Broad Institute
  * SOFTWARE COPYRIGHT NOTICE AGREEMENT
- * This software and its documentation are copyright 2009 by the
+ * This software and its documentation are copyright 2013 by the
  * Broad Institute. All rights are reserved.
  *
  * This software is supplied without any warranty or guaranteed support whatsoever. The
@@ -50,12 +50,12 @@ public class PreferenceEjb {
         @Nonnull PreferenceDefinition definition) throws Exception {
 
         String data = definition.getPreferenceData();
-        List<Preference> userPreferences = preferenceDAO.getUserPreferences(associatedUser, preferenceType);
+        List<Preference> userPreferences = preferenceDAO.getPreferences(associatedUser, preferenceType);
 
         // If the preference is the same as any of the existing preferences, then just update it and return.
         for (Preference preference : userPreferences) {
             if (preference.isSame(data)) {
-                preference.update(data);
+                preference.markModified(data);
                 return;
             }
         }
@@ -68,7 +68,7 @@ public class PreferenceEjb {
 
         // These preferences are fetched in descending modified date order, so replace the oldest one with this one.
         Preference preference = userPreferences.get(userPreferences.size() - 1);
-        preference.update(data);
+        preference.markModified(data);
     }
 
     /**
@@ -89,7 +89,7 @@ public class PreferenceEjb {
             @Nonnull PreferenceDefinition definition) throws Exception {
 
         String data = definition.getPreferenceData();
-        List<Preference> userPreferences = preferenceDAO.getPreferencesByObjects(object1Id, object2Id, preferenceType);
+        List<Preference> userPreferences = preferenceDAO.getPreferences(object1Id, object2Id, preferenceType);
 
         // If the preference is the same as any of the existing preferences, then just update it and return.
         for (Preference preference : userPreferences) {
@@ -107,7 +107,7 @@ public class PreferenceEjb {
 
         // These preferences are fetched in descending modified date order, so replace the oldest one with this one.
         Preference preference = userPreferences.get(userPreferences.size() - 1);
-        preference.update(data);
+        preference.markModified(data);
     }
 
     /**
@@ -119,7 +119,7 @@ public class PreferenceEjb {
      */
     public void clear(@Nonnull Long associatedUser) throws Exception {
 
-        List<Preference> userPreferences = preferenceDAO.getUserPreferences(associatedUser);
+        List<Preference> userPreferences = preferenceDAO.getPreferences(associatedUser);
         for (Preference preference : userPreferences) {
             preferenceDAO.remove(preference);
         }
@@ -134,7 +134,7 @@ public class PreferenceEjb {
      * @throws Exception Any problems processing the preference.
      */
     public void clear(@Nonnull Long associatedUser, @Nonnull PreferenceType preferenceType) throws Exception {
-        List<Preference> userPreferences = preferenceDAO.getUserPreferences(associatedUser, preferenceType);
+        List<Preference> userPreferences = preferenceDAO.getPreferences(associatedUser, preferenceType);
         for (Preference preference : userPreferences) {
             preferenceDAO.remove(preference);
         }
@@ -154,14 +154,14 @@ public class PreferenceEjb {
             @Nonnull Long object1Id,
             @Nullable Long object2Id,
             @Nonnull PreferenceType preferenceType) throws Exception {
-        List<Preference> userPreferences = preferenceDAO.getPreferencesByObjects(object1Id, object2Id, preferenceType);
+        List<Preference> userPreferences = preferenceDAO.getPreferences(object1Id, object2Id, preferenceType);
         for (Preference preference : userPreferences) {
             preferenceDAO.remove(preference);
         }
     }
 
     /**
-     * Get a preference.
+     * Get a preference associated with objects.
      *
      * @param object1Id An id for an object that is used for look up.
      * @param object2Id An id for a second object to be used for look up.
@@ -169,32 +169,32 @@ public class PreferenceEjb {
      *
      * @return Preference The matching preference
      */
-    public List<Preference> getObjectPreferences(
+    public List<Preference> getPreferences(
         @Nonnull Long object1Id, @Nullable Long object2Id, @Nonnull PreferenceType preferenceType) throws Exception {
-        return preferenceDAO.getPreferencesByObjects(object1Id, object2Id, preferenceType);
+        return preferenceDAO.getPreferences(object1Id, object2Id, preferenceType);
     }
 
     /**
-     * Get a preference.
+     * Get all preferences of all types attached to a user.
      *
      * @param associatedUser The user to associate with this preference.
      *
      * @return Preference The matching preference
      */
-    public List<Preference> getUserPreferences(@Nonnull Long associatedUser) throws Exception {
-        return preferenceDAO.getUserPreferences(associatedUser);
+    public List<Preference> getPreferences(@Nonnull Long associatedUser) throws Exception {
+        return preferenceDAO.getPreferences(associatedUser);
     }
 
     /**
-     * Get a preference.
+     * Get the preferences for a user of a particular type.
      *
      * @param associatedUser The user to associate with this preference.
      * @param preferenceType The preference type for easy searching.
      *
      * @return Preference The matching preference
      */
-    public List<Preference> getUserPreferences(
+    public List<Preference> getPreferences(
             @Nonnull Long associatedUser, @Nullable PreferenceType preferenceType) throws Exception {
-        return preferenceDAO.getUserPreferences(associatedUser, preferenceType);
+        return preferenceDAO.getPreferences(associatedUser, preferenceType);
     }
 }

@@ -16,8 +16,6 @@ public enum PreferenceType {
     PDO_SEARCH("PDO Search Preference", PreferenceScope.USER, 1,
             new NameValuePreferenceDefinition.NameValuePreferenceDefinitionCreator());
 
-    public final static Integer UNLIMITED = null;
-
     private final String preferenceTypeName;
     private final PreferenceScope preferenceScope;
     private final NameValuePreferenceDefinition.PreferenceDefinitionCreator creator;
@@ -39,16 +37,6 @@ public enum PreferenceType {
         return creator;
     }
 
-    public static PreferenceType findByName(String name) {
-        for (PreferenceType theEnum : PreferenceType.values()) {
-            if (theEnum.name().equals(name)) {
-                return theEnum;
-            }
-        }
-
-        return null;
-    }
-
     public String getPreferenceTypeName() {
         return preferenceTypeName;
     }
@@ -61,6 +49,10 @@ public enum PreferenceType {
         return saveLimit;
     }
 
+    /**
+     * This enum specifies the intention for this type of preference. Currently they are just global or user, but later
+     * could be tied to other classifications.
+     */
     public enum PreferenceScope {
         GLOBAL,
         USER

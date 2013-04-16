@@ -6,7 +6,11 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This is a simple name-value preference.
@@ -14,17 +18,23 @@ import java.util.*;
 @XmlRootElement(name = "nameValuePreferenceDefinition")
 public class NameValuePreferenceDefinition extends PreferenceDefinition {
 
+    private final JAXBContext context;
+
+    NameValuePreferenceDefinition() throws Exception {
+        context = JAXBContext.newInstance(NameValuePreferenceDefinition.class);
+    }
+
     private HashMap<String, List<String>> dataMap = new HashMap<String, List<String>> ();
 
     @Override
-    public void convertPreference(Preference preference) throws JAXBException {
+    public void convertPreference(Preference preference) throws Exception {
         // populate the data from the converted preference data.
-        dataMap = ((NameValuePreferenceDefinition)convertFromXml(preference.getData())).getDataMap();
+        dataMap = ((NameValuePreferenceDefinition) convertFromXml(preference.getData())).getDataMap();
     }
 
     @Override
     protected JAXBContext getContext() throws JAXBException {
-        return JAXBContext.newInstance(NameValuePreferenceDefinition.class);
+        return context;
     }
 
     @XmlJavaTypeAdapter(NameValueAdapter.class)
@@ -47,11 +57,15 @@ public class NameValuePreferenceDefinition extends PreferenceDefinition {
 
     public static class NameValuePreferenceDefinitionCreator implements PreferenceDefinitionCreator {
         @Override
-        public PreferenceDefinition create() {
+        public PreferenceDefinition create() throws Exception {
             return new NameValuePreferenceDefinition();
         }
     }
 
+    /**
+     * This is an adapter to stream the map using the jaxb annotations above. This lets us marshall and unmarshall
+     * the data to a string for storage in the preferences table.
+     */
     public static class NameValueAdapter extends XmlAdapter<NameValueAdapter.AdaptedMap, HashMap<String, List<String>>> {
 
         public static class AdaptedMap {

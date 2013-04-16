@@ -1,7 +1,7 @@
 /*
  * The Broad Institute
  * SOFTWARE COPYRIGHT NOTICE AGREEMENT
- * This software and its documentation are copyright 2009 by the
+ * This software and its documentation are copyright 2013 by the
  * Broad Institute/Massachusetts Institute of Technology. All rights are reserved.
  *
  * This software is supplied without any warranty or guaranteed support whatsoever. Neither
@@ -16,7 +16,19 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Lob;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+import javax.persistence.Transient;
 import java.util.Comparator;
 import java.util.Date;
 
@@ -50,27 +62,27 @@ public class Preference extends GenericDao {
     @Column(name = "OBJECT2_ID")
     private Long object2Id;
 
-    /** The data, typically XStream XML */
+    /** The data in a string clob. Using xml for many of these. */
     @Lob
-    @Column(name = "DATA", unique = false, nullable = false, insertable = true, updatable = true)
+    @Column(name = "DATA")
     private String data;
 
     /** BSP 'User' for the person who created this. */
-    @Column(name = "CREATED_BY", nullable = false, insertable = true, updatable = false)
+    @Column(name = "CREATED_BY")
     private Long createdBy;
 
     /** When the object was created */
     @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "CREATED_DATE", unique = false, nullable = false, insertable = true, updatable = false, length = 7)
+    @Column(name = "CREATED_DATE")
     private Date createdDate;
 
     /** When the object was last modified */
     @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "MODIFIED_DATE", unique = false, nullable = true, insertable = true, updatable = true, length = 7)
+    @Column(name = "MODIFIED_DATE")
     private Date modifiedDate;
 
     /** BSP 'User' for the person who modified this. */
-    @Column(name = "MODIFIED_BY", unique = false, nullable = true, insertable = true, updatable = true)
+    @Column(name = "MODIFIED_BY")
     private Long modifiedBy;
 
     protected Preference() {}
@@ -210,7 +222,7 @@ public class Preference extends GenericDao {
         this.object2Id = object2Id;
     }
 
-    public void update(@Nonnull String data) {
+    public void markModified(@Nonnull String data) {
         this.data = data;
         this.modifiedDate = new Date();
     }

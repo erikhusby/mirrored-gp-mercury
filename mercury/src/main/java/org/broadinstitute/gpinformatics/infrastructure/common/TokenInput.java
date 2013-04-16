@@ -83,8 +83,9 @@ public abstract class TokenInput<TOKEN_OBJECT> {
     }
 
     public List<TOKEN_OBJECT> getTokenObjects() {
-        // If there is data AND the objects have not been set up, do the set up.
-        if (!StringUtils.isBlank(listOfKeys) && (CollectionUtils.isEmpty(tokenObjects))) {
+        // setListOfKeys updates the objects, so when the action bean first populates the list of keys
+        // directly, there will be no objects. This ensures that there will be objects around later.
+        if (!StringUtils.isBlank(listOfKeys) && CollectionUtils.isEmpty(tokenObjects)) {
             setListOfKeys(listOfKeys);
         }
 

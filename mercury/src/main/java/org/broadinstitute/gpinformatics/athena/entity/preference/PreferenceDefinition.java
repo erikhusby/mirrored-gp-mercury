@@ -1,7 +1,7 @@
 /*
  * The Broad Institute
  * SOFTWARE COPYRIGHT NOTICE AGREEMENT
- * This software and its documentation are copyright 2009 by the
+ * This software and its documentation are copyright 2013 by the
  * Broad Institute/Massachusetts Institute of Technology. All rights are reserved.
  *
  * This software is supplied without any warranty or guaranteed support whatsoever. Neither
@@ -13,7 +13,7 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
-import javax.xml.bind.annotation.XmlRootElement;
+import java.io.Serializable;
 import java.io.StringReader;
 import java.io.StringWriter;
 
@@ -25,12 +25,31 @@ import java.io.StringWriter;
  */
 public abstract class PreferenceDefinition {
 
+    /**
+     * Get the preference data as a string.
+     *
+     * @return The xml string.
+     * @throws Exception Any errors.
+     */
     public String getPreferenceData() throws Exception {
         return convertToXml();
     }
 
-    public abstract void convertPreference(Preference preference) throws JAXBException;
+    /**
+     * Let the subclass do its work to convert the preference data into the appropriate data.
+     *
+     * @param preference The preference information.
+     *
+     * @throws Exception Any errors
+     */
+    public abstract void convertPreference(Preference preference) throws Exception;
 
+    /**
+     * Utility function to convert the underlying object (from getContext) into an XML string.
+     *
+     * @return The xml string.
+     * @throws JAXBException Any JAXB errors.
+     */
     private String convertToXml() throws JAXBException {
         StringWriter sw = new StringWriter();
         Marshaller marshaller = getContext().createMarshaller();
@@ -38,15 +57,32 @@ public abstract class PreferenceDefinition {
         return sw.toString();
     }
 
+    /**
+     * The JAXB context. The subclass creates the context based on the objects it wants to stream.
+     *
+     * @return The context object.
+     * @throws JAXBException Any JAXB errors.
+     */
     protected abstract JAXBContext getContext() throws JAXBException;
 
-    public Object convertFromXml(String xml) throws JAXBException {
+    /**
+     * Take the XML and use the context to convert it into a populated object.
+     *
+     * @param xml The xml string.
+     * @return The obecct.
+     *
+     * @throws JAXBException Any errors processing the XML.
+     */
+    protected PreferenceDefinition convertFromXml(String xml) throws JAXBException {
         Unmarshaller um = getContext().createUnmarshaller();
-        return um.unmarshal(new StringReader(xml));
+        return (PreferenceDefinition) um.unmarshal(new StringReader(xml));
     }
 
-    public interface PreferenceDefinitionCreator {
-        public PreferenceDefinition create();
+    /**
+     * Interface for creating preference definitions.
+     */
+    public interface PreferenceDefinitionCreator extends Serializable {
+        public PreferenceDefinition create() throws Exception;
     }
 }
 

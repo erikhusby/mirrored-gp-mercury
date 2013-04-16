@@ -1021,16 +1021,12 @@ public class ProductOrder implements Serializable {
             return name();
         }
 
-        public static OrderStatus findByName(String name) {
-            for (OrderStatus status : values()) {
-                if (status.name().equals(name)) {
-                    return status;
-                }
-            }
-
-            return null;
-        }
-
+        /**
+         * Get all status values using the name strings.
+         *
+         * @param statusStrings The desired list of statuses.
+         * @return The statuses that are listed.
+         */
         public static List<OrderStatus> getStatusesFromStrings(@Nonnull List<String> statusStrings) {
             if (CollectionUtils.isEmpty(statusStrings)) {
                 return Collections.emptyList();
@@ -1038,7 +1034,7 @@ public class ProductOrder implements Serializable {
 
             List<OrderStatus> statuses = new ArrayList<OrderStatus>();
             for (String statusString : statusStrings) {
-                statuses.add(OrderStatus.findByName(statusString));
+                statuses.add(OrderStatus.valueOf(statusString));
             }
 
             return statuses;

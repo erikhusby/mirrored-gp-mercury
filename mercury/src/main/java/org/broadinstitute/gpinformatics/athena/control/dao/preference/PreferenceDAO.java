@@ -1,7 +1,7 @@
 /*
  * The Broad Institute
  * SOFTWARE COPYRIGHT NOTICE AGREEMENT
- * This software and its documentation are copyright 2009 by the
+ * This software and its documentation are copyright 2013 by the
  * Broad Institute/Massachusetts Institute of Technology. All rights are reserved.
  *
  * This software is supplied without any warranty or guaranteed support whatsoever. Neither
@@ -18,8 +18,6 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.ejb.Stateful;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.EntityManager;
 import javax.persistence.criteria.CriteriaBuilder;
@@ -33,16 +31,31 @@ import java.util.List;
  * DAO to save and retrieve Preference objects.
  */
 @Stateful
-@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 @RequestScoped
 public class PreferenceDAO extends GenericDao {
 
-    public List<Preference> getUserPreferences(@Nonnull Long associatedUser) throws Exception {
-        return getUserPreferences(associatedUser, null);
+    /**
+     * This grabs ALL preferences that are associated to the specified user.
+     *
+     * @param associatedUser The user.
+     *
+     * @return The list of preferences that match.
+     * @throws Exception Any errors.
+     */
+    public List<Preference> getPreferences(@Nonnull Long associatedUser) throws Exception {
+        return getPreferences(associatedUser, null);
     }
 
-    public List<Preference> getUserPreferences(
-        @Nonnull Long associatedUser, @Nullable PreferenceType preferenceType) throws Exception {
+    /**
+     *
+     * @param associatedUser The user.
+     * @param preferenceType The preference type.
+     *
+     * @return The list of preferences that match.
+     * @throws Exception Any errors.
+     */
+    public List<Preference> getPreferences(
+            @Nonnull Long associatedUser, @Nullable PreferenceType preferenceType) throws Exception {
 
         EntityManager entityManager = getEntityManager();
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
@@ -54,11 +67,21 @@ public class PreferenceDAO extends GenericDao {
         terms.add(criteriaBuilder.equal(preferenceRoot.get(Preference_.associatedUser), associatedUser));
         terms.add(criteriaBuilder.equal(preferenceRoot.get(Preference_.preferenceType), preferenceType));
 
-        return populateOrderedPreferences(entityManager, criteriaBuilder, criteriaQuery, preferenceRoot, terms);
+        return populateOrderedPreferences(criteriaBuilder, criteriaQuery, preferenceRoot, terms);
     }
 
-    public List<Preference> getPreferencesByObjects(
-        @Nonnull Long object1Id, @Nullable Long object2Id, @Nonnull PreferenceType preferenceType) throws Exception {
+    /**
+     * Get the preferences attached to an object.
+     *
+     * @param object1Id The main object.
+     * @param object2Id An optional second object.
+     * @param preferenceType The preference type.
+     *
+     * @return The list of preferences that are found.
+     * @throws Exception Any errors.
+     */
+    public List<Preference> getPreferences(
+            @Nonnull Long object1Id, @Nullable Long object2Id, @Nonnull PreferenceType preferenceType) throws Exception {
 
         EntityManager entityManager = getEntityManager();
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
@@ -74,12 +97,24 @@ public class PreferenceDAO extends GenericDao {
             terms.add(criteriaBuilder.equal(preferenceRoot.get(Preference_.object2Id), object2Id));
         }
 
-        return populateOrderedPreferences(entityManager, criteriaBuilder, criteriaQuery, preferenceRoot, terms);
+        return populateOrderedPreferences(criteriaBuilder, criteriaQuery, preferenceRoot, terms);
     }
 
-    private List<Preference> populateOrderedPreferences(
-            EntityManager entityManager, CriteriaBuilder criteriaBuilder, CriteriaQuery<Preference> criteriaQuery,
+    /**
+     * Common code used by all methods to set up the preference criteria.
+     *
+     * @param criteriaBuilder The builder object.
+     * @param criteriaQuery The query.
+     * @param preferenceRoot The root object for preference.
+     * @param terms All terms.
+     *
+     * @return The preferences being returned.
+     * @throws Exception Any errors.
+     */
+    private List<Preference> populateOrderedPreferences(CriteriaBuilder criteriaBuilder, CriteriaQuery<Preference> criteriaQuery,
             Root<Preference> preferenceRoot, List<Predicate> terms) throws Exception {
+
+        EntityManager entityManager = getEntityManager();
 
         criteriaQuery.where(terms.toArray(new Predicate[terms.size()]));
 
