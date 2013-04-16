@@ -432,7 +432,7 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     @Before(stages = LifecycleStage.BindingAndValidation, on = LIST_ACTION)
     public void setupSearchCriteria() throws Exception {
-        // get the saved search for the user.
+        // Get the saved search for the user.
         List<Preference> preferences =
             preferenceEjb.getPreferences(getUserBean().getBspUser().getUserId(), PreferenceType.PDO_SEARCH);
 
@@ -443,23 +443,23 @@ public class ProductOrderActionBean extends CoreActionBean {
             selectedStatuses.add(ProductOrder.OrderStatus.Draft);
             selectedStatuses.add(ProductOrder.OrderStatus.Submitted);
         } else {
-            populateSearchFromPreferences(preferences);
+            // Since we have a preference and there is only one, grab it and set up all the search terms.
+            Preference preference = preferences.get(0);
+            populateSearchFromPreference(preference);
         }
     }
 
     /**
      * This populates all the search date from the first preference object.
      *
-     * @param preferences All preferences found.
+     * @param preference The single preference for PDO search.
      * @throws Exception Any errors.
      */
-    private void populateSearchFromPreferences(List<Preference> preferences) throws Exception {
-        // Since we have a preference and there is only one, grab it and set up all the search terms.
-        Preference preference = preferences.get(0);
+    private void populateSearchFromPreference(Preference preference) throws Exception {
         Map<String, List<String>> preferenceData =
             ((NameValuePreferenceDefinition) preference.getPreferenceDefinition()).getDataMap();
 
-        // The family id. By default there is now choice.
+        // The family id. By default there is no choice.
         List<String> productFamilyIds = preferenceData.get(FAMILY);
         if (!CollectionUtils.isEmpty(productFamilyIds)) {
             String familyId = preferenceData.get(FAMILY).get(0);
@@ -509,11 +509,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
         definition.put(STATUS, statusStrings);
 
-        List<String> dateStrings = new ArrayList<String> ();
-        dateStrings.add(String.valueOf(getDateRange().getRangeSelector()));
-        dateStrings.add(getDateRange().getStartStr());
-        dateStrings.add(getDateRange().getEndStr());
-        definition.put(DATE, dateStrings);
+        definition.put(DATE, getDateRange().createDateStrings());
 
         definition.put(OWNER, owner.getBusinessKeyList());
 

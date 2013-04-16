@@ -33,10 +33,8 @@ import java.util.Comparator;
 import java.util.Date;
 
 /**
- * Hibernate object for preference instances. A preference may be global,
- * associated with a domain or associated with a user.
- *
- * @author <a href="mailto:dinsmore@broadinstitute.org">Michael Dinsmore</a>
+ * This class handles the storage of preference data. It is based on a similar class created by Mike Dinsmore
+ * for GAP. Any problems with logic or comments are his fault.
  */
 @Entity
 @Table(name = "PREF_PREFERENCE", schema = "athena")
@@ -264,17 +262,4 @@ public class Preference extends GenericDao {
     public int hashCode() {
         return new HashCodeBuilder().append(getPreferenceId()).toHashCode();
     }
-    
-    /**
-     * Compare by the Preference by it preference type, case insensitive.  This is 
-     * potentially expensive because we're using preference type which is lazily
-     * loaded, but we've eagerly fetched in the usage of this comparator. 
-     */
-    public static final Comparator<Preference> BY_PREFERENCETYPE_NAME = new Comparator<Preference>() {
-        @Override
-        public int compare(Preference lhs, Preference rhs) {
-            return lhs.getPreferenceType().getPreferenceTypeName().toUpperCase().compareTo(
-                   rhs.getPreferenceType().getPreferenceTypeName().toUpperCase());
-        }
-    };
 }

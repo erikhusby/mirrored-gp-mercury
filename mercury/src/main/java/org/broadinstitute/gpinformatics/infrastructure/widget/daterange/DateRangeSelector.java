@@ -17,6 +17,7 @@ import javax.annotation.Nullable;
 import java.io.Serializable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -220,12 +221,23 @@ public class DateRangeSelector implements Serializable {
     }
 
     /**
-     * Set up a DateRangeSelector object based on the value of rangeSelector
+     * Set up a DateRangeSelector object based on the value of rangeSelector.
      *
-     * @param theRangeSelector rangeSelector value
+     * @param theRangeSelector rangeSelector value.
      */
     public DateRangeSelector(int theRangeSelector) {
         this(null, theRangeSelector, null, null);
+    }
+
+    /**
+     * @return This creates a list of strings representing the three values for the date.
+     */
+    public List<String> createDateStrings() {
+        List<String> dateStrings = new ArrayList<String>();
+        dateStrings.add(String.valueOf(rangeSelector));
+        dateStrings.add(getStartStr());
+        dateStrings.add(getEndStr());
+        return dateStrings;
     }
 
     private enum RangeDefinition {
@@ -262,13 +274,24 @@ public class DateRangeSelector implements Serializable {
         }
     }
 
-    public DateRangeSelector(List<String> rangeSelectorStrings) throws ParseException {
-        int rangeSelectorValue = Integer.parseInt(rangeSelectorStrings.get(0));
+    private static final int RANGE_SELECTOR_INDEX = 0;
+    private static final int START_DATE_INDEX = 1;
+    private static final int END_DATE_INDEX = 2;
 
-        String start = rangeSelectorStrings.get(1);
+    /**
+     * This is a special constructor that is useful for pulling user preference information into the date range
+     * selector object.
+     *
+     * @param rangeSelectorStrings The list of strings representation of this DateRangeSelector.
+     * @throws ParseException Any errors
+     */
+    public DateRangeSelector(List<String> rangeSelectorStrings) throws ParseException {
+        int rangeSelectorValue = Integer.parseInt(rangeSelectorStrings.get(RANGE_SELECTOR_INDEX));
+
+        String start = rangeSelectorStrings.get(START_DATE_INDEX);
         Date startDate = StringUtils.isBlank(start) ? null : DateUtils.parseDate(start);
 
-        String end = rangeSelectorStrings.get(2);
+        String end = rangeSelectorStrings.get(END_DATE_INDEX);
         Date endDate = StringUtils.isBlank(end) ? null : DateUtils.parseDate(end);
 
         setupRangeSelector(null, rangeSelectorValue, startDate, endDate);
