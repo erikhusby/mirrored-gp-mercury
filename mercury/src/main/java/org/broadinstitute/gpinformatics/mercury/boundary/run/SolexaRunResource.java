@@ -21,6 +21,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.io.File;
 import java.net.URI;
@@ -98,18 +99,19 @@ public class SolexaRunResource {
          *
          * In the future, this will be encompassed by MercuryOrSquidRouter tests.
          */
+        UriBuilder absolutePathBuilder = uriInfo.getAbsolutePathBuilder();
         if (connectorRun.getCode() != Response.Status.CREATED.getStatusCode()) {
             callerResponse = Response.status(connectorRun.getCode()).entity(solexaRunBean).build();
         } else {
 
-            callerResponse = Response.created(uriInfo.getAbsolutePathBuilder().path(runname).build())
+            callerResponse = Response.created(absolutePathBuilder.path(runname).build())
                                      .entity(solexaRunBean).build();
         }
 
         if (router.routeForVessel(flowcell) == MercuryOrSquidRouter.MercuryOrSquid.MERCURY) {
             try {
                 run = registerRun(solexaRunBean, flowcell);
-                URI createdUri = uriInfo.getAbsolutePathBuilder().path(run.getRunName()).build();
+                URI createdUri = absolutePathBuilder.path(run.getRunName()).build();
                 if (callerResponse.getStatus() == Response.Status.CREATED.getStatusCode()) {
                     callerResponse = Response.created(createdUri).entity(run).build();
                 }

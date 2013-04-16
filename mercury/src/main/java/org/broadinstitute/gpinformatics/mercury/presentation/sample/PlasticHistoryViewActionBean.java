@@ -82,21 +82,25 @@ public class PlasticHistoryViewActionBean extends CoreActionBean {
     }
 
     private void addVesselsToItemList(Set<PlasticHistoryListItem> targetItems, Collection<LabVessel> vessels) {
+        Set<LabVessel> vesselSet = new HashSet<LabVessel>();
         for (LabVessel vessel : vessels) {
-            for (LabVessel descendentVessel : vessel.getDescendantVessels()) {
-                targetItems.add(new PlasticHistoryListItem(descendentVessel));
+            vesselSet.addAll(vessel.getDescendantVessels());
+        }
 
-                // Adds flowcell's sequencer runs to the list.
-                if (descendentVessel.getType().equals(LabVessel.ContainerType.FLOWCELL)) {
-                    if (OrmUtil.proxySafeIsInstance(descendentVessel, RunCartridge.class)) {
-                        RunCartridge runCartridge = (RunCartridge) descendentVessel;
-                        for (SequencingRun seqRun : runCartridge.getSequencingRuns()) {
-                            targetItems.add(new PlasticHistoryListItem(seqRun, descendentVessel));
-                        }
+        for (LabVessel descendentVessel : vesselSet) {
+            targetItems.add(new PlasticHistoryListItem(descendentVessel));
+
+            // Adds flowcell's sequencer runs to the list.
+            if (descendentVessel.getType().equals(LabVessel.ContainerType.FLOWCELL)) {
+                if (OrmUtil.proxySafeIsInstance(descendentVessel, RunCartridge.class)) {
+                    RunCartridge runCartridge = (RunCartridge) descendentVessel;
+                    for (SequencingRun seqRun : runCartridge.getSequencingRuns()) {
+                        targetItems.add(new PlasticHistoryListItem(seqRun, descendentVessel));
                     }
                 }
             }
         }
+
     }
 
 }

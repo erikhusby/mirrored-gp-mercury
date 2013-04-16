@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.MolecularState;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -107,7 +108,11 @@ public class SampleInstance {
 
     private List<Reagent> reagents = new ArrayList<Reagent>();
 
+    // todo use this when the definitive batch is known
     private LabBatch labBatch;
+
+    // All lab batches found in ancestry.
+    private Collection<LabBatch> allLabBatches;
 
     public SampleInstance(MercurySample sample,
             GSP_CONTROL_ROLE controlRole,
@@ -244,6 +249,14 @@ public class SampleInstance {
 
     public LabBatch getLabBatch() {
         return labBatch;
+    }
+
+    public Collection<LabBatch> getAllLabBatches() {
+        return allLabBatches;
+    }
+
+    public void setAllLabBatches(Collection<LabBatch> allLabBatches) {
+        this.allLabBatches = allLabBatches;
     }
 
 }
