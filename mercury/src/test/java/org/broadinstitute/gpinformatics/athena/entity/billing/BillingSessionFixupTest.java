@@ -3,7 +3,6 @@
  */
 package org.broadinstitute.gpinformatics.athena.entity.billing;
 
-import clover.org.jfree.date.DateUtilities;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
@@ -18,10 +17,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -45,15 +41,17 @@ public class BillingSessionFixupTest extends Arquillian {
     }
 
     /**
-     * create a completed billing session.
+     * Create a completed billing session.
      */
     @Test(enabled = false)
     public void createCompleteBillingSession() {
 
         // Setting the date will end the session.
-        Date billedDate = DateUtilities.createDate(2013, 3, 31);
+        Calendar cal = Calendar.getInstance();
+        cal.set(2013, Calendar.MARCH, 31);
+        Date billedDate = cal.getTime();
 
-        // The user is needed for annotating the session
+        // The user is needed for annotating the session.
         BspUser user = userList.getByUsername("hrafal");
 
         // Add the ledger entries that we want to this billing session.

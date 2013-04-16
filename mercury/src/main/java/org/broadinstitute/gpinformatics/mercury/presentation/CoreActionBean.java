@@ -79,7 +79,7 @@ public class CoreActionBean implements ActionBean {
 
     // The date range widget can be used by simply adding a div with a class of dateRangeDiv. If only one date is
     // needed, this will work for any action bean. If more are needed, then ids should be used and configured directly.
-    private DateRangeSelector dateRange;
+    private DateRangeSelector dateRange = new DateRangeSelector(DateRangeSelector.THIS_MONTH);
 
     /**
      * @return the context

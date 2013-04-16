@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession_;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
@@ -12,6 +13,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
+import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -36,7 +38,6 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
         fetchUnbilledLedgerEntryCounts(productOrderListEntries, null);
     }
 
-
     /**
      * Second-pass, ledger aware query that merges its results into the first-pass objects passed as an argument.
      *
@@ -48,12 +49,8 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
      */
     private void fetchUnbilledLedgerEntryCounts(List<ProductOrderListEntry> productOrderListEntries, @Nullable String jiraTicketKey) {
 
-        // Build map of input productOrderListEntries jira key to DTO.
-        Map<String, ProductOrderListEntry> jiraKeyToProductOrderListEntryMap =
-                new HashMap<String, ProductOrderListEntry>();
-
-        for (ProductOrderListEntry productOrderListEntry : productOrderListEntries) {
-            jiraKeyToProductOrderListEntryMap.put(productOrderListEntry.getJiraTicketKey(), productOrderListEntry);
+        if (CollectionUtils.isEmpty(productOrderListEntries)) {
+            return;
         }
 
         // Build query to pick out eligible DTOs.  This only returns values for PDOs with ledger entries in open
@@ -77,11 +74,11 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
                 productOrderSampleLedgerEntrySetJoin.join(LedgerEntry_.billingSession, JoinType.LEFT);
 
         cq.select(
-                cb.construct(ProductOrderListEntry.class,
-                        productOrderRoot.get(ProductOrder_.productOrderId),
-                        productOrderRoot.get(ProductOrder_.jiraTicketKey),
-                        ledgerEntryBillingSessionJoin.get(BillingSession_.billingSessionId),
-                        cb.count(productOrderRoot)));
+            cb.construct(ProductOrderListEntry.class,
+                productOrderRoot.get(ProductOrder_.productOrderId),
+                productOrderRoot.get(ProductOrder_.jiraTicketKey),
+                ledgerEntryBillingSessionJoin.get(BillingSession_.billingSessionId),
+                cb.count(productOrderRoot)));
 
         List<Predicate> predicates = new ArrayList<Predicate>();
         predicates.add(cb.isNull(ledgerEntryBillingSessionJoin.get(BillingSession_.billedDate)));
@@ -90,46 +87,64 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
             predicates.add(cb.equal(productOrderRoot.get(ProductOrder_.jiraTicketKey), jiraTicketKey));
         }
 
-        //noinspection ToArrayCallWithZeroLengthArrayArgument
-        cq.where(predicates.toArray(new Predicate[]{}));
+        cq.where(predicates.toArray(new Predicate[predicates.size()]));
 
         cq.groupBy(
-                productOrderRoot.get(ProductOrder_.productOrderId),
-                productOrderRoot.get(ProductOrder_.jiraTicketKey),
-                ledgerEntryBillingSessionJoin.get(BillingSession_.billingSessionId));
-
+            productOrderRoot.get(ProductOrder_.productOrderId),
+            productOrderRoot.get(ProductOrder_.jiraTicketKey),
+            ledgerEntryBillingSessionJoin.get(BillingSession_.billingSessionId));
         List<ProductOrderListEntry> resultList = getEntityManager().createQuery(cq).getResultList();
+
+        // Build map of input productOrderListEntries jira key to DTO.
+        Map<String, ProductOrderListEntry> jiraKeyToProductOrderListEntryMap = new HashMap<String, ProductOrderListEntry>();
+        for (ProductOrderListEntry productOrderListEntry : productOrderListEntries) {
+            jiraKeyToProductOrderListEntryMap.put(productOrderListEntry.getJiraTicketKey(), productOrderListEntry);
+        }
 
         // Merge these counts into the objects from the first-pass query.
         for (ProductOrderListEntry result : resultList) {
-            ProductOrderListEntry productOrderListEntry = jiraKeyToProductOrderListEntryMap.get(result.getJiraTicketKey());
-            productOrderListEntry.setBillingSessionId(result.getBillingSessionId());
-            productOrderListEntry.setUnbilledLedgerEntryCount(result.getUnbilledLedgerEntryCount());
+            if ((result.getJiraTicketKey() != null) &&
+                (jiraKeyToProductOrderListEntryMap.containsKey(result.getJiraTicketKey()))) {
+
+                ProductOrderListEntry productOrderListEntry = jiraKeyToProductOrderListEntryMap.get(result.getJiraTicketKey());
+                productOrderListEntry.setBillingSessionId(result.getBillingSessionId());
+                productOrderListEntry.setUnbilledLedgerEntryCount(result.getUnbilledLedgerEntryCount());
+            }
         }
 
     }
 
-
     /**
      * Call the worker method with a null parameter indicating all ProductOrderListEntries should be fetched.
      *
+     * @param jiraTicketKey The jira ticket.
+     *
      * @return List of all ProductOrderListEntries.
      */
-    private List<ProductOrderListEntry> findBaseProductOrderListEntries() {
-        return findBaseProductOrderListEntries(null);
+    private List<ProductOrderListEntry> findBaseProductOrderListEntries(@Nullable String jiraTicketKey) {
+        return findBaseProductOrderListEntries(jiraTicketKey, null, null, null, null, null);
     }
-
 
     /**
      * First pass, ledger-unaware querying.
      *
-     * @param jiraTicketKey The nullable JIRA ticket key parameter.  If null, all ProductOrderListEntries are fetched,
-     *                      otherwise only the ProductOrderListEntry corresponding to the specific JIRA ticket key
-     *                      is fetched.
+     * @param jiraTicketKey Optional, specific jira ticket value to search.
+     * @param productFamilyId The identifier for the product family.
+     * @param productBusinessKeys The business key for the product (part number).
+     * @param orderStatuses The list of order statuses to filter on.
+     * @param placedDate The date range selector object for search.
+     * @param ownerIds The BSP user to use for placed.
      *
      * @return The order list.
      */
-    private List<ProductOrderListEntry> findBaseProductOrderListEntries(@Nullable String jiraTicketKey) {
+    private List<ProductOrderListEntry> findBaseProductOrderListEntries(
+            @Nullable String jiraTicketKey,
+            @Nullable Long productFamilyId,
+            @Nullable List<String> productBusinessKeys,
+            @Nullable List<ProductOrder.OrderStatus> orderStatuses,
+            @Nullable DateRangeSelector placedDate,
+            @Nullable List<Long> ownerIds) {
+
         CriteriaBuilder cb = getCriteriaBuilder();
         CriteriaQuery<ProductOrderListEntry> cq = cb.createQuery(ProductOrderListEntry.class);
 
@@ -153,37 +168,70 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
                         productOrderRoot.get(ProductOrder_.createdBy),
                         productOrderRoot.get(ProductOrder_.placedDate)));
 
+        List<Predicate> listOfAndTerms = new ArrayList<Predicate>();
+
         // Only taking a single JIRA ticket key as I don't want to worry about Splitter-like issues for
         // a varargs array of keys as there is currently no need for that functionality.
         if (jiraTicketKey != null) {
-            cq.where(cb.equal(productOrderRoot.get(ProductOrder_.jiraTicketKey), jiraTicketKey));
+            listOfAndTerms.add(cb.equal(productOrderRoot.get(ProductOrder_.jiraTicketKey), jiraTicketKey));
+        }
+
+        if (productFamilyId != null) {
+            listOfAndTerms.add(cb.equal(productProductFamilyJoin.get(ProductFamily_.productFamilyId), productFamilyId));
+        }
+
+        if (!CollectionUtils.isEmpty(productBusinessKeys)) {
+            listOfAndTerms.add(createOrTerms(cb, productOrderProductJoin.get(Product_.partNumber), productBusinessKeys));
+        }
+
+        if (!CollectionUtils.isEmpty(orderStatuses)) {
+            listOfAndTerms.add(createOrTerms(cb, productOrderRoot.get(ProductOrder_.orderStatus), orderStatuses));
+        }
+
+        // If there is a placed date range and the range has at least a start or end date, then add a date range.
+        if ((placedDate != null) && ((placedDate.getStart() != null) || (placedDate.getEnd() != null))) {
+            if (placedDate.getStart() == null) {
+                listOfAndTerms.add(cb.lessThan(productOrderRoot.get(ProductOrder_.placedDate), placedDate.getEndTime()));
+            } else if (placedDate.getEnd() == null) {
+                listOfAndTerms.add(cb.greaterThan(productOrderRoot.get(ProductOrder_.placedDate), placedDate.getStartTime()));
+            } else {
+                listOfAndTerms.add(
+                    cb.between(productOrderRoot.get(
+                        ProductOrder_.placedDate), placedDate.getStart(), placedDate.getEndTime()));
+            }
+        }
+
+        if (!CollectionUtils.isEmpty(ownerIds)) {
+            listOfAndTerms.add(createOrTerms(cb, productOrderRoot.get(ProductOrder_.createdBy), ownerIds));
+        }
+
+        if (!CollectionUtils.isEmpty(listOfAndTerms)) {
+            cq.where(cb.and(listOfAndTerms.toArray(new Predicate[listOfAndTerms.size()])));
         }
 
         return getEntityManager().createQuery(cq).getResultList();
     }
 
-    /**
-     * Generates reporting object ProductOrderListEntries for efficient Product Order list view.  Merges the
-     * results of the first-pass ledger-unaware query with the second-pass ledger aware query.
-     *
-     * @return The list of order entries.
-     */
-    public List<ProductOrderListEntry> findProductOrderListEntries() {
+    public List<ProductOrderListEntry> findProductOrderListEntries(
+            @Nullable Long productFamilyId,
+            @Nullable List<String> productKeys,
+            @Nullable List<ProductOrder.OrderStatus> orderStatuses,
+            @Nullable DateRangeSelector placedDate,
+            @Nullable List<Long> ownerIds) {
 
-        List<ProductOrderListEntry> productOrderListEntries = findBaseProductOrderListEntries();
+        List<ProductOrderListEntry> productOrderListEntries =
+            findBaseProductOrderListEntries(null, productFamilyId, productKeys, orderStatuses, placedDate, ownerIds);
         fetchUnbilledLedgerEntryCounts(productOrderListEntries);
 
         return productOrderListEntries;
-
     }
-
 
     /**
      * Find the single ProductOrderListEntry corresponding to the specified JIRA ticket key.
      *
      * @param jiraTicketKey JIRA ticket key of non-DRAFT PDO to be fetched.
      *
-     * @return corresponding ProductOrderListEntry.
+     * @return Corresponding ProductOrderListEntry.
      */
     public ProductOrderListEntry findSingle(@Nonnull String jiraTicketKey) {
 

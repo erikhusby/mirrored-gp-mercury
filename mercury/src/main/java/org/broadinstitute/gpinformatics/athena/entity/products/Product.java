@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.entity.products;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.ReplacementItems;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
@@ -219,7 +220,7 @@ public class Product implements Serializable, Comparable<Product> {
         this.primaryPriceItem = primaryPriceItem;
     }
 
-    public Collection<org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem> getReplacementPriceItems(PriceListCache priceListCache) {
+    public Collection<QuotePriceItem> getReplacementPriceItems(PriceListCache priceListCache) {
         try {
             ReplacementItems replacementItemList =
                     priceListCache.findByKeyFields(
@@ -227,7 +228,7 @@ public class Product implements Serializable, Comparable<Product> {
                             primaryPriceItem.getCategory(),
                             primaryPriceItem.getName()).getReplacementItems();
 
-            return replacementItemList.getPriceItems();
+            return replacementItemList.getQuotePriceItems();
         } catch (Throwable t) {
             // Since this is coming from the quote server, we will just show nothing when there are any errors.
             return Collections.emptyList();

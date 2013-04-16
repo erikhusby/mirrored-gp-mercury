@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import com.google.common.collect.ImmutableList;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -42,15 +43,7 @@ import javax.persistence.Transient;
 import java.io.IOException;
 import java.io.Serializable;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
+import java.util.*;
 
 @Entity
 @Audited
@@ -666,9 +659,10 @@ public class ProductOrder implements Serializable {
     /**
      * Call this method to change the 'owner' attribute of a Product Order.  We are currently storing this
      * attribute in the created by column in the database.
+     *
      * @param userId the owner ID
      */
-    public void setCreatedBy(Long userId) {
+    public void setCreatedBy(@Nullable Long userId) {
         createdBy = userId;
     }
 
@@ -1025,6 +1019,25 @@ public class ProductOrder implements Serializable {
         @Override
         public String getDisplayName() {
             return name();
+        }
+
+        /**
+         * Get all status values using the name strings.
+         *
+         * @param statusStrings The desired list of statuses.
+         * @return The statuses that are listed.
+         */
+        public static List<OrderStatus> getFromName(@Nonnull List<String> statusStrings) {
+            if (CollectionUtils.isEmpty(statusStrings)) {
+                return Collections.emptyList();
+            }
+
+            List<OrderStatus> statuses = new ArrayList<OrderStatus>();
+            for (String statusString : statusStrings) {
+                statuses.add(OrderStatus.valueOf(statusString));
+            }
+
+            return statuses;
         }
     }
 

@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.common;
 
+import org.jboss.weld.context.ManagedContext;
 import org.jboss.weld.context.bound.BoundSessionContext;
-import org.jboss.weld.context.ejb.EjbRequestContext;
 
 import javax.enterprise.context.RequestScoped;
 import javax.enterprise.inject.spi.BeanManager;
@@ -47,7 +47,7 @@ public class SessionContextUtility {
             // There seems to be a bug in JBoss AS 7.1.1 that causes Stateful RequestScoped beans not to be destroyed
             // at the end of onMessage.  This leads to a memory leak of org.hibernate.internal.util.collections.IdentityMap.
             // Until this bug is fixed, we manually end the Request scope.
-            EjbRequestContext context = (EjbRequestContext) beanManager.getContext(RequestScoped.class);
+            ManagedContext context = (ManagedContext) beanManager.getContext(RequestScoped.class);
             context.invalidate();
             context.deactivate();
 

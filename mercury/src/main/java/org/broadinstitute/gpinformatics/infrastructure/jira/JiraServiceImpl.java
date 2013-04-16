@@ -401,7 +401,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
         String fieldArgs = StringUtils.join(fieldIds, ",");
         String url = getBaseUrl() + "/issue/" + jiraIssueKey + "?fields=" + fieldArgs;
-        log.info(url);
+        log.debug(url);
         WebResource webResource =
                 getJerseyClient().resource(getBaseUrl() + "/issue/" + jiraIssueKey).queryParam("fields", fieldArgs);
 
@@ -412,7 +412,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
     @Override
     public String getResolution(String jiraIssueKey) throws IOException {
         String url = getBaseUrl() + "/issue/" + jiraIssueKey;
-        log.info(url);
+        log.debug(url);
         WebResource webResource =
                 getJerseyClient().resource(getBaseUrl() + "/issue/" + jiraIssueKey).queryParam("fields", "resolution");
 

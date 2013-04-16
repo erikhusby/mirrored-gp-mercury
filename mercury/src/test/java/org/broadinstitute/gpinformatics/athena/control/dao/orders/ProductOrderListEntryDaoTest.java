@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
@@ -54,7 +55,6 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
 
     private ProductOrder order;
 
-
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void setUp() throws Exception {
         // Skip if no injections, meaning we're not running in container
@@ -71,9 +71,9 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
 
         //noinspection ResultOfMethodCallIgnored
         order.getProduct().getPrimaryPriceItem().hashCode();
-        for (org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem priceItem : order.getProduct().getReplacementPriceItems(priceListCache)) {
+        for (QuotePriceItem quotePriceItem : order.getProduct().getReplacementPriceItems(priceListCache)) {
             //noinspection ResultOfMethodCallIgnored
-            priceItem.hashCode();
+            quotePriceItem.hashCode();
         }
         productOrderDao.persist(order);
 
@@ -81,7 +81,6 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
         productOrderDao.clear();
 
     }
-
 
     @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void tearDown() throws Exception {
@@ -92,7 +91,6 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
 
         utx.rollback();
     }
-
 
     /**
      * Sanity check: should not see any PDOs represented more than once.
@@ -129,9 +127,9 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
         }
     }
 
-
     private ProductOrderListEntry sanityCheckAndGetTestOrderListEntry() {
-        List<ProductOrderListEntry> productOrderListEntries = productOrderListEntryDao.findProductOrderListEntries();
+        List<ProductOrderListEntry> productOrderListEntries =
+                productOrderListEntryDao.findProductOrderListEntries(null, null, null, null, null);
 
         Assert.assertNotNull(productOrderListEntries);
 
@@ -151,8 +149,6 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
         return productOrderListEntries.iterator().next();
     }
 
-
-
     public void testNoLedgerEntries() {
 
         ProductOrderListEntry productOrderListEntry = sanityCheckAndGetTestOrderListEntry();
@@ -160,8 +156,6 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
         Assert.assertEquals(productOrderListEntry.getUnbilledLedgerEntryCount(), Long.valueOf(0L));
         Assert.assertNull(productOrderListEntry.getBillingSessionBusinessKey());
     }
-
-
 
     public void testOneLedgerEntryNoBillingSession() {
 
@@ -179,7 +173,6 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
         Assert.assertNull(productOrderListEntry.getBillingSessionBusinessKey());
 
     }
-
 
     public void testOneLedgerEntryWithBillingSession() {
         LedgerEntry ledgerEntry =

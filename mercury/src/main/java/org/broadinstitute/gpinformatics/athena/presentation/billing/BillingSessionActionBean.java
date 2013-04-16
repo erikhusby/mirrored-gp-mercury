@@ -17,7 +17,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
 import org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
@@ -244,10 +244,10 @@ public class BillingSessionActionBean extends CoreActionBean {
 
     private final Map<String, String> priceItemNameMap = new HashMap<String, String>();
     public Map<String, String> getQuotePriceItemNameMap() {
-        Collection<PriceItem> priceItems = priceListCache.getPriceItems ();
-        if (priceItemNameMap.isEmpty() && !priceItems.isEmpty()) {
-            for (PriceItem priceItem : priceListCache.getPriceItems()) {
-                priceItemNameMap.put(priceItem.getId(), priceItem.getName());
+        Collection<QuotePriceItem> quotePriceItems = priceListCache.getQuotePriceItems();
+        if (priceItemNameMap.isEmpty() && !quotePriceItems.isEmpty()) {
+            for (QuotePriceItem quotePriceItem : priceListCache.getQuotePriceItems()) {
+                priceItemNameMap.put(quotePriceItem.getId(), quotePriceItem.getName());
             }
         }
 

@@ -19,6 +19,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRout
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -151,6 +152,7 @@ public class SolexaRunRoutingTest {
         });
 
         mockBucketDao = EasyMock.createNiceMock(BucketDao.class);
+        ReworkEjb reworkEjb = EasyMock.createNiceMock(ReworkEjb.class);
         bucketBeanEJB = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB);
         EasyMock.replay(mockBucketDao, tubeDao, mockJira, labBatchDAO);
     }

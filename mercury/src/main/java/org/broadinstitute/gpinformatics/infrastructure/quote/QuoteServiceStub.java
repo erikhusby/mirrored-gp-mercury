@@ -43,7 +43,7 @@ public class QuoteServiceStub implements QuoteService {
 
 
     @Override
-    public String registerNewWork(Quote quote, PriceItem priceItem, PriceItem itemIsReplacing, Date reportedCompletionDate,
+    public String registerNewWork(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing, Date reportedCompletionDate,
                                   double numWorkUnits, String callbackUrl, String callbackParameterName, String callbackParameterValue) {
         return Integer.toString(workItemId++);
     }

@@ -49,7 +49,6 @@
                 defaultNullValue="0" />
     </changeSet>
 
-
     <changeSet id="GPLIM-65-3" author="hrafal">
         <preConditions onFail="MARK_RAN">
             <not>
@@ -2843,14 +2842,14 @@
     </changeSet>
 
     <changeSet id="GPLIM-1180.1" author="hrafal">
-        <preConditions onFail="WARN">
+        <preConditions onFail="MARK_RAN">
             <tableExists schemaName="athena" tableName="product_opt_price_items"  />
         </preConditions>
         <renameTable schemaName="athena" oldTableName="product_opt_price_items" newTableName="old_opt_price_items"/>
     </changeSet>
 
     <changeSet id="GPLIM-1180.2" author="hrafal">
-        <preConditions onFail="WARN">
+        <preConditions onFail="MARK_RAN">
             <tableExists schemaName="athena" tableName="product_opt_price_items_aud"  />
         </preConditions>
         <dropTable schemaName="athena" tableName="product_opt_price_items_aud"/>
@@ -2899,6 +2898,7 @@
             <column name="billing_session_type" type="varchar2(50)"/>
         </addColumn>
     </changeSet>
+
     <changeSet id="GPLIM-1179-1" author="pshapiro">
         <sql>
             ALTER TABLE athena.product_order
@@ -2911,4 +2911,116 @@
         </sql>
     </changeSet>
 
+    <changeSet id="GPLIM-1183-3" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="PREF_PREFERENCE" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createTable tableName="PREF_PREFERENCE" schemaName="athena">
+            <column name="PREFERENCE_ID" type="int">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="USER_ID" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="PREFERENCE_TYPE" type="VARCHAR2(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="OBJECT1_ID" type="int"/>
+            <column name="OBJECT2_ID" type="int"/>
+            <column name="DATA" type="clob">
+                <constraints nullable="false"/>
+            </column>
+            <column name="CREATED_DATE" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="CREATED_BY" type="DECIMAL(15,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="MODIFIED_DATE" type="TIMESTAMP"/>
+            <column name="MODIFIED_BY" type="DECIMAL(15,0)"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-65-3b" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists tableName="PREF_PREFERENCE" indexName="ix_pref_user" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createIndex tableName="PREF_PREFERENCE" indexName="ix_pref_user" schemaName="athena">
+            <column name="USER_ID"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-65-3c" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists tableName="PREF_PREFERENCE" indexName="ix_pref_type" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createIndex tableName="PREF_PREFERENCE" indexName="ix_pref_type" schemaName="athena">
+            <column name="PREFERENCE_TYPE"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-1183-3d" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <sequenceExists sequenceName="SEQ_PREFERENCE" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createSequence sequenceName="SEQ_PREFERENCE" schemaName="athena" startValue="1" incrementBy="50"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-65-3e" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists tableName="PREF_PREFERENCE" indexName="ix_pref_object1" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createIndex tableName="PREF_PREFERENCE" indexName="ix_pref_object1" schemaName="athena">
+            <column name="OBJECT1_ID"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-65-3f" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists tableName="PREF_PREFERENCE" indexName="ix_pref_object2" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createIndex tableName="PREF_PREFERENCE" indexName="ix_pref_object2" schemaName="athena">
+            <column name="OBJECT2_ID"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-1183-4" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="PREF_PREFERENCE_AUD" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createTable tableName="PREF_PREFERENCE_AUD" schemaName="athena">
+            <column name="PREFERENCE_ID" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rev" type="int">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="revtype" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="USER_ID" type="int"/>
+            <column name="PREFERENCE_TYPE" type="int"/>
+            <column name="OBJECT1_ID" type="int"/>
+            <column name="OBJECT2_ID" type="int"/>
+            <column name="DATA" type="CLOB"/>
+            <column name="CREATED_DATE" type="TIMESTAMP"/>
+            <column name="CREATED_BY" type="DECIMAL(15,0)"/>
+            <column name="MODIFIED_DATE" type="TIMESTAMP"/>
+            <column name="MODIFIED_BY" type="DECIMAL(15,0)"/>
+        </createTable>
+    </changeSet>
 </databaseChangeLog>

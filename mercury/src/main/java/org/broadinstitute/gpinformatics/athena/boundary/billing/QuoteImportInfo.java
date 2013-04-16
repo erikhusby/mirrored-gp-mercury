@@ -4,8 +4,14 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This is the information needed to import a quantity of some price item on a quote
@@ -153,10 +159,10 @@ public class QuoteImportInfo {
             return LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM == ledger.getPriceItemType();
         } else {
             // No quote, so calculate what it would be given the state of things now.
-            Collection<org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem> quotePriceItems =
+            Collection<QuotePriceItem> quotePriceItems =
                 ledger.getProductOrderSample().getProductOrder().getProduct().getReplacementPriceItems(priceListCache);
 
-            for (org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem quotePriceItem : quotePriceItems) {
+            for (QuotePriceItem quotePriceItem : quotePriceItems) {
                 if (ledger.getPriceItem().getName().equals(quotePriceItem.getName())) {
                     return true;
                 }

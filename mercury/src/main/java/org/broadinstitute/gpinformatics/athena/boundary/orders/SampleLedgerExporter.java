@@ -13,10 +13,18 @@ import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * This class creates a spreadsheet version of a product order's sample billing status, also called the sample
@@ -106,11 +114,11 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         allPriceItems.add(product.getPrimaryPriceItem());
 
         // Get the replacement items from the quote cache.
-        Collection<org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem> quotePriceItems =
+        Collection<QuotePriceItem> quotePriceItems =
                 product.getReplacementPriceItems(priceItemListCache);
 
         // Now add the replacement items as mercury price item objects.
-        for (org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem quotePriceItem : quotePriceItems) {
+        for (QuotePriceItem quotePriceItem : quotePriceItems) {
             // Find the price item object.
             PriceItem priceItem =
                 priceItemDao.find(
@@ -305,7 +313,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
     }
 
     private void writeAllBillAndNewHeaders(
-        Collection<org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem> priceItems, Set<Product> addOns) {
+        Collection<QuotePriceItem> quotePriceItems, Set<Product> addOns) {
 
         // The new row.
         getWriter().nextRow();
@@ -315,7 +323,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
         // primary price item for main product.
         writeBillAndNewHeaders();
-        for (org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem priceItem : priceItems) {
+        for (QuotePriceItem quotePriceItem : quotePriceItems) {
             writeBillAndNewHeaders();
         }
 
@@ -323,7 +331,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             // primary price item for this add-on.
             writeBillAndNewHeaders();
 
-            for (org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem priceItem : addOn.getReplacementPriceItems(priceListCache)) {
+            for (QuotePriceItem quotePriceItem : addOn.getReplacementPriceItems(priceListCache)) {
                 writeBillAndNewHeaders();
             }
         }

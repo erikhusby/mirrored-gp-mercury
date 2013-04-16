@@ -4,8 +4,6 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BucketViewActionBean"/>
-<%--<stripes:useActionBean var="batchActionBean"--%>
-<%--beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.CreateBatchActionBean"/>--%>
 
 <stripes:layout-render name="/layout.jsp" pageTitle="Bucket View" sectionTitle="Select Bucket">
 <stripes:layout-component name="extraHead">
@@ -69,7 +67,6 @@
                 checkboxClass:'rework-checkbox'});
 
             $j("#dueDate").datepicker();
-            $j("#bucketTabs").tabs();
         });
 
         function showJiraInfo() {
@@ -153,13 +150,8 @@
         </tr>
     </table>
 </c:if>
-<div id="bucketTabs" class="simpletab">
-    <ul class="simpletab">
-        <li class="simpletab"><a href="#tabs-bucket">Bucket Entries</a></li>
-        <li class="simpletab"><a href="#tabs-rework">Rework Entries</a></li>
-    </ul>
-    <div id="tabs-bucket">
-        <table id="bucketEntryView" class="table simple">
+        <div class="borderHeader"> Samples</div><br/>
+<table id="bucketEntryView" class="table simple">
             <thead>
             <tr>
                 <th width="10">
@@ -236,14 +228,13 @@
             </c:forEach>
             </tbody>
         </table>
-    </div>
-    <div id="tabs-rework">
+
+        <div class="borderHeader">Samples for Rework</div><br/>
         <table id="reworkEntryView" class="table simple">
             <thead>
             <tr>
                 <th width="10">
-                    <input type="checkbox" class="rework-checkAll"/><span id="reworkCount"
-                                                                          class="rework-checkedCount"></span>
+                    <input type="checkbox" class="rework-checkAll"/>
                 </th>
                 <th width="60">Vessel Name</th>
                 <th width="50">Sample Name</th>
@@ -262,41 +253,41 @@
                 <tr>
                     <td>
                         <stripes:checkbox class="bucket-checkbox" name="selectedReworks"
-                                          value="${entry.labVesselComment.labVessel.label}"/>
+                                          value="${entry.value.label}"/>
                     </td>
                     <td>
                         <c:choose> <c:when test="${!readOnly}">
-                            <a href="${ctxpath}/search/all.action?search=&searchKey=${entry.labVesselComment.labVessel.label}">
-                                    ${entry.labVesselComment.labVessel.label}
+                            <a href="${ctxpath}/search/all.action?search=&searchKey=${entry.key}">
+                                    ${entry.key}
                             </a>
-                        </c:when><c:otherwise>${entry.labVesselComment.labVessel.label}</c:otherwise>
+                        </c:when><c:otherwise>${entry.key}</c:otherwise>
                         </c:choose></td>
                     <td>
-                        <c:set var="mercurySample" value="${entry.rapSheet.sample}"/>
+                        <c:forEach items="${actionBean.getSampleNames(entry.value)}" var="sampleName" varStatus="loopstatus">
                             <c:choose><c:when test="${!readOnly}">
-                                <a href="${ctxpath}/search/all.action?search=&searchKey=${mercurySample.sampleKey}">
-                                        ${mercurySample.sampleKey}
-                                </a>
-                            </c:when><c:otherwise>${mercurySample.sampleKey}</c:otherwise></c:choose>
+                                <a href="${ctxpath}/search/all.action?search=&searchKey=${sampleName}"> ${sampleName} </a>
+                            </c:when><c:otherwise>${sampleName}</c:otherwise></c:choose>
+                            <c:if test="${!loopstatus.last}">, </c:if>
+                        </c:forEach>
                     </td>
                     <td>
                         <c:choose>
                             <c:when test="${!readOnly}"><a
-                                    href="${ctxpath}/search/all.action?search=&searchKey=${actionBean.getSinglePDOBusinessKey(entry)}">
-                                    ${actionBean.getSinglePDOBusinessKey(entry)}
+                                    href="${ctxpath}/search/all.action?search=&searchKey=${actionBean.getSinglePDOBusinessKey(entry.value)}">
+                                    ${actionBean.getSinglePDOBusinessKey(entry.value)}
                             </a>
                             </c:when>
-                            <c:otherwise>${actionBean.getSinglePDOBusinessKey(entry)}</c:otherwise>
+                            <c:otherwise>${actionBean.getSinglePDOBusinessKey(entry.value)}</c:otherwise>
                         </c:choose>
                     </td>
                     <td>
-                        <div class="tdfield">${actionBean.getPDODetails(actionBean.getSinglePDOBusinessKey(entry)).title}</div>
+                        <div class="tdfield">${actionBean.getPDODetails(actionBean.getSinglePDOBusinessKey(entry.value)).title}</div>
                     </td>
                     <td>
-                            ${actionBean.getUserFullName(actionBean.getPDODetails(actionBean.getSinglePDOBusinessKey(entry)).createdBy)}
+                            ${actionBean.getUserFullName(actionBean.getPDODetails(actionBean.getSinglePDOBusinessKey(entry.value)).createdBy)}
                     </td>
                     <td>
-                        <c:forEach items="${entry.labVesselComment.labVessel.nearestWorkflowLabBatches}" var="batch"
+                        <c:forEach items="${entry.value.nearestWorkflowLabBatches}" var="batch"
                                    varStatus="stat">
                             <c:choose><c:when test="${!readOnly}"> <a
                                     href="${ctxpath}/search/all.action?search=&searchKey=${batch.businessKey}">
@@ -308,23 +299,21 @@
 
                     </td>
                     <td>
-                            ${entry.reworkReason.value}
+                            ${actionBean.getReworkReason(entry.value)}
                     </td>
                     <td>
-                        ${entry.labVesselComment.comment}
+                        ${actionBean.getReworkComment(entry.value)}
                     </td>
                     <td>
-                            ${entry.labVesselComment.labEvent.eventOperator}
+                            ${actionBean.getUserFullName(actionBean.getReworkOperator(entry.value))}
                     </td>
                     <td>
-                            ${entry.labVesselComment.logDate}
+                        <fmt:formatDate value="${actionBean.getReworkLogDate(entry.value)}" pattern="MM/dd/yyyy HH:mm:ss"/>
                     </td>
                 </tr>
             </c:forEach>
             </tbody>
         </table>
-    </div>
-</div>
 </stripes:form>
 </stripes:layout-component>
 </stripes:layout-render>

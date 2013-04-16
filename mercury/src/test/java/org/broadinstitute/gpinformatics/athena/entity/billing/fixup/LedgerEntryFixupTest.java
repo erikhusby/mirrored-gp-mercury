@@ -5,7 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
-import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -151,10 +151,10 @@ public class LedgerEntryFixupTest extends Arquillian {
 
     private boolean isEntryAReplacementItem(LedgerEntry ledger) {
 
-        Collection<PriceItem> quotePriceItems =
+        Collection<QuotePriceItem> quotePriceItems =
                 ledger.getProductOrderSample().getProductOrder().getProduct().getReplacementPriceItems(priceListCache);
 
-        for (PriceItem quotePriceItem : quotePriceItems) {
+        for (QuotePriceItem quotePriceItem : quotePriceItems) {
             if (quotePriceItem.getName().equals(ledger.getPriceItem().getName())) {
                 return true;
             }

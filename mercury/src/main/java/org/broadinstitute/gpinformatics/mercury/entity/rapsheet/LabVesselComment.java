@@ -18,6 +18,8 @@ import org.hibernate.envers.Audited;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
@@ -45,7 +47,7 @@ public class LabVesselComment<T extends RapSheetEntry> {
     @NotNull
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, targetEntity = RapSheetEntry.class,
             mappedBy = "labVesselComment")
-    private List<T> rapSheetEntries;
+    private List<T> rapSheetEntries=new ArrayList<T>();
 
     @NotNull
     @Temporal(TemporalType.DATE)
@@ -54,12 +56,10 @@ public class LabVesselComment<T extends RapSheetEntry> {
     public LabVesselComment() {
     }
 
-    public LabVesselComment(LabEvent labEvent, LabVessel labVessel, String comment,
-                            List<T> rapSheetEntries) {
+    public LabVesselComment(LabEvent labEvent, LabVessel labVessel, String comment) {
         this.labEvent = labEvent;
         this.comment = comment;
         this.labVessel = labVessel;
-        this.rapSheetEntries = rapSheetEntries;
     }
 
     @PrePersist
@@ -106,4 +106,17 @@ public class LabVesselComment<T extends RapSheetEntry> {
     public void setRapSheetEntries(List<T> rapSheetEntries) {
         this.rapSheetEntries = rapSheetEntries;
     }
+
+    /**
+     * This class is here primarily so RapSheet can return the most recent RapSheetEntry/ReworkEntry.
+     * Normally we implement comparators as static methods, but Hibernates @Sort expects a class.
+     */
+    public static final class byLogDate implements Comparator<LabVesselComment> {
+        @Override
+        public int compare(LabVesselComment first, LabVesselComment second) {
+            int result;
+            result = first.getLogDate().compareTo(second.getLogDate());
+            return result;
+        }
+    };
 }

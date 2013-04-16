@@ -76,7 +76,7 @@ public class PMBQuoteServiceTest extends Arquillian {
         try {
             PriceList priceItems = pmbQuoteService.getAllPriceItems();
             Assert.assertNotNull(priceItems);
-            Assert.assertTrue(priceItems.getPriceItems().size() > 10);
+            Assert.assertTrue(priceItems.getQuotePriceItems().size() > 10);
         }
         catch (Exception e) {
             Assert.fail(e.toString());
