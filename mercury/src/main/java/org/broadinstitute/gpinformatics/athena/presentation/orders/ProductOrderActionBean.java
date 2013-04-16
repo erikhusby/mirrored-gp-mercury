@@ -15,6 +15,8 @@ import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.poi.util.IOUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
@@ -92,6 +94,8 @@ import java.util.Set;
  */
 @UrlBinding(ProductOrderActionBean.ACTIONBEAN_URL_BINDING)
 public class ProductOrderActionBean extends CoreActionBean {
+    private static Log logger = LogFactory.getLog(ProductOrderActionBean.class);
+
     public static final String ACTIONBEAN_URL_BINDING = "/orders/order.action";
     public static final String PRODUCT_ORDER_PARAMETER = "productOrder";
 
@@ -439,14 +443,28 @@ public class ProductOrderActionBean extends CoreActionBean {
         productFamilyId = null;
 
         if (CollectionUtils.isEmpty(preferences)) {
-            selectedStatuses = new ArrayList<ProductOrder.OrderStatus> ();
-            selectedStatuses.add(ProductOrder.OrderStatus.Draft);
-            selectedStatuses.add(ProductOrder.OrderStatus.Submitted);
+            populateSearchDefaults();
         } else {
-            // Since we have a preference and there is only one, grab it and set up all the search terms.
-            Preference preference = preferences.get(0);
-            populateSearchFromPreference(preference);
+            try {
+                // Since we have a preference and there is only one, grab it and set up all the search terms.
+                Preference preference = preferences.get(0);
+                populateSearchFromPreference(preference);
+            } catch (Throwable t) {
+                // If there are any errors with this preference, just use defaults and populate a message that
+                // the defaults were ignored for some reason.
+                populateSearchDefaults();
+                logger.error("Could not read user preference on search for product orders.");
+                addMessage("Could not read search preference, using default.");
+            }
         }
+    }
+
+    private void populateSearchDefaults() {
+        selectedStatuses = new ArrayList<ProductOrder.OrderStatus>();
+        selectedStatuses.add(ProductOrder.OrderStatus.Draft);
+        selectedStatuses.add(ProductOrder.OrderStatus.Submitted);
+
+        setDateRange(new DateRangeSelector(DateRangeSelector.THIS_MONTH));
     }
 
     /**
