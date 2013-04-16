@@ -5,23 +5,38 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession_;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry_;
-import org.broadinstitute.gpinformatics.athena.entity.orders.*;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily_;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject_;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.CriteriaInClauseCreator;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.JPASplitter;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
-import javax.persistence.criteria.*;
+import javax.persistence.Query;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Join;
+import javax.persistence.criteria.JoinType;
+import javax.persistence.criteria.ListJoin;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
+import javax.persistence.criteria.SetJoin;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,109 +46,15 @@ import java.util.Map;
 public class ProductOrderListEntryDao extends GenericDao implements Serializable {
 
     /**
+     * Universal first pass, ledger-unaware querying method used by both PDO view and PDO list queries.
      *
-     * @param productOrderListEntries The entries to fill with unbilled ledger entry counts.
-     */
-    private void fetchUnbilledLedgerEntryCounts(List<ProductOrderListEntry> productOrderListEntries) {
-        fetchUnbilledLedgerEntryCounts(productOrderListEntries, null);
-    }
-
-    /**
-     * Second-pass, ledger aware query that merges its results into the first-pass objects passed as an argument.
-     *
-     * Fetch the count of unbilled ledger entries for the
-     * {@link org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder}s referenced by the
-     * ProductOrderListEntry DTOs and set those counts into the DTOs.
-     *
-     * @param productOrderListEntries The entries to fill with unbilled ledger entry counts.
-     */
-    private void fetchUnbilledLedgerEntryCounts(List<ProductOrderListEntry> productOrderListEntries, @Nullable String jiraTicketKey) {
-
-        if (CollectionUtils.isEmpty(productOrderListEntries)) {
-            return;
-        }
-
-        // Build query to pick out eligible DTOs.  This only returns values for PDOs with ledger entries in open
-        // billing sessions or with no associated billing session.
-        CriteriaBuilder cb = getCriteriaBuilder();
-        CriteriaQuery<ProductOrderListEntry> cq = cb.createQuery(ProductOrderListEntry.class);
-
-        cq.distinct(true);
-
-        Root<ProductOrder> productOrderRoot = cq.from(ProductOrder.class);
-
-        // Left join the samples, inner join the samples to the ledger items.
-        ListJoin<ProductOrder, ProductOrderSample> productOrderProductOrderSampleListJoin =
-                productOrderRoot.join(ProductOrder_.samples, JoinType.LEFT);
-
-        SetJoin<ProductOrderSample, LedgerEntry> productOrderSampleLedgerEntrySetJoin =
-                productOrderProductOrderSampleListJoin.join(ProductOrderSample_.ledgerItems);
-
-        // Even if there are ledger entries there may not be a billing session so left join.
-        Join<LedgerEntry, BillingSession> ledgerEntryBillingSessionJoin =
-                productOrderSampleLedgerEntrySetJoin.join(LedgerEntry_.billingSession, JoinType.LEFT);
-
-        cq.select(
-            cb.construct(ProductOrderListEntry.class,
-                productOrderRoot.get(ProductOrder_.productOrderId),
-                productOrderRoot.get(ProductOrder_.jiraTicketKey),
-                ledgerEntryBillingSessionJoin.get(BillingSession_.billingSessionId),
-                cb.count(productOrderRoot)));
-
-        List<Predicate> predicates = new ArrayList<Predicate>();
-        predicates.add(cb.isNull(ledgerEntryBillingSessionJoin.get(BillingSession_.billedDate)));
-
-        if (jiraTicketKey != null) {
-            predicates.add(cb.equal(productOrderRoot.get(ProductOrder_.jiraTicketKey), jiraTicketKey));
-        }
-
-        cq.where(predicates.toArray(new Predicate[predicates.size()]));
-
-        cq.groupBy(
-            productOrderRoot.get(ProductOrder_.productOrderId),
-            productOrderRoot.get(ProductOrder_.jiraTicketKey),
-            ledgerEntryBillingSessionJoin.get(BillingSession_.billingSessionId));
-        List<ProductOrderListEntry> resultList = getEntityManager().createQuery(cq).getResultList();
-
-        // Build map of input productOrderListEntries jira key to DTO.
-        Map<String, ProductOrderListEntry> jiraKeyToProductOrderListEntryMap = new HashMap<String, ProductOrderListEntry>();
-        for (ProductOrderListEntry productOrderListEntry : productOrderListEntries) {
-            jiraKeyToProductOrderListEntryMap.put(productOrderListEntry.getJiraTicketKey(), productOrderListEntry);
-        }
-
-        // Merge these counts into the objects from the first-pass query.
-        for (ProductOrderListEntry result : resultList) {
-            if ((result.getJiraTicketKey() != null) &&
-                (jiraKeyToProductOrderListEntryMap.containsKey(result.getJiraTicketKey()))) {
-
-                ProductOrderListEntry productOrderListEntry = jiraKeyToProductOrderListEntryMap.get(result.getJiraTicketKey());
-                productOrderListEntry.setBillingSessionId(result.getBillingSessionId());
-                productOrderListEntry.setUnbilledLedgerEntryCount(result.getUnbilledLedgerEntryCount());
-            }
-        }
-
-    }
-
-    /**
-     * Call the worker method with a null parameter indicating all ProductOrderListEntries should be fetched.
-     *
-     * @param jiraTicketKey The jira ticket.
-     *
-     * @return List of all ProductOrderListEntries.
-     */
-    private List<ProductOrderListEntry> findBaseProductOrderListEntries(@Nullable String jiraTicketKey) {
-        return findBaseProductOrderListEntries(jiraTicketKey, null, null, null, null, null);
-    }
-
-    /**
-     * First pass, ledger-unaware querying.
-     *
-     * @param jiraTicketKey Optional, specific jira ticket value to search.
-     * @param productFamilyId The identifier for the product family.
+     * @param jiraTicketKey       Optional, specific JIRA ticket value to search, this is used to support billing data
+     *                            in PDO view.
+     * @param productFamilyId     The identifier for the product family.
      * @param productBusinessKeys The business key for the product (part number).
-     * @param orderStatuses The list of order statuses to filter on.
-     * @param placedDate The date range selector object for search.
-     * @param ownerIds The BSP user to use for placed.
+     * @param orderStatuses       The list of order statuses to filter on.
+     * @param placedDate          The date range selector object for search.
+     * @param ownerIds            The BSP user to use for placed.
      *
      * @return The order list.
      */
@@ -152,9 +73,12 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
 
         // These joins pick out attributes that are selected into the report object. DRAFTS can have any of these be null
         // so left joins are needed.
-        Join<ProductOrder, Product> productOrderProductJoin = productOrderRoot.join(ProductOrder_.product, JoinType.LEFT);
-        Join<Product, ProductFamily> productProductFamilyJoin = productOrderProductJoin.join(Product_.productFamily, JoinType.LEFT);
-        Join<ProductOrder, ResearchProject> productOrderResearchProjectJoin = productOrderRoot.join(ProductOrder_.researchProject, JoinType.LEFT);
+        Join<ProductOrder, Product> productOrderProductJoin =
+                productOrderRoot.join(ProductOrder_.product, JoinType.LEFT);
+        Join<Product, ProductFamily> productProductFamilyJoin =
+                productOrderProductJoin.join(Product_.productFamily, JoinType.LEFT);
+        Join<ProductOrder, ResearchProject> productOrderResearchProjectJoin =
+                productOrderRoot.join(ProductOrder_.researchProject, JoinType.LEFT);
 
         cq.select(
                 cb.construct(ProductOrderListEntry.class,
@@ -170,8 +94,7 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
 
         List<Predicate> listOfAndTerms = new ArrayList<Predicate>();
 
-        // Only taking a single JIRA ticket key as I don't want to worry about Splitter-like issues for
-        // a varargs array of keys as there is currently no need for that functionality.
+        // This is to support the PDO view use case, fetching the "Can Bill?" and "Billing Session" data.
         if (jiraTicketKey != null) {
             listOfAndTerms.add(cb.equal(productOrderRoot.get(ProductOrder_.jiraTicketKey), jiraTicketKey));
         }
@@ -181,7 +104,8 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
         }
 
         if (!CollectionUtils.isEmpty(productBusinessKeys)) {
-            listOfAndTerms.add(createOrTerms(cb, productOrderProductJoin.get(Product_.partNumber), productBusinessKeys));
+            listOfAndTerms
+                    .add(createOrTerms(cb, productOrderProductJoin.get(Product_.partNumber), productBusinessKeys));
         }
 
         if (!CollectionUtils.isEmpty(orderStatuses)) {
@@ -191,13 +115,15 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
         // If there is a placed date range and the range has at least a start or end date, then add a date range.
         if ((placedDate != null) && ((placedDate.getStart() != null) || (placedDate.getEnd() != null))) {
             if (placedDate.getStart() == null) {
-                listOfAndTerms.add(cb.lessThan(productOrderRoot.get(ProductOrder_.placedDate), placedDate.getEndTime()));
+                listOfAndTerms
+                        .add(cb.lessThan(productOrderRoot.get(ProductOrder_.placedDate), placedDate.getEndTime()));
             } else if (placedDate.getEnd() == null) {
-                listOfAndTerms.add(cb.greaterThan(productOrderRoot.get(ProductOrder_.placedDate), placedDate.getStartTime()));
+                listOfAndTerms
+                        .add(cb.greaterThan(productOrderRoot.get(ProductOrder_.placedDate), placedDate.getStartTime()));
             } else {
                 listOfAndTerms.add(
-                    cb.between(productOrderRoot.get(
-                        ProductOrder_.placedDate), placedDate.getStart(), placedDate.getEndTime()));
+                        cb.between(productOrderRoot.get(
+                                ProductOrder_.placedDate), placedDate.getStart(), placedDate.getEndTime()));
             }
         }
 
@@ -206,12 +132,108 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
         }
 
         if (!CollectionUtils.isEmpty(listOfAndTerms)) {
-            cq.where(cb.and(listOfAndTerms.toArray(new Predicate[listOfAndTerms.size()])));
+            cq.where(listOfAndTerms.toArray(new Predicate[listOfAndTerms.size()]));
         }
 
         return getEntityManager().createQuery(cq).getResultList();
     }
 
+
+    /**
+     * Second-pass, ledger aware query that merges its results into the first-pass objects passed as an argument.
+     * <p/>
+     * Fetch the count of unbilled ledger entries for the
+     * {@link org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder}s referenced by the
+     * ProductOrderListEntry DTOs and set those counts into the DTOs.
+     *
+     * @param productOrderListEntries The entries to fill with unbilled ledger entry counts.
+     */
+    private void fetchUnbilledLedgerEntryCounts(List<ProductOrderListEntry> productOrderListEntries) {
+
+        if (CollectionUtils.isEmpty(productOrderListEntries)) {
+            return;
+        }
+
+        // Build query to pick out eligible DTOs.  This only returns values for PDOs with ledger entries in open
+        // billing sessions or with no associated billing session.
+        final CriteriaBuilder cb = getCriteriaBuilder();
+        final CriteriaQuery<ProductOrderListEntry> cq = cb.createQuery(ProductOrderListEntry.class);
+
+        cq.distinct(true);
+
+        final Root<ProductOrder> productOrderRoot = cq.from(ProductOrder.class);
+
+        // Left join the samples, inner join the samples to the ledger items.
+        ListJoin<ProductOrder, ProductOrderSample> productOrderProductOrderSampleListJoin =
+                productOrderRoot.join(ProductOrder_.samples, JoinType.LEFT);
+
+        SetJoin<ProductOrderSample, LedgerEntry> productOrderSampleLedgerEntrySetJoin =
+                productOrderProductOrderSampleListJoin.join(ProductOrderSample_.ledgerItems);
+
+        // Even if there are ledger entries there may not be a billing session so left join.
+        final Join<LedgerEntry, BillingSession> ledgerEntryBillingSessionJoin =
+                productOrderSampleLedgerEntrySetJoin.join(LedgerEntry_.billingSession, JoinType.LEFT);
+
+        cq.select(
+                cb.construct(ProductOrderListEntry.class,
+                        productOrderRoot.get(ProductOrder_.productOrderId),
+                        productOrderRoot.get(ProductOrder_.jiraTicketKey),
+                        ledgerEntryBillingSessionJoin.get(BillingSession_.billingSessionId),
+                        cb.count(productOrderRoot)));
+
+        cq.groupBy(
+                productOrderRoot.get(ProductOrder_.productOrderId),
+                productOrderRoot.get(ProductOrder_.jiraTicketKey),
+                ledgerEntryBillingSessionJoin.get(BillingSession_.billingSessionId));
+
+
+        List<String> jiraTicketKeys = new ArrayList<String>();
+        for (ProductOrderListEntry productOrderListEntry : productOrderListEntries) {
+            if (productOrderListEntry.getJiraTicketKey() != null) {
+                jiraTicketKeys.add(productOrderListEntry.getJiraTicketKey());
+            }
+        }
+
+        // Only query for the JIRA ticket keys of interest, using Splitter.
+        List<ProductOrderListEntry> resultList = JPASplitter.runCriteriaQuery(
+                jiraTicketKeys,
+                new CriteriaInClauseCreator<String>() {
+                    @Override
+                    public Query createCriteriaInQuery(Collection<String> parameterList) {
+                        CriteriaQuery<ProductOrderListEntry> query = cq.where(
+                                cb.isNull(ledgerEntryBillingSessionJoin.get(BillingSession_.billedDate)),
+                                productOrderRoot.get(ProductOrder_.jiraTicketKey).in(parameterList));
+
+                        return getEntityManager().createQuery(query);
+                    }
+                }
+        );
+
+        // Build map of input productOrderListEntries jira key to DTO.
+        Map<String, ProductOrderListEntry> jiraKeyToProductOrderListEntryMap =
+                new HashMap<String, ProductOrderListEntry>();
+        for (ProductOrderListEntry productOrderListEntry : productOrderListEntries) {
+            jiraKeyToProductOrderListEntryMap.put(productOrderListEntry.getJiraTicketKey(), productOrderListEntry);
+        }
+
+        // Merge these counts into the objects from the first-pass query.
+        for (ProductOrderListEntry result : resultList) {
+            if ((result.getJiraTicketKey() != null) &&
+                (jiraKeyToProductOrderListEntryMap.containsKey(result.getJiraTicketKey()))) {
+
+                ProductOrderListEntry productOrderListEntry =
+                        jiraKeyToProductOrderListEntryMap.get(result.getJiraTicketKey());
+                productOrderListEntry.setBillingSessionId(result.getBillingSessionId());
+                productOrderListEntry.setUnbilledLedgerEntryCount(result.getUnbilledLedgerEntryCount());
+            }
+        }
+    }
+
+
+    /**
+     * Find the ProductOrderListEntries for the PDO list page, honoring any optionally supplied server-side filtering
+     * criteria.
+     */
     public List<ProductOrderListEntry> findProductOrderListEntries(
             @Nullable Long productFamilyId,
             @Nullable List<String> productKeys,
@@ -220,14 +242,15 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
             @Nullable List<Long> ownerIds) {
 
         List<ProductOrderListEntry> productOrderListEntries =
-            findBaseProductOrderListEntries(null, productFamilyId, productKeys, orderStatuses, placedDate, ownerIds);
+                findBaseProductOrderListEntries(null, productFamilyId, productKeys, orderStatuses, placedDate,
+                        ownerIds);
         fetchUnbilledLedgerEntryCounts(productOrderListEntries);
 
         return productOrderListEntries;
     }
 
     /**
-     * Find the single ProductOrderListEntry corresponding to the specified JIRA ticket key.
+     * Find the single ProductOrderListEntry corresponding to the specified JIRA ticket key for the PDO view page.
      *
      * @param jiraTicketKey JIRA ticket key of non-DRAFT PDO to be fetched.
      *
@@ -235,7 +258,8 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
      */
     public ProductOrderListEntry findSingle(@Nonnull String jiraTicketKey) {
 
-        List<ProductOrderListEntry> productOrderListEntries = findBaseProductOrderListEntries(jiraTicketKey);
+        List<ProductOrderListEntry> productOrderListEntries =
+                findBaseProductOrderListEntries(jiraTicketKey, null, null, null, null, null);
 
         if (productOrderListEntries.isEmpty()) {
             return null;
@@ -245,7 +269,7 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
             throw new RuntimeException("Too many results");
         }
 
-        fetchUnbilledLedgerEntryCounts(productOrderListEntries, jiraTicketKey);
+        fetchUnbilledLedgerEntryCounts(productOrderListEntries);
 
         return productOrderListEntries.get(0);
     }
