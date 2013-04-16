@@ -1426,4 +1426,103 @@ END;
         </sql>
     </changeSet>
 
+    <changeSet id="GPLIM-1134-01" author="dryan">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists schemaName="mercury" tableName="lab_batch_reworks"/>
+            </not>
+        </preConditions>
+
+        <createTable schemaName="mercury" tableName="lab_batch_reworks">
+            <column name="lab_batch" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reworks" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-1134-03" author="dryan">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists schemaName="mercury" tableName="lab_batch_reworks_aud"/>
+            </not>
+        </preConditions>
+
+        <createTable schemaName="mercury" tableName="lab_batch_reworks_aud">
+            <column name="lab_batch" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reworks" type="number(19,0)">
+                <constraints nullable="false" />
+            </column>
+            <column name="revtype" type="number(3,0)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="lab_batch_reworks_aud"
+                       columnNames="rev, lab_batch, reworks" />
+    </changeSet>
+    <changeSet id="GPLIM-1134-04" author="dryan">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists schemaName="mercury" tableName="lab_batch_reworks"
+                             indexName="FK_BATCH_REWORKS_BATCH"/>
+            </not>
+        </preConditions>
+        <addForeignKeyConstraint constraintName="FK_BATCH_REWORKS_BATCH" baseTableSchemaName="mercury"
+                                 baseTableName="lab_batch_reworks" baseColumnNames="lab_batch"
+                                 referencedTableSchemaName="mercury" referencedTableName="lab_batch"
+                                 referencedColumnNames="lab_batch_id" />
+    </changeSet>
+    <changeSet id="GPLIM-1134-05" author="dryan">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists schemaName="mercury" tableName="lab_batch_reworks"
+                             indexName="FK_BATCH_VESSEL_REWORKS"/>
+            </not>
+        </preConditions>
+        <addForeignKeyConstraint constraintName="FK_BATCH_VESSEL_REWORKS" baseTableSchemaName="mercury"
+                                 baseTableName="lab_batch_reworks" baseColumnNames="reworks"
+                                 referencedTableSchemaName="mercury" referencedTableName="lab_vessel"
+                                 referencedColumnNames="lab_vessel_id" />
+    </changeSet>
+    <changeSet id="GPLIM-1134-06" author="dryan">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists schemaName="mercury" tableName="lab_batch_reworks_aud"
+                             indexName="fk_lab_batch_reworks_rev"/>
+            </not>
+        </preConditions>
+        <addForeignKeyConstraint constraintName="fk_lab_batch_reworks_rev" baseTableSchemaName="mercury"
+                                 baseTableName="lab_batch_reworks_aud" baseColumnNames="rev"
+                                 referencedTableSchemaName="mercury" referencedTableName="rev_info"
+                                 referencedColumnNames="rev_info_id" />
+    </changeSet>
+
+    <changeSet id="GPLIM-1134-07" author="dryan">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists schemaName="mercury" tableName="rap_sheet_entry" columnName="ACTIVE_REWORK"/>
+            </not>
+        </preConditions>
+        <addColumn schemaName="mercury" tableName="rap_sheet_entry">
+            <column name="ACTIVE_REWORK" type="number(1,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-1134-08" author="dryan">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists schemaName="mercury" tableName="rap_sheet_entry_aud" columnName="ACTIVE_REWORK"/>
+            </not>
+        </preConditions>
+        <addColumn schemaName="mercury" tableName="rap_sheet_entry_aud">
+            <column name="ACTIVE_REWORK" type="number(1,0)"/>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

@@ -11,6 +11,10 @@ import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleImportBean
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleReceiptBean;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
+import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionJaxbBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionJaxbBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.QtpJaxbBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingJaxbBuilder;
 
 import javax.ws.rs.core.MediaType;
 import java.io.BufferedReader;
@@ -153,13 +157,13 @@ public class ExomeExpressIntegrationTest {
             // LC messages.
             // Reconstruct the factory, to update the time.
             bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory();
-            LabEventTest.ShearingJaxbBuilder shearingJaxbBuilder = new LabEventTest.ShearingJaxbBuilder(
+            ShearingJaxbBuilder shearingJaxbBuilder = new ShearingJaxbBuilder(
                     bettaLimsMessageTestFactory,
                     platingTargetTubeBarcodes, testSuffix, exportRackBarcode).invoke();
             for (BettaLIMSMessage bettaLIMSMessage : shearingJaxbBuilder.getMessageList()) {
                 sendMessage(baseUrl, bettaLIMSMessage);
             }
-            LabEventTest.LibraryConstructionJaxbBuilder libraryConstructionJaxbBuilder = new LabEventTest.LibraryConstructionJaxbBuilder(
+            LibraryConstructionJaxbBuilder libraryConstructionJaxbBuilder = new LibraryConstructionJaxbBuilder(
                     bettaLimsMessageTestFactory, testSuffix, shearingJaxbBuilder.getShearCleanPlateBarcode(), "000002453323",
                     sampleIds.size()).invoke();
 
@@ -180,13 +184,13 @@ public class ExomeExpressIntegrationTest {
                 }
             }
 
-            LabEventTest.HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = new LabEventTest.HybridSelectionJaxbBuilder(
+            HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = new HybridSelectionJaxbBuilder(
                     bettaLimsMessageTestFactory, testSuffix, libraryConstructionJaxbBuilder.getPondRegRackBarcode(),
                     libraryConstructionJaxbBuilder.getPondRegTubeBarcodes(), "0102692378").invoke();
             for (BettaLIMSMessage bettaLIMSMessage : hybridSelectionJaxbBuilder.getMessageList()) {
                 sendMessage(baseUrl, bettaLIMSMessage);
             }
-            LabEventTest.QtpJaxbBuilder qtpJaxbBuilder = new LabEventTest.QtpJaxbBuilder(bettaLimsMessageTestFactory, testSuffix,
+            QtpJaxbBuilder qtpJaxbBuilder = new QtpJaxbBuilder(bettaLimsMessageTestFactory, testSuffix,
                     Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchBarcodes()),
                     Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchRackBarcode()),
                     WorkflowName.EXOME_EXPRESS).invoke();

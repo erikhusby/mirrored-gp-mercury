@@ -81,12 +81,16 @@
                         ${listItem.indexCount}
                 </td>
                 <td>
-                    <c:forEach items="${listItem.labBatches}" var="batch">
-                        <stripes:link target="JIRA"
-                                      href="${batch.jiraTicket.browserUrl}"
-                                      class="external">
-                            ${batch.businessKey}
-                        </stripes:link>
+                    <c:forEach items="${listItem.labBatchCompositions}" var="composition">
+                        <span style="white-space:nowrap;">
+                            <stripes:link target="JIRA"
+                                          href="${composition.labBatch.jiraTicket.browserUrl}"
+                                          class="external">
+                                ${composition.labBatch.businessKey}
+                            </stripes:link>
+                            ${composition.count}/${composition.denominator}
+                        </span>
+                        <br/>
                     </c:forEach>
                 </td>
                 <td>

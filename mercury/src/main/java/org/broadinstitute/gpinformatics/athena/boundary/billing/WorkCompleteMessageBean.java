@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.work.WorkCompleteMessageDao;
@@ -59,7 +60,7 @@ public class WorkCompleteMessageBean implements MessageListener {
             long completedTime = message.getLongProperty(WorkCompleteMessage.Properties.COMPLETED_TIME.name());
             Date completedDate = new Date(completedTime);
 
-            if (pdoName == null || aliquotId == null) {
+            if (StringUtils.isBlank(pdoName) || StringUtils.isBlank(aliquotId)) {
                 log.error("Received a message without required parameters, cannot process: " + message);
                 return;
             }

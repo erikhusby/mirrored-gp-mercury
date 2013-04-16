@@ -10,7 +10,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEntryDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.*;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
@@ -37,11 +38,11 @@ public class BucketViewActionBean extends CoreActionBean {
     @Inject
     private BucketDao bucketDao;
     @Inject
-    private ReworkEntryDao reworkEntryDao;
-    @Inject
     private AthenaClientService athenaClientService;
     @Inject
     private LabBatchEjb labBatchEjb;
+    @Inject
+    private ReworkEjb reworkEjb;
     @Inject
     private LabVesselDao labVesselDao;
     @Inject
@@ -52,7 +53,7 @@ public class BucketViewActionBean extends CoreActionBean {
     public static final String CREATE_BATCH_ACTION = "createBatch";
 
     private List<WorkflowBucketDef> buckets = new ArrayList<WorkflowBucketDef>();
-    private List<String> selectedVesselLabels;
+    private List<String> selectedVesselLabels=new ArrayList<String>();
     private List<LabVessel> selectedBatchVessels;
     private List<String> selectedReworks=new ArrayList<String>();
 
@@ -60,7 +61,7 @@ public class BucketViewActionBean extends CoreActionBean {
     private String selectedBucket;
 
     private Collection<BucketEntry> bucketEntries;
-    private Collection<ReworkEntry> reworkEntries;
+    private Map<String,LabVessel> reworkEntries;
 
     private Map<String, ProductOrder> pdoByKeyMap = new HashMap<String, ProductOrder>();
 
@@ -126,11 +127,11 @@ public class BucketViewActionBean extends CoreActionBean {
         this.selectedReworks = selectedReworks;
     }
 
-    public Collection<ReworkEntry> getReworkEntries() {
+    public Map<String, LabVessel> getReworkEntries() {
         return reworkEntries;
     }
 
-    public void setReworkEntries(Collection<ReworkEntry> reworkEntries) {
+    public void setReworkEntries(Map<String, LabVessel> reworkEntries) {
         this.reworkEntries = reworkEntries;
     }
 
@@ -166,19 +167,35 @@ public class BucketViewActionBean extends CoreActionBean {
             } else {
                 bucketEntries = new ArrayList<BucketEntry>();
             }
-            if (bucketEntries.size() > 0) {
+            if (!bucketEntries.isEmpty() || !reworkEntries.isEmpty()) {
                 jiraEnabled = true;
                 for (BucketEntry bucketEntry : bucketEntries) {
                     pdoByKeyMap.put(bucketEntry.getPoBusinessKey(),
                             athenaClientService.retrieveProductOrderDetails(bucketEntry.getPoBusinessKey()));
                 }
             }
-            reworkEntries = reworkEntryDao.findAll(ReworkEntry.class);
+            reworkEntries = getInactiveRework();
         }
 
         //TODO jac populate the rework entries
 
         return view();
+    }
+
+    private Map<String, LabVessel> getInactiveRework() {
+        Map<String, LabVessel> result = new HashMap<String, LabVessel>();
+        Set<LabVessel> bySampleKeyList = new HashSet<LabVessel>();
+        Set<String> reworkBarcodes = new HashSet<String>();
+        for (ReworkEntry reworkEntry : reworkEjb.getNonActiveReworkEntries()) {
+            reworkBarcodes.add(reworkEntry.getRapSheet().getSample().getSampleKey());
+        }
+
+        bySampleKeyList.addAll(labVesselDao.findBySampleKeyList(new ArrayList<String>(reworkBarcodes)));
+        for (LabVessel vessel : bySampleKeyList) {
+            result.put(vessel.getLabel(), vessel);
+        }
+
+        return result;
     }
 
     public ProductOrder getPDODetails(String pdoKey) {
@@ -188,20 +205,43 @@ public class BucketViewActionBean extends CoreActionBean {
         return pdoByKeyMap.get(pdoKey);
     }
 
-    public List<String> getPDOBusinessKeys(ReworkEntry entry) {
-        List<String> businessKeys = new ArrayList<String>();
-        for (MercurySample sample : entry.getLabVesselPosition().getMercurySamples()) {
-            businessKeys.add(sample.getProductOrderKey());
-        }
-        return businessKeys;
-    }
-
-    public String getSinglePDOBusinessKey(ReworkEntry entry) {
-        List<String> keys = getPDOBusinessKeys(entry);
-        if (keys.size() == 1) {
-            return keys.get(0);
+    public String getSinglePDOBusinessKey(LabVessel vessel) {
+        if (vessel.getPdoKeys().size() == 1) {
+            return vessel.getPdoKeys().iterator().next();
         }
         return "Multiple PDOs";
+    }
+
+
+    public String getReworkReason(LabVessel vessel) {
+
+        return vessel.getAllSamples().iterator().next().getStartingSample().getRapSheet()
+                .getCurrentReworkEntry().getReworkReason().name();
+    }
+
+    public String getReworkComment(LabVessel vessel) {
+        return vessel.getAllSamples().iterator().next().getStartingSample().getRapSheet()
+                .getCurrentReworkEntry().getLabVesselComment().getComment();
+    }
+
+    public Set<String> getSampleNames(LabVessel vessel) {
+        final Set<SampleInstance> allSamples = vessel.getAllSamples();
+        Set<String> sampleNames=new HashSet<String>();
+        for (SampleInstance sampleInstance : allSamples) {
+            sampleNames.add(sampleInstance.getStartingSample().getSampleKey());
+        }
+        return sampleNames;
+    }
+
+    public Long getReworkOperator(LabVessel vessel) {
+        return vessel.getAllSamples().iterator().next().getStartingSample().getRapSheet()
+                .getCurrentReworkEntry().getLabVesselComment().getLabEvent().getEventOperator();
+    }
+
+
+    public Date getReworkLogDate(LabVessel vessel) {
+        return vessel.getAllSamples().iterator().next().getStartingSample().getRapSheet()
+                .getCurrentReworkEntry().getLabVesselComment().getLogDate();
     }
 
     public List<MercurySample> getMercurySamplesForBucketEntry(BucketEntry entry) {
@@ -228,11 +268,10 @@ public class BucketViewActionBean extends CoreActionBean {
         Set<LabVessel> reworks = new HashSet<LabVessel>(labVesselDao.findByListIdentifiers(selectedReworks));
 
         batchObject = new LabBatch(summary.trim(), vesselSet,LabBatch.LabBatchType.WORKFLOW, description, dueDate, important);
-        // fixme here is where we just dump the reworks into the ticket
-        // this should be persistent
         batchObject.addReworks(reworks);
 
-        labBatchEjb.createLabBatchAndRemoveFromBucket(batchObject, userBean.getBspUser().getUsername(),selectedBucket, LabEvent.UI_EVENT_LOCATION);
+        labBatchEjb.createLabBatchAndRemoveFromBucket(batchObject, userBean.getBspUser().getUsername(), selectedBucket,
+                LabEvent.UI_EVENT_LOCATION);
 
         addMessage(MessageFormat.format("Lab batch ''{0}'' has been created.",batchObject.getJiraTicket().getTicketName()));
 

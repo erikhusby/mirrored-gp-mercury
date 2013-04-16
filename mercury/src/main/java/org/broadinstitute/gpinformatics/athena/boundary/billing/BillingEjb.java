@@ -1,11 +1,11 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
-
+import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
-import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 
 import javax.annotation.Nonnull;
@@ -13,8 +13,9 @@ import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-
+import java.util.Set;
 
 @Stateful
 @RequestScoped
@@ -60,7 +61,6 @@ public class BillingEjb {
         }
     }
 
-
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private QuoteService quoteService;
@@ -70,6 +70,9 @@ public class BillingEjb {
 
     @Inject
     private BillingSessionDao billingSessionDao;
+
+    @Inject
+    private ProductOrderEjb productOrderEjb;
 
     /**
      * Transactional method to end a billing session with appropriate handling for complete or partial failure.
@@ -100,7 +103,6 @@ public class BillingEjb {
         }
     }
 
-
     /**
      * Transactional method to bill each previously unbilled {@link QuoteImportItem} on the BillingSession to the quote
      * server and update billing entities as appropriate to the results of the billing attempt.  Results
@@ -125,6 +127,7 @@ public class BillingEjb {
         boolean errorsInBilling = false;
 
         List<BillingResult> results = new ArrayList<BillingResult>();
+        Set<String> updatedPDOs = new HashSet<String>();
 
         for (QuoteImportItem item : billingSession.getUnBilledQuoteImportItems(priceListCache)) {
 
@@ -135,7 +138,7 @@ public class BillingEjb {
             Quote quote = new Quote();
             quote.setAlphanumericId(item.getQuoteId());
 
-            PriceItem quotePriceItem = PriceItem.convertMercuryPriceItem(item.getPriceItem());
+            QuotePriceItem quotePriceItem = QuotePriceItem.convertMercuryPriceItem(item.getPriceItem());
 
             // Calculate whether this is a replacement item and if it is, send the itemIsReplacing field, otherwise
             // the itemIsReplacing field will be null.
@@ -143,9 +146,9 @@ public class BillingEjb {
                     item.calculateIsReplacing(priceListCache);
 
             // Get the quote version of the price item for the item that is being replaced.
-            PriceItem quoteIsReplacing = null;
+            QuotePriceItem quoteIsReplacing = null;
             if (mercuryIsReplacing != null) {
-                quoteIsReplacing = PriceItem.convertMercuryPriceItem(mercuryIsReplacing);
+                quoteIsReplacing = QuotePriceItem.convertMercuryPriceItem(mercuryIsReplacing);
             }
 
             try {
@@ -158,6 +161,8 @@ public class BillingEjb {
                 // Now that we have successfully billed, update the Ledger Entries associated with this QuoteImportItem
                 // with the quote for the QuoteImportItem, add the priceItemType, and the success message.
                 item.updateQuoteIntoLedgerEntries(quoteIsReplacing, BillingSession.SUCCESS);
+
+                updatedPDOs.addAll(item.getOrderKeys());
 
             } catch (Exception ex) {
                 // Any exceptions in sending to the quote server will just be reported and will continue
@@ -172,6 +177,13 @@ public class BillingEjb {
         // all sessions from the ledger.
         if (!errorsInBilling) {
             endSession(billingSession);
+        }
+
+        // Update the state of all PDOs affected by this billing session.
+        try {
+            productOrderEjb.updateOrderStatus(updatedPDOs);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
 
         return results;

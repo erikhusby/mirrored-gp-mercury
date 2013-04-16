@@ -1,11 +1,13 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.sample;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabBatchComposition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
-import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 
 /**
  * "Polymorphic" representation of vessel or other entity/info to be shown in PlasticHistoryView's list.
@@ -18,13 +20,12 @@ public class PlasticHistoryListItem {
     private String type;
     private int pdoKeyCount;
     private int indexCount;
-    private Collection<LabBatch> labBatches;
+    private List<LabBatchComposition> labBatchCompositions;
     private String eventType;
     private String eventLocation;
     private Long eventOperator;
     private Date eventDate;
     private Date creationDate;
-    private String lcSetName;
 
     public PlasticHistoryListItem(LabVessel vessel) {
         label = vessel.getLabel();
@@ -32,12 +33,12 @@ public class PlasticHistoryListItem {
         type = vessel.getType().getName();
         pdoKeyCount = vessel.getPdoKeysCount();
         indexCount = vessel.getIndexesCount();
-        labBatches = vessel.getNearestWorkflowLabBatches();
         eventType = vessel.getLatestEvent().getLabEventType().getName();
         eventLocation = vessel.getLatestEvent().getEventLocation();
         eventOperator = vessel.getLatestEvent().getEventOperator();
         eventDate = vessel.getLatestEvent().getEventDate();
         creationDate = vessel.getCreatedOn();
+        labBatchCompositions = vessel.getLabBatchCompositions();
     }
 
     public PlasticHistoryListItem(SequencingRun seqRun, LabVessel seqVessel) {
@@ -70,10 +71,6 @@ public class PlasticHistoryListItem {
         return indexCount;
     }
 
-    public Collection<LabBatch> getLabBatches() {
-        return labBatches;
-    }
-
     public String getEventType() {
         return eventType;
     }
@@ -93,4 +90,36 @@ public class PlasticHistoryListItem {
     public Date getCreationDate() {
         return creationDate;
     }
+
+    public List<LabBatchComposition> getLabBatchCompositions() {
+        return labBatchCompositions;
+    }
+
+    public int hashCode() {
+        return new HashCodeBuilder()
+                .append(label)
+                .append(creationDate)
+                .append(eventDate)
+                .append(eventType)
+                .hashCode();
+    }
+
+    public boolean equals(Object obj) {
+        if (obj == null)
+            return false;
+        if (obj == this)
+            return true;
+        if (obj.getClass() != getClass())
+            return false;
+
+        PlasticHistoryListItem item = (PlasticHistoryListItem) obj;
+
+        return new EqualsBuilder()
+                .append(label, item.label)
+                .append(creationDate, item.creationDate)
+                .append(eventDate, item.eventDate)
+                .append(eventType, item.eventType)
+                .isEquals();
+    }
+
 }

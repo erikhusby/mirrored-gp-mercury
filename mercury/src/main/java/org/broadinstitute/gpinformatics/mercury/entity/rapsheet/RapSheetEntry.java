@@ -15,11 +15,12 @@ import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+import java.util.Comparator;
 
 @Entity
 @Audited
 @Table(schema = "mercury")
-public abstract class RapSheetEntry {
+public abstract class RapSheetEntry  implements Comparable<RapSheetEntry> {
     @SuppressWarnings("UnusedDeclaration")
     @Id
     @SequenceGenerator(name = "SEQ_RAP_SHEET_ENTRY", schema = "mercury", sequenceName = "SEQ_RAP_SHEET_ENTRY")
@@ -30,9 +31,9 @@ public abstract class RapSheetEntry {
     @ManyToOne(fetch = FetchType.LAZY,cascade = CascadeType.ALL)
     private RapSheet rapSheet;
 
-
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+        @JoinColumn(updatable = true,insertable = true)
     private LabVesselComment labVesselComment;
 
     // this should not cause n+1 select performance issue if it is LAZY and mandatory
@@ -43,9 +44,10 @@ public abstract class RapSheetEntry {
     public RapSheetEntry() {
     }
 
-    public RapSheetEntry(RapSheet rapSheet,LabVesselPosition labVesselPosition) {
-        this.rapSheet = rapSheet;
+    public RapSheetEntry(LabVesselPosition labVesselPosition, LabVesselComment labVesselComment) {
         this.labVesselPosition = labVesselPosition;
+        this.labVesselComment=labVesselComment;
+        labVesselComment.getRapSheetEntries().add(this);
     }
 
     public RapSheet getRapSheet() {
@@ -70,5 +72,17 @@ public abstract class RapSheetEntry {
 
     public void setLabVesselPosition(LabVesselPosition labVesselPosition) {
         this.labVesselPosition = labVesselPosition;
+    }
+
+    public static final Comparator<RapSheetEntry> byDateAsc = new Comparator<RapSheetEntry>() {
+        @Override
+        public int compare ( RapSheetEntry first, RapSheetEntry second ) {
+            return first.getLabVesselComment().getLogDate().compareTo(second.getLabVesselComment().getLogDate());
+        }
+    };
+
+    @Override
+    public int compareTo(RapSheetEntry reworkEntry) {
+        return byDateAsc.compare(reworkEntry,this);
     }
 }

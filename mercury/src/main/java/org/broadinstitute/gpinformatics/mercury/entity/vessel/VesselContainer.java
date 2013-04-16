@@ -442,6 +442,17 @@ public class VesselContainer<T extends LabVessel> {
 
     }
 
+    public Collection<LabBatch> getAllLabBatches() {
+        return getAllLabBatches(null);
+    }
+
+    public Collection<LabBatch> getAllLabBatches(@Nullable LabBatch.LabBatchType type) {
+        TransferTraverserCriteria.NearestLabBatchFinder batchCriteria =
+                new TransferTraverserCriteria.NearestLabBatchFinder(type);
+        applyCriteriaToAllPositions(batchCriteria);
+        return batchCriteria.getAllLabBatches();
+    }
+
     public Collection<LabBatch> getNearestLabBatches() {
         return getNearestLabBatches(null);
     }
@@ -460,5 +471,27 @@ public class VesselContainer<T extends LabVessel> {
         return productOrderCriteria.getNearestProductOrders();
     }
 
+    public List<LabBatchComposition> getLabBatchCompositions() {
+        List<SampleInstance> sampleInstances = new ArrayList<SampleInstance>();
+        for(VesselPosition position : getEmbedder().getVesselGeometry().getVesselPositions()){
+            sampleInstances.addAll(getSampleInstancesAtPosition(position));
+        }
 
+        Map<LabBatch, LabBatchComposition> batchMap = new HashMap<LabBatch, LabBatchComposition>();
+        for (SampleInstance sampleInstance : sampleInstances) {
+            for (LabBatch labBatch : sampleInstance.getAllLabBatches()) {
+                LabBatchComposition batchComposition = batchMap.get(labBatch);
+                if (batchComposition == null) {
+                    batchMap.put(labBatch, new LabBatchComposition(labBatch, 1, sampleInstances.size()));
+                } else {
+                    batchComposition.addCount();
+                }
+            }
+        }
+
+        List<LabBatchComposition> batchList = new ArrayList<LabBatchComposition>(batchMap.values());
+        Collections.sort(batchList, LabBatchComposition.HIGHEST_COUNT_FIRST);
+
+        return batchList;
+    }
 }

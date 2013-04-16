@@ -348,13 +348,14 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
     }
 
     @Override
-    public void postNewTransition(String jiraIssueKey, Transition transition, String comment) throws IOException {
-        postNewTransition(jiraIssueKey, transition, null, comment);
+    public void postNewTransition(String jiraIssueKey, Transition transition, @Nullable String comment) throws IOException {
+        postNewTransition(jiraIssueKey, transition, Collections.<CustomField>emptyList(), comment);
     }
 
 
     @Override
-    public void postNewTransition(String jiraIssueKey, Transition transition, Collection<CustomField> customFields,
+    public void postNewTransition(String jiraIssueKey, Transition transition,
+                                  @Nonnull Collection<CustomField> customFields,
                                   @Nullable String comment) throws IOException {
         IssueTransitionRequest jiraIssueTransition = new IssueTransitionRequest(transition, customFields, comment);
 
@@ -400,7 +401,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
         String fieldArgs = StringUtils.join(fieldIds, ",");
         String url = getBaseUrl() + "/issue/" + jiraIssueKey + "?fields=" + fieldArgs;
-        log.info(url);
+        log.debug(url);
         WebResource webResource =
                 getJerseyClient().resource(getBaseUrl() + "/issue/" + jiraIssueKey).queryParam("fields", fieldArgs);
 
@@ -411,7 +412,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
     @Override
     public String getResolution(String jiraIssueKey) throws IOException {
         String url = getBaseUrl() + "/issue/" + jiraIssueKey;
-        log.info(url);
+        log.debug(url);
         WebResource webResource =
                 getJerseyClient().resource(getBaseUrl() + "/issue/" + jiraIssueKey).queryParam("fields", "resolution");
 

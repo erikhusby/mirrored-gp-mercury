@@ -187,7 +187,7 @@ public class LabBatchEJBTest extends ContainerTest {
         labBatchDAO.clear();
         bucket = bucketDao.findByName(BUCKET_NAME);
 
-        String expectedTicketId = CreateFields.ProjectType.LCSET_PROJECT.getKeyPrefix() + JiraServiceStub.CREATED_ISSUE_SUFFIX;
+        String expectedTicketId = CreateFields.ProjectType.LCSET_PROJECT.getKeyPrefix() + JiraServiceStub.getCreatedIssueSuffix();
         Assert.assertEquals(expectedTicketId, savedBatch.getBatchName());
         savedBatch = labBatchDAO.findByName(expectedTicketId);
 

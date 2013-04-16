@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import com.google.common.collect.ImmutableList;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -44,13 +45,13 @@ import java.io.Serializable;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 
 @Entity
 @Audited
@@ -216,7 +217,7 @@ public class ProductOrder implements Serializable {
      * @param businessKey the key to convert
      * @return either a JIRA ID or a product order ID.
      */
-    public static JiraOrId convertBusinessKeyToJiraOrId(String businessKey) {
+    public static JiraOrId convertBusinessKeyToJiraOrId(@Nonnull String businessKey) {
         if (businessKey.startsWith(DRAFT_PREFIX)) {
             return new JiraOrId(Long.parseLong(businessKey.substring(DRAFT_PREFIX.length())), null);
         }
@@ -230,7 +231,7 @@ public class ProductOrder implements Serializable {
             countMap.clear();
         }
 
-        private void increment(String key) {
+        private void increment(@Nonnull String key) {
             if (!StringUtils.isEmpty(key)) {
                 Integer count = countMap.get(key);
                 if (count == null) {
@@ -240,18 +241,28 @@ public class ProductOrder implements Serializable {
             }
         }
 
-        private int get(String key) {
+        private int get(@Nonnull String key) {
             Integer count = countMap.get(key);
             return count == null ? 0 : count;
         }
 
-        private void output(List<String> output, String label, int compareCount) {
+        private void output(List<String> output, @Nonnull String label, int compareCount) {
             for (Map.Entry<String, Integer> entry : countMap.entrySet()) {
-                // Preformat the string so it can add the format pattern for the count value.
-                String message = label + " ''" + entry.getKey() + "'': {0}";
-                sampleCounts.formatSummaryNumber(output, message, entry.getValue(), compareCount);
+                output.add(MessageFormat.format("{0} ''{1}'': {2}", label, entry.getKey(),
+                        formatCountTotal(entry.getValue(), compareCount)));
+
             }
         }
+    }
+
+    private static Object formatCountTotal(int count, int compareCount) {
+        if (count == 0) {
+            return "None";
+        }
+        if (count == compareCount) {
+            return "All";
+        }
+        return count;
     }
 
     /**
@@ -359,13 +370,7 @@ public class ProductOrder implements Serializable {
          * @param compareCount The number to compare to
          */
         private void formatSummaryNumber(List<String> output, String message, int count, int compareCount) {
-            if (count == 0) {
-                output.add(MessageFormat.format(message, "None"));
-            } else if (count == compareCount) {
-                output.add(MessageFormat.format(message, "All"));
-            } else {
-                output.add(MessageFormat.format(message, count));
-            }
+            output.add(MessageFormat.format(message, formatCountTotal(count, compareCount)));
         }
 
         public List<String> sampleSummary() {
@@ -406,7 +411,8 @@ public class ProductOrder implements Serializable {
             }
 
             if (hasSampleKitUploadRackscanMismatch != 0) {
-                formatSummaryNumber(output, "<div class='text-error'>Rackscan Mismatch: {0}</div>", hasSampleKitUploadRackscanMismatch, totalSampleCount);
+                formatSummaryNumber(output, "<div class=\"text-error\">Rackscan Mismatch: {0}</div>",
+                        hasSampleKitUploadRackscanMismatch, totalSampleCount);
             }
 
             return output;
@@ -666,9 +672,10 @@ public class ProductOrder implements Serializable {
     /**
      * Call this method to change the 'owner' attribute of a Product Order.  We are currently storing this
      * attribute in the created by column in the database.
+     *
      * @param userId the owner ID
      */
-    public void setCreatedBy(Long userId) {
+    public void setCreatedBy(@Nullable Long userId) {
         createdBy = userId;
     }
 
@@ -1001,7 +1008,8 @@ public class ProductOrder implements Serializable {
         SAMPLE_IDS("Sample IDs"),
         REPORTER("Reporter"),
         FUNDING_DEADLINE("Funding Deadline"),
-        PUBLICATION_DEADLINE("Publication Deadline");
+        PUBLICATION_DEADLINE("Publication Deadline"),
+        STATUS("Status");
 
         private final String fieldName;
 
@@ -1025,23 +1033,24 @@ public class ProductOrder implements Serializable {
         public String getDisplayName() {
             return name();
         }
-    }
 
-    public enum TransitionStates {
-        Complete("Order Complete"),
-        Cancel("Cancel"),
-        StartProgress("Start Progress"),
-        PutOnHold("Put On Hold"),
-        DeveloperEdit("Developer Edit");
+        /**
+         * Get all status values using the name strings.
+         *
+         * @param statusStrings The desired list of statuses.
+         * @return The statuses that are listed.
+         */
+        public static List<OrderStatus> getFromName(@Nonnull List<String> statusStrings) {
+            if (CollectionUtils.isEmpty(statusStrings)) {
+                return Collections.emptyList();
+            }
 
-        private final String stateName;
+            List<OrderStatus> statuses = new ArrayList<OrderStatus>();
+            for (String statusString : statusStrings) {
+                statuses.add(OrderStatus.valueOf(statusString));
+            }
 
-        private TransitionStates(String stateName) {
-            this.stateName = stateName;
-        }
-
-        public String getStateName() {
-            return stateName;
+            return statuses;
         }
     }
 
@@ -1086,16 +1095,19 @@ public class ProductOrder implements Serializable {
             // We only support automatic status transitions from Submitted or Complete states.
             return false;
         }
-        OrderStatus oldStatus = orderStatus;
-        orderStatus = OrderStatus.Completed;
+        OrderStatus newStatus = OrderStatus.Completed;
         for (ProductOrderSample sample : samples) {
             if (sample.getDeliveryStatus() != ProductOrderSample.DeliveryStatus.ABANDONED && !sample.isBilled()) {
                 // Found an incomplete item.
-                orderStatus = OrderStatus.Submitted;
+                newStatus = OrderStatus.Submitted;
                 break;
             }
         }
 
-        return orderStatus != oldStatus;
+        if (newStatus != orderStatus) {
+            orderStatus = newStatus;
+            return true;
+        }
+        return false;
     }
 }

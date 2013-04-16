@@ -10,15 +10,15 @@ import java.util.Collection;
 public class PriceList {
     
     @XmlElement(name = "priceItem")
-    private final Collection<PriceItem> priceItems = new ArrayList<PriceItem>();
+    private final Collection<QuotePriceItem> quotePriceItems = new ArrayList<QuotePriceItem>();
 
     public PriceList() {}
     
-    public Collection<PriceItem> getPriceItems() {
-        return priceItems;
+    public Collection<QuotePriceItem> getQuotePriceItems() {
+        return quotePriceItems;
     }
     
-    public void add(@Nonnull PriceItem priceItem) {
-        priceItems.add(priceItem);
+    public void add(@Nonnull QuotePriceItem quotePriceItem) {
+        quotePriceItems.add(quotePriceItem);
     }
 }

@@ -86,9 +86,9 @@ var DAY_MILLIS = 1000 * 60 * 60 * 24;
             for (var i=0; i < options["dateOptions"].length; i++) {
                 var selectedString = "";
                 if (i == options["rangeSelector"]) {
-                    selectedString = "selected=\"true\"";
+                    selectedString = 'selected="true"';
                 }
-                optionsHTML += "<option value=\"" + i + "\"" + selectedString + ">" + options["dateOptions"][i].name + "</option>";
+                optionsHTML += '<option value="' + i + '"' + selectedString + '>' + options["dateOptions"][i].name + '</option>';
             }
             $(options["choiceSelectionId"]).html(optionsHTML);
         };
@@ -145,19 +145,19 @@ var DAY_MILLIS = 1000 * 60 * 60 * 24;
     function createComponents(container) {
         var divId = container.attr("id");
         var options = container.data('options');
-        var dateChoicesString = "<select class=\"dateRangeSelector\" id=\"" + divId + "-choices\" name=\"" + options["rangeFieldName"] + ".rangeSelector\">";
+        var dateChoicesString = '<select class="dateRangeSelector search-select" id="' + divId + '-choices" name="' + options["rangeFieldName"] + '.rangeSelector">';
 
         for (var i=0; i < options["dateOptions"].length; i++) {
             var selectedString = "";
             if (i == options["rangeSelector"]) {
-                selectedString = "selected=\"true\"";
+                selectedString = 'selected="true"';
             }
 
-            dateChoicesString += "<option value=\"" + i + "\"" + selectedString + ">" + options["dateOptions"][i].name + "</option>";
+            dateChoicesString += '<option value="' + i + '"' + selectedString + '>' + options["dateOptions"][i].name + '</option>';
         }
 
         dateChoicesString += "</select>";
-        dateChoicesString += "&nbsp;<input type=\"hidden\" value=\"\" id=\"" + divId + "NaturalLanguageString\" name=\"" +  options["rangeFieldName"] + ".naturalLanguageString\"/>";
+        dateChoicesString += '&nbsp;<input class="search-input" type="hidden" value="" id="' + divId + 'NaturalLanguageString" name="' +  options["rangeFieldName"] + '.naturalLanguageString"/>';
         container.html(dateChoicesString);
 
         container.append(createDateField(container, "start"));
@@ -176,7 +176,7 @@ var DAY_MILLIS = 1000 * 60 * 60 * 24;
         // Create the date field
         var inputField = document.createElement("input");
         inputField.setAttribute("type", "text");
-        inputField.setAttribute("class", options["dateFieldClass"]);
+        inputField.setAttribute("class", options["dateFieldClass"] + " search-input");
         inputField.setAttribute("id", divId + "-Calendar-" + calendarField + "Id");
         inputField.setAttribute("name", options["rangeFieldName"] + "." + calendarField);
         inputField.setAttribute("size", "10");

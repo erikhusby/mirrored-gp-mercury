@@ -8,7 +8,6 @@ import org.testng.annotations.Test;
 
 import java.util.Collection;
 
-import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 
 public class PriceListCacheTest {
@@ -18,30 +17,30 @@ public class PriceListCacheTest {
     @Test(groups = EXTERNAL_INTEGRATION)
     public void test_gsp_platform() {
         PriceList priceList = new PriceList();
-        PriceItem item1 = new PriceItem("Illumina Sequencing","123","101bp MiSeq","5","Sample",QuotePlatformType.SEQ.getPlatformName());
-        PriceItem item2 = new PriceItem("Illumina Sequencing","1234","151bp MiSeq","5","Sample",QuotePlatformType.SEQ.getPlatformName());
+        QuotePriceItem item1 = new QuotePriceItem("Illumina Sequencing","123","101bp MiSeq","5","Sample",QuotePlatformType.SEQ.getPlatformName());
+        QuotePriceItem item2 = new QuotePriceItem("Illumina Sequencing","1234","151bp MiSeq","5","Sample",QuotePlatformType.SEQ.getPlatformName());
         priceList.add(item1);
         priceList.add(item2);
-        priceList.add(new PriceItem("Illumina Sequencing","1234","151bp MiSeq","3","Sample","Cookie Baking Platform"));
+        priceList.add(new QuotePriceItem("Illumina Sequencing","1234","151bp MiSeq","3","Sample","Cookie Baking Platform"));
 
-        PriceListCache cache = new PriceListCache(priceList.getPriceItems());
+        PriceListCache cache = new PriceListCache(priceList.getQuotePriceItems());
         
-        Collection<PriceItem> priceItems = cache.getGSPPriceItems();
+        Collection<QuotePriceItem> quotePriceItems = cache.getGSPPriceItems();
         
-        Assert.assertEquals(2, priceItems.size());
+        Assert.assertEquals(2, quotePriceItems.size());
 
-        Assert.assertTrue(priceItems.contains(item1));
-        Assert.assertTrue(priceItems.contains(item2));
+        Assert.assertTrue(quotePriceItems.contains(item1));
+        Assert.assertTrue(quotePriceItems.contains(item2));
     }
     
     @Test(groups = EXTERNAL_INTEGRATION)
     public void test_gsp_prices() throws Exception {
-        PriceListCache cache = new PriceListCache(new QuoteServiceStub().getAllPriceItems().getPriceItems());
+        PriceListCache cache = new PriceListCache(new QuoteServiceStub().getAllPriceItems().getQuotePriceItems());
         Assert.assertFalse(cache.getGSPPriceItems().isEmpty());
 
-        for (PriceItem priceItem : cache.getGSPPriceItems()) {
-            Assert.assertTrue(QuotePlatformType.SEQ.getPlatformName().equalsIgnoreCase(priceItem.getPlatformName()));
-            log.debug(priceItem.getName());
+        for (QuotePriceItem quotePriceItem : cache.getGSPPriceItems()) {
+            Assert.assertTrue(QuotePlatformType.SEQ.getPlatformName().equalsIgnoreCase(quotePriceItem.getPlatformName()));
+            log.debug(quotePriceItem.getName());
         }
     }
 }

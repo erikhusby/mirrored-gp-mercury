@@ -50,12 +50,22 @@
                 countDisplayClass:'batch-checkedCount',
                 checkboxClass:'batch-checkbox'});
         });
-
         function showPlasticHistoryVisualizer(batchKey) {
             $j('#plasticViewDiv').html("<img src=\"${ctxpath}/images/spinner.gif\"/>");
-            $j('#plasticViewDiv').load('${ctxpath}/view/plasticHistoryView.action?batchKey=' + batchKey);
             $j('#plasticViewDiv').show();
+
+            // Dynamically created table needs ajax load to allow calling into script in plastic_history_list.jsp
+            $j.ajax({
+                url:"${ctxpath}/view/plasticHistoryView.action?batchKey=" + batchKey,
+                dataType:'html',
+                success:function (plasticViewHtml) {
+                    $j('#plasticViewDiv').html(plasticViewHtml);
+                    $j('#plasticViewDiv').show();
+                    plasticHistoryListRedraw();
+                }
+            });
         }
+
     </script>
     <%--@elvariable id="batches" type="java.util.Collection"--%>
     <%--@elvariable id="bean" type="org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean"--%>

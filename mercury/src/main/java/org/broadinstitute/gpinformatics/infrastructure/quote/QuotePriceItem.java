@@ -3,15 +3,13 @@ package org.broadinstitute.gpinformatics.infrastructure.quote;
 import javax.annotation.Nonnull;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.adapters.XmlAdapter;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 @XmlRootElement(name = "priceItem")
-public class PriceItem {
-
-    public static final String GSP_PLATFORM_NAME = QuotePlatformType.SEQ.getPlatformName();
-
-    public static final String SAMPLE_UNITS = "Sample";
+public class QuotePriceItem {
 
     private String id;
     private String name;
@@ -31,19 +29,19 @@ public class PriceItem {
 
     private ReplacementItems replacementItems;
 
-    public PriceItem() {}
+    public QuotePriceItem() {}
 
-    public static PriceItem convertMercuryPriceItem(
+    public static QuotePriceItem convertMercuryPriceItem(
         @Nonnull org.broadinstitute.gpinformatics.athena.entity.products.PriceItem priceItem) {
 
-        PriceItem quotePriceItem = new PriceItem();
+        QuotePriceItem quotePriceItem = new QuotePriceItem();
         quotePriceItem.setName(priceItem.getName());
         quotePriceItem.setCategoryName(priceItem.getCategory());
         quotePriceItem.setPlatformName(priceItem.getPlatform());
         return quotePriceItem;
     }
 
-    public PriceItem(String quoteServerId, String platformName, String categoryName, String name) {
+    public QuotePriceItem(String quoteServerId, String platformName, String categoryName, String name) {
         this.id = quoteServerId;
         this.platformName = platformName;
         this.categoryName = categoryName;
@@ -60,12 +58,12 @@ public class PriceItem {
      * @param unit
      * @param platformName
      */
-    public PriceItem(String categoryName,
-                     String id,
-                     String name,
-                     String price,
-                     String unit,
-                     String platformName) {
+    public QuotePriceItem(String categoryName,
+                          String id,
+                          String name,
+                          String price,
+                          String unit,
+                          String platformName) {
         this.categoryName = categoryName;
         this.id = id;
         this.name = name;
@@ -121,7 +119,7 @@ public class PriceItem {
     }
 
     @XmlElement(name = "submittedDate")
-    @XmlJavaTypeAdapter(PriceItemDateAdapter.class)
+    @XmlJavaTypeAdapter(DateAdapter.class)
     public Date getSubmittedDate() {
         return submittedDate;
     }
@@ -131,7 +129,7 @@ public class PriceItem {
     }
 
     @XmlElement(name = "effectiveDate")
-    @XmlJavaTypeAdapter(PriceItemDateAdapter.class)
+    @XmlJavaTypeAdapter(DateAdapter.class)
     public Date getEffectiveDate() {
         return effectiveDate;
     }
@@ -225,14 +223,14 @@ public class PriceItem {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof PriceItem)) return false;
+        if (!(o instanceof QuotePriceItem)) return false;
 
-        PriceItem priceItem = (PriceItem) o;
+        QuotePriceItem quotePriceItem = (QuotePriceItem) o;
 
-        if (categoryName != null ? !categoryName.equals(priceItem.categoryName) : priceItem.categoryName != null)
+        if (categoryName != null ? !categoryName.equals(quotePriceItem.categoryName) : quotePriceItem.categoryName != null)
             return false;
-        if (name != null ? !name.equals(priceItem.name) : priceItem.name != null) return false;
-        if (platformName != null ? !platformName.equals(priceItem.platformName) : priceItem.platformName != null)
+        if (name != null ? !name.equals(quotePriceItem.name) : quotePriceItem.name != null) return false;
+        if (platformName != null ? !platformName.equals(quotePriceItem.platformName) : quotePriceItem.platformName != null)
             return false;
 
         return true;
@@ -248,7 +246,7 @@ public class PriceItem {
 
     @Override
     public String toString() {
-        return "PriceItem{" +
+        return "QuotePriceItem{" +
                 "platformName='" + platformName + '\'' +
                 ", name='" + name + '\'' +
                 ", categoryName='" + categoryName + '\'' +
@@ -259,5 +257,25 @@ public class PriceItem {
         return platformName.equals(priceItem.getPlatform()) &&
                categoryName.equals(priceItem.getCategory()) &&
                name.equals(priceItem.getName());
+    }
+
+    /**
+     * It would be nice if quote server dates were formatted consistently so we didn't need multiple date conversion
+     * classes.
+     */
+    public static class DateAdapter extends XmlAdapter<String, Date> {
+
+        private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
+
+        @Override
+        public String marshal(Date v) throws Exception {
+            return dateFormat.format(v);
+        }
+
+        @Override
+        public Date unmarshal(String v) throws Exception {
+            return dateFormat.parse(v);
+        }
+
     }
 }

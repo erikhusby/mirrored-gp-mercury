@@ -4,11 +4,8 @@ import edu.mit.broad.prodinfo.thrift.lims.*;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
-import org.broadinstitute.gpinformatics.mercury.control.lims.LimsQueryResourceResponseFactory;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
+import org.broadinstitute.gpinformatics.mercury.control.lims.LimsQueryResourceResponseFactory;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.*;
 
 import javax.inject.Inject;
@@ -18,7 +15,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 

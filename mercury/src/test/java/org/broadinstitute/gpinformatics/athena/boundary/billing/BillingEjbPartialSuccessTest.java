@@ -19,6 +19,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quotes;
@@ -101,13 +102,13 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
 
         @Override
         public String registerNewWork(Quote quote,
-                                      org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem priceItem,
-                                      org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem itemIsReplacing,
+                                      QuotePriceItem quotePriceItem,
+                                      QuotePriceItem itemIsReplacing,
                                       Date reportedCompletionDate,
                                       double numWorkUnits,
                                       String callbackUrl, String callbackParameterName, String callbackParameterValue) {
             // Simulate failure only for ExEx Price Items.
-            if (NAME_EXOME_EXPRESS.equals(priceItem.getName())) {
+            if (NAME_EXOME_EXPRESS.equals(quotePriceItem.getName())) {
                 throw new RuntimeException("Intentional Work Registration Failure!");
             }
 

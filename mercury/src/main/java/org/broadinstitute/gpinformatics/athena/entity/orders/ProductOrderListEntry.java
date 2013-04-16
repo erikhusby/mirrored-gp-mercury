@@ -33,17 +33,8 @@ public class ProductOrderListEntry implements Serializable {
     private Long unbilledLedgerEntryCount = 0L;
 
     /**
-     * Version of the constructor called by the non-ledger aware first pass query
+     * Version of the constructor called by the non-ledger aware first pass query.
      *
-     * @param orderId
-     * @param title
-     * @param jiraTicketKey
-     * @param orderStatus
-     * @param productName
-     * @param productFamilyName
-     * @param researchProjectTitle
-     * @param ownerId
-     * @param placedDate
      */
     public ProductOrderListEntry(Long orderId, String title, String jiraTicketKey, ProductOrder.OrderStatus orderStatus,
                                  String productName, String productFamilyName, String researchProjectTitle,
@@ -61,13 +52,9 @@ public class ProductOrderListEntry implements Serializable {
     }
 
     /**
-     * Version of the constructor called by the ledger-aware second pass query.  These objects are essentially merged
+     * Version of the constructor called by the ledger-aware second pass query.  These objects are merged
      * into the objects from the first query.
      *
-     * @param orderId
-     * @param jiraTicketKey
-     * @param billingSessionId
-     * @param unbilledLedgerEntryCount
      */
     public ProductOrderListEntry(Long orderId, String jiraTicketKey, Long billingSessionId, Long unbilledLedgerEntryCount) {
         this.orderId = orderId;

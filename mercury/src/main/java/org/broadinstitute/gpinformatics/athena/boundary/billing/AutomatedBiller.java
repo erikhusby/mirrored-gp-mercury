@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.control.dao.work.WorkCompleteMessageDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.work.WorkCompleteMessage;
+import org.broadinstitute.gpinformatics.infrastructure.common.SessionContextUtility;
 
 import javax.ejb.Schedule;
 import javax.ejb.Singleton;
@@ -26,44 +27,54 @@ public class AutomatedBiller {
     private final WorkCompleteMessageDao workCompleteMessageDao;
     private final ProductOrderDao productOrderDao;
     private final ProductOrderEjb productOrderEjb;
+    private final SessionContextUtility sessionContextUtility;
 
     private final Log log = LogFactory.getLog(AutomatedBiller.class);
 
     @Inject
     AutomatedBiller(WorkCompleteMessageDao workCompleteMessageDao,
                     ProductOrderDao productOrderDao,
-                    ProductOrderEjb productOrderEjb) {
+                    ProductOrderEjb productOrderEjb,
+                    SessionContextUtility sessionContextUtility) {
         this.workCompleteMessageDao = workCompleteMessageDao;
         this.productOrderDao = productOrderDao;
         this.productOrderEjb = productOrderEjb;
+        this.sessionContextUtility = sessionContextUtility;
     }
 
     // EJBs require a no arg constructor.
     @SuppressWarnings("unused")
     public AutomatedBiller() {
-        this(null, null, null);
+        this(null, null, null, null);
     }
 
     // The schedule "minute = */15, hour = *" means every 15 minutes on the hour.
     @Schedule(minute = "*/15", hour = "*", persistent = false)
     public void processMessages() {
-        for (WorkCompleteMessage message : workCompleteMessageDao.getNewMessages()) {
-            try {
-                // For each message, find its product order and request auto billing of the provided sample.
-                ProductOrder order = productOrderDao.findByBusinessKey(message.getPdoName());
-                if (order != null) {
-                    productOrderEjb.autoBillSample(order, message.getAliquotId(),  message.getCompletedDate(),
-                            message.getData());
-                } else {
-                    log.error(MessageFormat.format("Invalid PDO key ''{0}'', no billing will occur.",
-                            message.getPdoName()));
+        // Use SessionContextUtility here because ProductOrderEjb depends on session scoped beans.
+        sessionContextUtility.executeInContext(new SessionContextUtility.Function() {
+            @Override
+            public void apply() {
+                for (WorkCompleteMessage message : workCompleteMessageDao.getNewMessages()) {
+                    try {
+                        // For each message, find its product order and request auto billing of the provided sample.
+                        ProductOrder order = productOrderDao.findByBusinessKey(message.getPdoName());
+                        if (order != null) {
+                            productOrderEjb.autoBillSample(order, message.getAliquotId(),  message.getCompletedDate(),
+                                    message.getData());
+                        } else {
+                            log.error(MessageFormat.format("Invalid PDO key ''{0}'', no billing will occur.",
+                                    message.getPdoName()));
+                        }
+                    } catch (Exception e) {
+                        log.error(MessageFormat.format(
+                                "Error while processing work complete message. PDO: {0}, Sample: {1}",
+                                message.getPdoName(), message.getAliquotId()), e);
+                    }
+                    // Once a message is processed, mark it to avoid processing it again.
+                    workCompleteMessageDao.markMessageProcessed(message);
                 }
-            } catch (Exception e) {
-                log.error(MessageFormat.format("Error while processing work complete message. PDO: {0}, Sample: {1}",
-                        message.getPdoName(), message.getAliquotId()), e);
             }
-            // Once a message is processed, mark it to avoid processing it again.
-            workCompleteMessageDao.markMessageProcessed(message);
-        }
+        });
     }
 }

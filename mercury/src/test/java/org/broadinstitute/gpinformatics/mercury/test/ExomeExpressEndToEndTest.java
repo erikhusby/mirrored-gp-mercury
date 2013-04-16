@@ -1,6 +1,11 @@
 package org.broadinstitute.gpinformatics.mercury.test;
 
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProducer;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
@@ -13,7 +18,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
-import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
@@ -25,10 +30,10 @@ import org.broadinstitute.gpinformatics.mercury.boundary.designation.Registratio
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.squid.SequelLibrary;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
-import org.broadinstitute.gpinformatics.mocks.EverythingYouAskForYouGetAndItsHuman;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bsp.BSPSampleFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
@@ -56,7 +61,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
+import org.broadinstitute.gpinformatics.mercury.test.builders.*;
 import org.broadinstitute.gpinformatics.mercury.test.entity.bsp.BSPSampleExportTest;
+import org.broadinstitute.gpinformatics.mocks.EverythingYouAskForYouGetAndItsHuman;
 import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -96,7 +103,14 @@ public class ExomeExpressEndToEndTest {
 
     @Test(groups = {DATABASE_FREE}, enabled = false)
     public void testAll() throws Exception {
-
+        List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>();
+        ProductOrder productOrder1 = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123", new Product(
+                "Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000, 20000, 100,
+                40, null, null, true, WorkflowName.EXOME_EXPRESS.getWorkflowName(), false), new ResearchProject(101L, "Test RP", "Test synopsis",
+                false));
+        String jiraTicketKey = "PD0-1";
+        productOrder1.setJiraTicketKey(jiraTicketKey);
+        productOrder1.setOrderStatus(ProductOrder.OrderStatus.Submitted);
         //        DirectedPass directedPass = null; //PassTestDataProducer.produceDirectedPass();
 
         // unconditionally forward all PASSes to Squid for storage
@@ -124,7 +138,7 @@ public class ExomeExpressEndToEndTest {
             //            String laneNumber = "3";
 
             // BasicProjectPlan
-            HashMap<LabEventName, PriceItem> billableEvents = new HashMap<LabEventName, PriceItem>();
+            HashMap<LabEventName, QuotePriceItem> billableEvents = new HashMap<LabEventName, QuotePriceItem>();
 
             //            BasicProjectPlan projectPlan = new BasicProjectPlan(
             //                    project,
@@ -143,12 +157,13 @@ public class ExomeExpressEndToEndTest {
             //            baitsCache.getBaitSetList().add(baitSet);
 
             // todo when R3_725 comes out, revert to looking this up via the pass
-            PriceItem priceItem = new PriceItem("Illumina Sequencing", "1", "Illumina HiSeq Run 44 Base", "15",
+            QuotePriceItem
+                    quotePriceItem = new QuotePriceItem("Illumina Sequencing", "1", "Illumina HiSeq Run 44 Base", "15",
                     "Bananas", "DNA Sequencing");
-            //            WorkflowDescription workflowDescription = new WorkflowDescription("HybridSelection", priceItem,
+            //            WorkflowDescription workflowDescription = new WorkflowDescription("HybridSelection", quotePriceItem,
             //                    CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
 
-            //            PassBackedProjectPlan projectPlan = new PassBackedProjectPlan(directedPass, bspDataFetcher, baitsCache, priceItem);
+            //            PassBackedProjectPlan projectPlan = new PassBackedProjectPlan(directedPass, bspDataFetcher, baitsCache, quotePriceItem);
             //projectPlan.getWorkflowDescription().initFromFile("HybridSelectionV2.xml");
             //            projectPlan.getWorkflowDescription().initFromFile("HybridSelectionVisualParadigm.xml");
 
@@ -302,18 +317,21 @@ public class ExomeExpressEndToEndTest {
             LabBatchDAO labBatchDAO = EasyMock.createNiceMock(LabBatchDAO.class);
             labBatchEJB.setLabBatchDao(labBatchDAO);
 
+            ReworkEjb reworkEjb = EasyMock.createNiceMock(ReworkEjb.class);
+
             EasyMock.expect(mockBucketDao.findByName(EasyMock.eq(LabEventType.SHEARING_BUCKET.getName())))
                     .andReturn(new LabEventTest.MockBucket(new WorkflowStepDef(LabEventType.SHEARING_BUCKET
                             .getName()), jiraTicket.getTicketName()));
-            BucketBean bucketBeanEJB = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB);
+            BucketBean bucketBeanEJB = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB
+            );
 
-            EasyMock.replay(mockBucketDao, mockJira, labBatchDAO, tubeDao);
+            EasyMock.replay(mockBucketDao, mockJira, labBatchDAO, tubeDao, reworkEjb);
 
 
             TemplateEngine templateEngine = new TemplateEngine();
             templateEngine.postConstruct();
             LabEventHandler labEventHandler = new LabEventHandler(new WorkflowLoader(),
-                    AthenaClientProducer.stubInstance(), bucketBeanEJB, mockBucketDao,
+                    AthenaClientProducer.stubInstance(), bucketBeanEJB, null,
                     new BSPUserList(BSPManagerFactoryProducer.stubInstance()));
             BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory();
             Map<String, TwoDBarcodedTube> mapBarcodeToTube = new HashMap<String, TwoDBarcodedTube>();
@@ -323,29 +341,29 @@ public class ExomeExpressEndToEndTest {
                         (TwoDBarcodedTube) stockToAliquotEntry.getValue());
             }
 
-            LabEventTest.PreFlightEntityBuilder preFlightEntityBuilder = new LabEventTest.PreFlightEntityBuilder(
-                    bettaLimsMessageTestFactory, labEventFactory, labEventHandler, mapBarcodeToTube);//.invoke();
+            PreFlightEntityBuilder preFlightEntityBuilder = new PreFlightEntityBuilder(
+                    bettaLimsMessageTestFactory, labEventFactory, labEventHandler, mapBarcodeToTube, "testPrefix");//.invoke();
 
-            LabEventTest.ShearingEntityBuilder shearingEntityBuilder = new LabEventTest.ShearingEntityBuilder(
+            ShearingEntityBuilder shearingEntityBuilder = new ShearingEntityBuilder(
                     mapBarcodeToTube, preFlightEntityBuilder.getTubeFormation(), bettaLimsMessageTestFactory, labEventFactory,
-                    labEventHandler, preFlightEntityBuilder.getRackBarcode()).invoke();
+                    labEventHandler, preFlightEntityBuilder.getRackBarcode(), "testPrefix").invoke();
 
-            LabEventTest.LibraryConstructionEntityBuilder libraryConstructionEntityBuilder =
-                    new LabEventTest.LibraryConstructionEntityBuilder(bettaLimsMessageTestFactory, labEventFactory,
+            LibraryConstructionEntityBuilder libraryConstructionEntityBuilder =
+                    new LibraryConstructionEntityBuilder(bettaLimsMessageTestFactory, labEventFactory,
                             labEventHandler,
                             shearingEntityBuilder.getShearingCleanupPlate(),
                             shearingEntityBuilder.getShearCleanPlateBarcode(),
                             shearingEntityBuilder.getShearingPlate(),
-                            mapBarcodeToTube.size()).invoke();
+                            mapBarcodeToTube.size(), "testPrefix").invoke();
 
-            LabEventTest.HybridSelectionEntityBuilder hybridSelectionEntityBuilder =
-                    new LabEventTest.HybridSelectionEntityBuilder(bettaLimsMessageTestFactory, labEventFactory,
+            HybridSelectionEntityBuilder hybridSelectionEntityBuilder =
+                    new HybridSelectionEntityBuilder(bettaLimsMessageTestFactory, labEventFactory,
                             labEventHandler,
                             libraryConstructionEntityBuilder.getPondRegRack(),
                             libraryConstructionEntityBuilder
                                     .getPondRegRackBarcode(),
                             libraryConstructionEntityBuilder
-                                    .getPondRegTubeBarcodes()).invoke();
+                                    .getPondRegTubeBarcodes(), "testPrefix").invoke();
 
             TubeFormation pondRack = libraryConstructionEntityBuilder.getPondRegRack();
             Assert.assertEquals(pondRack.getSampleInstances().size(), 2);
@@ -381,13 +399,13 @@ public class ExomeExpressEndToEndTest {
             //
             //            }
 
-            LabEventTest.QtpEntityBuilder qtpEntityBuilder = new LabEventTest.QtpEntityBuilder(
+            QtpEntityBuilder qtpEntityBuilder = new QtpEntityBuilder(
                     bettaLimsMessageTestFactory, labEventFactory, labEventHandler,
                     Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchRack()),
                     Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchRackBarcode()),
                     Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchBarcodes()),
                     hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(),
-                    WorkflowName.HYBRID_SELECTION);
+                    WorkflowName.HYBRID_SELECTION, "testPrefix");
             qtpEntityBuilder.invoke();
 
             TubeFormation poolingResult = qtpEntityBuilder.getDenatureRack();
