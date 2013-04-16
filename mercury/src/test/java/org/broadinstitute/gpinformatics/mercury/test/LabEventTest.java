@@ -42,6 +42,7 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowValidator;
 import org.broadinstitute.gpinformatics.mercury.control.zims.ZimsIlluminaRunFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -912,8 +913,8 @@ public class LabEventTest {
     }
 
     static void validateWorkflow(String nextEventTypeName, List<LabVessel> labVessels) {
-        BettalimsMessageResource bettalimsMessageResource = new BettalimsMessageResource();
-        bettalimsMessageResource.setAthenaClientService(new AthenaClientService() {
+        WorkflowValidator workflowValidator = new WorkflowValidator();
+        workflowValidator.setAthenaClientService(new AthenaClientService() {
             @Override
             public ProductOrder retrieveProductOrderDetails(String poBusinessKey) {
                 return mapKeyToProductOrder.get(poBusinessKey);
@@ -924,7 +925,7 @@ public class LabEventTest {
                 return null;
             }
         });
-        bettalimsMessageResource.validateWorkflow(labVessels, nextEventTypeName);
+        workflowValidator.validateWorkflow(labVessels, nextEventTypeName);
         WorkflowLoader workflowLoader = new WorkflowLoader();
         WorkflowConfig workflowConfig = workflowLoader.load();
         for (LabVessel labVessel : labVessels) {
