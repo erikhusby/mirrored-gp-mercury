@@ -137,6 +137,7 @@ public class BucketBeanTest extends ContainerTest {
         productOrderSamples.add(new ProductOrderSample(bspStock));
         bspAliquot1 = new TwoDBarcodedTube(twoDBarcode1);
         bspAliquot1.addSample(new MercurySample(bspStock));
+        bspAliquot1.addBucketEntry(new BucketEntry(bspAliquot1, poBusinessKey1));
         mapBarcodeToTube.put(twoDBarcode1, bspAliquot1);
 
 
@@ -152,6 +153,7 @@ public class BucketBeanTest extends ContainerTest {
         productOrderSamples.add(new ProductOrderSample(bspStock));
         bspAliquot2 = new TwoDBarcodedTube(twoDBarcode2);
         bspAliquot2.addSample(new MercurySample(bspStock));
+        bspAliquot2.addBucketEntry(new BucketEntry(bspAliquot2, poBusinessKey2));
         mapBarcodeToTube.put(twoDBarcode2, bspAliquot2);
 
 
@@ -167,6 +169,7 @@ public class BucketBeanTest extends ContainerTest {
         productOrderSamples.add(new ProductOrderSample(bspStock));
         bspAliquot3 = new TwoDBarcodedTube(twoDBarcode3);
         bspAliquot3.addSample(new MercurySample(bspStock));
+        bspAliquot3.addBucketEntry(new BucketEntry(bspAliquot3, poBusinessKey3));
         mapBarcodeToTube.put(twoDBarcode3, bspAliquot3);
 
 
@@ -182,6 +185,7 @@ public class BucketBeanTest extends ContainerTest {
         productOrderSamples.add(new ProductOrderSample(bspStock));
         bspAliquot4 = new TwoDBarcodedTube(twoDBarcode4);
         bspAliquot4.addSample(new MercurySample(bspStock));
+        bspAliquot4.addBucketEntry(new BucketEntry(bspAliquot4, poBusinessKey3));
         mapBarcodeToTube.put(twoDBarcode4, bspAliquot4);
 
 
