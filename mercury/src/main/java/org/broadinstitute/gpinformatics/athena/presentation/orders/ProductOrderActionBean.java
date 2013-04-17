@@ -426,7 +426,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         // If there are errors, will reload the page, so need to fetch the list.
         if (hasErrors()) {
-            listInit();
+            setupListDisplay();
         }
     }
 
@@ -725,12 +725,24 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent("downloadBillingTracker")
     public Resolution downloadBillingTracker() throws Exception {
         Resolution resolution =
-            ProductOrderActionBean.getTrackerForOrders(this, selectedProductOrders, priceItemDao, bspUserList, priceListCache);
+            ProductOrderActionBean.getTrackerForOrders(
+                this, selectedProductOrders, priceItemDao, bspUserList, priceListCache);
         if (hasErrors()) {
-            // Need to regenerate the list so it's displayed along with the errors.
-            listInit();
+            setupListDisplay();
+
         }
         return resolution;
+    }
+
+    /**
+     * This method makes sure to read the stored preference AND then do the appropraite find for the list page. This
+     * is because we need to regenerate the list so it's displayed along with the errors.
+     *
+     * @throws Exception Any errors.
+     */
+    private void setupListDisplay() throws Exception {
+        setupSearchCriteria();
+        listInit();
     }
 
     @HandlesEvent("startBilling")
