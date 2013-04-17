@@ -236,6 +236,15 @@ public interface TransferTraverserCriteria {
 
             return nearestSet;
         }
+
+        public Collection<LabBatch> getAllLabBatches() {
+            Set<LabBatch> allBatches = new HashSet<LabBatch>();
+            for (Collection<LabBatch> collection : labBatchesAtHopCount.values()) {
+                allBatches.addAll(collection);
+            }
+            return allBatches;
+        }
+
     }
 
     /**

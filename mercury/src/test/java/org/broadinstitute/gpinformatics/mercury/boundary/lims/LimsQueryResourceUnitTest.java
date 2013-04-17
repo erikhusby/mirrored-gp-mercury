@@ -2,18 +2,17 @@ package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
 import edu.mit.broad.prodinfo.thrift.lims.FlowcellDesignation;
 import edu.mit.broad.prodinfo.thrift.lims.TZIMSException;
-import org.testng.Assert;
 import org.apache.thrift.TException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
+import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.control.lims.LimsQueryResourceResponseFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
-import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.FlowcellDesignationType;
-import org.easymock.EasyMock;
+import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 

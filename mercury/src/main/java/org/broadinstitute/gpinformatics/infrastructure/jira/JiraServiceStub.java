@@ -30,7 +30,8 @@ import java.util.*;
 @Alternative
 public class JiraServiceStub implements JiraService {
 
-    public static final String CREATED_ISSUE_SUFFIX = "-123";
+    /** Controls the suffix of the new batch name e.g. "LCSET-123" */
+    private static String createdIssueSuffix = "-123";
 
     private Log logger = LogFactory.getLog(JiraServiceStub.class);
 
@@ -38,7 +39,7 @@ public class JiraServiceStub implements JiraService {
     public JiraIssue createIssue(String projectPrefix, String reporter, CreateFields.IssueType issueType,
                                  String summary, String description, Collection<CustomField> customFields) throws
             IOException {
-        return new JiraIssue(projectPrefix + CREATED_ISSUE_SUFFIX, this);
+        return new JiraIssue(projectPrefix + createdIssueSuffix, this);
     }
 
     @Override
@@ -179,5 +180,14 @@ public class JiraServiceStub implements JiraService {
     @Override
     public String getResolution(String jiraIssueKey) throws IOException {
         return "";
+    }
+
+    public static void setCreatedIssueSuffix(String createdIssueSuffix) {
+        JiraServiceStub.createdIssueSuffix = createdIssueSuffix;
+    }
+
+    public static String getCreatedIssueSuffix() {
+        return createdIssueSuffix;
+
     }
 }

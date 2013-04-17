@@ -550,13 +550,16 @@ public abstract class LabVessel implements Serializable {
 
         private final Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
         private final Set<Reagent> reagents = new HashSet<Reagent>();
-        private LabBatch lastEncounteredLabBatch = null;
+        private LabBatch unambiguousLabBatch = null;
+        private final Set<LabBatch> labBatches = new HashSet<LabBatch>();
 
         void add(TraversalResults traversalResults) {
             sampleInstances.addAll(traversalResults.getSampleInstances());
-            // Update here since last encountered lab batch may have been defined already, and won't be encountered again.
+            // Update here since last encountered lab batch may have been defined earlier in the traversal, and won't
+            // be encountered again.
             updateSampleInstanceLabBatch();
             reagents.addAll(traversalResults.getReagents());
+            labBatches.addAll(traversalResults.getLabBatches());
         }
 
         public Set<SampleInstance> getSampleInstances() {
@@ -565,6 +568,11 @@ public abstract class LabVessel implements Serializable {
 
         public Set<Reagent> getReagents() {
             return reagents;
+        }
+
+        /** All lab batches encountered in the traversal. */
+        public Set<LabBatch> getLabBatches() {
+            return labBatches;
         }
 
         public void add(SampleInstance sampleInstance) {
@@ -576,23 +584,21 @@ public abstract class LabVessel implements Serializable {
             reagents.add(reagent);
         }
 
+        // todo For multiple batches, use heuristic on vessel & container to find the unambiguous batch.
         public void add(Collection<LabBatch> labBatches) {
-            // Keeps only the last encountered lab batch.  Sample instances may or may not have been defined
-            // by this point of traversal, and if so, sets their lab batch.
-            //
-            // todo fix this oversimplification when implementation of workflow/event/batch matures.
-            // Expects that all samples in the vessel have the same batch when the vessel is not a container, i.e.
-            // there is only one lab batch for the vessel.
+            this.labBatches.addAll(labBatches);
             if (labBatches != null && labBatches.size() == 1) {
-                lastEncounteredLabBatch = labBatches.iterator().next();
-                updateSampleInstanceLabBatch();
+                unambiguousLabBatch = labBatches.iterator().next();
             }
+            updateSampleInstanceLabBatch();
         }
 
         public void updateSampleInstanceLabBatch() {
-            if (lastEncounteredLabBatch != null) {
-                for (SampleInstance si : sampleInstances) {
-                    si.setLabBatch(lastEncounteredLabBatch);
+            for (SampleInstance si : sampleInstances) {
+                si.setAllLabBatches(labBatches);
+                // Only sets the sample instance batch when it is unambiguous.
+                if (unambiguousLabBatch != null) {
+                    si.setLabBatch(unambiguousLabBatch);
                 }
             }
         }
@@ -963,6 +969,62 @@ public abstract class LabVessel implements Serializable {
 
             evaluateCriteria(nearestProductOrderCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
             return nearestProductOrderCriteria.getNearestProductOrders();
+        }
+    }
+
+    /**
+     * Returns the lab batch for a vessel based on the most frequently occurring lab batch in the given container.
+     *
+     * @param container contains the vessel
+     * @return the batch
+     */
+    public LabBatch getPluralityLabBatch(VesselContainer container) {
+        Collection<LabBatch> vesselBatches = getAllLabBatches();
+        for (LabBatchComposition labBatchComposition : (List<LabBatchComposition>)container.getLabBatchCompositions()) {
+            if (vesselBatches.contains(labBatchComposition.getLabBatch())) {
+                return labBatchComposition.getLabBatch();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Finds all the lab batches represented in this container, and determines how many vessels in this
+     * container belong to each of the batches.
+     *
+     * @return list of lab batches sorted by vessel count (descending).
+     */
+    public List<LabBatchComposition> getLabBatchCompositions() {
+
+        List<SampleInstance> sampleInstances = new ArrayList<SampleInstance>();
+        sampleInstances.addAll(getSampleInstances(SampleType.ANY, null));
+
+        Map<LabBatch, LabBatchComposition> batchMap = new HashMap<LabBatch, LabBatchComposition>();
+        for (SampleInstance sampleInstance : sampleInstances) {
+            for (LabBatch labBatch : sampleInstance.getAllLabBatches()) {
+                LabBatchComposition batchComposition = batchMap.get(labBatch);
+                if (batchComposition == null) {
+                    batchMap.put(labBatch, new LabBatchComposition(labBatch, 1, sampleInstances.size()));
+                } else {
+                    batchComposition.addCount();
+                }
+            }
+        }
+
+        List<LabBatchComposition> batchList = new ArrayList<LabBatchComposition>(batchMap.values());
+        Collections.sort(batchList, LabBatchComposition.HIGHEST_COUNT_FIRST);
+
+        return batchList;
+    }
+
+    public Collection<LabBatch> getAllLabBatches() {
+        if (getContainerRole() != null) {
+            return getContainerRole().getAllLabBatches();
+        } else {
+            TransferTraverserCriteria.NearestLabBatchFinder batchCriteria =
+                    new TransferTraverserCriteria.NearestLabBatchFinder(null);
+            evaluateCriteria(batchCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+            return batchCriteria.getAllLabBatches();
         }
     }
 

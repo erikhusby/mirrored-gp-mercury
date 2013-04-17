@@ -1,7 +1,7 @@
 <#-- @ftlvariable name="linkToPlastic" type="java.lang.String" -->
 <#-- @ftlvariable name="stationEvent" type="org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType" -->
 <#-- @ftlvariable name="bspUser" type="org.broadinstitute.bsp.client.users.BspUser" -->
-<#-- @ftlvariable name="validationErrors" type="java.util.List<org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettalimsMessageResource.WorkflowValidationError>" -->
+<#-- @ftlvariable name="validationErrors" type="java.util.List<org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowValidator.WorkflowValidationError>" -->
 <html xmlns="http://www.w3.org/1999/html">
 <body>
 <p>

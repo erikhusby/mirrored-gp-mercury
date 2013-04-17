@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.athena.entity.billing.fixup;
+package org.broadinstitute.gpinformatics.athena.control.dao.billing;
 
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession_;

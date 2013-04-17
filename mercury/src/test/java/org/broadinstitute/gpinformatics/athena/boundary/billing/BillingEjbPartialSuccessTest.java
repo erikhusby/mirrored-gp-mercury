@@ -9,8 +9,8 @@ import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderTestingDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -53,7 +53,7 @@ import static org.hamcrest.Matchers.*;
 public class BillingEjbPartialSuccessTest extends Arquillian {
 
     @Inject
-    private ProductOrderDao productOrderDao;
+    private ProductOrderTestingDao productOrderTestingDao;
 
     @Inject
     private PriceItemDao priceItemDao;
@@ -125,21 +125,23 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
 
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWarWithAlternatives(PartiallySuccessfulQuoteServiceStub.class);
+        return DeploymentBuilder.buildMercuryWarWithAlternatives(
+                org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST,
+                PartiallySuccessfulQuoteServiceStub.class);
     }
 
     private ProductOrder getExExProductOrder() {
         // We want a ProductOrder with multiple ProductOrderSamples for a Product with a Primary and at least one
-        // Optional PriceItem.  Specifically, this test requires there to be one ExEx ProductOrder with more than one
-        // PDO Sample.
+        // Optional PriceItem.  Specifically, this test requires there to be one placed ExEx ProductOrder with more
+        // than one PDO Sample.
         Collection<ProductOrder> productOrderList = Collections2.filter(
-                productOrderDao.findByProductName(NAME_EXOME_EXPRESS),
+                productOrderTestingDao.findByProductName(NAME_EXOME_EXPRESS),
                 new Predicate<ProductOrder>() {
                     @Override
                     public boolean apply(ProductOrder productOrder) {
                         @SuppressWarnings("ConstantConditions")
                         List<ProductOrderSample> samples = productOrder.getSamples();
-                        return samples.size() > 1;
+                        return samples.size() > 1 && productOrder.getJiraTicketKey() != null;
                     }
                 });
 

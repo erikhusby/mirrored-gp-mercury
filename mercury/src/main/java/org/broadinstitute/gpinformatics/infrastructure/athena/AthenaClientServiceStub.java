@@ -20,17 +20,19 @@ public class AthenaClientServiceStub implements AthenaClientService {
     private static final Long   TEST_CREATOR = 1111L;
     public static final  String rpSynopsis   = "Test synopsis";
     public static final String otherRpSynopsis = "To Study Stuff";
+    private static Map<String,ProductOrder> productOrderByBusinessKeyMap = new HashMap<String, ProductOrder>();
 
     @Override
-    public ProductOrder retrieveProductOrderDetails(String poBusinessKey) {
-
-        Map<String, ProductOrder> productOrderByBusinessKeyMap = ProductOrderTestFactory.buildTestProductOrderMap();
+    public synchronized ProductOrder retrieveProductOrderDetails(String poBusinessKey) {
+        if(productOrderByBusinessKeyMap.size() == 0){
+            productOrderByBusinessKeyMap = ProductOrderTestFactory.buildTestProductOrderMap();
+        }
 
         ProductOrder testOrder1 = productOrderByBusinessKeyMap.get(poBusinessKey);
         if (testOrder1 == null) {
             testOrder1 = ProductOrderTestFactory.createDummyProductOrder(poBusinessKey);
+            productOrderByBusinessKeyMap.put(poBusinessKey, testOrder1);
         }
-        productOrderByBusinessKeyMap.put(poBusinessKey, testOrder1);
 
         if (poBusinessKey == null) {
             testOrder1.getProduct().setWorkflowName(null);
@@ -49,6 +51,10 @@ public class AthenaClientServiceStub implements AthenaClientService {
                     new ArrayList<ProductOrderSample>(Collections.singletonList(productOrderSample)));
         }
         return mapSampleIdToPdoSample;
+    }
+
+    public static synchronized void addProductOrder(ProductOrder productOrder) {
+        productOrderByBusinessKeyMap.put(productOrder.getBusinessKey(), productOrder);
     }
 
 }
