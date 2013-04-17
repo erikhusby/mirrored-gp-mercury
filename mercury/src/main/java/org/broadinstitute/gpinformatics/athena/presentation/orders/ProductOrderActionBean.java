@@ -954,6 +954,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
         if (!selectedProductOrderSamples.isEmpty()) {
             productOrderEjb.abandonSamples(editOrder.getJiraTicketKey(), selectedProductOrderSamples);
+            addMessage("Abandoned samples: {0}.",
+                    StringUtils.join(ProductOrderSample.getSampleNames(selectedProductOrderSamples), ","));
             updateOrderStatus();
         }
         return createViewResolution();
