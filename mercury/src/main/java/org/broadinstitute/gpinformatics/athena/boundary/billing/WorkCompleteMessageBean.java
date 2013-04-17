@@ -83,7 +83,7 @@ public class WorkCompleteMessageBean implements MessageListener {
 
                     workCompleteMessageDao.persist(workComplete);
                 } catch (JMSException jmse) {
-                    throw new RuntimeException("Got a JMS exception processing work complete message: ", jmse);
+                    throw new RuntimeException("Got a JMS exception processing work complete message", jmse);
                 }
             }
         });
