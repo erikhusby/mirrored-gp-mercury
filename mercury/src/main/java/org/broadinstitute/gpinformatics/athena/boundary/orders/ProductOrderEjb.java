@@ -45,9 +45,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.OrderStatus.Abandoned;
-import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample.DeliveryStatus.ABANDONED;
-import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample.DeliveryStatus.NOT_STARTED;
+import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.OrderStatus;
+import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample.DeliveryStatus;
 
 @Stateful
 @RequestScoped
@@ -123,7 +122,7 @@ public class ProductOrderEjb {
 
     private static void setStatus(ProductOrder productOrder) {
         // DRAFT orders not yet supported; force state of new PDOs to Submitted.
-        productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+        productOrder.setOrderStatus(OrderStatus.Submitted);
     }
 
     /**
@@ -411,7 +410,7 @@ public class ProductOrderEjb {
         @Nonnull
         private final List<ProductOrderSample> samples;
 
-        protected SampleDeliveryStatusChangeException(ProductOrderSample.DeliveryStatus targetStatus,
+        protected SampleDeliveryStatusChangeException(DeliveryStatus targetStatus,
                                                       @Nonnull List<ProductOrderSample> samples) {
             super(createErrorMessage(targetStatus, samples));
             this.samples = samples;
@@ -421,7 +420,7 @@ public class ProductOrderEjb {
             return samples;
         }
 
-        protected static String createErrorMessage(ProductOrderSample.DeliveryStatus status,
+        protected static String createErrorMessage(DeliveryStatus status,
                                                    List<ProductOrderSample> samples) {
             List<String> messages = new ArrayList<String>();
 
@@ -467,7 +466,7 @@ public class ProductOrderEjb {
      * Transition the delivery statuses of the specified samples in the DB.
      *
      * @param order PDO containing the samples in question.
-     * @param acceptableStartingStatuses A Set of {@link org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample.DeliveryStatus}es
+     * @param acceptableStartingStatuses A Set of {@link DeliveryStatus}es
      *                                   in which samples are allowed to be before undergoing this transition.
      * @param targetStatus The status into which the samples will be transitioned.
      * @param samples The samples in question.
@@ -475,7 +474,7 @@ public class ProductOrderEjb {
      */
     private void transitionSamples(ProductOrder order,
                                    Set<ProductOrderSample.DeliveryStatus> acceptableStartingStatuses,
-                                   ProductOrderSample.DeliveryStatus targetStatus,
+                                   DeliveryStatus targetStatus,
                                    Collection<ProductOrderSample> samples) throws SampleDeliveryStatusChangeException {
 
         Set<ProductOrderSample> transitionSamples = new HashSet<ProductOrderSample>(samples);
@@ -518,7 +517,7 @@ public class ProductOrderEjb {
      */
     private void transitionSamplesAndUpdateTicket(String jiraTicketKey,
                                                   Set<ProductOrderSample.DeliveryStatus> acceptableStartingStatuses,
-                                                  ProductOrderSample.DeliveryStatus targetStatus,
+                                                  DeliveryStatus targetStatus,
                                                   Collection<ProductOrderSample> samples)
             throws NoSuchPDOException, SampleDeliveryStatusChangeException, IOException {
 
@@ -666,7 +665,7 @@ public class ProductOrderEjb {
             Object statusValue = issue.getField(ProductOrder.JiraField.STATUS.getFieldName());
             JiraStatus status = JiraStatus.fromString(((Map<?, ?>)statusValue).get("name").toString());
             JiraTransition transition;
-            if (order.getOrderStatus() == ProductOrder.OrderStatus.Completed) {
+            if (order.getOrderStatus() == OrderStatus.Completed) {
                 operation = "Completed";
                 transition = status.toClosed;
             } else {
@@ -723,9 +722,9 @@ public class ProductOrderEjb {
 
         ProductOrder productOrder = findProductOrder(jiraTicketKey);
 
-        productOrder.setOrderStatus(Abandoned);
+        productOrder.setOrderStatus(OrderStatus.Abandoned);
 
-        transitionSamples(productOrder, EnumSet.of(ABANDONED, NOT_STARTED), ABANDONED, productOrder.getSamples());
+        transitionSamples(productOrder, EnumSet.of(DeliveryStatus.ABANDONED, DeliveryStatus.NOT_STARTED), DeliveryStatus.ABANDONED, productOrder.getSamples());
 
         // Currently not setting abandon comments into PDO comments, that seems too intrusive.  We will record the comments
         // with the JIRA ticket.
@@ -743,6 +742,6 @@ public class ProductOrderEjb {
      */
     public void abandonSamples(@Nonnull String jiraTicketKey, Collection<ProductOrderSample> samples)
             throws IOException, SampleDeliveryStatusChangeException, NoSuchPDOException {
-        transitionSamplesAndUpdateTicket(jiraTicketKey, EnumSet.of(ABANDONED, NOT_STARTED), ABANDONED, samples);
+        transitionSamplesAndUpdateTicket(jiraTicketKey, EnumSet.of(DeliveryStatus.ABANDONED, DeliveryStatus.NOT_STARTED), DeliveryStatus.ABANDONED, samples);
     }
 }
