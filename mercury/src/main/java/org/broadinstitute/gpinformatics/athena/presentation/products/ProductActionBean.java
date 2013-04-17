@@ -100,6 +100,17 @@ public class ProductActionBean extends CoreActionBean {
         }
     }
 
+    @Before(stages = LifecycleStage.CustomValidation, on = SAVE_ACTION)
+    public void initAfterValidation() {
+        // The productFamilyId is required, so if the original is null or the id is different, set the product to the
+        // product family that is represented by the new id.
+        // We set product family here because we need it to validate the risk criteria.
+        if ((editProduct.getProductFamily() == null) ||
+            productFamilyId.equals(editProduct.getProductFamily().getProductFamilyId())) {
+            editProduct.setProductFamily(productFamilyDao.find(productFamilyId));
+        }
+    }
+
     /**
      * Need to get this for setting up create and edit and for any errors on save.
      */
@@ -155,13 +166,6 @@ public class ProductActionBean extends CoreActionBean {
             addValidationError("token-input-primaryPriceItem", "Primary price item is required");
         }
 
-        // The productFamilyId is required, so if the original is null or the id is different, set the product to the
-        // product family that is represented by the new id.
-        // We set product family here because we need it to validate the risk criteria.
-        if ((editProduct.getProductFamily() == null) ||
-            productFamilyId.equals(editProduct.getProductFamily().getProductFamilyId())) {
-            editProduct.setProductFamily(productFamilyDao.find(productFamilyId));
-        }
         checkValidCriteria();
     }
 
@@ -171,12 +175,14 @@ public class ProductActionBean extends CoreActionBean {
         for (String criterion : criteria) {
             RiskCriterion.RiskCriteriaType type = RiskCriterion.RiskCriteriaType.findByLabel(criterion);
             if (type.getOperatorType() == Operator.OperatorType.NUMERIC) {
-                try {
-                    Double.parseDouble(values[matchingValueIndex]);
-                } catch (NumberFormatException e) {
-                    addGlobalValidationError("Not a valid number for risk calculation: ''{2}''", values[matchingValueIndex]);
-                } catch (NullPointerException e) {
+                if (values == null || matchingValueIndex >= values.length || values[matchingValueIndex] == null) {
                     addGlobalValidationError("Need to provide a value for risk criterion ''{2}''", criterion);
+                } else {
+                    try {
+                        Double.parseDouble(values[matchingValueIndex]);
+                    } catch (NumberFormatException e) {
+                        addGlobalValidationError("Not a valid number for risk calculation: ''{2}''", values[matchingValueIndex]);
+                    }
                 }
             }
 

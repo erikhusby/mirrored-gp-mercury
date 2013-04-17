@@ -43,7 +43,15 @@ import javax.persistence.Transient;
 import java.io.IOException;
 import java.io.Serializable;
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Entity
 @Audited
@@ -223,7 +231,7 @@ public class ProductOrder implements Serializable {
             countMap.clear();
         }
 
-        private void increment(String key) {
+        private void increment(@Nonnull String key) {
             if (!StringUtils.isEmpty(key)) {
                 Integer count = countMap.get(key);
                 if (count == null) {
@@ -233,18 +241,28 @@ public class ProductOrder implements Serializable {
             }
         }
 
-        private int get(String key) {
+        private int get(@Nonnull String key) {
             Integer count = countMap.get(key);
             return count == null ? 0 : count;
         }
 
-        private void output(List<String> output, String label, int compareCount) {
+        private void output(List<String> output, @Nonnull String label, int compareCount) {
             for (Map.Entry<String, Integer> entry : countMap.entrySet()) {
-                // Preformat the string so it can add the format pattern for the count value.
-                String message = label + " ''" + entry.getKey() + "'': {0}";
-                sampleCounts.formatSummaryNumber(output, message, entry.getValue(), compareCount);
+                output.add(MessageFormat.format("{0} ''{1}'': {2}", label, entry.getKey(),
+                        formatCountTotal(entry.getValue(), compareCount)));
+
             }
         }
+    }
+
+    private static Object formatCountTotal(int count, int compareCount) {
+        if (count == 0) {
+            return "None";
+        }
+        if (count == compareCount) {
+            return "All";
+        }
+        return count;
     }
 
     /**
@@ -352,13 +370,7 @@ public class ProductOrder implements Serializable {
          * @param compareCount The number to compare to
          */
         private void formatSummaryNumber(List<String> output, String message, int count, int compareCount) {
-            if (count == 0) {
-                output.add(MessageFormat.format(message, "None"));
-            } else if (count == compareCount) {
-                output.add(MessageFormat.format(message, "All"));
-            } else {
-                output.add(MessageFormat.format(message, count));
-            }
+            output.add(MessageFormat.format(message, formatCountTotal(count, compareCount)));
         }
 
         public List<String> sampleSummary() {
@@ -399,7 +411,8 @@ public class ProductOrder implements Serializable {
             }
 
             if (hasSampleKitUploadRackscanMismatch != 0) {
-                formatSummaryNumber(output, "<div class='text-error'>Rackscan Mismatch: {0}</div>", hasSampleKitUploadRackscanMismatch, totalSampleCount);
+                formatSummaryNumber(output, "<div class=\"text-error\">Rackscan Mismatch: {0}</div>",
+                        hasSampleKitUploadRackscanMismatch, totalSampleCount);
             }
 
             return output;
