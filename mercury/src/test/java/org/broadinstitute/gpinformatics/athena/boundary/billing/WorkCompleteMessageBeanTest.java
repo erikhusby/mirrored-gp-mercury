@@ -108,7 +108,7 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
      * This test doesn't actually connect to the JMS queue.  The test hands the message directly
      * to the MDB handler method.
      */
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
     public void testOnMessage() throws Exception {
         deliverMessage();
         List<WorkCompleteMessage> messages = workCompleteMessageDao.getNewMessages();
