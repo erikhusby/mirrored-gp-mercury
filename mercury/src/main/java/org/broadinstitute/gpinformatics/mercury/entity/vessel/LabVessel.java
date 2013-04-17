@@ -534,7 +534,7 @@ public abstract class LabVessel implements Serializable {
         private final Set<Reagent> reagents = new HashSet<Reagent>();
         private LabBatch unambiguousLabBatch = null;
         private final Set<LabBatch> labBatches = new HashSet<LabBatch>();
-        // todo jmt bucketEntries
+        private final Set<BucketEntry> bucketEntries = new HashSet<BucketEntry>();
 
         void add(TraversalResults traversalResults) {
             sampleInstances.addAll(traversalResults.getSampleInstances());
@@ -574,6 +574,18 @@ public abstract class LabVessel implements Serializable {
                 unambiguousLabBatch = labBatches.iterator().next();
             }
             updateSampleInstanceLabBatch();
+        }
+
+        public void add(Set<BucketEntry> bucketEntries) {
+            this.bucketEntries.addAll(bucketEntries);
+            if(bucketEntries.size() > 1) {
+                throw new RuntimeException("Unexpected multiple buckets");
+            }
+            if (bucketEntries.size() == 1) {
+                for (SampleInstance sampleInstance : sampleInstances) {
+                    sampleInstance.setProductOrderKey(bucketEntries.iterator().next().getPoBusinessKey());
+                }
+            }
         }
 
         public void updateSampleInstanceLabBatch() {
@@ -638,7 +650,8 @@ public abstract class LabVessel implements Serializable {
                 }
             }
         }
-        bucketEntries
+        traversalResults.add(bucketEntries);
+
         for (Reagent reagent : getReagentContents()) {
             traversalResults.add(reagent);
         }

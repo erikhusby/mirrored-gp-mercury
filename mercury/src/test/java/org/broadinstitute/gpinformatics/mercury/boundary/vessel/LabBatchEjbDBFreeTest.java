@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.testng.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProducer;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
@@ -64,6 +65,7 @@ public class LabBatchEjbDBFreeTest {
             String bspStock = sampleName;
             TwoDBarcodedTube bspAliquot = new TwoDBarcodedTube(barcode);
             bspAliquot.addSample(new MercurySample(bspStock));
+            bspAliquot.addBucketEntry(new BucketEntry(bspAliquot, STUB_TEST_PDO_KEY));
             mapBarcodeToTube.put(barcode, bspAliquot);
             sampleIndex++;
         }

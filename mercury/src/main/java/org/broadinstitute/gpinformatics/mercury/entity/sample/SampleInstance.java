@@ -92,12 +92,6 @@ import java.util.List;
  * */
 public class SampleInstance {
 
-    private String productOrderKey;
-
-    public String getProductOrderKey() {
-        return productOrderKey;
-    }
-
     public enum GSP_CONTROL_ROLE {
         NEGATIVE,POSITIVE,NONE
     }
@@ -107,8 +101,6 @@ public class SampleInstance {
     private MercurySample sample;
 
     private GSP_CONTROL_ROLE controlRole;
-
-//    private Collection<ProjectPlan> projectPlans = new HashSet<ProjectPlan>();
 
     private MolecularState molecularState;
 
@@ -120,13 +112,13 @@ public class SampleInstance {
     // All lab batches found in ancestry.
     private Collection<LabBatch> allLabBatches;
 
+    private String productOrderKey;
+
     public SampleInstance(MercurySample sample,
             GSP_CONTROL_ROLE controlRole,
-//            ProjectPlan projectPlan,
             MolecularState molecularState) {
         this.sample = sample;
         this.controlRole = controlRole;
-//        projectPlans.add(projectPlan);
         this.molecularState = molecularState;
     }
 
@@ -265,5 +257,11 @@ public class SampleInstance {
         this.allLabBatches = allLabBatches;
     }
 
+    public String getProductOrderKey() {
+        return productOrderKey;
+    }
 
+    public void setProductOrderKey(String productOrderKey) {
+        this.productOrderKey = productOrderKey;
+    }
 }

@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequenci
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -74,6 +75,9 @@ public class SolexaRunRoutingTest extends BaseEventTest{
         AthenaClientServiceStub.addProductOrder(productOrder);
 
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder);
+        for (TwoDBarcodedTube twoDBarcodedTube : mapBarcodeToTube.values()) {
+            twoDBarcodedTube.addBucketEntry(new BucketEntry(twoDBarcodedTube, productOrder.getBusinessKey()));
+        }
 
         LabBatch workflowBatch = new LabBatch("Whole Genome Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
