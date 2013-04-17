@@ -160,6 +160,10 @@ public class BucketViewActionBean extends CoreActionBean {
     }
 
     public Resolution viewBucket() {
+        if(reworkEntries == null) {
+            reworkEntries = new HashMap<String, LabVessel>();
+        }
+
         if (selectedBucket != null) {
             Bucket bucket = bucketDao.findByName(selectedBucket);
             if (bucket != null) {
