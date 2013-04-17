@@ -172,7 +172,7 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
      * entity to be persisted.
      */
     public void deliverMessage() throws JMSException {
-        WorkCompleteMessageBean workCompleteMessageBean = new WorkCompleteMessageBean(workCompleteMessageDao);
+        WorkCompleteMessageBean workCompleteMessageBean = new WorkCompleteMessageBean(workCompleteMessageDao, sessionContextUtility);
         workCompleteMessageBean.onMessage(createMessage(createSession()));
         workCompleteMessageDao.flush();
         workCompleteMessageDao.clear();
