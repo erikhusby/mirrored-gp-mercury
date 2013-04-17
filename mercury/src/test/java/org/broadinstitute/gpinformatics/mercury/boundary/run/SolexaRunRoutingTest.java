@@ -75,9 +75,6 @@ public class SolexaRunRoutingTest extends BaseEventTest{
         AthenaClientServiceStub.addProductOrder(productOrder);
 
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder);
-        for (TwoDBarcodedTube twoDBarcodedTube : mapBarcodeToTube.values()) {
-            twoDBarcodedTube.addBucketEntry(new BucketEntry(twoDBarcodedTube, productOrder.getBusinessKey()));
-        }
 
         LabBatch workflowBatch = new LabBatch("Whole Genome Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);

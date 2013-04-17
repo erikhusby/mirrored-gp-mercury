@@ -152,9 +152,6 @@ public class LabEventTest extends BaseEventTest{
         productOrder.getResearchProject().setJiraTicketKey("RP-123");
 
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder);
-        for (TwoDBarcodedTube twoDBarcodedTube : mapBarcodeToTube.values()) {
-            twoDBarcodedTube.addBucketEntry(new BucketEntry(twoDBarcodedTube, productOrder.getBusinessKey()));
-        }
 
         LabBatch workflowBatch = new LabBatch("Hybrid Selection Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
@@ -292,9 +289,6 @@ public class LabEventTest extends BaseEventTest{
         AthenaClientServiceStub.addProductOrder(productOrder);
         final Date runDate = new Date();
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder);
-        for (TwoDBarcodedTube twoDBarcodedTube : mapBarcodeToTube.values()) {
-            twoDBarcodedTube.addBucketEntry(new BucketEntry(twoDBarcodedTube, productOrder.getBusinessKey()));
-        }
 
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
@@ -374,9 +368,6 @@ public class LabEventTest extends BaseEventTest{
         productOrder.getResearchProject().setJiraTicketKey("RP-123");
 
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder);
-        for (TwoDBarcodedTube twoDBarcodedTube : mapBarcodeToTube.values()) {
-            twoDBarcodedTube.addBucketEntry(new BucketEntry(twoDBarcodedTube, productOrder.getBusinessKey()));
-        }
 
         LabBatch workflowBatch = new LabBatch("whole Genome Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);

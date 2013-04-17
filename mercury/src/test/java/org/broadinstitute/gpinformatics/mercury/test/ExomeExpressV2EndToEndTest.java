@@ -137,7 +137,6 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
             productOrderSamples.add(new ProductOrderSample(bspStock));
             TwoDBarcodedTube bspAliquot = new TwoDBarcodedTube(barcode);
             bspAliquot.addSample(new MercurySample(bspStock));
-            bspAliquot.addBucketEntry(new BucketEntry(bspAliquot, jiraTicketKey));
             mapBarcodeToTube.put(barcode, bspAliquot);
         }
 
