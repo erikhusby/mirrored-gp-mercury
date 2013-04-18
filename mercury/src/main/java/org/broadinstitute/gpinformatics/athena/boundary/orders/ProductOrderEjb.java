@@ -164,7 +164,7 @@ public class ProductOrderEjb {
      * </ol>
      */
     @Nonnull
-    public ProductOrderSample mapAliquotIdToSample(@Nonnull ProductOrder order, @Nonnull String aliquotId)
+    protected ProductOrderSample mapAliquotIdToSample(@Nonnull ProductOrder order, @Nonnull String aliquotId)
             throws Exception {
 
         // Convert aliquotId to BSP ID, if it's an LSID.
@@ -185,6 +185,9 @@ public class ProductOrderEjb {
         for (ProductOrderSample sample : order.getSamples()) {
             if (sample.getSampleName().equals(sampleName) && sample.getAliquotId() == null) {
                 sample.setAliquotId(aliquotId);
+                // This persist call is here to ensure that the entity manager is participating in
+                // the transaction.
+                productOrderSampleDao.persist(sample);
                 return sample;
             }
         }
@@ -623,25 +626,6 @@ public class ProductOrderEjb {
             }
             return UNKNOWN;
         }
-    }
-
-    /**
-     * Update the order status of a list of PDOs, based on the rules in {@link ProductOrder#updateOrderStatus}.  Any
-     * status changes are pushed to JIRA as well, with a comment about the change and the current user.
-     *
-     * @param jiraTicketKeys the keys to update
-     * @return true if any PDO status was changed
-     * @throws NoSuchPDOException
-     * @throws IOException
-     * @throws JiraIssue.NoTransitionException
-     */
-    public boolean updateOrderStatus(Collection<String> jiraTicketKeys)
-            throws NoSuchPDOException, IOException, JiraIssue.NoTransitionException {
-        boolean anyChanged = false;
-        for (String key : jiraTicketKeys) {
-            anyChanged |= updateOrderStatus(key);
-        }
-        return anyChanged;
     }
 
     /**
