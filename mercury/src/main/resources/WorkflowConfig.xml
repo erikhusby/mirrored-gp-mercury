@@ -595,6 +595,7 @@
             <workflowProcessDefs>QTP 2500</workflowProcessDefs>
             <workflowProcessDefs>HiSEQ 2500</workflowProcessDefs>
         </productWorkflowDefVersions>
+        <routingRule>BOTH</routingRule>
     </productWorkflowDefs>
     <productWorkflowDefs>
         <name>Hybrid Selection</name>
@@ -608,6 +609,7 @@
             <workflowProcessDefs>QTP</workflowProcessDefs>
             <workflowProcessDefs>HiSEQ</workflowProcessDefs>
         </productWorkflowDefVersions>
+        <routingRule>SQUID</routingRule>
     </productWorkflowDefs>
     <productWorkflowDefs>
         <name>Whole Genome</name>
@@ -621,5 +623,6 @@
             <workflowProcessDefs>QTP</workflowProcessDefs>
             <workflowProcessDefs>HiSEQ</workflowProcessDefs>
         </productWorkflowDefVersions>
+        <routingRule>SQUID</routingRule>
     </productWorkflowDefs>
 </workflowConfig>
