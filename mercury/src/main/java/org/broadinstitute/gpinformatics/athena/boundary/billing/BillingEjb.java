@@ -107,27 +107,12 @@ public class BillingEjb {
         }
     }
 
+
     /**
-     * Transactional method to bill each previously unbilled {@link QuoteImportItem} on the BillingSession to the quote
-     * server and update billing entities as appropriate to the results of the billing attempt.  Results
-     * for each billing attempt correspond to a returned BillingResult.  If there was an exception billing a QuoteImportItem,
-     * the {@link org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb.BillingResult#isError()} will return
-     * true and {@link org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb.BillingResult#getErrorMessage()}
-     * will describe the cause of the problem.  On successful billing
-     * {@link org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb.BillingResult#getWorkId()} will contain
-     * the work id result.
-     *
-     *
-     * @param pageUrl        URL to be included in the call to the quote server.
-     * @param sessionKey     Key to be included in the call to the quote server.
-     *
-     * @return List of BillingResults describing the success or failure of billing for each previously unbilled QuoteImportItem
-     *         associated with the BillingSession.
+     * DO NOT CALL DIRECTLY FROM ACTION BEANS!!!  This method is a proof of concept for Arquillian testing of the
+     * extended persistence context with Stateful EJBs.  DO NOT CALL DIRECTLY FROM ACTION BEANS!!!
      */
-    public List<BillingResult> bill(@Nonnull String pageUrl, @Nonnull String sessionKey) {
-
-        BillingSession billingSession = billingSessionDao.findByBusinessKey(sessionKey);
-
+    public List<BillingResult> internalBill(@Nonnull String pageUrl, @Nonnull BillingSession billingSession) {
         boolean errorsInBilling = false;
 
         List<BillingResult> results = new ArrayList<BillingResult>();
@@ -158,7 +143,7 @@ public class BillingEjb {
             try {
                 String workId = quoteService.registerNewWork(
                         quote, quotePriceItem, quoteIsReplacing, item.getWorkCompleteDate(), item.getQuantity(),
-                        pageUrl, "billingSession", sessionKey);
+                        pageUrl, "billingSession", billingSession.getBusinessKey());
 
                 result.setWorkId(workId);
 
@@ -183,6 +168,10 @@ public class BillingEjb {
             endSession(billingSession);
         }
 
+        // MLC commenting out the status update below since it accesses the EntityManager and thereby enrolls it in
+        // the transaction in all cases, not just when we have done an explicit lookup of the BillingSession by
+        // business key.
+        /*
         // Update the state of all PDOs affected by this billing session.
         for (String key : updatedPDOs) {
             try {
@@ -194,7 +183,31 @@ public class BillingEjb {
                 log.error("Failed to update PDO status after billing: " + key, e);
             }
         }
+        */
 
         return results;
+    }
+
+
+    /**
+     * Transactional method to bill each previously unbilled {@link QuoteImportItem} on the BillingSession to the quote
+     * server and update billing entities as appropriate to the results of the billing attempt.  Results
+     * for each billing attempt correspond to a returned BillingResult.  If there was an exception billing a QuoteImportItem,
+     * the {@link org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb.BillingResult#isError()} will return
+     * true and {@link org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb.BillingResult#getErrorMessage()}
+     * will describe the cause of the problem.  On successful billing
+     * {@link org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb.BillingResult#getWorkId()} will contain
+     * the work id result.
+     *
+     * @param pageUrl    URL to be included in the call to the quote server.
+     * @param sessionKey Key to be included in the call to the quote server.
+     *
+     * @return List of BillingResults describing the success or failure of billing for each previously unbilled QuoteImportItem
+     *         associated with the BillingSession.
+     */
+    public List<BillingResult> bill(@Nonnull String pageUrl, @Nonnull String sessionKey) {
+
+        BillingSession billingSession = billingSessionDao.findByBusinessKey(sessionKey);
+        return internalBill(pageUrl, billingSession);
     }
 }

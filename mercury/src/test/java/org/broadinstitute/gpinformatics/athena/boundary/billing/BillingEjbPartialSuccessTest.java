@@ -43,6 +43,8 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
     private BillingEjb billingEjb;
 
     private static String FAILING_PRICE_ITEM_NAME;
+    public static final String SM_1234 = "SM-1234";
+    public static final String SM_5678 = "SM-5678";
 
     /**
      * This will succeed in billing some but not all work to make sure our Billing Session is left in the state we
@@ -90,27 +92,18 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
                 PartiallySuccessfulQuoteServiceStub.class);
     }
 
-
-    public void test() {
-
-        // To do this test the "right way":
-        //
-        // Create a Product, including its ProductFamily, ResearchProject, and primary PriceItem.
-        // Create a ProductOrder that references the Product and has two ProductOrderSamples.
-        // Create a replacement PriceItem.
-        // Create two LedgerEntries referencing each of the ProductOrderSamples in this PDO, one with the primary
-        //   PriceItem from the Product, the other with the replacement PriceItem.
-        // Create a BillingSession containing these two LedgerEntries.
-        // Persist all of this data, outside of a transaction, flush and clear the entity manager.
-        // Load the BillingSession and call a version of the BillingEjb method that does not call any Dao methods
-        //   inside a transactionally demarcated method.  The expectation is that this will cause none of the data
-        //   to be persisted.
-        // Clear the entity manager again and load the BillingSession, confirm that the billing messages were not
-        //   persisted.
-
-        final String SM_1234 = "SM-1234";
-        final String SM_5678 = "SM-5678";
-
+    /**
+     * <ul>
+     * <li>Create a Product, including its ProductFamily, ResearchProject, and primary PriceItem.</li>
+     * <li>Create a ProductOrder that references the Product and has two ProductOrderSamples.</li>
+     * <li>Create a replacement PriceItem.</li>
+     * <li>Create two LedgerEntries referencing each of the ProductOrderSamples in this PDO, one with the primary
+     * PriceItem from the Product, the other with the replacement PriceItem.</li>
+     * <li>Create a BillingSession containing these two LedgerEntries.</li>
+     * <li>Persist all of this data, outside of a transaction, flush and clear the entity manager.</li>
+     * </ul>
+     */
+    private BillingSession writeFixtureData() {
         ProductOrder productOrder = ProductOrderTestFactory.createProductOrder(SM_1234, SM_5678);
         billingSessionDao.persist(productOrder.getResearchProject());
         billingSessionDao.persist(productOrder.getProduct());
@@ -149,8 +142,63 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         billingSessionDao.flush();
         billingSessionDao.clear();
 
-        // TODO Check that the results of the #bill call are consistent with what's going into the DB as these results
-        // TODO are used to render the confirmation page.
+        return billingSession;
+
+    }
+
+
+    /**
+     * <ul>
+     * <li>Create the fixture data per {@link #writeFixtureData()}.</li>
+     * <li>Load the BillingSession and call a version of the BillingEjb method that does not call any Dao methods
+     * inside a transactionally demarcated method.  The expectation is that this will cause none of the data to be
+     * persisted.
+     * </li>
+     * <li>Clear the entity manager again and load the BillingSession, confirm that the billing messages were not
+     * persisted.
+     * </li>
+     * </ul>
+     */
+    public void testNegative() {
+
+        BillingSession billingSession = writeFixtureData();
+        billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey());
+
+        billingEjb.internalBill("http://www.broadinstitute.org", billingSession);
+
+        billingSessionDao.clear();
+
+        // Re-fetch the updated BillingSession from the database.
+        billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey());
+
+        // The BillingSession should exist as this billing attempt should have been partially successful.
+        assertThat(billingSession, is(not(nullValue())));
+
+        List<LedgerEntry> ledgerEntryItems = billingSession.getLedgerEntryItems();
+        assertThat(ledgerEntryItems, is(not(nullOrEmptyCollection())));
+        assertThat(ledgerEntryItems, hasSize(2));
+
+        for (LedgerEntry ledgerEntry : billingSession.getLedgerEntryItems()) {
+            assertThat(ledgerEntry.getBillingMessage(), is(nullValue()));
+        }
+    }
+
+
+    /**
+     * <ul>
+     * <li>Create the fixture data per {@link #writeFixtureData()}.</li>
+     * <li>Load the BillingSession and call a version of the BillingEjb method that <b>does</b> call DAO methods
+     * inside a transactionally demarcated method, which should cause the EntityManager to be enrolled in the
+     * transaction.</li>
+     * <li>Clear the entity manager again and load the BillingSession, confirm that the billing messages were
+     * persisted.</li>
+     * </ul>
+     */
+    public void testPositive() {
+
+        BillingSession billingSession = writeFixtureData();
+        billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey());
+
         billingEjb.bill("http://www.broadinstitute.org", billingSession.getBusinessKey());
 
         billingSessionDao.clear();
