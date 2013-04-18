@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.presentation.sample;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabBatchComposition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -29,16 +30,19 @@ public class PlasticHistoryListItem {
 
     public PlasticHistoryListItem(LabVessel vessel) {
         label = vessel.getLabel();
-        sampleInstanceCount = vessel.getSampleInstanceCount();
+        sampleInstanceCount = vessel.getSampleInstanceCount(LabVessel.SampleType.WITH_PDO, null);
         type = vessel.getType().getName();
         pdoKeyCount = vessel.getPdoKeysCount();
         indexCount = vessel.getIndexesCount();
-        eventType = vessel.getLatestEvent().getLabEventType().getName();
-        eventLocation = vessel.getLatestEvent().getEventLocation();
-        eventOperator = vessel.getLatestEvent().getEventOperator();
-        eventDate = vessel.getLatestEvent().getEventDate();
+        LabEvent latestEvent = vessel.getLatestEvent();
+        if(latestEvent != null){
+            eventType = latestEvent.getLabEventType().getName();
+            eventLocation = latestEvent.getEventLocation();
+            eventOperator = latestEvent.getEventOperator();
+            eventDate = latestEvent.getEventDate();
+        }
         creationDate = vessel.getCreatedOn();
-        labBatchCompositions = vessel.getLabBatchCompositions();
+        labBatchCompositions = vessel.getWorkflowLabBatchCompositions();
     }
 
     public PlasticHistoryListItem(SequencingRun seqRun, LabVessel seqVessel) {

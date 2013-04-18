@@ -117,18 +117,12 @@ public class VesselContainer<T extends LabVessel> {
         return singleSampleLibraryCriteria.getSingleSampleLibraries();
     }
 
-    public Set<SampleInstance> getSampleInstancesAtPosition(VesselPosition position) {
-        LabVessel.TraversalResults traversalResults = traverseAncestors(position, LabVessel.SampleType.ANY, null);
+    public Set<SampleInstance> getSampleInstancesAtPosition(VesselPosition position, LabVessel.SampleType sampleType, @Nullable LabBatch.LabBatchType batchType){
+        LabVessel.TraversalResults traversalResults = traverseAncestors(position, sampleType, batchType);
         return traversalResults.getSampleInstances();
     }
-
-    public List<SampleInstance> getSampleInstancesAtPositionList(VesselPosition position) {
-        LabVessel.TraversalResults traversalResults = traverseAncestors(position, LabVessel.SampleType.ANY, null);
-        Map<String, SampleInstance> sampleInstanceMap = new TreeMap<String, SampleInstance>();
-        for (SampleInstance sample : traversalResults.getSampleInstances()) {
-            sampleInstanceMap.put(sample.getStartingSample().getSampleKey(), sample);
-        }
-        return new ArrayList<SampleInstance>(sampleInstanceMap.values());
+    public Set<SampleInstance> getSampleInstancesAtPosition(VesselPosition position) {
+        return getSampleInstancesAtPosition(position, LabVessel.SampleType.ANY, null);
     }
 
     LabVessel.TraversalResults traverseAncestors(VesselPosition position, LabVessel.SampleType sampleType,

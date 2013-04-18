@@ -13,7 +13,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTr
 import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.UserRemarks;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
-import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
@@ -25,6 +24,7 @@ import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Formula;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.NotAudited;
+import org.jetbrains.annotations.Nullable;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -216,18 +216,6 @@ public abstract class LabVessel implements Serializable {
             containersCount = 0;
         }
         containersCount++;
-    }
-
-    //Utility method for getting containers as a list so they can be displayed in a display table column
-    public List<VesselContainer<?>> getContainerList() {
-        List<VesselContainer<?>> vesselContainers = new ArrayList<VesselContainer<?>>(getContainers());
-        Collections.sort(vesselContainers, new Comparator<VesselContainer<?>>() {
-            @Override
-            public int compare(VesselContainer<?> o1, VesselContainer<?> o2) {
-                return o1.getEmbedder().getCreatedOn().compareTo(o2.getEmbedder().getCreatedOn());
-            }
-        });
-        return vesselContainers;
     }
 
     public Set<VesselContainer<?>> getContainers() {
@@ -455,15 +443,15 @@ public abstract class LabVessel implements Serializable {
      * @return
      */
     public Collection<SampleInstance> getSamplesAtPosition(@NotNull VesselPosition vesselPosition) {
-        List<SampleInstance> sampleInstances;
+        Set<SampleInstance> sampleInstances;
         VesselContainer<?> vesselContainer = getContainerRole();
         if (vesselContainer != null) {
-            sampleInstances = vesselContainer.getSampleInstancesAtPositionList(vesselPosition);
+            sampleInstances = vesselContainer.getSampleInstancesAtPosition(vesselPosition);
         } else {
-            sampleInstances = getSampleInstancesList();
+            sampleInstances = getSampleInstances();
         }
         if (sampleInstances == null) {
-            sampleInstances = Collections.emptyList();
+            sampleInstances = Collections.emptySet();
         }
         return sampleInstances;
     }
@@ -530,7 +518,7 @@ public abstract class LabVessel implements Serializable {
      * @param labBatchType the type of lab batch to include in the instance, or null for any
      * @return sample instances
      */
-    public Set<SampleInstance> getSampleInstances(SampleType sampleType, LabBatch.LabBatchType labBatchType) {
+    public Set<SampleInstance> getSampleInstances(SampleType sampleType, @Nullable LabBatch.LabBatchType labBatchType) {
 
         if (getContainerRole() != null) {
             return getContainerRole().getSampleInstances(sampleType, labBatchType);
@@ -540,9 +528,12 @@ public abstract class LabVessel implements Serializable {
     }
 
     public int getSampleInstanceCount() {
-        return getSampleInstances(SampleType.ANY, null).size();
+        return getSampleInstanceCount(SampleType.ANY, null);
     }
 
+    public int getSampleInstanceCount(SampleType sampleType, @Nullable LabBatch.LabBatchType batchType){
+        return getSampleInstances(sampleType, batchType).size();
+    }
     /**
      * The results of traversing (ancestor) vessels
      */
@@ -664,10 +655,6 @@ public abstract class LabVessel implements Serializable {
 
         traversalResults.completeLevel();
         return traversalResults;
-    }
-
-    public List<SampleInstance> getSampleInstancesList() {
-        return new ArrayList<SampleInstance>(getSampleInstances(SampleType.ANY, null));
     }
 
     /**
@@ -810,10 +797,6 @@ public abstract class LabVessel implements Serializable {
         }
     }
 
-    public List<LabBatch> getLabBatchesList() {
-        return new ArrayList<LabBatch>(getLabBatches());
-    }
-
     // todo jmt can the next three methods be deleted?
 
     /**
@@ -833,14 +816,6 @@ public abstract class LabVessel implements Serializable {
         }
 
         return foundSamples;
-    }
-
-    public List<MercurySample> getMercurySamplesList() {
-        List<MercurySample> mercurySamplesList = new ArrayList<MercurySample>();
-        if (!mercurySamples.isEmpty()) {
-            mercurySamplesList.addAll(getMercurySamples());
-        }
-        return mercurySamplesList;
     }
 
     /**
@@ -994,6 +969,35 @@ public abstract class LabVessel implements Serializable {
      *
      * @return list of lab batches sorted by vessel count (descending).
      */
+    public List<LabBatchComposition> getWorkflowLabBatchCompositions() {
+
+        List<SampleInstance> sampleInstances = new ArrayList<SampleInstance>();
+        sampleInstances.addAll(getSampleInstances(SampleType.ANY, null));
+
+        Map<LabBatch, LabBatchComposition> batchMap = new HashMap<LabBatch, LabBatchComposition>();
+        for (SampleInstance sampleInstance : sampleInstances) {
+            for (LabBatch labBatch : sampleInstance.getAllWorkflowLabBatches()) {
+                LabBatchComposition batchComposition = batchMap.get(labBatch);
+                if (batchComposition == null) {
+                    batchMap.put(labBatch, new LabBatchComposition(labBatch, 1, sampleInstances.size()));
+                } else {
+                    batchComposition.addCount();
+                }
+            }
+        }
+
+        List<LabBatchComposition> batchList = new ArrayList<LabBatchComposition>(batchMap.values());
+        Collections.sort(batchList, LabBatchComposition.HIGHEST_COUNT_FIRST);
+
+        return batchList;
+    }
+
+    /**
+     * Finds all the lab batches represented in this container, and determines how many vessels in this
+     * container belong to each of the batches.
+     *
+     * @return list of lab batches sorted by vessel count (descending).
+     */
     public List<LabBatchComposition> getLabBatchCompositions() {
 
         List<SampleInstance> sampleInstances = new ArrayList<SampleInstance>();
@@ -1048,15 +1052,6 @@ public abstract class LabVessel implements Serializable {
             evaluateCriteria(batchCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
             return batchCriteria.getNearestLabBatches();
         }
-    }
-
-    public List<LabBatch> getNearestLabBatchesList() {
-        List<LabBatch> batchList = new ArrayList<LabBatch>();
-        Collection<LabBatch> batchCollection = getNearestLabBatches();
-        if (batchCollection != null) {
-            batchList = new ArrayList<LabBatch>(batchCollection);
-        }
-        return batchList;
     }
 
     public Collection<LabVessel> getDescendantVessels() {

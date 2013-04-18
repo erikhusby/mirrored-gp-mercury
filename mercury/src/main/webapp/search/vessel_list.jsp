@@ -131,7 +131,7 @@
                     </a>
                 </td>
                 <td>
-                        ${vessel.sampleInstanceCount}
+                        ${vessel.getSampleInstanceCount("WITH_PDO", null)}
                 </td>
                 <td>
                         ${vessel.type.name}
@@ -143,7 +143,7 @@
                         ${vessel.indexesCount}
                 </td>
                 <td>
-                    <c:forEach items="${vessel.labBatchCompositions}" var="composition">
+                    <c:forEach items="${vessel.workflowLabBatchCompositions}" var="composition">
                         <span style="white-space:nowrap;">
                             <stripes:link target="JIRA"
                                           href="${composition.labBatch.jiraTicket.browserUrl}"

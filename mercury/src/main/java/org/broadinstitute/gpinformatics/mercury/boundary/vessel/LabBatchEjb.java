@@ -291,7 +291,7 @@ public class LabBatchEjb {
 
         LabVessel firstVessel = vesselIterator.next();
 
-        for (LabBatch testBatch : firstVessel.getNearestLabBatchesList()) {
+        for (LabBatch testBatch : firstVessel.getNearestLabBatches()) {
             if (testBatch.getStartingLabVessels().containsAll(batchVessels)) {
                 result = true;
                 break;

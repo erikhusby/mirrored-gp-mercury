@@ -213,12 +213,15 @@ public class ProductOrderSampleHistoryActionBean extends CoreActionBean {
     }
 
     public WorkflowStepDef getLatestProcess(LabEvent event) {
-        ProductWorkflowDefVersion.LabEventNode eventNode = productWorkflowDefVersion.findStepByEventType(event.getLabEventType().getName());
-        if (eventNode != null) {
-            return eventNode.getStepDef();
-        } else {
-            return null;
+        if(event != null){
+            ProductWorkflowDefVersion.LabEventNode eventNode = productWorkflowDefVersion.findStepByEventType(event.getLabEventType().getName());
+            if (eventNode != null) {
+                return eventNode.getStepDef();
+            } else {
+                return null;
+            }
         }
+        return null;
     }
 
     public String getToolTipLookups() {

@@ -6,9 +6,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MolecularState;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * An aliquot of a sample in a particular
@@ -257,6 +255,16 @@ public class SampleInstance {
 
     public void setAllLabBatches(Collection<LabBatch> allLabBatches) {
         this.allLabBatches = allLabBatches;
+    }
+
+    public Collection<LabBatch> getAllWorkflowLabBatches(){
+        Set<LabBatch> workflowBatches = new HashSet<LabBatch>();
+        for(LabBatch batch : allLabBatches){
+            if(batch.getLabBatchType().equals(LabBatch.LabBatchType.WORKFLOW)){
+                workflowBatches.add(batch);
+            }
+        }
+        return workflowBatches;
     }
 
 }

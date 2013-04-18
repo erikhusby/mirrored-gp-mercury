@@ -10,7 +10,6 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
@@ -185,7 +184,7 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
             int sampleCount = 0;
 
             for(LabVessel currVessel: pdoKey.getValue()) {
-                sampleCount += currVessel.getSampleInstanceCount();
+                sampleCount += currVessel.getSampleInstanceCount(LabVessel.SampleType.WITH_PDO, null);
             }
 
             ticketDescription.append(sampleCount).append(" samples ");
