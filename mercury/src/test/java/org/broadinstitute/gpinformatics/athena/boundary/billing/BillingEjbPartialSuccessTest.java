@@ -1,16 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
-import com.google.common.base.Function;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Collections2;
-import com.google.common.collect.ListMultimap;
-import com.google.common.collect.Multimaps;
+import com.google.common.collect.Sets;
 import org.apache.commons.lang.NotImplementedException;
-import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
-import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
-import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
-import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderTestingDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -25,6 +17,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quotes;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -32,19 +25,10 @@ import org.testng.annotations.Test;
 
 import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
-import javax.transaction.HeuristicMixedException;
-import javax.transaction.HeuristicRollbackException;
-import javax.transaction.NotSupportedException;
-import javax.transaction.RollbackException;
-import javax.transaction.SystemException;
-import javax.transaction.UserTransaction;
-import java.util.Collection;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.UUID;
 
-import static org.broadinstitute.gpinformatics.athena.entity.products.PriceItem.*;
 import static org.broadinstitute.gpinformatics.infrastructure.matchers.NullOrEmptyCollection.nullOrEmptyCollection;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -53,28 +37,12 @@ import static org.hamcrest.Matchers.*;
 public class BillingEjbPartialSuccessTest extends Arquillian {
 
     @Inject
-    private ProductOrderTestingDao productOrderTestingDao;
-
-    @Inject
-    private PriceItemDao priceItemDao;
-
-    @Inject
-    private LedgerEntryDao ledgerEntryDao;
-
-    @Inject
     private BillingSessionDao billingSessionDao;
 
     @Inject
     private BillingEjb billingEjb;
 
-    @SuppressWarnings("CdiInjectionPointsInspection")
-    @Inject
-    private UserTransaction utx;
-
-    @SuppressWarnings("CdiInjectionPointsInspection")
-    @Inject
-    private Log logger;
-
+    private static String FAILING_PRICE_ITEM_NAME;
 
     /**
      * This will succeed in billing some but not all work to make sure our Billing Session is left in the state we
@@ -83,21 +51,14 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
     @Alternative
     private static class PartiallySuccessfulQuoteServiceStub implements QuoteService {
 
-        private void newNotImplementedException(String methodName) {
-            throw new NotImplementedException(
-                    "PartiallySuccessfulQuoteServiceStub does not implement '" + methodName + "'.");
-        }
-
         @Override
         public PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException {
-            newNotImplementedException("getAllPriceItems");
-            return null;
+            throw new NotImplementedException();
         }
 
         @Override
         public Quotes getAllSequencingPlatformQuotes() throws QuoteServerException, QuoteNotFoundException {
-            newNotImplementedException("getAllSequencingPlatformQuotes");
-            return null;
+            throw new NotImplementedException();
         }
 
         @Override
@@ -107,8 +68,8 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
                                       Date reportedCompletionDate,
                                       double numWorkUnits,
                                       String callbackUrl, String callbackParameterName, String callbackParameterValue) {
-            // Simulate failure only for ExEx Price Items.
-            if (NAME_EXOME_EXPRESS.equals(quotePriceItem.getName())) {
+            // Simulate failure only for one particular PriceItem.
+            if (FAILING_PRICE_ITEM_NAME.equals(quotePriceItem.getName())) {
                 throw new RuntimeException("Intentional Work Registration Failure!");
             }
 
@@ -117,8 +78,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
 
         @Override
         public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException {
-            newNotImplementedException("getQuoteByAlphaId");
-            return null;
+            throw new NotImplementedException();
         }
     }
 
@@ -130,92 +90,70 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
                 PartiallySuccessfulQuoteServiceStub.class);
     }
 
-    private ProductOrder getExExProductOrder() {
-        // We want a ProductOrder with multiple ProductOrderSamples for a Product with a Primary and at least one
-        // Optional PriceItem.  Specifically, this test requires there to be one placed ExEx ProductOrder with more
-        // than one PDO Sample.
-        Collection<ProductOrder> productOrderList = Collections2.filter(
-                productOrderTestingDao.findByProductName(NAME_EXOME_EXPRESS),
-                new Predicate<ProductOrder>() {
-                    @Override
-                    public boolean apply(ProductOrder productOrder) {
-                        @SuppressWarnings("ConstantConditions")
-                        List<ProductOrderSample> samples = productOrder.getSamples();
-                        return samples.size() > 1 && productOrder.getJiraTicketKey() != null;
-                    }
-                });
 
-        assertThat(productOrderList, is(not(nullOrEmptyCollection())));
+    public void test() {
 
-        return productOrderList.iterator().next();
-    }
+        // To do this test the "right way":
+        //
+        // Create a Product, including its ProductFamily, ResearchProject, and primary PriceItem.
+        // Create a ProductOrder that references the Product and has two ProductOrderSamples.
+        // Create a replacement PriceItem.
+        // Create two LedgerEntries referencing each of the ProductOrderSamples in this PDO, one with the primary
+        //   PriceItem from the Product, the other with the replacement PriceItem.
+        // Create a BillingSession containing these two LedgerEntries.
+        // Persist all of this data, outside of a transaction, flush and clear the entity manager.
+        // Load the BillingSession and call a version of the BillingEjb method that does not call any Dao methods
+        //   inside a transactionally demarcated method.  The expectation is that this will cause none of the data
+        //   to be persisted.
+        // Clear the entity manager again and load the BillingSession, confirm that the billing messages were not
+        //   persisted.
 
+        final String SM_1234 = "SM-1234";
+        final String SM_5678 = "SM-5678";
 
-    private Set<LedgerEntry> getLedgerEntrySet() {
+        ProductOrder productOrder = ProductOrderTestFactory.createProductOrder(SM_1234, SM_5678);
+        billingSessionDao.persist(productOrder.getResearchProject());
+        billingSessionDao.persist(productOrder.getProduct());
 
+        UUID uuid = UUID.randomUUID();
+        PriceItem replacementPriceItem = new PriceItem(uuid.toString(), "Genomics Platform", "Testing Category",
+                "Replacement PriceItem Name " + uuid);
+        FAILING_PRICE_ITEM_NAME = replacementPriceItem.getName();
+        billingSessionDao.persist(replacementPriceItem);
+        billingSessionDao.persist(productOrder);
+
+        ProductOrderSample sm1234 = null;
+        ProductOrderSample sm5678 = null;
+        for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
+            if (SM_1234.equals(productOrderSample.getSampleName())) {
+                sm1234 = productOrderSample;
+            } else if (SM_5678.equals(productOrderSample.getSampleName())) {
+                sm5678 = productOrderSample;
+            } else {
+                throw new RuntimeException("Unexpected sample seen: " + productOrderSample.getSampleName());
+            }
+        }
+
+        // Suppress "sm1234 may be null" warning.
         @SuppressWarnings("ConstantConditions")
-        final List<ProductOrderSample> productOrderSamples = getExExProductOrder().getSamples();
+        LedgerEntry ledgerEntry1234 =
+                new LedgerEntry(sm1234, productOrder.getProduct().getPrimaryPriceItem(), new Date(), 3);
 
-        return new HashSet<LedgerEntry>() {{
-            PriceItem exExPriceItem =
-                    priceItemDao.find(PLATFORM_GENOMICS, CATEGORY_EXOME_SEQUENCING_ANALYSIS, NAME_EXOME_EXPRESS);
+        // Suppress "sm5678 may be null" warning.
+        @SuppressWarnings("ConstantConditions")
+        LedgerEntry ledgerEntry5678 = new LedgerEntry(sm5678, replacementPriceItem, new Date(), 5);
 
-            PriceItem standardExomePriceItem =
-                    priceItemDao.find(PLATFORM_GENOMICS, CATEGORY_EXOME_SEQUENCING_ANALYSIS, NAME_STANDARD_WHOLE_EXOME);
-
-            add(new LedgerEntry(productOrderSamples.get(0), exExPriceItem, new Date(), 5000));
-            add(new LedgerEntry(productOrderSamples.get(1), standardExomePriceItem, new Date(), 8000));
-        }};
-    }
-
-    private class ExExPartition {
-        private final LedgerEntry exEx;
-        private final LedgerEntry standardEx;
-
-        public ExExPartition(List<LedgerEntry> ledgerEntries) {
-            ListMultimap<Boolean, LedgerEntry> partition = Multimaps.index(ledgerEntries,
-                    new Function<LedgerEntry, Boolean>() {
-                        @Override
-                        public Boolean apply(LedgerEntry ledgerEntry) {
-                            @SuppressWarnings("ConstantConditions")
-                            PriceItem priceItem = ledgerEntry.getPriceItem();
-                            return NAME_EXOME_EXPRESS.equals(priceItem.getName());
-                        }
-                    });
-
-            this.exEx = partition.get(true).get(0);
-            this.standardEx = partition.get(false).get(0);
-        }
-
-        private LedgerEntry getExEx() {
-            return exEx;
-        }
-
-        private LedgerEntry getStandardEx() {
-            return standardEx;
-        }
-    }
-
-
-    public void test()
-            throws SystemException, NotSupportedException, HeuristicRollbackException, HeuristicMixedException,
-            RollbackException {
-
-        Set<LedgerEntry> ledgerEntries = getLedgerEntrySet();
-
-        utx.begin();
-        for (LedgerEntry ledgerEntry : ledgerEntries) {
-            ledgerEntryDao.persist(ledgerEntry);
-        }
-
-        BillingSession billingSession = new BillingSession(-1L, ledgerEntries);
+        BillingSession billingSession = new BillingSession(-1L, Sets.newHashSet(ledgerEntry1234, ledgerEntry5678));
         billingSessionDao.persist(billingSession);
-        utx.commit();
+
+        billingSessionDao.flush();
+        billingSessionDao.clear();
 
         // TODO Check that the results of the #bill call are consistent with what's going into the DB as these results
         // TODO are used to render the confirmation page.
         billingEjb.bill("http://www.broadinstitute.org", billingSession.getBusinessKey());
 
+        billingSessionDao.clear();
         // Re-fetch the updated BillingSession from the database.
         billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey());
 
@@ -226,9 +164,14 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         assertThat(ledgerEntryItems, is(not(nullOrEmptyCollection())));
         assertThat(ledgerEntryItems, hasSize(2));
 
-        ExExPartition exExPartition = new ExExPartition(ledgerEntryItems);
-
-        assertThat(exExPartition.getStandardEx().getBillingMessage(), is(equalTo(BillingSession.SUCCESS)));
-        assertThat(exExPartition.getExEx().getBillingMessage(), is(not(equalTo(BillingSession.SUCCESS))));
+        for (LedgerEntry ledgerEntry : billingSession.getLedgerEntryItems()) {
+            if (SM_1234.equals(ledgerEntry.getProductOrderSample().getSampleName())) {
+                assertThat(ledgerEntry.getBillingMessage(), is(equalTo(BillingSession.SUCCESS)));
+            }
+            if (SM_5678.equals(ledgerEntry.getProductOrderSample().getSampleName())) {
+                assertThat(ledgerEntry.getBillingMessage(),
+                        is(both(not(equalTo(BillingSession.SUCCESS))).and(is(notNullValue()))));
+            }
+        }
     }
 }

@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
@@ -13,19 +14,23 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
 
 public class ProductOrderTestFactory {
 
-    public static ProductOrder createDummyProductOrder(int sampleCount, @Nonnull String jiraKey, WorkflowName workflowName,
+    public static ProductOrder createDummyProductOrder(int sampleCount, @Nonnull String jiraKey,
+                                                       WorkflowName workflowName,
                                                        long creatorId, String rpTitle, String rpSynopsis,
                                                        boolean irbNotEngaged, String productPartNumber) {
 
-        PriceItem exExPriceItem = new PriceItem("ExExQuoteId", PriceItem.PLATFORM_GENOMICS, PriceItem.CATEGORY_EXOME_SEQUENCING_ANALYSIS,
-                                                   PriceItem.NAME_EXOME_EXPRESS);
+        PriceItem exExPriceItem =
+                new PriceItem("ExExQuoteId", PriceItem.PLATFORM_GENOMICS, PriceItem.CATEGORY_EXOME_SEQUENCING_ANALYSIS,
+                        PriceItem.NAME_EXOME_EXPRESS);
         Product dummyProduct =
                 ProductTestFactory.createDummyProduct(workflowName.getWorkflowName(), productPartNumber);
         dummyProduct.setPrimaryPriceItem(exExPriceItem);
@@ -33,7 +38,7 @@ public class ProductOrderTestFactory {
         List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>(sampleCount);
         for (int sampleIndex = 1; sampleIndex <= sampleCount; sampleIndex++) {
             String bspStock = "SM-" + String.valueOf(sampleIndex) + String.valueOf(sampleIndex + 1) +
-                                      String.valueOf(sampleIndex + 3) + String.valueOf(sampleIndex + 2);
+                              String.valueOf(sampleIndex + 3) + String.valueOf(sampleIndex + 2);
             productOrderSamples.add(new ProductOrderSample(bspStock, new BSPSampleDTO()));
         }
 
@@ -47,7 +52,8 @@ public class ProductOrderTestFactory {
         }
         productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
-        Product dummyAddOnProduct = ProductTestFactory.createDummyProduct("DNA Extract from FFPE or Slides", "partNumber");
+        Product dummyAddOnProduct =
+                ProductTestFactory.createDummyProduct("DNA Extract from FFPE or Slides", "partNumber");
         productOrder.updateAddOnProducts(Collections.singletonList(dummyAddOnProduct));
 
         return productOrder;
@@ -86,8 +92,9 @@ public class ProductOrderTestFactory {
     }
 
     public static ProductOrder buildExExProductOrder(int maxSamples) {
-        return createDummyProductOrder(maxSamples, "PD0-1EE", WorkflowName.EXOME_EXPRESS, 101, "Test RP", AthenaClientServiceStub.rpSynopsis,
-                        ResearchProject.IRB_ENGAGED, "P-EXEXTest-1232");
+        return createDummyProductOrder(maxSamples, "PD0-1EE", WorkflowName.EXOME_EXPRESS, 101, "Test RP",
+                AthenaClientServiceStub.rpSynopsis,
+                ResearchProject.IRB_ENGAGED, "P-EXEXTest-1232");
     }
 
     public static ProductOrder buildHybridSelectionProductOrder(int maxSamples) {
@@ -101,6 +108,40 @@ public class ProductOrderTestFactory {
         return createDummyProductOrder(maxSamples, "PD0-2WGS", WorkflowName.WHOLE_GENOME,
                 301, "Test RP", AthenaClientServiceStub.rpSynopsis,
                 ResearchProject.IRB_ENGAGED, "P-WGS-9294");
+    }
+
+
+    /**
+     * Database free creation of Product Order from scratch, including creation of a new Research Project and Product.
+     *
+     * @param sampleNames Names of samples for this PDO.
+     * @return Transient PDO.
+     */
+    public static ProductOrder createProductOrder(String... sampleNames) {
+        UUID uuid = UUID.randomUUID();
+        ProductFamily productFamily = new ProductFamily("Product Family " + uuid);
+        Product product =
+                new Product("Product Name " + uuid, productFamily, "Product Description " + uuid, "P-" + uuid,
+                        new Date(), null, 0, 0, 0, 1, "Input requirements", "Deliverables", true, "Workflow name",
+                        false);
+
+
+        ResearchProject researchProject = new ResearchProject(-1L, "Research Project " + uuid, "Synopsis", false);
+        researchProject.setJiraTicketKey("RP-" + uuid);
+
+        List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>();
+        for (String sampleName : sampleNames) {
+            productOrderSamples.add(new ProductOrderSample(sampleName));
+        }
+
+        PriceItem priceItem = new PriceItem(uuid.toString(), "Genomics Platform", "Testing Category", "PriceItem Name " + uuid);
+        product.setPrimaryPriceItem(priceItem);
+
+        ProductOrder productOrder =
+                new ProductOrder(-1L, "PDO title " + uuid, productOrderSamples, "Quote-" + uuid, product,
+                        researchProject);
+        productOrder.setJiraTicketKey("PDO-" + uuid);
+        return productOrder;
     }
 
 }

@@ -16,8 +16,6 @@ import java.util.*;
 /**
  * This entity represents all the stored information for a Mercury Project.
  *
- * @author mcovarr
- *
  */
 @Entity
 @Audited
@@ -57,12 +55,12 @@ public class Product implements Serializable, Comparable<Product> {
     private String deliverables;
 
     /**
-     * Whether this Product should show as a top-level product .
+     * Whether this Product should show as a top-level product in the Product list or for Product Order creation/edit.
      **/
     private boolean topLevelProduct;
 
     /**
-     * Primary price item for the product. Should NOT also be in the priceItems set.
+     * Primary price item for the product.
      */
     @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST}, optional = false)
     private PriceItem primaryPriceItem;
@@ -76,6 +74,7 @@ public class Product implements Serializable, Comparable<Product> {
     private boolean pdmOrderableOnly;
 
     // This is used for edit to keep track of changes to the object.
+    // TODO MLC We should review whether this is still needed in Stripes, it was added to deal with JSF lifecycle issues.
     @Transient
     private String originalPartNumber;
 
@@ -404,10 +403,10 @@ public class Product implements Serializable, Comparable<Product> {
         List<String> duplicates = new ArrayList<String> ();
         Set<String> priceItemNames = new HashSet<String> ();
 
-        // Add the duplicates for this product/
+        // Add the duplicates for this product.
         addProductDuplicates(duplicates, priceItemNames);
 
-        // Add the duplicates for addOns/
+        // Add the duplicates for addOns.
         for (Product addOn : addOns) {
             addOn.addProductDuplicates(duplicates, priceItemNames);
         }
@@ -421,7 +420,7 @@ public class Product implements Serializable, Comparable<Product> {
 
     private void addProductDuplicates(List<String> duplicates, Set<String> priceItemNames) {
         if (primaryPriceItem != null) {
-            // No price items yet, so can just add it/
+            // No price items yet, so can just add it.
             priceItemNames.add(primaryPriceItem.getName());
         }
     }
@@ -537,7 +536,7 @@ public class Product implements Serializable, Comparable<Product> {
 
         assert (criteria.length == operators.length) && (criteria.length == values.length);
 
-        // The new list
+        // The new list.
         List<RiskCriterion> newList = new ArrayList<RiskCriterion>();
         // Assume that the new list is no different than the original.
         boolean isDifferent = false;

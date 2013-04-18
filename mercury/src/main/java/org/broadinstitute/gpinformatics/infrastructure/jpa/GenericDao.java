@@ -57,8 +57,9 @@ public class GenericDao {
      * Flushes changes in the extended persistence context to the database.
      *
      * Transaction is MANDATORY because flush does not make sense outside the context of a transaction.
+     * MLC changing this to REQUIRED as it does make sense outside a transaction for Arquillian tests.
      */
-    @TransactionAttribute(TransactionAttributeType.MANDATORY)
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void flush() {
         getEntityManager().flush();
     }
