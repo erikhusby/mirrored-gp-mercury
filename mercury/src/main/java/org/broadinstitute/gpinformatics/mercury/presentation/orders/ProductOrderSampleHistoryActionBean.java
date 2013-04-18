@@ -4,6 +4,7 @@ import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -39,7 +40,7 @@ public class ProductOrderSampleHistoryActionBean extends CoreActionBean {
 
     private ProductWorkflowDefVersion productWorkflowDefVersion;
     private String businessKey;
-    private List<MercurySample> mercurySamples;
+    private Set<MercurySample> mercurySamples = new HashSet<MercurySample>();
     public Map<Integer, String> indexToStepNameMap = new TreeMap<Integer, String>();
 
     public Map<Integer, String> getIndexToStepNameMap() {
@@ -50,11 +51,11 @@ public class ProductOrderSampleHistoryActionBean extends CoreActionBean {
         this.indexToStepNameMap = indexToStepNameMap;
     }
 
-    public List<MercurySample> getMercurySamples() {
+    public Set<MercurySample> getMercurySamples() {
         return mercurySamples;
     }
 
-    public void setMercurySamples(List<MercurySample> mercurySamples) {
+    public void setMercurySamples(Set<MercurySample> mercurySamples) {
         this.mercurySamples = mercurySamples;
     }
 
@@ -91,7 +92,13 @@ public class ProductOrderSampleHistoryActionBean extends CoreActionBean {
                     }
                 }
             }
-            mercurySamples = mercurySampleDao.findBySampleKeys(ProductOrderSample.getSampleNames(pdo.getSamples()));
+            List<MercurySample> allSamples = mercurySampleDao.findBySampleKeys(ProductOrderSample.getSampleNames(pdo.getSamples()));
+            //remove samples without a PDO
+            for(MercurySample sample : allSamples){
+                if(!StringUtils.isEmpty(sample.getProductOrderKey())){
+                    mercurySamples.add(sample);
+                }
+            }
         }
 
         return new ForwardResolution(VIEW_PAGE);
