@@ -578,10 +578,10 @@ public abstract class LabVessel implements Serializable {
 
         public void add(Set<BucketEntry> bucketEntries) {
             this.bucketEntries.addAll(bucketEntries);
-            if(bucketEntries.size() > 1) {
+            if (this.bucketEntries.size() > 1) {
                 throw new RuntimeException("Unexpected multiple buckets");
             }
-            if (bucketEntries.size() == 1) {
+            if (this.bucketEntries.size() == 1) {
                 for (SampleInstance sampleInstance : sampleInstances) {
                     sampleInstance.setProductOrderKey(bucketEntries.iterator().next().getPoBusinessKey());
                 }
