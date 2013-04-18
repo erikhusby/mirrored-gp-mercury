@@ -56,7 +56,7 @@ public class WorkflowConfig {
         }
         ProductWorkflowDef productWorkflowDef = mapNameToWorkflow.get(workflowName);
         if(productWorkflowDef == null) {
-            throw new RuntimeException("Failed to find workflow " + workflowName);
+            throw new WorkflowException("Failed to find workflow " + workflowName);
         }
         return productWorkflowDef;
     }
