@@ -71,12 +71,13 @@ public class MercuryOrSquidRouter implements Serializable {
      * Building on {@link #routeForVessel(String)}, this method takes a list of barcodes for which a user wishes to
      * determine the system of record.  The work is delegated to {@link #routeForVessel(String)}
      *
+     *
      * @param barcodes a Collection of barcodes that correspond to lab vessels that are to be processed by the system
      *
      * @return An instance of a MercuryOrSquid enum that will assist in determining to which system requests should be
      * routed.
      */
-    public MercuryOrSquid routeForVessels(List<String> barcodes) {
+    public MercuryOrSquid routeForVessels(Collection<String> barcodes) {
 
         TreeSet<MercuryOrSquid> routingOptions = new TreeSet<MercuryOrSquid>();
         for (String vesselBarcode : barcodes) {
@@ -85,9 +86,7 @@ public class MercuryOrSquidRouter implements Serializable {
             routingOptions.add(determinedRoute);
         }
 
-        MercuryOrSquid result = evaluateRoutingOption(routingOptions);
-
-        return result;
+        return evaluateRoutingOption(routingOptions);
     }
 
     /**
@@ -163,7 +162,7 @@ public class MercuryOrSquidRouter implements Serializable {
                 if (productOrderKey != null) {
                     ProductOrder order = athenaClientService.retrieveProductOrderDetails(productOrderKey);
                     if (order != null && StringUtils.isNotBlank(order.getProduct().getWorkflowName())) {
-                        MercuryOrSquid routing = null;
+                        MercuryOrSquid routing;
                         try {
                             routing = getWorkflow(order.getProduct().getWorkflowName()).getRouting();
                         } catch (WorkflowException e) {
@@ -176,9 +175,7 @@ public class MercuryOrSquidRouter implements Serializable {
             }
         }
 
-        MercuryOrSquid result = evaluateRoutingOption(routingOptions);
-
-        return result;
+        return evaluateRoutingOption(routingOptions);
     }
 
     /**
@@ -186,7 +183,7 @@ public class MercuryOrSquidRouter implements Serializable {
      * does this by querying to the "Athena" side of Mercury for the ProductOrder Definition and looks up the
      * workflow definition based on the workflow name defined on the ProductOrder
      *
-     * @param
+     * @param workflowName
      *
      * @return Workflow Definition for the defined workflow for the product order represented by productOrderKey
      */
@@ -194,7 +191,6 @@ public class MercuryOrSquidRouter implements Serializable {
 
         WorkflowConfig workflowConfig = workflowLoader.load();
 
-        final ProductWorkflowDef workflowByName = workflowConfig.getWorkflowByName(workflowName);
-        return workflowByName;
+        return workflowConfig.getWorkflowByName(workflowName);
     }
 }

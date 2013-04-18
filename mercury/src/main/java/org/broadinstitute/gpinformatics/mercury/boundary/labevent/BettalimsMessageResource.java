@@ -176,21 +176,22 @@ public class BettalimsMessageResource {
                         target specific workflows and adjust where the system of record should be considered for
                         each workflow
                         */
-                        for (String testEvent : barcodesToBeVerified) {
-                            final MercuryOrSquidRouter.MercuryOrSquid route =
-                                    mercuryOrSquidRouter.routeForVessel(testEvent);
-                            if (MercuryOrSquidRouter.MercuryOrSquid.MERCURY == route) {
+                        final MercuryOrSquidRouter.MercuryOrSquid route =
+                                mercuryOrSquidRouter.routeForVessels(barcodesToBeVerified);
+
+                        if (MercuryOrSquidRouter.MercuryOrSquid.MERCURY == route) {
+                            processInMercury = true;
+                        } else {
+                            if (MercuryOrSquidRouter.MercuryOrSquid.BOTH == route) {
                                 processInMercury = true;
-                            } else {
-                                if (MercuryOrSquidRouter.MercuryOrSquid.BOTH == route) {
-                                    processInMercury = true;
-                                }
-                                processInSquid = true;
                             }
+                            processInSquid = true;
                         }
-                        if (processInMercury && processInSquid) {
+
+                        if (processInMercury && processInSquid && route != MercuryOrSquidRouter.MercuryOrSquid.BOTH) {
                             throw new InformaticsServiceException(
-                                    "For Product Dependent processing, we cannot process in both Mercury and Squid");
+                                    "For Workflow Dependent processing, we cannot process in both " +
+                                            "Mercury and Squid unless routing specifies both");
                         }
                         break;
                     case BOTH:
