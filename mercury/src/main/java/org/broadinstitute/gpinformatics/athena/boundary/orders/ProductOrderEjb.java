@@ -164,7 +164,7 @@ public class ProductOrderEjb {
      * </ol>
      */
     @Nonnull
-    protected ProductOrderSample mapAliquotIdToSample(@Nonnull ProductOrder order, @Nonnull String aliquotId)
+    public ProductOrderSample mapAliquotIdToSample(@Nonnull ProductOrder order, @Nonnull String aliquotId)
             throws Exception {
 
         // Convert aliquotId to BSP ID, if it's an LSID.
