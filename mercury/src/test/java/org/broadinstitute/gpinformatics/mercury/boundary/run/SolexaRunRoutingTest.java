@@ -74,23 +74,23 @@ public class SolexaRunRoutingTest extends BaseEventTest{
 
         AthenaClientServiceStub.addProductOrder(productOrder);
 
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder);
+        Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
 
         LabBatch workflowBatch = new LabBatch("Whole Genome Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
 
-        PreFlightEntityBuilder preFlightEntityBuilder = runPreflightProcess(mapBarcodeToTube, productOrder, workflowBatch);
+        PreFlightEntityBuilder preFlightEntityBuilder = runPreflightProcess(mapBarcodeToTube, productOrder, workflowBatch, "1");
         ShearingEntityBuilder shearingEntityBuilder = runShearingProcess(mapBarcodeToTube, preFlightEntityBuilder.getTubeFormation(),
-                preFlightEntityBuilder.getRackBarcode());
+                preFlightEntityBuilder.getRackBarcode(), "1");
         LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = runLibraryConstructionProcess(shearingEntityBuilder.getShearingCleanupPlate(),
-                shearingEntityBuilder.getShearCleanPlateBarcode(), shearingEntityBuilder.getShearingPlate());
+                shearingEntityBuilder.getShearCleanPlateBarcode(), shearingEntityBuilder.getShearingPlate(), "1");
         SageEntityBuilder sageEntityBuilder = runSageProcess(libraryConstructionEntityBuilder.getPondRegRack(),
                 libraryConstructionEntityBuilder.getPondRegRackBarcode(), libraryConstructionEntityBuilder.getPondRegTubeBarcodes());
 
         Assert.assertEquals(sageEntityBuilder.getSageCleanupRack().getSampleInstances().size(), NUM_POSITIONS_IN_RACK, "Wrong number of sage cleanup samples");
 
         QtpEntityBuilder qtpEntityBuilder = runQtpProcess(sageEntityBuilder.getSageCleanupRack(), sageEntityBuilder.getSageCleanupTubeBarcodes(),
-                sageEntityBuilder.getMapBarcodeToSageUnloadTubes(), WorkflowName.WHOLE_GENOME);
+                sageEntityBuilder.getMapBarcodeToSageUnloadTubes(), WorkflowName.WHOLE_GENOME, "1");
 
         Map.Entry<String, TwoDBarcodedTube> stringTwoDBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
         LabEventTest.ListTransfersFromStart transferTraverserCriteria = new LabEventTest.ListTransfersFromStart();

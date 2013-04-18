@@ -10,15 +10,14 @@ import java.util.Map;
 public class BSPLSIDUtil {
 
     public static String lsidToBareId(String lsid) {
-        String [] chunks = lsid.split(":");
-        return chunks[chunks.length - 1];
+        return lsid.substring(lsid.lastIndexOf(':') + 1);
     }
 
     /**
      * Return a mapping from each LSID in the input collection to a bare Sample ID
      * (ID without an SM- or SP- prefix) suitable for feeding to the runSampleSearch method
      *
-     * @param lsids
+     * @param lsids LSIDs to map
      *
      * @return mapping from LSIDs to samples
      *

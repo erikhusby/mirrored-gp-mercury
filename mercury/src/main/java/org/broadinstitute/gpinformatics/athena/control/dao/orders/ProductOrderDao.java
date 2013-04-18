@@ -156,18 +156,6 @@ public class ProductOrderDao extends GenericDao {
         return findAll(ProductOrder.class);
     }
 
-    public List<ProductOrder> findByProductName(@Nonnull final String productName) {
-        return findAll(ProductOrder.class, new GenericDaoCallback<ProductOrder>() {
-            @Override
-            public void callback(CriteriaQuery<ProductOrder> criteriaQuery, Root<ProductOrder> root) {
-                CriteriaBuilder criteriaBuilder = getCriteriaBuilder();
-                Join<ProductOrder, Product> productJoin = root.join(ProductOrder_.product);
-
-                criteriaQuery.where(criteriaBuilder.equal(productJoin.get(Product_.productName), productName));
-            }
-        });
-    }
-
     public List<ProductOrder> findAll(FetchSpec... fetchSpecs) {
         return findAll(ProductOrder.class, new ProductOrderDaoCallback(fetchSpecs));
     }

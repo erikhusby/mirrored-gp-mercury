@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
@@ -20,6 +22,8 @@ import java.util.Set;
 @Stateful
 @RequestScoped
 public class BillingEjb {
+
+    private static final Log log = LogFactory.getLog(BillingEjb.class);
 
     /**
      * Encapsulates the results of a billing attempt on a {@link QuoteImportItem}, successful or otherwise.
@@ -180,10 +184,15 @@ public class BillingEjb {
         }
 
         // Update the state of all PDOs affected by this billing session.
-        try {
-            productOrderEjb.updateOrderStatus(updatedPDOs);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        for (String key : updatedPDOs) {
+            try {
+                productOrderEjb.updateOrderStatus(key);
+            } catch (Exception e) {
+                // Errors are just logged here because the current user doesn't work with PDOs, and wouldn't
+                // be able to resolve these issues.  Exceptions should only occur if a required resource,
+                // such as JIRA, is missing.
+                log.error("Failed to update PDO status after billing: " + key, e);
+            }
         }
 
         return results;

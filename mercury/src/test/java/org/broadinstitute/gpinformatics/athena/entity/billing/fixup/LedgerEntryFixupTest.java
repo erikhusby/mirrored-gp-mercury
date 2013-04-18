@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.entity.billing.fixup;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryFixupDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;

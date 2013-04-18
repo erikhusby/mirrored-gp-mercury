@@ -150,20 +150,20 @@ public class LabEventTest extends BaseEventTest{
         AthenaClientServiceStub.addProductOrder(productOrder);
         productOrder.getResearchProject().setJiraTicketKey("RP-123");
 
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder);
+        Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
 
         LabBatch workflowBatch = new LabBatch("Hybrid Selection Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
 
-        PreFlightEntityBuilder preFlightEntityBuilder = runPreflightProcess(mapBarcodeToTube, productOrder, workflowBatch);
+        PreFlightEntityBuilder preFlightEntityBuilder = runPreflightProcess(mapBarcodeToTube, productOrder, workflowBatch, "1");
         ShearingEntityBuilder shearingEntityBuilder = runShearingProcess(mapBarcodeToTube, preFlightEntityBuilder.getTubeFormation(),
-                preFlightEntityBuilder.getRackBarcode());
+                preFlightEntityBuilder.getRackBarcode(), "1");
         LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = runLibraryConstructionProcess(shearingEntityBuilder.getShearingCleanupPlate(),
-                shearingEntityBuilder.getShearCleanPlateBarcode(), shearingEntityBuilder.getShearingPlate());
+                shearingEntityBuilder.getShearCleanPlateBarcode(), shearingEntityBuilder.getShearingPlate(), "1");
         HybridSelectionEntityBuilder hybridSelectionEntityBuilder = runHybridSelectionProcess(libraryConstructionEntityBuilder.getPondRegRack(),
-                libraryConstructionEntityBuilder.getPondRegRackBarcode(), libraryConstructionEntityBuilder.getPondRegTubeBarcodes());
+                libraryConstructionEntityBuilder.getPondRegRackBarcode(), libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), "1");
         QtpEntityBuilder qtpEntityBuilder = runQtpProcess(hybridSelectionEntityBuilder.getNormCatchRack(), hybridSelectionEntityBuilder.getNormCatchBarcodes(),
-                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), WorkflowName.HYBRID_SELECTION);
+                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), WorkflowName.HYBRID_SELECTION, "1");
 
         IlluminaFlowcell illuminaFlowcell = qtpEntityBuilder.getIlluminaFlowcell();
         Set<SampleInstance> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
@@ -274,20 +274,21 @@ public class LabEventTest extends BaseEventTest{
         ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
         AthenaClientServiceStub.addProductOrder(productOrder);
         final Date runDate = new Date();
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder);
+        Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
 
-        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube, productOrder, workflowBatch);
+        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube, productOrder,
+                workflowBatch, null, String.valueOf(runDate.getTime()), "1");
         ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder = runExomeExpressShearingProcess(productOrder, picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
-                picoPlatingEntityBuilder.getNormTubeFormation(), picoPlatingEntityBuilder.getNormalizationBarcode());
+                picoPlatingEntityBuilder.getNormTubeFormation(), picoPlatingEntityBuilder.getNormalizationBarcode(), "1");
         LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = runLibraryConstructionProcess(exomeExpressShearingEntityBuilder.getShearingCleanupPlate(),
-                exomeExpressShearingEntityBuilder.getShearCleanPlateBarcode(), exomeExpressShearingEntityBuilder.getShearingPlate());
+                exomeExpressShearingEntityBuilder.getShearCleanPlateBarcode(), exomeExpressShearingEntityBuilder.getShearingPlate(), "1");
         HybridSelectionEntityBuilder hybridSelectionEntityBuilder = runHybridSelectionProcess(libraryConstructionEntityBuilder.getPondRegRack(),
-                libraryConstructionEntityBuilder.getPondRegRackBarcode(), libraryConstructionEntityBuilder.getPondRegTubeBarcodes());
+                libraryConstructionEntityBuilder.getPondRegRackBarcode(), libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), "1");
         QtpEntityBuilder qtpEntityBuilder = runQtpProcess(hybridSelectionEntityBuilder.getNormCatchRack(), hybridSelectionEntityBuilder.getNormCatchBarcodes(),
-                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), WorkflowName.EXOME_EXPRESS);
-        HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder = runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack());
+                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), WorkflowName.EXOME_EXPRESS, "1");
+        HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder = runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1");
 
         IlluminaFlowcell illuminaFlowcell = hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell();
         Set<SampleInstance> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
@@ -352,23 +353,23 @@ public class LabEventTest extends BaseEventTest{
         AthenaClientServiceStub.addProductOrder(productOrder);
         productOrder.getResearchProject().setJiraTicketKey("RP-123");
 
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder);
+        Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
 
         LabBatch workflowBatch = new LabBatch("whole Genome Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
 
-        PreFlightEntityBuilder preFlightEntityBuilder = runPreflightProcess(mapBarcodeToTube, productOrder, workflowBatch);
+        PreFlightEntityBuilder preFlightEntityBuilder = runPreflightProcess(mapBarcodeToTube, productOrder, workflowBatch, "1");
         ShearingEntityBuilder shearingEntityBuilder = runShearingProcess(mapBarcodeToTube, preFlightEntityBuilder.getTubeFormation(),
-                preFlightEntityBuilder.getRackBarcode());
+                preFlightEntityBuilder.getRackBarcode(), "1");
         LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = runLibraryConstructionProcess(shearingEntityBuilder.getShearingCleanupPlate(),
-                shearingEntityBuilder.getShearCleanPlateBarcode(), shearingEntityBuilder.getShearingPlate());
+                shearingEntityBuilder.getShearCleanPlateBarcode(), shearingEntityBuilder.getShearingPlate(), "1");
         SageEntityBuilder sageEntityBuilder = runSageProcess(libraryConstructionEntityBuilder.getPondRegRack(),
                 libraryConstructionEntityBuilder.getPondRegRackBarcode(), libraryConstructionEntityBuilder.getPondRegTubeBarcodes());
 
         Assert.assertEquals(sageEntityBuilder.getSageCleanupRack().getSampleInstances().size(), NUM_POSITIONS_IN_RACK, "Wrong number of sage cleanup samples");
 
         QtpEntityBuilder qtpEntityBuilder = runQtpProcess(sageEntityBuilder.getSageCleanupRack(), sageEntityBuilder.getSageCleanupTubeBarcodes(),
-                sageEntityBuilder.getMapBarcodeToSageUnloadTubes(), WorkflowName.WHOLE_GENOME);
+                sageEntityBuilder.getMapBarcodeToSageUnloadTubes(), WorkflowName.WHOLE_GENOME, "1");
 
         IlluminaFlowcell illuminaFlowcell = qtpEntityBuilder.getIlluminaFlowcell();
         Set<SampleInstance> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
