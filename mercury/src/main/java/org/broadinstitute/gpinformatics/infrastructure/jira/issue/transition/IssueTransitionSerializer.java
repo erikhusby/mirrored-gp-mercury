@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition;
 
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.UpdateJiraIssueUpdateSerializer;
 import org.codehaus.jackson.JsonGenerator;
-import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.map.JsonSerializer;
 import org.codehaus.jackson.map.SerializerProvider;
 
@@ -11,11 +10,11 @@ import java.io.IOException;
 public class IssueTransitionSerializer extends JsonSerializer<IssueTransitionRequest> {
 
     @Override
-    public void serialize(IssueTransitionRequest value, JsonGenerator jsonGenerator, SerializerProvider provider) throws IOException, JsonProcessingException {
+    public void serialize(IssueTransitionRequest value, JsonGenerator jsonGenerator, SerializerProvider provider) throws IOException {
 
         jsonGenerator.writeStartObject();
 
-        if ( ! value.getFields().getCustomFields().isEmpty()) {
+        if (!value.getFields().getCustomFields().isEmpty()) {
             jsonGenerator.writeFieldName("fields");
             jsonGenerator.writeStartObject();
             UpdateJiraIssueUpdateSerializer.writeCustomFields(value.getFields().getCustomFields(), jsonGenerator);
@@ -27,15 +26,12 @@ public class IssueTransitionSerializer extends JsonSerializer<IssueTransitionReq
         jsonGenerator.writeStringField("id", value.getTransition().getId());
         jsonGenerator.writeEndObject();
 
-        if (value.getComment() != null) {
-            writeComment(jsonGenerator, value.getComment());
-        }
+        writeComment(jsonGenerator, value.getComment());
 
         jsonGenerator.writeEndObject();
-
     }
 
-    private void writeComment(JsonGenerator jsonGenerator, String comment) throws IOException {
+    private static void writeComment(JsonGenerator jsonGenerator, String comment) throws IOException {
         if (comment != null) {
             jsonGenerator.writeFieldName("update");
 

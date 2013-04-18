@@ -29,6 +29,7 @@ public class PriceItem implements Serializable, Comparable<PriceItem> {
     public static final String PLATFORM_GENOMICS = "Genomics Platform";
     public static final String CATEGORY_EXOME_SEQUENCING_ANALYSIS = "Exome Sequencing Analysis";
     public static final String NAME_EXOME_EXPRESS = "Exome Express";
+    public static final String NAME_STANDARD_WHOLE_EXOME = "Standard Whole Exome";
 
     @Id
     @SequenceGenerator(name = "SEQ_PRICE_ITEM", schema = "athena", sequenceName = "SEQ_PRICE_ITEM")
@@ -56,7 +57,7 @@ public class PriceItem implements Serializable, Comparable<PriceItem> {
     private String units;
 
     /**
-     * Package visible constructor for JPA
+     * Package visible constructor for JPA.
      */
     public PriceItem() {}
 
@@ -88,7 +89,7 @@ public class PriceItem implements Serializable, Comparable<PriceItem> {
     }
 
     /**
-     * Quote server holds price data, we would set this into the entity as a transient property
+     * Quote server holds price data, we would set this into the entity as a transient property.
      */
     public void setPrice(String price) {
         this.price = price;
@@ -99,7 +100,7 @@ public class PriceItem implements Serializable, Comparable<PriceItem> {
     }
 
     /**
-     * Quote server holds units data, we would set this into the entity as a transient property
+     * Quote server holds units data, we would set this into the entity as a transient property.
      */
     public void setUnits(String units) {
         this.units = units;
@@ -138,10 +139,6 @@ public class PriceItem implements Serializable, Comparable<PriceItem> {
     @Override
     public int hashCode() {
         return new HashCodeBuilder().append(category).append(name).append(platform).hashCode();
-    }
-
-    public String getConcatenatedKey() {
-        return platform + '|' + category + '|' + name;
     }
 
     public String getDisplayName() {

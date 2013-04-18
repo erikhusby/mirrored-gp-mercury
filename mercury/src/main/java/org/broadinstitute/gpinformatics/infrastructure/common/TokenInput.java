@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.common;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -82,6 +83,12 @@ public abstract class TokenInput<TOKEN_OBJECT> {
     }
 
     public List<TOKEN_OBJECT> getTokenObjects() {
+        // setListOfKeys updates the objects, so when the action bean first populates the list of keys
+        // directly, there will be no objects. This ensures that there will be objects around later.
+        if (!StringUtils.isBlank(listOfKeys) && CollectionUtils.isEmpty(tokenObjects)) {
+            setListOfKeys(listOfKeys);
+        }
+
         return tokenObjects;
     }
 

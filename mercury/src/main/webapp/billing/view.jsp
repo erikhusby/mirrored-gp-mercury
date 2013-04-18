@@ -87,6 +87,7 @@
                 <th>Platform</th>
                 <th width="40">Category</th>
                 <th width="40">Price Item</th>
+                <th width="40">Quote Price Type</th>
                 <th width="60">Quantity</th>
                 <th width="100">Work Completed</th>
                 <th width="40">Work Reported</th>
@@ -94,19 +95,15 @@
             </tr>
             </thead>
             <tbody>
-            <c:forEach items="${actionBean.editSession.quoteImportItems}" var="item">
+            <c:forEach items="${actionBean.quoteImportItems}" var="item">
                 <tr>
                     <td width="50">${item.quoteId}</td>
                     <td width="100">${item.priceItem.platform}</td>
                     <td width="50">${item.priceItem.category}</td>
-                    <td>${actionBean.quotePriceItemNameMap[item.priceItem.quoteServerId]}</td>
+                    <td>${item.priceItem.name}</td>
+                    <td width="70">${item.quotePriceType}</td>
                     <td width="50">${item.quantity}</td>
-                    <td>
-                            ${item.numSamples}<br/>
-                        <fmt:formatDate value="${item.startRange}"/>
-                        -
-                        <fmt:formatDate value="${item.endRange}"/>
-                    </td>
+                    <td>${item.numSamples}</td>
                     <td>
                         <fmt:formatDate value="${item.workCompleteDate}"/>
                     </td>

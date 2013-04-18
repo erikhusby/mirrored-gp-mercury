@@ -106,6 +106,31 @@ public class LabBatchEjb {
      *
      * @param batchObject A constructed, but not persisted, batch object containing all initial information necessary
      *                    to persist a new batch
+     * @param reworkVessels Vessels to add as rework.
+     * @param reporter    The User that is attempting to create the batch
+     */
+    public LabBatch createLabBatch(LabBatch batchObject, Set<LabVessel> reworkVessels, String reporter) {
+        Collection<String> pdoList = LabVessel.extractPdoKeyList(batchObject.getStartingLabVessels());
+
+        if (StringUtils.isBlank(batchObject.getBatchName())) {
+            throw new InformaticsServiceException("The Name for the batch Object cannot be null");
+        }
+
+        labBatchDao.persist(batchObject);
+
+        batchToJira(reporter, null, batchObject);
+
+        jiraBatchNotification(batchObject);
+
+        return batchObject;
+    }
+
+    /**
+     * createLabBatch will, given a group of lab plastic ware, create a batch entity and a new Jira Ticket for that
+     * entity
+     *
+     * @param batchObject A constructed, but not persisted, batch object containing all initial information necessary
+     *                    to persist a new batch
      * @param reporter    The User that is attempting to create the batch
      */
     public LabBatch createLabBatch(@Nonnull LabBatch batchObject, @Nonnull String reporter) {

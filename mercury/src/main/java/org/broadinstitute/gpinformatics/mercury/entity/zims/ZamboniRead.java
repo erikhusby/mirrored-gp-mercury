@@ -19,11 +19,21 @@ public class ZamboniRead {
 
     public ZamboniRead() {}
 
+    /**
+     * All fields are nullable because the pipeline may update values
+     * at different points in the life of a run.
+     *
+     * See {@link ZimsIlluminaRun#addRead(edu.mit.broad.prodinfo.thrift.lims.TZamboniRead)}
+     * for an explanation of how ZamboniReads are converted to thrift reads.
+     * @param firstCycle nullable
+     * @param length nullable
+     * @param readType nullable
+     */
     public ZamboniRead(Integer firstCycle,
                        Integer length,
                        String readType) {
-        this.firstCycle = ThriftConversionUtil.zeroAsNull(firstCycle);
-        this.length = ThriftConversionUtil.zeroAsNull(length);
+        this.firstCycle = firstCycle;
+        this.length = length;
         if (readType != null) {
             if (TEMPLATE.equals(readType)) {
                 this.readType = ZamboniReadType.TEMPLATE;

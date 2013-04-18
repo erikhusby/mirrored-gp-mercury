@@ -76,7 +76,7 @@ public class JiraServiceTest {
 
         try {
             Map<String, CustomFieldDefinition> requiredFields =
-                service.getRequiredFields(new CreateFields.Project(CreateFields.ProjectType.Product_Ordering.getKeyPrefix()),
+                service.getRequiredFields(new CreateFields.Project(CreateFields.ProjectType.PRODUCT_ORDERING.getKeyPrefix()),
                                                               CreateFields.IssueType.PRODUCT_ORDER );
 
             Assert.assertTrue(requiredFields.keySet().contains(ProductOrder.JiraField.PRODUCT_FAMILY.getFieldName()));
@@ -86,7 +86,7 @@ public class JiraServiceTest {
                                                 "Test Exome Express"));
 
             JiraIssue jiraIssue =
-                    service.createIssue(CreateFields.ProjectType.Product_Ordering.getKeyPrefix(), "hrafal",
+                    service.createIssue(CreateFields.ProjectType.PRODUCT_ORDERING.getKeyPrefix(), "hrafal",
                             CreateFields.IssueType.PRODUCT_ORDER,
                             "Athena Test case:::  Test new Summary Addition",
                             "Athena Test Case:  Test description setting",customFieldList);

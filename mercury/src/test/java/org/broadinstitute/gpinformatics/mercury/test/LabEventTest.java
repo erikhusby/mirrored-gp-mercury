@@ -23,7 +23,9 @@ import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferEnt
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVisualizer;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexingSchemeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -33,14 +35,11 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowValidator;
 import org.broadinstitute.gpinformatics.mercury.control.zims.ZimsIlluminaRunFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.LabVesselComment;
-import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
-import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkLevel;
-import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkReason;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.*;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
@@ -151,21 +150,20 @@ public class LabEventTest extends BaseEventTest{
         AthenaClientServiceStub.addProductOrder(productOrder);
         productOrder.getResearchProject().setJiraTicketKey("RP-123");
 
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder);
+        Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
 
         LabBatch workflowBatch = new LabBatch("Hybrid Selection Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
 
-
-        PreFlightEntityBuilder preFlightEntityBuilder = runPreflightProcess(mapBarcodeToTube, productOrder, workflowBatch);
+        PreFlightEntityBuilder preFlightEntityBuilder = runPreflightProcess(mapBarcodeToTube, productOrder, workflowBatch, "1");
         ShearingEntityBuilder shearingEntityBuilder = runShearingProcess(mapBarcodeToTube, preFlightEntityBuilder.getTubeFormation(),
-                preFlightEntityBuilder.getRackBarcode());
+                preFlightEntityBuilder.getRackBarcode(), "1");
         LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = runLibraryConstructionProcess(shearingEntityBuilder.getShearingCleanupPlate(),
-                shearingEntityBuilder.getShearCleanPlateBarcode(), shearingEntityBuilder.getShearingPlate());
+                shearingEntityBuilder.getShearCleanPlateBarcode(), shearingEntityBuilder.getShearingPlate(), "1");
         HybridSelectionEntityBuilder hybridSelectionEntityBuilder = runHybridSelectionProcess(libraryConstructionEntityBuilder.getPondRegRack(),
-                libraryConstructionEntityBuilder.getPondRegRackBarcode(), libraryConstructionEntityBuilder.getPondRegTubeBarcodes());
+                libraryConstructionEntityBuilder.getPondRegRackBarcode(), libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), "1");
         QtpEntityBuilder qtpEntityBuilder = runQtpProcess(hybridSelectionEntityBuilder.getNormCatchRack(), hybridSelectionEntityBuilder.getNormCatchBarcodes(),
-                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), WorkflowName.HYBRID_SELECTION);
+                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), WorkflowName.HYBRID_SELECTION, "1");
 
         IlluminaFlowcell illuminaFlowcell = qtpEntityBuilder.getIlluminaFlowcell();
         Set<SampleInstance> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
@@ -238,27 +236,15 @@ public class LabEventTest extends BaseEventTest{
         Map.Entry<String, TwoDBarcodedTube> twoDBarcodedTubeForRework = mapBarcodeToTube.entrySet().iterator().next();
         int lastEventIndex = transferTraverserCriteria.getVisitedLabEvents().size();
         LabEvent catchEvent =
-                transferTraverserCriteria.getVisitedLabEvents().toArray(new LabEvent[lastEventIndex])[lastEventIndex - 1];
-        MercurySample startingSample =
-                twoDBarcodedTubeForRework.getValue().getAllSamples().iterator().next().getStartingSample();
+                transferTraverserCriteria.getVisitedLabEvents().toArray(new LabEvent[lastEventIndex])[lastEventIndex
+                                                                                                      - 1];
+        BucketEntryDao bucketEntryDao = EasyMock.createNiceMock(BucketEntryDao.class);
 
-        ReworkEntry reworkEntry = startingSample.getRapSheet().addRework(ReworkReason.MACHINE_ERROR, ReworkLevel.ONE_SAMPLE_HOLD_REST_BATCH,
-                                catchEvent.getLabEventType(),VesselPosition.TUBE1,startingSample);
-
-        LabVesselComment reworkComment =
-                new LabVesselComment<ReworkEntry>(catchEvent, twoDBarcodedTubeForRework.getValue(), "rework comment",
-                        Arrays.asList(reworkEntry));
-        Assert.assertNotNull(reworkComment.getLabEvent(),"Lab event is required.");
-        Assert.assertNotNull(reworkComment.getLabVessel(),"Lab Vessel is required.");
-        Assert.assertNotNull(reworkComment.getRapSheetEntries(),"Rap Sheet Entries should not be null.");
-        Assert.assertFalse(reworkComment.getRapSheetEntries().isEmpty(), "Should have some Rap Sheet Entries.");
-        Assert.assertTrue(reworkComment.getRapSheetEntries().get(0) instanceof ReworkEntry, "Entry should be ReworkEntry.");
-        ReworkEntry rework = (ReworkEntry)reworkComment.getRapSheetEntries().get(0);
-        Assert.assertNotNull(rework.getReworkLevel(), "ReworkLevel cannot be null.");
-        Assert.assertNotNull(rework.getReworkReason(), "ReworkReason cannot be null.");
-        Assert.assertNotNull(rework.getReworkStep(), "getReworkStep cannot be null.");
-        Assert.assertNotNull(rework.getRapSheet(), "rework.getRapSheet cannot be null.");
-        Assert.assertNotNull(rework.getRapSheet().getSample(), "RapSheet.sample cannot be null.");
+        EasyMock.expect(bucketEntryDao.findByVesselAndPO(twoDBarcodedTubeForRework.getValue(),twoDBarcodedTubeForRework.getValue().getLabel()))
+                .andReturn(new BucketEntry(twoDBarcodedTubeForRework.getValue(),
+                        twoDBarcodedTubeForRework.getValue().getLabel()));
+        final BucketEntryDao bucketEntryMock = EasyMock.createNiceMock(BucketEntryDao.class);
+        EasyMock.replay(bucketEntryMock);
 
         if (false) {
             TransferVisualizerFrame transferVisualizerFrame = new TransferVisualizerFrame();
@@ -288,21 +274,21 @@ public class LabEventTest extends BaseEventTest{
         ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
         AthenaClientServiceStub.addProductOrder(productOrder);
         final Date runDate = new Date();
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder);
-
+        Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
 
-        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube, productOrder, workflowBatch);
+        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube, productOrder,
+                workflowBatch, null, String.valueOf(runDate.getTime()), "1");
         ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder = runExomeExpressShearingProcess(productOrder, picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
-                picoPlatingEntityBuilder.getNormTubeFormation(), picoPlatingEntityBuilder.getNormalizationBarcode());
+                picoPlatingEntityBuilder.getNormTubeFormation(), picoPlatingEntityBuilder.getNormalizationBarcode(), "1");
         LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = runLibraryConstructionProcess(exomeExpressShearingEntityBuilder.getShearingCleanupPlate(),
-                exomeExpressShearingEntityBuilder.getShearCleanPlateBarcode(), exomeExpressShearingEntityBuilder.getShearingPlate());
+                exomeExpressShearingEntityBuilder.getShearCleanPlateBarcode(), exomeExpressShearingEntityBuilder.getShearingPlate(), "1");
         HybridSelectionEntityBuilder hybridSelectionEntityBuilder = runHybridSelectionProcess(libraryConstructionEntityBuilder.getPondRegRack(),
-                libraryConstructionEntityBuilder.getPondRegRackBarcode(), libraryConstructionEntityBuilder.getPondRegTubeBarcodes());
+                libraryConstructionEntityBuilder.getPondRegRackBarcode(), libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), "1");
         QtpEntityBuilder qtpEntityBuilder = runQtpProcess(hybridSelectionEntityBuilder.getNormCatchRack(), hybridSelectionEntityBuilder.getNormCatchBarcodes(),
-                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), WorkflowName.EXOME_EXPRESS);
-        HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder = runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack());
+                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), WorkflowName.EXOME_EXPRESS, "1");
+        HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder = runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1");
 
         IlluminaFlowcell illuminaFlowcell = hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell();
         Set<SampleInstance> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
@@ -367,24 +353,23 @@ public class LabEventTest extends BaseEventTest{
         AthenaClientServiceStub.addProductOrder(productOrder);
         productOrder.getResearchProject().setJiraTicketKey("RP-123");
 
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder);
+        Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
 
         LabBatch workflowBatch = new LabBatch("whole Genome Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
 
-
-        PreFlightEntityBuilder preFlightEntityBuilder = runPreflightProcess(mapBarcodeToTube, productOrder, workflowBatch);
+        PreFlightEntityBuilder preFlightEntityBuilder = runPreflightProcess(mapBarcodeToTube, productOrder, workflowBatch, "1");
         ShearingEntityBuilder shearingEntityBuilder = runShearingProcess(mapBarcodeToTube, preFlightEntityBuilder.getTubeFormation(),
-                preFlightEntityBuilder.getRackBarcode());
+                preFlightEntityBuilder.getRackBarcode(), "1");
         LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = runLibraryConstructionProcess(shearingEntityBuilder.getShearingCleanupPlate(),
-                shearingEntityBuilder.getShearCleanPlateBarcode(), shearingEntityBuilder.getShearingPlate());
+                shearingEntityBuilder.getShearCleanPlateBarcode(), shearingEntityBuilder.getShearingPlate(), "1");
         SageEntityBuilder sageEntityBuilder = runSageProcess(libraryConstructionEntityBuilder.getPondRegRack(),
                 libraryConstructionEntityBuilder.getPondRegRackBarcode(), libraryConstructionEntityBuilder.getPondRegTubeBarcodes());
 
         Assert.assertEquals(sageEntityBuilder.getSageCleanupRack().getSampleInstances().size(), NUM_POSITIONS_IN_RACK, "Wrong number of sage cleanup samples");
 
         QtpEntityBuilder qtpEntityBuilder = runQtpProcess(sageEntityBuilder.getSageCleanupRack(), sageEntityBuilder.getSageCleanupTubeBarcodes(),
-                sageEntityBuilder.getMapBarcodeToSageUnloadTubes(), WorkflowName.WHOLE_GENOME);
+                sageEntityBuilder.getMapBarcodeToSageUnloadTubes(), WorkflowName.WHOLE_GENOME, "1");
 
         IlluminaFlowcell illuminaFlowcell = qtpEntityBuilder.getIlluminaFlowcell();
         Set<SampleInstance> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
@@ -435,8 +420,8 @@ public class LabEventTest extends BaseEventTest{
         LabBatchDAO labBatchDAO = EasyMock.createNiceMock(LabBatchDAO.class);
         labBatchEJB.setLabBatchDao(labBatchDAO);
 
-
         BucketDao mockBucketDao = EasyMock.createNiceMock(BucketDao.class);
+
         EasyMock.replay(mockBucketDao, tubeDao, mockJira, labBatchDAO);
 
         LabEventHandler labEventHandler = getLabEventHandler(mockBucketDao);
@@ -600,10 +585,10 @@ public class LabEventTest extends BaseEventTest{
     }
 
     public static void validateWorkflow(String nextEventTypeName, List<LabVessel> labVessels) {
-        BettalimsMessageResource bettalimsMessageResource = new BettalimsMessageResource();
+        WorkflowValidator workflowValidator = new WorkflowValidator();
         final AthenaClientService athenaClientService = AthenaClientProducer.stubInstance();
-        bettalimsMessageResource.setAthenaClientService(athenaClientService);
-        bettalimsMessageResource.validateWorkflow(labVessels, nextEventTypeName);
+        workflowValidator.setAthenaClientService(athenaClientService);
+        workflowValidator.validateWorkflow(labVessels, nextEventTypeName);
         WorkflowLoader workflowLoader = new WorkflowLoader();
         WorkflowConfig workflowConfig = workflowLoader.load();
         for (LabVessel labVessel : labVessels) {

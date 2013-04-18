@@ -2,20 +2,22 @@ package org.broadinstitute.gpinformatics.athena.presentation.billing;
 
 import net.sourceforge.stripes.action.*;
 import net.sourceforge.stripes.controller.LifecycleStage;
+import net.sourceforge.stripes.validation.Validate;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb;
+import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteWorkItemsExporter;
-import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
 import org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
@@ -29,7 +31,7 @@ import java.util.*;
 import static org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao.FetchSpec.*;
 
 /**
- * This handles all the needed interface processing elements
+ * This handles all the needed interface processing elements.
  */
 @UrlBinding("/billing/session.action")
 public class BillingSessionActionBean extends CoreActionBean {
@@ -41,10 +43,10 @@ public class BillingSessionActionBean extends CoreActionBean {
     private BillingSessionDao billingSessionDao;
 
     @Inject
-    private LedgerEntryDao ledgerEntryDao;
+    private ProductOrderDao productOrderDao;
 
     @Inject
-    private ProductOrderDao productOrderDao;
+    private PriceItemDao priceItemDao;
 
     @Inject
     private BSPUserList bspUserList;
@@ -64,6 +66,7 @@ public class BillingSessionActionBean extends CoreActionBean {
 
     private List<BillingSession> billingSessions;
 
+    @Validate(required = true, on = {"bill", "endSession"})
     private String sessionKey;
 
     // parameter from quote server
@@ -72,7 +75,7 @@ public class BillingSessionActionBean extends CoreActionBean {
     private BillingSession editSession;
 
     /**
-     * Initialize the session with the passed in key for display in the form. Creation happens from a gesture in the
+     * Initialize the session with the passed in key for display in the form.  Creation happens from a gesture in the
      * order list, so create is not needed here.
      */
     @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, "downloadTracker", "downloadQuoteItems", "bill", "endSession"})
@@ -91,7 +94,7 @@ public class BillingSessionActionBean extends CoreActionBean {
     @DefaultHandler
     @HandlesEvent(LIST_ACTION)
     public Resolution list() {
-        // If a billing session is sent, then this is coming from the quote server and it needs to be redirected to view
+        // If a billing session is sent, then this is coming from the quote server and it needs to be redirected to view.
         if (!StringUtils.isBlank(billingSession)) {
             return new RedirectResolution(BillingSessionActionBean.class, VIEW_ACTION).addParameter("sessionKey", billingSession);
         }
@@ -112,15 +115,15 @@ public class BillingSessionActionBean extends CoreActionBean {
                 productOrderDao.findListByBusinessKeyList(productOrderBusinessKeys, Product, ResearchProject, Samples);
 
         Resolution downloadResolution =
-            ProductOrderActionBean.getTrackerForOrders(this, productOrders, bspUserList);
+            ProductOrderActionBean.getTrackerForOrders(this, productOrders, priceItemDao, bspUserList, priceListCache);
 
-        // If there is no file to download, just pass on the errors
+        // If there is no file to download, just pass on the errors.
         // FIXME: this logic is bogus, getTrackerForOrders doesn't return null on error.
         if (downloadResolution == null) {
             return new ForwardResolution(SESSION_VIEW_PAGE);
         }
 
-        // Do the download
+        // Do the download.
         return downloadResolution;
     }
 
@@ -142,7 +145,7 @@ public class BillingSessionActionBean extends CoreActionBean {
             outputStream = new FileOutputStream(tempFile);
 
             QuoteWorkItemsExporter exporter =
-                    new QuoteWorkItemsExporter(editSession, editSession.getQuoteImportItems());
+                    new QuoteWorkItemsExporter(editSession, getQuoteImportItems());
 
             exporter.writeToStream(outputStream, bspUserList);
             IOUtils.closeQuietly(outputStream);
@@ -171,12 +174,15 @@ public class BillingSessionActionBean extends CoreActionBean {
         }
     }
 
+    public List<QuoteImportItem> getQuoteImportItems() {
+        return editSession.getQuoteImportItems(priceListCache);
+    }
 
     @HandlesEvent("bill")
     public Resolution bill() {
 
         String pageUrl = getContext().getRequest().getRequestURL().toString();
-        List<BillingEjb.BillingResult> billingResults = billingEjb.bill(editSession, pageUrl, sessionKey);
+        List<BillingEjb.BillingResult> billingResults = billingEjb.bill(pageUrl, sessionKey);
 
         boolean errorsInBilling = false;
 
@@ -206,10 +212,9 @@ public class BillingSessionActionBean extends CoreActionBean {
 
     @HandlesEvent("endSession")
     public Resolution endSession() {
+        billingEjb.endSession(sessionKey);
 
-        billingEjb.endSession(editSession);
-
-        // Default is list
+        // The default Resolution is LIST_ACTION.
         return new RedirectResolution(BillingSessionActionBean.class);
     }
 
@@ -239,10 +244,10 @@ public class BillingSessionActionBean extends CoreActionBean {
 
     private final Map<String, String> priceItemNameMap = new HashMap<String, String>();
     public Map<String, String> getQuotePriceItemNameMap() {
-        Collection<PriceItem> priceItems = priceListCache.getPriceItems ();
-        if (priceItemNameMap.isEmpty() && !priceItems.isEmpty()) {
-            for (PriceItem priceItem : priceListCache.getPriceItems()) {
-                priceItemNameMap.put(priceItem.getId(), priceItem.getName());
+        Collection<QuotePriceItem> quotePriceItems = priceListCache.getQuotePriceItems();
+        if (priceItemNameMap.isEmpty() && !quotePriceItems.isEmpty()) {
+            for (QuotePriceItem quotePriceItem : priceListCache.getQuotePriceItems()) {
+                priceItemNameMap.put(quotePriceItem.getId(), quotePriceItem.getName());
             }
         }
 

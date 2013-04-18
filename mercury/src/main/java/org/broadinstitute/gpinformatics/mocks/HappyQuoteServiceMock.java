@@ -23,12 +23,9 @@ public class HappyQuoteServiceMock implements QuoteService {
     }
 
     @Override
-    public String registerNewWork(Quote quote, PriceItem priceItem, Date reportedCompletionDate, double numWorkUnits, String callbackUrl, String callbackParameterName, String callbackParameterValue) {
-        throw new RuntimeException("happy mock can't do this");
-    }
-
-    @Override
-    public Quote getQuoteByNumericId(String numericId) throws QuoteServerException, QuoteNotFoundException {
+    public String registerNewWork(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
+                                  Date reportedCompletionDate, double numWorkUnits, String callbackUrl,
+                                  String callbackParameterName, String callbackParameterValue) {
         throw new RuntimeException("happy mock can't do this");
     }
 

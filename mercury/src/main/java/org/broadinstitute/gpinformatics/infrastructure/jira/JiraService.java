@@ -148,7 +148,7 @@ public interface JiraService extends Serializable {
 
     Transition findAvailableTransitionByName(String jiraIssueKey, String transitionName);
 
-    void postNewTransition(String jiraIssueKey, Transition transition, String comment) throws IOException;
+    void postNewTransition(String jiraIssueKey, Transition transition, @Nullable String comment) throws IOException;
 
 
     /**
@@ -160,7 +160,8 @@ public interface JiraService extends Serializable {
      * @param comment a comment to add, or null if none
      * @throws IOException
      */
-    void postNewTransition(String jiraIssueKey, Transition transition, Collection<CustomField> customFields,
+    void postNewTransition(String jiraIssueKey, Transition transition,
+                           @Nonnull Collection<CustomField> customFields,
                            @Nullable String comment) throws IOException;
 
     IssueFieldsResponse getIssueFields(String jiraIssueKey, Collection<CustomFieldDefinition> customFieldDefinitions) throws IOException;

@@ -19,15 +19,20 @@ public class EnversRevisionListener implements RevisionListener {
     @Override
     public void newRevision(Object revisionEntity) {
         RevInfo revInfo = (RevInfo) revisionEntity;
-        UserBean userBean = null;
         try {
-            userBean = ServiceAccessUtility.getBean(UserBean.class);
+            UserBean userBean = ServiceAccessUtility.getBean(UserBean.class);
+            if (userBean != null && userBean.getLoginUserName() != null) {
+                revInfo.setUsername(userBean.getLoginUserName());
+            }
         } catch (Exception e) {
             // An exception can be thrown if a database operation occurs inside a JMS message handler, and
             // Envers is called to write the audit entry.  In this case, the username would be empty anyway.
-        }
-        if (userBean != null && userBean.getLoginUserName() != null) {
-            revInfo.setUsername(userBean.getLoginUserName());
+            // This can also occur if we modify the db inside a scheduled task, since there's no session scope
+            // in that case either. For some reason, inside a JMS message handler the JNDI call fails, and inside
+            // a scheduled task a UserBean is returned but calling into it results in a WELD exception.
+            //
+            // The best fix would be to somehow check up front if we're currently in session scope before trying
+            // to look up UserBean at all.
         }
     }
 }

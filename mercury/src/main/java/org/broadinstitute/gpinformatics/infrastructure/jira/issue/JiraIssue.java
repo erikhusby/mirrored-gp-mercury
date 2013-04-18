@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Iss
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.*;
@@ -97,23 +98,7 @@ public class JiraIssue implements Serializable {
         return foundValue;
     }
 
-    public Map<String, Object> getFieldValues(@Nonnull String... fieldNames) throws IOException{
-
-        if(!extraFields.keySet().containsAll(Arrays.asList(fieldNames))) {
-
-            JiraIssue tempIssue = jiraService.getIssueInfo(key, fieldNames);
-            extraFields= tempIssue.getFieldValues(fieldNames);
-
-            summary = tempIssue.getSummary();
-            description = tempIssue.getDescription();
-            dueDate = tempIssue.getDueDate();
-        }
-
-        return extraFields;
-    }
-
     public <TV> void addFieldValue(String filedName, TV value) {
-
         extraFields.put(filedName, value);
     }
 
@@ -177,18 +162,43 @@ public class JiraIssue implements Serializable {
     }
 
     /**
+     * Return the value of a JIRA field by name.
+     *
+     * @param fieldName  the field to return
+     * @return the field's value
+     * @throws IOException
+     */
+    public Object getField(String fieldName) throws IOException {
+        CustomFieldDefinition definition = jiraService.getCustomFields(fieldName).get(fieldName);
+        IssueFieldsResponse response = jiraService.getIssueFields(key, Collections.singleton(definition));
+        return response.getFields().get(definition.getJiraCustomFieldId());
+    }
+
+    /**
      * @return a list of all available workflow transitions for this ticket in its current state
      */
     public IssueTransitionListResponse findAvailableTransitions() {
         return jiraService.findAvailableTransitions(key);
     }
 
+    public static class NoTransitionException extends Exception {
+        public NoTransitionException(String s) {
+            super(s);
+        }
+    }
+
     /**
-     * Transition a given Jira Ticket
-     * @param transition the target transition state
+     * Post a transition for this issue.
+     *
+     * @param transitionName the name of the transition to post
      */
-    public void postNewTransition(Transition transition) throws IOException {
-        jiraService.postNewTransition(key, transition, null);
+    public void postTransition(@Nonnull String transitionName, @Nullable String comment) throws NoTransitionException, IOException {
+        Transition transition = jiraService.findAvailableTransitionByName(key, transitionName);
+        if (transition == null) {
+            throw new NoTransitionException(
+                    "Cannot " + transitionName + " " + key + ": no " + transitionName + " transition found");
+        }
+        jiraService.postNewTransition(key, transition, comment);
     }
 
     public Map<String, CustomFieldDefinition> getCustomFields(String... fieldNames) throws IOException {
@@ -208,5 +218,9 @@ public class JiraIssue implements Serializable {
         return "JiraIssue{" +
                 "key='" + key + '\'' +
                 '}';
+    }
+
+    public String getResolution() throws IOException {
+        return jiraService.getResolution(key);
     }
 }

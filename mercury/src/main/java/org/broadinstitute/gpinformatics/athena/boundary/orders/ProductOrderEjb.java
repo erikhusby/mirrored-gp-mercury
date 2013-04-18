@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.work.MessageDataValue;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPLSIDUtil;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
@@ -37,7 +38,6 @@ import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -45,10 +45,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.OrderStatus.Abandoned;
-import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.OrderStatus.Complete;
-import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.TransitionStates.Cancel;
-import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample.DeliveryStatus.*;
+import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.OrderStatus;
+import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample.DeliveryStatus;
 
 @Stateful
 @RequestScoped
@@ -124,7 +122,7 @@ public class ProductOrderEjb {
 
     private static void setStatus(ProductOrder productOrder) {
         // DRAFT orders not yet supported; force state of new PDOs to Submitted.
-        productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+        productOrder.setOrderStatus(OrderStatus.Submitted);
     }
 
     /**
@@ -166,7 +164,14 @@ public class ProductOrderEjb {
      * </ol>
      */
     @Nonnull
-    public ProductOrderSample mapAliquotIdToSample(@Nonnull ProductOrder order, @Nonnull String aliquotId) {
+    public ProductOrderSample mapAliquotIdToSample(@Nonnull ProductOrder order, @Nonnull String aliquotId)
+            throws Exception {
+
+        // Convert aliquotId to BSP ID, if it's an LSID.
+        if (!ProductOrderSample.isInBspFormat(aliquotId)) {
+            aliquotId = BSPLSIDUtil.lsidToBareId(aliquotId);
+        }
+
         for (ProductOrderSample sample : order.getSamples()) {
             if (aliquotId.equals(sample.getAliquotId())) {
                 return sample;
@@ -175,16 +180,18 @@ public class ProductOrderEjb {
 
         String sampleName = sampleDataFetcher.getStockIdForAliquotId(aliquotId);
         if (sampleName == null) {
-            throw new RuntimeException("Couldn't find a sample for aliquot: " + aliquotId);
+            throw new Exception("Couldn't find a sample for aliquot: " + aliquotId);
         }
         for (ProductOrderSample sample : order.getSamples()) {
             if (sample.getSampleName().equals(sampleName) && sample.getAliquotId() == null) {
                 sample.setAliquotId(aliquotId);
+                // This persist call is here to ensure that the entity manager is participating in
+                // the transaction.
                 productOrderSampleDao.persist(sample);
                 return sample;
             }
         }
-        throw new RuntimeException(
+        throw new Exception(
                 MessageFormat.format("Could not bill PDO {0}, Sample {1}, Aliquot {2}, all" +
                                      " samples have been assigned aliquots already.",
                         order.getBusinessKey(), sampleName, aliquotId));
@@ -199,7 +206,8 @@ public class ProductOrderEjb {
      * @param completedDate the date completed to use when billing
      * @param data used to check and see if billing can occur
      */
-    public void autoBillSample(ProductOrder order, String aliquotId, Date completedDate, Map<String, MessageDataValue> data) {
+    public void autoBillSample(ProductOrder order, String aliquotId, Date completedDate, Map<String, MessageDataValue> data)
+            throws Exception {
 
         Product product = order.getProduct();
 
@@ -207,8 +215,8 @@ public class ProductOrderEjb {
             log.error(MessageFormat.format("Can''t auto-bill order {0} because it''s currently locked out.",
                     order.getJiraTicketKey()));
             // Return early to avoid marking the message as processed.
-            // TODO: This code should be wrapped in a beginLockout()/endLockout() block to avoid collisions with
-            // a mercury user starting a billing session during this process.
+            // TODO This code should be wrapped in a beginLockout()/endLockout() block to avoid collisions with
+            // TODO a mercury user starting a billing session during this process.
             return;
         }
 
@@ -309,7 +317,7 @@ public class ProductOrderEjb {
         validateQuote(productOrder);
 
         Transition transition = jiraService.findAvailableTransitionByName(productOrder.getJiraTicketKey(),
-                ProductOrder.TransitionStates.DeveloperEdit.getStateName());
+                JiraTransition.DEVELOPER_EDIT.getStateName());
 
         PDOUpdateField [] pdoUpdateFields = new PDOUpdateField[] {
                 new PDOUpdateField(ProductOrder.JiraField.PRODUCT, productOrder.getProduct().getProductName()),
@@ -394,12 +402,6 @@ public class ProductOrderEjb {
 
     }
 
-    public static class NoTransitionException extends Exception {
-        public NoTransitionException(String s) {
-            super(s);
-        }
-    }
-
     public static class NoSuchPDOException extends Exception {
         public NoSuchPDOException(String s) {
             super(s);
@@ -411,7 +413,7 @@ public class ProductOrderEjb {
         @Nonnull
         private final List<ProductOrderSample> samples;
 
-        protected SampleDeliveryStatusChangeException(ProductOrderSample.DeliveryStatus targetStatus,
+        protected SampleDeliveryStatusChangeException(DeliveryStatus targetStatus,
                                                       @Nonnull List<ProductOrderSample> samples) {
             super(createErrorMessage(targetStatus, samples));
             this.samples = samples;
@@ -421,7 +423,7 @@ public class ProductOrderEjb {
             return samples;
         }
 
-        protected static String createErrorMessage(ProductOrderSample.DeliveryStatus status,
+        protected static String createErrorMessage(DeliveryStatus status,
                                                    List<ProductOrderSample> samples) {
             List<String> messages = new ArrayList<String>();
 
@@ -443,7 +445,6 @@ public class ProductOrderEjb {
         }
     }
 
-
     /**
      * Utility method to find PDO by JIRA ticket key and throw exception if it is not found.
      *
@@ -453,7 +454,8 @@ public class ProductOrderEjb {
      *
      * @throws NoSuchPDOException
      */
-    private ProductOrder findProductOrder(String jiraTicketKey) throws NoSuchPDOException {
+    @Nonnull
+    private ProductOrder findProductOrder(@Nonnull String jiraTicketKey) throws NoSuchPDOException {
         ProductOrder productOrder = productOrderDao.findByBusinessKey(jiraTicketKey);
 
         if (productOrder == null) {
@@ -463,12 +465,11 @@ public class ProductOrderEjb {
         return productOrder;
     }
 
-
     /**
      * Transition the delivery statuses of the specified samples in the DB.
      *
      * @param order PDO containing the samples in question.
-     * @param acceptableStartingStatuses A Set of {@link org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample.DeliveryStatus}es
+     * @param acceptableStartingStatuses A Set of {@link DeliveryStatus}es
      *                                   in which samples are allowed to be before undergoing this transition.
      * @param targetStatus The status into which the samples will be transitioned.
      * @param samples The samples in question.
@@ -476,7 +477,7 @@ public class ProductOrderEjb {
      */
     private void transitionSamples(ProductOrder order,
                                    Set<ProductOrderSample.DeliveryStatus> acceptableStartingStatuses,
-                                   ProductOrderSample.DeliveryStatus targetStatus,
+                                   DeliveryStatus targetStatus,
                                    Collection<ProductOrderSample> samples) throws SampleDeliveryStatusChangeException {
 
         Set<ProductOrderSample> transitionSamples = new HashSet<ProductOrderSample>(samples);
@@ -503,7 +504,6 @@ public class ProductOrderEjb {
         order.prepareToSave(userBean.getBspUser());
     }
 
-
     /**
      * Transition the specified samples to the specified target status, adding a comment to the JIRA ticket, does NOT
      * transition the JIRA ticket status as this is called from sample transition methods only and not whole PDO transition
@@ -520,7 +520,7 @@ public class ProductOrderEjb {
      */
     private void transitionSamplesAndUpdateTicket(String jiraTicketKey,
                                                   Set<ProductOrderSample.DeliveryStatus> acceptableStartingStatuses,
-                                                  ProductOrderSample.DeliveryStatus targetStatus,
+                                                  DeliveryStatus targetStatus,
                                                   Collection<ProductOrderSample> samples)
             throws NoSuchPDOException, SampleDeliveryStatusChangeException, IOException {
 
@@ -544,38 +544,151 @@ public class ProductOrderEjb {
     }
 
     /**
+     * JIRA Transition states used by PDOs.
+     */
+    public enum JiraTransition {
+        ORDER_COMPLETE("Order Complete"),
+        OPEN("Open"),
+        CLOSED("Closed"),
+        CANCEL("Cancel"),
+        COMPLETE_ORDER("Complete Order"),
+        CREATE_WORK_REQUEST("Create Work Request"),
+        DEVELOPER_EDIT("Developer Edit");
+
+        /** The text that represents this transition state in JIRA. */
+        private final String stateName;
+
+        private JiraTransition(String stateName) {
+            this.stateName = stateName;
+        }
+
+        public String getStateName() {
+            return stateName;
+        }
+    }
+
+    /**
+     * JIRA Resolutions used by PDOs.
+     */
+    private enum JiraResolution {
+        UNRESOLVED("Unresolved"),
+        COMPLETED("Completed"),
+        CANCELLED("Cancelled");
+
+        /** The text that represents this resolution in JIRA. */
+        private final String text;
+
+        JiraResolution(String text) {
+            this.text = text;
+        }
+
+        static JiraResolution fromString(String text) {
+            for (JiraResolution status : values()) {
+                if (status.text.equalsIgnoreCase(text)) {
+                    return status;
+                }
+            }
+            return null;
+        }
+    }
+
+    /**
+     * JIRA Status used by PDOs. Each status contains two transitions. One will transition to Open, one to Closed.
+     */
+    private enum JiraStatus {
+        OPEN("Open", null, JiraTransition.COMPLETE_ORDER),
+        WORK_REQUEST_CREATED("Work Request Created", null, JiraTransition.ORDER_COMPLETE),
+        CLOSED("Closed", JiraTransition.OPEN, null),
+        REOPENED("Reopened", JiraTransition.OPEN, JiraTransition.CLOSED),
+        CANCELLED("Cancelled", JiraTransition.OPEN, JiraTransition.CLOSED),
+        UNKNOWN(null, null, null);
+
+        /** The text that represents this status in JIRA. */
+        private final String text;
+
+        /** Transition to use to get to 'Open'. Null if we are already Open. */
+        private final JiraTransition toOpen;
+
+        /** Transition to use to get to 'Closed'. Null if we are already Closed. */
+        private final JiraTransition toClosed;
+
+        JiraStatus(String text, JiraTransition toOpen, JiraTransition toClosed) {
+            this.text = text;
+            this.toOpen = toOpen;
+            this.toClosed = toClosed;
+        }
+
+        static JiraStatus fromString(String text) {
+            for (JiraStatus status : values()) {
+                if (status.text.equalsIgnoreCase(text)) {
+                    return status;
+                }
+            }
+            return UNKNOWN;
+        }
+    }
+
+    /**
+     * Update the order status of a PDO, based on the rules in {@link ProductOrder#updateOrderStatus}.  Any status
+     * changes are pushed to JIRA as well, with a comment about the change and the current user.
+     *
+     * @param jiraTicketKey the key to update
+     * @return true if the status was changed
+     * @throws NoSuchPDOException
+     * @throws IOException
+     * @throws JiraIssue.NoTransitionException
+     */
+    public boolean updateOrderStatus(@Nonnull String jiraTicketKey)
+            throws NoSuchPDOException, IOException, JiraIssue.NoTransitionException {
+        // Since we can't directly change the JIRA status of a PDO, we need to use a JIRA transition which in turn will
+        // update the status.
+        ProductOrder order = findProductOrder(jiraTicketKey);
+        if (order.updateOrderStatus()) {
+            String operation;
+            JiraIssue issue = jiraService.getIssue(jiraTicketKey);
+            Object statusValue = issue.getField(ProductOrder.JiraField.STATUS.getFieldName());
+            JiraStatus status = JiraStatus.fromString(((Map<?, ?>)statusValue).get("name").toString());
+            JiraTransition transition;
+            if (order.getOrderStatus() == OrderStatus.Completed) {
+                operation = "Completed";
+                transition = status.toClosed;
+            } else {
+                operation = "Opened";
+                transition = status.toOpen;
+            }
+            if (transition != null) {
+                issue.postTransition(transition.getStateName(),
+                        getUserName() + " performed " + operation + " transition");
+            }
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * Transition the specified JIRA ticket using the specified transition, adding the specified comment.
      *
      * @param jiraTicketKey JIRA ticket key.
-     * @param alreadyResolvedResolutions If a JIRA ticket is found to already be in any of these states, do not do anything.
-     * @param transitionState The transition to use.
+     * @param currentResolution if the JIRA's resolution is already this value, do not do anything.
+     * @param state The transition to use.
      * @param transitionComments Comments to include as part of the transition, will be appended to the JIRA ticket.
      *
      * @throws IOException
-     * @throws NoTransitionException Thrown if the specified transition is not available on the specified issue.
+     * @throws JiraIssue.NoTransitionException Thrown if the specified transition is not available on the specified issue.
      */
-    private void transitionJiraTicket(String jiraTicketKey, Set<String> alreadyResolvedResolutions,
-                                      ProductOrder.TransitionStates transitionState,
-                                      String transitionComments) throws IOException, NoTransitionException {
-        String resolution = jiraService.getResolution(jiraTicketKey);
-
-        if (!alreadyResolvedResolutions.contains(resolution)) {
-
-            Transition transition = jiraService.findAvailableTransitionByName(jiraTicketKey, transitionState.getStateName());
-
-            if (transition == null) {
-                throw new NoTransitionException(
-                        "Cannot " + transitionState.getStateName() + " " + jiraTicketKey +
-                                " in resolution '" + resolution + "': no " + transitionState.getStateName() + " transition found");
-            }
-
-            String jiraCommentText = getUserName() + " performed " + transitionState.getStateName() + " transition on " + jiraTicketKey;
-
+    private void transitionJiraTicket(String jiraTicketKey,
+                                      JiraResolution currentResolution,
+                                      JiraTransition state,
+                                      @Nullable String transitionComments)
+            throws IOException, JiraIssue.NoTransitionException {
+        JiraIssue issue = jiraService.getIssue(jiraTicketKey);
+        JiraResolution resolution = JiraResolution.fromString(issue.getResolution());
+        if (currentResolution == resolution) {
+            String jiraCommentText = getUserName() + " performed " + state.getStateName() + " transition";
             if (transitionComments != null) {
                 jiraCommentText = jiraCommentText + ": " + transitionComments;
             }
-
-            jiraService.postNewTransition(jiraTicketKey, transition, jiraCommentText);
+            issue.postTransition(state.getStateName(), jiraCommentText);
         }
     }
 
@@ -584,46 +697,22 @@ public class ProductOrderEjb {
      *
      * @param jiraTicketKey JIRA ticket key.
      * @param abandonComments Transition comments.
-     * @throws NoTransitionException
+     * @throws JiraIssue.NoTransitionException
      * @throws NoSuchPDOException
      * @throws SampleDeliveryStatusChangeException
      */
     public void abandon(@Nonnull String jiraTicketKey, @Nullable String abandonComments)
-            throws NoTransitionException, NoSuchPDOException, SampleDeliveryStatusChangeException, IOException {
+            throws JiraIssue.NoTransitionException, NoSuchPDOException, SampleDeliveryStatusChangeException, IOException {
 
         ProductOrder productOrder = findProductOrder(jiraTicketKey);
 
-        productOrder.setOrderStatus(Abandoned);
+        productOrder.setOrderStatus(OrderStatus.Abandoned);
 
-        transitionSamples(productOrder, EnumSet.of(ABANDONED, NOT_STARTED), ABANDONED, productOrder.getSamples());
-
-        // Currently not setting abandon comments into PDO comments, that seems too intrusive.  We will record the comments
-        // with the JIRA ticket.
-        transitionJiraTicket(jiraTicketKey, Collections.singleton("Cancelled"), Cancel, abandonComments);
-    }
-
-    /**
-     * Mark the whole PDO as complete, with a comment.
-     *
-     * @param jiraTicketKey JIRA ticket key of the PDO in question.
-     * @param completionComments Comments to include in the JIRA ticket.
-     *
-     * @throws SampleDeliveryStatusChangeException
-     * @throws IOException
-     * @throws NoTransitionException
-     */
-    public void complete(@Nonnull String jiraTicketKey, @Nullable String completionComments)
-            throws SampleDeliveryStatusChangeException, IOException, NoTransitionException, NoSuchPDOException {
-
-        ProductOrder productOrder = findProductOrder(jiraTicketKey);
-        productOrder.setOrderStatus(Complete);
-
-        transitionSamples(productOrder, EnumSet.of(DELIVERED, NOT_STARTED), DELIVERED, productOrder.getSamples());
+        transitionSamples(productOrder, EnumSet.of(DeliveryStatus.ABANDONED, DeliveryStatus.NOT_STARTED), DeliveryStatus.ABANDONED, productOrder.getSamples());
 
         // Currently not setting abandon comments into PDO comments, that seems too intrusive.  We will record the comments
         // with the JIRA ticket.
-        transitionJiraTicket(jiraTicketKey, Collections.singleton("Complete"), ProductOrder.TransitionStates.Complete,
-                completionComments);
+        transitionJiraTicket(jiraTicketKey, JiraResolution.CANCELLED, JiraTransition.CANCEL, abandonComments);
     }
 
     /**
@@ -637,21 +726,6 @@ public class ProductOrderEjb {
      */
     public void abandonSamples(@Nonnull String jiraTicketKey, Collection<ProductOrderSample> samples)
             throws IOException, SampleDeliveryStatusChangeException, NoSuchPDOException {
-        transitionSamplesAndUpdateTicket(jiraTicketKey, EnumSet.of(ABANDONED, NOT_STARTED), ABANDONED, samples);
-    }
-
-
-    /**
-     * Sample completion method with parameter types guessed as appropriate for use with Stripes.
-     *
-     * @param jiraTicketKey JIRA ticket key of the PDO in question.
-     * @param samples The samples to complete.
-     * @throws IOException
-     * @throws SampleDeliveryStatusChangeException
-     * @throws NoSuchPDOException
-     */
-    public void completeSamples(@Nonnull String jiraTicketKey, Collection<ProductOrderSample> samples)
-            throws IOException, SampleDeliveryStatusChangeException, NoSuchPDOException {
-        transitionSamplesAndUpdateTicket(jiraTicketKey, EnumSet.of(DELIVERED, NOT_STARTED), DELIVERED, samples);
+        transitionSamplesAndUpdateTicket(jiraTicketKey, EnumSet.of(DeliveryStatus.ABANDONED, DeliveryStatus.NOT_STARTED), DeliveryStatus.ABANDONED, samples);
     }
 }

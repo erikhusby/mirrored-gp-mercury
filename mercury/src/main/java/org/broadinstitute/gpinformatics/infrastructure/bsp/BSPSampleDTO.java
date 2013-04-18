@@ -4,10 +4,22 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 
-import java.util.*;
+import javax.annotation.Nonnull;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
- * A simple DTO for fetching commonly used data from BSP.
+ * A class that stores data fetched from BSP. In the case of Plastic Barcodes and FFPE, the data will be retrieved
+ * from BSP if it isn't already present.
+ * <p/>
+ * If a value is missing the following default values are returned, based on the object type:
+ * <ul>
+ *     <li>double - 0</li>
+ *     <li>String - ""</li>
+ *     <li>boolean - false</li>
+ * </ul>
  */
 public class BSPSampleDTO {
 
@@ -55,20 +67,10 @@ public class BSPSampleDTO {
     // strain?
     // tissueType?
 
-    private static double safeParseDouble(String s) {
-        try {
-            if (!StringUtils.isBlank(s)) {
-                return Double.parseDouble(s);
-            }
-        } catch (Exception e) {
-            // fall through.
-        }
-        return 0;
-    }
-
     /**
      * This constructor creates a dto with no values. This is mainly for tests that don't care about the DTO
      */
+    @SuppressWarnings("unchecked")
     public BSPSampleDTO() {
         columnToValue = Collections.emptyMap();
     }
@@ -78,107 +80,125 @@ public class BSPSampleDTO {
      *
      * @param dataMap The BSP Sample Search results mapped by the columns
      */
+    @SuppressWarnings("unchecked")
     public BSPSampleDTO(Map<BSPSampleSearchColumn, String> dataMap) {
         columnToValue = dataMap;
     }
 
     /**
-     * Trim off any empty white space after the string value.
+     * Use these methods to access the data, so missing elements are returned as empty strings, which is what
+     * the clients of this API expect.
      *
-     * @param value The string to trim
-     * @return Trimmed value
+     * @param column column to look up
+     * @return value at column, or empty string if missing
      */
-    private static String trim(String value) {
+    @Nonnull
+    private String getValue(BSPSampleSearchColumn column) {
+        String value = columnToValue.get(column);
         if (value != null) {
-            if (value.trim().length() > 0) {
-                return value.trim();
+            return value;
+        }
+        return "";
+    }
+
+    private double getDouble(BSPSampleSearchColumn column) {
+        String s = getValue(column);
+        if (!StringUtils.isBlank(s)) {
+            try {
+                return Double.parseDouble(s);
+            } catch (Exception e) {
+                // Fall through to return.
             }
         }
-        return null;
+        return 0;
+    }
+
+    private boolean getBoolean(BSPSampleSearchColumn column) {
+        return Boolean.parseBoolean(getValue(column));
     }
 
     public double getRin() {
-        return safeParseDouble(columnToValue.get(BSPSampleSearchColumn.RIN));
+        return getDouble(BSPSampleSearchColumn.RIN);
     }
 
     public double getVolume() {
-        return safeParseDouble(columnToValue.get(BSPSampleSearchColumn.VOLUME));
+        return getDouble(BSPSampleSearchColumn.VOLUME);
     }
 
     public double getConcentration() {
-        return safeParseDouble(columnToValue.get(BSPSampleSearchColumn.CONCENTRATION));
+        return getDouble(BSPSampleSearchColumn.CONCENTRATION);
     }
 
     public String getRootSample() {
-        return columnToValue.get(BSPSampleSearchColumn.ROOT_SAMPLE);
+        return getValue(BSPSampleSearchColumn.ROOT_SAMPLE);
     }
 
     public String getStockSample() {
-        return columnToValue.get(BSPSampleSearchColumn.STOCK_SAMPLE);
+        return getValue(BSPSampleSearchColumn.STOCK_SAMPLE);
     }
 
     public String getCollection() {
-        return columnToValue.get(BSPSampleSearchColumn.COLLECTION);
+        return getValue(BSPSampleSearchColumn.COLLECTION);
     }
 
     public String getCollaboratorsSampleName() {
-        return columnToValue.get(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID);
+        return getValue(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID);
     }
 
     public String getContainerId() {
-        return columnToValue.get(BSPSampleSearchColumn.CONTAINER_ID);
+        return getValue(BSPSampleSearchColumn.CONTAINER_ID);
     }
 
     public String getPatientId() {
-        return columnToValue.get(BSPSampleSearchColumn.PARTICIPANT_ID);
+        return getValue(BSPSampleSearchColumn.PARTICIPANT_ID);
     }
 
     public String getOrganism() {
-        return columnToValue.get(BSPSampleSearchColumn.SPECIES);
+        return getValue(BSPSampleSearchColumn.SPECIES);
     }
 
     public boolean getHasSampleKitUploadRackscanMismatch() {
-        return Boolean.parseBoolean(columnToValue.get(BSPSampleSearchColumn.RACKSCAN_MISMATCH));
+        return getBoolean(BSPSampleSearchColumn.RACKSCAN_MISMATCH);
     }
 
     public String getSampleLsid() {
-        return columnToValue.get(BSPSampleSearchColumn.LSID);
+        return getValue(BSPSampleSearchColumn.LSID);
     }
 
     public String getCollaboratorParticipantId() {
-        return columnToValue.get(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID);
+        return getValue(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID);
     }
 
     public String getMaterialType() {
-        return columnToValue.get(BSPSampleSearchColumn.MATERIAL_TYPE);
+        return getValue(BSPSampleSearchColumn.MATERIAL_TYPE);
     }
 
     public double getTotal() {
-        return safeParseDouble(columnToValue.get(BSPSampleSearchColumn.TOTAL_DNA));
+        return getDouble(BSPSampleSearchColumn.TOTAL_DNA);
     }
 
     public String getSampleType() {
-        return columnToValue.get(BSPSampleSearchColumn.SAMPLE_TYPE);
+        return getValue(BSPSampleSearchColumn.SAMPLE_TYPE);
     }
 
     public String getPrimaryDisease() {
-        return columnToValue.get(BSPSampleSearchColumn.PRIMARY_DISEASE);
+        return getValue(BSPSampleSearchColumn.PRIMARY_DISEASE);
     }
 
     public String getGender() {
-        return columnToValue.get(BSPSampleSearchColumn.GENDER);
+        return getValue(BSPSampleSearchColumn.GENDER);
     }
 
     public String getStockType() {
-        return columnToValue.get(BSPSampleSearchColumn.STOCK_TYPE);
+        return getValue(BSPSampleSearchColumn.STOCK_TYPE);
     }
 
     public String getFingerprint() {
-        return columnToValue.get(BSPSampleSearchColumn.FINGERPRINT);
+        return getValue(BSPSampleSearchColumn.FINGERPRINT);
     }
 
     public boolean isSampleReceived() {
-        return !StringUtils.isBlank(columnToValue.get(BSPSampleSearchColumn.ROOT_SAMPLE));
+        return !StringUtils.isBlank(getValue(BSPSampleSearchColumn.ROOT_SAMPLE));
     }
 
     public boolean isActiveStock() {
@@ -191,7 +211,7 @@ public class BSPSampleDTO {
     }
 
     public String getSampleId() {
-        return columnToValue.get(BSPSampleSearchColumn.SAMPLE_ID);
+        return getValue(BSPSampleSearchColumn.SAMPLE_ID);
     }
 
     public MaterialType getMaterialTypeObject() {
@@ -200,15 +220,15 @@ public class BSPSampleDTO {
     }
 
     public String getCollaboratorName() {
-        return columnToValue.get(BSPSampleSearchColumn.COLLABORATOR_NAME);
+        return getValue(BSPSampleSearchColumn.COLLABORATOR_NAME);
     }
 
     public String getEthnicity() {
-        return columnToValue.get(BSPSampleSearchColumn.ETHNICITY);
+        return getValue(BSPSampleSearchColumn.ETHNICITY);
     }
 
     public String getRace() {
-        return columnToValue.get(BSPSampleSearchColumn.RACE);
+        return getValue(BSPSampleSearchColumn.RACE);
     }
 
     public Boolean getFfpeStatus() {

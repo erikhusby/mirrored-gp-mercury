@@ -13,12 +13,12 @@ public class QuoteServiceTest {
 
     private Quote quote;
 
-    private  PriceItem priceItem;
+    private QuotePriceItem quotePriceItem;
 
     @BeforeClass
     private void setupLargeQuoteAndPriceItem() {
         quote = new Quote("DNA4JC",new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION,"NHGRI", "NHGRI"))), ApprovalStatus.FUNDED);
-        priceItem = new PriceItem("Illumina Sequencing","1","Illumina Custom Hybrid Selection Library (93 sample batch size)","15","bannanas","DNA Sequencing");
+        quotePriceItem = new QuotePriceItem("Illumina Sequencing","1","Illumina Custom Hybrid Selection Library (93 sample batch size)","15","bannanas","DNA Sequencing");
     }
 
     @Test(groups = {EXTERNAL_INTEGRATION}, enabled = false)
@@ -27,7 +27,7 @@ public class QuoteServiceTest {
         Quote fetchedQuote = service.getQuoteByAlphaId(quote.getAlphanumericId());
         System.out.println(fetchedQuote.getQuoteFunding().getFundsRemaining());
         String workBatchId =
-            service.registerNewWork(quote, priceItem, new Date(), 0.0001,
+            service.registerNewWork(quote, quotePriceItem, null, new Date(), 0.0001,
                                     "http://www.MercuryTesting","paramName","paramValue");
         System.out.println(fetchedQuote.getQuoteFunding().getFundsRemaining());
 

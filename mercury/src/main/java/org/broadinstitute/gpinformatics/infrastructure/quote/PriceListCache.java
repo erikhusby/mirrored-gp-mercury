@@ -21,8 +21,9 @@ import java.util.List;
 @ApplicationScoped
 public class PriceListCache extends AbstractCache implements Serializable {
     private static final long serialVersionUID = 1843525203075284455L;
+    public static final PriceListCache DUMMY_CACHE = new PriceListCache(new ArrayList<QuotePriceItem> ());
 
-    private Collection<PriceItem> priceItems = new ArrayList<PriceItem>();
+    private Collection<QuotePriceItem> quotePriceItems = new ArrayList<QuotePriceItem>();
 
     private PMBQuoteService quoteService;
 
@@ -36,14 +37,14 @@ public class PriceListCache extends AbstractCache implements Serializable {
     /**
      * Not sure we really need this constructor any more except there are tests using it
      *
-     * @param priceItems The price list to hold in the cache
+     * @param quotePriceItems The price list to hold in the cache
      */
-    public PriceListCache(@Nonnull Collection<PriceItem> priceItems) {
-        if (priceItems == null) {
+    public PriceListCache(@Nonnull Collection<QuotePriceItem> quotePriceItems) {
+        if (quotePriceItems == null) {
              throw new NullPointerException("priceList cannot be null.");
         }
 
-        this.priceItems = priceItems;
+        this.quotePriceItems = quotePriceItems;
     }
 
     @Inject
@@ -58,7 +59,7 @@ public class PriceListCache extends AbstractCache implements Serializable {
 
             // Only replace if the new list is non-null.
             if (rawPriceList != null) {
-                priceItems = rawPriceList.getPriceItems();
+                quotePriceItems = rawPriceList.getQuotePriceItems();
             }
 
         } catch (Exception ex) {
@@ -71,55 +72,55 @@ public class PriceListCache extends AbstractCache implements Serializable {
      *
      * @return the price items
      */
-    public Collection<PriceItem> getPriceItems() {
-        if (priceItems.isEmpty()) {
+    public Collection<QuotePriceItem> getQuotePriceItems() {
+        if (quotePriceItems.isEmpty()) {
             refreshCache();
         }
-        return priceItems;
+        return quotePriceItems;
     }
 
     /**
-     * Filter {@link PriceItem}s by known platforms
+     * Filter {@link QuotePriceItem}s by known platforms
      *
      * @param quotePlatformType The type of platform for the quote server
      *
      * @return The matching price items
      */
-    public Collection<PriceItem> getPriceItemsByPlatform(QuotePlatformType quotePlatformType) {
-        Collection<PriceItem> items = new HashSet<PriceItem>();
-        for (PriceItem priceItem : getPriceItems()) {
-            if (quotePlatformType.getPlatformName().equalsIgnoreCase(priceItem.getPlatformName())) {
-                items.add(priceItem);
+    public Collection<QuotePriceItem> getPriceItemsByPlatform(QuotePlatformType quotePlatformType) {
+        Collection<QuotePriceItem> items = new HashSet<QuotePriceItem>();
+        for (QuotePriceItem quotePriceItem : getQuotePriceItems()) {
+            if (quotePlatformType.getPlatformName().equalsIgnoreCase(quotePriceItem.getPlatformName())) {
+                items.add(quotePriceItem);
             }
         }
         return items;
     }
 
     
-    public Collection<PriceItem> getGSPPriceItems() {
+    public Collection<QuotePriceItem> getGSPPriceItems() {
         return getPriceItemsByPlatform(QuotePlatformType.SEQ);
     }
 
 
-    public List<PriceItem> searchPriceItems(String query) {
-        List<PriceItem> results = new ArrayList<PriceItem>();
+    public List<QuotePriceItem> searchPriceItems(String query) {
+        List<QuotePriceItem> results = new ArrayList<QuotePriceItem>();
         String lowerQuery = query.toLowerCase();
 
         // Currently searching all price items, not filtering by platform or anything else
-        for (PriceItem priceItem : getPriceItems()) {
-            if (priceItem != null &&
-                ((priceItem.getPlatformName() != null && priceItem.getPlatformName().toLowerCase().contains(lowerQuery)) ||
-                 (priceItem.getCategoryName() != null && priceItem.getCategoryName().toLowerCase().contains(lowerQuery)) ||
-                 (priceItem.getName() != null && priceItem.getName().toLowerCase().contains(lowerQuery)))) {
-                results.add(priceItem);
+        for (QuotePriceItem quotePriceItem : getQuotePriceItems()) {
+            if (quotePriceItem != null &&
+                ((quotePriceItem.getPlatformName() != null && quotePriceItem.getPlatformName().toLowerCase().contains(lowerQuery)) ||
+                 (quotePriceItem.getCategoryName() != null && quotePriceItem.getCategoryName().toLowerCase().contains(lowerQuery)) ||
+                 (quotePriceItem.getName() != null && quotePriceItem.getName().toLowerCase().contains(lowerQuery)))) {
+                results.add(quotePriceItem);
             }
         }
 
         return results;
     }
 
-    public boolean contains(PriceItem priceItem) {
-        return getPriceItems().contains(priceItem);
+    public boolean contains(QuotePriceItem quotePriceItem) {
+        return getQuotePriceItems().contains(quotePriceItem);
     }
 
     /**
@@ -129,30 +130,30 @@ public class PriceListCache extends AbstractCache implements Serializable {
      *
      * @return The matching price item
      */
-    public PriceItem findByConcatenatedKey(String concatenatedKey) {
+    public QuotePriceItem findByConcatenatedKey(String concatenatedKey) {
 
         if (concatenatedKey == null) {
             throw new RuntimeException("Invalid search key: " + concatenatedKey);
         }
 
-        for (PriceItem priceItem : getPriceItems()) {
+        for (QuotePriceItem quotePriceItem : getQuotePriceItems()) {
             String currentKey =
                 org.broadinstitute.gpinformatics.athena.entity.products.PriceItem.makeConcatenatedKey(
-                        priceItem.getPlatformName(), priceItem.getCategoryName(),priceItem.getName());
+                        quotePriceItem.getPlatformName(), quotePriceItem.getCategoryName(), quotePriceItem.getName());
 
             if (concatenatedKey.equals(currentKey)) {
-                return priceItem;
+                return quotePriceItem;
             }
         }
 
         return null;
     }
 
-    public PriceItem findById(long priceItemId) {
+    public QuotePriceItem findById(long priceItemId) {
         String idString = String.valueOf(priceItemId);
-        for (PriceItem priceItem : getPriceItems()) {
-            if (priceItem.getId().equals(idString)) {
-                return priceItem;
+        for (QuotePriceItem quotePriceItem : getQuotePriceItems()) {
+            if (quotePriceItem.getId().equals(idString)) {
+                return quotePriceItem;
             }
         }
 
@@ -160,7 +161,7 @@ public class PriceListCache extends AbstractCache implements Serializable {
     }
 
     public String getPriceItemName(long priceItemId) {
-        PriceItem item = findById(priceItemId);
+        QuotePriceItem item = findById(priceItemId);
         if (item != null) {
             return item.getName();
         }
@@ -168,12 +169,12 @@ public class PriceListCache extends AbstractCache implements Serializable {
         return "invalid price item id " + priceItemId;
     }
 
-    public PriceItem findByKeyFields(String platform, String category, String name) {
-        for (PriceItem priceItem : getPriceItems()) {
-            if (priceItem.getPlatformName().equals(platform) &&
-                priceItem.getCategoryName().equals(category) &&
-                priceItem.getName().equals(name)) {
-                return priceItem;
+    public QuotePriceItem findByKeyFields(String platform, String category, String name) {
+        for (QuotePriceItem quotePriceItem : getQuotePriceItems()) {
+            if (quotePriceItem.getPlatformName().equals(platform) &&
+                quotePriceItem.getCategoryName().equals(category) &&
+                quotePriceItem.getName().equals(name)) {
+                return quotePriceItem;
             }
         }
 

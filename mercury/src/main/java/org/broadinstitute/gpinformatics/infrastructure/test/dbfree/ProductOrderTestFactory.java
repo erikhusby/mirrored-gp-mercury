@@ -24,11 +24,11 @@ public class ProductOrderTestFactory {
                                                        long creatorId, String rpTitle, String rpSynopsis,
                                                        boolean irbNotEngaged, String productPartNumber) {
 
-        PriceItem priceItem = new PriceItem(PriceItem.PLATFORM_GENOMICS, PriceItem.CATEGORY_EXOME_SEQUENCING_ANALYSIS,
-                                                   PriceItem.NAME_EXOME_EXPRESS, "testQuoteId");
+        PriceItem exExPriceItem = new PriceItem("ExExQuoteId", PriceItem.PLATFORM_GENOMICS, PriceItem.CATEGORY_EXOME_SEQUENCING_ANALYSIS,
+                                                   PriceItem.NAME_EXOME_EXPRESS);
         Product dummyProduct =
                 ProductTestFactory.createDummyProduct(workflowName.getWorkflowName(), productPartNumber);
-        dummyProduct.setPrimaryPriceItem(priceItem);
+        dummyProduct.setPrimaryPriceItem(exExPriceItem);
 
         List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>(sampleCount);
         for (int sampleIndex = 1; sampleIndex <= sampleCount; sampleIndex++) {
@@ -37,28 +37,26 @@ public class ProductOrderTestFactory {
             productOrderSamples.add(new ProductOrderSample(bspStock, new BSPSampleDTO()));
         }
 
-        ProductOrder productOrder = new ProductOrder(creatorId, "Test PO", productOrderSamples, "GSP-123", dummyProduct,
-                                                            ResearchProjectTestFactory
-                                                                    .createDummyResearchProject(creatorId, rpTitle,
-                                                                            rpSynopsis,
-                                                                            irbNotEngaged));
+        ResearchProject researchProject = ResearchProjectTestFactory.createDummyResearchProject(
+                creatorId, rpTitle, rpSynopsis, irbNotEngaged);
+
+        ProductOrder productOrder =
+                new ProductOrder(creatorId, "Test PO", productOrderSamples, "GSP-123", dummyProduct, researchProject);
         if (StringUtils.isNotBlank(jiraKey)) {
             productOrder.setJiraTicketKey(jiraKey);
         }
         productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
-        productOrder
-                .updateAddOnProducts(Collections
-                        .singletonList(ProductTestFactory.createDummyProduct("DNA Extract from FFPE or Slides",
-                                "partNumber")));
+        Product dummyAddOnProduct = ProductTestFactory.createDummyProduct("DNA Extract from FFPE or Slides", "partNumber");
+        productOrder.updateAddOnProducts(Collections.singletonList(dummyAddOnProduct));
 
         return productOrder;
 
     }
 
     /*
-         *  Helper methods to create test data.  Moved from Test cases to aid stub implementation.
-         */
+     *  Helper methods to create test data.  Moved from Test cases to aid stub implementation.
+     */
     public static ProductOrder createDummyProductOrder() {
         return createDummyProductOrder("PDO-0");
     }

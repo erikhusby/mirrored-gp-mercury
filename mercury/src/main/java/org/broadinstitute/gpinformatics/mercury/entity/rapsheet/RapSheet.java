@@ -11,14 +11,22 @@
 
 package org.broadinstitute.gpinformatics.mercury.entity.rapsheet;
 
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.hibernate.envers.Audited;
 
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -33,42 +41,35 @@ public class RapSheet {
     private Long rapSheetId;
 
     @NotNull
-    @OneToMany(mappedBy = "rapSheet", cascade = CascadeType.REFRESH, fetch = FetchType.LAZY)
-    private List<MercurySample> samples;
+    @OneToMany(mappedBy = "rapSheet", cascade = CascadeType.ALL, fetch = FetchType.LAZY )
+    private List<MercurySample> samples=new ArrayList<MercurySample>();
 
     @NotNull
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "rapSheet")
-    private List<RapSheetEntry> rapSheetEntries=new ArrayList<RapSheetEntry>();
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY,mappedBy = "rapSheet")
+    private List<RapSheetEntry> rapSheetEntries = new ArrayList<RapSheetEntry>();
 
     public RapSheet() {
     }
-
-    public RapSheet(RapSheetEntry... rapSheetEntry) {
-        rapSheetEntries = new ArrayList<RapSheetEntry>(rapSheetEntry.length);
-        Collections.addAll(rapSheetEntries, rapSheetEntry);
-    }
-
     public RapSheet(MercurySample sample) {
         setSample(sample);
     }
 
-    public void addEntry(RapSheetEntry rapSheetEntry) {
-        rapSheetEntries.add(rapSheetEntry);
-        rapSheetEntry.setRapSheet(this);
+    public void addRework(ReworkEntry... entries) {
+        for (ReworkEntry reworkEntry : entries) {
+            rapSheetEntries.add(reworkEntry);
+            reworkEntry.setRapSheet(this);
+        }
     }
 
-
-    public ReworkEntry addRework(ReworkReason reworkReason, ReworkLevel reworkLevel, LabEventType reworkStep,
-                                 VesselPosition vesselPosition, MercurySample mercurySample) {
-        LabVesselPosition labVesselPosition=new LabVesselPosition(vesselPosition,mercurySample);
-        final ReworkEntry reworkEntry = new ReworkEntry(this,reworkReason, reworkLevel, reworkStep,labVesselPosition);
-        addEntry(reworkEntry);
-        setSample(mercurySample);
-        return reworkEntry;
-    }
+    @Transient
+    /**
+     * Sort the reworkEntries
+     */
+    private boolean reworkEntriesSorted =false;
 
     public void setSample(MercurySample sample) {
-        getSamples().add(0,sample);
+        samples.clear();
+        samples.add(sample);
     }
 
     public void setSamples(List<MercurySample> samples) {
@@ -79,24 +80,75 @@ public class RapSheet {
     }
 
     public MercurySample getSample() {
-        return getSamples().get(0);
+        return getSamples().iterator().next();
     }
 
     private List<MercurySample> getSamples() {
-        if (samples==null) {
-            samples=new ArrayList<MercurySample>(1);
-        }
         return samples;
     }
 
     public List<RapSheetEntry> getRapSheetEntries() {
-        if (rapSheetEntries == null) {
-            rapSheetEntries = new ArrayList<RapSheetEntry>();
+        return rapSheetEntries;
+    }
+
+    /**
+     * RapSheets needs to be sorted so the most recent is on top.
+     * @return A list of RapSheets sorted
+     */
+    public List<RapSheetEntry> getSortedRapSheets() {
+        if (!reworkEntriesSorted) {
+            Collections.sort(rapSheetEntries);
+            reworkEntriesSorted = true;
         }
         return rapSheetEntries;
     }
 
-    public void setRapSheetEntries(List<RapSheetEntry> entries) {
-        this.rapSheetEntries = entries;
+    public void setRapSheetEntries(List<RapSheetEntry> reworkEntries) {
+        Collections.sort(reworkEntries);
+        this.rapSheetEntries = reworkEntries;
+    }
+
+    public void startRework() {
+        getCurrentReworkEntry().setActiveRework(true);
+    }
+
+
+    public ReworkEntry getCurrentReworkEntry(){
+        for (RapSheetEntry rapSheetEntry : getReworkEntries()) {
+            return (ReworkEntry) rapSheetEntry;
+        }
+        return null;
+    }
+
+    /**
+     * Get the active rework.
+     * @return Active Rework or null;
+     */
+    public ReworkEntry getActiveRework() {
+        for (RapSheetEntry rapSheetEntry : getReworkEntries()) {
+            if (((ReworkEntry) rapSheetEntry).isActiveRework()) {
+                return (ReworkEntry) rapSheetEntry;
+            }
+        }
+        return null;
+    }
+
+    public Collection<ReworkEntry> getReworkEntries(){
+        Collection<ReworkEntry> entries=new ArrayList<ReworkEntry>();
+        for (RapSheetEntry rapSheetEntry : getSortedRapSheets()) {
+            if (rapSheetEntry instanceof ReworkEntry) {
+                entries.add((ReworkEntry) rapSheetEntry);
+            }
+        }
+        return entries;
+    }
+    /**
+     * Get all the active rework and make it inactive.
+     * If there is no ReworkEntries, it will do nothing.
+     */
+    public void stopRework() {
+        if (getActiveRework() != null) {
+            getActiveRework().setActiveRework(false);
+        }
     }
 }

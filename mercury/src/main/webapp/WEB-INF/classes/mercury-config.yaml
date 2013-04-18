@@ -263,7 +263,7 @@ mercury:
       bsp:      DEV
       gap:      DEV
       jira:     TEST
-      quote:    DEV
+      quote:    QA
       squid:    DEV
       thrift:   QA
       deckMsgs: DEV

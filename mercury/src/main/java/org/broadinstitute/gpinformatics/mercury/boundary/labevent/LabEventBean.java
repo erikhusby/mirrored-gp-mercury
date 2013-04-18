@@ -20,6 +20,7 @@ public class LabEventBean {
     private List<LabVesselBean> sources = new ArrayList<LabVesselBean>();
     private List<LabVesselBean> targets = new ArrayList<LabVesselBean>();
     private List<TransferBean> transfers = new ArrayList<TransferBean>();
+    private List<ReagentBean> reagents = new ArrayList<ReagentBean>();
 
     public LabEventBean(String eventType, String station, String operator, Date eventDate) {
         this.eventType = eventType;
@@ -94,5 +95,13 @@ public class LabEventBean {
 
     public void setBatchId(String batchId) {
         this.batchId = batchId;
+    }
+
+    public List<ReagentBean> getReagents() {
+        return reagents;
+    }
+
+    public void setReagents(List<ReagentBean> reagents) {
+        this.reagents = reagents;
     }
 }

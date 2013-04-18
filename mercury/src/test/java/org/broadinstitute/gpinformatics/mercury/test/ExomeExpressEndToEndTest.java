@@ -18,7 +18,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
-import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
@@ -33,6 +33,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bsp.BSPSampleFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
@@ -137,7 +138,7 @@ public class ExomeExpressEndToEndTest {
             //            String laneNumber = "3";
 
             // BasicProjectPlan
-            HashMap<LabEventName, PriceItem> billableEvents = new HashMap<LabEventName, PriceItem>();
+            HashMap<LabEventName, QuotePriceItem> billableEvents = new HashMap<LabEventName, QuotePriceItem>();
 
             //            BasicProjectPlan projectPlan = new BasicProjectPlan(
             //                    project,
@@ -156,12 +157,13 @@ public class ExomeExpressEndToEndTest {
             //            baitsCache.getBaitSetList().add(baitSet);
 
             // todo when R3_725 comes out, revert to looking this up via the pass
-            PriceItem priceItem = new PriceItem("Illumina Sequencing", "1", "Illumina HiSeq Run 44 Base", "15",
+            QuotePriceItem
+                    quotePriceItem = new QuotePriceItem("Illumina Sequencing", "1", "Illumina HiSeq Run 44 Base", "15",
                     "Bananas", "DNA Sequencing");
-            //            WorkflowDescription workflowDescription = new WorkflowDescription("HybridSelection", priceItem,
+            //            WorkflowDescription workflowDescription = new WorkflowDescription("HybridSelection", quotePriceItem,
             //                    CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
 
-            //            PassBackedProjectPlan projectPlan = new PassBackedProjectPlan(directedPass, bspDataFetcher, baitsCache, priceItem);
+            //            PassBackedProjectPlan projectPlan = new PassBackedProjectPlan(directedPass, bspDataFetcher, baitsCache, quotePriceItem);
             //projectPlan.getWorkflowDescription().initFromFile("HybridSelectionV2.xml");
             //            projectPlan.getWorkflowDescription().initFromFile("HybridSelectionVisualParadigm.xml");
 
@@ -315,12 +317,15 @@ public class ExomeExpressEndToEndTest {
             LabBatchDAO labBatchDAO = EasyMock.createNiceMock(LabBatchDAO.class);
             labBatchEJB.setLabBatchDao(labBatchDAO);
 
+            ReworkEjb reworkEjb = EasyMock.createNiceMock(ReworkEjb.class);
+
             EasyMock.expect(mockBucketDao.findByName(EasyMock.eq(LabEventType.SHEARING_BUCKET.getName())))
                     .andReturn(new LabEventTest.MockBucket(new WorkflowStepDef(LabEventType.SHEARING_BUCKET
                             .getName()), jiraTicket.getTicketName()));
-            BucketBean bucketBeanEJB = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB);
+            BucketBean bucketBeanEJB = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB
+            );
 
-            EasyMock.replay(mockBucketDao, mockJira, labBatchDAO, tubeDao);
+            EasyMock.replay(mockBucketDao, mockJira, labBatchDAO, tubeDao, reworkEjb);
 
 
             TemplateEngine templateEngine = new TemplateEngine();

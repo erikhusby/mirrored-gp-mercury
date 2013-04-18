@@ -345,9 +345,9 @@
                 </security:authorizeBlock>
             </c:if>
             <c:if test="${actionBean.editOrder.draft}">
-                <%-- MLC PDOs can be placed by PM or PDMs, so I'm making the security tag accept either of those roles for 'Place Order'.
-                     I am also putting 'Validate' under that same security tag since I think that may have the power to alter 'On-Riskedness'
-                     for PDO samples --%>
+                <%-- PDOs can be placed by PM or PDMs, so the security tag accepts either of those roles for 'Place Order'.
+                     'Validate' is also under that same security tag since that has the power to alter 'On-Riskedness'
+                     for PDO samples. --%>
                 <security:authorizeBlock roles="<%= roles(Developer, PDM, PM) %>">
 
                     <stripes:submit name="placeOrder" value="Validate and Place Order"
@@ -510,7 +510,7 @@
                     <label class="control-label label-form">Number of Lanes Per Sample</label>
 
                     <div class="controls">
-                        <div class="form-value">${actionBean.editOrder.count}</div>
+                        <div class="form-value">${actionBean.editOrder.laneCount}</div>
                     </div>
                 </div>
             </c:if>

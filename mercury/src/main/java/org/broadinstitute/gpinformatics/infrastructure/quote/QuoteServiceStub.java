@@ -43,16 +43,9 @@ public class QuoteServiceStub implements QuoteService {
 
 
     @Override
-    public String registerNewWork(Quote quote, PriceItem priceItem, Date reportedCompletionDate,
+    public String registerNewWork(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing, Date reportedCompletionDate,
                                   double numWorkUnits, String callbackUrl, String callbackParameterName, String callbackParameterValue) {
         return Integer.toString(workItemId++);
-    }
-
-
-    @Override
-    public Quote getQuoteByNumericId(final String numericId) throws QuoteServerException, QuoteNotFoundException {
-        //TODO PMB remove this impl method
-        throw new IllegalStateException("Not Yet Implemented");
     }
 
     @Override

@@ -3,15 +3,16 @@ package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 import org.apache.commons.collections15.CollectionUtils;
 import org.apache.commons.collections15.Predicate;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
-import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
-import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
-import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
@@ -37,6 +38,9 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
     private ProductOrderDao productOrderDao;
 
     @Inject
+    private PriceListCache priceListCache;
+
+    @Inject
     private ProductDao productDao;
 
     @Inject
@@ -51,7 +55,6 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
 
     private ProductOrder order;
 
-
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void setUp() throws Exception {
         // Skip if no injections, meaning we're not running in container
@@ -63,13 +66,14 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
 
         order = ProductOrderDBTestFactory.createTestProductOrder(researchProjectDao, productDao);
 
-        // need to initialize the price items here as we will be exercising their hashCode methods when we create
-        // LedgerEntry entities in some of our tests
+        // We need to initialize the price items here as we will be exercising their hashCode methods when we create
+        // LedgerEntry entities in some of our tests.
+
         //noinspection ResultOfMethodCallIgnored
         order.getProduct().getPrimaryPriceItem().hashCode();
-        for (PriceItem priceItem : order.getProduct().getOptionalPriceItems()) {
+        for (QuotePriceItem quotePriceItem : order.getProduct().getReplacementPriceItems(priceListCache)) {
             //noinspection ResultOfMethodCallIgnored
-            priceItem.hashCode();
+            quotePriceItem.hashCode();
         }
         productOrderDao.persist(order);
 
@@ -77,7 +81,6 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
         productOrderDao.clear();
 
     }
-
 
     @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void tearDown() throws Exception {
@@ -89,7 +92,6 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
         utx.rollback();
     }
 
-
     /**
      * Sanity check: should not see any PDOs represented more than once.
      *
@@ -99,7 +101,7 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
 
         Map<String, Long> countsMap = new HashMap<String, Long>();
         for (ProductOrderListEntry productOrderListEntry : productOrderListEntries) {
-            if (! countsMap.containsKey(productOrderListEntry.getJiraTicketKey())) {
+            if (!countsMap.containsKey(productOrderListEntry.getJiraTicketKey())) {
                 countsMap.put(productOrderListEntry.getJiraTicketKey(), 1L);
             }
             else {
@@ -116,7 +118,7 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
             }
         });
 
-        if ( ! countsEntries.isEmpty()) {
+        if (!countsEntries.isEmpty()) {
             List<String> strings = new ArrayList<String>();
             for (Map.Entry<String, Long> countEntry : countsEntries) {
                 strings.add(countEntry.getKey() + ": " + countEntry.getValue());
@@ -125,13 +127,13 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
         }
     }
 
-
     private ProductOrderListEntry sanityCheckAndGetTestOrderListEntry() {
-        List<ProductOrderListEntry> productOrderListEntries = productOrderListEntryDao.findProductOrderListEntries();
+        List<ProductOrderListEntry> productOrderListEntries =
+                productOrderListEntryDao.findProductOrderListEntries(null, null, null, null, null);
 
         Assert.assertNotNull(productOrderListEntries);
 
-        // this is a container test so there is data in there beyond our test data.  if that turns up bugs for us, great!
+        // This is a container test so there is data in there beyond our test data.  if that turns up bugs for us, great!
         assertPDOUniqueness(productOrderListEntries);
 
         CollectionUtils.filter(productOrderListEntries, new Predicate<ProductOrderListEntry>() {
@@ -147,8 +149,6 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
         return productOrderListEntries.iterator().next();
     }
 
-
-
     public void testNoLedgerEntries() {
 
         ProductOrderListEntry productOrderListEntry = sanityCheckAndGetTestOrderListEntry();
@@ -156,8 +156,6 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
         Assert.assertEquals(productOrderListEntry.getUnbilledLedgerEntryCount(), Long.valueOf(0L));
         Assert.assertNull(productOrderListEntry.getBillingSessionBusinessKey());
     }
-
-
 
     public void testOneLedgerEntryNoBillingSession() {
 
@@ -175,7 +173,6 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
         Assert.assertNull(productOrderListEntry.getBillingSessionBusinessKey());
 
     }
-
 
     public void testOneLedgerEntryWithBillingSession() {
         LedgerEntry ledgerEntry =

@@ -12,9 +12,12 @@ import org.broadinstitute.gpinformatics.athena.entity.products.*;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.MaterialTypeTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.PriceItemTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProductTokenInput;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -46,7 +49,7 @@ public class ProductActionBean extends CoreActionBean {
     private PriceItemTokenInput priceItemTokenInput;
 
     @Inject
-    private PriceItemTokenInput optionalPriceItemTokenInput;
+    private PriceListCache priceListCache;
 
     @Inject
     private MaterialTypeTokenInput materialTypeTokenInput;
@@ -97,6 +100,17 @@ public class ProductActionBean extends CoreActionBean {
         }
     }
 
+    @Before(stages = LifecycleStage.CustomValidation, on = SAVE_ACTION)
+    public void initAfterValidation() {
+        // The productFamilyId is required, so if the original is null or the id is different, set the product to the
+        // product family that is represented by the new id.
+        // We set product family here because we need it to validate the risk criteria.
+        if ((editProduct.getProductFamily() == null) ||
+            productFamilyId.equals(editProduct.getProductFamily().getProductFamilyId())) {
+            editProduct.setProductFamily(productFamilyDao.find(productFamilyId));
+        }
+    }
+
     /**
      * Need to get this for setting up create and edit and for any errors on save.
      */
@@ -125,7 +139,7 @@ public class ProductActionBean extends CoreActionBean {
      * Validate information on the product being edited or created.
      */
     @ValidationMethod(on = SAVE_ACTION)
-    public void validatePriceItems() {
+    public void validateForSave() {
         String[] duplicatePriceItems = editProduct.getDuplicatePriceItemNames();
         if (duplicatePriceItems != null) {
             addGlobalValidationError("Cannot save with duplicate price items: " + StringUtils.join(duplicatePriceItems, ", "));
@@ -152,15 +166,23 @@ public class ProductActionBean extends CoreActionBean {
             addValidationError("token-input-primaryPriceItem", "Primary price item is required");
         }
 
-        // Ensure that numeric criteria have valid data.
+        checkValidCriteria();
+    }
+
+    private void checkValidCriteria() {
+        // Ensure that numeric criteria have valid data, and that the product supports the requested criteria.
         int matchingValueIndex = 0;
         for (String criterion : criteria) {
             RiskCriterion.RiskCriteriaType type = RiskCriterion.RiskCriteriaType.findByLabel(criterion);
             if (type.getOperatorType() == Operator.OperatorType.NUMERIC) {
-                try {
-                    Double.parseDouble(values[matchingValueIndex]);
-                } catch (NumberFormatException e) {
-                    addGlobalValidationError("Not a valid number for risk calculation: {2}", values[matchingValueIndex]);
+                if (values == null || matchingValueIndex >= values.length || values[matchingValueIndex] == null) {
+                    addGlobalValidationError("Need to provide a value for risk criterion ''{2}''", criterion);
+                } else {
+                    try {
+                        Double.parseDouble(values[matchingValueIndex]);
+                    } catch (NumberFormatException e) {
+                        addGlobalValidationError("Not a valid number for risk calculation: ''{2}''", values[matchingValueIndex]);
+                    }
                 }
             }
 
@@ -223,7 +245,6 @@ public class ProductActionBean extends CoreActionBean {
         if (primaryPriceItem != null) {
             priceItemTokenInput.setup(PriceItem.getPriceItemKeys(Collections.singletonList(primaryPriceItem)));
         }
-        optionalPriceItemTokenInput.setup(PriceItem.getPriceItemKeys(editProduct.getOptionalPriceItems()));
     }
 
     @HandlesEvent("addOnsAutocomplete")
@@ -252,13 +273,6 @@ public class ProductActionBean extends CoreActionBean {
     public Resolution save() {
         populateTokenListFields();
 
-        // The productFamilyId is required, so if the original is null or the id is different, set the product to the
-        // product family that is represented by the new id.
-        if ((editProduct.getProductFamily() == null) ||
-            productFamilyId.equals(editProduct.getProductFamily().getProductFamilyId())) {
-            editProduct.setProductFamily(productFamilyDao.find(productFamilyId));
-        }
-
         // If all lengths match, just send it.
         if (allLengthsMatch()) {
             editProduct.updateRiskCriteria(criteria, operators, values);
@@ -267,7 +281,7 @@ public class ProductActionBean extends CoreActionBean {
             String[] fullOperators = new String[criteria.length];
             String[] fullValues = new String[criteria.length];
 
-            // insert the operators and values for booleans, otherwise, use the next item.
+            // Insert the operators and values for booleans, otherwise, use the next item.
             int fullPosition = 0;
             int originalPosition = 0;
             for (String criterion : criteria) {
@@ -304,9 +318,6 @@ public class ProductActionBean extends CoreActionBean {
 
         editProduct.getAllowableMaterialTypes().clear();
         editProduct.getAllowableMaterialTypes().addAll(materialTypeTokenInput.getMercuryTokenObjects());
-
-        editProduct.getOptionalPriceItems().clear();
-        editProduct.getOptionalPriceItems().addAll(optionalPriceItemTokenInput.getMercuryTokenObjects());
     }
 
     public Product getEditProduct() {
@@ -339,14 +350,6 @@ public class ProductActionBean extends CoreActionBean {
 
     public void setMaterialTypeTokenInput(MaterialTypeTokenInput materialTypeTokenInput) {
         this.materialTypeTokenInput = materialTypeTokenInput;
-    }
-
-    public PriceItemTokenInput getOptionalPriceItemTokenInput() {
-        return optionalPriceItemTokenInput;
-    }
-
-    public void setOptionalPriceItemTokenInput(PriceItemTokenInput optionalPriceItemTokenInput) {
-        this.optionalPriceItemTokenInput = optionalPriceItemTokenInput;
     }
 
     public PriceItemTokenInput getPriceItemTokenInput() {
@@ -403,5 +406,9 @@ public class ProductActionBean extends CoreActionBean {
 
     public void setProductFamilyId(Long productFamilyId) {
         this.productFamilyId = productFamilyId;
+    }
+
+    public Collection<QuotePriceItem> getReplacementPriceItems() {
+        return editProduct.getReplacementPriceItems(priceListCache);
     }
 }

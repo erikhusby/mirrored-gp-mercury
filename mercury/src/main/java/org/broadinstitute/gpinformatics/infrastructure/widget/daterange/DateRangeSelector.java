@@ -9,12 +9,17 @@
  */
 package org.broadinstitute.gpinformatics.infrastructure.widget.daterange;
 
+import clover.org.apache.commons.lang.StringUtils;
 import org.hibernate.Criteria;
 import org.hibernate.criterion.Restrictions;
 
+import javax.annotation.Nullable;
 import java.io.Serializable;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 /**
  * This simple class handles the date range selector data created by the date range selector javascript
@@ -216,12 +221,23 @@ public class DateRangeSelector implements Serializable {
     }
 
     /**
-     * Set up a DateRangeSelector object based on the value of rangeSelector
+     * Set up a DateRangeSelector object based on the value of rangeSelector.
      *
-     * @param theRangeSelector rangeSelector value
+     * @param theRangeSelector rangeSelector value.
      */
     public DateRangeSelector(int theRangeSelector) {
         this(null, theRangeSelector, null, null);
+    }
+
+    /**
+     * @return This creates a list of strings representing the three values for the date.
+     */
+    public List<String> createDateStrings() {
+        List<String> dateStrings = new ArrayList<String>();
+        dateStrings.add(String.valueOf(rangeSelector));
+        dateStrings.add(getStartStr());
+        dateStrings.add(getEndStr());
+        return dateStrings;
     }
 
     private enum RangeDefinition {
@@ -258,10 +274,36 @@ public class DateRangeSelector implements Serializable {
         }
     }
 
-    private DateRangeSelector(String naturalLanguageString,
-                              int rangeSelector,
-                              Date start,
-                              Date end) {
+    private static final int RANGE_SELECTOR_INDEX = 0;
+    private static final int START_DATE_INDEX = 1;
+    private static final int END_DATE_INDEX = 2;
+
+    /**
+     * This is a special constructor that is useful for pulling user preference information into the date range
+     * selector object.
+     *
+     * @param rangeSelectorStrings The list of strings representation of this DateRangeSelector.
+     * @throws ParseException Any errors
+     */
+    public DateRangeSelector(List<String> rangeSelectorStrings) throws ParseException {
+        int rangeSelectorValue = Integer.parseInt(rangeSelectorStrings.get(RANGE_SELECTOR_INDEX));
+
+        String start = rangeSelectorStrings.get(START_DATE_INDEX);
+        Date startDate = StringUtils.isBlank(start) ? null : DateUtils.parseDate(start);
+
+        String end = rangeSelectorStrings.get(END_DATE_INDEX);
+        Date endDate = StringUtils.isBlank(end) ? null : DateUtils.parseDate(end);
+
+        setupRangeSelector(null, rangeSelectorValue, startDate, endDate);
+    }
+
+    private DateRangeSelector(
+        @Nullable String naturalLanguageString, int rangeSelector, @Nullable Date start, @Nullable Date end) {
+        setupRangeSelector(naturalLanguageString, rangeSelector, start, end);
+    }
+
+    private void setupRangeSelector(
+        @Nullable String naturalLanguageString, int rangeSelector, @Nullable Date start, @Nullable Date end) {
         if ((null != naturalLanguageString) && (!naturalLanguageString.isEmpty())) {
             Integer var = toRangeSelector(naturalLanguageString);
             if (var != null) {

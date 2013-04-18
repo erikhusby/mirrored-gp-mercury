@@ -153,13 +153,14 @@ public class JiraServiceStub implements JiraService {
     }
 
     @Override
-    public void postNewTransition(String jiraIssueKey, Transition transition, Collection<CustomField> customFields,
+    public void postNewTransition(String jiraIssueKey, Transition transition,
+                                  @Nonnull Collection<CustomField> customFields,
                                   @Nullable String comment) throws IOException {
 
     }
 
     @Override
-    public void postNewTransition(String jiraIssueKey, Transition transition, String comment) throws IOException {
+    public void postNewTransition(String jiraIssueKey, Transition transition, @Nullable String comment) throws IOException {
 
     }
 

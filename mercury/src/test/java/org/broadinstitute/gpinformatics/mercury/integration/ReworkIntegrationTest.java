@@ -1,17 +1,13 @@
 package org.broadinstitute.gpinformatics.mercury.integration;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean;
-import org.broadinstitute.gpinformatics.infrastructure.mercury.MercuryClientEjb;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
-import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkReason;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.presentation.TestCoreActionBeanContext;
-import org.broadinstitute.gpinformatics.mercury.presentation.workflow.AddReworkActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.workflow.BucketViewActionBean;
 import org.broadinstitute.gpinformatics.mocks.EverythingYouAskForYouGetAndItsHuman;
 import org.broadinstitute.gpinformatics.mocks.HappyQuoteServiceMock;
@@ -21,14 +17,14 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 
 public class ReworkIntegrationTest extends Arquillian {
 
@@ -152,10 +148,10 @@ public class ReworkIntegrationTest extends Arquillian {
         LabVessel aTubeFromBatch2 = batch2.getStartingLabVessels().iterator().next();
 
         // arz not sure what to set for other params
-        reworkEjb.addReworks(aTubeFromBatch1, null,null,null);
+        reworkEjb.addRework(aTubeFromBatch1, null, null, null);
         // arz for the "do rework with different PDO" case, seems like this
         // method's signature would change to include a PDO...but that's for later
-        reworkEjb.addReworks(aTubeFromBatch1, null,null,null);
+        reworkEjb.addRework(aTubeFromBatch1, null, null, null);
 
         List<String> selectedReworks = new ArrayList<String>(2);
         selectedReworks.add(aTubeFromBatch1.getLabel());

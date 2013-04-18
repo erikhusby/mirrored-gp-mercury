@@ -1,11 +1,13 @@
-package org.broadinstitute.gpinformatics.athena.entity.fixup;
+package org.broadinstitute.gpinformatics.athena.entity.billing.fixup;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryFixupDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -16,6 +18,7 @@ import javax.inject.Inject;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
 import java.text.MessageFormat;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -26,7 +29,11 @@ public class LedgerEntryFixupTest extends Arquillian {
     private static final Log logger = LogFactory.getLog(LedgerEntryFixupTest.class);
 
     @Inject
-    private LedgerEntryDao ledgerEntryDao;
+    private LedgerEntryFixupDao ledgerEntryFixupDao;
+
+    @Inject
+    private PriceListCache priceListCache;
+
 
     // Use (RC, "rc"), (PROD, "prod") to push the backfill to RC and production respectively.
     @Deployment
@@ -91,9 +98,8 @@ public class LedgerEntryFixupTest extends Arquillian {
      */
     @Test(enabled = false)
     public void backfillLedgerQuotes() {
-
         int counter = 0;
-        for (LedgerEntry ledger : ledgerEntryDao.findSuccessfullyBilledLedgerEntriesWithoutQuoteId()) {
+        for (LedgerEntry ledger : ledgerEntryFixupDao.findSuccessfullyBilledLedgerEntriesWithoutQuoteId()) {
             String quoteId = ledger.getProductOrderSample().getProductOrder().getQuoteId();
 
             final int BATCH_SIZE = 1000;
@@ -101,16 +107,62 @@ public class LedgerEntryFixupTest extends Arquillian {
             if (++counter % BATCH_SIZE == 0) {
                 // Only create a transaction for every BATCH_SIZE ledger entries, otherwise this test runs
                 // excruciatingly slowly.
-                ledgerEntryDao.persist(ledger);
+                ledgerEntryFixupDao.persistAll(Collections.emptyList());
                 logger.info(MessageFormat.format("Issued persist at record {0}", counter));
             }
         }
         // We need the transaction that #persistAll gives us to get the last set of modulus BATCH_SIZE ledger
         // entries.  It doesn't matter what we pass this method, it will create the transaction around the
         // extended persistence context that holds the entities we modified above.
-        ledgerEntryDao.persistAll(Collections.emptyList());
+        ledgerEntryFixupDao.persistAll(Collections.emptyList());
     }
 
+    /**
+     * Add all appropriate price item types to any ledger entry items that were billed to the quote server.
+     */
+    @Test(enabled = false)
+    public void populatePriceItemTypes() {
+        int counter = 1;
+        final int BATCH_SIZE = 2000;
+        for (LedgerEntry ledger : ledgerEntryFixupDao.findAllBilledEntries()) {
+            if (ledger.getPriceItem().equals(
+                    ledger.getProductOrderSample().getProductOrder().getProduct().getPrimaryPriceItem())) {
+                // This is a primary price item.
+                ledger.setPriceItemType(LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
+            } else if (isEntryAReplacementItem(ledger)) {
+                ledger.setPriceItemType(LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM);
+            } else {
+                ledger.setPriceItemType(LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM);
+            }
+
+            if (counter % BATCH_SIZE == 0) {
+                // Only create a transaction for every BATCH_SIZE ledger entries.
+                ledgerEntryFixupDao.persistAll(Collections.emptyList());
+                logger.info(MessageFormat.format("Issued persist at record {0}", counter));
+            }
+
+            counter++;
+        }
+
+        // We need the transaction that #persistAll gives us to get the last set of modulus BATCH_SIZE ledger
+        // entries.  It doesn't matter what we pass this method, it will create the transaction that persists
+        // the entities modified above.
+        ledgerEntryFixupDao.persistAll(Collections.emptyList());
+    }
+
+    private boolean isEntryAReplacementItem(LedgerEntry ledger) {
+
+        Collection<QuotePriceItem> quotePriceItems =
+                ledger.getProductOrderSample().getProductOrder().getProduct().getReplacementPriceItems(priceListCache);
+
+        for (QuotePriceItem quotePriceItem : quotePriceItems) {
+            if (quotePriceItem.getName().equals(ledger.getPriceItem().getName())) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     /**
      * Largely copy/pasted from #backfillLedgerQuotes above, used to null out ledger quote IDs when we
@@ -122,7 +174,7 @@ public class LedgerEntryFixupTest extends Arquillian {
         int counter = 0;
 
         List<LedgerEntry> ledgerEntries =
-                ledgerEntryDao.findAll(LedgerEntry.class, new GenericDao.GenericDaoCallback<LedgerEntry>() {
+                ledgerEntryFixupDao.findAll(LedgerEntry.class, new GenericDao.GenericDaoCallback<LedgerEntry>() {
                     @Override
                     public void callback(CriteriaQuery<LedgerEntry> criteriaQuery, Root<LedgerEntry> root) {
                         // This runs much more slowly without the fetch as these would otherwise be singleton selected.
@@ -138,7 +190,7 @@ public class LedgerEntryFixupTest extends Arquillian {
             if (++counter % BATCH_SIZE == 0) {
                 // Only create a transaction for every BATCH_SIZE ledger entries, otherwise this test runs
                 // excruciatingly slowly.
-                ledgerEntryDao.persist(ledger);
+                ledgerEntryFixupDao.persistAll(Collections.emptyList());
                 logger.info(MessageFormat.format("Issued persist at record {0}", counter));
             }
         }
@@ -146,6 +198,6 @@ public class LedgerEntryFixupTest extends Arquillian {
         // We need the transaction that #persistAll gives us to get the last set of modulus BATCH_SIZE ledger
         // entries.  It doesn't matter what we pass this method, it will create the transaction that persists
         // the entities modified above.
-        ledgerEntryDao.persistAll(Collections.emptyList());
+        ledgerEntryFixupDao.persistAll(Collections.emptyList());
     }
 }

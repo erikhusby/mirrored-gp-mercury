@@ -3,13 +3,21 @@ package org.broadinstitute.gpinformatics.athena.boundary.billing;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This is the information needed to import a quantity of some price item on a quote
  */
 public class QuoteImportInfo {
+
     /**
      * What the heck is this complicated structure? It is used to take in ledger items and bucket them
      * in a way that makes getQuoteImportItems easy later. The buckets (the map keys) are:
@@ -22,7 +30,8 @@ public class QuoteImportInfo {
      * <p/>
      *      Billing Ledger - We keep the whole ledger so we can place any errors on each item AND it has the count
      */
-    private final Map<String, Map<PriceItem, Map<Date, List<LedgerEntry>>>> quantitiesByQuotePriceItem = new HashMap<String, Map<PriceItem, Map<Date, List<LedgerEntry>>>>();
+    private final Map<String, Map<PriceItem, Map<Date, List<LedgerEntry>>>> quantitiesByQuotePriceItem =
+            new HashMap<String, Map<PriceItem, Map<Date, List<LedgerEntry>>>>();
 
     /**
      * Take the ledger item and bucket it into the nasty structure we use here.
@@ -48,7 +57,8 @@ public class QuoteImportInfo {
         }
 
         // Get the date bucket for this price item.
-        Date bucketDate = getBucketDate(ledger.getWorkCompleteDate());
+        Date bucketDate = ledger.getBucketDate();
+
         if (!quantitiesByQuotePriceItem.get(quoteId).get(priceItem).containsKey(bucketDate)) {
             quantitiesByQuotePriceItem.get(quoteId).get(priceItem).put(bucketDate, new ArrayList<LedgerEntry> ());
         }
@@ -73,29 +83,7 @@ public class QuoteImportInfo {
         return ledger.getProductOrderSample().getProductOrder().getQuoteId();
     }
 
-    private static Date getBucketDate(Date billedDate) {
-        Calendar cal = new GregorianCalendar();
-        cal.setTime(billedDate);
-        int day = cal.get(Calendar.DAY_OF_MONTH);
-
-        Calendar endOfPeriod = Calendar.getInstance();
-        endOfPeriod.setTime(billedDate);
-        if (day <= 15) {
-            endOfPeriod.set(Calendar.DAY_OF_MONTH, 15);
-        } else {
-            endOfPeriod.set(Calendar.DAY_OF_MONTH, endOfPeriod.getActualMaximum(Calendar.DAY_OF_MONTH));
-        }
-
-        // Set to the end of the day.
-        endOfPeriod.set(Calendar.HOUR_OF_DAY, 23);
-        endOfPeriod.set(Calendar.MINUTE, 59);
-        endOfPeriod.set(Calendar.SECOND, 59);
-        endOfPeriod.set(Calendar.MILLISECOND, 999);
-
-        return endOfPeriod.getTime();
-    }
-
-    public List<QuoteImportItem> getQuoteImportItems() {
+    public List<QuoteImportItem> getQuoteImportItems(PriceListCache priceListCache) {
         List<QuoteImportItem> quoteItems = new ArrayList<QuoteImportItem> ();
 
         for (String quoteId : quantitiesByQuotePriceItem.keySet()) {
@@ -104,33 +92,83 @@ public class QuoteImportInfo {
                 for (Date bucketDate : quotePriceItems.get(priceItem).keySet()) {
                     List<LedgerEntry> ledgerItems = quotePriceItems.get(priceItem).get(bucketDate);
 
-                    // Separate the ledger items into debits and credits so that the quote server will not cancel
-                    // out items.
                     List<LedgerEntry> creditLedgerItems = new ArrayList<LedgerEntry>();
                     List<LedgerEntry> debitLedgerItems = new ArrayList<LedgerEntry>();
+                    List<LedgerEntry> replacementCreditLedgerItems = new ArrayList<LedgerEntry>();
+                    List<LedgerEntry> replacementDebitLedgerItems = new ArrayList<LedgerEntry>();
+
+                    // Separate the items into debits and credits so that the quote server will not cancel out items.
                     for (LedgerEntry ledger : ledgerItems) {
                         if (ledger.getQuantity() < 0) {
-                            creditLedgerItems.add(ledger);
+                            if (isReplacementPriceItem(priceListCache, ledger)) {
+                                replacementCreditLedgerItems.add(ledger);
+                            } else {
+                                creditLedgerItems.add(ledger);
+                            }
                         } else {
-                            debitLedgerItems.add(ledger);
+                            if (isReplacementPriceItem(priceListCache, ledger)) {
+                                replacementDebitLedgerItems.add(ledger);
+                            } else {
+                                debitLedgerItems.add(ledger);
+                            }
                         }
                     }
 
-                    // Add the debit items to the list of quote import items.
-                    if (!debitLedgerItems.isEmpty()) {
-                        QuoteImportItem debitItems = new QuoteImportItem(quoteId, priceItem, debitLedgerItems, bucketDate);
-                        quoteItems.add(debitItems);
-                    }
+                    addQuoteItemsForLedgerItems(quoteItems, quoteId, priceItem,
+                            LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM.getQuoteType(),
+                            debitLedgerItems, bucketDate);
 
-                    // Add the credit items to the list of quote import items.
-                    if (!creditLedgerItems.isEmpty()) {
-                        QuoteImportItem creditItems = new QuoteImportItem(quoteId, priceItem, creditLedgerItems, bucketDate);
-                        quoteItems.add(creditItems);
-                    }
+                    addQuoteItemsForLedgerItems(quoteItems, quoteId, priceItem,
+                            LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM.getQuoteType(),
+                            replacementDebitLedgerItems, bucketDate);
+
+                    addQuoteItemsForLedgerItems(quoteItems, quoteId, priceItem,
+                            LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM.getQuoteType(),
+                            creditLedgerItems, bucketDate);
+
+                    addQuoteItemsForLedgerItems(quoteItems, quoteId, priceItem,
+                            LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM.getQuoteType(),
+                            replacementCreditLedgerItems, bucketDate);
                 }
             }
         }
 
         return quoteItems;
+    }
+
+    private void addQuoteItemsForLedgerItems(
+        List<QuoteImportItem> quoteItems, String quoteId, PriceItem priceItem, String quoteType,
+        List<LedgerEntry> ledgerItems, Date bucketDate) {
+
+        if (!ledgerItems.isEmpty()) {
+            QuoteImportItem newQuoteItem = new QuoteImportItem(quoteId, priceItem, quoteType, ledgerItems, bucketDate);
+            quoteItems.add(newQuoteItem);
+        }
+    }
+
+    /**
+     * This tests whether the ledger entry is a quote item or a quote replacement item. If the session was
+     * already billed (a quote is applied), then pull this right off the ledger. If this has not been billed, then
+     * calculate it from the product order.
+     *
+     * @param ledger The ledger entry.
+     * @return Is the entry a replacement or not.
+     */
+    private boolean isReplacementPriceItem(PriceListCache priceListCache, LedgerEntry ledger) {
+        if (ledger.getQuoteId() != null) {
+            return LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM == ledger.getPriceItemType();
+        } else {
+            // No quote, so calculate what it would be given the state of things now.
+            Collection<QuotePriceItem> quotePriceItems =
+                ledger.getProductOrderSample().getProductOrder().getProduct().getReplacementPriceItems(priceListCache);
+
+            for (QuotePriceItem quotePriceItem : quotePriceItems) {
+                if (ledger.getPriceItem().getName().equals(quotePriceItem.getName())) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 }

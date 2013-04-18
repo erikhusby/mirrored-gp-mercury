@@ -78,20 +78,6 @@ public class ProductOrderSampleStatusTest extends ContainerTest {
         userBean.logout();
     }
 
-    /**
-     * This should work if there was actually a 'Close' or 'Complete' transition, which as of the time of this writing
-     * does not exist
-     */
-    @Test
-    public void testCompletePDO() throws Exception {
-        productOrderEjb.complete(testKey, "This has been completed by my test!");
-        ProductOrder order = productOrderDao.findByBusinessKey(testKey);
-        Assert.assertEquals(order.getOrderStatus(), ProductOrder.OrderStatus.Complete);
-        for (ProductOrderSample sample : order.getSamples()) {
-            Assert.assertEquals(sample.getDeliveryStatus(), ProductOrderSample.DeliveryStatus.DELIVERED);
-        }
-    }
-
     @Test
     public void testAbandonPDO() throws Exception {
         productOrderEjb.abandon(testKey, "This has been abandoned by my test!");
@@ -114,23 +100,6 @@ public class ProductOrderSampleStatusTest extends ContainerTest {
             ProductOrderSample.DeliveryStatus status = ProductOrderSample.DeliveryStatus.NOT_STARTED;
             if (samplesToAbandon.contains(sample)) {
                 status = ProductOrderSample.DeliveryStatus.ABANDONED;
-            }
-            Assert.assertEquals(sample.getDeliveryStatus(), status);
-        }
-    }
-
-    @Test
-    public void testCompleteSamples() throws Exception{
-        ProductOrder order = productOrderDao.findByBusinessKey(testKey);
-        List<ProductOrderSample> samples = order.getSamples();
-        List<ProductOrderSample> samplesToComplete = Arrays.asList(samples.get(12), samples.get(14), samples.get(16));
-        productOrderEjb.completeSamples(testKey, samplesToComplete);
-        Assert.assertEquals(order.getOrderStatus(), ProductOrder.OrderStatus.Draft);
-        Assert.assertEquals(samples.size(), NUM_TEST_SAMPLES);
-        for (ProductOrderSample sample : samples) {
-            ProductOrderSample.DeliveryStatus status = ProductOrderSample.DeliveryStatus.NOT_STARTED;
-            if (samplesToComplete.contains(sample)) {
-                status = ProductOrderSample.DeliveryStatus.DELIVERED;
             }
             Assert.assertEquals(sample.getDeliveryStatus(), status);
         }

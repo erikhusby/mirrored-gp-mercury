@@ -44,7 +44,7 @@ public class CompletionStatusFetcherTest extends ContainerTest {
 
         // Get all statuses
         allPDOFetcher = new CompletionStatusFetcher();
-        allPDOFetcher.setupProgress(pdoDao);
+        allPDOFetcher.loadProgress(pdoDao);
     }
 
     @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
@@ -129,7 +129,9 @@ public class CompletionStatusFetcherTest extends ContainerTest {
 
         List<String> allBusinessKeys = new ArrayList<String>();
         for (ProductOrder order : allOrders) {
-            allBusinessKeys.add(order.getBusinessKey());
+            if (order.hasJiraTicketKey()) {
+                allBusinessKeys.add(order.getBusinessKey());
+            }
         }
 
         allBusinessKeys.addAll(allBusinessKeys);

@@ -3,23 +3,27 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
-import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
-import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderSampleTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderSampleTestFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.meanbean.lang.EquivalentFactory;
 import org.meanbean.test.BeanTester;
 import org.meanbean.test.Configuration;
 import org.meanbean.test.ConfigurationBuilder;
 import org.meanbean.test.EqualsMethodTester;
 import org.meanbean.test.HashCodeMethodTester;
+import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
+import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.OrderStatus;
 import static org.broadinstitute.gpinformatics.infrastructure.matchers.InBspFormatSample.inBspFormat;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -53,7 +57,7 @@ public class ProductOrderTest {
                 // TODO: jiraTicketKey is part of businessKey which is what equals() uses. should it really be ignored?
                 .ignoreProperty("jiraTicketKey")
                 .ignoreProperty("orderStatus")
-                .ignoreProperty("count")
+                .ignoreProperty("laneCount")
                 .ignoreProperty("modifiedBy")
                 .ignoreProperty("createdBy")
                 .ignoreProperty("createdDate")
@@ -80,10 +84,7 @@ public class ProductOrderTest {
                 ResearchProject researchProject =
                         new ResearchProject(ID, title, "RP title", ResearchProject.IRB_NOT_ENGAGED);
 
-                ProductOrder order =
-                    new ProductOrder(ID, "PO title", sixBspSamplesNoDupes, "quoteId", product, researchProject);
-
-                return order;
+                return new ProductOrder(ID, "PO title", sixBspSamplesNoDupes, "quoteId", product, researchProject);
             }
         }
 
@@ -97,7 +98,7 @@ public class ProductOrderTest {
     @Test
     public void testOrder() throws Exception {
         assertThat(productOrder.fetchJiraIssueType(), is(equalTo(CreateFields.IssueType.PRODUCT_ORDER)));
-        assertThat(productOrder.fetchJiraProject(), is(equalTo(CreateFields.ProjectType.Product_Ordering)));
+        assertThat(productOrder.fetchJiraProject(), is(equalTo(CreateFields.ProjectType.PRODUCT_ORDERING)));
         assertThat(productOrder.getJiraTicketKey(), is(notNullValue()));
         assertThat(productOrder.getJiraTicketKey(), is(equalTo(PDO_JIRA_KEY)));
     }
@@ -143,16 +144,54 @@ public class ProductOrderTest {
         assertThat(productOrder.getDuplicateCount(), is(equalTo(2)));
     }
 
-
     @Test
     public void testAreAllSampleBSPFormat() throws Exception {
         assertThat(fourBspSamplesWithDupes, everyItem(is(inBspFormat())));
-
         assertThat(sixBspSamplesNoDupes, everyItem(is(inBspFormat())));
-
         assertThat(nonBspSampleProducts, everyItem(is(not(inBspFormat()))));
-
         assertThat(sixMixedSampleProducts, not(everyItem(is(inBspFormat()))));
     }
 
+    public static ProductOrder createOrderWithSamples(List<ProductOrderSample> samples, OrderStatus status) {
+        ProductOrder order = new ProductOrder();
+        order.addSamples(samples);
+        order.setOrderStatus(status);
+        return order;
+    }
+
+    @DataProvider(name = "testUpdateOrderStatus")
+    public Object[][] createUpdateOrderStatusData() {
+        List<ProductOrderSample> billedSamples = Arrays.asList(ProductOrderSampleTest.createBilledSample("ABC"),
+                ProductOrderSampleTest.createBilledSample("DEF"));
+        List<ProductOrderSample> abandonedSamples = ProductOrderSampleTestFactory.createDBFreeSampleList("123", "456");
+        for (ProductOrderSample sample : abandonedSamples) {
+            sample.setDeliveryStatus(ProductOrderSample.DeliveryStatus.ABANDONED);
+        }
+        List<ProductOrderSample> notBilledSamples = ProductOrderSampleTestFactory.createDBFreeSampleList("ZZZ", "YYY");
+        List<ProductOrderSample> atLeastOneNotBilled = Arrays.asList(ProductOrderSampleTest.createBilledSample("ABC"),
+                new ProductOrderSample("ZZZ"));
+        return new Object[][] {
+                // Can't transition from Draft or Abandoned, regardless of the sample state.
+                {createOrderWithSamples(billedSamples, OrderStatus.Draft), false, OrderStatus.Draft},
+                {createOrderWithSamples(billedSamples, OrderStatus.Abandoned), false, OrderStatus.Abandoned},
+                // If all samples are billed, transition to Completed.
+                {createOrderWithSamples(billedSamples, OrderStatus.Submitted), true, OrderStatus.Completed},
+                {createOrderWithSamples(billedSamples, OrderStatus.Completed), false, OrderStatus.Completed},
+                // If all samples are abandoned, transition to Completed.
+                {createOrderWithSamples(abandonedSamples, OrderStatus.Submitted), true, OrderStatus.Completed},
+                {createOrderWithSamples(abandonedSamples, OrderStatus.Completed), false, OrderStatus.Completed},
+                // If none are billed, transition to Submitted.
+                {createOrderWithSamples(notBilledSamples, OrderStatus.Submitted), false, OrderStatus.Submitted},
+                {createOrderWithSamples(notBilledSamples, OrderStatus.Completed), true, OrderStatus.Submitted},
+                // If at least one is not billed, transition to Submitted.
+                {createOrderWithSamples(atLeastOneNotBilled, OrderStatus.Submitted), false, OrderStatus.Submitted},
+                {createOrderWithSamples(atLeastOneNotBilled, OrderStatus.Completed), true, OrderStatus.Submitted},
+        };
+    }
+
+    @Test(dataProvider = "testUpdateOrderStatus")
+    public void testUpdateOrderStatus(ProductOrder order, boolean result, OrderStatus status) {
+        Assert.assertEquals(order.updateOrderStatus(), result);
+        Assert.assertEquals(order.getOrderStatus(), status);
+    }
 }

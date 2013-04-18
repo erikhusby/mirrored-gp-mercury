@@ -65,9 +65,8 @@ public class ProductOrderDaoTest extends ContainerTest {
     }
 
     public void testFindOrders() {
-        // Try to find the created ProductOrder by its researchProject and title.
-        ProductOrder productOrderFromDb =
-                productOrderDao.findByResearchProjectAndTitle(order.getResearchProject(), order.getTitle());
+        // Try to find the created ProductOrder by business key.
+        ProductOrder productOrderFromDb = productOrderDao.findByBusinessKey(order.getBusinessKey());
         Assert.assertNotNull(productOrderFromDb);
         Assert.assertEquals(productOrderFromDb.getTitle(), order.getTitle());
         Assert.assertEquals(productOrderFromDb.getQuoteId(), order.getQuoteId());
@@ -75,30 +74,17 @@ public class ProductOrderDaoTest extends ContainerTest {
         Assert.assertEquals(productOrderFromDb.getSamples().size(), order.getSamples().size());
 
         // Try to find a non-existing ProductOrder.
-        productOrderFromDb = productOrderDao.findByResearchProjectAndTitle(order.getResearchProject(),
-                                                                                  "NonExistingProductOrder_" + UUID.randomUUID());
-        Assert.assertNull(productOrderFromDb,
-                                 "Should have thrown exception when trying to retrieve an non-existing product Order.");
+        productOrderFromDb = productOrderDao.findByBusinessKey("NonExistingProductOrder_" + UUID.randomUUID());
+        Assert.assertNull(productOrderFromDb);
 
-        // Try to find an existing ProductOrder by ResearchProject.
-        List<ProductOrder> orders = productOrderDao.findByResearchProject(order.getResearchProject());
+        // Try to find by list of keys.
+        List<ProductOrder> orders =
+                productOrderDao.findListByBusinessKeyList(Collections.singletonList(order.getBusinessKey()));
         Assert.assertNotNull(orders);
         if (!orders.isEmpty()) {
             productOrderFromDb = orders.get(0);
         }
         Assert.assertNotNull(productOrderFromDb);
-    }
-
-    public void testFindOrdersCreatedBy() {
-        List<ProductOrder> orders = productOrderDao.findByCreatedPersonId(ProductOrderDBTestFactory.TEST_CREATOR_ID);
-        Assert.assertNotNull(orders);
-        Assert.assertFalse(orders.isEmpty());
-    }
-
-    public void testFindOrdersModifiedBy() {
-        List<ProductOrder> orders = productOrderDao.findByModifiedPersonId(ProductOrderDBTestFactory.TEST_CREATOR_ID);
-        Assert.assertNotNull(orders);
-        Assert.assertFalse(orders.isEmpty());
     }
 
     public void testFindModifiedAfter() {

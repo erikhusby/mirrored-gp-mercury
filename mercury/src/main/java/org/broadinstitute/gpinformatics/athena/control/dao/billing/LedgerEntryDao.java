@@ -33,41 +33,6 @@ public class LedgerEntryDao extends GenericDao {
     }
 
     /**
-     * Fetch the billed LedgerEntries with null quote IDs, join fetching their associated {@link ProductOrderSample}s
-     * for performance purposes (i.e. avoiding singleton-selects of what are probably nearly unique
-     * {@link javax.persistence.ManyToOne} ProductOrderSamples).
-     *
-     * @return List of billed Ledger Entries with null quote IDs.
-     */
-    public List<LedgerEntry> findSuccessfullyBilledLedgerEntriesWithoutQuoteId() {
-        return findAll(LedgerEntry.class, new GenericDaoCallback<LedgerEntry>() {
-            @Override
-            public void callback(CriteriaQuery<LedgerEntry> criteriaQuery, Root<LedgerEntry> root) {
-
-                CriteriaBuilder cb = getCriteriaBuilder();
-
-                Join<LedgerEntry, BillingSession> ledgerBillingSessionJoin = root.join(LedgerEntry_.billingSession);
-
-                criteriaQuery.where(
-                        // Filter out ledgers that already have a quote assigned.
-                        cb.isNull(root.get(LedgerEntry_.quoteId)),
-                        // A predicate for billed ledgers only as we want unbilled ledgers to keep their null quote IDs
-                        // until billing.  The predicate for this purpose is that the ledgers' billing session must
-                        // exist (this is an inner join) and have a non-null billed date.  Note that this is not
-                        // explicitly testing for *successful* billing (see comments in LedgerEntryDao), just a
-                        // billing session with a billed date.
-                        cb.isNotNull(ledgerBillingSessionJoin.get(BillingSession_.billedDate)),
-                        // Only select ledger entries that were successfully billed.
-                        cb.equal(root.get(LedgerEntry_.billingMessage), BillingSession.SUCCESS));
-
-                // This test runs very slowly without this fetch as we would singleton select thousands of
-                // ProductOrderSamples.
-                root.fetch(LedgerEntry_.productOrderSample);
-            }
-        });
-    }
-
-    /**
      * Version of the method that should work with either {@link ProductOrder} entities xor String ProductOrder
      * business keys (one or the other must be non-null).
      *

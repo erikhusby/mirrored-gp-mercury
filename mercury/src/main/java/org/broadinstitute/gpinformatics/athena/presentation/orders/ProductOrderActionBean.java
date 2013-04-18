@@ -15,27 +15,36 @@ import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.poi.util.IOUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
-import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderListEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceEjb;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
-import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
+import org.broadinstitute.gpinformatics.athena.entity.preference.NameValuePreferenceDefinition;
+import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
+import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean;
@@ -48,9 +57,11 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.mercury.MercuryClientService;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
@@ -75,13 +86,16 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
- * This handles all the needed interface processing elements
+ * This handles all the needed interface processing elements.
  */
 @UrlBinding(ProductOrderActionBean.ACTIONBEAN_URL_BINDING)
 public class ProductOrderActionBean extends CoreActionBean {
+    private static Log logger = LogFactory.getLog(ProductOrderActionBean.class);
+
     public static final String ACTIONBEAN_URL_BINDING = "/orders/order.action";
     public static final String PRODUCT_ORDER_PARAMETER = "productOrder";
 
@@ -98,12 +112,49 @@ public class ProductOrderActionBean extends CoreActionBean {
     private static final String SET_RISK = "setRisk";
     private static final String PLACE_ORDER = "placeOrder";
 
+    // Search field constants
+    private static final String FAMILY = "productFamily";
+    private static final String PRODUCT = "product";
+    private static final String STATUS = "status";
+    private static final String DATE = "date";
+    private static final String OWNER = "owner";
+
+    @Inject
+    private ProductFamilyDao productFamilyDao;
+
+    @Inject
+    private ProductOrderDao productOrderDao;
+
+    @Inject
+    private ProductDao productDao;
+
+    @Inject
+    private ResearchProjectDao projectDao;
+
+    @Inject
+    private BillingSessionDao billingSessionDao;
+
+    @Inject
+    private PriceItemDao priceItemDao;
+
+    @Inject
+    private LedgerEntryDao ledgerEntryDao;
+
+    @Inject
+    private ProductOrderSampleDao productOrderSampleDao;
+
+    @Inject
+    private PreferenceEjb preferenceEjb;
+
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private QuoteService quoteService;
 
     @Inject
     private ProductOrderUtil productOrderUtil;
+
+    @Inject
+    private PriceListCache priceListCache;
 
     @Inject
     private ProductOrderSampleDao sampleDao;
@@ -119,24 +170,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Inject
     private SampleSearchLink sampleSearchLink;
-
-    @Inject
-    private ProductOrderDao productOrderDao;
-
-    @Inject
-    private ProductDao productDao;
-
-    @Inject
-    private ResearchProjectDao projectDao;
-
-    @Inject
-    private BillingSessionDao billingSessionDao;
-
-    @Inject
-    private LedgerEntryDao ledgerEntryDao;
-
-    @Inject
-    private ProductOrderSampleDao productOrderSampleDao;
 
     @Inject
     private ProductOrderEjb productOrderEjb;
@@ -155,7 +188,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     private MercuryClientService mercuryClientService;
 
-    private List<ProductOrderListEntry> allProductOrderListEntries;
+    private List<ProductOrderListEntry> displayedProductOrderListEntries;
 
     private String sampleList;
 
@@ -164,7 +197,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private List<Long> sampleIdsForGetBspData;
 
-    private CompletionStatusFetcher progressFetcher = new CompletionStatusFetcher();
+    private final CompletionStatusFetcher progressFetcher = new CompletionStatusFetcher();
 
     @ValidateNestedProperties({
         @Validate(field="comments", maxlength=2000, on={SAVE_ACTION}),
@@ -173,7 +206,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     })
     private ProductOrder editOrder;
 
-    // For create, we can also have a research project key to default
+    // For create, we can also have a research project key to default.
     private String researchProjectKey;
 
     private List<String> selectedProductOrderBusinessKeys;
@@ -201,15 +234,19 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Validate(required = true, on = SET_RISK)
     private String riskComment;
 
-    //This is used for prompting why the abandon button is disabled
+    // This is used for prompting why the abandon button is disabled.
     private String abandonDisabledReason;
 
-    //This is used to determine whether a special warning message needs to be confirmed before normal abandon;
-    private boolean abandonWarning = false;
+    // This is used to determine whether a special warning message needs to be confirmed before normal abandon.
+    private boolean abandonWarning;
     /**
      * Single {@link ProductOrderListEntry} for the view page, gives us billing session information.
      */
     private ProductOrderListEntry productOrderListEntry;
+
+    private Long productFamilyId;
+
+    private List<ProductOrder.OrderStatus> selectedStatuses;
 
     /*
      * The search query.
@@ -220,8 +257,11 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     private UserTokenInput owner;
 
+    // Search uses product family list.
+    private List<ProductFamily> productFamilies;
+
     /**
-     * Initialize the product with the passed in key for display in the form or create it, if not specified
+     * Initialize the product with the passed in key for display in the form or create it, if not specified.
      */
     @Before(stages = LifecycleStage.BindingAndValidation, on = {"!" + LIST_ACTION, "!getQuoteFunding"})
     public void init() {
@@ -229,7 +269,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (!StringUtils.isBlank(productOrder)) {
             editOrder = productOrderDao.findByBusinessKey(productOrder);
 
-            progressFetcher.setupProgress(productOrderDao, Collections.singletonList(editOrder.getBusinessKey()));
+            progressFetcher.loadProgress(productOrderDao, Collections.singletonList(editOrder.getBusinessKey()));
         } else {
             // If this was a create with research project specified, find that.
             // This is only used for save, when creating a new product order.
@@ -240,11 +280,11 @@ public class ProductOrderActionBean extends CoreActionBean {
     @ValidationMethod(on = SAVE_ACTION)
     public void saveValidations() throws Exception {
         // If the research project has no original title, then it was not fetched from hibernate, so this is a create
-        // OR if this was fetched and the title has been changed
+        // OR if this was fetched and the title has been changed.
         if ((editOrder.getOriginalTitle() == null) ||
                 (!editOrder.getTitle().equalsIgnoreCase(editOrder.getOriginalTitle()))) {
 
-            // Check if there is an existing research project and error out if it already exists
+            // Check if there is an existing research project and error out if it already exists.
             ProductOrder existingOrder = productOrderDao.findByTitle(editOrder.getTitle());
             if (existingOrder != null) {
                 addValidationError("title", "A product order already exists with this name.");
@@ -254,7 +294,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         // Whether we are draft or not, we should populate the proper edit fields for validation.
         updateTokenInputFields();
 
-        // If this is not a draft, some fields are required
+        // If this is not a draft, some fields are required.
         if (!editOrder.isDraft()) {
             doValidation("save");
         } else {
@@ -265,7 +305,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     /**
-     * Validate a required field
+     * Validate a required field.
      * @param value if null, field is missing
      * @param name name of field
      */
@@ -274,7 +314,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     /**
-     * Validate a required field
+     * Validate a required field.
      * @param hasValue if false, field is missing
      * @param name name of field
      */
@@ -298,7 +338,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         requireField(editOrder.getQuoteId() != null, "a quote specified", action);
         requireField(editOrder.getProduct(), "a product", action);
         if (editOrder.getProduct() != null && editOrder.getProduct().getSupportsNumberOfLanes()) {
-            requireField(editOrder.getCount() > 0, "a specified number of lanes", action);
+            requireField(editOrder.getLaneCount() > 0, "a specified number of lanes", action);
         }
 
         try {
@@ -310,7 +350,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         // Since we are only validating from view, we can persist without worry of saving something bad.
-        // We are doing on risk calculation only when everything passes, but informing the user no matter what
+        // We are doing on risk calculation only when everything passes, but informing the user no matter what.
         if (!hasErrors()) {
             int numSamplesOnRisk = editOrder.calculateRisk();
             editOrder.prepareToSave(getUserBean().getBspUser());
@@ -335,7 +375,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     @ValidationMethod(on = {"startBilling", "downloadBillingTracker"})
-    public void validateOrderSelection() {
+    public void validateOrderSelection() throws Exception {
         String validatingFor = getContext().getEventName().equals("startBilling") ? "billing session" :
                 "tracker download";
 
@@ -358,7 +398,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 products.add(order.getProduct());
             }
 
-            // Go through each products and report invalid duplicate price item names
+            // Go through each products and report invalid duplicate price item names.
             for (Product product : products) {
                 String[] duplicatePriceItems = product.getDuplicatePriceItemNames();
                 if (duplicatePriceItems != null) {
@@ -384,22 +424,120 @@ public class ProductOrderActionBean extends CoreActionBean {
             }
         }
 
-        // If there are errors, will reload the page, so need to fetch the list
+        // If there are errors, will reload the page, so need to fetch the list.
         if (hasErrors()) {
-            listInit();
+            setupListDisplay();
         }
     }
 
+    /**
+     * Set up defaults before binding and validation and then let any binding override that. Note that the Core Action
+     * Bean sets up the single date range obect to be this month.
+     */
+    @Before(stages = LifecycleStage.BindingAndValidation, on = LIST_ACTION)
+    public void setupSearchCriteria() throws Exception {
+        // Get the saved search for the user.
+        List<Preference> preferences =
+            preferenceEjb.getPreferences(getUserBean().getBspUser().getUserId(), PreferenceType.PDO_SEARCH);
+
+        productFamilyId = null;
+
+        if (CollectionUtils.isEmpty(preferences)) {
+            populateSearchDefaults();
+        } else {
+            try {
+                // Since we have a preference and there is only one, grab it and set up all the search terms.
+                Preference preference = preferences.get(0);
+                populateSearchFromPreference(preference);
+            } catch (Throwable t) {
+                // If there are any errors with this preference, just use defaults and populate a message that
+                // the defaults were ignored for some reason.
+                populateSearchDefaults();
+                logger.error("Could not read user preference on search for product orders.");
+                addMessage("Could not read search preference, using default.");
+            }
+        }
+    }
+
+    private void populateSearchDefaults() {
+        selectedStatuses = new ArrayList<ProductOrder.OrderStatus>();
+        selectedStatuses.add(ProductOrder.OrderStatus.Draft);
+        selectedStatuses.add(ProductOrder.OrderStatus.Submitted);
+
+        setDateRange(new DateRangeSelector(DateRangeSelector.THIS_MONTH));
+    }
+
+    /**
+     * This populates all the search date from the first preference object.
+     *
+     * @param preference The single preference for PDO search.
+     * @throws Exception Any errors.
+     */
+    private void populateSearchFromPreference(Preference preference) throws Exception {
+        Map<String, List<String>> preferenceData =
+            ((NameValuePreferenceDefinition) preference.getPreferenceDefinition()).getDataMap();
+
+        // The family id. By default there is no choice.
+        List<String> productFamilyIds = preferenceData.get(FAMILY);
+        if (!CollectionUtils.isEmpty(productFamilyIds)) {
+            String familyId = preferenceData.get(FAMILY).get(0);
+            if (!StringUtils.isBlank(familyId)){
+                productFamilyId = Long.parseLong(familyId);
+            }
+        }
+
+        // Set up all the simple fields from the values in the preference data.
+        productTokenInput.setListOfKeys(StringUtils.join(preferenceData.get(PRODUCT), ","));
+        selectedStatuses = ProductOrder.OrderStatus.getFromName(preferenceData.get(STATUS));
+        setDateRange(new DateRangeSelector(preferenceData.get(DATE)));
+        owner.setListOfKeys(StringUtils.join(preferenceData.get(OWNER), ","));
+    }
+
     @After(stages = LifecycleStage.BindingAndValidation, on = LIST_ACTION)
-    public void listInit() {
-        allProductOrderListEntries = orderListEntryDao.findProductOrderListEntries();
-        progressFetcher.setupProgress(productOrderDao);
+    public void listInit() throws Exception {
+
+        // Do the specified find and then add all the % complete info for the progress bars.
+        displayedProductOrderListEntries =
+            orderListEntryDao.findProductOrderListEntries(
+                productFamilyId, productTokenInput.getBusinessKeyList(), selectedStatuses, getDateRange(), owner.getOwnerIds());
+        progressFetcher.loadProgress(productOrderDao);
+
+        // Get the sorted family list.
+        productFamilies = productFamilyDao.findAll();
+        Collections.sort(productFamilies);
+    }
+
+    /**
+     * If we have successfully run the search, save the selected values to the preference.
+     *
+     * @throws Exception Any errors
+     */
+    @After(stages = LifecycleStage.EventHandling, on = LIST_ACTION)
+    private void saveSearchPreference() throws Exception {
+        NameValuePreferenceDefinition definition =
+                (NameValuePreferenceDefinition) PreferenceType.PDO_SEARCH.getCreator().create();
+
+        definition.put(FAMILY, productFamilyId == null ? "" : productFamilyId.toString());
+
+        definition.put(PRODUCT, productTokenInput.getBusinessKeyList());
+
+        List<String> statusStrings = new ArrayList<String> ();
+        for (ProductOrder.OrderStatus status : selectedStatuses) {
+            statusStrings.add(status.name());
+        }
+        definition.put(STATUS, statusStrings);
+
+        definition.put(DATE, getDateRange().createDateStrings());
+
+        definition.put(OWNER, owner.getBusinessKeyList());
+
+        preferenceEjb.add(userBean.getBspUser().getUserId(), PreferenceType.PDO_SEARCH, definition);
     }
 
     @After(stages = LifecycleStage.BindingAndValidation, on = EDIT_ACTION)
     public void createInit() {
         // Once validation is all set for edit (so that any errors can show the originally Checked Items),
-        // set the add ons to the current
+        // set the add ons to the current.
         addOnKeys.clear();
         for (ProductOrderAddOn addOnProduct : editOrder.getAddOns()) {
             addOnKeys.add(addOnProduct.getAddOn().getBusinessKey());
@@ -434,7 +572,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             try {
                 item.put("error", ex.getMessage());
             } catch (Exception ex1) {
-                // Don't really care if this gets an exception
+                // Don't really care if this gets an exception.
             }
         }
 
@@ -480,7 +618,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         String[] productKey = (editOrder.getProduct() == null) ? new String[0] : new String[] { editOrder.getProduct().getBusinessKey() };
         productTokenInput.setup(productKey);
 
-        // If a research project key was specified then use that as the default
+        // If a research project key was specified then use that as the default.
         String[] projectKey;
         if (!StringUtils.isBlank(researchProjectKey)) {
             projectKey = new String[] { researchProjectKey };
@@ -498,7 +636,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             editOrder.placeOrder();
             editOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
-            // save it!
+            // Save it!
             productOrderDao.persist(editOrder);
         } catch (Exception e) {
             // Need to quote the message contents to prevent errors.
@@ -563,7 +701,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             productOrderEjb.updateJiraIssue(editOrder);
         }
 
-        // save it!
+        // Save it!
         productOrderDao.persist(editOrder);
 
         addMessage("Product Order \"{0}\" has been saved.", editOrder.getTitle());
@@ -571,7 +709,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     private void updateTokenInputFields() {
-        // set the project, product and addOns for the order
+        // Set the project, product and addOns for the order.
         ResearchProject project = projectDao.findByBusinessKey(projectTokenInput.getTokenObject());
         Product product = productDao.findByPartNumber(productTokenInput.getTokenObject());
         List<Product> addOnProducts = productDao.findByPartNumbers(addOnKeys);
@@ -585,13 +723,26 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     @HandlesEvent("downloadBillingTracker")
-    public Resolution downloadBillingTracker() {
-        Resolution resolution = ProductOrderActionBean.getTrackerForOrders(this, selectedProductOrders, bspUserList);
+    public Resolution downloadBillingTracker() throws Exception {
+        Resolution resolution =
+            ProductOrderActionBean.getTrackerForOrders(
+                this, selectedProductOrders, priceItemDao, bspUserList, priceListCache);
         if (hasErrors()) {
-            // Need to regenerate the list so it's displayed along with the errors.
-            listInit();
+            setupListDisplay();
+
         }
         return resolution;
+    }
+
+    /**
+     * This method makes sure to read the stored preference AND then do the appropraite find for the list page. This
+     * is because we need to regenerate the list so it's displayed along with the errors.
+     *
+     * @throws Exception Any errors.
+     */
+    private void setupListDisplay() throws Exception {
+        setupSearchCriteria();
+        listInit();
     }
 
     @HandlesEvent("startBilling")
@@ -616,7 +767,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         for (String businessKey : selectedProductOrderBusinessKeys) {
             try {
                 productOrderEjb.abandon(businessKey, businessKey + " abandoned by " + userBean.getLoginUserName());
-            } catch (ProductOrderEjb.NoTransitionException e) {
+            } catch (JiraIssue.NoTransitionException e) {
                 throw new RuntimeException(e);
             } catch (ProductOrderEjb.NoSuchPDOException e) {
                 throw new RuntimeException(e);
@@ -671,7 +822,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         JSONArray itemList = new JSONArray();
 
         if (samples != null) {
-            // assuming all samples come from same product order here
+            // Assuming all samples come from same product order here.
             List<String> sampleNames = ProductOrderSample.getSampleNames(samples);
             ProductOrder.loadBspData(sampleNames, samples);
 
@@ -749,6 +900,14 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
+    private void updateOrderStatus()
+            throws ProductOrderEjb.NoSuchPDOException, IOException, JiraIssue.NoTransitionException {
+        if (productOrderEjb.updateOrderStatus(editOrder.getJiraTicketKey())) {
+            // If the status was changed, let the user know.
+            addMessage("The order status is now {0}.", editOrder.getOrderStatus());
+        }
+    }
+
     @HandlesEvent(DELETE_SAMPLES_ACTION)
     public Resolution deleteSamples() throws Exception {
         // If removeAll returns false, no samples were removed -- should never happen.
@@ -761,7 +920,8 @@ public class ProductOrderActionBean extends CoreActionBean {
             issue.addComment(MessageFormat.format("{0} deleted samples: {1}.", userBean.getLoginUserName(), nameList));
             issue.setCustomFieldUsingTransition(ProductOrder.JiraField.SAMPLE_IDS,
                     editOrder.getSampleString(),
-                    ProductOrder.TransitionStates.DeveloperEdit.getStateName());
+                    ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
+            updateOrderStatus();
         }
         return createViewResolution();
     }
@@ -769,7 +929,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent(SET_RISK)
     public Resolution setRisk() throws Exception {
 
-        // If we are creating a manual on risk, then need to set it up and persist it for reuse
+        // If we are creating a manual on risk, then need to set it up and persist it for reuse.
         RiskCriterion criterion = null;
         if (riskStatus) {
             criterion = RiskCriterion.createManual();
@@ -806,6 +966,9 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
         if (!selectedProductOrderSamples.isEmpty()) {
             productOrderEjb.abandonSamples(editOrder.getJiraTicketKey(), selectedProductOrderSamples);
+            addMessage("Abandoned samples: {0}.",
+                    StringUtils.join(ProductOrderSample.getSampleNames(selectedProductOrderSamples), ","));
+            updateOrderStatus();
         }
         return createViewResolution();
     }
@@ -822,9 +985,11 @@ public class ProductOrderActionBean extends CoreActionBean {
         issue.addComment(MessageFormat.format("{0} added samples: {1}.", userBean.getLoginUserName(), nameList));
         issue.setCustomFieldUsingTransition(ProductOrder.JiraField.SAMPLE_IDS,
                 editOrder.getSampleString(),
-                ProductOrder.TransitionStates.DeveloperEdit.getStateName());
+                ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
 
         handleSamplesAdded(samplesToAdd);
+
+        updateOrderStatus();
 
         return createViewResolution();
     }
@@ -852,8 +1017,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.selectedProductOrderSampleIds = selectedProductOrderSampleIds;
     }
 
-    public List<ProductOrderListEntry> getAllProductOrderListEntries() {
-        return allProductOrderListEntries;
+    public List<ProductOrderListEntry> getDisplayedProductOrderListEntries() {
+        return displayedProductOrderListEntries;
     }
 
     public ProductOrder getEditOrder() {
@@ -875,13 +1040,15 @@ public class ProductOrderActionBean extends CoreActionBean {
     public static Resolution getTrackerForOrders(
         final CoreActionBean actionBean,
         List<ProductOrder> productOrderList,
-        BSPUserList bspUserList) {
+        PriceItemDao priceItemDao,
+        BSPUserList bspUserList,
+        PriceListCache priceListCache) {
 
         OutputStream outputStream = null;
 
         try {
             String filename =
-                    "BillingTracker-" + AbstractSpreadsheetExporter.DATE_FORMAT.format(Calendar.getInstance().getTime());
+                "BillingTracker-" + AbstractSpreadsheetExporter.DATE_FORMAT.format(Calendar.getInstance().getTime());
 
             // Colon is a metacharacter in Windows separating the drive letter from the rest of the path.
             filename = filename.replaceAll(":", "_");
@@ -889,14 +1056,14 @@ public class ProductOrderActionBean extends CoreActionBean {
             final File tempFile = File.createTempFile(filename, ".xls");
             outputStream = new FileOutputStream(tempFile);
 
-            SampleLedgerExporter sampleLedgerExporter = new SampleLedgerExporter(bspUserList, productOrderList);
+            SampleLedgerExporter sampleLedgerExporter =
+                new SampleLedgerExporter(priceItemDao, bspUserList, priceListCache, productOrderList);
             sampleLedgerExporter.writeToStream(outputStream);
             IOUtils.closeQuietly(outputStream);
 
             return new Resolution() {
                 @Override
-                public void execute(HttpServletRequest request, HttpServletResponse response)
-                        throws Exception {
+                public void execute(HttpServletRequest request, HttpServletResponse response) throws Exception {
                     InputStream inputStream = new FileInputStream(tempFile);
 
                     try {
@@ -1211,7 +1378,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     /**
-     * Update whether to use special warning
+     * Update whether to use special warning.
      * @param abandonWarning Boolean flag used to determine whether we need to use special message confirmation
      */
     public void setAbandonWarning(boolean abandonWarning) {
@@ -1220,5 +1387,29 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public boolean isSupportsRin() {
         return (editOrder != null) && (editOrder.getProduct() != null) && editOrder.getProduct().isSupportsRin();
+    }
+
+    public void setProductFamilies(List<ProductFamily> productFamilies) {
+        this.productFamilies = productFamilies;
+    }
+
+    public Object getProductFamilies() {
+        return productFamilies;
+    }
+
+    public Long getProductFamilyId() {
+        return productFamilyId;
+    }
+
+    public void setProductFamilyId(Long productFamilyId) {
+        this.productFamilyId = productFamilyId;
+    }
+
+    public List<ProductOrder.OrderStatus> getSelectedStatuses() {
+        return selectedStatuses;
+    }
+
+    public void setSelectedStatuses(List<ProductOrder.OrderStatus> selectedStatuses) {
+        this.selectedStatuses = selectedStatuses;
     }
 }

@@ -58,7 +58,8 @@ public class ZimsIlluminaRunFactory {
         RunCartridge flowcell = illuminaRun.getSampleCartridge();
 
         // Fetch samples and product orders
-        Set<SampleInstance> sampleInstances = flowcell.getSampleInstances(true);
+        Set<SampleInstance> sampleInstances = flowcell.getSampleInstances(LabVessel.SampleType.WITH_PDO,
+                LabBatch.LabBatchType.WORKFLOW);
         Set<String> sampleIds = new HashSet<String>();
         Set<String> productOrderKeys = new HashSet<String>();
         for (SampleInstance sampleInstance : sampleInstances) {
@@ -101,7 +102,8 @@ public class ZimsIlluminaRunFactory {
             Map<String, ProductOrder> mapKeyToProductOrder) {
         List<LibraryBean> libraryBeans = new ArrayList<LibraryBean>();
         // todo jmt reuse the sampleInstances fetched in makeZimsIlluminaRun? Would save a few milliseconds.
-        Set<SampleInstance> sampleInstances = labVessel.getSampleInstances(true);
+        Set<SampleInstance> sampleInstances = labVessel.getSampleInstances(LabVessel.SampleType.WITH_PDO,
+                LabBatch.LabBatchType.WORKFLOW);
         for (SampleInstance sampleInstance : sampleInstances) {
             ProductOrder productOrder = mapKeyToProductOrder.get(sampleInstance.getProductOrderKey());
             BSPSampleDTO bspSampleDTO = mapSampleIdToDto.get(sampleInstance.getStartingSample().getSampleKey());
