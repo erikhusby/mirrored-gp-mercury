@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
@@ -87,13 +88,14 @@ public class BaseEventTest {
      * create the rack from a product order than has more than NUM_POSITIONS_IN_RACK tubes.
      *
      * @param productOrder The product order to create the initial rack from
+     * @param tubeBarcodePrefix prefix for each tube barcode
      * @return Returns a map of String barcodes to their tube objects.
      */
-    public Map<String, TwoDBarcodedTube> createInitialRack(ProductOrder productOrder) {
+    public Map<String, TwoDBarcodedTube> createInitialRack(ProductOrder productOrder, String tubeBarcodePrefix) {
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
         int rackPosition = 1;
         for (ProductOrderSample poSample : productOrder.getSamples()) {
-            String barcode = "R" + rackPosition;
+            String barcode = tubeBarcodePrefix + rackPosition;
             TwoDBarcodedTube bspAliquot = new TwoDBarcodedTube(barcode);
             bspAliquot.addSample(new MercurySample(productOrder.getBusinessKey(), poSample.getSampleName()));
             mapBarcodeToTube.put(barcode, bspAliquot);
@@ -138,12 +140,24 @@ public class BaseEventTest {
      * @param mapBarcodeToTube A map of barcodes to tubes that will be run the starting point of the pico/plating process.
      * @param productOrder     The product order to use for bucket entries.
      * @param workflowBatch    The batch that will be used for this process.
+     * @param lcsetSuffix      Set this non-null to override the lcset id number.
+     * @param rackBarcodeSuffix    rack barcode suffix.
+     * @param barcodeSuffix    Uniquifies the generated vessel barcodes. NOT date if test quickly invokes twice.
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
-    public PicoPlatingEntityBuilder runPicoPlatingProcess(Map<String, TwoDBarcodedTube> mapBarcodeToTube, ProductOrder productOrder,
-                                                          LabBatch workflowBatch) {
-        String rackBarcode = "REXEX" + new Date().toString();
+    public PicoPlatingEntityBuilder runPicoPlatingProcess(Map<String, TwoDBarcodedTube> mapBarcodeToTube,
+                                                          ProductOrder productOrder, LabBatch workflowBatch,
+                                                          String lcsetSuffix, String rackBarcodeSuffix,
+                                                          String barcodeSuffix) {
+        String rackBarcode = "REXEX" + rackBarcodeSuffix;
+
+        // Controls what the created lcset id is by temporarily overriding the static variable.
+        String defaultLcsetSuffix = JiraServiceStub.getCreatedIssueSuffix();
+        if (lcsetSuffix != null) {
+            JiraServiceStub.setCreatedIssueSuffix(lcsetSuffix);
+        }
         labBatchEJB.createLabBatch(workflowBatch, "scottmat");
+        JiraServiceStub.setCreatedIssueSuffix(defaultLcsetSuffix);
 
         Bucket workingBucket = createAndPopulateBucket(mapBarcodeToTube, productOrder, "Pico/Plating Bucket");
 
@@ -154,7 +168,7 @@ public class BaseEventTest {
 
         return new PicoPlatingEntityBuilder(bettaLimsMessageTestFactory,
                 labEventFactory, getLabEventHandler(mockBucketDao),
-                mapBarcodeToTube, rackBarcode, "testPrefix").invoke();
+                mapBarcodeToTube, rackBarcode, barcodeSuffix).invoke();
     }
 
     /**
@@ -164,12 +178,13 @@ public class BaseEventTest {
      * @param normBarcodeToTubeMap A map of barcodes to tubes that will be run the starting point of the ExEx shearing process.
      * @param normTubeFormation    The tube formation that represents the entities coming out of pico/plating.
      * @param normBarcode          The rack barcode of the tube formation.
+     * @param barcodeSuffix    Uniquifies the generated vessel barcodes. NOT date if test quickly invokes twice.
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
     public ExomeExpressShearingEntityBuilder runExomeExpressShearingProcess(ProductOrder productOrder,
                                                                             Map<String, TwoDBarcodedTube> normBarcodeToTubeMap,
                                                                             TubeFormation normTubeFormation,
-                                                                            String normBarcode) {
+                                                                            String normBarcode, String barcodeSuffix) {
         Bucket workingBucket = createAndPopulateBucket(normBarcodeToTubeMap, productOrder, "Shearing Bucket");
 
         BucketDao mockBucketDao = EasyMock.createNiceMock(BucketDao.class);
@@ -178,7 +193,7 @@ public class BaseEventTest {
         EasyMock.replay(mockBucketDao);
 
         return new ExomeExpressShearingEntityBuilder(normBarcodeToTubeMap, normTubeFormation, bettaLimsMessageTestFactory, labEventFactory,
-                getLabEventHandler(mockBucketDao), normBarcode, "testPrefix").invoke();
+                getLabEventHandler(mockBucketDao), normBarcode, barcodeSuffix).invoke();
     }
 
     /**
@@ -187,10 +202,11 @@ public class BaseEventTest {
      * @param mapBarcodeToTube A map of barcodes to tubes that will be run the starting point of the preflight process.
      * @param productOrder     The product order to use for bucket entries.
      * @param workflowBatch    The batch that will be used for this process.
+     * @param barcodeSuffix    Uniquifies the generated vessel barcodes. NOT date if test quickly invokes twice.
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
     public PreFlightEntityBuilder runPreflightProcess(Map<String, TwoDBarcodedTube> mapBarcodeToTube, ProductOrder productOrder,
-                                                      LabBatch workflowBatch) {
+                                                      LabBatch workflowBatch, String barcodeSuffix) {
         labBatchEJB.createLabBatch(workflowBatch, "scotmatt");
 
         Bucket workingBucket = createAndPopulateBucket(mapBarcodeToTube, productOrder, "Preflight Bucket");
@@ -202,7 +218,7 @@ public class BaseEventTest {
 
         return new PreFlightEntityBuilder(bettaLimsMessageTestFactory,
                 labEventFactory, getLabEventHandler(mockBucketDao),
-                mapBarcodeToTube, "testPrefix").invoke();
+                mapBarcodeToTube, barcodeSuffix).invoke();
     }
 
     /**
@@ -211,14 +227,15 @@ public class BaseEventTest {
      * @param mapBarcodeToTube A map of barcodes to tubes that will be run the starting point of the shearing process.
      * @param tubeFormation    The tube formation that represents the entities coming out of pico/plating.
      * @param rackBarcode      The rack barcode of the tube formation.
+     * @param barcodeSuffix    Uniquifies the generated vessel barcodes. NOT date if test quickly invokes twice.
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
     public ShearingEntityBuilder runShearingProcess(Map<String, TwoDBarcodedTube> mapBarcodeToTube, TubeFormation tubeFormation,
-                                                    String rackBarcode) {
+                                                    String rackBarcode, String barcodeSuffix) {
 
         return new ShearingEntityBuilder(mapBarcodeToTube, tubeFormation,
                 bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(EasyMock.createNiceMock(BucketDao.class)),
-                rackBarcode, "testPrefix").invoke();
+                rackBarcode, barcodeSuffix).invoke();
     }
 
     /**
@@ -227,15 +244,18 @@ public class BaseEventTest {
      * @param shearingCleanupPlate   The shearing cleanup plate from the shearing process.
      * @param shearCleanPlateBarcode The shearing clean plate barcode.
      * @param shearingPlate          The shearing plate from the shearing process.
+     * @param barcodeSuffix    Uniquifies the generated vessel barcodes. NOT date if test quickly invokes twice.
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
     public LibraryConstructionEntityBuilder runLibraryConstructionProcess(StaticPlate shearingCleanupPlate,
-                                                                          String shearCleanPlateBarcode, StaticPlate shearingPlate) {
+                                                                          String shearCleanPlateBarcode,
+                                                                          StaticPlate shearingPlate,
+                                                                          String barcodeSuffix) {
 
         return new LibraryConstructionEntityBuilder(
                 bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(EasyMock.createNiceMock(BucketDao.class)),
                 shearingCleanupPlate, shearCleanPlateBarcode,
-                shearingPlate, NUM_POSITIONS_IN_RACK, "testPrefix").invoke();
+                shearingPlate, NUM_POSITIONS_IN_RACK, barcodeSuffix).invoke();
     }
 
     /**
@@ -244,14 +264,15 @@ public class BaseEventTest {
      * @param pondRegRack         The pond registration rack coming out of the library construction process.
      * @param pondRegRackBarcode  The pond registration rack barcode.
      * @param pondRegTubeBarcodes A list of pond registration tube barcodes.
+     * @param barcodeSuffix    Uniquifies the generated vessel barcodes. NOT date if test quickly invokes twice.
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
     public HybridSelectionEntityBuilder runHybridSelectionProcess(TubeFormation pondRegRack, String pondRegRackBarcode,
-                                                                  List<String> pondRegTubeBarcodes) {
+                                                                  List<String> pondRegTubeBarcodes, String barcodeSuffix) {
 
         return new HybridSelectionEntityBuilder(
                 bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(EasyMock.createNiceMock(BucketDao.class)),
-                pondRegRack, pondRegRackBarcode, pondRegTubeBarcodes, "testPrefix").invoke();
+                pondRegRack, pondRegRackBarcode, pondRegTubeBarcodes, barcodeSuffix).invoke();
     }
 
     /**
@@ -261,30 +282,33 @@ public class BaseEventTest {
      * @param tubeBarcodes     A list of the tube barcodes in the rack.
      * @param mapBarcodeToTube A map of barcodes to tubes that will be run the starting point of the pico/plating process.
      * @param workflowName     The workflow name for the current workflow.
+     * @param barcodeSuffix    Uniquifies the generated vessel barcodes. NOT date if test quickly invokes twice.
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
     public QtpEntityBuilder runQtpProcess(TubeFormation rack, List<String> tubeBarcodes,
-                                          Map<String, TwoDBarcodedTube> mapBarcodeToTube, WorkflowName workflowName) {
+                                          Map<String, TwoDBarcodedTube> mapBarcodeToTube, WorkflowName workflowName,
+                                          String barcodeSuffix) {
 
         return new QtpEntityBuilder(
                 bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(EasyMock.createNiceMock(BucketDao.class)),
                 Collections.singletonList(rack),
                 Collections.singletonList(rack.getLabel()),
                 Collections.singletonList(tubeBarcodes),
-                mapBarcodeToTube, workflowName, "testPrefix").invoke();
+                mapBarcodeToTube, workflowName, barcodeSuffix).invoke();
     }
 
     /**
      * This method runs the entities through the HiSeq2500 process.
      *
      * @param denatureRack The denature tube rack.
+     * @param barcodeSuffix    Uniquifies the generated vessel barcodes. NOT date if test quickly invokes twice.
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
-    public HiSeq2500FlowcellEntityBuilder runHiSeq2500FlowcellProcess(TubeFormation denatureRack) {
+    public HiSeq2500FlowcellEntityBuilder runHiSeq2500FlowcellProcess(TubeFormation denatureRack, String barcodeSuffix) {
 
         String flowcellBarcode = "flowcell" + new Date().getTime();
         return new HiSeq2500FlowcellEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(EasyMock.createNiceMock(BucketDao.class)),
-                denatureRack, flowcellBarcode, "testPrefix").invoke();
+                denatureRack, flowcellBarcode, barcodeSuffix).invoke();
     }
 
     /**
