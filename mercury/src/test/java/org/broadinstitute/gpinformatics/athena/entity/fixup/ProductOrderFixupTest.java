@@ -19,6 +19,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
@@ -300,5 +301,22 @@ public class ProductOrderFixupTest extends Arquillian {
                 log.info(String.format("Changed %s to status %s", order.getJiraTicketKey(), order.getOrderStatus()));
             }
         }
+    }
+
+    private void changeJiraKey(String oldKey, String newKey) {
+        ProductOrder order = productOrderDao.findByBusinessKey(newKey);
+        if (order != null) {
+             Assert.fail("Should be no " + newKey + " in the database!");
+        }
+        order = productOrderDao.findByBusinessKey(oldKey);
+        order.setJiraTicketKey(newKey);
+        productOrderDao.persist(order);
+    }
+
+    @Test(enabled = false)
+    public void fixupPDOChangeJIRAIssue() {
+        // Fix DB error caused by clicking Place Order too many times. We need to update a PDO to use a different
+        // JIRA key.
+        changeJiraKey("PDO-1043", "PDO-1042");
     }
 }
