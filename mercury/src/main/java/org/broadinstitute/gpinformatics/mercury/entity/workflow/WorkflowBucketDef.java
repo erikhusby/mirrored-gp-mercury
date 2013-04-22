@@ -1,17 +1,13 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
-import com.sun.tools.javac.resources.version;
-import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-//import org.mvel2.MVEL;
-//import org.mvel2.optimizers.OptimizerFactory;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
-import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
+
+//import org.mvel2.MVEL;
+//import org.mvel2.optimizers.OptimizerFactory;
 
 /**
  * Where samples are placed for batching, typically the first step in a process

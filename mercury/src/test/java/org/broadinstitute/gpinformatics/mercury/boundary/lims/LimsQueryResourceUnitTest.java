@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
+import static org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid.BOTH;
 import static org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid.MERCURY;
 import static org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid.SQUID;
 import static org.easymock.EasyMock.*;
@@ -215,6 +216,19 @@ public class LimsQueryResourceUnitTest {
         verifyAll();
     }
 
+    @Test(groups = DATABASE_FREE)
+    public void testFindImmediatePlateParentsFromBoth() {
+        expect(mockMercuryOrSquidRouter.routeForVessel("squidPlate")).andReturn(BOTH);
+        expect(mockThriftService.findImmediatePlateParents("squidPlate")).andReturn(Arrays.asList("sp1", "sp2"));
+        replayAll();
+
+        List<String> result = resource.findImmediatePlateParents("squidPlate");
+        assertThat(result, equalTo(Arrays.asList("sp1", "sp2")));
+
+        verifyAll();
+    }
+
+
     /*
      * Tests for fetchMaterialTypesForTubeBarcodes
      */
@@ -272,6 +286,21 @@ public class LimsQueryResourceUnitTest {
     @Test(groups = DATABASE_FREE)
     public void testFetchParentRackContentsForPlateFromSquid() {
         expect(mockMercuryOrSquidRouter.routeForVessel("squidPlate")).andReturn(SQUID);
+        Map<String, Boolean> map = new HashMap<String, Boolean>();
+        map.put("A01", true);
+        map.put("A02", false);
+        expect(mockThriftService.fetchParentRackContentsForPlate("squidPlate")).andReturn(map);
+        replayAll();
+
+        Map<String, Boolean> result = resource.fetchParentRackContentsForPlate("squidPlate");
+        assertThat(result, equalTo(map));
+
+        verifyAll();
+    }
+
+    @Test(groups = DATABASE_FREE)
+    public void testFetchParentRackContentsForPlateFromBoth() {
+        expect(mockMercuryOrSquidRouter.routeForVessel("squidPlate")).andReturn(BOTH);
         Map<String, Boolean> map = new HashMap<String, Boolean>();
         map.put("A01", true);
         map.put("A02", false);

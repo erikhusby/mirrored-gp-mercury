@@ -204,7 +204,7 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
 
 
         // Bucket should have been drained after Plating to Shearing Tubes
-        Assert.assertEquals(0,workingBucket.getBucketEntries().size());
+        Assert.assertEquals(workingBucket.getBucketEntries().size(), 0);
 
 
         LabEventTest.validateWorkflow(LabEventType.COVARIS_LOADED.getName(),

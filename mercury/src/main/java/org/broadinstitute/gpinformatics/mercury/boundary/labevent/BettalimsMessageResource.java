@@ -164,22 +164,34 @@ public class BettalimsMessageResource {
                         processInMercury = false;
                         processInSquid = true;
                         break;
-                    case PRODUCT_DEPENDENT:
+                    case WORKFLOW_DEPENDENT:
 
                         Collection<String> barcodesToBeVerified = getRegisteredBarcodesFromMessage(bettaLIMSMessage);
 
                         // todo jmt revisit performance of this - fetch all barcodes at once, and fetch unique PDOs from Athena
-                        for (String testEvent : barcodesToBeVerified) {
-                            if (MercuryOrSquidRouter.MercuryOrSquid.MERCURY == mercuryOrSquidRouter
-                                                                                           .routeForVessel(testEvent)) {
+
+                        /*
+                        The logic has been Updated to take into account the routing definition being defined
+                        at the workflow level.  This 2 stage approach to routing gives the system the flexibility to
+                        target specific workflows and adjust where the system of record should be considered for
+                        each workflow
+                        */
+                        final MercuryOrSquidRouter.MercuryOrSquid route =
+                                mercuryOrSquidRouter.routeForVessels(barcodesToBeVerified);
+
+                        if (MercuryOrSquidRouter.MercuryOrSquid.MERCURY == route) {
+                            processInMercury = true;
+                        } else {
+                            if (MercuryOrSquidRouter.MercuryOrSquid.BOTH == route) {
                                 processInMercury = true;
-                            } else {
-                                processInSquid = true;
                             }
+                            processInSquid = true;
                         }
-                        if (processInMercury && processInSquid) {
+
+                        if (processInMercury && processInSquid && route != MercuryOrSquidRouter.MercuryOrSquid.BOTH) {
                             throw new InformaticsServiceException(
-                                    "For Product Dependent processing, we cannot process in both Mercury and Squid");
+                                    "For Workflow Dependent processing, we cannot process in both " +
+                                            "Mercury and Squid unless routing specifies both");
                         }
                         break;
                     case BOTH:

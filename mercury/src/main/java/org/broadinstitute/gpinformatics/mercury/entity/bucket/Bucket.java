@@ -25,8 +25,8 @@ public class Bucket {
     @Id
     private Long bucketId;
 
-    @OneToMany (mappedBy = "bucket", cascade = CascadeType.PERSIST, orphanRemoval = true)
-// todo jmt    @Where(clause = "batched_date is null")
+    @OneToMany (mappedBy = "bucket", cascade = CascadeType.PERSIST)
+    @Where(clause = "status='Active'")
     private Set<BucketEntry> bucketEntries = new HashSet<BucketEntry>();
 
     @Column ()
@@ -95,7 +95,8 @@ public class Bucket {
      *                      for that entry
      */
     public void removeEntry ( BucketEntry entryToRemove) {
-        bucketEntries.remove(entryToRemove);
+        this.bucketEntries.remove(entryToRemove);
+        entryToRemove.setStatus(BucketEntry.Status.Archived);
     }
 
     public Long getBucketId () {
