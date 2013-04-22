@@ -8,6 +8,7 @@ import org.testng.annotations.Test;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 import static org.testng.Assert.*;
 
+
 @Test(groups = EXTERNAL_INTEGRATION)
 public class BSPSampleDataFetcherTest extends ContainerTest {
 

@@ -209,7 +209,7 @@ public class BSPSampleDTO {
      * @return A boolean that determines if this sample has been received or not.
      */
     public boolean isSampleReceived() {
-        return (!getRootSample().equals(getSampleId()) || StringUtils.isBlank(getRootSample()))
+        return !getRootSample().equals(getSampleId()) || !StringUtils.isBlank(getRootSample())
                 || StringUtils.isNotBlank(getReceiptDate());
     }
 
