@@ -20,6 +20,12 @@ import java.util.regex.Pattern;
 public class BSPUtil {
     public static final Pattern BSP_SAMPLE_NAME_PATTERN = Pattern.compile("SM-[A-Z1-9]{4,6}");
 
+    /**
+     * Tests if the sampleName is in a valid BSP format.
+     * @param sampleName the name of the sample you are testing.
+     *
+     * @return true if the sample name is a valid BSP Sample name.
+     */
     public static boolean isInBspFormat(@Nonnull String sampleName) {
         return BSP_SAMPLE_NAME_PATTERN.matcher(sampleName).matches();
     }
