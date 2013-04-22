@@ -4,19 +4,19 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
-import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabBatchComposition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
-import org.easymock.EasyMock;
 import org.testng.annotations.Test;
 
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -49,11 +49,6 @@ public class ReworkDbFreeTest extends BaseEventTest {
         AthenaClientServiceStub.addProductOrder(productOrder);
         Map<String, TwoDBarcodedTube> origRackMap = createInitialRack(productOrder, origTubePrefix);
         Bucket workingBucket = createAndPopulateBucket(origRackMap, productOrder, "Pico/Plating Bucket");
-
-        BucketDao mockBucketDao = EasyMock.createMock(BucketDao.class);
-        EasyMock.expect(mockBucketDao.findByName("Pico/Plating Bucket")).andReturn(workingBucket).times(2);
-        EasyMock.expect(mockBucketDao.findByName(EasyMock.anyObject(String.class))).andReturn(new Bucket("FAKEBUCKET")).times(2);
-        EasyMock.replay(mockBucketDao);
 
         PicoPlatingEntityBuilder pplatingEntityBuilder1 = runPicoPlatingProcess(
                 origRackMap,
@@ -143,6 +138,34 @@ public class ReworkDbFreeTest extends BaseEventTest {
         assert(reworkTube.getPluralityLabBatch(reworkContainer).getBatchName().endsWith(reworkLcsetSuffix));
     }
 
+    @Test
+    public void testMultiplePdos() {
+        ProductOrder productOrder1 = ProductOrderTestFactory.createDummyProductOrder(4, "PDO-1",
+                WorkflowName.EXOME_EXPRESS, 1L, "Test 1", "Test 1", false, "ExEx-001");
+        ProductOrder productOrder2 = ProductOrderTestFactory.createDummyProductOrder(3, "PDO-2",
+                WorkflowName.EXOME_EXPRESS, 1L, "Test 2", "Test 2", false, "ExEx-001");
+        AthenaClientServiceStub.addProductOrder(productOrder1);
+        AthenaClientServiceStub.addProductOrder(productOrder2);
+        final Date runDate = new Date();
+
+        Map<String, TwoDBarcodedTube> mapBarcodeToTube1 = createInitialRack(productOrder1, "R");
+        Map<String, TwoDBarcodedTube> mapBarcodeToTube2 = createInitialRack(productOrder2, "R");
+        Map.Entry<String, TwoDBarcodedTube> stringTwoDBarcodedTubeEntry = mapBarcodeToTube1.entrySet().iterator().next();
+        mapBarcodeToTube2.put(stringTwoDBarcodedTubeEntry.getKey(), stringTwoDBarcodedTubeEntry.getValue());
+
+        LabBatch workflowBatch = new LabBatch("Exome Express Batch",
+                new HashSet<LabVessel>(mapBarcodeToTube1.values()), LabBatch.LabBatchType.WORKFLOW);
+        PicoPlatingEntityBuilder picoPlatingEntityBuilder1 = runPicoPlatingProcess(mapBarcodeToTube1, productOrder1,
+                workflowBatch, null, String.valueOf(runDate.getTime()), "1");
+        PicoPlatingEntityBuilder picoPlatingEntityBuilder2 = runPicoPlatingProcess(mapBarcodeToTube2, productOrder2,
+                workflowBatch, null, String.valueOf(runDate.getTime()), "2");
+        ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder1 = runExomeExpressShearingProcess(
+                productOrder1, picoPlatingEntityBuilder1.getNormBarcodeToTubeMap(),
+                picoPlatingEntityBuilder1.getNormTubeFormation(), picoPlatingEntityBuilder1.getNormalizationBarcode(), "1");
+        ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder2 = runExomeExpressShearingProcess(
+                productOrder1, picoPlatingEntityBuilder2.getNormBarcodeToTubeMap(),
+                picoPlatingEntityBuilder2.getNormTubeFormation(), picoPlatingEntityBuilder1.getNormalizationBarcode(), "2");
+    }
 
     private void validateLabBatchComposition(List<LabBatchComposition> composition, int denominator, int[] counts, String[] lcsetSuffixes) {
         assertEquals(composition.size(), counts.length);

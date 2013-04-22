@@ -274,15 +274,7 @@ public class LabEventTest extends BaseEventTest{
         Map.Entry<String, TwoDBarcodedTube> twoDBarcodedTubeForRework = mapBarcodeToTube.entrySet().iterator().next();
         int lastEventIndex = transferTraverserCriteria.getVisitedLabEvents().size();
         LabEvent catchEvent =
-                transferTraverserCriteria.getVisitedLabEvents().toArray(new LabEvent[lastEventIndex])[lastEventIndex
-                                                                                                      - 1];
-        BucketEntryDao bucketEntryDao = EasyMock.createNiceMock(BucketEntryDao.class);
-
-        EasyMock.expect(bucketEntryDao.findByVesselAndPO(twoDBarcodedTubeForRework.getValue(),twoDBarcodedTubeForRework.getValue().getLabel()))
-                .andReturn(new BucketEntry(twoDBarcodedTubeForRework.getValue(),
-                        twoDBarcodedTubeForRework.getValue().getLabel()));
-        final BucketEntryDao bucketEntryMock = EasyMock.createNiceMock(BucketEntryDao.class);
-        EasyMock.replay(bucketEntryMock);
+                transferTraverserCriteria.getVisitedLabEvents().toArray(new LabEvent[lastEventIndex])[lastEventIndex - 1];
 
         if (false) {
             TransferVisualizerFrame transferVisualizerFrame = new TransferVisualizerFrame();
@@ -349,9 +341,6 @@ public class LabEventTest extends BaseEventTest{
                                          flowcellBarcode + dateFormat.format(runDate),
                                          runDate, machineName,
                                          runPath.getAbsolutePath(), null);
-
-        IlluminaSequencingRunDao runDao = EasyMock.createNiceMock(IlluminaSequencingRunDao.class);
-        EasyMock.expect(runDao.findByRunName(EasyMock.anyObject(String.class))).andReturn(null);
 
         IlluminaSequencingRunFactory runFactory = new IlluminaSequencingRunFactory(EasyMock.createMock(JiraCommentUtil.class));
         IlluminaSequencingRun run = runFactory.buildDbFree(runBean,hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell());

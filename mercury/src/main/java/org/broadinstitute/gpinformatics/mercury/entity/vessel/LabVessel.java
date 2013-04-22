@@ -113,10 +113,6 @@ public abstract class LabVessel implements Serializable {
     @Embedded
     private UserRemarks userRemarks;
 
-    @Transient
-    /** todo this is used only for experimental testing for GPLIM-64...should remove this asap! */
-    private Collection<? extends LabVessel> chainOfCustodyRoots = new HashSet<LabVessel>();
-
     // todo jmt separate role for sample holder?
     @ManyToMany(cascade = CascadeType.PERSIST)
     private Set<MercurySample> mercurySamples = new HashSet<MercurySample>();
@@ -552,7 +548,7 @@ public abstract class LabVessel implements Serializable {
         private final Set<Reagent> reagents = new HashSet<Reagent>();
         private LabBatch unambiguousLabBatch = null;
         private final Set<LabBatch> labBatches = new HashSet<LabBatch>();
-        private final Set<BucketEntry> bucketEntries = new HashSet<BucketEntry>();
+        private BucketEntry bucketEntry;
 
         void add(TraversalResults traversalResults) {
             sampleInstances.addAll(traversalResults.getSampleInstances());
@@ -594,15 +590,10 @@ public abstract class LabVessel implements Serializable {
             updateSampleInstanceLabBatch();
         }
 
-        public void add(Set<BucketEntry> bucketEntries) {
-            this.bucketEntries.addAll(bucketEntries);
-            if (this.bucketEntries.size() > 1) {
-                throw new RuntimeException("Unexpected multiple buckets");
-            }
-            if (this.bucketEntries.size() == 1) {
-                for (SampleInstance sampleInstance : sampleInstances) {
-                    sampleInstance.setProductOrderKey(bucketEntries.iterator().next().getPoBusinessKey());
-                }
+        void setBucketEntry(BucketEntry bucketEntry) {
+            this.bucketEntry = bucketEntry;
+            for (SampleInstance sampleInstance : sampleInstances) {
+                sampleInstance.setProductOrderKey(bucketEntry.getPoBusinessKey());
             }
         }
 
@@ -671,7 +662,20 @@ public abstract class LabVessel implements Serializable {
                 }
             }
         }
-        traversalResults.add(bucketEntries);
+        if (bucketEntries.size() > 1) {
+            for (BucketEntry bucketEntry : bucketEntries) {
+                for (LabVessel container : containers) {
+                    if (bucketEntry.getLabBatch() != null) {
+                        if (bucketEntry.getLabBatch().getStartingLabVessels().equals(container.getContainerRole().getContainedVessels())) {
+                            traversalResults.setBucketEntry(bucketEntry);
+                            break;
+                        }
+                    }
+                }
+            }
+        } else if(bucketEntries.size() == 1) {
+            traversalResults.setBucketEntry(bucketEntries.iterator().next());
+        }
 
         for (Reagent reagent : getReagentContents()) {
             traversalResults.add(reagent);
