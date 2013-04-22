@@ -200,11 +200,12 @@ public class BSPSampleDTO {
     /**
      * This method returns true when the sample is received using the following logic:
      * 1) If the sample id is not the root sample we are not a root sample and therefore received.
-     *    Otherwise we are a root sample and need to check condition 3.
+     * Otherwise we are a root sample and need to check condition 3.
      * or
      * 2) If the root sample is null then we are a root sample and need to check condition 3
      * or
      * 3) If we are a root sample and we have a receipt date we have been received.
+     *
      * @return A boolean that determines if this sample has been received or not.
      */
     public boolean isSampleReceived() {
