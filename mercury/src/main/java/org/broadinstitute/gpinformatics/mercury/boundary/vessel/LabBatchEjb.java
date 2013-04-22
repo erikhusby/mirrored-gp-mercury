@@ -113,7 +113,7 @@ public class LabBatchEjb {
         Collection<String> pdoList = LabVessel.extractPdoKeyList(batchObject.getStartingLabVessels());
 
         if (StringUtils.isBlank(batchObject.getBatchName())) {
-            throw new InformaticsServiceException("The Name for the batch Object cannot be null");
+            throw new InformaticsServiceException("The name for the batch object cannot be null");
         }
 
         labBatchDao.persist(batchObject);

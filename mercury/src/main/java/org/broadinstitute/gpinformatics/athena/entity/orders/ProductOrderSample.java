@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
@@ -47,8 +48,6 @@ public class ProductOrderSample implements Serializable {
     @SequenceGenerator(name = "SEQ_ORDER_SAMPLE", schema = "athena", sequenceName = "SEQ_ORDER_SAMPLE")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_ORDER_SAMPLE")
     private Long productOrderSampleId;
-
-    public static final Pattern BSP_SAMPLE_NAME_PATTERN = Pattern.compile("SM-[A-Z1-9]{4,6}");
 
     // This is the name of the BSP or Non-BSP sample.
     @Index(name = "ix_pos_sample_name")
@@ -274,7 +273,7 @@ public class ProductOrderSample implements Serializable {
     }
 
     public static boolean isInBspFormat(@Nonnull String sampleName) {
-        return BSP_SAMPLE_NAME_PATTERN.matcher(sampleName).matches();
+        return MercurySample.BSP_SAMPLE_NAME_PATTERN.matcher(sampleName).matches();
     }
 
     public Set<LedgerEntry> getBillableLedgerItems() {
