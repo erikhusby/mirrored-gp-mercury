@@ -1534,7 +1534,6 @@ END;
         <addColumn schemaName="mercury" tableName="bucket_entry">
             <column name="STATUS" type="varchar(20)" />
         </addColumn>
-
     </changeSet>
 
     <changeSet author="scottmat" id="GPLIM-1237-2">
@@ -1546,7 +1545,6 @@ END;
         <addColumn schemaName="mercury" tableName="bucket_entry_aud">
             <column name="STATUS" type="varchar(20)" />
         </addColumn>
-
     </changeSet>
 
 </databaseChangeLog>
