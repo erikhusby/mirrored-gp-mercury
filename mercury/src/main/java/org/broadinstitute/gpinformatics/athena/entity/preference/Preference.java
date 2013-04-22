@@ -86,8 +86,7 @@ public class Preference extends GenericDao {
     protected Preference() {}
 
     public Preference(
-        long createdBy, long object1Id, @Nullable Long object2Id, @Nonnull PreferenceType preferenceType,
-        @Nonnull String data) {
+        long createdBy, long object1Id, @Nullable Long object2Id, @Nonnull PreferenceType preferenceType, @Nonnull String data) {
 
         this(preferenceType, data);
         this.object1Id = object1Id;
@@ -150,11 +149,9 @@ public class Preference extends GenericDao {
 
     @Transient
     private PreferenceDefinition preferenceDefinition;
-
     public PreferenceDefinition getPreferenceDefinition() throws Exception {
-        if (preferenceDefinition == null) {
-            preferenceDefinition = preferenceType.getCreator().create();
-            preferenceDefinition.convertPreference(this);
+        if ((preferenceDefinition == null) || (preferenceDefinition.getDefinitionValue() == null)) {
+            preferenceDefinition = new PreferenceDefinition(preferenceType, getData());
         }
 
         return preferenceDefinition;

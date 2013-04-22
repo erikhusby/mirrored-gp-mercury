@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.preference;
 
-import javax.xml.bind.JAXBContext;
+import org.broadinstitute.gpinformatics.infrastructure.ObjectMarshaller;
+
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -16,25 +17,19 @@ import java.util.Map;
  * This is a simple name-value preference.
  */
 @XmlRootElement(name = "nameValuePreferenceDefinition")
-public class NameValuePreferenceDefinition extends PreferenceDefinition {
+public class NameValueDefinitionValue implements PreferenceDefinitionValue {
 
-    private final JAXBContext context;
+    private ObjectMarshaller<NameValueDefinitionValue> marshaller;
 
-    NameValuePreferenceDefinition() throws Exception {
-        context = JAXBContext.newInstance(NameValuePreferenceDefinition.class);
+    private HashMap<String, List<String>> dataMap;
+
+    private NameValueDefinitionValue(NameValueDefinitionValue definitionValue) {
+        this.dataMap = definitionValue.getDataMap();
     }
 
-    private HashMap<String, List<String>> dataMap = new HashMap<String, List<String>> ();
-
-    @Override
-    public void convertPreference(Preference preference) throws Exception {
-        // populate the data from the converted preference data.
-        dataMap = ((NameValuePreferenceDefinition) convertFromXml(preference.getData())).getDataMap();
-    }
-
-    @Override
-    protected JAXBContext getContext() throws JAXBException {
-        return context;
+    public NameValueDefinitionValue() throws JAXBException {
+        dataMap = new HashMap<String, List<String>> ();
+        marshaller = new ObjectMarshaller<NameValueDefinitionValue>(NameValueDefinitionValue.class);
     }
 
     @XmlJavaTypeAdapter(NameValueAdapter.class)
@@ -55,10 +50,23 @@ public class NameValuePreferenceDefinition extends PreferenceDefinition {
         dataMap.put(key, Collections.singletonList(value));
     }
 
+    @Override
+    public String marshal() {
+        return marshaller.marshal(this);
+    }
+
+    @Override
+    public PreferenceDefinitionValue unmarshal(String xml) {
+        return marshaller.unmarshal(xml);
+    }
+
     public static class NameValuePreferenceDefinitionCreator implements PreferenceDefinitionCreator {
         @Override
-        public PreferenceDefinition create() throws Exception {
-            return new NameValuePreferenceDefinition();
+        public PreferenceDefinitionValue create(String xml) throws Exception {
+            NameValueDefinitionValue definitionValue = new NameValueDefinitionValue();
+
+            // This unmarshalls that definition and populates the data map on a newly created definition.
+            return definitionValue.unmarshal(xml);
         }
     }
 
