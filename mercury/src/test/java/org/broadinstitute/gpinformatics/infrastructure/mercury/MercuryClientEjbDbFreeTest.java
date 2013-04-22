@@ -3,10 +3,12 @@ package org.broadinstitute.gpinformatics.infrastructure.mercury;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
+import org.broadinstitute.gpinformatics.infrastructure.gap.Samples;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
@@ -25,6 +27,7 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.persistence.criteria.Root;
 import java.util.*;
 
 import static org.easymock.EasyMock.*;
@@ -46,36 +49,28 @@ public class MercuryClientEjbDbFreeTest {
     private MercuryClientEjb service;
     private ProductOrder pdo;
     private LabBatch labBatch;
-    private Map<BSPSampleSearchColumn, String> bspData;
     private WorkflowLoader workflowLoader = new WorkflowLoader();
     private BSPUserList bspUserList;
     private Bucket bucket;
     private String pdoCreator;
+    private Map<String, BSPSampleDTO> bspDtoMap;
 
     private BucketBean bucketBean = createMock(BucketBean.class);
     private BucketDao bucketDao = createMock(BucketDao.class);
     private LabVesselDao labVesselDao = createMock(LabVesselDao.class);
+    private BSPSampleDataFetcher bspSampleDataFetcher = createMock(BSPSampleDataFetcher.class);
 
-    private Object[] mocks = new Object[]{bucketBean, bucketDao, labVesselDao};
+    private Object[] mocks = new Object[]{bucketBean, bucketDao, labVesselDao, bspSampleDataFetcher};
 
     @BeforeMethod
     public void setUp() {
 
         reset(mocks);
 
-        bspData = new HashMap<BSPSampleSearchColumn, String>() {{
-            put(BSPSampleSearchColumn.PRIMARY_DISEASE, "Cancer");
-            put(BSPSampleSearchColumn.LSID, "org.broad:SM-2345");
-            put(BSPSampleSearchColumn.MATERIAL_TYPE, "DNA:DNA WGA Cleaned");
-            put(BSPSampleSearchColumn.MATERIAL_TYPE, "DNA:DNA Genomic");
-            put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, "5432");
-            put(BSPSampleSearchColumn.SPECIES, "Homo Sapiens");
-            put(BSPSampleSearchColumn.PARTICIPANT_ID, "PT-2345");
-        }};
-
         bspUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
         labBatch = new LabBatch("ExEx Receipt Batch", new HashSet<LabVessel>(), LabBatch.LabBatchType.SAMPLES_RECEIPT);
         bucket = new Bucket(new WorkflowStepDef(PICO_PLATING_BUCKET));
+        bspDtoMap = new HashMap<String, BSPSampleDTO>();
 
         final int SAMPLE_SIZE = 2;
 
@@ -87,15 +82,26 @@ public class MercuryClientEjbDbFreeTest {
         for (ProductOrderSample pdoSample : pdo.getSamples()) {
             LabVessel labVessel = new TwoDBarcodedTube("R" + rackPosition++);
 
-            MercurySample mercurySample =
-                    new MercurySample(pdo.getBusinessKey(), pdoSample.getSampleName(), new BSPSampleDTO(bspData));
+            Map<BSPSampleSearchColumn, String> bspData = new HashMap<BSPSampleSearchColumn, String>();
+            bspData.put(BSPSampleSearchColumn.PRIMARY_DISEASE, "Cancer");
+            bspData.put(BSPSampleSearchColumn.LSID, "org.broad:" + pdoSample.getSampleName());
+            bspData.put(BSPSampleSearchColumn.MATERIAL_TYPE, "DNA:DNA Genomic");
+            bspData.put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, pdoSample.getSampleName());
+            bspData.put(BSPSampleSearchColumn.SPECIES, "Homo Sapiens");
+            bspData.put(BSPSampleSearchColumn.PARTICIPANT_ID, "PT-2345");
+            bspData.put(BSPSampleSearchColumn.ROOT_SAMPLE, "SM-000");
+
+            BSPSampleDTO bspDto = new BSPSampleDTO(bspData);
+            MercurySample mercurySample = new MercurySample(pdo.getBusinessKey(), pdoSample.getSampleName(), bspDto);
 
             labVessel.addSample(mercurySample);
             labBatch.addLabVessel(labVessel);
             labVessels.add(labVessel);
+            bspDtoMap.put(pdoSample.getSampleName(), bspDto);
         }
 
-        service = new MercuryClientEjb(bucketBean, bucketDao, workflowLoader, bspUserList, labVesselDao);
+        service = new MercuryClientEjb(bucketBean, bucketDao, workflowLoader, bspUserList, labVesselDao,
+                bspSampleDataFetcher);
     }
 
 
@@ -103,13 +109,29 @@ public class MercuryClientEjbDbFreeTest {
 
         expect(labVesselDao.findBySampleKeyList((List<String>) anyObject())).andReturn(labVessels);
         expect(bucketDao.findByName(PICO_PLATING_BUCKET)).andReturn(bucket);
+        expect(bspSampleDataFetcher.fetchSamplesFromBSP((List<String>)anyObject())).andReturn(bspDtoMap);
         bucketDao.persist(bucket);
-        bucketBean.add(labVessels, bucket, pdoCreator, EVENT_LOCATION, EVENT_TYPE, pdo.getBusinessKey());
+
+        bucketBean.add((List<LabVessel>)anyObject(), eq(bucket), eq(pdoCreator), eq(EVENT_LOCATION), eq(EVENT_TYPE),
+                eq(pdo.getBusinessKey()));
 
         replay(mocks);
 
-        Collection<ProductOrderSample> addedSamples = service.addFromProductOrder(pdo);
-        Assert.assertEquals(addedSamples, pdo.getSamples());
+        // Muck around to get sample lists to be sorted the same.
+        List<ProductOrderSample> addedSamples = new ArrayList<ProductOrderSample>(service.addFromProductOrder(pdo));
+        List<ProductOrderSample> pdoSamples = new ArrayList<ProductOrderSample>(pdo.getSamples());
+
+        Comparator<ProductOrderSample> pdoSampleComparator = new Comparator<ProductOrderSample>() {
+            @Override
+            public int compare(ProductOrderSample o1, ProductOrderSample o2) {
+                return o1.getSampleName().compareTo(o2.getSampleName());
+            }
+        };
+
+        Collections.sort(addedSamples, pdoSampleComparator);
+        Collections.sort(pdoSamples, pdoSampleComparator);
+
+        Assert.assertEquals(addedSamples, pdoSamples);
 
         verify(mocks);
     }
