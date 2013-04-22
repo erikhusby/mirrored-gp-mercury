@@ -33,12 +33,14 @@ public class PlasticHistoryListItem {
         type = vessel.getType().getName();
         pdoKeyCount = vessel.getPdoKeysCount();
         indexCount = vessel.getIndexesCount();
-        eventType = vessel.getLatestEvent().getLabEventType().getName();
-        eventLocation = vessel.getLatestEvent().getEventLocation();
-        eventOperator = vessel.getLatestEvent().getEventOperator();
-        eventDate = vessel.getLatestEvent().getEventDate();
         creationDate = vessel.getCreatedOn();
         labBatchCompositions = vessel.getLabBatchCompositions();
+        if (vessel.getLatestEvent() != null) {
+            eventType = vessel.getLatestEvent().getLabEventType().getName();
+            eventLocation = vessel.getLatestEvent().getEventLocation();
+            eventOperator = vessel.getLatestEvent().getEventOperator();
+            eventDate = vessel.getLatestEvent().getEventDate();
+        }
     }
 
     public PlasticHistoryListItem(SequencingRun seqRun, LabVessel seqVessel) {
