@@ -1,12 +1,14 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
 
 
 @Test(groups = EXTERNAL_INTEGRATION)
@@ -30,10 +32,11 @@ public class BSPSampleDataFetcherTest extends ContainerTest {
         assertEquals(bspSampleDTO.getOrganism(), "Homo : Homo sapiens");
         assertEquals(bspSampleDTO.getPrimaryDisease(), "Control");
         assertEquals(bspSampleDTO.getMaterialType(), "DNA:DNA Genomic");
-        assertTrue(StringUtils.isBlank(bspSampleDTO.getReceiptDate()));
+        assertNull(bspSampleDTO.getReceiptDate());
         assertTrue(bspSampleDTO.isSampleReceived());
 
         bspSampleDTO = fetcher.fetchSingleSampleFromBSP(bspSampleDTO.getRootSample());
+
         assertNotNull(bspSampleDTO.getReceiptDate());
         assertTrue(bspSampleDTO.isSampleReceived());
     }
