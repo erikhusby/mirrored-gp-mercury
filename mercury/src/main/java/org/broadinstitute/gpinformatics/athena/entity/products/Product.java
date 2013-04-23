@@ -121,7 +121,7 @@ public class Product implements Serializable, Comparable<Product> {
     public Product() {}
 
     public Product(boolean topLevelProduct) {
-        this(null, null, null, null, null, null, null, null, null, null, null, null, topLevelProduct, null, false);
+        this(null, null, null, null, null, null, null, null, null, null, null, null, topLevelProduct, null, false, null);
     }
 
     public Product(String productName,
@@ -138,7 +138,8 @@ public class Product implements Serializable, Comparable<Product> {
                    String deliverables,
                    boolean topLevelProduct,
                    String workflowName,
-                   boolean pdmOrderableOnly) {
+                   boolean pdmOrderableOnly,
+                   String aggregationDataType) {
 
         this.productName = productName;
         this.productFamily = productFamily;
@@ -155,6 +156,7 @@ public class Product implements Serializable, Comparable<Product> {
         this.topLevelProduct = topLevelProduct;
         this.workflowName = workflowName;
         this.pdmOrderableOnly = pdmOrderableOnly;
+        this.aggregationDataType = aggregationDataType;
     }
 
     public Long getProductId() {
@@ -482,7 +484,7 @@ public class Product implements Serializable, Comparable<Product> {
 
     public static Product makeEmptyProduct() {
         return new Product(null, null, null, null, null, null, null,
-                null, null, null, null, null, DEFAULT_TOP_LEVEL, DEFAULT_WORKFLOW_NAME, false);
+                null, null, null, null, null, DEFAULT_TOP_LEVEL, DEFAULT_WORKFLOW_NAME, false, null);
     }
 
     public String getDisplayName() {

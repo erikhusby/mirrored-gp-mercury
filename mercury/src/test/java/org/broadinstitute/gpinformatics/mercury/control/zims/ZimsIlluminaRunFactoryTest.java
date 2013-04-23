@@ -61,7 +61,7 @@ public class ZimsIlluminaRunFactoryTest {
         // Create a test product
         Product testProduct = new Product("Test Product", new ProductFamily("Test Product Family"), "Test product",
                 "P-TEST-1", new Date(), new Date(), 0, 0, 0, 0, "Test samples only", "None", true,
-                "Test Workflow", false);
+                "Test Workflow", false, "agg type");
 
         zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(mockBSPSampleDataFetcher, mockAthenaClientService);
         LabEventFactory labEventFactory = new LabEventFactory();
@@ -223,6 +223,7 @@ public class ZimsIlluminaRunFactoryTest {
         assertThat(libraryBean.getResearchProjectName(), equalTo("Test Project"));
         assertThat(libraryBean.getResearchProjectId(), equalTo("TestRP-1"));
         assertThat(libraryBean.getProduct(), equalTo("Test Product"));
+        assertThat(libraryBean.getDataType(), equalTo("agg type"));
         assertThat(libraryBean.getProductFamily(), equalTo("Test Product Family"));
         assertThat(libraryBean.getRootSample(), equalTo("RootSample"));
         assertThat(libraryBean.getSampleId(), equalTo("sample1"));

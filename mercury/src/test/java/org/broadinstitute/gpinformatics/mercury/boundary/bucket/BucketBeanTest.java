@@ -93,15 +93,15 @@ public class BucketBeanTest extends ContainerTest {
 
         productOrder1 = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123", new Product(
                 "Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000, 20000, 100,
-                40, null, null, true, WorkflowName.EXOME_EXPRESS.getWorkflowName(), false), new ResearchProject(101L, "Test RP", "Test synopsis",
+                40, null, null, true, WorkflowName.EXOME_EXPRESS.getWorkflowName(), false, "agg type"), new ResearchProject(101L, "Test RP", "Test synopsis",
                 false));
         productOrder2 = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123", new Product(
                 "Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000, 20000, 100,
-                40, null, null, true, WorkflowName.EXOME_EXPRESS.getWorkflowName(), false), new ResearchProject(101L, "Test RP", "Test synopsis",
+                40, null, null, true, WorkflowName.EXOME_EXPRESS.getWorkflowName(), false, "agg type"), new ResearchProject(101L, "Test RP", "Test synopsis",
                 false));
         productOrder3 = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123", new Product(
                 "Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000, 20000, 100,
-                40, null, null, true, WorkflowName.EXOME_EXPRESS.getWorkflowName(), false), new ResearchProject(101L, "Test RP", "Test synopsis",
+                40, null, null, true, WorkflowName.EXOME_EXPRESS.getWorkflowName(), false, "agg type"), new ResearchProject(101L, "Test RP", "Test synopsis",
                 false));
 
         productOrder1.setJiraTicketKey(poBusinessKey1);
