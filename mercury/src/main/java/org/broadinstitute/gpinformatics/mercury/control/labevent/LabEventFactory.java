@@ -910,6 +910,8 @@ public class LabEventFactory implements Serializable {
                 // Assume it to mean an 8-lane HiSeq flowcell.
                 targetVessel = new IlluminaFlowcell(IlluminaFlowcell.FlowcellType.HiSeqFlowcell,
                         receptaclePlateTransferEvent.getDestinationPlate().getBarcode());
+            } else {
+                throw new RuntimeException("Unexpected physical type: " + physType);
             }
         }
         labEvent.getVesselToSectionTransfers().add(new VesselToSectionTransfer(sourceTube,

@@ -709,26 +709,6 @@ public class LabEventTest extends BaseEventTest{
         return baitTube;
     }
 
-    /*
-    public static class HiSeqEntityBuilder {
-        private final BettaLimsMessageTestFactory bettaLimsMessageTestFactory;
-        private final LabEventFactory labEventFactory;
-        private final LabEventHandler labEventHandler;
-        private final StripTube stripTube;
-
-        private IlluminaFlowcell illuminaFlowcell;
-
-        public HiSeqJaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
-                                LabEventFactory labEventFactory, LabEventHandler labEventHandler,
-                                StripTube stripTube) {
-            this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
-            this.labEventFactory = labEventFactory;
-            this.labEventHandler = labEventHandler;
-            this.stripTube = stripTube;
-        }
-    }
-*/
-
     public static class MockBucket extends Bucket {
 
         private final String testProductOrder;
