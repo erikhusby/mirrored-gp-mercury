@@ -353,6 +353,14 @@
                 </div>
 
                 <div class="control-group">
+                    <stripes:label for="aggregationDataType" name="AggregationDataType" class="control-label"/>
+                    <div class="controls">
+                        <stripes:text id="aggregationDataType" name="editProduct.aggregationDataType"
+                                      class="defaultText" title="Enter data type to use for aggregation"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
                     <stripes:label for="riskCriterion" name="RiskCriteria" class="control-label"/>
                     <div id="riskCriterion" class="controls" style="margin-top: 5px;">
                         A sample is on risk if:

@@ -64,7 +64,7 @@ public class ZimsIlluminaRunFactory {
         Set<String> productOrderKeys = new HashSet<String>();
         for (SampleInstance sampleInstance : sampleInstances) {
             sampleIds.add(sampleInstance.getStartingSample().getSampleKey());
-            productOrderKeys.add(sampleInstance.getStartingSample().getProductOrderKey());
+            productOrderKeys.add(sampleInstance.getProductOrderKey());
         }
         Map<String, BSPSampleDTO> mapSampleIdToDto = bspSampleDataFetcher.fetchSamplesFromBSP(sampleIds);
         Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<String, ProductOrder>();
@@ -105,7 +105,7 @@ public class ZimsIlluminaRunFactory {
         Set<SampleInstance> sampleInstances = labVessel.getSampleInstances(LabVessel.SampleType.WITH_PDO,
                 LabBatch.LabBatchType.WORKFLOW);
         for (SampleInstance sampleInstance : sampleInstances) {
-            ProductOrder productOrder = mapKeyToProductOrder.get(sampleInstance.getStartingSample().getProductOrderKey());
+            ProductOrder productOrder = mapKeyToProductOrder.get(sampleInstance.getProductOrderKey());
             BSPSampleDTO bspSampleDTO = mapSampleIdToDto.get(sampleInstance.getStartingSample().getSampleKey());
             LabBatch labBatch = labVessel.getNearestWorkflowLabBatches().iterator().next(); // TODO: change to use singular version
             String lcSet;

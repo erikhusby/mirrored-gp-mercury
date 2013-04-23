@@ -83,7 +83,7 @@ public class AddEntriesToPicoBucketTest extends Arquillian {
                 }
                 for (ProductOrderSample sample : order.getSamples()) {
 
-                    MercurySample mercurySample = new MercurySample(sample.getProductOrder().getBusinessKey(), sample.getSampleName());
+                    MercurySample mercurySample = new MercurySample(sample.getSampleName());
                     List<String> plasticBarcodes = sample.getBspDTO().getPlasticBarcodes();
                     if (plasticBarcodes != null && plasticBarcodes.size() > 0) {
                         //lookup the vessel... if it doesn't exist create one

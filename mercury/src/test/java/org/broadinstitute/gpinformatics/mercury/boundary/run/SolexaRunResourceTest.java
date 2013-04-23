@@ -88,7 +88,7 @@ public class SolexaRunResourceTest extends Arquillian {
                 flowcellBarcode);
 
         for(ProductOrderSample currSample:exexOrder.getSamples()) {
-            newFlowcell.addSample(new MercurySample(exexOrder.getBusinessKey(),currSample.getBspSampleName()));
+            newFlowcell.addSample(new MercurySample(currSample.getBspSampleName()));
         }
 
         flowcellDao.persist(newFlowcell);

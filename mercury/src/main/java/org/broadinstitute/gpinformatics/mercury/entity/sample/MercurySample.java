@@ -4,12 +4,12 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.RapSheet;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
-import javax.annotation.Nonnull;
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -20,7 +20,6 @@ import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
-import java.util.regex.Pattern;
 
 /**
  * Represents Mercury's view of a sample.  Sample information is held in another system (initially Athena),
@@ -37,8 +36,6 @@ public class MercurySample {
     @SuppressWarnings("UnusedDeclaration")
     private Long mercurySampleId;
 
-    private String productOrderKey;
-
     @Index(name = "ix_ms_sample_key")
     private String sampleKey;
 
@@ -47,10 +44,9 @@ public class MercurySample {
 
     @Transient
     private BSPSampleDTO bspSampleDTO;
+
     @Transient
     private boolean hasBspDTOBeenInitialized;
-    public static final Pattern BSP_SAMPLE_NAME_PATTERN = Pattern.compile("SM-[A-Z1-9]{4,6}");
-
 
     /**
      * For JPA
@@ -62,14 +58,7 @@ public class MercurySample {
         this.sampleKey = sampleKey;
     }
 
-    public MercurySample(String productOrderKey, String sampleKey) {
-        this.productOrderKey = productOrderKey;
-        this.sampleKey = sampleKey;
-    }
-
-
-    public MercurySample(String productOrderKey, String sampleKey, BSPSampleDTO bspSampleDTO) {
-        this.productOrderKey = productOrderKey;
+    public MercurySample(String sampleKey, BSPSampleDTO bspSampleDTO) {
         this.sampleKey = sampleKey;
         this.bspSampleDTO = bspSampleDTO;
         hasBspDTOBeenInitialized = true;
@@ -86,24 +75,12 @@ public class MercurySample {
         this.rapSheet = rapSheet;
     }
 
-    public String getProductOrderKey() {
-        return productOrderKey;
-    }
-
-    public void setProductOrderKey(String productOrderKey) {
-        this.productOrderKey = productOrderKey;
-    }
-
     public String getSampleKey() {
         return sampleKey;
     }
 
     public boolean isInBspFormat() {
-        return isInBspFormat(sampleKey);
-    }
-
-    public static boolean isInBspFormat(@Nonnull String sampleName) {
-        return BSP_SAMPLE_NAME_PATTERN.matcher(sampleName).matches();
+        return BSPUtil.isInBspFormat(sampleKey);
     }
 
     public BSPSampleDTO getBspSampleDTO() {
@@ -135,12 +112,11 @@ public class MercurySample {
 
         MercurySample that = (MercurySample) o;
 
-        return new EqualsBuilder().append(getProductOrderKey(), that.getProductOrderKey()).
-                append(getSampleKey(), that.getSampleKey()).isEquals();
+        return new EqualsBuilder().append(getSampleKey(), that.getSampleKey()).isEquals();
     }
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder().append(getProductOrderKey()).append(getSampleKey()).toHashCode();
+        return new HashCodeBuilder().append(getSampleKey()).toHashCode();
     }
 }

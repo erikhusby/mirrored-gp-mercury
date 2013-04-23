@@ -294,9 +294,10 @@ public class VesselContainer<T extends LabVessel> {
      * @return contained vessels
      */
     @Transient
-    public Collection<T> getContainedVessels() {
+    public Set<T> getContainedVessels() {
+        // Wrap in HashSet so equals works against other Sets
         //noinspection unchecked
-        return (Collection<T>) mapPositionToVessel.values();
+        return new HashSet<T>((Collection<? extends T>) mapPositionToVessel.values());
     }
 
     public void addContainedVessel(T child, VesselPosition position) {

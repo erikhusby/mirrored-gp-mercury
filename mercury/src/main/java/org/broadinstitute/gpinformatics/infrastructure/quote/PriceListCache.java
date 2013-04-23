@@ -2,6 +2,8 @@ package org.broadinstitute.gpinformatics.infrastructure.quote;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCache;
 
@@ -9,10 +11,7 @@ import javax.annotation.Nonnull;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 
 /**
@@ -21,7 +20,6 @@ import java.util.List;
 @ApplicationScoped
 public class PriceListCache extends AbstractCache implements Serializable {
     private static final long serialVersionUID = 1843525203075284455L;
-    public static final PriceListCache DUMMY_CACHE = new PriceListCache(new ArrayList<QuotePriceItem> ());
 
     private Collection<QuotePriceItem> quotePriceItems = new ArrayList<QuotePriceItem>();
 
@@ -40,10 +38,6 @@ public class PriceListCache extends AbstractCache implements Serializable {
      * @param quotePriceItems The price list to hold in the cache
      */
     public PriceListCache(@Nonnull Collection<QuotePriceItem> quotePriceItems) {
-        if (quotePriceItems == null) {
-             throw new NullPointerException("priceList cannot be null.");
-        }
-
         this.quotePriceItems = quotePriceItems;
     }
 
@@ -179,5 +173,22 @@ public class PriceListCache extends AbstractCache implements Serializable {
         }
 
         return null;
+    }
+
+    public Collection<QuotePriceItem> getReplacementPriceItems(Product product) {
+        return getReplacementPriceItems(product.getPrimaryPriceItem());
+    }
+
+    public Collection<QuotePriceItem> getReplacementPriceItems(PriceItem primaryPriceItem) {
+        try {
+            QuotePriceItem quotePriceItem = findByKeyFields(
+                    primaryPriceItem.getPlatform(), primaryPriceItem.getCategory(), primaryPriceItem.getName());
+
+            return quotePriceItem.getReplacementItems().getQuotePriceItems();
+        } catch (Throwable t) {
+            // Since this is coming from the quote server, we will just show nothing when there are any errors.
+            return Collections.emptyList();
+        }
+
     }
 }

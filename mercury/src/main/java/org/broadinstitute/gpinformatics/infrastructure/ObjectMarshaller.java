@@ -1,122 +1,92 @@
 package org.broadinstitute.gpinformatics.infrastructure;
 
-/**
- * Created by IntelliJ IDEA.
- * User: mccrory
- * Date: 4/2/12
- * Time: 10:14 AM
- */
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.commons.io.IOUtils;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
-import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 
-public class ObjectMarshaller {
+/**
+ * This class handles the boilerplate code needed to turn an object into XML and to turn a string as XML into an object.
+ */
+public class ObjectMarshaller<T> {
 
-    private static Log logger = LogFactory.getLog(ObjectMarshaller.class);
+    private JAXBContext context;
 
-    // Suitable for short xml Strings
-    public static String marshall(Object object) {
-        return marshall(object, false);
+    public ObjectMarshaller(Class<T> clazz) throws JAXBException {
+        context = JAXBContext.newInstance(clazz);
     }
 
-    // Suitable for short xml Strings
-    public static String marshall(Object object, boolean formatOutput) {
+    /**
+     * Default marshal that does not format the output.
+     *
+     * @param object The Object that will be marshalled.
+     *
+     * @return The xml string representation of the object.
+     */
+    public String marshal(T object) {
+        return marshal(object, false);
+    }
+
+    /**
+     * Marshal with formatting.
+     *
+     * @param object The Object that will be marshalled.
+     *
+     * @return The xml string representation of the object.
+     */
+    public String marshalFormatted(T object) {
+        return marshal(object, true);
+    }
+
+    /**
+     * Marshal method that takes the formatting as a parameter and does the work.
+     *
+     * @param object The Object being marshalled.
+     * @param formatOutput whether to format the output or not.
+     *
+     * @return The XML string.
+     */
+    private String marshal(T object, boolean formatOutput) {
 
         StringWriter writer = null;
         String result = null;
         try {
             writer = new StringWriter();
 
-            JAXBContext jc = JAXBContext.newInstance(object.getClass());
-
-            Marshaller marshaller = jc.createMarshaller();
+            Marshaller marshaller = context.createMarshaller();
             marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, formatOutput);
             marshaller.setProperty(Marshaller.JAXB_FRAGMENT, Boolean.TRUE);
 
             marshaller.marshal(object, writer);
             result = writer.toString();
-
         } catch (JAXBException ex) {
             throw new RuntimeException("Error marshaling object '" + object + "'", ex);
         } finally  {
-            if ((writer != null )) {
-                writer.flush();
-                try {
-                    writer.close();
-                } catch (IOException e) { }
-            }
+            IOUtils.closeQuietly(writer);
         }
 
         return result;
     }
 
-    public static <T> T unmarshall(Class<T> clazz, String descr) {
-
+    @SuppressWarnings("unchecked")
+    public T unmarshal(String descr) {
         T object;
+        Reader reader = null;
 
         try {
-
-            object = unmarshall(clazz, new StringReader(descr));
-
-        } catch (Exception ex) {
-
-            throw new RuntimeException("Error unmarshaling '" + descr + "' as class " + clazz.getName(), ex);
-        }
-
-        return object;
-    }
-
-//
-//    public static <T> T unmarshall(Class<T> clazz, File file) {
-//
-//        T object;
-//
-//        try {
-//
-//            object = unmarshall(clazz, new FileReader(file));
-//
-//        } catch (Exception ex) {
-//
-//            throw new RuntimeException("Error unmarshaling an object from the file " + file.getAbsolutePath() + " as class " + clazz.getName(), ex);
-//        }
-//
-//        return object;
-//    }
-//
-    public static <T> T unmarshall(Class<T> clazz, Reader reader) {
-
-        T object;
-
-        try {
-
-            JAXBContext jc = JAXBContext.newInstance(clazz);
-
-            Unmarshaller unmarshaller = jc.createUnmarshaller();
+            reader = new StringReader(descr);
+            Unmarshaller unmarshaller = context.createUnmarshaller();
             object = (T) unmarshaller.unmarshal(reader);
 
         } catch (JAXBException ex) {
-
-            throw new RuntimeException("Error unmarshaling an object as class " + clazz.getName(), ex);
-
+            throw new RuntimeException("Error unmarshaling an object as class ", ex);
         } finally {
-
-            try {
-
-                if (reader != null)
-                    reader.close();
-
-            } catch (IOException ex) {
-                logger.error(ex);
-            }
+            IOUtils.closeQuietly(reader);
         }
 
         return object;

@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * This is the information needed to import a quantity of some price item on a quote
+ * This is the information needed to import a quantity of some price item on a quote.
  */
 public class QuoteImportInfo {
 
@@ -22,9 +22,10 @@ public class QuoteImportInfo {
      * What the heck is this complicated structure? It is used to take in ledger items and bucket them
      * in a way that makes getQuoteImportItems easy later. The buckets (the map keys) are:
      * <ul>
-     * <li>Quote Id (the string that is the main key)</li>
-     * <li>Price Item (all the info to separate a call to the quote server by primary price or add on)</li>
-     * <li>Bill Date (this separates the counts by billing period. The get period will do the logic of placing into an appropriate chunk)</li>
+     * <li>Quote Id (the string that is the main key).</li>
+     * <li>Price Item (all the info to separate a call to the quote server by primary price or add on).</li>
+     * <li>Bill Date (this separates the counts by billing period. The get period will do the logic of
+     * placing into an appropriate chunk).</li>
      * </ul>
      * All this maps to:
      * <p/>
@@ -115,20 +116,16 @@ public class QuoteImportInfo {
                     }
 
                     addQuoteItemsForLedgerItems(quoteItems, quoteId, priceItem,
-                            LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM.getQuoteType(),
-                            debitLedgerItems, bucketDate);
+                        LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM, debitLedgerItems, bucketDate);
 
                     addQuoteItemsForLedgerItems(quoteItems, quoteId, priceItem,
-                            LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM.getQuoteType(),
-                            replacementDebitLedgerItems, bucketDate);
+                        LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM, replacementDebitLedgerItems, bucketDate);
 
                     addQuoteItemsForLedgerItems(quoteItems, quoteId, priceItem,
-                            LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM.getQuoteType(),
-                            creditLedgerItems, bucketDate);
+                        LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM, creditLedgerItems, bucketDate);
 
                     addQuoteItemsForLedgerItems(quoteItems, quoteId, priceItem,
-                            LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM.getQuoteType(),
-                            replacementCreditLedgerItems, bucketDate);
+                        LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM, replacementCreditLedgerItems, bucketDate);
                 }
             }
         }
@@ -137,9 +134,10 @@ public class QuoteImportInfo {
     }
 
     private void addQuoteItemsForLedgerItems(
-        List<QuoteImportItem> quoteItems, String quoteId, PriceItem priceItem, String quoteType,
-        List<LedgerEntry> ledgerItems, Date bucketDate) {
+        List<QuoteImportItem> quoteItems, String quoteId, PriceItem priceItem,
+        LedgerEntry.PriceItemType priceItemType, List<LedgerEntry> ledgerItems, Date bucketDate) {
 
+        String quoteType = priceItemType.getQuoteType();
         if (!ledgerItems.isEmpty()) {
             QuoteImportItem newQuoteItem = new QuoteImportItem(quoteId, priceItem, quoteType, ledgerItems, bucketDate);
             quoteItems.add(newQuoteItem);
@@ -157,15 +155,15 @@ public class QuoteImportInfo {
     private boolean isReplacementPriceItem(PriceListCache priceListCache, LedgerEntry ledger) {
         if (ledger.getQuoteId() != null) {
             return LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM == ledger.getPriceItemType();
-        } else {
-            // No quote, so calculate what it would be given the state of things now.
-            Collection<QuotePriceItem> quotePriceItems =
-                ledger.getProductOrderSample().getProductOrder().getProduct().getReplacementPriceItems(priceListCache);
+        }
 
-            for (QuotePriceItem quotePriceItem : quotePriceItems) {
-                if (ledger.getPriceItem().getName().equals(quotePriceItem.getName())) {
-                    return true;
-                }
+        // No quote, so calculate what it would be given the state of things now.
+        Collection<QuotePriceItem> quotePriceItems =
+            priceListCache.getReplacementPriceItems(ledger.getProductOrderSample().getProductOrder().getProduct());
+
+        for (QuotePriceItem quotePriceItem : quotePriceItems) {
+            if (ledger.getPriceItem().getName().equals(quotePriceItem.getName())) {
+                return true;
             }
         }
 

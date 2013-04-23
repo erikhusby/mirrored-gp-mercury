@@ -105,9 +105,7 @@ public class QuoteImportItem {
      * @param itemIsReplacing The item that is replacing the primary price item.
      * @param billingMessage The message to be assigned to all entries.
      */
-    public void updateQuoteIntoLedgerEntries(
-        QuotePriceItem itemIsReplacing,
-        String billingMessage) {
+    public void updateQuoteIntoLedgerEntries(QuotePriceItem itemIsReplacing, String billingMessage) {
 
         LedgerEntry.PriceItemType priceItemType = getPriceItemType(itemIsReplacing);
 
@@ -119,27 +117,30 @@ public class QuoteImportItem {
     }
 
     /**
-     * @return There should always be ledger entries and if not, this failing will be fine.
+     * @return There should always be ledger entries and if not, it will throw an exception, which should be OK. This
+     * just returns the first items sample because all items are grouped at a fine level by price item which means the
+     * same product because price items are product based.
      */
     public Product getProduct() {
         return ledgerItems.get(0).getProductOrderSample().getProductOrder().getProduct();
     }
 
     /**
-     * Calculate if this item's price item is an optional price item on this product.
+     * Calculate if this item's price item is a replacement price item on this product. It returns a quote price item
+     * object that is the primary.
      *
      * @param priceListCache The cache of the price list.
      *
      * @return null if this is not a replacement item or the primary price item if it is one.
      */
-    public PriceItem calculateIsReplacing(PriceListCache priceListCache) {
-        Product product = getProduct();
+    public QuotePriceItem getPrimaryForReplacement(PriceListCache priceListCache) {
+        PriceItem primaryPriceItem = getProduct().getPrimaryPriceItem();
 
         // If this is optional, then return the primary as the 'is replacing.' This is comparing the quote price item
         // to the values on the product's price item, so do the item by item compare.
-        for (QuotePriceItem optional : product.getReplacementPriceItems(priceListCache)) {
+        for (QuotePriceItem optional : priceListCache.getReplacementPriceItems(primaryPriceItem)) {
             if (optional.isMercuryPriceItemEqual(priceItem)) {
-                return product.getPrimaryPriceItem();
+                return QuotePriceItem.convertMercuryPriceItem(primaryPriceItem);
             }
         }
 

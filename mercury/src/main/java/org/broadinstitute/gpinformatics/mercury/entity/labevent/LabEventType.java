@@ -306,7 +306,7 @@ public enum LabEventType {
          * For processes that are shared by multiple products, a message could belong to either system.  The
          * message router must examine the plastic barcodes to determine system of record
          */
-        PRODUCT_DEPENDENT,
+        WORKFLOW_DEPENDENT,
         /**
          * Some messages, e.g. BaitSetup, don't include enough information to determine system of record, so
          * they must be processed in both.

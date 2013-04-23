@@ -30,7 +30,7 @@ public class PlasticHistoryListItem {
 
     public PlasticHistoryListItem(LabVessel vessel) {
         label = vessel.getLabel();
-        sampleInstanceCount = vessel.getSampleInstanceCount(LabVessel.SampleType.WITH_PDO, null);
+        sampleInstanceCount = vessel.getSampleInstanceCount();
         type = vessel.getType().getName();
         pdoKeyCount = vessel.getPdoKeysCount();
         indexCount = vessel.getIndexesCount();

@@ -394,6 +394,7 @@ public class BucketBean {
 
         for (BucketEntry currEntry : bucketEntries) {
             batchVessels.add(currEntry.getLabVessel());
+            currEntry.setLabBatch(bucketBatch);
         }
 
         if (!batchVessels.isEmpty()) {
@@ -418,7 +419,7 @@ public class BucketBean {
 
         }
 
-        removeEntries(bucketEntries);
+        archiveEntries(bucketEntries);
 
         logger.info("Size of entries to remove is " + bucketEntries.size());
         return bucketBatch;
@@ -430,7 +431,7 @@ public class BucketBean {
      * @param bucketEntries collection of bucket entries to be removed from the buckets in which they exist
      */
     //TODO SGM  Move to a bucket factory class
-    private void removeEntries(@Nonnull Collection<BucketEntry> bucketEntries) {
+    private void archiveEntries(@Nonnull Collection<BucketEntry> bucketEntries) {
         for (BucketEntry currEntry : bucketEntries) {
             logger.info("Adding entry " + currEntry.getBucketEntryId() + " for vessel " + currEntry.getLabVessel()
                     .getLabCentricName() +
@@ -468,7 +469,7 @@ public class BucketBean {
 
         Collection<BucketEntry> singleRemoval = Collections.singletonList(bucketEntry);
 
-        removeEntries(singleRemoval);
+        archiveEntries(singleRemoval);
 
         jiraRemovalUpdate(bucketEntry, reason);
     }

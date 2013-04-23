@@ -218,17 +218,13 @@ public class LabVesselFactory implements Serializable {
                 mercurySample = new MercurySample(sampleId);
             } else {
                 for (ProductOrderSample productOrderSample : productOrderSamples) {
-                    mercurySample = new MercurySample(productOrderSample.getProductOrder().getBusinessKey(),
-                            productOrderSample.getSampleName());
+                    mercurySample = new MercurySample(productOrderSample.getSampleName());
                 }
             }
         } else if(mercurySamples.size() > 1) {
             throw new RuntimeException("More than one MercurySample for " + sampleId);
         } else {
             mercurySample = mercurySamples.get(0);
-            if(mercurySample.getProductOrderKey() == null && !productOrderSamples.isEmpty()) {
-                mercurySample.setProductOrderKey(productOrderSamples.get(0).getProductOrder().getBusinessKey());
-            }
         }
         return mercurySample;
     }

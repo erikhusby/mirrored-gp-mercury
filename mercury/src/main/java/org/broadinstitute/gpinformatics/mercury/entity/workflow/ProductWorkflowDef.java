@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
@@ -26,6 +27,9 @@ public class ProductWorkflowDef implements Serializable {
 
     /** e.g. Exome Express */
     private String name;
+
+    private String routingRule;
+
 
     /** List of versions */
     private List<ProductWorkflowDefVersion> productWorkflowDefVersions = new ArrayList<ProductWorkflowDefVersion>();
@@ -87,5 +91,31 @@ public class ProductWorkflowDef implements Serializable {
         return productDefVersionsByVersion.get(version);
     }
 
+    /**
+     * Accessor for the routing logic associated with a workflow instance.  The routing logic helps the system determine
+     * which LIMS system ({@see MercuryOrSquid}) should be considered the primary system of record.  Based on this
+     * value, mercury will either keep all LIMS related information to itself, share that information with another
+     * system, or pass all information to another system
+     *
+     * @return String to represent the routing intent.  Values are based on enums found in
+     * {@link org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid}
+     */
+    public String getRoutingRule() {
+        return routingRule;
+    }
+
+    /**
+     * This method is an extension of {@link #getRoutingRule()}.  Since the values defined in the routingRule are
+     * based on {@link org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid},
+     * this method helps solidify that point.  It provides the user with an interpretation of the routing rule
+     * in the form of a MercuryOrSquid enum
+     *
+     * @return an instance of
+     * {@link org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid} that
+     * corresponds to the String value found in the routing rule.
+     */
+    public MercuryOrSquidRouter.MercuryOrSquid getRouting() {
+        return MercuryOrSquidRouter.MercuryOrSquid.valueOf(getRoutingRule());
+    }
 
 }

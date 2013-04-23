@@ -108,7 +108,13 @@ public class SolexaRunResource {
                                      .entity(solexaRunBean).build();
         }
 
-        if (router.routeForVessel(flowcell) == MercuryOrSquidRouter.MercuryOrSquid.MERCURY) {
+        /*
+            updated which routing should determine if a run should be registered in Mercury.  If BOTH is returned, we
+             must cover Mercury as well as Squid
+         */
+        MercuryOrSquidRouter.MercuryOrSquid route = router.routeForVessel(flowcell);
+        if (route == MercuryOrSquidRouter.MercuryOrSquid.MERCURY ||
+                    route == MercuryOrSquidRouter.MercuryOrSquid.BOTH) {
             try {
                 run = registerRun(solexaRunBean, flowcell);
                 URI createdUri = absolutePathBuilder.path(run.getRunName()).build();
