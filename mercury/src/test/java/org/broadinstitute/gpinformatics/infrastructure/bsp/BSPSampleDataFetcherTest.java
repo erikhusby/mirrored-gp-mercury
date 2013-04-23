@@ -9,8 +9,6 @@ import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
 
@@ -35,12 +33,9 @@ public class BSPSampleDataFetcherTest extends ContainerTest {
         assertEquals(bspSampleDTO.getOrganism(), "Homo : Homo sapiens");
         assertEquals(bspSampleDTO.getPrimaryDisease(), "Control");
         assertEquals(bspSampleDTO.getMaterialType(), "DNA:DNA Genomic");
-        assertNull(bspSampleDTO.getReceiptDate());
         assertTrue(bspSampleDTO.isSampleReceived());
 
         bspSampleDTO = fetcher.fetchSingleSampleFromBSP(bspSampleDTO.getRootSample());
-
-        assertNotNull(bspSampleDTO.getReceiptDate());
         assertTrue(bspSampleDTO.isSampleReceived());
     }
 

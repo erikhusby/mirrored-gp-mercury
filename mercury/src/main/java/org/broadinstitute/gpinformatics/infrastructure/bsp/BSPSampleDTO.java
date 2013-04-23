@@ -214,19 +214,19 @@ public class BSPSampleDTO {
      * @return A boolean that determines if this sample has been received or not.
      */
     public boolean isSampleReceived() {
-        return !getRootSample().equals(getSampleId())
-                || getReceiptDate() != null;
+        try {
+            return !getRootSample().equals(getSampleId()) || getReceiptDate() != null;
+        } catch (ParseException e) {
+            //In the case of a parsing exception we assume there is a date, however the date can not be parsed which isn't important for this logic.
+            return true;
+        }
     }
 
-    public Date getReceiptDate() {
+    public Date getReceiptDate() throws ParseException {
         String receiptDateString = getValue(BSPSampleSearchColumn.RECEIPT_DATE);
         Date receiptDate = null;
         if(StringUtils.isNotBlank(receiptDateString)){
-            try {
-                receiptDate = BSP_DATE_FORMAT.parse(receiptDateString);
-            } catch (ParseException e) {
-                receiptDate = null;
-            }
+            receiptDate = BSP_DATE_FORMAT.parse(receiptDateString);
         }
         return receiptDate;
     }
