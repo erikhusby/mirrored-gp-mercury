@@ -48,8 +48,6 @@ public class MercurySample {
     @Transient
     private boolean hasBspDTOBeenInitialized;
 
-    public static final Pattern BSP_SAMPLE_NAME_PATTERN = Pattern.compile("SM-[A-Z1-9]{4,6}");
-
     /**
      * For JPA
      */

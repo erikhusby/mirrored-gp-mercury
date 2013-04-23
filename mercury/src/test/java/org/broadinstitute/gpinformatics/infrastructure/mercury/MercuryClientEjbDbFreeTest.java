@@ -126,7 +126,7 @@ public class MercuryClientEjbDbFreeTest {
                     break;
             }
             BSPSampleDTO bspDto = new BSPSampleDTO(bspData);
-            MercurySample mercurySample = new MercurySample(pdo.getBusinessKey(), pdoSample.getSampleName(), bspDto);
+            MercurySample mercurySample = new MercurySample(pdoSample.getSampleName(), bspDto);
 
             if (expectedInBucket) {
                 expectedSamples.add(pdoSample);
