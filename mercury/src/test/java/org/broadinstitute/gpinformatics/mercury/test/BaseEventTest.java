@@ -161,11 +161,6 @@ public class BaseEventTest {
         JiraServiceStub.setCreatedIssueSuffix(defaultLcsetSuffix);
 
         Bucket workingBucket = createAndPopulateBucket(mapBarcodeToTube, productOrder, "Pico/Plating Bucket");
-        // todo jmt this should happen when the batch is created from the bucket
-        for (BucketEntry bucketEntry : workingBucket.getBucketEntries()) {
-            bucketEntry.setLabBatch(workflowBatch);
-        }
-
 
         BucketDao mockBucketDao = EasyMock.createMock(BucketDao.class);
         EasyMock.expect(mockBucketDao.findByName("Pico/Plating Bucket")).andReturn(workingBucket);
@@ -192,10 +187,6 @@ public class BaseEventTest {
                                                                             TubeFormation normTubeFormation,
                                                                             String normBarcode, String barcodeSuffix) {
         Bucket workingBucket = createAndPopulateBucket(normBarcodeToTubeMap, productOrder, "Shearing Bucket");
-        // todo jmt this should happen when the batch is created from the bucket
-//        for (BucketEntry bucketEntry : workingBucket.getBucketEntries()) {
-//            bucketEntry.setLabBatch(workflowBatch);
-//        }
 
         BucketDao mockBucketDao = EasyMock.createNiceMock(BucketDao.class);
         EasyMock.expect(mockBucketDao.findByName("Shearing Bucket")).andReturn(workingBucket);

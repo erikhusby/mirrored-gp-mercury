@@ -663,6 +663,8 @@ public abstract class LabVessel implements Serializable {
             }
         }
         if (bucketEntries.size() > 1) {
+            throw new RuntimeException("Unexpected multiple bucket entries");
+/* todo jmt handle multiple buckets
             for (BucketEntry bucketEntry : bucketEntries) {
                 for (LabVessel container : containers) {
                     if (bucketEntry.getLabBatch() != null) {
@@ -673,6 +675,7 @@ public abstract class LabVessel implements Serializable {
                     }
                 }
             }
+*/
         } else if(bucketEntries.size() == 1) {
             traversalResults.setBucketEntry(bucketEntries.iterator().next());
         }

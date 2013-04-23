@@ -304,6 +304,7 @@ public class LabEventTest extends BaseEventTest{
         ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
         AthenaClientServiceStub.addProductOrder(productOrder);
         final Date runDate = new Date();
+        // todo jmt create bucket, then batch, rather than rack than batch then bucket
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
@@ -619,7 +620,8 @@ public class LabEventTest extends BaseEventTest{
         WorkflowLoader workflowLoader = new WorkflowLoader();
         WorkflowConfig workflowConfig = workflowLoader.load();
         for (LabVessel labVessel : labVessels) {
-            for (SampleInstance sampleInstance : labVessel.getSampleInstances()) {
+            for (SampleInstance sampleInstance : labVessel.getSampleInstances(LabVessel.SampleType.WITH_PDO,
+                    LabBatch.LabBatchType.WORKFLOW)) {
                 ProductOrder productOrder = athenaClientService.retrieveProductOrderDetails(
                         sampleInstance.getProductOrderKey());
                 // get workflow name from product order
