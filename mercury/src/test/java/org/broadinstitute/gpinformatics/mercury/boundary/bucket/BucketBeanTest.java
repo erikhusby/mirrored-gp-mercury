@@ -380,10 +380,14 @@ public class BucketBeanTest extends ContainerTest {
             }
         }
 
-        Assert.assertTrue(bucketEntryDao.findByVesselAndBucket(vessel1, bucket) == null);
-        Assert.assertTrue(bucketEntryDao.findByVesselAndBucket(vessel2, bucket) == null);
-        Assert.assertTrue(bucketEntryDao.findByVesselAndBucket(vessel3, bucket) == null);
-        Assert.assertTrue(bucketEntryDao.findByVesselAndBucket(vessel4, bucket) != null);
+        Assert.assertNotNull(bucketEntryDao.findByVesselAndBucket(vessel1, bucket));
+        Assert.assertNotNull(bucketEntryDao.findByVesselAndBucket(vessel2, bucket));
+        Assert.assertNotNull(bucketEntryDao.findByVesselAndBucket(vessel3, bucket));
+
+        Assert.assertFalse(bucket.contains(testEntry1));
+        Assert.assertFalse(bucket.contains(testEntry2));
+        Assert.assertFalse(bucket.contains(testEntry3));
+        Assert.assertTrue(bucket.contains(testEntry4));
 
         testEntry4 = bucketEntryDao.findByVesselAndBucket(vessel4, bucket);
         resource.cancel(testEntry4, howieTest,
@@ -393,7 +397,8 @@ public class BucketBeanTest extends ContainerTest {
         bucketDao.clear();
         bucket = bucketDao.findByName(bucketCreationName);
 
-        Assert.assertTrue(bucketEntryDao.findByVesselAndBucket(vessel4, bucket) == null);
+        Assert.assertNotNull(bucketEntryDao.findByVesselAndBucket(vessel4, bucket));
+        Assert.assertFalse(bucket.contains(testEntry4));
 
         Assert.assertTrue(bucket.getBucketEntries().isEmpty());
     }
