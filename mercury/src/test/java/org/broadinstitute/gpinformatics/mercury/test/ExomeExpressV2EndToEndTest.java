@@ -26,6 +26,7 @@ import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRu
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
@@ -135,7 +136,7 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
 
             productOrderSamples.add(new ProductOrderSample(bspStock));
             TwoDBarcodedTube bspAliquot = new TwoDBarcodedTube(barcode);
-            bspAliquot.addSample(new MercurySample(jiraTicketKey, bspStock));
+            bspAliquot.addSample(new MercurySample(bspStock));
             mapBarcodeToTube.put(barcode, bspAliquot);
         }
 
@@ -203,7 +204,7 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
 
 
         // Bucket should have been drained after Plating to Shearing Tubes
-        Assert.assertEquals(0,workingBucket.getBucketEntries().size());
+        Assert.assertEquals(workingBucket.getBucketEntries().size(), 0);
 
 
         LabEventTest.validateWorkflow(LabEventType.COVARIS_LOADED.getName(),

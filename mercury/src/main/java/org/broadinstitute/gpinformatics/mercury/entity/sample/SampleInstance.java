@@ -102,8 +102,6 @@ public class SampleInstance {
 
     private GSP_CONTROL_ROLE controlRole;
 
-//    private Collection<ProjectPlan> projectPlans = new HashSet<ProjectPlan>();
-
     private MolecularState molecularState;
 
     private List<Reagent> reagents = new ArrayList<Reagent>();
@@ -114,13 +112,13 @@ public class SampleInstance {
     // All lab batches found in ancestry.
     private Collection<LabBatch> allLabBatches;
 
+    private String productOrderKey;
+
     public SampleInstance(MercurySample sample,
             GSP_CONTROL_ROLE controlRole,
-//            ProjectPlan projectPlan,
             MolecularState molecularState) {
         this.sample = sample;
         this.controlRole = controlRole;
-//        projectPlans.add(projectPlan);
         this.molecularState = molecularState;
     }
 
@@ -259,4 +257,11 @@ public class SampleInstance {
         this.allLabBatches = allLabBatches;
     }
 
+    public String getProductOrderKey() {
+        return productOrderKey;
+    }
+
+    public void setProductOrderKey(String productOrderKey) {
+        this.productOrderKey = productOrderKey;
+    }
 }

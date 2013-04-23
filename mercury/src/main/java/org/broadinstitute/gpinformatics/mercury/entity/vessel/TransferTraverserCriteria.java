@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
@@ -291,15 +292,15 @@ public interface TransferTraverserCriteria {
         public TraversalControl evaluateVesselPreOrder(Context context) {
             if (context.getLabVessel() != null) {
                 if (context.getLabVessel().getMercurySamples() != null) {
-                    for (MercurySample mercurySample : context.getLabVessel().getMercurySamples()) {
-                        if (StringUtils.isBlank(mercurySample.getProductOrderKey())) {
+                    for (BucketEntry bucketEntry : context.getLabVessel().getBucketEntries()) {
+                        if (StringUtils.isBlank(bucketEntry.getPoBusinessKey())) { // todo jmt use BucketEntry?
                             continue;
                         }
                         if (!productOrdersAtHopCount.containsKey(context.getHopCount())) {
                             productOrdersAtHopCount.put(context.getHopCount(), new HashSet<String>());
                         }
 
-                        String productOrderKey = mercurySample.getProductOrderKey();
+                        String productOrderKey = bucketEntry.getPoBusinessKey();
                         if (productOrderKey != null) {
                             productOrdersAtHopCount.get(context.getHopCount()).add(productOrderKey);
                         }

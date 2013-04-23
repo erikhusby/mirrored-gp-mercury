@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.testng.Assert;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -1016,7 +1017,8 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
             if (newTube == null) {
                 newTube = new TwoDBarcodedTube("R" + currSample.getSampleName());
             }
-            newTube.addSample(new MercurySample(productOrder.getBusinessKey(), currSample.getSampleName()));
+            newTube.addSample(new MercurySample(currSample.getSampleName()));
+            newTube.addBucketEntry(new BucketEntry(newTube, productOrder.getBusinessKey()));
             tubes.add(newTube);
             barcodes.add(newTube.getLabel());
             if (bucketName != null && bucket.findEntry(newTube) == null) {
