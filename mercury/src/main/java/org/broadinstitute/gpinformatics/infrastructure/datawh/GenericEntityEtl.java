@@ -50,6 +50,9 @@ public abstract class GenericEntityEtl<T, C> {
         this.auditReaderDao = auditReaderDao;
     }
 
+    protected GenericEntityEtl() {
+    }
+
     protected GenericEntityEtl(Class entityClass, String baseFilename, GenericDao dao) {
         this.entityClass = entityClass;
         this.baseFilename = baseFilename;

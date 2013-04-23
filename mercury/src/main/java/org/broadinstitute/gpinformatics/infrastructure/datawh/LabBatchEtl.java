@@ -13,6 +13,9 @@ import java.util.Collection;
 @Stateful
 public class LabBatchEtl extends GenericEntityEtl<LabBatch, LabBatch> {
 
+    public LabBatchEtl() {
+    }
+
     @Inject
     public LabBatchEtl(LabBatchDAO dao) {
         super(LabBatch.class, "lab_batch", dao);

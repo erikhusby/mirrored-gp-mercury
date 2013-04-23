@@ -13,6 +13,9 @@ import java.util.Collection;
 @Stateful
 public class ResearchProjectIrbEtl extends GenericEntityEtl<ResearchProjectIRB, ResearchProjectIRB> {
 
+    public ResearchProjectIrbEtl() {
+    }
+
     @Inject
     public ResearchProjectIrbEtl(ResearchProjectDao dao) {
         super(ResearchProjectIRB.class, "research_project_irb", dao);

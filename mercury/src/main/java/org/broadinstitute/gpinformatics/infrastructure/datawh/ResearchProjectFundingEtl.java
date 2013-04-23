@@ -13,6 +13,9 @@ import java.util.Collection;
 @Stateful
 public class ResearchProjectFundingEtl extends GenericEntityEtl<ResearchProjectFunding, ResearchProjectFunding> {
 
+    public ResearchProjectFundingEtl() {
+    }
+
     @Inject
     public ResearchProjectFundingEtl(ResearchProjectDao dao) {
         super(ResearchProjectFunding.class, "research_project_funding", dao);

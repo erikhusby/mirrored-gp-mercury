@@ -17,6 +17,9 @@ import java.util.Date;
 public class ProductOrderEtl extends GenericEntityAndStatusEtl<ProductOrder, ProductOrder> {
     private BSPUserList userList;
 
+    public ProductOrderEtl() {
+    }
+
     @Inject
     public ProductOrderEtl(ProductOrderDao dao, BSPUserList userList) {
         super(ProductOrder.class, "product_order", "product_order_status", dao);

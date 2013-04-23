@@ -15,6 +15,9 @@ import java.util.Date;
 @Stateful
 public class ResearchProjectEtl extends GenericEntityAndStatusEtl<ResearchProject, ResearchProject> {
 
+    public ResearchProjectEtl() {
+    }
+
     @Inject
     public ResearchProjectEtl(ResearchProjectDao dao) {
         super(ResearchProject.class, "research_project", "research_project_status", dao);

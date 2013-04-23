@@ -16,6 +16,9 @@ import java.util.Collection;
 public class ProjectPersonEtl extends GenericEntityEtl<ProjectPerson, ProjectPerson> {
     private BSPUserList userList;
 
+    public ProjectPersonEtl() {
+    }
+
     @Inject
     public ProjectPersonEtl(ResearchProjectDao dao, BSPUserList userList) {
         super(ProjectPerson.class, "research_project_person", dao);

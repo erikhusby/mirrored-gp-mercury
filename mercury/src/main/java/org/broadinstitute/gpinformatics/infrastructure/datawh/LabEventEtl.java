@@ -22,6 +22,9 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
     private ProductOrderDao pdoDao;
     private WorkflowConfigLookup workflowConfigLookup;
 
+    public LabEventEtl() {
+    }
+
     @Inject
     public LabEventEtl(WorkflowConfigLookup workflowConfigLookup, LabEventDao dao, ProductOrderDao pdoDao) {
         super(LabEvent.class, "event_fact", dao);

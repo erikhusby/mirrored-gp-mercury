@@ -14,6 +14,9 @@ import java.util.Date;
 @Stateful
 public class ProductOrderSampleEtl extends GenericEntityAndStatusEtl<ProductOrderSample, ProductOrderSample> {
 
+    public ProductOrderSampleEtl() {
+    }
+
     @Inject
     public ProductOrderSampleEtl(ProductOrderSampleDao dao) {
         super(ProductOrderSample.class, "product_order_sample", "product_order_sample_status", dao);

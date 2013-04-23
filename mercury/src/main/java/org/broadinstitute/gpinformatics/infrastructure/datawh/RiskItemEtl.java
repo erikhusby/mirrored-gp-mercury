@@ -21,6 +21,9 @@ import java.util.List;
 public class RiskItemEtl extends GenericEntityEtl<RiskItem, ProductOrderSample> {
     private ProductOrderSampleDao pdoSampleDao;
 
+    public RiskItemEtl() {
+    }
+
     @Inject
     public RiskItemEtl(RiskItemDao dao, ProductOrderSampleDao pdoSampleDao) {
         super(RiskItem.class, "product_order_sample_risk", dao);

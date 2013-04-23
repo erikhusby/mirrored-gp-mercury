@@ -19,6 +19,9 @@ public abstract class GenericEntityAndStatusEtl<T, C> extends GenericEntityEtl<T
     /** The entity-related name of the data file, and must sync with the ETL cron script and control file. */
     public String baseStatusFilename;
 
+    protected GenericEntityAndStatusEtl() {
+    }
+
     protected GenericEntityAndStatusEtl(Class entityClass, String baseFilename, String baseStatusFilename, GenericDao dao) {
         super(entityClass, baseFilename, dao);
         this.baseStatusFilename = baseStatusFilename;

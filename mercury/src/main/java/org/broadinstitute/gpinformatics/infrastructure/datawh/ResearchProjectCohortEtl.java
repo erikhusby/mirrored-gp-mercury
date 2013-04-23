@@ -14,6 +14,9 @@ import java.util.Collection;
 @Stateful
 public class ResearchProjectCohortEtl extends GenericEntityEtl<ResearchProjectCohort, ResearchProjectCohort> {
 
+    public ResearchProjectCohortEtl() {
+    }
+
     @Inject
     public ResearchProjectCohortEtl(ResearchProjectDao dao) {
         super(ResearchProjectCohort.class, "research_project_cohort", dao);

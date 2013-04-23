@@ -13,6 +13,9 @@ import java.util.Collection;
 @Stateful
 public class ProductEtl extends GenericEntityEtl<Product, Product> {
 
+    public ProductEtl() {
+    }
+
     @Inject
     public ProductEtl(ProductDao dao) {
         super(Product.class, "product", dao);
