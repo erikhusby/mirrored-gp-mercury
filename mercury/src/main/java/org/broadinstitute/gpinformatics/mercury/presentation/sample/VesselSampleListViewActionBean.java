@@ -92,9 +92,9 @@ public class VesselSampleListViewActionBean extends CoreActionBean {
      */
     public Set<SampleInstance> getSampleInstancesAtPosition(VesselPosition position) {
         if (vessel.getContainerRole() != null) {
-            return vessel.getContainerRole().getSampleInstancesAtPosition(position, LabVessel.SampleType.WITH_PDO, null);
+            return vessel.getContainerRole().getSampleInstancesAtPosition(position);
         } else {
-            return vessel.getSampleInstances(LabVessel.SampleType.WITH_PDO, null);
+            return vessel.getSampleInstances();
         }
     }
 

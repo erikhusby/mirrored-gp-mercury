@@ -13,7 +13,6 @@
                 "aoColumns":[
                     {"bSortable":false},
                     {"bSortable":true},
-                    {"bSortable":true}
                 ]
             });
 
@@ -46,7 +45,6 @@
         <tr>
             <th width="30">Vessel History</th>
             <th>Sample Name</th>
-            <th>PDO</th>
         </tr>
         </thead>
         <tbody>
@@ -61,11 +59,6 @@
                 <td>
                     <a href="${ctxpath}/search/all.action?search=&searchKey=${sample.sampleKey}">
                             ${sample.sampleKey}
-                    </a>
-                </td>
-                <td>
-                    <a href="${ctxpath}/search/all.action?search=&searchKey=${sample.productOrderKey}">
-                            ${sample.productOrderKey}
                     </a>
                 </td>
             </tr>

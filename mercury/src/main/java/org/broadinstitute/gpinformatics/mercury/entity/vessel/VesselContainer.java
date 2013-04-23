@@ -11,8 +11,26 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.hibernate.annotations.Parent;
 import org.jetbrains.annotations.Nullable;
 
-import javax.persistence.*;
-import java.util.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Embeddable;
+import javax.persistence.EnumType;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
+import javax.persistence.MapKeyColumn;
+import javax.persistence.MapKeyEnumerated;
+import javax.persistence.OneToMany;
+import javax.persistence.Transient;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * A vessel that contains other vessels, e.g. a rack of tubes, a plate of wells, or a flowcell of lanes
@@ -121,6 +139,7 @@ public class VesselContainer<T extends LabVessel> {
         LabVessel.TraversalResults traversalResults = traverseAncestors(position, sampleType, batchType);
         return traversalResults.getSampleInstances();
     }
+
     public Set<SampleInstance> getSampleInstancesAtPosition(VesselPosition position) {
         return getSampleInstancesAtPosition(position, LabVessel.SampleType.ANY, null);
     }

@@ -4,7 +4,6 @@ import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -23,7 +22,12 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
 import java.sql.Timestamp;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 @UrlBinding(value = "/view/pdoSampleHistory.action")
 public class ProductOrderSampleHistoryActionBean extends CoreActionBean {
@@ -92,13 +96,7 @@ public class ProductOrderSampleHistoryActionBean extends CoreActionBean {
                     }
                 }
             }
-            List<MercurySample> allSamples = mercurySampleDao.findBySampleKeys(ProductOrderSample.getSampleNames(pdo.getSamples()));
-            //remove samples without a PDO
-            for(MercurySample sample : allSamples){
-                if(!StringUtils.isEmpty(sample.getProductOrderKey())){
-                    mercurySamples.add(sample);
-                }
-            }
+            mercurySamples.addAll(mercurySampleDao.findBySampleKeys(ProductOrderSample.getSampleNames(pdo.getSamples())));
         }
 
         return new ForwardResolution(VIEW_PAGE);
@@ -220,11 +218,13 @@ public class ProductOrderSampleHistoryActionBean extends CoreActionBean {
     }
 
     public WorkflowStepDef getLatestProcess(LabEvent event) {
-        ProductWorkflowDefVersion.LabEventNode eventNode = null;
+        ProductWorkflowDefVersion.LabEventNode eventNode;
         if (event != null) {
             eventNode = productWorkflowDefVersion.findStepByEventType(event.getLabEventType().getName());
             if (eventNode != null) {
                 return eventNode.getStepDef();
+            } else {
+                return null;
             }
         }
         return null;

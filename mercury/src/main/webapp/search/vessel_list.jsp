@@ -131,7 +131,7 @@
                     </a>
                 </td>
                 <td>
-                        ${vessel.getSampleInstanceCount("WITH_PDO", null)}
+                        ${vessel.sampleInstanceCount}
                 </td>
                 <td>
                         ${vessel.type.name}

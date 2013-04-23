@@ -69,9 +69,9 @@ public class VesselViewActionBean extends CoreActionBean {
         VesselPosition position = VesselPosition.getByName(rowName + columnName);
         VesselContainer<?> vesselContainer = vessel.getContainerRole();
         if (vesselContainer != null) {
-            sampleInstances = vesselContainer.getSampleInstancesAtPosition(position, LabVessel.SampleType.WITH_PDO, null);
+            sampleInstances = vesselContainer.getSampleInstancesAtPosition(position);
         } else {
-            sampleInstances = vessel.getSampleInstances(LabVessel.SampleType.WITH_PDO, null);
+            sampleInstances = vessel.getSampleInstances();
         }
         for (SampleInstance sample : sampleInstances) {
             List<LabVessel> vessels = labVesselDao.findBySampleKey(sample.getStartingSample().getSampleKey());

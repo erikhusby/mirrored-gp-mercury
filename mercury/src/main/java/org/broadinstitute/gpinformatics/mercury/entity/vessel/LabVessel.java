@@ -13,7 +13,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTr
 import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.UserRemarks;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
-import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
@@ -27,6 +26,7 @@ import org.hibernate.envers.Audited;
 import org.hibernate.envers.NotAudited;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
@@ -473,7 +473,7 @@ public abstract class LabVessel implements Serializable {
      * @param vesselPosition position in vessel, eg: A01
      * @return
      */
-    public Collection<SampleInstance> getSamplesAtPosition(@NotNull VesselPosition vesselPosition) {
+    public Collection<SampleInstance> getSamplesAtPosition(@Nonnull VesselPosition vesselPosition) {
         Set<SampleInstance> sampleInstances;
         VesselContainer<?> vesselContainer = getContainerRole();
         if (vesselContainer != null) {
@@ -574,6 +574,7 @@ public abstract class LabVessel implements Serializable {
         private final Set<Reagent> reagents = new HashSet<Reagent>();
         private LabBatch unambiguousLabBatch = null;
         private final Set<LabBatch> labBatches = new HashSet<LabBatch>();
+        private BucketEntry bucketEntry;
 
         void add(TraversalResults traversalResults) {
             sampleInstances.addAll(traversalResults.getSampleInstances());

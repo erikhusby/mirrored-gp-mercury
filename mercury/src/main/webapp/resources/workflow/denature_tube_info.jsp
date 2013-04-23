@@ -29,7 +29,7 @@
             </ul>
             <ul>
 
-                <li> Sample Count: ${actionBean.denatureTube.getSampleInstanceCount("WITH_PDO", null)}</li>
+                <li> Sample Count: ${actionBean.denatureTube.sampleInstanceCount}</li>
             </ul>
             <ul>
                 <li>Last Event: ${actionBean.denatureTube.latestEvent.labEventType.name}</li>
