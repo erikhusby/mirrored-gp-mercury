@@ -73,6 +73,7 @@ public class LabBatch {
     }
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private LabBatchType labBatchType;
 
     @Transient
