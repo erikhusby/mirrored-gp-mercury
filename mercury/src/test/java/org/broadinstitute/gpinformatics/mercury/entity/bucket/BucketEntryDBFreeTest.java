@@ -44,6 +44,10 @@ public class BucketEntryDBFreeTest {
         SimpleDateFormat dateFormatter = new SimpleDateFormat("dd/MM/yy");
 
         Assert.assertEquals ( dateFormatter.format ( new Date () ), dateFormatter.format ( entry.getCreatedDate () ) );
+        Assert.assertEquals(entry.getStatus(), BucketEntry.Status.Active);
+
+        entry.setStatus(BucketEntry.Status.Archived);
+        Assert.assertEquals(entry.getStatus(), BucketEntry.Status.Archived);
     }
 
     public void testBasicBeaniness()  {
