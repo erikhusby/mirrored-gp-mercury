@@ -206,16 +206,15 @@ public class BSPSampleDTO {
     /**
      * This method returns true when the sample is received using the following logic:
      * <ol>
-     * <li>If the root sample is null then we are a root sample and need to check condition 3.</li>
      * <li>If the sample id is not the root sample we are not a root sample and therefore received.
-     * Otherwise we are a root sample and need to check condition 3.</li>
+     * Otherwise we are a root sample and need to check condition 2.</li>
      * <li>If we are a root sample and we have a receipt date then we have been received.</li>
      * </ol>
      *
      * @return A boolean that determines if this sample has been received or not.
      */
     public boolean isSampleReceived() {
-        return !StringUtils.isBlank(getRootSample()) || !getRootSample().equals(getSampleId())
+        return !getRootSample().equals(getSampleId())
                 || getReceiptDate() != null;
     }
 
