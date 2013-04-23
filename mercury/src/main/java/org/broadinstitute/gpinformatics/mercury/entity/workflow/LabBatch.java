@@ -61,6 +61,14 @@ public class LabBatch {
 
     private Date createdOn;
 
+    /**
+     * needed for fix-up test
+     *
+     */
+    protected void setLabBatchType(LabBatchType labBatchType) {
+        this.labBatchType = labBatchType;
+    }
+
     public enum LabBatchType {
         /** A batch created as part of workflow, e.g. an LCSET */
         WORKFLOW,
