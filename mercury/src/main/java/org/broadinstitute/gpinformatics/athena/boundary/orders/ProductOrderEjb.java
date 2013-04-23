@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.athena.entity.work.MessageDataValue;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPLSIDUtil;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -168,7 +169,7 @@ public class ProductOrderEjb {
             throws Exception {
 
         // Convert aliquotId to BSP ID, if it's an LSID.
-        if (!ProductOrderSample.isInBspFormat(aliquotId)) {
+        if (!BSPUtil.isInBspFormat(aliquotId)) {
             aliquotId = BSPLSIDUtil.lsidToBareId(aliquotId);
         }
 

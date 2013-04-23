@@ -11,8 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkReason;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
@@ -21,8 +20,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 @UrlBinding(value = "/workflow/AddRework.action")
@@ -53,7 +50,7 @@ public class AddReworkActionBean extends CoreActionBean {
     private WorkflowBucketDef bucket;
 
     @Validate(required = true, on = REWORK_SAMPLE_ACTION)
-    private ReworkReason reworkReason;
+    private ReworkEntry.ReworkReason reworkReason;
     @Validate(required = true, on = REWORK_SAMPLE_ACTION)
     private String commentText;
 
@@ -79,8 +76,7 @@ public class AddReworkActionBean extends CoreActionBean {
             return view();
         }
 
-//        final String pluralIfAppropriate = reworks.size() != 1 ? "s have" : " has";
-        addMessage("Vessel {0} been added to the {1} bucket.", labVessel.getLabel(), bucketName);
+        addMessage("Vessel {0} has been added to the {1} bucket.", labVessel.getLabel(), bucketName);
         return new RedirectResolution(this.getClass());
     }
 
@@ -172,11 +168,11 @@ public class AddReworkActionBean extends CoreActionBean {
         this.bucket = bucket;
     }
 
-    public ReworkReason getReworkReason() {
+    public ReworkEntry.ReworkReason getReworkReason() {
         return reworkReason;
     }
 
-    public void setReworkReason(ReworkReason reworkReason) {
+    public void setReworkReason(ReworkEntry.ReworkReason reworkReason) {
         this.reworkReason = reworkReason;
     }
 

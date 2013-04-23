@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.AuditJoinTable;
@@ -20,7 +21,6 @@ import javax.persistence.*;
 import java.io.Serializable;
 import java.text.MessageFormat;
 import java.util.*;
-import java.util.regex.Pattern;
 
 /**
  * Class to describe Athena's view of a Sample. A Sample is identified by a sample Id and
@@ -47,8 +47,6 @@ public class ProductOrderSample implements Serializable {
     @SequenceGenerator(name = "SEQ_ORDER_SAMPLE", schema = "athena", sequenceName = "SEQ_ORDER_SAMPLE")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_ORDER_SAMPLE")
     private Long productOrderSampleId;
-
-    public static final Pattern BSP_SAMPLE_NAME_PATTERN = Pattern.compile("SM-[A-Z1-9]{4,6}");
 
     // This is the name of the BSP or Non-BSP sample.
     @Index(name = "ix_pos_sample_name")
@@ -270,12 +268,9 @@ public class ProductOrderSample implements Serializable {
     }
 
     public boolean isInBspFormat() {
-        return isInBspFormat(sampleName);
+        return BSPUtil.isInBspFormat(sampleName);
     }
 
-    public static boolean isInBspFormat(@Nonnull String sampleName) {
-        return BSP_SAMPLE_NAME_PATTERN.matcher(sampleName).matches();
-    }
 
     public Set<LedgerEntry> getBillableLedgerItems() {
         Set<LedgerEntry> billableLedgerItems = new HashSet<LedgerEntry>();
@@ -309,7 +304,7 @@ public class ProductOrderSample implements Serializable {
 
     public String getBspSampleName() {
         // skip the SM- part of the name.
-        if ((sampleName.length() > 3) && isInBspFormat(sampleName)) {
+        if ((sampleName.length() > 3) && isInBspFormat()) {
             return sampleName.substring(3);
         }
         return sampleName;

@@ -23,7 +23,7 @@ import java.util.Collection;
 @RequestScoped
 public class ReworkEntryDao extends GenericDao {
 
-    public Collection<ReworkEntry> getNonActiveReworkEntries() {
-        return super.findList(ReworkEntry.class, ReworkEntry_.activeRework,false);
+    public Collection<ReworkEntry> getNonActive() {
+        return findList(ReworkEntry.class, ReworkEntry_.activeRework,false);
     }
 }

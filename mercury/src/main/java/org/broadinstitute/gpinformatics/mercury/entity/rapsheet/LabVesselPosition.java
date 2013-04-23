@@ -16,7 +16,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -36,14 +35,14 @@ public class LabVesselPosition {
     private Long labVesselPositionId;
 
     // this should not cause n+1 select performance issue if it is LAZY and mandatory
-    @OneToOne(mappedBy = "labVesselPosition", optional = false)
+    @OneToOne(mappedBy = "labVesselPosition", optional = false, fetch = FetchType.LAZY)
     private RapSheetEntry rapSheetEntry;
 
-    @NotNull
+    @Column(nullable = false)
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
-    private List<MercurySample> mercurySamples;
+    private List<MercurySample> mercurySamples = new ArrayList<MercurySample>();
 
-    @NotNull
+    @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     VesselPosition vesselPosition;
 
@@ -51,20 +50,17 @@ public class LabVesselPosition {
     }
 
     public List<MercurySample> getMercurySamples() {
-        if (mercurySamples==null){
-            mercurySamples=new ArrayList<MercurySample>();
-        }
         return mercurySamples;
     }
 
-    public LabVesselPosition(VesselPosition vesselPosition,MercurySample ... mercurySamples) {
+    public LabVesselPosition(VesselPosition vesselPosition, MercurySample... mercurySamples) {
         this.vesselPosition = vesselPosition;
-        Collections.addAll(getMercurySamples(),mercurySamples);
+        Collections.addAll(getMercurySamples(), mercurySamples);
     }
 
     public void setMercurySamples(List<MercurySample> mercurySamples) {
-
-        this.mercurySamples = mercurySamples;
+        this.mercurySamples.clear();
+        this.mercurySamples.addAll(mercurySamples);
     }
 
     public VesselPosition getVesselPosition() {
