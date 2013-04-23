@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.bucket;
 
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
+import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
@@ -24,7 +25,8 @@ public class Bucket {
     @Id
     private Long bucketId;
 
-    @OneToMany (mappedBy = "bucket", cascade = CascadeType.PERSIST, orphanRemoval = true)
+    @OneToMany (mappedBy = "bucket", cascade = CascadeType.PERSIST)
+    @Where(clause = "status='Active'")
     private Set<BucketEntry> bucketEntries = new HashSet<BucketEntry>();
 
     @Column ()
@@ -92,7 +94,8 @@ public class Bucket {
      *                      for that entry
      */
     public void removeEntry ( BucketEntry entryToRemove) {
-        bucketEntries.remove(entryToRemove);
+        this.bucketEntries.remove(entryToRemove);
+        entryToRemove.setStatus(BucketEntry.Status.Archived);
     }
 
     public Long getBucketId () {

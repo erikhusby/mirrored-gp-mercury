@@ -1,6 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.entity.bucket;
 
 import org.apache.commons.lang3.builder.CompareToBuilder;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.envers.Audited;
 
@@ -8,6 +12,8 @@ import javax.annotation.Nonnull;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -56,6 +62,10 @@ public class BucketEntry  {
         }
     };
 
+    public enum Status {
+        Active, Archived
+    }
+
     @SequenceGenerator (name = "SEQ_BUCKET_ENTRY", schema = "mercury",  sequenceName = "SEQ_BUCKET_ENTRY")
     @GeneratedValue (strategy = GenerationType.SEQUENCE, generator = "SEQ_BUCKET_ENTRY")
     @Id
@@ -72,6 +82,10 @@ public class BucketEntry  {
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     @JoinColumn (name = "bucket_existence_id")
     private Bucket bucket;
+
+    @Column(name = "STATUS", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private Status status = Status.Active;
 
     /*
         TODO SGM:  Implement this as a separate join table to have the ranking associated directly with the Product
@@ -154,34 +168,44 @@ public class BucketEntry  {
         return bucketEntryId;
     }
 
+    public Status getStatus() {
+        return status;
+    }
+
+    public void setStatus(Status status) {
+        this.status = status;
+    }
+
     @Override
     public boolean equals ( Object o ) {
-        if ( this == o )
+        if ( this == o ) {
             return true;
-        if ( !( o instanceof BucketEntry ) )
+        }
+        if ( o == null || !OrmUtil.proxySafeIsInstance(o, BucketEntry.class)) {
             return false;
+        }
 
-        BucketEntry that = ( BucketEntry ) o;
+        BucketEntry that = OrmUtil.proxySafeCast(o,BucketEntry.class);
 
-        if ( labVessel != null ? !labVessel.equals ( that.getLabVessel() ) : that.getLabVessel() != null )
-            return false;
-        if ( poBusinessKey != null ? !poBusinessKey.equals ( that.getPoBusinessKey() ) : that.getPoBusinessKey() != null )
-            return false;
-
-        return true;
+        return new EqualsBuilder().append(getStatus(), that.getStatus())
+                                  .append(getLabVessel(), that.getLabVessel())
+                                  .append(getPoBusinessKey(), that.getPoBusinessKey())
+                                  .isEquals();
     }
 
     @Override
     public int hashCode () {
-        int result = labVessel != null ? labVessel.hashCode () : 0;
-        result = 31 * result + ( poBusinessKey != null ? poBusinessKey.hashCode () : 0 );
-        return result;
+
+
+        return new HashCodeBuilder().append(getStatus()).append(getLabVessel()).append(getPoBusinessKey()).toHashCode();
+
     }
 
     public int compareTo (BucketEntry other) {
         CompareToBuilder builder = new CompareToBuilder ();
-        builder.append(labVessel, other.getLabVessel());
-        builder.append(poBusinessKey, other.getPoBusinessKey());
+        builder.append(getStatus(), other.getStatus());
+        builder.append(getLabVessel(), other.getLabVessel());
+        builder.append(getPoBusinessKey(), other.getPoBusinessKey());
 
         return builder.toComparison();
     }
