@@ -249,21 +249,21 @@
             </tr>
             </thead>
             <tbody>
-            <c:forEach items="${actionBean.reworkEntries}" var="entry">
+            <c:forEach items="${actionBean.reworkEntries}" var="reworkVessel">
                 <tr>
                     <td>
                         <stripes:checkbox class="bucket-checkbox" name="selectedReworks"
-                                          value="${entry.value.label}"/>
+                                          value="${reworkVessel.label}"/>
                     </td>
                     <td>
                         <c:choose> <c:when test="${!readOnly}">
-                            <a href="${ctxpath}/search/all.action?search=&searchKey=${entry.key}">
-                                    ${entry.key}
+                            <a href="${ctxpath}/search/all.action?search=&searchKey=${reworkVessel.label}">
+                                    ${reworkVessel.label}
                             </a>
-                        </c:when><c:otherwise>${entry.key}</c:otherwise>
+                        </c:when><c:otherwise>${reworkVessel.label}</c:otherwise>
                         </c:choose></td>
                     <td>
-                        <c:forEach items="${actionBean.getSampleNames(entry.value)}" var="sampleName" varStatus="loopstatus">
+                        <c:forEach items="${actionBean.getSampleNames(reworkVessel)}" var="sampleName" varStatus="loopstatus">
                             <c:choose><c:when test="${!readOnly}">
                                 <a href="${ctxpath}/search/all.action?search=&searchKey=${sampleName}"> ${sampleName} </a>
                             </c:when><c:otherwise>${sampleName}</c:otherwise></c:choose>
@@ -273,21 +273,21 @@
                     <td>
                         <c:choose>
                             <c:when test="${!readOnly}"><a
-                                    href="${ctxpath}/search/all.action?search=&searchKey=${actionBean.getSinglePDOBusinessKey(entry.value)}">
-                                    ${actionBean.getSinglePDOBusinessKey(entry.value)}
+                                    href="${ctxpath}/search/all.action?search=&searchKey=${actionBean.getSinglePDOBusinessKey(reworkVessel)}">
+                                    ${actionBean.getSinglePDOBusinessKey(reworkVessel)}
                             </a>
                             </c:when>
-                            <c:otherwise>${actionBean.getSinglePDOBusinessKey(entry.value)}</c:otherwise>
+                            <c:otherwise>${actionBean.getSinglePDOBusinessKey(reworkVessel)}</c:otherwise>
                         </c:choose>
                     </td>
                     <td>
-                        <div class="tdfield">${actionBean.getPDODetails(actionBean.getSinglePDOBusinessKey(entry.value)).title}</div>
+                        <div class="tdfield">${actionBean.getPDODetails(actionBean.getSinglePDOBusinessKey(reworkVessel)).title}</div>
                     </td>
                     <td>
-                            ${actionBean.getUserFullName(actionBean.getPDODetails(actionBean.getSinglePDOBusinessKey(entry.value)).createdBy)}
+                            ${actionBean.getUserFullName(actionBean.getPDODetails(actionBean.getSinglePDOBusinessKey(reworkVessel)).createdBy)}
                     </td>
                     <td>
-                        <c:forEach items="${entry.value.nearestWorkflowLabBatches}" var="batch"
+                        <c:forEach items="${reworkVessel.nearestWorkflowLabBatches}" var="batch"
                                    varStatus="stat">
                             <c:choose><c:when test="${!readOnly}"> <a
                                     href="${ctxpath}/search/all.action?search=&searchKey=${batch.businessKey}">
@@ -299,16 +299,16 @@
 
                     </td>
                     <td>
-                            ${actionBean.getReworkReason(entry.value)}
+                            ${actionBean.getReworkReason(reworkVessel)}
                     </td>
                     <td>
-                        ${actionBean.getReworkComment(entry.value)}
+                        ${actionBean.getReworkComment(reworkVessel)}
                     </td>
                     <td>
-                            ${actionBean.getUserFullName(actionBean.getReworkOperator(entry.value))}
+                            ${actionBean.getUserFullName(actionBean.getReworkOperator(reworkVessel))}
                     </td>
                     <td>
-                        <fmt:formatDate value="${actionBean.getReworkLogDate(entry.value)}" pattern="MM/dd/yyyy HH:mm:ss"/>
+                        <fmt:formatDate value="${actionBean.getReworkLogDate(reworkVessel)}" pattern="MM/dd/yyyy HH:mm:ss"/>
                     </td>
                 </tr>
             </c:forEach>

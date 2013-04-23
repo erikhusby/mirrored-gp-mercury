@@ -198,9 +198,11 @@ public class ReworkEjb {
         }
     }
 
-
-    public Collection<ReworkEntry> getNonActiveReworkEntries() {
-        return reworkEntryDao.getNonActive();
+    public Collection<LabVessel> getVesselsForRework(){
+        Set<LabVessel> inactiveVessels=new HashSet<LabVessel>();
+        for (ReworkEntry activeRework : reworkEntryDao.getNonActive()) {
+            inactiveVessels.add(activeRework.getLabVesselComment().getLabVessel());
+        }
+        return inactiveVessels;
     }
-
 }
