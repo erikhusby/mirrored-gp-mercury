@@ -190,8 +190,10 @@ public interface TransferTraverserCriteria {
                         batchesAtHop.addAll(labBatches);
                     } else {
                         for (LabBatch labBatch : labBatches) {
-                            if (labBatch.getLabBatchType().equals(type)) {
-                                batchesAtHop.add(labBatch);
+                            if (labBatch.getLabBatchType() != null) {
+                                if (labBatch.getLabBatchType().equals(type)) {
+                                    batchesAtHop.add(labBatch);
+                                }
                             }
                         }
                     }
