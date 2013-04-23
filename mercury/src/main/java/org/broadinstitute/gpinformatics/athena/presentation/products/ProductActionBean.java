@@ -409,6 +409,6 @@ public class ProductActionBean extends CoreActionBean {
     }
 
     public Collection<QuotePriceItem> getReplacementPriceItems() {
-        return editProduct.getReplacementPriceItems(priceListCache);
+        return priceListCache.getReplacementPriceItems(editProduct);
     }
 }
