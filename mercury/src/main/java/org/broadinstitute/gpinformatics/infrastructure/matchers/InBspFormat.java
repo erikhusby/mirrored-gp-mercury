@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.matchers;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
 import org.hamcrest.Description;
 import org.hamcrest.Factory;
 import org.hamcrest.Matcher;
@@ -10,7 +11,7 @@ public class InBspFormat extends TypeSafeMatcher<String> {
 
     @Override
     public boolean matchesSafely(String s) {
-        return ProductOrderSample.isInBspFormat(s);
+        return BSPUtil.isInBspFormat(s);
     }
 
     @Override

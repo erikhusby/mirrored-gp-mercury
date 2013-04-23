@@ -15,23 +15,28 @@ package org.broadinstitute.gpinformatics.mercury.entity.rapsheet;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.hibernate.envers.Audited;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.validation.constraints.NotNull;
 
+/**
+ * A ReworkEntry is marks that a sample needs to be reworked (activeRework = true) or that it has been reworked
+ * (activeRework = false). Other information on the event are why the rework is being requested, and to what level
+ * it is being reworked; see (@link(ReworkReason))
+ */
 @Entity
 @Audited
 public class ReworkEntry extends RapSheetEntry {
     @Enumerated(EnumType.STRING)
-    @NotNull
+    @Column(nullable = false)
     private ReworkReason reworkReason;
 
     @Enumerated(EnumType.STRING)
-    @NotNull
+    @Column(nullable = false)
     private ReworkLevel reworkLevel;
 
-    @NotNull
+    @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private LabEventType reworkStep;
 
@@ -43,7 +48,8 @@ public class ReworkEntry extends RapSheetEntry {
      * This is a Big B Boolean, because hibernate was complaining about not being able
      * so assign null to a primitive.
      */
-    private Boolean activeRework=false;
+    @Column(nullable = false)
+    private boolean activeRework = false;
 
     public ReworkEntry() {
 
@@ -85,11 +91,55 @@ public class ReworkEntry extends RapSheetEntry {
         this.reworkStep = reworkStep;
     }
 
-    public Boolean isActiveRework() {
+    public boolean isActiveRework() {
         return activeRework;
     }
 
-    public void setActiveRework(Boolean activeRework) {
+    public void setActiveRework(boolean activeRework) {
         this.activeRework = activeRework;
+    }
+
+    /**
+     * The lab recognizes these types of rework. They refer to them as Type 1, 2 or 3. This will tell the lab
+     * what they need to rework and how it effects the rest of the batch.
+     */
+    public static enum ReworkLevel {
+        ONE_SAMPLE_HOLD_REST_BATCH("Type 1", "Rework one sample and hold up the rest of the batch."),
+        ONE_SAMPLE_RELEASE_REST_BATCH("Type 2", "Rework one sample let the rest of the batch proceed. "),
+        ENTIRE_BATCH("Type 3", "Rework all samples in the batch.");
+
+        private final String value;
+        private final String description;
+
+        private ReworkLevel(String value, String description) {
+            this.value = value;
+            this.description = description;
+        }
+
+        public String getValue() {
+            return value;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+    }
+
+    /**
+     * Why the rework is happening. This list needs to be added to.
+     */
+    public static enum ReworkReason {
+        MACHINE_ERROR("Machine Error"),
+        UNKNOWN_ERROR("Unknown Error");
+
+        private final String value;
+
+        ReworkReason(String value) {
+            this.value = value;
+        }
+
+        public String getValue() {
+            return value;
+        }
     }
 }

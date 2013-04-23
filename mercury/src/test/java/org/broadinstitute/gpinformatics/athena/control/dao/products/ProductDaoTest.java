@@ -92,7 +92,7 @@ public class ProductDaoTest extends ContainerTest {
                 false,                                     // top level product
                 "dummy price item id"                      // quote server price item id
                 ,
-                false);
+                false, "agg type");
 
         // we have some tests that call this method more than once so the price item compound key must be unique
         // across invocations

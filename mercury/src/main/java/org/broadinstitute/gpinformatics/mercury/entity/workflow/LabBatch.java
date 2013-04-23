@@ -55,7 +55,7 @@ public class LabBatch {
     // fixme reworks need to be included in the startingVessels
     // list because they are starting vessels...but just
     // marked as rework
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(cascade = CascadeType.ALL)
     private Collection<LabVessel> reworks = new HashSet<LabVessel>();
 
     private Date createdOn;
@@ -118,13 +118,13 @@ public class LabBatch {
 
 
     /**
-     * Adds the given rework vessels to the list
-     * of reworks for the batch.
+     * Adds the given rework vessels to the list of reworks for the batch
+     * and updates the RapSheet so the samples know they are rework.
      * @param newRework
      */
     public void addReworks(Collection<LabVessel> newRework) {
         reworks.addAll(newRework);
-        for (LabVessel vessel : getReworks()) {
+        for (LabVessel vessel : newRework) {
             for (MercurySample sample : vessel.getMercurySamples()) {
                 sample.getRapSheet().startRework();
             }

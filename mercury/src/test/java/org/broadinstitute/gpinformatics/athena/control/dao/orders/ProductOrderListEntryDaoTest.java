@@ -71,7 +71,7 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
 
         //noinspection ResultOfMethodCallIgnored
         order.getProduct().getPrimaryPriceItem().hashCode();
-        for (QuotePriceItem quotePriceItem : order.getProduct().getReplacementPriceItems(priceListCache)) {
+        for (QuotePriceItem quotePriceItem : priceListCache.getReplacementPriceItems(order.getProduct())) {
             //noinspection ResultOfMethodCallIgnored
             quotePriceItem.hashCode();
         }

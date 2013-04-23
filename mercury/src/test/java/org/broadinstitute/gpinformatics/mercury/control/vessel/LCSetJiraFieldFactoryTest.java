@@ -65,7 +65,7 @@ public class LCSetJiraFieldFactoryTest {
                                                      new Product("Test product",
                                                                  new ProductFamily("Test product family"), "test",
                                                                  "1234", null, null, 10000, 20000, 100, 40, null, null,
-                                                                 true, workflowName, false),
+                                                                 true, workflowName, false, "agg type"),
                                                      new ResearchProject(101L, "Test RP", rpSynopsis, false));
         productOrder.setJiraTicketKey(pdoBusinessName);
         mapKeyToProductOrder.put(pdoBusinessName, productOrder);

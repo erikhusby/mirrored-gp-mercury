@@ -218,6 +218,11 @@ public class ProductOrder implements Serializable {
      * @return either a JIRA ID or a product order ID.
      */
     public static JiraOrId convertBusinessKeyToJiraOrId(@Nonnull String businessKey) {
+        // This is currently happening in DEV at least, not sure why.
+        //noinspection ConstantConditions
+        if (businessKey == null) {
+            return null;
+        }
         if (businessKey.startsWith(DRAFT_PREFIX)) {
             return new JiraOrId(Long.parseLong(businessKey.substring(DRAFT_PREFIX.length())), null);
         }

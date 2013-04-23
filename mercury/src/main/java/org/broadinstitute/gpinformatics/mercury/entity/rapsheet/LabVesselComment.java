@@ -16,10 +16,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
@@ -33,23 +31,21 @@ public class LabVesselComment<T extends RapSheetEntry> {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_LV_COMMENT")
     private Long labVesselCommentId;
 
-    @NotNull
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST, optional = false)
     protected LabEvent labEvent;
 
     @Column(name = "LAB_VESSEL_COMMENT")
     private String comment;
 
-    @NotNull
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.REFRESH,optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.REFRESH, optional = false)
     private LabVessel labVessel;
 
-    @NotNull
+    @Column(nullable = false)
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, targetEntity = RapSheetEntry.class,
             mappedBy = "labVesselComment")
-    private List<T> rapSheetEntries=new ArrayList<T>();
+    private List<T> rapSheetEntries = new ArrayList<T>();
 
-    @NotNull
+    @Column(nullable = false)
     @Temporal(TemporalType.DATE)
     private Date logDate;
 
@@ -67,7 +63,8 @@ public class LabVesselComment<T extends RapSheetEntry> {
         logDate = new Date();
     }
 
-    public void setLogDate(Date logDate) {
+    public void
+    setLogDate(Date logDate) {
         this.logDate = logDate;
     }
 
@@ -106,17 +103,4 @@ public class LabVesselComment<T extends RapSheetEntry> {
     public void setRapSheetEntries(List<T> rapSheetEntries) {
         this.rapSheetEntries = rapSheetEntries;
     }
-
-    /**
-     * This class is here primarily so RapSheet can return the most recent RapSheetEntry/ReworkEntry.
-     * Normally we implement comparators as static methods, but Hibernates @Sort expects a class.
-     */
-    public static final class byLogDate implements Comparator<LabVesselComment> {
-        @Override
-        public int compare(LabVesselComment first, LabVesselComment second) {
-            int result;
-            result = first.getLogDate().compareTo(second.getLogDate());
-            return result;
-        }
-    };
 }

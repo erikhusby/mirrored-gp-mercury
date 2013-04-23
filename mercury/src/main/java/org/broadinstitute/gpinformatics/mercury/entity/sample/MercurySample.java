@@ -4,12 +4,12 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.RapSheet;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
-import javax.annotation.Nonnull;
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -20,7 +20,6 @@ import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
-import java.util.regex.Pattern;
 
 /**
  * Represents Mercury's view of a sample.  Sample information is held in another system (initially Athena),
@@ -49,7 +48,6 @@ public class MercurySample {
     private BSPSampleDTO bspSampleDTO;
     @Transient
     private boolean hasBspDTOBeenInitialized;
-    public static final Pattern BSP_SAMPLE_NAME_PATTERN = Pattern.compile("SM-[A-Z1-9]{4,6}");
 
 
     /**
@@ -99,11 +97,7 @@ public class MercurySample {
     }
 
     public boolean isInBspFormat() {
-        return isInBspFormat(sampleKey);
-    }
-
-    public static boolean isInBspFormat(@Nonnull String sampleName) {
-        return BSP_SAMPLE_NAME_PATTERN.matcher(sampleName).matches();
+        return BSPUtil.isInBspFormat(sampleKey);
     }
 
     public BSPSampleDTO getBspSampleDTO() {

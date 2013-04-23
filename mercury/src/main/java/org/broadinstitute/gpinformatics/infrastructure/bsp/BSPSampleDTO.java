@@ -5,8 +5,11 @@ import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 
 import javax.annotation.Nonnull;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -16,9 +19,9 @@ import java.util.Map;
  * <p/>
  * If a value is missing the following default values are returned, based on the object type:
  * <ul>
- *     <li>double - 0</li>
- *     <li>String - ""</li>
- *     <li>boolean - false</li>
+ * <li>double - 0</li>
+ * <li>String - ""</li>
+ * <li>boolean - false</li>
  * </ul>
  */
 public class BSPSampleDTO {
@@ -32,6 +35,9 @@ public class BSPSampleDTO {
     public static final String ACTIVE_IND = "Active Stock";
 
     private final Map<BSPSampleSearchColumn, String> columnToValue;
+
+    //This is the BSP sample receipt date formatter. (ex. 11/18/2010)
+    public static final SimpleDateFormat BSP_DATE_FORMAT = new SimpleDateFormat("MM/DD/yyyy");
 
     public boolean hasData() {
         return !columnToValue.isEmpty();
@@ -197,9 +203,35 @@ public class BSPSampleDTO {
         return getValue(BSPSampleSearchColumn.FINGERPRINT);
     }
 
+    /**
+     * This method returns true when the sample is received using the following logic:
+     * <ol>
+     * <li>If the root sample is null then we are a root sample and need to check condition 3.</li>
+     * <li>If the sample id is not the root sample we are not a root sample and therefore received.
+     * Otherwise we are a root sample and need to check condition 3.</li>
+     * <li>If we are a root sample and we have a receipt date then we have been received.</li>
+     * </ol>
+     *
+     * @return A boolean that determines if this sample has been received or not.
+     */
     public boolean isSampleReceived() {
-        return !StringUtils.isBlank(getValue(BSPSampleSearchColumn.ROOT_SAMPLE));
+        return !StringUtils.isBlank(getRootSample()) || !getRootSample().equals(getSampleId())
+                || getReceiptDate() != null;
     }
+
+    public Date getReceiptDate() {
+        String receiptDateString = getValue(BSPSampleSearchColumn.RECEIPT_DATE);
+        Date receiptDate = null;
+        if(StringUtils.isNotBlank(receiptDateString)){
+            try {
+                receiptDate = BSP_DATE_FORMAT.parse(receiptDateString);
+            } catch (ParseException e) {
+                receiptDate = null;
+            }
+        }
+        return receiptDate;
+    }
+
 
     public boolean isActiveStock() {
         String stockType = getStockType();

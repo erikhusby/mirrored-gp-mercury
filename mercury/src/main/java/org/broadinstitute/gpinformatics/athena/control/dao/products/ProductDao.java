@@ -174,7 +174,7 @@ public class ProductDao extends GenericDao implements Serializable {
      */
     private List<Product> findInProducts(String searchText, List<Product> products) {
         List<Product> list = new ArrayList<Product>();
-        String[] searchWords = searchText.split("\\s");
+        String[] searchWords = (searchText == null ? "" : searchText).split("\\s");
 
         Collections.sort(products);
 

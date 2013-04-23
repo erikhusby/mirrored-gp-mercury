@@ -23,7 +23,7 @@ public class DbFreeSquidThriftLibraryConverterTest {
         ProductOrder pdo = new ProductOrder(new BspUser(),project);
         pdo.setJiraTicketKey("PDO-2");
         pdo.setProduct(new Product("Mashed Potatoes",new ProductFamily("Mashed Things"),
-                null,null,null,null,null,null,null,null,null,null,false,null,false));
+                null,null,null,null,null,null,null,null,null,null,false,null,false, "with gravy"));
 
         SquidThriftLibraryConverter converter = new SquidThriftLibraryConverter();
         TZamboniLibrary zamboniLibrary = thriftRun.getLanes().iterator().next().getLibraries().iterator().next();
@@ -49,6 +49,7 @@ public class DbFreeSquidThriftLibraryConverterTest {
         assertNull(lib.getResearchProjectName());
 
         assertEquals("Mashed Potatoes",lib.getProduct());
+        assertEquals("with gravy",lib.getDataType());
         assertEquals("Mashed Things",lib.getProductFamily());
 
         assertEquals(lib.getLcSet(),zamboniLibrary.getLcset());

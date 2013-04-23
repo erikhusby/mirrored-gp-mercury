@@ -16,6 +16,7 @@ import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.RapSheet;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
@@ -53,15 +54,15 @@ public class BucketViewActionBean extends CoreActionBean {
     public static final String CREATE_BATCH_ACTION = "createBatch";
 
     private List<WorkflowBucketDef> buckets = new ArrayList<WorkflowBucketDef>();
-    private List<String> selectedVesselLabels=new ArrayList<String>();
+    private List<String> selectedVesselLabels = new ArrayList<String>();
     private List<LabVessel> selectedBatchVessels;
-    private List<String> selectedReworks=new ArrayList<String>();
+    private List<String> selectedReworks = new ArrayList<String>();
 
     @Validate(required = true, on = {CREATE_BATCH_ACTION, "viewBucket"})
     private String selectedBucket;
 
     private Collection<BucketEntry> bucketEntries;
-    private Map<String,LabVessel> reworkEntries;
+    private Map<String, LabVessel> reworkEntries;
 
     private Map<String, ProductOrder> pdoByKeyMap = new HashMap<String, ProductOrder>();
 
@@ -160,9 +161,7 @@ public class BucketViewActionBean extends CoreActionBean {
     }
 
     public Resolution viewBucket() {
-        if(reworkEntries == null) {
-            reworkEntries = new HashMap<String, LabVessel>();
-        }
+        reworkEntries = getInactiveRework();
 
         if (selectedBucket != null) {
             Bucket bucket = bucketDao.findByName(selectedBucket);
@@ -178,11 +177,7 @@ public class BucketViewActionBean extends CoreActionBean {
                             athenaClientService.retrieveProductOrderDetails(bucketEntry.getPoBusinessKey()));
                 }
             }
-            reworkEntries = getInactiveRework();
         }
-
-        //TODO jac populate the rework entries
-
         return view();
     }
 
@@ -216,21 +211,27 @@ public class BucketViewActionBean extends CoreActionBean {
         return "Multiple PDOs";
     }
 
+    private RapSheet getRapSheet(LabVessel vessel) {
+        for (SampleInstance sampleInstance : vessel.getAllSamples()) {
+            return sampleInstance.getStartingSample().getRapSheet();
+        }
+
+        return null;
+    }
 
     public String getReworkReason(LabVessel vessel) {
-
-        return vessel.getAllSamples().iterator().next().getStartingSample().getRapSheet()
+        return getRapSheet(vessel)
                 .getCurrentReworkEntry().getReworkReason().name();
     }
 
     public String getReworkComment(LabVessel vessel) {
-        return vessel.getAllSamples().iterator().next().getStartingSample().getRapSheet()
+        return getRapSheet(vessel)
                 .getCurrentReworkEntry().getLabVesselComment().getComment();
     }
 
     public Set<String> getSampleNames(LabVessel vessel) {
         final Set<SampleInstance> allSamples = vessel.getAllSamples();
-        Set<String> sampleNames=new HashSet<String>();
+        Set<String> sampleNames = new HashSet<String>();
         for (SampleInstance sampleInstance : allSamples) {
             sampleNames.add(sampleInstance.getStartingSample().getSampleKey());
         }
@@ -238,13 +239,13 @@ public class BucketViewActionBean extends CoreActionBean {
     }
 
     public Long getReworkOperator(LabVessel vessel) {
-        return vessel.getAllSamples().iterator().next().getStartingSample().getRapSheet()
+        return getRapSheet(vessel)
                 .getCurrentReworkEntry().getLabVesselComment().getLabEvent().getEventOperator();
     }
 
 
     public Date getReworkLogDate(LabVessel vessel) {
-        return vessel.getAllSamples().iterator().next().getStartingSample().getRapSheet()
+        return getRapSheet(vessel)
                 .getCurrentReworkEntry().getLabVesselComment().getLogDate();
     }
 

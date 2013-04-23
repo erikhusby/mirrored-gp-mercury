@@ -153,7 +153,7 @@ public class LedgerEntryFixupTest extends Arquillian {
     private boolean isEntryAReplacementItem(LedgerEntry ledger) {
 
         Collection<QuotePriceItem> quotePriceItems =
-                ledger.getProductOrderSample().getProductOrder().getProduct().getReplacementPriceItems(priceListCache);
+            priceListCache.getReplacementPriceItems(ledger.getProductOrderSample().getProductOrder().getProduct());
 
         for (QuotePriceItem quotePriceItem : quotePriceItems) {
             if (quotePriceItem.getName().equals(ledger.getPriceItem().getName())) {

@@ -40,8 +40,9 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
-import org.broadinstitute.gpinformatics.athena.entity.preference.NameValuePreferenceDefinition;
+import org.broadinstitute.gpinformatics.athena.entity.preference.NameValueDefinitionValue;
 import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
+import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceDefinitionValue;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
@@ -454,7 +455,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 // the defaults were ignored for some reason.
                 populateSearchDefaults();
                 logger.error("Could not read user preference on search for product orders.");
-                addMessage("Could not read search preference, using default.");
+                addMessage("Could not read search preference");
             }
         }
     }
@@ -474,8 +475,8 @@ public class ProductOrderActionBean extends CoreActionBean {
      * @throws Exception Any errors.
      */
     private void populateSearchFromPreference(Preference preference) throws Exception {
-        Map<String, List<String>> preferenceData =
-            ((NameValuePreferenceDefinition) preference.getPreferenceDefinition()).getDataMap();
+        PreferenceDefinitionValue value = preference.getPreferenceDefinition().getDefinitionValue();
+        Map<String, List<String>> preferenceData = ((NameValueDefinitionValue) value).getDataMap();
 
         // The family id. By default there is no choice.
         List<String> productFamilyIds = preferenceData.get(FAMILY);
@@ -514,24 +515,23 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     @After(stages = LifecycleStage.EventHandling, on = LIST_ACTION)
     private void saveSearchPreference() throws Exception {
-        NameValuePreferenceDefinition definition =
-                (NameValuePreferenceDefinition) PreferenceType.PDO_SEARCH.getCreator().create();
+        NameValueDefinitionValue definitionValue = new NameValueDefinitionValue();
 
-        definition.put(FAMILY, productFamilyId == null ? "" : productFamilyId.toString());
+        definitionValue.put(FAMILY, productFamilyId == null ? "" : productFamilyId.toString());
 
-        definition.put(PRODUCT, productTokenInput.getBusinessKeyList());
+        definitionValue.put(PRODUCT, productTokenInput.getBusinessKeyList());
 
         List<String> statusStrings = new ArrayList<String> ();
         for (ProductOrder.OrderStatus status : selectedStatuses) {
             statusStrings.add(status.name());
         }
-        definition.put(STATUS, statusStrings);
+        definitionValue.put(STATUS, statusStrings);
 
-        definition.put(DATE, getDateRange().createDateStrings());
+        definitionValue.put(DATE, getDateRange().createDateStrings());
 
-        definition.put(OWNER, owner.getBusinessKeyList());
+        definitionValue.put(OWNER, owner.getBusinessKeyList());
 
-        preferenceEjb.add(userBean.getBspUser().getUserId(), PreferenceType.PDO_SEARCH, definition);
+        preferenceEjb.add(userBean.getBspUser().getUserId(), PreferenceType.PDO_SEARCH, definitionValue);
     }
 
     @After(stages = LifecycleStage.BindingAndValidation, on = EDIT_ACTION)
