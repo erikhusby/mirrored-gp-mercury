@@ -39,7 +39,7 @@ public class LabBatchFixUpTest extends Arquillian {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void updateNullLabBatchType() {
         final List<LabBatch> nullTypes = labBatchDAO.findList(LabBatch.class, LabBatch_.labBatchType, null);
         List<LabBatch> fixedBatches = new ArrayList<LabBatch>(nullTypes.size());
