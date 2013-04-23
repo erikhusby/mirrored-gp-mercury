@@ -52,7 +52,8 @@ public class BucketEntryDBFreeTest {
 
     public void testBasicBeaniness()  {
         BeanTester tester = new BeanTester();
-        Configuration configuration = new ConfigurationBuilder ().ignoreProperty("bucketExistence").build();
+        Configuration configuration = new ConfigurationBuilder().ignoreProperty("bucket").ignoreProperty("labBatch").
+                build();
 
         tester.testBean(BucketEntry.class, configuration);
     }

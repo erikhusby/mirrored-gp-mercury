@@ -36,19 +36,19 @@ public class BSPPlatingTest extends ContainerTest {
 
         Map<MercurySample, AliquotParameters> starterMap = new HashMap<MercurySample, AliquotParameters>();
 
-        MercurySample sample = new MercurySample("PDO-123", "SM-26BPV");
+        MercurySample sample = new MercurySample("SM-26BPV");
         starterMap.put(sample, new AliquotParameters(0.0f, 1.0f));
 
-        sample = new MercurySample("PDO-123", "SM-26BHJ");
+        sample = new MercurySample("SM-26BHJ");
         starterMap.put(sample, new AliquotParameters(0.0f, 1.0f));
 
-        sample = new MercurySample("PDO-123", "SM-26BPU");
+        sample = new MercurySample("SM-26BPU");
         starterMap.put(sample, new AliquotParameters(0.0f, 1.0f));
 
-        sample = new MercurySample("PDO-123", "SM-HOWIE");
+        sample = new MercurySample("SM-HOWIE");
         starterMap.put(sample, new AliquotParameters(0.0f, 1.0f));
 
-        sample = new MercurySample("PDO-123", "SM-26BPK");
+        sample = new MercurySample("SM-26BPK");
         starterMap.put(sample, new AliquotParameters(0.0f, 1.0f));
 
 

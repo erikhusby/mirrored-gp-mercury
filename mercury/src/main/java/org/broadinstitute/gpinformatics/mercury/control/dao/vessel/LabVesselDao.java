@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.vessel;
 
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry_;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample_;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -72,8 +74,8 @@ public class LabVesselDao extends GenericDao {
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<LabVessel> criteriaQuery = criteriaBuilder.createQuery(LabVessel.class);
         Root<LabVessel> root = criteriaQuery.from(LabVessel.class);
-        Join<LabVessel, MercurySample> labVessels = root.join(LabVessel_.mercurySamples);
-        Predicate predicate = criteriaBuilder.equal(labVessels.get(MercurySample_.productOrderKey), productOrderKey);
+        Join<LabVessel, BucketEntry> bucketEntryJoin = root.join(LabVessel_.bucketEntries);
+        Predicate predicate = criteriaBuilder.equal(bucketEntryJoin.get(BucketEntry_.poBusinessKey), productOrderKey);
         criteriaQuery.where(predicate);
         try {
             resultList.addAll(getEntityManager().createQuery(criteriaQuery).getResultList());

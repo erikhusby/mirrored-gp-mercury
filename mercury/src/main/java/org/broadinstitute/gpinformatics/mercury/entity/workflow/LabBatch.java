@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -91,6 +92,9 @@ public class LabBatch {
 
     @Transient
     private String important;
+
+    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "labBatch")
+    private Set<BucketEntry> bucketEntries = new HashSet<BucketEntry>();
 
     /**
      * Create a new batch with the given name
@@ -348,6 +352,14 @@ public class LabBatch {
 
     public LabVessel[] getStartingVesselsArray() {
         return startingLabVessels.toArray(new LabVessel[startingLabVessels.size()]);
+    }
+
+    public Set<BucketEntry> getBucketEntries() {
+        return bucketEntries;
+    }
+
+    public void addBucketEntry(BucketEntry bucketEntry) {
+        bucketEntries.add(bucketEntry);
     }
 
     @Override

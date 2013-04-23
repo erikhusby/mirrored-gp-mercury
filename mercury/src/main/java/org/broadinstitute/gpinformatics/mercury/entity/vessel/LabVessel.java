@@ -135,10 +135,6 @@ public abstract class LabVessel implements Serializable {
     @Embedded
     private UserRemarks userRemarks;
 
-    @Transient
-    /** todo this is used only for experimental testing for GPLIM-64...should remove this asap! */
-    private Collection<? extends LabVessel> chainOfCustodyRoots = new HashSet<LabVessel>();
-
     // todo jmt separate role for sample holder?
     @ManyToMany(cascade = CascadeType.PERSIST)
     private Set<MercurySample> mercurySamples = new HashSet<MercurySample>();
@@ -574,6 +570,7 @@ public abstract class LabVessel implements Serializable {
         private final Set<Reagent> reagents = new HashSet<Reagent>();
         private LabBatch unambiguousLabBatch = null;
         private final Set<LabBatch> labBatches = new HashSet<LabBatch>();
+        private BucketEntry bucketEntry;
 
         void add(TraversalResults traversalResults) {
             sampleInstances.addAll(traversalResults.getSampleInstances());
@@ -615,6 +612,13 @@ public abstract class LabVessel implements Serializable {
             updateSampleInstanceLabBatch();
         }
 
+        void setBucketEntry(BucketEntry bucketEntry) {
+            this.bucketEntry = bucketEntry;
+            for (SampleInstance sampleInstance : sampleInstances) {
+                sampleInstance.setProductOrderKey(bucketEntry.getPoBusinessKey());
+            }
+        }
+
         public void updateSampleInstanceLabBatch() {
             for (SampleInstance si : sampleInstances) {
                 si.setAllLabBatches(labBatches);
@@ -654,9 +658,10 @@ public abstract class LabVessel implements Serializable {
 
         Set<MercurySample> filteredMercurySamples = new HashSet<MercurySample>();
         if (sampleType == SampleType.WITH_PDO) {
-            for (MercurySample mercurySample : mercurySamples) {
-                if (mercurySample.getProductOrderKey() != null) {
-                    filteredMercurySamples.add(mercurySample);
+            for (BucketEntry bucketEntry : bucketEntries) {
+                if(bucketEntry.getPoBusinessKey() != null) {
+                    filteredMercurySamples = mercurySamples;
+                    break;
                 }
             }
         } else {
@@ -679,6 +684,24 @@ public abstract class LabVessel implements Serializable {
                 }
             }
         }
+        if (bucketEntries.size() > 1) {
+            throw new RuntimeException("Unexpected multiple bucket entries");
+/* todo jmt handle multiple buckets
+            for (BucketEntry bucketEntry : bucketEntries) {
+                for (LabVessel container : containers) {
+                    if (bucketEntry.getLabBatch() != null) {
+                        if (bucketEntry.getLabBatch().getStartingLabVessels().equals(container.getContainerRole().getContainedVessels())) {
+                            traversalResults.setBucketEntry(bucketEntry);
+                            break;
+                        }
+                    }
+                }
+            }
+*/
+        } else if(bucketEntries.size() == 1) {
+            traversalResults.setBucketEntry(bucketEntries.iterator().next());
+        }
+
         for (Reagent reagent : getReagentContents()) {
             traversalResults.add(reagent);
         }
@@ -803,6 +826,10 @@ public abstract class LabVessel implements Serializable {
 
     public Set<BucketEntry> getBucketEntries() {
         return Collections.unmodifiableSet(bucketEntries);
+    }
+
+    public void addBucketEntry(BucketEntry bucketEntry) {
+        bucketEntries.add(bucketEntry);
     }
 
     public void addLabBatch(LabBatch labBatch) {
@@ -1139,7 +1166,7 @@ public abstract class LabVessel implements Serializable {
     public Set<String> getPdoKeys() {
         Set<String> pdoKeys = new HashSet<String>();
         for (SampleInstance sample : getAllSamples()) {
-            String productOrderKey = sample.getStartingSample().getProductOrderKey();
+            String productOrderKey = sample.getProductOrderKey();
             if (productOrderKey != null) {
                 pdoKeys.add(productOrderKey);
             }

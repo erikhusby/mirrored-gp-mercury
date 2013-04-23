@@ -394,6 +394,7 @@ public class BucketBean {
 
         for (BucketEntry currEntry : bucketEntries) {
             batchVessels.add(currEntry.getLabVessel());
+            currEntry.setLabBatch(bucketBatch);
         }
 
         if (!batchVessels.isEmpty()) {

@@ -6,6 +6,7 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
@@ -39,11 +40,11 @@ public class BucketEntry  {
     public static final Comparator<BucketEntry> byDate = new Comparator<BucketEntry>() {
         @Override
         public int compare ( BucketEntry bucketEntryPrime, BucketEntry bucketEntrySecond ) {
-            int result;
-            result = bucketEntryPrime.getCreatedDate().compareTo(bucketEntrySecond.getCreatedDate());
+            int result = bucketEntryPrime.getCreatedDate().compareTo(bucketEntrySecond.getCreatedDate());
 
-            if(result == 0)
+            if(result == 0) {
                 result = bucketEntryPrime.getProductOrderRanking().compareTo(bucketEntrySecond.getProductOrderRanking());
+            }
 
             return result;
         }
@@ -52,11 +53,11 @@ public class BucketEntry  {
     public static final Comparator<BucketEntry> byPdo = new Comparator<BucketEntry>() {
         @Override
         public int compare ( BucketEntry bucketEntryPrime, BucketEntry bucketEntrySecond ) {
-            int result;
-            result = bucketEntryPrime.getPoBusinessKey().compareTo(bucketEntrySecond.getPoBusinessKey());
+            int result = bucketEntryPrime.getPoBusinessKey().compareTo(bucketEntrySecond.getPoBusinessKey());
 
-            if(result == 0)
+            if(result == 0) {
                 result = bucketEntryPrime.getLabVessel().compareTo(bucketEntrySecond.getLabVessel());
+            }
 
             return result;
         }
@@ -97,6 +98,10 @@ public class BucketEntry  {
     @Column(name = "created_date", nullable = false)
     private Date createdDate;
 
+    /** The batch into which the bucket was drained. */
+    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+    private LabBatch labBatch;
+
     protected BucketEntry () {
     }
 
@@ -120,7 +125,7 @@ public class BucketEntry  {
      * @return an instance of a lab vessel waiting to be processed
      */
     public LabVessel getLabVessel() {
-        return this.labVessel;
+        return labVessel;
     }
 
     /**
@@ -128,7 +133,7 @@ public class BucketEntry  {
      * @return a representation of a product order associated with an item in a bucket waiting to be processed
      */
     public String getPoBusinessKey() {
-        return this.poBusinessKey;
+        return poBusinessKey;
     }
 
     /**
@@ -176,6 +181,14 @@ public class BucketEntry  {
         this.status = status;
     }
 
+    public LabBatch getLabBatch() {
+        return labBatch;
+    }
+
+    public void setLabBatch(LabBatch labBatch) {
+        this.labBatch = labBatch;
+    }
+
     @Override
     public boolean equals ( Object o ) {
         if ( this == o ) {
@@ -188,9 +201,9 @@ public class BucketEntry  {
         BucketEntry that = OrmUtil.proxySafeCast(o,BucketEntry.class);
 
         return new EqualsBuilder().append(getStatus(), that.getStatus())
-                                  .append(getLabVessel(), that.getLabVessel())
-                                  .append(getPoBusinessKey(), that.getPoBusinessKey())
-                                  .isEquals();
+                .append(getLabVessel(), that.getLabVessel())
+                .append(getPoBusinessKey(), that.getPoBusinessKey())
+                .isEquals();
     }
 
     @Override

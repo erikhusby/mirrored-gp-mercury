@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMess
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
@@ -95,7 +96,8 @@ public class ZimsIlluminaRunFactoryTest {
         // Create an LCSET lab batch
         final String sourceTubeBarcode = "testTube";
         testTube = new TwoDBarcodedTube(sourceTubeBarcode);
-        testTube.addSample(new MercurySample("TestPDO-1", "TestSM-1"));
+        testTube.addSample(new MercurySample("TestSM-1"));
+        testTube.addBucketEntry(new BucketEntry(testTube, "TestPDO-1"));
         JiraTicket lcSetTicket = new JiraTicket(mockJiraService, "LCSET-1");
         LabBatch lcSetBatch = new LabBatch("LCSET-1 batch", Collections.<LabVessel>singleton(testTube),
                 LabBatch.LabBatchType.WORKFLOW);

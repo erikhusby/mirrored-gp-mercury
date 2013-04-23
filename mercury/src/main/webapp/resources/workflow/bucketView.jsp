@@ -182,7 +182,7 @@
                         </c:when><c:otherwise>${entry.labVessel.label}</c:otherwise>
                         </c:choose></td>
                     <td>
-                        <c:forEach items="${actionBean.getMercurySamplesForBucketEntry(entry)}"
+                        <c:forEach items="${entry.labVessel.mercurySamplesList}"
                                    var="mercurySample"
                                    varStatus="stat">
                             <c:choose><c:when test="${!readOnly}">

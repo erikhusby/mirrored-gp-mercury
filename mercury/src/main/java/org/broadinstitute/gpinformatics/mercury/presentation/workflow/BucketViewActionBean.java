@@ -234,16 +234,6 @@ public class BucketViewActionBean extends CoreActionBean {
                 .getCurrentReworkEntry().getLabVesselComment().getLogDate();
     }
 
-    public List<MercurySample> getMercurySamplesForBucketEntry(BucketEntry entry) {
-        List<MercurySample> mercurySamplesForEntry = new ArrayList<MercurySample>();
-        for (MercurySample sample : entry.getLabVessel().getMercurySamples()) {
-            if (StringUtils.equals(entry.getPoBusinessKey(), sample.getProductOrderKey())) {
-                mercurySamplesForEntry.add(sample);
-            }
-        }
-        return mercurySamplesForEntry;
-    }
-
     /**
      * Supports the submission for the page.  Will forward to confirmation page on success
      *

@@ -71,6 +71,7 @@ public class Bucket {
     public void addEntry( BucketEntry newEntry ) {
         newEntry.setBucket(this);
         newEntry.setProductOrderRanking(getBucketEntries().size()+1);
+        newEntry.getLabVessel().addBucketEntry(newEntry);
         bucketEntries.add(newEntry);
 
     }
