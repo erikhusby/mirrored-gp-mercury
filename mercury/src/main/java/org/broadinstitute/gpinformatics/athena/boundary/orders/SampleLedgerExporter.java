@@ -115,7 +115,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
         // Get the replacement items from the quote cache.
         Collection<QuotePriceItem> quotePriceItems =
-                product.getReplacementPriceItems(priceItemListCache);
+            priceItemListCache.getReplacementPriceItems(product.getPrimaryPriceItem());
 
         // Now add the replacement items as mercury price item objects.
         for (QuotePriceItem quotePriceItem : quotePriceItems) {
@@ -309,7 +309,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         getWriter().writeCell("Billing Errors", getFixedHeaderStyle());
         getWriter().setColumnWidth(ERRORS_WIDTH);
 
-        writeAllBillAndNewHeaders(currentProduct.getReplacementPriceItems(priceListCache), currentProduct.getAddOns());
+        writeAllBillAndNewHeaders(priceListCache.getReplacementPriceItems(currentProduct), currentProduct.getAddOns());
     }
 
     private void writeAllBillAndNewHeaders(
@@ -331,7 +331,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             // primary price item for this add-on.
             writeBillAndNewHeaders();
 
-            for (QuotePriceItem quotePriceItem : addOn.getReplacementPriceItems(priceListCache)) {
+            for (QuotePriceItem quotePriceItem : priceListCache.getReplacementPriceItems(addOn)) {
                 writeBillAndNewHeaders();
             }
         }

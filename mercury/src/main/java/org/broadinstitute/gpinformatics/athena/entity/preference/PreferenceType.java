@@ -14,18 +14,18 @@ package org.broadinstitute.gpinformatics.athena.entity.preference;
  */
 public enum PreferenceType {
     PDO_SEARCH("PDO Search Preference", PreferenceScope.USER, 1,
-            new NameValuePreferenceDefinition.NameValuePreferenceDefinitionCreator());
+            new NameValueDefinitionValue.NameValuePreferenceDefinitionCreator());
 
     private final String preferenceTypeName;
     private final PreferenceScope preferenceScope;
-    private final NameValuePreferenceDefinition.PreferenceDefinitionCreator creator;
+    private final PreferenceDefinitionCreator creator;
     private final int saveLimit;
 
     private PreferenceType(
             String preferenceTypeName,
             PreferenceScope preferenceScope,
             int saveLimit,
-            PreferenceDefinition.PreferenceDefinitionCreator creator) {
+            PreferenceDefinitionCreator creator) {
 
         this.preferenceTypeName = preferenceTypeName;
         this.preferenceScope = preferenceScope;
@@ -33,7 +33,7 @@ public enum PreferenceType {
         this.creator = creator;
     }
 
-    public PreferenceDefinition.PreferenceDefinitionCreator getCreator() {
+    public PreferenceDefinitionCreator getCreator() {
         return creator;
     }
 
@@ -47,6 +47,10 @@ public enum PreferenceType {
 
     public int getSaveLimit() {
         return saveLimit;
+    }
+
+    public PreferenceDefinitionValue create(String xml) throws Exception {
+        return creator.create(xml);
     }
 
     /**

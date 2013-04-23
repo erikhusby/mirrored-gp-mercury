@@ -25,6 +25,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.xml.bind.JAXBException;
 import java.io.StringReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -44,6 +45,8 @@ public class SampleReceiptResource {
 
     private static final Log LOG = LogFactory.getLog(SampleReceiptResource.class);
 
+    ObjectMarshaller<SampleReceiptBean> marshaller;
+
     @Inject
     private LabBatchDAO labBatchDAO;
 
@@ -56,6 +59,10 @@ public class SampleReceiptResource {
 
     @Inject
     private LabVesselFactory labVesselFactory;
+
+    public SampleReceiptResource() throws JAXBException {
+        marshaller = new ObjectMarshaller<SampleReceiptBean>(SampleReceiptBean.class);
+    }
 
     @GET
     @Path("{batchName}")
@@ -96,8 +103,9 @@ public class SampleReceiptResource {
         Date now = new Date();
         wsMessageStore.store(WsMessageStore.SAMPLE_RECEIPT_RESOURCE_TYPE, sampleReceiptBeanXml, now);
         try {
-            SampleReceiptBean sampleReceiptBean = ObjectMarshaller.unmarshall(SampleReceiptBean.class,
-                    new StringReader(sampleReceiptBeanXml));
+            SampleReceiptBean sampleReceiptBean =
+                marshaller.unmarshal(sampleReceiptBeanXml);
+
             return notifyOfReceipt(sampleReceiptBean);
         } catch (Exception e) {
             wsMessageStore.recordError(WsMessageStore.SAMPLE_RECEIPT_RESOURCE_TYPE, sampleReceiptBeanXml, now, e);

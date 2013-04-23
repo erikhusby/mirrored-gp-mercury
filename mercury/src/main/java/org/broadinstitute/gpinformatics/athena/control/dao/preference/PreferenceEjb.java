@@ -10,7 +10,7 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.preference;
 
 import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
-import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceDefinition;
+import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceDefinitionValue;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 
 import javax.annotation.Nonnull;
@@ -40,16 +40,16 @@ public class PreferenceEjb {
      *
      * @param associatedUser The user to associate with this preference.
      * @param preferenceType The preference type for easy searching.
-     * @param definition The preference definition
+     * @param definitionValue The preference definition
      *
      * @throws PreferenceException Any problems processing the preference.
      */
     public void add(
         @Nonnull Long associatedUser,
         @Nonnull PreferenceType preferenceType,
-        @Nonnull PreferenceDefinition definition) throws Exception {
+        @Nonnull PreferenceDefinitionValue definitionValue) throws Exception {
 
-        String data = definition.getPreferenceData();
+        String data = definitionValue.marshal();
         List<Preference> userPreferences = preferenceDAO.getPreferences(associatedUser, preferenceType);
 
         // If the preference is the same as any of the existing preferences, then just update it and return.
@@ -77,7 +77,7 @@ public class PreferenceEjb {
      * @param object1Id An id for an object that is used for look up.
      * @param object2Id An id for a second object to be used for look up.
      * @param preferenceType The preference type.
-     * @param definition The preference definition
+     * @param definitionValue The preference definition value
      *
      * @throws PreferenceException Any problems processing the preference.
      */
@@ -86,9 +86,9 @@ public class PreferenceEjb {
             long object1Id,
             @Nullable Long object2Id,
             @Nonnull PreferenceType preferenceType,
-            @Nonnull PreferenceDefinition definition) throws Exception {
+            @Nonnull PreferenceDefinitionValue definitionValue) throws Exception {
 
-        String data = definition.getPreferenceData();
+        String data = definitionValue.marshal();
         List<Preference> userPreferences = preferenceDAO.getPreferences(object1Id, object2Id, preferenceType);
 
         // If the preference is the same as any of the existing preferences, then just update it and return.

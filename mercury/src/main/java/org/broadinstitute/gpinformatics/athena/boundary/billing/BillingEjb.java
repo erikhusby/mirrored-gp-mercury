@@ -144,16 +144,8 @@ public class BillingEjb {
 
             QuotePriceItem quotePriceItem = QuotePriceItem.convertMercuryPriceItem(item.getPriceItem());
 
-            // Calculate whether this is a replacement item and if it is, send the itemIsReplacing field, otherwise
-            // the itemIsReplacing field will be null.
-            org.broadinstitute.gpinformatics.athena.entity.products.PriceItem mercuryIsReplacing =
-                    item.calculateIsReplacing(priceListCache);
-
-            // Get the quote version of the price item for the item that is being replaced.
-            QuotePriceItem quoteIsReplacing = null;
-            if (mercuryIsReplacing != null) {
-                quoteIsReplacing = QuotePriceItem.convertMercuryPriceItem(mercuryIsReplacing);
-            }
+            // Get the quote PriceItem that this is replacing, if it is a replacement.
+            QuotePriceItem quoteIsReplacing = item.getPrimaryForReplacement(priceListCache);
 
             try {
                 String workId = quoteService.registerNewWork(

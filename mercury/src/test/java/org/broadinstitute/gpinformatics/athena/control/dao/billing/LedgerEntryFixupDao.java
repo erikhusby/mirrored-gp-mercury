@@ -45,9 +45,7 @@ public class LedgerEntryFixupDao extends GenericDao {
                         cb.isNull(root.get(LedgerEntry_.quoteId)),
                         // A predicate for billed ledgers only as we want unbilled ledgers to keep their null quote IDs
                         // until billing.  The predicate for this purpose is that the ledgers' billing session must
-                        // exist (this is an inner join) and have a non-null billed date.  Note that this is not
-                        // explicitly testing for *successful* billing (see comments in LedgerEntryDao), just a
-                        // billing session with a billed date.
+                        // exist (this is an inner join) and have a non-null billed date.
                         cb.isNotNull(ledgerBillingSessionJoin.get(BillingSession_.billedDate)),
                         // Only select ledger entries that were successfully billed.
                         cb.equal(root.get(LedgerEntry_.billingMessage), BillingSession.SUCCESS));
