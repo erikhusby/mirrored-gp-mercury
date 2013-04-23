@@ -98,7 +98,6 @@ public class MercuryClientEjb {
                     for (MercurySample mercurySample : vessel.getMercurySamples()) {
                         String sampleKey = mercurySample.getSampleKey();
                         assert(nameToSampleMap.containsKey(sampleKey));
-//                        mercurySample.setProductOrderKey(pdo.getBusinessKey());
                         samplesAdded.add(nameToSampleMap.get(sampleKey));
                     }
                 }
