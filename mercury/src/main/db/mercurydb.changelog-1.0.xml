@@ -1525,4 +1525,26 @@ END;
         </addColumn>
     </changeSet>
 
+    <changeSet author="scottmat" id="GPLIM-1237-1">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists schemaName="mercury" tableName="bucket_entry" columnName="STATUS" />
+            </not>
+        </preConditions>
+        <addColumn schemaName="mercury" tableName="bucket_entry">
+            <column name="STATUS" type="varchar(20)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="scottmat" id="GPLIM-1237-2">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists schemaName="mercury" tableName="bucket_entry_aud" columnName="STATUS" />
+            </not>
+        </preConditions>
+        <addColumn schemaName="mercury" tableName="bucket_entry_aud">
+            <column name="STATUS" type="varchar(20)" />
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
