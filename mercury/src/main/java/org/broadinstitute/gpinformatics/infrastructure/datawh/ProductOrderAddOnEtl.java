@@ -13,15 +13,9 @@ import java.util.Collection;
 @Stateful
 public class ProductOrderAddOnEtl extends GenericEntityEtl<ProductOrderAddOn, ProductOrderAddOn> {
 
-    public ProductOrderAddOnEtl() {
-        entityClass = ProductOrderAddOn.class;
-        baseFilename = "product_order_add_on";
-    }
-
     @Inject
-    public ProductOrderAddOnEtl(ProductOrderDao d) {
-        this();
-        dao = d;
+    public ProductOrderAddOnEtl(ProductOrderDao dao) {
+        super(ProductOrderAddOn.class, "product_order_add_on", dao);
     }
 
     @Override

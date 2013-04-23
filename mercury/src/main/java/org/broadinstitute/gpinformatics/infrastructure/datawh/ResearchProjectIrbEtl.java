@@ -8,21 +8,14 @@ import javax.ejb.Stateful;
 import javax.inject.Inject;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
-import java.util.ArrayList;
 import java.util.Collection;
 
 @Stateful
 public class ResearchProjectIrbEtl extends GenericEntityEtl<ResearchProjectIRB, ResearchProjectIRB> {
 
-    public ResearchProjectIrbEtl() {
-        entityClass = ResearchProjectIRB.class;
-        baseFilename = "research_project_irb";
-    }
-
     @Inject
-    public ResearchProjectIrbEtl(ResearchProjectDao d) {
-        this();
-        dao = d;
+    public ResearchProjectIrbEtl(ResearchProjectDao dao) {
+        super(ResearchProjectIRB.class, "research_project_irb", dao);
     }
 
     @Override

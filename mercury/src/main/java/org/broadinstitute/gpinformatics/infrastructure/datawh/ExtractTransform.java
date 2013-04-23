@@ -10,7 +10,9 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDa
 
 import javax.ejb.Stateful;
 import javax.inject.Inject;
-import javax.ws.rs.*;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 import java.io.*;
 import java.text.ParseException;
@@ -68,7 +70,7 @@ public class ExtractTransform {
     @Inject
     private Deployment deployment;
     @Inject
-    private EventEtl eventEtl;
+    private LabEventEtl labEventEtl;
     @Inject
     private LabBatchEtl labBatchEtl;
     @Inject
@@ -104,7 +106,7 @@ public class ExtractTransform {
     }
 
     public ExtractTransform(AuditReaderDao auditReaderDao,
-                            EventEtl eventEtl,
+                            LabEventEtl labEventEtl,
                             LabBatchEtl labBatchEtl,
                             LabVesselEtl labVesselEtl,
                             PriceItemEtl priceItemEtl,
@@ -121,7 +123,7 @@ public class ExtractTransform {
                             RiskItemEtl riskItemEtl,
                             LedgerEntryEtl ledgerEntryEtl) {
         this.auditReaderDao = auditReaderDao;
-        this.eventEtl = eventEtl;
+        this.labEventEtl = labEventEtl;
         this.labBatchEtl = labBatchEtl;
         this.labVesselEtl = labVesselEtl;
         this.priceItemEtl = priceItemEtl;
@@ -186,6 +188,7 @@ public class ExtractTransform {
      * @return count of records created, or -1 if could not run
      */
     public int incrementalEtl(String startEtl, String endEtl) {
+        final String ZERO = "0";
 
         // Bails if target directory is missing.
         String dataDir = getDatafileDir();
@@ -207,7 +210,7 @@ public class ExtractTransform {
         // Forces start and end to be whole second boundaries, which the auditReaderDao needs.
         try {
             long startTimeSec;
-            if ("0".equals(startEtl)) {
+            if (ZERO.equals(startEtl)) {
                 startTimeSec = readLastEtlRun();
                 if (startTimeSec == 0L) {
                     logger.warn("Cannot determine time of last incremental ETL.  ETL will not be run.");
@@ -218,7 +221,7 @@ public class ExtractTransform {
             }
 
             long endTimeSec;
-            if ("0".equals(endEtl)) {
+            if (ZERO.equals(endEtl)) {
                 endTimeSec = System.currentTimeMillis() / MSEC_IN_SEC;
             } else {
                 endTimeSec = secTimestampFormat.parse(endEtl).getTime() / MSEC_IN_SEC;
@@ -230,7 +233,7 @@ public class ExtractTransform {
                 int recordCount = incrementalEtl(startTimeSec, endTimeSec, etlDateStr);
 
                 // Withholds lastEtlRun file update if doing a limited range of changes.
-                if (recordCount >= 0 && "0".equals(endEtl)) {
+                if (recordCount >= 0 && ZERO.equals(endEtl)) {
                     writeLastEtlRun(endTimeSec);
                 }
 
@@ -287,7 +290,7 @@ public class ExtractTransform {
                 recordCount += labBatchEtl.doEtl(revIds, etlDateStr);
                 recordCount += labVesselEtl.doEtl(revIds, etlDateStr);
                 recordCount += workflowConfigEtl.doEtl(revIds, etlDateStr);
-                recordCount += eventEtl.doEtl(revIds, etlDateStr);
+                recordCount += labEventEtl.doEtl(revIds, etlDateStr);
             }
 
             return recordCount;
@@ -355,7 +358,7 @@ public class ExtractTransform {
         recordCount += labBatchEtl.doEtl(entityClass, startId, endId, etlDateStr);
         recordCount += labVesselEtl.doEtl(entityClass, startId, endId, etlDateStr);
         recordCount += workflowConfigEtl.doEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += eventEtl.doEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += labEventEtl.doEtl(entityClass, startId, endId, etlDateStr);
 
         recordCount += riskItemEtl.doEtl(entityClass, startId, endId, etlDateStr);
         recordCount += ledgerEntryEtl.doEtl(entityClass, startId, endId, etlDateStr);

@@ -18,15 +18,9 @@ import java.util.Set;
 @Stateful
 public class LedgerEntryEtl extends GenericEntityEtl<LedgerEntry, ProductOrderSample> {
 
-    public LedgerEntryEtl() {
-        entityClass = LedgerEntry.class;
-        baseFilename = "product_order_sample_bill";
-    }
-
     @Inject
-    public LedgerEntryEtl(ProductOrderSampleDao d) {
-        this();
-        dao = d;
+    public LedgerEntryEtl(ProductOrderSampleDao dao) {
+        super(LedgerEntry.class, "product_order_sample_bill", dao);
     }
 
     @Override

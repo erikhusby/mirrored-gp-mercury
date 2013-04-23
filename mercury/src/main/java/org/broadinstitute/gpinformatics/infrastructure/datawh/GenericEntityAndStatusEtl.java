@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
+import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.RevInfo;
 import org.hibernate.envers.RevisionType;
 
@@ -17,6 +18,11 @@ public abstract class GenericEntityAndStatusEtl<T, C> extends GenericEntityEtl<T
 
     /** The entity-related name of the data file, and must sync with the ETL cron script and control file. */
     public String baseStatusFilename;
+
+    protected GenericEntityAndStatusEtl(Class entityClass, String baseFilename, String baseStatusFilename, GenericDao dao) {
+        super(entityClass, baseFilename, dao);
+        this.baseStatusFilename = baseStatusFilename;
+    }
 
     /**
      * Makes a sqlloader record from entity status fields, revision date, and etl date.

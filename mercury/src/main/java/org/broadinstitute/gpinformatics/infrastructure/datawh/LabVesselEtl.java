@@ -14,15 +14,9 @@ import java.util.Collection;
 @Stateful
 public class LabVesselEtl extends GenericEntityEtl<LabVessel, LabVessel> {
 
-    public LabVesselEtl() {
-        entityClass = LabVessel.class;
-        baseFilename = "lab_vessel";
-    }
-
     @Inject
-    public LabVesselEtl(LabVesselDao d) {
-        this();
-        dao = d;
+    public LabVesselEtl(LabVesselDao dao) {
+        super(LabVessel.class, "lab_vessel", dao);
     }
 
     @Override

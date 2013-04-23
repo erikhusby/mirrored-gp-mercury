@@ -21,16 +21,10 @@ import java.util.List;
 public class RiskItemEtl extends GenericEntityEtl<RiskItem, ProductOrderSample> {
     private ProductOrderSampleDao pdoSampleDao;
 
-    public RiskItemEtl() {
-        entityClass = RiskItem.class;
-        baseFilename = "product_order_sample_risk";
-    }
-
     @Inject
-    public RiskItemEtl(RiskItemDao d, ProductOrderSampleDao d2) {
-        this();
-        dao = d;
-        pdoSampleDao = d2;
+    public RiskItemEtl(RiskItemDao dao, ProductOrderSampleDao pdoSampleDao) {
+        super(RiskItem.class, "product_order_sample_risk", dao);
+        this.pdoSampleDao = pdoSampleDao;
     }
 
     @Override

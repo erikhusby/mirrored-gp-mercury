@@ -8,21 +8,14 @@ import javax.ejb.Stateful;
 import javax.inject.Inject;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
-import java.util.ArrayList;
 import java.util.Collection;
 
 @Stateful
 public class ProductEtl extends GenericEntityEtl<Product, Product> {
 
-    public ProductEtl() {
-        entityClass = Product.class;
-        baseFilename = "product";
-    }
-
     @Inject
-    public ProductEtl(ProductDao d) {
-        this();
-        dao = d;
+    public ProductEtl(ProductDao dao) {
+        super(Product.class, "product", dao);
     }
 
     @Override

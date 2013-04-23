@@ -17,17 +17,10 @@ import java.util.Date;
 public class ProductOrderEtl extends GenericEntityAndStatusEtl<ProductOrder, ProductOrder> {
     private BSPUserList userList;
 
-    public ProductOrderEtl() {
-        entityClass = ProductOrder.class;
-        baseFilename = "product_order";
-        baseStatusFilename = "product_order_status";
-    }
-
     @Inject
-    public ProductOrderEtl(ProductOrderDao d, BSPUserList ul) {
-        this();
-        dao = d;
-        userList = ul;
+    public ProductOrderEtl(ProductOrderDao dao, BSPUserList userList) {
+        super(ProductOrder.class, "product_order", "product_order_status", dao);
+        this.userList = userList;
     }
 
     @Override

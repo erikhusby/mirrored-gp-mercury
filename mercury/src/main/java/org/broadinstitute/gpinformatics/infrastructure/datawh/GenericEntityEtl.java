@@ -31,6 +31,11 @@ import java.util.*;
  *            and only differs from T in cross-entity etl subclasses.
  */
 public abstract class GenericEntityEtl<T, C> {
+    public static final String IN_CLAUSE_PLACEHOLDER = "__IN_CLAUSE__";
+    protected static final int AUDIT_READER_ENTITY_IDX = 0;
+    protected static final int AUDIT_READER_REV_INFO_IDX = 1;
+    protected static final int AUDIT_READER_TYPE_IDX = 2;
+
     public Class entityClass;  // equivalent to T.class
 
     /** The entity-related name of the data file, and must sync with the ETL cron script and control file. */
@@ -45,11 +50,11 @@ public abstract class GenericEntityEtl<T, C> {
         this.auditReaderDao = auditReaderDao;
     }
 
-    public static final String IN_CLAUSE_PLACEHOLDER = "__IN_CLAUSE__";
-    protected static final int SQL_IN_CLAUSE_LIMIT = 1000;
-    protected static final int AUDIT_READER_ENTITY_IDX = 0;
-    protected static final int AUDIT_READER_REV_INFO_IDX = 1;
-    protected static final int AUDIT_READER_TYPE_IDX = 2;
+    protected GenericEntityEtl(Class entityClass, String baseFilename, GenericDao dao) {
+        this.entityClass = entityClass;
+        this.baseFilename = baseFilename;
+        this.dao = dao;
+    }
 
     /**
      * Returns the JPA key for the entity.
