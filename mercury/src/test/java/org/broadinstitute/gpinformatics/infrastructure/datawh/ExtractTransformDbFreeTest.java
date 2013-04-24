@@ -14,10 +14,7 @@ import org.testng.annotations.Test;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static org.easymock.EasyMock.*;
@@ -80,24 +77,13 @@ public class ExtractTransformDbFreeTest {
         datafileDir = System.getProperty("java.io.tmpdir");
         badDataDir = datafileDir + System.getProperty("file.separator") + nowMsec;
 
-        extractTransform = new ExtractTransform(
-                auditReaderDao,
-                labEventEtl,
-                labBatchEtl,
-                labVesselEtl,
-                priceItemEtl,
-                productEtl,
-                productOrderAddOnEtl,
-                productOrderEtl,
-                productOrderSampleEtl,
-                projectPersonEtl,
-                researchProjectCohortEtl,
-                researchProjectEtl,
-                researchProjectFundingEtl,
-                researchProjectIrbEtl,
-                workflowConfigEtl,
-                riskItemEtl,
-                ledgerEntryEtl);
+        Collection<GenericEntityEtl> etlInstances = new HashSet<GenericEntityEtl>();
+        for (Object mock : mocks) {
+            if (mock != auditReaderDao) {
+                etlInstances.add((GenericEntityEtl)mock);
+            }
+        }
+        extractTransform = new ExtractTransform(auditReaderDao, etlInstances);
     }
 
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)

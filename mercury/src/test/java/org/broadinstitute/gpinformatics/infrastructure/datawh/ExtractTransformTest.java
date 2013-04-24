@@ -213,9 +213,7 @@ public class ExtractTransformTest extends Arquillian {
         return ids;
     }
 
-
-
-    public void testaUndeletedRiskOnDevDb() throws Exception {
+    public void testUndeletedRiskOnDevDb() throws Exception {
         Long[] ids = getRiskJoin(false);
         if (ids == null || ids.length < 3) {
             logger.info("Skipping test, cannot find undeleted product order risk");
