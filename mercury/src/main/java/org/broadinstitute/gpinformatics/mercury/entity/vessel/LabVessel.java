@@ -579,7 +579,6 @@ public abstract class LabVessel implements Serializable {
         private final Set<Reagent> reagents = new HashSet<Reagent>();
         private LabBatch unambiguousLabBatch = null;
         private final Set<LabBatch> labBatches = new HashSet<LabBatch>();
-        private BucketEntry bucketEntry;
 
         void add(TraversalResults traversalResults) {
             sampleInstances.addAll(traversalResults.getSampleInstances());
@@ -621,10 +620,9 @@ public abstract class LabVessel implements Serializable {
             updateSampleInstanceLabBatch();
         }
 
-        void setBucketEntry(BucketEntry bucketEntry) {
-            this.bucketEntry = bucketEntry;
+        void setProductOrderKey(String productOrderKey) {
             for (SampleInstance sampleInstance : sampleInstances) {
-                sampleInstance.setProductOrderKey(bucketEntry.getPoBusinessKey());
+                sampleInstance.setProductOrderKey(productOrderKey);
             }
         }
 
@@ -694,8 +692,15 @@ public abstract class LabVessel implements Serializable {
             }
         }
         if (bucketEntries.size() > 1) {
-            throw new RuntimeException("Unexpected multiple bucket entries");
-/* todo jmt handle multiple buckets
+            Set<String> productOrderKeys = new HashSet<String>();
+            for (BucketEntry bucketEntry : bucketEntries) {
+                productOrderKeys.add(bucketEntry.getPoBusinessKey());
+            }
+            if(productOrderKeys.size() > 1) {
+                throw new RuntimeException("Unexpected multiple product orders in bucket entries");
+            }
+            traversalResults.setProductOrderKey(productOrderKeys.iterator().next());
+/* todo jmt handle multiple product orders
             for (BucketEntry bucketEntry : bucketEntries) {
                 for (LabVessel container : containers) {
                     if (bucketEntry.getLabBatch() != null) {
@@ -708,7 +713,7 @@ public abstract class LabVessel implements Serializable {
             }
 */
         } else if(bucketEntries.size() == 1) {
-            traversalResults.setBucketEntry(bucketEntries.iterator().next());
+            traversalResults.setProductOrderKey(bucketEntries.iterator().next().getPoBusinessKey());
         }
 
         for (Reagent reagent : getReagentContents()) {
