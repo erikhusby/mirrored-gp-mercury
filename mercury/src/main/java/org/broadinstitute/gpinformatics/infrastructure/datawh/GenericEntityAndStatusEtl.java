@@ -10,11 +10,14 @@ import java.util.*;
 
 /**
  * Base class for etl'ing entities that also have status etl.
- * @param <T> the class that gets audited and referenced by backfill entity id range.
- * @param <C> the class that is used to create sqlLoader records.  Typically C is the same class as T,
- *            and only differs from T in cross-entity etl subclasses.
+ *
+ * @param <AUDITED_ENTITY_CLASS>  the class that gets audited and referenced by backfill entity id range.
+ * @param <ETL_DATA_SOURCE_CLASS> the class that is used to create sqlLoader records.  Typically ETL_DATA_SOURCE_CLASS
+ *                                is the same class as AUDITED_ENTITY_CLASS, and only differs from AUDITED_ENTITY_CLASS
+ *                                in cross-entity etl subclasses.
  */
-public abstract class GenericEntityAndStatusEtl<T, C> extends GenericEntityEtl<T, C> {
+public abstract class GenericEntityAndStatusEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLASS>
+        extends GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLASS> {
 
     /** The entity-related name of the data file, and must sync with the ETL cron script and control file. */
     public String baseStatusFilename;
@@ -31,20 +34,19 @@ public abstract class GenericEntityAndStatusEtl<T, C> extends GenericEntityEtl<T
      * Makes a sqlloader record from entity status fields, revision date, and etl date.
      *
      * @param etlDateStr date
-     * @param revDate    Envers revision date
-     * @param entity     the Envers versioned entity
      * @param isDelete   indicates deleted entity
+     * @param entity     the Envers versioned entity
+     * @param revDate    Envers revision date
      * @return delimited SqlLoader record, or null if none
      */
-    abstract String statusRecord(String etlDateStr, Date revDate, C entity, boolean isDelete);
-
+    abstract String statusRecord(String etlDateStr, boolean isDelete, ETL_DATA_SOURCE_CLASS entity, Date revDate);
 
     /**
-     * Converts the generic T entity to C entity.
+     * Converts the generic AUDITED_ENTITY_CLASS entity to ETL_DATA_SOURCE_CLASS entity.
      * Default is pass-through; override for cross-etl behavior.
      */
-    protected C convertTtoC(T entities) {
-        return (C)entities;
+    protected ETL_DATA_SOURCE_CLASS convertTtoC(AUDITED_ENTITY_CLASS entities) {
+        return (ETL_DATA_SOURCE_CLASS)entities;
     }
 
 
@@ -58,7 +60,7 @@ public abstract class GenericEntityAndStatusEtl<T, C> extends GenericEntityEtl<T
             RevisionType revType = (RevisionType) dataChange[AUDIT_READER_TYPE_IDX];
             boolean isDelete = revType == RevisionType.DEL;
 
-            T entity = (T) dataChange[AUDIT_READER_ENTITY_IDX];
+            AUDITED_ENTITY_CLASS entity = (AUDITED_ENTITY_CLASS) dataChange[AUDIT_READER_ENTITY_IDX];
             Long entityId = entityId(entity);
 
             if (isDelete) {
@@ -75,11 +77,9 @@ public abstract class GenericEntityAndStatusEtl<T, C> extends GenericEntityEtl<T
         return new AuditLists(deletedEntityIds, changedEntityIds, revInfoPairs);
     }
 
-
     @Override
     protected int writeRecords(Collection<Long> deletedEntityIds, Collection<Long> changedEntityIds,
                                Collection<RevInfoPair> revInfoPairs, String etlDateStr) {
-
 
         // Creates the wrapped Writer to the sqlLoader data file.
         DataFile dataFile = new DataFile(dataFilename(etlDateStr, baseFilename));
@@ -107,13 +107,13 @@ public abstract class GenericEntityAndStatusEtl<T, C> extends GenericEntityEtl<T
 
             // Records every audited status change.
             for (RevInfoPair pair : revInfoPairs) {
-                Long entityId = entityId(pair.getRevEntity());
+                Long entityId = entityId(pair.revEntity);
 
                 // Db referential integrity errors happen on status for non-existent entities.
                 if (changedEntityIds.contains(entityId)) {
-                    Date revDate = pair.getRevDate();
-                    C entity = convertTtoC(pair.getRevEntity());
-                    String record = statusRecord(etlDateStr, revDate, entity, false);
+                    Date revDate = pair.revDate;
+                    ETL_DATA_SOURCE_CLASS entity = convertTtoC(pair.revEntity);
+                    String record = statusRecord(etlDateStr, false, entity, revDate);
                     statusFile.write(record);
                 }
             }
@@ -131,7 +131,7 @@ public abstract class GenericEntityAndStatusEtl<T, C> extends GenericEntityEtl<T
      }
 
     @Override
-    protected int writeRecords(Collection<C> entities, String etlDateStr) {
+    protected int writeRecords(Collection<ETL_DATA_SOURCE_CLASS> entities, String etlDateStr) {
 
         Date statusDate = null;
         try {
@@ -147,11 +147,11 @@ public abstract class GenericEntityAndStatusEtl<T, C> extends GenericEntityEtl<T
 
         try {
             // Writes the data and status records.
-            for (C entity : entities) {
+            for (ETL_DATA_SOURCE_CLASS entity : entities) {
                 for (String record : dataRecords(etlDateStr, false, entity)) {
                     dataFile.write(record);
                 }
-                String record = statusRecord(etlDateStr, statusDate, entity, false);
+                String record = statusRecord(etlDateStr, false, entity, statusDate);
                 statusFile.write(record);
             }
 

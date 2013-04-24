@@ -26,23 +26,28 @@ import java.util.*;
 /**
  * Base class for entity etl.
  *
- * @param <T> the class that gets audited and referenced by backfill entity id range.
- * @param <C> the class that is used to create sqlLoader records.  Typically C is the same class as T,
- *            and only differs from T in cross-entity etl subclasses.
+ * @param <AUDITED_ENTITY_CLASS>  the class that gets audited and referenced by backfill entity id range.
+ * @param <ETL_DATA_SOURCE_CLASS> the class that is used to create sqlLoader records.  Typically ETL_DATA_SOURCE_CLASS
+ *                                is the same class as AUDITED_ENTITY_CLASS, and only differs from AUDITED_ENTITY_CLASS
+ *                                in cross-entity etl subclasses.
  */
-public abstract class GenericEntityEtl<T, C> {
+public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLASS> {
     public static final String IN_CLAUSE_PLACEHOLDER = "__IN_CLAUSE__";
-    protected static final int AUDIT_READER_ENTITY_IDX = 0;
-    protected static final int AUDIT_READER_REV_INFO_IDX = 1;
-    protected static final int AUDIT_READER_TYPE_IDX = 2;
+    /** Envers-defined constant indicating the entity. */
+    static final int AUDIT_READER_ENTITY_IDX = 0;
+    /** Envers-defined constant indicating the revInfo. */
+    static final int AUDIT_READER_REV_INFO_IDX = 1;
+    /** Envers-defined constant indicating the change type. */
+    static final int AUDIT_READER_TYPE_IDX = 2;
 
-    public Class entityClass;  // equivalent to T.class
-
+    /** Equivalent to AUDITED_ENTITY_CLASS.class, i.e. the audited entity class handled by the subclass. */
+    public Class entityClass;
     /** The entity-related name of the data file, and must sync with the ETL cron script and control file. */
     public String baseFilename;
 
-    protected Log logger = LogFactory.getLog(getClass());
+    protected final Log logger = LogFactory.getLog(getClass());
     protected AuditReaderDao auditReaderDao;
+    /** The Mercury or Athena dao needed by the subclass. */
     protected GenericDao dao;
 
     @Inject
@@ -64,16 +69,16 @@ public abstract class GenericEntityEtl<T, C> {
      * @param entity entity having an id
      * @return the id
      */
-    abstract Long entityId(T entity);
+    abstract Long entityId(AUDITED_ENTITY_CLASS entity);
 
     /** Returns Criteria.Path to entityId given an entity root. */
     abstract Path rootId(Root root);
 
-    /** Returns sqlLoader records for the C-typed entity given by entityId. */
+    /** Returns sqlLoader records for the ETL_DATA_SOURCE_CLASS-typed entity given by entityId. */
     abstract Collection<String> dataRecords(String etlDateStr, boolean isDelete, Long entityId);
 
     /** Returns multiple sqlLoader records for the entity.  Override for fact table etl. */
-    Collection<String> dataRecords(String etlDateStr, boolean isDelete, C entity) {
+    Collection<String> dataRecords(String etlDateStr, boolean isDelete, ETL_DATA_SOURCE_CLASS entity) {
         Collection<String> records = new ArrayList<String>();
         if (entity != null) {
             records.add(dataRecord(etlDateStr, isDelete, entity));
@@ -82,23 +87,25 @@ public abstract class GenericEntityEtl<T, C> {
     }
 
     /** Returns a single sqlLoader record for the entity. */
-    abstract String dataRecord(String etlDateStr, boolean isDelete, C entity);
+    abstract String dataRecord(String etlDateStr, boolean isDelete, ETL_DATA_SOURCE_CLASS entity);
 
     /**
-     * Converts the generic T entity ids to C entity ids.
+     * Converts the generic AUDITED_ENTITY_CLASS entity ids to ETL_DATA_SOURCE_CLASS entity ids.
      * Default is pass-through; override for cross-etl behavior,
      * possibly by using the lookupAssociatedIds() method.
      */
-    protected Collection<Long> convertIdsTtoC(Collection<Long> entityIds) {
+    protected Collection<Long> convertAuditedEntityIdToDataSourceEntityId(Collection<Long> entityIds) {
         return entityIds;
     }
 
     /**
-     * Converts the generic T entities to C entities.
+     * Converts the generic AUDITED_ENTITY_CLASS entities to ETL_DATA_SOURCE_CLASS entities.
      * Default is pass-through; override for cross-etl behavior.
      */
-    protected Collection<C> convertTtoC(Collection<T> entities) {
-        return (Collection<C>)entities;
+    protected Collection<ETL_DATA_SOURCE_CLASS> convertAuditedEntityToDataSourceEntity(
+            Collection<AUDITED_ENTITY_CLASS> entities) {
+
+        return (Collection<ETL_DATA_SOURCE_CLASS>)entities;
     }
 
     /**
@@ -115,8 +122,8 @@ public abstract class GenericEntityEtl<T, C> {
         AuditLists auditLists = fetchAuditIds(auditEntities);
 
         // The convert calls optionally convert entity types for cross-entity etl classes.
-        Collection<Long> deletedEntityIds = convertIdsTtoC(auditLists.deletedEntityIds);
-        Collection<Long> changedEntityIds = convertIdsTtoC(auditLists.changedEntityIds);
+        Collection<Long> deletedEntityIds = convertAuditedEntityIdToDataSourceEntityId(auditLists.deletedEntityIds);
+        Collection<Long> changedEntityIds = convertAuditedEntityIdToDataSourceEntityId(auditLists.changedEntityIds);
 
         return writeRecords(deletedEntityIds, changedEntityIds, auditLists.revInfoPairs, etlDateStr);
     }
@@ -134,38 +141,39 @@ public abstract class GenericEntityEtl<T, C> {
      */
     public int doEtl(Class requestedClass, long startId, long endId, String etlDateStr) {
 
-        // No-op unless the implementing class is the requested entity class.
+        // No-op unless the implementing class is the requested entity class.  Not an error.
         if (!entityClass.equals(requestedClass)) {
             return 0;
         }
 
-        Collection<T> auditEntities = entitiesInRange(startId, endId);
-        Collection<C> entities = convertTtoC(auditEntities);
+        Collection<AUDITED_ENTITY_CLASS> auditEntities = entitiesInRange(startId, endId);
+        Collection<ETL_DATA_SOURCE_CLASS> entities = convertAuditedEntityToDataSourceEntity(auditEntities);
 
         return writeRecords(entities, etlDateStr);
     }
 
     /** Returns entities having id in the given range, including endpoints. */
-    protected Collection<T> entitiesInRange(final long startId, final long endId) {
+    protected Collection<AUDITED_ENTITY_CLASS> entitiesInRange(final long startId, final long endId) {
         return dao.findAll(entityClass,
-                new GenericDao.GenericDaoCallback<T>() {
+                new GenericDao.GenericDaoCallback<AUDITED_ENTITY_CLASS>() {
                     @Override
-                    public void callback(CriteriaQuery<T> cq, Root<T> root) {
+                    public void callback(CriteriaQuery<AUDITED_ENTITY_CLASS> cq, Root<AUDITED_ENTITY_CLASS> root) {
                         CriteriaBuilder cb = dao.getEntityManager().getCriteriaBuilder();
                         cq.where(cb.between(rootId(root), startId, endId));
                     }
                 });
     }
 
+    /** Parses AuditReader output into more useful lists of entities. */
     @DaoFree
     protected AuditLists fetchAuditIds(Collection<Object[]> auditEntities) {
         Set<Long> deletedEntityIds = new HashSet<Long>();
         Set<Long> changedEntityIds = new HashSet<Long>();
 
         for (Object[] dataChange : auditEntities) {
-            RevisionType revType = (RevisionType) dataChange[2];
+            RevisionType revType = (RevisionType) dataChange[AUDIT_READER_TYPE_IDX];
             boolean isDelete = revType == RevisionType.DEL;
-            T entity = (T)dataChange[0];
+            AUDITED_ENTITY_CLASS entity = (AUDITED_ENTITY_CLASS)dataChange[AUDIT_READER_ENTITY_IDX];
             Long entityId = entityId(entity);
             if (isDelete) {
                 deletedEntityIds.add(entityId);
@@ -178,11 +186,11 @@ public abstract class GenericEntityEtl<T, C> {
         return new AuditLists(deletedEntityIds, changedEntityIds, Collections.EMPTY_LIST);
      }
 
-    // DTO class used for audit reader data.
+    /** DTO class used for audit reader data. */
     protected class AuditLists {
-        Collection<Long> deletedEntityIds;
-        Collection<Long> changedEntityIds;
-        Collection<RevInfoPair> revInfoPairs;
+        final Collection<Long> deletedEntityIds;
+        final Collection<Long> changedEntityIds;
+        final Collection<RevInfoPair> revInfoPairs;
 
         public AuditLists(Collection<Long> deletedEntityIds, Collection<Long> changedEntityIds,
                           Collection<RevInfoPair> revInfoPairs) {
@@ -192,27 +200,19 @@ public abstract class GenericEntityEtl<T, C> {
         }
     }
 
-    // DTO class for entity-date pairs, only used for the status record generating etl classes.
+    /** DTO class for entity-date pairs, only used for the status record generating etl classes. */
     protected class RevInfoPair {
-        private T revEntity;
-        private Date revDate;
+        final AUDITED_ENTITY_CLASS revEntity;
+        final Date revDate;
 
-        T getRevEntity() {
-            return revEntity;
-        }
-
-        Date getRevDate() {
-            return revDate;
-        }
-
-        RevInfoPair(T revEntity, Date revDate) {
+        RevInfoPair(AUDITED_ENTITY_CLASS revEntity, Date revDate) {
             this.revEntity = revEntity;
             this.revDate = revDate;
         }
     }
 
 
-
+    /** Writes the sqlLoader data file records for the given entity changes. */
     @DaoFree
     protected int writeRecords(Collection<Long> deletedEntityIds, Collection<Long> changedEntityIds,
                                Collection<RevInfoPair> revInfoPairs, String etlDateStr) {
@@ -233,47 +233,42 @@ public abstract class GenericEntityEtl<T, C> {
                     dataFile.write(record);
                 }
             }
-            return dataFile.getRecordCount();
 
         } catch (IOException e) {
             logger.error("Error while writing " + dataFile.getFilename(), e);
-            return dataFile.getRecordCount();
 
         } finally {
             dataFile.close();
         }
+        return dataFile.getRecordCount();
      }
 
+    /** Writes the sqlLoader data file records for the given entity changes. */
     @DaoFree
-    protected int writeRecords(Collection<C> entities, String etlDateStr) {
+    protected int writeRecords(Collection<ETL_DATA_SOURCE_CLASS> entities, String etlDateStr) {
 
         // Creates the wrapped Writer to the sqlLoader data file.
-        String filename = dataFilename(etlDateStr, baseFilename);
-        DataFile dataFile = new DataFile(filename);
+        DataFile dataFile = new DataFile(dataFilename(etlDateStr, baseFilename));
 
         try {
             // Writes the records.
-            for (C entity : entities) {
+            for (ETL_DATA_SOURCE_CLASS entity : entities) {
                 for (String record : dataRecords(etlDateStr, false, entity)) {
                     dataFile.write(record);
                 }
             }
-            return dataFile.getRecordCount();
 
         } catch (IOException e) {
             logger.error("Error while writing file " + dataFile.getFilename(), e);
-            return dataFile.getRecordCount();
 
         } finally {
             dataFile.close();
         }
+        return dataFile.getRecordCount();
     }
 
     /**
-     *  Given a set of entity ids, queries for associated ids.
-     *  Chunks as necessary to limit sql "in" clause to 1000 elements.
-     *
-     *  Cannot use JPASplitter because it doesn't support native query (fails querying PO_SAMPLE_RISK_JOIN_AUD).
+     *  Given a set of entity ids, queries for associated ids, the association given by the sql query string.
      *
      * @param ids  entity ids
      * @param queryString  containing 'entity_id' as returned column name, and IN_CLAUSE_PLACEHOLDER between parens.
@@ -282,6 +277,7 @@ public abstract class GenericEntityEtl<T, C> {
     public Collection<Long> lookupAssociatedIds(Collection<Long> ids, String queryString) {
         Collection<Long> associatedIds = new HashSet<Long>();
 
+        // Cannot use JPASplitter because it doesn't support native query (fails querying PO_SAMPLE_RISK_JOIN_AUD).
         for (Collection<Long> split : BaseSplitter.split(ids)) {
             String inClause = StringUtils.join(split, ",");
             Query query = dao.getEntityManager().createNativeQuery(queryString.replaceFirst(IN_CLAUSE_PLACEHOLDER, inClause));

@@ -38,7 +38,7 @@ public class ProductOrderSampleEtl extends GenericEntityAndStatusEtl<ProductOrde
     }
 
     @Override
-    String statusRecord(String etlDateStr, Date revDate, ProductOrderSample entity, boolean isDelete) {
+    String statusRecord(String etlDateStr, boolean isDelete, ProductOrderSample entity, Date revDate) {
         if (entity != null && entity.getDeliveryStatus() != null) {
             return genericRecord(etlDateStr, isDelete,
                     entity.getProductOrderSampleId(),
