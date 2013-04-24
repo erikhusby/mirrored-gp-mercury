@@ -173,11 +173,11 @@ public class LibraryBean {
                        String gssrStrain,
                        String gssrIndividual,
                        BSPSampleDTO bspSampleDTO) {
-        this.sampleLSID = gssrLsid;
-        this.materialType = gssrMaterialType;
-        this.collaboratorSampleId = gssrCollaboratorSampleId;
-        this.species = gssrOrganism + ":" + gssrSpecies + ":" + gssrStrain;
-        this.collaboratorParticipantId = gssrIndividual;
+        sampleLSID = gssrLsid;
+        materialType = gssrMaterialType;
+        collaboratorSampleId = gssrCollaboratorSampleId;
+        species = gssrOrganism + ":" + gssrSpecies + ":" + gssrStrain;
+        collaboratorParticipantId = gssrIndividual;
         overrideSampleFieldsFromBSP(bspSampleDTO);
     }
 
@@ -255,12 +255,12 @@ public class LibraryBean {
         this.doAggregation = doAggregation;
         this.customAmpliconSetNames = customAmpliconSetNames;
         if (productOrder != null) {
-            this.productOrderKey = productOrder.getBusinessKey();
-            this.productOrderTitle = productOrder.getTitle();
+            productOrderKey = productOrder.getBusinessKey();
+            productOrderTitle = productOrder.getTitle();
             ResearchProject mercuryProject = productOrder.getResearchProject();
             if (mercuryProject != null) {
-                this.researchProjectId = mercuryProject.getBusinessKey();
-                this.researchProjectName = mercuryProject.getTitle();
+                researchProjectId = mercuryProject.getBusinessKey();
+                researchProjectName = mercuryProject.getTitle();
             }
             Product product = productOrder.getProduct();
             if (product != null) {
