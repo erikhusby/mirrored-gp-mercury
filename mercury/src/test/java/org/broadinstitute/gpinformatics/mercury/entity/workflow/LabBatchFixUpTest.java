@@ -52,6 +52,12 @@ public class LabBatchFixUpTest extends Arquillian {
             }
             if (nullType.getBatchName().startsWith("BP-")) {
                 nullType.setLabBatchType(LabBatch.LabBatchType.BSP);
+            } else if (nullType.getBatchName().startsWith("LCSET-")) {
+                nullType.setLabBatchType(LabBatch.LabBatchType.WORKFLOW);
+            } else if (nullType.getBatchName().startsWith("EX-")) {
+                nullType.setLabBatchType(LabBatch.LabBatchType.SAMPLES_IMPORT);
+            } else if (nullType.getBatchName().startsWith("SK-")) {
+                nullType.setLabBatchType(LabBatch.LabBatchType.SAMPLES_RECEIPT);
             } else {
                 throw new IllegalStateException(
                         "I don't know what type of lab batch this is! " + nullType.getLabBatchId() + " " + nullType
