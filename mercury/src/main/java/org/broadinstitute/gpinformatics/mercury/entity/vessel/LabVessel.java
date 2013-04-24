@@ -433,6 +433,15 @@ public abstract class LabVessel implements Serializable {
         return nearest.size();
     }
 
+    /**
+     * Sets the rework state to inactive, meaning it will no longer appear in the bucket.
+     */
+    public  void deactivateRework() {
+        for (MercurySample sample : getMercurySamples()){
+            sample.getRapSheet().deactivateRework();
+        }
+    }
+
     public enum ContainerType {
         STATIC_PLATE("Plate"),
         PLATE_WELL("Plate Well"),
