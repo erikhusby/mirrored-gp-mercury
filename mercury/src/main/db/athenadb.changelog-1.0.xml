@@ -3023,4 +3023,28 @@
             <column name="MODIFIED_BY" type="DECIMAL(15,0)"/>
         </createTable>
     </changeSet>
+
+
+    <changeSet id="GPLIM-1229" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="PRODUCT" columnName="AGGREGATION_DATA_TYPE" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="PRODUCT">
+            <column name="AGGREGATION_DATA_TYPE" type="varchar(200)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-1229-1" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="PRODUCT_AUD" columnName="AGGREGATION_DATA_TYPE" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="PRODUCT_AUD">
+            <column name="AGGREGATION_DATA_TYPE" type="varchar(200)"/>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

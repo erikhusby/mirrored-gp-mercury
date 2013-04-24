@@ -351,7 +351,6 @@ public class IlluminaRunResourceTest extends Arquillian {
                 if (zLib.getPdoKey() != null) {
                     foundPDO = true;
                     if (pdo != null) {
-                        // todo arz other fields
                         assertEquals(libBean.getProductOrderTitle(),pdo.getTitle(),PDO_COMPARISON_ERROR_MESSAGE);
                         assertEquals(libBean.getResearchProjectId(),pdo.getResearchProject().getBusinessKey(),PDO_COMPARISON_ERROR_MESSAGE);
                         assertEquals(libBean.getProductOrderKey(),pdo.getBusinessKey(),PDO_COMPARISON_ERROR_MESSAGE);
@@ -359,10 +358,12 @@ public class IlluminaRunResourceTest extends Arquillian {
                         assertEquals(libBean.getProductPartNumber(), pdo.getProduct().getPartNumber());
                     }
                 }
+
                 if (zLib.getLcset() != null) {
                     foundLcSet = true;
                     assertEquals(libBean.getLcSet(),zLib.getLcset());
                 }
+
                 if (libBean.getLcSet() != null && zLib.getLcset() == null) {
                     fail("bean has lcset " + libBean.getLcSet() + ", but thrift library has no lc set.");
                 }

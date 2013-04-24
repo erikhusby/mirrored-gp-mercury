@@ -95,12 +95,12 @@ public class ReworkEjb {
             for (SampleInstance sampleInstance : samplesAtPosition) {
                 MercurySample mercurySample = sampleInstance.getStartingSample();
                 BucketEntry bucketEntry =
-                        bucketEntryDao.findByVesselAndPO(labVessel, mercurySample.getProductOrderKey());
+                        bucketEntryDao.findByVesselAndPO(labVessel, sampleInstance.getProductOrderKey());
 
                 if (bucketEntry != null) {
                     String error =
                             String.format("Sample %s in product order %s already exists in the %s bucket.",
-                                    mercurySample.getSampleKey(), mercurySample.getProductOrderKey(),
+                                    mercurySample.getSampleKey(), sampleInstance.getProductOrderKey(),
                                     bucketEntry.getBucket().getBucketDefinitionName());
                     logger.error(error);
                     throw new ValidationException(error);
@@ -198,9 +198,11 @@ public class ReworkEjb {
         }
     }
 
-
-    public Collection<ReworkEntry> getNonActiveReworkEntries() {
-        return reworkEntryDao.getNonActive();
+    public Collection<LabVessel> getVesselsForRework(){
+        Set<LabVessel> inactiveVessels=new HashSet<LabVessel>();
+        for (ReworkEntry activeRework : reworkEntryDao.getNonActive()) {
+            inactiveVessels.add(activeRework.getLabVesselComment().getLabVessel());
+        }
+        return inactiveVessels;
     }
-
 }

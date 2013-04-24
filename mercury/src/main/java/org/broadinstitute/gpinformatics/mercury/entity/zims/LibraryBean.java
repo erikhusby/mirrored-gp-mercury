@@ -145,6 +145,12 @@ public class LibraryBean {
     @JsonProperty
     private String materialType;
 
+    /**
+     * This is the aggregation data type defined on the product and used by Picard to report the right data.
+     */
+    @JsonProperty
+    private String dataType;
+
     @JsonProperty
     private boolean isGssrSample;
 
@@ -160,10 +166,10 @@ public class LibraryBean {
     public LibraryBean() {}
 
     /**
-     * Sets gssr parameters and then overrides them
-     * with BSP values.  Useful for testing.
-     * @param gssrLsid
-     * @param bspSampleDTO
+     * Sets gssr parameters and then overrides them with BSP values.  Useful for testing.
+     *
+     * @param gssrLsid The lsid of the gssr sample.
+     * @param bspSampleDTO The BSP representation of the sample.
      */
     LibraryBean(String gssrLsid,
                        String gssrMaterialType,
@@ -254,6 +260,7 @@ public class LibraryBean {
         this.gssrBarcodes = gssrBarcodes;
         this.doAggregation = doAggregation;
         this.customAmpliconSetNames = customAmpliconSetNames;
+
         if (productOrder != null) {
             productOrderKey = productOrder.getBusinessKey();
             productOrderTitle = productOrder.getTitle();
@@ -262,8 +269,10 @@ public class LibraryBean {
                 researchProjectId = mercuryProject.getBusinessKey();
                 researchProjectName = mercuryProject.getTitle();
             }
+
             Product product = productOrder.getProduct();
             if (product != null) {
+                this.dataType = productOrder.getProduct().getAggregationDataType();
                 this.product = product.getProductName();
                 ProductFamily family = product.getProductFamily();
                 if (family != null) {
@@ -462,6 +471,10 @@ public class LibraryBean {
 
     public String getMaterialType() {
         return materialType;
+    }
+
+    public String getDataType() {
+        return dataType;
     }
 
     public boolean getIsGssrSample() {

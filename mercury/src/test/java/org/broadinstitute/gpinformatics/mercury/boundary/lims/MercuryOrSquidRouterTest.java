@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
@@ -93,11 +94,11 @@ public class MercuryOrSquidRouterTest {
 
         ProductFamily family = new ProductFamily("Test Product Family");
         testProduct = new Product("Test Product", family, "Test product", "P-TEST-1", new Date(), new Date(),
-                0, 0, 0, 0, "Test samples only", "None", true, "Test Workflow", false);
+                0, 0, 0, 0, "Test samples only", "None", true, "Test Workflow", false, "agg type");
 
         //todo SGM:  Revisit. This probably meant to set the Workflow to ExEx
         exomeExpress = new Product("Exome Express", family, "Exome express", "P-EX-1", new Date(), new Date(),
-                0, 0, 0, 0, "Test exome express samples only", "None", true, WorkflowName.EXOME_EXPRESS.getWorkflowName(), false);
+                0, 0, 0, 0, "Test exome express samples only", "None", true, WorkflowName.EXOME_EXPRESS.getWorkflowName(), false, "agg type");
     }
 
     /*
@@ -259,7 +260,8 @@ public class MercuryOrSquidRouterTest {
         String jiraTicketKey = "PDO-" + productOrderSequence++;
         order.setJiraTicketKey(jiraTicketKey);
         when(mockAthenaClientService.retrieveProductOrderDetails(jiraTicketKey)).thenReturn(order);
-        tube.addSample(new MercurySample(jiraTicketKey, "SM-1"));
+        tube.addSample(new MercurySample("SM-1"));
+        tube.addBucketEntry(new BucketEntry(tube, jiraTicketKey));
         return order;
     }
 }
