@@ -1,92 +1,63 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 import junit.framework.Assert;
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
-import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
-import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServiceStub;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.inject.Inject;
-import javax.transaction.UserTransaction;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
-public class ProductOrderEjbTest extends ContainerTest {
+@Test(groups = TestGroups.DATABASE_FREE)
+public class ProductOrderEjbTest {
 
-    @Inject
-    ProductOrderEjb productOrderEjb;
+    public static final String ALIQUOT_ID_1 = "SM-ALIQUOT1";
+    public static final String ALIQUOT_ID_2 = "SM-ALIQUOT2";
+    public static final String STOCK_ID = "SM-STOCK";
 
-    @Inject
-    ProductOrderDao productOrderDao;
-
-    @Inject
-    ResearchProjectDao researchProjectDao;
-
-    @Inject
-    ProductOrderSampleDao productOrderSampleDao;
-
-    @Inject
-    ProductDao productDao;
-
-    @Inject
-    UserTransaction utx;
-
-    @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
-    public void setUp() throws Exception {
-        // Skip if no injections, since we're not running in container.
-        if (utx == null) {
-            return;
-        }
-
-        utx.begin();
-    }
-
-    @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
-    public void tearDown() throws Exception {
-        // Skip if no injections, since we're not running in container.
-        if (utx == null) {
-            return;
-        }
-
-        utx.rollback();
-    }
+    ProductOrderEjb productOrderEjb = new ProductOrderEjb(null, null, null, null, null, null, null,
+            new BSPSampleDataFetcher(new BSPSampleSearchService() {
+                @Override
+                public List<Map<BSPSampleSearchColumn, String>> runSampleSearch(Collection<String> sampleIDs,
+                                                                                BSPSampleSearchColumn... resultColumns) {
+                    // For this test case, both aliquots map to the same sample.
+                    return new ArrayList<Map<BSPSampleSearchColumn, String>>() {{
+                        add(new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
+                            put(BSPSampleSearchColumn.STOCK_SAMPLE, STOCK_ID);
+                        }});
+                    }};
+                }
+            }));
 
     public void testMapAliquotIdToSampleOne() throws Exception {
-        ProductOrder order = ProductOrderDBTestFactory.createTestProductOrder(researchProjectDao, productDao,
-                BSPSampleSearchServiceStub.STOCK_ID);
-        String key = order.getBusinessKey();
-        productOrderDao.persist(order);
-        productOrderDao.flush();
-        productOrderDao.clear();
+        ProductOrder order = ProductOrderDBTestFactory.createTestProductOrder(STOCK_ID);
 
         // Test case where sample has not yet been mapped to an aliquot.
-        order = productOrderDao.findByBusinessKey(key);
-        List<ProductOrderSample> samples = productOrderSampleDao.findByOrderAndName(order, BSPSampleSearchServiceStub.STOCK_ID);
+        List<ProductOrderSample> samples = order.getSamples();
         Assert.assertTrue(samples.size() == 1);
         Assert.assertTrue(samples.get(0).getAliquotId() == null);
 
         // Now map it.
-        ProductOrderSample sample = productOrderEjb.mapAliquotIdToSample(order, BSPSampleSearchServiceStub.ALIQUOT_ID_1);
+        ProductOrderSample sample = productOrderEjb.mapAliquotIdToSample(order, ALIQUOT_ID_1);
         Assert.assertNotNull(sample);
-        Assert.assertEquals(sample.getAliquotId(), BSPSampleSearchServiceStub.ALIQUOT_ID_1);
+        Assert.assertEquals(sample.getAliquotId(), ALIQUOT_ID_1);
 
         // Test case where sample has already been mapped, should return same sample again.
-        sample = productOrderEjb.mapAliquotIdToSample(order, BSPSampleSearchServiceStub.ALIQUOT_ID_1);
+        sample = productOrderEjb.mapAliquotIdToSample(order, ALIQUOT_ID_1);
         Assert.assertNotNull(sample);
-        Assert.assertEquals(sample.getAliquotId(), BSPSampleSearchServiceStub.ALIQUOT_ID_1);
+        Assert.assertEquals(sample.getAliquotId(), ALIQUOT_ID_1);
 
         // Try to map another aliquot, should get an exception.
         try {
-            sample = productOrderEjb.mapAliquotIdToSample(order, BSPSampleSearchServiceStub.ALIQUOT_ID_2);
+            sample = productOrderEjb.mapAliquotIdToSample(order, ALIQUOT_ID_2);
             Assert.fail("Exception should be thrown");
         } catch (Exception e) {
             // Error is expected.
@@ -96,17 +67,10 @@ public class ProductOrderEjbTest extends ContainerTest {
     public void testMapAliquotToSampleTwo() throws Exception {
         // Test case where there are multiple samples, where each one maps to a different aliquot.
 
-        ProductOrder order = ProductOrderDBTestFactory.createTestProductOrder(researchProjectDao, productDao,
-                BSPSampleSearchServiceStub.STOCK_ID, BSPSampleSearchServiceStub.STOCK_ID);
-        String key = order.getBusinessKey();
-        productOrderDao.persist(order);
-        productOrderDao.flush();
-        productOrderDao.clear();
-
-        order = productOrderDao.findByBusinessKey(key);
-        ProductOrderSample sample = productOrderEjb.mapAliquotIdToSample(order, BSPSampleSearchServiceStub.ALIQUOT_ID_1);
-        ProductOrderSample sample2 = productOrderEjb.mapAliquotIdToSample(order, BSPSampleSearchServiceStub.ALIQUOT_ID_2);
-        Assert.assertEquals(sample.getAliquotId(), BSPSampleSearchServiceStub.ALIQUOT_ID_1);
-        Assert.assertEquals(sample2.getAliquotId(), BSPSampleSearchServiceStub.ALIQUOT_ID_2);
+        ProductOrder order = ProductOrderDBTestFactory.createTestProductOrder(STOCK_ID, STOCK_ID);
+        ProductOrderSample sample = productOrderEjb.mapAliquotIdToSample(order, ALIQUOT_ID_1);
+        ProductOrderSample sample2 = productOrderEjb.mapAliquotIdToSample(order, ALIQUOT_ID_2);
+        Assert.assertEquals(sample.getAliquotId(), ALIQUOT_ID_1);
+        Assert.assertEquals(sample2.getAliquotId(), ALIQUOT_ID_2);
     }
 }

@@ -1293,7 +1293,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (!editOrder.isSubmitted()) {
             setAbandonDisabledReason("the order status of the PDO is not 'Submitted'.");
             return false;
-        } else if (productOrderSampleDao.countSamplesWithLedgerEntries(editOrder) > 0) {
+        }
+        if (productOrderSampleDao.countSamplesWithLedgerEntries(editOrder) > 0) {
             setAbandonWarning(true);
         }
         return true;

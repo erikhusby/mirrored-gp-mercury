@@ -10,7 +10,6 @@ import javax.ejb.Stateful;
 import javax.inject.Inject;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
-import java.util.ArrayList;
 import java.util.Collection;
 
 @Stateful
@@ -18,15 +17,12 @@ public class ProjectPersonEtl extends GenericEntityEtl<ProjectPerson, ProjectPer
     private BSPUserList userList;
 
     public ProjectPersonEtl() {
-        entityClass = ProjectPerson.class;
-        baseFilename = "research_project_person";
     }
 
     @Inject
-    public ProjectPersonEtl(ResearchProjectDao d, BSPUserList ul) {
-        this();
-        dao = d;
-        userList = ul;
+    public ProjectPersonEtl(ResearchProjectDao dao, BSPUserList userList) {
+        super(ProjectPerson.class, "research_project_person", dao);
+        this.userList = userList;
     }
 
     @Override

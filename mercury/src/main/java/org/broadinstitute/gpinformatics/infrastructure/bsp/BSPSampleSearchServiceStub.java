@@ -119,11 +119,6 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
     public static final String SM_12DW4_CONTAINER_ID = "CO-2859994";
     public static final String SM_12MD2_CONTAINER_ID = "CO-2859994";
 
-
-    public static final String ALIQUOT_ID_1 = "SM-ALIQUOT1";
-    public static final String ALIQUOT_ID_2 = "SM-ALIQUOT2";
-    public static final String STOCK_ID = "SM-STOCK";
-
     private final Map<String, Map<BSPSampleSearchColumn, String>> samples = new HashMap<String, Map<BSPSampleSearchColumn, String>>();
 
     public BSPSampleSearchServiceStub() {
@@ -257,14 +252,6 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
             put(BSPSampleSearchColumn.FINGERPRINT, SM_12MD2_FP);
             put(BSPSampleSearchColumn.CONTAINER_ID, SM_12MD2_CONTAINER_ID);
             put(BSPSampleSearchColumn.SAMPLE_ID, SM_12MD2);
-        }} );
-
-        addToMap( ALIQUOT_ID_1, new HashMap<BSPSampleSearchColumn, String>() {{
-            put(BSPSampleSearchColumn.STOCK_SAMPLE, STOCK_ID);
-        }} );
-
-        addToMap( ALIQUOT_ID_2, new HashMap<BSPSampleSearchColumn, String>() {{
-            put(BSPSampleSearchColumn.STOCK_SAMPLE, STOCK_ID);
         }} );
     }
 

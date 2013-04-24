@@ -27,14 +27,12 @@ public class WorkflowConfigEtl extends GenericEntityEtl<Object, Object> {
     static final String PROCESS_BASE_FILENAME = "workflow_process";
 
     public WorkflowConfigEtl() {
-        entityClass = WorkflowConfig.class;
-        baseFilename = WORKFLOW_BASE_FILENAME;
     }
 
     @Inject
-    public WorkflowConfigEtl(WorkflowLoader wl) {
-        this();
-        workflowLoader = wl;
+    public WorkflowConfigEtl(WorkflowLoader workflowLoader) {
+        super(WorkflowConfig.class, WORKFLOW_BASE_FILENAME, null);
+        this.workflowLoader = workflowLoader;
     }
 
     @Override

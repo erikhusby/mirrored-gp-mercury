@@ -172,10 +172,16 @@
 
                     if (sampleData[x].hasFingerprint) {
                         $j('#fingerprint-' + sampleId).html('<img src="${ctxpath}/images/check.png" title="Yes"/>');
+                    } else {
+                        // Need to replace &#160; with empty string.
+                        $j('#fingerprint-' + sampleId).text('');
                     }
 
                     if (sampleData[x].hasSampleKitUploadRackscanMismatch) {
                         $j('#sampleKitUploadRackscanMismatch-' + sampleId).html('<img src="${ctxpath}/images/error.png" title="Yes"/>');
+                    } else {
+                        // Need to replace &#160; with empty string.
+                        $j('#sampleKitUploadRackscanMismatch-' + sampleId).text('');
                     }
 
                     bspDataCount--;

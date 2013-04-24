@@ -16,15 +16,11 @@ import java.util.Date;
 public class ResearchProjectEtl extends GenericEntityAndStatusEtl<ResearchProject, ResearchProject> {
 
     public ResearchProjectEtl() {
-        entityClass = ResearchProject.class;
-        baseFilename = "research_project";
-        baseStatusFilename = "research_project_status";
     }
 
     @Inject
-    public ResearchProjectEtl(ResearchProjectDao d) {
-        this();
-        dao = d;
+    public ResearchProjectEtl(ResearchProjectDao dao) {
+        super(ResearchProject.class, "research_project", "research_project_status", dao);
     }
 
     @Override
@@ -43,7 +39,7 @@ public class ResearchProjectEtl extends GenericEntityAndStatusEtl<ResearchProjec
     }
 
     @Override
-    String statusRecord(String etlDateStr, Date statusDate, ResearchProject entity, boolean isDelete) {
+    String statusRecord(String etlDateStr, boolean isDelete, ResearchProject entity, Date statusDate) {
         if (entity != null || entity.getStatus() != null) {
             return genericRecord(etlDateStr, isDelete,
                     entity.getResearchProjectId(),

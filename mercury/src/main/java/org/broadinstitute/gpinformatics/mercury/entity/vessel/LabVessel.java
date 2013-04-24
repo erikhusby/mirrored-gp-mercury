@@ -433,6 +433,15 @@ public abstract class LabVessel implements Serializable {
         return nearest.size();
     }
 
+    /**
+     * Sets the rework state to inactive, meaning it will no longer appear in the bucket.
+     */
+    public  void deactivateRework() {
+        for (MercurySample sample : getMercurySamples()){
+            sample.getRapSheet().deactivateRework();
+        }
+    }
+
     public enum ContainerType {
         STATIC_PLATE("Plate"),
         PLATE_WELL("Plate Well"),
@@ -711,6 +720,13 @@ public abstract class LabVessel implements Serializable {
         return traversalResults;
     }
 
+    void traverseDescendants(TransferTraverserCriteria criteria, TransferTraverserCriteria.TraversalDirection direction,
+                             int hopCount) {
+        for (VesselEvent vesselEvent : getDescendants()) {
+            evaluateVesselEvent(criteria, direction, hopCount, vesselEvent);
+        }
+    }
+
     public List<SampleInstance> getSampleInstancesList() {
         return new ArrayList<SampleInstance>(getSampleInstances(SampleType.ANY, null));
     }
@@ -973,9 +989,7 @@ public abstract class LabVessel implements Serializable {
                 evaluateVesselEvent(transferTraverserCriteria, traversalDirection, hopCount, vesselEvent);
             }
         } else if (traversalDirection == TransferTraverserCriteria.TraversalDirection.Descendants) {
-            for (VesselEvent vesselEvent : getDescendants()) {
-                evaluateVesselEvent(transferTraverserCriteria, traversalDirection, hopCount, vesselEvent);
-            }
+            traverseDescendants(transferTraverserCriteria, traversalDirection, hopCount);
         } else {
             throw new RuntimeException("Unknown direction " + traversalDirection.name());
         }
@@ -989,7 +1003,7 @@ public abstract class LabVessel implements Serializable {
         if (labVessel == null) {
             vesselEvent.getVesselContainer().evaluateCriteria(vesselEvent.getPosition(),
                     transferTraverserCriteria, traversalDirection,
-                    vesselEvent.getLabEvent(), hopCount);
+                    vesselEvent.getLabEvent(), hopCount + 1);
         } else {
             labVessel.evaluateCriteria(transferTraverserCriteria, traversalDirection, vesselEvent.getLabEvent(),
                     hopCount + 1);

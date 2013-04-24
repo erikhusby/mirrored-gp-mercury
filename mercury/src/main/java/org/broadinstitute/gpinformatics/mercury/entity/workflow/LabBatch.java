@@ -139,7 +139,7 @@ public class LabBatch {
         reworks.addAll(newRework);
         for (LabVessel vessel : newRework) {
             for (MercurySample sample : vessel.getMercurySamples()) {
-                sample.getRapSheet().startRework();
+                sample.getRapSheet().activateRework();
             }
         }
     }

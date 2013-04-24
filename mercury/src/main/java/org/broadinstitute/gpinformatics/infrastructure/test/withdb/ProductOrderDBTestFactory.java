@@ -8,6 +8,8 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderSampleTestFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 
 import java.util.List;
@@ -38,18 +40,12 @@ public class ProductOrderDBTestFactory {
         Product product = products.get(new Random().nextInt(products.size()));
 
         // Try to create a Product Order and persist it.
-        String testProductOrderTitle = TEST_ORDER_TITLE_PREFIX + UUID.randomUUID();
-        ProductOrder order =
-                new ProductOrder(TEST_CREATOR_ID, testProductOrderTitle, ProductOrderSampleTestFactory
-                        .createSampleList(sampleNames),
-                                        "quoteId", product, project);
+        return createTestProductOrder(project, product, sampleNames);
+    }
 
-        order.setJiraTicketKey(TEST_PRODUCT_ORDER_KEY_PREFIX + UUID.randomUUID());
-        BspUser testUser = new BspUser();
-        testUser.setUserId(TEST_CREATOR_ID);
-        order.prepareToSave(testUser, true);
-
-        return order;
+    public static ProductOrder createTestProductOrder(String... sampleNames) {
+        return createTestProductOrder(ResearchProjectTestFactory.createTestResearchProject(),
+                ProductTestFactory.createTestProduct(), sampleNames);
     }
 
     public static ProductOrder createTestProductOrder(ResearchProjectDao researchProjectDao, ProductDao productDao) {
@@ -67,6 +63,10 @@ public class ProductOrderDBTestFactory {
         assertThat(products, is(not(nullOrEmptyCollection())));
         Product product = products.get(new Random().nextInt(products.size()));
 
+        return createTestProductOrder(project, product, sampleNames);
+    }
+
+    public static ProductOrder createTestProductOrder(ResearchProject project, Product product, String... sampleNames) {
         // Try to create a Product Order and persist it.
         String testProductOrderTitle = TEST_ORDER_TITLE_PREFIX + UUID.randomUUID();
         ProductOrder order =

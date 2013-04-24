@@ -96,11 +96,6 @@ public class RapSheet {
         this.rapSheetEntries.addAll(reworkEntries);
     }
 
-    public void startRework() {
-        getCurrentReworkEntry().setActiveRework(true);
-    }
-
-
     public ReworkEntry getCurrentReworkEntry(){
         for (ReworkEntry rapSheetEntry : getReworkEntries()) {
             return rapSheetEntry;
@@ -130,11 +125,18 @@ public class RapSheet {
         }
         return entries;
     }
+
+
+    public void activateRework() {
+        getCurrentReworkEntry().setActiveRework(true);
+    }
+
+
     /**
      * Get all the active rework and make it inactive.
      * If there is no ReworkEntries, it will do nothing.
      */
-    public void stopRework() {
+    public void deactivateRework() {
         if (getActiveRework() != null) {
             getActiveRework().setActiveRework(false);
         }
