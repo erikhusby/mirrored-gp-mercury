@@ -147,7 +147,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                     logger.warn("Cannot find starting sample for sampleInstance " + si.toString());
                     continue;
                 }
-                String productOrderKey = sample.getProductOrderKey();
+                String productOrderKey = si.getProductOrderKey();
                 if (productOrderKey == null) {
                     logger.warn("Sample " + sample.getSampleKey() + " has null productOrderKey");
                     continue;

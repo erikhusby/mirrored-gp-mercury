@@ -132,7 +132,6 @@ public class MercuryClientEjb {
                     BSPSampleDTO bspDto = bspDtoMap.get(sampleKey);
 
                     if (bspDto != null && bspDto.isSampleReceived()) {
-                        mercurySample.setProductOrderKey(pdo.getBusinessKey());
                         validVessels.add(vessel);
                     }
                 }

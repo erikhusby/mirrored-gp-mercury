@@ -26,9 +26,20 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 
-import static org.easymock.EasyMock.*;
+import static org.easymock.EasyMock.anyObject;
+import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.eq;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.reset;
+import static org.easymock.EasyMock.verify;
 
 /**
  * DbFree test of MercuryClientEjb.
@@ -96,7 +107,7 @@ public class MercuryClientEjbDbFreeTest {
                     bspData.put(BSPSampleSearchColumn.MATERIAL_TYPE, "DNA:DNA Genomic");
                     bspData.put(BSPSampleSearchColumn.SAMPLE_ID, pdoSample.getSampleName());
                     bspData.put(BSPSampleSearchColumn.ROOT_SAMPLE, pdoSample.getSampleName());
-                    bspData.put(BSPSampleSearchColumn.RECEIPT_DATE, null);
+                    bspData.put(BSPSampleSearchColumn.RECEIPT_DATE, "ROOT");
                     expectedInBucket = false;
                     break;
 
@@ -104,7 +115,7 @@ public class MercuryClientEjbDbFreeTest {
                     // Non-genomic material.
                     bspData.put(BSPSampleSearchColumn.MATERIAL_TYPE, "Tissue:Blood");
                     bspData.put(BSPSampleSearchColumn.SAMPLE_ID, pdoSample.getSampleName());
-                    bspData.put(BSPSampleSearchColumn.ROOT_SAMPLE, null);
+                    bspData.put(BSPSampleSearchColumn.ROOT_SAMPLE, "ROOT");
                     expectedInBucket = false;
                     break;
 
@@ -113,20 +124,20 @@ public class MercuryClientEjbDbFreeTest {
                     bspData.put(BSPSampleSearchColumn.MATERIAL_TYPE, "DNA:DNA Genomic");
                     bspData.put(BSPSampleSearchColumn.ROOT_SAMPLE, pdoSample.getSampleName());
                     bspData.put(BSPSampleSearchColumn.SAMPLE_ID, pdoSample.getSampleName());
-                    bspData.put(BSPSampleSearchColumn.RECEIPT_DATE, "2013-04-22");
+                    bspData.put(BSPSampleSearchColumn.RECEIPT_DATE, "4/22/2013");
                     expectedInBucket = true;
                     break;
 
                 default:
                     // Non-root samples.
                     bspData.put(BSPSampleSearchColumn.MATERIAL_TYPE, "DNA:DNA Genomic");
-                    bspData.put(BSPSampleSearchColumn.ROOT_SAMPLE, null);
+                    bspData.put(BSPSampleSearchColumn.ROOT_SAMPLE, "ROOT");
                     bspData.put(BSPSampleSearchColumn.SAMPLE_ID, pdoSample.getSampleName());
                     expectedInBucket = true;
                     break;
             }
             BSPSampleDTO bspDto = new BSPSampleDTO(bspData);
-            MercurySample mercurySample = new MercurySample(pdo.getBusinessKey(), pdoSample.getSampleName(), bspDto);
+            MercurySample mercurySample = new MercurySample(pdoSample.getSampleName(), bspDto);
 
             if (expectedInBucket) {
                 expectedSamples.add(pdoSample);

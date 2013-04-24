@@ -62,7 +62,7 @@ public class BucketViewActionBean extends CoreActionBean {
     private String selectedBucket;
 
     private Collection<BucketEntry> bucketEntries;
-    private Map<String, LabVessel> reworkEntries;
+    private Collection<LabVessel> reworkEntries;
 
     private Map<String, ProductOrder> pdoByKeyMap = new HashMap<String, ProductOrder>();
 
@@ -128,11 +128,11 @@ public class BucketViewActionBean extends CoreActionBean {
         this.selectedReworks = selectedReworks;
     }
 
-    public Map<String, LabVessel> getReworkEntries() {
+    public Collection<LabVessel> getReworkEntries() {
         return reworkEntries;
     }
 
-    public void setReworkEntries(Map<String, LabVessel> reworkEntries) {
+    public void setReworkEntries(Collection<LabVessel> reworkEntries) {
         this.reworkEntries = reworkEntries;
     }
 
@@ -161,7 +161,7 @@ public class BucketViewActionBean extends CoreActionBean {
     }
 
     public Resolution viewBucket() {
-        reworkEntries = getInactiveRework();
+        reworkEntries = reworkEjb.getVesselsForRework();
 
         if (selectedBucket != null) {
             Bucket bucket = bucketDao.findByName(selectedBucket);
@@ -181,21 +181,6 @@ public class BucketViewActionBean extends CoreActionBean {
         return view();
     }
 
-    private Map<String, LabVessel> getInactiveRework() {
-        Map<String, LabVessel> result = new HashMap<String, LabVessel>();
-        Set<LabVessel> bySampleKeyList = new HashSet<LabVessel>();
-        Set<String> reworkBarcodes = new HashSet<String>();
-        for (ReworkEntry reworkEntry : reworkEjb.getNonActiveReworkEntries()) {
-            reworkBarcodes.add(reworkEntry.getRapSheet().getSample().getSampleKey());
-        }
-
-        bySampleKeyList.addAll(labVesselDao.findBySampleKeyList(new ArrayList<String>(reworkBarcodes)));
-        for (LabVessel vessel : bySampleKeyList) {
-            result.put(vessel.getLabel(), vessel);
-        }
-
-        return result;
-    }
 
     public ProductOrder getPDODetails(String pdoKey) {
         if (!pdoByKeyMap.containsKey(pdoKey)) {
@@ -247,16 +232,6 @@ public class BucketViewActionBean extends CoreActionBean {
     public Date getReworkLogDate(LabVessel vessel) {
         return getRapSheet(vessel)
                 .getCurrentReworkEntry().getLabVesselComment().getLogDate();
-    }
-
-    public List<MercurySample> getMercurySamplesForBucketEntry(BucketEntry entry) {
-        List<MercurySample> mercurySamplesForEntry = new ArrayList<MercurySample>();
-        for (MercurySample sample : entry.getLabVessel().getMercurySamples()) {
-            if (StringUtils.equals(entry.getPoBusinessKey(), sample.getProductOrderKey())) {
-                mercurySamplesForEntry.add(sample);
-            }
-        }
-        return mercurySamplesForEntry;
     }
 
     /**

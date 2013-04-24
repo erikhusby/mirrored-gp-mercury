@@ -319,7 +319,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
         if(exomeExpressProduct == null) {
             exomeExpressProduct=new Product("Standard Exome Sequencing", productFamilyDao.find("Exome"),
                     "Standard Exome Sequencing", "P-EX-0001", new Date(), null, 1814400, 1814400, 184, null, null,
-                    null, true, WorkflowName.HYBRID_SELECTION.getWorkflowName(), false);
+                    null, true, WorkflowName.HYBRID_SELECTION.getWorkflowName(), false, "agg type");
             exomeExpressProduct.setPrimaryPriceItem(new PriceItem("1234", PriceItem.PLATFORM_GENOMICS, "Pony Genomics",
                     "Standard Pony"));
             productDao.persist(exomeExpressProduct);
@@ -346,7 +346,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
             String barcode="R" + testPrefix + rackPosition;
             String bspStock="SM-" + testPrefix + rackPosition;
             TwoDBarcodedTube bspAliquot=new TwoDBarcodedTube(barcode);
-            bspAliquot.addSample(new MercurySample(productOrder.getBusinessKey(), bspStock));
+            bspAliquot.addSample(new MercurySample(bspStock));
             mapBarcodeToTube.put(barcode, bspAliquot);
 
             twoDBarcodedTubeDAO.persist(bspAliquot);

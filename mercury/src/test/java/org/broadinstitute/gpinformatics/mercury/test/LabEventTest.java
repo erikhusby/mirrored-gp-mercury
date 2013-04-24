@@ -2,6 +2,8 @@ package org.broadinstitute.gpinformatics.mercury.test;
 
 //import com.jprofiler.api.agent.Controller;
 
+import org.apache.commons.collections15.Factory;
+import org.apache.commons.collections15.map.LazySortedMap;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProducer;
@@ -15,9 +17,16 @@ import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.*;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.graph.Graph;
-import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettalimsMessageResource;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferEntityGrapher;
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVisualizer;
@@ -25,7 +34,6 @@ import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexingSchemeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -40,19 +48,44 @@ import org.broadinstitute.gpinformatics.mercury.control.zims.ZimsIlluminaRunFact
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.*;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.DesignedReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.*;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.gpinformatics.mercury.presentation.transfervis.TransferVisualizerFrame;
-import org.broadinstitute.gpinformatics.mercury.test.builders.*;
+import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.PreFlightEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.SageEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingEntityBuilder;
 import org.easymock.EasyMock;
+import org.hamcrest.Matchers;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -62,10 +95,25 @@ import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.SortedSet;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
 import static org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign.ReagentType;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.startsWith;
 
 /**
  * Test messaging
@@ -94,6 +142,15 @@ public class LabEventTest extends BaseEventTest{
         private int hopCount = -1;
         private final List<String> labEventNames = new ArrayList<String>();
 
+        private final SortedMap<Integer, SortedSet<LabEvent>> labEventNamesByHopCount =
+                LazySortedMap.decorate(new TreeMap<Integer, SortedSet<LabEvent>>(),
+                                       new Factory<SortedSet<LabEvent>>() {
+                                            @Override
+                                            public SortedSet<LabEvent> create() {
+                                                return new TreeSet<LabEvent>(LabEvent.byEventDate);
+                                            }
+                                       });
+
         /**
          * Avoid infinite loops
          */
@@ -102,13 +159,14 @@ public class LabEventTest extends BaseEventTest{
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
             if (context.getEvent() != null) {
+                labEventNamesByHopCount.get(context.getHopCount()).add(context.getEvent());
+
                 if (!getVisitedLabEvents().add(context.getEvent())) {
                     return TraversalControl.StopTraversing;
                 }
                 if (context.getHopCount() > hopCount) {
                     hopCount = context.getHopCount();
-                    labEventNames.add(context.getEvent().getLabEventType().getName() + " into " +
-                            context.getEvent().getTargetLabVessels().iterator().next().getLabel());
+                    labEventNames.add(makeLabEventName(context.getEvent()));
                 }
             }
             return TraversalControl.ContinueTraversing;
@@ -128,6 +186,29 @@ public class LabEventTest extends BaseEventTest{
 
         public Set<LabEvent> getVisitedLabEvents() {
             return visitedLabEvents;
+        }
+
+        public List<String> getLastEventNamesPerHop() {
+            List<String> result = new ArrayList<String>();
+            for (SortedSet<LabEvent> labEvents : labEventNamesByHopCount.values()) {
+                result.add(makeLabEventName(labEvents.last()));
+            }
+            return result;
+        }
+
+        public List<String> getAllEventNamesPerHop() {
+            List<String> result = new ArrayList<String>();
+            for (SortedSet<LabEvent> labEvents : labEventNamesByHopCount.values()) {
+                for (LabEvent event : labEvents) {
+                    result.add(makeLabEventName(event));
+                }
+            }
+            return result;
+        }
+
+        private String makeLabEventName(LabEvent event) {
+            return event.getLabEventType().getName() + " into " +
+                   event.getTargetLabVessels().iterator().next().getLabel();
         }
     }
 
@@ -226,8 +307,28 @@ public class LabEventTest extends BaseEventTest{
         TwoDBarcodedTube startingTube = mapBarcodeToTube.entrySet().iterator().next().getValue();
         startingTube.evaluateCriteria(transferTraverserCriteria,
                 TransferTraverserCriteria.TraversalDirection.Descendants);
-        List<String> labEventNames = transferTraverserCriteria.getLabEventNames();
-        Assert.assertEquals(labEventNames.size(), 13, "Wrong number of transfers");
+        List<String> labEventNames = transferTraverserCriteria.getAllEventNamesPerHop();
+        String[] expectedEventNames = {
+                "PreflightPicoSetup",
+                "PreflightPicoSetup",
+                "PreflightPostNormPicoSetup",
+                "PreflightPostNormPicoSetup",
+                "ShearingTransfer",
+                "PostShearingTransferCleanup",
+                "ShearingQC",
+                "AdapterLigationCleanup",
+                "HybSelPondEnrichmentCleanup",
+                "PondRegistration",
+                "PreSelectionPool",
+                "Hybridization",
+                "CatchEnrichmentCleanup",
+                "NormalizedCatchRegistration",
+                "PoolingTransfer",
+                "DenatureTransfer",
+                "StripTubeBTransfer",
+                "FlowcellTransfer",
+        };
+        verifyEventSequence(labEventNames, expectedEventNames);
 
         Assert.assertEquals(illuminaSequencingRun.getSampleCartridge(),
                 qtpEntityBuilder.getIlluminaFlowcell(), "Wrong flowcell");
@@ -236,15 +337,7 @@ public class LabEventTest extends BaseEventTest{
         Map.Entry<String, TwoDBarcodedTube> twoDBarcodedTubeForRework = mapBarcodeToTube.entrySet().iterator().next();
         int lastEventIndex = transferTraverserCriteria.getVisitedLabEvents().size();
         LabEvent catchEvent =
-                transferTraverserCriteria.getVisitedLabEvents().toArray(new LabEvent[lastEventIndex])[lastEventIndex
-                                                                                                      - 1];
-        BucketEntryDao bucketEntryDao = EasyMock.createNiceMock(BucketEntryDao.class);
-
-        EasyMock.expect(bucketEntryDao.findByVesselAndPO(twoDBarcodedTubeForRework.getValue(),twoDBarcodedTubeForRework.getValue().getLabel()))
-                .andReturn(new BucketEntry(twoDBarcodedTubeForRework.getValue(),
-                        twoDBarcodedTubeForRework.getValue().getLabel()));
-        final BucketEntryDao bucketEntryMock = EasyMock.createNiceMock(BucketEntryDao.class);
-        EasyMock.replay(bucketEntryMock);
+                transferTraverserCriteria.getVisitedLabEvents().toArray(new LabEvent[lastEventIndex])[lastEventIndex - 1];
 
         if (false) {
             TransferVisualizerFrame transferVisualizerFrame = new TransferVisualizerFrame();
@@ -274,6 +367,7 @@ public class LabEventTest extends BaseEventTest{
         ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
         AthenaClientServiceStub.addProductOrder(productOrder);
         final Date runDate = new Date();
+        // todo jmt create bucket, then batch, rather than rack than batch then bucket
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
@@ -312,9 +406,6 @@ public class LabEventTest extends BaseEventTest{
                                          runDate, machineName,
                                          runPath.getAbsolutePath(), null);
 
-        IlluminaSequencingRunDao runDao = EasyMock.createNiceMock(IlluminaSequencingRunDao.class);
-        EasyMock.expect(runDao.findByRunName(EasyMock.anyObject(String.class))).andReturn(null);
-
         IlluminaSequencingRunFactory runFactory = new IlluminaSequencingRunFactory(EasyMock.createMock(JiraCommentUtil.class));
         IlluminaSequencingRun run = runFactory.buildDbFree(runBean,hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell());
 
@@ -322,10 +413,32 @@ public class LabEventTest extends BaseEventTest{
         ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
         stringTwoDBarcodedTubeEntry.getValue().evaluateCriteria(transferTraverserCriteria,
                 TransferTraverserCriteria.TraversalDirection.Descendants);
-        List<String> labEventNames = transferTraverserCriteria.getLabEventNames();
+        List<String> labEventNames = transferTraverserCriteria.getAllEventNamesPerHop();
 
-        //todo: these need to be made to assert something useful, and pass.
-        Assert.assertEquals(labEventNames.size(), 11, "Wrong number of transfers");
+        /*
+         * TODO: Get expected events from workflow. Currently complicated by:
+         *      some events are required while some are not
+         *      testExomeExpress does not record all required BSP events
+         *      ListTransfersFromStart does not return (is not even told about) in-place events
+         */
+        String[] expectedEventNames = {
+                "SamplesNormalizationTransfer",
+                "PicoPlatingPostNorm",
+                "ShearingTransfer",
+                "PostShearingTransferCleanup",
+                "ShearingQC",
+                "AdapterLigationCleanup",
+                "HybSelPondEnrichmentCleanup",
+                "PondRegistration",
+                "PreSelectionPool",
+                "Hybridization",
+                "CatchEnrichmentCleanup",
+                "NormalizedCatchRegistration",
+                "PoolingTransfer",
+                "DenatureTransfer",
+                "DenatureToFlowcellTransfer",
+        };
+        verifyEventSequence(labEventNames, expectedEventNames);
 
         /*
          *
@@ -381,8 +494,27 @@ public class LabEventTest extends BaseEventTest{
         ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
         stringTwoDBarcodedTubeEntry.getValue().evaluateCriteria(transferTraverserCriteria,
                 TransferTraverserCriteria.TraversalDirection.Descendants);
-        List<String> labEventNames = transferTraverserCriteria.getLabEventNames();
-        Assert.assertEquals(labEventNames.size(), 12, "Wrong number of transfers");
+        List<String> labEventNames = transferTraverserCriteria.getAllEventNamesPerHop();
+        String[] expectedEventNames = {
+                "PreflightPicoSetup",
+                "PreflightPicoSetup",
+                "PreflightPostNormPicoSetup",
+                "PreflightPostNormPicoSetup",
+                "ShearingTransfer",
+                "PostShearingTransferCleanup",
+                "ShearingQC",
+                "AdapterLigationCleanup",
+                "HybSelPondEnrichmentCleanup",
+                "PondRegistration",
+                "SageLoading",
+                "SageUnloading",
+                "SageCleanup",
+                "PoolingTransfer",
+                "DenatureTransfer",
+                "StripTubeBTransfer",
+                "FlowcellTransfer",
+        };
+        verifyEventSequence(labEventNames, expectedEventNames);
 
 //        Controller.stopCPURecording();
     }
@@ -399,7 +531,7 @@ public class LabEventTest extends BaseEventTest{
 
             String bspStock = "SM-" + rackPosition;
             TwoDBarcodedTube bspAliquot = new TwoDBarcodedTube(barcode);
-            bspAliquot.addSample(new MercurySample(null, bspStock));
+            bspAliquot.addSample(new MercurySample(bspStock));
             mapBarcodeToTube.put(barcode, bspAliquot);
         }
 
@@ -432,6 +564,28 @@ public class LabEventTest extends BaseEventTest{
                 buildIndexPlate.getIndexPlate());
         fluidigmMessagesBuilder.buildJaxb();
         fluidigmMessagesBuilder.buildObjectGraph();
+    }
+
+    private void verifyEventSequence(List<String> labEventNames, String[] expectedEventNames) {
+    /*
+     * First, make sure that all expected event names are present. Then, check for extra events. Finally, make sure
+     * that they're in the right order. The idea is that if all of the event positions are thrown off because of a
+     * missing early event, that would be more useful feedback than the n+1th event being in the nth slot.
+     */
+        for (String expectedEventName : expectedEventNames) {
+            /*
+             * Concatenate a " " to the expected event name to match, for example, "Hybridization into ..." without
+             * falsely matching on "HybridizationCleanup into ...".
+             */
+            // TODO: try removing ugly Matchers.<String> syntax after moving to Java 7
+            assertThat(labEventNames, Matchers.<String>hasItem(startsWith(expectedEventName + " ")));
+        }
+
+        Assert.assertEquals(labEventNames.size(), expectedEventNames.length, "Wrong number of transfers");
+
+        for (int i = 0; i < expectedEventNames.length; i++) {
+            assertThat("Unexpected event at position " + i, labEventNames.get(i), startsWith(expectedEventNames[i]));
+        }
     }
 
     /**
@@ -592,9 +746,10 @@ public class LabEventTest extends BaseEventTest{
         WorkflowLoader workflowLoader = new WorkflowLoader();
         WorkflowConfig workflowConfig = workflowLoader.load();
         for (LabVessel labVessel : labVessels) {
-            for (SampleInstance sampleInstance : labVessel.getSampleInstances()) {
+            for (SampleInstance sampleInstance : labVessel.getSampleInstances(LabVessel.SampleType.WITH_PDO,
+                    LabBatch.LabBatchType.WORKFLOW)) {
                 ProductOrder productOrder = athenaClientService.retrieveProductOrderDetails(
-                        sampleInstance.getStartingSample().getProductOrderKey());
+                        sampleInstance.getProductOrderKey());
                 // get workflow name from product order
                 ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(
                         productOrder.getProduct().getWorkflowName());
@@ -679,26 +834,6 @@ public class LabEventTest extends BaseEventTest{
         baitTube.addReagent(new DesignedReagent(reagent));
         return baitTube;
     }
-
-    /*
-    public static class HiSeqEntityBuilder {
-        private final BettaLimsMessageTestFactory bettaLimsMessageTestFactory;
-        private final LabEventFactory labEventFactory;
-        private final LabEventHandler labEventHandler;
-        private final StripTube stripTube;
-
-        private IlluminaFlowcell illuminaFlowcell;
-
-        public HiSeqJaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
-                                LabEventFactory labEventFactory, LabEventHandler labEventHandler,
-                                StripTube stripTube) {
-            this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
-            this.labEventFactory = labEventFactory;
-            this.labEventHandler = labEventHandler;
-            this.stripTube = stripTube;
-        }
-    }
-*/
 
     public static class MockBucket extends Bucket {
 

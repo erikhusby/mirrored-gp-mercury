@@ -36,8 +36,6 @@ public class MercurySample {
     @SuppressWarnings("UnusedDeclaration")
     private Long mercurySampleId;
 
-    private String productOrderKey;
-
     @Index(name = "ix_ms_sample_key")
     private String sampleKey;
 
@@ -46,9 +44,9 @@ public class MercurySample {
 
     @Transient
     private BSPSampleDTO bspSampleDTO;
+
     @Transient
     private boolean hasBspDTOBeenInitialized;
-
 
     /**
      * For JPA
@@ -60,14 +58,7 @@ public class MercurySample {
         this.sampleKey = sampleKey;
     }
 
-    public MercurySample(String productOrderKey, String sampleKey) {
-        this.productOrderKey = productOrderKey;
-        this.sampleKey = sampleKey;
-    }
-
-
-    public MercurySample(String productOrderKey, String sampleKey, BSPSampleDTO bspSampleDTO) {
-        this.productOrderKey = productOrderKey;
+    public MercurySample(String sampleKey, BSPSampleDTO bspSampleDTO) {
         this.sampleKey = sampleKey;
         this.bspSampleDTO = bspSampleDTO;
         hasBspDTOBeenInitialized = true;
@@ -82,14 +73,6 @@ public class MercurySample {
 
     public void setRapSheet(RapSheet rapSheet) {
         this.rapSheet = rapSheet;
-    }
-
-    public String getProductOrderKey() {
-        return productOrderKey;
-    }
-
-    public void setProductOrderKey(String productOrderKey) {
-        this.productOrderKey = productOrderKey;
     }
 
     public String getSampleKey() {
@@ -129,12 +112,11 @@ public class MercurySample {
 
         MercurySample that = (MercurySample) o;
 
-        return new EqualsBuilder().append(getProductOrderKey(), that.getProductOrderKey()).
-                append(getSampleKey(), that.getSampleKey()).isEquals();
+        return new EqualsBuilder().append(getSampleKey(), that.getSampleKey()).isEquals();
     }
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder().append(getProductOrderKey()).append(getSampleKey()).toHashCode();
+        return new HashCodeBuilder().append(getSampleKey()).toHashCode();
     }
 }

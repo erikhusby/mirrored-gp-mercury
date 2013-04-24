@@ -442,15 +442,6 @@
         <workflowProcessDefVersions>
             <version>1.0</version>
             <effectiveDate>2012-09-30T21:03:24.085-04:00</effectiveDate>
-            <!--
-                    <workflowStepDefs>
-                        <name>Catch Pico?</name>
-                        <labEventTypes></labEventTypes>
-                        <optional>false</optional>
-                        <entryPoint>false</entryPoint>
-                        <reEntryPoint>false</reEntryPoint>
-                    </workflowStepDefs>
-            -->
             <workflowStepDefs>
                 <name>Pooling Transfer</name>
                 <labEventTypes>POOLING_TRANSFER</labEventTypes>
@@ -458,15 +449,6 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
-            <!--
-                    <workflowStepDefs>
-                        <name>EcoTransfer?</name>
-                        <labEventTypes></labEventTypes>
-                        <optional>false</optional>
-                        <entryPoint>false</entryPoint>
-                        <reEntryPoint>false</reEntryPoint>
-                    </workflowStepDefs>
-            -->
             <workflowStepDefs>
                 <name>Normalization Transfer</name>
                 <labEventTypes>NORMALIZATION_TRANSFER</labEventTypes>

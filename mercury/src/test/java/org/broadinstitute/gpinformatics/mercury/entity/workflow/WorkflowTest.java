@@ -202,7 +202,7 @@ public class WorkflowTest {
         }};
 
         TwoDBarcodedTube twoDBarcodedTube = new TwoDBarcodedTube("00001234");
-        twoDBarcodedTube.addSample(new MercurySample("PDO-123", "SM-1234", new BSPSampleDTO(dataMap)));
+        twoDBarcodedTube.addSample(new MercurySample("SM-1234", new BSPSampleDTO(dataMap)));
 
         WorkflowLoader workflowLoader = new WorkflowLoader();
         WorkflowConfig workflowConfig1 = workflowLoader.load();
@@ -229,7 +229,7 @@ public class WorkflowTest {
         }};
 
         TwoDBarcodedTube twoDBarcodedTube = new TwoDBarcodedTube("00002345");
-        twoDBarcodedTube.addSample(new MercurySample("PDO-123", "SM-2345", new BSPSampleDTO(dataMap)));
+        twoDBarcodedTube.addSample(new MercurySample("SM-2345", new BSPSampleDTO(dataMap)));
 
         WorkflowLoader workflowLoader = new WorkflowLoader();
         WorkflowConfig workflowConfig1 = workflowLoader.load();

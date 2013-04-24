@@ -246,12 +246,10 @@ public class VesselContainer<T extends LabVessel> {
                         cherryPickTransfer.getLabEvent(), hopCount + 1);
             }
         }
-        // handle un-racked VesselToSectionTransfers
+        // handle VesselToVesselTransfers and un-racked VesselToSectionTransfers
         T vessel = getVesselAtPosition(position);
         if (vessel != null) {
-            for (VesselToSectionTransfer vesselToSectionTransfer : vessel.getVesselToSectionTransfersThisAsSource()) {
-                vessel.evaluateCriteria(transferTraverserCriteria, traversalDirection, vesselToSectionTransfer.getLabEvent(), hopCount);
-            }
+            vessel.traverseDescendants(transferTraverserCriteria, traversalDirection, hopCount);
         }
     }
 
@@ -300,9 +298,10 @@ public class VesselContainer<T extends LabVessel> {
      * @return contained vessels
      */
     @Transient
-    public Collection<T> getContainedVessels() {
+    public Set<T> getContainedVessels() {
+        // Wrap in HashSet so equals works against other Sets
         //noinspection unchecked
-        return (Collection<T>) mapPositionToVessel.values();
+        return new HashSet<T>((Collection<? extends T>) mapPositionToVessel.values());
     }
 
     public void addContainedVessel(T child, VesselPosition position) {
