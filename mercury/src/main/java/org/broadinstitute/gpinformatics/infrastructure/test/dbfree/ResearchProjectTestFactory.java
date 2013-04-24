@@ -13,10 +13,16 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
+import java.util.UUID;
 
 public class ResearchProjectTestFactory {
 
     public static final long TEST_CREATOR = 10950;
+
+    public static ResearchProject createTestResearchProject() {
+        String uuid = UUID.randomUUID().toString();
+        return createDummyResearchProject(TEST_CREATOR, "title " + uuid, "synopsis " + uuid, true);
+    }
 
     public static ResearchProject createDummyResearchProject(long createdBy, String title, String synopsis,
                                                              boolean irbNotEngaged) {
