@@ -24,6 +24,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
+import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
 
 import javax.ejb.Stateful;
@@ -42,6 +43,7 @@ import java.util.Set;
 /**
  * Validates messages against workflow definitions
  */
+@SuppressWarnings("FeatureEnvy")
 @Stateful
 @RequestScoped
 public class WorkflowValidator {
@@ -58,6 +60,7 @@ public class WorkflowValidator {
     @Inject
     private EmailSender emailSender;
 
+    @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private AthenaClientService athenaClientService;
 
@@ -139,13 +142,13 @@ public class WorkflowValidator {
 
         public String getLinkToProductOrder() {
             return appConfig.getUrl() + ProductOrderActionBean.ACTIONBEAN_URL_BINDING + "?" +
-                    ProductOrderActionBean.VIEW_ACTION + "&" + ProductOrderActionBean.PRODUCT_ORDER_PARAMETER +
+                   CoreActionBean.VIEW_ACTION + "&" + ProductOrderActionBean.PRODUCT_ORDER_PARAMETER +
                     "=" + productOrder.getBusinessKey();
         }
 
         public String getLinkToResearchProject() {
             return appConfig.getUrl() + ResearchProjectActionBean.ACTIONBEAN_URL_BINDING + "?" +
-                    ResearchProjectActionBean.VIEW_ACTION + "&" + ResearchProjectActionBean.RESEARCH_PROJECT_PARAMETER +
+                   CoreActionBean.VIEW_ACTION + "&" + ResearchProjectActionBean.RESEARCH_PROJECT_PARAMETER +
                     "=" + productOrder.getResearchProject().getBusinessKey();
         }
     }
@@ -181,20 +184,20 @@ public class WorkflowValidator {
      * @return list of errors
      */
     public List<WorkflowValidationError> validateWorkflow(Collection<LabVessel> labVessels, String eventType) {
-        List<SampleInstance> allSampleInstances = new ArrayList<SampleInstance>();
         List<WorkflowValidationError> validationErrors = new ArrayList<WorkflowValidationError>();
         for (LabVessel labVessel : labVessels) {
             Set<SampleInstance> sampleInstances = labVessel.getSampleInstances(LabVessel.SampleType.WITH_PDO,
                     LabBatch.LabBatchType.WORKFLOW);
-            allSampleInstances.addAll(sampleInstances);
             for (SampleInstance sampleInstance : sampleInstances) {
-                ProductWorkflowDefVersion workflowVersion = getWorkflowVersion(sampleInstance.getProductOrderKey());
-                if (workflowVersion != null) {
-                    List<ProductWorkflowDefVersion.ValidationError> errors = workflowVersion.validate(labVessel, eventType);
-                    if (!errors.isEmpty()) {
-                        validationErrors.add(new WorkflowValidationError(sampleInstance, errors,
-                                athenaClientService.retrieveProductOrderDetails(
-                                        sampleInstance.getProductOrderKey()), appConfig));
+                if (sampleInstance.getProductOrderKey() != null) {
+                    ProductWorkflowDefVersion workflowVersion = getWorkflowVersion(sampleInstance.getProductOrderKey());
+                    if (workflowVersion != null) {
+                        List<ProductWorkflowDefVersion.ValidationError> errors = workflowVersion.validate(labVessel, eventType);
+                        if (!errors.isEmpty()) {
+                            validationErrors.add(new WorkflowValidationError(sampleInstance, errors,
+                                    athenaClientService.retrieveProductOrderDetails(
+                                            sampleInstance.getProductOrderKey()), appConfig));
+                        }
                     }
                 }
             }
