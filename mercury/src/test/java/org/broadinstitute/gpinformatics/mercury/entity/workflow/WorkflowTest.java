@@ -79,10 +79,10 @@ public class WorkflowTest {
 
         Assert.assertEquals(1, preLcProcessVersion.getBuckets().size());
 
-        Assert.assertTrue(exomeExpressProductVersion.isPreviousStepBucket(LabEventType.PLATING_TO_SHEARING_TUBES
+        Assert.assertTrue(exomeExpressProductVersion.isPreviousStepBucket(LabEventType.COVARIS_LOADED
                 .getName()));
         Assert.assertFalse(exomeExpressProductVersion
-                .isNextStepBucket(LabEventType.PLATING_TO_SHEARING_TUBES.getName()));
+                .isNextStepBucket(LabEventType.COVARIS_LOADED.getName()));
 
         Assert.assertFalse(exomeExpressProductVersion
                 .isPreviousStepBucket(LabEventType.PICO_PLATING_POST_NORM_PICO.getName()));
@@ -125,8 +125,6 @@ public class WorkflowTest {
         shearingBucketDef.addLabEvent(LabEventType.SHEARING_BUCKET);
 
         preLcProcessVersion.addStep(shearingBucketDef);
-        preLcProcessVersion.addStep(new WorkflowStepDef(LabEventType.PLATING_TO_SHEARING_TUBES.getName()).addLabEvent(
-                LabEventType.PLATING_TO_SHEARING_TUBES));
         preLcProcessVersion.addStep(new WorkflowStepDef(LabEventType.COVARIS_LOADED.getName()).addLabEvent(
                 LabEventType.COVARIS_LOADED));
         preLcProcessVersion
