@@ -43,10 +43,6 @@ public class LabEventHandler implements Serializable {
 
     private BSPUserList bspUserList;
 
-    private BucketBean bucketBean;
-
-    private BucketDao bucketDao;
-
     @Inject
     private JiraCommentUtil jiraCommentUtil;
 
@@ -54,12 +50,10 @@ public class LabEventHandler implements Serializable {
     }
 
     @Inject
-    public LabEventHandler(WorkflowLoader workflowLoader, AthenaClientService athenaClientService, BucketBean bucketBean,
-            BucketDao bucketDao, BSPUserList bspUserList) {
+    public LabEventHandler(WorkflowLoader workflowLoader, AthenaClientService athenaClientService,
+                           BSPUserList bspUserList) {
         this.workflowLoader = workflowLoader;
         this.athenaClientService = athenaClientService;
-        this.bucketBean = bucketBean;
-        this.bucketDao = bucketDao;
         this.bspUserList = bspUserList;
     }
 
@@ -83,75 +77,6 @@ public class LabEventHandler implements Serializable {
             }
         }
         //notifyCheckpoints(labEvent);
-
-        /*
-            Since multiple Workflow Versions can be associated with the collection of vessels, individually determine
-            what the previous bucket for the vessels will be
-         */
-        Map<WorkflowStepDef, Collection<LabVessel>> bucketVessels = itemizeBucketItems(labEvent);
-
-        /*
-            If buckets were found, this means that the previous viable step in the workflow is a bucket.  The source vessels
-            for this event need to be removed from that bucket.
-         */
-        for (WorkflowStepDef bucketDef : bucketVessels.keySet()) {
-            WorkflowStepDef workingBucketIdentifier = bucketDef;
-
-            /*
-                If the bucket previously existed, retrieve it, otherwise create a new one based on the workflow step
-                definition
-             */
-            Bucket workingBucket = bucketDao.findByName(workingBucketIdentifier.getName());
-            if (workingBucket == null) {
-
-                //TODO SGM, JMT:  this check should probably be part of the pre process Validation call from the decks
-                LOG.error("Bucket " + workingBucketIdentifier.getName() +
-                        " is expected to have vessels but no instance of the bucket can be found.");
-                workingBucket = new Bucket(workingBucketIdentifier);
-            }
-
-            /*
-                If the source item is a TubeFormation (for a rack) we really only want to deal with the Tubes
-                themselves.  Extract them and use that to pull from the bucket.
-             */
-            Set<LabVessel> eventVessels = labEvent.getSourceVesselTubes();
-
-            bucketBean.start(bspUserList.getById(labEvent.getEventOperator()).getUsername(), eventVessels,
-                    workingBucket, labEvent.getEventLocation());
-        }
-
-        /*
-            Since multiple Workflow Versions can be associated with the collection of vessels, individually determine
-            what the next bucket for the vessels will be
-         */
-        Map<WorkflowStepDef, Collection<LabVessel>> bucketVesselCandidates = itemizeBucketCandidates(labEvent);
-
-        /*
-            If buckets were found, this means that the next viable (Non branch) step in the workflow is a bucket.  The
-            source vessels for this event need to be removed from that bucket.
-         */
-        for (WorkflowStepDef bucketDef : bucketVesselCandidates.keySet()) {
-            WorkflowStepDef workingBucketIdentifier = bucketDef;
-
-            /*
-               If the bucket previously existed, retrieve it, otherwise create a new one based on the workflow step
-               definition
-            */
-
-            Bucket workingBucket = bucketDao.findByName(workingBucketIdentifier.getName());
-            if (workingBucket == null) {
-                workingBucket = new Bucket(workingBucketIdentifier);
-            }
-
-            /*
-                If the Target item is a TubeFormation (for a rack) we really only want to deal with the Tubes
-                themselves.  Extract them and use that to add to the bucket.
-             */
-            Set<LabVessel> eventVessels = labEvent.getTargetVesselTubes();
-
-            bucketBean.add(eventVessels, workingBucket, bspUserList.getById(labEvent.getEventOperator()).getUsername(),
-                    labEvent.getEventLocation(), workingBucketIdentifier.getLabEventTypes().iterator().next());
-        }
 
         return HandlerResponse.OK;
 

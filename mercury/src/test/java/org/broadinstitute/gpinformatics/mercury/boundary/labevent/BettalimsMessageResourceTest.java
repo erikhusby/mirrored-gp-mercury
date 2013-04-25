@@ -3,10 +3,10 @@ package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 //import com.jprofiler.api.agent.Controller;
 
 import com.sun.jersey.api.client.Client;
-import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
@@ -16,6 +16,7 @@ import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServic
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
+import org.broadinstitute.gpinformatics.infrastructure.mercury.MercuryClientEjb;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
@@ -29,6 +30,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedT
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.IndexedPlateFactory;
 import org.broadinstitute.gpinformatics.mercury.control.zims.ZimsIlluminaRunFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ImportFromSquidTest;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
@@ -41,8 +43,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
-import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionJaxbBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.BaseEventTest;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
+import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PreFlightJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpJaxbBuilder;
@@ -53,17 +56,9 @@ import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import javax.transaction.HeuristicMixedException;
-import javax.transaction.HeuristicRollbackException;
-import javax.transaction.NotSupportedException;
-import javax.transaction.RollbackException;
-import javax.transaction.SystemException;
-import javax.transaction.UserTransaction;
 import javax.ws.rs.core.MediaType;
 import java.io.BufferedReader;
 import java.io.File;
@@ -76,6 +71,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -138,9 +134,8 @@ public class BettalimsMessageResourceTest extends Arquillian {
     @Inject
     private BSPUserList bspUserList;
 
-    @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
-    private UserTransaction utx;
+    private MercuryClientEjb mercuryClientEjb;
 
     private final SimpleDateFormat testPrefixDateFormat=new SimpleDateFormat("MMddHHmmss");
 
@@ -149,28 +144,59 @@ public class BettalimsMessageResourceTest extends Arquillian {
         return DeploymentBuilder.buildMercuryWar(DEV);
     }
 
-    @BeforeMethod(groups = EXTERNAL_INTEGRATION)
-    public void setUp() throws SystemException, NotSupportedException {
-        // Skip if no injections, meaning we're not running in container
-        if(utx == null) {
-            return;
+    /**
+     * Sends messages for one PDO, then reworks two of those samples along with a second PDO.
+     */
+    @Test(enabled = false, groups = EXTERNAL_INTEGRATION)
+    public void testRework() {
+        // Set up one PDO / bucket / batch
+        String testPrefix = testPrefixDateFormat.format(new Date());
+        ProductOrder productOrder1 = buildProductOrder(testPrefix, BaseEventTest.NUM_POSITIONS_IN_RACK);
+        Map<String, TwoDBarcodedTube> mapBarcodeToTube = buildSampleTubes(testPrefix,
+                BaseEventTest.NUM_POSITIONS_IN_RACK);
+        bucketAndBatch(testPrefix, productOrder1, mapBarcodeToTube);
+        // message
+        BettaLimsMessageTestFactory bettaLimsMessageFactory = new BettaLimsMessageTestFactory();
+        HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = sendMessagesUptoCatch(testPrefix,
+                mapBarcodeToTube, bettaLimsMessageFactory);
+
+        QtpJaxbBuilder qtpJaxbBuilder=new QtpJaxbBuilder(bettaLimsMessageFactory, testPrefix,
+                Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchBarcodes()),
+                Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchRackBarcode()),
+                WorkflowName.HYBRID_SELECTION).invoke();
+        for (BettaLIMSMessage bettaLIMSMessage : qtpJaxbBuilder.getMessageList()) {
+            sendMessage(bettaLIMSMessage);
         }
 
-        utx.begin();
-    }
+        // Create second PDO
+        testPrefix = testPrefixDateFormat.format(new Date());
+        ProductOrder productOrder2 = buildProductOrder(testPrefix, BaseEventTest.NUM_POSITIONS_IN_RACK - 2);
+        Map<String, TwoDBarcodedTube> mapBarcodeToTube2 = buildSampleTubes(testPrefix,
+                BaseEventTest.NUM_POSITIONS_IN_RACK - 2);
 
-    @AfterMethod(groups = EXTERNAL_INTEGRATION)
-    public void tearDown() {
-        // Skip if no injections, meaning we're not running in container
-        if(utx == null) {
-            return;
-        }
+        // Add two samples from first PDO to bucket
+        Iterator<Map.Entry<String,TwoDBarcodedTube>> iterator = mapBarcodeToTube.entrySet().iterator();
+        mapBarcodeToTube2.put(iterator.next().getKey(), iterator.next().getValue());
+        mapBarcodeToTube2.put(iterator.next().getKey(), iterator.next().getValue());
+        HashSet<LabVessel> starters = new HashSet<LabVessel>(mapBarcodeToTube2.values());
+        mercuryClientEjb.addFromProductOrder(productOrder2);
+        mercuryClientEjb.addFromProductOrder(productOrder1, productOrder1.getSamples().subList(0, 1));
 
-        // Ignore all exceptions, to preserve exception that was generated by the test
-        //noinspection OverlyBroadCatchBlock
-        try {
-            utx.commit();
-        } catch (Exception ignored) {
+        // Create batch
+        String batchName = "LCSET-MsgTest-" + testPrefix;
+        LabBatch labBatch = new LabBatch(batchName, starters, LabBatch.LabBatchType.WORKFLOW);
+        labBatch.setJiraTicket(new JiraTicket(JiraServiceProducer.stubInstance(), batchName));
+        labBatchEjb.createLabBatchAndRemoveFromBucket(labBatch, "jowalsh", "Pico/Plating Bucket",
+                LabEvent.UI_EVENT_LOCATION);
+        // message
+        hybridSelectionJaxbBuilder = sendMessagesUptoCatch(testPrefix, mapBarcodeToTube2, bettaLimsMessageFactory);
+
+        qtpJaxbBuilder=new QtpJaxbBuilder(bettaLimsMessageFactory, testPrefix,
+                Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchBarcodes()),
+                Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchRackBarcode()),
+                WorkflowName.HYBRID_SELECTION).invoke();
+        for (BettaLIMSMessage bettaLIMSMessage : qtpJaxbBuilder.getMessageList()) {
+            sendMessage(bettaLIMSMessage);
         }
     }
 
@@ -182,7 +208,8 @@ public class BettalimsMessageResourceTest extends Arquillian {
         String testPrefix = testPrefixDateFormat.format(new Date());
 //        Controller.startCPURecording(true);
 
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = buildSamplesInPdo(testPrefix);
+        Map<String, TwoDBarcodedTube> mapBarcodeToTube = buildSamplesInPdo(testPrefix,
+                BaseEventTest.NUM_POSITIONS_IN_RACK);
 
         BettaLimsMessageTestFactory bettaLimsMessageFactory = new BettaLimsMessageTestFactory();
 
@@ -240,96 +267,95 @@ public class BettalimsMessageResourceTest extends Arquillian {
     private HybridSelectionJaxbBuilder sendMessagesUptoCatch(String testPrefix,
             Map<String, TwoDBarcodedTube> mapBarcodeToTube,
             BettaLimsMessageTestFactory bettaLimsMessageFactory) {
-        try {
-            PreFlightJaxbBuilder preFlightJaxbBuilder=new PreFlightJaxbBuilder(
-                    bettaLimsMessageFactory, testPrefix, new ArrayList<String>(mapBarcodeToTube.keySet())).invoke();
-            for (BettaLIMSMessage bettaLIMSMessage : preFlightJaxbBuilder.getMessageList()) {
-                sendMessage(bettaLIMSMessage);
-            }
-
-            ShearingJaxbBuilder shearingJaxbBuilder=new ShearingJaxbBuilder(bettaLimsMessageFactory,
-                    new ArrayList<String>(mapBarcodeToTube.keySet()), testPrefix, preFlightJaxbBuilder.getRackBarcode()).invoke();
-            for (BettaLIMSMessage bettaLIMSMessage : shearingJaxbBuilder.getMessageList()) {
-                sendMessage(bettaLIMSMessage);
-            }
-
-            Map<String,StaticPlate> mapBarcodeToPlate=indexedPlateFactory.parseStream(
-                    Thread.currentThread().getContextClassLoader().getResourceAsStream("DuplexCOAforBroad.xlsx"),
-                    IndexedPlateFactory.TechnologiesAndParsers.ILLUMINA_SINGLE);
-            StaticPlate indexPlate=mapBarcodeToPlate.values().iterator().next();
-            if(staticPlateDAO.findByBarcode(indexPlate.getLabel()) == null) {
-                staticPlateDAO.persist(indexPlate);
-                staticPlateDAO.flush();
-                staticPlateDAO.clear();
-            }
-            utx.commit();
-            utx.begin();
-            LibraryConstructionJaxbBuilder libraryConstructionJaxbBuilder = new LibraryConstructionJaxbBuilder(
-                    bettaLimsMessageFactory, testPrefix, shearingJaxbBuilder.getShearCleanPlateBarcode(), indexPlate.getLabel(),
-                    LabEventTest.NUM_POSITIONS_IN_RACK).invoke();
-
-            for (BettaLIMSMessage bettaLIMSMessage : libraryConstructionJaxbBuilder.getMessageList()) {
-                sendMessage(bettaLIMSMessage);
-            }
-
-            HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = new HybridSelectionJaxbBuilder(bettaLimsMessageFactory,
-                    testPrefix, libraryConstructionJaxbBuilder.getPondRegRackBarcode(),
-                    libraryConstructionJaxbBuilder.getPondRegTubeBarcodes(), "Bait" + testPrefix).invoke();
-            List<ReagentDesign> reagentDesigns=reagentDesignDao.findAll(ReagentDesign.class, 0, 1);
-            ReagentDesign baitDesign=null;
-            if(reagentDesigns != null && !reagentDesigns.isEmpty()) {
-                baitDesign=reagentDesigns.get(0);
-            }
-
-            twoDBarcodedTubeDAO.persist(LabEventTest.buildBaitTube(hybridSelectionJaxbBuilder.getBaitTubeBarcode(), baitDesign));
-            twoDBarcodedTubeDAO.flush();
-            twoDBarcodedTubeDAO.clear();
-            utx.commit();
-            utx.begin();
-            for (BettaLIMSMessage bettaLIMSMessage : hybridSelectionJaxbBuilder.getMessageList()) {
-                sendMessage(bettaLIMSMessage);
-            }
-            return hybridSelectionJaxbBuilder;
-        } catch (RollbackException e) {
-            throw new RuntimeException(e);
-        } catch (HeuristicMixedException e) {
-            throw new RuntimeException(e);
-        } catch (HeuristicRollbackException e) {
-            throw new RuntimeException(e);
-        } catch (SystemException e) {
-            throw new RuntimeException(e);
-        } catch (NotSupportedException e) {
-            throw new RuntimeException(e);
+        PreFlightJaxbBuilder preFlightJaxbBuilder=new PreFlightJaxbBuilder(
+                bettaLimsMessageFactory, testPrefix, new ArrayList<String>(mapBarcodeToTube.keySet())).invoke();
+        for (BettaLIMSMessage bettaLIMSMessage : preFlightJaxbBuilder.getMessageList()) {
+            sendMessage(bettaLIMSMessage);
         }
+
+        ShearingJaxbBuilder shearingJaxbBuilder=new ShearingJaxbBuilder(bettaLimsMessageFactory,
+                new ArrayList<String>(mapBarcodeToTube.keySet()), testPrefix, preFlightJaxbBuilder.getRackBarcode()).invoke();
+        for (BettaLIMSMessage bettaLIMSMessage : shearingJaxbBuilder.getMessageList()) {
+            sendMessage(bettaLIMSMessage);
+        }
+
+        Map<String,StaticPlate> mapBarcodeToPlate=indexedPlateFactory.parseStream(
+                Thread.currentThread().getContextClassLoader().getResourceAsStream("DuplexCOAforBroad.xlsx"),
+                IndexedPlateFactory.TechnologiesAndParsers.ILLUMINA_SINGLE);
+        StaticPlate indexPlate=mapBarcodeToPlate.values().iterator().next();
+        if(staticPlateDAO.findByBarcode(indexPlate.getLabel()) == null) {
+            staticPlateDAO.persist(indexPlate);
+        }
+
+        LibraryConstructionJaxbBuilder libraryConstructionJaxbBuilder = new LibraryConstructionJaxbBuilder(
+                bettaLimsMessageFactory, testPrefix, shearingJaxbBuilder.getShearCleanPlateBarcode(), indexPlate.getLabel(),
+                LabEventTest.NUM_POSITIONS_IN_RACK).invoke();
+
+        for (BettaLIMSMessage bettaLIMSMessage : libraryConstructionJaxbBuilder.getMessageList()) {
+            sendMessage(bettaLIMSMessage);
+        }
+
+        HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = new HybridSelectionJaxbBuilder(bettaLimsMessageFactory,
+                testPrefix, libraryConstructionJaxbBuilder.getPondRegRackBarcode(),
+                libraryConstructionJaxbBuilder.getPondRegTubeBarcodes(), "Bait" + testPrefix).invoke();
+        List<ReagentDesign> reagentDesigns=reagentDesignDao.findAll(ReagentDesign.class, 0, 1);
+        ReagentDesign baitDesign=null;
+        if(reagentDesigns != null && !reagentDesigns.isEmpty()) {
+            baitDesign=reagentDesigns.get(0);
+        }
+
+        twoDBarcodedTubeDAO.persist(LabEventTest.buildBaitTube(hybridSelectionJaxbBuilder.getBaitTubeBarcode(),
+                baitDesign));
+
+        for (BettaLIMSMessage bettaLIMSMessage : hybridSelectionJaxbBuilder.getMessageList()) {
+            sendMessage(bettaLIMSMessage);
+        }
+        return hybridSelectionJaxbBuilder;
     }
 
     /**
      * Build samples in plastic, and associate them with a PDO
      * @param testPrefix make barcodes unique
+     * @param numberOfSamples how many samples to create
      * @return map from tube barcode to sample tube
      */
-    private Map<String, TwoDBarcodedTube> buildSamplesInPdo(String testPrefix) {
-        List<ProductOrderSample> productOrderSamples=new ArrayList<ProductOrderSample>();
-        for (int rackPosition=1; rackPosition <= LabEventTest.NUM_POSITIONS_IN_RACK; rackPosition++) {
-            String bspStock="SM-" + testPrefix + rackPosition;
-            productOrderSamples.add(new ProductOrderSample(bspStock));
-        }
+    private Map<String, TwoDBarcodedTube> buildSamplesInPdo(String testPrefix, int numberOfSamples) {
+        ProductOrder productOrder = buildProductOrder(testPrefix, numberOfSamples);
+        Map<String, TwoDBarcodedTube> mapBarcodeToTube = buildSampleTubes(testPrefix, numberOfSamples);
+        bucketAndBatch(testPrefix, productOrder, mapBarcodeToTube);
+        return mapBarcodeToTube;
+    }
 
-        Product exomeExpressProduct=productDao.findByPartNumber("P-EX-0001");
+    /**
+     * Build a product order, including product and research project
+     * @param testPrefix make unique
+     * @param numberOfSamples how many samples
+     * @return product order
+     */
+    private ProductOrder buildProductOrder(String testPrefix, int numberOfSamples) {
+        Product exomeExpressProduct=productDao.findByPartNumber("P-EX-0002");
         if(exomeExpressProduct == null) {
+            // todo jmt change to exome express
             exomeExpressProduct=new Product("Standard Exome Sequencing", productFamilyDao.find("Exome"),
                     "Standard Exome Sequencing", "P-EX-0001", new Date(), null, 1814400, 1814400, 184, null, null,
                     null, true, WorkflowName.HYBRID_SELECTION.getWorkflowName(), false, "agg type");
             exomeExpressProduct.setPrimaryPriceItem(new PriceItem("1234", PriceItem.PLATFORM_GENOMICS, "Pony Genomics",
                     "Standard Pony"));
             productDao.persist(exomeExpressProduct);
-            productDao.flush();
         }
+
         ResearchProject researchProject=researchProjectDao.findByBusinessKey("RP-19");
         if(researchProject == null) {
             researchProject=new ResearchProject(10950L, "SIGMA Sarcoma", "SIGMA Sarcoma", false);
             researchProjectDao.persist(researchProject);
         }
+
+        List<ProductOrderSample> productOrderSamples=new ArrayList<ProductOrderSample>();
+        for (int rackPosition=1; rackPosition <= numberOfSamples; rackPosition++) {
+            String bspStock="SM-" + testPrefix + rackPosition;
+            productOrderSamples.add(new ProductOrderSample(bspStock));
+        }
+
         ProductOrder productOrder=new ProductOrder(10950L, "Messaging Test " + testPrefix, productOrderSamples, "GSP-123",
                 exomeExpressProduct, researchProject);
         productOrder.prepareToSave(bspUserList.getByUsername("jowalsh"));
@@ -339,10 +365,18 @@ public class BettalimsMessageResourceTest extends Arquillian {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        return productOrder;
+    }
 
+    /**
+     * Build samples and tubes
+     * @param testPrefix make unique
+     * @param numberOfSamples how many samples
+     * @return map from tube barcode to tube
+     */
+    private Map<String, TwoDBarcodedTube> buildSampleTubes(String testPrefix, int numberOfSamples) {
         Map<String,TwoDBarcodedTube> mapBarcodeToTube=new LinkedHashMap<String,TwoDBarcodedTube>();
-        HashSet<LabVessel> starters = new HashSet<LabVessel>();
-        for (int rackPosition=1; rackPosition <= LabEventTest.NUM_POSITIONS_IN_RACK; rackPosition++) {
+        for (int rackPosition=1; rackPosition <= numberOfSamples; rackPosition++) {
             String barcode="R" + testPrefix + rackPosition;
             String bspStock="SM-" + testPrefix + rackPosition;
             TwoDBarcodedTube bspAliquot=new TwoDBarcodedTube(barcode);
@@ -350,31 +384,26 @@ public class BettalimsMessageResourceTest extends Arquillian {
             mapBarcodeToTube.put(barcode, bspAliquot);
 
             twoDBarcodedTubeDAO.persist(bspAliquot);
-            starters.add(bspAliquot);
         }
+        return mapBarcodeToTube;
+    }
+
+    /**
+     * Add a product order's samples to the bucket, and create a batch from the bucket
+     * @param testPrefix make unique
+     * @param productOrder contains sample
+     * @param mapBarcodeToTube tubes
+     */
+    private void bucketAndBatch(String testPrefix, ProductOrder productOrder,
+                                Map<String, TwoDBarcodedTube> mapBarcodeToTube) {
+        HashSet<LabVessel> starters = new HashSet<LabVessel>(mapBarcodeToTube.values());
+        mercuryClientEjb.addFromProductOrder(productOrder);
 
         String batchName = "LCSET-MsgTest-" + testPrefix;
         LabBatch labBatch = new LabBatch(batchName, starters, LabBatch.LabBatchType.WORKFLOW);
         labBatch.setJiraTicket(new JiraTicket(JiraServiceProducer.stubInstance(), batchName));
-
-        labBatchEjb.createLabBatch(labBatch, "jowalsh");
-        productOrderDao.flush();
-        productOrderDao.clear();
-        try {
-            utx.commit();
-            utx.begin();
-        } catch (RollbackException e) {
-            throw new RuntimeException(e);
-        } catch (HeuristicMixedException e) {
-            throw new RuntimeException(e);
-        } catch (HeuristicRollbackException e) {
-            throw new RuntimeException(e);
-        } catch (SystemException e) {
-            throw new RuntimeException(e);
-        } catch (NotSupportedException e) {
-            throw new RuntimeException(e);
-        }
-        return mapBarcodeToTube;
+        labBatchEjb.createLabBatchAndRemoveFromBucket(labBatch, "jowalsh", "Pico/Plating Bucket",
+                LabEvent.UI_EVENT_LOCATION);
     }
 
     /**
@@ -391,7 +420,8 @@ public class BettalimsMessageResourceTest extends Arquillian {
         // Get to catch, for 8 LCSETs
         for (int i = 0; i < 8; i++) {
             testPrefix = testPrefixDateFormat.format(new Date());
-            Map<String, TwoDBarcodedTube> mapBarcodeToTube = buildSamplesInPdo(testPrefix);
+            Map<String, TwoDBarcodedTube> mapBarcodeToTube = buildSamplesInPdo(testPrefix,
+                    BaseEventTest.NUM_POSITIONS_IN_RACK);
             HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder =
                     sendMessagesUptoCatch(testPrefix, mapBarcodeToTube, bettaLimsMessageFactory);
             listLcsetListNormCatchBarcodes.add(hybridSelectionJaxbBuilder.getNormCatchBarcodes());
@@ -418,8 +448,6 @@ public class BettalimsMessageResourceTest extends Arquillian {
         if (true) {
             // In JVM
             bettalimsMessageResource.processMessage(bettaLIMSMessage);
-            twoDBarcodedTubeDAO.flush();
-            twoDBarcodedTubeDAO.clear();
         }
 
         if (false) {

@@ -10,13 +10,16 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDa
 
 import javax.ejb.Stateful;
 import javax.inject.Inject;
-import javax.ws.rs.*;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 import java.io.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.concurrent.Semaphore;
 
 /**
@@ -62,90 +65,65 @@ public class ExtractTransform {
     private static long incrementalRunStartTime = System.currentTimeMillis();  // only useful for logging
     private static boolean loggedConfigError = false;
     private EtlConfig etlConfig = null;
+    private Collection<GenericEntityEtl> etlInstances = new HashSet<GenericEntityEtl>();
 
     @Inject
     private AuditReaderDao auditReaderDao;
     @Inject
     private Deployment deployment;
-    @Inject
-    private EventEtl eventEtl;
-    @Inject
-    private LabBatchEtl labBatchEtl;
-    @Inject
-    private LabVesselEtl labVesselEtl;
-    @Inject
-    private PriceItemEtl priceItemEtl;
-    @Inject
-    private ProductEtl productEtl;
-    @Inject
-    private ProductOrderAddOnEtl productOrderAddOnEtl;
-    @Inject
-    private ProductOrderEtl productOrderEtl;
-    @Inject
-    private ProductOrderSampleEtl productOrderSampleEtl;
-    @Inject
-    private ProjectPersonEtl projectPersonEtl;
-    @Inject
-    private ResearchProjectCohortEtl researchProjectCohortEtl;
-    @Inject
-    private ResearchProjectEtl researchProjectEtl;
-    @Inject
-    private ResearchProjectFundingEtl researchProjectFundingEtl;
-    @Inject
-    private ResearchProjectIrbEtl researchProjectIrbEtl;
-    @Inject
-    private WorkflowConfigEtl workflowConfigEtl;
-    @Inject
-    private RiskItemEtl riskItemEtl;
-    @Inject
-    private LedgerEntryEtl ledgerEntryEtl;
 
     public ExtractTransform() {
     }
 
-    public ExtractTransform(AuditReaderDao auditReaderDao,
-                            EventEtl eventEtl,
-                            LabBatchEtl labBatchEtl,
-                            LabVesselEtl labVesselEtl,
-                            PriceItemEtl priceItemEtl,
-                            ProductEtl productEtl,
-                            ProductOrderAddOnEtl productOrderAddOnEtl,
-                            ProductOrderEtl productOrderEtl,
-                            ProductOrderSampleEtl productOrderSampleEtl,
-                            ProjectPersonEtl projectPersonEtl,
-                            ResearchProjectCohortEtl researchProjectCohortEtl,
-                            ResearchProjectEtl researchProjectEtl,
-                            ResearchProjectFundingEtl researchProjectFundingEtl,
-                            ResearchProjectIrbEtl researchProjectIrbEtl,
-                            WorkflowConfigEtl workflowConfigEtl,
-                            RiskItemEtl riskItemEtl,
-                            LedgerEntryEtl ledgerEntryEtl) {
+    @Inject
+    public ExtractTransform(
+            LabEventEtl labEventEtl,
+            LabBatchEtl labBatchEtl,
+            LabVesselEtl labVesselEtl,
+            PriceItemEtl priceItemEtl,
+            ProductEtl productEtl,
+            ProductOrderAddOnEtl productOrderAddOnEtl,
+            ProductOrderEtl productOrderEtl,
+            ProductOrderSampleEtl productOrderSampleEtl,
+            ProjectPersonEtl projectPersonEtl,
+            ResearchProjectCohortEtl researchProjectCohortEtl,
+            ResearchProjectEtl researchProjectEtl,
+            ResearchProjectFundingEtl researchProjectFundingEtl,
+            ResearchProjectIrbEtl researchProjectIrbEtl,
+            WorkflowConfigEtl workflowConfigEtl,
+            RiskItemEtl riskItemEtl,
+            LedgerEntryEtl ledgerEntryEtl) {
+
+        etlInstances.add(labEventEtl);
+        etlInstances.add(labBatchEtl);
+        etlInstances.add(labVesselEtl);
+        etlInstances.add(priceItemEtl);
+        etlInstances.add(productEtl);
+        etlInstances.add(productOrderAddOnEtl);
+        etlInstances.add(productOrderEtl);
+        etlInstances.add(productOrderSampleEtl);
+        etlInstances.add(projectPersonEtl);
+        etlInstances.add(researchProjectCohortEtl);
+        etlInstances.add(researchProjectEtl);
+        etlInstances.add(researchProjectFundingEtl);
+        etlInstances.add(researchProjectIrbEtl);
+        etlInstances.add(workflowConfigEtl);
+        etlInstances.add(riskItemEtl);
+        etlInstances.add(ledgerEntryEtl);
+    }
+
+    public ExtractTransform(AuditReaderDao auditReaderDao, Collection<GenericEntityEtl> etlInstances) {
         this.auditReaderDao = auditReaderDao;
-        this.eventEtl = eventEtl;
-        this.labBatchEtl = labBatchEtl;
-        this.labVesselEtl = labVesselEtl;
-        this.priceItemEtl = priceItemEtl;
-        this.productEtl = productEtl;
-        this.productOrderAddOnEtl = productOrderAddOnEtl;
-        this.productOrderEtl = productOrderEtl;
-        this.productOrderSampleEtl = productOrderSampleEtl;
-        this.projectPersonEtl = projectPersonEtl;
-        this.researchProjectCohortEtl = researchProjectCohortEtl;
-        this.researchProjectEtl = researchProjectEtl;
-        this.researchProjectFundingEtl = researchProjectFundingEtl;
-        this.researchProjectIrbEtl = researchProjectIrbEtl;
-        this.workflowConfigEtl = workflowConfigEtl;
-        this.riskItemEtl = riskItemEtl;
-        this.ledgerEntryEtl = ledgerEntryEtl;
+        this.etlInstances = etlInstances;
     }
 
     /**
-     * Runs ETL on one entity class for the given range of entity ids (possibly all).
-     *
-     * @param entityClassname The fully qualified classname of the Mercury class to ETL.
-     * @param startId First entity id of a range of ids to backfill.  Set to 0 for minimum.
-     * @param endId Last entity id of a range of ids to backfill.  Set to -1 for maximum.
-     */
+        * Runs ETL on one entity class for the given range of entity ids (possibly all).
+        *
+        * @param entityClassname The fully qualified classname of the Mercury class to ETL.
+        * @param startId First entity id of a range of ids to backfill.  Set to 0 for minimum.
+        * @param endId Last entity id of a range of ids to backfill.  Set to -1 for maximum.
+        */
     @Path("backfill/{entityClassname}/{startId}/{endId}")
     @PUT
     public Response entityIdRangeEtl(@PathParam("entityClassname") String entityClassname,
@@ -186,6 +164,7 @@ public class ExtractTransform {
      * @return count of records created, or -1 if could not run
      */
     public int incrementalEtl(String startEtl, String endEtl) {
+        final String ZERO = "0";
 
         // Bails if target directory is missing.
         String dataDir = getDatafileDir();
@@ -207,7 +186,7 @@ public class ExtractTransform {
         // Forces start and end to be whole second boundaries, which the auditReaderDao needs.
         try {
             long startTimeSec;
-            if ("0".equals(startEtl)) {
+            if (ZERO.equals(startEtl)) {
                 startTimeSec = readLastEtlRun();
                 if (startTimeSec == 0L) {
                     logger.warn("Cannot determine time of last incremental ETL.  ETL will not be run.");
@@ -218,7 +197,7 @@ public class ExtractTransform {
             }
 
             long endTimeSec;
-            if ("0".equals(endEtl)) {
+            if (ZERO.equals(endEtl)) {
                 endTimeSec = System.currentTimeMillis() / MSEC_IN_SEC;
             } else {
                 endTimeSec = secTimestampFormat.parse(endEtl).getTime() / MSEC_IN_SEC;
@@ -230,7 +209,7 @@ public class ExtractTransform {
                 int recordCount = incrementalEtl(startTimeSec, endTimeSec, etlDateStr);
 
                 // Withholds lastEtlRun file update if doing a limited range of changes.
-                if (recordCount >= 0 && "0".equals(endEtl)) {
+                if (recordCount >= 0 && ZERO.equals(endEtl)) {
                     writeLastEtlRun(endTimeSec);
                 }
 
@@ -269,25 +248,10 @@ public class ExtractTransform {
 
             int recordCount = 0;
             if (revIds.size() > 0) {
-
                 // The order of ETL is not significant since import tables have no referential integrity.
-                recordCount += productEtl.doEtl(revIds, etlDateStr);
-                recordCount += priceItemEtl.doEtl(revIds, etlDateStr);
-                recordCount += researchProjectEtl.doEtl(revIds, etlDateStr);
-                recordCount += projectPersonEtl.doEtl(revIds, etlDateStr);
-                recordCount += researchProjectIrbEtl.doEtl(revIds, etlDateStr);
-                recordCount += researchProjectFundingEtl.doEtl(revIds, etlDateStr);
-                recordCount += researchProjectCohortEtl.doEtl(revIds, etlDateStr);
-                recordCount += productOrderSampleEtl.doEtl(revIds, etlDateStr);
-                recordCount += productOrderEtl.doEtl(revIds, etlDateStr);
-                recordCount += productOrderAddOnEtl.doEtl(revIds, etlDateStr);
-                recordCount += riskItemEtl.doEtl(revIds, etlDateStr);
-                recordCount += ledgerEntryEtl.doEtl(revIds, etlDateStr);
-
-                recordCount += labBatchEtl.doEtl(revIds, etlDateStr);
-                recordCount += labVesselEtl.doEtl(revIds, etlDateStr);
-                recordCount += workflowConfigEtl.doEtl(revIds, etlDateStr);
-                recordCount += eventEtl.doEtl(revIds, etlDateStr);
+                for (GenericEntityEtl etlInstance : etlInstances) {
+                    recordCount += etlInstance.doEtl(revIds, etlDateStr);
+                }
             }
 
             return recordCount;
@@ -341,24 +305,9 @@ public class ExtractTransform {
 
         int recordCount = 0;
         // The one of these that matches the entityClass will make ETL records, others are no-ops.
-        recordCount += productEtl.doEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += priceItemEtl.doEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += researchProjectEtl.doEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += projectPersonEtl.doEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += researchProjectIrbEtl.doEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += researchProjectFundingEtl.doEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += researchProjectCohortEtl.doEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += productOrderSampleEtl.doEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += productOrderEtl.doEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += productOrderAddOnEtl.doEtl(entityClass, startId, endId, etlDateStr);
-        // event datamart
-        recordCount += labBatchEtl.doEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += labVesselEtl.doEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += workflowConfigEtl.doEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += eventEtl.doEtl(entityClass, startId, endId, etlDateStr);
-
-        recordCount += riskItemEtl.doEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += ledgerEntryEtl.doEtl(entityClass, startId, endId, etlDateStr);
+        for (GenericEntityEtl etlInstance : etlInstances) {
+            recordCount += etlInstance.doEtl(entityClass, startId, endId, etlDateStr);
+        }
 
         if (recordCount > 0) {
             writeIsReadyFile(etlDateStr);
@@ -479,5 +428,6 @@ public class ExtractTransform {
     private int minutesSince(long msecTimestamp) {
         return (int)Math.ceil((System.currentTimeMillis() - msecTimestamp) / MSEC_IN_SEC / SEC_IN_MIN);
     }
+
 }
 

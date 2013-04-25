@@ -1,5 +1,5 @@
 <%@ include file="/resources/layout/taglibs.jsp" %>
-<%--@elvariable id="samples" type="java.util.Collection"--%>
+<%--@elvariable id="samples" type="java.util.Collection<org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample>"--%>
 <%--@elvariable id="bean" type="org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean"--%>
 <stripes:layout-definition>
     <script type="text/javascript">

@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
@@ -40,7 +39,7 @@ public class EventEtlDbFreeTest {
     private final long vesselId = 5511223344L;
     private final Date eventDate = new Date(1350000000000L);
     private final LabEventType eventType = LabEventType.PICO_PLATING_BUCKET;
-    private EventEtl tst;
+    private LabEventEtl tst;
 
     private final AuditReaderDao auditReader = createMock(AuditReaderDao.class);
     private final LabEventDao dao = createMock(LabEventDao.class);
@@ -69,7 +68,7 @@ public class EventEtlDbFreeTest {
         sampleInstList.clear();
         sampleInstList.add(sampleInst);
 
-        tst = new EventEtl(wfLookup, dao, pdoDao);
+        tst = new LabEventEtl(wfLookup, dao, pdoDao);
         tst.setAuditReaderDao(auditReader);
     }
 

@@ -213,9 +213,7 @@ public class ExtractTransformTest extends Arquillian {
         return ids;
     }
 
-
-
-    public void testaUndeletedRiskOnDevDb() throws Exception {
+    public void testUndeletedRiskOnDevDb() throws Exception {
         Long[] ids = getRiskJoin(false);
         if (ids == null || ids.length < 3) {
             logger.info("Skipping test, cannot find undeleted product order risk");
@@ -241,12 +239,13 @@ public class ExtractTransformTest extends Arquillian {
         RevInfo revInfo = auditReaderDao.findById(RevInfo.class, rev);
         // Brackets the change with interval on whole second boundaries.
         String startEtl = ExtractTransform.secTimestampFormat.format(revInfo.getRevDate());
-        long endDate = ExtractTransform.secTimestampFormat.parse(startEtl).getTime() + MSEC_IN_SEC;
-        String endEtl = ExtractTransform.secTimestampFormat.format(new Date(endDate));
+        startMsec = ExtractTransform.secTimestampFormat.parse(startEtl).getTime();
+        endMsec = startMsec + MSEC_IN_SEC;
+        String endEtl = ExtractTransform.secTimestampFormat.format(new Date(endMsec));
         int recordCount = extractTransform.incrementalEtl(startEtl, endEtl);
         assertTrue(recordCount > 0);
         // Filename is "back dated".
-        assertTrue(searchEtlFile(endDate, endDate, datFileEnding, "F", pdoSampleId));
+        assertTrue(searchEtlFile(startMsec, endMsec, datFileEnding, "F", pdoSampleId));
     }
 
     public void testDeletedRiskOnDevDb() throws Exception {
@@ -261,13 +260,14 @@ public class ExtractTransformTest extends Arquillian {
         RevInfo revInfo = auditReaderDao.findById(RevInfo.class, rev);
         // Brackets the change with interval on whole second boundaries.
         String startEtl = ExtractTransform.secTimestampFormat.format(revInfo.getRevDate());
-        long endDate = ExtractTransform.secTimestampFormat.parse(startEtl).getTime() + MSEC_IN_SEC;
-        String endEtl = ExtractTransform.secTimestampFormat.format(new Date(endDate));
+        long startMsec = ExtractTransform.secTimestampFormat.parse(startEtl).getTime();
+        long endMsec = startMsec + MSEC_IN_SEC;
+        String endEtl = ExtractTransform.secTimestampFormat.format(new Date(endMsec));
         int recordCount = extractTransform.incrementalEtl(startEtl, endEtl);
         assertTrue(recordCount > 0);
 
         final String datFileEnding = "_product_order_sample_risk.dat";
-        assertTrue(searchEtlFile(endDate, endDate, datFileEnding, "T", pdoSampleId));
+        assertTrue(searchEtlFile(startMsec, endMsec, datFileEnding, "T", pdoSampleId));
     }
 
 
@@ -298,12 +298,13 @@ public class ExtractTransformTest extends Arquillian {
         RevInfo revInfo = auditReaderDao.findById(RevInfo.class, rev);
         // Brackets the change with interval on whole second boundaries.
         String startEtl = ExtractTransform.secTimestampFormat.format(revInfo.getRevDate());
-        long endDate = ExtractTransform.secTimestampFormat.parse(startEtl).getTime() + MSEC_IN_SEC;
-        String endEtl = ExtractTransform.secTimestampFormat.format(new Date(endDate));
+        startMsec = ExtractTransform.secTimestampFormat.parse(startEtl).getTime();
+        endMsec = startMsec + MSEC_IN_SEC;
+        String endEtl = ExtractTransform.secTimestampFormat.format(new Date(endMsec));
         int recordCount = extractTransform.incrementalEtl(startEtl, endEtl);
         assertTrue(recordCount > 0);
         // Filename is "back dated".
-        assertTrue(searchEtlFile(endDate, endDate, datFileEnding, "F", pdoSampleId));
+        assertTrue(searchEtlFile(startMsec, endMsec, datFileEnding, "F", pdoSampleId));
     }
 
     public void testDeletedLedgerOnDevDb() throws Exception {
@@ -318,13 +319,14 @@ public class ExtractTransformTest extends Arquillian {
         RevInfo revInfo = auditReaderDao.findById(RevInfo.class, rev);
         // Brackets the change with interval on whole second boundaries.
         String startEtl = ExtractTransform.secTimestampFormat.format(revInfo.getRevDate());
-        long endDate = ExtractTransform.secTimestampFormat.parse(startEtl).getTime() + MSEC_IN_SEC;
-        String endEtl = ExtractTransform.secTimestampFormat.format(new Date(endDate));
+        long startMsec = ExtractTransform.secTimestampFormat.parse(startEtl).getTime();
+        long endMsec = startMsec + MSEC_IN_SEC;
+        String endEtl = ExtractTransform.secTimestampFormat.format(new Date(endMsec));
         int recordCount = extractTransform.incrementalEtl(startEtl, endEtl);
         assertTrue(recordCount > 0);
 
         final String datFileEnding = "_product_order_sample_bill.dat";
-        assertTrue(searchEtlFile(endDate, endDate, datFileEnding, "T", pdoSampleId));
+        assertTrue(searchEtlFile(startMsec, endMsec, datFileEnding, "T", pdoSampleId));
     }
 
 

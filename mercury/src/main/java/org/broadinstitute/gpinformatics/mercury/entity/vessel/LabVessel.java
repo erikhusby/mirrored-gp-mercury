@@ -26,7 +26,6 @@ import org.hibernate.envers.Audited;
 import org.hibernate.envers.NotAudited;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
@@ -474,15 +473,15 @@ public abstract class LabVessel implements Serializable {
      * @return
      */
     public Collection<SampleInstance> getSamplesAtPosition(@Nonnull VesselPosition vesselPosition) {
-        Set<SampleInstance> sampleInstances;
+        List<SampleInstance> sampleInstances;
         VesselContainer<?> vesselContainer = getContainerRole();
         if (vesselContainer != null) {
-            sampleInstances = vesselContainer.getSampleInstancesAtPosition(vesselPosition);
+            sampleInstances = vesselContainer.getSampleInstancesAtPositionList(vesselPosition);
         } else {
-            sampleInstances = getSampleInstances();
+            sampleInstances = getSampleInstancesList();
         }
         if (sampleInstances == null) {
-            sampleInstances = Collections.emptySet();
+            sampleInstances = Collections.emptyList();
         }
         return sampleInstances;
     }
@@ -549,7 +548,7 @@ public abstract class LabVessel implements Serializable {
      * @param labBatchType the type of lab batch to include in the instance, or null for any
      * @return sample instances
      */
-    public Set<SampleInstance> getSampleInstances(SampleType sampleType, @Nullable LabBatch.LabBatchType labBatchType) {
+    public Set<SampleInstance> getSampleInstances(SampleType sampleType, LabBatch.LabBatchType labBatchType) {
 
         if (getContainerRole() != null) {
             return getContainerRole().getSampleInstances(sampleType, labBatchType);
@@ -559,12 +558,9 @@ public abstract class LabVessel implements Serializable {
     }
 
     public int getSampleInstanceCount() {
-        return getSampleInstanceCount(SampleType.ANY, null);
+        return getSampleInstances(SampleType.ANY, null).size();
     }
 
-    public int getSampleInstanceCount(SampleType sampleType, @Nullable LabBatch.LabBatchType batchType){
-        return getSampleInstances(sampleType, batchType).size();
-    }
     /**
      * The results of traversing (ancestor) vessels
      */
@@ -703,7 +699,7 @@ public abstract class LabVessel implements Serializable {
             }
 */
         } else if(bucketEntries.size() == 1) {
-            traversalResults.setBucketEntry(bucketEntries.iterator().next());
+            traversalResults.setProductOrderKey(bucketEntries.iterator().next().getPoBusinessKey());
         }
 
         for (Reagent reagent : getReagentContents()) {
@@ -713,6 +709,17 @@ public abstract class LabVessel implements Serializable {
 
         traversalResults.completeLevel();
         return traversalResults;
+    }
+
+    void traverseDescendants(TransferTraverserCriteria criteria, TransferTraverserCriteria.TraversalDirection direction,
+                             int hopCount) {
+        for (VesselEvent vesselEvent : getDescendants()) {
+            evaluateVesselEvent(criteria, direction, hopCount, vesselEvent);
+        }
+    }
+
+    public List<SampleInstance> getSampleInstancesList() {
+        return new ArrayList<SampleInstance>(getSampleInstances(SampleType.ANY, null));
     }
 
     /**
@@ -961,9 +968,7 @@ public abstract class LabVessel implements Serializable {
                 evaluateVesselEvent(transferTraverserCriteria, traversalDirection, hopCount, vesselEvent);
             }
         } else if (traversalDirection == TransferTraverserCriteria.TraversalDirection.Descendants) {
-            for (VesselEvent vesselEvent : getDescendants()) {
-                evaluateVesselEvent(transferTraverserCriteria, traversalDirection, hopCount, vesselEvent);
-            }
+            traverseDescendants(transferTraverserCriteria, traversalDirection, hopCount);
         } else {
             throw new RuntimeException("Unknown direction " + traversalDirection.name());
         }
@@ -977,7 +982,7 @@ public abstract class LabVessel implements Serializable {
         if (labVessel == null) {
             vesselEvent.getVesselContainer().evaluateCriteria(vesselEvent.getPosition(),
                     transferTraverserCriteria, traversalDirection,
-                    vesselEvent.getLabEvent(), hopCount);
+                    vesselEvent.getLabEvent(), hopCount + 1);
         } else {
             labVessel.evaluateCriteria(transferTraverserCriteria, traversalDirection, vesselEvent.getLabEvent(),
                     hopCount + 1);

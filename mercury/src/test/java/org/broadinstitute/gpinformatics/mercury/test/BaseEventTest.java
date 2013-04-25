@@ -23,7 +23,6 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
-import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
@@ -129,9 +128,9 @@ public class BaseEventTest {
     }
 
 
-    protected LabEventHandler getLabEventHandler( BucketDao bucketDAO) {
+    protected LabEventHandler getLabEventHandler() {
         AthenaClientService athenaClientService = AthenaClientProducer.stubInstance();
-        return new LabEventHandler(new WorkflowLoader(), athenaClientService, bucketBeanEJB, bucketDAO,
+        return new LabEventHandler(new WorkflowLoader(), athenaClientService,
                 new BSPUserList(BSPManagerFactoryProducer.stubInstance()));
     }
 
@@ -162,13 +161,8 @@ public class BaseEventTest {
 
         Bucket workingBucket = createAndPopulateBucket(mapBarcodeToTube, productOrder, "Pico/Plating Bucket");
 
-        BucketDao mockBucketDao = EasyMock.createMock(BucketDao.class);
-        EasyMock.expect(mockBucketDao.findByName("Pico/Plating Bucket")).andReturn(workingBucket);
-        EasyMock.expect(mockBucketDao.findByName(EasyMock.anyObject(String.class))).andReturn(new Bucket("FAKEBUCKET"));
-        EasyMock.replay(mockBucketDao);
-
         return new PicoPlatingEntityBuilder(bettaLimsMessageTestFactory,
-                labEventFactory, getLabEventHandler(mockBucketDao),
+                labEventFactory, getLabEventHandler(),
                 mapBarcodeToTube, rackBarcode, barcodeSuffix).invoke();
     }
 
@@ -186,15 +180,10 @@ public class BaseEventTest {
                                                                             Map<String, TwoDBarcodedTube> normBarcodeToTubeMap,
                                                                             TubeFormation normTubeFormation,
                                                                             String normBarcode, String barcodeSuffix) {
-        Bucket workingBucket = createAndPopulateBucket(normBarcodeToTubeMap, productOrder, "Shearing Bucket");
 
-        BucketDao mockBucketDao = EasyMock.createNiceMock(BucketDao.class);
-        EasyMock.expect(mockBucketDao.findByName("Shearing Bucket")).andReturn(workingBucket);
-        EasyMock.expect(mockBucketDao.findByName(EasyMock.anyObject(String.class))).andReturn(new Bucket("FAKEBUCKET"));
-        EasyMock.replay(mockBucketDao);
-
-        return new ExomeExpressShearingEntityBuilder(normBarcodeToTubeMap, normTubeFormation, bettaLimsMessageTestFactory, labEventFactory,
-                getLabEventHandler(mockBucketDao), normBarcode, barcodeSuffix).invoke();
+        return new ExomeExpressShearingEntityBuilder(normBarcodeToTubeMap, normTubeFormation,
+                bettaLimsMessageTestFactory, labEventFactory,
+                getLabEventHandler(), normBarcode, barcodeSuffix).invoke();
     }
 
     /**
@@ -218,7 +207,7 @@ public class BaseEventTest {
         EasyMock.replay(mockBucketDao);
 
         return new PreFlightEntityBuilder(bettaLimsMessageTestFactory,
-                labEventFactory, getLabEventHandler(mockBucketDao),
+                labEventFactory, getLabEventHandler(),
                 mapBarcodeToTube, barcodeSuffix).invoke();
     }
 
@@ -235,7 +224,7 @@ public class BaseEventTest {
                                                     String rackBarcode, String barcodeSuffix) {
 
         return new ShearingEntityBuilder(mapBarcodeToTube, tubeFormation,
-                bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(EasyMock.createNiceMock(BucketDao.class)),
+                bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
                 rackBarcode, barcodeSuffix).invoke();
     }
 
@@ -254,7 +243,7 @@ public class BaseEventTest {
                                                                           String barcodeSuffix) {
 
         return new LibraryConstructionEntityBuilder(
-                bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(EasyMock.createNiceMock(BucketDao.class)),
+                bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
                 shearingCleanupPlate, shearCleanPlateBarcode,
                 shearingPlate, NUM_POSITIONS_IN_RACK, barcodeSuffix).invoke();
     }
@@ -272,7 +261,7 @@ public class BaseEventTest {
                                                                   List<String> pondRegTubeBarcodes, String barcodeSuffix) {
 
         return new HybridSelectionEntityBuilder(
-                bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(EasyMock.createNiceMock(BucketDao.class)),
+                bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
                 pondRegRack, pondRegRackBarcode, pondRegTubeBarcodes, barcodeSuffix).invoke();
     }
 
@@ -291,7 +280,7 @@ public class BaseEventTest {
                                           String barcodeSuffix) {
 
         return new QtpEntityBuilder(
-                bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(EasyMock.createNiceMock(BucketDao.class)),
+                bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
                 Collections.singletonList(rack),
                 Collections.singletonList(rack.getLabel()),
                 Collections.singletonList(tubeBarcodes),
@@ -308,7 +297,7 @@ public class BaseEventTest {
     public HiSeq2500FlowcellEntityBuilder runHiSeq2500FlowcellProcess(TubeFormation denatureRack, String barcodeSuffix) {
 
         String flowcellBarcode = "flowcell" + new Date().getTime();
-        return new HiSeq2500FlowcellEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(EasyMock.createNiceMock(BucketDao.class)),
+        return new HiSeq2500FlowcellEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
                 denatureRack, flowcellBarcode, barcodeSuffix).invoke();
     }
 
@@ -321,7 +310,7 @@ public class BaseEventTest {
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
     public SageEntityBuilder runSageProcess(TubeFormation pondRegRack, String pondRegRackBarcode, List<String> pondRegTubeBarcodes) {
-        return new SageEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(EasyMock.createNiceMock(BucketDao.class)),
+        return new SageEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
                 pondRegRackBarcode, pondRegRack, pondRegTubeBarcodes).invoke();
     }
 

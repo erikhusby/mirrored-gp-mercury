@@ -19,14 +19,11 @@ import java.util.Set;
 public class LedgerEntryEtl extends GenericEntityEtl<LedgerEntry, ProductOrderSample> {
 
     public LedgerEntryEtl() {
-        entityClass = LedgerEntry.class;
-        baseFilename = "product_order_sample_bill";
     }
 
     @Inject
-    public LedgerEntryEtl(ProductOrderSampleDao d) {
-        this();
-        dao = d;
+    public LedgerEntryEtl(ProductOrderSampleDao dao) {
+        super(LedgerEntry.class, "product_order_sample_bill", dao);
     }
 
     @Override
@@ -45,14 +42,14 @@ public class LedgerEntryEtl extends GenericEntityEtl<LedgerEntry, ProductOrderSa
     }
 
     @Override
-    protected Collection<Long> convertIdsTtoC(Collection<Long> auditIds) {
+    protected Collection<Long> convertAuditedEntityIdToDataSourceEntityId(Collection<Long> auditIds) {
         String queryString = "select distinct product_order_sample_id entity_id from ATHENA.BILLING_LEDGER_AUD " +
                 " where product_order_sample_id is not null and ledger_id IN ( " + IN_CLAUSE_PLACEHOLDER + " )";
         return lookupAssociatedIds(auditIds, queryString);
     }
 
     @Override
-    protected Collection<ProductOrderSample> convertTtoC(Collection<LedgerEntry> auditEntities) {
+    protected Collection<ProductOrderSample> convertAuditedEntityToDataSourceEntity(Collection<LedgerEntry> auditEntities) {
         Set<ProductOrderSample> pdoSamples = new HashSet<ProductOrderSample>();
         for (LedgerEntry ledgerEntry : auditEntities) {
             pdoSamples.add(ledgerEntry.getProductOrderSample());

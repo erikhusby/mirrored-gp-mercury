@@ -39,7 +39,7 @@ public class MercurySample {
     @Index(name = "ix_ms_sample_key")
     private String sampleKey;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE,CascadeType.PERSIST})
     private RapSheet rapSheet;
 
     @Transient
