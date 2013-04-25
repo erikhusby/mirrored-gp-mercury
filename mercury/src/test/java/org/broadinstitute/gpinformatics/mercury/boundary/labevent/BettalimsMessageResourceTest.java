@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -23,6 +24,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMes
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunResource;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
+import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
@@ -31,7 +33,9 @@ import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRu
 import org.broadinstitute.gpinformatics.mercury.control.vessel.IndexedPlateFactory;
 import org.broadinstitute.gpinformatics.mercury.control.zims.ZimsIlluminaRunFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
+import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ImportFromSquidTest;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
@@ -75,6 +79,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
@@ -137,6 +142,9 @@ public class BettalimsMessageResourceTest extends Arquillian {
     @Inject
     private MercuryClientEjb mercuryClientEjb;
 
+    @Inject
+    private ReworkEjb reworkEjb;
+
     private final SimpleDateFormat testPrefixDateFormat=new SimpleDateFormat("MMddHHmmss");
 
     @Deployment
@@ -148,7 +156,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
      * Sends messages for one PDO, then reworks two of those samples along with a second PDO.
      */
     @Test(enabled = false, groups = EXTERNAL_INTEGRATION)
-    public void testRework() {
+    public void testRework() throws ValidationException {
         // Set up one PDO / bucket / batch
         String testPrefix = testPrefixDateFormat.format(new Date());
         ProductOrder productOrder1 = buildProductOrder(testPrefix, BaseEventTest.NUM_POSITIONS_IN_RACK);
@@ -175,16 +183,27 @@ public class BettalimsMessageResourceTest extends Arquillian {
                 BaseEventTest.NUM_POSITIONS_IN_RACK - 2);
 
         // Add two samples from first PDO to bucket
+        Set<LabVessel> reworks = new HashSet<LabVessel>();
         Iterator<Map.Entry<String,TwoDBarcodedTube>> iterator = mapBarcodeToTube.entrySet().iterator();
-        mapBarcodeToTube2.put(iterator.next().getKey(), iterator.next().getValue());
-        mapBarcodeToTube2.put(iterator.next().getKey(), iterator.next().getValue());
+        Map.Entry<String, TwoDBarcodedTube> barcodeTubeEntry = iterator.next();
+        reworkEjb.addRework(barcodeTubeEntry.getValue(), ReworkEntry.ReworkReason.UNKNOWN_ERROR,
+                LabEventType.PICO_PLATING_BUCKET, "Test");
+        mapBarcodeToTube2.put(barcodeTubeEntry.getKey(), barcodeTubeEntry.getValue());
+        reworks.add(barcodeTubeEntry.getValue());
+
+        barcodeTubeEntry = iterator.next();
+        reworkEjb.addRework(barcodeTubeEntry.getValue(), ReworkEntry.ReworkReason.UNKNOWN_ERROR,
+                LabEventType.PICO_PLATING_BUCKET, "Test");
+        mapBarcodeToTube2.put(barcodeTubeEntry.getKey(), barcodeTubeEntry.getValue());
+        reworks.add(barcodeTubeEntry.getValue());
+
         HashSet<LabVessel> starters = new HashSet<LabVessel>(mapBarcodeToTube2.values());
         mercuryClientEjb.addFromProductOrder(productOrder2);
-        mercuryClientEjb.addFromProductOrder(productOrder1, productOrder1.getSamples().subList(0, 1));
 
         // Create batch
         String batchName = "LCSET-MsgTest-" + testPrefix;
         LabBatch labBatch = new LabBatch(batchName, starters, LabBatch.LabBatchType.WORKFLOW);
+        labBatch.addReworks(reworks);
         labBatch.setJiraTicket(new JiraTicket(JiraServiceProducer.stubInstance(), batchName));
         labBatchEjb.createLabBatchAndRemoveFromBucket(labBatch, "jowalsh", "Pico/Plating Bucket",
                 LabEvent.UI_EVENT_LOCATION);
