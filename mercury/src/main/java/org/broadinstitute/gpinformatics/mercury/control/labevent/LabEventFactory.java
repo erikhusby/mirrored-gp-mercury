@@ -937,7 +937,7 @@ public class LabEventFactory implements Serializable {
         return buildVesselToSectionDbFree(receptaclePlateTransferEvent,
                 twoDBarcodedTubeDao.findByBarcode(receptaclePlateTransferEvent.getSourceReceptacle().getBarcode()),
                 staticPlateDAO.findByBarcode(receptaclePlateTransferEvent.getDestinationPlate().getBarcode()),
-                SECTION_ALL_96);
+                receptaclePlateTransferEvent.getDestinationPlate().getSection());
     }
 
     public LabEvent buildFromBettaLims(ReceptacleEventType receptacleEventType) {
