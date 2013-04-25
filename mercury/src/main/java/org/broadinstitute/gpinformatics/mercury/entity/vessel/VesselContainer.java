@@ -218,8 +218,12 @@ public class VesselContainer<T extends LabVessel> {
         }
         for (VesselToSectionTransfer vesselToSectionTransfer : vesselToSectionTransfersTo) {
             if (vesselToSectionTransfer.getTargetVesselContainer().equals(this)) {
-                vesselToSectionTransfer.getSourceVessel()
-                        .evaluateCriteria(transferTraverserCriteria, traversalDirection,
+                int targetWellIndex = vesselToSectionTransfer.getTargetSection().getWells().indexOf(position);
+                if (targetWellIndex < 0) {
+                    // the position parameter isn't in the section, so skip the transfer
+                    continue;
+                }
+                vesselToSectionTransfer.getSourceVessel().evaluateCriteria(transferTraverserCriteria, traversalDirection,
                                 vesselToSectionTransfer.getLabEvent(), hopCount + 1);
             }
         }
