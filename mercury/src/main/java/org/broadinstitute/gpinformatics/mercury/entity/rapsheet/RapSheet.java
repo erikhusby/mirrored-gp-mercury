@@ -105,6 +105,8 @@ public class RapSheet {
 
     /**
      * Get the active rework.
+     * Active Rework is Rework which has not been put in a bucket.
+     * Once it is added to a bucket, it becomes inactive.
      * @return Active Rework or null;
      */
     public ReworkEntry getActiveRework() {
@@ -134,6 +136,10 @@ public class RapSheet {
 
     /**
      * Get all the active rework and make it inactive.
+     *
+     * Active Rework is Rework which has not been put in a bucket.
+     * Once it is added to a bucket, it becomes inactive.
+     *
      * If there is no ReworkEntries, it will do nothing.
      */
     public void deactivateRework() {
