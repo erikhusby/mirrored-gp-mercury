@@ -6,22 +6,22 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
-import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
-import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.io.Serializable;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
 
 // Implements Serializable because it's used by a Stateful session bean.
 public class LabEventHandler implements Serializable {
@@ -210,18 +210,16 @@ public class LabEventHandler implements Serializable {
      * @param productOrderKey Business Key for a previously defined product order
      * @return Workflow Definition for the defined workflow for the product order represented by productOrderKey
      */
-    public ProductWorkflowDefVersion getWorkflowVersion(String productOrderKey) {
+    public ProductWorkflowDefVersion getWorkflowVersion(@Nonnull String productOrderKey) {
         WorkflowConfig workflowConfig = workflowLoader.load();
 
         ProductWorkflowDefVersion versionResult = null;
 
         ProductOrder productOrder = athenaClientService.retrieveProductOrderDetails(productOrderKey);
 
-        if (StringUtils.isNotBlank(productOrder.getProduct().getWorkflowName())) {
-            ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(
-                    productOrder.getProduct().getWorkflowName());
-
-            versionResult = productWorkflowDef.getEffectiveVersion();
+        String workflowName = productOrder.getProduct().getWorkflowName();
+        if (StringUtils.isNotBlank(workflowName)) {
+            versionResult = workflowConfig.getWorkflowByName(workflowName).getEffectiveVersion();
         }
         return versionResult;
     }
@@ -249,10 +247,9 @@ public class LabEventHandler implements Serializable {
             if (productOrders != null && !productOrders.isEmpty()) {
                 ProductWorkflowDefVersion workflowDef = getWorkflowVersion(productOrders.iterator().next());
 
-                if (workflowDef != null &&
-                        workflowDef.isPreviousStepBucket(labEvent.getLabEventType().getName())) {
-                    workingBucketName = workflowDef.getPreviousStep(
-                            labEvent.getLabEventType().getName());
+                String eventTypeName = labEvent.getLabEventType().getName();
+                if (workflowDef != null && workflowDef.isPreviousStepBucket(eventTypeName)) {
+                    workingBucketName = workflowDef.getPreviousStep(eventTypeName);
                 }
             }
 
