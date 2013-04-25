@@ -26,6 +26,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowD
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
 
+import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
@@ -69,7 +70,7 @@ public class WorkflowValidator {
      * rollbacks, which would cause knock on transactions in the code to persist messages.
      * @param bettaLIMSMessage JAXB from deck
      */
-    @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void validateWorkflow(BettaLIMSMessage bettaLIMSMessage) {
         for (PlateCherryPickEvent plateCherryPickEvent : bettaLIMSMessage.getPlateCherryPickEvent()) {
             validateWorkflow(plateCherryPickEvent, new ArrayList<String>(
@@ -111,10 +112,10 @@ public class WorkflowValidator {
      * Parameter to email template.
      */
     public static class WorkflowValidationError {
-        private SampleInstance sampleInstance;
-        private List<ProductWorkflowDefVersion.ValidationError> errors;
-        private ProductOrder productOrder;
-        private AppConfig appConfig;
+        private final SampleInstance sampleInstance;
+        private final List<ProductWorkflowDefVersion.ValidationError> errors;
+        private final ProductOrder productOrder;
+        private final AppConfig appConfig;
 
         public WorkflowValidationError(SampleInstance sampleInstance,
                 List<ProductWorkflowDefVersion.ValidationError> errors, ProductOrder productOrder,
@@ -211,7 +212,7 @@ public class WorkflowValidator {
      * @param productOrderKey Business Key for a previously defined product order
      * @return Workflow Definition for the defined workflow for the product order represented by productOrderKey
      */
-    public ProductWorkflowDefVersion getWorkflowVersion(String productOrderKey) {
+    public ProductWorkflowDefVersion getWorkflowVersion(@Nonnull String productOrderKey) {
         WorkflowConfig workflowConfig = new WorkflowLoader().load();
         ProductWorkflowDefVersion versionResult = null;
         ProductOrder productOrder = athenaClientService.retrieveProductOrderDetails(productOrderKey);
