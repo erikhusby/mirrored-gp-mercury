@@ -25,11 +25,13 @@ import java.util.*;
 @RequestScoped
 public class BucketBean {
 
+    // todo jmt rename to BucketEjb?  Many unused parameters and an unused field.
+
     private LabEventFactory labEventFactory;
 
-    JiraService jiraService;
+    private JiraService jiraService;
 
-    LabBatchEjb batchEjb;
+    private LabBatchEjb batchEjb;
 
     private final static Log logger = LogFactory.getLog(BucketBean.class);
 
@@ -382,27 +384,24 @@ public class BucketBean {
      * @param operator                Represents the user that initiated adding the vessels to the bucket
      * @param batchInitiationLocation Machine location from which operator initiated this action
      * @param autoBatch               Indicator to let the system know if they should even perform Auto Batching.
-     * @return Either a newly created batch object, or the most recent one found that encorporates all
+     * @return Either a newly created batch object, or the most recent one found that incorporates all
      *         lab vessels being processed in this request.
      */
 //    @DaoFree
     private LabBatch startBucketDrain(@Nonnull Collection<BucketEntry> bucketEntries, @Nonnull String operator,
                                       String batchInitiationLocation, boolean autoBatch) {
-        LabBatch bucketBatch = null;
         Set<LabVessel> batchVessels = new HashSet<LabVessel>();
 
         for (BucketEntry currEntry : bucketEntries) {
             batchVessels.add(currEntry.getLabVessel());
-            currEntry.setLabBatch(bucketBatch);
         }
 
+        LabBatch bucketBatch = null;
         if (!batchVessels.isEmpty()) {
             for (LabBatch currBatch : batchVessels.iterator().next().getNearestLabBatches()) {
-
                 if (LabBatch.isCommonBatch(currBatch, batchVessels)) {
                     bucketBatch = currBatch;
                 }
-
             }
         }
         /*
@@ -413,11 +412,12 @@ public class BucketBean {
             existing batch) create a new Lab Batch.
          */
         if (bucketBatch == null) {
-
 //            throw new InformaticsServiceException("There should be an existing Batch");
-
         }
 
+        for (BucketEntry currEntry : bucketEntries) {
+            currEntry.setLabBatch(bucketBatch);
+        }
         archiveEntries(bucketEntries);
 
         logger.info("Size of entries to remove is " + bucketEntries.size());
