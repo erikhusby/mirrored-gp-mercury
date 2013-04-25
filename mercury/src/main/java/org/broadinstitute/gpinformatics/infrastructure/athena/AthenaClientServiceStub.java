@@ -18,28 +18,24 @@ import java.util.*;
 @Alternative
 public class AthenaClientServiceStub implements AthenaClientService {
 
-    private static final Long   TEST_CREATOR = 1111L;
-    public static final  String rpSynopsis   = "Test synopsis";
+    private static final Long TEST_CREATOR = 1111L;
+    public static final String rpSynopsis = "Test synopsis";
     public static final String otherRpSynopsis = "To Study Stuff";
-    private static Map<String,ProductOrder> productOrderByBusinessKeyMap = new HashMap<String, ProductOrder>();
+    private static Map<String, ProductOrder> productOrderByBusinessKeyMap = new HashMap<String, ProductOrder>();
 
     @Override
     public synchronized ProductOrder retrieveProductOrderDetails(@Nonnull String poBusinessKey) {
-        if (productOrderByBusinessKeyMap.size() == 0) {
+        if (productOrderByBusinessKeyMap.isEmpty()) {
             productOrderByBusinessKeyMap = ProductOrderTestFactory.buildTestProductOrderMap();
         }
 
-        ProductOrder testOrder1 = productOrderByBusinessKeyMap.get(poBusinessKey);
-        if (testOrder1 == null) {
-            testOrder1 = ProductOrderTestFactory.createDummyProductOrder(poBusinessKey);
-            productOrderByBusinessKeyMap.put(poBusinessKey, testOrder1);
+        ProductOrder order = productOrderByBusinessKeyMap.get(poBusinessKey);
+        if (order == null) {
+            order = ProductOrderTestFactory.createDummyProductOrder(poBusinessKey);
+            productOrderByBusinessKeyMap.put(poBusinessKey, order);
         }
 
-        if (poBusinessKey == null) {
-            testOrder1.getProduct().setWorkflowName(null);
-        }
-
-        return testOrder1;
+        return order;
     }
 
     @Override
@@ -57,5 +53,4 @@ public class AthenaClientServiceStub implements AthenaClientService {
     public static synchronized void addProductOrder(ProductOrder productOrder) {
         productOrderByBusinessKeyMap.put(productOrder.getBusinessKey(), productOrder);
     }
-
 }
