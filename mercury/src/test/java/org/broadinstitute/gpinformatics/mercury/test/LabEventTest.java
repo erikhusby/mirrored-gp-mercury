@@ -96,6 +96,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -110,7 +111,6 @@ import java.util.TreeSet;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
 import static org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign.ReagentType;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.startsWith;
 
 /**
@@ -282,7 +282,7 @@ public class LabEventTest extends BaseEventTest{
                 },
                 new AthenaClientService() {
                     @Override
-                    public ProductOrder retrieveProductOrderDetails(String poBusinessKey) {
+                    public ProductOrder retrieveProductOrderDetails(@Nonnull String poBusinessKey) {
                         return productOrder;
                     }
 
@@ -738,7 +738,7 @@ public class LabEventTest extends BaseEventTest{
 
     public static void validateWorkflow(String nextEventTypeName, List<LabVessel> labVessels) {
         WorkflowValidator workflowValidator = new WorkflowValidator();
-        final AthenaClientService athenaClientService = AthenaClientProducer.stubInstance();
+        AthenaClientService athenaClientService = AthenaClientProducer.stubInstance();
         workflowValidator.setAthenaClientService(athenaClientService);
         workflowValidator.validateWorkflow(labVessels, nextEventTypeName);
         WorkflowLoader workflowLoader = new WorkflowLoader();
@@ -800,7 +800,7 @@ public class LabEventTest extends BaseEventTest{
                 }
                 if(testScheme == null) {
                     testScheme = new MolecularIndexingScheme(
-                                            new HashMap<MolecularIndexingScheme.IndexPosition, MolecularIndex>() {{
+                                            new EnumMap<MolecularIndexingScheme.IndexPosition, MolecularIndex>(MolecularIndexingScheme.IndexPosition.class) {{
                                                 put(MolecularIndexingScheme.IndexPosition.ILLUMINA_P7, new MolecularIndex(sequence));
                                             }});
                     if(molecularIndexingSchemeDao != null) {

@@ -136,6 +136,7 @@ public class ProductOrder implements Serializable {
      * @return The business key is the jira ticket key when this is not a draft, otherwise it is the DRAFT_KEY plus the
      * internal database id.
      */
+    @Nonnull
     public String getBusinessKey() {
         return createBusinessKey(productOrderId, jiraTicketKey);
     }
@@ -229,7 +230,7 @@ public class ProductOrder implements Serializable {
         return new JiraOrId(0, businessKey);
     }
 
-    private class Counter implements Serializable {
+    private static class Counter implements Serializable {
         private final Map<String, Integer> countMap = new HashMap<String, Integer>();
 
         private void clear() {
