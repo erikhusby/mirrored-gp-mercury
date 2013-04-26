@@ -256,7 +256,7 @@ public class SampleInstance {
     }
 
     public void setAllLabBatches(Collection<LabBatch> allLabBatches) {
-        this.allLabBatches = allLabBatches;
+        this.allLabBatches = new HashSet<LabBatch>(allLabBatches);
     }
 
     public Collection<LabBatch> getAllWorkflowLabBatches(){
