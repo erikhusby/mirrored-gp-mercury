@@ -22,7 +22,12 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
 import java.sql.Timestamp;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 @UrlBinding(value = "/view/pdoSampleHistory.action")
 public class ProductOrderSampleHistoryActionBean extends CoreActionBean {
@@ -39,7 +44,7 @@ public class ProductOrderSampleHistoryActionBean extends CoreActionBean {
 
     private ProductWorkflowDefVersion productWorkflowDefVersion;
     private String businessKey;
-    private List<MercurySample> mercurySamples;
+    private Set<MercurySample> mercurySamples = new HashSet<MercurySample>();
     public Map<Integer, String> indexToStepNameMap = new TreeMap<Integer, String>();
 
     public Map<Integer, String> getIndexToStepNameMap() {
@@ -50,11 +55,11 @@ public class ProductOrderSampleHistoryActionBean extends CoreActionBean {
         this.indexToStepNameMap = indexToStepNameMap;
     }
 
-    public List<MercurySample> getMercurySamples() {
+    public Set<MercurySample> getMercurySamples() {
         return mercurySamples;
     }
 
-    public void setMercurySamples(List<MercurySample> mercurySamples) {
+    public void setMercurySamples(Set<MercurySample> mercurySamples) {
         this.mercurySamples = mercurySamples;
     }
 
@@ -91,7 +96,7 @@ public class ProductOrderSampleHistoryActionBean extends CoreActionBean {
                     }
                 }
             }
-            mercurySamples = mercurySampleDao.findBySampleKeys(ProductOrderSample.getSampleNames(pdo.getSamples()));
+            mercurySamples.addAll(mercurySampleDao.findBySampleKeys(ProductOrderSample.getSampleNames(pdo.getSamples())));
         }
 
         return new ForwardResolution(VIEW_PAGE);
@@ -213,11 +218,13 @@ public class ProductOrderSampleHistoryActionBean extends CoreActionBean {
     }
 
     public WorkflowStepDef getLatestProcess(LabEvent event) {
-        ProductWorkflowDefVersion.LabEventNode eventNode = null;
+        ProductWorkflowDefVersion.LabEventNode eventNode;
         if (event != null) {
             eventNode = productWorkflowDefVersion.findStepByEventType(event.getLabEventType().getName());
             if (eventNode != null) {
                 return eventNode.getStepDef();
+            } else {
+                return null;
             }
         }
         return null;

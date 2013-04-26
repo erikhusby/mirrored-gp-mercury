@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMes
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
+import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500JaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpJaxbBuilder;
@@ -120,10 +121,16 @@ public class ExomeExpressIntegrationTest {
             for (BettaLIMSMessage bettaLIMSMessage : qtpJaxbBuilder.getMessageList()) {
                 sendMessage(baseUrl, bettaLIMSMessage);
             }
+            HiSeq2500JaxbBuilder hiSeq2500JaxbBuilder =
+                    new HiSeq2500JaxbBuilder(bettaLimsMessageTestFactory, testSuffix,
+                            qtpJaxbBuilder.getDenatureTubeBarcode()).invoke();
+            for (BettaLIMSMessage bettaLIMSMessage : hiSeq2500JaxbBuilder.getMessageList()) {
+                sendMessage(baseUrl, bettaLIMSMessage);
+            }
 
             System.out.println("Transfer from denature tube: " + qtpJaxbBuilder.getDenatureTubeBarcode());
-            String flowcellBarcode = "FS-" + testSuffix;
-            System.out.print("Using flowcell: " + flowcellBarcode);
+            String flowcellBarcode = hiSeq2500JaxbBuilder.getFlowcellBarcode();
+            System.out.println("Using flowcell: " + flowcellBarcode);
 
             // User checks chain of custody, activity stream.
             // User does denature to flowcell transfer in UI.

@@ -3,6 +3,7 @@
 
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.AddReworkActionBean"/>
+
 <c:choose>
     <c:when test="${actionBean.labVessel == null}">
         <div class="control-group">
@@ -37,7 +38,7 @@
                 Sample Count:
             </stripes:label>
             <div class="controls">
-                <div id="sampleCount">${actionBean.labVessel.sampleInstanceCount}</div>
+                <div id="sampleCount">${actionBean.labVessel.getSampleInstanceCount("WITH_PDO", null)}</div>
             </div>
         </div>
         <div class="control-group">
