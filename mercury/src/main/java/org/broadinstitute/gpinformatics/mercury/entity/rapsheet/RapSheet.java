@@ -91,7 +91,7 @@ public class RapSheet {
     }
 
     public void setRapSheetEntries(List<RapSheetEntry> reworkEntries) {
-        Collections.sort(reworkEntries, RapSheetEntry.BY_DATE_ASC);
+        Collections.sort(reworkEntries, RapSheetEntry.BY_DATE_DESC);
         this.rapSheetEntries.clear();
         this.rapSheetEntries.addAll(reworkEntries);
     }

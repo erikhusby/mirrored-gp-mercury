@@ -1,16 +1,11 @@
 package org.broadinstitute.gpinformatics.mercury.test;
 
 import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.WebResource;
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.*;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
-import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ChildVesselBean;
-import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ParentVesselBean;
-import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleImportBean;
-import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleReceiptBean;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionJaxbBuilder;
@@ -30,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
@@ -73,86 +67,10 @@ public class ExomeExpressIntegrationTest {
                 System.out.println(sampleName + "\t" + sampleBarcodeMap.get(sampleName));
             }
 
-            System.out.println("Press enter to send receipt message");
-            scanner.nextLine();
-            // Send receipt message
-            List<ParentVesselBean> parentVesselBeans = new ArrayList<ParentVesselBean>();
-            for (String sampleName : sampleBarcodeMap.keySet()) {
-                parentVesselBeans.add(new ParentVesselBean(sampleBarcodeMap.get(sampleName), sampleName,
-                        "Matrix Tube [0.75mL]", null));
-            }
-            SampleReceiptBean sampleReceiptBean = new SampleReceiptBean(new Date(), "SK-" + testSuffix,
-                    parentVesselBeans, "jowalsh");
-            WebResource resource = Client.create().resource(baseUrl.toExternalForm() + "/rest/samplereceipt");
-            resource.type(MediaType.APPLICATION_XML_TYPE)
-                    .accept(MediaType.APPLICATION_XML)
-                    .entity(sampleReceiptBean)
-                    .post(String.class);
-
-            // User creates PDO in UI.
-            // User checks bucket.
-            // User creates LCSET from bucket.
-
-            System.out.println("Press enter to send dilution and plating");
-            scanner.nextLine();
-            // dilution.
             BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory();
-            String dilutionTargetRackBarcode = "DilutionTarget" + testSuffix;
-            List<String> dilutionTargetTubeBarcodes = new ArrayList<String>();
-            List<String> platingTargetTubeBarcodes = new ArrayList<String>();
-            for (int i = 0; i < sampleBarcodeMap.size(); i++) {
-                dilutionTargetTubeBarcodes.add(testSuffix + i);
-            }
-            PlateTransferEventType dilutionTransferEvent = bettaLimsMessageTestFactory.buildRackToRack(
-                    LabEventType.SAMPLES_DAUGHTER_PLATE_CREATION.getName(), "DilutionSource" + testSuffix,
-                    new ArrayList<String>(sampleBarcodeMap.values()),
-                    dilutionTargetRackBarcode, dilutionTargetTubeBarcodes);
-            BettaLIMSMessage dilutionTransferMessage = new BettaLIMSMessage();
-            dilutionTransferMessage.getPlateTransferEvent().add(dilutionTransferEvent);
-            sendMessage(baseUrl, dilutionTransferMessage);
-            bettaLimsMessageTestFactory.advanceTime();
 
-            // plating aliquot.
-            for (int i = 0; i < sampleBarcodeMap.size(); i++) {
-                platingTargetTubeBarcodes.add("1" + testSuffix + i);
-            }
-            PlateTransferEventType platingTransfer = bettaLimsMessageTestFactory.buildRackToRack(
-                    LabEventType.SAMPLES_DAUGHTER_PLATE_CREATION.getName(), dilutionTargetRackBarcode,
-                    dilutionTargetTubeBarcodes, "PlatingTarget" + testSuffix, platingTargetTubeBarcodes);
-            BettaLIMSMessage platingTransferMessage = new BettaLIMSMessage();
-            platingTransferMessage.getPlateTransferEvent().add(platingTransfer);
-            sendMessage(baseUrl, platingTransferMessage);
-            bettaLimsMessageTestFactory.advanceTime();
-
-            // User checks chain of custody.
-            // User checks LCSET LIMS Activity Stream.
-
-            System.out.println("Press enter to send export");
-            scanner.nextLine();
-            // export message.
-            // Reconstruct the factory, to update the time.
-            bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory();
-            parentVesselBeans = new ArrayList<ParentVesselBean>();
-            ArrayList<ChildVesselBean> childVesselBeans = new ArrayList<ChildVesselBean>();
-            // Need a 4 character base 36 ID.
-            @SuppressWarnings("NumericCastThatLosesPrecision")
-            String partialSampleId = Integer.toString((int) (System.currentTimeMillis() % 1600000L), 36).toUpperCase();
-            for (int i = 0; i < sampleBarcodeMap.size(); i++) {
-                childVesselBeans
-                        .add(new ChildVesselBean(platingTargetTubeBarcodes.get(i), "SM-" + partialSampleId + (i + 1),
-                                "tube", bettaLimsMessageTestFactory.buildWellName(i + 1)));
-            }
-            String exportRackBarcode = "EX-" + testSuffix;
-            parentVesselBeans.add(new ParentVesselBean(exportRackBarcode, null, "Rack", childVesselBeans));
-            SampleImportBean sampleImportBean = new SampleImportBean("BSP", "EX-" + testSuffix, new Date(),
-                    parentVesselBeans, "jowalsh");
-            resource = Client.create().resource(baseUrl.toExternalForm() + "/rest/sampleimport");
-            resource.type(MediaType.APPLICATION_XML_TYPE)
-                    .accept(MediaType.APPLICATION_XML)
-                    .entity(sampleImportBean)
-                    .post(String.class);
-
-            // User checks chain of custody, activity stream.
+            System.out.print("Enter export rack barcode: ");
+            String exportRackBarcode = scanner.nextLine();
 
             System.out.println(
                     "About to send LC messages.  Press y to skip end repair.  To include everything, just hit enter.");
@@ -163,7 +81,8 @@ public class ExomeExpressIntegrationTest {
             bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory();
             ShearingJaxbBuilder shearingJaxbBuilder = new ShearingJaxbBuilder(
                     bettaLimsMessageTestFactory,
-                    platingTargetTubeBarcodes, testSuffix, exportRackBarcode).invoke();
+                    new ArrayList<String>(sampleBarcodeMap.values()),
+                    testSuffix, exportRackBarcode).invoke();
             for (BettaLIMSMessage bettaLIMSMessage : shearingJaxbBuilder.getMessageList()) {
                 sendMessage(baseUrl, bettaLIMSMessage);
             }
@@ -203,8 +122,8 @@ public class ExomeExpressIntegrationTest {
             }
 
             System.out.println("Transfer from denature tube: " + qtpJaxbBuilder.getDenatureTubeBarcode());
-            System.out.print("Enter flowcell barcode: ");
-            String flowcellBarcode = scanner.nextLine();
+            String flowcellBarcode = "FS-" + testSuffix;
+            System.out.print("Using flowcell: " + flowcellBarcode);
 
             // User checks chain of custody, activity stream.
             // User does denature to flowcell transfer in UI.
