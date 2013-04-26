@@ -186,13 +186,21 @@ public class WorkflowValidator {
      */
     public List<WorkflowValidationError> validateWorkflow(Collection<LabVessel> labVessels, String eventType) {
         List<WorkflowValidationError> validationErrors = new ArrayList<WorkflowValidationError>();
+        // Cache the workflows, because it's likely that there are only a few unique product orders on each plate
+        Map<String, ProductWorkflowDefVersion> mapProductOrderToWorkflow = new HashMap<String, ProductWorkflowDefVersion>();
+
         for (LabVessel labVessel : labVessels) {
             Set<SampleInstance> sampleInstances = labVessel.getSampleInstances(LabVessel.SampleType.WITH_PDO,
                     LabBatch.LabBatchType.WORKFLOW);
             for (SampleInstance sampleInstance : sampleInstances) {
                 if (sampleInstance.getProductOrderKey() != null) {
-                    ProductWorkflowDefVersion workflowVersion = getWorkflowVersion(sampleInstance.getProductOrderKey());
+                    ProductWorkflowDefVersion workflowVersion =
+                            mapProductOrderToWorkflow.get(sampleInstance.getProductOrderKey());
+                    if(workflowVersion == null) {
+                        workflowVersion = getWorkflowVersion(sampleInstance.getProductOrderKey());
+                    }
                     if (workflowVersion != null) {
+                        mapProductOrderToWorkflow.put(sampleInstance.getProductOrderKey(), workflowVersion);
                         List<ProductWorkflowDefVersion.ValidationError> errors = workflowVersion.validate(labVessel, eventType);
                         if (!errors.isEmpty()) {
                             validationErrors.add(new WorkflowValidationError(sampleInstance, errors,
