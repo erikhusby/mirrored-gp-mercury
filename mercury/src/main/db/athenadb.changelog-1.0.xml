@@ -3005,7 +3005,7 @@
         <createTable tableName="PREF_PREFERENCE_AUD" schemaName="athena">
             <column name="PREFERENCE_ID" type="int">
                 <constraints nullable="false"/>
-            </column>
+tion
             <column name="rev" type="int">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
@@ -3045,6 +3045,14 @@
         <addColumn tableName="PRODUCT_AUD">
             <column name="AGGREGATION_DATA_TYPE" type="varchar(200)"/>
         </addColumn>
+    </changeSet>
+
+    <!-- Now that optional price item fixups are run from GP4P sprint 6, we can remove the renamed table-->
+    <changeSet id="GPLIM-1200.1" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <tableExists schemaName="athena" tableName="old_opt_price_items"  />
+        </preConditions>
+        <dropTable schemaName="athena" tableName="old_opt_price_items"/>
     </changeSet>
 
 </databaseChangeLog>
