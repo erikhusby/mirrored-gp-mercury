@@ -5,31 +5,32 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowException;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 
 import javax.inject.Inject;
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
+import java.util.HashSet;
 import java.util.NavigableSet;
+import java.util.Set;
 import java.util.TreeSet;
 
 import static org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid.BOTH;
 import static org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid.MERCURY;
 import static org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid.SQUID;
+import static org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.*;
+import static org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch.*;
 
 /**
  * Utility for routing messages and queries to Mercury or Squid as determined by the supplied sample containers.
  * Defines the notion of a vessel belonging to either Mercury or Squid.
  * <p>
- * The current definition of "belonging" to Mercury is that any sample in the tube is associated with an
- * Exome Express product order.
+ * The current definition of "belonging" to Mercury is that all vessels upstream of the specified vessel (or set of
+ * vessels) have been batched for Exome Express.
  *
  * TODO SGM  This needs a better name since the options are more than just Mercury or Squid!!!!
  */
@@ -151,31 +152,89 @@ public class MercuryOrSquidRouter implements Serializable {
      * The logic within this method will utilize the vessel to navigate back to the correct PDO and determine what
      * routing is configured for the workflow associated with the PDO.
      *
-     * @param vessel an instance of a LabVessel for which system routing is to be deterimined
+     * @param vessel an instance of a LabVessel for which system routing is to be determined
      * @return An instance of a MercuryOrSquid enum that will assist in determining to which system requests should be
      * routed.
      */
     public MercuryOrSquid routeForVessel(LabVessel vessel) {
         TreeSet<MercuryOrSquid> routingOptions = new TreeSet<MercuryOrSquid>();
         if (vessel != null) {
-            for (String productOrderKey : vessel.getNearestProductOrders()) {
+
+            Set<SampleInstance> sampleInstances = vessel.getSampleInstances(SampleType.ANY, LabBatchType.WORKFLOW);
+            if (sampleInstances.isEmpty()) {
+                routingOptions.add(SQUID);
+            } else {
+                Set<SampleInstance> possibleControls = new HashSet<SampleInstance>();
+                for (SampleInstance sampleInstance : sampleInstances) {
+                    if (sampleInstance.getProductOrderKey() == null) {
+                        possibleControls.add(sampleInstance);
+                    } else {
+                        ProductOrder order = athenaClientService.retrieveProductOrderDetails(sampleInstance.getProductOrderKey());
+                        routingOptions.add(getWorkflow(order.getProduct().getWorkflowName()).getRouting());
+                    }
+                }
+                if (!possibleControls.isEmpty()) {
+                    // TODO: ask BSP for collaborator sample IDs and check against known controls
+                    routingOptions.add(SQUID);
+                }
+            }
+
+//  TODO: This is an old implementation based on getNearestProductOrders() (with some fixes for proper handling of plates). Remove once we have some confidence with the SampleInstance implementation
+            /*
+             * For vessel containers, we need to manually iterate over all of the positions because we want to ignore
+             * cases where (especially for plates) there is no upstream source vessel. However, if there is an upstream
+             * source that we can't determine a PDO for, we need to route to Squid. Calling getNearestProductOrders() on
+             * a plate will return the orders that were successfully found, but will give no indication of there being
+             * sources that do not have a PDO.
+             */
+/*
+            if (vessel.getContainerRole() != null) {
+                Iterator<String> positionNames = vessel.getVesselGeometry().getPositionNames();
+                while (positionNames.hasNext()) {
+                    String positionName = positionNames.next();
+                    TransferTraverserCriteria.NearestProductOrderCriteria criteria =
+                            new TransferTraverserCriteria.NearestProductOrderCriteria();
+
+                    vessel.getContainerRole().evaluateCriteria(VesselPosition.getByName(positionName), criteria,
+                            TransferTraverserCriteria.TraversalDirection.Ancestors, null, 0);
+                    if (criteria.hasSourceVessel()) {
+                        MercuryOrSquid routing = getWorkflowRoutingForVessel(criteria.getNearestProductOrders());
+                        if (routing != null) {
+                            routingOptions.add(routing);
+                        }
+                    }
+                }
+            } else {
+                MercuryOrSquid routing = getWorkflowRoutingForVessel(vessel.getNearestProductOrders());
+                if (routing != null) {
+                    routingOptions.add(routing);
+                }
+            }
+*/
+        }
+
+        return evaluateRoutingOption(routingOptions);
+    }
+
+    private MercuryOrSquid getWorkflowRoutingForVessel(Collection<String> nearestProductOrders) {
+        MercuryOrSquid routing = null;
+        if (nearestProductOrders.isEmpty()) {
+            routing = SQUID;
+        } else {
+            for (String productOrderKey : nearestProductOrders) {
                 if (productOrderKey != null) {
                     ProductOrder order = athenaClientService.retrieveProductOrderDetails(productOrderKey);
                     if (order != null && StringUtils.isNotBlank(order.getProduct().getWorkflowName())) {
-                        MercuryOrSquid routing;
                         try {
                             routing = getWorkflow(order.getProduct().getWorkflowName()).getRouting();
                         } catch (WorkflowException e) {
                             routing = SQUID;
                         }
-
-                        routingOptions.add(routing);
                     }
                 }
             }
         }
-
-        return evaluateRoutingOption(routingOptions);
+        return routing;
     }
 
     /**
