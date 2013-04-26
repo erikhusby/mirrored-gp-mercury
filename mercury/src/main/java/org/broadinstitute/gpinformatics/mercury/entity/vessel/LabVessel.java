@@ -90,6 +90,7 @@ public abstract class LabVessel implements Serializable {
     private final Set<JiraTicket> ticketsCreated = new HashSet<JiraTicket>();
 
     @ManyToMany(cascade = CascadeType.PERSIST, mappedBy = "startingLabVessels")
+    @BatchSize(size = 100)
     private Set<LabBatch> labBatches = new HashSet<LabBatch>();
 
     // todo jmt separate role for reagents?
@@ -97,6 +98,7 @@ public abstract class LabVessel implements Serializable {
     // have to specify name, generated aud name is too long for Oracle
     @JoinTable(schema = "mercury", name = "lv_reagent_contents", joinColumns = @JoinColumn(name = "lab_vessel"),
             inverseJoinColumns = @JoinColumn(name = "reagent_contents"))
+    @BatchSize(size = 100)
     private Set<Reagent> reagentContents = new HashSet<Reagent>();
 
     /**
@@ -110,6 +112,7 @@ public abstract class LabVessel implements Serializable {
     // todo jmt separate role for containee?
     @ManyToMany(cascade = CascadeType.PERSIST)
     @JoinTable(schema = "mercury")
+    @BatchSize(size = 100)
     private Set<LabVessel> containers = new HashSet<LabVessel>();
 
     /**
@@ -131,6 +134,7 @@ public abstract class LabVessel implements Serializable {
     private Collection<StatusNote> notes = new HashSet<StatusNote>();
 
     @OneToMany(mappedBy = "labVessel", cascade = CascadeType.PERSIST)
+    @BatchSize(size = 100)
     private Set<BucketEntry> bucketEntries = new HashSet<BucketEntry>();
 
     @Embedded
@@ -138,16 +142,20 @@ public abstract class LabVessel implements Serializable {
 
     // todo jmt separate role for sample holder?
     @ManyToMany(cascade = CascadeType.PERSIST)
+    @BatchSize(size = 100)
     private Set<MercurySample> mercurySamples = new HashSet<MercurySample>();
 
     // todo jmt set these fields db-free
     @OneToMany(mappedBy = "sourceVessel", cascade = CascadeType.PERSIST)
+    @BatchSize(size = 100)
     private Set<VesselToVesselTransfer> vesselToVesselTransfersThisAsSource = new HashSet<VesselToVesselTransfer>();
 
     @OneToMany(mappedBy = "targetLabVessel", cascade = CascadeType.PERSIST)
+    @BatchSize(size = 100)
     private Set<VesselToVesselTransfer> vesselToVesselTransfersThisAsTarget = new HashSet<VesselToVesselTransfer>();
 
     @OneToMany(mappedBy = "sourceVessel", cascade = CascadeType.PERSIST)
+    @BatchSize(size = 100)
     private Set<VesselToSectionTransfer> vesselToSectionTransfersThisAsSource = new HashSet<VesselToSectionTransfer>();
 
     @OneToMany(mappedBy = "labVessel", cascade = CascadeType.PERSIST)
