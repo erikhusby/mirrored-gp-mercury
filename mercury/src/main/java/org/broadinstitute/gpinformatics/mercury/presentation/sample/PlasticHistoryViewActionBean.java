@@ -66,10 +66,12 @@ public class PlasticHistoryViewActionBean extends CoreActionBean {
     public Set<PlasticHistoryListItem> getPlasticHistory() {
         Set<PlasticHistoryListItem> targetItems = new HashSet<PlasticHistoryListItem>();
         if (sampleKey != null) {
-            MercurySample selectedSample = mercurySampleDao.findBySampleKey(sampleKey);
-            if (selectedSample != null) {
-                List<LabVessel> vessels = labVesselDao.findBySampleKey(selectedSample.getSampleKey());
-                addVesselsToItemList(targetItems, vessels);
+            List<MercurySample> selectedSamples = mercurySampleDao.findBySampleKey(sampleKey);
+            if (selectedSamples != null) {
+                for(MercurySample selectedSample : selectedSamples){
+                    List<LabVessel> vessels = labVesselDao.findBySampleKey(selectedSample.getSampleKey());
+                    addVesselsToItemList(targetItems, vessels);
+                }
             }
         } else if (batchKey != null) {
             LabBatch batch = labBatchDAO.findByBusinessKey(batchKey);

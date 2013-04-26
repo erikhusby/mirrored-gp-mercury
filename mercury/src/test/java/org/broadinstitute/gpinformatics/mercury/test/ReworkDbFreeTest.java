@@ -70,10 +70,10 @@ public class ReworkDbFreeTest extends BaseEventTest {
         // Selects the rework tube and verifies its lcset.
         TwoDBarcodedTube reworkTube = origRackMap.get(origTubePrefix + reworkIdx);
         assertNotNull(reworkTube);
-        assertEquals(reworkTube.getLabBatchesList().size(), 1);
-        assertEquals(reworkTube.getLabBatchesList().get(0).getBatchName(), "LCSET" + origLcsetSuffix);
-        assertEquals(reworkTube.getMercurySamplesList().size(), 1);
-        String reworkSampleKey = reworkTube.getMercurySamplesList().get(0).getSampleKey();
+        assertEquals(reworkTube.getLabBatches().size(), 1);
+        assertEquals(reworkTube.getLabBatches().iterator().next().getBatchName(), "LCSET" + origLcsetSuffix);
+        assertEquals(reworkTube.getMercurySamples().size(), 1);
+        String reworkSampleKey = reworkTube.getMercurySamples().iterator().next().getSampleKey();
 
         // Starts the rework with a new rack of tubes and includes the rework tube.
         Map<String, TwoDBarcodedTube> reworkRackMap = createInitialRack(productOrder, reworkTubePrefix);

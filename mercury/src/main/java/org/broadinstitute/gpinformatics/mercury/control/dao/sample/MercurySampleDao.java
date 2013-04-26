@@ -3,15 +3,13 @@ package org.broadinstitute.gpinformatics.mercury.control.dao.sample;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample_;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Data Access Object for MercurySample
@@ -57,8 +55,8 @@ public class MercurySampleDao extends GenericDao {
         return findListByList(MercurySample.class, MercurySample_.sampleKey, sampleKeys);
     }
 
-    public MercurySample findBySampleKey(String sampleKey) {
-        return findSingle(MercurySample.class, MercurySample_.sampleKey, sampleKey);
+    public List<MercurySample> findBySampleKey(String sampleKey) {
+        return findList(MercurySample.class, MercurySample_.sampleKey, sampleKey);
     }
 
     public Map<String, List<MercurySample>> findMapIdToListMercurySample(List<String> sampleKeys) {

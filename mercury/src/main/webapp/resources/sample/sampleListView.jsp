@@ -12,7 +12,7 @@
                 ],
                 "aoColumns":[
                     {"bSortable":false},
-                    {"bSortable":true}
+                    {"bSortable":true},
                 ]
             });
 
