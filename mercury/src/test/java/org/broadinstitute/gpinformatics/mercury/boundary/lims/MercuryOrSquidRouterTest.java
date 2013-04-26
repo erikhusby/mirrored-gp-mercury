@@ -55,6 +55,7 @@ public class MercuryOrSquidRouterTest {
     private static final String MERCURY_TUBE_1 = "mercuryTube1";
     private static final String MERCURY_TUBE_2 = "mercuryTube2";
     private static final String MERCURY_TUBE_3 = "mercuryTube3";
+    private static final String CONTROL_TUBE = "controlTube";
 
     private MercuryOrSquidRouter mercuryOrSquidRouter;
 
@@ -65,6 +66,7 @@ public class MercuryOrSquidRouterTest {
     private TwoDBarcodedTube tube1;
     private TwoDBarcodedTube tube2;
     private TwoDBarcodedTube tube3;
+    private TwoDBarcodedTube controlTube;
     private StaticPlate plate;
     private ResearchProject testProject;
     private Product testProduct;
@@ -87,6 +89,10 @@ public class MercuryOrSquidRouterTest {
 
         tube3 = new TwoDBarcodedTube(MERCURY_TUBE_3);
         when(mockLabVesselDao.findByIdentifier(MERCURY_TUBE_3)).thenReturn(tube3);
+
+        controlTube = new TwoDBarcodedTube(CONTROL_TUBE);
+        controlTube.addSample(new MercurySample("SM-CONTROL1"));
+        when(mockLabVesselDao.findByIdentifier(CONTROL_TUBE)).thenReturn(controlTube);
 
         plate = new StaticPlate("mercuryPlate", Eppendorf96);
         when(mockLabVesselDao.findByIdentifier("mercuryPlate")).thenReturn(plate);
@@ -159,13 +165,22 @@ public class MercuryOrSquidRouterTest {
 
     @Test(groups = DATABASE_FREE)
     public void testRouteForTubesAllInMercuryWithExomeExpressOrders() {
-        ProductOrder order = placeOrderForTubeAndBucket(tube1, exomeExpress, picoBucket);
-        placeOrderForTubeAndBucket(tube2, exomeExpress, picoBucket);
+        ProductOrder order1 = placeOrderForTubeAndBucket(tube1, exomeExpress, picoBucket);
+        ProductOrder order2 = placeOrderForTubeAndBucket(tube2, exomeExpress, picoBucket);
         assertThat(mercuryOrSquidRouter.routeForVessels(Arrays.asList(MERCURY_TUBE_1, MERCURY_TUBE_2)), is(BOTH));
         // only verify for one tube because current implementation short-circuits once one qualifying order is found
         verify(mockLabVesselDao).findByIdentifier(MERCURY_TUBE_1);
-        verify(mockAthenaClientService).retrieveProductOrderDetails(order.getBusinessKey());
+        verify(mockLabVesselDao).findByIdentifier(MERCURY_TUBE_2);
+        verify(mockAthenaClientService).retrieveProductOrderDetails(order1.getBusinessKey());
+        verify(mockAthenaClientService).retrieveProductOrderDetails(order2.getBusinessKey());
     }
+
+/* work-in-progress
+    @Test(groups = DATABASE_FREE)
+    public void testRouteForTubesAllInMercuryWithExomeExpressOrdersWithControls() {
+        ProductOrder order = placeOrderForTubeAndBucket(tube1, exomeExpress, picoBucket);
+    }
+*/
 
     /*
      * Tests for routeForPlate()
