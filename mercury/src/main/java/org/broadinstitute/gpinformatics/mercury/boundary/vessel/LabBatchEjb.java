@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.AbstractBatchJiraFieldFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -26,7 +27,12 @@ import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Encapsulates the business logic related to {@link LabBatch}s.  This includes the creation
@@ -185,6 +191,8 @@ public class LabBatchEjb {
                                                       @Nonnull String bucketName, @Nonnull String location) {
         Bucket bucket = bucketDao.findByName(bucketName);
         batch = createLabBatch(batch, operator);
+        //todo jac Hard coded labEventType for the one bucket.  This will need to change when we have multiple.
+        bucketBean.add(batch.getReworks(), bucket, operator, location, LabEventType.PICO_PLATING_BUCKET);
         bucketBean.start(operator, batch.getStartingLabVessels(), bucket, location);
         return batch;
     }
