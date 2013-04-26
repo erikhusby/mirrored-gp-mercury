@@ -3,8 +3,12 @@ package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
@@ -13,8 +17,11 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowExceptio
 
 import javax.inject.Inject;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.NavigableSet;
 import java.util.Set;
 import java.util.TreeSet;
@@ -53,19 +60,24 @@ public class MercuryOrSquidRouter implements Serializable {
         BOTH, MERCURY, SQUID
     }
 
-    private LabVesselDao        labVesselDao;
-    private AthenaClientService athenaClientService;
-    private WorkflowLoader      workflowLoader;
+    private LabVesselDao         labVesselDao;
+    private ControlDao           controlDao;
+    private AthenaClientService  athenaClientService;
+    private WorkflowLoader       workflowLoader;
+    private BSPSampleDataFetcher bspSampleDataFetcher;
 
     MercuryOrSquidRouter() {
     }
 
     @Inject
-    public MercuryOrSquidRouter(LabVesselDao labVesselDao, AthenaClientService athenaClientService,
-                                WorkflowLoader workflowLoader) {
+    public MercuryOrSquidRouter(LabVesselDao labVesselDao, ControlDao controlDao,
+                                AthenaClientService athenaClientService,
+                                WorkflowLoader workflowLoader, BSPSampleDataFetcher bspSampleDataFetcher) {
         this.labVesselDao = labVesselDao;
+        this.controlDao = controlDao;
         this.athenaClientService = athenaClientService;
         this.workflowLoader = workflowLoader;
+        this.bspSampleDataFetcher = bspSampleDataFetcher;
     }
 
     /**
@@ -174,43 +186,48 @@ public class MercuryOrSquidRouter implements Serializable {
                     }
                 }
                 if (!possibleControls.isEmpty()) {
-                    // TODO: ask BSP for collaborator sample IDs and check against known controls
-                    routingOptions.add(SQUID);
-                }
-            }
 
-//  TODO: This is an old implementation based on getNearestProductOrders() (with some fixes for proper handling of plates). Remove once we have some confidence with the SampleInstance implementation
-            /*
-             * For vessel containers, we need to manually iterate over all of the positions because we want to ignore
-             * cases where (especially for plates) there is no upstream source vessel. However, if there is an upstream
-             * source that we can't determine a PDO for, we need to route to Squid. Calling getNearestProductOrders() on
-             * a plate will return the orders that were successfully found, but will give no indication of there being
-             * sources that do not have a PDO.
-             */
-/*
-            if (vessel.getContainerRole() != null) {
-                Iterator<String> positionNames = vessel.getVesselGeometry().getPositionNames();
-                while (positionNames.hasNext()) {
-                    String positionName = positionNames.next();
-                    TransferTraverserCriteria.NearestProductOrderCriteria criteria =
-                            new TransferTraverserCriteria.NearestProductOrderCriteria();
+                    /*
+                     * TODO: When querying a group of tubes, if everything might be a control (i.e., nothing has a PDO),
+                     * don't bother checking controls; just route to Squid. This will avoid unnecessary BSP queries.
+                     */
 
-                    vessel.getContainerRole().evaluateCriteria(VesselPosition.getByName(positionName), criteria,
-                            TransferTraverserCriteria.TraversalDirection.Ancestors, null, 0);
-                    if (criteria.hasSourceVessel()) {
-                        MercuryOrSquid routing = getWorkflowRoutingForVessel(criteria.getNearestProductOrders());
-                        if (routing != null) {
-                            routingOptions.add(routing);
+                    // TODO: change this logic if SampleInstance.controlRole is ever populated
+
+                    // TODO: move this logic into ControlEjb?
+                    List<Control> controls = controlDao.findAllActive();
+                    List<String> controlSampleIds = new ArrayList<String>();
+                    for (Control control : controls) {
+                        controlSampleIds.add(control.getCollaboratorSampleId());
+                    }
+
+                    // Don't bother querying BSP if Mercury doesn't have any active controls.
+                    if (controlSampleIds.isEmpty()) {
+                        routingOptions.add(SQUID);
+                    } else {
+                        Collection<String> sampleNames = new ArrayList<String>();
+                        for (SampleInstance sampleInstance : possibleControls) {
+                            sampleNames.add(sampleInstance.getStartingSample().getSampleKey());
+                        }
+                        Map<String, BSPSampleDTO> sampleDTOs = bspSampleDataFetcher.fetchSamplesFromBSP(sampleNames);
+
+                        for (SampleInstance possibleControl : possibleControls) {
+                            String sampleKey = possibleControl.getStartingSample().getSampleKey();
+                            BSPSampleDTO sampleDTO = sampleDTOs.get(sampleKey);
+                            if (sampleDTO == null) {
+                                // Don't know what this is, but it isn't for Mercury.
+                                routingOptions.add(SQUID);
+                            } else {
+                                if (controlSampleIds.contains(sampleDTO.getCollaboratorsSampleName())) {
+                                    routingOptions.add(BOTH);
+                                } else {
+                                    routingOptions.add(SQUID);
+                                }
+                            }
                         }
                     }
                 }
-            } else {
-                MercuryOrSquid routing = getWorkflowRoutingForVessel(vessel.getNearestProductOrders());
-                if (routing != null) {
-                    routingOptions.add(routing);
-                }
             }
-*/
         }
 
         return evaluateRoutingOption(routingOptions);

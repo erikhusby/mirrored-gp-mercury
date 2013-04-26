@@ -6,9 +6,14 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
@@ -19,6 +24,8 @@ import org.testng.annotations.Test;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
 import static org.broadinstitute.gpinformatics.infrastructure.test.dbfree.LabEventTestFactory.doSectionTransfer;
@@ -56,11 +63,15 @@ public class MercuryOrSquidRouterTest {
     private static final String MERCURY_TUBE_2 = "mercuryTube2";
     private static final String MERCURY_TUBE_3 = "mercuryTube3";
     private static final String CONTROL_TUBE = "controlTube";
+    public static final String CONTROL_SAMPLE_ID = "SM-CONTROL1";
+    public static final String NA12878 = "NA12878";
 
     private MercuryOrSquidRouter mercuryOrSquidRouter;
 
     private LabVesselDao mockLabVesselDao;
+    private ControlDao mockControlDao;
     private AthenaClientService mockAthenaClientService;
+    private BSPSampleDataFetcher mockBspSampleDataFetcher;
     private int productOrderSequence = 1;
 
     private TwoDBarcodedTube tube1;
@@ -76,13 +87,18 @@ public class MercuryOrSquidRouterTest {
     @BeforeMethod(groups = DATABASE_FREE)
     public void setUp() throws Exception {
         mockLabVesselDao = mock(LabVesselDao.class);
+        mockControlDao = mock(ControlDao.class);
         mockAthenaClientService = mock(AthenaClientService.class);
-        mercuryOrSquidRouter = new MercuryOrSquidRouter(mockLabVesselDao, mockAthenaClientService, new WorkflowLoader());
+        mockBspSampleDataFetcher = mock(BSPSampleDataFetcher.class);
+        mercuryOrSquidRouter = new MercuryOrSquidRouter(mockLabVesselDao, mockControlDao, mockAthenaClientService,
+                new WorkflowLoader(), mockBspSampleDataFetcher);
 
 //        when(mockTwoDBarcodedTubeDAO.findByBarcode(anyString())).thenReturn(null); // TODO: Make this explicit and required? Currently this is the default behavior even without this call
 
         tube1 = new TwoDBarcodedTube(MERCURY_TUBE_1);
         when(mockLabVesselDao.findByIdentifier(MERCURY_TUBE_1)).thenReturn(tube1);
+        when(mockBspSampleDataFetcher.fetchSamplesFromBSP(Arrays.asList("SM-1")))
+                .thenReturn(Collections.singletonMap("SM-1", makeBspSampleDTO("Sample1")));
 
         tube2 = new TwoDBarcodedTube(MERCURY_TUBE_2);
         when(mockLabVesselDao.findByIdentifier(MERCURY_TUBE_2)).thenReturn(tube2);
@@ -91,8 +107,12 @@ public class MercuryOrSquidRouterTest {
         when(mockLabVesselDao.findByIdentifier(MERCURY_TUBE_3)).thenReturn(tube3);
 
         controlTube = new TwoDBarcodedTube(CONTROL_TUBE);
-        controlTube.addSample(new MercurySample("SM-CONTROL1"));
+        controlTube.addSample(new MercurySample(CONTROL_SAMPLE_ID));
         when(mockLabVesselDao.findByIdentifier(CONTROL_TUBE)).thenReturn(controlTube);
+        when(mockControlDao.findAllActive())
+                .thenReturn(Arrays.asList(new Control(NA12878, Control.ControlType.POSITIVE)));
+        when(mockBspSampleDataFetcher.fetchSamplesFromBSP(Arrays.asList(CONTROL_SAMPLE_ID)))
+                .thenReturn(Collections.singletonMap(CONTROL_SAMPLE_ID, makeBspSampleDTO(NA12878)));
 
         plate = new StaticPlate("mercuryPlate", Eppendorf96);
         when(mockLabVesselDao.findByIdentifier("mercuryPlate")).thenReturn(plate);
@@ -108,6 +128,12 @@ public class MercuryOrSquidRouterTest {
                 0, 0, 0, 0, "Test exome express samples only", "None", true, WorkflowName.EXOME_EXPRESS.getWorkflowName(), false, "agg type");
 
         picoBucket = new Bucket("Pico/Plating Bucket");
+    }
+
+    private BSPSampleDTO makeBspSampleDTO(String collaboratorSampleId) {
+        Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>();
+        dataMap.put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, collaboratorSampleId);
+        return new BSPSampleDTO(dataMap);
     }
 
     /*
@@ -175,12 +201,20 @@ public class MercuryOrSquidRouterTest {
         verify(mockAthenaClientService).retrieveProductOrderDetails(order2.getBusinessKey());
     }
 
-/* work-in-progress
     @Test(groups = DATABASE_FREE)
     public void testRouteForTubesAllInMercuryWithExomeExpressOrdersWithControls() {
-        ProductOrder order = placeOrderForTubeAndBucket(tube1, exomeExpress, picoBucket);
+        ProductOrder order1 = placeOrderForTubeAndBucket(tube1, exomeExpress, picoBucket);
+        ProductOrder order2 = placeOrderForTubeAndBucket(tube2, exomeExpress, picoBucket);
+        assertThat(mercuryOrSquidRouter.routeForVessels(Arrays.asList(MERCURY_TUBE_1, MERCURY_TUBE_2, CONTROL_TUBE)),
+                is(BOTH));
+        verify(mockLabVesselDao).findByIdentifier(MERCURY_TUBE_1);
+        verify(mockLabVesselDao).findByIdentifier(MERCURY_TUBE_2);
+        verify(mockLabVesselDao).findByIdentifier(CONTROL_TUBE);
+        verify(mockAthenaClientService).retrieveProductOrderDetails(order1.getBusinessKey());
+        verify(mockAthenaClientService).retrieveProductOrderDetails(order2.getBusinessKey());
+        verify(mockControlDao).findAllActive();
+        verify(mockBspSampleDataFetcher).fetchSamplesFromBSP(Arrays.asList(CONTROL_SAMPLE_ID));
     }
-*/
 
     /*
      * Tests for routeForPlate()
