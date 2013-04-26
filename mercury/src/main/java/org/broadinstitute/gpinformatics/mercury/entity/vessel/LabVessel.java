@@ -587,14 +587,11 @@ public abstract class LabVessel implements Serializable {
 
         private final Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
         private final Set<Reagent> reagents = new HashSet<Reagent>();
-        private LabBatch unambiguousLabBatch = null;
-        private final Set<LabBatch> labBatches = new HashSet<LabBatch>();
         private BucketEntry bucketEntry;
 
         void add(TraversalResults traversalResults) {
             sampleInstances.addAll(traversalResults.getSampleInstances());
             reagents.addAll(traversalResults.getReagents());
-            labBatches.addAll(traversalResults.getLabBatches());
         }
 
         public Set<SampleInstance> getSampleInstances() {
@@ -605,25 +602,12 @@ public abstract class LabVessel implements Serializable {
             return reagents;
         }
 
-        /** All lab batches encountered in the traversal. */
-        public Set<LabBatch> getLabBatches() {
-            return labBatches;
-        }
-
         public void add(SampleInstance sampleInstance) {
             sampleInstances.add(sampleInstance);
         }
 
         public void add(Reagent reagent) {
             reagents.add(reagent);
-        }
-
-        // todo For multiple batches, use heuristic on vessel & container to find the unambiguous batch.
-        public void add(Collection<LabBatch> labBatches) {
-            this.labBatches.addAll(labBatches);
-            if (labBatches != null && labBatches.size() == 1) {
-                unambiguousLabBatch = labBatches.iterator().next();
-            }
         }
 
         void setProductOrderKey(String productOrderKey) {
@@ -718,7 +702,6 @@ public abstract class LabVessel implements Serializable {
         for (Reagent reagent : getReagentContents()) {
             traversalResults.add(reagent);
         }
-        traversalResults.add(getLabBatchesOfType(labBatchType));
 
         traversalResults.completeLevel();
         return traversalResults;
