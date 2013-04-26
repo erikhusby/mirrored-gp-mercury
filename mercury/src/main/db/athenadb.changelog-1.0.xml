@@ -3005,7 +3005,7 @@
         <createTable tableName="PREF_PREFERENCE_AUD" schemaName="athena">
             <column name="PREFERENCE_ID" type="int">
                 <constraints nullable="false"/>
-tion
+            </column>
             <column name="rev" type="int">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
