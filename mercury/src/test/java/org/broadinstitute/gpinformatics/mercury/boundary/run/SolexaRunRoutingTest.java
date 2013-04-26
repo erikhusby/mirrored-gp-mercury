@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.run;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProducer;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.monitoring.HipChatMessageSender;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnectorProducer;
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
@@ -10,10 +11,10 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
-import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
@@ -121,8 +122,9 @@ public class SolexaRunRoutingTest extends BaseEventTest{
 
         LabVesselDao vesselDao = EasyMock.createNiceMock(LabVesselDao.class);
 
-        MercuryOrSquidRouter router = new MercuryOrSquidRouter(vesselDao, AthenaClientProducer.stubInstance(),
-                                                                      new WorkflowLoader());
+        MercuryOrSquidRouter router = new MercuryOrSquidRouter(vesselDao, EasyMock.createNiceMock(ControlDao.class),
+                AthenaClientProducer.stubInstance(), new WorkflowLoader(),
+                EasyMock.createNiceMock(BSPSampleDataFetcher.class));
         HipChatMessageSender hipChatMsgSender = EasyMock.createNiceMock(HipChatMessageSender.class);
 
         SolexaRunResource runResource = new SolexaRunResource(runDao, runFactory, flowcellDao, router,
@@ -160,8 +162,9 @@ public class SolexaRunRoutingTest extends BaseEventTest{
         LabVesselDao vesselDao = EasyMock.createNiceMock(LabVesselDao.class);
 
         IlluminaSequencingRunFactory runFactory = EasyMock.createMock(IlluminaSequencingRunFactory.class);
-        MercuryOrSquidRouter router = new MercuryOrSquidRouter(vesselDao, AthenaClientProducer.stubInstance(),
-                                                                      new WorkflowLoader());
+        MercuryOrSquidRouter router = new MercuryOrSquidRouter(vesselDao, EasyMock.createNiceMock(ControlDao.class),
+                AthenaClientProducer.stubInstance(), new WorkflowLoader(),
+                EasyMock.createNiceMock(BSPSampleDataFetcher.class));
 
         HipChatMessageSender hipChatMsgSender = EasyMock.createNiceMock(HipChatMessageSender.class);
 
