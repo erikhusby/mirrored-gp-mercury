@@ -1,7 +1,7 @@
-<%@ page import="org.broadinstitute.gpinformatics.mercury.entity.DB" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
-<%@ taglib prefix="stripes" uri="http://stripes.sourceforge.net/stripes.tld" %>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib uri="http://mercury.broadinstitute.org/Mercury/security" prefix="security" %>
+<%@ page import="static org.broadinstitute.gpinformatics.mercury.entity.DB.Role.*" %>
+<%@ page import="static org.broadinstitute.gpinformatics.mercury.entity.DB.roles" %>
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BucketViewActionBean"/>
 
@@ -77,7 +77,7 @@
 
 <stripes:layout-component name="content">
 <c:set var="readOnly" value="false"/>
-<security:authorizeBlock roles="<%=new String[] {DB.Role.LabUser.name,DB.Role.PDM.name}%>">
+<security:authorizeBlock roles="<%= roles(LabUser, LabManager, PDM, PM, Developer) %>">
     <c:set var="readOnly" value="true"/>
 </security:authorizeBlock>
 <stripes:form beanclass="${actionBean.class.name}" id="bucketForm">
@@ -182,7 +182,7 @@
                         </c:when><c:otherwise>${entry.labVessel.label}</c:otherwise>
                         </c:choose></td>
                     <td>
-                        <c:forEach items="${entry.labVessel.mercurySamplesList}"
+                        <c:forEach items="${entry.labVessel.mercurySamples}"
                                    var="mercurySample"
                                    varStatus="stat">
                             <c:choose><c:when test="${!readOnly}">

@@ -81,20 +81,20 @@
             </li>
 
             <security:authorizeBlock
-                    roles="<%= roles(Developer, PDM)%>">
+                    roles="<%= roles(LabUser, LabManager, PDM, PM, Developer)%>">
                 <li class="dropdown">
 
                     <a id="labNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span
                             class="icon-tasks"></span> Lab <b class="caret"></b></a>
                     <ul class="dropdown-menu" role="menu">
                         <security:authorizeBlock
-                                roles="<%= roles(Developer, PDM) %>">
+                                roles="<%= roles(LabUser, LabManager, PDM, PM, Developer) %>">
                             <li><stripes:link
                                     beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BucketViewActionBean"
                                     event="view">Buckets</stripes:link></li>
                         </security:authorizeBlock>
                         <security:authorizeBlock
-                                roles="<%= roles(Developer) %>">
+                                roles="<%= roles(LabUser, LabManager, PDM, PM, Developer) %>">
                             <li>
                                 <stripes:link
                                         beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.CollaboratorControlsActionBean"
@@ -118,10 +118,8 @@
                 </li>
             </security:authorizeBlock>
 
-            <security:authorizeBlock
-                    roles="<%= roles(Developer) %>">
+            <security:authorizeBlock roles="<%= roles(Developer) %>">
                 <li class="dropdown">
-
                     <a id="adminNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span
                             class="icon-cog"></span> Admin <b class="caret"></b></a>
                     <ul class="dropdown-menu" role="menu">
@@ -134,7 +132,7 @@
 
         </ul>
 
-        <security:authorizeBlock roles="<%= roles(Developer) %>">
+        <security:authorizeBlock roles="<%= roles(LabUser, LabManager, PDM, PM, Developer) %>">
             <ul class="nav pull-right global-search navbar-search">
                 <li style="white-space:nowrap;">
                     <stripes:form
