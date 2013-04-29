@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
+import com.google.common.collect.Lists;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
@@ -13,6 +14,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.ContainerType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
@@ -24,12 +26,7 @@ import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Creates LabVessels for (initially) web services
@@ -92,6 +89,34 @@ public class LabVesselFactory implements Serializable {
                 parentVesselBeans, labEventType);
     }
 
+
+    /**
+     * Creates initial vessel and sample, standalone, without parent vessel or corresponding event.
+     * @param sampleName the sample name/key
+     * @param barcode the vessel barcode
+     * @param userName the BSP user
+     * @param eventDate when the action was performed
+     * @return vessels, associated with samples
+     */
+    public List<LabVessel> buildInitialLabVessels(String sampleName, String barcode, String userName, Date eventDate) {
+        List<String> barcodes = new ArrayList<String>();
+        barcodes.add(barcode);
+        Map<String,LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
+
+        List<String> sampleIds = new ArrayList<String>();
+        sampleIds.add(sampleName);
+        Map<String, List<MercurySample>> mapIdToListMercurySample =
+                mercurySampleDao.findMapIdToListMercurySample(sampleIds);
+        Map<String, List<ProductOrderSample>> mapIdToListPdoSamples =
+                athenaClientService.findMapSampleNameToPoSample(sampleIds);
+
+        List<ParentVesselBean> parentVesselBeans = new ArrayList<ParentVesselBean>();
+        parentVesselBeans.add(new ParentVesselBean(barcode, sampleName, null, null));
+
+        return buildLabVesselDaoFree(mapBarcodeToVessel, mapIdToListMercurySample, mapIdToListPdoSamples, userName,
+                eventDate, parentVesselBeans, null);
+    }
+
     /**
      * For each piece of plastic being received: find or create plastic; find or create a corresponding Mercury sample
      * @param mapBarcodeToVessel plastic entities
@@ -135,8 +160,10 @@ public class LabVesselFactory implements Serializable {
 
                 MercurySample mercurySample = getMercurySample(mapIdToListMercurySample, mapIdToListPdoSamples, sampleId);
                 twoDBarcodedTube.addSample(mercurySample);
-                twoDBarcodedTube.addInPlaceEvent(new LabEvent(labEventType, eventDate, "BSP", disambiguator, operator));
-                disambiguator++;
+                if (labEventType != null) {
+                    twoDBarcodedTube.addInPlaceEvent(new LabEvent(labEventType, eventDate, "BSP", disambiguator, operator));
+                    disambiguator++;
+                }
                 labVessels.add(twoDBarcodedTube);
             } else {
                 String vesselType = parentVesselBean.getVesselType().toLowerCase();
