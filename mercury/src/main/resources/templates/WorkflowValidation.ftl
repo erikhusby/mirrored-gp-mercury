@@ -25,7 +25,7 @@
     <#list validationErrors as validationError>
     <tr>
         <td>${validationError.sampleInstance.startingSample.sampleKey}</td>
-        <td><a href="${validationError.sampleInstance.labBatch.jiraTicket.browserUrl}">${(validationError.sampleInstance.labBatch.batchName)!''}</a></td>
+        <td><a href="${(validationError.sampleInstance.labBatch.jiraTicket.browserUrl)!}">${(validationError.sampleInstance.labBatch.batchName)!''}</a></td>
         <td>
             <#list validationError.errors as error>${error.message}
                 <#list error.expectedEventNames as expectedEventName>${expectedEventName} </#list>
