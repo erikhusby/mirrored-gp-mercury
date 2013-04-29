@@ -98,12 +98,14 @@ public class ReworkEjb {
                         bucketEntryDao.findByVesselAndPO(labVessel, sampleInstance.getProductOrderKey());
 
                 if (bucketEntry != null) {
-                    String error =
-                            String.format("Sample %s in product order %s already exists in the %s bucket.",
-                                    mercurySample.getSampleKey(), sampleInstance.getProductOrderKey(),
-                                    bucketEntry.getBucket().getBucketDefinitionName());
-                    logger.error(error);
-                    throw new ValidationException(error);
+                    if (bucketEntry.getStatus().equals(BucketEntry.Status.Active)) {
+                        String error =
+                                String.format("Sample %s in product order %s already exists in the %s bucket.",
+                                        mercurySample.getSampleKey(), sampleInstance.getProductOrderKey(),
+                                        bucketEntry.getBucket().getBucketDefinitionName());
+                        logger.error(error);
+                        throw new ValidationException(error);
+                    }
                 }
 
                 getReworkEntryDaoFree(mercurySample, labVessel, vesselPosition,
@@ -183,8 +185,8 @@ public class ReworkEjb {
 
     public Collection<LabVessel> getVesselsForRework(){
         Set<LabVessel> inactiveVessels=new HashSet<LabVessel>();
-        for (ReworkEntry activeRework : reworkEntryDao.getNonActive()) {
-            inactiveVessels.add(activeRework.getLabVesselComment().getLabVessel());
+        for (ReworkEntry rework : reworkEntryDao.getActive()) {
+            inactiveVessels.add(rework.getLabVesselComment().getLabVessel());
         }
         return inactiveVessels;
     }

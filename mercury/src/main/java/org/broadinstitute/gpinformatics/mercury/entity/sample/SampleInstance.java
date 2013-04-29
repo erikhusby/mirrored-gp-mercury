@@ -8,7 +8,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * An aliquot of a sample in a particular
@@ -241,10 +243,6 @@ public class SampleInstance {
         return reagents;
     }
 
-    public void setLabBatch(LabBatch labBatch) {
-        this.labBatch = labBatch;
-    }
-
     public LabBatch getLabBatch() {
         return labBatch;
     }
@@ -254,7 +252,21 @@ public class SampleInstance {
     }
 
     public void setAllLabBatches(Collection<LabBatch> allLabBatches) {
-        this.allLabBatches = allLabBatches;
+        this.allLabBatches = new HashSet<LabBatch>(allLabBatches);
+        // todo jmt improve this logic
+        if (allLabBatches.size() == 1) {
+            labBatch = allLabBatches.iterator().next();
+        }
+    }
+
+    public Collection<LabBatch> getAllWorkflowLabBatches(){
+        Set<LabBatch> workflowBatches = new HashSet<LabBatch>();
+        for(LabBatch batch : allLabBatches){
+            if(batch.getLabBatchType() == LabBatch.LabBatchType.WORKFLOW){
+                workflowBatches.add(batch);
+            }
+        }
+        return workflowBatches;
     }
 
     public String getProductOrderKey() {

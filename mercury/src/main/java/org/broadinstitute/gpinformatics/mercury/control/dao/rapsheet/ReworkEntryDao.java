@@ -22,8 +22,15 @@ import java.util.Collection;
 @Stateful
 @RequestScoped
 public class ReworkEntryDao extends GenericDao {
-
-    public Collection<ReworkEntry> getNonActive() {
-        return findList(ReworkEntry.class, ReworkEntry_.activeRework,false);
+    /**
+     * Get all the active rework.
+     *
+     * Active Rework is Rework which has not been put in a bucket.
+     * Once it is added to a bucket, it becomes inactive.
+     *
+     * @return Active rework.
+     */
+    public Collection<ReworkEntry> getActive() {
+        return findList(ReworkEntry.class, ReworkEntry_.activeRework, true);
     }
 }

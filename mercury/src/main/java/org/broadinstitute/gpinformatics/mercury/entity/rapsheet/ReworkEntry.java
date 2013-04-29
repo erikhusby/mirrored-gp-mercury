@@ -49,7 +49,7 @@ public class ReworkEntry extends RapSheetEntry {
      * so assign null to a primitive.
      */
     @Column(nullable = false)
-    private boolean activeRework = false;
+    private boolean activeRework = true;
 
     public ReworkEntry() {
 

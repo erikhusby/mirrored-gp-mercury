@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.mercury;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -13,6 +14,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -34,30 +36,28 @@ import java.util.*;
 public class MercuryClientEjb {
 
     private static final Log logger = LogFactory.getLog(MercuryClientEjb.class);
-
     private LabVesselDao labVesselDao;
-
     private BSPUserList userList;
-
     private BucketBean bucketBean;
-
     private WorkflowLoader workflowLoader;
-
     private BucketDao bucketDao;
     private BSPSampleDataFetcher bspSampleDataFetcher;
+    private LabVesselFactory labVesselFactory;
 
     public MercuryClientEjb() {}
 
     @Inject
     public MercuryClientEjb(BucketBean bucketBean, BucketDao bucketDao,
                             WorkflowLoader workflowLoader, BSPUserList userList,
-                            LabVesselDao labVesselDao, BSPSampleDataFetcher bspSampleDataFetcher) {
+                            LabVesselDao labVesselDao, BSPSampleDataFetcher bspSampleDataFetcher,
+                            LabVesselFactory labVesselFactory) {
         this.bucketBean = bucketBean;
         this.bucketDao = bucketDao;
         this.workflowLoader = workflowLoader;
         this.userList = userList;
         this.labVesselDao = labVesselDao;
         this.bspSampleDataFetcher = bspSampleDataFetcher;
+        this.labVesselFactory = labVesselFactory;
     }
 
     public Collection<ProductOrderSample> addFromProductOrder(ProductOrder pdo) {
@@ -65,6 +65,11 @@ public class MercuryClientEjb {
     }
 
     public Collection<ProductOrderSample> addFromProductOrder(ProductOrder pdo, Collection<ProductOrderSample> samples) {
+
+        // Limited to ExomeExpress pdos.
+        if (!pdo.getProduct().getWorkflowName().equals(WorkflowName.EXOME_EXPRESS.getWorkflowName())) {
+            return Collections.emptyList();
+        }
 
         // Finds the pico bucket from workflow config for this product.
         WorkflowBucketDef picoBucketDef = findPicoBucketDef(pdo.getProduct());
@@ -76,14 +81,9 @@ public class MercuryClientEjb {
             return Collections.emptyList();
         }
 
-        // Finds the vessels for MercurySamples representing the pdo samples.
+        List<LabVessel> vessels = new ArrayList<LabVessel>();
         Map<String, ProductOrderSample> nameToSampleMap = new HashMap<String, ProductOrderSample>();
-        for (ProductOrderSample pdoSample : samples) {
-            nameToSampleMap.put(pdoSample.getSampleName(), pdoSample);
-        }
-        List<LabVessel> vessels = labVesselDao.findBySampleKeyList(new ArrayList<String>(nameToSampleMap.keySet()));
-
-        Collection<LabVessel> validVessels = applyPicoBucketCriteria(vessels, picoBucketDef, pdo);
+        Collection<String> samplesWithoutVessel = new ArrayList<String>();
 
         String username = null;
         Long bspUserId = pdo.getCreatedBy();
@@ -93,6 +93,26 @@ public class MercuryClientEjb {
                 username = bspUser.getUsername();
             }
         }
+
+        // Finds existing vessels for the pdo samples, or if none, then either the sample has not been received
+        // or the sample is a derived stock that has not been seen by Mercury.  Creates both standalone vessel and
+        // MercurySample for the latter.
+        for (ProductOrderSample pdoSample : samples) {
+            nameToSampleMap.put(pdoSample.getSampleName(), pdoSample);
+
+            List<LabVessel> existingVessel = labVesselDao.findBySampleKey(pdoSample.getSampleName());
+            if (CollectionUtils.isEmpty(existingVessel)) {
+                samplesWithoutVessel.add(pdoSample.getSampleName());
+            } else {
+                vessels.addAll(existingVessel);
+            }
+        }
+
+        if (!CollectionUtils.isEmpty(samplesWithoutVessel)) {
+            vessels.addAll(createInitialVessels(samplesWithoutVessel, username));
+        }
+
+        Collection<LabVessel> validVessels = applyPicoBucketCriteria(vessels, picoBucketDef);
 
         bucketBean.add(validVessels, picoBucket, username, LabEvent.UI_EVENT_LOCATION, LabEventType.PICO_PLATING_BUCKET,
                 pdo.getBusinessKey());
@@ -111,30 +131,11 @@ public class MercuryClientEjb {
     }
 
     // todo jmt should this check be in bucketBean.add?
-    private Collection<LabVessel> applyPicoBucketCriteria(Collection<LabVessel> vessels,
-                                                          WorkflowBucketDef bucketDef,
-                                                          ProductOrder pdo) {
-
-        Collection<String> sampleNames = new ArrayList<String>();
-        for (LabVessel vessel : vessels) {
-            for (MercurySample mercurySample : vessel.getMercurySamples()) {
-                sampleNames.add(mercurySample.getSampleKey());
-            }
-        }
-        Map<String, BSPSampleDTO> bspDtoMap = bspSampleDataFetcher.fetchSamplesFromBSP(sampleNames);
-
+    private Collection<LabVessel> applyPicoBucketCriteria(Collection<LabVessel> vessels, WorkflowBucketDef bucketDef) {
         Collection<LabVessel> validVessels = new HashSet<LabVessel>();
         for (LabVessel vessel : vessels) {
             if (bucketDef.meetsBucketCriteria(vessel)) {
-
-                for (MercurySample mercurySample : vessel.getMercurySamples()) {
-                    String sampleKey = mercurySample.getSampleKey();
-                    BSPSampleDTO bspDto = bspDtoMap.get(sampleKey);
-
-                    if (bspDto != null && bspDto.isSampleReceived()) {
-                        validVessels.add(vessel);
-                    }
-                }
+                validVessels.add(vessel);
             }
         }
         return validVessels;
@@ -169,5 +170,25 @@ public class MercuryClientEjb {
             logger.debug("Created new bucket " + bucketName);
         }
         return picoBucket;
+    }
+
+    private Collection<LabVessel> createInitialVessels(Collection<String>samplesWithoutVessel, String username) {
+        Collection<LabVessel> vessels = new ArrayList<LabVessel>();
+        Map<String, BSPSampleDTO> bspDtoMap = bspSampleDataFetcher.fetchSamplesFromBSP(samplesWithoutVessel);
+        for (String sampleName : samplesWithoutVessel) {
+            BSPSampleDTO bspDto = bspDtoMap.get(sampleName);
+            if (bspDto != null && bspDto.isSampleReceived()) {
+                // Prefers the manufacturer's barcode.
+                String barcode = null;
+                String SMID_PREFIX_REGEX = "[sS][mM]-.*";
+                for (String bspBarcode : bspDto.getPlasticBarcodes()) {
+                    if (barcode == null || barcode.matches(SMID_PREFIX_REGEX)) {
+                        barcode = bspBarcode;
+                    }
+                }
+                vessels.addAll(labVesselFactory.buildInitialLabVessels(sampleName, barcode, username, new Date()));
+            }
+        }
+        return vessels;
     }
 }

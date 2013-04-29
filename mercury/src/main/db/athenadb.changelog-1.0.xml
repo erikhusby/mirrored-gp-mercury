@@ -3047,4 +3047,12 @@
         </addColumn>
     </changeSet>
 
+    <!-- Now that optional price item fixups are run from GP4P sprint 6, we can remove the renamed table-->
+    <changeSet id="GPLIM-1200.1" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <tableExists schemaName="athena" tableName="old_opt_price_items"  />
+        </preConditions>
+        <dropTable schemaName="athena" tableName="old_opt_price_items"/>
+    </changeSet>
+
 </databaseChangeLog>

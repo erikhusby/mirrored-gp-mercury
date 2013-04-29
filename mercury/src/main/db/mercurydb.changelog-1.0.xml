@@ -1568,5 +1568,10 @@ END;
                 constraintName="FK_BE_LAB_BATCH"
                 referencedTableName="lab_batch" referencedColumnNames="LAB_BATCH_ID" referencedTableSchemaName="mercury"/>
     </changeSet>
+    <changeSet id="GPLIM-1212-6" author="thompson">
+        <createIndex tableName="VESSEL_TRANSFER" indexName="IX_VT_TARGET_VESSEL">
+            <column name="TARGET_VESSEL"/>
+        </createIndex>
+    </changeSet>
 
 </databaseChangeLog>
