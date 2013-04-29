@@ -417,10 +417,10 @@ public enum SBSSection {
             VesselPosition.LANE1,
             VesselPosition.LANE2
     )),
-    FLOWCELL2_LANE1("FLOWCELL2_LANE1", Arrays.asList(
+    LANE1("LANE1", Arrays.asList(
             VesselPosition.LANE1
     )),
-    FLOWCELL2_LANE2("FLOWCELL2_LANE2", Arrays.asList(
+    LANE2("LANE2", Arrays.asList(
             VesselPosition.LANE2
     )),
     // Quadrant containing the odd rows and odd columns on a 384-well plate.
