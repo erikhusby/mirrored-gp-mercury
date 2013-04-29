@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
-import com.google.common.collect.Lists;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
@@ -13,14 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.ContainerType;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;

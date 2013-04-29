@@ -43,8 +43,6 @@ import static org.testng.Assert.fail;
 public class MercuryClientServiceTest extends Arquillian {
     private Log logger = LogFactory.getLog(getClass());
     private String nonMercurySampleName = "SM-1T7HE";
-    //private String nonMercurySampleName = "SM-4B5XS";
-    private static final int SAMPLE_SIZE = 1;
     private static final long REAL_BSP_USER_ID = 10647L;
     private static final String REAL_PDO_KEY = "PDO-8";
     private ProductOrder pdo1;
@@ -69,11 +67,11 @@ public class MercuryClientServiceTest extends Arquillian {
 
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void setUp() {
-        pdo1 = ProductOrderTestFactory.buildExExProductOrder(SAMPLE_SIZE);
+        pdo1 = ProductOrderTestFactory.buildExExProductOrder(1);
         pdo1.setJiraTicketKey(REAL_PDO_KEY);
         pdo1.setCreatedBy(REAL_BSP_USER_ID);
 
-        pdo2 = ProductOrderTestFactory.buildExExProductOrder(SAMPLE_SIZE);
+        pdo2 = ProductOrderTestFactory.buildExExProductOrder(2);
         pdo2.setJiraTicketKey(REAL_PDO_KEY);
         pdo2.setCreatedBy(REAL_BSP_USER_ID);
 
@@ -82,7 +80,11 @@ public class MercuryClientServiceTest extends Arquillian {
         pdo1.setSamples(pdoSamples);
 
         pdoSamples.clear();
-        pdoSamples.add(new ProductOrderSample(nonMercurySampleName));
+        for (int i = 1; i < 3; ++i) {
+            ProductOrderSample sample = new ProductOrderSample(nonMercurySampleName);
+            sample.setSamplePosition(i);
+            pdoSamples.add(sample);
+        }
         pdo2.setSamples(pdoSamples);
 
         if (labVesselDao != null) {
@@ -97,7 +99,7 @@ public class MercuryClientServiceTest extends Arquillian {
         }
     }
 
-    /** Deletes the mercury sample used in this test. */
+    // Deletes the mercury sample used in this test.  When dao's are defined but there is no transaction, this does nothing.
     private void deleteTestSample() {
         try {
             List<LabVessel> labVessels = labVesselDao.findBySampleKey(nonMercurySampleName);
@@ -121,6 +123,7 @@ public class MercuryClientServiceTest extends Arquillian {
                 logger.info("Deleting sample " + mercurySample.getSampleKey());
                 mercurySampleDao.remove(mercurySample);
             }
+
         } catch (Exception e) {
             logger.error("Error finding and deleting the test sample, vessel, lab event, bucket entry", e);
             fail("Error finding and deleting the test sample, vessel, lab event, bucket entry");
@@ -129,11 +132,13 @@ public class MercuryClientServiceTest extends Arquillian {
 
     public void testSampleToPicoBucket() throws Exception {
         // First time through, creates the initial vessel & sample
+        Assert.assertEquals(labVesselDao.findBySampleKey(nonMercurySampleName).size(), 0);
         Collection<ProductOrderSample> addedSamples1 = service.addSampleToPicoBucket(pdo1);
         Assert.assertEquals(addedSamples1.size(), pdo1.getSamples().size());
 
         // Second time through it reuses the existing vessel & sample
         Collection<ProductOrderSample> addedSamples2 = service.addSampleToPicoBucket(pdo2);
+        Assert.assertEquals(pdo2.getSamples().size(), 2);
         Assert.assertEquals(addedSamples2.size(), pdo2.getSamples().size());
     }
 
