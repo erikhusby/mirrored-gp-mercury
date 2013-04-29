@@ -77,7 +77,7 @@ public abstract class RapSheetEntry  {
     public static final Comparator<RapSheetEntry> BY_DATE_DESC = new Comparator<RapSheetEntry>() {
         @Override
         public int compare(RapSheetEntry first, RapSheetEntry second) {
-            return first.getLabVesselComment().getLogDate().compareTo(second.getLabVesselComment().getLogDate());
+            return second.getLabVesselComment().getLogDate().compareTo(first.getLabVesselComment().getLogDate());
         }
     };
 }
