@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -81,10 +82,6 @@ public class MercuryClientEjb {
             return Collections.emptyList();
         }
 
-        List<LabVessel> vessels = new ArrayList<LabVessel>();
-        Map<String, ProductOrderSample> nameToSampleMap = new HashMap<String, ProductOrderSample>();
-        Collection<String> samplesWithoutVessel = new ArrayList<String>();
-
         String username = null;
         Long bspUserId = pdo.getCreatedBy();
         if (bspUserId != null) {
@@ -97,14 +94,27 @@ public class MercuryClientEjb {
         // Finds existing vessels for the pdo samples, or if none, then either the sample has not been received
         // or the sample is a derived stock that has not been seen by Mercury.  Creates both standalone vessel and
         // MercurySample for the latter.
+        Map<String, Collection<ProductOrderSample>> nameToSampleMap = new HashMap<String, Collection<ProductOrderSample>>();
+        Set<String> sampleKeyList = new HashSet<String>();
         for (ProductOrderSample pdoSample : samples) {
-            nameToSampleMap.put(pdoSample.getSampleName(), pdoSample);
+            // A pdo can have multiple samples all with same sample name but with different sample position.
+            // Each one will get a MercurySample and LabVessel put into the bucket.
+            Collection<ProductOrderSample> pdoSampleList = nameToSampleMap.get(pdoSample.getSampleName());
+            if (pdoSampleList == null) {
+                pdoSampleList = new ArrayList<ProductOrderSample>();
+                nameToSampleMap.put(pdoSample.getSampleName(), pdoSampleList);
+            }
+            pdoSampleList.add(pdoSample);
+            sampleKeyList.add(pdoSample.getSampleName());
+        }
 
-            List<LabVessel> existingVessel = labVesselDao.findBySampleKey(pdoSample.getSampleName());
-            if (CollectionUtils.isEmpty(existingVessel)) {
-                samplesWithoutVessel.add(pdoSample.getSampleName());
-            } else {
-                vessels.addAll(existingVessel);
+        List<LabVessel> vessels = labVesselDao.findBySampleKeyList(new ArrayList<String>(sampleKeyList));
+
+        // Finds samples with no existing vessels.
+        Collection<String> samplesWithoutVessel = new ArrayList<String>(sampleKeyList);
+        for (LabVessel vessel : vessels) {
+            for (MercurySample sample : vessel.getMercurySamples()) {
+                samplesWithoutVessel.remove(sample.getSampleKey());
             }
         }
 
@@ -124,7 +134,7 @@ public class MercuryClientEjb {
         List<ProductOrderSample> samplesAdded = new ArrayList<ProductOrderSample>();
         for (LabVessel vessel : validVessels) {
             for (MercurySample sample : vessel.getMercurySamples()) {
-                samplesAdded.add(nameToSampleMap.get(sample.getSampleKey()));
+                samplesAdded.addAll(nameToSampleMap.get(sample.getSampleKey()));
             }
         }
         return samplesAdded;
@@ -178,11 +188,10 @@ public class MercuryClientEjb {
         for (String sampleName : samplesWithoutVessel) {
             BSPSampleDTO bspDto = bspDtoMap.get(sampleName);
             if (bspDto != null && bspDto.isSampleReceived()) {
-                // Prefers the manufacturer's barcode.
+                // Prefers the manufacturer's barcode i.e. not the SM-id.
                 String barcode = null;
-                String SMID_PREFIX_REGEX = "[sS][mM]-.*";
                 for (String bspBarcode : bspDto.getPlasticBarcodes()) {
-                    if (barcode == null || barcode.matches(SMID_PREFIX_REGEX)) {
+                    if (barcode == null || !BSPUtil.isInBspFormat(sampleName)) {
                         barcode = bspBarcode;
                     }
                 }

@@ -154,9 +154,10 @@ public class MercuryClientEjbDbFreeTest {
         reset(mocks);
         // Mock should return sample for those that Mercury knows about, i.e. all except the 1st and 4th test samples.
         // The 4th sample is in house so a standalone vessel/sample should be created.
+        List<String> pdoSampleNames = new ArrayList<String>();
+        List<LabVessel> mockVessels = new ArrayList<LabVessel>();
         for (int rackPosition = 1; rackPosition <= SAMPLE_SIZE; ++rackPosition) {
             ProductOrderSample pdoSample = pdo.getSamples().get(rackPosition - 1);
-            List<LabVessel> mockVessels = new ArrayList<LabVessel>();
             if (rackPosition != 1 && rackPosition != 4) {
                 mockVessels.add(labVessels.get(rackPosition - 1));
             }
@@ -168,8 +169,8 @@ public class MercuryClientEjbDbFreeTest {
                         .andReturn(mockCreatedVessels);
             }
 
-            expect(labVesselDao.findBySampleKey(pdoSample.getSampleName())).andReturn(mockVessels);
         }
+        expect(labVesselDao.findBySampleKeyList((List<String>)anyObject())).andReturn(mockVessels);
         expect(bucketDao.findByName(PICO_PLATING_BUCKET)).andReturn(bucket);
         // Should be OK to return more samples in map than was asked for.
         expect(bspSampleDataFetcher.fetchSamplesFromBSP((List<String>)anyObject())).andReturn(bspDtoMap);
