@@ -1,6 +1,12 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.search;
 
-import net.sourceforge.stripes.action.*;
+import net.sourceforge.stripes.action.Before;
+import net.sourceforge.stripes.action.DefaultHandler;
+import net.sourceforge.stripes.action.ForwardResolution;
+import net.sourceforge.stripes.action.HandlesEvent;
+import net.sourceforge.stripes.action.RedirectResolution;
+import net.sourceforge.stripes.action.Resolution;
+import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.SimpleError;
 import net.sourceforge.stripes.validation.Validate;
@@ -22,7 +28,13 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.inject.Inject;
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -32,7 +44,7 @@ import java.util.regex.Pattern;
 public class SearchActionBean extends CoreActionBean {
     public static final String ACTIONBEAN_URL_BINDING = "/search/all.action";
 
-    private enum SearchType {
+    protected enum SearchType {
         VESSELS_BY_BARCODE, VESSELS_BY_PDO, VESSELS_BY_SAMPLE_KEY, PDO_BY_KEY, SAMPLES_BY_NAME, BATCH_BY_KEY
     }
 
@@ -121,7 +133,7 @@ public class SearchActionBean extends CoreActionBean {
         return new ForwardResolution(SESSION_LIST_PAGE);
     }
 
-    private void doSearch(SearchType... searchForItems) {
+    protected void doSearch(SearchType... searchForItems) {
         if (searchForItems.length == 0) {
             searchForItems = SearchType.values();
         }

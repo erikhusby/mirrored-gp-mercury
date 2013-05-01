@@ -12,24 +12,24 @@
             $j(document).ready(function () {
 
                 $j('#positiveControlList').dataTable({
-                                                         "oTableTools":ttExportDefines,
-                                                         "aaSorting":[
-                                                             [1, 'desc']
-                                                         ],
-                                                         "aoColumns":[
-                                                             {"bSortable":true}//Collaborator Sample ID
-                                                         ]
-                                                     });
+                    "oTableTools":ttExportDefines,
+                    "aaSorting":[
+                        [1, 'desc']
+                    ],
+                    "aoColumns":[
+                        {"bSortable":true}//Collaborator Sample ID
+                    ]
+                });
 
                 $j('#negativeControlList').dataTable({
-                                                         "oTableTools":ttExportDefines,
-                                                         "aaSorting":[
-                                                             [1, 'desc']
-                                                         ],
-                                                         "aoColumns":[
-                                                             {"bSortable":true}//Collaborator Sample ID
-                                                         ]
-                                                     });
+                    "oTableTools":ttExportDefines,
+                    "aaSorting":[
+                        [1, 'desc']
+                    ],
+                    "aoColumns":[
+                        {"bSortable":true}//Collaborator Sample ID
+                    ]
+                });
 
             });
 
@@ -48,7 +48,7 @@
         <div class="clearfix"></div>
 
         <div class="borderHeader">
-               Positive Controls
+            Positive Controls
         </div>
 
         <table id="positiveControlList" class="table simple">
@@ -73,7 +73,7 @@
         </table>
 
         <div class="borderHeader">
-               Negative Controls
+            Negative Controls
         </div>
 
         <table id="negativeControlList" class="table simple">

@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.sample;
 
-import net.sourceforge.stripes.action.After;
 import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
@@ -34,17 +33,17 @@ public class CollaboratorControlsActionBean extends CoreActionBean {
     @Inject
     private ControlEjb controlEjb;
 
-    private static final String VIEW_PAGE              = "/resources/sample/view_control.jsp";
-    private static final String CREATE_PAGE            = "/resources/sample/create_control.jsp";
-    private static final String CONTROL_LIST_PAGE      = "/resources/sample/list_controls.jsp";
-    private static final String controlParameter       = "sampleCollaboratorId";
-    public static final  String ACTIONBEAN_URL_BINDING = "/resources/sample/controls.action";
-    private static final String CURRENT_OBJECT         = "Control";
-    public static final  String CREATE_CONTROL         = CoreActionBean.CREATE + CURRENT_OBJECT;
-    public static final  String EDIT_CONTROL           = CoreActionBean.EDIT + CURRENT_OBJECT;
+    private static final String VIEW_PAGE = "/sample/view_control.jsp";
+    private static final String CREATE_PAGE = "/sample/create_control.jsp";
+    private static final String CONTROL_LIST_PAGE = "/sample/list_controls.jsp";
+    private static final String controlParameter = "sampleCollaboratorId";
+    public static final String ACTIONBEAN_URL_BINDING = "/sample/controls.action";
+    private static final String CURRENT_OBJECT = "Control";
+    public static final String CREATE_CONTROL = CoreActionBean.CREATE + CURRENT_OBJECT;
+    public static final String EDIT_CONTROL = CoreActionBean.EDIT + CURRENT_OBJECT;
 
     private Control.ControlType createControlType;
-    private boolean             editControlInactiveState;
+    private boolean editControlInactiveState;
 
     private Control workingControl;
     List<Control> positiveControls;
@@ -54,7 +53,7 @@ public class CollaboratorControlsActionBean extends CoreActionBean {
     /**
      * Called before the execution of all Control related actions (except for the list page), this method
      * is responsible for making sure that there is a non null Control entity ready to interact with.
-     *
+     * <p/>
      * If an existing entity can be found, this method will load it.  Otherwise, an empty entity is loaded instead
      */
     @Before(stages = LifecycleStage.BindingAndValidation, on = {"!" + LIST_ACTION})
@@ -124,10 +123,10 @@ public class CollaboratorControlsActionBean extends CoreActionBean {
         if (isCreating()) {
             Control existingVersion = controlDao.findBySampleId(workingControl.getBusinessKey());
 
-            if(existingVersion != null) {
+            if (existingVersion != null) {
                 addValidationError("controlName", "An active control with this name already exists.  Please either " +
-                                                          "update the existing control or create one with a " +
-                                                          "different name");
+                                                  "update the existing control or create one with a " +
+                                                  "different name");
             }
             if (StringUtils.isBlank(workingControl.getBusinessKey())) {
                 addValidationError("controlName", "The Collaborator Sample ID is required for a new control");
@@ -145,7 +144,7 @@ public class CollaboratorControlsActionBean extends CoreActionBean {
          */
         if (editControlInactiveState && inactiveVersion != null) {
             addValidationError("controlName", "You cannot deactivate this control at this time.  There is " +
-                                                      "already an inactive control that matches this.");
+                                              "already an inactive control that matches this.");
         }
 
     }
@@ -174,7 +173,7 @@ public class CollaboratorControlsActionBean extends CoreActionBean {
             is the state.
              */
             state = editControlInactiveState ? Control.ControlState.INACTIVE
-                                                             : Control.ControlState.ACTIVE;
+                    : Control.ControlState.ACTIVE;
         }
 
 //        controlDao.persist(workingControl);
@@ -207,7 +206,7 @@ public class CollaboratorControlsActionBean extends CoreActionBean {
         }
 
         return new RedirectResolution(CollaboratorControlsActionBean.class, destination)
-                       .addParameter(controlParameter, workingControl.getBusinessKey());
+                .addParameter(controlParameter, workingControl.getBusinessKey());
     }
 
     /* Accessors */

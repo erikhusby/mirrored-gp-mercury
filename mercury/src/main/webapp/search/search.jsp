@@ -61,9 +61,9 @@
                 </c:if>
 
                 <div class="pull-right">
-                        <img alt="show plate view" width="20" height="20" name="" title="show plate view"
-                             src="${ctxpath}/images/plate.png" style="margin-top: -5px;"/> - plate layout
-                        <img alt="show sample view" width="20" height="20" name="" title="show sample view"
+                    <img alt="show plate view" width="20" height="20" name="" title="show plate view"
+                         src="${ctxpath}/images/plate.png" style="margin-top: -5px;"/> - plate layout
+                    <img alt="show sample view" width="20" height="20" name="" title="show sample view"
                          src="${ctxpath}/images/list.png" style="margin-top: -5px; margin-left: 10px;"/> - sample
                     list
                 </div>
@@ -103,7 +103,7 @@
                     <div id="sampleDiv">
                 </c:otherwise>
             </c:choose>
-            <stripes:layout-render name="/resources/sample/sampleListView.jsp" samples="${actionBean.foundSamples}"
+            <stripes:layout-render name="/sample/sample_list.jsp" samples="${actionBean.foundSamples}"
                                    bean="${actionBean}" showCheckboxes="false"/>
             </div>
         </c:if>
@@ -127,7 +127,7 @@
                     <div id="pdoDiv">
                 </c:otherwise>
             </c:choose>
-            <stripes:layout-render name="/resources/orders/pdoListView.jsp" pdos="${actionBean.foundPDOs}"
+            <stripes:layout-render name="/orders/pdo_list.jsp" pdos="${actionBean.foundPDOs}"
                                    bean="${actionBean}" showCheckboxes="false"/>
             </div>
         </c:if>
@@ -153,7 +153,7 @@
                         <div id="batchDiv">
                     </c:otherwise>
                 </c:choose>
-                <stripes:layout-render name="/resources/batch/batchListView.jsp" batches="${actionBean.foundBatches}"
+                <stripes:layout-render name="/batch/batch_list.jsp" batches="${actionBean.foundBatches}"
                                        bean="${actionBean}" showCheckboxes="false"/>
                 </div>
             </stripes:form>

@@ -1,6 +1,11 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.vessel;
 
-import net.sourceforge.stripes.action.*;
+import net.sourceforge.stripes.action.DefaultHandler;
+import net.sourceforge.stripes.action.ForwardResolution;
+import net.sourceforge.stripes.action.HandlesEvent;
+import net.sourceforge.stripes.action.RedirectResolution;
+import net.sourceforge.stripes.action.Resolution;
+import net.sourceforge.stripes.action.UrlBinding;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import java.util.Arrays;
@@ -9,7 +14,7 @@ import java.util.List;
 @UrlBinding(value = "/view/heatMap.action")
 public class HeatMapActionBean extends CoreActionBean {
 
-    private static final String VIEW_PAGE = "/resources/container/heatMap.jsp";
+    private static final String VIEW_PAGE = "/container/heat_map.jsp";
 
     private String heatMapFieldString;
     private String jqueryClass;

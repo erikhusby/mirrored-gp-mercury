@@ -1,6 +1,11 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.workflow;
 
-import net.sourceforge.stripes.action.*;
+import net.sourceforge.stripes.action.DefaultHandler;
+import net.sourceforge.stripes.action.ForwardResolution;
+import net.sourceforge.stripes.action.HandlesEvent;
+import net.sourceforge.stripes.action.RedirectResolution;
+import net.sourceforge.stripes.action.Resolution;
+import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.lang3.StringUtils;
@@ -27,7 +32,7 @@ import java.util.GregorianCalendar;
 
 @UrlBinding("/workflow/LinkDenatureTubeToFlowcell.action")
 public class LinkDenatureTubeToFlowcellActionBean extends CoreActionBean {
-    private static String VIEW_PAGE = "/resources/workflow/link_dtube_to_fc.jsp";
+    private static String VIEW_PAGE = "/workflow/link_dtube_to_fc.jsp";
 
     @Inject
     BettalimsMessageResource bettalimsMessageResource;
@@ -121,10 +126,11 @@ public class LinkDenatureTubeToFlowcellActionBean extends CoreActionBean {
                 }
             }
         }
-        return new ForwardResolution("/resources/workflow/denature_tube_info.jsp");
+        return new ForwardResolution("/workflow/denature_tube_info.jsp");
     }
 
-    public ReceptaclePlateTransferEvent buildDenatureTubeToFlowcell(String eventType, String denatureTubeBarcode, String flowcellBarcode) {
+    public ReceptaclePlateTransferEvent buildDenatureTubeToFlowcell(String eventType, String denatureTubeBarcode,
+                                                                    String flowcellBarcode) {
         ReceptaclePlateTransferEvent event = new ReceptaclePlateTransferEvent();
         event.setEventType(eventType);
         GregorianCalendar gregorianCalendar = new GregorianCalendar();

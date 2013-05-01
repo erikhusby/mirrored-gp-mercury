@@ -107,6 +107,11 @@
                                         beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.LinkDenatureTubeToFlowcellActionBean"
                                         event="view">Link Denature Tube to Flowcell</stripes:link>
                             </li>
+                            <li>
+                                <stripes:link
+                                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.VesselSearchActionBean"
+                                        event="view">Search Vessels</stripes:link>
+                            </li>
                             <li><a tabindex="-1" href="${ctxpath}/reagent/design.action?list">Reagent Designs</a></li>
                         </security:authorizeBlock>
                     </ul>
