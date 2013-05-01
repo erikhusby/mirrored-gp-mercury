@@ -68,7 +68,8 @@ public class MercuryClientEjb {
     public Collection<ProductOrderSample> addFromProductOrder(ProductOrder pdo, Collection<ProductOrderSample> samples) {
 
         // Limited to ExomeExpress pdos.
-        if (!pdo.getProduct().getWorkflowName().equals(WorkflowName.EXOME_EXPRESS.getWorkflowName())) {
+        if (pdo.getProduct() == null ||
+                !WorkflowName.EXOME_EXPRESS.getWorkflowName().equals(pdo.getProduct().getWorkflowName())) {
             return Collections.emptyList();
         }
 
