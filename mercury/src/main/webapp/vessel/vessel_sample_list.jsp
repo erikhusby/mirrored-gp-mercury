@@ -3,6 +3,7 @@
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <%--@elvariable id="vessel" type="org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel"--%>
+<%--@elvariable id="bean" type="org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean"--%>
 <%--@elvariable id="index" type="java.lang.Integer"--%>
 
 <stripes:layout-definition>
@@ -15,9 +16,9 @@
                     [2, 'asc']
                 ],
                 "aoColumns":[
+                    {"bSortable":true, sWidth:'100px'},
                     {"bSortable":true},
-                    {"bSortable":true},
-                    {"bSortable":true},
+                    {"bSortable":true, sWidth:'1px'},
                     {"bSortable":true, "sType":"html"}
                 ],
                 "sDom":""
@@ -25,13 +26,13 @@
         });
     </script>
 
-    <table id="vesselSampleListView${index}" class="table simple">
+    <table id="vesselSampleListView${index}" class="table simple" style="margin: 0 0; width: 1024px">
         <thead>
         <tr>
-            <th width="150">Sample</th>
-            <th width="150">Index</th>
-            <th width="150">Position</th>
-            <th width="150">JIRAs + PDOs</th>
+            <th>Sample</th>
+            <th>Index</th>
+            <th>Position</th>
+            <th>JIRAs + PDOs</th>
         </tr>
         </thead>
         <tbody>
@@ -41,7 +42,7 @@
                         ${sample.startingSample.sampleKey}
                 </td>
                 <td style="padding: 0;">
-                    <table style="padding: 0; border: none;">
+                    <table style="padding: 0;">
                         <c:forEach items="${sample.indexes}" var="curIndex">
                             <c:forEach items="${curIndex.molecularIndexingScheme.indexes}" var="innerIndex">
                                 <tr>
@@ -53,21 +54,36 @@
                         </c:forEach>
                     </table>
                 </td>
-                <td>
-                    <c:forEach items="${vessel.getPositionsOfSample(sample)}" var="position">
-                        ${position}
-                    </c:forEach>
+                <td style="padding: 0;">
+                    <table style="padding: 0">
+                        <c:forEach items="${vessel.getPositionsOfSample(sample)}" var="position">
+                            <tr>
+                                <td style="border: none;">
+                                        ${position}
+                                </td>
+                            </tr>
+                        </c:forEach>
+                    </table>
                 </td>
                 <td style="padding: 0;">
                     <table style="padding: 0">
-                        <c:forEach items="${sample.allWorkflowLabBatches}" var="batch">
-
+                        <c:forEach items="${sample.getLabBatchCompositionInVesselContext(vessel)}"
+                                   var="batchComposition">
                             <tr>
                                 <td>
-                                        ${batch.businessKey}
+                                    <a target="JIRA" href="${bean.jiraUrl(batchComposition.labBatch.jiraTicket)}"
+                                       class="external" target="JIRA">
+                                            ${batchComposition.labBatch.businessKey}
+                                        (${batchComposition.count}/${batchComposition.denominator})
+                                    </a>
                                 </td>
                                 <td>
-                                    PDO
+                                    <stripes:link
+                                            beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"
+                                            event="view">
+                                        <stripes:param name="productOrder" value="${sample.productOrderKey}"/>
+                                        ${sample.productOrderKey}
+                                    </stripes:link>
                                 </td>
                             </tr>
                         </c:forEach>

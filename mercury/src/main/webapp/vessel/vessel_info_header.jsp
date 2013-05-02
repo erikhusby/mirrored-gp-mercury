@@ -9,20 +9,24 @@
             padding: 3px
         }
     </style>
-    <table class="headerTd">
+    <table class="headerTd" style="width: 1024px">
         <tr>
-            <td width="200"
-                style="border: 1px solid #cccccc; border-right: none; border-bottom: none">${vessel.type.name}</td>
-            <td style="border: 1px solid #cccccc; border-left: none; border-bottom: none">${vessel.label}</td>
-        </tr>
-        <tr>
-            <td colspan="2" style="border-top: none; border-right: 1px solid #cccccc;"><fmt:formatDate
+            <td>Vessel Type:</td>
+            <td>${vessel.type.name}</td>
+            <td>Vessel Label:</td>
+            <td>${vessel.label}</td>
+            <td>Create Date:</td>
+            <td><fmt:formatDate
                     value="${vessel.createdOn}" pattern="yyyy.MM.dd"/></td>
         </tr>
         <tr>
+            <td>Latest Event:</td>
             <td width="200">${vessel.latestEvent.labEventType.name}</td>
+            <td>Event Date:</td>
             <td width="200"><fmt:formatDate value="${vessel.latestEvent.eventDate}" pattern="yyyy.MM.dd"/></td>
+            <td>Event Location:</td>
             <td width="80">${vessel.latestEvent.eventLocation}</td>
+            <td>Event Operator:</td>
             <td width="100">${bean.getUserFullName(vessel.latestEvent.eventOperator)}</td>
         </tr>
     </table>

@@ -5,11 +5,14 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabBatchComposition;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MolecularState;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -287,6 +290,29 @@ public class SampleInstance {
             }
         }
         return workflowBatches;
+    }
+
+    /**
+     * This method gets the batch compositions for this sample instance in the context of a lab vessel.
+     *
+     * @param vessel The lab vessel used as context to determine the batch compositions.
+     *
+     * @return An ordered list of batch compositions for this sample given the vessel as context. The most likely
+     *         batch will be first in the list.
+     */
+    public List<LabBatchComposition> getLabBatchCompositionInVesselContext(LabVessel vessel) {
+        List<LabBatchComposition> allLabBatchCompositions = vessel.getWorkflowLabBatchCompositions();
+        List<LabBatchComposition> filteredBatchCompositions = new ArrayList<LabBatchComposition>();
+        for (LabBatch labBatch : getAllWorkflowLabBatches()) {
+            for (LabBatchComposition composition : allLabBatchCompositions) {
+                if (composition.getLabBatch().equals(labBatch)) {
+                    filteredBatchCompositions.add(composition);
+                }
+            }
+        }
+        Collections.sort(filteredBatchCompositions, LabBatchComposition.HIGHEST_COUNT_FIRST);
+
+        return filteredBatchCompositions;
     }
 
     public String getProductOrderKey() {

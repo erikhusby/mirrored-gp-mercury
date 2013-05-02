@@ -59,7 +59,7 @@
                     <stripes:layout-render name="/vessel/vessel_info_header.jsp" bean="${actionBean}"
                                            vessel="${vessel}"/>
                     <stripes:layout-render name="/vessel/vessel_sample_list.jsp" vessel="${vessel}"
-                                           index="${status.count}"/>
+                                           index="${status.count}" bean="${actionBean}"/>
                     <hr style="color: #0088CC; background-color: #0088CC; height: 2px; margin-top: 10px; margin-bottom: 10px;"/>
                 </c:forEach>
             </c:if>
