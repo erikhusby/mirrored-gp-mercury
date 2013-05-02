@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 
@@ -364,7 +365,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             }
 
             // If the entry represents a change, then highlight it with a light yellow.
-            if (quantities.getBilled() == quantities.getUploaded()) {
+            if (MathUtils.isSame(quantities.getBilled(), quantities.getUploaded())) {
                 getWriter().writeCell(quantities.getUploaded());
             } else {
                 getWriter().writeCell(quantities.getUploaded(), getBilledAmountStyle());
