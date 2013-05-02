@@ -5,6 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
@@ -12,8 +13,11 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -107,14 +111,20 @@ public class BillingEjb {
         }
     }
 
+    // Use Requires New here so that a runtime exception doesn't cause the caller's transaction to be rolled back.
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    private boolean updateOrderStatusWithNewTransaction(@Nonnull String jiraTicketKey)
+            throws JiraIssue.NoTransitionException, ProductOrderEjb.NoSuchPDOException, IOException {
+        return productOrderEjb.updateOrderStatus(jiraTicketKey);
+    }
     /**
      * Transactional method to bill each previously unbilled {@link QuoteImportItem} on the BillingSession to the quote
      * server and update billing entities as appropriate to the results of the billing attempt.  Results
      * for each billing attempt correspond to a returned BillingResult.  If there was an exception billing a QuoteImportItem,
-     * the {@link org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb.BillingResult#isError()} will return
-     * true and {@link org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb.BillingResult#getErrorMessage()}
+     * the {@link BillingResult#isError()} will return
+     * true and {@link BillingResult#getErrorMessage()}
      * will describe the cause of the problem.  On successful billing
-     * {@link org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb.BillingResult#getWorkId()} will contain
+     * {@link BillingResult#getWorkId()} will contain
      * the work id result.
      *
      *
@@ -178,7 +188,7 @@ public class BillingEjb {
         // Update the state of all PDOs affected by this billing session.
         for (String key : updatedPDOs) {
             try {
-                productOrderEjb.updateOrderStatus(key);
+                updateOrderStatusWithNewTransaction(key);
             } catch (Exception e) {
                 // Errors are just logged here because the current user doesn't work with PDOs, and wouldn't
                 // be able to resolve these issues.  Exceptions should only occur if a required resource,
