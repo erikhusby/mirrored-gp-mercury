@@ -31,6 +31,9 @@ public class VesselSearchActionBean extends SearchActionBean {
         return new ForwardResolution(SESSION_LIST_PAGE);
     }
 
+    /**
+     * This method orders the results based on the order of strings passed in.
+     */
     private void orderResults() {
         List<String> searchOrder = cleanInputString(getSearchKey());
         Map<String, LabVessel> labelToVessel = new HashMap<String, LabVessel>();

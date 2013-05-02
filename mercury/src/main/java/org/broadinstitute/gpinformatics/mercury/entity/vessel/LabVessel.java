@@ -498,6 +498,13 @@ public abstract class LabVessel implements Serializable {
         return sampleInstances;
     }
 
+    /**
+     * This method gets all of the positions within this vessel that contain the sample instance passed in.
+     *
+     * @param sampleInstance The sample instance to search for positions of within the vessel
+     *
+     * @return This returns a list of vessel positions within this vessel that contain the sample instances passed in.
+     */
     public List<VesselPosition> getPositionsOfSample(@Nonnull SampleInstance sampleInstance) {
         List<VesselPosition> positionList = new ArrayList<VesselPosition>();
         if (getContainerRole() != null) {
