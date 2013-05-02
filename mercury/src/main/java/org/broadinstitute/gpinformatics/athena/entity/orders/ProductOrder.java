@@ -1,6 +1,9 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
+import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -1115,5 +1118,18 @@ public class ProductOrder implements Serializable {
             return true;
         }
         return false;
+    }
+
+    /**
+     * Group the {@code ProductOrderSample}s by their Sample IDs into a {@code Multimap} ({@code Multimap}s can have
+     * multiple values for the same key).
+     */
+    public Multimap<String, ProductOrderSample> groupBySampleId() {
+        return Multimaps.index(getSamples(), new Function<ProductOrderSample, String>() {
+            @Override
+            public String apply(ProductOrderSample input) {
+                return input.getSampleName();
+            }
+        });
     }
 }

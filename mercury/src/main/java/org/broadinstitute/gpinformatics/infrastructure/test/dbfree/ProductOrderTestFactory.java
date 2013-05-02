@@ -123,7 +123,7 @@ public class ProductOrderTestFactory {
         Product product =
                 new Product("Product Name " + uuid, productFamily, "Product Description " + uuid, "P-" + uuid,
                         new Date(), null, 0, 0, 0, 1, "Input requirements", "Deliverables", true, "Workflow name",
-                        false);
+                        false, "Aggregation Data Type");
 
 
         ResearchProject researchProject = new ResearchProject(-1L, "Research Project " + uuid, "Synopsis", false);

@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
+import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import org.apache.commons.lang.NotImplementedException;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
@@ -17,7 +18,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quotes;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -30,8 +31,13 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.broadinstitute.gpinformatics.infrastructure.matchers.NullOrEmptyCollection.nullOrEmptyCollection;
+import static org.broadinstitute.gpinformatics.infrastructure.matchers.SuccessfullyBilled.successfullyBilled;
+import static org.broadinstitute.gpinformatics.infrastructure.matchers.UnsuccessfullyBilled.unsuccessfullyBilled;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.nullValue;
 
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
 public class BillingEjbPartialSuccessTest extends Arquillian {
@@ -104,36 +110,22 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
      * </ul>
      */
     private BillingSession writeFixtureData() {
-        ProductOrder productOrder = ProductOrderTestFactory.createProductOrder(SM_1234, SM_5678);
-        billingSessionDao.persist(productOrder.getResearchProject());
-        billingSessionDao.persist(productOrder.getProduct());
+        ProductOrder productOrder = ProductOrderDBTestFactory.createProductOrder(billingSessionDao, SM_1234, SM_5678);
 
         UUID uuid = UUID.randomUUID();
         PriceItem replacementPriceItem = new PriceItem(uuid.toString(), "Genomics Platform", "Testing Category",
                 "Replacement PriceItem Name " + uuid);
         FAILING_PRICE_ITEM_NAME = replacementPriceItem.getName();
         billingSessionDao.persist(replacementPriceItem);
-        billingSessionDao.persist(productOrder);
 
-        ProductOrderSample sm1234 = null;
-        ProductOrderSample sm5678 = null;
-        for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
-            if (SM_1234.equals(productOrderSample.getSampleName())) {
-                sm1234 = productOrderSample;
-            } else if (SM_5678.equals(productOrderSample.getSampleName())) {
-                sm5678 = productOrderSample;
-            } else {
-                throw new RuntimeException("Unexpected sample seen: " + productOrderSample.getSampleName());
-            }
-        }
+        Multimap<String, ProductOrderSample> samplesByName = productOrder.groupBySampleId();
 
-        // Suppress "sm1234 may be null" warning.
-        @SuppressWarnings("ConstantConditions")
+        ProductOrderSample sm1234 = samplesByName.get(SM_1234).iterator().next();
+        ProductOrderSample sm5678 = samplesByName.get(SM_5678).iterator().next();
+
         LedgerEntry ledgerEntry1234 =
                 new LedgerEntry(sm1234, productOrder.getProduct().getPrimaryPriceItem(), new Date(), 3);
 
-        // Suppress "sm5678 may be null" warning.
-        @SuppressWarnings("ConstantConditions")
         LedgerEntry ledgerEntry5678 = new LedgerEntry(sm5678, replacementPriceItem, new Date(), 5);
 
         BillingSession billingSession = new BillingSession(-1L, Sets.newHashSet(ledgerEntry1234, ledgerEntry5678));
@@ -143,44 +135,6 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         billingSessionDao.clear();
 
         return billingSession;
-
-    }
-
-
-    /**
-     * <ul>
-     * <li>Create the fixture data per {@link #writeFixtureData()}.</li>
-     * <li>Load the BillingSession and call a version of the BillingEjb method that does not call any Dao methods
-     * inside a transactionally demarcated method.  The expectation is that this will cause none of the data to be
-     * persisted.
-     * </li>
-     * <li>Clear the entity manager again and load the BillingSession, confirm that the billing messages were not
-     * persisted.
-     * </li>
-     * </ul>
-     */
-    public void testNegative() {
-
-        BillingSession billingSession = writeFixtureData();
-        billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey());
-
-        billingEjb.internalBill("http://www.broadinstitute.org", billingSession);
-
-        billingSessionDao.clear();
-
-        // Re-fetch the updated BillingSession from the database.
-        billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey());
-
-        // The BillingSession should exist as this billing attempt should have been partially successful.
-        assertThat(billingSession, is(not(nullValue())));
-
-        List<LedgerEntry> ledgerEntryItems = billingSession.getLedgerEntryItems();
-        assertThat(ledgerEntryItems, is(not(nullOrEmptyCollection())));
-        assertThat(ledgerEntryItems, hasSize(2));
-
-        for (LedgerEntry ledgerEntry : billingSession.getLedgerEntryItems()) {
-            assertThat(ledgerEntry.getBillingMessage(), is(nullValue()));
-        }
     }
 
 
@@ -214,11 +168,10 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
 
         for (LedgerEntry ledgerEntry : billingSession.getLedgerEntryItems()) {
             if (SM_1234.equals(ledgerEntry.getProductOrderSample().getSampleName())) {
-                assertThat(ledgerEntry.getBillingMessage(), is(equalTo(BillingSession.SUCCESS)));
+                assertThat(ledgerEntry, is(successfullyBilled()));
             }
             if (SM_5678.equals(ledgerEntry.getProductOrderSample().getSampleName())) {
-                assertThat(ledgerEntry.getBillingMessage(),
-                        is(both(not(equalTo(BillingSession.SUCCESS))).and(is(notNullValue()))));
+                assertThat(ledgerEntry, is(unsuccessfullyBilled()));
             }
         }
     }
