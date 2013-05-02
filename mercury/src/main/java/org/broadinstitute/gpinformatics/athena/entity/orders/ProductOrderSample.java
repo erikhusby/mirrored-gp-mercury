@@ -27,7 +27,6 @@ import java.util.*;
  * a billableItem and an optionally comment which may be in most cases empty but on
  * occasion can actually have a value to describe "exceptions" that occur for a particular sample.
  *
- * @author mccrory
  */
 @Entity
 @Audited
