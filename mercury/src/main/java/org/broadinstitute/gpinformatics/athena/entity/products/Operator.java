@@ -1,9 +1,13 @@
 package org.broadinstitute.gpinformatics.athena.entity.products;
 
+import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
+
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.broadinstitute.gpinformatics.athena.entity.products.Operator.OperatorType.*;
+import static org.broadinstitute.gpinformatics.athena.entity.products.Operator.OperatorType.BOOLEAN;
+import static org.broadinstitute.gpinformatics.athena.entity.products.Operator.OperatorType.NUMERIC;
+import static org.broadinstitute.gpinformatics.athena.entity.products.Operator.OperatorType.STRING;
 
 /**
  * This is a generic comparator used for operations AND for billing
@@ -89,7 +93,7 @@ public enum Operator {
         case LESS_THAN_OR_EQUAL_TO:
             return d1 <= d2;
         case EQUALS:
-            return d1 == d2;
+            return MathUtils.isSame(d1, d2);
         default:
             throw new RuntimeException();
         }

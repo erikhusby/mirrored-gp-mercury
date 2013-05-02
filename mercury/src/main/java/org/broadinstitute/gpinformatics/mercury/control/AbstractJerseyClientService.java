@@ -7,6 +7,7 @@ import com.sun.jersey.api.client.filter.ClientFilter;
 import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
 import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.client.urlconnection.HTTPSProperties;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -61,7 +62,7 @@ public abstract class AbstractJerseyClientService implements Serializable {
      *
      * @param mediaTypes
      */
-    protected void forceResponseMimeTypes(final Client client, final MediaType... mediaTypes) {
+    protected void forceResponseMimeTypes(Client client, final MediaType... mediaTypes) {
 
         client.addFilter(new ClientFilter() {
             @Override
@@ -70,8 +71,9 @@ public abstract class AbstractJerseyClientService implements Serializable {
                 MultivaluedMap<String, String> map = resp.getHeaders();
                 List<String> mimeTypes = new ArrayList<String>();
 
-                for (MediaType mediaType : mediaTypes)
+                for (MediaType mediaType : mediaTypes) {
                     mimeTypes.add(mediaType.toString());
+                }
 
                 map.put("Content-Type", mimeTypes);
                 return resp;
@@ -99,13 +101,16 @@ public abstract class AbstractJerseyClientService implements Serializable {
             // Create a trust manager that does not validate certificate chains
             TrustManager[] trustAllCerts = new TrustManager[] {
                     new X509TrustManager() {
+                        @Override
                         public X509Certificate[] getAcceptedIssuers() {
                             return null;
                         }
 
+                        @Override
                         public void checkClientTrusted(X509Certificate[] certs, String authType) {
                         }
 
+                        @Override
                         public void checkServerTrusted(X509Certificate[] certs, String authType) {
                         }
                     }};
@@ -171,7 +176,7 @@ public abstract class AbstractJerseyClientService implements Serializable {
          *
          * @param bspData
          */
-        public void callback(String [] bspData);
+        void callback(String[] bspData);
     }
 
     /**
@@ -196,13 +201,14 @@ public abstract class AbstractJerseyClientService implements Serializable {
         logger.debug(String.format("URL string is '%s'", urlString));
         WebResource webResource = getJerseyClient().resource(urlString);
 
+        BufferedReader reader = null;
         try {
 
             ClientResponse clientResponse =
                     webResource.type(MediaType.APPLICATION_FORM_URLENCODED_TYPE).post(ClientResponse.class, paramString);
 
             InputStream is = clientResponse.getEntityInputStream();
-            BufferedReader rdr = new BufferedReader(new InputStreamReader(is));
+            reader = new BufferedReader(new InputStreamReader(is));
 
             Response.Status clientResponseStatus = Response.Status.fromStatusCode(clientResponse.getStatus());
 
@@ -210,15 +216,15 @@ public abstract class AbstractJerseyClientService implements Serializable {
             // returning a 202 ACCEPTED response for this POST, but in actuality it returns a 200 OK.  I'm allowing
             // for both in the event that the BSP server's behavior is ever corrected.
             if (!EnumSet.of(ACCEPTED, OK).contains(clientResponseStatus)) {
-                logger.error("response code " + clientResponse.getStatus() + ": " + rdr.readLine());
+                logger.error("response code " + clientResponse.getStatus() + ": " + reader.readLine());
                 return;
             }
 
             // skip header line
-            rdr.readLine();
+            reader.readLine();
 
             // what should be the first real data line
-            String readLine = rdr.readLine();
+            String readLine = reader.readLine();
 
             while (readLine != null) {
 
@@ -236,14 +242,14 @@ public abstract class AbstractJerseyClientService implements Serializable {
 
                 callback.callback(truncatedData);
 
-                readLine = rdr.readLine();
+                readLine = reader.readLine();
             }
 
             is.close();
         } catch (IOException e) {
-
             logger.error(e);
-            return;
+        } finally {
+            IOUtils.closeQuietly(reader);
         }
     }
 }

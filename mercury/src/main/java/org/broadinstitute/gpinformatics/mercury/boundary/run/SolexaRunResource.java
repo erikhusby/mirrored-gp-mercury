@@ -25,6 +25,7 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.io.File;
 import java.net.URI;
+import java.util.EnumSet;
 
 /**
  * A JAX-RS resource for Solexa sequencing runs
@@ -113,8 +114,8 @@ public class SolexaRunResource {
              must cover Mercury as well as Squid
          */
         MercuryOrSquidRouter.MercuryOrSquid route = router.routeForVessel(flowcell);
-        if (route == MercuryOrSquidRouter.MercuryOrSquid.MERCURY ||
-                    route == MercuryOrSquidRouter.MercuryOrSquid.BOTH) {
+        if(EnumSet.of(MercuryOrSquidRouter.MercuryOrSquid.MERCURY,
+                      MercuryOrSquidRouter.MercuryOrSquid.BOTH).contains(route)) {
             try {
                 run = registerRun(solexaRunBean, flowcell);
                 URI createdUri = absolutePathBuilder.path(run.getRunName()).build();
