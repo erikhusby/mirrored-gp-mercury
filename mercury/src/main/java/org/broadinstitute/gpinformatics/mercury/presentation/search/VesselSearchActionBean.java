@@ -5,6 +5,12 @@ import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
 
 @UrlBinding(VesselSearchActionBean.ACTIONBEAN_URL_BINDING)
 public class VesselSearchActionBean extends SearchActionBean {
@@ -21,6 +27,19 @@ public class VesselSearchActionBean extends SearchActionBean {
     @HandlesEvent("vesselSearch")
     public Resolution vesselSearch() throws Exception {
         doSearch(SearchType.VESSELS_BY_BARCODE);
+        orderResults();
         return new ForwardResolution(SESSION_LIST_PAGE);
+    }
+
+    private void orderResults() {
+        List<String> searchOrder = cleanInputString(getSearchKey());
+        Map<String, LabVessel> labelToVessel = new HashMap<String, LabVessel>();
+        for (LabVessel vessel : getFoundVessels()) {
+            labelToVessel.put(vessel.getLabel(), vessel);
+        }
+        setFoundVessels(new LinkedHashSet<LabVessel>());
+        for (String key : searchOrder) {
+            getFoundVessels().add(labelToVessel.get(key));
+        }
     }
 }
