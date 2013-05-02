@@ -9,7 +9,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkReason;
+import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
@@ -88,7 +88,7 @@ public class BatchToJiraTest extends Arquillian {
         return gssrIdsText;
     }
 
-    @Test(enabled = true)
+    @Test
     public void test_jira_creation_from_batch() throws Exception {
         String expectedGssrText = "SM-01\n\nSM-02 (rework)";
         Set<LabVessel> startingVessels = new HashSet<LabVessel>();
@@ -102,7 +102,7 @@ public class BatchToJiraTest extends Arquillian {
         LabEvent event = new LabEvent(LabEventType.DENATURE_TO_FLOWCELL_TRANSFER, new Date(), "TEST-LAND", 0L, 101L);
         tube2.addInPlaceEvent(event);
         LabBatch batch = new LabBatch("Test batch 2", startingVessels, LabBatch.LabBatchType.WORKFLOW);
-        reworkEjb.addReworkToBatch(batch, tube2, ReworkReason.MACHINE_ERROR, LabEventType.PICO_PLATING_BUCKET,
+        reworkEjb.addReworkToBatch(batch, tube2, ReworkEntry.ReworkReason.MACHINE_ERROR, LabEventType.PICO_PLATING_BUCKET,
                 "I am reworking this");
 
 

@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.testng.Assert;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -65,7 +66,7 @@ public class LCSetJiraFieldFactoryTest {
                                                      new Product("Test product",
                                                                  new ProductFamily("Test product family"), "test",
                                                                  "1234", null, null, 10000, 20000, 100, 40, null, null,
-                                                                 true, workflowName, false),
+                                                                 true, workflowName, false, "agg type"),
                                                      new ResearchProject(101L, "Test RP", rpSynopsis, false));
         productOrder.setJiraTicketKey(pdoBusinessName);
         mapKeyToProductOrder.put(pdoBusinessName, productOrder);
@@ -80,7 +81,8 @@ public class LCSetJiraFieldFactoryTest {
             String bspStock = vesselSampleList.get(sampleIndex - 1);
             productOrderSamples.add(new ProductOrderSample(bspStock));
             TwoDBarcodedTube bspAliquot = new TwoDBarcodedTube(barcode);
-            bspAliquot.addSample(new MercurySample(pdoBusinessName, bspStock));
+            bspAliquot.addSample(new MercurySample(bspStock));
+            bspAliquot.addBucketEntry(new BucketEntry(bspAliquot, pdoBusinessName));
             mapBarcodeToTube.put(barcode, bspAliquot);
         }
 

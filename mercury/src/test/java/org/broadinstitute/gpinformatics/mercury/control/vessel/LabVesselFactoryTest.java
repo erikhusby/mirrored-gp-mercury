@@ -56,7 +56,6 @@ public class LabVesselFactoryTest {
         Assert.assertEquals(sampleInstances.size(), 1, "Wrong number of samples");
         MercurySample mercurySample = sampleInstances.iterator().next().getStartingSample();
         Assert.assertEquals(mercurySample.getSampleKey(), SAMPLE1, "Wrong sample");
-        Assert.assertNull(mercurySample.getProductOrderKey(), "Unexpected PDO");
     }
 
     @Test
@@ -85,7 +84,6 @@ public class LabVesselFactoryTest {
         Assert.assertEquals(sampleInstances.size(), 1, "Wrong number of samples");
         MercurySample mercurySample = sampleInstances.iterator().next().getStartingSample();
         Assert.assertEquals(mercurySample.getSampleKey(), SAMPLE1, "Wrong sample");
-        Assert.assertEquals(mercurySample.getProductOrderKey(), pdoKey, "Wrong PDO");
     }
 
     public static SampleReceiptBean buildTubes(String date) {

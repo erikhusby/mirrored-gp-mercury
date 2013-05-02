@@ -9,21 +9,17 @@ import javax.ejb.Stateful;
 import javax.inject.Inject;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
-import java.util.ArrayList;
 import java.util.Collection;
 
 @Stateful
 public class ResearchProjectCohortEtl extends GenericEntityEtl<ResearchProjectCohort, ResearchProjectCohort> {
 
     public ResearchProjectCohortEtl() {
-        entityClass = ResearchProjectCohort.class;
-        baseFilename = "research_project_cohort";
     }
 
     @Inject
-    public ResearchProjectCohortEtl(ResearchProjectDao d) {
-        this();
-        dao = d;
+    public ResearchProjectCohortEtl(ResearchProjectDao dao) {
+        super(ResearchProjectCohort.class, "research_project_cohort", dao);
     }
 
     @Override

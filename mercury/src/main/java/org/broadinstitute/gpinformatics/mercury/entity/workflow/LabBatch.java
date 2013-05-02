@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -55,10 +56,18 @@ public class LabBatch {
     // fixme reworks need to be included in the startingVessels
     // list because they are starting vessels...but just
     // marked as rework
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(cascade = CascadeType.ALL)
     private Collection<LabVessel> reworks = new HashSet<LabVessel>();
 
     private Date createdOn;
+
+    /**
+     * needed for fix-up test
+     *
+     */
+    protected void setLabBatchType(LabBatchType labBatchType) {
+        this.labBatchType = labBatchType;
+    }
 
     public enum LabBatchType {
         /** A batch created as part of workflow, e.g. an LCSET */
@@ -72,6 +81,7 @@ public class LabBatch {
     }
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private LabBatchType labBatchType;
 
     @Transient
@@ -82,6 +92,9 @@ public class LabBatch {
 
     @Transient
     private String important;
+
+    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "labBatch")
+    private Set<BucketEntry> bucketEntries = new HashSet<BucketEntry>();
 
     /**
      * Create a new batch with the given name
@@ -118,15 +131,15 @@ public class LabBatch {
 
 
     /**
-     * Adds the given rework vessels to the list
-     * of reworks for the batch.
+     * Adds the given rework vessels to the list of reworks for the batch
+     * and updates the RapSheet so the samples know they are rework.
      * @param newRework
      */
     public void addReworks(Collection<LabVessel> newRework) {
         reworks.addAll(newRework);
-        for (LabVessel vessel : getReworks()) {
+        for (LabVessel vessel : newRework) {
             for (MercurySample sample : vessel.getMercurySamples()) {
-                sample.getRapSheet().startRework();
+                sample.getRapSheet().activateRework();
             }
         }
     }
@@ -339,6 +352,14 @@ public class LabBatch {
 
     public LabVessel[] getStartingVesselsArray() {
         return startingLabVessels.toArray(new LabVessel[startingLabVessels.size()]);
+    }
+
+    public Set<BucketEntry> getBucketEntries() {
+        return bucketEntries;
+    }
+
+    public void addBucketEntry(BucketEntry bucketEntry) {
+        bucketEntries.add(bucketEntry);
     }
 
     @Override

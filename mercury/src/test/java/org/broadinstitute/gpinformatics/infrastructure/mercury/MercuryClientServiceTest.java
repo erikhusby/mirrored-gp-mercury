@@ -2,23 +2,26 @@ package org.broadinstitute.gpinformatics.infrastructure.mercury;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
+import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry_;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -28,7 +31,7 @@ import java.util.Collection;
 import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
-import static org.easymock.EasyMock.*;
+import static org.testng.Assert.fail;
 
 /**
  * Container test of MercuryClientService
@@ -39,89 +42,104 @@ import static org.easymock.EasyMock.*;
 @Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION)
 public class MercuryClientServiceTest extends Arquillian {
     private Log logger = LogFactory.getLog(getClass());
-    private String workflowName = "Exome Express";  // must be used in WorkflowConfig.xml
-    private Long userId = 10400L; // must be user BSP knows about
-    private String pdoKey = "PDO-8";  // must exist on test jira (receives the comments put by BucketBean)
-    private List<ProductOrderSample> pdoSamples = new ArrayList<ProductOrderSample>();
+    private String nonMercurySampleName = "SM-1T7HE";
+    private static final long REAL_BSP_USER_ID = 10647L;
+    private static final String REAL_PDO_KEY = "PDO-8";
+    private ProductOrder pdo1;
+    private ProductOrder pdo2;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private MercuryClientService service;
     @Inject
-    private LabBatchDAO labBatchDAO;
-
-    private ProductOrder pdo = createMock(ProductOrder.class);
-    private Product product = createMock(Product.class);
-    private BSPUserList bspUserList = createMock(BSPUserList.class);
-    private BspUser bspUser = createMock(BspUser.class);
-    private BSPSampleDTO bspSampleDto = createMock(BSPSampleDTO.class);
-    private Object[] mocks = new Object[]{pdo, product, bspUserList, bspUser, bspSampleDto};
+    private MercurySampleDao mercurySampleDao;
+    @Inject
+    private LabVesselDao labVesselDao;
+    @Inject
+    private LabEventDao labEventDao;
+    @Inject
+    private BucketEntryDao bucketEntryDao;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
         return DeploymentBuilder.buildMercuryWar(DEV);
     }
 
-    @BeforeClass
-    public void beforeClass() throws Exception {
-    }
-
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void setUp() {
+        pdo1 = ProductOrderTestFactory.buildExExProductOrder(1);
+        pdo1.setJiraTicketKey(REAL_PDO_KEY);
+        pdo1.setCreatedBy(REAL_BSP_USER_ID);
+
+        pdo2 = ProductOrderTestFactory.buildExExProductOrder(2);
+        pdo2.setJiraTicketKey(REAL_PDO_KEY);
+        pdo2.setCreatedBy(REAL_BSP_USER_ID);
+
+        List<ProductOrderSample> pdoSamples = new ArrayList<ProductOrderSample>();
+        pdoSamples.add(new ProductOrderSample(nonMercurySampleName));
+        pdo1.setSamples(pdoSamples);
+
         pdoSamples.clear();
-        reset(mocks);
+        for (int i = 1; i < 3; ++i) {
+            ProductOrderSample sample = new ProductOrderSample(nonMercurySampleName);
+            sample.setSamplePosition(i);
+            pdoSamples.add(sample);
+        }
+        pdo2.setSamples(pdoSamples);
+
+        if (labVesselDao != null) {
+            deleteTestSample();
+        }
     }
 
-    private boolean setUpSamplesFromReceiptBatch() {
-        // For the bucket entry criteria to work, the samples have to exist in BSP.
-        // todo jmt How to recreate the test data after a database refresh?
-        LabBatch labBatch = labBatchDAO.findByName("SK-27D9");
-        if (labBatch == null) {
-            return false;
+    @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    public void afterMethod() {
+        if (labVesselDao != null) {
+            deleteTestSample();
         }
-        Collection<LabVessel> receiptVessels = labBatch.getStartingLabVessels();
-            for (LabVessel receiptVessel : receiptVessels) {
-                for (MercurySample receiptSample: receiptVessel.getMercurySamples()) {
-                    String sampleName = receiptSample.getSampleKey();
-                    ProductOrderSample pdoSample = new ProductOrderSample(sampleName, bspSampleDto);
-                    pdoSamples.add(pdoSample);
-                }
+    }
+
+    // Deletes the mercury sample used in this test.  When dao's are defined but there is no transaction, this does nothing.
+    private void deleteTestSample() {
+        try {
+            List<LabVessel> labVessels = labVesselDao.findBySampleKey(nonMercurySampleName);
+
+            List<BucketEntry> bucketEntries = bucketEntryDao.findListByList(BucketEntry.class, BucketEntry_.labVessel, labVessels);
+            for (BucketEntry bucketEntry : bucketEntries) {
+                logger.info("Deleting bucket entry " + bucketEntry.getBucketEntryId());
+                bucketEntryDao.remove(bucketEntry);
             }
-        logger.info("Testing with " + pdoSamples.size() + " receipt samples");
-        return true;
+            List<LabEvent> labEvents = labEventDao.findListByList(LabEvent.class, LabEvent_.inPlaceLabVessel, labVessels);
+            for (LabEvent labEvent : labEvents) {
+                logger.info("Deleting " + labEvent.getLabEventType() + " event " + labEvent.getLabEventId());
+                labEventDao.remove(labEvent);
+            }
+            for (LabVessel labVessel : labVessels) {
+                logger.info("Deleting vessel " + labVessel.getLabel());
+                labVesselDao.remove(labVessel);
+            }
+
+            for (MercurySample mercurySample : mercurySampleDao.findBySampleKey(nonMercurySampleName)) {
+                logger.info("Deleting sample " + mercurySample.getSampleKey());
+                mercurySampleDao.remove(mercurySample);
+            }
+
+        } catch (Exception e) {
+            logger.error("Error finding and deleting the test sample, vessel, lab event, bucket entry", e);
+            fail("Error finding and deleting the test sample, vessel, lab event, bucket entry");
+        }
     }
 
     public void testSampleToPicoBucket() throws Exception {
-        if (setUpSamplesFromReceiptBatch()) {
-            expect(pdo.getProduct()).andReturn(product);
-            expect(product.getWorkflowName()).andReturn(workflowName).anyTimes();
-            expect(pdo.getCreatedBy()).andReturn(userId);
-            expect(pdo.getSamples()).andReturn(pdoSamples);
-            expect(pdo.getBusinessKey()).andReturn(pdoKey);
+        // First time through, creates the initial vessel & sample
+        Assert.assertEquals(labVesselDao.findBySampleKey(nonMercurySampleName).size(), 0);
+        Collection<ProductOrderSample> addedSamples1 = service.addSampleToPicoBucket(pdo1);
+        Assert.assertEquals(addedSamples1.size(), pdo1.getSamples().size());
 
-            replay(mocks);
-
-            Collection<ProductOrderSample> addedSamples = service.addSampleToPicoBucket(pdo);
-            Assert.assertEquals(addedSamples.size(), pdoSamples.size());
-
-            verify(mocks);
-        } else {
-            logger.info("Skipping test due to missing test data");
-        }
+        // Second time through it reuses the existing vessel & sample
+        Collection<ProductOrderSample> addedSamples2 = service.addSampleToPicoBucket(pdo2);
+        Assert.assertEquals(pdo2.getSamples().size(), 2);
+        Assert.assertEquals(addedSamples2.size(), pdo2.getSamples().size());
     }
 
-    public void testNoReceiptSamples() throws Exception {
-        expect(pdo.getProduct()).andReturn(product);
-        expect(product.getWorkflowName()).andReturn(workflowName).anyTimes();
-        expect(pdo.getCreatedBy()).andReturn(userId);
-        expect(pdo.getSamples()).andReturn(pdoSamples);
-        expect(pdo.getBusinessKey()).andReturn(pdoKey);
-
-        replay(mocks);
-
-        Collection<ProductOrderSample> addedSamples = service.addSampleToPicoBucket(pdo);
-        Assert.assertEquals(addedSamples.size(), pdoSamples.size());
-
-        verify(mocks);
-    }
 }

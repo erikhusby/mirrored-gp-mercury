@@ -18,19 +18,16 @@ import javax.persistence.criteria.Root;
 import java.util.*;
 
 @Stateful
-public class EventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
-    protected ProductOrderDao pdoDao;
-    protected WorkflowConfigLookup workflowConfigLookup;
+public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
+    private ProductOrderDao pdoDao;
+    private WorkflowConfigLookup workflowConfigLookup;
 
-    public EventEtl() {
-        entityClass = LabEvent.class;
-        baseFilename = "event_fact";
+    public LabEventEtl() {
     }
 
     @Inject
-    public EventEtl(WorkflowConfigLookup workflowConfigLookup, LabEventDao d, ProductOrderDao pdoDao) {
-        this();
-        dao = d;
+    public LabEventEtl(WorkflowConfigLookup workflowConfigLookup, LabEventDao dao, ProductOrderDao pdoDao) {
+        super(LabEvent.class, "event_fact", dao);
         this.workflowConfigLookup = workflowConfigLookup;
         this.pdoDao = pdoDao;
     }
@@ -79,17 +76,17 @@ public class EventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
     }
 
     private class EventFactDto {
-        LabEvent labEvent;
-        boolean noLabBatch;
-        LabVessel labVessel;
-        String eventName;
-        SampleInstance sampleInstance;
-        LabBatch labBatch;
-        Long labBatchId;
-        MercurySample sample;
-        String productOrderKey;
-        ProductOrder productOrder;
-        WorkflowConfigDenorm wfDenorm;
+        private LabEvent labEvent;
+        private boolean noLabBatch;
+        private LabVessel labVessel;
+        private String eventName;
+        private SampleInstance sampleInstance;
+        private LabBatch labBatch;
+        private Long labBatchId;
+        private MercurySample sample;
+        private String productOrderKey;
+        private ProductOrder productOrder;
+        private WorkflowConfigDenorm wfDenorm;
 
         private EventFactDto(LabEvent labEvent, boolean noLabBatch, LabVessel labVessel, String eventName,
                              SampleInstance sampleInstance, LabBatch labBatch, Long labBatchId, MercurySample sample,
@@ -135,7 +132,8 @@ public class EventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
 
             Set<SampleInstance> sampleInstances = vessel.getSampleInstances();
             if (sampleInstances.size() == 0) {
-                logger.warn("Cannot ETL event " + entity.getLabEventId() + " vessel " + vessel.getLabel() + " that has no SampleInstances.");
+                logger.warn("Cannot ETL event " + entity.getLabEventId() + " vessel " + vessel.getLabel() +
+                        " that has no SampleInstances.");
                 continue;
             }
 
@@ -149,7 +147,7 @@ public class EventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                     logger.warn("Cannot find starting sample for sampleInstance " + si.toString());
                     continue;
                 }
-                String productOrderKey = sample.getProductOrderKey();
+                String productOrderKey = si.getProductOrderKey();
                 if (productOrderKey == null) {
                     logger.warn("Sample " + sample.getSampleKey() + " has null productOrderKey");
                     continue;
@@ -163,6 +161,7 @@ public class EventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         return facts;
     }
 
+    // Updates fields in each EventFactDto, and removes it from the collection if unusable.
     private void updateIds(Collection<EventFactDto> facts) {
 
         Map<String, ProductOrder> pdoMap = new HashMap<String, ProductOrder>();
@@ -172,37 +171,34 @@ public class EventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         for (Iterator<EventFactDto> iter = facts.iterator(); iter.hasNext(); ) {
             EventFactDto fact = iter.next();
 
+            // First checks the map to reuse any lookups that were already done.
             if (pdoMap.containsKey(fact.productOrderKey)) {
                 fact.productOrder = pdoMap.get(fact.productOrderKey);
                 fact.wfDenorm = wfMap.get(fact.productOrderKey);
-
-                if (fact.productOrder == null || fact.wfDenorm == null) {
-                    iter.remove();
-                    continue;
-                }
-
             } else {
+
+                // Does the lookups and warns once if entity is missing.
                 fact.productOrder = pdoDao.findByBusinessKey(fact.productOrderKey);
                 pdoMap.put(fact.productOrderKey, fact.productOrder);
 
                 if (fact.productOrder == null) {
                     logger.warn("ProductOrder " + fact.productOrderKey + " is missing.");
-                    iter.remove();
-                    continue;
-                }
+                } else {
 
-                fact.wfDenorm = workflowConfigLookup.lookupWorkflowConfig(fact.eventName, fact.productOrder,
-                        fact.labEvent.getEventDate());
-                wfMap.put(fact.productOrderKey, fact.wfDenorm);
+                    fact.wfDenorm = workflowConfigLookup.lookupWorkflowConfig(fact.eventName, fact.productOrder,
+                            fact.labEvent.getEventDate());
+                    wfMap.put(fact.productOrderKey, fact.wfDenorm);
 
-                if (fact.wfDenorm == null) {
-                    logger.warn("No workflow config for" +
-                            " event " + fact.eventName +
-                            " productOrder " + fact.productOrderKey +
-                            " eventDate " + fact.labEvent.getEventDate());
-                    iter.remove();
-                    continue;
+                    if (fact.wfDenorm == null) {
+                        logger.warn("No workflow config for" +
+                                " event " + fact.eventName +
+                                " productOrder " + fact.productOrderKey +
+                                " eventDate " + fact.labEvent.getEventDate());
+                    }
                 }
+            }
+            if (fact.productOrder == null || fact.wfDenorm == null) {
+                iter.remove();
             }
         }
     }

@@ -14,14 +14,11 @@ import java.util.Collection;
 public class LabBatchEtl extends GenericEntityEtl<LabBatch, LabBatch> {
 
     public LabBatchEtl() {
-        entityClass = LabBatch.class;
-        baseFilename = "lab_batch";
     }
 
     @Inject
-    public LabBatchEtl(LabBatchDAO d) {
-        this();
-        dao = d;
+    public LabBatchEtl(LabBatchDAO dao) {
+        super(LabBatch.class, "lab_batch", dao);
     }
 
     @Override

@@ -3,33 +3,41 @@ package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowException;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 
 import javax.inject.Inject;
 import java.io.Serializable;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.NavigableSet;
+import java.util.Set;
 import java.util.TreeSet;
 
 import static org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid.BOTH;
 import static org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid.MERCURY;
 import static org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid.SQUID;
+import static org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.*;
+import static org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch.*;
 
 /**
  * Utility for routing messages and queries to Mercury or Squid as determined by the supplied sample containers.
  * Defines the notion of a vessel belonging to either Mercury or Squid.
  * <p>
- * The current definition of "belonging" to Mercury is that any sample in the tube is associated with an
- * Exome Express product order.
+ * The current definition of "belonging" to Mercury is that all vessels upstream of the specified vessel (or set of
+ * vessels) have been batched for Exome Express.
  *
  * TODO SGM  This needs a better name since the options are more than just Mercury or Squid!!!!
  */
@@ -52,31 +60,37 @@ public class MercuryOrSquidRouter implements Serializable {
         BOTH, MERCURY, SQUID
     }
 
-    private LabVesselDao        labVesselDao;
-    private AthenaClientService athenaClientService;
-    private WorkflowLoader      workflowLoader;
+    private LabVesselDao         labVesselDao;
+    private ControlDao           controlDao;
+    private AthenaClientService  athenaClientService;
+    private WorkflowLoader       workflowLoader;
+    private BSPSampleDataFetcher bspSampleDataFetcher;
 
     MercuryOrSquidRouter() {
     }
 
     @Inject
-    public MercuryOrSquidRouter(LabVesselDao labVesselDao, AthenaClientService athenaClientService,
-                                WorkflowLoader workflowLoader) {
+    public MercuryOrSquidRouter(LabVesselDao labVesselDao, ControlDao controlDao,
+                                AthenaClientService athenaClientService,
+                                WorkflowLoader workflowLoader, BSPSampleDataFetcher bspSampleDataFetcher) {
         this.labVesselDao = labVesselDao;
+        this.controlDao = controlDao;
         this.athenaClientService = athenaClientService;
         this.workflowLoader = workflowLoader;
+        this.bspSampleDataFetcher = bspSampleDataFetcher;
     }
 
     /**
      * Building on {@link #routeForVessel(String)}, this method takes a list of barcodes for which a user wishes to
      * determine the system of record.  The work is delegated to {@link #routeForVessel(String)}
      *
+     *
      * @param barcodes a Collection of barcodes that correspond to lab vessels that are to be processed by the system
      *
      * @return An instance of a MercuryOrSquid enum that will assist in determining to which system requests should be
      * routed.
      */
-    public MercuryOrSquid routeForVessels(List<String> barcodes) {
+    public MercuryOrSquid routeForVessels(Collection<String> barcodes) {
 
         TreeSet<MercuryOrSquid> routingOptions = new TreeSet<MercuryOrSquid>();
         for (String vesselBarcode : barcodes) {
@@ -85,9 +99,7 @@ public class MercuryOrSquidRouter implements Serializable {
             routingOptions.add(determinedRoute);
         }
 
-        MercuryOrSquid result = evaluateRoutingOption(routingOptions);
-
-        return result;
+        return evaluateRoutingOption(routingOptions);
     }
 
     /**
@@ -152,33 +164,94 @@ public class MercuryOrSquidRouter implements Serializable {
      * The logic within this method will utilize the vessel to navigate back to the correct PDO and determine what
      * routing is configured for the workflow associated with the PDO.
      *
-     * @param vessel an instance of a LabVessel for which system routing is to be deterimined
+     * @param vessel an instance of a LabVessel for which system routing is to be determined
      * @return An instance of a MercuryOrSquid enum that will assist in determining to which system requests should be
      * routed.
      */
     public MercuryOrSquid routeForVessel(LabVessel vessel) {
         TreeSet<MercuryOrSquid> routingOptions = new TreeSet<MercuryOrSquid>();
         if (vessel != null) {
-            for (String productOrderKey : vessel.getNearestProductOrders()) {
-                if (productOrderKey != null) {
-                    ProductOrder order = athenaClientService.retrieveProductOrderDetails(productOrderKey);
-                    if (order != null && StringUtils.isNotBlank(order.getProduct().getWorkflowName())) {
-                        MercuryOrSquid routing = null;
-                        try {
-                            routing = getWorkflow(order.getProduct().getWorkflowName()).getRouting();
-                        } catch (WorkflowException e) {
-                            routing = SQUID;
-                        }
 
-                        routingOptions.add(routing);
+            Set<SampleInstance> sampleInstances = vessel.getSampleInstances(SampleType.ANY, LabBatchType.WORKFLOW);
+            if (sampleInstances.isEmpty()) {
+                routingOptions.add(SQUID);
+            } else {
+                Set<SampleInstance> possibleControls = new HashSet<SampleInstance>();
+                for (SampleInstance sampleInstance : sampleInstances) {
+                    if (sampleInstance.getProductOrderKey() == null) {
+                        possibleControls.add(sampleInstance);
+                    } else {
+                        ProductOrder order = athenaClientService.retrieveProductOrderDetails(sampleInstance.getProductOrderKey());
+                        routingOptions.add(getWorkflow(order.getProduct().getWorkflowName()).getRouting());
+                    }
+                }
+                if (!possibleControls.isEmpty()) {
+
+                    /*
+                     * TODO: When querying a group of tubes, if everything might be a control (i.e., nothing has a PDO),
+                     * don't bother checking controls; just route to Squid. This will avoid unnecessary BSP queries.
+                     */
+
+                    // TODO: change this logic if SampleInstance.controlRole is ever populated
+
+                    // TODO: move this logic into ControlEjb?
+                    List<Control> controls = controlDao.findAllActive();
+                    List<String> controlSampleIds = new ArrayList<String>();
+                    for (Control control : controls) {
+                        controlSampleIds.add(control.getCollaboratorSampleId());
+                    }
+
+                    // Don't bother querying BSP if Mercury doesn't have any active controls.
+                    if (controlSampleIds.isEmpty()) {
+                        routingOptions.add(SQUID);
+                    } else {
+                        Collection<String> sampleNames = new ArrayList<String>();
+                        for (SampleInstance sampleInstance : possibleControls) {
+                            sampleNames.add(sampleInstance.getStartingSample().getSampleKey());
+                        }
+                        Map<String, BSPSampleDTO> sampleDTOs = bspSampleDataFetcher.fetchSamplesFromBSP(sampleNames);
+
+                        for (SampleInstance possibleControl : possibleControls) {
+                            String sampleKey = possibleControl.getStartingSample().getSampleKey();
+                            BSPSampleDTO sampleDTO = sampleDTOs.get(sampleKey);
+                            if (sampleDTO == null) {
+                                // Don't know what this is, but it isn't for Mercury.
+                                routingOptions.add(SQUID);
+                            } else {
+                                if (controlSampleIds.contains(sampleDTO.getCollaboratorsSampleName())) {
+                                    routingOptions.add(BOTH);
+                                } else {
+                                    routingOptions.add(SQUID);
+                                }
+                            }
+                        }
                     }
                 }
             }
         }
 
-        MercuryOrSquid result = evaluateRoutingOption(routingOptions);
+        return evaluateRoutingOption(routingOptions);
+    }
 
-        return result;
+    private MercuryOrSquid getWorkflowRoutingForVessel(Collection<String> nearestProductOrders) {
+        MercuryOrSquid routing = null;
+        if (nearestProductOrders.isEmpty()) {
+            routing = SQUID;
+        } else {
+            for (String productOrderKey : nearestProductOrders) {
+                if (productOrderKey != null) {
+                    ProductOrder order = athenaClientService.retrieveProductOrderDetails(productOrderKey);
+                    if (order != null && StringUtils.isNotBlank(order.getProduct().getWorkflowName())) {
+                        try {
+                            routing = getWorkflow(order.getProduct().getWorkflowName()).getRouting();
+                        } catch (WorkflowException e) {
+                            routing = SQUID;
+                        }
+                    }
+                }
+            }
+        }
+        return routing;
     }
 
     /**
@@ -186,7 +259,7 @@ public class MercuryOrSquidRouter implements Serializable {
      * does this by querying to the "Athena" side of Mercury for the ProductOrder Definition and looks up the
      * workflow definition based on the workflow name defined on the ProductOrder
      *
-     * @param
+     * @param workflowName
      *
      * @return Workflow Definition for the defined workflow for the product order represented by productOrderKey
      */
@@ -194,7 +267,6 @@ public class MercuryOrSquidRouter implements Serializable {
 
         WorkflowConfig workflowConfig = workflowLoader.load();
 
-        final ProductWorkflowDef workflowByName = workflowConfig.getWorkflowByName(workflowName);
-        return workflowByName;
+        return workflowConfig.getWorkflowByName(workflowName);
     }
 }

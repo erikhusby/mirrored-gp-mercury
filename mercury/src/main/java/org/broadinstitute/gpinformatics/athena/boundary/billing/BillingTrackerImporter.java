@@ -182,7 +182,7 @@ public class BillingTrackerImporter {
                 currentPdoId = rowPdoIdStr;
                 sampleIndexInOrder = 0;
 
-                // Find the order in the DB
+                // Find the order in the DB.
                 productOrder = productOrderDao.findByBusinessKey(currentPdoId);
                 if (productOrder == null) {
                     String error = "Product Order " + currentPdoId + " on row " + (row.getRowNum() + 1) +
@@ -205,7 +205,7 @@ public class BillingTrackerImporter {
                 break;
             }
 
-            // The order in the spreadsheet is the same as returned in the productOrder !
+            // The order in the spreadsheet is the same as returned in the productOrder.
             if (sampleIndexInOrder >= samples.size()) {
                 String error = "Sample " + currentSampleName + " on row " +  (row.getRowNum() + 1 ) +
                         " of spreadsheet "  + primaryProductPartNumber +
@@ -218,9 +218,9 @@ public class BillingTrackerImporter {
             ProductOrderSample productOrderSample = samples.get(sampleIndexInOrder);
             if (!productOrderSample.getSampleName().equals(currentSampleName)) {
                 String error = "Sample " + currentSampleName + " on row " + (row.getRowNum() + 1) +
-                                           " of spreadsheet " + primaryProductPartNumber +
-                                           " is in different position than expected. Expected value from Order is "
-                                           + productOrderSample.getSampleName();
+                    " of spreadsheet " + primaryProductPartNumber +
+                    " is in different position than expected. Expected value from Order is "
+                    + productOrderSample.getSampleName();
                 addError(error);
                 return null;
             }

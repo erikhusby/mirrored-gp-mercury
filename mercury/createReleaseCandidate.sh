@@ -53,3 +53,5 @@ git commit -m "REL-000 Setting master version to $NEXTVERSION" pom.xml
 git fetch origin +master
 git push origin master
 
+# Notify the HipChat room
+./notifyHipChat.sh "Mercury Release Candidate branch $RCBRANCH created."

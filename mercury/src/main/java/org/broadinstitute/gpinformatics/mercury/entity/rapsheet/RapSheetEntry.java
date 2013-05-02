@@ -14,31 +14,31 @@ package org.broadinstitute.gpinformatics.mercury.entity.rapsheet;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 import java.util.Comparator;
 
+/**
+ * A RapSheetEntry is basically a log entry for a sample. A Sample can have a RapSheet
+ * and each event you are logging gets a new RapSheetEntry.
+ */
 @Entity
 @Audited
 @Table(schema = "mercury")
-public abstract class RapSheetEntry  implements Comparable<RapSheetEntry> {
+public abstract class RapSheetEntry  {
     @SuppressWarnings("UnusedDeclaration")
     @Id
     @SequenceGenerator(name = "SEQ_RAP_SHEET_ENTRY", schema = "mercury", sequenceName = "SEQ_RAP_SHEET_ENTRY")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_RAP_SHEET_ENTRY")
     private Long rapSheetEntryId;
 
-    @NotNull
-    @ManyToOne(fetch = FetchType.LAZY,cascade = CascadeType.ALL)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, optional = false)
     private RapSheet rapSheet;
 
-    @NotNull
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-        @JoinColumn(updatable = true,insertable = true)
+    @JoinColumn(updatable = true, insertable = true, nullable = false)
     private LabVesselComment labVesselComment;
 
     // this should not cause n+1 select performance issue if it is LAZY and mandatory
-    @OneToOne(optional = false, fetch = FetchType.LAZY,cascade = {CascadeType.ALL})
-    @NotNull
+    @OneToOne(optional = false, fetch = FetchType.LAZY, cascade = {CascadeType.ALL})
     private LabVesselPosition labVesselPosition;
 
     public RapSheetEntry() {
@@ -46,7 +46,7 @@ public abstract class RapSheetEntry  implements Comparable<RapSheetEntry> {
 
     public RapSheetEntry(LabVesselPosition labVesselPosition, LabVesselComment labVesselComment) {
         this.labVesselPosition = labVesselPosition;
-        this.labVesselComment=labVesselComment;
+        this.labVesselComment = labVesselComment;
         labVesselComment.getRapSheetEntries().add(this);
     }
 
@@ -74,15 +74,10 @@ public abstract class RapSheetEntry  implements Comparable<RapSheetEntry> {
         this.labVesselPosition = labVesselPosition;
     }
 
-    public static final Comparator<RapSheetEntry> byDateAsc = new Comparator<RapSheetEntry>() {
+    public static final Comparator<RapSheetEntry> BY_DATE_DESC = new Comparator<RapSheetEntry>() {
         @Override
-        public int compare ( RapSheetEntry first, RapSheetEntry second ) {
-            return first.getLabVesselComment().getLogDate().compareTo(second.getLabVesselComment().getLogDate());
+        public int compare(RapSheetEntry first, RapSheetEntry second) {
+            return second.getLabVesselComment().getLogDate().compareTo(first.getLabVesselComment().getLogDate());
         }
     };
-
-    @Override
-    public int compareTo(RapSheetEntry reworkEntry) {
-        return byDateAsc.compare(reworkEntry,this);
-    }
 }

@@ -2,9 +2,6 @@ package org.broadinstitute.gpinformatics.athena.entity.products;
 
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
-import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
-import org.broadinstitute.gpinformatics.infrastructure.quote.ReplacementItems;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
 
@@ -31,13 +28,17 @@ public class Product implements Serializable, Comparable<Product> {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PRODUCT")
     private Long productId;
 
+    @Column(name = "PRODUCT_NAME", length = 255)
     private String productName;
 
     @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST}, optional = false)
     private ProductFamily productFamily;
 
-    @Column(length = 2000)
+    @Column(name = "DESCRIPTION", length = 2000)
     private String description;
+
+    @Column(name = "AGGREGATION_DATA_TYPE", length = 200)
+    private String aggregationDataType;
 
     @Column(unique = true)
     private String partNumber;
@@ -119,7 +120,7 @@ public class Product implements Serializable, Comparable<Product> {
     public Product() {}
 
     public Product(boolean topLevelProduct) {
-        this(null, null, null, null, null, null, null, null, null, null, null, null, topLevelProduct, null, false);
+        this(null, null, null, null, null, null, null, null, null, null, null, null, topLevelProduct, null, false, null);
     }
 
     public Product(String productName,
@@ -136,7 +137,8 @@ public class Product implements Serializable, Comparable<Product> {
                    String deliverables,
                    boolean topLevelProduct,
                    String workflowName,
-                   boolean pdmOrderableOnly) {
+                   boolean pdmOrderableOnly,
+                   String aggregationDataType) {
 
         this.productName = productName;
         this.productFamily = productFamily;
@@ -153,6 +155,7 @@ public class Product implements Serializable, Comparable<Product> {
         this.topLevelProduct = topLevelProduct;
         this.workflowName = workflowName;
         this.pdmOrderableOnly = pdmOrderableOnly;
+        this.aggregationDataType = aggregationDataType;
     }
 
     public Long getProductId() {
@@ -217,21 +220,6 @@ public class Product implements Serializable, Comparable<Product> {
 
     public void setPrimaryPriceItem(PriceItem primaryPriceItem) {
         this.primaryPriceItem = primaryPriceItem;
-    }
-
-    public Collection<QuotePriceItem> getReplacementPriceItems(PriceListCache priceListCache) {
-        try {
-            ReplacementItems replacementItemList =
-                    priceListCache.findByKeyFields(
-                            primaryPriceItem.getPlatform(),
-                            primaryPriceItem.getCategory(),
-                            primaryPriceItem.getName()).getReplacementItems();
-
-            return replacementItemList.getQuotePriceItems();
-        } catch (Throwable t) {
-            // Since this is coming from the quote server, we will just show nothing when there are any errors.
-            return Collections.emptyList();
-        }
     }
 
     public Set<MaterialType> getAllowableMaterialTypes() {
@@ -324,6 +312,14 @@ public class Product implements Serializable, Comparable<Product> {
 
     public void setUseAutomatedBilling(boolean useAutomatedBilling) {
         this.useAutomatedBilling = useAutomatedBilling;
+    }
+
+    public String getAggregationDataType() {
+        return aggregationDataType;
+    }
+
+    public void setAggregationDataType(String aggregationDataType) {
+        this.aggregationDataType = aggregationDataType;
     }
 
     public BillingRequirement getRequirement() {
@@ -487,7 +483,7 @@ public class Product implements Serializable, Comparable<Product> {
 
     public static Product makeEmptyProduct() {
         return new Product(null, null, null, null, null, null, null,
-                null, null, null, null, null, DEFAULT_TOP_LEVEL, DEFAULT_WORKFLOW_NAME, false);
+                null, null, null, null, null, DEFAULT_TOP_LEVEL, DEFAULT_WORKFLOW_NAME, false, null);
     }
 
     public String getDisplayName() {

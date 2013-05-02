@@ -12,7 +12,7 @@ public class OrderBillSummaryStat {
 
         // If the delta is negative, then we want to INCREASE the credits a POSITIVE amount.
         if (delta < 0) {
-            credit += (-1 * delta);
+            credit += -delta;
         } else {
             charge += delta;
         }

@@ -15,15 +15,11 @@ import java.util.Date;
 public class ProductOrderSampleEtl extends GenericEntityAndStatusEtl<ProductOrderSample, ProductOrderSample> {
 
     public ProductOrderSampleEtl() {
-        entityClass = ProductOrderSample.class;
-        baseFilename = "product_order_sample";
-        baseStatusFilename = "product_order_sample_status";
     }
 
     @Inject
-    public ProductOrderSampleEtl(ProductOrderSampleDao d) {
-        this();
-        dao = d;
+    public ProductOrderSampleEtl(ProductOrderSampleDao dao) {
+        super(ProductOrderSample.class, "product_order_sample", "product_order_sample_status", dao);
     }
 
     @Override
@@ -42,7 +38,7 @@ public class ProductOrderSampleEtl extends GenericEntityAndStatusEtl<ProductOrde
     }
 
     @Override
-    String statusRecord(String etlDateStr, Date revDate, ProductOrderSample entity, boolean isDelete) {
+    String statusRecord(String etlDateStr, boolean isDelete, ProductOrderSample entity, Date revDate) {
         if (entity != null && entity.getDeliveryStatus() != null) {
             return genericRecord(etlDateStr, isDelete,
                     entity.getProductOrderSampleId(),

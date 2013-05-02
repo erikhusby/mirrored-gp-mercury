@@ -80,21 +80,18 @@
                 </ul>
             </li>
 
-            <security:authorizeBlock
-                    roles="<%= roles(Developer, PDM)%>">
+            <security:authorizeBlock roles="<%= roles(PDM, Developer)%>">
                 <li class="dropdown">
 
                     <a id="labNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span
                             class="icon-tasks"></span> Lab <b class="caret"></b></a>
                     <ul class="dropdown-menu" role="menu">
-                        <security:authorizeBlock
-                                roles="<%= roles(Developer, PDM) %>">
-                            <li><stripes:link
+                        <li>
+                            <stripes:link
                                     beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BucketViewActionBean"
-                                    event="view">Buckets</stripes:link></li>
-                        </security:authorizeBlock>
-                        <security:authorizeBlock
-                                roles="<%= roles(Developer) %>">
+                                    event="view">Buckets</stripes:link>
+                        </li>
+                        <security:authorizeBlock roles="<%= roles(Developer) %>">
                             <li>
                                 <stripes:link
                                         beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.CollaboratorControlsActionBean"
@@ -102,26 +99,22 @@
                             </li>
                             <li>
                                 <stripes:link
-                                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.LinkDenatureTubeToFlowcellActionBean"
-                                        event="view">Link Denature Tube to Flowcell</stripes:link>
-                            </li>
-                            <li>
-                                <stripes:link
                                         beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.AddReworkActionBean"
                                         event="view">Add Rework</stripes:link>
                             </li>
-                        </security:authorizeBlock>
-                        <security:authorizeBlock roles="<%= roles(Developer) %>">
+                            <li>
+                                <stripes:link
+                                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.LinkDenatureTubeToFlowcellActionBean"
+                                        event="view">Link Denature Tube to Flowcell</stripes:link>
+                            </li>
                             <li><a tabindex="-1" href="${ctxpath}/reagent/design.action?list">Reagent Designs</a></li>
                         </security:authorizeBlock>
                     </ul>
                 </li>
             </security:authorizeBlock>
 
-            <security:authorizeBlock
-                    roles="<%= roles(Developer) %>">
+            <security:authorizeBlock roles="<%= roles(Developer) %>">
                 <li class="dropdown">
-
                     <a id="adminNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span
                             class="icon-cog"></span> Admin <b class="caret"></b></a>
                     <ul class="dropdown-menu" role="menu">

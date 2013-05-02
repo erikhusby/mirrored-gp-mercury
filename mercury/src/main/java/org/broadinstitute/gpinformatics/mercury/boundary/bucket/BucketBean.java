@@ -11,7 +11,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
@@ -26,11 +25,13 @@ import java.util.*;
 @RequestScoped
 public class BucketBean {
 
+    // todo jmt rename to BucketEjb?  Many unused parameters and an unused field.
+
     private LabEventFactory labEventFactory;
 
-    JiraService jiraService;
+    private JiraService jiraService;
 
-    LabBatchEjb batchEjb;
+    private LabBatchEjb batchEjb;
 
     private final static Log logger = LogFactory.getLog(BucketBean.class);
 
@@ -383,26 +384,24 @@ public class BucketBean {
      * @param operator                Represents the user that initiated adding the vessels to the bucket
      * @param batchInitiationLocation Machine location from which operator initiated this action
      * @param autoBatch               Indicator to let the system know if they should even perform Auto Batching.
-     * @return Either a newly created batch object, or the most recent one found that encorporates all
+     * @return Either a newly created batch object, or the most recent one found that incorporates all
      *         lab vessels being processed in this request.
      */
 //    @DaoFree
     private LabBatch startBucketDrain(@Nonnull Collection<BucketEntry> bucketEntries, @Nonnull String operator,
                                       String batchInitiationLocation, boolean autoBatch) {
-        LabBatch bucketBatch = null;
         Set<LabVessel> batchVessels = new HashSet<LabVessel>();
 
         for (BucketEntry currEntry : bucketEntries) {
             batchVessels.add(currEntry.getLabVessel());
         }
 
+        LabBatch bucketBatch = null;
         if (!batchVessels.isEmpty()) {
             for (LabBatch currBatch : batchVessels.iterator().next().getNearestLabBatches()) {
-
                 if (LabBatch.isCommonBatch(currBatch, batchVessels)) {
                     bucketBatch = currBatch;
                 }
-
             }
         }
         /*
@@ -413,12 +412,13 @@ public class BucketBean {
             existing batch) create a new Lab Batch.
          */
         if (bucketBatch == null) {
-
 //            throw new InformaticsServiceException("There should be an existing Batch");
-
         }
 
-        removeEntries(bucketEntries);
+        for (BucketEntry currEntry : bucketEntries) {
+            currEntry.setLabBatch(bucketBatch);
+        }
+        archiveEntries(bucketEntries);
 
         logger.info("Size of entries to remove is " + bucketEntries.size());
         return bucketBatch;
@@ -430,7 +430,7 @@ public class BucketBean {
      * @param bucketEntries collection of bucket entries to be removed from the buckets in which they exist
      */
     //TODO SGM  Move to a bucket factory class
-    private void removeEntries(@Nonnull Collection<BucketEntry> bucketEntries) {
+    private void archiveEntries(@Nonnull Collection<BucketEntry> bucketEntries) {
         for (BucketEntry currEntry : bucketEntries) {
             logger.info("Adding entry " + currEntry.getBucketEntryId() + " for vessel " + currEntry.getLabVessel()
                     .getLabCentricName() +
@@ -448,9 +448,7 @@ public class BucketBean {
      * @param labVessel vessel full of samples for rework.
      */
     public void removeRework(LabVessel labVessel){
-        for (MercurySample sample : labVessel.getMercurySamples()){
-            sample.getRapSheet().stopRework();
-        }
+        labVessel.deactivateRework();
     }
 
 
@@ -468,7 +466,7 @@ public class BucketBean {
 
         Collection<BucketEntry> singleRemoval = Collections.singletonList(bucketEntry);
 
-        removeEntries(singleRemoval);
+        archiveEntries(singleRemoval);
 
         jiraRemovalUpdate(bucketEntry, reason);
     }

@@ -1,5 +1,5 @@
 <%@ include file="/resources/layout/taglibs.jsp" %>
-<%--@elvariable id="samples" type="java.util.Collection"--%>
+<%--@elvariable id="samples" type="java.util.Collection<org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample>"--%>
 <%--@elvariable id="bean" type="org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean"--%>
 <stripes:layout-definition>
     <script type="text/javascript">
@@ -13,7 +13,6 @@
                 "aoColumns":[
                     {"bSortable":false},
                     {"bSortable":true},
-                    {"bSortable":true}
                 ]
             });
 
@@ -46,7 +45,6 @@
         <tr>
             <th width="30">Vessel History</th>
             <th>Sample Name</th>
-            <th>PDO</th>
         </tr>
         </thead>
         <tbody>
@@ -61,11 +59,6 @@
                 <td>
                     <a href="${ctxpath}/search/all.action?search=&searchKey=${sample.sampleKey}">
                             ${sample.sampleKey}
-                    </a>
-                </td>
-                <td>
-                    <a href="${ctxpath}/search/all.action?search=&searchKey=${sample.productOrderKey}">
-                            ${sample.productOrderKey}
                     </a>
                 </td>
             </tr>

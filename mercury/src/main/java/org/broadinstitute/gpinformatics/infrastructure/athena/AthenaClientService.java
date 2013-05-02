@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.athena;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 
+import javax.annotation.Nonnull;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
@@ -24,7 +25,7 @@ public interface AthenaClientService extends Serializable {
      * @param poBusinessKey
      * @return
      */
-    ProductOrder retrieveProductOrderDetails(String poBusinessKey);
+    ProductOrder retrieveProductOrderDetails(@Nonnull String poBusinessKey);
 
     /**
      * For a list of sample names, return corresponding ProductOrderSamples

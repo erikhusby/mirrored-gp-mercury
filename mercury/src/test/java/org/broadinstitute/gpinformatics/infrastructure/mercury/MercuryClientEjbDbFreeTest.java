@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.mercury;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
@@ -12,6 +13,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderT
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -27,7 +29,13 @@ import org.testng.annotations.Test;
 
 import java.util.*;
 
-import static org.easymock.EasyMock.*;
+import static org.easymock.EasyMock.anyObject;
+import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.eq;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.reset;
+import static org.easymock.EasyMock.verify;
 
 /**
  * DbFree test of MercuryClientEjb.
@@ -42,76 +50,145 @@ public class MercuryClientEjbDbFreeTest {
     private LabEventType EVENT_TYPE = LabEventType.PICO_PLATING_BUCKET;
     private String EVENT_LOCATION = LabEvent.UI_EVENT_LOCATION;
 
-    private List<LabVessel> labVessels = new ArrayList<LabVessel>();
+    private final int SAMPLE_SIZE = 5;
+
     private MercuryClientEjb service;
     private ProductOrder pdo;
     private LabBatch labBatch;
-    private Map<BSPSampleSearchColumn, String> bspData;
     private WorkflowLoader workflowLoader = new WorkflowLoader();
     private BSPUserList bspUserList;
     private Bucket bucket;
     private String pdoCreator;
+    private Map<String, BSPSampleDTO> bspDtoMap;
 
     private BucketBean bucketBean = createMock(BucketBean.class);
     private BucketDao bucketDao = createMock(BucketDao.class);
     private LabVesselDao labVesselDao = createMock(LabVesselDao.class);
+    private BSPSampleDataFetcher bspSampleDataFetcher = createMock(BSPSampleDataFetcher.class);
+    private LabVesselFactory labVesselFactory = createMock(LabVesselFactory.class);
 
-    private Object[] mocks = new Object[]{bucketBean, bucketDao, labVesselDao};
+    private Object[] mocks = new Object[]{bucketBean, bucketDao, labVesselDao, bspSampleDataFetcher, labVesselFactory};
 
     @BeforeMethod
     public void setUp() {
-
         reset(mocks);
 
-        bspData = new HashMap<BSPSampleSearchColumn, String>() {{
-            put(BSPSampleSearchColumn.PRIMARY_DISEASE, "Cancer");
-            put(BSPSampleSearchColumn.LSID, "org.broad:SM-2345");
-            put(BSPSampleSearchColumn.MATERIAL_TYPE, "DNA:DNA WGA Cleaned");
-            put(BSPSampleSearchColumn.MATERIAL_TYPE, "DNA:DNA Genomic");
-            put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, "5432");
-            put(BSPSampleSearchColumn.SPECIES, "Homo Sapiens");
-            put(BSPSampleSearchColumn.PARTICIPANT_ID, "PT-2345");
-        }};
-
         bspUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
+        pdoCreator = bspUserList.getById(BSPManagerFactoryStub.QA_DUDE_USER_ID).getUsername();
+
         labBatch = new LabBatch("ExEx Receipt Batch", new HashSet<LabVessel>(), LabBatch.LabBatchType.SAMPLES_RECEIPT);
         bucket = new Bucket(new WorkflowStepDef(PICO_PLATING_BUCKET));
-
-        final int SAMPLE_SIZE = 2;
+        bspDtoMap = new HashMap<String, BSPSampleDTO>();
 
         pdo = ProductOrderTestFactory.buildExExProductOrder(SAMPLE_SIZE);
         pdo.setCreatedBy(BSPManagerFactoryStub.QA_DUDE_USER_ID);
-        pdoCreator = bspUserList.getById(BSPManagerFactoryStub.QA_DUDE_USER_ID).getUsername();
 
-        int rackPosition = 1;
-        for (ProductOrderSample pdoSample : pdo.getSamples()) {
-            LabVessel labVessel = new TwoDBarcodedTube("R" + rackPosition++);
+        service = new MercuryClientEjb(bucketBean, bucketDao, workflowLoader, bspUserList, labVesselDao,
+                bspSampleDataFetcher, labVesselFactory);
+    }
 
-            MercurySample mercurySample =
-                    new MercurySample(pdo.getBusinessKey(), pdoSample.getSampleName(), new BSPSampleDTO(bspData));
+    // Creates test samples and updates expectedSamples and labVessels.
+    private void setupMercurySamples(ProductOrder pdo, Collection<ProductOrderSample> expectedSamples,
+                                     List<LabVessel> labVessels) {
 
-            labVessel.addSample(mercurySample);
-            labBatch.addLabVessel(labVessel);
+        List<MercurySample> mercurySamples = new ArrayList<MercurySample>();
+
+        for (int rackPosition = 1; rackPosition <= pdo.getSamples().size(); ++rackPosition) {
+            ProductOrderSample pdoSample = pdo.getSamples().get(rackPosition - 1);
+
+            Map<BSPSampleSearchColumn, String> bspData = new HashMap<BSPSampleSearchColumn, String>();
+            switch (rackPosition) {
+                case 1:
+                    // Unreceived root should be rejected.
+                    bspData.put(BSPSampleSearchColumn.MATERIAL_TYPE, "DNA:DNA Genomic");
+                    bspData.put(BSPSampleSearchColumn.SAMPLE_ID, pdoSample.getSampleName());
+                    bspData.put(BSPSampleSearchColumn.ROOT_SAMPLE, pdoSample.getSampleName());
+                    bspData.put(BSPSampleSearchColumn.RECEIPT_DATE, null);
+                    break;
+
+                case 2:
+                    // Received root but non-genomic material, should be rejected.
+                    bspData.put(BSPSampleSearchColumn.MATERIAL_TYPE, "Tissue:Blood");
+                    bspData.put(BSPSampleSearchColumn.SAMPLE_ID, pdoSample.getSampleName());
+                    bspData.put(BSPSampleSearchColumn.ROOT_SAMPLE, pdoSample.getSampleName());
+                    bspData.put(BSPSampleSearchColumn.RECEIPT_DATE, "04/22/2013");
+                    break;
+
+                case 3:
+                    // Received root should be accepted.
+                    bspData.put(BSPSampleSearchColumn.MATERIAL_TYPE, "DNA:DNA Genomic");
+                    bspData.put(BSPSampleSearchColumn.ROOT_SAMPLE, pdoSample.getSampleName());
+                    bspData.put(BSPSampleSearchColumn.SAMPLE_ID, pdoSample.getSampleName());
+                    bspData.put(BSPSampleSearchColumn.RECEIPT_DATE, "04/22/2013");
+                    expectedSamples.add(pdoSample);
+                    break;
+
+                default:
+                    // FYI case 4 will be a derived sample that Mercury doesn't know about yet.
+                    // Non-root samples should all be accepted.
+                    bspData.put(BSPSampleSearchColumn.MATERIAL_TYPE, "DNA:DNA Genomic");
+                    bspData.put(BSPSampleSearchColumn.ROOT_SAMPLE, "ROOT");
+                    bspData.put(BSPSampleSearchColumn.SAMPLE_ID, pdoSample.getSampleName());
+                    expectedSamples.add(pdoSample);
+                    break;
+            }
+            BSPSampleDTO bspDto = new BSPSampleDTO(bspData);
+            bspDto.addPlastic(makeTubeBarcode(rackPosition));
+            bspDtoMap.put(pdoSample.getSampleName(), bspDto);
+
+            LabVessel labVessel = new TwoDBarcodedTube(makeTubeBarcode(rackPosition));
+            labVessel.addSample(new MercurySample(pdoSample.getSampleName(), bspDto));
             labVessels.add(labVessel);
-        }
 
-        service = new MercuryClientEjb(bucketBean, bucketDao, workflowLoader, bspUserList, labVesselDao);
+            labBatch.addLabVessel(labVessel);
+        }
     }
 
 
     public void testSamplesToPicoBucket() throws Exception {
 
-        expect(labVesselDao.findBySampleKeyList((List<String>) anyObject())).andReturn(labVessels);
+        Collection<ProductOrderSample> expectedSamples = new ArrayList<ProductOrderSample>();
+        List<LabVessel> labVessels = new ArrayList<LabVessel>();
+        setupMercurySamples(pdo, expectedSamples, labVessels);
+
+        reset(mocks);
+        // Mock should return sample for those that Mercury knows about, i.e. all except the 1st and 4th test samples.
+        // The 4th sample is in house so a standalone vessel/sample should be created.
+        List<String> pdoSampleNames = new ArrayList<String>();
+        List<LabVessel> mockVessels = new ArrayList<LabVessel>();
+        for (int rackPosition = 1; rackPosition <= SAMPLE_SIZE; ++rackPosition) {
+            ProductOrderSample pdoSample = pdo.getSamples().get(rackPosition - 1);
+            if (rackPosition != 1 && rackPosition != 4) {
+                mockVessels.add(labVessels.get(rackPosition - 1));
+            }
+            if (rackPosition == 4) {
+                List<LabVessel> mockCreatedVessels = new ArrayList<LabVessel>();
+                mockCreatedVessels.add(labVessels.get(rackPosition - 1));
+                expect(labVesselFactory.buildInitialLabVessels(eq(pdoSample.getSampleName()),
+                        eq(makeTubeBarcode(rackPosition)), eq(pdoCreator), (Date)anyObject()))
+                        .andReturn(mockCreatedVessels);
+            }
+
+        }
+        expect(labVesselDao.findBySampleKeyList((List<String>)anyObject())).andReturn(mockVessels);
         expect(bucketDao.findByName(PICO_PLATING_BUCKET)).andReturn(bucket);
+        // Should be OK to return more samples in map than was asked for.
+        expect(bspSampleDataFetcher.fetchSamplesFromBSP((List<String>)anyObject())).andReturn(bspDtoMap);
         bucketDao.persist(bucket);
-        bucketBean.add(labVessels, bucket, pdoCreator, EVENT_LOCATION, EVENT_TYPE, pdo.getBusinessKey());
+
+        bucketBean.add((List<LabVessel>)anyObject(), eq(bucket), eq(pdoCreator), eq(EVENT_LOCATION), eq(EVENT_TYPE),
+                eq(pdo.getBusinessKey()));
 
         replay(mocks);
 
         Collection<ProductOrderSample> addedSamples = service.addFromProductOrder(pdo);
-        Assert.assertEquals(addedSamples, pdo.getSamples());
+        Assert.assertEqualsNoOrder(addedSamples.toArray(), expectedSamples.toArray());
 
         verify(mocks);
     }
 
+
+    private String makeTubeBarcode(int rackPosition) {
+        return "R" + rackPosition;
+    }
 }

@@ -12,7 +12,14 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlIDREF;
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * A version of a product workflow definition
@@ -27,10 +34,10 @@ public class ProductWorkflowDefVersion implements Serializable {
     /** e.g. Library Construction */
     // When serializing, we want to refer to WorkflowConfig.workflowProcessDefs, not make copies of them
     @XmlIDREF
-    private List<WorkflowProcessDef> workflowProcessDefs = new ArrayList<WorkflowProcessDef>();
+    private final List<WorkflowProcessDef> workflowProcessDefs = new ArrayList<WorkflowProcessDef>();
     private transient Map<String, WorkflowProcessDef> processDefsByName = new HashMap<String, WorkflowProcessDef>();
 
-    private List<String> entryPointsUsed = new ArrayList<String>();
+    private final List<String> entryPointsUsed = new ArrayList<String>();
     private transient Map<String, LabEventNode> mapNameToLabEvent;
     private transient LabEventNode rootLabEventNode;
     private transient ProductWorkflowDef productWorkflowDef;
@@ -89,12 +96,12 @@ public class ProductWorkflowDefVersion implements Serializable {
 
     public static class LabEventNode {
         private final LabEventType labEventType;
-        private List<LabEventNode> predecessors = new ArrayList<LabEventNode>();
-        private List<LabEventNode> successors = new ArrayList<LabEventNode>();
+        private final List<LabEventNode> predecessors = new ArrayList<LabEventNode>();
+        private final List<LabEventNode> successors = new ArrayList<LabEventNode>();
 
         private final WorkflowStepDef stepDef;
 
-        LabEventNode ( LabEventType labEventType, WorkflowStepDef stepDef ) {
+        LabEventNode(LabEventType labEventType, WorkflowStepDef stepDef) {
             this.labEventType = labEventType;
             this.stepDef = stepDef;
         }
@@ -139,11 +146,11 @@ public class ProductWorkflowDefVersion implements Serializable {
                 workflowStepDef.setProcessDef(workflowProcessDef);
                 for (LabEventType labEventType : workflowStepDef.getLabEventTypes()) {
                     // todo jmt optional should probably be on the message, not the step
-                    LabEventNode labEventNode = new LabEventNode(labEventType, workflowStepDef );
-                    if(mapNameToLabEvent.put(labEventType.getName(), labEventNode) != null) {
+                    LabEventNode labEventNode = new LabEventNode(labEventType, workflowStepDef);
+                    if (mapNameToLabEvent.put(labEventType.getName(), labEventNode) != null) {
                         throw new RuntimeException("Duplicate lab event in workflow, " + labEventType.getName());
                     }
-                    if(rootLabEventNode == null) {
+                    if (rootLabEventNode == null) {
                         rootLabEventNode = labEventNode;
                     }
                     if (previousNode != null) {
@@ -216,10 +223,10 @@ public class ProductWorkflowDefVersion implements Serializable {
      */
     public boolean isStepDeadBranch(String eventTypeName) {
 
-        LabEventNode stepNode =findStepByEventType(eventTypeName);
+        LabEventNode stepNode = findStepByEventType(eventTypeName);
 
         boolean result = false;
-        if(stepNode != null) {
+        if (stepNode != null) {
             WorkflowStepDef step = stepNode.getStepDef();
             result = step.isDeadEndBranch();
         }
@@ -236,10 +243,8 @@ public class ProductWorkflowDefVersion implements Serializable {
      */
     public WorkflowStepDef getNextNonDeadBranchStep(String eventTypeName) {
         WorkflowStepDef nextStep = getNextStep(eventTypeName);
-        while(nextStep != null &&
-              nextStep.isDeadEndBranch()) {
-            WorkflowStepDef tempStep = getNextStep(nextStep.getLabEventTypes().get(nextStep.getLabEventTypes().size()-1).getName());
-            nextStep = tempStep;
+        while (nextStep != null && nextStep.isDeadEndBranch()) {
+            nextStep = getNextStep(nextStep.getLabEventTypes().get(nextStep.getLabEventTypes().size() - 1).getName());
         }
         return nextStep;
     }
@@ -255,9 +260,9 @@ public class ProductWorkflowDefVersion implements Serializable {
     public WorkflowStepDef getPreviousStep(String eventTypeName) {
 
         WorkflowStepDef foundStep = null;
-        if(!(findStepByEventType(eventTypeName) == null) &&
-           !findStepByEventType(eventTypeName).getPredecessors().isEmpty()) {
-            foundStep = findStepByEventType(eventTypeName).getPredecessors().get(0).getStepDef();
+        LabEventNode stepByEventType = findStepByEventType(eventTypeName);
+        if ((stepByEventType != null) && !stepByEventType.getPredecessors().isEmpty()) {
+            foundStep = stepByEventType.getPredecessors().get(0).getStepDef();
         }
 
         return foundStep;
@@ -275,19 +280,17 @@ public class ProductWorkflowDefVersion implements Serializable {
 
         WorkflowStepDef foundStep = null;
 
-        if(!(findStepByEventType(eventTypeName) == null) &&
-           !findStepByEventType(eventTypeName).getSuccessors().isEmpty()) {
-
-            foundStep = findStepByEventType(eventTypeName).getSuccessors().get(0).getStepDef();
-
+        LabEventNode stepByEventType = findStepByEventType(eventTypeName);
+        if ((stepByEventType != null) && !stepByEventType.getSuccessors().isEmpty()) {
+            foundStep = stepByEventType.getSuccessors().get(0).getStepDef();
         }
         return foundStep;
     }
 
     public static class ValidationError {
-        private String message;
-        private Set<String> actualEventNames;
-        private Set<String> expectedEventNames;
+        private final String message;
+        private final Set<String> actualEventNames;
+        private final Set<String> expectedEventNames;
 
         public ValidationError(String message, Set<String> actualEventNames, Set<String> expectedEventNames) {
             this.message = message;
@@ -296,9 +299,7 @@ public class ProductWorkflowDefVersion implements Serializable {
         }
 
         public ValidationError(String message) {
-            this.message = message;
-            actualEventNames = Collections.emptySet();
-            expectedEventNames = Collections.emptySet();
+            this(message, Collections.<String>emptySet(), Collections.<String>emptySet());
         }
 
         public String getMessage() {
@@ -324,7 +325,7 @@ public class ProductWorkflowDefVersion implements Serializable {
         List<ValidationError> errors = new ArrayList<ValidationError>();
 
         LabEventNode labEventNode = findStepByEventType(nextEventTypeName);
-        if(labEventNode == null) {
+        if (labEventNode == null) {
             errors.add(new ValidationError("Failed to find " + nextEventTypeName + " in " +
                     productWorkflowDef.getName() + " version " + getVersion()));
         } else {
@@ -335,7 +336,7 @@ public class ProductWorkflowDefVersion implements Serializable {
             for (LabEventNode predecessorNode : labEventNode.getPredecessors()) {
                 validPredecessorEventNames.add(predecessorNode.getLabEventType().getName());
                 // todo jmt recurse
-                if(predecessorNode.getStepDef().isOptional()) {
+                if (predecessorNode.getStepDef().isOptional()) {
                     start = predecessorNode.getPredecessors().isEmpty();
                     for (LabEventNode predPredEventNode : predecessorNode.getPredecessors()) {
                         validPredecessorEventNames.add(predPredEventNode.getLabEventType().getName());
@@ -351,20 +352,21 @@ public class ProductWorkflowDefVersion implements Serializable {
                 found = validateTransfers(nextEventTypeName, errors, validPredecessorEventNames, actualEventNames,
                         found, labVessel.getTransfersTo(), labEventNode);
             }
-            if(!found) {
+            if (!found) {
                 found = validateTransfers(nextEventTypeName, errors, validPredecessorEventNames, actualEventNames,
                         found, labVessel.getInPlaceEvents(), labEventNode);
             }
-            if(!found && !start) {
+            if (!found && !start) {
                 errors.add(new ValidationError("", actualEventNames, validPredecessorEventNames));
             }
         }
         return errors;
     }
 
-    private boolean validateTransfers(String nextEventTypeName, List<ValidationError> errors,
-            Set<String> validPredecessorEventNames, Set<String> actualEventNames, boolean found, Set<LabEvent> transfers,
-            LabEventNode labEventNode) {
+    private static boolean validateTransfers(String nextEventTypeName, List<ValidationError> errors,
+                                             Set<String> validPredecessorEventNames, Set<String> actualEventNames,
+                                             boolean found, Set<LabEvent> transfers,
+                                             LabEventNode labEventNode) {
         for (LabEvent labEvent : transfers) {
             String actualEventName = labEvent.getLabEventType().getName();
             actualEventNames.add(actualEventName);
@@ -392,22 +394,21 @@ public class ProductWorkflowDefVersion implements Serializable {
     }
 
     @Override
-    public boolean equals ( Object o ) {
-        if ( this == o ) {
+    public boolean equals(Object o) {
+        if (this == o) {
             return true;
         }
-        if ( !( o instanceof ProductWorkflowDefVersion ) ) {
+        if (!(o instanceof ProductWorkflowDefVersion)) {
             return false;
         }
 
-        ProductWorkflowDefVersion that = ( ProductWorkflowDefVersion ) o;
+        ProductWorkflowDefVersion that = (ProductWorkflowDefVersion) o;
 
         return new EqualsBuilder().append(effectiveDate, that.effectiveDate).append(version, that.version).isEquals();
     }
 
     @Override
-    public int hashCode () {
-
+    public int hashCode() {
         return new HashCodeBuilder().append(version).append(effectiveDate).toHashCode();
     }
 }

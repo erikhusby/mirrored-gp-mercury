@@ -25,18 +25,16 @@ import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.LabVesselComment
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.LabVesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.RapSheet;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
-import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkLevel;
-import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkReason;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
+import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -82,9 +80,9 @@ public class ReworkEjb {
      *
      * @throws InformaticsServiceException
      */
-    public Collection<MercurySample> getVesselRapSheet(@NotNull LabVessel labVessel, ReworkReason reworkReason,
-                                                       ReworkLevel reworkLevel, @NotNull LabEventType reworkFromStep,
-                                                       @NotNull String comment)
+    public Collection<MercurySample> getVesselRapSheet(@Nonnull LabVessel labVessel, ReworkEntry.ReworkReason reworkReason,
+                                                       ReworkEntry.ReworkLevel reworkLevel, @Nonnull LabEventType reworkFromStep,
+                                                       @Nonnull String comment)
             throws ValidationException {
         Set<MercurySample> reworks = new HashSet<MercurySample>();
         VesselPosition[] vesselPositions=labVessel.getVesselGeometry().getVesselPositions();
@@ -96,19 +94,21 @@ public class ReworkEjb {
                     labVessel.getSamplesAtPosition(vesselPosition.name());
             for (SampleInstance sampleInstance : samplesAtPosition) {
                 MercurySample mercurySample = sampleInstance.getStartingSample();
-                final BucketEntry bucketEntry =
-                        bucketEntryDao.findByVesselAndPO(labVessel, mercurySample.getProductOrderKey());
+                BucketEntry bucketEntry =
+                        bucketEntryDao.findByVesselAndPO(labVessel, sampleInstance.getProductOrderKey());
 
                 if (bucketEntry != null) {
-                    String error =
-                            String.format("Sample %s in product order %s already exists in the %s bucket.",
-                                    mercurySample.getSampleKey(), mercurySample.getProductOrderKey(),
-                                    bucketEntry.getBucket().getBucketDefinitionName());
-                    logger.error(error);
-                    throw new ValidationException(error);
+                    if (bucketEntry.getStatus().equals(BucketEntry.Status.Active)) {
+                        String error =
+                                String.format("Sample %s in product order %s already exists in the %s bucket.",
+                                        mercurySample.getSampleKey(), sampleInstance.getProductOrderKey(),
+                                        bucketEntry.getBucket().getBucketDefinitionName());
+                        logger.error(error);
+                        throw new ValidationException(error);
+                    }
                 }
 
-                mercurySample = getReworkEntryDaoFree(mercurySample, labVessel, vesselPosition,
+                getReworkEntryDaoFree(mercurySample, labVessel, vesselPosition,
                         reworkReason, reworkLevel, reworkFromStep, comment);
 
                 reworks.add(mercurySample);
@@ -131,10 +131,10 @@ public class ReworkEjb {
      * @return a sample with ReworkEntry added
      */
     @DaoFree
-    public MercurySample getReworkEntryDaoFree(@NotNull MercurySample mercurySample, @NotNull LabVessel labVessel,
-                                               @NotNull VesselPosition vesselPosition,
-                                               @NotNull ReworkReason reworkReason,
-                                               ReworkLevel reworkLevel, @NotNull LabEventType reworkFromStep,
+    public void getReworkEntryDaoFree(@Nonnull MercurySample mercurySample, @Nonnull LabVessel labVessel,
+                                               @Nonnull VesselPosition vesselPosition,
+                                               @Nonnull ReworkEntry.ReworkReason reworkReason,
+                                               ReworkEntry.ReworkLevel reworkLevel, @Nonnull LabEventType reworkFromStep,
                                                String comment) {
         LabVesselPosition labVesselPosition = new LabVesselPosition(vesselPosition, mercurySample);
         LabVesselComment<ReworkEntry> reworkComment =
@@ -142,7 +142,6 @@ public class ReworkEjb {
         ReworkEntry reworkEntry = new ReworkEntry(labVesselPosition, reworkComment, reworkReason,
                 reworkLevel, reworkFromStep);
         mercurySample.getRapSheet().addRework(reworkEntry);
-        return mercurySample;
     }
 
     /**
@@ -155,27 +154,24 @@ public class ReworkEjb {
      *
      * @throws ValidationException
      */
-    public LabVessel addRework(@NotNull LabVessel labVessel, @NotNull ReworkReason reworkReason,
-                               @NotNull LabEventType reworkFromStep, @NotNull String comment)
+    public void addRework(@Nonnull LabVessel labVessel, @Nonnull ReworkEntry.ReworkReason reworkReason,
+                               @Nonnull LabEventType reworkFromStep, @Nonnull String comment)
             throws ValidationException {
         List<MercurySample> reworks = new ArrayList<MercurySample>(
-                getVesselRapSheet(labVessel, reworkReason, ReworkLevel.ONE_SAMPLE_RELEASE_REST_BATCH, reworkFromStep,
+                getVesselRapSheet(labVessel, reworkReason, ReworkEntry.ReworkLevel.ONE_SAMPLE_RELEASE_REST_BATCH, reworkFromStep,
                         comment));
 
         if (!reworks.isEmpty()) {
             mercurySampleDao.persistAll(reworks);
-            mercurySampleDao.flush();
         }
-        return labVesselDao.findByIdentifier(labVessel.getLabel());
     }
 
-    public LabBatch addReworkToBatch(@NotNull LabBatch batch, @NotNull LabVessel labVessel,
-                                     @NotNull ReworkReason reworkReason,
-                                     @NotNull LabEventType reworkFromStep, @NotNull String comment)
+    public void addReworkToBatch(@Nonnull LabBatch batch, @Nonnull LabVessel labVessel,
+                                     @Nonnull ReworkEntry.ReworkReason reworkReason,
+                                     @Nonnull LabEventType reworkFromStep, @Nonnull String comment)
             throws ValidationException {
-        LabVessel vessel = addRework(labVessel, reworkReason, reworkFromStep, comment);
-        batch.addReworks(Arrays.asList(vessel));
-        return batch;
+        addRework(labVessel, reworkReason, reworkFromStep, comment);
+        batch.addReworks(Arrays.asList(labVessel));
     }
 
 
@@ -187,22 +183,11 @@ public class ReworkEjb {
         this.mercurySampleDao = mercurySampleDao;
     }
 
-
-    public void startRework(@NotNull LabVessel labVessel) {
-        for (MercurySample mercurySample : labVessel.getMercurySamples()) {
-            mercurySample.getRapSheet().startRework();
+    public Collection<LabVessel> getVesselsForRework(){
+        Set<LabVessel> inactiveVessels=new HashSet<LabVessel>();
+        for (ReworkEntry rework : reworkEntryDao.getActive()) {
+            inactiveVessels.add(rework.getLabVesselComment().getLabVessel());
         }
+        return inactiveVessels;
     }
-
-    public void stopRework(@NotNull LabVessel labVessel) {
-        for (MercurySample mercurySample : labVessel.getMercurySamples()) {
-            mercurySample.getRapSheet().stopRework();
-        }
-    }
-
-
-    public Collection<ReworkEntry> getNonActiveReworkEntries() {
-        return reworkEntryDao.getNonActiveReworkEntries();
-    }
-
 }

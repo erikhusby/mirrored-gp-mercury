@@ -5,6 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
@@ -12,8 +13,11 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -107,12 +111,33 @@ public class BillingEjb {
         }
     }
 
-
+    // Use Requires New here so that a runtime exception doesn't cause the caller's transaction to be rolled back.
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    private boolean updateOrderStatusWithNewTransaction(@Nonnull String jiraTicketKey)
+            throws JiraIssue.NoTransitionException, ProductOrderEjb.NoSuchPDOException, IOException {
+        return productOrderEjb.updateOrderStatus(jiraTicketKey);
+    }
     /**
-     * DO NOT CALL DIRECTLY FROM ACTION BEANS!!!  This method is a proof of concept for Arquillian testing of the
-     * extended persistence context with Stateful EJBs.  DO NOT CALL DIRECTLY FROM ACTION BEANS!!!
+     * Transactional method to bill each previously unbilled {@link QuoteImportItem} on the BillingSession to the quote
+     * server and update billing entities as appropriate to the results of the billing attempt.  Results
+     * for each billing attempt correspond to a returned BillingResult.  If there was an exception billing a QuoteImportItem,
+     * the {@link BillingResult#isError()} will return
+     * true and {@link BillingResult#getErrorMessage()}
+     * will describe the cause of the problem.  On successful billing
+     * {@link BillingResult#getWorkId()} will contain
+     * the work id result.
+     *
+     *
+     * @param pageUrl        URL to be included in the call to the quote server.
+     * @param sessionKey     Key to be included in the call to the quote server.
+     *
+     * @return List of BillingResults describing the success or failure of billing for each previously unbilled QuoteImportItem
+     *         associated with the BillingSession.
      */
-    public List<BillingResult> internalBill(@Nonnull String pageUrl, @Nonnull BillingSession billingSession) {
+    public List<BillingResult> bill(@Nonnull String pageUrl, @Nonnull String sessionKey) {
+
+        BillingSession billingSession = billingSessionDao.findByBusinessKey(sessionKey);
+
         boolean errorsInBilling = false;
 
         List<BillingResult> results = new ArrayList<BillingResult>();
@@ -129,21 +154,13 @@ public class BillingEjb {
 
             QuotePriceItem quotePriceItem = QuotePriceItem.convertMercuryPriceItem(item.getPriceItem());
 
-            // Calculate whether this is a replacement item and if it is, send the itemIsReplacing field, otherwise
-            // the itemIsReplacing field will be null.
-            org.broadinstitute.gpinformatics.athena.entity.products.PriceItem mercuryIsReplacing =
-                    item.calculateIsReplacing(priceListCache);
-
-            // Get the quote version of the price item for the item that is being replaced.
-            QuotePriceItem quoteIsReplacing = null;
-            if (mercuryIsReplacing != null) {
-                quoteIsReplacing = QuotePriceItem.convertMercuryPriceItem(mercuryIsReplacing);
-            }
+            // Get the quote PriceItem that this is replacing, if it is a replacement.
+            QuotePriceItem quoteIsReplacing = item.getPrimaryForReplacement(priceListCache);
 
             try {
                 String workId = quoteService.registerNewWork(
                         quote, quotePriceItem, quoteIsReplacing, item.getWorkCompleteDate(), item.getQuantity(),
-                        pageUrl, "billingSession", billingSession.getBusinessKey());
+                        pageUrl, "billingSession", sessionKey);
 
                 result.setWorkId(workId);
 
@@ -168,14 +185,10 @@ public class BillingEjb {
             endSession(billingSession);
         }
 
-        // MLC commenting out the status update below since it accesses the EntityManager and thereby enrolls it in
-        // the transaction in all cases, not just when we have done an explicit lookup of the BillingSession by
-        // business key.
-        /*
         // Update the state of all PDOs affected by this billing session.
         for (String key : updatedPDOs) {
             try {
-                productOrderEjb.updateOrderStatus(key);
+                updateOrderStatusWithNewTransaction(key);
             } catch (Exception e) {
                 // Errors are just logged here because the current user doesn't work with PDOs, and wouldn't
                 // be able to resolve these issues.  Exceptions should only occur if a required resource,
@@ -183,31 +196,7 @@ public class BillingEjb {
                 log.error("Failed to update PDO status after billing: " + key, e);
             }
         }
-        */
 
         return results;
-    }
-
-
-    /**
-     * Transactional method to bill each previously unbilled {@link QuoteImportItem} on the BillingSession to the quote
-     * server and update billing entities as appropriate to the results of the billing attempt.  Results
-     * for each billing attempt correspond to a returned BillingResult.  If there was an exception billing a QuoteImportItem,
-     * the {@link org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb.BillingResult#isError()} will return
-     * true and {@link org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb.BillingResult#getErrorMessage()}
-     * will describe the cause of the problem.  On successful billing
-     * {@link org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb.BillingResult#getWorkId()} will contain
-     * the work id result.
-     *
-     * @param pageUrl    URL to be included in the call to the quote server.
-     * @param sessionKey Key to be included in the call to the quote server.
-     *
-     * @return List of BillingResults describing the success or failure of billing for each previously unbilled QuoteImportItem
-     *         associated with the BillingSession.
-     */
-    public List<BillingResult> bill(@Nonnull String pageUrl, @Nonnull String sessionKey) {
-
-        BillingSession billingSession = billingSessionDao.findByBusinessKey(sessionKey);
-        return internalBill(pageUrl, billingSession);
     }
 }

@@ -72,8 +72,8 @@
 
                 </td>
                 <td>
-                    <a href="${ctxpath}/search/all.action?search=&searchKey=${sample.startingSample.productOrderKey}">
-                            ${sample.startingSample.productOrderKey}
+                    <a href="${ctxpath}/search/all.action?search=&searchKey=${sample.productOrderKey}">
+                            ${sample.productOrderKey}
                     </a>
                 </td>
                 <td>

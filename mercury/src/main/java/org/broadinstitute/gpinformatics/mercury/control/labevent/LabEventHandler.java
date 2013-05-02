@@ -6,22 +6,22 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
-import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
-import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.io.Serializable;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
 
 // Implements Serializable because it's used by a Stateful session bean.
 public class LabEventHandler implements Serializable {
@@ -43,10 +43,6 @@ public class LabEventHandler implements Serializable {
 
     private BSPUserList bspUserList;
 
-    private BucketBean bucketBean;
-
-    private BucketDao bucketDao;
-
     @Inject
     private JiraCommentUtil jiraCommentUtil;
 
@@ -54,12 +50,10 @@ public class LabEventHandler implements Serializable {
     }
 
     @Inject
-    public LabEventHandler(WorkflowLoader workflowLoader, AthenaClientService athenaClientService, BucketBean bucketBean,
-            BucketDao bucketDao, BSPUserList bspUserList) {
+    public LabEventHandler(WorkflowLoader workflowLoader, AthenaClientService athenaClientService,
+                           BSPUserList bspUserList) {
         this.workflowLoader = workflowLoader;
         this.athenaClientService = athenaClientService;
-        this.bucketBean = bucketBean;
-        this.bucketDao = bucketDao;
         this.bspUserList = bspUserList;
     }
 
@@ -83,75 +77,6 @@ public class LabEventHandler implements Serializable {
             }
         }
         //notifyCheckpoints(labEvent);
-
-        /*
-            Since multiple Workflow Versions can be associated with the collection of vessels, individually determine
-            what the previous bucket for the vessels will be
-         */
-        Map<WorkflowStepDef, Collection<LabVessel>> bucketVessels = itemizeBucketItems(labEvent);
-
-        /*
-            If buckets were found, this means that the previous viable step in the workflow is a bucket.  The source vessels
-            for this event need to be removed from that bucket.
-         */
-        for (WorkflowStepDef bucketDef : bucketVessels.keySet()) {
-            WorkflowStepDef workingBucketIdentifier = bucketDef;
-
-            /*
-                If the bucket previously existed, retrieve it, otherwise create a new one based on the workflow step
-                definition
-             */
-            Bucket workingBucket = bucketDao.findByName(workingBucketIdentifier.getName());
-            if (workingBucket == null) {
-
-                //TODO SGM, JMT:  this check should probably be part of the pre process Validation call from the decks
-                LOG.error("Bucket " + workingBucketIdentifier.getName() +
-                        " is expected to have vessels but no instance of the bucket can be found.");
-                workingBucket = new Bucket(workingBucketIdentifier);
-            }
-
-            /*
-                If the source item is a TubeFormation (for a rack) we really only want to deal with the Tubes
-                themselves.  Extract them and use that to pull from the bucket.
-             */
-            Set<LabVessel> eventVessels = labEvent.getSourceVesselTubes();
-
-            bucketBean.start(bspUserList.getById(labEvent.getEventOperator()).getUsername(), eventVessels,
-                    workingBucket, labEvent.getEventLocation());
-        }
-
-        /*
-            Since multiple Workflow Versions can be associated with the collection of vessels, individually determine
-            what the next bucket for the vessels will be
-         */
-        Map<WorkflowStepDef, Collection<LabVessel>> bucketVesselCandidates = itemizeBucketCandidates(labEvent);
-
-        /*
-            If buckets were found, this means that the next viable (Non branch) step in the workflow is a bucket.  The
-            source vessels for this event need to be removed from that bucket.
-         */
-        for (WorkflowStepDef bucketDef : bucketVesselCandidates.keySet()) {
-            WorkflowStepDef workingBucketIdentifier = bucketDef;
-
-            /*
-               If the bucket previously existed, retrieve it, otherwise create a new one based on the workflow step
-               definition
-            */
-
-            Bucket workingBucket = bucketDao.findByName(workingBucketIdentifier.getName());
-            if (workingBucket == null) {
-                workingBucket = new Bucket(workingBucketIdentifier);
-            }
-
-            /*
-                If the Target item is a TubeFormation (for a rack) we really only want to deal with the Tubes
-                themselves.  Extract them and use that to add to the bucket.
-             */
-            Set<LabVessel> eventVessels = labEvent.getTargetVesselTubes();
-
-            bucketBean.add(eventVessels, workingBucket, bspUserList.getById(labEvent.getEventOperator()).getUsername(),
-                    labEvent.getEventLocation(), workingBucketIdentifier.getLabEventTypes().iterator().next());
-        }
 
         return HandlerResponse.OK;
 
@@ -285,18 +210,16 @@ public class LabEventHandler implements Serializable {
      * @param productOrderKey Business Key for a previously defined product order
      * @return Workflow Definition for the defined workflow for the product order represented by productOrderKey
      */
-    public ProductWorkflowDefVersion getWorkflowVersion(String productOrderKey) {
+    public ProductWorkflowDefVersion getWorkflowVersion(@Nonnull String productOrderKey) {
         WorkflowConfig workflowConfig = workflowLoader.load();
 
         ProductWorkflowDefVersion versionResult = null;
 
         ProductOrder productOrder = athenaClientService.retrieveProductOrderDetails(productOrderKey);
 
-        if (StringUtils.isNotBlank(productOrder.getProduct().getWorkflowName())) {
-            ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(
-                    productOrder.getProduct().getWorkflowName());
-
-            versionResult = productWorkflowDef.getEffectiveVersion();
+        String workflowName = productOrder.getProduct().getWorkflowName();
+        if (StringUtils.isNotBlank(workflowName)) {
+            versionResult = workflowConfig.getWorkflowByName(workflowName).getEffectiveVersion();
         }
         return versionResult;
     }
@@ -324,10 +247,9 @@ public class LabEventHandler implements Serializable {
             if (productOrders != null && !productOrders.isEmpty()) {
                 ProductWorkflowDefVersion workflowDef = getWorkflowVersion(productOrders.iterator().next());
 
-                if (workflowDef != null &&
-                        workflowDef.isPreviousStepBucket(labEvent.getLabEventType().getName())) {
-                    workingBucketName = workflowDef.getPreviousStep(
-                            labEvent.getLabEventType().getName());
+                String eventTypeName = labEvent.getLabEventType().getName();
+                if (workflowDef != null && workflowDef.isPreviousStepBucket(eventTypeName)) {
+                    workingBucketName = workflowDef.getPreviousStep(eventTypeName);
                 }
             }
 

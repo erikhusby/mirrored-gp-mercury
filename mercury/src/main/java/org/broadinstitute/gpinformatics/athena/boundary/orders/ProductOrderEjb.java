@@ -7,7 +7,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
@@ -17,6 +16,7 @@ import org.broadinstitute.gpinformatics.athena.entity.work.MessageDataValue;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPLSIDUtil;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -24,6 +24,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.IssueFieldsResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
@@ -55,32 +56,46 @@ import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder
  */
 public class ProductOrderEjb {
 
-    @Inject
-    private ProductOrderDao productOrderDao;
+    private final ProductOrderDao productOrderDao;
+
+    private final ProductDao productDao;
+
+    private final QuoteService quoteService;
+
+    private final JiraService jiraService;
+
+    private final UserBean userBean;
+
+    private final BSPUserList userList;
+
+    private final LedgerEntryDao ledgerEntryDao;
+
+    private final BSPSampleDataFetcher sampleDataFetcher;
+
+    // EJBs require a no arg constructor.
+    @SuppressWarnings("unused")
+    public ProductOrderEjb() {
+        this(null, null, null, null, null, null, null, null);
+    }
 
     @Inject
-    private ProductDao productDao;
-
-    @Inject
-    private QuoteService quoteService;
-
-    @Inject
-    private JiraService jiraService;
-
-    @Inject
-    private UserBean userBean;
-
-    @Inject
-    private BSPUserList userList;
-
-    @Inject
-    private LedgerEntryDao ledgerEntryDao;
-
-    @Inject
-    private ProductOrderSampleDao productOrderSampleDao;
-
-    @Inject
-    BSPSampleDataFetcher sampleDataFetcher;
+    public ProductOrderEjb(ProductOrderDao productOrderDao,
+                           ProductDao productDao,
+                           QuoteService quoteService,
+                           JiraService jiraService,
+                           UserBean userBean,
+                           BSPUserList userList,
+                           LedgerEntryDao ledgerEntryDao,
+                           BSPSampleDataFetcher sampleDataFetcher) {
+        this.productOrderDao = productOrderDao;
+        this.productDao = productDao;
+        this.quoteService = quoteService;
+        this.jiraService = jiraService;
+        this.userBean = userBean;
+        this.userList = userList;
+        this.ledgerEntryDao = ledgerEntryDao;
+        this.sampleDataFetcher = sampleDataFetcher;
+    }
 
     private final Log log = LogFactory.getLog(ProductOrderEjb.class);
 
@@ -164,11 +179,12 @@ public class ProductOrderEjb {
      * </ol>
      */
     @Nonnull
-    public ProductOrderSample mapAliquotIdToSample(@Nonnull ProductOrder order, @Nonnull String aliquotId)
+    @DaoFree
+    protected ProductOrderSample mapAliquotIdToSample(@Nonnull ProductOrder order, @Nonnull String aliquotId)
             throws Exception {
 
         // Convert aliquotId to BSP ID, if it's an LSID.
-        if (!ProductOrderSample.isInBspFormat(aliquotId)) {
+        if (!BSPUtil.isInBspFormat(aliquotId)) {
             aliquotId = BSPLSIDUtil.lsidToBareId(aliquotId);
         }
 
@@ -185,9 +201,6 @@ public class ProductOrderEjb {
         for (ProductOrderSample sample : order.getSamples()) {
             if (sample.getSampleName().equals(sampleName) && sample.getAliquotId() == null) {
                 sample.setAliquotId(aliquotId);
-                // This persist call is here to ensure that the entity manager is participating in
-                // the transaction.
-                productOrderSampleDao.persist(sample);
                 return sample;
             }
         }
@@ -201,23 +214,29 @@ public class ProductOrderEjb {
      * If the order's product supports automated billing, and it's not currently locked out,
      * generate a list of billing ledger items for the sample and add them to the billing ledger.
      *
-     * @param order order to bill for
+     * @param orderKey business key of order to bill for
      * @param aliquotId the sample aliquot ID
      * @param completedDate the date completed to use when billing
      * @param data used to check and see if billing can occur
+     * @return true if the auto-bill request was processed.  It will return false if PDO supports automated billing but
+     * is currently locked out of billing.
      */
-    public void autoBillSample(ProductOrder order, String aliquotId, Date completedDate, Map<String, MessageDataValue> data)
-            throws Exception {
+    public boolean autoBillSample(String orderKey, String aliquotId, Date completedDate,
+                                  Map<String, MessageDataValue> data) throws Exception {
+
+        ProductOrder order = productOrderDao.findByBusinessKey(orderKey);
+        if (order == null) {
+            log.error(MessageFormat.format("Invalid PDO key ''{0}'', no billing will occur.", orderKey));
+            return true;
+        }
 
         Product product = order.getProduct();
 
         if (isLockedOut(order)) {
             log.error(MessageFormat.format("Can''t auto-bill order {0} because it''s currently locked out.",
                     order.getJiraTicketKey()));
-            // Return early to avoid marking the message as processed.
-            // TODO This code should be wrapped in a beginLockout()/endLockout() block to avoid collisions with
-            // TODO a mercury user starting a billing session during this process.
-            return;
+            // Return false to indicate we couldn't process the message.
+            return false;
         }
 
         if (product.isUseAutomatedBilling()) {
@@ -231,6 +250,7 @@ public class ProductOrderEjb {
         } else {
             log.debug(MessageFormat.format("Product {0} doesn''t support automated billing.", product.getProductName()));
         }
+        return true;
     }
 
     /**
@@ -410,17 +430,10 @@ public class ProductOrderEjb {
 
 
     public static class SampleDeliveryStatusChangeException extends Exception {
-        @Nonnull
-        private final List<ProductOrderSample> samples;
 
         protected SampleDeliveryStatusChangeException(DeliveryStatus targetStatus,
                                                       @Nonnull List<ProductOrderSample> samples) {
             super(createErrorMessage(targetStatus, samples));
-            this.samples = samples;
-        }
-
-        protected List<ProductOrderSample> getSamples() {
-            return samples;
         }
 
         protected static String createErrorMessage(DeliveryStatus status,
@@ -434,14 +447,6 @@ public class ProductOrderEjb {
 
             return "Cannot transition samples to status " + status.getDisplayName()
                    + ": " + StringUtils.join(messages, ", ");
-        }
-
-        protected ProductOrder getProductOrder() {
-            if (!samples.isEmpty()) {
-                return samples.get(0).getProductOrder();
-            }
-
-            return null;
         }
     }
 

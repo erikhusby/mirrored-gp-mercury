@@ -44,11 +44,16 @@ public class BucketEntryDBFreeTest {
         SimpleDateFormat dateFormatter = new SimpleDateFormat("dd/MM/yy");
 
         Assert.assertEquals ( dateFormatter.format ( new Date () ), dateFormatter.format ( entry.getCreatedDate () ) );
+        Assert.assertEquals(entry.getStatus(), BucketEntry.Status.Active);
+
+        entry.setStatus(BucketEntry.Status.Archived);
+        Assert.assertEquals(entry.getStatus(), BucketEntry.Status.Archived);
     }
 
     public void testBasicBeaniness()  {
         BeanTester tester = new BeanTester();
-        Configuration configuration = new ConfigurationBuilder ().ignoreProperty("bucketExistence").build();
+        Configuration configuration = new ConfigurationBuilder().ignoreProperty("bucket").ignoreProperty("labBatch").
+                build();
 
         tester.testBean(BucketEntry.class, configuration);
     }

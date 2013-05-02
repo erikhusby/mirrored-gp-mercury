@@ -37,6 +37,9 @@ public class LabEventResource {
     @Produces({MediaType.APPLICATION_XML})
     public LabEventResponseBean transfersByBatchId(@PathParam("batchId")String batchId) {
         LabBatch labBatch = labBatchDAO.findByName(batchId);
+        if(labBatch == null) {
+            throw new RuntimeException("Batch not found: " + batchId);
+        }
         List<LabEvent> labEventsByTime = new ArrayList<LabEvent>(labBatch.getLabEvents());
         Collections.sort(labEventsByTime, LabEvent.byEventDate);
         List<LabEventBean> labEventBeans = buildLabEventBeans(labEventsByTime, new LabEventFactory.LabEventRefDataFetcher() {

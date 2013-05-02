@@ -18,16 +18,12 @@ public class ProductOrderEtl extends GenericEntityAndStatusEtl<ProductOrder, Pro
     private BSPUserList userList;
 
     public ProductOrderEtl() {
-        entityClass = ProductOrder.class;
-        baseFilename = "product_order";
-        baseStatusFilename = "product_order_status";
     }
 
     @Inject
-    public ProductOrderEtl(ProductOrderDao d, BSPUserList ul) {
-        this();
-        dao = d;
-        userList = ul;
+    public ProductOrderEtl(ProductOrderDao dao, BSPUserList userList) {
+        super(ProductOrder.class, "product_order", "product_order_status", dao);
+        this.userList = userList;
     }
 
     @Override
@@ -46,7 +42,7 @@ public class ProductOrderEtl extends GenericEntityAndStatusEtl<ProductOrder, Pro
     }
 
     @Override
-    String statusRecord(String etlDateStr, Date statusDate, ProductOrder entity, boolean isDelete) {
+    String statusRecord(String etlDateStr, boolean isDelete, ProductOrder entity, Date statusDate) {
         if (entity != null && entity.getOrderStatus() != null) {
             return genericRecord(etlDateStr, isDelete,
                     entity.getProductOrderId(),

@@ -124,6 +124,15 @@
             </div>
 
             <div class="view-control-group control-group">
+                <label class="control-label label-form">Aggregation Data Type</label>
+                <div class="controls">
+                    <div class="form-value">
+                        ${actionBean.editProduct.aggregationDataType}
+                    </div>
+                </div>
+            </div>
+
+            <div class="view-control-group control-group">
                 <label class="control-label label-form">Risk Criteria</label>
                 <div class="controls">
                     <div class="form-value">

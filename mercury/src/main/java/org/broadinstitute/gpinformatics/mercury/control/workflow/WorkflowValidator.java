@@ -24,8 +24,10 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
+import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
 
+import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
@@ -42,6 +44,7 @@ import java.util.Set;
 /**
  * Validates messages against workflow definitions
  */
+@SuppressWarnings("FeatureEnvy")
 @Stateful
 @RequestScoped
 public class WorkflowValidator {
@@ -58,6 +61,7 @@ public class WorkflowValidator {
     @Inject
     private EmailSender emailSender;
 
+    @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private AthenaClientService athenaClientService;
 
@@ -69,7 +73,7 @@ public class WorkflowValidator {
      * rollbacks, which would cause knock on transactions in the code to persist messages.
      * @param bettaLIMSMessage JAXB from deck
      */
-    @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void validateWorkflow(BettaLIMSMessage bettaLIMSMessage) {
         for (PlateCherryPickEvent plateCherryPickEvent : bettaLIMSMessage.getPlateCherryPickEvent()) {
             validateWorkflow(plateCherryPickEvent, new ArrayList<String>(
@@ -111,10 +115,10 @@ public class WorkflowValidator {
      * Parameter to email template.
      */
     public static class WorkflowValidationError {
-        private SampleInstance sampleInstance;
-        private List<ProductWorkflowDefVersion.ValidationError> errors;
-        private ProductOrder productOrder;
-        private AppConfig appConfig;
+        private final SampleInstance sampleInstance;
+        private final List<ProductWorkflowDefVersion.ValidationError> errors;
+        private final ProductOrder productOrder;
+        private final AppConfig appConfig;
 
         public WorkflowValidationError(SampleInstance sampleInstance,
                 List<ProductWorkflowDefVersion.ValidationError> errors, ProductOrder productOrder,
@@ -139,13 +143,13 @@ public class WorkflowValidator {
 
         public String getLinkToProductOrder() {
             return appConfig.getUrl() + ProductOrderActionBean.ACTIONBEAN_URL_BINDING + "?" +
-                    ProductOrderActionBean.VIEW_ACTION + "&" + ProductOrderActionBean.PRODUCT_ORDER_PARAMETER +
+                   CoreActionBean.VIEW_ACTION + "&" + ProductOrderActionBean.PRODUCT_ORDER_PARAMETER +
                     "=" + productOrder.getBusinessKey();
         }
 
         public String getLinkToResearchProject() {
             return appConfig.getUrl() + ResearchProjectActionBean.ACTIONBEAN_URL_BINDING + "?" +
-                    ResearchProjectActionBean.VIEW_ACTION + "&" + ResearchProjectActionBean.RESEARCH_PROJECT_PARAMETER +
+                   CoreActionBean.VIEW_ACTION + "&" + ResearchProjectActionBean.RESEARCH_PROJECT_PARAMETER +
                     "=" + productOrder.getResearchProject().getBusinessKey();
         }
     }
@@ -181,20 +185,28 @@ public class WorkflowValidator {
      * @return list of errors
      */
     public List<WorkflowValidationError> validateWorkflow(Collection<LabVessel> labVessels, String eventType) {
-        List<SampleInstance> allSampleInstances = new ArrayList<SampleInstance>();
         List<WorkflowValidationError> validationErrors = new ArrayList<WorkflowValidationError>();
+        // Cache the workflows, because it's likely that there are only a few unique product orders on each plate
+        Map<String, ProductWorkflowDefVersion> mapProductOrderToWorkflow = new HashMap<String, ProductWorkflowDefVersion>();
+
         for (LabVessel labVessel : labVessels) {
             Set<SampleInstance> sampleInstances = labVessel.getSampleInstances(LabVessel.SampleType.WITH_PDO,
                     LabBatch.LabBatchType.WORKFLOW);
-            allSampleInstances.addAll(sampleInstances);
             for (SampleInstance sampleInstance : sampleInstances) {
-                ProductWorkflowDefVersion workflowVersion = getWorkflowVersion(sampleInstance.getStartingSample().getProductOrderKey());
-                if (workflowVersion != null) {
-                    List<ProductWorkflowDefVersion.ValidationError> errors = workflowVersion.validate(labVessel, eventType);
-                    if (!errors.isEmpty()) {
-                        validationErrors.add(new WorkflowValidationError(sampleInstance, errors,
-                                athenaClientService.retrieveProductOrderDetails(
-                                        sampleInstance.getStartingSample().getProductOrderKey()), appConfig));
+                if (sampleInstance.getProductOrderKey() != null) {
+                    ProductWorkflowDefVersion workflowVersion =
+                            mapProductOrderToWorkflow.get(sampleInstance.getProductOrderKey());
+                    if(workflowVersion == null) {
+                        workflowVersion = getWorkflowVersion(sampleInstance.getProductOrderKey());
+                    }
+                    if (workflowVersion != null) {
+                        mapProductOrderToWorkflow.put(sampleInstance.getProductOrderKey(), workflowVersion);
+                        List<ProductWorkflowDefVersion.ValidationError> errors = workflowVersion.validate(labVessel, eventType);
+                        if (!errors.isEmpty()) {
+                            validationErrors.add(new WorkflowValidationError(sampleInstance, errors,
+                                    athenaClientService.retrieveProductOrderDetails(
+                                            sampleInstance.getProductOrderKey()), appConfig));
+                        }
                     }
                 }
             }
@@ -211,7 +223,7 @@ public class WorkflowValidator {
      * @param productOrderKey Business Key for a previously defined product order
      * @return Workflow Definition for the defined workflow for the product order represented by productOrderKey
      */
-    public ProductWorkflowDefVersion getWorkflowVersion(String productOrderKey) {
+    public ProductWorkflowDefVersion getWorkflowVersion(@Nonnull String productOrderKey) {
         WorkflowConfig workflowConfig = new WorkflowLoader().load();
         ProductWorkflowDefVersion versionResult = null;
         ProductOrder productOrder = athenaClientService.retrieveProductOrderDetails(productOrderKey);

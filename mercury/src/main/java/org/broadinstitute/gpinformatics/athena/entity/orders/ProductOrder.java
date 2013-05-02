@@ -136,6 +136,7 @@ public class ProductOrder implements Serializable {
      * @return The business key is the jira ticket key when this is not a draft, otherwise it is the DRAFT_KEY plus the
      * internal database id.
      */
+    @Nonnull
     public String getBusinessKey() {
         return createBusinessKey(productOrderId, jiraTicketKey);
     }
@@ -218,13 +219,18 @@ public class ProductOrder implements Serializable {
      * @return either a JIRA ID or a product order ID.
      */
     public static JiraOrId convertBusinessKeyToJiraOrId(@Nonnull String businessKey) {
+        // This is currently happening in DEV at least, not sure why.
+        //noinspection ConstantConditions
+        if (businessKey == null) {
+            return null;
+        }
         if (businessKey.startsWith(DRAFT_PREFIX)) {
             return new JiraOrId(Long.parseLong(businessKey.substring(DRAFT_PREFIX.length())), null);
         }
         return new JiraOrId(0, businessKey);
     }
 
-    private class Counter implements Serializable {
+    private static class Counter implements Serializable {
         private final Map<String, Integer> countMap = new HashMap<String, Integer>();
 
         private void clear() {

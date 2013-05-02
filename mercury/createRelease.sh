@@ -51,3 +51,6 @@ git tag -a -m "Current RC" --force RCBUILD $RCBRANCH
 git push origin $RCBRANCH
 git push origin --tags
 
+#
+# Notify the HipChat room
+./notifyHipChat.sh "Mercury Production branch $PRODVERSION created." 
