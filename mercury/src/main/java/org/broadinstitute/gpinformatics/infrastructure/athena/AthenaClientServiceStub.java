@@ -29,12 +29,15 @@ public class AthenaClientServiceStub implements AthenaClientService {
             productOrderByBusinessKeyMap = ProductOrderTestFactory.buildTestProductOrderMap();
         }
 
+        return pullProductOrder(poBusinessKey);
+    }
+
+    private ProductOrder pullProductOrder(String poBusinessKey) {
         ProductOrder order = productOrderByBusinessKeyMap.get(poBusinessKey);
         if (order == null) {
             order = ProductOrderTestFactory.createDummyProductOrder(poBusinessKey);
             productOrderByBusinessKeyMap.put(poBusinessKey, order);
         }
-
         return order;
     }
 
@@ -48,6 +51,21 @@ public class AthenaClientServiceStub implements AthenaClientService {
                     new ArrayList<ProductOrderSample>(Collections.singletonList(productOrderSample)));
         }
         return mapSampleIdToPdoSample;
+    }
+
+    @Override
+    public Collection<ProductOrder> retrieveMultipleProductOrderDetails(@Nonnull Collection<String> poBusinessKeys) {
+        if (productOrderByBusinessKeyMap.isEmpty()) {
+            productOrderByBusinessKeyMap = ProductOrderTestFactory.buildTestProductOrderMap();
+        }
+
+        List<ProductOrder> productOrderList = new ArrayList<ProductOrder>(poBusinessKeys.size());
+
+        for(String poKey:poBusinessKeys) {
+            productOrderList.add(pullProductOrder(poKey));
+        }
+
+        return productOrderList;
     }
 
     public static synchronized void addProductOrder(ProductOrder productOrder) {
