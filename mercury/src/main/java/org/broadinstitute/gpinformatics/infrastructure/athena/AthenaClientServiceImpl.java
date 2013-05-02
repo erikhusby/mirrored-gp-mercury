@@ -10,6 +10,8 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import javax.annotation.Nonnull;
 import javax.enterprise.inject.Default;
 import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -42,4 +44,8 @@ public class AthenaClientServiceImpl implements AthenaClientService {
         return productOrderSampleDao.findMapBySamples(sampleNames);
     }
 
+    @Override
+    public Collection<ProductOrder> retrieveMultipleProductOrderDetails(@Nonnull Collection<String> poBusinessKeys) {
+        return productOrderDao.findListByBusinessKeyList(new ArrayList<String>(poBusinessKeys));
+    }
 }
