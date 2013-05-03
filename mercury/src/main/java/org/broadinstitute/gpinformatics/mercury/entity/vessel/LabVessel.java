@@ -835,6 +835,13 @@ public abstract class LabVessel implements Serializable {
         return events;
     }
 
+    public Set<LabEvent> getInPlaceAndTransferToEvents() {
+        Set<LabEvent> events = new HashSet<LabEvent>();
+        events.addAll(getInPlaceEvents());
+        events.addAll(getTransfersTo());
+        return events;
+    }
+
     public Float getVolume() {
         return volume;
     }
@@ -1158,23 +1165,13 @@ public abstract class LabVessel implements Serializable {
      *
      * @return a set of strings representing all indexes in this vessel.
      */
-    public Set<String> getIndexes() {
-        Set<String> indexes = new HashSet<String>();
-        StringBuilder indexInfo = new StringBuilder();
+    public Set<MolecularIndexReagent> getIndexes() {
+        Set<MolecularIndexReagent> indexes = new HashSet<MolecularIndexReagent>();
         for (SampleInstance sample : getAllSamples()) {
             for (Reagent reagent : sample.getReagents()) {
                 if (OrmUtil.proxySafeIsInstance(reagent, MolecularIndexReagent.class)) {
                     MolecularIndexReagent indexReagent = (MolecularIndexReagent) reagent;
-                    indexInfo.append(indexReagent.getMolecularIndexingScheme().getName());
-                    indexInfo.append(" - ");
-                    for (MolecularIndexingScheme.IndexPosition hint : indexReagent.getMolecularIndexingScheme()
-                            .getIndexes().keySet()) {
-                        MolecularIndex index = indexReagent.getMolecularIndexingScheme().getIndexes().get(hint);
-                        indexInfo.append(index.getSequence());
-                        indexInfo.append("\n");
-                    }
-                    indexes.add(indexInfo.toString());
-                    indexInfo.delete(0, indexInfo.length());
+                    indexes.add(indexReagent);
                 }
             }
         }
@@ -1182,18 +1179,50 @@ public abstract class LabVessel implements Serializable {
         return indexes;
     }
 
+    /**
+     * This method gets index information only for the single samples passed in
+     *
+     * @param sample
+     *
+     * @return
+     */
+    public Set<MolecularIndexReagent> getIndexesForSample(MercurySample sample) {
+        Set<MolecularIndexReagent> indexes = new HashSet<MolecularIndexReagent>();
+        for (SampleInstance sampleInstance : getAllSamples()) {
+            if (sampleInstance.getStartingSample().equals(sample)) {
+                for (Reagent reagent : sampleInstance.getReagents()) {
+                    if (OrmUtil.proxySafeIsInstance(reagent, MolecularIndexReagent.class)) {
+                        MolecularIndexReagent indexReagent = (MolecularIndexReagent) reagent;
+                        indexes.add(indexReagent);
+                    }
+                }
+            }
+        }
+        return indexes;
+    }
+
     public String getIndexesString() {
-        Collection<String> indexes = getIndexes();
+        Collection<MolecularIndexReagent> indexes = getIndexes();
         if ((indexes == null) || indexes.isEmpty()) {
             return "";
         }
 
-        String[] batchArray = indexes.toArray(new String[indexes.size()]);
-        return StringUtils.join(batchArray);
+        StringBuilder indexInfo = new StringBuilder();
+        for (MolecularIndexReagent indexReagent : getIndexes()) {
+            indexInfo.append(indexReagent.getMolecularIndexingScheme().getName());
+            indexInfo.append(" - ");
+            for (MolecularIndexingScheme.IndexPosition hint : indexReagent.getMolecularIndexingScheme()
+                    .getIndexes().keySet()) {
+                MolecularIndex index = indexReagent.getMolecularIndexingScheme().getIndexes().get(hint);
+                indexInfo.append(index.getSequence());
+                indexInfo.append("\n");
+            }
+        }
+        return indexInfo.toString();
     }
 
     public int getIndexesCount() {
-        Collection<String> indexes = getIndexes();
+        Collection<MolecularIndexReagent> indexes = getIndexes();
         if ((indexes == null) || indexes.isEmpty()) {
             return 0;
         }
@@ -1243,6 +1272,18 @@ public abstract class LabVessel implements Serializable {
             allSamples.addAll(getContainerRole().getSampleInstances(SampleType.ANY, null));
         }
         return allSamples;
+    }
+
+    public Set<SampleInstance> getSampleInstancesForSample(MercurySample sample) {
+        Set<SampleInstance> allSamples = new HashSet<SampleInstance>();
+        Set<SampleInstance> filteredSamples = new HashSet<SampleInstance>();
+        allSamples.addAll(getSampleInstances(SampleType.ANY, null));
+        for (SampleInstance sampleInstance : allSamples) {
+            if (sampleInstance.getStartingSample().equals(sample)) {
+                filteredSamples.add(sampleInstance);
+            }
+        }
+        return filteredSamples;
     }
 
     /**

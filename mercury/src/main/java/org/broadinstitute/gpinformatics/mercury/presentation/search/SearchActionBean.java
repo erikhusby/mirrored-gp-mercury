@@ -485,4 +485,12 @@ public class SearchActionBean extends CoreActionBean {
         this.jiraTicketId = jiraTicketId;
     }
 
+    protected LabVesselDao getLabVesselDao() {
+        return labVesselDao;
+    }
+
+    protected MercurySampleDao getMercurySampleDao() {
+        return mercurySampleDao;
+    }
+
 }

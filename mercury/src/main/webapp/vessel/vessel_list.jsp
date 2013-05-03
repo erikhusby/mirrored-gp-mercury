@@ -3,7 +3,7 @@
 <stripes:layout-definition>
 
     <%-- Where in the hosting page to set the id the user chooses --%>
-    <%--@elvariable id="vessels" type="java.util.Collection<LabVessel>"--%>
+    <%--@elvariable id="vessels" type="java.util.Collection<org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel>"--%>
     <%--@elvariable id="bean" type="org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean"--%>
     <%--@elvariable id="showCheckboxes" type="java.lang.Boolean"--%>
 

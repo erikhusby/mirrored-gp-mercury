@@ -39,7 +39,7 @@ public class MercurySample {
     @Index(name = "ix_ms_sample_key")
     private String sampleKey;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE,CascadeType.PERSIST})
+    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE, CascadeType.PERSIST})
     private RapSheet rapSheet;
 
     @Transient
@@ -98,6 +98,11 @@ public class MercurySample {
         }
 
         return bspSampleDTO;
+    }
+
+    public void setBspSampleDTO(BSPSampleDTO bspSampleDTO) {
+        hasBspDTOBeenInitialized = true;
+        this.bspSampleDTO = bspSampleDTO;
     }
 
     @Override
