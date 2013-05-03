@@ -291,6 +291,21 @@ public enum LabEventType {
     MRRBS_FINAL_PRODUCT_POOL("mRRBSFinalProductPool", false, true, SystemOfRecord.SQUID, false,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE),
 
+    // Malaria Illumina
+    MALARIA_TEP_PCR("Malaria_TEP_PCR", false, true, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE, PipelineTransformation.LIGATION),
+    MALARIA_PF_PCR("Malaria_PF_PCR", false, true, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE, PipelineTransformation.LIGATION),
+    MALARIA_MAL_PCR("Malaria_MAL_PCR", false, true, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE, PipelineTransformation.LIGATION),
+    MALARIA_TEP_PCR_NORM("Malaria_TEP_PCR_Norm", false, true, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
+    MALARIA_PF_PCR_NORM("Malaria_PF_PCR_Norm", false, true, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
+    MALARIA_MAL_PCR_NORM("Malaria_MAL_PCR_Norm", false, true, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
+    MALARIA_PCR_NORM_POOL("MalariaPCRNormPool", false, true, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
+
+    // Malaria PacBio
+    MALARIA_BEP_PCR("Malaria_BEP_PCR", false, true, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
+    MALARIA_BEP_PRIMER_TRANSFER("MalariaBEPPrimerTransfer", false, true, SystemOfRecord.SQUID, false, PlasticToValidate.TARGET, PipelineTransformation.LIGATION),
+    MALARIA_BEP_PCR_NORM("Malaria_BEP_PCR_Norm", false, true, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
+    MALARIA_BEP_POOL("Malaria_BEP_Pool", false, true, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
+
     /**
      * TODO SGM  the following names are place holders.  They will be re-evaluated as development of
      */
