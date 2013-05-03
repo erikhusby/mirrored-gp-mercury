@@ -13,17 +13,6 @@ import java.io.Serializable;
 
 /**
  * Core entity for ProductFamilies.
- * <p/>
- * Making this a class and not an enum for the same reason we don't have concrete Products as subclasses
- * of an abstract AbstractProduct class: we want the ability to define these without changing code.
- * ProductFamily is by nature an enummy thing (in its current state it's nothing more than a controlled vocabulary name)
- * and does seem to beg for a nice way of being able to summon up persistent or detached instances of well known
- * ProductFamilies.  This is going to be a general problem in Mercury/Athena in need of a general solution.
- * <p/>
- * It's also possible that ProductFamilies turn out to be fairly static and an enum would suffice.
- *
- * @author mcovarr
- *
  */
 @Entity
 @Audited
@@ -46,7 +35,7 @@ public class ProductFamily implements Serializable, Comparable<ProductFamily> {
     /**
      * JPA package visible constructor. Stripes requires the empty constructor.
      */
-    public ProductFamily() {
+    protected ProductFamily() {
     }
 
     public ProductFamily(@Nonnull String name) {

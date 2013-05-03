@@ -131,9 +131,8 @@ public class PriceListCache extends AbstractCache implements Serializable {
         }
 
         for (QuotePriceItem quotePriceItem : getQuotePriceItems()) {
-            String currentKey =
-                org.broadinstitute.gpinformatics.athena.entity.products.PriceItem.makeConcatenatedKey(
-                        quotePriceItem.getPlatformName(), quotePriceItem.getCategoryName(), quotePriceItem.getName());
+            String currentKey = PriceItem.makeConcatenatedKey(quotePriceItem.getPlatformName(),
+                    quotePriceItem.getCategoryName(), quotePriceItem.getName());
 
             if (concatenatedKey.equals(currentKey)) {
                 return quotePriceItem;

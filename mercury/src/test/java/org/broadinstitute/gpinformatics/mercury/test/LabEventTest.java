@@ -290,6 +290,12 @@ public class LabEventTest extends BaseEventTest{
                     public Map<String, List<ProductOrderSample>> findMapSampleNameToPoSample(List<String> sampleNames) {
                         return null;
                     }
+
+                    @Override
+                    public Collection<ProductOrder> retrieveMultipleProductOrderDetails(
+                            @Nonnull Collection<String> poBusinessKeys) {
+                        return null;
+                    }
                 }
         );
         ZimsIlluminaRun zimsIlluminaRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(illuminaSequencingRun);

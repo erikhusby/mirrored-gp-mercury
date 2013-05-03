@@ -92,7 +92,7 @@ public class MercuryOrSquidRouter implements Serializable {
      */
     public MercuryOrSquid routeForVessels(Collection<String> barcodes) {
 
-        TreeSet<MercuryOrSquid> routingOptions = new TreeSet<MercuryOrSquid>();
+        NavigableSet<MercuryOrSquid> routingOptions = new TreeSet<MercuryOrSquid>();
         for (String vesselBarcode : barcodes) {
             MercuryOrSquid determinedRoute = routeForVessel(vesselBarcode);
 
@@ -132,7 +132,7 @@ public class MercuryOrSquidRouter implements Serializable {
 
             if (routingOptions.size() > 1) {
                 if ((routingOptions.contains(SQUID) && routingOptions.contains(MERCURY)) ||
-                            ((routingOptions.contains(BOTH)) && routingOptions.contains(MERCURY))) {
+                            (routingOptions.contains(BOTH) && routingOptions.contains(MERCURY))) {
                     throw new RouterException("The Routing cannot be determined");
                 }
             }
@@ -169,7 +169,7 @@ public class MercuryOrSquidRouter implements Serializable {
      * routed.
      */
     public MercuryOrSquid routeForVessel(LabVessel vessel) {
-        TreeSet<MercuryOrSquid> routingOptions = new TreeSet<MercuryOrSquid>();
+        NavigableSet<MercuryOrSquid> routingOptions = new TreeSet<MercuryOrSquid>();
         if (vessel != null) {
 
             Set<SampleInstance> sampleInstances = vessel.getSampleInstances(SampleType.WITH_PDO, LabBatchType.WORKFLOW);
