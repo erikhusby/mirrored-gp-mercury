@@ -54,7 +54,7 @@ public class HiSeq2500FlowcellEntityBuilder {
         LabEventTest.validateWorkflow("DenatureToFlowcellTransfer", denatureRack);
         LabEvent flowcellTransferEntity = labEventFactory.buildVesselToSectionDbFree(flowcellTransferJaxb,
                 denatureRack.getContainerRole().getContainedVessels().iterator().next(), null,
-                SBSSection.FLOWCELL2.getSectionName());
+                SBSSection.ALL2.getSectionName());
         labEventHandler.processEvent(flowcellTransferEntity);
         //asserts
         illuminaFlowcell = (IlluminaFlowcell) flowcellTransferEntity.getTargetLabVessels().iterator().next();

@@ -172,7 +172,7 @@ public class MercuryOrSquidRouter implements Serializable {
         TreeSet<MercuryOrSquid> routingOptions = new TreeSet<MercuryOrSquid>();
         if (vessel != null) {
 
-            Set<SampleInstance> sampleInstances = vessel.getSampleInstances(SampleType.ANY, LabBatchType.WORKFLOW);
+            Set<SampleInstance> sampleInstances = vessel.getSampleInstances(SampleType.WITH_PDO, LabBatchType.WORKFLOW);
             if (sampleInstances.isEmpty()) {
                 routingOptions.add(SQUID);
             } else {
