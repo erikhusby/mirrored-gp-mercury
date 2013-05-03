@@ -33,6 +33,8 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.ejb.Stateful;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.IOException;
@@ -631,6 +633,26 @@ public class ProductOrderEjb {
             }
             return UNKNOWN;
         }
+    }
+
+    /**
+     * This is a version of {@link #updateOrderStatus} that does not propagate RuntimeExceptions since those cause a
+     * transaction in progress to be marked for rollback.
+     * Rollback on failures to update JIRA tickets with status changes is undesirable in billing as the status change is
+     * fairly inconsequential in comparison to persisting database records of whether work was billed to the quote server.
+     */
+    public boolean updateOrderStatusNoRollback(@Nonnull String jiraTicketKey)
+            throws NoSuchPDOException, IOException, JiraIssue.NoTransitionException {
+
+        boolean changed = false;
+
+        try {
+            changed = updateOrderStatus(jiraTicketKey);
+        }
+        catch (RuntimeException e) {
+            log.error(e);
+        }
+        return changed;
     }
 
     /**

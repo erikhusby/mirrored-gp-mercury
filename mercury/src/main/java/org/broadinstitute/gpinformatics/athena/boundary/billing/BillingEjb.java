@@ -188,7 +188,7 @@ public class BillingEjb {
         // Update the state of all PDOs affected by this billing session.
         for (String key : updatedPDOs) {
             try {
-                updateOrderStatusWithNewTransaction(key);
+                productOrderEjb.updateOrderStatusNoRollback(key);
             } catch (Exception e) {
                 // Errors are just logged here because the current user doesn't work with PDOs, and wouldn't
                 // be able to resolve these issues.  Exceptions should only occur if a required resource,

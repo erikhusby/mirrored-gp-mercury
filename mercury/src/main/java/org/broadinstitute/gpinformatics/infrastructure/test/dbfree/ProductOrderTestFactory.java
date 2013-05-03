@@ -21,6 +21,8 @@ import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 
+import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.OrderStatus.Submitted;
+
 public class ProductOrderTestFactory {
 
     public static ProductOrder createDummyProductOrder(int sampleCount, @Nonnull String jiraKey,
@@ -50,7 +52,7 @@ public class ProductOrderTestFactory {
         if (StringUtils.isNotBlank(jiraKey)) {
             productOrder.setJiraTicketKey(jiraKey);
         }
-        productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+        productOrder.setOrderStatus(Submitted);
 
         Product dummyAddOnProduct =
                 ProductTestFactory.createDummyProduct("DNA Extract from FFPE or Slides", "partNumber");
@@ -141,6 +143,7 @@ public class ProductOrderTestFactory {
                 new ProductOrder(-1L, "PDO title " + uuid, productOrderSamples, "Quote-" + uuid, product,
                         researchProject);
         productOrder.setJiraTicketKey("PDO-" + uuid);
+        productOrder.setOrderStatus(Submitted);
         return productOrder;
     }
 
