@@ -96,7 +96,7 @@ public class BillingEjbJiraDownTest extends Arquillian {
         assertThat(ledgerEntryItems, everyItem(is(successfullyBilled())));
 
         // Make sure our angry JIRA was in fact angered by what we have done and has therefore thrown an exception that
-        // threatened to rollback our transaction.
+        // threatened to roll back our transaction.
         assertThat(AngryJiraStub.getInvocationCount(), is(greaterThan(0)));
     }
 }
