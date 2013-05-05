@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.Price
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProductTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
+import org.broadinstitute.gpinformatics.mercury.entity.DB;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
@@ -413,6 +414,10 @@ public class ProductActionBean extends CoreActionBean {
     }
 
     public String getCreateTitleIfAllowed() {
-        return CREATE_PRODUCT;
+        if (getUserBean().isDeveloperUser() || getUserBean().isPDMUser()) {
+            return CREATE_PRODUCT;
+        }
+
+        return "";
     }
 }
