@@ -13,6 +13,8 @@ body { padding-bottom: 40px; padding-top: 5px; font-size: 12px; }
 footer { font-size: 10px; text-align: center; padding-top: 20px; }
 section { margin-left: 2%; margin-right: 2% }
 
+.create { background-image:url("/Mercury/images/plus.png");background-position:left center;background-repeat:no-repeat;display:inline;padding:0 0 0 15px; }
+
 /* Override Bootstrap's opinion that links should not be underlined. */
 a { text-decoration: underline; color: #0088CC; font-size: medium; }
 a.external {background-image:url("/Mercury/images/external-link.gif");background-position:right center;background-repeat:no-repeat;display:inline;padding:0 20px 0 0;}

@@ -29,7 +29,7 @@ public class ProductActionBean extends CoreActionBean {
     public static final String ACTIONBEAN_URL_BINDING = "/products/product.action";
     public static final String PRODUCT_PARAMETER = "product";
 
-    private static final String CREATE_PRODUCT = CoreActionBean.CREATE + " New Product";
+    public static final String CREATE_PRODUCT = CoreActionBean.CREATE + " Product";
     private static final String EDIT_PRODUCT = CoreActionBean.EDIT + " Product: ";
 
     public static final String PRODUCT_CREATE_PAGE = "/products/create.jsp";
@@ -410,5 +410,9 @@ public class ProductActionBean extends CoreActionBean {
 
     public Collection<QuotePriceItem> getReplacementPriceItems() {
         return priceListCache.getReplacementPriceItems(editProduct);
+    }
+
+    public String getCreateTitleIfAllowed() {
+        return CREATE_PRODUCT;
     }
 }

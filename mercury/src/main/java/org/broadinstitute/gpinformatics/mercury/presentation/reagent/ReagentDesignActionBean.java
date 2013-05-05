@@ -37,7 +37,7 @@ import java.util.*;
 @UrlBinding("/reagent/design.action")
 public class ReagentDesignActionBean extends CoreActionBean {
 
-    private static final String CREATE_DESIGN = CoreActionBean.CREATE + "New Design";
+    public static final String CREATE_DESIGN = CoreActionBean.CREATE + "Design";
     private static final String EDIT_DESIGN = CoreActionBean.EDIT + "Design: ";
 
     private static final String REAGENT_LIST_PAGE = "/reagent/list.jsp";

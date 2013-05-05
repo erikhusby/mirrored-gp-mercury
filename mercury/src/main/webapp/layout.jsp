@@ -172,8 +172,18 @@
 
         <section>
             <c:if test="${sectionTitle ne null}">
-                <div class="page-header"><h4>${sectionTitle}</h4></div>
+                <div class="page-header">
+                    <h4>
+                        ${sectionTitle}
+                        <c:if test="${not empty createTitle}">
+                            <stripes:link beanclass="${actionBean.class.name}" event="create" title="${createTitle}" class="pull-right create">
+                                ${createTitle}
+                            </stripes:link>
+                        </c:if>
+                    </h4>
+                </div>
             </c:if>
+
 
             <!-- show messages/errors -->
             <p>
