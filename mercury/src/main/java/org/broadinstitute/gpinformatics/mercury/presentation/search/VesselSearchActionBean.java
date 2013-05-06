@@ -35,14 +35,17 @@ public class VesselSearchActionBean extends SearchActionBean {
      * This method orders the results based on the order of strings passed in.
      */
     private void orderResults() {
-        List<String> searchOrder = cleanInputString(getSearchKey());
         Map<String, LabVessel> labelToVessel = new HashMap<String, LabVessel>();
         for (LabVessel vessel : getFoundVessels()) {
             labelToVessel.put(vessel.getLabel(), vessel);
         }
         setFoundVessels(new LinkedHashSet<LabVessel>());
+        List<String> searchOrder = cleanInputString(getSearchKey());
         for (String key : searchOrder) {
-            getFoundVessels().add(labelToVessel.get(key));
+            LabVessel labVessel = labelToVessel.get(key);
+            if (labVessel != null) {
+                getFoundVessels().add(labVessel);
+            }
         }
     }
 }
