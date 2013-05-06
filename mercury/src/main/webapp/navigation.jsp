@@ -110,16 +110,6 @@
                             <li>
                                 <a tabindex="-1" href="${ctxpath}/reagent/design.action?list">Reagent Designs</a>
                             </li>
-                            <li>
-                                <stripes:link
-                                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.VesselSearchActionBean"
-                                        event="view">Search Vessels</stripes:link>
-                            </li>
-                            <li>
-                                <stripes:link
-                                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.SampleSearchActionBean"
-                                        event="view">Search Samples</stripes:link>
-                            </li>
                         </security:authorizeBlock>
                     </ul>
                 </li>
@@ -139,23 +129,32 @@
 
         </ul>
 
-        <security:authorizeBlock roles="<%= roles(Developer) %>">
-            <ul class="nav pull-right global-search navbar-search">
-                <li style="white-space:nowrap;">
-                    <stripes:form
-                            beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean">
-                        <input type="search" data-type="search" name="searchKey"
-                               placeholder="Enter a PDO, Sample or Barcode"
-                               class="search-query ui-input-text ui-body-null"
-                               style="margin-top: 5px;vertical-align: top;height:14px;"/>
-                        <input type="submit" name="search" value="Search" class="btn btn-mini"/>
-                        &#160;
-                        <stripes:link style="display: inline; padding: 0px;" title="Click for advanced search options"
-                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean"
-                                      event="view">Advanced</stripes:link>
-                    </stripes:form>
-                </li>
-            </ul>
-        </security:authorizeBlock>
+        <ul class="nav pull-right global-search navbar-search">
+            <li class="dropdown">
+                <a id="searchNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span
+                        class="icon-search"></span> Search <b class="caret"></b></a>
+                <ul class="dropdown-menu" role="menu">
+                    <li>
+                        <stripes:link
+                                beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.VesselSearchActionBean"
+                                event="view">Vessels</stripes:link>
+                    </li>
+                    <li>
+                        <stripes:link
+                                beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.SampleSearchActionBean"
+                                event="view">Samples</stripes:link>
+                    </li>
+
+                    <security:authorizeBlock roles="<%= roles(Developer) %>">
+                        <li class="divider"></li>
+                        <li>
+                            <stripes:link
+                                beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean"
+                                event="view">All Types</stripes:link>
+                        </li>
+                    </security:authorizeBlock>
+                </ul>
+            </li>
+        </ul>
     </div>
 </header>

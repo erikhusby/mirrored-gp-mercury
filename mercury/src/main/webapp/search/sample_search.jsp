@@ -4,7 +4,7 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.SampleSearchActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="Search Vessels" sectionTitle="Search">
+<stripes:layout-render name="/layout.jsp" pageTitle="Search Samples" sectionTitle="Search Samples">
     <stripes:layout-component name="extraHead">
 
         <script type="text/javascript">
@@ -34,7 +34,7 @@
                 <div class="form-horizontal">
                     <div class="control-group" style="margin-bottom:5px;">
                         <stripes:label for="barcode" class="control-label"
-                                       style="width: 60px;">sample id</stripes:label>
+                                       style="width: 60px;">Sample ID(s)</stripes:label>
                         <div class="controls" style="margin-left: 80px;">
                             <stripes:textarea rows="5" cols="160" name="searchKey" id="name"
                                               title="Enter the value to search"
@@ -44,7 +44,7 @@
 
                     <div class="control-group">
                         <div class="controls" style="margin-left: 80px;">
-                            <stripes:submit name="sampleSearch" value="Search Samples"/>
+                            <stripes:submit name="sampleSearch" value="Search"/>
                         </div>
                     </div>
                 </div>
