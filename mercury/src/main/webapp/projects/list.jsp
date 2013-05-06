@@ -64,7 +64,7 @@
                     ${actionBean.getUserFullName(project.createdBy)}
                 </td>
                 <td>
-                    <fmt:formatDate value="${project.modifiedDate}" pattern="MM/dd/yyyy HH:mm"/>
+                    <fmt:formatDate value="${project.modifiedDate}" pattern="${actionBean.dateTimePattern}"/>
                 </td>
                 <td>
                     ${actionBean.researchProjectCounts.get(project.jiraTicketKey)}

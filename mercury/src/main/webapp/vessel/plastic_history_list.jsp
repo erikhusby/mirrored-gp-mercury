@@ -103,10 +103,10 @@
                         ${bean.getUserFullNameOrBlank(listItem.eventOperator)}
                 </td>
                 <td>
-                    <fmt:formatDate value="${listItem.eventDate}" pattern="MM/dd/yyyy HH:mm:ss.S"/>
+                    <fmt:formatDate value="${listItem.eventDate}" pattern="${bean.dateTimePattern}"/>
                 </td>
                 <td>
-                    <fmt:formatDate value="${listItem.creationDate}" pattern="MM/dd/yyyy"/>
+                    <fmt:formatDate value="${listItem.creationDate}" pattern="${bean.datePattern}"/>
                 </td>
             </tr>
         </c:forEach>

@@ -79,7 +79,7 @@
                         ${bean.getUserFullName(pdo.createdBy)}
                 </td>
                 <td>
-                    <fmt:formatDate value="${pdo.createdDate}" pattern="MM/dd/yyyy"/>
+                    <fmt:formatDate value="${pdo.createdDate}" pattern="${bean.datePattern}"/>
                 </td>
             </tr>
         </c:forEach>

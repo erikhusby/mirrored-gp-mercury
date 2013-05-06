@@ -48,7 +48,7 @@
                             ${event.labEventType.name}
                     </td>
                     <td>
-                        <fmt:formatDate value="${event.eventDate}" pattern="yyyy.MM.dd HH:mm:ss.SSS"/>
+                        <fmt:formatDate value="${event.eventDate}" pattern="${bean.dateTimePattern}"/>
                     </td>
                     <td>
                             ${event.eventLocation}

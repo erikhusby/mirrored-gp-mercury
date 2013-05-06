@@ -150,5 +150,4 @@ input.search-checkbox { float: left; margin-right: 3px; }
 .search-horizontal input + .help-block, .search-horizontal select + .help-block, .search-horizontal textarea + .help-block { margin-top: 0px; }
 .search-horizontal .form-actions { padding-left: 180px; }
 
-.ui-accordion .ui-accordion-header { display: block; cursor: pointer; position: relative; margin-top: 2px; zoom: 1;
-}
+.ui-accordion .ui-accordion-header { display: block; cursor: pointer; margin-top: 2px; zoom: 1; padding: .5em .5em .5em .5em; }

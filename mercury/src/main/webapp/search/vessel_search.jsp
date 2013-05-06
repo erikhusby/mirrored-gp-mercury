@@ -9,7 +9,7 @@
 
         <script type="text/javascript">
             $(document).ready(function () {
-                $j("#accordion").accordion({ collapsible: true, active: false, icons: false, heightStyle: "content", autoHeight: false });
+                $j("#accordion").accordion({ collapsible: true, active: false, heightStyle: "content", autoHeight: false });
 
                 if (${empty actionBean.foundVessels}) {
                     showSearch();

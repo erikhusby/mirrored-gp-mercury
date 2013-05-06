@@ -170,10 +170,10 @@
                         ${bean.getUserFullName(vessel.latestEvent.eventOperator)}
                 </td>
                 <td>
-                    <fmt:formatDate value="${vessel.latestEvent.eventDate}" pattern="MM/dd/yyyy HH:mm:ss"/>
+                    <fmt:formatDate value="${vessel.latestEvent.eventDate}" pattern="${bean.dateTimePattern}"/>
                 </td>
                 <td>
-                    <fmt:formatDate value="${vessel.createdOn}" pattern="MM/dd/yyyy"/>
+                    <fmt:formatDate value="${vessel.createdOn}" pattern="${bean.datePattern}"/>
                 </td>
             </tr>
         </c:forEach>

@@ -143,7 +143,8 @@
                         <div class="controls">
                             <div class="form-value">
                                     ${actionBean.getUserFullName(actionBean.editResearchProject.createdBy)}
-                                on <fmt:formatDate value="${actionBean.editResearchProject.createdDate}"/>
+                                on <fmt:formatDate value="${actionBean.editResearchProject.createdDate}"
+                                                   pattern="${actionBean.datePattern}"/>
                             </div>
                         </div>
                     </div>
