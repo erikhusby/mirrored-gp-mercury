@@ -33,7 +33,8 @@
             <stripes:form beanclass="${actionBean.class.name}" id="searchForm" class="form-horizontal">
                 <div class="form-horizontal">
                     <div class="control-group" style="margin-bottom:5px;">
-                        <stripes:label for="barcode" class="control-label" style="width: 60px;">Vessel Barcode(s)</stripes:label>
+                        <stripes:label for="barcode" class="control-label"
+                                       style="width: 60px;">Vessel Barcode(s)</stripes:label>
                         <div class="controls" style="margin-left: 80px;">
                             <stripes:textarea rows="5" cols="160" name="searchKey" id="name"
                                               title="Enter the value to search"
@@ -48,12 +49,11 @@
                     </div>
                 </div>
             </stripes:form>
-        </div>
-        <div id="searchResults">
             <c:if test="${not actionBean.resultsAvailable}">
                 No Results Found
             </c:if>
-
+        </div>
+        <div id="searchResults">
             <c:if test="${not empty actionBean.foundVessels}">
                 <div id="resultSummary">Found ${fn:length(actionBean.foundVessels)} Vessels</div>
                 <hr style="margin-top: 5px; margin-bottom: 5px;"/>

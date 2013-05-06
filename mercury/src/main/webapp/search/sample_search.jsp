@@ -50,11 +50,10 @@
                 </div>
             </stripes:form>
         </div>
+        <c:if test="${empty actionBean.mercurySampleToVessels}">
+            No Results Found
+        </c:if>
         <div id="searchResults">
-            <c:if test="${empty actionBean.mercurySampleToVessels}">
-                No Results Found
-            </c:if>
-
             <c:if test="${not empty actionBean.mercurySampleToVessels}">
                 <div id="resultSummary">Found ${fn:length(actionBean.mercurySampleToVessels)} Samples</div>
                 <hr style="margin-top: 5px; margin-bottom: 5px;"/>

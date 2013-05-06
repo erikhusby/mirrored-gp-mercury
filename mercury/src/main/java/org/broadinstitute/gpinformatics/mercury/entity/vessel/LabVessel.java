@@ -1180,11 +1180,11 @@ public abstract class LabVessel implements Serializable {
     }
 
     /**
-     * This method gets index information only for the single samples passed in
+     * This method gets index information only for the single samples passed in.
      *
-     * @param sample
+     * @param sample The mercury sample to get the index information for.
      *
-     * @return
+     * @return A set of indexes for the mercury sample passed in.
      */
     public Set<MolecularIndexReagent> getIndexesForSample(MercurySample sample) {
         Set<MolecularIndexReagent> indexes = new HashSet<MolecularIndexReagent>();
@@ -1201,6 +1201,11 @@ public abstract class LabVessel implements Serializable {
         return indexes;
     }
 
+    /**
+     * This method gets a string concatenated representation of all the indexes.
+     *
+     * @return A string containing information about all the indexes.
+     */
     public String getIndexesString() {
         Collection<MolecularIndexReagent> indexes = getIndexes();
         if ((indexes == null) || indexes.isEmpty()) {
@@ -1274,6 +1279,13 @@ public abstract class LabVessel implements Serializable {
         return allSamples;
     }
 
+    /**
+     * This method gets all of the sample instances in this vessel for the given mercury sample.
+     *
+     * @param sample The mercury sample to search for sample instances of within this vessel.
+     *
+     * @return A set of sample instances of the mercury sample passed in.
+     */
     public Set<SampleInstance> getSampleInstancesForSample(MercurySample sample) {
         Set<SampleInstance> allSamples = new HashSet<SampleInstance>();
         Set<SampleInstance> filteredSamples = new HashSet<SampleInstance>();
