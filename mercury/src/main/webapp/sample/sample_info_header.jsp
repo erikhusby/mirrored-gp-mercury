@@ -16,7 +16,14 @@
             <td>Sample Name:</td>
             <td>${sample.sampleKey}</td>
             <td>Material Type:</td>
-            <td>${sample.bspSampleDTO.materialType}</td>
+            <c:choose>
+                <c:when test="${sample.bspSampleDTO == null}">
+                    <td>Sample not found in BSP</td>
+                </c:when>
+                <c:otherwise>
+                    <td>${sample.bspSampleDTO.materialType}</td>
+                </c:otherwise>
+            </c:choose>
         </tr>
     </table>
 

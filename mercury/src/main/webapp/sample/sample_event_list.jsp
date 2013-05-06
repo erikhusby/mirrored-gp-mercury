@@ -71,7 +71,7 @@
                     </td>
                     <td style="padding: 0;">
                         <table style="padding: 0">
-                            <c:forEach items="${vessel.labBatchCompositions}"
+                            <c:forEach items="${vessel.workflowLabBatchCompositions}"
                                        var="batchComposition">
                                 <tr>
                                     <td>
@@ -84,13 +84,17 @@
                                     <td>
                                         <c:forEach items="${vessel.getSampleInstancesForSample(sample)}"
                                                    var="sampleInstance">
-                                            <stripes:link
-                                                    beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"
-                                                    event="view">
-                                                <stripes:param name="productOrder"
-                                                               value="${sampleInstance.productOrderKey}"/>
-                                                ${sampleInstance.productOrderKey}
-                                            </stripes:link>
+                                            <c:choose>
+                                                <c:when test="${sampleInstance.productOrderKey != null}">
+                                                    <stripes:link
+                                                            beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"
+                                                            event="view">
+                                                        <stripes:param name="productOrder"
+                                                                       value="${sampleInstance.productOrderKey}"/>
+                                                        ${sampleInstance.productOrderKey}
+                                                    </stripes:link></c:when>
+                                            </c:choose>
+
                                         </c:forEach>
                                     </td>
                                 </tr>
