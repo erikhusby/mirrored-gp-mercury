@@ -175,7 +175,7 @@
                 <div class="page-header">
                     ${sectionTitle}
                     <c:if test="${not empty createTitle}">
-                        <stripes:link beanclass="${actionBean.class.name}" event="create" title="${createTitle}" class="pull-right create">
+                        <stripes:link beanclass="${actionBean.class.name}" event="${actionBean.createAction}" title="${createTitle}" class="pull-right create">
                             ${createTitle}
                         </stripes:link>
                     </c:if>

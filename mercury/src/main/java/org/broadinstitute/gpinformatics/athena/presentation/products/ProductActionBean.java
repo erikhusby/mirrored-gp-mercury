@@ -413,6 +413,13 @@ public class ProductActionBean extends CoreActionBean {
         return priceListCache.getReplacementPriceItems(editProduct);
     }
 
+    /**
+     * Normally, JSPs protect things directly, but since the JSP here only allows create for particular users, adding
+     * this here. Create is in the layout and is passed in as an attribute, so doing this in the JSP is better.
+     *
+     * @return The create product string is sent when the user is allowed to create. Otherwise, it sends an empty string
+     * which is used by master layout to leave out the Create link.
+     */
     public String getCreateTitleIfAllowed() {
         if (getUserBean().isDeveloperUser() || getUserBean().isPDMUser()) {
             return CREATE_PRODUCT;
