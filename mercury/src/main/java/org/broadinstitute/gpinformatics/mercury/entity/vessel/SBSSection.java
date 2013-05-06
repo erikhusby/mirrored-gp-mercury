@@ -413,7 +413,8 @@ public enum SBSSection {
             VesselPosition.LANE7,
             VesselPosition.LANE8
     )),
-    FLOWCELL2("FLOWCELL2", Arrays.asList(
+    // todo jmt should be FLOWCELL2?
+    ALL2("ALL2", Arrays.asList(
             VesselPosition.LANE1,
             VesselPosition.LANE2
     )),

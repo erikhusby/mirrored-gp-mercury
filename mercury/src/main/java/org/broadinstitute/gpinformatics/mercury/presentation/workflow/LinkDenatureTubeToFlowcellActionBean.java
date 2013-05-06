@@ -151,7 +151,7 @@ public class LinkDenatureTubeToFlowcellActionBean extends CoreActionBean {
         PlateType flowcell = new PlateType();
         flowcell.setBarcode(flowcellBarcode);
         flowcell.setPhysType(IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell.getAutomationName());
-        flowcell.setSection(SBSSection.FLOWCELL2.getSectionName());
+        flowcell.setSection(SBSSection.ALL2.getSectionName());
         event.setDestinationPlate(flowcell);
 
         return event;

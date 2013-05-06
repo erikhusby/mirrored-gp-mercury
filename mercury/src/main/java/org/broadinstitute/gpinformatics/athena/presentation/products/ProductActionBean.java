@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.Price
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProductTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
+import org.broadinstitute.gpinformatics.mercury.entity.DB;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
@@ -29,7 +30,7 @@ public class ProductActionBean extends CoreActionBean {
     public static final String ACTIONBEAN_URL_BINDING = "/products/product.action";
     public static final String PRODUCT_PARAMETER = "product";
 
-    private static final String CREATE_PRODUCT = CoreActionBean.CREATE + " New Product";
+    public static final String CREATE_PRODUCT = CoreActionBean.CREATE + " Product";
     private static final String EDIT_PRODUCT = CoreActionBean.EDIT + " Product: ";
 
     public static final String PRODUCT_CREATE_PAGE = "/products/create.jsp";
@@ -410,5 +411,20 @@ public class ProductActionBean extends CoreActionBean {
 
     public Collection<QuotePriceItem> getReplacementPriceItems() {
         return priceListCache.getReplacementPriceItems(editProduct);
+    }
+
+    /**
+     * Normally, JSPs protect things directly, but since the JSP here only allows create for particular users, adding
+     * this here. Create is in the layout and is passed in as an attribute, so doing this in the JSP is better.
+     *
+     * @return The create product string is sent when the user is allowed to create. Otherwise, it sends an empty string
+     * which is used by master layout to leave out the Create link.
+     */
+    public String getCreateTitleIfAllowed() {
+        if (getUserBean().isDeveloperUser() || getUserBean().isPDMUser()) {
+            return CREATE_PRODUCT;
+        }
+
+        return "";
     }
 }

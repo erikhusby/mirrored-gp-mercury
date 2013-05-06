@@ -5,7 +5,11 @@ import net.sourceforge.stripes.validation.ValidationErrors;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.OrderBillSummaryStat;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
@@ -13,6 +17,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 
 import java.io.IOException;
@@ -270,18 +275,25 @@ public class BillingTrackerImporter {
                 // Check the already billed amount against the DB.
                 previouslyBilledQuantity = billedCell.getNumericCellValue();
                 PriceItem priceItem = priceItemMap.get( trackerColumnInfos.get(priceItemIndex) );
-                // Check billedQuantity parsed against that which is already billed for this POS and PriceItem - should match
+                // Check billedQuantity parsed against that which is already billed for this POS and PriceItem, they
+                // should match.
                 ProductOrderSample.LedgerQuantities quantities = billCounts.get(priceItem);
-                if ((quantities != null) && (quantities.getBilled() != previouslyBilledQuantity)) {
-                    return String.format("Found a different billed quantity '%f' in the database for sample in %s in %s, price item '%s', in Product sheet %s. " +
-                                    "The billed quantity in the spreadsheet is '%f', please download a recent copy of the BillingTracker spreadsheet.",
-                                    quantities.getBilled(), row.getCell(BillingTrackerUtils.SAMPLE_ID_COL_POS), row.getCell(BillingTrackerUtils.PDO_ID_COL_POS),
-                                billableRef.getPriceItemName(), product.getPartNumber(), previouslyBilledQuantity );
+                if ((quantities != null) && !MathUtils.isSame(quantities.getBilled(), previouslyBilledQuantity)) {
+                    return String.format(
+                            "Found a different billed quantity '%f' in the database for sample in %s in %s, " +
+                            "price item '%s', in Product sheet %s. The billed quantity in the spreadsheet is " +
+                            "'%f', please download a recent copy of the BillingTracker spreadsheet.",
+                            quantities.getBilled(), row.getCell(BillingTrackerUtils.SAMPLE_ID_COL_POS),
+                            row.getCell(BillingTrackerUtils.PDO_ID_COL_POS),
+                            billableRef.getPriceItemName(), product.getPartNumber(), previouslyBilledQuantity);
                 }
                 if (quantities == null && previouslyBilledQuantity != 0) {
-                    return String.format("No billed quantity found in the database for sample %s in %s, price item '%s', in Product sheet %s. " +
-                                         "However the billed quantity in the spreadsheet is '%f', indicating the Billed column of this spreadsheet has accidentally been edited.",
-                            row.getCell(BillingTrackerUtils.SAMPLE_ID_COL_POS), row.getCell(BillingTrackerUtils.PDO_ID_COL_POS),
+                    return String.format("No billed quantity found in the database for sample %s in %s, price item " +
+                                         "'%s', in Product sheet %s. However the billed quantity in the spreadsheet " +
+                                         "is '%f', indicating the Billed column of this spreadsheet has accidentally " +
+                                         "been edited.",
+                            row.getCell(BillingTrackerUtils.SAMPLE_ID_COL_POS),
+                            row.getCell(BillingTrackerUtils.PDO_ID_COL_POS),
                             billableRef.getPriceItemName(), product.getPartNumber(), previouslyBilledQuantity );
                 }
             }

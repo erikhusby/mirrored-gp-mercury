@@ -3,13 +3,9 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.security.AuthorizePageActionBean" />
 
-<stripes:layout-render name="/layout.jsp" pageTitle="Page Authorization" sectionTitle="List Page Authorizations">
+<stripes:layout-render name="/layout.jsp" pageTitle="Page Authorization" sectionTitle="List Page Authorization" createTitle="Create Page Authorization">
 
     <stripes:layout-component name="content">
-
-        <p>
-            <stripes:link beanclass="${actionBean.class.name}" event="create" title="Click to authorize a new page" class="pull-right"><span class="icon-home"></span>New Page Authorization</stripes:link>
-        </p>
 
         <div class="clearfix"></div>
 

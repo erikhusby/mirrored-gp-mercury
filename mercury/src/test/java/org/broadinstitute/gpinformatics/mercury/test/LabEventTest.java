@@ -126,7 +126,7 @@ public class LabEventTest extends BaseEventTest{
     /**
      * Section for both lanes of a 2-lane flowcell
      */
-    public static final String SECTION_ALL_2 = "FLOWCELL2";
+    public static final String SECTION_ALL_2 = "ALL2";
 
     public static final String POND_REGISTRATION_TUBE_PREFIX = "PondReg";
 
@@ -288,6 +288,12 @@ public class LabEventTest extends BaseEventTest{
 
                     @Override
                     public Map<String, List<ProductOrderSample>> findMapSampleNameToPoSample(List<String> sampleNames) {
+                        return null;
+                    }
+
+                    @Override
+                    public Collection<ProductOrder> retrieveMultipleProductOrderDetails(
+                            @Nonnull Collection<String> poBusinessKeys) {
                         return null;
                     }
                 }
@@ -672,7 +678,8 @@ public class LabEventTest extends BaseEventTest{
                 for (int column = 1; column <= 6; column++) {
                     ReceptacleType receptacleType = new ReceptacleType();
                     receptacleType.setBarcode(tubeBarcodes.get(barcodeIndex));
-                    receptacleType.setPosition(bettaLimsMessageTestFactory.buildWellName(row * 12 + column));
+                    receptacleType.setPosition(bettaLimsMessageTestFactory.buildWellName(row * 12 + column,
+                            BettaLimsMessageTestFactory.WellNameType.SHORT));
                     sourcePositionMap.getReceptacle().add(receptacleType);
                     barcodeIndex++;
                 }

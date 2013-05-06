@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.quote;
 
+import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
+
 import javax.annotation.Nonnull;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -31,9 +33,7 @@ public class QuotePriceItem {
 
     public QuotePriceItem() {}
 
-    public static QuotePriceItem convertMercuryPriceItem(
-        @Nonnull org.broadinstitute.gpinformatics.athena.entity.products.PriceItem priceItem) {
-
+    public static QuotePriceItem convertMercuryPriceItem(@Nonnull PriceItem priceItem) {
         QuotePriceItem quotePriceItem = new QuotePriceItem();
         quotePriceItem.setName(priceItem.getName());
         quotePriceItem.setCategoryName(priceItem.getCategory());
@@ -253,7 +253,7 @@ public class QuotePriceItem {
                 '}';
     }
 
-    public boolean isMercuryPriceItemEqual(org.broadinstitute.gpinformatics.athena.entity.products.PriceItem priceItem) {
+    public boolean isMercuryPriceItemEqual(PriceItem priceItem) {
         return platformName.equals(priceItem.getPlatform()) &&
                categoryName.equals(priceItem.getCategory()) &&
                name.equals(priceItem.getName());

@@ -13,8 +13,6 @@ import java.util.*;
 /**
  * This entity represents all the stored information for a Mercury Project.
  *
- * @author mcovarr
- *
  */
 @Entity
 @Audited

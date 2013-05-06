@@ -120,7 +120,8 @@ public class DriedBloodSpotDbFreeTest {
                 // DBSSamplePunch receptacle -> plate A01 etc.
                 ReceptaclePlateTransferEvent samplePunchJaxb = bettaLimsMessageTestFactory.buildTubeToPlate(
                         "DBSSamplePunch", ftaPaperBarcode, incubationPlateBarcode, "96DeepWell",
-                        bettaLimsMessageTestFactory.buildWellName(paperNum), "FTAPaper");
+                        bettaLimsMessageTestFactory.buildWellName(paperNum,
+                                BettaLimsMessageTestFactory.WellNameType.LONG), "FTAPaper");
                 paperNum++;
                 samplePunchJaxb.setBatchId(labBatchId);
                 samplePunchJaxbs.add(samplePunchJaxb);
@@ -243,7 +244,8 @@ public class DriedBloodSpotDbFreeTest {
             for (TwoDBarcodedTube twoDBarcodedTube : mapBarcodeToTube.values()) {
                 LabEvent samplePunchEntity = labEventFactory.buildVesselToSectionDbFree(
                         driedBloodSpotJaxbBuilder.getSamplePunchJaxbs().get(tubeNum), twoDBarcodedTube, null,
-                        bettaLimsMessageTestFactory.buildWellName(tubeNum));
+                        bettaLimsMessageTestFactory.buildWellName(tubeNum,
+                                BettaLimsMessageTestFactory.WellNameType.LONG));
                 incubationPlate = (StaticPlate) samplePunchEntity.getTargetLabVessels().iterator().next();
                 tubeNum++;
             }
