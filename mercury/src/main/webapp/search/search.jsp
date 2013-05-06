@@ -4,7 +4,7 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="Search Vessels" sectionTitle="Search">
+<stripes:layout-render name="/layout.jsp" pageTitle="Search All Types" sectionTitle="Search All Types">
 
     <stripes:layout-component name="extraHead">
 
@@ -28,7 +28,7 @@
         <stripes:form beanclass="${actionBean.class.name}" id="searchForm" class="form-horizontal">
             <div class="form-horizontal">
                 <div class="control-group" style="margin-bottom:5px;">
-                    <stripes:label for="barcode" class="control-label" style="width: 60px;">barcode</stripes:label>
+                    <stripes:label for="barcode" class="control-label" style="width: 60px;">Search For</stripes:label>
                     <div class="controls" style="margin-left: 80px;">
                         <stripes:textarea rows="5" cols="160" name="searchKey" id="name"
                                           title="Enter the value to search"
@@ -43,10 +43,6 @@
                 </div>
             </div>
         </stripes:form>
-
-        <c:if test="${not actionBean.resultsAvailable}">
-            No Results Found
-        </c:if>
 
         <c:if test="${not empty actionBean.foundVessels}">
 
