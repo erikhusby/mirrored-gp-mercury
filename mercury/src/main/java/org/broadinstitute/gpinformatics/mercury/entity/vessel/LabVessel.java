@@ -506,16 +506,24 @@ public abstract class LabVessel implements Serializable {
      * @return This returns a list of vessel positions within this vessel that contain the sample instances passed in.
      */
     public List<VesselPosition> getPositionsOfSample(@Nonnull SampleInstance sampleInstance) {
+        if (getContainerRole() == null) {
+            return Collections.emptyList();
+        }
+
+        VesselPosition[] positions = getContainerRole().getEmbedder().getVesselGeometry().getVesselPositions();
+        if (positions == null) {
+            return Collections.emptyList();
+        }
+
         List<VesselPosition> positionList = new ArrayList<VesselPosition>();
-        if (getContainerRole() != null) {
-            for (VesselPosition position : getContainerRole().getEmbedder().getVesselGeometry().getVesselPositions()) {
-                for (SampleInstance curSampleInstance : getSamplesAtPosition(position)) {
-                    if (curSampleInstance.getStartingSample().equals(sampleInstance.getStartingSample())) {
-                        positionList.add(position);
-                    }
+        for (VesselPosition position : positions) {
+            for (SampleInstance curSampleInstance : getSamplesAtPosition(position)) {
+                if (curSampleInstance.getStartingSample().equals(sampleInstance.getStartingSample())) {
+                    positionList.add(position);
                 }
             }
         }
+
         return positionList;
     }
 

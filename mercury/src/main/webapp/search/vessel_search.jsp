@@ -9,6 +9,8 @@
 
         <script type="text/javascript">
             $(document).ready(function () {
+                $j("#accordion").accordion({ collapsible: true, active: false, icons: false, heightStyle: "content", autoHeight: false });
+
                 if (${empty actionBean.foundVessels}) {
                     showSearch();
                 }
@@ -57,13 +59,22 @@
             <c:if test="${not empty actionBean.foundVessels}">
                 <div id="resultSummary">Found ${fn:length(actionBean.foundVessels)} Vessels</div>
                 <hr style="margin-top: 5px; margin-bottom: 5px;"/>
-                <c:forEach items="${actionBean.foundVessels}" var="vessel" varStatus="status">
-                    <stripes:layout-render name="/vessel/vessel_info_header.jsp" bean="${actionBean}"
-                                           vessel="${vessel}"/>
-                    <stripes:layout-render name="/vessel/vessel_sample_list.jsp" vessel="${vessel}"
-                                           index="${status.count}" bean="${actionBean}"/>
-                    <hr style="color: #0088CC; background-color: #0088CC; height: 2px; margin-top: 10px; margin-bottom: 10px;"/>
-                </c:forEach>
+
+                <div id="accordion">
+                    <c:forEach items="${actionBean.foundVessels}" var="vessel" varStatus="status">
+                        <div style="padding-left: 20px;">
+                            <stripes:layout-render name="/vessel/vessel_info_header.jsp" bean="${actionBean}"
+                                                   vessel="${vessel}"/>
+                        </div>
+
+                        <div id="vesselList-${vessel.labCentricName}" style="height: 300px;">
+                            <div>
+                                <stripes:layout-render name="/vessel/vessel_sample_list.jsp" vessel="${vessel}"
+                                                       index="${status.count}" bean="${actionBean}"/>
+                            </div>
+                        </div>
+                    </c:forEach>
+                </div>
             </c:if>
         </div>
     </stripes:layout-component>

@@ -26,14 +26,14 @@
         });
     </script>
 
-    <table id="vesselSampleListView${index}" class="table simple" style="margin: 0 0; width: 1024px">
+    <table id="vesselSampleListView${index}" class="table simple" style="margin: 0 0; width: 100%">
         <thead>
-        <tr>
-            <th>Sample</th>
-            <th>Index</th>
-            <th>Position</th>
-            <th>JIRAs + PDOs</th>
-        </tr>
+            <tr>
+                <th>Sample</th>
+                <th>Index</th>
+                <th>Position</th>
+                <th>JIRAs + PDOs</th>
+            </tr>
         </thead>
         <tbody>
         <c:forEach items="${vessel.sampleInstances}" var="sample">

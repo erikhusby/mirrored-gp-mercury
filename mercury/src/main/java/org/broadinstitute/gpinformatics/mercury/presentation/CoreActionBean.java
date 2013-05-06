@@ -458,4 +458,12 @@ public class CoreActionBean implements ActionBean {
     public String[] getRoles(@Nonnull DB.Role... roles) {
         return DB.roles(roles);
     }
+
+    public String getDatePattern() {
+        return "MM/dd/yyyy";
+    }
+
+    public String getDateTimePattern() {
+        return "MM/dd/yyyy HH:mm";
+    }
 }
