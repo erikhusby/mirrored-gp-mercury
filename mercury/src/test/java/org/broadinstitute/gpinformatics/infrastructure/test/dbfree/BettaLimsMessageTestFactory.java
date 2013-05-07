@@ -11,7 +11,6 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEv
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
-import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 
 import javax.xml.bind.JAXBContext;
@@ -43,8 +42,31 @@ public class BettaLimsMessageTestFactory {
 
             return writer.toString();
         } catch (JAXBException e) {
-            throw new InformaticsServiceException(e);
+            throw new RuntimeException(e);
         }
+    }
+
+    public static void addMessage(List<BettaLIMSMessage> messageList, BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
+            StationEventType... stationEventTypes) {
+        BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
+        bettaLIMSMessage.setMode(LabEventFactory.MODE_MERCURY);
+        for (StationEventType stationEventType : stationEventTypes) {
+            if (stationEventType instanceof PlateTransferEventType) {
+                bettaLIMSMessage.getPlateTransferEvent().add((PlateTransferEventType) stationEventType);
+            } else if (stationEventType instanceof PlateCherryPickEvent) {
+                bettaLIMSMessage.getPlateCherryPickEvent().add((PlateCherryPickEvent) stationEventType);
+            } else if (stationEventType instanceof PlateEventType) {
+                bettaLIMSMessage.getPlateEvent().add((PlateEventType) stationEventType);
+            } else if (stationEventType instanceof ReceptaclePlateTransferEvent) {
+                bettaLIMSMessage.getReceptaclePlateTransferEvent().add((ReceptaclePlateTransferEvent) stationEventType);
+            } else if (stationEventType instanceof ReceptacleEventType) {
+                bettaLIMSMessage.getReceptacleEvent().add((ReceptacleEventType) stationEventType);
+            } else {
+                throw new RuntimeException("Unknown station event type " + stationEventType);
+            }
+        }
+        messageList.add(bettaLIMSMessage);
+        bettaLimsMessageTestFactory.advanceTime();
     }
 
     /**

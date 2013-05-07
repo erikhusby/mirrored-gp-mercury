@@ -136,28 +136,28 @@ public class DriedBloodSpotDbFreeTest {
             reagentType.setKitType("Incubation Mix");
             reagentType.setBarcode("IncubationMix1234");
             incubationMixJaxb.getReagent().add(reagentType);
-            LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, incubationMixJaxb);
+            BettaLimsMessageTestFactory.addMessage(messageList, bettaLimsMessageTestFactory, incubationMixJaxb);
 
             // DBSLysisBuffer plateEvent
             lysisBufferJaxb = bettaLimsMessageTestFactory.buildPlateEvent("DBSLysisBuffer", incubationPlateBarcode);
-            LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, lysisBufferJaxb);
+            BettaLimsMessageTestFactory.addMessage(messageList, bettaLimsMessageTestFactory, lysisBufferJaxb);
 
             // DBSMagneticResin plateEVent
             magneticResinJaxb = bettaLimsMessageTestFactory.buildPlateEvent("DBSMagneticResin", incubationPlateBarcode);
-            LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, magneticResinJaxb);
+            BettaLimsMessageTestFactory.addMessage(messageList, bettaLimsMessageTestFactory, magneticResinJaxb);
 
             String firstPurificationBarcode = "DBS1stPur" + timestamp;
             // DBS1stPurification plate -> plate
             dbs1stPurificationJaxb = bettaLimsMessageTestFactory.buildPlateToPlate("DBS1stPurification", incubationPlateBarcode, firstPurificationBarcode);
-            LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, dbs1stPurificationJaxb);
+            BettaLimsMessageTestFactory.addMessage(messageList, bettaLimsMessageTestFactory, dbs1stPurificationJaxb);
 
             // DBSWashBuffer plateEvent
             dbsWashBufferJaxb = bettaLimsMessageTestFactory.buildPlateEvent("DBSWashBuffer", firstPurificationBarcode);
-            LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, dbsWashBufferJaxb);
+            BettaLimsMessageTestFactory.addMessage(messageList, bettaLimsMessageTestFactory, dbsWashBufferJaxb);
 
             // DBSElutionBuffer plateEvent
             dbsElutionBufferJaxb = bettaLimsMessageTestFactory.buildPlateEvent("DBSElutionBuffer", firstPurificationBarcode);
-            LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, dbsElutionBufferJaxb);
+            BettaLimsMessageTestFactory.addMessage(messageList, bettaLimsMessageTestFactory, dbsElutionBufferJaxb);
 
             // DBSFinalTransfer plate -> rack
             List<String> finalTubeBarcodes = new ArrayList<String>();
@@ -166,7 +166,7 @@ public class DriedBloodSpotDbFreeTest {
             }
             dbsFinalTransferJaxb = bettaLimsMessageTestFactory.buildPlateToRack("DBSFinalTransfer", firstPurificationBarcode,
                     "DBSFinal" + timestamp, finalTubeBarcodes);
-            LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, dbsFinalTransferJaxb);
+            BettaLimsMessageTestFactory.addMessage(messageList, bettaLimsMessageTestFactory, dbsFinalTransferJaxb);
         }
 
         public List<BettaLIMSMessage> getMessageList() {
