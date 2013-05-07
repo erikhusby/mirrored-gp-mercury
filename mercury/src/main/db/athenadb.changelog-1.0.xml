@@ -3055,4 +3055,41 @@
         <dropTable schemaName="athena" tableName="old_opt_price_items"/>
     </changeSet>
 
+    <changeSet id="GPLIM-1293" author="pshapiro">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists columnName="ACCESS_CONTROL_ENABLED" tableName="RESEARCH_PROJECT" schemaName="ATHENA"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="RESEARCH_PROJECT" schemaName="ATHENA">
+            <column name="ACCESS_CONTROL_ENABLED" type="NUMBER(1,0)"/>
+        </addColumn>
+        <addNotNullConstraint
+                tableName="RESEARCH_PROJECT"
+                columnName="ACCESS_CONTROL_ENABLED"
+                defaultNullValue="0" />
+    </changeSet>
+
+    <changeSet id="GPLIM-1293-1" author="pshapiro">
+        <preConditions>
+            <not>
+                <columnExists tableName="RESEARCH_PROJECT_AUD" columnName="ACCESS_CONTROL_ENABLED" schemaName="ATHENA"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="RESEARCH_PROJECT_AUD">
+            <column name="ACCESS_CONTROL_ENABLED" type="NUMBER(1,0)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-1293-2" author="pshapiro">
+        <sql>
+            ALTER TABLE ATHENA.PROJECT_PERSON drop CONSTRAINT CHECK_ROLE
+        </sql>
+        <sql>
+            ALTER TABLE ATHENA.PROJECT_PERSON
+            ADD CONSTRAINT CHECK_ROLE
+            CHECK (ROLE IN ('BROAD_SCIENTIST', 'EXTERNAL', 'PM_IN_CHARGE', 'PM', 'PDM', 'BROAD_PI', 'SCIENTIST', 'OTHER', 'UNSPECIFIED'))
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>

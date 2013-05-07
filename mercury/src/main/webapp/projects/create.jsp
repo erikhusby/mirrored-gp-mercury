@@ -49,6 +49,16 @@
                             }
                         );
 
+                        $j("#otherUsers").tokenInput(
+                            "${ctxpath}/projects/project.action?usersAutocomplete=", {
+                                hintText: "Enter a user name",
+                                prePopulate: ${actionBean.ensureStringResult(actionBean.otherUserList.completeData)},
+                                tokenDelimiter: "${actionBean.otherUserList.separator}",
+                                preventDuplicates: true,
+                                resultsFormatter: formatInput
+                            }
+                        );
+
                         $j("#fundingSources").tokenInput(
                             "${ctxpath}/projects/project.action?fundingAutocomplete=", {
                                 prePopulate: ${actionBean.ensureStringResult(actionBean.fundingSourceList.completeData)},
@@ -110,6 +120,15 @@
                     </div>
                 </div>
 
+                <div class="control-group">
+                    <stripes:label for="accessControlEnabled" class="control-label">Access Control</stripes:label>
+                    <div class="controls">
+                        <stripes:checkbox name="editResearchProject.accessControlEnabled"
+                                          id="accessControlEnabled" style="margin-top: 10px;"/>
+                        <stripes:label for="accessControlEnabled" class="control-label" style="width:auto;">Restrict to Project Users</stripes:label>
+                    </div>
+                </div>
+
                 <!-- Project Managers -->
                 <div class="control-group">
                     <stripes:label for="projectManagers" class="control-label">Project Managers *</stripes:label>
@@ -141,6 +160,14 @@
                     <stripes:label for="scientists" class="control-label">Scientists</stripes:label>
                     <div class="controls">
                         <stripes:text id="scientists" name="scientistList.listOfKeys" />
+                    </div>
+                </div>
+
+                <!-- Other -->
+                <div class="control-group">
+                    <stripes:label for="otherUsers" class="control-label">Other Users</stripes:label>
+                    <div class="controls">
+                        <stripes:text id="otherUsers" name="otherUserList.listOfKeys" />
                     </div>
                 </div>
 
