@@ -55,32 +55,37 @@
                     </a>
                 </td>
                 <td>
-                        ${position}
+                    ${position}
                 </td>
                 <td>
-                    <a href="${ctxpath}/search/all.action?search=&searchKey=${actionBean.getVesselAtPosition(position).label}">
+                    <c:if test="${not empty actionBean.getVesselAtPosition(position).label}">
+                        <a href="${ctxpath}/search/all.action?search=&searchKey=${actionBean.getVesselAtPosition(position).label}">
                             ${actionBean.getVesselAtPosition(position).label}
-                    </a>
+                        </a>
+                    </c:if>
                 </td>
                 <td>
                         ${actionBean.getVesselAtPosition(position).type.name}
                 </td>
                 <td>
-                    <a href="${ctxpath}/search/all.action?search=&searchKey=${sample.startingSample.sampleKey}">
+                    <c:if test="${not empty sample.startingSample.sampleKey}">
+                        <a href="${ctxpath}/search/all.action?search=&searchKey=${sample.startingSample.sampleKey}">
                             ${sample.startingSample.sampleKey}
-                    </a>
-
+                        </a>
+                    </c:if>
                 </td>
                 <td>
-                    <a href="${ctxpath}/search/all.action?search=&searchKey=${sample.productOrderKey}">
+                    <c:if test="${not empty sample.productOrderKey}">
+                        <a href="${ctxpath}/search/all.action?search=&searchKey=${sample.productOrderKey}">
                             ${sample.productOrderKey}
-                    </a>
+                        </a>
+                    </c:if>
                 </td>
                 <td>
-                        ${actionBean.getIndexValueForSample(sample)}
+                    ${actionBean.getIndexValueForSample(sample)}
                 </td>
                 <td>
-                        ${actionBean.getReagentInfoForSample(sample)}
+                    ${actionBean.getReagentInfoForSample(sample)}
                 </td>
             </tr>
         </c:forEach>

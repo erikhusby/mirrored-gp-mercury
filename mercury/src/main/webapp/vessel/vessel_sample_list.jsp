@@ -26,7 +26,7 @@
         });
     </script>
 
-    <table id="vesselSampleListView${index}" class="table simple" style="margin: 0 0; width: 100%">
+    <table id="vesselSampleListView${index}" class="table simple" style="margin: 0 0; width: 100%;">
         <thead>
             <tr>
                 <th>Sample</th>
@@ -47,7 +47,7 @@
                             <c:forEach items="${curIndex.molecularIndexingScheme.indexes}" var="innerIndex">
                                 <tr>
                                     <td style="border: none">
-                                            ${innerIndex.value.sequence}
+                                        ${innerIndex.value.sequence}
                                     </td>
                                 </tr>
                             </c:forEach>
@@ -59,35 +59,33 @@
                         <c:forEach items="${vessel.getPositionsOfSample(sample)}" var="position">
                             <tr>
                                 <td style="border: none;">
-                                        ${position}
+                                    ${position}
                                 </td>
                             </tr>
                         </c:forEach>
                     </table>
                 </td>
                 <td style="padding: 0;">
-                    <table style="padding: 0">
-                        <c:forEach items="${sample.getLabBatchCompositionInVesselContext(vessel)}"
-                                   var="batchComposition">
-                            <tr>
-                                <td>
-                                    <a target="JIRA" href="${bean.jiraUrl(batchComposition.labBatch.jiraTicket)}"
-                                       class="external" target="JIRA">
-                                            ${batchComposition.labBatch.businessKey}
-                                        (${batchComposition.count}/${batchComposition.denominator})
-                                    </a>
-                                </td>
-                                <td>
-                                    <stripes:link
-                                            beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"
-                                            event="view">
-                                        <stripes:param name="productOrder" value="${sample.productOrderKey}"/>
-                                        ${sample.productOrderKey}
-                                    </stripes:link>
-                                </td>
-                            </tr>
-                        </c:forEach>
-                    </table>
+                    <c:forEach items="${sample.getLabBatchCompositionInVesselContext(vessel)}"
+                               var="batchComposition">
+                        <c:if test="${not empty batchComposition.labBatch.businessKey}">
+                            <a target="JIRA" href="${bean.jiraUrl(batchComposition.labBatch.jiraTicket)}"
+                               class="external" target="JIRA">
+                                    ${batchComposition.labBatch.businessKey}
+                                (${batchComposition.count}/${batchComposition.denominator})
+                            </a>
+                        </c:if>
+
+                        <c:if test="${not empty sample.productOrderKey}">
+                            <stripes:link
+                                beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"
+                                event="view">
+                                <stripes:param name="productOrder" value="${sample.productOrderKey}"/>
+                                ${sample.productOrderKey}
+                            </stripes:link>
+                        </c:if>
+                        <br/>
+                    </c:forEach>
                 </td>
             </tr>
         </c:forEach>

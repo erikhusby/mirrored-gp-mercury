@@ -9,6 +9,9 @@
 
         <script type="text/javascript">
             $(document).ready(function () {
+                $j("#accordion").accordion({ collapsible: true, active: false, heightStyle: "content", autoHeight: false });
+                $j("#accordion").show();
+
                 if (${empty actionBean.mercurySampleToVessels}) {
                     showSearch();
                 }
@@ -56,15 +59,22 @@
         <div id="searchResults">
             <c:if test="${not empty actionBean.mercurySampleToVessels}">
                 <div id="resultSummary">Found ${fn:length(actionBean.mercurySampleToVessels)} Samples</div>
-                <hr style="margin-top: 5px; margin-bottom: 5px;"/>
-                <c:forEach items="${actionBean.mercurySampleToVessels}" var="sampleToVessels" varStatus="status">
-                    <stripes:layout-render name="/sample/sample_info_header.jsp" bean="${actionBean}"
-                                           sample="${sampleToVessels.key}"/>
-                    <stripes:layout-render name="/sample/sample_event_list.jsp" vessels="${sampleToVessels.value}"
-                                           index="${status.count}" bean="${actionBean}"
-                                           sample="${sampleToVessels.key}"/>
-                    <hr style="color: #0088CC; background-color: #0088CC; height: 2px; margin-top: 10px; margin-bottom: 10px;"/>
-                </c:forEach>
+
+                <div id="accordion" style="display:none;">
+                    <c:forEach items="${actionBean.mercurySampleToVessels}" var="sampleToVessels" varStatus="status">
+                        <div style="padding-left: 20px;">
+                            <stripes:layout-render name="/sample/sample_info_header.jsp" bean="${actionBean}"
+                                                   sample="${sampleToVessels.key}"/>
+                        </div>
+
+                        <div id="vesselList-${vessel.labCentricName}" style="height: 300px;">
+                            <div>
+                                <stripes:layout-render name="/sample/sample_event_list.jsp" vessels="${sampleToVessels.value}"
+                                                       index="${status.count}" bean="${actionBean}" sample="${sampleToVessels.key}"/>
+                            </div>
+                        </div>
+                    </c:forEach>
+                </div>
             </c:if>
         </div>
     </stripes:layout-component>

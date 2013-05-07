@@ -10,6 +10,7 @@
         <script type="text/javascript">
             $(document).ready(function () {
                 $j("#accordion").accordion({ collapsible: true, active: false, heightStyle: "content", autoHeight: false });
+                $j("#accordion").show();
 
                 if (${empty actionBean.foundVessels}) {
                     showSearch();
@@ -58,9 +59,8 @@
         <div id="searchResults">
             <c:if test="${not empty actionBean.foundVessels}">
                 <div id="resultSummary">Found ${fn:length(actionBean.foundVessels)} Vessels</div>
-                <hr style="margin-top: 5px; margin-bottom: 5px;"/>
 
-                <div id="accordion">
+                <div id="accordion" style="display:none;">
                     <c:forEach items="${actionBean.foundVessels}" var="vessel" varStatus="status">
                         <div style="padding-left: 20px;">
                             <stripes:layout-render name="/vessel/vessel_info_header.jsp" bean="${actionBean}"
