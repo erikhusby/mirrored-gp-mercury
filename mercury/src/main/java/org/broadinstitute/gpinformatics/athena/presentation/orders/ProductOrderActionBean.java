@@ -544,7 +544,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
-    @After(stages = LifecycleStage.BindingAndValidation, on = VIEW_ACTION)
+    @After(stages = LifecycleStage.BindingAndValidation, on = { VIEW_ACTION, ADD_SAMPLES_ACTION })
     public void entryInit() {
         productOrderListEntry = editOrder.isDraft() ? ProductOrderListEntry.createDummy() :
                 orderListEntryDao.findSingle(editOrder.getJiraTicketKey());
@@ -727,10 +727,11 @@ public class ProductOrderActionBean extends CoreActionBean {
         Resolution resolution =
             ProductOrderActionBean.getTrackerForOrders(
                 this, selectedProductOrders, priceItemDao, bspUserList, priceListCache);
+
         if (hasErrors()) {
             setupListDisplay();
-
         }
+
         return resolution;
     }
 
