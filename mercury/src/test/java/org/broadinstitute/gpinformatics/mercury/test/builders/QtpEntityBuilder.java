@@ -99,7 +99,8 @@ public class QtpEntityBuilder {
         if (poolTubes.size() > 1) {
             Map<VesselPosition, TwoDBarcodedTube> mapPositionToTube = new HashMap<VesselPosition, TwoDBarcodedTube>();
             for (int j = 0; j < poolTubes.size(); j++) {
-                mapPositionToTube.put(VesselPosition.getByName(bettaLimsMessageTestFactory.buildWellName(j + 1)),
+                mapPositionToTube.put(VesselPosition.getByName(bettaLimsMessageTestFactory.buildWellName(j + 1,
+                        BettaLimsMessageTestFactory.WellNameType.SHORT)),
                         poolTubes.get(j));
             }
             rearrayedPoolingRack = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);

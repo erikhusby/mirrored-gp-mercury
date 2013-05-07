@@ -64,7 +64,7 @@ public class BucketEntryDaoTest extends ContainerTest {
         twoDBarcodeKey = "SM-1493";
         testPoBusinessKey = "PDO-33";
         BucketEntry testEntry = new BucketEntry(new TwoDBarcodedTube(twoDBarcodeKey), testPoBusinessKey,
-                                                       newTestBucket);
+                newTestBucket);
         bucketEntryDao.persist(testEntry);
         bucketEntryDao.flush();
         bucketEntryDao.clear();
@@ -97,9 +97,8 @@ public class BucketEntryDaoTest extends ContainerTest {
 
         SimpleDateFormat dateFormatter = new SimpleDateFormat("dd/MM/yy");
 
-        Assert.assertEquals(dateFormatter.format(new Date()), dateFormatter.format(
-                                                                                          retrievedEntry
-                                                                                                  .getCreatedDate()));
+        Assert.assertEquals(dateFormatter.format(new Date()),
+                dateFormatter.format(retrievedEntry.getCreatedDate()));
 
         Bucket findBucket = bucketDao.findByName(BucketDaoTest.EXTRACTION_BUCKET_NAME);
 
@@ -110,8 +109,8 @@ public class BucketEntryDaoTest extends ContainerTest {
         Assert.assertNotNull(retrievedEntry2.getCreatedDate());
 
         Assert.assertEquals(dateFormatter.format(new Date()), dateFormatter.format(
-                                                                                          retrievedEntry2
-                                                                                                  .getCreatedDate()));
+                retrievedEntry2
+                        .getCreatedDate()));
     }
 
     @Test
@@ -121,7 +120,7 @@ public class BucketEntryDaoTest extends ContainerTest {
 
         TwoDBarcodedTube vesselToDupe = tubeDAO.findByBarcode(twoDBarcodeKey);
         BucketEntry testEntry = new BucketEntry(vesselToDupe, testPoBusinessKey + "dupe",
-                                                       testBucket);
+                testBucket);
 
         bucketEntryDao.persist(testEntry);
         bucketEntryDao.flush();
@@ -140,8 +139,8 @@ public class BucketEntryDaoTest extends ContainerTest {
         SimpleDateFormat dateFormatter = new SimpleDateFormat("dd/MM/yy");
 
         Assert.assertEquals(dateFormatter.format(new Date()), dateFormatter.format(
-                                                                                          retrievedEntry
-                                                                                                  .getCreatedDate()));
+                retrievedEntry
+                        .getCreatedDate()));
 
         Bucket findBucket = bucketDao.findByName(BucketDaoTest.EXTRACTION_BUCKET_NAME);
 

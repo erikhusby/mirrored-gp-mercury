@@ -53,20 +53,29 @@ public class BettaLimsMessageTestFactory {
      * each event has a disambiguator.
      */
     public void advanceTime() {
-        time++;
+        // The Mercury constraint has millisecond resolution, but the Squid equivalent has second resolution, so to
+        // allow cross system testing we advance by 1 second.
+        time+=1000L;
     }
 
-    public String buildWellName(int positionNumber) {
+    public enum WellNameType {
+        LONG, /** long form of well name, e.g. A01 */
+        SHORT /** short form of well name, e.g. A1 */
+    }
+
+    public String buildWellName(int positionNumber, WellNameType wellNameType) {
         @SuppressWarnings("NumericCastThatLosesPrecision")
         char row = (char) ('A' + (positionNumber / NUMBER_OF_RACK_COLUMNS));
         int column = positionNumber % NUMBER_OF_RACK_COLUMNS;
-        if(column == 0) {
+        if (column == 0) {
             column = NUMBER_OF_RACK_COLUMNS;
             row--;
         }
         String columnString = String.valueOf(column);
-        if(columnString.length() == 1) {
-            columnString = "0" + columnString;
+        if (wellNameType == WellNameType.LONG) {
+            if (columnString.length() == 1) {
+                columnString = "0" + columnString;
+            }
         }
         return row + columnString;
     }
@@ -203,7 +212,7 @@ public class BettaLimsMessageTestFactory {
             plateCherryPickEvent.getSourcePositionMap().add(buildPositionMap(sourceRackBarcodes.get(i), sourceTubeBarcode));
         }
 
-        plateCherryPickEvent.setPlate(buildPlate(targetRackBarcode));
+        plateCherryPickEvent.setPlate(buildRack(targetRackBarcode));
         plateCherryPickEvent.setPositionMap(buildPositionMap(targetRackBarcode, targetTubeBarcodes));
 
         for (CherryPick cherryPick : cherryPicks) {
@@ -373,7 +382,7 @@ public class BettaLimsMessageTestFactory {
     private void addReceptacleToPositionMap(int rackPosition, PositionMapType targetPositionMap, String barcode) {
         ReceptacleType receptacleType = new ReceptacleType();
         receptacleType.setBarcode(barcode);
-        receptacleType.setPosition(buildWellName(rackPosition));
+        receptacleType.setPosition(buildWellName(rackPosition, WellNameType.SHORT));
         receptacleType.setReceptacleType("tube");
         targetPositionMap.getReceptacle().add(receptacleType);
     }

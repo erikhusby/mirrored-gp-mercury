@@ -208,9 +208,20 @@ public class BettalimsMessageResource {
                 bettalimsResponse = bettalimsConnector.sendMessage(message);
             }
             if (processInMercury) {
-                processMessage(bettaLIMSMessage);
+                try {
+                    processMessage(bettaLIMSMessage);
+                } catch (Exception e) {
+                    // If we're processing in both Mercury and Squid, and Squid succeeded while Mercury failed,
+                    // ignore the Mercury error.
+                    if (processInSquid && bettalimsResponse.getCode() !=
+                            Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()) {
+                        LOG.error("Mercury processing failed, returning Squid result to client", e);
+                    } else {
+                        throw e;
+                    }
+                }
             }
-            if (bettalimsResponse != null && bettalimsResponse.getCode() != 200) {
+            if (bettalimsResponse != null && bettalimsResponse.getCode() != Response.Status.OK.getStatusCode()) {
                 throw new RuntimeException(bettalimsResponse.getMessage());
             }
         } catch (Exception e) {

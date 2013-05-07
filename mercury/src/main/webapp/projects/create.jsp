@@ -1,3 +1,4 @@
+<%@ page import="org.broadinstitute.gpinformatics.infrastructure.common.TokenInput" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -9,64 +10,71 @@
             $j(document).ready(
                     function () {
                         $j("#projectManagers").tokenInput(
-                                "${ctxpath}/projects/project.action?usersAutocomplete=", {
-                                    hintText: "Type a Project Manager name",
-                                    prePopulate: ${actionBean.ensureStringResult(actionBean.projectManagerList.completeData)},
-                                    preventDuplicates: true,
-                                    resultsFormatter: formatInput
-                                }
+                            "${ctxpath}/projects/project.action?usersAutocomplete=", {
+                                hintText: "Type a Project Manager name",
+                                prePopulate: ${actionBean.ensureStringResult(actionBean.projectManagerList.completeData)},
+                                tokenDelimiter: "${actionBean.projectManagerList.separator}",
+                                preventDuplicates: true,
+                                resultsFormatter: formatInput
+                            }
                         );
 
                         $j("#scientists").tokenInput(
-                                "${ctxpath}/projects/project.action?usersAutocomplete=", {
-                                    hintText: "Type a Scientist name",
-                                    prePopulate: ${actionBean.ensureStringResult(actionBean.scientistList.completeData)},
-                                    preventDuplicates: true,
-                                    resultsFormatter: formatInput
-                                }
+                            "${ctxpath}/projects/project.action?usersAutocomplete=", {
+                                hintText: "Type a Scientist name",
+                                prePopulate: ${actionBean.ensureStringResult(actionBean.scientistList.completeData)},
+                                tokenDelimiter: "${actionBean.scientistList.separator}",
+                                preventDuplicates: true,
+                                resultsFormatter: formatInput
+                            }
                         );
 
                         $j("#externalCollaborators").tokenInput(
-                                "${ctxpath}/projects/project.action?usersAutocomplete=", {
-                                    hintText: "Type a Collaborator name",
-                                    prePopulate: ${actionBean.ensureStringResult(actionBean.externalCollaboratorList.completeData)},
-                                    preventDuplicates: true,
-                                    resultsFormatter: formatInput
-                                }
+                            "${ctxpath}/projects/project.action?usersAutocomplete=", {
+                                hintText: "Type a Collaborator name",
+                                prePopulate: ${actionBean.ensureStringResult(actionBean.externalCollaboratorList.completeData)},
+                                tokenDelimiter: "${actionBean.externalCollaboratorList.separator}",
+                                preventDuplicates: true,
+                                resultsFormatter: formatInput
+                            }
                         );
 
                         $j("#broadPIs").tokenInput(
-                                "${ctxpath}/projects/project.action?usersAutocomplete=", {
-                                    hintText: "Type a Broad PI",
-                                    prePopulate: ${actionBean.ensureStringResult(actionBean.broadPiList.completeData)},
-                                    preventDuplicates: true,
-                                    resultsFormatter: formatInput
-                                }
+                            "${ctxpath}/projects/project.action?usersAutocomplete=", {
+                                hintText: "Type a Broad PI",
+                                prePopulate: ${actionBean.ensureStringResult(actionBean.broadPiList.completeData)},
+                                tokenDelimiter: "${actionBean.broadPiList.separator}",
+                                preventDuplicates: true,
+                                resultsFormatter: formatInput
+                            }
                         );
 
                         $j("#fundingSources").tokenInput(
-                                "${ctxpath}/projects/project.action?fundingAutocomplete=", {
-                                    prePopulate: ${actionBean.ensureStringResult(actionBean.fundingSourceList.completeData)},
-                                    preventDuplicates: true,
-                                    resultsFormatter: formatInput
-                                }
+                            "${ctxpath}/projects/project.action?fundingAutocomplete=", {
+                                prePopulate: ${actionBean.ensureStringResult(actionBean.fundingSourceList.completeData)},
+                                tokenDelimiter: "${actionBean.fundingSourceList.separator}",
+                                preventDuplicates: true,
+                                resultsFormatter: formatInput
+                            }
                         );
 
                         $j("#cohorts").tokenInput(
-                                "${ctxpath}/projects/project.action?cohortAutocomplete=", {
-                                    hintText: "Type a Sample Cohort name",
-                                    prePopulate: ${actionBean.ensureStringResult(actionBean.cohortsList.completeData)},
-                                    preventDuplicates: true,
-                                    resultsFormatter: formatInput
-                                }
+                            "${ctxpath}/projects/project.action?cohortAutocomplete=", {
+                                hintText: "Type a Sample Cohort name",
+                                prePopulate: ${actionBean.ensureStringResult(actionBean.cohortsList.completeData)},
+                                tokenDelimiter: "${actionBean.cohortsList.separator}",
+                                preventDuplicates: true,
+                                resultsFormatter: formatInput
+                            }
                         );
 
                         $j("#irbs").tokenInput(
-                                "${ctxpath}/projects/project.action?irbAutocomplete=", {
-                                    hintText: "Type an IRB Number",
-                                    prePopulate: ${actionBean.ensureStringResult(actionBean.irbsCompleteData)},
-                                    preventDuplicates: true
-                                }
+                            "${ctxpath}/projects/project.action?irbAutocomplete=", {
+                                hintText: "Type an IRB Number",
+                                prePopulate: ${actionBean.ensureStringResult(actionBean.irbsCompleteData)},
+                                tokenDelimiter: "<%=TokenInput.TOKEN_INPUT_SEPARATOR%>",
+                                preventDuplicates: true
+                            }
                         );
                     }
             );
