@@ -1,0 +1,83 @@
+package org.broadinstitute.gpinformatics.mercury.test.builders;
+
+import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.testng.Assert;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
+/**
+* Builds an entity graph for Dried Blood Spot messages.
+*/
+public class DriedBloodSpotEntityBuilder {
+    private DriedBloodSpotJaxbBuilder driedBloodSpotJaxbBuilder;
+    private LabBatch labBatch;
+    private Map<String, TwoDBarcodedTube> mapBarcodeToTube;
+
+    public DriedBloodSpotEntityBuilder(DriedBloodSpotJaxbBuilder driedBloodSpotJaxbBuilder, LabBatch labBatch,
+                                       Map<String, TwoDBarcodedTube> mapBarcodeToTube) {
+        this.driedBloodSpotJaxbBuilder = driedBloodSpotJaxbBuilder;
+        this.labBatch = labBatch;
+        this.mapBarcodeToTube = mapBarcodeToTube;
+    }
+
+    public void buildEntities() {
+        BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
+        driedBloodSpotJaxbBuilder.buildJaxb();
+        LabEventFactory labEventFactory = new LabEventFactory();
+        labEventFactory.setLabEventRefDataFetcher(new LabEventFactory.LabEventRefDataFetcher() {
+            @Override
+            public BspUser getOperator ( String userId ) {
+                return new BSPUserList.QADudeUser("Test", BSPManagerFactoryStub.QA_DUDE_USER_ID);
+            }
+
+            @Override
+            public BspUser getOperator ( Long bspUserId ) {
+                return new BSPUserList.QADudeUser("Test", BSPManagerFactoryStub.QA_DUDE_USER_ID);
+            }
+
+            @Override
+            public LabBatch getLabBatch(String labBatchName) {
+                return labBatch;
+            }
+        });
+
+        int tubeNum = 1;
+        StaticPlate incubationPlate = null;
+        for (TwoDBarcodedTube twoDBarcodedTube : mapBarcodeToTube.values()) {
+            LabEvent samplePunchEntity = labEventFactory.buildVesselToSectionDbFree(
+                    driedBloodSpotJaxbBuilder.getSamplePunchJaxbs().get(tubeNum), twoDBarcodedTube, null,
+                    bettaLimsMessageTestFactory.buildWellName(tubeNum,
+                            BettaLimsMessageTestFactory.WellNameType.LONG));
+            incubationPlate = (StaticPlate) samplePunchEntity.getTargetLabVessels().iterator().next();
+            tubeNum++;
+        }
+
+        labEventFactory.buildFromBettaLimsPlateEventDbFree(driedBloodSpotJaxbBuilder.getIncubationMixJaxb(), incubationPlate);
+        labEventFactory.buildFromBettaLimsPlateEventDbFree(driedBloodSpotJaxbBuilder.getLysisBufferJaxb(), incubationPlate);
+        labEventFactory.buildFromBettaLimsPlateEventDbFree(driedBloodSpotJaxbBuilder.getMagneticResinJaxb(), incubationPlate);
+
+        LabEvent firstPurificationEntity = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(
+                driedBloodSpotJaxbBuilder.getDbs1stPurificationJaxb(), incubationPlate, null);
+        StaticPlate firstPurificationPlate = (StaticPlate) firstPurificationEntity.getTargetLabVessels().iterator().next();
+        labEventFactory.buildFromBettaLimsPlateEventDbFree(driedBloodSpotJaxbBuilder.getDbsWashBufferJaxb(), firstPurificationPlate);
+        labEventFactory.buildFromBettaLimsPlateEventDbFree(driedBloodSpotJaxbBuilder.getDbsElutionBufferJaxb(), firstPurificationPlate);
+
+        Map<String, TwoDBarcodedTube> mapBarcodeToTargetTubes = new HashMap<String, TwoDBarcodedTube>();
+        labEventFactory.buildFromBettaLimsPlateToRackDbFree(driedBloodSpotJaxbBuilder.getDbsFinalTransferJaxb(),
+                firstPurificationPlate, mapBarcodeToTargetTubes, null);
+        Set<SampleInstance> sampleInstances = mapBarcodeToTargetTubes.values().iterator().next().getSampleInstances();
+        // todo jmt what to assert here?
+//        Assert.assertEquals(sampleInstances.size(), 1, "Wrong number of sample instances");
+    }
+}
