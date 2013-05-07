@@ -1020,6 +1020,12 @@
         </dependency>
 
         <dependency>
+            <groupId>org.jboss.arquillian.protocol</groupId>
+            <artifactId>arquillian-protocol-servlet</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
             <groupId>org.jboss.arquillian.extension</groupId>
             <artifactId>arquillian-drone-impl</artifactId>
             <scope>test</scope>
@@ -1358,6 +1364,14 @@
             <artifactId>freemarker</artifactId>
             <version>2.3.19</version>
         </dependency>
+
+<!--
+        <dependency>
+            <groupId>com.jprofiler</groupId>
+            <artifactId>jprofiler</artifactId>
+            <version>6</version>
+        </dependency>
+-->
 
     </dependencies>
 
