@@ -34,7 +34,7 @@ public class HiSeq2500JaxbBuilder {
         flowcellTransferJaxb =
                 bettaLimsMessageTestFactory.buildTubeToPlate("DenatureToFlowcellTransfer",
                         denatureTubeBarcode, flowcellBarcode, LabEventTest.PHYS_TYPE_FLOWCELL_2_LANE, LabEventTest.SECTION_ALL_2, "tube");
-        BettaLimsMessageTestFactory.addMessage(messageList, bettaLimsMessageTestFactory, flowcellTransferJaxb);
+        bettaLimsMessageTestFactory.addMessage(messageList, flowcellTransferJaxb);
 
         return this;
     }

@@ -534,7 +534,7 @@ public class LabEventTest extends BaseEventTest{
             mapBarcodeToTube.put(barcode, bspAliquot);
         }
 
-        BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory();
+        BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
         LabEventFactory labEventFactory = new LabEventFactory();
         labEventFactory.setLabEventRefDataFetcher(labEventRefDataFetcher);
 
@@ -633,7 +633,7 @@ public class LabEventTest extends BaseEventTest{
             fluidigmSampleInputJaxb.getPlate().setPhysType(
                     StaticPlate.PlateType.Fluidigm48_48AccessArrayIFC.getDisplayName());
             fluidigmSampleInputJaxb.getPlate().setSection(SBSSection.P384COLS4_6BYROW.getSectionName());
-            BettaLimsMessageTestFactory.addMessage(messageList, bettaLimsMessageTestFactory, fluidigmSampleInputJaxb);
+            bettaLimsMessageTestFactory.addMessage(messageList, fluidigmSampleInputJaxb);
 
             // FluidigmIndexedAdapterInput plate P96COLS1-6BYROW to chip P384COLS4-6BYROW
             fluidigmIndexedAdapterInputJaxb = bettaLimsMessageTestFactory.buildPlateToPlate(
@@ -644,8 +644,8 @@ public class LabEventTest extends BaseEventTest{
             fluidigmIndexedAdapterInputJaxb.getPlate().setPhysType(
                     StaticPlate.PlateType.Fluidigm48_48AccessArrayIFC.getDisplayName());
             fluidigmIndexedAdapterInputJaxb.getPlate().setSection(SBSSection.P384COLS4_6BYROW.getSectionName());
-            BettaLimsMessageTestFactory
-                    .addMessage(messageList, bettaLimsMessageTestFactory, fluidigmIndexedAdapterInputJaxb);
+            bettaLimsMessageTestFactory
+                    .addMessage(messageList, fluidigmIndexedAdapterInputJaxb);
 
             // FluidigmHarvestingToRack chip P384COLS4-6BYROW to rack P96COLS1-6BYROW
             harvestRackBarcode = "Harvest" + testPrefix;
@@ -663,8 +663,8 @@ public class LabEventTest extends BaseEventTest{
             fluidigmHarvestingToRackJaxb.setPositionMap(buildFluidigmPositionMap(tubeBarcodes, fluidigmSampleInputJaxb
                     .getSourcePlate().getBarcode()));
             fluidigmHarvestingToRackJaxb.getPlate().setSection(SBSSection.P96COLS1_6BYROW.getSectionName());
-            BettaLimsMessageTestFactory
-                    .addMessage(messageList, bettaLimsMessageTestFactory, fluidigmHarvestingToRackJaxb);
+            bettaLimsMessageTestFactory
+                    .addMessage(messageList, fluidigmHarvestingToRackJaxb);
         }
 
         private PositionMapType buildFluidigmPositionMap(ArrayList<String> tubeBarcodes, String rackBarcode) {

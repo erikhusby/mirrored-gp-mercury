@@ -178,7 +178,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
                 BaseEventTest.NUM_POSITIONS_IN_RACK);
         bucketAndBatch(testPrefix, productOrder1, mapBarcodeToTube);
         // message
-        BettaLimsMessageTestFactory bettaLimsMessageFactory = new BettaLimsMessageTestFactory();
+        BettaLimsMessageTestFactory bettaLimsMessageFactory = new BettaLimsMessageTestFactory(true);
         HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = sendMessagesUptoCatch(testPrefix,
                 mapBarcodeToTube, bettaLimsMessageFactory, WorkflowName.EXOME_EXPRESS);
 
@@ -259,7 +259,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = buildSamplesInPdo(testPrefix,
                 BaseEventTest.NUM_POSITIONS_IN_RACK, WorkflowName.EXOME_EXPRESS);
 
-        BettaLimsMessageTestFactory bettaLimsMessageFactory = new BettaLimsMessageTestFactory();
+        BettaLimsMessageTestFactory bettaLimsMessageFactory = new BettaLimsMessageTestFactory(true);
 
         HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = sendMessagesUptoCatch(testPrefix,
                 mapBarcodeToTube, bettaLimsMessageFactory, WorkflowName.EXOME_EXPRESS);
@@ -475,7 +475,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
     @Test(enabled = false)
     public void test8Lcsets() {
         String testPrefix;
-        BettaLimsMessageTestFactory bettaLimsMessageFactory = new BettaLimsMessageTestFactory();
+        BettaLimsMessageTestFactory bettaLimsMessageFactory = new BettaLimsMessageTestFactory(true);
         List<List<String>> listLcsetListNormCatchBarcodes = new ArrayList<List<String>>();
         List<String> normCatchRackBarcodes = new ArrayList<String>();
 

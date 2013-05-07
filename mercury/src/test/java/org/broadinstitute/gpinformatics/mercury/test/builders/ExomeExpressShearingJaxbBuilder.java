@@ -78,27 +78,27 @@ public class ExomeExpressShearingJaxbBuilder {
         exExShearingBucket =
                 bettaLimsMessageTestFactory
                         .buildRackEvent(LabEventType.SHEARING_BUCKET.getName(), rackBarcode, tubeBarcodeList);
-        BettaLimsMessageTestFactory.addMessage(messageList, bettaLimsMessageTestFactory, exExShearingBucket);
+        bettaLimsMessageTestFactory.addMessage(messageList, exExShearingBucket);
 
         shearPlateBarcode = "ShearPlate" + testPrefix;
         shearTransferEventJaxb = bettaLimsMessageTestFactory.buildRackToPlate(LabEventType.SHEARING_TRANSFER.getName(), rackBarcode,
                 tubeBarcodeList, shearPlateBarcode);
-        BettaLimsMessageTestFactory.addMessage(messageList, bettaLimsMessageTestFactory, shearTransferEventJaxb);
+        bettaLimsMessageTestFactory.addMessage(messageList, shearTransferEventJaxb);
 
         covarisLoadEventJaxb =
                 bettaLimsMessageTestFactory.buildPlateEvent(LabEventType.COVARIS_LOADED.getName(), shearPlateBarcode);
-        BettaLimsMessageTestFactory.addMessage(messageList, bettaLimsMessageTestFactory, covarisLoadEventJaxb);
+        bettaLimsMessageTestFactory.addMessage(messageList, covarisLoadEventJaxb);
 
         shearCleanPlateBarcode = "ShearCleanPlate" + testPrefix;
         postShearingTransferCleanupEventJaxb = bettaLimsMessageTestFactory.buildPlateToPlate(LabEventType.POST_SHEARING_TRANSFER_CLEANUP.getName()
                 , shearPlateBarcode, shearCleanPlateBarcode);
-        BettaLimsMessageTestFactory
-                .addMessage(messageList, bettaLimsMessageTestFactory, postShearingTransferCleanupEventJaxb);
+        bettaLimsMessageTestFactory
+                .addMessage(messageList, postShearingTransferCleanupEventJaxb);
 
         String shearQcPlateBarcode = "ShearQcPlate" + testPrefix;
         shearingQcEventJaxb = bettaLimsMessageTestFactory.buildPlateToPlate(LabEventType.SHEARING_QC.getName(), shearCleanPlateBarcode,
                 shearQcPlateBarcode);
-        BettaLimsMessageTestFactory.addMessage(messageList, bettaLimsMessageTestFactory, shearingQcEventJaxb);
+        bettaLimsMessageTestFactory.addMessage(messageList, shearingQcEventJaxb);
 
         return this;
     }

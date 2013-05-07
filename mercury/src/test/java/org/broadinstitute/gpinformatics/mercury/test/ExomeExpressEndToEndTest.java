@@ -333,7 +333,7 @@ public class ExomeExpressEndToEndTest {
             LabEventHandler labEventHandler = new LabEventHandler(new WorkflowLoader(),
                     AthenaClientProducer.stubInstance(),
                     new BSPUserList(BSPManagerFactoryProducer.stubInstance()));
-            BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory();
+            BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
             Map<String, TwoDBarcodedTube> mapBarcodeToTube = new HashMap<String, TwoDBarcodedTube>();
 
             for (Map.Entry<String, LabVessel> stockToAliquotEntry : stockSampleAliquotMap.entrySet()) {

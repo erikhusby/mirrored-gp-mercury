@@ -65,26 +65,26 @@ public class PreFlightJaxbBuilder {
         preflightPicoSetup1 = bettaLimsMessageTestFactory.buildRackToPlate("PreflightPicoSetup", rackBarcode,
                 tubeBarcodes,
                 "PreflightPicoPlate1" + testPrefix);
-        BettaLimsMessageTestFactory.addMessage(messageList, bettaLimsMessageTestFactory, preflightPicoSetup1);
+        bettaLimsMessageTestFactory.addMessage(messageList, preflightPicoSetup1);
 
         preflightPicoSetup2 = bettaLimsMessageTestFactory.buildRackToPlate("PreflightPicoSetup", rackBarcode,
                 tubeBarcodes,
                 "PreflightPicoPlate2" + testPrefix);
-        BettaLimsMessageTestFactory.addMessage(messageList, bettaLimsMessageTestFactory, preflightPicoSetup2);
+        bettaLimsMessageTestFactory.addMessage(messageList, preflightPicoSetup2);
 
         preflightNormalization = bettaLimsMessageTestFactory.buildRackEvent("PreflightNormalization", rackBarcode,
                 tubeBarcodes);
-        BettaLimsMessageTestFactory.addMessage(messageList, bettaLimsMessageTestFactory, preflightNormalization);
+        bettaLimsMessageTestFactory.addMessage(messageList, preflightNormalization);
 
         preflightPostNormPicoSetup1 = bettaLimsMessageTestFactory.buildRackToPlate("PreflightPostNormPicoSetup",
                 rackBarcode, tubeBarcodes,
                 "PreflightPostNormPicoPlate1" + testPrefix);
-        BettaLimsMessageTestFactory.addMessage(messageList, bettaLimsMessageTestFactory, preflightPostNormPicoSetup1);
+        bettaLimsMessageTestFactory.addMessage(messageList, preflightPostNormPicoSetup1);
 
         preflightPostNormPicoSetup2 = bettaLimsMessageTestFactory.buildRackToPlate("PreflightPostNormPicoSetup",
                 rackBarcode, tubeBarcodes,
                 "PreflightPostNormPicoPlate2" + testPrefix);
-        BettaLimsMessageTestFactory.addMessage(messageList, bettaLimsMessageTestFactory, preflightPostNormPicoSetup2);
+        bettaLimsMessageTestFactory.addMessage(messageList, preflightPostNormPicoSetup2);
 
         return this;
     }

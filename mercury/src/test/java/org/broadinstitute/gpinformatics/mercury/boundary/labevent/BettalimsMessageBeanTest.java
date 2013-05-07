@@ -33,7 +33,7 @@ public class BettalimsMessageBeanTest {
 
     @Test(enabled = false)
     public void testJms() {
-        BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory();
+        BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
         PlateTransferEventType plateTransferEventType = bettaLimsMessageTestFactory.buildPlateToPlate(
                 LabEventType.POST_SHEARING_TRANSFER_CLEANUP.getName(), "x", "y");
         BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();

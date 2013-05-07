@@ -59,18 +59,18 @@ public class ShearingJaxbBuilder {
         shearPlateBarcode = "ShearPlate" + testPrefix;
         shearingTransferEventJaxb = bettaLimsMessageTestFactory.buildRackToPlate("ShearingTransfer", rackBarcode,
                 tubeBarcodeList, shearPlateBarcode);
-        BettaLimsMessageTestFactory.addMessage(messageList, bettaLimsMessageTestFactory, shearingTransferEventJaxb);
+        bettaLimsMessageTestFactory.addMessage(messageList, shearingTransferEventJaxb);
 
         shearCleanPlateBarcode = "ShearCleanPlate" + testPrefix;
         postShearingTransferCleanupEventJaxb = bettaLimsMessageTestFactory.buildPlateToPlate(
                 "PostShearingTransferCleanup", shearPlateBarcode, shearCleanPlateBarcode);
-        BettaLimsMessageTestFactory
-                .addMessage(messageList, bettaLimsMessageTestFactory, postShearingTransferCleanupEventJaxb);
+        bettaLimsMessageTestFactory
+                .addMessage(messageList, postShearingTransferCleanupEventJaxb);
 
         String shearQcPlateBarcode = "ShearQcPlate" + testPrefix;
         shearingQcEventJaxb = bettaLimsMessageTestFactory.buildPlateToPlate("ShearingQC", shearCleanPlateBarcode,
                 shearQcPlateBarcode);
-        BettaLimsMessageTestFactory.addMessage(messageList, bettaLimsMessageTestFactory, shearingQcEventJaxb);
+        bettaLimsMessageTestFactory.addMessage(messageList, shearingQcEventJaxb);
 
         return this;
     }

@@ -29,6 +29,13 @@ public class BettaLimsMessageTestFactory {
     public static final int NUMBER_OF_RACK_COLUMNS = 12;
 
     private long time = System.currentTimeMillis();
+    /** True if the mode element in the messages should be set to Mercury. This causes all messages to bypass
+     * routing logic and be processed by Mercury. */
+    private final boolean mercuryMode;
+
+    public BettaLimsMessageTestFactory(boolean mercuryMode) {
+        this.mercuryMode = mercuryMode;
+    }
 
     public static String marshal(BettaLIMSMessage blmJaxbObject) {
         try {
@@ -46,10 +53,17 @@ public class BettaLimsMessageTestFactory {
         }
     }
 
-    public static void addMessage(List<BettaLIMSMessage> messageList, BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
-            StationEventType... stationEventTypes) {
+    /**
+     * Adds one or more station events to a list of bettalims messages.  Advances the time, to avoid unique
+     * constraint violations.
+     * @param messageList list of bettalims messages, typically sent to the BettaLIMS web service, in a loop
+     * @param stationEventTypes one or more station events
+     */
+    public void addMessage(List<BettaLIMSMessage> messageList, StationEventType... stationEventTypes) {
         BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
-        bettaLIMSMessage.setMode(LabEventFactory.MODE_MERCURY);
+        if (mercuryMode) {
+            bettaLIMSMessage.setMode(LabEventFactory.MODE_MERCURY);
+        }
         for (StationEventType stationEventType : stationEventTypes) {
             if (stationEventType instanceof PlateTransferEventType) {
                 bettaLIMSMessage.getPlateTransferEvent().add((PlateTransferEventType) stationEventType);
@@ -66,7 +80,7 @@ public class BettaLimsMessageTestFactory {
             }
         }
         messageList.add(bettaLIMSMessage);
-        bettaLimsMessageTestFactory.advanceTime();
+        advanceTime();
     }
 
     /**
