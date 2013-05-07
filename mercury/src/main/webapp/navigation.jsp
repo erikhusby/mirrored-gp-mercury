@@ -47,7 +47,7 @@
                     <%-- PMs and PDMs (and Developers) can place Product Orders. --%>
                     <security:authorizeBlock roles="<%= roles(Developer, PDM, PM) %>">
                         <li>
-                            <stripes:link
+                            <stripes:link id="createProductOrder"
                                     beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"
                                     tabindex="=1" event="create">Create</stripes:link>
                         </li>

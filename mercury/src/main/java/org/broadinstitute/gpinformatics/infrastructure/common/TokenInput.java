@@ -61,7 +61,7 @@ public abstract class TokenInput<TOKEN_OBJECT> {
         if (StringUtils.isBlank(listOfKeys)) {
             tokenObjects = Collections.emptyList();
         } else {
-            String[] keys = listOfKeys.split(getTokenSeparator());
+            String[] keys = listOfKeys.split(getSeparator());
 
             tokenObjects = new ArrayList<TOKEN_OBJECT>(keys.length);
             for (String key : keys) {
@@ -70,12 +70,8 @@ public abstract class TokenInput<TOKEN_OBJECT> {
         }
     }
 
-    protected String getTokenSeparator() {
-        return ",";
-    }
-
-    protected String getJoinSeparator() {
-        return ",";
+    private String getSeparator() {
+        return ",,,,,";
     }
 
     public String getListOfKeys() {
@@ -186,11 +182,11 @@ public abstract class TokenInput<TOKEN_OBJECT> {
     protected abstract TOKEN_OBJECT getById(String key);
 
     public void setup(Long... longIds) {
-        setListOfKeys(StringUtils.join(longIds, getJoinSeparator()));
+        setListOfKeys(StringUtils.join(longIds, getSeparator()));
     }
 
     public void setup(String... ids) {
-        setListOfKeys(StringUtils.join(ids, getJoinSeparator()));
+        setListOfKeys(StringUtils.join(ids, getSeparator()));
     }
 
     /**

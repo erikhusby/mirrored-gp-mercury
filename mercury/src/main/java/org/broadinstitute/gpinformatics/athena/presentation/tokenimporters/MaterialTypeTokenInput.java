@@ -26,18 +26,6 @@ public class MaterialTypeTokenInput extends TokenInput<MaterialType> {
         super(SINGLE_LINE_FORMAT);
     }
 
-    // There are commas in material types so use the | character for the separator
-    @Override
-    public String getTokenSeparator() {
-        return "\\|";
-    }
-
-    // There are commas in material types so use the | character for the separator
-    @Override
-    public String getJoinSeparator() {
-        return "|";
-    }
-
     @Override
     protected MaterialType getById(String name) {
         return materialTypeListCache.getByFullName(name);
