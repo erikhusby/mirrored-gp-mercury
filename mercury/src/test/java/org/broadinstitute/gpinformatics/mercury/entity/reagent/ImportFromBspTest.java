@@ -136,7 +136,7 @@ public class ImportFromBspTest extends ContainerTest {
         }
         LabBatchBean labBatchBean = new LabBatchBean("BP-ROOT-" + testSuffix, null, rootTubeBeans);
         createBatch(labBatchBean);
-        BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory();
+        BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
 
         PlateTransferEventType plateTransferEventType = bettaLimsMessageTestFactory.buildRackToRack(
                 LabEventType.SAMPLES_NORMALIZATION_TRANSFER.getName(), "ROOT" + testSuffix, normSourceBarcodes,

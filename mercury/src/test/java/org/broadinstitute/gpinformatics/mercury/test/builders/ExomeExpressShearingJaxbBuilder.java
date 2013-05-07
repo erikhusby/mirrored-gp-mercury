@@ -5,7 +5,6 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMes
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -79,26 +78,27 @@ public class ExomeExpressShearingJaxbBuilder {
         exExShearingBucket =
                 bettaLimsMessageTestFactory
                         .buildRackEvent(LabEventType.SHEARING_BUCKET.getName(), rackBarcode, tubeBarcodeList);
-        LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, exExShearingBucket);
+        bettaLimsMessageTestFactory.addMessage(messageList, exExShearingBucket);
 
         shearPlateBarcode = "ShearPlate" + testPrefix;
         shearTransferEventJaxb = bettaLimsMessageTestFactory.buildRackToPlate(LabEventType.SHEARING_TRANSFER.getName(), rackBarcode,
                 tubeBarcodeList, shearPlateBarcode);
-        LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, shearTransferEventJaxb);
+        bettaLimsMessageTestFactory.addMessage(messageList, shearTransferEventJaxb);
 
         covarisLoadEventJaxb =
                 bettaLimsMessageTestFactory.buildPlateEvent(LabEventType.COVARIS_LOADED.getName(), shearPlateBarcode);
-        LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, covarisLoadEventJaxb);
+        bettaLimsMessageTestFactory.addMessage(messageList, covarisLoadEventJaxb);
 
         shearCleanPlateBarcode = "ShearCleanPlate" + testPrefix;
         postShearingTransferCleanupEventJaxb = bettaLimsMessageTestFactory.buildPlateToPlate(LabEventType.POST_SHEARING_TRANSFER_CLEANUP.getName()
                 , shearPlateBarcode, shearCleanPlateBarcode);
-        LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, postShearingTransferCleanupEventJaxb);
+        bettaLimsMessageTestFactory
+                .addMessage(messageList, postShearingTransferCleanupEventJaxb);
 
         String shearQcPlateBarcode = "ShearQcPlate" + testPrefix;
         shearingQcEventJaxb = bettaLimsMessageTestFactory.buildPlateToPlate(LabEventType.SHEARING_QC.getName(), shearCleanPlateBarcode,
                 shearQcPlateBarcode);
-        LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, shearingQcEventJaxb);
+        bettaLimsMessageTestFactory.addMessage(messageList, shearingQcEventJaxb);
 
         return this;
     }

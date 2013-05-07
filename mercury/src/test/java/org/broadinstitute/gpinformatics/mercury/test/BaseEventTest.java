@@ -43,7 +43,7 @@ public class BaseEventTest {
 
     public static final int NUM_POSITIONS_IN_RACK = 96;
 
-    private BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory();
+    private BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
 
     private LabEventFactory labEventFactory = new LabEventFactory();
 
