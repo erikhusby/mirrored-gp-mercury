@@ -19,6 +19,8 @@ import java.util.List;
  */
 public abstract class TokenInput<TOKEN_OBJECT> {
 
+    public static final String TOKEN_INPUT_SEPARATOR = ",,,,,";
+
     protected static final boolean SINGLE_LINE_FORMAT = true;
     protected static final boolean DOUBLE_LINE_FORMAT = false;
 
@@ -70,8 +72,8 @@ public abstract class TokenInput<TOKEN_OBJECT> {
         }
     }
 
-    private String getSeparator() {
-        return ",,,,,";
+    public String getSeparator() {
+        return TOKEN_INPUT_SEPARATOR;
     }
 
     public String getListOfKeys() {
