@@ -28,18 +28,23 @@
 
     <table id="vesselSampleListView${index}" class="table simple" style="margin: 0 0; width: 100%;">
         <thead>
-            <tr>
-                <th>Sample</th>
-                <th>Index</th>
-                <th>Position</th>
-                <th>JIRAs + PDOs</th>
-            </tr>
+        <tr>
+            <th>Sample</th>
+            <th>Index</th>
+            <th>Position</th>
+            <th>JIRAs + PDOs</th>
+        </tr>
         </thead>
         <tbody>
         <c:forEach items="${vessel.sampleInstances}" var="sample">
             <tr>
                 <td>
+                    <stripes:link
+                            beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.SampleSearchActionBean"
+                            event="sampleSearch">
+                        <stripes:param name="searchKey" value="${sample.startingSample.sampleKey}"/>
                         ${sample.startingSample.sampleKey}
+                    </stripes:link>
                 </td>
                 <td style="padding: 0;">
                     <table style="padding: 0;">
@@ -47,7 +52,7 @@
                             <c:forEach items="${curIndex.molecularIndexingScheme.indexes}" var="innerIndex">
                                 <tr>
                                     <td style="border: none">
-                                        ${innerIndex.value.sequence}
+                                            ${innerIndex.value.sequence}
                                     </td>
                                 </tr>
                             </c:forEach>
@@ -59,7 +64,7 @@
                         <c:forEach items="${vessel.getPositionsOfSample(sample)}" var="position">
                             <tr>
                                 <td style="border: none;">
-                                    ${position}
+                                        ${position}
                                 </td>
                             </tr>
                         </c:forEach>
@@ -78,8 +83,8 @@
 
                         <c:if test="${not empty sample.productOrderKey}">
                             <stripes:link
-                                beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"
-                                event="view">
+                                    beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"
+                                    event="view">
                                 <stripes:param name="productOrder" value="${sample.productOrderKey}"/>
                                 ${sample.productOrderKey}
                             </stripes:link>

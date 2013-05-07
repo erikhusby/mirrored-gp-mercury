@@ -6,13 +6,13 @@
 
 <stripes:layout-render name="/layout.jsp" pageTitle="Search Vessels" sectionTitle="Search Vessels">
     <stripes:layout-component name="extraHead">
-
         <script type="text/javascript">
             $(document).ready(function () {
-                $j("#accordion").accordion({ collapsible: true, active: false, heightStyle: "content", autoHeight: false });
+
+                $j("#accordion").accordion({  collapsible:true, active:false, heightStyle:"content", autoHeight:false});
                 $j("#accordion").show();
 
-                if (${empty actionBean.foundVessels}) {
+                if (${not actionBean.searchDone}) {
                     showSearch();
                 }
                 else {
@@ -52,17 +52,20 @@
                     </div>
                 </div>
             </stripes:form>
+
+        </div>
+        <div id="searchResults">
             <c:if test="${not actionBean.resultsAvailable}">
                 No Results Found
             </c:if>
-        </div>
-        <div id="searchResults">
             <c:if test="${not empty actionBean.foundVessels}">
-                <div id="resultSummary">Found ${fn:length(actionBean.foundVessels)} Vessels</div>
+                <div id="resultSummary">Searched for ${actionBean.numSearchTerms} vessel(s),
+                    found ${fn:length(actionBean.foundVessels)}.
+                </div>
 
-                <div id="accordion" style="display:none;">
+                <div id="accordion" style="display:none;" class="accordion">
                     <c:forEach items="${actionBean.foundVessels}" var="vessel" varStatus="status">
-                        <div style="padding-left: 20px;">
+                        <div style="padding-left: 30px;padding-bottom: 0">
                             <stripes:layout-render name="/vessel/vessel_info_header.jsp" bean="${actionBean}"
                                                    vessel="${vessel}"/>
                         </div>

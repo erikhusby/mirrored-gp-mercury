@@ -115,6 +115,9 @@ public class SearchActionBean extends CoreActionBean {
     private String summary;
     private Date dueDate;
 
+    private boolean isSearchDone = false;
+    private int numSearchTerms;
+
     /**
      * Initialize the product with the passed in key for display in the form
      */
@@ -138,7 +141,7 @@ public class SearchActionBean extends CoreActionBean {
             searchForItems = SearchType.values();
         }
         List<String> searchList = cleanInputString(searchKey);
-
+        numSearchTerms = searchList.size();
         int count = 0;
         long totalResults = 0l;
         for (SearchType searchForItem : searchForItems) {
@@ -182,6 +185,7 @@ public class SearchActionBean extends CoreActionBean {
         }
         multipleResultTypes = count > 1;
         resultsAvailable = totalResults > 0;
+        isSearchDone = true;
     }
 
     @HandlesEvent(SEARCH_ACTION)
@@ -493,4 +497,19 @@ public class SearchActionBean extends CoreActionBean {
         return mercurySampleDao;
     }
 
+    public boolean isSearchDone() {
+        return isSearchDone;
+    }
+
+    public void setSearchDone(boolean searchDone) {
+        isSearchDone = searchDone;
+    }
+
+    public int getNumSearchTerms() {
+        return numSearchTerms;
+    }
+
+    public void setNumSearchTerms(int numSearchTerms) {
+        this.numSearchTerms = numSearchTerms;
+    }
 }

@@ -44,6 +44,7 @@ public class SampleSearchActionBean extends SearchActionBean {
     @HandlesEvent("sampleSearch")
     public Resolution sampleSearch() throws Exception {
         List<String> searchList = cleanInputString(getSearchKey());
+        setNumSearchTerms(searchList.size());
         Map<String, BSPSampleDTO> sampleToDTO = bspSampleDataFetcher.fetchSamplesFromBSP(searchList);
         for (String searchKey : searchList) {
             List<MercurySample> samples = getMercurySampleDao().findBySampleKey(searchKey);
@@ -58,6 +59,7 @@ public class SampleSearchActionBean extends SearchActionBean {
                 sample.setBspSampleDTO(sampleToDTO.get(sample.getSampleKey()));
             }
         }
+        setSearchDone(true);
         return new ForwardResolution(SESSION_LIST_PAGE);
     }
 
