@@ -56,7 +56,7 @@ public class BucketDBFreeTest {
 
         Assert.assertFalse(bucket.getBucketEntries().isEmpty());
 
-        Assert.assertEquals(4, bucket.getBucketEntries().size());
+        Assert.assertEquals(bucket.getBucketEntries().size(), 4);
 
         Assert.assertTrue(bucket.contains(testEntry1));
         Assert.assertTrue(bucket.contains(testEntry2));
@@ -74,7 +74,7 @@ public class BucketDBFreeTest {
 
         bucket.removeEntry(testEntry2);
 
-        Assert.assertEquals(2, bucket.getBucketEntries().size());
+        Assert.assertEquals(bucket.getBucketEntries().size(), 2);
 
         Assert.assertFalse(bucket.contains(testEntry3));
         Assert.assertTrue(bucket.contains(testEntry1));
@@ -83,7 +83,7 @@ public class BucketDBFreeTest {
 
         bucket.removeEntry(testEntry1);
 
-        Assert.assertEquals(1, bucket.getBucketEntries().size());
+        Assert.assertEquals(bucket.getBucketEntries().size(), 1);
 
         Assert.assertFalse(bucket.contains(testEntry3));
         Assert.assertFalse(bucket.contains(testEntry1));
@@ -92,7 +92,7 @@ public class BucketDBFreeTest {
 
         bucket.removeEntry(testEntry4);
 
-        Assert.assertEquals(0, bucket.getBucketEntries().size());
+        Assert.assertEquals(bucket.getBucketEntries().size(), 0);
 
         Assert.assertFalse(bucket.contains(testEntry3));
         Assert.assertFalse(bucket.contains(testEntry1));

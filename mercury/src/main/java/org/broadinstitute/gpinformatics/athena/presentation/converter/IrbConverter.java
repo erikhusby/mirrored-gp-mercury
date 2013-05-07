@@ -34,7 +34,7 @@ public class IrbConverter {
             return Collections.emptyList();
         }
 
-        String[] irbArray = irbList.split(",");
+        String[] irbArray = irbList.split(TokenInput.TOKEN_INPUT_SEPARATOR);
         List<Irb> irbs = new ArrayList<Irb> ();
         for (String irb : irbArray) {
             irbs.add((Irb) IrbConverter.getAsObject(irb.trim()));

@@ -86,9 +86,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
     private Map<String, Long> projectOrderCounts;
 
     // These are the fields for catching the input tokens
-    @ValidateNestedProperties({
-        @Validate(field = "listOfKeys", label = "Project Managers", required = true, on = {SAVE_ACTION})
-    })
+    @ValidateNestedProperties(
+            @Validate(field = "listOfKeys", label = "Project Managers", required = true, on = {SAVE_ACTION})
+    )
     @Inject
     private UserTokenInput projectManagerList;
 
@@ -100,6 +100,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     @Inject
     private UserTokenInput broadPiList;
+
+    @Inject
+    private UserTokenInput otherUserList;
 
     @Inject
     private FundingTokenInput fundingSourceList;
@@ -223,6 +226,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
         scientistList.setup(editResearchProject.getScientists());
         externalCollaboratorList.setup(editResearchProject.getExternalCollaborators());
         broadPiList.setup(editResearchProject.getBroadPIs());
+        otherUserList.setup(editResearchProject.getOther());
         fundingSourceList.setup(editResearchProject.getFundingIds());
         cohortsList.setup(editResearchProject.getCohortIds());
     }
@@ -266,6 +270,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
         editResearchProject.addPeople(RoleType.EXTERNAL, externalCollaboratorList.getTokenObjects());
         editResearchProject.addPeople(RoleType.SCIENTIST, scientistList.getTokenObjects());
         editResearchProject.addPeople(RoleType.PM, projectManagerList.getTokenObjects());
+        editResearchProject.addPeople(RoleType.OTHER, otherUserList.getTokenObjects());
 
         editResearchProject.populateCohorts(cohortsList.getTokenObjects());
         editResearchProject.populateFunding(fundingSourceList.getTokenObjects());
@@ -399,6 +404,14 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     public void setProjectManagerList(UserTokenInput projectManagerList) {
         this.projectManagerList = projectManagerList;
+    }
+
+    public UserTokenInput getOtherUserList() {
+        return otherUserList;
+    }
+
+    public void setOtherUserList(UserTokenInput otherUserList) {
+        this.otherUserList = otherUserList;
     }
 
     public String getQ() {

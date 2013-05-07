@@ -95,7 +95,7 @@ public class Bucket {
      *                      for that entry
      */
     public void removeEntry ( BucketEntry entryToRemove) {
-        this.bucketEntries.remove(entryToRemove);
+        bucketEntries.remove(entryToRemove);
         entryToRemove.setStatus(BucketEntry.Status.Archived);
     }
 

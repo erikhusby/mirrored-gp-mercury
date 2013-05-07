@@ -19,6 +19,8 @@ import java.util.List;
  */
 public abstract class TokenInput<TOKEN_OBJECT> {
 
+    public static final String TOKEN_INPUT_SEPARATOR = ",,,,,";
+
     protected static final boolean SINGLE_LINE_FORMAT = true;
     protected static final boolean DOUBLE_LINE_FORMAT = false;
 
@@ -61,7 +63,7 @@ public abstract class TokenInput<TOKEN_OBJECT> {
         if (StringUtils.isBlank(listOfKeys)) {
             tokenObjects = Collections.emptyList();
         } else {
-            String[] keys = listOfKeys.split(getTokenSeparator());
+            String[] keys = listOfKeys.split(getSeparator());
 
             tokenObjects = new ArrayList<TOKEN_OBJECT>(keys.length);
             for (String key : keys) {
@@ -70,12 +72,8 @@ public abstract class TokenInput<TOKEN_OBJECT> {
         }
     }
 
-    protected String getTokenSeparator() {
-        return ",";
-    }
-
-    protected String getJoinSeparator() {
-        return ",";
+    public String getSeparator() {
+        return TOKEN_INPUT_SEPARATOR;
     }
 
     public String getListOfKeys() {
@@ -186,11 +184,11 @@ public abstract class TokenInput<TOKEN_OBJECT> {
     protected abstract TOKEN_OBJECT getById(String key);
 
     public void setup(Long... longIds) {
-        setListOfKeys(StringUtils.join(longIds, getJoinSeparator()));
+        setListOfKeys(StringUtils.join(longIds, getSeparator()));
     }
 
     public void setup(String... ids) {
-        setListOfKeys(StringUtils.join(ids, getJoinSeparator()));
+        setListOfKeys(StringUtils.join(ids, getSeparator()));
     }
 
     /**
