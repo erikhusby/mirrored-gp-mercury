@@ -35,11 +35,7 @@ import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import javax.persistence.criteria.SetJoin;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @RequestScoped
 @Stateful
@@ -108,9 +104,44 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
                     .add(createOrTerms(cb, productOrderProductJoin.get(Product_.partNumber), productBusinessKeys));
         }
 
-        if (!CollectionUtils.isEmpty(orderStatuses)) {
-            listOfAndTerms.add(createOrTerms(cb, productOrderRoot.get(ProductOrder_.orderStatus), orderStatuses));
+        listOfAndTerms.add(createStatusTerms(cb, placedDate, orderStatuses, productOrderRoot));
+
+        if (!CollectionUtils.isEmpty(ownerIds)) {
+            listOfAndTerms.add(createOrTerms(cb, productOrderRoot.get(ProductOrder_.createdBy), ownerIds));
         }
+
+        if (!CollectionUtils.isEmpty(listOfAndTerms)) {
+            cq.where(listOfAndTerms.toArray(new Predicate[listOfAndTerms.size()]));
+        }
+
+        return getEntityManager().createQuery(cq).getResultList();
+    }
+
+    /**
+     * To get draft to work, we must run the statuses with the dates as an AND query and then OR in all drafts.
+     *
+     * @param cb The criteria builder object.
+     * @param placedDate The data placed range object.
+     * @param orderStatuses The statuses.
+     * @param productOrderRoot The product order root query object.
+     *
+     * @return The predicate that represents this whole query.
+     */
+    private Predicate createStatusTerms(
+        CriteriaBuilder cb, DateRangeSelector placedDate,
+        List<ProductOrder.OrderStatus> orderStatuses, Root<ProductOrder> productOrderRoot) {
+
+        // If there are no order statuses, add them all so that the inner query on data/draft will work.
+        List<ProductOrder.OrderStatus> fixedOrderStatuses = orderStatuses;
+        if (CollectionUtils.isEmpty(fixedOrderStatuses)) {
+            fixedOrderStatuses = Arrays.asList(ProductOrder.OrderStatus.values());
+        }
+
+        // create the and terms for the status and the dates
+        List<Predicate> listOfAndTerms = new ArrayList<Predicate>();
+
+        // No matter what and the order statuses with the date rage
+        listOfAndTerms.add(createOrTerms(cb, productOrderRoot.get(ProductOrder_.orderStatus), fixedOrderStatuses));
 
         // If there is a placed date range and the range has at least a start or end date, then add a date range.
         if ((placedDate != null) && ((placedDate.getStart() != null) || (placedDate.getEnd() != null))) {
@@ -127,15 +158,16 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
             }
         }
 
-        if (!CollectionUtils.isEmpty(ownerIds)) {
-            listOfAndTerms.add(createOrTerms(cb, productOrderRoot.get(ProductOrder_.createdBy), ownerIds));
+        Predicate statusAndDate = cb.and(listOfAndTerms.toArray(new Predicate[listOfAndTerms.size()]));
+
+        // return the status and date, if not looking for Drafts
+        if (!orderStatuses.contains(ProductOrder.OrderStatus.Draft)) {
+            return statusAndDate;
         }
 
-        if (!CollectionUtils.isEmpty(listOfAndTerms)) {
-            cq.where(listOfAndTerms.toArray(new Predicate[listOfAndTerms.size()]));
-        }
-
-        return getEntityManager().createQuery(cq).getResultList();
+        // Now add all the drafts by doing an OR query with just drafts
+        return cb.or(
+            statusAndDate, cb.equal(productOrderRoot.get(ProductOrder_.orderStatus), ProductOrder.OrderStatus.Draft));
     }
 
 
