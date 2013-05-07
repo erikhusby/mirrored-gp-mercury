@@ -33,6 +33,7 @@
                             hintText: "Type a name",
                             prePopulate: ${actionBean.ensureStringResult(actionBean.owner.completeData)},
                             tokenLimit: 1,
+                            tokenDelimiter: ",,,,,",
                             resultsFormatter: formatInput
                         }
                     );
@@ -42,6 +43,7 @@
                             hintText: "Type a project name",
                             prePopulate: ${actionBean.ensureStringResult(actionBean.projectTokenInput.completeData)},
                             resultsFormatter: formatInput,
+                            tokenDelimiter: ",,,,,",
                             tokenLimit: 1
                         }
                     );
@@ -53,6 +55,7 @@
                             onDelete: updateUIForProductChoice,
                             resultsFormatter: formatInput,
                             prePopulate: ${actionBean.ensureStringResult(actionBean.productTokenInput.completeData)},
+                            tokenDelimiter: ",,,,,",
                             tokenLimit: 1
                         }
                     );
