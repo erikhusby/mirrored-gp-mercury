@@ -81,7 +81,8 @@ public class SamplesBatchMessagingEndToEndTest extends ContainerTest {
             extractionEndTubeBarcodes.add("2DExt" + i + timestamp);
             // todo jmt different source tube types - falcon?
             cherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(extStartRackBarcode, "A0" + ((i / 15) + 1),
-                    extEndRackBarcode, bettaLimsMessageTestFactory.buildWellName(i + 1)));
+                    extEndRackBarcode, bettaLimsMessageTestFactory.buildWellName(i + 1,
+                    BettaLimsMessageTestFactory.WellNameType.SHORT)));
         }
 
         BettaLIMSMessage extractionEndMsg = new BettaLIMSMessage();

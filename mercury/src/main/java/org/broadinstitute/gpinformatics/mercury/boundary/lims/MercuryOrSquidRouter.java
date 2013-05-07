@@ -172,7 +172,12 @@ public class MercuryOrSquidRouter implements Serializable {
         NavigableSet<MercuryOrSquid> routingOptions = new TreeSet<MercuryOrSquid>();
         if (vessel != null) {
 
-            Set<SampleInstance> sampleInstances = vessel.getSampleInstances(SampleType.ANY, LabBatchType.WORKFLOW);
+            Set<SampleInstance> sampleInstances = vessel.getSampleInstances(SampleType.WITH_PDO, LabBatchType.WORKFLOW);
+            // If no sample instances, see if there are any without a PDO
+            // todo jmt improve performance with a version of getSampleInstances that prefers PDO, but will return without in one call
+            if(sampleInstances.isEmpty()) {
+                sampleInstances = vessel.getSampleInstances(SampleType.ANY, LabBatchType.WORKFLOW);
+            }
             if (sampleInstances.isEmpty()) {
                 routingOptions.add(SQUID);
             } else {

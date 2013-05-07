@@ -7,7 +7,9 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="List Product Orders" sectionTitle="List Product Orders">
+<stripes:layout-render name="/layout.jsp" pageTitle="List Product Orders" sectionTitle="List Product Orders"
+                       createTitle="<%=ProductOrderActionBean.CREATE_ORDER%>">
+
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
             $j(document).ready(function() {
@@ -114,12 +116,6 @@
         <div style="display:none;" id="noneSelectedDialog">
             <p>You must select at least one Product Order to <span id="noneSelectedDialogMessage"></span>.</p>
         </div>
-
-        <p>
-            <stripes:link title="<%=ProductOrderActionBean.CREATE_ORDER%>" beanclass="${actionBean.class.name}" event="create" class="pull-right">
-                <span class="icon-shopping-cart"></span> <%=ProductOrderActionBean.CREATE_ORDER%>
-            </stripes:link>
-        </p>
 
         <stripes:form beanclass="${actionBean.class.name}" id="searchForm">
             <div class="search-horizontal">
