@@ -161,7 +161,7 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
         Predicate statusAndDate = cb.and(listOfAndTerms.toArray(new Predicate[listOfAndTerms.size()]));
 
         // return the status and date, if not looking for Drafts
-        if (!orderStatuses.contains(ProductOrder.OrderStatus.Draft)) {
+        if (!fixedOrderStatuses.contains(ProductOrder.OrderStatus.Draft)) {
             return statusAndDate;
         }
 
