@@ -89,6 +89,8 @@ public class MercuryOrSquidRouterTest {
 
     @BeforeMethod(groups = DATABASE_FREE)
     public void setUp() throws Exception {
+        // Some of this mocking could be replaced by testing the @DaoFree routeForVessel method, but the mocks
+        // existed before that method was factored out.
         mockLabVesselDao = mock(LabVesselDao.class);
         mockControlDao = mock(ControlDao.class);
         mockAthenaClientService = mock(AthenaClientService.class);
