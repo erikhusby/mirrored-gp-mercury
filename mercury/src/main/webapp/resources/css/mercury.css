@@ -149,3 +149,5 @@ input.search-checkbox { float: left; margin-right: 3px; }
 .search-horizontal .help-block { margin-bottom: 0; }
 .search-horizontal input + .help-block, .search-horizontal select + .help-block, .search-horizontal textarea + .help-block { margin-top: 0px; }
 .search-horizontal .form-actions { padding-left: 180px; }
+
+.help-text { font-size: x-small; }

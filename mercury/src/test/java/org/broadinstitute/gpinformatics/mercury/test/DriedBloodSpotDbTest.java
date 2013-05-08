@@ -4,6 +4,7 @@ import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.filter.LoggingFilter;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.test.builders.DriedBloodSpotJaxbBuilder;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
@@ -37,8 +38,8 @@ public class DriedBloodSpotDbTest extends ContainerTest {
         Client client = Client.create();
         client.addFilter(new LoggingFilter(System.out));
 
-        DriedBloodSpotDbFreeTest.DriedBloodSpotJaxbBuilder driedBloodSpotJaxbBuilder =
-                new DriedBloodSpotDbFreeTest.DriedBloodSpotJaxbBuilder(ftaPaperBarcodes, batchId, timestamp);
+        DriedBloodSpotJaxbBuilder driedBloodSpotJaxbBuilder =
+                new DriedBloodSpotJaxbBuilder(ftaPaperBarcodes, batchId, timestamp);
         driedBloodSpotJaxbBuilder.buildJaxb();
 
         SamplesPicoDbTest.createBatch(baseUrl, client, batchId, ftaPaperBarcodes);

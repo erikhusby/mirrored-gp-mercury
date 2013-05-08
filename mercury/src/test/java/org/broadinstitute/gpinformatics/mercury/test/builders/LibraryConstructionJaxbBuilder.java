@@ -96,36 +96,36 @@ public class LibraryConstructionJaxbBuilder {
 
     public LibraryConstructionJaxbBuilder invoke() {
         endRepairJaxb = bettaLimsMessageTestFactory.buildPlateEvent("EndRepair", shearCleanPlateBarcode);
-        LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, endRepairJaxb);
+        bettaLimsMessageTestFactory.addMessage(messageList, endRepairJaxb);
 
         endRepairCleanupJaxb = bettaLimsMessageTestFactory.buildPlateEvent("EndRepairCleanup", shearCleanPlateBarcode);
-        LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, endRepairCleanupJaxb);
+        bettaLimsMessageTestFactory.addMessage(messageList, endRepairCleanupJaxb);
 
         aBaseJaxb = bettaLimsMessageTestFactory.buildPlateEvent("ABase", shearCleanPlateBarcode);
-        LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, aBaseJaxb);
+        bettaLimsMessageTestFactory.addMessage(messageList, aBaseJaxb);
 
         aBaseCleanupJaxb = bettaLimsMessageTestFactory.buildPlateEvent("ABaseCleanup", shearCleanPlateBarcode);
-        LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, aBaseCleanupJaxb);
+        bettaLimsMessageTestFactory.addMessage(messageList, aBaseCleanupJaxb);
 
 //            indexPlateBarcode = "IndexPlate" + testPrefix;
         indexedAdapterLigationJaxb = bettaLimsMessageTestFactory.buildPlateToPlate("IndexedAdapterLigation",
                 indexPlateBarcode,
                 shearCleanPlateBarcode);
-        LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, indexedAdapterLigationJaxb);
+        bettaLimsMessageTestFactory.addMessage(messageList, indexedAdapterLigationJaxb);
 
         String ligationCleanupBarcode = "ligationCleanupPlate" + testPrefix;
         ligationCleanupJaxb = bettaLimsMessageTestFactory.buildPlateToPlate("AdapterLigationCleanup",
                 shearCleanPlateBarcode,
                 ligationCleanupBarcode);
-        LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, ligationCleanupJaxb);
+        bettaLimsMessageTestFactory.addMessage(messageList, ligationCleanupJaxb);
 
         pondEnrichmentJaxb = bettaLimsMessageTestFactory.buildPlateEvent("PondEnrichment", ligationCleanupBarcode);
-        LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, pondEnrichmentJaxb);
+        bettaLimsMessageTestFactory.addMessage(messageList, pondEnrichmentJaxb);
 
         String pondCleanupBarcode = "pondCleanupPlate" + testPrefix;
         pondCleanupJaxb = bettaLimsMessageTestFactory.buildPlateToPlate("HybSelPondEnrichmentCleanup",
                 ligationCleanupBarcode, pondCleanupBarcode);
-        LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, pondCleanupJaxb);
+        bettaLimsMessageTestFactory.addMessage(messageList, pondCleanupJaxb);
 
         pondRegRackBarcode = "PondReg" + testPrefix;
         pondRegTubeBarcodes = new ArrayList<String>();
@@ -134,7 +134,7 @@ public class LibraryConstructionJaxbBuilder {
         }
         pondRegistrationJaxb = bettaLimsMessageTestFactory.buildPlateToRack("PondRegistration", pondCleanupBarcode,
                 pondRegRackBarcode, pondRegTubeBarcodes);
-        LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, pondRegistrationJaxb);
+        bettaLimsMessageTestFactory.addMessage(messageList, pondRegistrationJaxb);
 
         return this;
     }

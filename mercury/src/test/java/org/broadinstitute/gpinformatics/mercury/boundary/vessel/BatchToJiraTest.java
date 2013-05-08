@@ -88,8 +88,8 @@ public class BatchToJiraTest extends Arquillian {
         return gssrIdsText;
     }
 
-    @Test
-    public void test_jira_creation_from_batch() throws Exception {
+    @Test(enabled = false)
+    public void testJiraCreationFromBatch() throws Exception {
         String expectedGssrText = "SM-01\n\nSM-02 (rework)";
         Set<LabVessel> startingVessels = new HashSet<LabVessel>();
         LabVessel tube1 = new TwoDBarcodedTube("Starter01");

@@ -35,7 +35,7 @@ public class JiraCommentUtilTest extends Arquillian {
     @Inject
     private JiraCommentUtil jiraCommentUtil;
 
-    @Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testMessaging() {
         TwoDBarcodedTube twoDBarcodedTube = new TwoDBarcodedTube("1234");
 

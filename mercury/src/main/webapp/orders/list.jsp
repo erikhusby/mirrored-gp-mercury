@@ -50,7 +50,17 @@
                 });
 
                 setupDialogs();
+
+                statusChange();
             });
+
+            function statusChange() {
+                if ($j(".selectedStatuses[value='Draft']").attr('checked')) {
+                    $j("#draftMessage").show();
+                } else {
+                    $j("#draftMessage").hide();
+                }
+            }
 
             function formatInput(item) {
                 var extraCount = (item.extraCount == undefined) ? "" : item.extraCount;
@@ -150,7 +160,7 @@
                     <div class="controls">
                         <c:forEach items="<%=ProductOrder.OrderStatus.values()%>" var="orderStatus">
                             <div style="margin-top: 5px; margin-right: 15px; float: left; width: auto;">
-                                <stripes:checkbox class="search-checkbox" name="selectedStatuses" value="${orderStatus}" id="${orderStatus}-id"/>
+                                <stripes:checkbox onchange="statusChange()" class="search-checkbox selectedStatuses" name="selectedStatuses" value="${orderStatus}" id="${orderStatus}-id"/>
                                 <stripes:label class="search-checkbox-label" for="${orderStatus}-id">
                                     ${orderStatus.displayName}
                                 </stripes:label>
@@ -168,6 +178,9 @@
                              rangeSelector="${actionBean.dateRange.rangeSelector}"
                              startString="${actionBean.dateRange.startStr}"
                              endString="${actionBean.dateRange.endStr}">
+                        </div>
+                        <div id="draftMessage" class="help-text" style="margin-left: 10px;margin-top: -10px; margin-bottom: 5px; display: none;">
+                            Matching Draft Orders are displayed for any date selection
                         </div>
                     </div>
                 </div>
