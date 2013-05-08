@@ -8,7 +8,6 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEv
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
-import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -118,7 +117,7 @@ public class QtpJaxbBuilder {
             poolingTransferJaxb = bettaLimsMessageTestFactory.buildCherryPick("PoolingTransfer",
                     Arrays.asList(normCatchRackBarcodes.get(i)), Collections.singletonList(normCatchBarcodes),
                     poolRackBarcode, Collections.singletonList(poolTubeBarcodes.get(i)), poolingCherryPicks);
-            LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, poolingTransferJaxb);
+            bettaLimsMessageTestFactory.addMessage(messageList, poolingTransferJaxb);
             i++;
         }
 
@@ -138,7 +137,7 @@ public class QtpJaxbBuilder {
         denatureJaxb = bettaLimsMessageTestFactory.buildCherryPick("DenatureTransfer",
                 Collections.singletonList(poolRackBarcode), Collections.singletonList(poolTubeBarcodes),
                 denatureRackBarcode, denatureTubeBarcodes, denatureCherryPicks);
-        LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, denatureJaxb);
+        bettaLimsMessageTestFactory.addMessage(messageList, denatureJaxb);
 
         if (workflowName != WorkflowName.EXOME_EXPRESS) {
             // StripTubeBTransfer
@@ -162,17 +161,17 @@ public class QtpJaxbBuilder {
                     stripTubeHolderBarcode,
                     Arrays.asList(stripTubeBarcode),
                     stripTubeCherryPicks);
-            LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, stripTubeTransferJaxb);
+            bettaLimsMessageTestFactory.addMessage(messageList, stripTubeTransferJaxb);
 
             // FlowcellTransfer
             flowcellBarcode = "Flowcell" + testPrefix;
             flowcellTransferJaxb = bettaLimsMessageTestFactory.buildStripTubeToFlowcell("FlowcellTransfer",
                     stripTubeBarcode, flowcellBarcode);
-            LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, flowcellTransferJaxb);
+            bettaLimsMessageTestFactory.addMessage(messageList, flowcellTransferJaxb);
 
             flowcellLoad = bettaLimsMessageTestFactory.buildReceptacleEvent(LabEventType.FLOWCELL_LOADED.getName(),
                     flowcellBarcode, LabEventFactory.PHYS_TYPE_FLOWCELL);
-            LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, flowcellLoad);
+            bettaLimsMessageTestFactory.addMessage(messageList, flowcellLoad);
         }
         return this;
     }

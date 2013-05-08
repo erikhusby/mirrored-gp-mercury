@@ -6,7 +6,6 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventTy
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
-import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -141,63 +140,63 @@ public class HybridSelectionJaxbBuilder {
                 pondRegTubeBarcodes.subList(0, pondRegTubeBarcodes
                         .size() / 2), preSelPoolRackBarcode,
                 preSelPoolBarcodes);
-        LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, preSelPoolJaxb);
+        bettaLimsMessageTestFactory.addMessage(messageList, preSelPoolJaxb);
 
         preSelPoolJaxb2 = bettaLimsMessageTestFactory.buildRackToRack("PreSelectionPool", pondRegRackBarcode,
                 pondRegTubeBarcodes.subList(
                         pondRegTubeBarcodes.size() / 2,
                         pondRegTubeBarcodes.size()),
                 preSelPoolRackBarcode, preSelPoolBarcodes);
-        LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, preSelPoolJaxb2);
+        bettaLimsMessageTestFactory.addMessage(messageList, preSelPoolJaxb2);
 
         String hybridizationPlateBarcode = "Hybrid" + testPrefix;
         hybridizationJaxb = bettaLimsMessageTestFactory.buildRackToPlate("Hybridization", preSelPoolRackBarcode,
                 preSelPoolBarcodes, hybridizationPlateBarcode);
-        LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, hybridizationJaxb);
+        bettaLimsMessageTestFactory.addMessage(messageList, hybridizationJaxb);
 
         String baitSetupBarcode = "BaitSetup" + testPrefix;
         baitSetupJaxb = bettaLimsMessageTestFactory.buildTubeToPlate("BaitSetup", baitTubeBarcode, baitSetupBarcode,
                 LabEventFactory.PHYS_TYPE_EPPENDORF_96,
                 LabEventFactory.SECTION_ALL_96, "tube");
-        LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, baitSetupJaxb);
+        bettaLimsMessageTestFactory.addMessage(messageList, baitSetupJaxb);
 
         baitAdditionJaxb = bettaLimsMessageTestFactory.buildPlateToPlate("BaitAddition", baitSetupBarcode,
                 hybridizationPlateBarcode);
-        LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, baitAdditionJaxb);
+        bettaLimsMessageTestFactory.addMessage(messageList, baitAdditionJaxb);
 
         beadAdditionJaxb = bettaLimsMessageTestFactory.buildPlateEvent("BeadAddition", hybridizationPlateBarcode);
-        LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, beadAdditionJaxb);
+        bettaLimsMessageTestFactory.addMessage(messageList, beadAdditionJaxb);
 
         apWashJaxb = bettaLimsMessageTestFactory.buildPlateEvent("APWash", hybridizationPlateBarcode);
-        LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, apWashJaxb);
+        bettaLimsMessageTestFactory.addMessage(messageList, apWashJaxb);
 
         gsWash1Jaxb = bettaLimsMessageTestFactory.buildPlateEvent("GSWash1", hybridizationPlateBarcode);
-        LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, gsWash1Jaxb);
+        bettaLimsMessageTestFactory.addMessage(messageList, gsWash1Jaxb);
 
         gsWash2Jaxb = bettaLimsMessageTestFactory.buildPlateEvent("GSWash2", hybridizationPlateBarcode);
-        LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, gsWash2Jaxb);
+        bettaLimsMessageTestFactory.addMessage(messageList, gsWash2Jaxb);
 
         gsWash3Jaxb = bettaLimsMessageTestFactory.buildPlateEvent("GSWash3", hybridizationPlateBarcode);
-        LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, gsWash3Jaxb);
+        bettaLimsMessageTestFactory.addMessage(messageList, gsWash3Jaxb);
 
         gsWash4Jaxb = bettaLimsMessageTestFactory.buildPlateEvent("GSWash4", hybridizationPlateBarcode);
-        LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, gsWash4Jaxb);
+        bettaLimsMessageTestFactory.addMessage(messageList, gsWash4Jaxb);
 
         gsWash5Jaxb = bettaLimsMessageTestFactory.buildPlateEvent("GSWash5", hybridizationPlateBarcode);
-        LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, gsWash5Jaxb);
+        bettaLimsMessageTestFactory.addMessage(messageList, gsWash5Jaxb);
 
         gsWash6Jaxb = bettaLimsMessageTestFactory.buildPlateEvent("GSWash6", hybridizationPlateBarcode);
-        LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, gsWash6Jaxb);
+        bettaLimsMessageTestFactory.addMessage(messageList, gsWash6Jaxb);
 
         catchEnrichmentSetupJaxb = bettaLimsMessageTestFactory.buildPlateEvent("CatchEnrichmentSetup",
                 hybridizationPlateBarcode);
-        LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, catchEnrichmentSetupJaxb);
+        bettaLimsMessageTestFactory.addMessage(messageList, catchEnrichmentSetupJaxb);
 
         String catchCleanupBarcode = "catchCleanPlate" + testPrefix;
         catchEnrichmentCleanupJaxb = bettaLimsMessageTestFactory.buildPlateToPlate("CatchEnrichmentCleanup",
                 hybridizationPlateBarcode,
                 catchCleanupBarcode);
-        LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, catchEnrichmentCleanupJaxb);
+        bettaLimsMessageTestFactory.addMessage(messageList, catchEnrichmentCleanupJaxb);
 
         normCatchBarcodes = new ArrayList<String>();
         for (int rackPosition = 1; rackPosition <= pondRegTubeBarcodes.size() / 2; rackPosition++) {
@@ -207,7 +206,7 @@ public class HybridSelectionJaxbBuilder {
         normCatchJaxb = bettaLimsMessageTestFactory.buildPlateToRack("NormalizedCatchRegistration",
                 hybridizationPlateBarcode, normCatchRackBarcode,
                 normCatchBarcodes);
-        LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, normCatchJaxb);
+        bettaLimsMessageTestFactory.addMessage(messageList, normCatchJaxb);
 
         return this;
     }
