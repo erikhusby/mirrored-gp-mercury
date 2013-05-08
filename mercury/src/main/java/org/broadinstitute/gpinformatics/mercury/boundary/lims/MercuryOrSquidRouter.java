@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
@@ -42,6 +43,8 @@ import static org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch.
  * TODO SGM  This needs a better name since the options are more than just Mercury or Squid!!!!
  */
 public class MercuryOrSquidRouter implements Serializable {
+
+    private static final long serialVersionUID = 20130507L;
 
     /**
      * This enum defines the possible choices for where work is to be routed during normal Mercury processing.
@@ -90,7 +93,11 @@ public class MercuryOrSquidRouter implements Serializable {
      */
     public MercuryOrSquid routeForVesselBarcodes(Collection<String> barcodes) {
         Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(new ArrayList<String>(barcodes));
-        Collection<LabVessel> labVessels = mapBarcodeToVessel.values();
+        // can't use mapBarcodeToVessel.values(), because it doesn't include nulls
+        List<LabVessel> labVessels = new ArrayList<LabVessel>();
+        for (Map.Entry<String, LabVessel> stringLabVesselEntry : mapBarcodeToVessel.entrySet()) {
+            labVessels.add(stringLabVesselEntry.getValue());
+        }
         return routeForVessels(labVessels);
     }
 
@@ -102,24 +109,27 @@ public class MercuryOrSquidRouter implements Serializable {
      * routed.
      */
     public MercuryOrSquid routeForVessels(Collection<LabVessel> labVessels) {
+        // todo jmt can this be an EnumSet?
         NavigableSet<MercuryOrSquid> routingOptions = new TreeSet<MercuryOrSquid>();
         Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<String, ProductOrder>();
         Set<SampleInstance> possibleControls = new HashSet<SampleInstance>();
         for (LabVessel labVessel : labVessels) {
-            Set<SampleInstance> sampleInstances = labVessel.getSampleInstances(SampleType.WITH_PDO, LabBatchType.WORKFLOW);
-            // If no sample instances, see if there are any without a PDO
-            // todo jmt save CPU with a version of getSampleInstances that prefers PDO, but will return without in one call
-            if(sampleInstances.isEmpty()) {
-                sampleInstances = labVessel.getSampleInstances(SampleType.ANY, LabBatchType.WORKFLOW);
-            }
-            for (SampleInstance sampleInstance : sampleInstances) {
-                String productOrderKey = sampleInstance.getProductOrderKey();
-                if (productOrderKey == null) {
-                    possibleControls.add(sampleInstance);
-                } else {
-                    if(!mapKeyToProductOrder.containsKey(productOrderKey)) {
-                        mapKeyToProductOrder.put(productOrderKey,
-                                athenaClientService.retrieveProductOrderDetails(sampleInstance.getProductOrderKey()));
+            if (labVessel != null) {
+                Set<SampleInstance> sampleInstances = labVessel.getSampleInstances(SampleType.WITH_PDO, LabBatchType.WORKFLOW);
+                // If no sample instances, see if there are any without a PDO, it might be a control
+                // todo jmt save CPU with a version of getSampleInstances that prefers PDO, but will return without in one call
+                if(sampleInstances.isEmpty()) {
+                    sampleInstances = labVessel.getSampleInstances(SampleType.ANY, LabBatchType.WORKFLOW);
+                }
+                for (SampleInstance sampleInstance : sampleInstances) {
+                    String productOrderKey = sampleInstance.getProductOrderKey();
+                    if (productOrderKey == null) {
+                        possibleControls.add(sampleInstance);
+                    } else {
+                        if(!mapKeyToProductOrder.containsKey(productOrderKey)) {
+                            mapKeyToProductOrder.put(productOrderKey,
+                                    athenaClientService.retrieveProductOrderDetails(sampleInstance.getProductOrderKey()));
+                        }
                     }
                 }
             }
@@ -130,16 +140,19 @@ public class MercuryOrSquidRouter implements Serializable {
         if (mapKeyToProductOrder.isEmpty()) {
             routingOptions.add(SQUID);
         } else {
-            Collection<String> sampleNames = new ArrayList<String>();
-            for (SampleInstance sampleInstance : possibleControls) {
-                sampleNames.add(sampleInstance.getStartingSample().getSampleKey());
-            }
-            Map<String, BSPSampleDTO> mapSampleNameToDto = bspSampleDataFetcher.fetchSamplesFromBSP(sampleNames);
-
-            List<Control> controls = controlDao.findAllActive();
             List<String> controlSampleIds = new ArrayList<String>();
-            for (Control control : controls) {
-                controlSampleIds.add(control.getCollaboratorSampleId());
+            Collection<String> sampleNames = new ArrayList<String>();
+            Map<String, BSPSampleDTO> mapSampleNameToDto = null;
+            if (!possibleControls.isEmpty()) {
+                for (SampleInstance sampleInstance : possibleControls) {
+                    sampleNames.add(sampleInstance.getStartingSample().getSampleKey());
+                }
+                mapSampleNameToDto = bspSampleDataFetcher.fetchSamplesFromBSP(sampleNames);
+
+                List<Control> controls = controlDao.findAllActive();
+                for (Control control : controls) {
+                    controlSampleIds.add(control.getCollaboratorSampleId());
+                }
             }
             for (LabVessel labVessel : labVessels) {
                 MercuryOrSquid determinedRoute =
@@ -218,8 +231,10 @@ public class MercuryOrSquidRouter implements Serializable {
      * @param controlSampleIds @return An instance of a MercuryOrSquid enum that will assist in determining to which system requests should be
      * @param mapSampleNameToDto map from sample name to BSP sample DTO
      */
+    @DaoFree
     public MercuryOrSquid routeForVessel(LabVessel vessel, Map<String, ProductOrder> mapKeyToProductOrder,
                                          List<String> controlSampleIds, Map<String, BSPSampleDTO> mapSampleNameToDto) {
+        // todo jmt can this be an EnumSet?
         NavigableSet<MercuryOrSquid> routingOptions = new TreeSet<MercuryOrSquid>();
         if (vessel != null) {
 

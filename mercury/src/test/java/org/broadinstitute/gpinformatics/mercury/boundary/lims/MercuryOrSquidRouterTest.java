@@ -118,6 +118,16 @@ public class MercuryOrSquidRouterTest {
                 new HashMap<String, LabVessel>() {{
                     put(CONTROL_TUBE, controlTube);
                 }});
+
+        when(mockLabVesselDao.findByBarcodes(new ArrayList<String>(){{add(MERCURY_TUBE_1); add(MERCURY_TUBE_2);}})).thenReturn(
+                new HashMap<String, LabVessel>(){{put(MERCURY_TUBE_1, tube1); put(MERCURY_TUBE_2, tube2);}});
+
+        when(mockLabVesselDao.findByBarcodes(new ArrayList<String>(){{add("squidTube"); add(MERCURY_TUBE_1);}})).thenReturn(
+                new HashMap<String, LabVessel>(){{put("squidTube", null); put(MERCURY_TUBE_1, tube1);}});
+
+        when(mockLabVesselDao.findByBarcodes(new ArrayList<String>(){{add(MERCURY_TUBE_1); add(MERCURY_TUBE_2); add(CONTROL_TUBE);}})).thenReturn(
+                new HashMap<String, LabVessel>(){{put(MERCURY_TUBE_1, tube1); put(MERCURY_TUBE_2, tube2); put(CONTROL_TUBE, controlTube);}});
+
         when(mockControlDao.findAllActive())
                 .thenReturn(Arrays.asList(new Control(NA12878, Control.ControlType.POSITIVE)));
         when(mockBspSampleDataFetcher.fetchSamplesFromBSP(Arrays.asList(CONTROL_SAMPLE_ID)))
