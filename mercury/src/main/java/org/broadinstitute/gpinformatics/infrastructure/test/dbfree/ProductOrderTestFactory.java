@@ -1,5 +1,8 @@
 package org.broadinstitute.gpinformatics.infrastructure.test.dbfree;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -147,4 +150,17 @@ public class ProductOrderTestFactory {
         return productOrder;
     }
 
+    /**
+     * Group the {@code ProductOrderSample}s by their Sample IDs into a {@code Multimap} ({@code Multimap}s can have
+     * multiple values for the same key).
+     * @param productOrder Input Product Order
+     */
+    public static Multimap<String, ProductOrderSample> groupBySampleId(ProductOrder productOrder) {
+        return Multimaps.index(productOrder.getSamples(), new Function<ProductOrderSample, String>() {
+            @Override
+            public String apply(ProductOrderSample input) {
+                return input.getSampleName();
+            }
+        });
+    }
 }

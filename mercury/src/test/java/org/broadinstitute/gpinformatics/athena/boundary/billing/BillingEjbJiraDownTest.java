@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -44,7 +45,7 @@ public class BillingEjbJiraDownTest extends Arquillian {
 
     @Deployment
     public static WebArchive buildMercuryDeployment() {
-        return DeploymentBuilder.buildMercuryWarWithAlternatives(HappyQuoteServiceStub.class, AngryJiraStub.class);
+        return DeploymentBuilder.buildMercuryWarWithAlternatives(AcceptsAllWorkRegistrationsQuoteServiceStub.class, AlwaysThrowsRuntimeExceptionsJiraStub.class);
     }
 
 
@@ -54,7 +55,7 @@ public class BillingEjbJiraDownTest extends Arquillian {
         final String SM_B = "SM-1234B";
         ProductOrder productOrder = ProductOrderDBTestFactory.createProductOrder(billingSessionDao, SM_A, SM_B);
 
-        Multimap<String, ProductOrderSample> samplesByName = productOrder.groupBySampleId();
+        Multimap<String, ProductOrderSample> samplesByName = ProductOrderTestFactory.groupBySampleId(productOrder);
 
         final ProductOrderSample sampleA = samplesByName.get(SM_A).iterator().next();
         final ProductOrderSample sampleB = samplesByName.get(SM_B).iterator().next();
@@ -97,6 +98,6 @@ public class BillingEjbJiraDownTest extends Arquillian {
 
         // Make sure our angry JIRA was in fact angered by what we have done and has therefore thrown an exception that
         // threatened to roll back our transaction.
-        assertThat(AngryJiraStub.getInvocationCount(), is(greaterThan(0)));
+        assertThat(AlwaysThrowsRuntimeExceptionsJiraStub.getInvocationCount(), is(greaterThan(0)));
     }
 }

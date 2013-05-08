@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quotes;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -118,7 +119,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         FAILING_PRICE_ITEM_NAME = replacementPriceItem.getName();
         billingSessionDao.persist(replacementPriceItem);
 
-        Multimap<String, ProductOrderSample> samplesByName = productOrder.groupBySampleId();
+        Multimap<String, ProductOrderSample> samplesByName = ProductOrderTestFactory.groupBySampleId(productOrder);
 
         ProductOrderSample sm1234 = samplesByName.get(SM_1234).iterator().next();
         ProductOrderSample sm5678 = samplesByName.get(SM_5678).iterator().next();

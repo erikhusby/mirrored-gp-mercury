@@ -9,12 +9,12 @@ import org.hamcrest.TypeSafeMatcher;
 
 
 /**
- * This class tests for a non-null and non-successful billing message on a ledger entry.
+ * Hamcrest matcher for a non-null and non-successful billing message on a {@link LedgerEntry}.
  */
 public class UnsuccessfullyBilled extends TypeSafeMatcher<LedgerEntry> {
     @Override
     public boolean matchesSafely(LedgerEntry ledgerEntry) {
-        return ledgerEntry.getBillingMessage() != null && !BillingSession.SUCCESS.equals(ledgerEntry.getBillingMessage());
+        return ledgerEntry.isUnsuccessfullyBilled();
     }
 
     @Override

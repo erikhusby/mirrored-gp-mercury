@@ -86,6 +86,10 @@ public class ProductOrderDBTestFactory {
     }
 
 
+    /**
+     * Creates a {@link ProductOrder} with the specified sample names and persists everything using the
+     * dao parameter.
+     */
     public static ProductOrder createProductOrder(GenericDao dao, String... sampleNames) {
         ProductOrder productOrder = ProductOrderTestFactory.createProductOrder(sampleNames);
         dao.persist(productOrder.getResearchProject());
