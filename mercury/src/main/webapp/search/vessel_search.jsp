@@ -65,7 +65,7 @@
 
                 <div id="accordion" style="display:none;" class="accordion">
                     <c:forEach items="${actionBean.foundVessels}" var="vessel" varStatus="status">
-                        <div style="padding-left: 30px;padding-bottom: 0">
+                        <div style="padding-left: 30px;padding-bottom: 2px">
                             <stripes:layout-render name="/vessel/vessel_info_header.jsp" bean="${actionBean}"
                                                    vessel="${vessel}"/>
                         </div>

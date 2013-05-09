@@ -45,16 +45,16 @@
             <c:forEach items="${vessel.inPlaceAndTransferToEvents}" var="event">
                 <tr>
                     <td>
-                        ${event.labEventType.name}
+                            ${event.labEventType.name}
                     </td>
                     <td>
                         <fmt:formatDate value="${event.eventDate}" pattern="${bean.dateTimePattern}"/>
                     </td>
                     <td>
-                        ${event.eventLocation}
+                            ${event.eventLocation}
                     </td>
                     <td>
-                        ${bean.getUserFullName(event.eventOperator)}
+                            ${bean.getUserFullName(event.eventOperator)}
                     </td>
                     <td style="padding: 0;">
                         <table style="padding: 0;">
@@ -62,7 +62,7 @@
                                 <c:forEach items="${curIndex.molecularIndexingScheme.indexes}" var="innerIndex">
                                     <tr>
                                         <td style="border: none">
-                                            ${innerIndex.key} - ${innerIndex.value.sequence}
+                                                ${innerIndex.key} - ${innerIndex.value.sequence}
                                         </td>
                                     </tr>
                                 </c:forEach>
@@ -74,7 +74,7 @@
                             <a target="JIRA" href="${bean.jiraUrl(batchComposition.labBatch.jiraTicket)}"
                                class="external" target="JIRA">
                                     ${batchComposition.labBatch.businessKey}
-                                    (${batchComposition.count}/${batchComposition.denominator})
+                                (${batchComposition.count}/${batchComposition.denominator})
                             </a>
 
                             <c:forEach items="${vessel.getSampleInstancesForSample(sample)}"
@@ -82,7 +82,7 @@
                                 <c:if test="${not empty sampleInstance.productOrderKey}">
                                     <stripes:link
                                             beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"
-                                            event="view">
+                                            event="view" style="margin-left: 3px;">
                                         <stripes:param name="productOrder"
                                                        value="${sampleInstance.productOrderKey}"/>
                                         ${sampleInstance.productOrderKey}

@@ -64,7 +64,7 @@
 
                 <div id="accordion" style="display:none;" class="accordion">
                     <c:forEach items="${actionBean.mercurySampleToVessels}" var="sampleToVessels" varStatus="status">
-                        <div style="padding-left: 20px;">
+                        <div style="padding-left: 30px;padding-bottom: 2px">
                             <stripes:layout-render name="/sample/sample_info_header.jsp" bean="${actionBean}"
                                                    sample="${sampleToVessels.key}"/>
                         </div>
