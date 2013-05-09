@@ -5,7 +5,6 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
@@ -13,11 +12,8 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -111,12 +107,7 @@ public class BillingEjb {
         }
     }
 
-    // Use Requires New here so that a runtime exception doesn't cause the caller's transaction to be rolled back.
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    private boolean updateOrderStatusWithNewTransaction(@Nonnull String jiraTicketKey)
-            throws JiraIssue.NoTransitionException, ProductOrderEjb.NoSuchPDOException, IOException {
-        return productOrderEjb.updateOrderStatus(jiraTicketKey);
-    }
+
     /**
      * Transactional method to bill each previously unbilled {@link QuoteImportItem} on the BillingSession to the quote
      * server and update billing entities as appropriate to the results of the billing attempt.  Results
@@ -188,6 +179,10 @@ public class BillingEjb {
         // Update the state of all PDOs affected by this billing session.
         for (String key : updatedPDOs) {
             try {
+                // Update the order status using the ProductOrderEjb with a version of the order status update
+                // method that does not mark transactions for rollback in the event that JIRA-related RuntimeExceptions
+                // are thrown.  It is still possible that this method will throw a checked exception,
+                // but these will not mark the transaction for rollback.
                 productOrderEjb.updateOrderStatusNoRollback(key);
             } catch (Exception e) {
                 // Errors are just logged here because the current user doesn't work with PDOs, and wouldn't

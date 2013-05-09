@@ -13,13 +13,13 @@ import javax.enterprise.inject.Alternative;
 import java.util.Date;
 
 /**
- * This is intended to be a happy quote service that accepts all billed work and returns work item ids that are
+ * This is intended to be a "happy" quote service that accepts all billed work and returns work item ids that are
  * unique within a test run.  Currently some of the methods are set up to throw {@link NotImplementedException}s, but
  * that's only because the current clients of this class don't care about those methods.  These 'angry' methods could
  * be modified to be happier if new clients so require.
  */
 @Alternative
-class HappyQuoteServiceStub implements QuoteService {
+class AcceptsAllWorkRegistrationsQuoteServiceStub implements QuoteService {
 
     private static int counter = 0;
 

@@ -87,9 +87,9 @@
                             class="icon-tasks"></span> Lab <b class="caret"></b></a>
                     <ul class="dropdown-menu" role="menu">
                         <li>
-                            <stripes:link
-                                    beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BucketViewActionBean"
-                                    event="view">Buckets</stripes:link>
+                            <stripes:link id="viewBuckets"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BucketViewActionBean"
+                                          event="view">Buckets</stripes:link>
                         </li>
                         <security:authorizeBlock roles="<%= roles(Developer) %>">
                             <li>

@@ -1119,17 +1119,4 @@ public class ProductOrder implements Serializable {
         }
         return false;
     }
-
-    /**
-     * Group the {@code ProductOrderSample}s by their Sample IDs into a {@code Multimap} ({@code Multimap}s can have
-     * multiple values for the same key).
-     */
-    public Multimap<String, ProductOrderSample> groupBySampleId() {
-        return Multimaps.index(getSamples(), new Function<ProductOrderSample, String>() {
-            @Override
-            public String apply(ProductOrderSample input) {
-                return input.getSampleName();
-            }
-        });
-    }
 }

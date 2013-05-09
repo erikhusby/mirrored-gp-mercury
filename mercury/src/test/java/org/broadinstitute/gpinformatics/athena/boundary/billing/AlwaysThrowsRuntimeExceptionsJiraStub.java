@@ -23,7 +23,7 @@ import java.util.Map;
  * Completely 'angry' JIRA implementation that will throw a {@link RuntimeException} on any method invocation.
  */
 @Alternative
-class AngryJiraStub implements JiraService {
+class AlwaysThrowsRuntimeExceptionsJiraStub implements JiraService {
 
     /**
      * The invocation count variable feels like something that would normally be accomplished with a mock, but an

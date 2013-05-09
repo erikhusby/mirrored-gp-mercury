@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 
 import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
+import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderCompletionStatus;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -16,6 +18,9 @@ import javax.transaction.UserTransaction;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import static org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM;
+import static org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM;
 
 /**
  * Test the progress object.
@@ -114,8 +119,18 @@ public class CompletionStatusFetcherTest extends ContainerTest {
         for (ProductOrderSample sample : samples) {
             if (sample.getDeliveryStatus() == ProductOrderSample.DeliveryStatus.ABANDONED) {
                 abandoned++;
-            } else if (!sample.getLedgerItems().isEmpty()) {
-                completed++;
+            } else {
+                for (LedgerEntry ledgerEntry : sample.getLedgerItems()) {
+                    LedgerEntry.PriceItemType priceItemType = ledgerEntry.getPriceItemType();
+                    // If we find a ledger entry with a priceItemType of PRIMARY_PRICE_ITEM or REPLACEMENT_PRICE_ITEM,
+                    // this sample can be considered complete for the purposes of the CompletionStatusFetcher.
+                    // If the priceItemType is ADD_ON_PRICE_ITEM or null (as would be the case for a Quote server
+                    // error), we do not consider the sample complete.
+                    if (PRIMARY_PRICE_ITEM.equals(priceItemType) || REPLACEMENT_PRICE_ITEM.equals(priceItemType)) {
+                        completed++;
+                        break;
+                    }
+                }
             }
 
             total++;
@@ -146,12 +161,12 @@ public class CompletionStatusFetcherTest extends ContainerTest {
     public void testGetPercentInProgress() throws Exception {
         // Find the first PDO with abandoned samples.
         String firstCompleteAndAbandonedKey = null;
-        int fetcherInProgess = 0;
+        int fetcherInProgress = 0;
 
         for (String pdoKey : allPDOFetcher.getKeys()) {
             if (allPDOFetcher.getPercentCompleted(pdoKey) > 0) {
                 firstCompleteAndAbandonedKey = pdoKey;
-                fetcherInProgess = allPDOFetcher.getPercentInProgress(pdoKey);
+                fetcherInProgress = allPDOFetcher.getPercentInProgress(pdoKey);
                 break;
             }
         }
@@ -164,7 +179,7 @@ public class CompletionStatusFetcherTest extends ContainerTest {
         ProductOrderCompletionStatus realStatus = calculateStatus(order.getSamples());
 
         Assert.assertEquals(
-                fetcherInProgess, realStatus.getPercentInProgress(),
+                fetcherInProgress, realStatus.getPercentInProgress(),
                 "Fetcher calculated different in progress percentage");
     }
 
