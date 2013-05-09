@@ -7,7 +7,6 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
@@ -38,11 +37,6 @@ public class BillingEjbJiraDownTest extends Arquillian {
 
     @Inject
     private BillingEjb billingEjb;
-
-    @SuppressWarnings("CdiInjectionPointsInspection")
-    @Inject
-    private JiraService jiraService;
-
 
     @Deployment
     public static WebArchive buildMercuryDeployment() {
