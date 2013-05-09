@@ -14,7 +14,6 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.Price
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProductTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
-import org.broadinstitute.gpinformatics.mercury.entity.DB;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
@@ -30,8 +29,9 @@ public class ProductActionBean extends CoreActionBean {
     public static final String ACTIONBEAN_URL_BINDING = "/products/product.action";
     public static final String PRODUCT_PARAMETER = "product";
 
-    public static final String CREATE_PRODUCT = CoreActionBean.CREATE + " Product";
-    private static final String EDIT_PRODUCT = CoreActionBean.EDIT + " Product: ";
+    public static final String PRODUCT_STRING = "Product";
+    public static final String CREATE_PRODUCT = CoreActionBean.CREATE + PRODUCT_STRING;
+    private static final String EDIT_PRODUCT = CoreActionBean.EDIT + PRODUCT_STRING;
 
     public static final String PRODUCT_CREATE_PAGE = "/products/create.jsp";
     public static final String PRODUCT_LIST_PAGE = "/products/list.jsp";
@@ -76,6 +76,10 @@ public class ProductActionBean extends CoreActionBean {
         @Validate(field="availabilityDate", required = true, on={SAVE_ACTION}, label = "Availability Date")
     })
     private Product editProduct;
+
+    public ProductActionBean() {
+        super(CREATE_PRODUCT, EDIT_PRODUCT, PRODUCT_PARAMETER);
+    }
 
     private String q;
 
@@ -414,17 +418,18 @@ public class ProductActionBean extends CoreActionBean {
     }
 
     /**
-     * Normally, JSPs protect things directly, but since the JSP here only allows create for particular users, adding
-     * this here. Create is in the layout and is passed in as an attribute, so doing this in the JSP is better.
-     *
-     * @return The create product string is sent when the user is allowed to create. Otherwise, it sends an empty string
-     * which is used by master layout to leave out the Create link.
+     * @return Show the create title if this is a developer or PDM.
      */
-    public String getCreateTitleIfAllowed() {
-        if (getUserBean().isDeveloperUser() || getUserBean().isPDMUser()) {
-            return CREATE_PRODUCT;
-        }
+    @Override
+    public boolean isCreateAllowed() {
+        return isEditAllowed();
+    }
 
-        return "";
+    /**
+     * @return Show the edit title if this is a developer or PDM.
+     */
+    @Override
+    public boolean isEditAllowed() {
+        return getUserBean().isDeveloperUser() || getUserBean().isPDMUser();
     }
 }

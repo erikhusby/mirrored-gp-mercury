@@ -12,7 +12,6 @@ package org.broadinstitute.gpinformatics.athena.entity.preference;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -29,7 +28,6 @@ import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.persistence.Transient;
-import java.util.Comparator;
 import java.util.Date;
 
 /**
@@ -38,7 +36,7 @@ import java.util.Date;
  */
 @Entity
 @Table(name = "PREF_PREFERENCE", schema = "athena")
-public class Preference extends GenericDao {
+public class Preference {
 
     @Id
     @SequenceGenerator(name = "SEQ_PREFERENCE", schema = "athena", sequenceName = "SEQ_PREFERENCE")

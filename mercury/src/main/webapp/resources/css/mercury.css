@@ -13,8 +13,6 @@ body { padding-bottom: 40px; padding-top: 5px; font-size: 12px; }
 footer { font-size: 10px; text-align: center; padding-top: 20px; }
 section { margin-left: 2%; margin-right: 2% }
 
-.create { background-image:url("/Mercury/images/plus.png");background-position:left center;background-repeat:no-repeat;display:inline;padding:0 0 0 15px; }
-
 /* Override Bootstrap's opinion that links should not be underlined. */
 a { text-decoration: underline; color: #0088CC; font-size: medium; }
 a.external {background-image:url("/Mercury/images/external-link.gif");background-position:right center;background-repeat:no-repeat;display:inline;padding:0 20px 0 0;}
@@ -133,7 +131,6 @@ textarea.controlledText { width: 550px; }
 .simpletab .ui-widget-header { border-bottom: 1px solid #c2c2c2; }
 .simpletab .ui-state-hover { border: 1px solid #0088cc; color: #0088cc; background: #e6f7ff; }
 
-
 .search-select { width: auto; font-weight: bold; font-size: x-small; height: 25px; padding: 0; margin-right: 10px; }
 input.search-input { width: auto; font-weight: bold; font-size: x-small; height: 25px;  padding: 0; }
 .search-checkbox-label { float: left; font-weight: bold; font-size: x-small; }
@@ -151,3 +148,9 @@ input.search-checkbox { float: left; margin-right: 3px; }
 .search-horizontal .form-actions { padding-left: 180px; }
 
 .help-text { font-size: x-small; }
+
+fieldset { padding-right: 10px; padding-bottom: 10px; margin: 0; border: 1px solid #b9b9b9; }
+legend { display: block; width: auto; padding: 0; margin-bottom: 0; margin-left: 10px; font-size: inherit; color: #333333; border: 1px; }
+legend + .control-group { margin-top: 0px; -webkit-margin-top-collapse: separate; }
+
+.input-create-form { width: 385px; }

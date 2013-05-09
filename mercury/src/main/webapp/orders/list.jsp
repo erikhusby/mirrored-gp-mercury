@@ -7,8 +7,7 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="List Product Orders" sectionTitle="List Product Orders"
-                       createTitle="<%=ProductOrderActionBean.CREATE_ORDER%>">
+<stripes:layout-render name="/layout.jsp" pageTitle="List Product Orders" sectionTitle="List Product Orders" showCreate="true">
 
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
