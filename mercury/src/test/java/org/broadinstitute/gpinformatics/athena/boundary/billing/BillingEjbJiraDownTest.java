@@ -39,6 +39,7 @@ public class BillingEjbJiraDownTest extends Arquillian {
     @Inject
     private BillingEjb billingEjb;
 
+    @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private JiraService jiraService;
 
@@ -49,7 +50,7 @@ public class BillingEjbJiraDownTest extends Arquillian {
     }
 
 
-    private BillingSession writeFixtureData() {
+    private String writeFixtureData() {
 
         final String SM_A = "SM-1234A";
         final String SM_B = "SM-1234B";
@@ -72,21 +73,20 @@ public class BillingEjbJiraDownTest extends Arquillian {
         billingSessionDao.flush();
         billingSessionDao.clear();
 
-        return billingSession;
+        return billingSession.getBusinessKey();
     }
 
 
-    public void testPositive() {
+    public void test() {
 
-        BillingSession billingSession = writeFixtureData();
-        billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey());
+        String businessKey = writeFixtureData();
 
-        billingEjb.bill("http://www.broadinstitute.org", billingSession.getBusinessKey());
+        billingEjb.bill("http://www.broadinstitute.org", businessKey);
 
         billingSessionDao.clear();
 
         // Re-fetch the updated BillingSession from the database.
-        billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey());
+        BillingSession billingSession = billingSessionDao.findByBusinessKey(businessKey);
 
         assertThat(billingSession, is(not(nullValue())));
 
