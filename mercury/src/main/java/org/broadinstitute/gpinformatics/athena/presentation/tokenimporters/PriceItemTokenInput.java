@@ -1,9 +1,10 @@
 package org.broadinstitute.gpinformatics.athena.presentation.tokenimporters;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
+import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -43,8 +44,8 @@ public class PriceItemTokenInput extends TokenInput<QuotePriceItem> {
 
     @Override
     protected String getTokenId(QuotePriceItem quotePriceItem) {
-        return org.broadinstitute.gpinformatics.athena.entity.products.PriceItem.makeConcatenatedKey(
-                quotePriceItem.getPlatformName(), quotePriceItem.getCategoryName(), quotePriceItem.getName());
+        return PriceItem.makeConcatenatedKey(quotePriceItem.getPlatformName(),
+                quotePriceItem.getCategoryName(), quotePriceItem.getName());
     }
 
     @Override
@@ -69,7 +70,7 @@ public class PriceItemTokenInput extends TokenInput<QuotePriceItem> {
         return super.createAutocomplete(quotePriceItem);
     }
 
-    public org.broadinstitute.gpinformatics.athena.entity.products.PriceItem getMercuryTokenObject() {
+    public PriceItem getMercuryTokenObject() {
         List<QuotePriceItem> quotePriceItems = getTokenObjects();
 
         if ((quotePriceItems == null) || (quotePriceItems.isEmpty())) {
@@ -77,19 +78,17 @@ public class PriceItemTokenInput extends TokenInput<QuotePriceItem> {
         }
 
         if (quotePriceItems.size() > 1) {
-            throw new IllegalArgumentException("If you want to get more than one price item, use #getMercuryTokenObjects.");
+            throw new IllegalArgumentException("If you want to get more than one price item, use getMercuryTokenObjects.");
         }
 
         return getMercuryPriceItem(quotePriceItems.get(0));
     }
 
-    public Collection<? extends org.broadinstitute.gpinformatics.athena.entity.products.PriceItem> getMercuryTokenObjects() {
-        List<org.broadinstitute.gpinformatics.athena.entity.products.PriceItem> mercuryTokenObjects =
-                new ArrayList<org.broadinstitute.gpinformatics.athena.entity.products.PriceItem>();
+    public Collection<? extends PriceItem> getMercuryTokenObjects() {
+        List<PriceItem> mercuryTokenObjects = new ArrayList<PriceItem>();
 
         for (QuotePriceItem quotePriceItem : getTokenObjects()) {
-            org.broadinstitute.gpinformatics.athena.entity.products.PriceItem mercuryPriceItem = getMercuryPriceItem(
-                    quotePriceItem);
+            PriceItem mercuryPriceItem = getMercuryPriceItem(quotePriceItem);
             if (mercuryPriceItem != null) {
                 mercuryTokenObjects.add(mercuryPriceItem);
             }
@@ -98,19 +97,18 @@ public class PriceItemTokenInput extends TokenInput<QuotePriceItem> {
         return mercuryTokenObjects;
     }
 
-    private org.broadinstitute.gpinformatics.athena.entity.products.PriceItem getMercuryPriceItem(QuotePriceItem quotePriceItem) {
+    private PriceItem getMercuryPriceItem(QuotePriceItem quotePriceItem) {
         // Find the existing Mercury price item.
         if (quotePriceItem == null) {
             return null;
         }
 
-        org.broadinstitute.gpinformatics.athena.entity.products.PriceItem mercuryPriceItem =
-                priceItemDao.find(quotePriceItem.getPlatformName(), quotePriceItem.getCategoryName(), quotePriceItem.getName());
+        PriceItem mercuryPriceItem = priceItemDao.find(quotePriceItem.getPlatformName(),
+                quotePriceItem.getCategoryName(), quotePriceItem.getName());
 
         if (mercuryPriceItem == null) {
-            mercuryPriceItem = new org.broadinstitute.gpinformatics.athena.entity.products.PriceItem(
-                    quotePriceItem.getId(), quotePriceItem.getPlatformName(), quotePriceItem.getCategoryName(), quotePriceItem
-                    .getName());
+            mercuryPriceItem = new PriceItem(quotePriceItem.getId(), quotePriceItem.getPlatformName(),
+                    quotePriceItem.getCategoryName(), quotePriceItem.getName());
             priceItemDao.persist(mercuryPriceItem);
         }
 

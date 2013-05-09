@@ -13,6 +13,8 @@ body { padding-bottom: 40px; padding-top: 5px; font-size: 12px; }
 footer { font-size: 10px; text-align: center; padding-top: 20px; }
 section { margin-left: 2%; margin-right: 2% }
 
+.create { background-image:url("/Mercury/images/plus.png");background-position:left center;background-repeat:no-repeat;display:inline;padding:0 0 0 15px; }
+
 /* Override Bootstrap's opinion that links should not be underlined. */
 a { text-decoration: underline; color: #0088CC; font-size: medium; }
 a.external {background-image:url("/Mercury/images/external-link.gif");background-position:right center;background-repeat:no-repeat;display:inline;padding:0 20px 0 0;}
@@ -66,7 +68,7 @@ table.workflow td.current { background-color: #eecac6}
 
 table.nocol tbody td,table.nocol tbody th { border-left: none; border-right: none; }
 
-.page-header { border-bottom: 1px solid #EEEEEE; font-size: 2em; font-family: 'Carrois Gothic SC', sans-serif; margin: 0 0 10px; padding-bottom: 0;}
+.page-header { color: #644436; border-bottom: 1px solid #EEEEEE; margin: 0 0 15px 0; padding-bottom: 3px; font-size: x-large; font-weight: bold; line-height: 1; }
 
 .twocolumn {-moz-column-count:2;-webkit-column-count:2;-moz-column-gap:2em;-webkit-column-gap:2em;-moz-column-rule-style:solid;-moz-column-rule-color:#fff;-moz-column-rule-width:2px;-webkit-column-rule-style:solid;-webkit-column-rule-color:#fff;-webkit-column-rule-width:2px}
 .threecolumn {-moz-column-count:3;-webkit-column-count:3;-moz-column-gap:2em;-webkit-column-gap:2em;-moz-column-rule-style:solid;-moz-column-rule-color:#fff;-moz-column-rule-width:2px;-webkit-column-rule-style:solid;-webkit-column-rule-color:#fff;-webkit-column-rule-width:2px}
@@ -147,3 +149,5 @@ input.search-checkbox { float: left; margin-right: 3px; }
 .search-horizontal .help-block { margin-bottom: 0; }
 .search-horizontal input + .help-block, .search-horizontal select + .help-block, .search-horizontal textarea + .help-block { margin-top: 0px; }
 .search-horizontal .form-actions { padding-left: 180px; }
+
+.help-text { font-size: x-small; }

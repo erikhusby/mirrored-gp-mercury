@@ -45,6 +45,7 @@
                             prePopulate: ${actionBean.ensureStringResult(actionBean.priceItemTokenInput.completeData)},
                             resultsFormatter: formatInput,
                             tokenLimit: 1,
+                            tokenDelimiter: "${actionBean.priceItemTokenInput.separator}",
                             preventDuplicates: true
                         }
                     );
@@ -54,6 +55,7 @@
                             hintText: "Type a Product name",
                             prePopulate: ${actionBean.ensureStringResult(actionBean.addOnTokenInput.completeData)},
                             resultsFormatter: formatInput,
+                            tokenDelimiter: "${actionBean.addOnTokenInput.separator}",
                             preventDuplicates: true
                         }
                     );
@@ -63,8 +65,8 @@
                             hintText: "Type a Material Type name",
                             prePopulate: ${actionBean.ensureStringResult(actionBean.materialTypeTokenInput.completeData)},
                             preventDuplicates: true,
-                            resultsFormatter: formatInput,
-                            tokenDelimiter: "|"
+                            tokenDelimiter: "${actionBean.materialTypeTokenInput.separator}",
+                            resultsFormatter: formatInput
                         }
                     );
 

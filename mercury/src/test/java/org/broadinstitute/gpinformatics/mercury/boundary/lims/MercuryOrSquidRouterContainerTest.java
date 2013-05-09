@@ -76,8 +76,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
     @Inject
     private LabVesselDao vesselDao;
 
-    @Inject
-    private BettaLimsMessageTestFactory bettaLimsMessageTestFactory;
+    private BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
 
     @Inject
     private BettalimsMessageResource bettalimsMessageResource;
@@ -198,8 +197,8 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
         StaticPlate shearPlate =
                 (StaticPlate) vesselDao.findByIdentifier(shearingEventJaxb.getPlate().getBarcode());
-//        Assert.assertNotNull(shearPlate);
-        Assert.assertNull(shearPlate);
+        Assert.assertNotNull(shearPlate);
+//        Assert.assertNull(shearPlate);
 
         // Adapter Ligation (Plate to Plate -- where the the Target is the item to validate, not the source)
         PlateTransferEventType ligationCleanupJaxb =
@@ -218,8 +217,8 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
         StaticPlate ligatedPlate =
                 (StaticPlate) vesselDao.findByIdentifier(ligationCleanupJaxb.getPlate().getBarcode());
-//        Assert.assertNotNull(ligatedPlate);
-        Assert.assertNull(ligatedPlate);
+        Assert.assertNotNull(ligatedPlate);
+//        Assert.assertNull(ligatedPlate);
 
         EasyMock.verify(mockConnector);
 

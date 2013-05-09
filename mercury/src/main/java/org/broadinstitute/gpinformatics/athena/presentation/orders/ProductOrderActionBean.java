@@ -544,7 +544,9 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
-    @After(stages = LifecycleStage.BindingAndValidation, on = VIEW_ACTION)
+    // All actions that can result in the view page loading (either by a validation error or view itself)
+    @After(stages = LifecycleStage.BindingAndValidation,
+           on = { EDIT_ACTION, VIEW_ACTION, ADD_SAMPLES_ACTION, ABANDON_SAMPLES_ACTION, DELETE_SAMPLES_ACTION })
     public void entryInit() {
         productOrderListEntry = editOrder.isDraft() ? ProductOrderListEntry.createDummy() :
                 orderListEntryDao.findSingle(editOrder.getJiraTicketKey());
@@ -727,10 +729,11 @@ public class ProductOrderActionBean extends CoreActionBean {
         Resolution resolution =
             ProductOrderActionBean.getTrackerForOrders(
                 this, selectedProductOrders, priceItemDao, bspUserList, priceListCache);
+
         if (hasErrors()) {
             setupListDisplay();
-
         }
+
         return resolution;
     }
 

@@ -89,6 +89,10 @@ public class CoreActionBean implements ActionBean {
         return context;
     }
 
+    public String getCreateAction() {
+        return CREATE_ACTION;
+    }
+
     /**
      * @param context the context to set
      */

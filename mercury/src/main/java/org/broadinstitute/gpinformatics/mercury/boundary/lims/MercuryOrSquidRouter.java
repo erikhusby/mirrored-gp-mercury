@@ -92,7 +92,7 @@ public class MercuryOrSquidRouter implements Serializable {
      */
     public MercuryOrSquid routeForVessels(Collection<String> barcodes) {
 
-        TreeSet<MercuryOrSquid> routingOptions = new TreeSet<MercuryOrSquid>();
+        NavigableSet<MercuryOrSquid> routingOptions = new TreeSet<MercuryOrSquid>();
         for (String vesselBarcode : barcodes) {
             MercuryOrSquid determinedRoute = routeForVessel(vesselBarcode);
 
@@ -132,7 +132,7 @@ public class MercuryOrSquidRouter implements Serializable {
 
             if (routingOptions.size() > 1) {
                 if ((routingOptions.contains(SQUID) && routingOptions.contains(MERCURY)) ||
-                            ((routingOptions.contains(BOTH)) && routingOptions.contains(MERCURY))) {
+                            (routingOptions.contains(BOTH) && routingOptions.contains(MERCURY))) {
                     throw new RouterException("The Routing cannot be determined");
                 }
             }
@@ -169,10 +169,15 @@ public class MercuryOrSquidRouter implements Serializable {
      * routed.
      */
     public MercuryOrSquid routeForVessel(LabVessel vessel) {
-        TreeSet<MercuryOrSquid> routingOptions = new TreeSet<MercuryOrSquid>();
+        NavigableSet<MercuryOrSquid> routingOptions = new TreeSet<MercuryOrSquid>();
         if (vessel != null) {
 
-            Set<SampleInstance> sampleInstances = vessel.getSampleInstances(SampleType.ANY, LabBatchType.WORKFLOW);
+            Set<SampleInstance> sampleInstances = vessel.getSampleInstances(SampleType.WITH_PDO, LabBatchType.WORKFLOW);
+            // If no sample instances, see if there are any without a PDO
+            // todo jmt improve performance with a version of getSampleInstances that prefers PDO, but will return without in one call
+            if(sampleInstances.isEmpty()) {
+                sampleInstances = vessel.getSampleInstances(SampleType.ANY, LabBatchType.WORKFLOW);
+            }
             if (sampleInstances.isEmpty()) {
                 routingOptions.add(SQUID);
             } else {

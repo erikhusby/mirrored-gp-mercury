@@ -5,7 +5,11 @@ import net.sourceforge.stripes.validation.ValidationErrors;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.OrderBillSummaryStat;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
@@ -13,6 +17,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 
 import java.io.IOException;
@@ -64,10 +69,12 @@ public class BillingTrackerImporter {
                 Sheet sheet = workbook.getSheetAt(i);
                 String productPartNumberStr = sheet.getSheetName();
 
-                List<TrackerColumnInfo> trackerHeaderList = BillingTrackerUtils.parseTrackerSheetHeader(sheet.getRow(0), productPartNumberStr);
+                List<TrackerColumnInfo> trackerHeaderList =
+                        BillingTrackerUtils.parseTrackerSheetHeader(sheet.getRow(0), productPartNumberStr);
 
                 // Get a map (by PDOId) of a map of OrderBillSummaryStat objects (by BillableRef) for this sheet.
-                Map<String, Map<BillableRef, OrderBillSummaryStat>> sheetSummaryMap = parseSheetForSummaryMap(sheet, trackerHeaderList, priceListCache);
+                Map<String, Map<BillableRef, OrderBillSummaryStat>> sheetSummaryMap =
+                        parseSheetForSummaryMap(sheet, trackerHeaderList);
                 if (!validationErrors.isEmpty()) {
                     return null;
                 }
@@ -141,8 +148,8 @@ public class BillingTrackerImporter {
         }
     }
 
-    Map<String, Map<BillableRef, OrderBillSummaryStat>> parseSheetForSummaryMap(
-        Sheet sheet, List<TrackerColumnInfo> trackerColumnInfos, PriceListCache priceListCache) {
+    private Map<String, Map<BillableRef, OrderBillSummaryStat>> parseSheetForSummaryMap(
+            Sheet sheet, List<TrackerColumnInfo> trackerColumnInfos) {
         ProductOrder productOrder = null;
         Product product = null;
         List<ProductOrderSample> samples = null;
@@ -266,23 +273,31 @@ public class BillingTrackerImporter {
 
             // Get the AlreadyBilled cell
             Cell billedCell = row.getCell(currentBilledPosition);
+            Cell sampleId = row.getCell(BillingTrackerUtils.SAMPLE_ID_COL_POS);
+            Cell pdoId = row.getCell(BillingTrackerUtils.PDO_ID_COL_POS);
+            String partNumber = product.getPartNumber();
+            String priceItemName = billableRef.getPriceItemName();
             if (BillingTrackerUtils.isNonNullNumericCell(billedCell)) {
                 // Check the already billed amount against the DB.
                 previouslyBilledQuantity = billedCell.getNumericCellValue();
                 PriceItem priceItem = priceItemMap.get( trackerColumnInfos.get(priceItemIndex) );
-                // Check billedQuantity parsed against that which is already billed for this POS and PriceItem - should match
+                // Check billedQuantity parsed against that which is already billed for this sample and PriceItem, they
+                // should match.
                 ProductOrderSample.LedgerQuantities quantities = billCounts.get(priceItem);
-                if ((quantities != null) && (quantities.getBilled() != previouslyBilledQuantity)) {
-                    return String.format("Found a different billed quantity '%f' in the database for sample in %s in %s, price item '%s', in Product sheet %s. " +
-                                    "The billed quantity in the spreadsheet is '%f', please download a recent copy of the BillingTracker spreadsheet.",
-                                    quantities.getBilled(), row.getCell(BillingTrackerUtils.SAMPLE_ID_COL_POS), row.getCell(BillingTrackerUtils.PDO_ID_COL_POS),
-                                billableRef.getPriceItemName(), product.getPartNumber(), previouslyBilledQuantity );
+                if ((quantities != null) && !MathUtils.isSame(quantities.getBilled(), previouslyBilledQuantity)) {
+                    return String.format(
+                            "Found a different billed quantity '%f' in the database for sample in %s in %s, " +
+                            "price item '%s', in Product %s. The billed quantity in the spreadsheet is " +
+                            "'%f', please download a recent copy of the BillingTracker spreadsheet.",
+                            quantities.getBilled(), sampleId, pdoId,
+                            priceItemName, partNumber, previouslyBilledQuantity);
                 }
                 if (quantities == null && previouslyBilledQuantity != 0) {
-                    return String.format("No billed quantity found in the database for sample %s in %s, price item '%s', in Product sheet %s. " +
-                                         "However the billed quantity in the spreadsheet is '%f', indicating the Billed column of this spreadsheet has accidentally been edited.",
-                            row.getCell(BillingTrackerUtils.SAMPLE_ID_COL_POS), row.getCell(BillingTrackerUtils.PDO_ID_COL_POS),
-                            billableRef.getPriceItemName(), product.getPartNumber(), previouslyBilledQuantity );
+                    return String.format("No billed quantity found in the database for sample %s in %s, price item " +
+                                         "'%s', in Product %s. However the billed quantity in the spreadsheet " +
+                                         "is '%f', indicating the Billed column of this spreadsheet has accidentally " +
+                                         "been edited.",
+                            sampleId, pdoId, priceItemName, partNumber, previouslyBilledQuantity );
                 }
             }
 
@@ -291,9 +306,8 @@ public class BillingTrackerImporter {
             if (BillingTrackerUtils.isNonNullNumericCell(newQuantityCell)) {
                 newQuantity = newQuantityCell.getNumericCellValue();
                 if (newQuantity < 0) {
-                    return String.format("Found negative new quantity '%f' for sample %s in %s, price item '%s', in Product sheet %s",
-                                newQuantity, row.getCell(BillingTrackerUtils.SAMPLE_ID_COL_POS), row.getCell(BillingTrackerUtils.PDO_ID_COL_POS),
-                                billableRef.getPriceItemName(), product.getPartNumber());
+                    return String.format("Found negative new quantity '%f' for sample %s in %s, price item '%s', in Product %s",
+                            newQuantity, sampleId, pdoId, priceItemName, partNumber);
                 }
 
                 double delta = newQuantity - previouslyBilledQuantity;
@@ -302,33 +316,30 @@ public class BillingTrackerImporter {
 
                     Cell cell = row.getCell(BillingTrackerUtils.QUOTE_ID_COL_POS);
                     if (cell == null || cell.getStringCellValue() == null) {
-                        return String.format("Found empty %s value for updated sample %s in %s, price item '%s', in Product sheet %s",
-                                BillingTrackerUtils.QUOTE_ID_HEADING, row.getCell(BillingTrackerUtils.SAMPLE_ID_COL_POS), row.getCell(BillingTrackerUtils.PDO_ID_COL_POS),
-                                billableRef.getPriceItemName(), product.getPartNumber());
+                        return String.format("Found empty %s value for updated sample %s in %s, price item '%s', in Product %s",
+                                BillingTrackerUtils.QUOTE_ID_HEADING, sampleId, pdoId, priceItemName, partNumber);
                     }
 
                     String uploadedQuoteId = cell.getStringCellValue().trim();
                     if (!productOrderSample.getProductOrder().getQuoteId().equals(uploadedQuoteId)) {
                         return MessageFormat
-                                .format("Found quote ID ''{0}'' for updated sample ''{1}'' in ''{2}'' in Product sheet ''{3}'', this differs from quote ''{4}'' currently associated with ''{2}''.",
-                                        uploadedQuoteId,
-                                        row.getCell(BillingTrackerUtils.SAMPLE_ID_COL_POS),
-                                        row.getCell(BillingTrackerUtils.PDO_ID_COL_POS),
-                                        product.getPartNumber(),
+                                .format("Found quote ID ''{0}'' for updated sample ''{1}'' in ''{2}'' in Product" +
+                                        " ''{3}'', this differs from quote ''{4}'' currently associated with ''{2}''.",
+                                        uploadedQuoteId, sampleId, pdoId, partNumber,
                                         productOrderSample.getProductOrder().getQuoteId());
                     }
 
 
                     cell = row.getCell(BillingTrackerUtils.WORK_COMPLETE_DATE_COL_POS);
                     if (cell == null || cell.getDateCellValue() == null) {
-                        return String.format("Found empty %s value for updated sample %s in %s, price item '%s', in Product sheet %s",
-                                BillingTrackerUtils.WORK_COMPLETE_DATE_HEADING, row.getCell(BillingTrackerUtils.SAMPLE_ID_COL_POS), row.getCell(BillingTrackerUtils.PDO_ID_COL_POS),
-                                billableRef.getPriceItemName(), product.getPartNumber());
+                        return String.format("Found empty %s value for updated sample %s in %s, price item '%s', in Product %s",
+                                BillingTrackerUtils.WORK_COMPLETE_DATE_HEADING, sampleId, pdoId,
+                                priceItemName, partNumber);
                     }
 
                     OrderBillSummaryStat orderBillSummaryStat = pdoSummaryStatsMap.get(billableRef);
                     if (orderBillSummaryStat == null) {
-                        // create a new stat obj and add it to the map
+                        // Create a new stat obj and add it to the map.
                         orderBillSummaryStat = new OrderBillSummaryStat();
                         pdoSummaryStatsMap.put(billableRef, orderBillSummaryStat);
                     }

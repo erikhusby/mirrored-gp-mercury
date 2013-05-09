@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.test;
 
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.filter.LoggingFilter;
+import org.broadinstitute.gpinformatics.mercury.test.builders.SamplesPicoJaxbBuilder;
 import org.testng.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -44,8 +45,8 @@ public class SamplesPicoDbTest extends ContainerTest {
         }
         createBatch(baseUrl, client, batchId, tubeBarcodes);
 
-        SamplesPicoEndToEndTest.SamplesPicoJaxbBuilder samplesPicoJaxbBuilder =
-                new SamplesPicoEndToEndTest.SamplesPicoJaxbBuilder(tubeBarcodes, batchId, timestamp);
+        SamplesPicoJaxbBuilder samplesPicoJaxbBuilder =
+                new SamplesPicoJaxbBuilder(tubeBarcodes, batchId, timestamp);
         samplesPicoJaxbBuilder.buildJaxb();
         List<BettaLIMSMessage> messageList = samplesPicoJaxbBuilder.getMessageList();
         sendMessages(baseUrl, client, messageList);

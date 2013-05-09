@@ -38,7 +38,7 @@ public class SamplesBatchMessagingEndToEndTest extends ContainerTest {
         Client client = Client.create();
         client.addFilter(new LoggingFilter(System.out));
 
-        BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory();
+        BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
         List<String> sampleBarcodes = new ArrayList<String>();
         sampleBarcodes.add("SM-1001-" + timestamp);
         sampleBarcodes.add("SM-1002-" + timestamp);
@@ -81,7 +81,8 @@ public class SamplesBatchMessagingEndToEndTest extends ContainerTest {
             extractionEndTubeBarcodes.add("2DExt" + i + timestamp);
             // todo jmt different source tube types - falcon?
             cherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(extStartRackBarcode, "A0" + ((i / 15) + 1),
-                    extEndRackBarcode, bettaLimsMessageTestFactory.buildWellName(i + 1)));
+                    extEndRackBarcode, bettaLimsMessageTestFactory.buildWellName(i + 1,
+                    BettaLimsMessageTestFactory.WellNameType.SHORT)));
         }
 
         BettaLIMSMessage extractionEndMsg = new BettaLIMSMessage();

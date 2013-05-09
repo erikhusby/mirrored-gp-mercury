@@ -68,7 +68,7 @@ public class ExomeExpressIntegrationTest {
                 System.out.println(sampleName + "\t" + sampleBarcodeMap.get(sampleName));
             }
 
-            BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory();
+            BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
 
             System.out.print("Enter export rack barcode: ");
             String exportRackBarcode = scanner.nextLine();
@@ -79,7 +79,7 @@ public class ExomeExpressIntegrationTest {
             boolean shouldSkipEndRepair = line.contains("y");
             // LC messages.
             // Reconstruct the factory, to update the time.
-            bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory();
+            bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
             ShearingJaxbBuilder shearingJaxbBuilder = new ShearingJaxbBuilder(
                     bettaLimsMessageTestFactory,
                     new ArrayList<String>(sampleBarcodeMap.values()),

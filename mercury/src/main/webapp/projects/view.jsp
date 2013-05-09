@@ -66,6 +66,22 @@
                 </div>
             </div>
 
+            <div class="control-group view-control-group">
+                <label class="control-label label-form">Access Control</label>
+                <div class="controls">
+                    <div class="form-value">
+                        <c:choose>
+                            <c:when test="${actionBean.editResearchProject.accessControlEnabled}">
+                                Restricted to Project Users
+                            </c:when>
+                            <c:otherwise>
+                                Open to All Users
+                            </c:otherwise>
+                        </c:choose>
+                    </div>
+                </div>
+            </div>
+
             <!-- Project Managers -->
             <div class="control-group view-control-group">
                 <label class="control-label label-form">Project Managers</label>
@@ -93,12 +109,21 @@
                 </div>
             </div>
 
-            <!-- Project Managers -->
+            <!-- Scientists -->
             <div class="control-group view-control-group">
                 <label class="control-label label-form">Scientists</label>
 
                 <div class="controls">
                     <div class="form-value">${actionBean.getUserListString(actionBean.editResearchProject.scientists)}</div>
+                </div>
+            </div>
+
+            <!-- Other -->
+            <div class="control-group view-control-group">
+                <label class="control-label label-form">Other Users</label>
+
+                <div class="controls">
+                    <div class="form-value">${actionBean.getUserListString(actionBean.editResearchProject.other)}</div>
                 </div>
             </div>
 

@@ -102,7 +102,8 @@ public class SageEntityBuilder {
         Map<VesselPosition, TwoDBarcodedTube> mapPositionToTube = new HashMap<VesselPosition, TwoDBarcodedTube>();
         List<TwoDBarcodedTube> sageUnloadTubes = new ArrayList<TwoDBarcodedTube>(mapBarcodeToSageUnloadTubes.values());
         for (int i = 0; i < NUM_POSITIONS_IN_RACK; i++) {
-            mapPositionToTube.put(VesselPosition.getByName(bettaLimsMessageTestFactory.buildWellName(i + 1)),
+            mapPositionToTube.put(VesselPosition.getByName(bettaLimsMessageTestFactory.buildWellName(i + 1,
+                    BettaLimsMessageTestFactory.WellNameType.SHORT)),
                     sageUnloadTubes.get(i));
         }
         TubeFormation sageUnloadRackRearrayed = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);

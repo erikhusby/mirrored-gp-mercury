@@ -107,14 +107,15 @@ public class BillingEjb {
         }
     }
 
+
     /**
      * Transactional method to bill each previously unbilled {@link QuoteImportItem} on the BillingSession to the quote
      * server and update billing entities as appropriate to the results of the billing attempt.  Results
      * for each billing attempt correspond to a returned BillingResult.  If there was an exception billing a QuoteImportItem,
-     * the {@link org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb.BillingResult#isError()} will return
-     * true and {@link org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb.BillingResult#getErrorMessage()}
+     * the {@link BillingResult#isError()} will return
+     * true and {@link BillingResult#getErrorMessage()}
      * will describe the cause of the problem.  On successful billing
-     * {@link org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb.BillingResult#getWorkId()} will contain
+     * {@link BillingResult#getWorkId()} will contain
      * the work id result.
      *
      *
@@ -178,7 +179,11 @@ public class BillingEjb {
         // Update the state of all PDOs affected by this billing session.
         for (String key : updatedPDOs) {
             try {
-                productOrderEjb.updateOrderStatus(key);
+                // Update the order status using the ProductOrderEjb with a version of the order status update
+                // method that does not mark transactions for rollback in the event that JIRA-related RuntimeExceptions
+                // are thrown.  It is still possible that this method will throw a checked exception,
+                // but these will not mark the transaction for rollback.
+                productOrderEjb.updateOrderStatusNoRollback(key);
             } catch (Exception e) {
                 // Errors are just logged here because the current user doesn't work with PDOs, and wouldn't
                 // be able to resolve these issues.  Exceptions should only occur if a required resource,

@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 
 import javax.annotation.Nonnull;
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -26,6 +27,14 @@ public interface AthenaClientService extends Serializable {
      * @return
      */
     ProductOrder retrieveProductOrderDetails(@Nonnull String poBusinessKey);
+
+    /**
+     * Provides the means to find a collection of Product orders registered in Athena by the registered Business Keys
+     *
+     * @param poBusinessKeys
+     * @return
+     */
+    Collection<ProductOrder> retrieveMultipleProductOrderDetails(@Nonnull Collection<String> poBusinessKeys);
 
     /**
      * For a list of sample names, return corresponding ProductOrderSamples

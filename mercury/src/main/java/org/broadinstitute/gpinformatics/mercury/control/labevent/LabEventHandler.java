@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.labevent;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -244,7 +245,7 @@ public class LabEventHandler implements Serializable {
 
             Collection<String> productOrders = currVessel.getNearestProductOrders();
             WorkflowStepDef workingBucketName = null;
-            if (productOrders != null && !productOrders.isEmpty()) {
+            if (CollectionUtils.isNotEmpty(productOrders)) {
                 ProductWorkflowDefVersion workflowDef = getWorkflowVersion(productOrders.iterator().next());
 
                 String eventTypeName = labEvent.getLabEventType().getName();
@@ -293,7 +294,7 @@ public class LabEventHandler implements Serializable {
             Collection<String> productOrders = currVessel.getNearestProductOrders();
             WorkflowStepDef workingBucketName = null;
 
-            if (productOrders != null && !productOrders.isEmpty()) {
+            if (CollectionUtils.isNotEmpty(productOrders)) {
 
                 /*
                     Determine the appropriate workflow version based on the product order
