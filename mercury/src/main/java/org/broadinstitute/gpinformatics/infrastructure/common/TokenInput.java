@@ -58,6 +58,11 @@ public abstract class TokenInput<TOKEN_OBJECT> {
     }
 
     // The UI needs to get at these so they must be public.
+    public void setListOfKeys(List<String> listOfKeys) {
+        setListOfKeys(StringUtils.join(listOfKeys, getSeparator()));
+    }
+
+    // Called from stripes.  From Java use setListOfKeys(List<String>) above.
     public void setListOfKeys(String listOfKeys) {
         this.listOfKeys = listOfKeys;
         if (StringUtils.isBlank(listOfKeys)) {
@@ -67,7 +72,10 @@ public abstract class TokenInput<TOKEN_OBJECT> {
 
             tokenObjects = new ArrayList<TOKEN_OBJECT>(keys.length);
             for (String key : keys) {
-                tokenObjects.add(getById(key.trim()));
+                TOKEN_OBJECT object = getById(key.trim());
+                if (object != null) {
+                    tokenObjects.add(getById(key.trim()));
+                }
             }
         }
     }
