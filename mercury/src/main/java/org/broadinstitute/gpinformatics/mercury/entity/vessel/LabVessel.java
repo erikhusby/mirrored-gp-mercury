@@ -1173,8 +1173,8 @@ public abstract class LabVessel implements Serializable {
      *
      * @return a set of strings representing all indexes in this vessel.
      */
-    public Set<MolecularIndexReagent> getIndexes() {
-        Set<MolecularIndexReagent> indexes = new HashSet<MolecularIndexReagent>();
+    public List<MolecularIndexReagent> getIndexes() {
+        List<MolecularIndexReagent> indexes = new ArrayList<MolecularIndexReagent>();
         for (SampleInstance sample : getAllSamples()) {
             for (Reagent reagent : sample.getReagents()) {
                 if (OrmUtil.proxySafeIsInstance(reagent, MolecularIndexReagent.class)) {
@@ -1185,6 +1185,10 @@ public abstract class LabVessel implements Serializable {
         }
 
         return indexes;
+    }
+
+    public Set<MolecularIndexReagent> getUniqueIndexes() {
+        return new HashSet<MolecularIndexReagent>(getIndexes());
     }
 
     /**
@@ -1239,7 +1243,14 @@ public abstract class LabVessel implements Serializable {
         if ((indexes == null) || indexes.isEmpty()) {
             return 0;
         }
+        return indexes.size();
+    }
 
+    public int getUniqueIndexesCount() {
+        Collection<MolecularIndexReagent> indexes = getUniqueIndexes();
+        if ((indexes == null) || indexes.isEmpty()) {
+            return 0;
+        }
         return indexes.size();
     }
 

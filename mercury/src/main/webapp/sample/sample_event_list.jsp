@@ -9,7 +9,12 @@
 
 <stripes:layout-definition>
     <script type="text/javascript">
+
         $j(document).ready(function () {
+            $j('.ui-accordion-header').activate(drawTable);
+        });
+
+        function drawTable() {
             var resultsId = "#sampleEventListView${index}";
             $j(resultsId).dataTable({
                 "oTableTools":ttExportDefines,
@@ -23,10 +28,9 @@
                     {"bSortable":true},
                     {"bSortable":true},
                     {"bSortable":true, "sType":"html"}
-                ],
-                "sDom":""
-            })
-        });
+                ]
+            });
+        }
     </script>
 
     <table id="sampleEventListView${index}" class="table simple" style="margin: 0 0; width: 100%;">
@@ -59,13 +63,13 @@
                     <td style="padding: 0;">
                         <table style="padding: 0;">
                             <c:forEach items="${vessel.getIndexesForSample(sample)}" var="curIndex">
-                                <c:forEach items="${curIndex.molecularIndexingScheme.indexes}" var="innerIndex">
-                                    <tr>
-                                        <td style="border: none">
-                                                ${innerIndex.key} - ${innerIndex.value.sequence}
-                                        </td>
-                                    </tr>
-                                </c:forEach>
+                                <tr>
+                                    <td style="border: none">
+                                        <c:forEach items="${curIndex.molecularIndexingScheme.indexes}" var="innerIndex">
+                                            ${innerIndex.key} - ${innerIndex.value.sequence} &nbsp;
+                                        </c:forEach>
+                                    </td>
+                                </tr>
                             </c:forEach>
                         </table>
                     </td>

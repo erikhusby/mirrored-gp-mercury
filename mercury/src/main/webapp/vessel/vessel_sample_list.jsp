@@ -8,7 +8,12 @@
 
 <stripes:layout-definition>
     <script type="text/javascript">
+
         $j(document).ready(function () {
+            $j('.ui-accordion-header').activate(drawTable);
+        });
+
+        function drawTable() {
             var resultsId = "#vesselSampleListView${index}";
             $j(resultsId).dataTable({
                 "oTableTools":ttExportDefines,
@@ -20,10 +25,9 @@
                     {"bSortable":true},
                     {"bSortable":true, sWidth:'1px'},
                     {"bSortable":true, "sType":"html"}
-                ],
-                "sDom":""
-            })
-        });
+                ]
+            });
+        }
     </script>
 
     <table id="vesselSampleListView${index}" class="table simple" style="margin: 0 0; width: 100%;">
@@ -48,14 +52,14 @@
                 </td>
                 <td style="padding: 0;">
                     <table style="padding: 0;">
-                        <c:forEach items="${sample.indexes}" var="curIndex">
-                            <c:forEach items="${curIndex.molecularIndexingScheme.indexes}" var="innerIndex">
-                                <tr>
-                                    <td style="border: none">
-                                            ${innerIndex.value.sequence}
-                                    </td>
-                                </tr>
-                            </c:forEach>
+                        <c:forEach items="${vessel.getIndexesForSample(sample.startingSample)}" var="curIndex">
+                            <tr>
+                                <td style="border: none">
+                                    <c:forEach items="${curIndex.molecularIndexingScheme.indexes}" var="innerIndex">
+                                        ${innerIndex.key} - ${innerIndex.value.sequence} &nbsp;
+                                    </c:forEach>
+                                </td>
+                            </tr>
                         </c:forEach>
                     </table>
                 </td>
