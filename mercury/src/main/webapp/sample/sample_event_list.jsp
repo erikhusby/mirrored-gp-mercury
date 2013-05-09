@@ -11,7 +11,7 @@
     <script type="text/javascript">
 
         $j(document).ready(function () {
-            $j('.ui-accordion-header').activate(drawTable);
+            $j(".accordion").on("accordionactivate", drawTable);
         });
 
         function drawTable() {
