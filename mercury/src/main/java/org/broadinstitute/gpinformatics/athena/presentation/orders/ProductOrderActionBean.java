@@ -488,10 +488,10 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         // Set up all the simple fields from the values in the preference data.
-        productTokenInput.setListOfKeys(StringUtils.join(preferenceData.get(PRODUCT), ","));
+        productTokenInput.setListOfKeys(preferenceData.get(PRODUCT));
         selectedStatuses = ProductOrder.OrderStatus.getFromName(preferenceData.get(STATUS));
         setDateRange(new DateRangeSelector(preferenceData.get(DATE)));
-        owner.setListOfKeys(StringUtils.join(preferenceData.get(OWNER), ","));
+        owner.setListOfKeys(preferenceData.get(OWNER));
     }
 
     @After(stages = LifecycleStage.BindingAndValidation, on = LIST_ACTION)
