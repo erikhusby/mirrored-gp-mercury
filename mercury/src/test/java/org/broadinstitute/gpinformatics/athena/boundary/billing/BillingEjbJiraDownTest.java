@@ -7,7 +7,6 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
@@ -39,17 +38,13 @@ public class BillingEjbJiraDownTest extends Arquillian {
     @Inject
     private BillingEjb billingEjb;
 
-    @Inject
-    private JiraService jiraService;
-
-
     @Deployment
     public static WebArchive buildMercuryDeployment() {
         return DeploymentBuilder.buildMercuryWarWithAlternatives(AcceptsAllWorkRegistrationsQuoteServiceStub.class, AlwaysThrowsRuntimeExceptionsJiraStub.class);
     }
 
 
-    private BillingSession writeFixtureData() {
+    private String writeFixtureData() {
 
         final String SM_A = "SM-1234A";
         final String SM_B = "SM-1234B";
@@ -72,21 +67,20 @@ public class BillingEjbJiraDownTest extends Arquillian {
         billingSessionDao.flush();
         billingSessionDao.clear();
 
-        return billingSession;
+        return billingSession.getBusinessKey();
     }
 
 
-    public void testPositive() {
+    public void test() {
 
-        BillingSession billingSession = writeFixtureData();
-        billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey());
+        String businessKey = writeFixtureData();
 
-        billingEjb.bill("http://www.broadinstitute.org", billingSession.getBusinessKey());
+        billingEjb.bill("http://www.broadinstitute.org", businessKey);
 
         billingSessionDao.clear();
 
         // Re-fetch the updated BillingSession from the database.
-        billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey());
+        BillingSession billingSession = billingSessionDao.findByBusinessKey(businessKey);
 
         assertThat(billingSession, is(not(nullValue())));
 

@@ -17,6 +17,7 @@
                         "${ctxpath}/projects/project.action?usersAutocomplete=", {
                             hintText: "Type a name",
                             prePopulate: ${actionBean.ensureStringResult(actionBean.owner.completeData)},
+                            tokenDelimiter: "${actionBean.owner.separator}",
                             resultsFormatter: formatInput
                         }
                 );
@@ -25,7 +26,8 @@
                         "${ctxpath}/orders/order.action?productAutocomplete=", {
                             hintText: "Type a Product name or Part Number   ",
                             resultsFormatter: formatInput,
-                            prePopulate: ${actionBean.ensureStringResult(actionBean.productTokenInput.completeData)}
+                            prePopulate: ${actionBean.ensureStringResult(actionBean.productTokenInput.completeData)},
+                            tokenDelimiter: "${actionBean.productTokenInput.separator}"
                         }
                 );
 
