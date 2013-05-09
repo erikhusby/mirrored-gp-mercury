@@ -696,6 +696,10 @@ public class ProductOrder implements Serializable {
         return modifiedBy;
     }
 
+    public void setModifiedBy(Long modifiedBy) {
+        this.modifiedBy = modifiedBy;
+    }
+
     public Date getPlacedDate() {
         return placedDate;
     }
