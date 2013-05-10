@@ -33,14 +33,29 @@ public class ResearchProjectTest {
 
     @Test
     public void testProjectHierarchy() {
+        /**
+         * Create a self-join association.
+         */
         researchProject.setParentResearchProject(researchProject);
         try {
-            researchProject.
+            researchProject.prePersist();
+            Assert.fail("Should have thrown an exception about improper hierarchy!");
         } catch (Exception e) {
-
         }
+
+        /**
+         * Create a looped association.
+         */
         ResearchProject anotherResearchProject = ResearchProjectTestFactory
                 .createDummyResearchProject(10950, "MyResearchProject", "To Study Stuff", ResearchProject.IRB_ENGAGED);
+        researchProject.setParentResearchProject(anotherResearchProject);
+        anotherResearchProject.setParentResearchProject(researchProject);
+
+        try {
+            researchProject.prePersist();
+            Assert.fail("Should have thrown an exception about improper hierarchy!");
+        } catch (Exception e) {
+        }
     }
 
     @Test
