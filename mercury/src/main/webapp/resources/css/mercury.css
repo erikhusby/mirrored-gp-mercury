@@ -20,6 +20,7 @@ a.external {background-image:url("/Mercury/images/external-link.gif");background
 .control-group a, .navbar a, table a { font-size: small; }
 
 h1, h2, h3, h4, h5 {font-family: 'Carrois Gothic SC', sans-serif; color: #644436;}
+h3 {font-size: 22px; line-height: 30px;}
 
 select > option:nth-child(even) { background-color:#fafafa; }
 

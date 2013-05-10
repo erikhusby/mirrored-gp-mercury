@@ -171,7 +171,7 @@
         <section>
             <c:if test="${sectionTitle ne null}">
                 <div class="page-header">
-                    ${sectionTitle}
+                    <h3 style="display:inline;">${sectionTitle}</h3>
                     <c:if test="${showCreate && actionBean.createAllowed}">
                         <stripes:link beanclass="${actionBean.class.name}" event="${actionBean.createAction}" title="Click to ${actionBean.createTitle}" class="pull-right">
                             <i class="icon-plus"></i>

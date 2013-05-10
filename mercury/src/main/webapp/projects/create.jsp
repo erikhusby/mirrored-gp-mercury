@@ -156,9 +156,11 @@
 
                     <div class="controls">
                         <div class="form-value">
-                            <stripes:layout-render name="/projects/treeview_component.jsp"
-                                                   childProjects="${actionBean.editResearchProject.childProjects}"
-                                                   bean="${actionBean}" />
+                            <div style="margin-left: -24px;">
+                                <stripes:layout-render name="/projects/treeview_component.jsp"
+                                                       childProjects="${actionBean.editResearchProject.childProjects}"
+                                                       bean="${actionBean}" />
+                            </div>
                         </div>
                     </div>
                 </div>

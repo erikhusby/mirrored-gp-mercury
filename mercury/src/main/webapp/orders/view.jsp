@@ -586,7 +586,7 @@
             </div>
 
             <div class="borderHeader">
-                Samples
+                <h4 style="display:inline">Samples</h4>
 
                 <c:if test="${!actionBean.editOrder.draft}">
                     <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
