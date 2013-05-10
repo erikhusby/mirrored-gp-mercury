@@ -5,17 +5,11 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.products.ProductActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="Details for #{actionBean.editProduct.partNumber}" sectionTitle="Details for #{actionBean.editProduct.partNumber}">
+<stripes:layout-render name="/layout.jsp" pageTitle="Details for #{actionBean.editProduct.partNumber}"
+                       sectionTitle="Details for #{actionBean.editProduct.partNumber}"
+                       businessKeyValue="${actionBean.editProduct.businessKey}">
 
     <stripes:layout-component name="content">
-        <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
-            <p>
-                <stripes:link title="Click to edit ${actionBean.editProduct.productName}" href="${ctxpath}/products/product.action?edit" class="pull-right">
-                    <span class="icon-tags"></span> Edit product
-                    <stripes:param name="product" value="${actionBean.editProduct.partNumber}"/>
-                </stripes:link>
-            </p>
-        </security:authorizeBlock>
 
         <div class="form-horizontal">
 
@@ -177,7 +171,7 @@
         </div>
 
         <div class="tableBar">
-            Add-ons
+            <h4 style="display:inline">Add-ons</h4>
         </div>
 
         <table id="addOnList" class="table simple">
@@ -209,7 +203,7 @@
         </table>
 
         <div class="tableBar">
-            Replacement Price Items
+            <h4 style="display:inline">Replacement Price Items</h4>
         </div>
         <table id="optionPriceList" class="table table-striped table-bordered">
             <thead>
@@ -231,7 +225,7 @@
         </table>
 
         <div class="tableBar">
-            Material Types
+            <h4 style="display:inline">Material Types</h4>
         </div>
         <table id="allowedMaterialTypes" class="table table-striped table-bordered">
             <thead>

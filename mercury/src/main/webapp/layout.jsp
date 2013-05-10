@@ -167,21 +167,27 @@
         </stripes:layout-component>
     </nav>
 
-
     <div class="row-fluid">
-
         <section>
             <c:if test="${sectionTitle ne null}">
                 <div class="page-header">
-                    ${sectionTitle}
-                    <c:if test="${not empty createTitle}">
-                        <stripes:link beanclass="${actionBean.class.name}" event="${actionBean.createAction}" title="${createTitle}" class="pull-right create">
-                            ${createTitle}
+                    <h3 style="display:inline;">${sectionTitle}</h3>
+                    <c:if test="${showCreate && actionBean.createAllowed}">
+                        <stripes:link beanclass="${actionBean.class.name}" event="${actionBean.createAction}" title="Click to ${actionBean.createTitle}" class="pull-right">
+                            <i class="icon-plus"></i>
+                            ${actionBean.createTitle}
+                        </stripes:link>
+                    </c:if>
+
+                    <c:if test="${not empty businessKeyValue && actionBean.editAllowed}">
+                        <stripes:link beanclass="${actionBean.class.name}" event="${actionBean.editAction}" title="Click to ${actionBean.editTitle}" class="pull-right">
+                            <stripes:param name="${actionBean.editBusinessKeyName}" value="${businessKeyValue}"/>
+                            <i class="icon-pencil"></i>
+                            ${actionBean.editTitle}
                         </stripes:link>
                     </c:if>
                 </div>
             </c:if>
-
 
             <!-- show messages/errors -->
             <p>
@@ -193,7 +199,6 @@
                 <stripes:layout-component name="content"/>
             </div>
         </section>
-
     </div>
     </body>
 

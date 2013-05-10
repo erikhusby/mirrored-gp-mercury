@@ -19,6 +19,8 @@ import java.util.List;
  */
 public abstract class TokenInput<TOKEN_OBJECT> {
 
+    public static final String TOKEN_INPUT_SEPARATOR = ",,,,,";
+
     protected static final boolean SINGLE_LINE_FORMAT = true;
     protected static final boolean DOUBLE_LINE_FORMAT = false;
 
@@ -56,6 +58,11 @@ public abstract class TokenInput<TOKEN_OBJECT> {
     }
 
     // The UI needs to get at these so they must be public.
+    public void setListOfKeys(List<String> listOfKeys) {
+        setListOfKeys(StringUtils.join(listOfKeys, getSeparator()));
+    }
+
+    // Called from stripes.  From Java use setListOfKeys(List<String>) above.
     public void setListOfKeys(String listOfKeys) {
         this.listOfKeys = listOfKeys;
         if (StringUtils.isBlank(listOfKeys)) {
@@ -65,13 +72,16 @@ public abstract class TokenInput<TOKEN_OBJECT> {
 
             tokenObjects = new ArrayList<TOKEN_OBJECT>(keys.length);
             for (String key : keys) {
-                tokenObjects.add(getById(key.trim()));
+                TOKEN_OBJECT object = getById(key.trim());
+                if (object != null) {
+                    tokenObjects.add(getById(key.trim()));
+                }
             }
         }
     }
 
-    private String getSeparator() {
-        return ",,,,,";
+    public String getSeparator() {
+        return TOKEN_INPUT_SEPARATOR;
     }
 
     public String getListOfKeys() {
@@ -91,11 +101,11 @@ public abstract class TokenInput<TOKEN_OBJECT> {
     /**
      * Generate the completion data for this TokenInput.  Only called by TokenInput itself.  Subclasses should return
      * the empty string, not null, for cases where no completions exist.
-     * * @return the completion data
+     *
+     * @return the completion data
      * @throws JSONException if an error occurs
      */
     public String generateCompleteData() throws JSONException {
-
         JSONArray itemList = new JSONArray();
         for (TOKEN_OBJECT tokenObject : getTokenObjects()) {
             itemList.put(createAutocomplete(tokenObject));
@@ -114,7 +124,6 @@ public abstract class TokenInput<TOKEN_OBJECT> {
      * @throws JSONException Any errors making JSON objects
      */
     protected String createItemListString(List<TOKEN_OBJECT> tokenObjects) throws JSONException {
-
         int extraCount = 0;
 
         // assume chunk is full size

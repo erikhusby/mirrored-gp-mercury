@@ -4,7 +4,6 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMess
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
-import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,26 +65,26 @@ public class PreFlightJaxbBuilder {
         preflightPicoSetup1 = bettaLimsMessageTestFactory.buildRackToPlate("PreflightPicoSetup", rackBarcode,
                 tubeBarcodes,
                 "PreflightPicoPlate1" + testPrefix);
-        LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, preflightPicoSetup1);
+        bettaLimsMessageTestFactory.addMessage(messageList, preflightPicoSetup1);
 
         preflightPicoSetup2 = bettaLimsMessageTestFactory.buildRackToPlate("PreflightPicoSetup", rackBarcode,
                 tubeBarcodes,
                 "PreflightPicoPlate2" + testPrefix);
-        LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, preflightPicoSetup2);
+        bettaLimsMessageTestFactory.addMessage(messageList, preflightPicoSetup2);
 
         preflightNormalization = bettaLimsMessageTestFactory.buildRackEvent("PreflightNormalization", rackBarcode,
                 tubeBarcodes);
-        LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, preflightNormalization);
+        bettaLimsMessageTestFactory.addMessage(messageList, preflightNormalization);
 
         preflightPostNormPicoSetup1 = bettaLimsMessageTestFactory.buildRackToPlate("PreflightPostNormPicoSetup",
                 rackBarcode, tubeBarcodes,
                 "PreflightPostNormPicoPlate1" + testPrefix);
-        LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, preflightPostNormPicoSetup1);
+        bettaLimsMessageTestFactory.addMessage(messageList, preflightPostNormPicoSetup1);
 
         preflightPostNormPicoSetup2 = bettaLimsMessageTestFactory.buildRackToPlate("PreflightPostNormPicoSetup",
                 rackBarcode, tubeBarcodes,
                 "PreflightPostNormPicoPlate2" + testPrefix);
-        LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, preflightPostNormPicoSetup2);
+        bettaLimsMessageTestFactory.addMessage(messageList, preflightPostNormPicoSetup2);
 
         return this;
     }

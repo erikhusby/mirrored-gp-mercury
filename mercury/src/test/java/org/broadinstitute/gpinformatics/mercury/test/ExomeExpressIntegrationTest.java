@@ -68,7 +68,7 @@ public class ExomeExpressIntegrationTest {
                 System.out.println(sampleName + "\t" + sampleBarcodeMap.get(sampleName));
             }
 
-            BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory();
+            BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
 
             System.out.print("Enter export rack barcode: ");
             String exportRackBarcode = scanner.nextLine();
@@ -79,7 +79,7 @@ public class ExomeExpressIntegrationTest {
             boolean shouldSkipEndRepair = line.contains("y");
             // LC messages.
             // Reconstruct the factory, to update the time.
-            bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory();
+            bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
             ShearingJaxbBuilder shearingJaxbBuilder = new ShearingJaxbBuilder(
                     bettaLimsMessageTestFactory,
                     new ArrayList<String>(sampleBarcodeMap.values()),
@@ -121,9 +121,23 @@ public class ExomeExpressIntegrationTest {
             for (BettaLIMSMessage bettaLIMSMessage : qtpJaxbBuilder.getMessageList()) {
                 sendMessage(baseUrl, bettaLIMSMessage);
             }
+
+            System.out.println("About to perform denature to Flowcell Transfer.  Press 'y' if running in Parallel?");
+            String parallelIndicator = scanner.nextLine();
+            boolean parallelFlag = parallelIndicator.contains("y");
+
+            String designationName = "";
+            if (parallelFlag) {
+                System.out.println("Enter the squid designation name");
+                designationName = scanner.nextLine();
+            }
+
             HiSeq2500JaxbBuilder hiSeq2500JaxbBuilder =
                     new HiSeq2500JaxbBuilder(bettaLimsMessageTestFactory, testSuffix,
-                            qtpJaxbBuilder.getDenatureTubeBarcode()).invoke();
+                            qtpJaxbBuilder.getDenatureTubeBarcode(), designationName);
+
+            hiSeq2500JaxbBuilder.invoke();
+
             for (BettaLIMSMessage bettaLIMSMessage : hiSeq2500JaxbBuilder.getMessageList()) {
                 sendMessage(baseUrl, bettaLIMSMessage);
             }

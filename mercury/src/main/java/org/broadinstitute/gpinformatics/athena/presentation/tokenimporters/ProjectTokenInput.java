@@ -32,7 +32,23 @@ public class ProjectTokenInput extends TokenInput<ResearchProject> {
     }
 
     public String getJsonString(String query) throws JSONException {
+        return getJsonString(query, null);
+    }
+
+    /**
+     * Get the list of all research projects minus the list of projects to omit.
+     *
+     * @param query the search text string
+     * @param omitProjects list of projects to remove from the returned project list
+     * @return list of research projects
+     * @throws JSONException
+     */
+    public String getJsonString(String query, Collection<ResearchProject> omitProjects) throws JSONException {
         Collection<ResearchProject> projects = researchProjectDao.searchProjects(query);
+        if (omitProjects != null) {
+            projects.removeAll(omitProjects);
+        }
+
         return createItemListString(new ArrayList<ResearchProject>(projects));
     }
 

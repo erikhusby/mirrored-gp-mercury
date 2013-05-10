@@ -104,7 +104,7 @@ public class ZimsIlluminaRunFactoryTest {
         lcSetBatch.setJiraTicket(lcSetTicket);
 
         // Record some events for the sample
-        BettaLimsMessageTestFactory bettaLimsMessageFactory = new BettaLimsMessageTestFactory();
+        BettaLimsMessageTestFactory bettaLimsMessageFactory = new BettaLimsMessageTestFactory(true);
 
         // Normalized Catch Registration
         String catchTubeBarcode = "catchTube";

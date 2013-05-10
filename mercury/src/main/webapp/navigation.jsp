@@ -80,7 +80,8 @@
                 </ul>
             </li>
 
-            <security:authorizeBlock roles="<%= roles(PDM, Developer)%>">
+            <security:authorizeBlock
+                    roles="<%= roles(LabUser, LabManager, PDM, PM, Developer)%>">
                 <li class="dropdown">
 
                     <a id="labNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span
@@ -102,6 +103,8 @@
                                         beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.AddReworkActionBean"
                                         event="view">Add Rework</stripes:link>
                             </li>
+                        </security:authorizeBlock>
+                        <security:authorizeBlock roles="<%= roles(Developer) %>">
                             <li>
                                 <stripes:link
                                         beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.LinkDenatureTubeToFlowcellActionBean"
@@ -128,7 +131,6 @@
             </security:authorizeBlock>
 
         </ul>
-
         <ul class="nav pull-right global-search navbar-search">
             <li class="dropdown">
                 <a id="searchNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span
@@ -155,6 +157,5 @@
                     </security:authorizeBlock>
                 </ul>
             </li>
-        </ul>
     </div>
 </header>

@@ -33,7 +33,7 @@
                             hintText: "Type a name",
                             prePopulate: ${actionBean.ensureStringResult(actionBean.owner.completeData)},
                             tokenLimit: 1,
-                            tokenDelimiter: ",,,,,",
+                            tokenDelimiter: "${actionBean.owner.separator}",
                             resultsFormatter: formatInput
                         }
                     );
@@ -43,7 +43,7 @@
                             hintText: "Type a project name",
                             prePopulate: ${actionBean.ensureStringResult(actionBean.projectTokenInput.completeData)},
                             resultsFormatter: formatInput,
-                            tokenDelimiter: ",,,,,",
+                            tokenDelimiter: "${actionBean.projectTokenInput.separator}",
                             tokenLimit: 1
                         }
                     );
@@ -55,7 +55,7 @@
                             onDelete: updateUIForProductChoice,
                             resultsFormatter: formatInput,
                             prePopulate: ${actionBean.ensureStringResult(actionBean.productTokenInput.completeData)},
-                            tokenDelimiter: ",,,,,",
+                            tokenDelimiter: "${actionBean.productTokenInput.separator}",
                             tokenLimit: 1
                         }
                     );

@@ -38,7 +38,7 @@ public class SamplesBatchMessagingEndToEndTest extends ContainerTest {
         Client client = Client.create();
         client.addFilter(new LoggingFilter(System.out));
 
-        BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory();
+        BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
         List<String> sampleBarcodes = new ArrayList<String>();
         sampleBarcodes.add("SM-1001-" + timestamp);
         sampleBarcodes.add("SM-1002-" + timestamp);

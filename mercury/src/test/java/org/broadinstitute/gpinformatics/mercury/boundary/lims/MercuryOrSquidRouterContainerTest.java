@@ -76,8 +76,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
     @Inject
     private LabVesselDao vesselDao;
 
-    @Inject
-    private BettaLimsMessageTestFactory bettaLimsMessageTestFactory;
+    private BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
 
     @Inject
     private BettalimsMessageResource bettalimsMessageResource;

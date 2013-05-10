@@ -16,7 +16,6 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventTy
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
-import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
@@ -30,18 +29,36 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
-import org.broadinstitute.gpinformatics.mercury.test.builders.*;
+import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingJaxbBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
 import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
 
@@ -58,7 +75,7 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
     public void test() {
 
 
-        BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory();
+        BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
         BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
 
         LabEventFactory labEventFactory = new LabEventFactory(testUserList);
@@ -170,8 +187,9 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
 
         LabEventHandler leHandler = getLabEventHandler();
 
-        Bucket workingBucket = createAndPopulateBucket(picoPlatingEntityBuilder.getNormBarcodeToTubeMap(), productOrder1,
-                "Shearing Bucket");
+        Bucket workingBucket =
+                createAndPopulateBucket(picoPlatingEntityBuilder.getNormBarcodeToTubeMap(), productOrder1,
+                        "Shearing Bucket");
         // Lab Event Factory should have put tubes into the Bucket after normalization
         Assert.assertEquals(LabEventTest.NUM_POSITIONS_IN_RACK, workingBucket.getBucketEntries().size());
 
@@ -272,7 +290,7 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
                 new HiSeq2500FlowcellEntityBuilder(bettaLimsMessageTestFactory, labEventFactory,
                         leHandler,
                         qtpEntityBuilder.getDenatureRack(),
-                        flowcellBarcode, "testPrefix").invoke();
+                        flowcellBarcode, "testPrefix", "designationName").invoke();
         // MiSeq reagent block transfer message
         // Register run
         IlluminaSequencingRunFactory illuminaSequencingRunFactory =

@@ -4,8 +4,7 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" />
 
-<stripes:layout-render name="/layout.jsp" pageTitle="List Research Projects" sectionTitle="List Research Projects"
-        createTitle="<%=ResearchProjectActionBean.CREATE_PROJECT%>">
+<stripes:layout-render name="/layout.jsp" pageTitle="List Research Projects" sectionTitle="List Research Projects" showCreate="true">
 
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">

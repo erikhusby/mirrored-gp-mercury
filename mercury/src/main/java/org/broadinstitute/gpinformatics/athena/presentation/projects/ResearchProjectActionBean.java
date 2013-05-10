@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.athena.presentation.converter.IrbConvert
 import org.broadinstitute.gpinformatics.athena.presentation.links.TableauLink;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.CohortTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.FundingTokenInput;
+import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProjectTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -37,11 +38,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public static final String ACTIONBEAN_URL_BINDING = "/projects/project.action";
     public static final String RESEARCH_PROJECT_PARAMETER = "researchProject";
 
-    private static final int IRB_NAME_MAX_LENGTH = 250;
-
-    private static final String CURRENT_OBJECT = "Research Project";
-    public static final String CREATE_PROJECT = CoreActionBean.CREATE + CURRENT_OBJECT;
-    public static final String EDIT_PROJECT = CoreActionBean.EDIT + CURRENT_OBJECT;
+    private static final String PROJECT = "Research Project";
+    public static final String CREATE_PROJECT = CoreActionBean.CREATE + PROJECT;
+    public static final String EDIT_PROJECT = CoreActionBean.EDIT + PROJECT;
 
     public static final String PROJECT_CREATE_PAGE = "/projects/create.jsp";
     public static final String PROJECT_LIST_PAGE = "/projects/list.jsp";
@@ -58,6 +57,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     @Inject
     private BSPCohortList cohortList;
+
+    @Inject
+    private ProjectTokenInput projectTokenInput;
 
     @Validate(required = true, on = {EDIT_ACTION, VIEW_ACTION})
     private String researchProject;
@@ -86,9 +88,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
     private Map<String, Long> projectOrderCounts;
 
     // These are the fields for catching the input tokens
-    @ValidateNestedProperties({
-        @Validate(field = "listOfKeys", label = "Project Managers", required = true, on = {SAVE_ACTION})
-    })
+    @ValidateNestedProperties(
+            @Validate(field = "listOfKeys", label = "Project Managers", required = true, on = {SAVE_ACTION})
+    )
     @Inject
     private UserTokenInput projectManagerList;
 
@@ -102,6 +104,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
     private UserTokenInput broadPiList;
 
     @Inject
+    private UserTokenInput otherUserList;
+
+    @Inject
     private FundingTokenInput fundingSourceList;
 
     @Inject
@@ -113,6 +118,10 @@ public class ResearchProjectActionBean extends CoreActionBean {
     private String irbList = "";
 
     private CompletionStatusFetcher progressFetcher = new CompletionStatusFetcher();
+
+    public ResearchProjectActionBean() {
+        super(CREATE_PROJECT, EDIT_PROJECT, RESEARCH_PROJECT_PARAMETER);
+    }
 
     /**
      * Fetch the complete list of research projects.
@@ -223,14 +232,19 @@ public class ResearchProjectActionBean extends CoreActionBean {
         scientistList.setup(editResearchProject.getScientists());
         externalCollaboratorList.setup(editResearchProject.getExternalCollaborators());
         broadPiList.setup(editResearchProject.getBroadPIs());
+        otherUserList.setup(editResearchProject.getOther());
         fundingSourceList.setup(editResearchProject.getFundingIds());
         cohortsList.setup(editResearchProject.getCohortIds());
+        // The parent research project doesn't need to be defined, so only pre-populate if it's present.
+        if (editResearchProject.getParentResearchProject() != null) {
+            projectTokenInput.setup(editResearchProject.getParentResearchProject().getBusinessKey());
+        }
     }
 
     public Resolution save() throws Exception {
         populateTokenListFields();
 
-        // Do the jira jig
+        // Do the jira jig.
         try {
             editResearchProject.submit();
         } catch (Exception ex) {
@@ -266,10 +280,13 @@ public class ResearchProjectActionBean extends CoreActionBean {
         editResearchProject.addPeople(RoleType.EXTERNAL, externalCollaboratorList.getTokenObjects());
         editResearchProject.addPeople(RoleType.SCIENTIST, scientistList.getTokenObjects());
         editResearchProject.addPeople(RoleType.PM, projectManagerList.getTokenObjects());
+        editResearchProject.addPeople(RoleType.OTHER, otherUserList.getTokenObjects());
 
         editResearchProject.populateCohorts(cohortsList.getTokenObjects());
         editResearchProject.populateFunding(fundingSourceList.getTokenObjects());
         editResearchProject.populateIrbs(IrbConverter.getIrbs(irbList));
+
+        editResearchProject.setParentResearchProject(researchProjectDao.findByBusinessKey(projectTokenInput.getTokenObject()));
     }
 
     @HandlesEvent("view")
@@ -339,6 +356,28 @@ public class ResearchProjectActionBean extends CoreActionBean {
         return createTextResolution(IrbConverter.getJsonString(getQ()));
     }
 
+    @HandlesEvent("projectAutocomplete")
+    public Resolution projectAutocomplete() throws Exception {
+        return createTextResolution(projectTokenInput.getJsonString(getQ()));
+    }
+
+    @HandlesEvent("projectHierarchyAwareAutocomplete")
+    public Resolution projectHierarchyAwareAutocomplete() throws Exception {
+        researchProject = getContext().getRequest().getParameter(RESEARCH_PROJECT_PARAMETER);
+        if (StringUtils.isBlank(researchProject)) {
+            /**
+             * Improperly calling this method since it's not supplying the project for which it should be trimming the
+             * result set to prevent hierarchical loops, so just return the full list.
+             */
+            return projectAutocomplete();
+        }
+
+        editResearchProject = researchProjectDao.findByBusinessKey(researchProject);
+        Collection<ResearchProject> childResearchProjects = editResearchProject.getAllChildren();
+        childResearchProjects.add(editResearchProject);
+        return createTextResolution(projectTokenInput.getJsonString(getQ(), childResearchProjects));
+    }
+
     // Complete Data getters are for the prepopulates on the create.jsp
 
     public String getIrbsCompleteData() throws Exception {
@@ -401,6 +440,14 @@ public class ResearchProjectActionBean extends CoreActionBean {
         this.projectManagerList = projectManagerList;
     }
 
+    public UserTokenInput getOtherUserList() {
+        return otherUserList;
+    }
+
+    public void setOtherUserList(UserTokenInput otherUserList) {
+        this.otherUserList = otherUserList;
+    }
+
     public String getQ() {
         return q;
     }
@@ -424,4 +471,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public CompletionStatusFetcher getProgressFetcher() {
         return progressFetcher;
     }
+
+    public ProjectTokenInput getProjectTokenInput() {
+        return projectTokenInput;
+    }
+
 }

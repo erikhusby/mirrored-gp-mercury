@@ -399,19 +399,10 @@ textarea.controlledText {
     border-width: 0;
 }
 
-.simpletab .ui-tabs-nav {
-    padding-left: 0;
-    background: transparent;
-    border-width: 0 0 1px 0;
-    -moz-border-radius: 0;
-    -webkit-border-radius: 0;
-    border-radius: 0;
-}
-
-.simpletab .ui-state-default a {
-    color: #b5b5b5;
-    font-size: small;
-}
+.search-select { width: auto; font-weight: bold; font-size: x-small; height: 25px; padding: 0; margin-right: 10px; }
+input.search-input { width: auto; font-weight: bold; font-size: x-small; height: 25px;  padding: 0; }
+.search-checkbox-label { float: left; font-weight: bold; font-size: x-small; }
+input.search-checkbox { float: left; margin-right: 3px; }
 
 .simpletab .ui-tabs-panel {
     background: #ffffff;

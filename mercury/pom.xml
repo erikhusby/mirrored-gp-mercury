@@ -48,6 +48,13 @@
             <name>${project.name} Website</name>
             <url>file://${site.path}/${project.artifactId}</url>
         </site>
+
+        <repository>
+            <id>prodinfo</id>
+            <name>Broad Prodinfo</name>
+            <url>file:///seq/prodinfo/m2-repository</url>
+        </repository>
+
     </distributionManagement>
 
     <developers>
@@ -669,7 +676,7 @@
                 <database.delimiterType>row</database.delimiterType>
 
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
-                <database.url>jdbc:oracle:thin:@192.168.195.5:1521:gpinfprd</database.url>
+                <database.url>jdbc:oracle:thin:@192.168.195.31:1521:gpinfprd</database.url>
                 <mercury.password>guest</mercury.password>
                 <athena.password>guest</athena.password>
             </properties>
@@ -925,6 +932,71 @@
                 </plugins>
             </build>
         </profile>
+
+        <profile>
+            <id>MessageTestJar</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-jar-plugin</artifactId>
+                        <configuration>
+                            <classifier>message-test</classifier>
+                            <includes>
+                                <include>**/*JaxbBuilder.class</include>
+                                <include>**/BettaLimsMessageTestFactory*.class</include>
+                            </includes>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-deploy-plugin</artifactId>
+                        <configuration>
+                            <url>${project.distributionManagement.repository.url}</url>
+                            <file>target/${project.artifactId}-${project.version}-message-test.jar</file>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>${project.artifactId}</artifactId>
+                            <version>${project.version}</version>
+                            <packaging>jar</packaging>
+                            <classifer>message-test</classifer>
+                            <uniqueVersion>false</uniqueVersion>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>BettalimsGeneratedJar</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-jar-plugin</artifactId>
+                        <configuration>
+                            <classifier>bettalims-generated</classifier>
+                            <includes>
+                                <include>**/bettalims/generated/*.class</include>
+                                <include>**/WorkflowName.class</include>
+                            </includes>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-deploy-plugin</artifactId>
+                        <configuration>
+                            <url>${project.distributionManagement.repository.url}</url>
+                            <file>target/${project.artifactId}-${project.version}-bettalims-generated.jar</file>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>${project.artifactId}</artifactId>
+                            <version>${project.version}</version>
+                            <packaging>jar</packaging>
+                            <classifer>bettalims-generated</classifer>
+                            <uniqueVersion>false</uniqueVersion>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
 
     <dependencyManagement>
@@ -1016,6 +1088,12 @@
             <groupId>org.jboss.shrinkwrap.resolver</groupId>
             <artifactId>shrinkwrap-resolver-impl-maven</artifactId>
             <version>1.1.0-alpha-3</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jboss.arquillian.protocol</groupId>
+            <artifactId>arquillian-protocol-servlet</artifactId>
             <scope>test</scope>
         </dependency>
 
@@ -1359,6 +1437,14 @@
             <version>2.3.19</version>
         </dependency>
 
+<!--
+        <dependency>
+            <groupId>com.jprofiler</groupId>
+            <artifactId>jprofiler</artifactId>
+            <version>6</version>
+        </dependency>
+-->
+
     </dependencies>
 
     <build>
@@ -1429,6 +1515,19 @@
                         <artifactId>sql-maven-plugin</artifactId>
                         <version>1.5</version>
                 </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>2.4</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-deploy-plugin</artifactId>
+                    <version>2.7</version>
+                </plugin>
+
                 <!--
                                 <plugin>
                                     <artifactId>maven-dependency-plugin</artifactId>

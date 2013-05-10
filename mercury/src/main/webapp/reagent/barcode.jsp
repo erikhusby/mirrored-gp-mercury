@@ -14,6 +14,7 @@
                             prePopulate: ${actionBean.ensureStringResult(actionBean.reagentDesignTokenInput.completeData)},
                             resultsFormatter: formatInput,
                             tokenLimit: 1,
+                            tokenDelimiter: "${actionBean.reagentDesignTokenInput.separator}",
                             preventDuplicates: true
                         });
             });

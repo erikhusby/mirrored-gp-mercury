@@ -5,7 +5,9 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="View Research Project" sectionTitle="View Project: ${actionBean.editResearchProject.title}">
+<stripes:layout-render name="/layout.jsp" pageTitle="View Research Project"
+                       sectionTitle="View Project: ${actionBean.editResearchProject.title}"
+                       businessKeyValue="${actionBean.editResearchProject.businessKey}">
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
             $j(document).ready(function () {
@@ -23,14 +25,8 @@
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
-        <p>
-            <stripes:link title="Click to edit ${actionBean.editResearchProject.title}" beanclass="${actionBean.class.name}" event="edit" class="pull-right">
-                <span class="icon-briefcase"></span> <%=ResearchProjectActionBean.EDIT_PROJECT%>
-                <stripes:param name="researchProject" value="${actionBean.editResearchProject.businessKey}"/>
-            </stripes:link>
-        </p>
 
-        <div class="form-horizontal">
+        <div class="form-horizontal span7">
             <div class="control-group view-control-group">
                 <label class="control-label label-form">Project</label>
 
@@ -66,42 +62,53 @@
                 </div>
             </div>
 
-            <!-- Project Managers -->
             <div class="control-group view-control-group">
-                <label class="control-label label-form">Project Managers</label>
-
+                <label class="control-label label-form">Access Control</label>
                 <div class="controls">
-                    <div class="form-value">${actionBean.getUserListString(actionBean.editResearchProject.projectManagers)}</div>
+                    <div class="form-value">
+                        <c:choose>
+                            <c:when test="${actionBean.editResearchProject.accessControlEnabled}">
+                                Restricted to Project Users
+                            </c:when>
+                            <c:otherwise>
+                                Open to All Users
+                            </c:otherwise>
+                        </c:choose>
+                    </div>
                 </div>
             </div>
 
-            <!-- Broad PIs -->
+            <!-- Parent Project -->
             <div class="control-group view-control-group">
-                <label class="control-label label-form">Broad PIs</label>
+                <label class="control-label label-form">Parent Project</label>
 
                 <div class="controls">
-                    <div class="form-value">${actionBean.getUserListString(actionBean.editResearchProject.broadPIs)}</div>
+                    <div class="form-value">
+                        <c:if test="${actionBean.editResearchProject.parentResearchProject != null}">
+                            <stripes:link beanclass="${actionBean.class.name}" event="view">
+                                <stripes:param name="researchProject" value="${actionBean.editResearchProject.parentResearchProject.businessKey}"/>
+                                ${actionBean.editResearchProject.parentResearchProject.title}
+                            </stripes:link>
+
+                        </c:if>
+                    </div>
                 </div>
             </div>
 
-            <!-- External Collaborators -->
+            <!-- Subproject -->
             <div class="control-group view-control-group">
-                <label class="control-label label-form">External Collaborators</label>
+                <label class="control-label label-form">Subprojects</label>
 
                 <div class="controls">
-                    <div class="form-value">${actionBean.getUserListString(actionBean.editResearchProject.externalCollaborators)}</div>
+                    <div class="form-value">
+                        <div style="margin-left: -24px;">
+                        <stripes:layout-render name="/projects/treeview_component.jsp"
+                                               childProjects="${actionBean.editResearchProject.childProjects}"
+                                               bean="${actionBean}" />
+                        </div>
+                    </div>
                 </div>
             </div>
-
-            <!-- Project Managers -->
-            <div class="control-group view-control-group">
-                <label class="control-label label-form">Scientists</label>
-
-                <div class="controls">
-                    <div class="form-value">${actionBean.getUserListString(actionBean.editResearchProject.scientists)}</div>
-                </div>
-            </div>
-
 
             <div class="control-group view-control-group">
                 <label class="control-label label-form">Created by</label>
@@ -113,7 +120,6 @@
                     </div>
                 </div>
             </div>
-
 
             <div class="control-group view-control-group">
                 <label class="control-label label-form">Funding Sources</label>
@@ -168,14 +174,66 @@
             </div>
         </div>
 
+        <div class="form-horizontal help-block span5">
+            <fieldset>
+                <legend><h4>Project Users</h4></legend>
 
-        <div class="tableBar" style="margin-bottom: 10px;">
-            Orders
+                <!-- Project Managers -->
+                <div class="control-group view-control-group">
+                    <label class="control-label label-form">Project Managers</label>
+
+                    <div class="controls">
+                        <div class="form-value">${actionBean.getUserListString(actionBean.editResearchProject.projectManagers)}</div>
+                    </div>
+                </div>
+
+                <!-- Broad PIs -->
+                <div class="control-group view-control-group">
+                    <label class="control-label label-form">Broad PIs</label>
+
+                    <div class="controls">
+                        <div class="form-value">${actionBean.getUserListString(actionBean.editResearchProject.broadPIs)}</div>
+                    </div>
+                </div>
+
+                <!-- External Collaborators -->
+                <div class="control-group view-control-group">
+                    <label class="control-label label-form">External Collaborators</label>
+
+                    <div class="controls">
+                        <div class="form-value">${actionBean.getUserListString(actionBean.editResearchProject.externalCollaborators)}</div>
+                    </div>
+                </div>
+
+                <!-- Scientists -->
+                <div class="control-group view-control-group">
+                    <label class="control-label label-form">Scientists</label>
+
+                    <div class="controls">
+                        <div class="form-value">${actionBean.getUserListString(actionBean.editResearchProject.scientists)}</div>
+                    </div>
+                </div>
+
+                <!-- Other -->
+                <div class="control-group view-control-group">
+                    <label class="control-label label-form">Other Users</label>
+
+                    <div class="controls">
+                        <div class="form-value">${actionBean.getUserListString(actionBean.editResearchProject.other)}</div>
+                    </div>
+                </div>
+            </fieldset>
+
+        </div>
+
+        <div class="tableBar" style="clear:both; margin-bottom: 10px;">
+            <h4 style="display:inline">Orders</h4>
 
             <stripes:link title="Create product with research project ${actionBean.editResearchProject.title}"
                           beanclass="<%=ProductOrderActionBean.class.getName()%>" event="create" class="pull-right">
-                <span class="icon-tags"></span> <%=ProductOrderActionBean.CREATE_ORDER%>
                 <stripes:param name="researchProjectKey" value="${actionBean.editResearchProject.businessKey}"/>
+                <i class="icon-plus"></i>
+                Add New Product Order
             </stripes:link>
         </div>
 
