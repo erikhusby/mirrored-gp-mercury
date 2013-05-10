@@ -1,9 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -78,7 +75,7 @@ public class ProductOrder implements Serializable {
     @Column(name = "PLACED_DATE")
     private Date placedDate;
 
-    @Column(name = "MODIFIED_BY")
+    @Column(name = "MODIFIED_DATE")
     private Date modifiedDate;
 
     @Column(name = "MODIFIED_BY")
