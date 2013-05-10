@@ -4,7 +4,7 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" />
 
-<stripes:layout-render name="/layout.jsp" pageTitle="List Research Projects" sectionTitle="List Research Projects">
+<stripes:layout-render name="/layout.jsp" pageTitle="List Research Projects" sectionTitle="List Research Projects" showCreate="true">
 
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
@@ -14,12 +14,12 @@
                     "oTableTools": ttExportDefines,
                     "aaSorting": [[4,'desc']],
                     "aoColumns": [
-                        {"bSortable": true, "sType": "html"},   // Name
-                        {"bSortable": true, "sType": "title-jira"},   // ID
-                        {"bSortable": true},                    // Status
-                        {"bSortable": true},                    // Owner
-                        {"bSortable": true, "sType": "date"},   // Updated
-                        {"bSortable": true, "sType": "numeric"} // Count
+                        {"bSortable": true, "sType": "html"},           // Name
+                        {"bSortable": true, "sType": "title-jira"},     // ID
+                        {"bSortable": true},                            // Status
+                        {"bSortable": true},                            // Owner
+                        {"bSortable": true, "sType": "date"},           // Updated
+                        {"bSortable": true, "sType": "numeric"}         // Count
                     ]
                 })
             });
@@ -27,11 +27,6 @@
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
-
-    <p>
-        <stripes:link beanclass="${actionBean.class.name}" event="create" title="<%=ResearchProjectActionBean.CREATE_PROJECT%>" class="pull-right">
-            <span class="icon-briefcase"></span> <%=ResearchProjectActionBean.CREATE_PROJECT%></stripes:link>
-    </p>
 
     <div class="clearfix"></div>
 

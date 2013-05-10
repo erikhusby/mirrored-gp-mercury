@@ -16,9 +16,8 @@ import java.io.Serializable;
 import java.util.*;
 
 /**
- * This handles the billing session
+ * This handles the billing session.
  *
- * @author hrafal
  */
 @Entity
 @Audited
@@ -69,9 +68,9 @@ public class BillingSession implements Serializable {
 
     /**
      * This is a 'special' constructor to recreate a billing session that may have been deleted. It is being built for
-     * fixup tests. The billing session is considered billed even though nothing has gone to thequote server.
+     * fixup tests. The billing session is considered billed even though nothing has gone to the quote server.
      *
-     * @param billedDate If the desire is to set this as already billed (if something was billed arleady
+     * @param billedDate If the desire is to set this as already billed (if something was billed already
      *                   in the quote server). If null, this is left open to bill and end.
      * @param createdBy The user who is creating this.
      * @param ledgerItems All the ledger entries that will be added to this session.

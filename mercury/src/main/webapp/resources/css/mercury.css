@@ -66,7 +66,7 @@ table.workflow td.current { background-color: #eecac6}
 
 table.nocol tbody td,table.nocol tbody th { border-left: none; border-right: none; }
 
-.page-header { border-bottom: 1px solid #EEEEEE; font-size: 2em; font-family: 'Carrois Gothic SC', sans-serif; margin: 0 0 10px; padding-bottom: 0;}
+.page-header { color: #644436; border-bottom: 1px solid #EEEEEE; margin: 0 0 15px 0; padding-bottom: 3px; font-size: x-large; font-weight: bold; line-height: 1; }
 
 .twocolumn {-moz-column-count:2;-webkit-column-count:2;-moz-column-gap:2em;-webkit-column-gap:2em;-moz-column-rule-style:solid;-moz-column-rule-color:#fff;-moz-column-rule-width:2px;-webkit-column-rule-style:solid;-webkit-column-rule-color:#fff;-webkit-column-rule-width:2px}
 .threecolumn {-moz-column-count:3;-webkit-column-count:3;-moz-column-gap:2em;-webkit-column-gap:2em;-moz-column-rule-style:solid;-moz-column-rule-color:#fff;-moz-column-rule-width:2px;-webkit-column-rule-style:solid;-webkit-column-rule-color:#fff;-webkit-column-rule-width:2px}
@@ -131,7 +131,6 @@ textarea.controlledText { width: 550px; }
 .simpletab .ui-widget-header { border-bottom: 1px solid #c2c2c2; }
 .simpletab .ui-state-hover { border: 1px solid #0088cc; color: #0088cc; background: #e6f7ff; }
 
-
 .search-select { width: auto; font-weight: bold; font-size: x-small; height: 25px; padding: 0; margin-right: 10px; }
 input.search-input { width: auto; font-weight: bold; font-size: x-small; height: 25px;  padding: 0; }
 .search-checkbox-label { float: left; font-weight: bold; font-size: x-small; }
@@ -147,3 +146,11 @@ input.search-checkbox { float: left; margin-right: 3px; }
 .search-horizontal .help-block { margin-bottom: 0; }
 .search-horizontal input + .help-block, .search-horizontal select + .help-block, .search-horizontal textarea + .help-block { margin-top: 0px; }
 .search-horizontal .form-actions { padding-left: 180px; }
+
+.help-text { font-size: x-small; }
+
+fieldset { padding-right: 10px; padding-bottom: 10px; margin: 0; border: 1px solid #b9b9b9; }
+legend { display: block; width: auto; padding: 0; margin-bottom: 0; margin-left: 10px; font-size: inherit; color: #333333; border: 1px; }
+legend + .control-group { margin-top: 0px; -webkit-margin-top-collapse: separate; }
+
+.input-create-form { width: 385px; }

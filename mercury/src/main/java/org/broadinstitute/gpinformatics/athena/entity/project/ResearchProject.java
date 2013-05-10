@@ -129,6 +129,10 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
     @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     private List<ProductOrder> productOrders = new ArrayList<ProductOrder>();
 
+    /** True if access to this Project's data should be restricted based on user. */
+    @Column(name = "ACCESS_CONTROL_ENABLED")
+    private boolean accessControlEnabled;
+
     @Index(name = "ix_rp_jira")
     @Column(name = "JIRA_TICKET_KEY", nullable = false)
     private String jiraTicketKey;               // Reference to the Jira Ticket associated to this Research Project
@@ -251,6 +255,14 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
         this.irbNotes = irbNotes;
     }
 
+    public boolean isAccessControlEnabled() {
+        return accessControlEnabled;
+    }
+
+    public void setAccessControlEnabled(boolean accessControlEnabled) {
+        this.accessControlEnabled = accessControlEnabled;
+    }
+
     /**
      * Sets the last modified by property to the specified user and the last modified date to the current date.
      *
@@ -356,12 +368,28 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
         associatedPeople.add(new ProjectPerson(this, role, personId));
     }
 
+    /**
+     * @param role role type to filter on
+     * @return list of associated people based on their role type
+     */
+    private Collection<ProjectPerson> findPeopleByType(RoleType role) {
+        List<ProjectPerson> foundPersonList = new ArrayList<ProjectPerson>(associatedPeople.size());
+
+        for (ProjectPerson person : associatedPeople) {
+            if (person.getRole() == role) {
+                foundPersonList.add(person);
+            }
+        }
+
+        return foundPersonList;
+    }
+
     public Long[] getPeople(RoleType role) {
         List<Long> people = new ArrayList<Long>();
 
-        for (ProjectPerson projectPerson : associatedPeople) {
-            if (role == projectPerson.getRole()) {
-                people.add(projectPerson.getPersonId());
+        for (ProjectPerson person : associatedPeople) {
+            if (person.getRole() == role) {
+                people.add(person.getPersonId());
             }
         }
 
@@ -382,6 +410,10 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
 
     public Long[] getExternalCollaborators() {
         return getPeople(RoleType.EXTERNAL);
+    }
+
+    public Long[] getOther() {
+        return getPeople(RoleType.OTHER);
     }
 
     public void populateFunding(Collection<Funding> fundingSet) {
@@ -529,26 +561,6 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
 
     public void setParentResearchProject(ResearchProject parentResearchProject) {
         this.parentResearchProject = parentResearchProject;
-    }
-
-    /**
-     *
-     * Provides the ability to retrieve a filtered list of associated people based on their role type
-     *
-     * @param personType
-     *
-     * @return
-     */
-    private Collection<ProjectPerson> findPeopleByType(RoleType personType) {
-        List<ProjectPerson> foundPersonList = new ArrayList<ProjectPerson>(associatedPeople.size());
-
-        for (ProjectPerson currPerson : associatedPeople) {
-            if (currPerson.getRole() == personType) {
-                foundPersonList.add(currPerson);
-            }
-        }
-
-        return foundPersonList;
     }
 
     /**

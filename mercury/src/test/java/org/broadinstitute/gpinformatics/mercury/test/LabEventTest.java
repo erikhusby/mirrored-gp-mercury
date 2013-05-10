@@ -18,14 +18,9 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.graph.Graph;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferEntityGrapher;
@@ -126,7 +121,7 @@ public class LabEventTest extends BaseEventTest{
     /**
      * Section for both lanes of a 2-lane flowcell
      */
-    public static final String SECTION_ALL_2 = "FLOWCELL2";
+    public static final String SECTION_ALL_2 = "ALL2";
 
     public static final String POND_REGISTRATION_TUBE_PREFIX = "PondReg";
 
@@ -539,7 +534,7 @@ public class LabEventTest extends BaseEventTest{
             mapBarcodeToTube.put(barcode, bspAliquot);
         }
 
-        BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory();
+        BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
         LabEventFactory labEventFactory = new LabEventFactory();
         labEventFactory.setLabEventRefDataFetcher(labEventRefDataFetcher);
 
@@ -638,7 +633,7 @@ public class LabEventTest extends BaseEventTest{
             fluidigmSampleInputJaxb.getPlate().setPhysType(
                     StaticPlate.PlateType.Fluidigm48_48AccessArrayIFC.getDisplayName());
             fluidigmSampleInputJaxb.getPlate().setSection(SBSSection.P384COLS4_6BYROW.getSectionName());
-            addMessage(messageList, bettaLimsMessageTestFactory, fluidigmSampleInputJaxb);
+            bettaLimsMessageTestFactory.addMessage(messageList, fluidigmSampleInputJaxb);
 
             // FluidigmIndexedAdapterInput plate P96COLS1-6BYROW to chip P384COLS4-6BYROW
             fluidigmIndexedAdapterInputJaxb = bettaLimsMessageTestFactory.buildPlateToPlate(
@@ -649,7 +644,8 @@ public class LabEventTest extends BaseEventTest{
             fluidigmIndexedAdapterInputJaxb.getPlate().setPhysType(
                     StaticPlate.PlateType.Fluidigm48_48AccessArrayIFC.getDisplayName());
             fluidigmIndexedAdapterInputJaxb.getPlate().setSection(SBSSection.P384COLS4_6BYROW.getSectionName());
-            addMessage(messageList, bettaLimsMessageTestFactory, fluidigmIndexedAdapterInputJaxb);
+            bettaLimsMessageTestFactory
+                    .addMessage(messageList, fluidigmIndexedAdapterInputJaxb);
 
             // FluidigmHarvestingToRack chip P384COLS4-6BYROW to rack P96COLS1-6BYROW
             harvestRackBarcode = "Harvest" + testPrefix;
@@ -667,7 +663,8 @@ public class LabEventTest extends BaseEventTest{
             fluidigmHarvestingToRackJaxb.setPositionMap(buildFluidigmPositionMap(tubeBarcodes, fluidigmSampleInputJaxb
                     .getSourcePlate().getBarcode()));
             fluidigmHarvestingToRackJaxb.getPlate().setSection(SBSSection.P96COLS1_6BYROW.getSectionName());
-            addMessage(messageList, bettaLimsMessageTestFactory, fluidigmHarvestingToRackJaxb);
+            bettaLimsMessageTestFactory
+                    .addMessage(messageList, fluidigmHarvestingToRackJaxb);
         }
 
         private PositionMapType buildFluidigmPositionMap(ArrayList<String> tubeBarcodes, String rackBarcode) {
@@ -678,7 +675,8 @@ public class LabEventTest extends BaseEventTest{
                 for (int column = 1; column <= 6; column++) {
                     ReceptacleType receptacleType = new ReceptacleType();
                     receptacleType.setBarcode(tubeBarcodes.get(barcodeIndex));
-                    receptacleType.setPosition(bettaLimsMessageTestFactory.buildWellName(row * 12 + column));
+                    receptacleType.setPosition(bettaLimsMessageTestFactory.buildWellName(row * 12 + column,
+                            BettaLimsMessageTestFactory.WellNameType.SHORT));
                     sourcePositionMap.getReceptacle().add(receptacleType);
                     barcodeIndex++;
                 }
@@ -706,29 +704,6 @@ public class LabEventTest extends BaseEventTest{
             TubeFormation harvestRack = (TubeFormation) fluidigmHarvestingToRackEntity.getTargetLabVessels().iterator().next();
             Assert.assertEquals(harvestRack.getSampleInstances().size(), mapBarcodeToTube.size(), "Wrong number of sample instances");
         }
-    }
-
-    public static void addMessage(List<BettaLIMSMessage> messageList, BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
-            StationEventType... stationEventTypes) {
-        BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
-        bettaLIMSMessage.setMode(LabEventFactory.MODE_MERCURY);
-        for (StationEventType stationEventType : stationEventTypes) {
-            if (stationEventType instanceof PlateTransferEventType) {
-                bettaLIMSMessage.getPlateTransferEvent().add((PlateTransferEventType) stationEventType);
-            } else if (stationEventType instanceof PlateCherryPickEvent) {
-                bettaLIMSMessage.getPlateCherryPickEvent().add((PlateCherryPickEvent) stationEventType);
-            } else if (stationEventType instanceof PlateEventType) {
-                bettaLIMSMessage.getPlateEvent().add((PlateEventType) stationEventType);
-            } else if (stationEventType instanceof ReceptaclePlateTransferEvent) {
-                bettaLIMSMessage.getReceptaclePlateTransferEvent().add((ReceptaclePlateTransferEvent) stationEventType);
-            } else if (stationEventType instanceof ReceptacleEventType) {
-                bettaLIMSMessage.getReceptacleEvent().add((ReceptacleEventType) stationEventType);
-            } else {
-                throw new RuntimeException("Unknown station event type " + stationEventType);
-            }
-        }
-        messageList.add(bettaLIMSMessage);
-        bettaLimsMessageTestFactory.advanceTime();
     }
 
     public static void validateWorkflow(String nextEventTypeName, Collection<? extends LabVessel> tubes) {

@@ -1,3 +1,4 @@
+<%@ page import="org.broadinstitute.gpinformatics.mercury.presentation.reagent.ReagentDesignActionBean" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <%--
@@ -14,7 +15,8 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.reagent.ReagentDesignActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="List of Designed Reagents" sectionTitle="Designed Reagents">
+<stripes:layout-render name="/layout.jsp" pageTitle="List of Designed Reagents" sectionTitle="Reagent Designs" showCreate="true">
+
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
             $j(document).ready(function() {
@@ -33,48 +35,43 @@
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
-            <p>
-                <stripes:link title="New Reagent Design" beanclass="${actionBean.class.name}" event="create"
-                              class="pull-right">
-                    New reagent design
-                </stripes:link>
-                <br/>
-                <stripes:link title="Assign Barcodes" beanclass="${actionBean.class.name}" event="assignBarcode"
-                              class="pull-right">
-                    Assign Barcodes
-                </stripes:link>
-            </p>
 
-            <div class="clearfix"></div>
+        <div class="actionButtons">
+            <stripes:link title="Assign Barcodes" beanclass="${actionBean.class.name}" event="assignBarcode">
+                Assign Barcodes
+            </stripes:link>
+        </div>
 
-            <table id="reagentList" class="table simple">
-                <thead>
+        <div class="clearfix"></div>
+
+        <table id="reagentList" class="table simple">
+            <thead>
+            <tr>
+                <th>Design Name</th>
+                <th>Reagent Type</th>
+                <th>Target Set</th>
+                <th>Manufacturer</th>
+                <%--<th>Barcodes</th>--%>
+            </tr>
+            </thead>
+            <tbody>
+            <c:forEach items="${actionBean.allReagentDesigns}" var="design">
                 <tr>
-                    <th>Design Name</th>
-                    <th>Reagent Type</th>
-                    <th>Target Set</th>
-                    <th>Manufacturer</th>
-                    <%--<th>Barcodes</th>--%>
+                    <td>
+                        <stripes:link beanclass="${actionBean.class.name}" event="edit">
+                            <stripes:param name="reagentDesign" value="${design.businessKey}"/>
+                            ${design.designName}
+                        </stripes:link>
+                    </td>
+                    <td>${design.reagentType}</td>
+                    <td>${design.targetSetName}</td>
+                    <td>${design.manufacturersName}</td>
+                        <%--<td>--%>
+                        <%--${actionBean.barcodeMap[design.designName]}--%>
+                        <%--</td>--%>
                 </tr>
-                </thead>
-                <tbody>
-                <c:forEach items="${actionBean.allReagentDesigns}" var="design">
-                    <tr>
-                        <td>
-                            <stripes:link beanclass="${actionBean.class.name}" event="edit">
-                                <stripes:param name="reagentDesign" value="${design.businessKey}"/>
-                                ${design.designName}
-                            </stripes:link>
-                        </td>
-                        <td>${design.reagentType}</td>
-                        <td>${design.targetSetName}</td>
-                        <td>${design.manufacturersName}</td>
-                            <%--<td>--%>
-                            <%--${actionBean.barcodeMap[design.designName]}--%>
-                            <%--</td>--%>
-                    </tr>
-                </c:forEach>
-                </tbody>
-            </table>
+            </c:forEach>
+            </tbody>
+        </table>
     </stripes:layout-component>
 </stripes:layout-render>

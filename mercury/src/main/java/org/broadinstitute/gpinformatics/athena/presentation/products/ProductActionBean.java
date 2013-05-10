@@ -29,8 +29,9 @@ public class ProductActionBean extends CoreActionBean {
     public static final String ACTIONBEAN_URL_BINDING = "/products/product.action";
     public static final String PRODUCT_PARAMETER = "product";
 
-    private static final String CREATE_PRODUCT = CoreActionBean.CREATE + " New Product";
-    private static final String EDIT_PRODUCT = CoreActionBean.EDIT + " Product: ";
+    public static final String PRODUCT_STRING = "Product";
+    public static final String CREATE_PRODUCT = CoreActionBean.CREATE + PRODUCT_STRING;
+    private static final String EDIT_PRODUCT = CoreActionBean.EDIT + PRODUCT_STRING;
 
     public static final String PRODUCT_CREATE_PAGE = "/products/create.jsp";
     public static final String PRODUCT_LIST_PAGE = "/products/list.jsp";
@@ -75,6 +76,10 @@ public class ProductActionBean extends CoreActionBean {
         @Validate(field="availabilityDate", required = true, on={SAVE_ACTION}, label = "Availability Date")
     })
     private Product editProduct;
+
+    public ProductActionBean() {
+        super(CREATE_PRODUCT, EDIT_PRODUCT, PRODUCT_PARAMETER);
+    }
 
     private String q;
 
@@ -410,5 +415,21 @@ public class ProductActionBean extends CoreActionBean {
 
     public Collection<QuotePriceItem> getReplacementPriceItems() {
         return priceListCache.getReplacementPriceItems(editProduct);
+    }
+
+    /**
+     * @return Show the create title if this is a developer or PDM.
+     */
+    @Override
+    public boolean isCreateAllowed() {
+        return isEditAllowed();
+    }
+
+    /**
+     * @return Show the edit title if this is a developer or PDM.
+     */
+    @Override
+    public boolean isEditAllowed() {
+        return getUserBean().isDeveloperUser() || getUserBean().isPDMUser();
     }
 }

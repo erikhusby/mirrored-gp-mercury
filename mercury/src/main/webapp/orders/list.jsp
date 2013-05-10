@@ -7,7 +7,8 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="List Product Orders" sectionTitle="List Product Orders">
+<stripes:layout-render name="/layout.jsp" pageTitle="List Product Orders" sectionTitle="List Product Orders" showCreate="true">
+
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
             $j(document).ready(function() {
@@ -16,6 +17,7 @@
                         "${ctxpath}/projects/project.action?usersAutocomplete=", {
                             hintText: "Type a name",
                             prePopulate: ${actionBean.ensureStringResult(actionBean.owner.completeData)},
+                            tokenDelimiter: "${actionBean.owner.separator}",
                             resultsFormatter: formatInput
                         }
                 );
@@ -24,7 +26,8 @@
                         "${ctxpath}/orders/order.action?productAutocomplete=", {
                             hintText: "Type a Product name or Part Number   ",
                             resultsFormatter: formatInput,
-                            prePopulate: ${actionBean.ensureStringResult(actionBean.productTokenInput.completeData)}
+                            prePopulate: ${actionBean.ensureStringResult(actionBean.productTokenInput.completeData)},
+                            tokenDelimiter: "${actionBean.productTokenInput.separator}"
                         }
                 );
 
@@ -48,7 +51,17 @@
                 });
 
                 setupDialogs();
+
+                statusChange();
             });
+
+            function statusChange() {
+                if ($j(".selectedStatuses[value='Draft']").attr('checked')) {
+                    $j("#draftMessage").show();
+                } else {
+                    $j("#draftMessage").hide();
+                }
+            }
 
             function formatInput(item) {
                 var extraCount = (item.extraCount == undefined) ? "" : item.extraCount;
@@ -115,12 +128,6 @@
             <p>You must select at least one Product Order to <span id="noneSelectedDialogMessage"></span>.</p>
         </div>
 
-        <p>
-            <stripes:link title="<%=ProductOrderActionBean.CREATE_ORDER%>" beanclass="${actionBean.class.name}" event="create" class="pull-right">
-                <span class="icon-shopping-cart"></span> <%=ProductOrderActionBean.CREATE_ORDER%>
-            </stripes:link>
-        </p>
-
         <stripes:form beanclass="${actionBean.class.name}" id="searchForm">
             <div class="search-horizontal">
 
@@ -154,7 +161,7 @@
                     <div class="controls">
                         <c:forEach items="<%=ProductOrder.OrderStatus.values()%>" var="orderStatus">
                             <div style="margin-top: 5px; margin-right: 15px; float: left; width: auto;">
-                                <stripes:checkbox class="search-checkbox" name="selectedStatuses" value="${orderStatus}" id="${orderStatus}-id"/>
+                                <stripes:checkbox onchange="statusChange()" class="search-checkbox selectedStatuses" name="selectedStatuses" value="${orderStatus}" id="${orderStatus}-id"/>
                                 <stripes:label class="search-checkbox-label" for="${orderStatus}-id">
                                     ${orderStatus.displayName}
                                 </stripes:label>
@@ -172,6 +179,9 @@
                              rangeSelector="${actionBean.dateRange.rangeSelector}"
                              startString="${actionBean.dateRange.startStr}"
                              endString="${actionBean.dateRange.endStr}">
+                        </div>
+                        <div id="draftMessage" class="help-text" style="margin-left: 10px;margin-top: -10px; margin-bottom: 5px; display: none;">
+                            Matching Draft Orders are displayed for any date selection
                         </div>
                     </div>
                 </div>

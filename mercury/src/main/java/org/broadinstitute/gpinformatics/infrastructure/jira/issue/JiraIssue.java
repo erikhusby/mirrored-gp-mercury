@@ -85,7 +85,7 @@ public class JiraIssue implements Serializable {
 
     public Object getFieldValue(@Nonnull String fieldName) throws IOException{
 
-        Object foundValue = null;
+        Object foundValue;
 
         if(!extraFields.containsKey(fieldName)) {
             JiraIssue tempIssue = jiraService.getIssueInfo(key, fieldName);

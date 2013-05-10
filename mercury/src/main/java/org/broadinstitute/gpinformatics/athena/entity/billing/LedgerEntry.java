@@ -128,6 +128,20 @@ public class LedgerEntry implements Serializable {
         return (billingSession != null) && (billingSession.getBilledDate() != null);
     }
 
+    /**
+     * This ledger entry has a positively successful billing message.
+     */
+    public boolean isSuccessfullyBilled() {
+        return BillingSession.SUCCESS.equals(billingMessage);
+    }
+
+    /**
+     * This ledger has a billing message but it is not the success message, which means it is an error message.
+     */
+    public boolean isUnsuccessfullyBilled() {
+        return billingMessage != null && !BillingSession.SUCCESS.equals(billingMessage);
+    }
+
     public void removeFromSession() {
         billingSession = null;
     }

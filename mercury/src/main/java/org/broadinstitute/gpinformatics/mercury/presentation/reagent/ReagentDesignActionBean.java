@@ -37,8 +37,9 @@ import java.util.*;
 @UrlBinding("/reagent/design.action")
 public class ReagentDesignActionBean extends CoreActionBean {
 
-    private static final String CREATE_DESIGN = CoreActionBean.CREATE + "New Design";
-    private static final String EDIT_DESIGN = CoreActionBean.EDIT + "Design: ";
+    public static final String CREATE_DESIGN = CoreActionBean.CREATE + "Reagent Design";
+    private static final String EDIT_DESIGN = CoreActionBean.EDIT + "Design";
+    public static final String DESIGN_PARAMETER = "reagent";
 
     private static final String REAGENT_LIST_PAGE = "/reagent/list.jsp";
     private static final String REAGENT_CREATE_PAGE = "/reagent/create.jsp";
@@ -56,6 +57,10 @@ public class ReagentDesignActionBean extends CoreActionBean {
 
     @Inject
     private LabVesselDao labVesselDao;
+
+    public ReagentDesignActionBean() {
+        super(CREATE_DESIGN, EDIT_DESIGN, DESIGN_PARAMETER);
+    }
 
     @ValidateNestedProperties({
             @Validate(field = "designName", label = "Design Name", required = true, maxlength = 255,

@@ -1,11 +1,12 @@
 <%@ include file="/resources/layout/taglibs.jsp" %>
 <%@ page import="static org.broadinstitute.gpinformatics.mercury.entity.DB.Role.*" %>
 <%@ page import="static org.broadinstitute.gpinformatics.mercury.entity.DB.roles" %>
+<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.products.ProductActionBean" %>
 
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.products.ProductActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="Products" sectionTitle="Products">
+<stripes:layout-render name="/layout.jsp" pageTitle="Products" sectionTitle="List Products" showCreate="true">
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
             $j(document).ready(function() {
@@ -23,13 +24,6 @@
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
-        <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
-            <p>
-                <stripes:link title="New Product" beanclass="${actionBean.class.name}" event="create" class="pull-right">
-                    <span class="icon-tags"></span> New Product
-                </stripes:link>
-            </p>
-        </security:authorizeBlock>
         <div class="clearfix"></div>
 
         <table id="productList" class="table simple">

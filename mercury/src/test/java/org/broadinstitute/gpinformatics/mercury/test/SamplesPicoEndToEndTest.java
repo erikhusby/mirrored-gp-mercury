@@ -8,10 +8,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFac
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventResource;
@@ -31,11 +27,11 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.test.builders.SamplesPicoJaxbBuilder;
 import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -122,185 +118,6 @@ public class SamplesPicoEndToEndTest {
                     printVessel(labVesselBean);
                 }
             }
-        }
-    }
-
-    /**
-     * Build the messages used in Samples (BSP) Pico batches
-     */
-    @SuppressWarnings("FeatureEnvy")
-    public static class SamplesPicoJaxbBuilder {
-        private final List<String> tubeBarcodes;
-        private final String       labBatchId;
-        private final String       timestamp;
-
-        private final List<BettaLIMSMessage> messageList = new ArrayList<BettaLIMSMessage>();
-        private PlateTransferEventType picoDilutionTransferJaxbA1;
-        private PlateTransferEventType picoDilutionTransferJaxbA2;
-        private PlateTransferEventType picoDilutionTransferJaxbB1;
-        private PlateEventType         picoBufferAdditionJaxb;
-        private PlateTransferEventType picoMicrofluorTransferJaxb;
-        private PlateTransferEventType picoStandardsTransferCol2Jaxb;
-        private PlateTransferEventType picoStandardsTransferCol4Jaxb;
-        private PlateTransferEventType picoStandardsTransferCol6Jaxb;
-        private PlateTransferEventType picoStandardsTransferCol8Jaxb;
-        private PlateTransferEventType picoStandardsTransferCol10Jaxb;
-        private PlateTransferEventType picoStandardsTransferCol12Jaxb;
-
-        SamplesPicoJaxbBuilder(List<String> tubeBarcodes, String labBatchId, String timestamp) {
-            this.tubeBarcodes = tubeBarcodes;
-            this.labBatchId = labBatchId;
-            this.timestamp = timestamp;
-        }
-
-        /**
-         * Build JAXB messages.  These messages can be sent to BettalimsMessageResource, or used to build entity
-         * graphs.
-         */
-        void buildJaxb() {
-            BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory();
-
-            // 3 x  PicoDilutionTransfer
-            String picoDilutionPlateBarcode = "PicoDilutionPlate" + timestamp;
-            picoDilutionTransferJaxbA1 = bettaLimsMessageTestFactory.buildRackToPlate("PicoDilutionTransfer",
-                    "PicoRack"  + timestamp, tubeBarcodes, picoDilutionPlateBarcode);
-            picoDilutionTransferJaxbA1.getPlate().setSection(SBSSection.P384_96TIP_1INTERVAL_A1.getSectionName());
-            picoDilutionTransferJaxbA1.getPlate().setPhysType(StaticPlate.PlateType.Eppendorf384.getDisplayName());
-            picoDilutionTransferJaxbA1.setBatchId(labBatchId);
-
-            picoDilutionTransferJaxbA2 = bettaLimsMessageTestFactory.buildRackToPlate("PicoDilutionTransfer",
-                    "PicoRack" + timestamp, tubeBarcodes, picoDilutionPlateBarcode);
-            picoDilutionTransferJaxbA2.getPlate().setSection(SBSSection.P384_96TIP_1INTERVAL_A2.getSectionName());
-            picoDilutionTransferJaxbA2.getPlate().setPhysType(StaticPlate.PlateType.Eppendorf384.getDisplayName());
-            picoDilutionTransferJaxbA2.setBatchId(labBatchId);
-
-            picoDilutionTransferJaxbB1 = bettaLimsMessageTestFactory.buildRackToPlate("PicoDilutionTransfer",
-                    "PicoRack"  + timestamp, tubeBarcodes, picoDilutionPlateBarcode);
-            picoDilutionTransferJaxbB1.getPlate().setSection(SBSSection.P384_96TIP_1INTERVAL_B1.getSectionName());
-            picoDilutionTransferJaxbB1.getPlate().setPhysType(StaticPlate.PlateType.Eppendorf384.getDisplayName());
-            picoDilutionTransferJaxbB1.setBatchId(labBatchId);
-
-            LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, picoDilutionTransferJaxbA1,
-                    picoDilutionTransferJaxbA2, picoDilutionTransferJaxbB1);
-
-            /*
-                        // PicoBufferTransfer
-                        PlateTransferEventType picoBufferTransferJaxb = bettaLimsMessageTestFactory.buildPlateToPlate(
-                                "PicoBufferTransfer", "PicoBufferPlate", picoDilutionPlateBarcode);
-                        BettaLIMSMessage bettaLIMSMessage2 = new BettaLIMSMessage();
-                        bettaLIMSMessage2.getPlateTransferEvent().add(picoBufferTransferJaxb);
-                        messageList.add(bettaLIMSMessage2);
-
-            */
-            // plateEvent PicoBufferAddition
-            picoBufferAdditionJaxb = bettaLimsMessageTestFactory.buildPlateEvent("PicoBufferAddition",
-                                                                             picoDilutionPlateBarcode);
-            LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, picoBufferAdditionJaxb);
-
-            // PicoMicrofluorTransfer
-            String picoMicrofluorPlateBarcode = "PicoMicrofluorPlate" + timestamp;
-            picoMicrofluorTransferJaxb = bettaLimsMessageTestFactory.buildPlateToPlate("PicoMicrofluorTransfer",
-                                                                                   picoDilutionPlateBarcode,
-                                                                                   picoMicrofluorPlateBarcode);
-            picoMicrofluorTransferJaxb.getSourcePlate().setSection(SBSSection.ALL384.getSectionName());
-            picoMicrofluorTransferJaxb.getSourcePlate().setPhysType(
-                    StaticPlate.PlateType.Eppendorf384.getDisplayName());
-            picoMicrofluorTransferJaxb.getPlate().setSection(SBSSection.ALL384.getSectionName());
-            picoMicrofluorTransferJaxb.getPlate().setPhysType(StaticPlate.PlateType.Eppendorf384.getDisplayName());
-            // todo jmt batch ID is set only for the first message?
-            picoMicrofluorTransferJaxb.setBatchId(labBatchId);
-            LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, picoMicrofluorTransferJaxb);
-
-            // 6 x PicoStandardsTransfer
-            picoStandardsTransferCol2Jaxb = bettaLimsMessageTestFactory.buildPlateToPlate("PicoStandardsTransfer",
-                    "PicoStandardsPlate" + timestamp, picoMicrofluorPlateBarcode);
-            picoStandardsTransferCol2Jaxb.getSourcePlate().setSection(SBSSection.P96_COL1.getSectionName());
-            picoStandardsTransferCol2Jaxb.getPlate().setSection(SBSSection.P384_COL2_1INTERVAL_B.getSectionName());
-            picoStandardsTransferCol2Jaxb.getPlate().setPhysType(StaticPlate.PlateType.Eppendorf384.getDisplayName());
-            picoStandardsTransferCol2Jaxb.setBatchId(labBatchId);
-
-            picoStandardsTransferCol4Jaxb = bettaLimsMessageTestFactory.buildPlateToPlate("PicoStandardsTransfer",
-                    "PicoStandardsPlate" + timestamp, picoMicrofluorPlateBarcode);
-            picoStandardsTransferCol4Jaxb.getSourcePlate().setSection(SBSSection.P96_COL1.getSectionName());
-            picoStandardsTransferCol4Jaxb.getPlate().setSection(SBSSection.P384_COL4_1INTERVAL_B.getSectionName());
-            picoStandardsTransferCol4Jaxb.getPlate().setPhysType(StaticPlate.PlateType.Eppendorf384.getDisplayName());
-            picoStandardsTransferCol4Jaxb.setBatchId(labBatchId);
-
-            picoStandardsTransferCol6Jaxb = bettaLimsMessageTestFactory.buildPlateToPlate("PicoStandardsTransfer",
-                    "PicoStandardsPlate" + timestamp, picoMicrofluorPlateBarcode);
-            picoStandardsTransferCol6Jaxb.getSourcePlate().setSection(SBSSection.P96_COL1.getSectionName());
-            picoStandardsTransferCol6Jaxb.getPlate().setSection(SBSSection.P384_COL6_1INTERVAL_B.getSectionName());
-            picoStandardsTransferCol6Jaxb.getPlate().setPhysType(StaticPlate.PlateType.Eppendorf384.getDisplayName());
-            picoStandardsTransferCol6Jaxb.setBatchId(labBatchId);
-
-            picoStandardsTransferCol8Jaxb = bettaLimsMessageTestFactory.buildPlateToPlate("PicoStandardsTransfer",
-                    "PicoStandardsPlate" + timestamp, picoMicrofluorPlateBarcode);
-            picoStandardsTransferCol8Jaxb.getSourcePlate().setSection(SBSSection.P96_COL1.getSectionName());
-            picoStandardsTransferCol8Jaxb.getPlate().setSection(SBSSection.P384_COL8_1INTERVAL_B.getSectionName());
-            picoStandardsTransferCol8Jaxb.getPlate().setPhysType(StaticPlate.PlateType.Eppendorf384.getDisplayName());
-            picoStandardsTransferCol8Jaxb.setBatchId(labBatchId);
-
-            picoStandardsTransferCol10Jaxb = bettaLimsMessageTestFactory.buildPlateToPlate("PicoStandardsTransfer",
-                    "PicoStandardsPlate" + timestamp, picoMicrofluorPlateBarcode);
-            picoStandardsTransferCol10Jaxb.getSourcePlate().setSection(SBSSection.P96_COL1.getSectionName());
-            picoStandardsTransferCol10Jaxb.getPlate().setSection(SBSSection.P384_COL10_1INTERVAL_B.getSectionName());
-            picoStandardsTransferCol10Jaxb.getPlate().setPhysType(StaticPlate.PlateType.Eppendorf384.getDisplayName());
-            picoStandardsTransferCol10Jaxb.setBatchId(labBatchId);
-
-            picoStandardsTransferCol12Jaxb = bettaLimsMessageTestFactory.buildPlateToPlate("PicoStandardsTransfer",
-                    "PicoStandardsPlate" + timestamp, picoMicrofluorPlateBarcode);
-            picoStandardsTransferCol12Jaxb.getSourcePlate().setSection(SBSSection.P96_COL1.getSectionName());
-            picoStandardsTransferCol12Jaxb.getPlate().setSection(SBSSection.P384_COL12_1INTERVAL_B.getSectionName());
-            picoStandardsTransferCol12Jaxb.getPlate().setPhysType(StaticPlate.PlateType.Eppendorf384.getDisplayName());
-            picoStandardsTransferCol12Jaxb.setBatchId(labBatchId);
-
-            LabEventTest.addMessage(messageList, bettaLimsMessageTestFactory, picoStandardsTransferCol2Jaxb,
-                    picoStandardsTransferCol4Jaxb, picoStandardsTransferCol6Jaxb, picoStandardsTransferCol8Jaxb,
-                    picoStandardsTransferCol10Jaxb, picoStandardsTransferCol12Jaxb);
-        }
-
-        public List<BettaLIMSMessage> getMessageList() {
-            return messageList;
-        }
-
-        public PlateTransferEventType getPicoMicrofluorTransferJaxb() {
-            return picoMicrofluorTransferJaxb;
-        }
-
-        public PlateTransferEventType getPicoDilutionTransferJaxbA1() {
-            return picoDilutionTransferJaxbA1;
-        }
-
-        public PlateTransferEventType getPicoDilutionTransferJaxbA2() {
-            return picoDilutionTransferJaxbA2;
-        }
-
-        public PlateTransferEventType getPicoDilutionTransferJaxbB1() {
-            return picoDilutionTransferJaxbB1;
-        }
-
-        public PlateTransferEventType getPicoStandardsTransferCol2Jaxb() {
-            return picoStandardsTransferCol2Jaxb;
-        }
-
-        public PlateTransferEventType getPicoStandardsTransferCol4Jaxb() {
-            return picoStandardsTransferCol4Jaxb;
-        }
-
-        public PlateTransferEventType getPicoStandardsTransferCol6Jaxb() {
-            return picoStandardsTransferCol6Jaxb;
-        }
-
-        public PlateTransferEventType getPicoStandardsTransferCol8Jaxb() {
-            return picoStandardsTransferCol8Jaxb;
-        }
-
-        public PlateTransferEventType getPicoStandardsTransferCol10Jaxb() {
-            return picoStandardsTransferCol10Jaxb;
-        }
-
-        public PlateTransferEventType getPicoStandardsTransferCol12Jaxb() {
-            return picoStandardsTransferCol12Jaxb;
         }
     }
 

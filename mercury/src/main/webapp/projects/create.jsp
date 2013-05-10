@@ -1,3 +1,4 @@
+<%@ page import="org.broadinstitute.gpinformatics.infrastructure.common.TokenInput" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -9,64 +10,81 @@
             $j(document).ready(
                     function () {
                         $j("#projectManagers").tokenInput(
-                                "${ctxpath}/projects/project.action?usersAutocomplete=", {
-                                    hintText: "Type a Project Manager name",
-                                    prePopulate: ${actionBean.ensureStringResult(actionBean.projectManagerList.completeData)},
-                                    preventDuplicates: true,
-                                    resultsFormatter: formatInput
-                                }
+                            "${ctxpath}/projects/project.action?usersAutocomplete=", {
+                                hintText: "Type a Project Manager name",
+                                prePopulate: ${actionBean.ensureStringResult(actionBean.projectManagerList.completeData)},
+                                tokenDelimiter: "${actionBean.projectManagerList.separator}",
+                                preventDuplicates: true,
+                                resultsFormatter: formatInput
+                            }
                         );
 
                         $j("#scientists").tokenInput(
-                                "${ctxpath}/projects/project.action?usersAutocomplete=", {
-                                    hintText: "Type a Scientist name",
-                                    prePopulate: ${actionBean.ensureStringResult(actionBean.scientistList.completeData)},
-                                    preventDuplicates: true,
-                                    resultsFormatter: formatInput
-                                }
+                            "${ctxpath}/projects/project.action?usersAutocomplete=", {
+                                hintText: "Type a Scientist name",
+                                prePopulate: ${actionBean.ensureStringResult(actionBean.scientistList.completeData)},
+                                tokenDelimiter: "${actionBean.scientistList.separator}",
+                                preventDuplicates: true,
+                                resultsFormatter: formatInput
+                            }
                         );
 
                         $j("#externalCollaborators").tokenInput(
-                                "${ctxpath}/projects/project.action?usersAutocomplete=", {
-                                    hintText: "Type a Collaborator name",
-                                    prePopulate: ${actionBean.ensureStringResult(actionBean.externalCollaboratorList.completeData)},
-                                    preventDuplicates: true,
-                                    resultsFormatter: formatInput
-                                }
+                            "${ctxpath}/projects/project.action?usersAutocomplete=", {
+                                hintText: "Type a Collaborator name",
+                                prePopulate: ${actionBean.ensureStringResult(actionBean.externalCollaboratorList.completeData)},
+                                tokenDelimiter: "${actionBean.externalCollaboratorList.separator}",
+                                preventDuplicates: true,
+                                resultsFormatter: formatInput
+                            }
                         );
 
                         $j("#broadPIs").tokenInput(
-                                "${ctxpath}/projects/project.action?usersAutocomplete=", {
-                                    hintText: "Type a Broad PI",
-                                    prePopulate: ${actionBean.ensureStringResult(actionBean.broadPiList.completeData)},
-                                    preventDuplicates: true,
-                                    resultsFormatter: formatInput
-                                }
+                            "${ctxpath}/projects/project.action?usersAutocomplete=", {
+                                hintText: "Type a Broad PI",
+                                prePopulate: ${actionBean.ensureStringResult(actionBean.broadPiList.completeData)},
+                                tokenDelimiter: "${actionBean.broadPiList.separator}",
+                                preventDuplicates: true,
+                                resultsFormatter: formatInput
+                            }
+                        );
+
+                        $j("#otherUsers").tokenInput(
+                            "${ctxpath}/projects/project.action?usersAutocomplete=", {
+                                hintText: "Enter a user name",
+                                prePopulate: ${actionBean.ensureStringResult(actionBean.otherUserList.completeData)},
+                                tokenDelimiter: "${actionBean.otherUserList.separator}",
+                                preventDuplicates: true,
+                                resultsFormatter: formatInput
+                            }
                         );
 
                         $j("#fundingSources").tokenInput(
-                                "${ctxpath}/projects/project.action?fundingAutocomplete=", {
-                                    prePopulate: ${actionBean.ensureStringResult(actionBean.fundingSourceList.completeData)},
-                                    preventDuplicates: true,
-                                    resultsFormatter: formatInput
-                                }
+                            "${ctxpath}/projects/project.action?fundingAutocomplete=", {
+                                prePopulate: ${actionBean.ensureStringResult(actionBean.fundingSourceList.completeData)},
+                                tokenDelimiter: "${actionBean.fundingSourceList.separator}",
+                                preventDuplicates: true,
+                                resultsFormatter: formatInput
+                            }
                         );
 
                         $j("#cohorts").tokenInput(
-                                "${ctxpath}/projects/project.action?cohortAutocomplete=", {
-                                    hintText: "Type a Sample Cohort name",
-                                    prePopulate: ${actionBean.ensureStringResult(actionBean.cohortsList.completeData)},
-                                    preventDuplicates: true,
-                                    resultsFormatter: formatInput
-                                }
+                            "${ctxpath}/projects/project.action?cohortAutocomplete=", {
+                                hintText: "Type a Sample Cohort name",
+                                prePopulate: ${actionBean.ensureStringResult(actionBean.cohortsList.completeData)},
+                                tokenDelimiter: "${actionBean.cohortsList.separator}",
+                                preventDuplicates: true,
+                                resultsFormatter: formatInput
+                            }
                         );
 
                         $j("#irbs").tokenInput(
-                                "${ctxpath}/projects/project.action?irbAutocomplete=", {
-                                    hintText: "Type an IRB Number",
-                                    prePopulate: ${actionBean.ensureStringResult(actionBean.irbsCompleteData)},
-                                    preventDuplicates: true
-                                }
+                            "${ctxpath}/projects/project.action?irbAutocomplete=", {
+                                hintText: "Type an IRB Number",
+                                prePopulate: ${actionBean.ensureStringResult(actionBean.irbsCompleteData)},
+                                tokenDelimiter: "<%=TokenInput.TOKEN_INPUT_SEPARATOR%>",
+                                preventDuplicates: true
+                            }
                         );
 
                         $j("#parentResearchProject").tokenInput(
@@ -92,12 +110,12 @@
         <stripes:form beanclass="${actionBean.class.name}" id="createForm" class="form-horizontal" focus="editResearchProject.title">
             <stripes:hidden name="submitString"/>
             <stripes:hidden name="researchProject" value="${actionBean.editResearchProject.jiraTicketKey}"/>
-            <div class="form-horizontal">
+            <div class="form-horizontal" style="float:left;">
                 <div class="control-group">
                     <stripes:label for="title" class="control-label">Name *</stripes:label>
                     <div class="controls">
-                            <stripes:text name="editResearchProject.title" value="${actionBean.editResearchProject.title}"
-                                          id="title"  class="defaultText input-xxlarge" title="Enter the project name"  maxlength="255"/>
+                        <stripes:text name="editResearchProject.title" value="${actionBean.editResearchProject.title}"
+                                      id="title"  class="defaultText input-create-form" title="Enter the project name"  maxlength="255"/>
                     </div>
                 </div>
 
@@ -106,42 +124,17 @@
                     <stripes:label for="synopsis" class="control-label">Synopsis *</stripes:label>
 
                     <div class="controls">
-                        <stripes:textarea id="synopsis" rows="5" cols="100" name="editResearchProject.synopsis" class="defaultText textarea input-xxlarge"
+                        <stripes:textarea id="synopsis" rows="5" cols="100" name="editResearchProject.synopsis" class="defaultText textarea input-create-form"
                                       title="Enter the synopsis of the project" value="${actionBean.editResearchProject.synopsis}"/>
                     </div>
                 </div>
 
-                <!-- Project Managers -->
                 <div class="control-group">
-                    <stripes:label for="projectManagers" class="control-label">Project Managers *</stripes:label>
-
+                    <stripes:label for="accessControlEnabled" class="control-label">Access Control</stripes:label>
                     <div class="controls">
-                        <stripes:text id="projectManagers" name="projectManagerList.listOfKeys" />
-                    </div>
-                </div>
-
-                <!-- Broad PIs -->
-                <div class="control-group">
-                    <stripes:label for="broadPIs" class="control-label">Broad PIs</stripes:label>
-
-                    <div class="controls">
-                        <stripes:text id="broadPIs" name="broadPiList.listOfKeys" />
-                    </div>
-                </div>
-
-                <!-- External Collaborators -->
-                <div class="control-group">
-                    <stripes:label for="externalCollaborators" class="control-label">External Collaborators</stripes:label>
-                    <div class="controls">
-                        <stripes:text id="externalCollaborators" name="externalCollaboratorList.listOfKeys" />
-                    </div>
-                </div>
-
-                <!-- Scientists -->
-                <div class="control-group">
-                    <stripes:label for="scientists" class="control-label">Scientists</stripes:label>
-                    <div class="controls">
-                        <stripes:text id="scientists" name="scientistList.listOfKeys" />
+                        <stripes:checkbox name="editResearchProject.accessControlEnabled"
+                                          id="accessControlEnabled" style="margin-top: 10px;"/>
+                        <stripes:label for="accessControlEnabled" class="control-label" style="width:auto;">Restrict to Project Users</stripes:label>
                     </div>
                 </div>
 
@@ -214,13 +207,60 @@
                 <div class="control-group">
                     <label id="j_idt130" class="ui-outputlabel control-label" for="irbNotes">IRB Notes</label>
                     <div class="controls">
-                        <stripes:text id="irbNotes" class="defaultText input-xxlarge" title="Enter notes about the above IRBs" name="editResearchProject.irbNotes" value="${actionBean.editResearchProject.irbNotes}" maxlength="255" />
+                        <stripes:text id="irbNotes" class="defaultText input-create-form" title="Enter notes about the above IRBs" name="editResearchProject.irbNotes" value="${actionBean.editResearchProject.irbNotes}" maxlength="255" />
                     </div>
                 </div>
-
             </div>
 
-            <div class="control-group">
+            <div class="form-horizontal" style="float: left; margin-left: 30px;">
+                <fieldset>
+                    <legend>Project Users</legend>
+
+                    <!-- Project Managers -->
+                    <div class="control-group">
+                        <stripes:label for="projectManagers" class="control-label">Project Managers *</stripes:label>
+
+                        <div class="controls">
+                            <stripes:text id="projectManagers" name="projectManagerList.listOfKeys" />
+                        </div>
+                    </div>
+
+                    <!-- Broad PIs -->
+                    <div class="control-group">
+                        <stripes:label for="broadPIs" class="control-label">Broad PIs</stripes:label>
+
+                        <div class="controls">
+                            <stripes:text id="broadPIs" name="broadPiList.listOfKeys" />
+                        </div>
+                    </div>
+
+                    <!-- External Collaborators -->
+                    <div class="control-group">
+                        <stripes:label for="externalCollaborators" class="control-label">External Collaborators</stripes:label>
+                        <div class="controls">
+                            <stripes:text id="externalCollaborators" name="externalCollaboratorList.listOfKeys" />
+                        </div>
+                    </div>
+
+                    <!-- Scientists -->
+                    <div class="control-group">
+                        <stripes:label for="scientists" class="control-label">Scientists</stripes:label>
+                        <div class="controls">
+                            <stripes:text id="scientists" name="scientistList.listOfKeys" />
+                        </div>
+                    </div>
+
+                    <!-- Other -->
+                    <div class="control-group">
+                        <stripes:label for="otherUsers" class="control-label">Other Users</stripes:label>
+                        <div class="controls">
+                            <stripes:text id="otherUsers" name="otherUserList.listOfKeys" />
+                        </div>
+                    </div>
+                </fieldset>
+            </div>
+
+            <div class="control-group" style="clear: both;">
                 <div class="controls">
                     <div class="row-fluid">
                         <div class="span1">

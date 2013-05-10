@@ -7,7 +7,9 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderSampleTestFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
@@ -18,7 +20,8 @@ import java.util.UUID;
 
 import static org.broadinstitute.gpinformatics.infrastructure.matchers.NullOrEmptyCollection.nullOrEmptyCollection;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 
 public class ProductOrderDBTestFactory {
     public static final String TEST_ORDER_TITLE_PREFIX = "TestProductOrder_";
@@ -72,7 +75,7 @@ public class ProductOrderDBTestFactory {
         ProductOrder order =
                 new ProductOrder(TEST_CREATOR_ID, testProductOrderTitle, ProductOrderSampleTestFactory
                         .createSampleList(sampleNames),
-                                        "quoteId", product, project);
+                        "quoteId", product, project);
 
         order.setJiraTicketKey(TEST_PRODUCT_ORDER_KEY_PREFIX + UUID.randomUUID());
         BspUser testUser = new BspUser();
@@ -80,5 +83,18 @@ public class ProductOrderDBTestFactory {
         order.prepareToSave(testUser, true);
 
         return order;
+    }
+
+
+    /**
+     * Creates a {@link ProductOrder} with the specified sample names and persists everything using the
+     * dao parameter.
+     */
+    public static ProductOrder createProductOrder(GenericDao dao, String... sampleNames) {
+        ProductOrder productOrder = ProductOrderTestFactory.createProductOrder(sampleNames);
+        dao.persist(productOrder.getResearchProject());
+        dao.persist(productOrder.getProduct());
+        dao.persist(productOrder);
+        return productOrder;
     }
 }
