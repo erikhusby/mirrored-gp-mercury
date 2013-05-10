@@ -77,9 +77,25 @@ public class CoreActionBean implements ActionBean {
     @Inject
     private JiraLink jiraLink;
 
+    // These fields are generic title fields used by the master layout to determine what links to show in the title
+    // pull right field.
+    private String createTitle;
+    private String editTitle;
+    private String editBusinessKeyName;
+
     // The date range widget can be used by simply adding a div with a class of dateRangeDiv. If only one date is
     // needed, this will work for any action bean. If more are needed, then ids should be used and configured directly.
     private DateRangeSelector dateRange = new DateRangeSelector(DateRangeSelector.THIS_MONTH);
+
+    // Needed for managed bean.
+    public CoreActionBean() {
+    }
+
+    protected CoreActionBean(String createTitle, String editTitle, String editBusinessKeyName) {
+        this.createTitle = createTitle;
+        this.editTitle = editTitle;
+        this.editBusinessKeyName = editBusinessKeyName;
+    }
 
     /**
      * @return the context
@@ -89,8 +105,14 @@ public class CoreActionBean implements ActionBean {
         return context;
     }
 
+    @SuppressWarnings("unused")  // This is used by layout.jsp which does not know about the bean it is using.
     public String getCreateAction() {
         return CREATE_ACTION;
+    }
+
+    @SuppressWarnings("unused")  // This is used by layout.jsp which does not know about the bean it is using.
+    public String getEditAction() {
+        return EDIT_ACTION;
     }
 
     /**
@@ -457,5 +479,40 @@ public class CoreActionBean implements ActionBean {
 
     public String[] getRoles(@Nonnull DB.Role... roles) {
         return DB.roles(roles);
+    }
+
+    /**
+     * @return The name of the business key parameter used in URLs to edit the object being viewed.
+     */
+    public String getEditBusinessKeyName() {
+        return editBusinessKeyName;
+    }
+
+    /**
+     * @return The title of the link when editing the object.
+     */
+    public String getEditTitle() {
+        return editTitle;
+    }
+
+    /**
+     * @return The title of the page when creating the object.
+     */
+    public String getCreateTitle() {
+        return createTitle;
+    }
+
+    /**
+     * @return By default, edit is always allowed. Subclasses can put protections around that by overriding it.
+     */
+    public boolean isCreateAllowed() {
+        return true;
+    }
+
+    /**
+     * @return By default, edit is always allowed. Subclasses can put protections around that by overriding it.
+     */
+    public boolean isEditAllowed() {
+        return true;
     }
 }

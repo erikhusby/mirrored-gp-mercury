@@ -7,7 +7,9 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="Product Order ${actionBean.editOrder.title}" sectionTitle="Product Order ${actionBean.editOrder.title}">
+<stripes:layout-render name="/layout.jsp" pageTitle="Product Order ${actionBean.editOrder.title}"
+                       sectionTitle="Product Order ${actionBean.editOrder.title}"
+                       businessKeyValue="${actionBean.editOrder.businessKey}">
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
             $j(document).ready(function() {
@@ -294,98 +296,89 @@
 
     <stripes:layout-component name="content">
 
-    <div style="display:none" id="confirmDialog">
-        <p>Are you sure you want to <span id="confirmDialogMessage"></span> the <span id="dialogNumSamples"></span> selected samples?</p>
-    </div>
-
-    <div id="riskDialog" style="width:600px;display:none;">
-        <p>Manually Update Risk (<span id="selectedCountId"> </span> selected)</p>
-        <p><span style="float:left; width:185px;">Update status to:</span>
-            <input type="radio" id="onRiskDialogId" name="riskRadio" value="true" checked="checked" style="float:left;margin-right:5px;">
-            <label style="float:left;width:60px;" for="onRiskDialogId">On Risk</label>
-            <input type="radio" id="notOnRiskDialogId" name="riskRadio" value="false" style="float:left;margin-right:5px;">
-            <label style="float:left;margin-right:10px;width:auto;" for="notOnRiskDialogId">Not On Risk</label>
-            <input type="hidden" id="allDialogId" name="sampleRadio" value="false">
-        <p style="clear:both">
-        <label for="riskCommentId">Comment:</label>
-        </p>
-
-        <textarea id="riskCommentId" name="comment" class="controlledText" cols="80" rows="4"> </textarea>
-    </div>
-
-    <div style="display:none" id="deleteConfirmation">
-        <p>This will permanently remove this draft. Are you sure?</p>
-    </div>
-
-    <div style="display:none" id="abandonConfirmation">
-        <p>This will abandon this Product Order. Are you sure?</p>
-    </div>
-
-    <div style="display:none" id="noneSelectedDialog">
-        <p>You must select at least one sample to <span id="noneSelectedDialogMessage"></span>.</p>
-    </div>
-
-    <stripes:form action="/orders/order.action" id="orderForm" class="form-horizontal">
-        <stripes:hidden name="productOrder" value="${actionBean.editOrder.businessKey}"/>
-        <stripes:hidden id="orderDialogAction" name=""/>
-
-        <div class="actionButtons">
-            <%-- Do not show abandon button at all for DRAFTs, do show for Submitted *or later states* --%>
-            <c:if test="${not actionBean.editOrder.draft}">
-                <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
-                    <c:choose>
-                        <c:when test="${actionBean.abandonable}">
-                            <c:set var="abandonTitle" value="Click to abandon ${actionBean.editOrder.title}"/>
-                            <c:set var="abandonDisable" value="false"/>
-                            <stripes:hidden name="selectedProductOrderBusinessKeys" value="${actionBean.editOrder.businessKey}"/>
-                        </c:when>
-                        <c:otherwise>
-                            <c:set var="abandonTitle"
-                                   value="Cannot abandon this order because ${actionBean.abandonDisabledReason}"/>
-                            <c:set var="abandonDisable" value="true"/>
-                        </c:otherwise>
-                    </c:choose>
-                    <stripes:button name="abandonOrders" id="abandonOrders" value="Abandon Order"
-                                    onclick="showAbandonConfirm('abandonOrders', 'abandon', ${actionBean.abandonWarning})"
-                                    class="btn padright" title="${abandonTitle}" disabled="${abandonDisable}"/>
-                </security:authorizeBlock>
-            </c:if>
-            <c:if test="${actionBean.editOrder.draft}">
-                <%-- PDOs can be placed by PM or PDMs, so the security tag accepts either of those roles for 'Place Order'.
-                     'Validate' is also under that same security tag since that has the power to alter 'On-Riskedness'
-                     for PDO samples. --%>
-                <security:authorizeBlock roles="<%= roles(Developer, PDM, PM) %>">
-
-                    <stripes:submit name="placeOrder" value="Validate and Place Order"
-                                    disabled="${!actionBean.canPlaceOrder}" class="btn"/>
-                    <stripes:submit name="validate" value="Validate" style="margin-left: 5px;" class="btn"/>
-                </security:authorizeBlock>
-
-                <stripes:link title="Click to edit ${actionBean.editOrder.title}"
-                              beanclass="${actionBean.class.name}" event="edit" class="btn"
-                              style="text-decoration: none !important;">
-                    <span class="icon-shopping-cart"></span> <%=ProductOrderActionBean.EDIT_ORDER%>
-                    <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
-                </stripes:link>
-
-                <security:authorizeBlock roles="<%= roles(Developer, PDM, PM) %>">
-                    <stripes:button onclick="showDeleteConfirm('deleteOrder')" name="deleteOrder"
-                                    value="Delete Draft" style="margin-left: 5px;" class="btn"/>
-                </security:authorizeBlock>
-            </c:if>
+        <div style="display:none" id="confirmDialog">
+            <p>Are you sure you want to <span id="confirmDialogMessage"></span> the <span id="dialogNumSamples"></span> selected samples?</p>
         </div>
-    </stripes:form>
 
-        <%-- PDO edit should only be available to PDMs, i.e. not PMs. --%>
-        <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
-            <c:if test="${!actionBean.editOrder.draft}">
-                <stripes:link title="Click to edit ${actionBean.editOrder.title}"
-                    beanclass="${actionBean.class.name}" event="edit" class="pull-right">
-                    <span class="icon-shopping-cart"></span> <%=ProductOrderActionBean.EDIT_ORDER%>
-                    <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
-                </stripes:link>
-            </c:if>
-        </security:authorizeBlock>
+        <div id="riskDialog" style="width:600px;display:none;">
+            <p>Manually Update Risk (<span id="selectedCountId"> </span> selected)</p>
+            <p><span style="float:left; width:185px;">Update status to:</span>
+                <input type="radio" id="onRiskDialogId" name="riskRadio" value="true" checked="checked" style="float:left;margin-right:5px;">
+                <label style="float:left;width:60px;" for="onRiskDialogId">On Risk</label>
+                <input type="radio" id="notOnRiskDialogId" name="riskRadio" value="false" style="float:left;margin-right:5px;">
+                <label style="float:left;margin-right:10px;width:auto;" for="notOnRiskDialogId">Not On Risk</label>
+                <input type="hidden" id="allDialogId" name="sampleRadio" value="false">
+            <p style="clear:both">
+            <label for="riskCommentId">Comment:</label>
+            </p>
+
+            <textarea id="riskCommentId" name="comment" class="controlledText" cols="80" rows="4"> </textarea>
+        </div>
+
+        <div style="display:none" id="deleteConfirmation">
+            <p>This will permanently remove this draft. Are you sure?</p>
+        </div>
+
+        <div style="display:none" id="abandonConfirmation">
+            <p>This will abandon this Product Order. Are you sure?</p>
+        </div>
+
+        <div style="display:none" id="noneSelectedDialog">
+            <p>You must select at least one sample to <span id="noneSelectedDialogMessage"></span>.</p>
+        </div>
+
+        <stripes:form action="/orders/order.action" id="orderForm" class="form-horizontal">
+            <stripes:hidden name="productOrder" value="${actionBean.editOrder.businessKey}"/>
+            <stripes:hidden id="orderDialogAction" name=""/>
+
+            <div class="actionButtons">
+                <c:choose>
+                    <c:when test="${actionBean.editOrder.draft}">
+                        <%-- PDOs can be placed by PM or PDMs, so the security tag accepts either of those roles for 'Place Order'.
+                             'Validate' is also under that same security tag since that has the power to alter 'On-Riskedness'
+                             for PDO samples. --%>
+                        <security:authorizeBlock roles="<%= roles(Developer, PDM, PM) %>">
+
+                            <stripes:submit name="placeOrder" value="Validate and Place Order"
+                                            disabled="${!actionBean.canPlaceOrder}" class="btn"/>
+                            <stripes:submit name="validate" value="Validate" style="margin-left: 3px;" class="btn"/>
+                        </security:authorizeBlock>
+
+                        <stripes:link title="Click to edit ${actionBean.editOrder.title}"
+                                      beanclass="${actionBean.class.name}" event="edit" class="btn"
+                                      style="text-decoration: none !important; margin-left: 10px;">
+                            <%=ProductOrderActionBean.EDIT_ORDER%>
+                            <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
+                        </stripes:link>
+
+                        <security:authorizeBlock roles="<%= roles(Developer, PDM, PM) %>">
+                            <stripes:button onclick="showDeleteConfirm('deleteOrder')" name="deleteOrder"
+                                            value="Delete Draft" style="margin-left: 10px;" class="btn"/>
+                        </security:authorizeBlock>
+                    </c:when>
+                    <c:otherwise>
+                        <%-- Do not show abandon button at all for DRAFTs, do show for Submitted *or later states* --%>
+                        <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
+                            <c:choose>
+                                <c:when test="${actionBean.abandonable}">
+                                    <c:set var="abandonTitle" value="Click to abandon ${actionBean.editOrder.title}"/>
+                                    <c:set var="abandonDisable" value="false"/>
+                                    <stripes:hidden name="selectedProductOrderBusinessKeys" value="${actionBean.editOrder.businessKey}"/>
+                                </c:when>
+                                <c:otherwise>
+                                    <c:set var="abandonTitle"
+                                           value="Cannot abandon this order because ${actionBean.abandonDisabledReason}"/>
+                                    <c:set var="abandonDisable" value="true"/>
+                                </c:otherwise>
+                            </c:choose>
+                            <stripes:button name="abandonOrders" id="abandonOrders" value="Abandon Order"
+                                            onclick="showAbandonConfirm('abandonOrders', 'abandon', ${actionBean.abandonWarning})"
+                                            class="btn padright" title="${abandonTitle}" disabled="${abandonDisable}"/>
+                        </security:authorizeBlock>
+                    </c:otherwise>
+                </c:choose>
+            </div>
+        </stripes:form>
 
         <div style="both:clear"> </div>
 

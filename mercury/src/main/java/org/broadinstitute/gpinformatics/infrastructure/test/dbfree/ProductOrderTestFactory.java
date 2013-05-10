@@ -146,6 +146,7 @@ public class ProductOrderTestFactory {
                 new ProductOrder(-1L, "PDO title " + uuid, productOrderSamples, "Quote-" + uuid, product,
                         researchProject);
         productOrder.setJiraTicketKey("PDO-" + uuid);
+        productOrder.setModifiedBy(-1L);
         productOrder.setOrderStatus(Submitted);
         return productOrder;
     }

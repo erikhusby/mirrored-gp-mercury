@@ -100,9 +100,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     public static final String ACTIONBEAN_URL_BINDING = "/orders/order.action";
     public static final String PRODUCT_ORDER_PARAMETER = "productOrder";
 
-    private static final String CURRENT_OBJECT = "Product Order";
-    public static final String CREATE_ORDER = CoreActionBean.CREATE + CURRENT_OBJECT;
-    public static final String EDIT_ORDER = CoreActionBean.EDIT + CURRENT_OBJECT;
+    private static final String PRODUCT_ORDER = "Product Order";
+    public static final String CREATE_ORDER = CoreActionBean.CREATE + PRODUCT_ORDER;
+    public static final String EDIT_ORDER = CoreActionBean.EDIT + PRODUCT_ORDER;
 
     private static final String ORDER_CREATE_PAGE = "/orders/create.jsp";
     private static final String ORDER_LIST_PAGE = "/orders/list.jsp";
@@ -119,6 +119,10 @@ public class ProductOrderActionBean extends CoreActionBean {
     private static final String STATUS = "status";
     private static final String DATE = "date";
     private static final String OWNER = "owner";
+
+    public ProductOrderActionBean() {
+        super(CREATE_ORDER, EDIT_ORDER, PRODUCT_ORDER_PARAMETER);
+    }
 
     @Inject
     private ProductFamilyDao productFamilyDao;
@@ -1415,5 +1419,14 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setSelectedStatuses(List<ProductOrder.OrderStatus> selectedStatuses) {
         this.selectedStatuses = selectedStatuses;
+    }
+
+    /**
+     * @return Show the edit title if this is not a draft (Drafts use a button per Product Owner workflow request) and
+     * the user is appropriate for editing.
+     */
+    @Override
+    public boolean isEditAllowed() {
+        return !editOrder.isDraft() && (getUserBean().isDeveloperUser() || getUserBean().isPDMUser());
     }
 }
