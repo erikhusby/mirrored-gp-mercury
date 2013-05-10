@@ -121,9 +121,23 @@ public class ExomeExpressIntegrationTest {
             for (BettaLIMSMessage bettaLIMSMessage : qtpJaxbBuilder.getMessageList()) {
                 sendMessage(baseUrl, bettaLIMSMessage);
             }
+
+            System.out.println("About to perform denature to Flowcell Transfer.  Press 'y' if running in Parallel?");
+            String parallelIndicator = scanner.nextLine();
+            boolean parallelFlag = parallelIndicator.contains("y");
+
+            String designationName = "";
+            if (parallelFlag) {
+                System.out.println("Enter the squid designation name");
+                designationName = scanner.nextLine();
+            }
+
             HiSeq2500JaxbBuilder hiSeq2500JaxbBuilder =
                     new HiSeq2500JaxbBuilder(bettaLimsMessageTestFactory, testSuffix,
-                            qtpJaxbBuilder.getDenatureTubeBarcode()).invoke();
+                            qtpJaxbBuilder.getDenatureTubeBarcode(), designationName);
+
+            hiSeq2500JaxbBuilder.invoke();
+
             for (BettaLIMSMessage bettaLIMSMessage : hiSeq2500JaxbBuilder.getMessageList()) {
                 sendMessage(baseUrl, bettaLIMSMessage);
             }
