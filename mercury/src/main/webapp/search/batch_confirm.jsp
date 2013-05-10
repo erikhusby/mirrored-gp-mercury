@@ -20,7 +20,7 @@
 
                 <div class="controls">
                     <div class="form-value">
-                        <stripes:link target="JIRA"
+                        <stripes:link target="JIRA" id="ticketName"
                                       href="${actionBean.batch.jiraTicket.browserUrl}"
                                       class="external">
                             ${actionBean.batch.jiraTicket.ticketName}
