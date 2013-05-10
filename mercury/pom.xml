@@ -48,6 +48,13 @@
             <name>${project.name} Website</name>
             <url>file://${site.path}/${project.artifactId}</url>
         </site>
+
+        <repository>
+            <id>prodinfo</id>
+            <name>Broad Prodinfo</name>
+            <url>file:///seq/prodinfo/m2-repository</url>
+        </repository>
+
     </distributionManagement>
 
     <developers>
@@ -933,20 +940,26 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-jar-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <goals>
-                                    <goal>test-jar</goal>
-                                </goals>
-                                <phase>package</phase>
-                            </execution>
-                        </executions>
                         <configuration>
                             <classifier>message-test</classifier>
                             <includes>
                                 <include>**/*JaxbBuilder.class</include>
                                 <include>**/BettaLimsMessageTestFactory*.class</include>
                             </includes>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-deploy-plugin</artifactId>
+                        <configuration>
+                            <url>${project.distributionManagement.repository.url}</url>
+                            <file>target/${project.artifactId}-${project.version}-message-test.jar</file>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>${project.artifactId}</artifactId>
+                            <version>${project.version}</version>
+                            <packaging>jar</packaging>
+                            <classifer>message-test</classifer>
+                            <uniqueVersion>false</uniqueVersion>
                         </configuration>
                     </plugin>
                 </plugins>
@@ -959,20 +972,26 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-jar-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <goals>
-                                    <goal>jar</goal>
-                                </goals>
-                                <phase>package</phase>
-                            </execution>
-                        </executions>
                         <configuration>
                             <classifier>bettalims-generated</classifier>
                             <includes>
                                 <include>**/bettalims/generated/*.class</include>
                                 <include>**/WorkflowName.class</include>
                             </includes>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-deploy-plugin</artifactId>
+                        <configuration>
+                            <url>${project.distributionManagement.repository.url}</url>
+                            <file>target/${project.artifactId}-${project.version}-bettalims-generated.jar</file>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>${project.artifactId}</artifactId>
+                            <version>${project.version}</version>
+                            <packaging>jar</packaging>
+                            <classifer>bettalims-generated</classifer>
+                            <uniqueVersion>false</uniqueVersion>
                         </configuration>
                     </plugin>
                 </plugins>
@@ -1496,6 +1515,19 @@
                         <artifactId>sql-maven-plugin</artifactId>
                         <version>1.5</version>
                 </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>2.4</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-deploy-plugin</artifactId>
+                    <version>2.7</version>
+                </plugin>
+
                 <!--
                                 <plugin>
                                     <artifactId>maven-dependency-plugin</artifactId>
