@@ -1,9 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -69,19 +66,23 @@ public class ProductOrder implements Serializable {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PRODUCT_ORDER")
     private Long productOrderId;
 
+    @Column(name = "CREATED_DATE")
     private Date createdDate;
 
+    @Column(name = "CREATED_BY")
     private Long createdBy;
 
-    @Column(name = "placed_date")
+    @Column(name = "PLACED_DATE")
     private Date placedDate;
 
+    @Column(name = "MODIFIED_DATE")
     private Date modifiedDate;
 
+    @Column(name = "MODIFIED_BY")
     private Long modifiedBy;
 
     /** Unique title for the order */
-    @Column(unique = true)
+    @Column(name = "TITLE", unique = true)
     private String title = "";
 
     @ManyToOne
@@ -94,6 +95,7 @@ public class ProductOrder implements Serializable {
     private OrderStatus orderStatus = OrderStatus.Draft;
 
     /** Alphanumeric Id */
+    @Column(name = "QUOTE_ID")
     private String quoteId = "";
 
     /** Additional comments of the order */
@@ -694,6 +696,10 @@ public class ProductOrder implements Serializable {
 
     public long getModifiedBy() {
         return modifiedBy;
+    }
+
+    public void setModifiedBy(Long modifiedBy) {
+        this.modifiedBy = modifiedBy;
     }
 
     public Date getPlacedDate() {

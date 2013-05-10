@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 
 import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
-import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderCompletionStatus;
@@ -24,8 +23,6 @@ import static org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry
 
 /**
  * Test the progress object.
- *
- * @author hrafal
  */
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
 public class CompletionStatusFetcherTest extends ContainerTest {
@@ -47,7 +44,7 @@ public class CompletionStatusFetcherTest extends ContainerTest {
 
         utx.begin();
 
-        // Get all statuses
+        // Get all statuses.
         allPDOFetcher = new CompletionStatusFetcher();
         allPDOFetcher.loadProgress(pdoDao);
     }

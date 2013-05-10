@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.test.builders;
 
+import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
@@ -17,23 +18,24 @@ import org.testng.Assert;
 import java.util.Set;
 
 /**
-* @author Scott Matthews
-*         Date: 4/3/13
-*         Time: 6:31 AM
-*/
+ * @author Scott Matthews
+ *         Date: 4/3/13
+ *         Time: 6:31 AM
+ */
 public class HiSeq2500FlowcellEntityBuilder {
     private final BettaLimsMessageTestFactory bettaLimsMessageTestFactory;
-    private final LabEventFactory             labEventFactory;
-    private final LabEventHandler             labEventHandler;
+    private final LabEventFactory labEventFactory;
+    private final LabEventHandler labEventHandler;
     private final String flowcellBarcode;
-    private       IlluminaFlowcell            illuminaFlowcell;
-    private       LabEvent                    flowcellTransferEntity;
-    private final TubeFormation               denatureRack;
+    private IlluminaFlowcell illuminaFlowcell;
+    private LabEvent flowcellTransferEntity;
+    private final TubeFormation denatureRack;
     private String testPrefix;
+    private String designationName;
 
     public HiSeq2500FlowcellEntityBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
                                           LabEventFactory labEventFactory, LabEventHandler labEventHandler,
-                                          TubeFormation denatureRack, String flowcellBarcode, String testPrefix){
+                                          TubeFormation denatureRack, String flowcellBarcode, String testPrefix) {
 
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.labEventFactory = labEventFactory;
@@ -43,11 +45,22 @@ public class HiSeq2500FlowcellEntityBuilder {
         this.testPrefix = testPrefix;
     }
 
+    public HiSeq2500FlowcellEntityBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
+                                          LabEventFactory labEventFactory, LabEventHandler labEventHandler,
+                                          TubeFormation denatureRack, String flowcellBarcode, String testPrefix,
+                                          String designationName) {
+
+        this(bettaLimsMessageTestFactory, labEventFactory, labEventHandler, denatureRack, flowcellBarcode, testPrefix);
+        this.designationName = designationName;
+    }
+
     public HiSeq2500FlowcellEntityBuilder invoke() {
-        HiSeq2500JaxbBuilder hiSeq2500JaxbBuilder =
-                new HiSeq2500JaxbBuilder(bettaLimsMessageTestFactory, testPrefix,
-                        denatureRack.getContainerRole().getContainedVessels().iterator().next().getLabel())
-                        .invoke();
+        HiSeq2500JaxbBuilder hiSeq2500JaxbBuilder = new HiSeq2500JaxbBuilder(bettaLimsMessageTestFactory, testPrefix,
+                denatureRack.getContainerRole().getContainedVessels().iterator().next().getLabel());
+        if (StringUtils.isNotBlank(designationName)) {
+            hiSeq2500JaxbBuilder.setSquidDesignationName(designationName);
+        }
+        hiSeq2500JaxbBuilder.invoke();
         ReceptaclePlateTransferEvent flowcellTransferJaxb = hiSeq2500JaxbBuilder.getFlowcellTransferJaxb();
 
         // DenatureToFlowcellTransfer
@@ -62,7 +75,7 @@ public class HiSeq2500FlowcellEntityBuilder {
                 illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
                         VesselPosition.LANE1);
         Assert.assertEquals(lane1SampleInstances.size(), denatureRack.getSampleInstances().size(),
-                                   "Wrong number of samples in flowcell lane");
+                "Wrong number of samples in flowcell lane");
         Assert.assertEquals(lane1SampleInstances.iterator().next().getReagents().size(), 2,
                 "Wrong number of reagents");
         Set<SampleInstance> lane2SampleInstances =
@@ -95,5 +108,9 @@ public class HiSeq2500FlowcellEntityBuilder {
 
     public TubeFormation getDenatureRack() {
         return denatureRack;
+    }
+
+    public void setDesignationName(String designationName) {
+        this.designationName = designationName;
     }
 }

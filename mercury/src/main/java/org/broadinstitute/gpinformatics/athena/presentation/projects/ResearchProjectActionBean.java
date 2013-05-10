@@ -37,11 +37,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public static final String ACTIONBEAN_URL_BINDING = "/projects/project.action";
     public static final String RESEARCH_PROJECT_PARAMETER = "researchProject";
 
-    private static final int IRB_NAME_MAX_LENGTH = 250;
-
-    private static final String CURRENT_OBJECT = "Research Project";
-    public static final String CREATE_PROJECT = CoreActionBean.CREATE + CURRENT_OBJECT;
-    public static final String EDIT_PROJECT = CoreActionBean.EDIT + CURRENT_OBJECT;
+    private static final String PROJECT = "Research Project";
+    public static final String CREATE_PROJECT = CoreActionBean.CREATE + PROJECT;
+    public static final String EDIT_PROJECT = CoreActionBean.EDIT + PROJECT;
 
     public static final String PROJECT_CREATE_PAGE = "/projects/create.jsp";
     public static final String PROJECT_LIST_PAGE = "/projects/list.jsp";
@@ -116,6 +114,10 @@ public class ResearchProjectActionBean extends CoreActionBean {
     private String irbList = "";
 
     private CompletionStatusFetcher progressFetcher = new CompletionStatusFetcher();
+
+    public ResearchProjectActionBean() {
+        super(CREATE_PROJECT, EDIT_PROJECT, RESEARCH_PROJECT_PARAMETER);
+    }
 
     /**
      * Fetch the complete list of research projects.

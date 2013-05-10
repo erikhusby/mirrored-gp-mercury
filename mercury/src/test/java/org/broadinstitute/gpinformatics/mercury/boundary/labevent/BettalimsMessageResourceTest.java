@@ -128,7 +128,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
 
     @Inject
     private IlluminaFlowcellDao flowcellDao;
-    
+
     @Inject
     private BSPSampleDataFetcher bspSampleDataFetcher;
 
@@ -147,9 +147,10 @@ public class BettalimsMessageResourceTest extends Arquillian {
     @Inject
     private ReworkEjb reworkEjb;
 
-    private final SimpleDateFormat testPrefixDateFormat=new SimpleDateFormat("MMddHHmmss");
+    private final SimpleDateFormat testPrefixDateFormat = new SimpleDateFormat("MMddHHmmss");
 
     private static final Map<String, String> mapWorkflowToPartNum = new HashMap<String, String>();
+
     static {
         mapWorkflowToPartNum.put("Custom Amplicon", "P-VAL-0002");
 //        ("IGN WGS", "?")
@@ -191,7 +192,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
         }
 
         HiSeq2500JaxbBuilder hiSeq2500JaxbBuilder = new HiSeq2500JaxbBuilder(bettaLimsMessageFactory, testPrefix,
-                qtpJaxbBuilder.getDenatureTubeBarcode()).invoke();
+                qtpJaxbBuilder.getDenatureTubeBarcode(), "squidTestDesignation").invoke();
         for (BettaLIMSMessage bettaLIMSMessage : hiSeq2500JaxbBuilder.getMessageList()) {
             sendMessage(bettaLIMSMessage);
         }
@@ -205,7 +206,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
 
         // Add two samples from first PDO to bucket
         Set<LabVessel> reworks = new HashSet<LabVessel>();
-        Iterator<Map.Entry<String,TwoDBarcodedTube>> iterator = mapBarcodeToTube.entrySet().iterator();
+        Iterator<Map.Entry<String, TwoDBarcodedTube>> iterator = mapBarcodeToTube.entrySet().iterator();
         Map.Entry<String, TwoDBarcodedTube> barcodeTubeEntry = iterator.next();
         reworkEjb.addRework(barcodeTubeEntry.getValue(), ReworkEntry.ReworkReason.UNKNOWN_ERROR,
                 LabEventType.PICO_PLATING_BUCKET, "Test");
@@ -241,7 +242,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
         }
 
         hiSeq2500JaxbBuilder = new HiSeq2500JaxbBuilder(bettaLimsMessageFactory, testPrefix,
-                qtpJaxbBuilder.getDenatureTubeBarcode()).invoke();
+                qtpJaxbBuilder.getDenatureTubeBarcode(), "squidTestDesignation").invoke();
         for (BettaLIMSMessage bettaLIMSMessage : hiSeq2500JaxbBuilder.getMessageList()) {
             sendMessage(bettaLIMSMessage);
         }
@@ -264,7 +265,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
         HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = sendMessagesUptoCatch(testPrefix,
                 mapBarcodeToTube, bettaLimsMessageFactory, WorkflowName.EXOME_EXPRESS);
 
-        QtpJaxbBuilder qtpJaxbBuilder=new QtpJaxbBuilder(bettaLimsMessageFactory, testPrefix,
+        QtpJaxbBuilder qtpJaxbBuilder = new QtpJaxbBuilder(bettaLimsMessageFactory, testPrefix,
                 Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchBarcodes()),
                 Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchRackBarcode()),
                 WorkflowName.EXOME_EXPRESS).invoke();
@@ -273,7 +274,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
         }
 
         HiSeq2500JaxbBuilder hiSeq2500JaxbBuilder = new HiSeq2500JaxbBuilder(bettaLimsMessageFactory, testPrefix,
-                qtpJaxbBuilder.getDenatureTubeBarcode()).invoke();
+                qtpJaxbBuilder.getDenatureTubeBarcode(), "squidTestDesignation").invoke();
         for (BettaLIMSMessage bettaLIMSMessage : hiSeq2500JaxbBuilder.getMessageList()) {
             sendMessage(bettaLIMSMessage);
         }
@@ -283,7 +284,8 @@ public class BettalimsMessageResourceTest extends Arquillian {
 
         IlluminaSequencingRun illuminaSequencingRun = registerIlluminaSequencingRun(testPrefix,
                 hiSeq2500JaxbBuilder.getFlowcellBarcode());
-        ZimsIlluminaRunFactory zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(bspSampleDataFetcher, athenaClientService);
+        ZimsIlluminaRunFactory zimsIlluminaRunFactory =
+                new ZimsIlluminaRunFactory(bspSampleDataFetcher, athenaClientService);
         ZimsIlluminaRun zimsIlluminaRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(illuminaSequencingRun);
         Assert.assertEquals(zimsIlluminaRun.getLanes().size(), 2, "Wrong number of lanes");
 
@@ -292,16 +294,18 @@ public class BettalimsMessageResourceTest extends Arquillian {
 
     /**
      * Register a flowcell run
-     * @param testPrefix make barcodes unique
+     *
+     * @param testPrefix      make barcodes unique
      * @param flowcellBarcode flowcell to register
+     *
      * @return registered run
      */
     private IlluminaSequencingRun registerIlluminaSequencingRun(String testPrefix, String flowcellBarcode) {
         Date runDate = new Date();
         SimpleDateFormat format = new SimpleDateFormat("yyMMdd");
-        String runName="TestRun" + testPrefix + runDate.getTime();
+        String runName = "TestRun" + testPrefix + runDate.getTime();
 
-        String runPath = "/tmp/file/run/path/"+ runName + ".txt";
+        String runPath = "/tmp/file/run/path/" + runName + ".txt";
 
         IlluminaFlowcell flowcell = flowcellDao.findByBarcode(flowcellBarcode);
 
@@ -312,15 +316,17 @@ public class BettalimsMessageResourceTest extends Arquillian {
 
     /**
      * Send messages for Preflight, Shearing, Library Construction and Hybridization
-     * @param testPrefix make barcodes unique
-     * @param mapBarcodeToTube map from tube barcode to sample tube
+     *
+     * @param testPrefix              make barcodes unique
+     * @param mapBarcodeToTube        map from tube barcode to sample tube
      * @param bettaLimsMessageFactory to build messages
+     *
      * @return allows access to catch tubes
      */
     private HybridSelectionJaxbBuilder sendMessagesUptoCatch(String testPrefix,
-            Map<String, TwoDBarcodedTube> mapBarcodeToTube,
-            BettaLimsMessageTestFactory bettaLimsMessageFactory,
-            WorkflowName workflowName) {
+                                                             Map<String, TwoDBarcodedTube> mapBarcodeToTube,
+                                                             BettaLimsMessageTestFactory bettaLimsMessageFactory,
+                                                             WorkflowName workflowName) {
 
         String shearingRackBarcode;
         if (workflowName == WorkflowName.EXOME_EXPRESS) {
@@ -333,22 +339,23 @@ public class BettalimsMessageResourceTest extends Arquillian {
             }
             shearingRackBarcode = preFlightJaxbBuilder.getRackBarcode();
         }
-        ShearingJaxbBuilder shearingJaxbBuilder=new ShearingJaxbBuilder(bettaLimsMessageFactory,
+        ShearingJaxbBuilder shearingJaxbBuilder = new ShearingJaxbBuilder(bettaLimsMessageFactory,
                 new ArrayList<String>(mapBarcodeToTube.keySet()), testPrefix, shearingRackBarcode).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : shearingJaxbBuilder.getMessageList()) {
             sendMessage(bettaLIMSMessage);
         }
 
-        Map<String,StaticPlate> mapBarcodeToPlate=indexedPlateFactory.parseStream(
+        Map<String, StaticPlate> mapBarcodeToPlate = indexedPlateFactory.parseStream(
                 Thread.currentThread().getContextClassLoader().getResourceAsStream("DuplexCOAforBroad.xlsx"),
                 IndexedPlateFactory.TechnologiesAndParsers.ILLUMINA_SINGLE);
-        StaticPlate indexPlate=mapBarcodeToPlate.values().iterator().next();
-        if(staticPlateDAO.findByBarcode(indexPlate.getLabel()) == null) {
+        StaticPlate indexPlate = mapBarcodeToPlate.values().iterator().next();
+        if (staticPlateDAO.findByBarcode(indexPlate.getLabel()) == null) {
             staticPlateDAO.persist(indexPlate);
         }
 
         LibraryConstructionJaxbBuilder libraryConstructionJaxbBuilder = new LibraryConstructionJaxbBuilder(
-                bettaLimsMessageFactory, testPrefix, shearingJaxbBuilder.getShearCleanPlateBarcode(), indexPlate.getLabel(),
+                bettaLimsMessageFactory, testPrefix, shearingJaxbBuilder.getShearCleanPlateBarcode(),
+                indexPlate.getLabel(),
                 LabEventTest.NUM_POSITIONS_IN_RACK).invoke();
 
         for (BettaLIMSMessage bettaLIMSMessage : libraryConstructionJaxbBuilder.getMessageList()) {
@@ -358,10 +365,10 @@ public class BettalimsMessageResourceTest extends Arquillian {
         HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = new HybridSelectionJaxbBuilder(bettaLimsMessageFactory,
                 testPrefix, libraryConstructionJaxbBuilder.getPondRegRackBarcode(),
                 libraryConstructionJaxbBuilder.getPondRegTubeBarcodes(), "Bait" + testPrefix).invoke();
-        List<ReagentDesign> reagentDesigns=reagentDesignDao.findAll(ReagentDesign.class, 0, 1);
-        ReagentDesign baitDesign=null;
-        if(reagentDesigns != null && !reagentDesigns.isEmpty()) {
-            baitDesign=reagentDesigns.get(0);
+        List<ReagentDesign> reagentDesigns = reagentDesignDao.findAll(ReagentDesign.class, 0, 1);
+        ReagentDesign baitDesign = null;
+        if (reagentDesigns != null && !reagentDesigns.isEmpty()) {
+            baitDesign = reagentDesigns.get(0);
         }
 
         twoDBarcodedTubeDAO.persist(LabEventTest.buildBaitTube(hybridSelectionJaxbBuilder.getBaitTubeBarcode(),
@@ -375,12 +382,14 @@ public class BettalimsMessageResourceTest extends Arquillian {
 
     /**
      * Build samples in plastic, and associate them with a PDO
-     * @param testPrefix make barcodes unique
+     *
+     * @param testPrefix      make barcodes unique
      * @param numberOfSamples how many samples to create
+     *
      * @return map from tube barcode to sample tube
      */
     private Map<String, TwoDBarcodedTube> buildSamplesInPdo(String testPrefix, int numberOfSamples,
-                WorkflowName workflowName) {
+                                                            WorkflowName workflowName) {
         ProductOrder productOrder = buildProductOrder(testPrefix, numberOfSamples, workflowName);
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = buildSampleTubes(testPrefix, numberOfSamples);
         bucketAndBatch(testPrefix, productOrder, mapBarcodeToTube);
@@ -389,8 +398,10 @@ public class BettalimsMessageResourceTest extends Arquillian {
 
     /**
      * Build a product order, including product and research project
-     * @param testPrefix make unique
+     *
+     * @param testPrefix      make unique
      * @param numberOfSamples how many samples
+     *
      * @return product order
      */
     private ProductOrder buildProductOrder(String testPrefix, int numberOfSamples, WorkflowName workflowName) {
@@ -398,7 +409,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
         Product product = productDao.findByPartNumber(partNumber);
         if (product == null) {
             // todo jmt change to exome express
-            product=new Product("Standard Exome Sequencing", productFamilyDao.find("Exome"),
+            product = new Product("Standard Exome Sequencing", productFamilyDao.find("Exome"),
                     "Standard Exome Sequencing", "P-EX-0001", new Date(), null, 1814400, 1814400, 184, null, null,
                     null, true, WorkflowName.HYBRID_SELECTION.getWorkflowName(), false, "agg type");
             product.setPrimaryPriceItem(new PriceItem("1234", PriceItem.PLATFORM_GENOMICS, "Pony Genomics",
@@ -406,20 +417,21 @@ public class BettalimsMessageResourceTest extends Arquillian {
             productDao.persist(product);
         }
 
-        ResearchProject researchProject=researchProjectDao.findByBusinessKey("RP-19");
+        ResearchProject researchProject = researchProjectDao.findByBusinessKey("RP-19");
         if (researchProject == null) {
-            researchProject=new ResearchProject(10950L, "SIGMA Sarcoma", "SIGMA Sarcoma", false);
+            researchProject = new ResearchProject(10950L, "SIGMA Sarcoma", "SIGMA Sarcoma", false);
             researchProjectDao.persist(researchProject);
         }
 
-        List<ProductOrderSample> productOrderSamples=new ArrayList<ProductOrderSample>();
-        for (int rackPosition=1; rackPosition <= numberOfSamples; rackPosition++) {
-            String bspStock="SM-" + testPrefix + rackPosition;
+        List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>();
+        for (int rackPosition = 1; rackPosition <= numberOfSamples; rackPosition++) {
+            String bspStock = "SM-" + testPrefix + rackPosition;
             productOrderSamples.add(new ProductOrderSample(bspStock));
         }
 
-        ProductOrder productOrder=new ProductOrder(10950L, "Messaging Test " + testPrefix, productOrderSamples, "GSP-123",
-                product, researchProject);
+        ProductOrder productOrder =
+                new ProductOrder(10950L, "Messaging Test " + testPrefix, productOrderSamples, "GSP-123",
+                        product, researchProject);
         productOrder.prepareToSave(bspUserList.getByUsername("jowalsh"));
         productOrderDao.persist(productOrder);
         try {
@@ -432,16 +444,18 @@ public class BettalimsMessageResourceTest extends Arquillian {
 
     /**
      * Build samples and tubes
-     * @param testPrefix make unique
+     *
+     * @param testPrefix      make unique
      * @param numberOfSamples how many samples
+     *
      * @return map from tube barcode to tube
      */
     private Map<String, TwoDBarcodedTube> buildSampleTubes(String testPrefix, int numberOfSamples) {
-        Map<String,TwoDBarcodedTube> mapBarcodeToTube=new LinkedHashMap<String,TwoDBarcodedTube>();
-        for (int rackPosition=1; rackPosition <= numberOfSamples; rackPosition++) {
-            String barcode="R" + testPrefix + rackPosition;
-            String bspStock="SM-" + testPrefix + rackPosition;
-            TwoDBarcodedTube bspAliquot=new TwoDBarcodedTube(barcode);
+        Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
+        for (int rackPosition = 1; rackPosition <= numberOfSamples; rackPosition++) {
+            String barcode = "R" + testPrefix + rackPosition;
+            String bspStock = "SM-" + testPrefix + rackPosition;
+            TwoDBarcodedTube bspAliquot = new TwoDBarcodedTube(barcode);
             bspAliquot.addSample(new MercurySample(bspStock));
             mapBarcodeToTube.put(barcode, bspAliquot);
 
@@ -452,8 +466,9 @@ public class BettalimsMessageResourceTest extends Arquillian {
 
     /**
      * Add a product order's samples to the bucket, and create a batch from the bucket
-     * @param testPrefix make unique
-     * @param productOrder contains sample
+     *
+     * @param testPrefix       make unique
+     * @param productOrder     contains sample
      * @param mapBarcodeToTube tubes
      */
     private void bucketAndBatch(String testPrefix, ProductOrder productOrder,
@@ -493,7 +508,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
 
         // Combine 8 LCSETs on one flowcell
         testPrefix = testPrefixDateFormat.format(new Date());
-        QtpJaxbBuilder qtpJaxbBuilder=new QtpJaxbBuilder(bettaLimsMessageFactory, testPrefix,
+        QtpJaxbBuilder qtpJaxbBuilder = new QtpJaxbBuilder(bettaLimsMessageFactory, testPrefix,
                 listLcsetListNormCatchBarcodes,
                 normCatchRackBarcodes,
                 WorkflowName.HYBRID_SELECTION).invoke();
@@ -501,8 +516,10 @@ public class BettalimsMessageResourceTest extends Arquillian {
             sendMessage(bettaLIMSMessage);
         }
 
-        IlluminaSequencingRun illuminaSequencingRun = registerIlluminaSequencingRun(testPrefix, qtpJaxbBuilder.getFlowcellBarcode());
-        ZimsIlluminaRunFactory zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(bspSampleDataFetcher, athenaClientService);
+        IlluminaSequencingRun illuminaSequencingRun =
+                registerIlluminaSequencingRun(testPrefix, qtpJaxbBuilder.getFlowcellBarcode());
+        ZimsIlluminaRunFactory zimsIlluminaRunFactory =
+                new ZimsIlluminaRunFactory(bspSampleDataFetcher, athenaClientService);
         ZimsIlluminaRun zimsIlluminaRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(illuminaSequencingRun);
         Assert.assertEquals(zimsIlluminaRun.getLanes().size(), 8, "Wrong number of lanes");
     }
@@ -535,18 +552,19 @@ public class BettalimsMessageResourceTest extends Arquillian {
 
     /**
      * Send messages from files that were created by production BettaLIMS
+     *
      * @param baseUrl URL of arquillian server
      */
-    @Test(enabled=false, groups=EXTERNAL_INTEGRATION, dataProvider=Arquillian.ARQUILLIAN_DATA_PROVIDER)
+    @Test(enabled = false, groups = EXTERNAL_INTEGRATION, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testHttp(@ArquillianResource URL baseUrl) {
-        File inboxDirectory=new File("C:/Temp/seq/lims/bettalims/production/inbox");
-        List<String> dayDirectoryNames=Arrays.asList(inboxDirectory.list());
+        File inboxDirectory = new File("C:/Temp/seq/lims/bettalims/production/inbox");
+        List<String> dayDirectoryNames = Arrays.asList(inboxDirectory.list());
         Collections.sort(dayDirectoryNames);
         for (String dayDirectoryName : dayDirectoryNames) {
-            if(dayDirectoryName.startsWith("2012")) {
-                File dayDirectory=new File(inboxDirectory, dayDirectoryName);
-                List<String> messageFileNames=Arrays.asList(dayDirectory.list());
+            if (dayDirectoryName.startsWith("2012")) {
+                File dayDirectory = new File(inboxDirectory, dayDirectoryName);
+                List<String> messageFileNames = Arrays.asList(dayDirectory.list());
                 Collections.sort(messageFileNames);
                 for (String messageFileName : messageFileNames) {
 /*
@@ -562,23 +580,25 @@ public class BettalimsMessageResourceTest extends Arquillian {
 
     /**
      * Send a single message from a file that was created by production BettaLIMS
+     *
      * @param baseUrl URL of deployed server
      */
-    @Test(enabled=false, groups=EXTERNAL_INTEGRATION, dataProvider=Arquillian.ARQUILLIAN_DATA_PROVIDER)
+    @Test(enabled = false, groups = EXTERNAL_INTEGRATION, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testSingleFile(@ArquillianResource URL baseUrl) {
-        File file = new File("c:/Temp/seq/lims/bettalims/production/inbox/20120103/20120103_101119570_localhost_9998_ws.xml");
+        File file = new File(
+                "c:/Temp/seq/lims/bettalims/production/inbox/20120103/20120103_101119570_localhost_9998_ws.xml");
         sendFile(baseUrl, file);
     }
 
-    @Test(enabled=false, groups=EXTERNAL_INTEGRATION, dataProvider=Arquillian.ARQUILLIAN_DATA_PROVIDER)
+    @Test(enabled = false, groups = EXTERNAL_INTEGRATION, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testFileList(@ArquillianResource URL baseUrl) {
         try {
             BufferedReader bufferedReader = new BufferedReader(new FileReader("c:/temp/PdoLcSetMessageList.txt"));
             String line;
             while ((line = bufferedReader.readLine()) != null) {
-                if(!line.startsWith("#")) {
+                if (!line.startsWith("#")) {
                     sendFile(baseUrl, new File(line));
                 }
             }
@@ -589,12 +609,13 @@ public class BettalimsMessageResourceTest extends Arquillian {
 
     /**
      * Send a file from a message
+     *
      * @param baseUrl URL of the server
-     * @param file message file
+     * @param file    message file
      */
     private void sendFile(URL baseUrl, File file) {
         try {
-            String response= Client.create().resource(baseUrl.toExternalForm() + "rest/bettalimsmessage")
+            String response = Client.create().resource(baseUrl.toExternalForm() + "rest/bettalimsmessage")
                     .type(MediaType.APPLICATION_XML_TYPE)
                     .accept(MediaType.APPLICATION_XML)
                     .entity(file)

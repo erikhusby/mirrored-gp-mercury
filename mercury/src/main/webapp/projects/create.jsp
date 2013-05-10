@@ -101,12 +101,12 @@
         <stripes:form beanclass="${actionBean.class.name}" id="createForm" class="form-horizontal" focus="editResearchProject.title">
             <stripes:hidden name="submitString"/>
             <stripes:hidden name="researchProject" value="${actionBean.editResearchProject.jiraTicketKey}"/>
-            <div class="form-horizontal">
+            <div class="form-horizontal" style="float:left;">
                 <div class="control-group">
                     <stripes:label for="title" class="control-label">Name *</stripes:label>
                     <div class="controls">
-                            <stripes:text name="editResearchProject.title" value="${actionBean.editResearchProject.title}"
-                                          id="title"  class="defaultText input-xxlarge" title="Enter the project name"  maxlength="255"/>
+                        <stripes:text name="editResearchProject.title" value="${actionBean.editResearchProject.title}"
+                                      id="title"  class="defaultText input-create-form" title="Enter the project name"  maxlength="255"/>
                     </div>
                 </div>
 
@@ -115,7 +115,7 @@
                     <stripes:label for="synopsis" class="control-label">Synopsis *</stripes:label>
 
                     <div class="controls">
-                        <stripes:textarea id="synopsis" rows="5" cols="100" name="editResearchProject.synopsis" class="defaultText textarea input-xxlarge"
+                        <stripes:textarea id="synopsis" rows="5" cols="100" name="editResearchProject.synopsis" class="defaultText textarea input-create-form"
                                       title="Enter the synopsis of the project" value="${actionBean.editResearchProject.synopsis}"/>
                     </div>
                 </div>
@@ -126,48 +126,6 @@
                         <stripes:checkbox name="editResearchProject.accessControlEnabled"
                                           id="accessControlEnabled" style="margin-top: 10px;"/>
                         <stripes:label for="accessControlEnabled" class="control-label" style="width:auto;">Restrict to Project Users</stripes:label>
-                    </div>
-                </div>
-
-                <!-- Project Managers -->
-                <div class="control-group">
-                    <stripes:label for="projectManagers" class="control-label">Project Managers *</stripes:label>
-
-                    <div class="controls">
-                        <stripes:text id="projectManagers" name="projectManagerList.listOfKeys" />
-                    </div>
-                </div>
-
-                <!-- Broad PIs -->
-                <div class="control-group">
-                    <stripes:label for="broadPIs" class="control-label">Broad PIs</stripes:label>
-
-                    <div class="controls">
-                        <stripes:text id="broadPIs" name="broadPiList.listOfKeys" />
-                    </div>
-                </div>
-
-                <!-- External Collaborators -->
-                <div class="control-group">
-                    <stripes:label for="externalCollaborators" class="control-label">External Collaborators</stripes:label>
-                    <div class="controls">
-                        <stripes:text id="externalCollaborators" name="externalCollaboratorList.listOfKeys" />
-                    </div>
-                </div>
-
-                <!-- Scientists -->
-                <div class="control-group">
-                    <stripes:label for="scientists" class="control-label">Scientists</stripes:label>
-                    <div class="controls">
-                        <stripes:text id="scientists" name="scientistList.listOfKeys" />
-                    </div>
-                </div>
-
-                <!-- Other -->
-                <div class="control-group">
-                    <stripes:label for="otherUsers" class="control-label">Other Users</stripes:label>
-                    <div class="controls">
-                        <stripes:text id="otherUsers" name="otherUserList.listOfKeys" />
                     </div>
                 </div>
 
@@ -215,13 +173,60 @@
                 <div class="control-group">
                     <label id="j_idt130" class="ui-outputlabel control-label" for="irbNotes">IRB Notes</label>
                     <div class="controls">
-                        <stripes:text id="irbNotes" class="defaultText input-xxlarge" title="Enter notes about the above IRBs" name="editResearchProject.irbNotes" value="${actionBean.editResearchProject.irbNotes}" maxlength="255" />
+                        <stripes:text id="irbNotes" class="defaultText input-create-form" title="Enter notes about the above IRBs" name="editResearchProject.irbNotes" value="${actionBean.editResearchProject.irbNotes}" maxlength="255" />
                     </div>
                 </div>
-
             </div>
 
-            <div class="control-group">
+            <div class="form-horizontal" style="float: left; margin-left: 30px;">
+                <fieldset>
+                    <legend>Project Users</legend>
+
+                    <!-- Project Managers -->
+                    <div class="control-group">
+                        <stripes:label for="projectManagers" class="control-label">Project Managers *</stripes:label>
+
+                        <div class="controls">
+                            <stripes:text id="projectManagers" name="projectManagerList.listOfKeys" />
+                        </div>
+                    </div>
+
+                    <!-- Broad PIs -->
+                    <div class="control-group">
+                        <stripes:label for="broadPIs" class="control-label">Broad PIs</stripes:label>
+
+                        <div class="controls">
+                            <stripes:text id="broadPIs" name="broadPiList.listOfKeys" />
+                        </div>
+                    </div>
+
+                    <!-- External Collaborators -->
+                    <div class="control-group">
+                        <stripes:label for="externalCollaborators" class="control-label">External Collaborators</stripes:label>
+                        <div class="controls">
+                            <stripes:text id="externalCollaborators" name="externalCollaboratorList.listOfKeys" />
+                        </div>
+                    </div>
+
+                    <!-- Scientists -->
+                    <div class="control-group">
+                        <stripes:label for="scientists" class="control-label">Scientists</stripes:label>
+                        <div class="controls">
+                            <stripes:text id="scientists" name="scientistList.listOfKeys" />
+                        </div>
+                    </div>
+
+                    <!-- Other -->
+                    <div class="control-group">
+                        <stripes:label for="otherUsers" class="control-label">Other Users</stripes:label>
+                        <div class="controls">
+                            <stripes:text id="otherUsers" name="otherUserList.listOfKeys" />
+                        </div>
+                    </div>
+                </fieldset>
+            </div>
+
+            <div class="control-group" style="clear: both;">
                 <div class="controls">
                     <div class="row-fluid">
                         <div class="span1">
