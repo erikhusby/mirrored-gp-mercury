@@ -179,12 +179,13 @@
                             <c:when test="${!readOnly}">
                                 <a href="${ctxpath}/search/all.action?search=&searchKey=${entry.labVessel.label}">
                                                             ${entry.labVessel.label}
-                                                    </a></td>
+                                                    </a>
                             </c:when>
                             <c:otherwise>
                                 ${entry.labVessel.label}
                             </c:otherwise>
                         </c:choose>
+                    </td>
                     <td>
                         <c:forEach items="${entry.labVessel.mercurySamples}"
                                    var="mercurySample"
