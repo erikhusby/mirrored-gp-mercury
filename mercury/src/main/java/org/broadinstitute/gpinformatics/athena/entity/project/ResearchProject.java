@@ -638,7 +638,10 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
     protected void prePersist() {
         Collection<ResearchProject> children = getAllChildren();
         if (children.contains(this) || (children.contains(parentResearchProject))) {
-            throw new RuntimeException("Improper Research Project hierarchy.");
+            throw new RuntimeException("Improper Research Project child hierarchy.");
+        }
+        if (parentResearchProject.equals(this)) {
+            throw new RuntimeException("Improper Research Project parent hierarchy.");
         }
     }
 
