@@ -101,10 +101,11 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
     private ResearchProject parentResearchProject;
 
     /**
-     * List of {@link ResearchProject}s that belong under this one.
+     * Set of ResearchProjects that belong under this one.
      */
-    @OneToMany(fetch = FetchType.LAZY, mappedBy="parentResearchProject")
-    private Set<ResearchProject> childProjects;
+    @OneToMany(fetch = FetchType.LAZY, mappedBy="parentResearchProject", cascade = CascadeType.ALL)
+    //@OrderBy(value = "title")
+    private Set<ResearchProject> childProjects = new TreeSet<ResearchProject>(ResearchProject.BY_TITLE);
 
     // People related to the project
     @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
@@ -164,9 +165,9 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
     /**
      * The full constructor for fields that are not settable.
      *
-     * @param createdBy       The user creating the project
-     * @param title         The title (name) of the project
-     * @param synopsis      A description of the project
+     * @param createdBy The user creating the project
+     * @param title The title (name) of the project
+     * @param synopsis A description of the project
      * @param irbNotEngaged Is this project set up for NO IRB?
      */
     public ResearchProject(Long createdBy, String title, String synopsis, boolean irbNotEngaged) {
@@ -631,6 +632,28 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
         return childResearchProjects;
     }
 
+    /**
+     * Ensure that the parent research project model does not create any loops.
+     */
+    @PrePersist
+    protected void prePersist() {
+        Collection<ResearchProject> children = getAllChildren();
+        if (children.contains(this) || (children.contains(parentResearchProject))) {
+            throw new RuntimeException("Improper Research Project hierarchy.");
+        }
+    }
+
+    /**
+     * Compare by the ResearchProject by it's title, case insensitive.
+     */
+    public static final Comparator<ResearchProject> BY_TITLE = new Comparator<ResearchProject>() {
+        @Override
+        public int compare(ResearchProject lhs, ResearchProject rhs) {
+            return lhs.getTitle().toUpperCase().compareTo(
+                    rhs.getTitle().toUpperCase());
+        }
+    };
+
     @Override
     public boolean equals(Object other) {
         if ((this == other)) {
@@ -655,16 +678,5 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
         CompareToBuilder builder = new CompareToBuilder();
         builder.append(title, that.getTitle());
         return builder.build();
-    }
-
-    /**
-     * Ensure that the parent research project model does not create any loops.
-     */
-    @PrePersist
-    protected void prePersist() {
-        Collection<ResearchProject> children = getAllChildren();
-        if (children.contains(this) || (children.contains(parentResearchProject))) {
-            throw new RuntimeException("Improper Research Project hierarchy.");
-        }
     }
 }

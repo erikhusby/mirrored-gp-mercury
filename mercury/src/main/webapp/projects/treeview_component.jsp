@@ -7,7 +7,7 @@
         <stripes:useActionBean var="projectLinkBean"
                                beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" />
 
-        <ul>
+        <ul style="list-style:none;">
             <c:forEach items="${childProjects}" var="childProject">
                 <c:set var="showDetails" value="${(childProject.childProjects != null) && fn:length(childProject.childProjects) > 0}" />
                 <li>
