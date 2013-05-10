@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.athena.presentation.converter.IrbConvert
 import org.broadinstitute.gpinformatics.athena.presentation.links.TableauLink;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.CohortTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.FundingTokenInput;
+import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProjectTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -58,6 +59,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     @Inject
     private BSPCohortList cohortList;
+
+    @Inject
+    private ProjectTokenInput projectTokenInput;
 
     @Validate(required = true, on = {EDIT_ACTION, VIEW_ACTION})
     private String researchProject;
@@ -225,12 +229,16 @@ public class ResearchProjectActionBean extends CoreActionBean {
         broadPiList.setup(editResearchProject.getBroadPIs());
         fundingSourceList.setup(editResearchProject.getFundingIds());
         cohortsList.setup(editResearchProject.getCohortIds());
+        // The parent research project doesn't need to be defined, so only pre-populate if it's present.
+        if (editResearchProject.getParentResearchProject() != null) {
+            projectTokenInput.setup(editResearchProject.getParentResearchProject().getBusinessKey());
+        }
     }
 
     public Resolution save() throws Exception {
         populateTokenListFields();
 
-        // Do the jira jig
+        // Do the jira jig.
         try {
             editResearchProject.submit();
         } catch (Exception ex) {
@@ -270,6 +278,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
         editResearchProject.populateCohorts(cohortsList.getTokenObjects());
         editResearchProject.populateFunding(fundingSourceList.getTokenObjects());
         editResearchProject.populateIrbs(IrbConverter.getIrbs(irbList));
+
+        editResearchProject.setParentResearchProject(researchProjectDao.findByBusinessKey(projectTokenInput.getTokenObject()));
     }
 
     @HandlesEvent("view")
@@ -337,6 +347,28 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @HandlesEvent("irbAutocomplete")
     public Resolution irbAutocomplete() throws Exception {
         return createTextResolution(IrbConverter.getJsonString(getQ()));
+    }
+
+    @HandlesEvent("projectAutocomplete")
+    public Resolution projectAutocomplete() throws Exception {
+        return createTextResolution(projectTokenInput.getJsonString(getQ()));
+    }
+
+    @HandlesEvent("projectHierarchyAwareAutocomplete")
+    public Resolution projectHierarchyAwareAutocomplete() throws Exception {
+        researchProject = getContext().getRequest().getParameter(RESEARCH_PROJECT_PARAMETER);
+        if (StringUtils.isBlank(researchProject)) {
+            /**
+             * Improperly calling this method since it's not supplying the project for which it should be trimming the
+             * result set to prevent hierarchical loops, so just return the full list.
+             */
+            return projectAutocomplete();
+        }
+
+        editResearchProject = researchProjectDao.findByBusinessKey(researchProject);
+        Collection<ResearchProject> childResearchProjects = editResearchProject.getAllChildren();
+        childResearchProjects.add(editResearchProject);
+        return createTextResolution(projectTokenInput.getJsonString(getQ(), childResearchProjects));
     }
 
     // Complete Data getters are for the prepopulates on the create.jsp
@@ -424,4 +456,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public CompletionStatusFetcher getProgressFetcher() {
         return progressFetcher;
     }
+
+    public ProjectTokenInput getProjectTokenInput() {
+        return projectTokenInput;
+    }
+
 }

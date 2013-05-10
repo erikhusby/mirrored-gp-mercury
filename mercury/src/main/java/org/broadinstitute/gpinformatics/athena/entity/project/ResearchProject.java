@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -93,6 +94,17 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
 
     @Column(name = "IRB_NOT_ENGAGED", nullable = false)
     private boolean irbNotEngaged = IRB_ENGAGED;
+
+    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE,CascadeType.PERSIST})
+    @JoinColumn(name = "PARENT_RESEARCH_PROJECT", nullable = true, insertable = true, updatable = true)
+    @Index(name = "ix_parent_research_project")
+    private ResearchProject parentResearchProject;
+
+    /**
+     * List of {@link ResearchProject}s that belong under this one.
+     */
+    @OneToMany(fetch = FetchType.LAZY, mappedBy="parentResearchProject")
+    private Set<ResearchProject> childProjects;
 
     // People related to the project
     @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
@@ -209,7 +221,15 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
         this.irbNotes += "\n" + irbNotes;
     }
 
+    public ResearchProject getParentProject() {
+        return parentResearchProject;
+    }
+
     // Setters
+
+    public Set<ResearchProject> getChildProjects() {
+        return childProjects;
+    }
 
     public void setCreatedBy(Long createdBy) {
         this.createdBy = createdBy;
@@ -503,6 +523,14 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
         return originalTitle;
     }
 
+    public ResearchProject getParentResearchProject() {
+        return parentResearchProject;
+    }
+
+    public void setParentResearchProject(ResearchProject parentResearchProject) {
+        this.parentResearchProject = parentResearchProject;
+    }
+
     /**
      *
      * Provides the ability to retrieve a filtered list of associated people based on their role type
@@ -554,7 +582,6 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
      * for Research Projects
      */
     public enum RequiredSubmissionFields implements CustomField.SubmissionField {
-
         //        Sponsoring_Scientist("Sponsoring Scientist"),
         COHORTS("Cohort(s)"),
         FUNDING_SOURCE("Funding Source"),
@@ -573,6 +600,23 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
         public String getFieldName() {
             return fieldName;
         }
+    }
+
+    public Collection<ResearchProject> getAllChildren() {
+        return addChildResearchProjects(getChildProjects());
+    }
+
+    /**
+     * Recursive function to traverse through the full research project hierarchy tree to get all the projects.
+     *
+     * @param childResearchProjects the list of child research projects
+     * @return collection of research projects
+     */
+    private Collection<ResearchProject> addChildResearchProjects(Collection<ResearchProject> childResearchProjects) {
+        for (ResearchProject childResearchProject : childResearchProjects) {
+            childResearchProjects.addAll(addChildResearchProjects(childResearchProject.getChildProjects()));
+        }
+        return childResearchProjects;
     }
 
     @Override
@@ -599,5 +643,16 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
         CompareToBuilder builder = new CompareToBuilder();
         builder.append(title, that.getTitle());
         return builder.build();
+    }
+
+    /**
+     * Ensure that the parent research project model does not create any loops.
+     */
+    @PrePersist
+    protected void prePersist() {
+        Collection<ResearchProject> children = getAllChildren();
+        if (children.contains(this) || (children.contains(parentResearchProject))) {
+            throw new RuntimeException("Improper Research Project hierarchy.");
+        }
     }
 }

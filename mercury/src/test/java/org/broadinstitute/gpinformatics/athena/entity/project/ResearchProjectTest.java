@@ -32,6 +32,18 @@ public class ResearchProjectTest {
     }
 
     @Test
+    public void testProjectHierarchy() {
+        researchProject.setParentResearchProject(researchProject);
+        try {
+            researchProject.
+        } catch (Exception e) {
+
+        }
+        ResearchProject anotherResearchProject = ResearchProjectTestFactory
+                .createDummyResearchProject(10950, "MyResearchProject", "To Study Stuff", ResearchProject.IRB_ENGAGED);
+    }
+
+    @Test
     public void manageRPTest() {
         assertThat(researchProject.getPeople(RoleType.SCIENTIST), is(not(nullValue())));
         // A new RP is initialized with the creator as its PM.

@@ -93,7 +93,7 @@
                 </div>
             </div>
 
-            <!-- Project Managers -->
+            <!-- Scientists -->
             <div class="control-group view-control-group">
                 <label class="control-label label-form">Scientists</label>
 
@@ -102,6 +102,36 @@
                 </div>
             </div>
 
+
+            <!-- Parent Project -->
+            <div class="control-group view-control-group">
+                <label class="control-label label-form">Parent Project</label>
+
+                <div class="controls">
+                    <div class="form-value">
+                        <c:if test="${actionBean.editResearchProject.parentResearchProject != null}">
+                            <stripes:link beanclass="${actionBean.class.name}" event="view">
+                                <stripes:param name="researchProject" value="${actionBean.editResearchProject.parentResearchProject.businessKey}"/>
+                                ${actionBean.editResearchProject.parentResearchProject.title}
+                            </stripes:link>
+
+                        </c:if>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Subproject -->
+            <div class="control-group view-control-group">
+                <label class="control-label label-form">Subprojects</label>
+
+                <div class="controls">
+                    <div class="form-value">
+                        <stripes:layout-render name="/projects/treeview_component.jsp"
+                                               childProjects="${actionBean.editResearchProject.childProjects}"
+                                               bean="${actionBean}" />
+                    </div>
+                </div>
+            </div>
 
             <div class="control-group view-control-group">
                 <label class="control-label label-form">Created by</label>
