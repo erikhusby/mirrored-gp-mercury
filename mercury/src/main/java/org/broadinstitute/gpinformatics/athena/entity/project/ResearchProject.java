@@ -104,7 +104,6 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
      * Set of ResearchProjects that belong under this one.
      */
     @OneToMany(fetch = FetchType.LAZY, mappedBy="parentResearchProject", cascade = CascadeType.ALL)
-    //@OrderBy(value = "title")
     private Set<ResearchProject> childProjects = new TreeSet<ResearchProject>(ResearchProject.BY_TITLE);
 
     // People related to the project
