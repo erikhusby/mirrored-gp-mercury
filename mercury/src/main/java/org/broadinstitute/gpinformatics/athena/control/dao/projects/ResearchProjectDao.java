@@ -15,8 +15,22 @@ import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.TypedQuery;
-import javax.persistence.criteria.*;
-import java.util.*;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Expression;
+import javax.persistence.criteria.Join;
+import javax.persistence.criteria.JoinType;
+import javax.persistence.criteria.Path;
+import javax.persistence.criteria.Root;
+import javax.persistence.criteria.SetJoin;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 /**
  * Queries for the research project.
@@ -29,11 +43,92 @@ import java.util.*;
 @RequestScoped
 public class ResearchProjectDao extends GenericDao {
 
-    public static final boolean WITH_ORDERS = true;
-    public static final boolean NO_ORDERS = false;
+    private static final boolean WITH_ORDERS = true;
+    private static final boolean NO_ORDERS = false;
 
     public ResearchProject findByBusinessKey(String key) {
         return findByJiraTicketKey(key);
+    }
+
+    /**
+     * Return true if a user has permission to access this project's output.  This is true if the user is associated
+     * with the project in any way.
+     *
+     * @param project the project to check
+     * @param userId the user to check
+     * @return true if use has permission
+     */
+    private static boolean userHasProjectAccess(ResearchProject project, long userId) {
+        for (ProjectPerson person : project.getAssociatedPeople()) {
+            if (person.getPersonId() == userId) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Collect the set of all projects underneath this project, including those that are under sub-projects, etc.
+     *
+     * @param project project to collect sub-projects from
+     * @param subProjects set to put collected projects in
+     */
+    private static void collectSubProjects(ResearchProject project, Set<ResearchProject> subProjects) {
+        subProjects.add(project);
+        for (ResearchProject child : project.getChildProjects()) {
+            collectSubProjects(child, subProjects);
+        }
+    }
+
+    /**
+     * Given a project and a user, collect all projects and sub-projects accessible by this user.
+     *
+     * @param project the project to start the search at
+     * @param userId the user to find
+     * @param accessibleProjects the set to put the projects visible to the user in
+     */
+    private static void collectAccessibleByUser(ResearchProject project, long userId,
+                                                Set<ResearchProject> accessibleProjects) {
+        if (!project.isAccessControlEnabled()) {
+            // Access control not enabled, any user can see the data.
+            accessibleProjects.add(project);
+        }
+        if (userHasProjectAccess(project, userId)) {
+            // User has access, add all sub-projects.
+            collectSubProjects(project, accessibleProjects);
+        } else {
+            // User doesn't have access, check sub-projects for access.
+            for (ResearchProject child : project.getChildProjects()) {
+                collectAccessibleByUser(child, userId, accessibleProjects);
+            }
+        }
+    }
+
+    /**
+     * Return a list of all research projects that are accessible by a user.
+     * A project is accessible by a user if:
+     * <ul>
+     *     <li>the project's accessControlEnabled flag is false</li>
+     *     <li>the user is a person associated with this project in any role</li>
+     *     <li>the user is a person associated with any of this project's parent projects</li>
+     * </ul>
+     * To determine person/project association, we traverse the tree of projects in code.  Using a database query
+     * would work but would be more complicated, and we have too few RPs in Mercury for this to be a performance
+     * issue.
+     *
+     * @param userId
+     * @return
+     */
+    public Set<ResearchProject> findAllAccessibleByUser(long userId) {
+        Set<ResearchProject> foundProjects = new HashSet<ResearchProject>();
+        List<ResearchProject> allRootProjects = findList(ResearchProject.class, ResearchProject_.parentResearchProject, null);
+
+        for (ResearchProject project : allRootProjects) {
+            collectAccessibleByUser(project, userId, foundProjects);
+        }
+
+        return foundProjects;
     }
 
     /**
@@ -63,7 +158,6 @@ public class ResearchProjectDao extends GenericDao {
 
         return getEntityManager().createQuery(cq).getResultList();
     }
-
 
     public ResearchProject findByTitle(String title) {
         return findSingle(ResearchProject.class, ResearchProject_.title, title);
