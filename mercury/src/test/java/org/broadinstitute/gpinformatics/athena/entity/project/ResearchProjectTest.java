@@ -32,6 +32,33 @@ public class ResearchProjectTest {
     }
 
     @Test
+    public void testProjectHierarchy() {
+        /**
+         * Create a self-join association.
+         */
+        researchProject.setParentResearchProject(researchProject);
+        try {
+            researchProject.prePersist();
+            Assert.fail("Should have thrown an exception about improper hierarchy!");
+        } catch (Exception e) {
+        }
+
+        /**
+         * Create a looped association.
+         */
+        ResearchProject anotherResearchProject = ResearchProjectTestFactory
+                .createDummyResearchProject(10950, "MyResearchProject", "To Study Stuff", ResearchProject.IRB_ENGAGED);
+        researchProject.setParentResearchProject(anotherResearchProject);
+        anotherResearchProject.setParentResearchProject(researchProject);
+
+        try {
+            researchProject.prePersist();
+            Assert.fail("Should have thrown an exception about improper hierarchy!");
+        } catch (Exception e) {
+        }
+    }
+
+    @Test
     public void manageRPTest() {
         assertThat(researchProject.getPeople(RoleType.SCIENTIST), is(not(nullValue())));
         // A new RP is initialized with the creator as its PM.

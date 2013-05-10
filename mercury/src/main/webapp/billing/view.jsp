@@ -77,7 +77,7 @@
         </stripes:form>
 
         <div class="borderHeader">
-            Quote Items
+            <h4 style="display:inline">Quote Items</h4>
         </div>
 
         <table id="quoteReporting" class="table simple">

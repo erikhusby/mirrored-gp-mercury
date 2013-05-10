@@ -207,7 +207,7 @@
         <subsystem xmlns="urn:jboss:domain:jdr:1.0"/>
         <subsystem xmlns="urn:jboss:domain:jmx:1.1">
             <show-model value="true"/>
-            <remoting-connector/>
+            <remoting-connector use-management-endpoint="false"/>
         </subsystem>
         <subsystem xmlns="urn:jboss:domain:jpa:1.0">
             <jpa default-datasource=""/>
