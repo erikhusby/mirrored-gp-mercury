@@ -48,10 +48,13 @@ DROP TABLE price_item;
 DROP TABLE product;
 DROP TABLE lab_batch;
 DROP TABLE lab_vessel;
-DROP TABLE workflow_config;
 DROP TABLE event_fact;
+DROP TABLE workflow;
+DROP TABLE workflow_process;
 
 DROP TABLE im_product_order_add_on;
+DROP TABLE im_product_order_sample_bill;
+DROP TABLE im_product_order_sample_risk;
 DROP TABLE im_product_order_sample_stat;
 DROP TABLE im_product_order_sample;
 DROP TABLE im_product_order_status;
@@ -66,8 +69,9 @@ DROP TABLE im_price_item;
 DROP TABLE im_product;
 DROP TABLE im_lab_vessel;
 DROP TABLE im_lab_batch;
-DROP TABLE im_workflow_config;
 DROP TABLE im_event_fact;
+DROP TABLE im_workflow;
+DROP TABLE im_workflow_process;
 
 
 
@@ -159,6 +163,7 @@ CREATE TABLE product_order (
   quote_id VARCHAR2(255),
   jira_ticket_key VARCHAR2(255),
   owner VARCHAR2(40),
+  placed_date DATE,
   etl_date DATE NOT NULL
 );
 
@@ -177,7 +182,7 @@ CREATE TABLE product_order_sample (
   delivery_status VARCHAR2(40) NOT NULL,
   sample_position NUMERIC(19) NOT NULL,
   on_risk CHAR(1) DEFAULT 'F' NOT NULL CHECK (on_risk IN ('T','F')),
-  is_billed CHAR(1) DEFAULT 'F' NOT NULL CHECK (on_risk IN ('T','F')),
+  is_billed CHAR(1) DEFAULT 'F' NOT NULL CHECK (is_billed IN ('T','F')),
   is_abandoned CHAR(1) generated always as (case when delivery_status = 'ABANDONED' then 'T' else 'F' end) virtual,
   etl_date DATE NOT NULL
 );
@@ -348,7 +353,8 @@ CREATE TABLE im_product_order (
   title VARCHAR2(255),
   quote_id VARCHAR2(255),
   jira_ticket_key VARCHAR2(255),
-  owner VARCHAR2(40)
+  owner VARCHAR2(40),
+  placed_date DATE
 );
 
 CREATE TABLE im_product_order_status (

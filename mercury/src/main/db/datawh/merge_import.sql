@@ -352,6 +352,7 @@ FOR new IN im_po_cur LOOP
       quote_id = new.quote_id,
       jira_ticket_key = new.jira_ticket_key,
       owner = new.owner,
+      placed_date = new.placed_date,
       etl_date = new.etl_date
     WHERE product_order_id = new.product_order_id;
 
@@ -366,6 +367,7 @@ FOR new IN im_po_cur LOOP
       quote_id,
       jira_ticket_key,
       owner,
+      placed_date,
       etl_date
     )
     SELECT
@@ -379,6 +381,7 @@ FOR new IN im_po_cur LOOP
       new.quote_id,
       new.jira_ticket_key,
       new.owner,
+      new.placed_date,
       new.etl_date
     FROM DUAL WHERE NOT EXISTS (
       SELECT 1 FROM product_order
