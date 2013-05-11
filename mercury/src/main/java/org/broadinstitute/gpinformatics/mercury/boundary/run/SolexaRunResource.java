@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowc
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -25,6 +26,7 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.io.File;
 import java.net.URI;
+import java.util.Collections;
 import java.util.EnumSet;
 
 /**
@@ -113,7 +115,8 @@ public class SolexaRunResource {
             updated which routing should determine if a run should be registered in Mercury.  If BOTH is returned, we
              must cover Mercury as well as Squid
          */
-        MercuryOrSquidRouter.MercuryOrSquid route = router.routeForVessel(flowcell);
+        MercuryOrSquidRouter.MercuryOrSquid route = router.routeForVessels(
+                Collections.<LabVessel>singletonList(flowcell));
         if(EnumSet.of(MercuryOrSquidRouter.MercuryOrSquid.MERCURY,
                       MercuryOrSquidRouter.MercuryOrSquid.BOTH).contains(route)) {
             try {
@@ -138,14 +141,12 @@ public class SolexaRunResource {
     }
 
     public IlluminaSequencingRun registerRun(SolexaRunBean solexaRunBean, IlluminaFlowcell illuminaFlowcell) {
-        IlluminaSequencingRun illuminaSequencingRun;
-
         /*
          * Need logic to register MiSeq run based off of the ReagentBlockBarcode in SolexaRunBean.
          * Will be another story.
          */
-
-        illuminaSequencingRun = illuminaSequencingRunFactory.build(solexaRunBean, illuminaFlowcell);
+        IlluminaSequencingRun illuminaSequencingRun =
+                illuminaSequencingRunFactory.build(solexaRunBean, illuminaFlowcell);
 
         illuminaSequencingRunDao.persist(illuminaSequencingRun);
         return illuminaSequencingRun;
