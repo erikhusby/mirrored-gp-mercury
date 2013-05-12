@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
-import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -26,12 +25,12 @@ import static org.testng.Assert.assertNull;
  */
 
 @Test(groups = TestGroups.DATABASE_FREE)
-public class LedgerEntryEtlDbFreeTest {
+public class LedgerEntryCrossEtlDbFreeTest {
     private String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
     private long posId = 2233445511L;
     private String datafileDir;
     private Set<LedgerEntry> ledgerItems = new HashSet<LedgerEntry>();
-    private LedgerEntryEtl tst;
+    private LedgerEntryCrossEtl tst;
 
     private AuditReaderDao auditReader = createMock(AuditReaderDao.class);
     private LedgerEntry obj = createMock(LedgerEntry.class);
@@ -45,7 +44,7 @@ public class LedgerEntryEtlDbFreeTest {
         ExtractTransform.setDatafileDir(datafileDir);
         EtlTestUtilities.deleteEtlFiles(datafileDir);
 
-        tst = new LedgerEntryEtl(dao);
+        tst = new LedgerEntryCrossEtl(dao);
         tst.setAuditReaderDao(auditReader);
 
         reset(mocks);

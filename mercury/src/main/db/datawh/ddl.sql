@@ -53,6 +53,7 @@ DROP TABLE workflow;
 DROP TABLE workflow_process;
 
 DROP TABLE im_product_order_add_on;
+DROP TABLE im_ledger_entry;
 DROP TABLE im_product_order_sample_bill;
 DROP TABLE im_product_order_sample_risk;
 DROP TABLE im_product_order_sample_stat;
@@ -184,6 +185,7 @@ CREATE TABLE product_order_sample (
   on_risk CHAR(1) DEFAULT 'F' NOT NULL CHECK (on_risk IN ('T','F')),
   is_billed CHAR(1) DEFAULT 'F' NOT NULL CHECK (is_billed IN ('T','F')),
   is_abandoned CHAR(1) generated always as (case when delivery_status = 'ABANDONED' then 'T' else 'F' end) virtual,
+  ledger_quote_id VARCHAR2(40),
   etl_date DATE NOT NULL
 );
 
@@ -463,6 +465,15 @@ CREATE TABLE im_product_order_sample_bill (
   is_delete CHAR(1) NOT NULL,
   product_order_sample_id NUMERIC(19) NOT NULL,
   is_billed CHAR(1)
+);
+
+CREATE TABLE im_ledger_entry (
+  line_number NUMERIC(9) NOT NULL,
+  etl_date DATE NOT NULL,
+  is_delete CHAR(1) NOT NULL,
+  ledger_id NUMERIC(19) NOT NULL,
+  product_order_sample_id NUMERIC(19),
+  quote_id VARCHAR2(40)
 );
 
 CREATE SEQUENCE event_fact_id_seq start with 1;

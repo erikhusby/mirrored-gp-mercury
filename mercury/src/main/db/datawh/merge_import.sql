@@ -24,6 +24,7 @@ CURSOR im_workflow_process_cur IS SELECT * FROM im_workflow_process WHERE is_del
 CURSOR im_event_fact_cur IS SELECT * FROM im_event_fact WHERE is_delete = 'F';
 CURSOR im_po_sample_risk_cur IS SELECT * FROM im_product_order_sample_risk WHERE is_delete = 'F';
 CURSOR im_po_sample_bill_cur IS SELECT * FROM im_product_order_sample_bill WHERE is_delete = 'F';
+CURSOR im_ledger_entry_cur IS SELECT * FROM im_ledger_entry WHERE is_delete = 'F';
 
 errmsg VARCHAR2(255);
 dup_sample_id NUMERIC(19);
@@ -819,6 +820,21 @@ FOR new IN im_po_sample_bill_cur LOOP
   EXCEPTION WHEN OTHERS THEN 
     errmsg := SQLERRM;
     DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_product_order_sample_bill.dat line '||new.line_number||'  '||errmsg);
+    CONTINUE;
+  END;
+
+END LOOP;
+
+FOR new IN im_ledger_entry_cur LOOP
+  BEGIN
+
+    UPDATE product_order_sample SET
+      ledger_quote_id = new.quote_id
+    WHERE product_order_sample_id = new.product_order_sample_id;
+
+  EXCEPTION WHEN OTHERS THEN 
+    errmsg := SQLERRM;
+    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_ledger_entry.dat line '||new.line_number||'  '||errmsg);
     CONTINUE;
   END;
 
