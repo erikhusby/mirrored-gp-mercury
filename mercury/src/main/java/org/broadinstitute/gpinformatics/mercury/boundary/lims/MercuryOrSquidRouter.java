@@ -115,12 +115,7 @@ public class MercuryOrSquidRouter implements Serializable {
         Set<SampleInstance> possibleControls = new HashSet<SampleInstance>();
         for (LabVessel labVessel : labVessels) {
             if (labVessel != null) {
-                Set<SampleInstance> sampleInstances = labVessel.getSampleInstances(SampleType.WITH_PDO, LabBatchType.WORKFLOW);
-                // If no sample instances, see if there are any without a PDO, it might be a control
-                // todo jmt save CPU with a version of getSampleInstances that prefers PDO, but will return without in one call
-                if(sampleInstances.isEmpty()) {
-                    sampleInstances = labVessel.getSampleInstances(SampleType.ANY, LabBatchType.WORKFLOW);
-                }
+                Set<SampleInstance> sampleInstances = labVessel.getSampleInstances(SampleType.PREFER_PDO, LabBatchType.WORKFLOW);
                 for (SampleInstance sampleInstance : sampleInstances) {
                     String productOrderKey = sampleInstance.getProductOrderKey();
                     if (productOrderKey == null) {
@@ -238,12 +233,7 @@ public class MercuryOrSquidRouter implements Serializable {
         NavigableSet<MercuryOrSquid> routingOptions = new TreeSet<MercuryOrSquid>();
         if (vessel != null) {
 
-            Set<SampleInstance> sampleInstances = vessel.getSampleInstances(SampleType.WITH_PDO, LabBatchType.WORKFLOW);
-            // If no sample instances, see if there are any without a PDO
-            // todo jmt the calling method has already found sampleInstances, could cache them
-            if(sampleInstances.isEmpty()) {
-                sampleInstances = vessel.getSampleInstances(SampleType.ANY, LabBatchType.WORKFLOW);
-            }
+            Set<SampleInstance> sampleInstances = vessel.getSampleInstances(SampleType.PREFER_PDO, LabBatchType.WORKFLOW);
             if (sampleInstances.isEmpty()) {
                 routingOptions.add(SQUID);
             } else {
