@@ -123,7 +123,7 @@ public class SolexaRunResource {
                 run = registerRun(solexaRunBean, flowcell);
                 URI createdUri = absolutePathBuilder.path(run.getRunName()).build();
                 if (callerResponse.getStatus() == Response.Status.CREATED.getStatusCode()) {
-                    callerResponse = Response.created(createdUri).entity(run).build();
+                    callerResponse = Response.created(createdUri).entity(solexaRunBean).build();
                 }
             } catch (Exception e) {
                 LOG.error("Failed to process run" + Response.Status.INTERNAL_SERVER_ERROR, e);
