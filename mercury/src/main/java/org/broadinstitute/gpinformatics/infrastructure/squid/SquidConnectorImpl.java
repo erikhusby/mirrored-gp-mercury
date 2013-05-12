@@ -16,7 +16,7 @@ import javax.ws.rs.core.MediaType;
 @Impl
 public class SquidConnectorImpl implements SquidConnector {
 
-    SquidConfig squidConfig;
+    private SquidConfig squidConfig;
 
     @Inject
     public SquidConnectorImpl(SquidConfig squidConfig) {
@@ -26,7 +26,7 @@ public class SquidConnectorImpl implements SquidConnector {
     @Override
     public SquidResponse createRun(SolexaRunBean runInformation) {
 
-        ClientResponse response = Client.create().resource(squidConfig.getUrl() + "/rest/solexarun")
+        ClientResponse response = Client.create().resource(squidConfig.getUrl() + "/resources/solexarun")
                                 .type(MediaType.APPLICATION_XML_TYPE)
                                 .accept(MediaType.APPLICATION_XML)
                                 .entity(runInformation).post(ClientResponse.class);
