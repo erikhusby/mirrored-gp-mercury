@@ -92,7 +92,9 @@ public class ExtractTransform {
             ResearchProjectIrbEtl researchProjectIrbEtl,
             WorkflowConfigEtl workflowConfigEtl,
             RiskItemEtl riskItemEtl,
-            LedgerEntryCrossEtl ledgerEntryCrossEtl) {
+            LedgerEntryCrossEtl ledgerEntryCrossEtl,
+            LedgerEntryEtl ledgerEntryEtl
+    ) {
 
         etlInstances.add(labEventEtl);
         etlInstances.add(labBatchEtl);
@@ -110,6 +112,7 @@ public class ExtractTransform {
         etlInstances.add(workflowConfigEtl);
         etlInstances.add(riskItemEtl);
         etlInstances.add(ledgerEntryCrossEtl);
+        etlInstances.add(ledgerEntryEtl);
     }
 
     public ExtractTransform(AuditReaderDao auditReaderDao, Collection<GenericEntityEtl> etlInstances) {
