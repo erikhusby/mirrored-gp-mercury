@@ -669,7 +669,7 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
         if (children.contains(this) || (children.contains(parentResearchProject))) {
             throw new RuntimeException("Improper Research Project child hierarchy.");
         }
-        if (parentResearchProject.equals(this)) {
+        if (parentResearchProject != null && parentResearchProject.equals(this)) {
             throw new RuntimeException("Improper Research Project parent hierarchy.");
         }
     }
