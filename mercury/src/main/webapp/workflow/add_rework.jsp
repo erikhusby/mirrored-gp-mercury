@@ -11,9 +11,9 @@
                     if (barcode) {
                         $j('#vesselInfo').html("<img src=\"${ctxpath}/images/spinner.gif\"/>");
                         $j.ajax({
-                            url: "${ctxpath}/workflow/AddRework.action?vesselInfo=&vesselLabel=" + barcode,
-                            dataType: 'html',
-                            success: updateDetails
+                            url:"${ctxpath}/workflow/AddRework.action?vesselInfo=&vesselLabel=" + barcode,
+                            dataType:'html',
+                            success:updateDetails
                         });
                     }
                 })

@@ -3,7 +3,7 @@
 <stripes:layout-definition>
 
     <%-- Where in the hosting page to set the id the user chooses --%>
-    <%--@elvariable id="vessels" type="java.util.Collection"--%>
+    <%--@elvariable id="vessels" type="java.util.Collection<org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel>"--%>
     <%--@elvariable id="bean" type="org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean"--%>
     <%--@elvariable id="showCheckboxes" type="java.lang.Boolean"--%>
 
@@ -16,20 +16,25 @@
                 firstSortColumn++;
                 tableOptions.push({"bSortable":false});
             }
-            tableOptions.push [{"bSortable":false}, {"bSortable":false},
-            {"bSortable":false}, {"bSortable":false}, {"bSortable":false},
-            {"bSortable":false},
-            {"bSortable":true},
-            {"bSortable":true, "sType":"numeric"},
-            {"bSortable":true},
-            {"bSortable":true, "sType":"numeric"},
-            {"bSortable":true, "sType":"numeric"},
-            {"bSortable":true},
-            {"bSortable":true},
-            {"bSortable":true},
-            {"bSortable":true},
-            {"bSortable":true, "sType":"date"},
-            {"bSortable":true, "sType":"date"}];
+            tableOptions.push([
+                {"bSortable":false},
+                {"bSortable":false},
+                {"bSortable":false},
+                {"bSortable":false},
+                {"bSortable":false},
+                {"bSortable":false},
+                {"bSortable":true},
+                {"bSortable":true, "sType":"numeric"},
+                {"bSortable":true},
+                {"bSortable":true, "sType":"numeric"},
+                {"bSortable":true, "sType":"numeric"},
+                {"bSortable":true},
+                {"bSortable":true},
+                {"bSortable":true},
+                {"bSortable":true},
+                {"bSortable":true, "sType":"date"},
+                {"bSortable":true, "sType":"date"}
+            ]);
 
             $j('#vesselList').dataTable({
                 "oTableTools":ttExportDefines,
@@ -165,10 +170,10 @@
                         ${bean.getUserFullName(vessel.latestEvent.eventOperator)}
                 </td>
                 <td>
-                    <fmt:formatDate value="${vessel.latestEvent.eventDate}" pattern="MM/dd/yyyy HH:mm:ss"/>
+                    <fmt:formatDate value="${vessel.latestEvent.eventDate}" pattern="${bean.dateTimePattern}"/>
                 </td>
                 <td>
-                    <fmt:formatDate value="${vessel.createdOn}" pattern="MM/dd/yyyy"/>
+                    <fmt:formatDate value="${vessel.createdOn}" pattern="${bean.datePattern}"/>
                 </td>
             </tr>
         </c:forEach>

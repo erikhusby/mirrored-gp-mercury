@@ -2,12 +2,17 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabBatchComposition;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MolecularState;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -15,20 +20,20 @@ import java.util.Set;
 /**
  * An aliquot of a sample in a particular
  * molecular state.
- *
+ * <p/>
  * "Molecular state" describes the molecular
  * changes the target has undergone.  Knowing
  * the molecular state is key to identifying
  * what lab processes the sample instance
  * can undergo.
- *
+ * <p/>
  * This might all seem a bit too abstract.  Consider
  * what our users are trying to do when the search
  * for lims materials: they're trying to find
  * some piece of plastic that contains a sample
  * in a state that is amenable to a particular
  * "next" lab step.
- *
+ * <p/>
  * For example, currently you ask for
  * denatured illumina libraries so you
  * can do some topoff sequencing.  But
@@ -43,14 +48,14 @@ import java.util.Set;
  * our workflow to tell us the state of
  * the library.  We want to know the molecular
  * state.
- *
+ * <p/>
  * So instead of saying "give me the denatured
  * libraries which are associated with a
  * hybrid selection work request", we say
  * "give me the libraries that are denatured
  * and are in a molecular status which is
  * amenable to pooling for the catch operation."
- *
+ * <p/>
  * This might seem like an overly subtle difference,
  * but when a collaborator says to us "Hey, I
  * did my own hybrid selection and pooling, can
@@ -60,7 +65,7 @@ import java.util.Set;
  * breaks reporting because what we're doing is
  * saying we actually did all the prep work,
  * when in fact we didn't.
- *
+ * <p/>
  * A good challenge for whether this model
  * works in reality is to take all possible
  * molecular state configurations and map
@@ -71,7 +76,7 @@ import java.util.Set;
  * conflate they "why" (for example, 454 library
  * type "RNA rework aliquot") with the molecular
  * status.
- *
+ * <p/>
  * There's a fuzzy line between molecular
  * state "facts" and measured attributes,
  * like concentration and volume.  Metrics
@@ -84,18 +89,18 @@ import java.util.Set;
  * aliquot instance level as part of the
  * sample sheet, or by traversing lims event
  * histories.
- * 
+ * <p/>
  * The unique key of a SampleAliquotInstance
  * is the {@Link SampleAliquot} and the
  * {@link org.broadinstitute.gpinformatics.mercury.entity.vessel.MolecularState}.  You can have the same
  * Goop in a SampleSheet or
  * a {@link org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel}, in which case they'll
  * have to have different {@link org.broadinstitute.gpinformatics.mercury.entity.vessel.MolecularState}.
- * */
+ */
 public class SampleInstance {
 
     public enum GSP_CONTROL_ROLE {
-        NEGATIVE,POSITIVE,NONE
+        NEGATIVE, POSITIVE, NONE
     }
 
     private static Log gLog = LogFactory.getLog(SampleInstance.class);
@@ -117,8 +122,8 @@ public class SampleInstance {
     private String productOrderKey;
 
     public SampleInstance(MercurySample sample,
-            GSP_CONTROL_ROLE controlRole,
-            MolecularState molecularState) {
+                          GSP_CONTROL_ROLE controlRole,
+                          MolecularState molecularState) {
         this.sample = sample;
         this.controlRole = controlRole;
         this.molecularState = molecularState;
@@ -130,6 +135,7 @@ public class SampleInstance {
      * not a sample attribute, but an attribute
      * of the sample in a group of samples
      * in a container.
+     *
      * @return
      */
     public GSP_CONTROL_ROLE getControlRole() {
@@ -143,6 +149,7 @@ public class SampleInstance {
      * in some way to separate things more thoroughly
      * (think of "just kiosk that" in the current
      * model, except that it would actually work)
+     *
      * @return
      */
     public MercurySample getStartingSample() {
@@ -159,9 +166,9 @@ public class SampleInstance {
      * to a single {@link org.broadinstitute.gpinformatics.mercury.entity.project.BasicProjectPlan}
      * whenever possible, and tolerate ambiguity when necessary,
      * for example for "universal LC" with Fluidigm.
-     * 
+     *
      * Can be empty for control samples.
-     * 
+     *
      * It's critical that reworks (topoffs in particular)
      * are <b>not implemented by a new {@link org.broadinstitute.gpinformatics.mercury.entity.project.BasicProjectPlan}!</b>
      * Instead, topoffs are just another entry into the appropriate
@@ -171,7 +178,7 @@ public class SampleInstance {
      * or search jira to see what jira tickets exist starting
      * from the {@link org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel}
      * that you put into the queue.
-     * 
+     *
      * If there's more than one possible project for this
      * {@link SampleInstance}, an exception is thrown.
      * If your client can tolerate this ambiguity, use
@@ -201,6 +208,7 @@ public class SampleInstance {
     /**
      * What is the molecular state  of this
      * sample in this container?
+     *
      * @return
      */
     public MolecularState getMolecularState() {
@@ -215,7 +223,7 @@ public class SampleInstance {
      * This seems at odds with Project#getWorkflowDescription(SampleInstance)}.
      * We already declared the expected {org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescription} up at
      * the project, right?
-     *
+     * <p/>
      * We have a history of pioneering some kind of sample prep
      * in-house, and then sharing the protocols with the outside
      * world, and then accepting samples prepped with our
@@ -225,22 +233,37 @@ public class SampleInstance {
      * from the project being configured with isntructions
      * about what process the sample is supposed to go
      * from when it starts life as an aliquot.
-     *
+     * <p/>
      * Perhaps we should remove the bit on the project
      * and declare that all workflow lookups go through
      * the aliquotInstance.  Either the instance looks
      * up active projects and finds the intended workflow
      * there, or it stores it internal to itself.
+     *
      * @return
      */
     //public WorkflowDescription getWorkflowDescription();
-
     public void addReagent(Reagent reagent) {
         reagents.add(reagent);
     }
 
     public List<Reagent> getReagents() {
         return reagents;
+    }
+
+    /**
+     * This getter filters the reagents to return only the indexes.
+     *
+     * @return A list of indexes associated with this sample instance.
+     */
+    public List<MolecularIndexReagent> getIndexes() {
+        List<MolecularIndexReagent> indexes = new ArrayList<MolecularIndexReagent>();
+        for (Reagent reagent : reagents) {
+            if (OrmUtil.proxySafeIsInstance(reagent, MolecularIndexReagent.class)) {
+                indexes.add((MolecularIndexReagent) reagent);
+            }
+        }
+        return indexes;
     }
 
     public LabBatch getLabBatch() {
@@ -259,14 +282,37 @@ public class SampleInstance {
         }
     }
 
-    public Collection<LabBatch> getAllWorkflowLabBatches(){
+    public Collection<LabBatch> getAllWorkflowLabBatches() {
         Set<LabBatch> workflowBatches = new HashSet<LabBatch>();
-        for(LabBatch batch : allLabBatches){
-            if(batch.getLabBatchType() == LabBatch.LabBatchType.WORKFLOW){
+        for (LabBatch batch : allLabBatches) {
+            if (batch.getLabBatchType() == LabBatch.LabBatchType.WORKFLOW) {
                 workflowBatches.add(batch);
             }
         }
         return workflowBatches;
+    }
+
+    /**
+     * This method gets the batch compositions for this sample instance in the context of a lab vessel.
+     *
+     * @param vessel The lab vessel used as context to determine the batch compositions.
+     *
+     * @return An ordered list of batch compositions for this sample given the vessel as context. The most likely
+     *         batch will be first in the list.
+     */
+    public List<LabBatchComposition> getLabBatchCompositionInVesselContext(LabVessel vessel) {
+        List<LabBatchComposition> allLabBatchCompositions = vessel.getWorkflowLabBatchCompositions();
+        List<LabBatchComposition> filteredBatchCompositions = new ArrayList<LabBatchComposition>();
+        for (LabBatch labBatch : getAllWorkflowLabBatches()) {
+            for (LabBatchComposition composition : allLabBatchCompositions) {
+                if (composition.getLabBatch().equals(labBatch)) {
+                    filteredBatchCompositions.add(composition);
+                }
+            }
+        }
+        Collections.sort(filteredBatchCompositions, LabBatchComposition.HIGHEST_COUNT_FIRST);
+
+        return filteredBatchCompositions;
     }
 
     public String getProductOrderKey() {
