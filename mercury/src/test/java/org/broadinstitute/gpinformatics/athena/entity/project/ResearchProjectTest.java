@@ -47,7 +47,7 @@ public class ResearchProjectTest {
          * Create a looped association.
          */
         ResearchProject anotherResearchProject = ResearchProjectTestFactory
-                .createDummyResearchProject(10950, "MyResearchProject", "To Study Stuff", ResearchProject.IRB_ENGAGED);
+                .createDummyResearchProject(10950, "AnotherResearchProject", "To Study Stuff", ResearchProject.IRB_ENGAGED);
         researchProject.setParentResearchProject(anotherResearchProject);
         anotherResearchProject.setParentResearchProject(researchProject);
 
@@ -56,6 +56,13 @@ public class ResearchProjectTest {
             Assert.fail("Should have thrown an exception about improper hierarchy!");
         } catch (Exception e) {
         }
+
+        /**
+         * Positive test -- this should work find, no loops.
+         */
+        anotherResearchProject.setParentResearchProject(null);
+        researchProject.setParentResearchProject(anotherResearchProject);
+        researchProject.prePersist();
     }
 
     @Test

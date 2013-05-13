@@ -941,7 +941,6 @@
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-jar-plugin</artifactId>
                         <configuration>
-                            <classifier>message-test</classifier>
                             <includes>
                                 <include>**/*JaxbBuilder.class</include>
                                 <include>**/BettaLimsMessageTestFactory*.class</include>
@@ -953,12 +952,12 @@
                         <artifactId>maven-deploy-plugin</artifactId>
                         <configuration>
                             <url>${project.distributionManagement.repository.url}</url>
-                            <file>target/${project.artifactId}-${project.version}-message-test.jar</file>
+                            <file>target/${project.artifactId}-${project.version}-tests.jar</file>
                             <groupId>${project.groupId}</groupId>
                             <artifactId>${project.artifactId}</artifactId>
                             <version>${project.version}</version>
                             <packaging>jar</packaging>
-                            <classifer>message-test</classifer>
+                            <classifier>message-test</classifier>
                             <uniqueVersion>false</uniqueVersion>
                         </configuration>
                     </plugin>
@@ -990,7 +989,7 @@
                             <artifactId>${project.artifactId}</artifactId>
                             <version>${project.version}</version>
                             <packaging>jar</packaging>
-                            <classifer>bettalims-generated</classifer>
+                            <classifier>bettalims-generated</classifier>
                             <uniqueVersion>false</uniqueVersion>
                         </configuration>
                     </plugin>

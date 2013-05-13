@@ -1,6 +1,12 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.workflow;
 
-import net.sourceforge.stripes.action.*;
+import net.sourceforge.stripes.action.After;
+import net.sourceforge.stripes.action.DefaultHandler;
+import net.sourceforge.stripes.action.ForwardResolution;
+import net.sourceforge.stripes.action.HandlesEvent;
+import net.sourceforge.stripes.action.RedirectResolution;
+import net.sourceforge.stripes.action.Resolution;
+import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
 import org.apache.commons.lang3.StringUtils;
@@ -54,8 +60,8 @@ public class AddReworkActionBean extends CoreActionBean {
     @Validate(required = true, on = REWORK_SAMPLE_ACTION)
     private String commentText;
 
-    private static final String VIEW_PAGE = "/resources/workflow/add_rework.jsp";
-    private static final String VESSEL_INFO_PAGE = "/resources/workflow/vessel_info.jsp";
+    private static final String VIEW_PAGE = "/workflow/add_rework.jsp";
+    private static final String VESSEL_INFO_PAGE = "/workflow/vessel_info.jsp";
     private LabEventType reworkStep;
 
 
@@ -104,7 +110,7 @@ public class AddReworkActionBean extends CoreActionBean {
                     workflowName = order.getProduct().getWorkflowName();
                     ProductWorkflowDefVersion workflowDef = labEventHandler.getWorkflowVersion(order.getBusinessKey());
                     if (workflowName.equals(WorkflowName.EXOME_EXPRESS.getWorkflowName())) {
-                    buckets = workflowDef.getBuckets();
+                        buckets = workflowDef.getBuckets();
                     }
                     break;
                 }
@@ -113,7 +119,7 @@ public class AddReworkActionBean extends CoreActionBean {
     }
 
     @HandlesEvent(VESSEL_INFO_ACTION)
-    public ForwardResolution vesselInfo() throws Exception  {
+    public ForwardResolution vesselInfo() throws Exception {
         if (labVessel == null) {
             addGlobalValidationError("Mercury does not recognize vessel with barcode {0}.", vesselLabel);
         }

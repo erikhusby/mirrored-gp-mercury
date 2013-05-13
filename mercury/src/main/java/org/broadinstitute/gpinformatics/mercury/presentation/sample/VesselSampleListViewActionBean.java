@@ -27,7 +27,7 @@ import java.util.Set;
 @UrlBinding(value = "/view/vesselSampleListView.action")
 public class VesselSampleListViewActionBean extends CoreActionBean {
 
-    private static final String VIEW_PAGE = "/resources/sample/vesselSampleListView.jsp";
+    private static final String VIEW_PAGE = "/sample/vessel_sample_list.jsp";
 
     @Inject
     private LabVesselDao labVesselDao;
@@ -70,6 +70,7 @@ public class VesselSampleListViewActionBean extends CoreActionBean {
      * by the position of that container. Otherwise it returns itself.
      *
      * @param position the position to get the vessel from..
+     *
      * @return the vessel at the position.
      */
     public LabVessel getVesselAtPosition(VesselPosition position) {
@@ -88,6 +89,7 @@ public class VesselSampleListViewActionBean extends CoreActionBean {
      * the samples are taken from the vessel directly.
      *
      * @param position the vessel position to get samples from
+     *
      * @return a list of samples at the vessel position
      */
     public Set<SampleInstance> getSampleInstancesAtPosition(VesselPosition position) {
@@ -103,6 +105,7 @@ public class VesselSampleListViewActionBean extends CoreActionBean {
      * This method get index information for a sample instance.
      *
      * @param sample the sample to get the indexes from.
+     *
      * @return a string representing all indexes for this sample.
      */
     public String getIndexValueForSample(SampleInstance sample) {
@@ -112,7 +115,8 @@ public class VesselSampleListViewActionBean extends CoreActionBean {
                 MolecularIndexReagent indexReagent = (MolecularIndexReagent) reagent;
                 indexInfo.append(indexReagent.getMolecularIndexingScheme().getName());
                 indexInfo.append(" - ");
-                for (MolecularIndexingScheme.IndexPosition hint : indexReagent.getMolecularIndexingScheme().getIndexes().keySet()) {
+                for (MolecularIndexingScheme.IndexPosition hint : indexReagent.getMolecularIndexingScheme().getIndexes()
+                        .keySet()) {
                     MolecularIndex index = indexReagent.getMolecularIndexingScheme().getIndexes().get(hint);
                     indexInfo.append(index.getSequence());
                     indexInfo.append("\n");
@@ -127,6 +131,7 @@ public class VesselSampleListViewActionBean extends CoreActionBean {
      * This method get all reagent information for a sample instance execept indexes.
      *
      * @param sample the sample to get the reagents from.
+     *
      * @return a string representing all reagents (except indexes) for this sample.
      */
     public String getReagentInfoForSample(SampleInstance sample) {
@@ -154,7 +159,8 @@ public class VesselSampleListViewActionBean extends CoreActionBean {
                 bspSampleDTO = sample.getStartingSample().getBspSampleDTO();
             } else {
                 try {
-                    bspSampleDTO = sampleDataFetcher.fetchSingleSampleFromBSP(sample.getStartingSample().getSampleKey());
+                    bspSampleDTO =
+                            sampleDataFetcher.fetchSingleSampleFromBSP(sample.getStartingSample().getSampleKey());
                 } catch (RuntimeException re) {
                     bspSampleDTO = null;
                     flashErrorMessage(new LocalizableError("BSP Warning: " + re.getLocalizedMessage()));

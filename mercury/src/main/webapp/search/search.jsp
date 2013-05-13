@@ -4,7 +4,7 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="Search Vessels" sectionTitle="Search">
+<stripes:layout-render name="/layout.jsp" pageTitle="Search All Types" sectionTitle="Search All Types">
 
     <stripes:layout-component name="extraHead">
 
@@ -28,7 +28,7 @@
         <stripes:form beanclass="${actionBean.class.name}" id="searchForm" class="form-horizontal">
             <div class="form-horizontal">
                 <div class="control-group" style="margin-bottom:5px;">
-                    <stripes:label for="barcode" class="control-label" style="width: 60px;">barcode</stripes:label>
+                    <stripes:label for="barcode" class="control-label" style="width: 60px;">Search For</stripes:label>
                     <div class="controls" style="margin-left: 80px;">
                         <stripes:textarea rows="5" cols="160" name="searchKey" id="name"
                                           title="Enter the value to search"
@@ -44,10 +44,6 @@
             </div>
         </stripes:form>
 
-        <c:if test="${not actionBean.resultsAvailable}">
-            No Results Found
-        </c:if>
-
         <c:if test="${not empty actionBean.foundVessels}">
 
             <!-- This should be using a batch action bean class to do the create gesture-->
@@ -61,9 +57,9 @@
                 </c:if>
 
                 <div class="pull-right">
-                        <img alt="show plate view" width="20" height="20" name="" title="show plate view"
-                             src="${ctxpath}/images/plate.png" style="margin-top: -5px;"/> - plate layout
-                        <img alt="show sample view" width="20" height="20" name="" title="show sample view"
+                    <img alt="show plate view" width="20" height="20" name="" title="show plate view"
+                         src="${ctxpath}/images/plate.png" style="margin-top: -5px;"/> - plate layout
+                    <img alt="show sample view" width="20" height="20" name="" title="show sample view"
                          src="${ctxpath}/images/list.png" style="margin-top: -5px; margin-left: 10px;"/> - sample
                     list
                 </div>
@@ -103,7 +99,7 @@
                     <div id="sampleDiv">
                 </c:otherwise>
             </c:choose>
-            <stripes:layout-render name="/resources/sample/sampleListView.jsp" samples="${actionBean.foundSamples}"
+            <stripes:layout-render name="/sample/sample_list.jsp" samples="${actionBean.foundSamples}"
                                    bean="${actionBean}" showCheckboxes="false"/>
             </div>
         </c:if>
@@ -127,7 +123,7 @@
                     <div id="pdoDiv">
                 </c:otherwise>
             </c:choose>
-            <stripes:layout-render name="/resources/orders/pdoListView.jsp" pdos="${actionBean.foundPDOs}"
+            <stripes:layout-render name="/orders/pdo_list.jsp" pdos="${actionBean.foundPDOs}"
                                    bean="${actionBean}" showCheckboxes="false"/>
             </div>
         </c:if>
@@ -153,7 +149,7 @@
                         <div id="batchDiv">
                     </c:otherwise>
                 </c:choose>
-                <stripes:layout-render name="/resources/batch/batchListView.jsp" batches="${actionBean.foundBatches}"
+                <stripes:layout-render name="/batch/batch_list.jsp" batches="${actionBean.foundBatches}"
                                        bean="${actionBean}" showCheckboxes="false"/>
                 </div>
             </stripes:form>

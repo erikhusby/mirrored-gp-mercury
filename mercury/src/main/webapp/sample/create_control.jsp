@@ -54,14 +54,14 @@
                             <div class="controls">
                                 <stripes:radio value="${actionBean.positiveTypeValue}" id="positiveValue"
                                                name="createControlType"/>
-                                <%--<stripes:label for="positiveValue">--%>
+                                    <%--<stripes:label for="positiveValue">--%>
                                     ${actionBean.positiveTypeValue}
-                                <%--</stripes:label>--%>
+                                    <%--</stripes:label>--%>
                                 <stripes:radio value="${actionBean.negativeTypeValue}" id="negativeValue"
                                                name="createControlType"/>
-                                <%--<stripes:label for="negativeValue">--%>
-                                               ${actionBean.negativeTypeValue}
-                                <%--</stripes:label>--%>
+                                    <%--<stripes:label for="negativeValue">--%>
+                                    ${actionBean.negativeTypeValue}
+                                    <%--</stripes:label>--%>
                             </div>
                         </div>
 

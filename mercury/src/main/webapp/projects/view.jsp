@@ -116,7 +116,7 @@
                 <div class="controls">
                     <div class="form-value">
                         ${actionBean.getUserFullName(actionBean.editResearchProject.createdBy)}
-                            on <fmt:formatDate value="${actionBean.editResearchProject.createdDate}"/>
+                            on <fmt:formatDate value="${actionBean.editResearchProject.createdDate}" pattern="${actionBean.datePattern}"/>
                     </div>
                 </div>
             </div>
@@ -268,7 +268,7 @@
                         <td>${order.orderStatus}</td>
                         <td>${actionBean.getUserFullName(order.modifiedBy)}</td>
                         <td>
-                            <fmt:formatDate value="${order.modifiedDate}" pattern="MM/dd/yyyy"/>
+                            <fmt:formatDate value="${order.modifiedDate}" pattern="${actionBean.datePattern}"/>
                         </td>
                         <td align="center">
                             <div class="barFull" title="${actionBean.progressFetcher.getPercentInProgress(order.businessKey)}% In Progress">

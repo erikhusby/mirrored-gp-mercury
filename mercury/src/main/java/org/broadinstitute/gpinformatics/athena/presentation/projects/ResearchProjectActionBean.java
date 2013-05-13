@@ -61,7 +61,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @Inject
     private ProjectTokenInput projectTokenInput;
 
-    @Validate(required = true, on = {EDIT_ACTION, VIEW_ACTION})
+    @Validate(required = true, on = {EDIT_ACTION, VIEW_ACTION, "projectHierarchyAwareAutocomplete"})
     private String researchProject;
 
     @ValidateNestedProperties({
@@ -244,9 +244,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public Resolution save() throws Exception {
         populateTokenListFields();
 
-        // Do the jira jig.
         try {
-            editResearchProject.submit();
+            editResearchProject.submitToJira();
         } catch (Exception ex) {
             addGlobalValidationError("Error creating JIRA ticket for research project");
             return new ForwardResolution(getContext().getSourcePage());
@@ -364,13 +363,6 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @HandlesEvent("projectHierarchyAwareAutocomplete")
     public Resolution projectHierarchyAwareAutocomplete() throws Exception {
         researchProject = getContext().getRequest().getParameter(RESEARCH_PROJECT_PARAMETER);
-        if (StringUtils.isBlank(researchProject)) {
-            /**
-             * Improperly calling this method since it's not supplying the project for which it should be trimming the
-             * result set to prevent hierarchical loops, so just return the full list.
-             */
-            return projectAutocomplete();
-        }
 
         editResearchProject = researchProjectDao.findByBusinessKey(researchProject);
         Collection<ResearchProject> childResearchProjects = editResearchProject.getAllChildren();
@@ -460,7 +452,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
         return tableauLink.tableauReportUrl("PASS", editResearchProject.getTitle());
     }
 
-    /**
+   /**
      * @return true if Save is a valid operation.
      */
     public boolean getCanSave() {

@@ -109,7 +109,7 @@ public class MercuryClientEjb {
             sampleKeyList.add(pdoSample.getSampleName());
         }
 
-        List<LabVessel> vessels = labVesselDao.findBySampleKeyList(new ArrayList<String>(sampleKeyList));
+        List<LabVessel> vessels = labVesselDao.findBySampleKeyList(sampleKeyList);
 
         // Finds samples with no existing vessels.
         Collection<String> samplesWithoutVessel = new ArrayList<String>(sampleKeyList);

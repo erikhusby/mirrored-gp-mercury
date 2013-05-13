@@ -106,7 +106,7 @@ public class ResearchProjectDao extends GenericDao {
     }
 
     /**
-     * Return a list of all research projects that are accessible by a user.
+     * Return a collection of all research projects that are accessible by a user.
      * A project is accessible by a user if:
      * <ul>
      *     <li>the project's accessControlEnabled flag is false</li>
@@ -117,8 +117,8 @@ public class ResearchProjectDao extends GenericDao {
      * would work but would be more complicated, and we have too few RPs in Mercury for this to be a performance
      * issue.
      *
-     * @param userId
-     * @return
+     * @param userId user to search for
+     * @return a collection of all accessible projects for this user
      */
     public Set<ResearchProject> findAllAccessibleByUser(long userId) {
         Set<ResearchProject> foundProjects = new HashSet<ResearchProject>();
