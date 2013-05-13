@@ -58,13 +58,15 @@ public class ZimsIlluminaRunFactory {
         RunCartridge flowcell = illuminaRun.getSampleCartridge();
 
         // Fetch samples and product orders
-        Set<SampleInstance> sampleInstances = flowcell.getSampleInstances(LabVessel.SampleType.WITH_PDO,
+        Set<SampleInstance> sampleInstances = flowcell.getSampleInstances(LabVessel.SampleType.PREFER_PDO,
                 LabBatch.LabBatchType.WORKFLOW);
         Set<String> sampleIds = new HashSet<String>();
         Set<String> productOrderKeys = new HashSet<String>();
         for (SampleInstance sampleInstance : sampleInstances) {
             sampleIds.add(sampleInstance.getStartingSample().getSampleKey());
-            productOrderKeys.add(sampleInstance.getProductOrderKey());
+            if (sampleInstance.getProductOrderKey() != null) {
+                productOrderKeys.add(sampleInstance.getProductOrderKey());
+            }
         }
         Map<String, BSPSampleDTO> mapSampleIdToDto = bspSampleDataFetcher.fetchSamplesFromBSP(sampleIds);
         Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<String, ProductOrder>();
@@ -102,10 +104,13 @@ public class ZimsIlluminaRunFactory {
             Map<String, ProductOrder> mapKeyToProductOrder) {
         List<LibraryBean> libraryBeans = new ArrayList<LibraryBean>();
         // todo jmt reuse the sampleInstances fetched in makeZimsIlluminaRun? Would save a few milliseconds.
-        Set<SampleInstance> sampleInstances = labVessel.getSampleInstances(LabVessel.SampleType.WITH_PDO,
+        Set<SampleInstance> sampleInstances = labVessel.getSampleInstances(LabVessel.SampleType.PREFER_PDO,
                 LabBatch.LabBatchType.WORKFLOW);
         for (SampleInstance sampleInstance : sampleInstances) {
-            ProductOrder productOrder = mapKeyToProductOrder.get(sampleInstance.getProductOrderKey());
+            ProductOrder productOrder = null;
+            if (sampleInstance.getProductOrderKey() != null) {
+                productOrder = mapKeyToProductOrder.get(sampleInstance.getProductOrderKey());
+            }
             BSPSampleDTO bspSampleDTO = mapSampleIdToDto.get(sampleInstance.getStartingSample().getSampleKey());
             LabBatch labBatch = labVessel.getNearestWorkflowLabBatches().iterator().next(); // TODO: change to use singular version
             String lcSet;
@@ -145,7 +150,7 @@ public class ZimsIlluminaRunFactory {
             }
             libraryBeans.add(new LibraryBean(
                     labVessel.getLabel() + (indexingSchemeEntity == null ? "" : "_" + indexingSchemeEntity.getName()),
-                    productOrder.getResearchProject().getBusinessKey(), null, null, indexingSchemeDto,
+                    productOrder == null ? null : productOrder.getResearchProject().getBusinessKey(), null, null, indexingSchemeDto,
                     null/*todo jmt hasIndexingRead, designation?*/, null, null, null, null, null, null, null, null,
                     null, null, null, null, baitName, null, 0.0, null, null, null, null, null, null,
                     catNames, productOrder, lcSet, bspSampleDTO));
