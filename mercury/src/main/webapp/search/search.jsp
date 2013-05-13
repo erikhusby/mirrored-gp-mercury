@@ -74,7 +74,7 @@
                     <div id="vesselDiv">
                 </c:otherwise>
             </c:choose>
-            <stripes:layout-render name="/search/vessel_list.jsp" vessels="${actionBean.foundVessels}"
+            <stripes:layout-render name="/vessel/vessel_list.jsp" vessels="${actionBean.foundVessels}"
                                    bean="${actionBean}" showCheckboxes="false"/>
             </div>
         </c:if>

@@ -120,7 +120,7 @@
                     Found ${fn:length(actionBean.foundVessels)} Vessels
                 </div>
                 <div id="vesselDiv">
-                    <stripes:layout-render name="/search/vessel_list.jsp" vessels="${actionBean.foundVessels}"
+                    <stripes:layout-render name="/vessel/vessel_list.jsp" vessels="${actionBean.foundVessels}"
                                            bean="${actionBean}" showCheckboxes="true"/>
                 </div>
             </c:if>
