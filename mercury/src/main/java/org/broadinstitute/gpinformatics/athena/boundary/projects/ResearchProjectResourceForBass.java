@@ -35,6 +35,9 @@ import java.util.List;
  * <li>Retrieve a single research project by name<p/>
  * INPUT: A research project name<p/>
  * OUTPUT: A single research project ID/name/protected status tuple</li>
+ * <li>Retrieve all research projects<p/>
+ * INPUT: none<p/>
+ * OUTPUT: An array of research project ID/name/protected status tuples</li>
  * </ul>
  */
 @Path("researchProjectsForBass")
@@ -84,6 +87,13 @@ public class ResearchProjectResourceForBass {
                 this.projects.add(new ResearchProjectData(project));
             }
         }
+    }
+
+    @GET
+    @Path("rp")
+    @Produces(MediaType.APPLICATION_JSON)
+    public ResearchProjects getAllProjects() {
+        return new ResearchProjects(researchProjectDao.findAllResearchProjects());
     }
 
     @GET
