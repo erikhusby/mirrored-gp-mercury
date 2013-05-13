@@ -168,8 +168,6 @@ public class BettalimsMessageResource {
 
                         Collection<String> barcodesToBeVerified = getRegisteredBarcodesFromMessage(bettaLIMSMessage);
 
-                        // todo jmt revisit performance of this - fetch all barcodes at once, and fetch unique PDOs from Athena
-
                         /*
                         The logic has been Updated to take into account the routing definition being defined
                         at the workflow level.  This 2 stage approach to routing gives the system the flexibility to
@@ -177,7 +175,7 @@ public class BettalimsMessageResource {
                         each workflow
                         */
                         final MercuryOrSquidRouter.MercuryOrSquid route =
-                                mercuryOrSquidRouter.routeForVessels(barcodesToBeVerified);
+                                mercuryOrSquidRouter.routeForVesselBarcodes(barcodesToBeVerified);
 
                         if (MercuryOrSquidRouter.MercuryOrSquid.MERCURY == route) {
                             processInMercury = true;

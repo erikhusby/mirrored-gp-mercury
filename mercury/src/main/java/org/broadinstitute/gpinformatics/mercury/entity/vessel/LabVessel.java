@@ -45,6 +45,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -581,9 +582,9 @@ public abstract class LabVessel implements Serializable {
          * Only MercurySamples that have a PDO.
          */
         WITH_PDO,
-        /**
-         * Any MercurySample.
-         */
+        /** MercurySamples with PDO, if found, else any. */
+        PREFER_PDO,
+        /** Any MercurySample. */
         ANY
     }
 
@@ -601,7 +602,19 @@ public abstract class LabVessel implements Serializable {
             return getContainerRole().getSampleInstances(sampleType, labBatchType);
         }
         TraversalResults traversalResults = traverseAncestors(sampleType, labBatchType);
-        return traversalResults.getSampleInstances();
+        Set<SampleInstance> filteredSampleInstances;
+        if (sampleType == SampleType.WITH_PDO) {
+            filteredSampleInstances = new HashSet<SampleInstance>();
+            for (SampleInstance sampleInstance : traversalResults.getSampleInstances()) {
+                if(sampleInstance.getProductOrderKey() != null) {
+                    filteredSampleInstances.add(sampleInstance);
+                }
+            }
+        } else {
+            filteredSampleInstances = traversalResults.getSampleInstances();
+        }
+
+        return filteredSampleInstances;
     }
 
     public int getSampleInstanceCount() {
@@ -679,25 +692,21 @@ public abstract class LabVessel implements Serializable {
     TraversalResults traverseAncestors(SampleType sampleType, LabBatch.LabBatchType labBatchType) {
         TraversalResults traversalResults = new TraversalResults();
 
-        Set<MercurySample> filteredMercurySamples = new HashSet<MercurySample>();
-        if (sampleType == SampleType.WITH_PDO) {
-            for (BucketEntry bucketEntry : bucketEntries) {
-                if (bucketEntry.getPoBusinessKey() != null) {
-                    filteredMercurySamples = mercurySamples;
-                    break;
-                }
+        boolean continueTraversing = true;
+        switch (sampleType) {
+        case WITH_PDO:
+        case PREFER_PDO:
+            if(!bucketEntries.isEmpty() && !mercurySamples.isEmpty()) {
+                continueTraversing = false;
             }
-        } else {
-            filteredMercurySamples = mercurySamples;
+            break;
+        case ANY:
+            if(!mercurySamples.isEmpty()) {
+                continueTraversing = false;
+            }
+            break;
         }
-        if (!filteredMercurySamples.isEmpty()) {
-            for (MercurySample mercurySample : filteredMercurySamples) {
-                SampleInstance sampleInstance = new SampleInstance(mercurySample, null, null);
-                Set<LabBatch> batches = getLabBatchesOfType(labBatchType);
-                sampleInstance.setAllLabBatches(batches);
-                traversalResults.add(sampleInstance);
-            }
-        } else {
+        if (continueTraversing) {
             List<VesselEvent> vesselEvents = getAncestors();
             for (VesselEvent vesselEvent : vesselEvents) {
                 LabVessel labVessel = vesselEvent.getLabVessel();
@@ -708,6 +717,14 @@ public abstract class LabVessel implements Serializable {
                 } else {
                     traversalResults.add(labVessel.traverseAncestors(sampleType, labBatchType));
                 }
+            }
+        }
+        if(traversalResults.getSampleInstances().isEmpty() && !mercurySamples.isEmpty()) {
+            for (MercurySample mercurySample : mercurySamples) {
+                SampleInstance sampleInstance = new SampleInstance(mercurySample, null, null);
+                Set<LabBatch> batches = getLabBatchesOfType(labBatchType);
+                sampleInstance.setAllLabBatches(batches);
+                traversalResults.add(sampleInstance);
             }
         }
         if (bucketEntries.size() > 1) {

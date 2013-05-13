@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
-import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections15.set.UnmodifiableSet;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -24,10 +24,35 @@ import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.PostLoad;
+import javax.persistence.PrePersist;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Research Projects hold all the information about a research project
@@ -358,6 +383,10 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
         }
     }
 
+    public Set<ProjectPerson> getAssociatedPeople() {
+        return UnmodifiableSet.decorate(associatedPeople);
+    }
+
     /**
      * This addPerson should only be used for tests (until we mock up BSP Users better there.
      *
@@ -638,7 +667,10 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
     protected void prePersist() {
         Collection<ResearchProject> children = getAllChildren();
         if (children.contains(this) || (children.contains(parentResearchProject))) {
-            throw new RuntimeException("Improper Research Project hierarchy.");
+            throw new RuntimeException("Improper Research Project child hierarchy.");
+        }
+        if (parentResearchProject != null && parentResearchProject.equals(this)) {
+            throw new RuntimeException("Improper Research Project parent hierarchy.");
         }
     }
 

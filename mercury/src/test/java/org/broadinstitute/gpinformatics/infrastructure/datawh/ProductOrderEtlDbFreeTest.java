@@ -96,6 +96,7 @@ public class ProductOrderEtlDbFreeTest {
         expect(pdo.getCreatedBy()).andReturn(createdBy);
         expect(userList.getById(createdBy)).andReturn(owner);
         expect(owner.getUsername()).andReturn(ownerName);
+        expect(pdo.getPlacedDate()).andReturn(modifiedDate);
 
         expect(researchProject.getResearchProjectId()).andReturn(researchProjectId);
         expect(product.getProductId()).andReturn(productId);
@@ -124,6 +125,7 @@ public class ProductOrderEtlDbFreeTest {
         assertEquals(parts[i++], quoteId);
         assertEquals(parts[i++], jiraTicketKey);
         assertEquals(parts[i++], ownerName);
+        assertEquals(parts[i++], ExtractTransform.secTimestampFormat.format(modifiedDate));
         assertEquals(parts.length, i);
     }
 }
