@@ -171,7 +171,7 @@
         </div>
 
         <div class="tableBar">
-            Add-ons
+            <h4 style="display:inline">Add-ons</h4>
         </div>
 
         <table id="addOnList" class="table simple">
@@ -203,7 +203,7 @@
         </table>
 
         <div class="tableBar">
-            Replacement Price Items
+            <h4 style="display:inline">Replacement Price Items</h4>
         </div>
         <table id="optionPriceList" class="table table-striped table-bordered">
             <thead>
@@ -225,7 +225,7 @@
         </table>
 
         <div class="tableBar">
-            Material Types
+            <h4 style="display:inline">Material Types</h4>
         </div>
         <table id="allowedMaterialTypes" class="table table-striped table-bordered">
             <thead>

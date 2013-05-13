@@ -34,7 +34,7 @@ public class ProjectPerson {
     @Enumerated(EnumType.STRING)
     private RoleType role;
 
-    // Person ID is BSP User ID.
+    /** Person ID is BSP User ID. */
     @Column(name = "PERSON_ID")
     private Long personId;
 

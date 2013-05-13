@@ -86,6 +86,15 @@
                                 preventDuplicates: true
                             }
                         );
+
+                        $j("#parentResearchProject").tokenInput(
+                                "${ctxpath}/projects/project.action?projectHierarchyAwareAutocomplete=&researchProject=${actionBean.editResearchProject.businessKey}", {
+                                    hintText: "Type a project name",
+                                    prePopulate: ${actionBean.ensureStringResult(actionBean.projectTokenInput.completeData)},
+                                    resultsFormatter: formatInput,
+                                    tokenLimit: 1
+                                }
+                        );
                     }
             );
 
@@ -126,6 +135,33 @@
                         <stripes:checkbox name="editResearchProject.accessControlEnabled"
                                           id="accessControlEnabled" style="margin-top: 10px;"/>
                         <stripes:label for="accessControlEnabled" class="control-label" style="width:auto;">Restrict to Project Users</stripes:label>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <stripes:label for="researchProject" class="control-label">
+                        Parent Research Project
+                    </stripes:label>
+                    <div class="controls">
+                        <stripes:text
+                                id="parentResearchProject" name="projectTokenInput.listOfKeys"
+                                class="defaultText"
+                                title="Enter the parent research project"/>
+                    </div>
+                </div>
+
+                <!-- Subproject view only. -->
+                <div class="control-group">
+                    <label class="control-label">Subprojects</label>
+
+                    <div class="controls">
+                        <div class="form-value">
+                            <div style="margin-left: -24px;">
+                                <stripes:layout-render name="/projects/treeview_component.jsp"
+                                                       childProjects="${actionBean.editResearchProject.childProjects}"
+                                                       bean="${actionBean}" />
+                            </div>
+                        </div>
                     </div>
                 </div>
 

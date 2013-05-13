@@ -140,6 +140,7 @@
                         <input type="search" data-type="search" name="searchKey"
                                placeholder="Enter a PDO, Sample or Barcode"
                                class="search-query ui-input-text ui-body-null"
+                               autosave="unique" results="10"
                                style="margin-top: 5px;vertical-align: top;height:14px;"/>
                         <input type="submit" name="search" value="Search" class="btn btn-mini"/>
                         &#160;

@@ -49,6 +49,7 @@
             org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderResource,
             org.broadinstitute.gpinformatics.athena.boundary.products.ProductResource,
             org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectResource,
+            org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectResourceForBass,
             org.broadinstitute.gpinformatics.athena.boundary.util.PingResource,
             org.broadinstitute.gpinformatics.infrastructure.datawh.ExtractTransform,
             org.broadinstitute.gpinformatics.mercury.boundary.zims.IlluminaRunResource,

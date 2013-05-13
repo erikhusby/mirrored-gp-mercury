@@ -49,10 +49,10 @@ public class ResearchProjectDAOTest extends ContainerTest {
         utx.rollback();
     }
 
-    @SuppressWarnings({"unchecked"})
     public void testFindMultipleAttribute() {
-        final String searchString = "mouse";
-        final List<ResearchProject> mies =
+        String searchString = "mouse";
+        @SuppressWarnings("unchecked")
+        List<ResearchProject> mies =
                 researchProjectDao.findListWithWildcard(ResearchProject.class, searchString, true,
                         ResearchProject_.title,
                         ResearchProject_.synopsis,
@@ -71,7 +71,6 @@ public class ResearchProjectDAOTest extends ContainerTest {
 
         }
     }
-
 
     public void testFindResearchProjects() {
         // Try to find the created ProductOrder by its researchProject and title.

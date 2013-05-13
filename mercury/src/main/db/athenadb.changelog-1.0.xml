@@ -3092,4 +3092,54 @@
         </sql>
     </changeSet>
 
+    <changeSet id="GPLIM-1277-1" author="dinsmore">
+        <preConditions>
+            <not>
+                <columnExists tableName="research_project" columnName="parent_research_project" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="research_project">
+            <column name="parent_research_project" type="number(1,0)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-1277-2" author="dinsmore">
+        <preConditions>
+            <not>
+                <foreignKeyConstraintExists foreignKeyName="fk_rp_parent_rp" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addForeignKeyConstraint constraintName="fk_rp_parent_rp" baseTableSchemaName="athena"
+                                 baseTableName="research_project" baseColumnNames="parent_research_project"
+                                 referencedTableName="research_project" referencedColumnNames="research_project_id"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1277-3" author="dinsmore">
+        <preConditions>
+            <not>
+                <indexExists indexName="ix_parent_research_project" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createIndex indexName="ix_parent_research_project" schemaName="athena" tableName="research_project">
+            <column name="parent_research_project"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-1277-4" author="dinsmore">
+        <preConditions>
+            <columnExists tableName="research_project" columnName="parent_research_project" schemaName="athena"/>
+        </preConditions>
+        <modifyDataType tableName="research_project" columnName="parent_research_project" newDataType="NUMBER(19,0)"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1277-5" author="dinsmore">
+        <preConditions>
+            <not>
+                <columnExists tableName="research_project_aud" columnName="parent_research_project" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="research_project_aud">
+            <column name="parent_research_project" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>

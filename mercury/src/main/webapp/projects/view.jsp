@@ -26,7 +26,7 @@
 
     <stripes:layout-component name="content">
 
-        <div class="form-horizontal" style="float:left; width:600px;">
+        <div class="form-horizontal span7">
             <div class="control-group view-control-group">
                 <label class="control-label label-form">Project</label>
 
@@ -74,6 +74,38 @@
                                 Open to All Users
                             </c:otherwise>
                         </c:choose>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Parent Project -->
+            <div class="control-group view-control-group">
+                <label class="control-label label-form">Parent Project</label>
+
+                <div class="controls">
+                    <div class="form-value">
+                        <c:if test="${actionBean.editResearchProject.parentResearchProject != null}">
+                            <stripes:link beanclass="${actionBean.class.name}" event="view">
+                                <stripes:param name="researchProject" value="${actionBean.editResearchProject.parentResearchProject.businessKey}"/>
+                                ${actionBean.editResearchProject.parentResearchProject.title}
+                            </stripes:link>
+
+                        </c:if>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Subproject -->
+            <div class="control-group view-control-group">
+                <label class="control-label label-form">Subprojects</label>
+
+                <div class="controls">
+                    <div class="form-value">
+                        <div style="margin-left: -24px;">
+                        <stripes:layout-render name="/projects/treeview_component.jsp"
+                                               childProjects="${actionBean.editResearchProject.childProjects}"
+                                               bean="${actionBean}" />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -142,9 +174,9 @@
             </div>
         </div>
 
-        <div class="form-horizontal help-block" style="float:left; margin-left:20px;width: 400px;">
+        <div class="form-horizontal help-block span5">
             <fieldset>
-                <legend>Project Users</legend>
+                <legend><h4>Project Users</h4></legend>
 
                 <!-- Project Managers -->
                 <div class="control-group view-control-group">
@@ -195,7 +227,7 @@
         </div>
 
         <div class="tableBar" style="clear:both; margin-bottom: 10px;">
-            Orders
+            <h4 style="display:inline">Orders</h4>
 
             <stripes:link title="Create product with research project ${actionBean.editResearchProject.title}"
                           beanclass="<%=ProductOrderActionBean.class.getName()%>" event="create" class="pull-right">

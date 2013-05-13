@@ -21,7 +21,6 @@ import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -31,7 +30,6 @@ import java.util.Collection;
 import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
-import static org.testng.Assert.fail;
 
 /**
  * Container test of MercuryClientService
@@ -39,7 +37,7 @@ import static org.testng.Assert.fail;
  * @author epolk
  */
 
-@Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
 public class MercuryClientServiceTest extends Arquillian {
     private Log logger = LogFactory.getLog(getClass());
     private String nonMercurySampleName = "SM-1T7HE";
@@ -92,41 +90,29 @@ public class MercuryClientServiceTest extends Arquillian {
         }
     }
 
-    @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
-    public void afterMethod() {
-        if (labVesselDao != null) {
-            deleteTestSample();
-        }
-    }
-
     // Deletes the mercury sample used in this test.  When dao's are defined but there is no transaction, this does nothing.
     private void deleteTestSample() {
-        try {
-            List<LabVessel> labVessels = labVesselDao.findBySampleKey(nonMercurySampleName);
+        List<LabVessel> labVessels = labVesselDao.findBySampleKey(nonMercurySampleName);
 
-            List<BucketEntry> bucketEntries = bucketEntryDao.findListByList(BucketEntry.class, BucketEntry_.labVessel, labVessels);
-            for (BucketEntry bucketEntry : bucketEntries) {
-                logger.info("Deleting bucket entry " + bucketEntry.getBucketEntryId());
-                bucketEntryDao.remove(bucketEntry);
-            }
-            List<LabEvent> labEvents = labEventDao.findListByList(LabEvent.class, LabEvent_.inPlaceLabVessel, labVessels);
-            for (LabEvent labEvent : labEvents) {
-                logger.info("Deleting " + labEvent.getLabEventType() + " event " + labEvent.getLabEventId());
-                labEventDao.remove(labEvent);
-            }
-            for (LabVessel labVessel : labVessels) {
-                logger.info("Deleting vessel " + labVessel.getLabel());
-                labVesselDao.remove(labVessel);
-            }
+        List<BucketEntry> bucketEntries = bucketEntryDao.findListByList(BucketEntry.class, BucketEntry_.labVessel, labVessels);
+        for (BucketEntry bucketEntry : bucketEntries) {
+            logger.info("Deleting bucket entry " + bucketEntry.getBucketEntryId());
+            bucketEntryDao.remove(bucketEntry);
+        }
+        List<LabEvent> labEvents = labEventDao.findListByList(LabEvent.class, LabEvent_.inPlaceLabVessel, labVessels);
+        for (LabEvent labEvent : labEvents) {
+            logger.info("Deleting " + labEvent.getLabEventType() + " event " + labEvent.getLabEventId());
+            labEventDao.remove(labEvent);
+        }
 
-            for (MercurySample mercurySample : mercurySampleDao.findBySampleKey(nonMercurySampleName)) {
-                logger.info("Deleting sample " + mercurySample.getSampleKey());
-                mercurySampleDao.remove(mercurySample);
-            }
+        for (LabVessel labVessel : labVessels) {
+            logger.info("Deleting vessel " + labVessel.getLabel());
+            labVesselDao.remove(labVessel);
+        }
 
-        } catch (Exception e) {
-            logger.error("Error finding and deleting the test sample, vessel, lab event, bucket entry", e);
-            fail("Error finding and deleting the test sample, vessel, lab event, bucket entry");
+        for (MercurySample mercurySample : mercurySampleDao.findBySampleKey(nonMercurySampleName)) {
+            logger.info("Deleting sample " + mercurySample.getSampleKey());
+            mercurySampleDao.remove(mercurySample);
         }
     }
 

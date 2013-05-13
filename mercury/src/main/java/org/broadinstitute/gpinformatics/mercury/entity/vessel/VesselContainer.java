@@ -285,7 +285,7 @@ public class VesselContainer<T extends LabVessel> {
     public Set<SampleInstance> getSampleInstances(LabVessel.SampleType sampleType, LabBatch.LabBatchType labBatchType) {
         Set<SampleInstance> sampleInstances = new LinkedHashSet<SampleInstance>();
         for (VesselPosition position : mapPositionToVessel.keySet()) {
-            sampleInstances.addAll(getSampleInstancesAtPosition(position));
+            sampleInstances.addAll(getSampleInstancesAtPosition(position, sampleType, labBatchType));
         }
         if (sampleInstances.isEmpty()) {
             for (LabEvent labEvent : embedder.getTransfersTo()) {

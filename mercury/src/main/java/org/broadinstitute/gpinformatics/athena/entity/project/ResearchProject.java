@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
+import org.apache.commons.collections15.set.UnmodifiableSet;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -23,10 +24,35 @@ import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.PostLoad;
+import javax.persistence.PrePersist;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Research Projects hold all the information about a research project
@@ -94,6 +120,17 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
     @Column(name = "IRB_NOT_ENGAGED", nullable = false)
     private boolean irbNotEngaged = IRB_ENGAGED;
 
+    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE,CascadeType.PERSIST})
+    @JoinColumn(name = "PARENT_RESEARCH_PROJECT", nullable = true, insertable = true, updatable = true)
+    @Index(name = "ix_parent_research_project")
+    private ResearchProject parentResearchProject;
+
+    /**
+     * Set of ResearchProjects that belong under this one.
+     */
+    @OneToMany(fetch = FetchType.LAZY, mappedBy="parentResearchProject", cascade = CascadeType.ALL)
+    private Set<ResearchProject> childProjects = new TreeSet<ResearchProject>(ResearchProject.BY_TITLE);
+
     // People related to the project
     @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
                orphanRemoval = true)
@@ -152,9 +189,9 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
     /**
      * The full constructor for fields that are not settable.
      *
-     * @param createdBy       The user creating the project
-     * @param title         The title (name) of the project
-     * @param synopsis      A description of the project
+     * @param createdBy The user creating the project
+     * @param title The title (name) of the project
+     * @param synopsis A description of the project
      * @param irbNotEngaged Is this project set up for NO IRB?
      */
     public ResearchProject(Long createdBy, String title, String synopsis, boolean irbNotEngaged) {
@@ -213,7 +250,15 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
         this.irbNotes += "\n" + irbNotes;
     }
 
+    public ResearchProject getParentProject() {
+        return parentResearchProject;
+    }
+
     // Setters
+
+    public Set<ResearchProject> getChildProjects() {
+        return childProjects;
+    }
 
     public void setCreatedBy(Long createdBy) {
         this.createdBy = createdBy;
@@ -336,6 +381,10 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
                 associatedPeople.add(new ProjectPerson(this, role, user.getUserId()));
             }
         }
+    }
+
+    public Set<ProjectPerson> getAssociatedPeople() {
+        return UnmodifiableSet.decorate(associatedPeople);
     }
 
     /**
@@ -535,6 +584,14 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
         return originalTitle;
     }
 
+    public ResearchProject getParentResearchProject() {
+        return parentResearchProject;
+    }
+
+    public void setParentResearchProject(ResearchProject parentResearchProject) {
+        this.parentResearchProject = parentResearchProject;
+    }
+
     /**
      * fetchJiraProject is a helper method that binds a specific Jira project to a ResearchProject entity.  This
      * makes it easier for a user of this object to interact with Jira for this entity
@@ -566,7 +623,6 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
      * for Research Projects
      */
     public enum RequiredSubmissionFields implements CustomField.SubmissionField {
-
         //        Sponsoring_Scientist("Sponsoring Scientist"),
         COHORTS("Cohort(s)"),
         FUNDING_SOURCE("Funding Source"),
@@ -586,6 +642,48 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
             return fieldName;
         }
     }
+
+    public Collection<ResearchProject> getAllChildren() {
+        return addChildResearchProjects(getChildProjects());
+    }
+
+    /**
+     * Recursive function to traverse through the full research project hierarchy tree to get all the projects.
+     *
+     * @param childResearchProjects the list of child research projects
+     * @return collection of research projects
+     */
+    private Collection<ResearchProject> addChildResearchProjects(Collection<ResearchProject> childResearchProjects) {
+        for (ResearchProject childResearchProject : childResearchProjects) {
+            childResearchProjects.addAll(addChildResearchProjects(childResearchProject.getChildProjects()));
+        }
+        return childResearchProjects;
+    }
+
+    /**
+     * Ensure that the parent research project model does not create any loops.
+     */
+    @PrePersist
+    protected void prePersist() {
+        Collection<ResearchProject> children = getAllChildren();
+        if (children.contains(this) || (children.contains(parentResearchProject))) {
+            throw new RuntimeException("Improper Research Project child hierarchy.");
+        }
+        if (parentResearchProject != null && parentResearchProject.equals(this)) {
+            throw new RuntimeException("Improper Research Project parent hierarchy.");
+        }
+    }
+
+    /**
+     * Compare by the ResearchProject by it's title, case insensitive.
+     */
+    public static final Comparator<ResearchProject> BY_TITLE = new Comparator<ResearchProject>() {
+        @Override
+        public int compare(ResearchProject lhs, ResearchProject rhs) {
+            return lhs.getTitle().toUpperCase().compareTo(
+                    rhs.getTitle().toUpperCase());
+        }
+    };
 
     @Override
     public boolean equals(Object other) {
