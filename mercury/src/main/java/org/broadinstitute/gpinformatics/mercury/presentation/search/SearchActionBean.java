@@ -1,6 +1,12 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.search;
 
-import net.sourceforge.stripes.action.*;
+import net.sourceforge.stripes.action.Before;
+import net.sourceforge.stripes.action.DefaultHandler;
+import net.sourceforge.stripes.action.ForwardResolution;
+import net.sourceforge.stripes.action.HandlesEvent;
+import net.sourceforge.stripes.action.RedirectResolution;
+import net.sourceforge.stripes.action.Resolution;
+import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.SimpleError;
 import net.sourceforge.stripes.validation.Validate;
@@ -22,7 +28,13 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.inject.Inject;
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -32,7 +44,7 @@ import java.util.regex.Pattern;
 public class SearchActionBean extends CoreActionBean {
     public static final String ACTIONBEAN_URL_BINDING = "/search/all.action";
 
-    private enum SearchType {
+    protected enum SearchType {
         VESSELS_BY_BARCODE, VESSELS_BY_PDO, VESSELS_BY_SAMPLE_KEY, PDO_BY_KEY, SAMPLES_BY_NAME, BATCH_BY_KEY
     }
 
@@ -103,6 +115,9 @@ public class SearchActionBean extends CoreActionBean {
     private String summary;
     private Date dueDate;
 
+    private boolean isSearchDone = false;
+    private int numSearchTerms;
+
     /**
      * Initialize the product with the passed in key for display in the form
      */
@@ -121,12 +136,12 @@ public class SearchActionBean extends CoreActionBean {
         return new ForwardResolution(SESSION_LIST_PAGE);
     }
 
-    private void doSearch(SearchType... searchForItems) {
+    protected void doSearch(SearchType... searchForItems) {
         if (searchForItems.length == 0) {
             searchForItems = SearchType.values();
         }
         List<String> searchList = cleanInputString(searchKey);
-
+        numSearchTerms = searchList.size();
         int count = 0;
         long totalResults = 0l;
         for (SearchType searchForItem : searchForItems) {
@@ -170,6 +185,7 @@ public class SearchActionBean extends CoreActionBean {
         }
         multipleResultTypes = count > 1;
         resultsAvailable = totalResults > 0;
+        isSearchDone = true;
     }
 
     @HandlesEvent(SEARCH_ACTION)
@@ -473,4 +489,27 @@ public class SearchActionBean extends CoreActionBean {
         this.jiraTicketId = jiraTicketId;
     }
 
+    protected LabVesselDao getLabVesselDao() {
+        return labVesselDao;
+    }
+
+    protected MercurySampleDao getMercurySampleDao() {
+        return mercurySampleDao;
+    }
+
+    public boolean isSearchDone() {
+        return isSearchDone;
+    }
+
+    public void setSearchDone(boolean searchDone) {
+        isSearchDone = searchDone;
+    }
+
+    public int getNumSearchTerms() {
+        return numSearchTerms;
+    }
+
+    public void setNumSearchTerms(int numSearchTerms) {
+        this.numSearchTerms = numSearchTerms;
+    }
 }

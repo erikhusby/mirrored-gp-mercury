@@ -48,8 +48,8 @@
                     <security:authorizeBlock roles="<%= roles(Developer, PDM, PM) %>">
                         <li>
                             <stripes:link id="createProductOrder"
-                                    beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"
-                                    tabindex="=1" event="create">Create</stripes:link>
+                                          beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"
+                                          tabindex="=1" event="create">Create</stripes:link>
                         </li>
                     </security:authorizeBlock>
                     <li class="divider"></li>
@@ -87,14 +87,12 @@
                     <a id="labNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span
                             class="icon-tasks"></span> Lab <b class="caret"></b></a>
                     <ul class="dropdown-menu" role="menu">
-                        <security:authorizeBlock
-                                roles="<%= roles(LabUser, LabManager, PDM, PM, Developer) %>">
-                            <li><stripes:link id="viewBuckets"
+                        <li>
+                            <stripes:link id="viewBuckets"
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BucketViewActionBean"
-                                    event="view">Buckets</stripes:link></li>
-                        </security:authorizeBlock>
-                        <security:authorizeBlock
-                                roles="<%= roles(LabUser, LabManager, PDM, PM, Developer) %>">
+                                          event="view">Buckets</stripes:link>
+                        </li>
+                        <security:authorizeBlock roles="<%= roles(Developer) %>">
                             <li>
                                 <stripes:link
                                         beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.CollaboratorControlsActionBean"
@@ -112,7 +110,9 @@
                                         beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.LinkDenatureTubeToFlowcellActionBean"
                                         event="view">Link Denature Tube to Flowcell</stripes:link>
                             </li>
-                            <li><a tabindex="-1" href="${ctxpath}/reagent/design.action?list">Reagent Designs</a></li>
+                            <li>
+                                <a tabindex="-1" href="${ctxpath}/reagent/design.action?list">Reagent Designs</a>
+                            </li>
                         </security:authorizeBlock>
                     </ul>
                 </li>
@@ -131,25 +131,31 @@
             </security:authorizeBlock>
 
         </ul>
+        <ul class="nav pull-right global-search navbar-search">
+            <li class="dropdown">
+                <a id="searchNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span
+                        class="icon-search"></span> Search <b class="caret"></b></a>
+                <ul class="dropdown-menu" role="menu">
+                    <li>
+                        <stripes:link
+                                beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.VesselSearchActionBean"
+                                event="view">Vessels</stripes:link>
+                    </li>
+                    <li>
+                        <stripes:link
+                                beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.SampleSearchActionBean"
+                                event="view">Samples</stripes:link>
+                    </li>
 
-        <security:authorizeBlock roles="<%= roles(LabUser, LabManager, PDM, PM, Developer) %>">
-            <ul class="nav pull-right global-search navbar-search">
-                <li style="white-space:nowrap;">
-                    <stripes:form
-                            beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean">
-                        <input type="search" data-type="search" name="searchKey"
-                               placeholder="Enter a PDO, Sample or Barcode"
-                               class="search-query ui-input-text ui-body-null"
-                               autosave="unique" results="10"
-                               style="margin-top: 5px;vertical-align: top;height:14px;"/>
-                        <input type="submit" name="search" value="Search" class="btn btn-mini"/>
-                        &#160;
-                        <stripes:link style="display: inline; padding: 0px;" title="Click for advanced search options"
-                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean"
-                                      event="view">Advanced</stripes:link>
-                    </stripes:form>
-                </li>
-            </ul>
-        </security:authorizeBlock>
+                    <security:authorizeBlock roles="<%= roles(Developer) %>">
+                        <li class="divider"></li>
+                        <li>
+                            <stripes:link
+                                    beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean"
+                                    event="view">All Types</stripes:link>
+                        </li>
+                    </security:authorizeBlock>
+                </ul>
+            </li>
     </div>
 </header>

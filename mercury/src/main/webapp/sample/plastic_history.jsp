@@ -5,4 +5,5 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.PlasticHistoryViewActionBean"/>
 
-<stripes:layout-render name="/search/plastic_history_list.jsp" listItems="${actionBean.plasticHistory}" bean="${actionBean}"/>
+<stripes:layout-render name="/search/plastic_history_list.jsp" listItems="${actionBean.plasticHistory}"
+                       bean="${actionBean}"/>

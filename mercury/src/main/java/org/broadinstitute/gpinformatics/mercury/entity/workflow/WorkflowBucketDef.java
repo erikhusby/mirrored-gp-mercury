@@ -39,7 +39,7 @@ public class WorkflowBucketDef extends WorkflowStepDef {
 
     public boolean meetsBucketCriteria(LabVessel labVessel) {
 
-        // todo remove this code block when Bamboo works with MVEL
+    /*    // todo remove this code block when Bamboo works with MVEL
         if (entryExpression != null && entryExpression.contains("getMaterialType() == \"DNA:DNA Genomic\"")) {
             for (SampleInstance si : labVessel.getSampleInstances()) {
                 if (si.getStartingSample().getBspSampleDTO().getMaterialType().equals("DNA:DNA Genomic")) {
@@ -48,7 +48,7 @@ public class WorkflowBucketDef extends WorkflowStepDef {
             }
             return false;
         }
-
+      */
         // Compile, even though we're using it only once, because MVEL sometimes has
         // problems with Hibernate proxies in eval method
         // todo uncomment this code block when Bamboo works with MVEL

@@ -31,7 +31,7 @@ import java.util.TreeMap;
 
 @UrlBinding(value = "/view/pdoSampleHistory.action")
 public class ProductOrderSampleHistoryActionBean extends CoreActionBean {
-    private static final String VIEW_PAGE = "/resources/orders/pdoSampleHistory.jsp";
+    private static final String VIEW_PAGE = "/orders/pdo_sample_history.jsp";
 
     @Inject
     private MercurySampleDao mercurySampleDao;
@@ -96,7 +96,8 @@ public class ProductOrderSampleHistoryActionBean extends CoreActionBean {
                     }
                 }
             }
-            mercurySamples.addAll(mercurySampleDao.findBySampleKeys(ProductOrderSample.getSampleNames(pdo.getSamples())));
+            mercurySamples
+                    .addAll(mercurySampleDao.findBySampleKeys(ProductOrderSample.getSampleNames(pdo.getSamples())));
         }
 
         return new ForwardResolution(VIEW_PAGE);

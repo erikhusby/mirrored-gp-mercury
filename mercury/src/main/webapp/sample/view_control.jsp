@@ -15,7 +15,7 @@
 
     <stripes:layout-component name="content">
 
-        <stripes:form action="/resources/sample/controls.action" id="sampleControlForm" class="form-horizontal">
+        <stripes:form action="/sample/controls.action" id="sampleControlForm" class="form-horizontal">
 
             <stripes:hidden name="sampleCollaboratorId" value="${actionBean.workingControl.businessKey}"/>
 
@@ -29,7 +29,7 @@
             </div>
         </stripes:form>
 
-        <stripes:form action="/resources/sample/controls.action" id="sampleControlForm" class="form-horizontal">
+        <stripes:form action="/sample/controls.action" id="sampleControlForm" class="form-horizontal">
 
             <stripes:hidden name="sampleCollaboratorId" value="${actionBean.workingControl.businessKey}"/>
 

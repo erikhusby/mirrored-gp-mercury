@@ -21,7 +21,7 @@ import java.util.Set;
 @UrlBinding(value = "/view/vesselView.action")
 public class VesselViewActionBean extends CoreActionBean {
 
-    private static final String VIEW_PAGE = "/resources/container/vesselView.jsp";
+    private static final String VIEW_PAGE = "/container/vessel_layout.jsp";
 
     @Inject
     private LabVesselDao labVesselDao;

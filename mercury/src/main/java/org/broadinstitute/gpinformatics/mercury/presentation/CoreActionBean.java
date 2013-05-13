@@ -45,6 +45,10 @@ import java.util.List;
 public class CoreActionBean implements ActionBean {
     private static final Log log = LogFactory.getLog(CoreActionBean.class);
 
+    private static final String DATE_PATTERN = "MM/dd/yyyy";
+    private static final String DATE_TIME_PATTERN = "MM/dd/yyyy HH:mm";
+    private static final String PRECISE_DATE_TIME_PATTERN = "MM/dd/yyyy HH:mm:ss.S";
+
     // These are used for the create and edit strings in the UI and the submit string.
     public static final String CREATE = "Create ";
     public static final String EDIT = "Edit ";
@@ -480,7 +484,6 @@ public class CoreActionBean implements ActionBean {
     public String[] getRoles(@Nonnull DB.Role... roles) {
         return DB.roles(roles);
     }
-
     /**
      * @return The name of the business key parameter used in URLs to edit the object being viewed.
      */
@@ -514,5 +517,17 @@ public class CoreActionBean implements ActionBean {
      */
     public boolean isEditAllowed() {
         return true;
+    }
+    
+    public String getDatePattern() {
+        return DATE_PATTERN;
+    }
+
+    public String getDateTimePattern() {
+        return DATE_TIME_PATTERN;
+    }
+
+    public String getPreciseDateTimePattern() {
+        return PRECISE_DATE_TIME_PATTERN;
     }
 }

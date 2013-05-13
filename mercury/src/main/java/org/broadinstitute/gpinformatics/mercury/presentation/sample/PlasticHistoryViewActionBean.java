@@ -31,7 +31,7 @@ public class PlasticHistoryViewActionBean extends CoreActionBean {
     @Inject
     private LabBatchDAO labBatchDAO;
 
-    private static final String VIEW_PAGE = "/resources/sample/plasticHistoryView.jsp";
+    private static final String VIEW_PAGE = "/sample/plastic_history.jsp";
 
     private String sampleKey;
     private String batchKey;
@@ -68,7 +68,7 @@ public class PlasticHistoryViewActionBean extends CoreActionBean {
         if (sampleKey != null) {
             List<MercurySample> selectedSamples = mercurySampleDao.findBySampleKey(sampleKey);
             if (selectedSamples != null) {
-                for(MercurySample selectedSample : selectedSamples){
+                for (MercurySample selectedSample : selectedSamples) {
                     List<LabVessel> vessels = labVesselDao.findBySampleKey(selectedSample.getSampleKey());
                     addVesselsToItemList(targetItems, vessels);
                 }

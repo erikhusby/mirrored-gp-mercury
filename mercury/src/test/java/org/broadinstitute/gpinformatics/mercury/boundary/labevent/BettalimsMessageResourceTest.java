@@ -169,7 +169,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
     /**
      * Sends messages for one PDO, then reworks two of those samples along with a second PDO.
      */
-    @Test(enabled = false, groups = EXTERNAL_INTEGRATION)
+    @Test(enabled = true, groups = EXTERNAL_INTEGRATION, timeOut = 0)
     public void testRework() throws ValidationException {
         // Set up one PDO / bucket / batch
         String testPrefix = testPrefixDateFormat.format(new Date());

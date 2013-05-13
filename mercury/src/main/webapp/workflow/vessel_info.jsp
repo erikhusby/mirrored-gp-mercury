@@ -7,9 +7,11 @@
 <c:choose>
     <c:when test="${actionBean.labVessel == null}">
         <div class="control-group">
-                    <div class="controls">
-                        <div id="error" class="text-error">Mercury does not recognize tube barcode ${actionBean.vesselLabel}.</div>
-                </div></div>
+            <div class="controls">
+                <div id="error" class="text-error">Mercury does not recognize tube barcode ${actionBean.vesselLabel}.
+                </div>
+            </div>
+        </div>
     </c:when>
     <c:otherwise>
         <c:forEach items="${actionBean.labVessel.nearestWorkflowLabBatches}" var="batch">

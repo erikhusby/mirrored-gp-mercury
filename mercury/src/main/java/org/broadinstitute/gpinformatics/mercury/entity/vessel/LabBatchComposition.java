@@ -37,7 +37,7 @@ public class LabBatchComposition {
     /**
      * Ranks LabBatchCompositions by decreasing vessel count.
      */
-    public static Comparator HIGHEST_COUNT_FIRST = new Comparator<LabBatchComposition>() {
+    public static Comparator<LabBatchComposition> HIGHEST_COUNT_FIRST = new Comparator<LabBatchComposition>() {
         public int compare(LabBatchComposition lbc1, LabBatchComposition lbc2) {
             return lbc2.getCount() - lbc1.getCount();
         }

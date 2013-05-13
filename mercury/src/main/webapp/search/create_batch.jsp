@@ -97,7 +97,7 @@
                                 <div class="controls">
                                     <stripes:text id="dueDate" name="dueDate" class="defaultText"
                                                   title="enter date (MM/dd/yyyy)" value="${actionBean.dueDate}"><fmt:formatDate
-                                            value="${actionBean.dueDate}" dateStyle="short"/></stripes:text>
+                                            value="${actionBean.dueDate}" pattern="${actionBean.datePattern}"/></stripes:text>
                                 </div>
                             </div>
                         </div>
