@@ -561,10 +561,10 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
 
         String username = bspUserList.getById(createdBy).getUsername();
 
+        // Create the jira ticket and then assign the key right away because whatever else happens, this jira ticket
+        // IS created. If callers want to respond to errors, they can check for the key and decide what to do.
         JiraIssue issue = jiraService.createIssue(fetchJiraProject().getKeyPrefix(), username, fetchJiraIssueType(),
                                                   title, synopsis, listOfFields);
-
-        // TODO: Only set the JIRA key once everything else has completed successfully, i.e., adding watchers
         jiraTicketKey = issue.getKey();
 
         issue.addWatcher(username);
