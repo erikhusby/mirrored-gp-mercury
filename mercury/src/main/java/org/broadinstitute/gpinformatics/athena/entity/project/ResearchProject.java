@@ -499,7 +499,7 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
         return productOrders;
     }
 
-    public void submit() throws IOException {
+    public void submitToJira() throws IOException {
         if (jiraTicketKey != null) {
             return;
         }
