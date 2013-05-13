@@ -16,10 +16,7 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Join;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 @Stateful
 @RequestScoped
@@ -34,6 +31,10 @@ public class LabVesselDao extends GenericDao {
     }
 
     public List<LabVessel> findBySampleKeyList(List<String> sampleKeys) {
+        return findBySampleKeyList((Collection<String>) sampleKeys);
+    }
+
+    public List<LabVessel> findBySampleKeyList(Collection<String> sampleKeys) {
         List<LabVessel> resultList = new ArrayList<LabVessel>();
 
         for(String currSample:sampleKeys) {
