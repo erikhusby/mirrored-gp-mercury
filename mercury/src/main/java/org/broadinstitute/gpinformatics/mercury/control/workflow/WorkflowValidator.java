@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.control.workflow;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean;
 import org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean;
@@ -29,8 +31,6 @@ import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchAction
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.StringWriter;
@@ -48,6 +48,8 @@ import java.util.Set;
 @Stateful
 @RequestScoped
 public class WorkflowValidator {
+
+    private static final Log log = LogFactory.getLog(WorkflowValidator.class);
 
     @Inject
     private LabVesselDao labVesselDao;
@@ -68,36 +70,47 @@ public class WorkflowValidator {
     @Inject
     private AppConfig appConfig;
 
+    public static class WorkflowException extends Exception {
+        public WorkflowException(Throwable cause) {
+            super(cause);
+        }
+    }
+
     /**
      * Validate workflow for all events in a message.  Starts a new transaction; without it, exceptions could cause
      * rollbacks, which would cause knock on transactions in the code to persist messages.
      * @param bettaLIMSMessage JAXB from deck
      */
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public void validateWorkflow(BettaLIMSMessage bettaLIMSMessage) {
-        for (PlateCherryPickEvent plateCherryPickEvent : bettaLIMSMessage.getPlateCherryPickEvent()) {
-            validateWorkflow(plateCherryPickEvent, new ArrayList<String>(
-                    BettalimsMessageUtils.getBarcodesForCherryPick(plateCherryPickEvent)));
-        }
+    public void validateWorkflow(BettaLIMSMessage bettaLIMSMessage) throws WorkflowException {
+        try {
+            for (PlateCherryPickEvent plateCherryPickEvent : bettaLIMSMessage.getPlateCherryPickEvent()) {
+                validateWorkflow(plateCherryPickEvent, new ArrayList<String>(
+                        BettalimsMessageUtils.getBarcodesForCherryPick(plateCherryPickEvent)));
+            }
 
-        for (PlateEventType plateEventType : bettaLIMSMessage.getPlateEvent()) {
-            validateWorkflow(plateEventType, new ArrayList<String>(
-                    BettalimsMessageUtils.getBarcodesForPlateEvent(plateEventType)));
-        }
+            for (PlateEventType plateEventType : bettaLIMSMessage.getPlateEvent()) {
+                validateWorkflow(plateEventType, new ArrayList<String>(
+                        BettalimsMessageUtils.getBarcodesForPlateEvent(plateEventType)));
+            }
 
-        for (PlateTransferEventType plateTransferEventType : bettaLIMSMessage.getPlateTransferEvent()) {
-            validateWorkflow(plateTransferEventType, new ArrayList<String>(
-                    BettalimsMessageUtils.getBarcodesForPlateTransfer(plateTransferEventType)));
-        }
+            for (PlateTransferEventType plateTransferEventType : bettaLIMSMessage.getPlateTransferEvent()) {
+                validateWorkflow(plateTransferEventType, new ArrayList<String>(
+                        BettalimsMessageUtils.getBarcodesForPlateTransfer(plateTransferEventType)));
+            }
 
-        for (ReceptacleEventType receptacleEventType : bettaLIMSMessage.getReceptacleEvent()) {
-            validateWorkflow(receptacleEventType, new ArrayList<String>(
-                    BettalimsMessageUtils.getBarcodesForReceptacleEvent(receptacleEventType)));
-        }
+            for (ReceptacleEventType receptacleEventType : bettaLIMSMessage.getReceptacleEvent()) {
+                validateWorkflow(receptacleEventType, new ArrayList<String>(
+                        BettalimsMessageUtils.getBarcodesForReceptacleEvent(receptacleEventType)));
+            }
 
-        for (ReceptaclePlateTransferEvent receptaclePlateTransferEvent : bettaLIMSMessage.getReceptaclePlateTransferEvent()) {
-            validateWorkflow(receptaclePlateTransferEvent, new ArrayList<String>(
-                    BettalimsMessageUtils.getBarcodesForReceptaclePlateTransfer(receptaclePlateTransferEvent)));
+            for (ReceptaclePlateTransferEvent receptaclePlateTransferEvent : bettaLIMSMessage.getReceptaclePlateTransferEvent()) {
+                validateWorkflow(receptaclePlateTransferEvent, new ArrayList<String>(
+                        BettalimsMessageUtils.getBarcodesForReceptaclePlateTransfer(receptaclePlateTransferEvent)));
+            }
+        } catch (RuntimeException e) {
+            // convert runtime exceptions to checked, so the transaction is not rolled back
+            log.error("Workflow exception", e);
+            throw new WorkflowException(e);
         }
     }
 
@@ -189,7 +202,7 @@ public class WorkflowValidator {
         // Cache the workflows, because it's likely that there are only a few unique product orders on each plate
         Map<String, ProductWorkflowDefVersion> mapProductOrderToWorkflow = new HashMap<String, ProductWorkflowDefVersion>();
 
-        for (LabVessel labVessel : labVessels) {
+        for (LabVessel labVessel : labVessels) { // todo jmt can this be null?
             Set<SampleInstance> sampleInstances = labVessel.getSampleInstances(LabVessel.SampleType.WITH_PDO,
                     LabBatch.LabBatchType.WORKFLOW);
             for (SampleInstance sampleInstance : sampleInstances) {
