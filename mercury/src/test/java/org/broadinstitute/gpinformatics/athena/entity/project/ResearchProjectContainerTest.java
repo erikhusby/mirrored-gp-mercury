@@ -33,7 +33,7 @@ public class ResearchProjectContainerTest extends Arquillian {
         ResearchProject dummy = ResearchProjectTestFactory
                 .createDummyResearchProject(10950, "MyResearchProject", "To Study Stuff", ResearchProject.IRB_ENGAGED);
 
-        dummy.submit();
+        dummy.submitToJira();
 
         Assert.assertTrue(StringUtils.isNotEmpty(dummy.getJiraTicketKey()));
     }

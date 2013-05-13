@@ -244,9 +244,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public Resolution save() throws Exception {
         populateTokenListFields();
 
-        // Do the jira jig.
         try {
-            editResearchProject.submit();
+            editResearchProject.submitToJira();
         } catch (Exception ex) {
             addGlobalValidationError("Error creating JIRA ticket for research project");
             return new ForwardResolution(getContext().getSourcePage());
