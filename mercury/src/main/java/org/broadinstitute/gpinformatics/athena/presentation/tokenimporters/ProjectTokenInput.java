@@ -1,10 +1,12 @@
 package org.broadinstitute.gpinformatics.athena.presentation.tokenimporters;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.json.JSONException;
 
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -31,8 +33,15 @@ public class ProjectTokenInput extends TokenInput<ResearchProject> {
         return researchProjectDao.findByBusinessKey(key);
     }
 
+    /**
+     * Get a list of all research projects.
+     *
+     * @param query the search text string
+     * @return list of research projects
+     * @throws JSONException
+     */
     public String getJsonString(String query) throws JSONException {
-        return getJsonString(query, null);
+        return getJsonString(query, CollectionUtils.EMPTY_COLLECTION);
     }
 
     /**
@@ -43,11 +52,9 @@ public class ProjectTokenInput extends TokenInput<ResearchProject> {
      * @return list of research projects
      * @throws JSONException
      */
-    public String getJsonString(String query, Collection<ResearchProject> omitProjects) throws JSONException {
+    public String getJsonString(String query, @Nonnull Collection<ResearchProject> omitProjects) throws JSONException {
         Collection<ResearchProject> projects = researchProjectDao.searchProjects(query);
-        if (omitProjects != null) {
-            projects.removeAll(omitProjects);
-        }
+        projects.removeAll(omitProjects);
 
         return createItemListString(new ArrayList<ResearchProject>(projects));
     }

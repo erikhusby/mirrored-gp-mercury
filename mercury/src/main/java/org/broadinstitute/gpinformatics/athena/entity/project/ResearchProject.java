@@ -129,7 +129,7 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
      * Set of ResearchProjects that belong under this one.
      */
     @OneToMany(fetch = FetchType.LAZY, mappedBy="parentResearchProject", cascade = CascadeType.ALL)
-    private Set<ResearchProject> childProjects = new TreeSet<ResearchProject>(ResearchProject.BY_TITLE);
+    private Set<ResearchProject> childProjects = new HashSet<ResearchProject>();
 
     // People related to the project
     @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
@@ -254,11 +254,11 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
         return parentResearchProject;
     }
 
-    // Setters
-
     public Set<ResearchProject> getChildProjects() {
         return childProjects;
     }
+
+    // Setters
 
     public void setCreatedBy(Long createdBy) {
         this.createdBy = createdBy;
@@ -644,20 +644,23 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
     }
 
     public Collection<ResearchProject> getAllChildren() {
-        return addChildResearchProjects(getChildProjects());
+        Collection<ResearchProject> collectedProjects = new TreeSet<ResearchProject>();
+        collectedProjects.addAll(getChildProjects());
+
+        return collectChildResearchProjects(collectedProjects);
     }
 
     /**
      * Recursive function to traverse through the full research project hierarchy tree to get all the projects.
      *
-     * @param childResearchProjects the list of child research projects
+     * @param collectedProjects the list of collected child research projects
      * @return collection of research projects
      */
-    private Collection<ResearchProject> addChildResearchProjects(Collection<ResearchProject> childResearchProjects) {
-        for (ResearchProject childResearchProject : childResearchProjects) {
-            childResearchProjects.addAll(addChildResearchProjects(childResearchProject.getChildProjects()));
+    private Collection<ResearchProject> collectChildResearchProjects(Collection<ResearchProject> collectedProjects) {
+        for (ResearchProject childResearchProject : collectedProjects) {
+            collectedProjects.addAll(collectChildResearchProjects(childResearchProject.getChildProjects()));
         }
-        return childResearchProjects;
+        return collectedProjects;
     }
 
     /**
@@ -665,13 +668,25 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
      */
     @PrePersist
     protected void prePersist() {
-        Collection<ResearchProject> children = getAllChildren();
-        if (children.contains(this) || (children.contains(parentResearchProject))) {
+        if (hasLoop()) {
             throw new RuntimeException("Improper Research Project child hierarchy.");
         }
-        if (parentResearchProject != null && parentResearchProject.equals(this)) {
-            throw new RuntimeException("Improper Research Project parent hierarchy.");
+    }
+
+    /**
+     * Function to see if there's an endless loop with parent Research Project references.  Loops are not permitted.
+     *
+     * @return True if there is a loop.
+     */
+    private boolean hasLoop() {
+        ResearchProject parent = parentResearchProject;
+        while (parent != null) {
+            if (parent == this) {
+                return true;
+            }
+            parent = parent.parentResearchProject;
         }
+        return false;
     }
 
     /**
