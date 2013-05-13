@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
-import org.apache.commons.collections15.set.UnmodifiableSet;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -128,7 +127,7 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
     /**
      * Set of ResearchProjects that belong under this one.
      */
-    @OneToMany(fetch = FetchType.LAZY, mappedBy="parentResearchProject", cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.LAZY, mappedBy="parentResearchProject")
     private Set<ResearchProject> childProjects = new HashSet<ResearchProject>();
 
     // People related to the project
@@ -383,10 +382,6 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
         }
     }
 
-    public Set<ProjectPerson> getAssociatedPeople() {
-        return UnmodifiableSet.decorate(associatedPeople);
-    }
-
     /**
      * This addPerson should only be used for tests (until we mock up BSP Users better there.
      *
@@ -589,6 +584,14 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
     }
 
     public void setParentResearchProject(ResearchProject parentResearchProject) {
+        // Update parent/child relationships so they are correct. Hibernate will create the correct set of children
+        // the next time the objects are retrieved from the database.
+        if (this.parentResearchProject != null) {
+            this.parentResearchProject.childProjects.remove(this);
+        }
+        if (parentResearchProject != null) {
+            parentResearchProject.childProjects.add(this);
+        }
         this.parentResearchProject = parentResearchProject;
     }
 
@@ -725,4 +728,55 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
         builder.append(title, that.getTitle());
         return builder.build();
     }
+    /**
+     * Return true if a user has permission to access this project's output.  This is true if the user is associated
+     * with the project in any way.
+     *
+     * @param userId the user to check
+     * @return true if use has permission
+     */
+    private boolean userHasProjectAccess(long userId) {
+        for (ProjectPerson person : associatedPeople) {
+            if (person.getPersonId() == userId) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Collect the set of all projects underneath this project, including those that are under sub-projects, etc.
+     *
+     * @param subProjects set to put collected projects in
+     */
+    private void collectSubProjects(Set<ResearchProject> subProjects) {
+        subProjects.add(this);
+        for (ResearchProject child : childProjects) {
+            child.collectSubProjects(subProjects);
+        }
+    }
+
+    /**
+     * Given a project and a user, collect all projects and sub-projects accessible by this user.
+     *
+     * @param userId the user to find
+     * @param accessibleProjects the set to put the projects visible to the user in
+     */
+    public void collectAccessibleByUser(long userId, Set<ResearchProject> accessibleProjects) {
+        if (!accessControlEnabled) {
+            // Access control not enabled, any user can see the data.
+            accessibleProjects.add(this);
+        }
+        if (userHasProjectAccess(userId)) {
+            // User has access, add all sub-projects.
+            collectSubProjects(accessibleProjects);
+        } else {
+            // User doesn't have access, check sub-projects for access.
+            for (ResearchProject child : childProjects) {
+                child.collectAccessibleByUser(userId, accessibleProjects);
+            }
+        }
+    }
+
 }

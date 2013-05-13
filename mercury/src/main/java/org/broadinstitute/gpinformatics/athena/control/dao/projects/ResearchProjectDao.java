@@ -51,61 +51,6 @@ public class ResearchProjectDao extends GenericDao {
     }
 
     /**
-     * Return true if a user has permission to access this project's output.  This is true if the user is associated
-     * with the project in any way.
-     *
-     * @param project the project to check
-     * @param userId the user to check
-     * @return true if use has permission
-     */
-    private static boolean userHasProjectAccess(ResearchProject project, long userId) {
-        for (ProjectPerson person : project.getAssociatedPeople()) {
-            if (person.getPersonId() == userId) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Collect the set of all projects underneath this project, including those that are under sub-projects, etc.
-     *
-     * @param project project to collect sub-projects from
-     * @param subProjects set to put collected projects in
-     */
-    private static void collectSubProjects(ResearchProject project, Set<ResearchProject> subProjects) {
-        subProjects.add(project);
-        for (ResearchProject child : project.getChildProjects()) {
-            collectSubProjects(child, subProjects);
-        }
-    }
-
-    /**
-     * Given a project and a user, collect all projects and sub-projects accessible by this user.
-     *
-     * @param project the project to start the search at
-     * @param userId the user to find
-     * @param accessibleProjects the set to put the projects visible to the user in
-     */
-    private static void collectAccessibleByUser(ResearchProject project, long userId,
-                                                Set<ResearchProject> accessibleProjects) {
-        if (!project.isAccessControlEnabled()) {
-            // Access control not enabled, any user can see the data.
-            accessibleProjects.add(project);
-        }
-        if (userHasProjectAccess(project, userId)) {
-            // User has access, add all sub-projects.
-            collectSubProjects(project, accessibleProjects);
-        } else {
-            // User doesn't have access, check sub-projects for access.
-            for (ResearchProject child : project.getChildProjects()) {
-                collectAccessibleByUser(child, userId, accessibleProjects);
-            }
-        }
-    }
-
-    /**
      * Return a collection of all research projects that are accessible by a user.
      * A project is accessible by a user if:
      * <ul>
@@ -125,7 +70,7 @@ public class ResearchProjectDao extends GenericDao {
         List<ResearchProject> allRootProjects = findList(ResearchProject.class, ResearchProject_.parentResearchProject, null);
 
         for (ResearchProject project : allRootProjects) {
-            collectAccessibleByUser(project, userId, foundProjects);
+            project.collectAccessibleByUser(userId, foundProjects);
         }
 
         return foundProjects;
