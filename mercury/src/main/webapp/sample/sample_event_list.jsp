@@ -75,26 +75,29 @@
                         </table>
                     </td>
                     <td style="padding: 0;">
-                        <c:forEach items="${vessel.workflowLabBatchCompositions}" var="batchComposition">
-                            <a target="JIRA" href="${bean.jiraUrl(batchComposition.labBatch.jiraTicket)}"
-                               class="external" target="JIRA">
-                                    ${batchComposition.labBatch.businessKey}
-                                (${batchComposition.count}/${batchComposition.denominator})
-                            </a>
-
                             <c:forEach items="${vessel.getSampleInstancesForSample(sample)}"
                                        var="sampleInstance">
-                                <c:if test="${not empty sampleInstance.productOrderKey}">
-                                    <stripes:link
-                                            beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"
-                                            event="view" style="margin-left: 3px;">
-                                        <stripes:param name="productOrder"
-                                                       value="${sampleInstance.productOrderKey}"/>
-                                        ${sampleInstance.productOrderKey}
-                                    </stripes:link>
-                                </c:if>
+                                <c:forEach items="${sampleInstance.getLabBatchCompositionInVesselContext(vessel)}"
+                                           var="batchComposition">
+                                    <c:if test="${not empty batchComposition.labBatch.businessKey}">
+                                        <a target="JIRA" href="${bean.jiraUrl(batchComposition.labBatch.jiraTicket)}"
+                                           class="external" target="JIRA">
+                                                ${batchComposition.labBatch.businessKey}
+                                            (${batchComposition.count}/${batchComposition.denominator})
+                                        </a>
+                                    </c:if>
+
+                                    <c:if test="${not empty sampleInstance.productOrderKey}">
+                                        <stripes:link
+                                                beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"
+                                                event="view">
+                                            <stripes:param name="productOrder" value="${sampleInstance.productOrderKey}"/>
+                                            ${sampleInstance.productOrderKey}
+                                        </stripes:link>
+                                    </c:if>
+                                    <br/>
+                                </c:forEach>
                             </c:forEach>
-                        </c:forEach>
                     </td>
                 </tr>
             </c:forEach>
