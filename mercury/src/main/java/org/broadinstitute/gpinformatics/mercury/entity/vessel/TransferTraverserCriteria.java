@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import javax.annotation.Nonnull;
 import java.util.*;
 
+import static org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria.TraversalDirection.Ancestors;
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria.TraversalDirection.Descendants;
 
 /**
@@ -384,4 +385,52 @@ public interface TransferTraverserCriteria {
             return new ArrayList<LabVessel>(sortedTreeMap.values());
         }
     }
+
+    class LabVesselAncestorCriteria implements TransferTraverserCriteria {
+        private final Map<Integer, List<LabVessel>> labVesselAtHopCount = new TreeMap<Integer, List<LabVessel>>();
+
+        @Override
+        public TraversalControl evaluateVesselPreOrder(Context context) {
+            List<LabVessel> vesselList;
+            if (labVesselAtHopCount.containsKey(context.getHopCount())) {
+                vesselList = labVesselAtHopCount.get(context.getHopCount());
+            } else {
+                vesselList = new ArrayList<LabVessel>();
+            }
+
+            if (context.getLabVessel() != null) {
+                vesselList.add(context.getLabVessel());
+            } else if (context.getEvent() != null) {
+                if (context.getTraversalDirection() == Ancestors) {
+                    vesselList.addAll(context.getEvent().getTargetLabVessels());
+                } else {
+                    vesselList.addAll(context.getEvent().getSourceLabVessels());
+                }
+            }
+            labVesselAtHopCount.put(context.getHopCount(), vesselList);
+
+            return TraversalControl.ContinueTraversing;
+        }
+
+        @Override
+        public void evaluateVesselInOrder(Context context) {
+        }
+
+        @Override
+        public void evaluateVesselPostOrder(Context context) {
+        }
+
+        public Collection<LabVessel> getLabVesselDescendants() {
+            Set<LabVessel> allVessels = new HashSet<LabVessel>();
+            for (List<LabVessel> vesselList : labVesselAtHopCount.values()) {
+                allVessels.addAll(vesselList);
+            }
+            Map<Date, LabVessel> sortedTreeMap = new TreeMap<Date, LabVessel>();
+            for (LabVessel vessel : allVessels) {
+                sortedTreeMap.put(vessel.getCreatedOn(), vessel);
+            }
+            return new ArrayList<LabVessel>(sortedTreeMap.values());
+        }
+    }
+
 }

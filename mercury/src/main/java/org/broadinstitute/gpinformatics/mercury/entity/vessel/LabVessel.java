@@ -27,32 +27,9 @@ import org.hibernate.envers.NotAudited;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.persistence.CascadeType;
-import javax.persistence.Embedded;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
-import javax.persistence.OneToMany;
-import javax.persistence.SequenceGenerator;
-import javax.persistence.Table;
-import javax.persistence.Transient;
-import javax.persistence.UniqueConstraint;
+import javax.persistence.*;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 
 /**
  * A piece of plastic or glass that holds sample, reagent or other plastic.
@@ -722,10 +699,11 @@ public abstract class LabVessel implements Serializable {
         if(traversalResults.getSampleInstances().isEmpty() && !mercurySamples.isEmpty()) {
             for (MercurySample mercurySample : mercurySamples) {
                 SampleInstance sampleInstance = new SampleInstance(mercurySample, null, null);
-                Set<LabBatch> batches = getLabBatchesOfType(labBatchType);
-                sampleInstance.setAllLabBatches(batches);
                 traversalResults.add(sampleInstance);
             }
+        }
+        for(SampleInstance sampleInstance : traversalResults.getSampleInstances()){
+            sampleInstance.addLabBatches(getLabBatchesOfType(labBatchType));
         }
         if (bucketEntries.size() > 1) {
             Set<String> productOrderKeys = new HashSet<String>();
@@ -1096,7 +1074,7 @@ public abstract class LabVessel implements Serializable {
     public List<LabBatchComposition> getWorkflowLabBatchCompositions() {
 
         List<SampleInstance> sampleInstances = new ArrayList<SampleInstance>();
-        sampleInstances.addAll(getSampleInstances(SampleType.ANY, null));
+        sampleInstances.addAll(getSampleInstances(SampleType.WITH_PDO, null));
 
         Map<LabBatch, LabBatchComposition> batchMap = new HashMap<LabBatch, LabBatchComposition>();
         for (SampleInstance sampleInstance : sampleInstances) {
@@ -1125,7 +1103,7 @@ public abstract class LabVessel implements Serializable {
     public List<LabBatchComposition> getLabBatchCompositions() {
 
         List<SampleInstance> sampleInstances = new ArrayList<SampleInstance>();
-        sampleInstances.addAll(getSampleInstances(SampleType.ANY, null));
+        sampleInstances.addAll(getSampleInstances(SampleType.WITH_PDO, null));
 
         Map<LabBatch, LabBatchComposition> batchMap = new HashMap<LabBatch, LabBatchComposition>();
         for (SampleInstance sampleInstance : sampleInstances) {
@@ -1183,6 +1161,13 @@ public abstract class LabVessel implements Serializable {
                 new TransferTraverserCriteria.LabVesselDescendantCriteria();
         evaluateCriteria(descendantCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
         return descendantCriteria.getLabVesselDescendants();
+    }
+
+    public Collection<LabVessel> getAncestorVessels() {
+        TransferTraverserCriteria.LabVesselAncestorCriteria ancestorCritera =
+                        new TransferTraverserCriteria.LabVesselAncestorCriteria();
+        evaluateCriteria(ancestorCritera, TransferTraverserCriteria.TraversalDirection.Ancestors);
+        return ancestorCritera.getLabVesselDescendants();
     }
 
     /**
@@ -1325,11 +1310,14 @@ public abstract class LabVessel implements Serializable {
     public Set<SampleInstance> getSampleInstancesForSample(MercurySample sample) {
         Set<SampleInstance> allSamples = new HashSet<SampleInstance>();
         Set<SampleInstance> filteredSamples = new HashSet<SampleInstance>();
+        allSamples.addAll(getSampleInstances(SampleType.WITH_PDO, null));
         allSamples.addAll(getSampleInstances(SampleType.ANY, null));
         for (SampleInstance sampleInstance : allSamples) {
-            if (sampleInstance.getStartingSample().equals(sample)) {
+            //todo jac match on stock sample as well but really we need a way to grab every mercury sample for this instance and check them all (not just starting)
+           if (sampleInstance.getStartingSample().equals(sample) ||
+                   sampleInstance.getStartingSample().getSampleKey().equals(sample.getBspSampleDTO().getStockSample())) {
                 filteredSamples.add(sampleInstance);
-            }
+           }
         }
         return filteredSamples;
     }
