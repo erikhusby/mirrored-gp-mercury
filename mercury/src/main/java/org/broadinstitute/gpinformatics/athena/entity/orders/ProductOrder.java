@@ -78,8 +78,8 @@ public class ProductOrder implements Serializable {
     @Column(name = "MODIFIED_DATE")
     private Date modifiedDate;
 
-    @Column(name = "MODIFIED_BY")
-    private Long modifiedBy;
+    @Column(name = "MODIFIED_BY", nullable = false)
+    private long modifiedBy;
 
     /** Unique title for the order */
     @Column(name = "TITLE", unique = true)
@@ -229,9 +229,11 @@ public class ProductOrder implements Serializable {
         if (businessKey == null) {
             return null;
         }
+
         if (businessKey.startsWith(DRAFT_PREFIX)) {
             return new JiraOrId(Long.parseLong(businessKey.substring(DRAFT_PREFIX.length())), null);
         }
+
         return new JiraOrId(0, businessKey);
     }
 
@@ -259,9 +261,8 @@ public class ProductOrder implements Serializable {
 
         private void output(List<String> output, @Nonnull String label, int compareCount) {
             for (Map.Entry<String, Integer> entry : countMap.entrySet()) {
-                output.add(MessageFormat.format("{0} ''{1}'': {2}", label, entry.getKey(),
-                        formatCountTotal(entry.getValue(), compareCount)));
-
+                output.add(MessageFormat.format(
+                    "{0} ''{1}'': {2}", label, entry.getKey(), formatCountTotal(entry.getValue(), compareCount)));
             }
         }
     }
@@ -270,9 +271,11 @@ public class ProductOrder implements Serializable {
         if (count == 0) {
             return "None";
         }
+
         if (count == compareCount) {
             return "All";
         }
+
         return count;
     }
 
@@ -297,13 +300,54 @@ public class ProductOrder implements Serializable {
         private int uniqueSampleCount;
         private int uniqueParticipantCount;
 
+        /**
+         * Go through all the samples and tabulate statistics.
+         */
         private void generateCounts() {
             if (countsValid) {
                 return;
             }
 
+            // This gets the BSP data for every sample in the order.
             loadBspData();
 
+            // Initialize all counts.
+            clearAllData();
+
+            Set<String> sampleSet = new HashSet<String>(samples.size());
+            Set<String> participantSet = new HashSet<String>();
+
+            for (ProductOrderSample sample : samples) {
+                if (sampleSet.add(sample.getSampleName())) {
+                    // This is a unique sample name, so do any counts that are only needed for unique names. Since
+                    // BSP looks up samples by name, it would always get the same data, so only counting unique values.
+                    if (sample.isInBspFormat()) {
+                        bspSampleCount++;
+
+                        if (sample.bspMetaDataMissing()) {
+                            missingBspMetaDataCount++;
+                        } else {
+                            updateDTOCounts(participantSet, sample.getBspDTO());
+                        }
+                    }
+                }
+
+                // We can calculate on risk for any sample on the product and it can be done differently for each
+                // sample of the same name. Therefore, we want to calculate this for each item.
+                if (sample.isOnRisk()) {
+                    onRiskCount++;
+                }
+            }
+
+            uniqueSampleCount = sampleSet.size();
+            uniqueParticipantCount = participantSet.size();
+            countsValid = true;
+        }
+
+        /**
+         * initialize all the counters.
+         */
+        private void clearAllData() {
             totalSampleCount = samples.size();
             bspSampleCount = 0;
             receivedSampleCount = 0;
@@ -315,54 +359,41 @@ public class ProductOrder implements Serializable {
             stockTypeCounter.clear();
             primaryDiseaseCounter.clear();
             genderCounter.clear();
-            Set<String> sampleSet = new HashSet<String>(samples.size());
-            Set<String> participantSet = new HashSet<String>();
+        }
 
-            for (ProductOrderSample sample : samples) {
-                if (sampleSet.add(sample.getSampleName())) {
-                    if (sample.isInBspFormat()) {
-                        bspSampleCount++;
-
-                        if (sample.bspMetaDataMissing()) {
-                            missingBspMetaDataCount++;
-                        }
-
-                        BSPSampleDTO bspDTO = sample.getBspDTO();
-                        if (bspDTO.isSampleReceived()) {
-                            receivedSampleCount++;
-                        }
-                        if (bspDTO.isActiveStock()) {
-                            activeSampleCount++;
-                        }
-
-                        stockTypeCounter.increment(bspDTO.getStockType());
-
-                        String participantId = bspDTO.getPatientId();
-                        if (StringUtils.isNotBlank(participantId)) {
-                            participantSet.add(participantId);
-                        }
-
-                        primaryDiseaseCounter.increment(bspDTO.getPrimaryDisease());
-                        genderCounter.increment(bspDTO.getGender());
-                        if (bspDTO.getHasFingerprint()) {
-                            hasFPCount++;
-                        }
-
-                        if (bspDTO.getHasSampleKitUploadRackscanMismatch()) {
-                            hasSampleKitUploadRackscanMismatch++;
-                        }
-
-                        sampleTypeCounter.increment(bspDTO.getSampleType());
-
-                        if (sample.isOnRisk()) {
-                            onRiskCount++;
-                        }
-                    }
-                }
+        /**
+         * Update all the counts related to BSP information.
+         *
+         * @param participantSet The unique collection of participants by Id.
+         * @param bspDTO The BSP DTO.
+         */
+        private void updateDTOCounts(Set<String> participantSet, BSPSampleDTO bspDTO) {
+            if (bspDTO.isSampleReceived()) {
+                receivedSampleCount++;
             }
-            uniqueSampleCount = sampleSet.size();
-            uniqueParticipantCount = participantSet.size();
-            countsValid = true;
+
+            if (bspDTO.isActiveStock()) {
+                activeSampleCount++;
+            }
+
+            stockTypeCounter.increment(bspDTO.getStockType());
+
+            String participantId = bspDTO.getPatientId();
+            if (StringUtils.isNotBlank(participantId)) {
+                participantSet.add(participantId);
+            }
+
+            primaryDiseaseCounter.increment(bspDTO.getPrimaryDisease());
+            genderCounter.increment(bspDTO.getGender());
+            if (bspDTO.getHasFingerprint()) {
+                hasFPCount++;
+            }
+
+            if (bspDTO.getHasSampleKitUploadRackscanMismatch()) {
+                hasSampleKitUploadRackscanMismatch++;
+            }
+
+            sampleTypeCounter.increment(bspDTO.getSampleType());
         }
 
         /**
@@ -435,8 +466,6 @@ public class ProductOrder implements Serializable {
             }
         }
 
-        // TODO: Will need to implement more extensive validations vs specific products; will need to move these
-        // checks elsewhere.
         /**
          * Check to see if the samples are valid.
          * - for all BSP formatted sample IDs, do we have BSP data?
@@ -475,7 +504,16 @@ public class ProductOrder implements Serializable {
     public ProductOrder(@Nonnull Long creatorId, @Nonnull String title,
                         @Nonnull List<ProductOrderSample> samples, String quoteId,
                         Product product, ResearchProject researchProject) {
+
+        // Set the dates and modified values so that tests don't have to call prepare and will never create bogus
+        // data. Before adding this, tests were being created with null values, which caused problems, so taking out
+        // the requirement on prepare.
+        Date now = new Date();
         createdBy = creatorId;
+        createdDate = now;
+        modifiedBy = creatorId;
+        modifiedDate = now;
+
         this.title = title;
         setSamples(samples);
         this.quoteId = quoteId;
@@ -610,6 +648,7 @@ public class ProductOrder implements Serializable {
             // FIXME: This seems incorrect in the case where current sample list is non-empty and incoming samples are empty.
             return;
         }
+
         // Only update samples if the new sample list is different from the old one.
         if (isSampleListDifferent(samples)) {
             this.samples.clear();
@@ -698,7 +737,7 @@ public class ProductOrder implements Serializable {
         return modifiedBy;
     }
 
-    public void setModifiedBy(Long modifiedBy) {
+    public void setModifiedBy(long modifiedBy) {
         this.modifiedBy = modifiedBy;
     }
 

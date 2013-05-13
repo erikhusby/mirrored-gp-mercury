@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftFileAccessor;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.testng.annotations.Test;
@@ -20,7 +21,11 @@ public class DbFreeSquidThriftLibraryConverterTest {
     public void test_mercury_fields() throws Exception {
         TZamboniRun thriftRun = ThriftFileAccessor.deserializeRun();
         ResearchProject project = new ResearchProject(1L,"RP title","rp synopsis",false);
-        ProductOrder pdo = new ProductOrder(new BspUser(),project);
+
+        BspUser bspUser = new BspUser();
+        bspUser.setUserId(ResearchProjectTestFactory.TEST_CREATOR);
+
+        ProductOrder pdo = new ProductOrder(bspUser, project);
         pdo.setJiraTicketKey("PDO-2");
         pdo.setProduct(new Product("Mashed Potatoes",new ProductFamily("Mashed Things"),
                 null,null,null,null,null,null,null,null,null,null,false,null,false, "with gravy"));

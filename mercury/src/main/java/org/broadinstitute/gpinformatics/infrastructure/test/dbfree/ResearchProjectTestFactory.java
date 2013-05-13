@@ -62,7 +62,7 @@ public class ResearchProjectTestFactory {
 
         BspUser user = userList.getById(TEST_CREATOR);
         dummyProject.addPeople(RoleType.PM, Collections.singletonList(user));
-        dummyProject.submit();
+        dummyProject.submitToJira();
         return dummyProject;
     }
 }

@@ -48,9 +48,8 @@ public class ResearchProjectFixupTest extends Arquillian {
         StringBuilder userTitleList = new StringBuilder();
         for (ResearchProject rp : rpList) {
             if (StringUtils.isBlank(rp.getJiraTicketKey())) {
-                // Create the JIRA
                 try {
-                    rp.submit();
+                    rp.submitToJira();
                     rpListToPersist.add(rp);
                 } catch (Exception e) {
                     count++;
