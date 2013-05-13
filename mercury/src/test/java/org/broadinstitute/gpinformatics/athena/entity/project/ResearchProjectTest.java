@@ -3,16 +3,27 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
-import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.arrayWithSize;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 
 
 /**
@@ -117,4 +128,65 @@ public class ResearchProjectTest {
 
         assertThat(researchProject.getJiraTicketKey(), is(equalTo(RESEARCH_PROJ_JIRA_KEY)));
     }
+
+    private static ResearchProject createResearchProjectForACLTest(ResearchProject parent, boolean aclEnabled,
+                                                                   Long testUser) {
+        ResearchProject project = ResearchProjectTestFactory.createTestResearchProject();
+        project.setJiraTicketKey("TEST-" + UUID.randomUUID().toString());
+        project.setParentResearchProject(parent);
+        project.setAccessControlEnabled(aclEnabled);
+        if (testUser != null) {
+            project.addPerson(RoleType.BROAD_PI, testUser);
+        }
+        return project;
+    }
+
+    @DataProvider(name = "collectAccessible")
+    public Object[][] testCollectAccessibleDataProvider() {
+
+        long testUser = 1234;
+
+        // Trivial tests
+        ResearchProject anyAllowed = createResearchProjectForACLTest(null, false, null);
+        ResearchProject noneAllowed = createResearchProjectForACLTest(null, true, null);
+        ResearchProject oneAllowed = createResearchProjectForACLTest(null, true, testUser);
+        ResearchProject otherAllowed = createResearchProjectForACLTest(null, true, testUser + 1);
+
+        // Create test tree:
+        // root - ACL enabled, doesn't have user
+        // - p1 - ACL enabled, has user
+        //   - p11 - ACL enabled, doesn't have user
+        //   - p12 - ACL enabled, has user
+        // - p2 - ACL not enabled, doesn't have user
+        //   - p21 - ACL enabled, doesn't have user
+        //     - p31 - ACL enabled, has user
+        //   - p22 - ACL not enabled, has user
+
+        ResearchProject root = createResearchProjectForACLTest(null, true, null);
+        ResearchProject p1 = createResearchProjectForACLTest(root, true, testUser);
+        ResearchProject p11 = createResearchProjectForACLTest(p1, true, null);
+        ResearchProject p12 = createResearchProjectForACLTest(p1, true, testUser);
+        ResearchProject p2 = createResearchProjectForACLTest(root, false, null);
+        ResearchProject p21 = createResearchProjectForACLTest(p2, true, null);
+        ResearchProject p31 = createResearchProjectForACLTest(p21, true, testUser);
+        ResearchProject p22 = createResearchProjectForACLTest(p2, false, testUser);
+
+        return new Object[][] {
+                {anyAllowed, testUser, Collections.singleton(anyAllowed)},
+                {anyAllowed, testUser + 1, Collections.singleton(anyAllowed)},
+                {noneAllowed, testUser, Collections.emptySet()},
+                {oneAllowed, testUser, Collections.singleton(oneAllowed)},
+                {oneAllowed, testUser + 1, Collections.emptySet()},
+                {otherAllowed, testUser, Collections.emptySet()},
+                {root, testUser, new HashSet<ResearchProject>(Arrays.asList(p1, p11, p12, p2, p31, p22))},
+        };
+    }
+
+    @Test(dataProvider = "collectAccessible")
+    public void testCollectAccessibleByUser(ResearchProject root, long userId, Set<ResearchProject> expected) {
+        Set<ResearchProject> found = new HashSet<ResearchProject>();
+        root.collectAccessibleByUser(userId, found);
+        Assert.assertEquals(found, expected);
+    }
 }
+

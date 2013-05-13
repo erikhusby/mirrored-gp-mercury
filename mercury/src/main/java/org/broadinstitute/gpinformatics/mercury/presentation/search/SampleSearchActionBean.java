@@ -1,21 +1,13 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.search;
 
-import net.sourceforge.stripes.action.DefaultHandler;
-import net.sourceforge.stripes.action.ForwardResolution;
-import net.sourceforge.stripes.action.HandlesEvent;
-import net.sourceforge.stripes.action.Resolution;
-import net.sourceforge.stripes.action.UrlBinding;
+import net.sourceforge.stripes.action.*;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import javax.inject.Inject;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @UrlBinding(SampleSearchActionBean.ACTIONBEAN_URL_BINDING)
 public class SampleSearchActionBean extends SearchActionBean {
@@ -51,6 +43,7 @@ public class SampleSearchActionBean extends SearchActionBean {
             List<LabVessel> vessels = getLabVesselDao().findBySampleKey(searchKey);
             Set<LabVessel> allVessels = new LinkedHashSet<LabVessel>(vessels);
             for (LabVessel vessel : vessels) {
+                allVessels.addAll(vessel.getAncestorVessels());
                 allVessels.addAll(vessel.getDescendantVessels());
             }
             if (!samples.isEmpty()) {
