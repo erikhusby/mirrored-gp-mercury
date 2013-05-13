@@ -25,7 +25,8 @@
                     {"bSortable":true},
                     {"bSortable":true, sWidth:'1px'},
                     {"bSortable":true, "sType":"html"}
-                ]
+                ],
+                "bRetrieve": true
             });
         }
     </script>
