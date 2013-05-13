@@ -98,7 +98,7 @@ public class ProductOrder implements Serializable {
     @Column(name = "QUOTE_ID")
     private String quoteId = "";
 
-    /** Additional comments of the order */
+    /** Additional comments on the order. */
     @Column(length = 2000)
     private String comments;
 
@@ -108,12 +108,12 @@ public class ProductOrder implements Serializable {
     @Column(name="PUBLICATION_DEADLINE")
     private Date publicationDeadline;
 
-    /** Reference to the Jira Ticket created when the order is placed. Null means that the order is a draft */
+    /** Reference to the Jira Ticket created when the order is placed. Null means that the order is a draft. */
     @Column(name = "JIRA_TICKET_KEY", nullable = true)
     private String jiraTicketKey;
 
     @Column(name = "count")
-    /** counts the number of lanes; the default value is one lane */
+    /** Counts the number of lanes, the default value is one lane. */
     private int laneCount = 1;
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
@@ -128,8 +128,9 @@ public class ProductOrder implements Serializable {
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "productOrder", orphanRemoval = true)
     private final Set<ProductOrderAddOn> addOns = new HashSet<ProductOrderAddOn>();
 
+    // This is used for edit to keep track of changes to the object.
     @Transient
-    private String originalTitle;   // This is used for edit to keep track of changes to the object.
+    private String originalTitle;
 
     // Initialize our transient data after the object has been loaded from the database.
     @PostLoad
@@ -176,7 +177,7 @@ public class ProductOrder implements Serializable {
     }
 
     /**
-     * This calculates risk for all samples on the order
+     * This calculates risk for all samples in the order.
      *
      * @return The number of samples calculated to be on risk.
      */
@@ -677,7 +678,7 @@ public class ProductOrder implements Serializable {
         List<String> originalSampleNames = ProductOrderSample.getSampleNames(samples);
         List<String> newSampleNames = ProductOrderSample.getSampleNames(newSamples);
 
-        // If not equals, then this has changed
+        // If not equals, then this has changed.
         return !newSampleNames.equals(originalSampleNames);
     }
 
@@ -780,19 +781,19 @@ public class ProductOrder implements Serializable {
         BSPSampleDataFetcher bspSampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
         Map<String, BSPSampleDTO> bspSampleMetaData = bspSampleDataFetcher.fetchSamplesFromBSP(names);
 
-        // the non-null DTOs which we use to look up FFPE status
+        // The non-null DTOs which we use to look up FFPE status.
         List<BSPSampleDTO> nonNullDTOs = new ArrayList<BSPSampleDTO>();
         for (ProductOrderSample sample : samples) {
             BSPSampleDTO bspSampleDTO = bspSampleMetaData.get(sample.getSampleName());
 
-            // If the DTO is null, we do not need to set it because it defaults to DUMMY inside sample
+            // If the DTO is null, we do not need to set it because it defaults to DUMMY inside sample.
             if (bspSampleDTO != null) {
                 sample.setBspDTO(bspSampleDTO);
                 nonNullDTOs.add(bspSampleDTO);
             }
         }
 
-        // fill out all the non-null DTOs with FFPE status in one shot
+        // Fill out all the non-null DTOs with FFPE status in one shot.
         bspSampleDataFetcher.fetchFFPEDerived(nonNullDTOs);
     }
 
@@ -803,8 +804,8 @@ public class ProductOrder implements Serializable {
     }
 
     /**
-     * getUniqueParticipantCount provides the summation of all unique participants represented in the list of samples
-     * registered to this product order
+     * Provides the summation of all unique participants represented in the list of samples
+     * registered to this product order.
      *
      * @return a count of every participant that is represented by at least one sample in the list of product order
      *         samples
@@ -829,7 +830,7 @@ public class ProductOrder implements Serializable {
     }
 
     /**
-     * getTotalSampleCount exposes how many samples are registered to this product order
+     * Exposes how many samples are registered to this product order.
      *
      * @return a count of all samples registered to this product order
      */
@@ -838,8 +839,8 @@ public class ProductOrder implements Serializable {
     }
 
     /**
-     * getDuplicateCount exposes how many samples registered to this product order are represented by more than one
-     * sample in the list
+     * Exposes how many samples registered to this product order are represented by more than one
+     * sample in the list.
      *
      * @return a count of all samples that have more than one entry in the registered sample list
      */
@@ -849,7 +850,7 @@ public class ProductOrder implements Serializable {
     }
 
     /**
-     * getBspSampleCount exposes how many of the samples, which are registered to this product order, are from BSP
+     * Exposes how many of the samples, which are registered to this product order, are from BSP.
      *
      * @return a count of all product order samples that come from bsp
      */
@@ -874,8 +875,8 @@ public class ProductOrder implements Serializable {
     }
 
     /**
-     * getFingerprintCount calculates how many samples registered to this product order have a fingerprint associated
-     * with it
+     * Calculates how many samples registered to this product order have a fingerprint associated
+     * with it.
      *
      * @return a count of the samples that have a fingerprint
      */
@@ -884,8 +885,8 @@ public class ProductOrder implements Serializable {
     }
 
     /**
-     * getCountsByStockType exposes the summation of each unique stock type found in the list of samples registered to
-     * this product order
+     * Exposes the summation of each unique stock type found in the list of samples registered to
+     * this product order.
      *
      * @return a Map, indexed by the unique stock type found, which gives a count of how many samples in the list of
      *         product order samples, are related to that stock type
@@ -895,8 +896,8 @@ public class ProductOrder implements Serializable {
     }
 
     /**
-     * getReceivedSampleCount is a helper method that determines how many BSP samples registered to this product order
-     * are marked as Received
+     * Helper method that determines how many BSP samples registered to this product order
+     * are marked as Received.
      *
      * @return a count of all samples in this product order that are in a RECEIVED state
      */
@@ -905,8 +906,8 @@ public class ProductOrder implements Serializable {
     }
 
     /**
-     * getActiveSampleCount is a helper method that determines how many BSP samples registered to the product order are
-     * in an Active state
+     * Helper method that determines how many BSP samples registered to the product order are
+     * in an Active state.
      *
      * @return a count of all samples in this product order that are in an ACTIVE state
      */
@@ -1023,7 +1024,7 @@ public class ProductOrder implements Serializable {
     }
 
     /**
-     * isSheetEmpty validates the existence of samples in the product order
+     * Validates the existence of samples in the product order.
      *
      * @return true if there are no samples currently assigned to this product order
      */
