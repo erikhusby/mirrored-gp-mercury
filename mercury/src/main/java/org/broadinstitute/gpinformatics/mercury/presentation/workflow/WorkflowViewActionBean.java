@@ -23,7 +23,7 @@ import java.util.Set;
 @UrlBinding("/view/workflowView.action")
 public class WorkflowViewActionBean extends CoreActionBean {
 
-    private static final String VIEW_PAGE = "/resources/workflow/workflowView.jsp";
+    private static final String VIEW_PAGE = "/workflow/workflow.jsp";
 
     @Inject
     private LabVesselDao labVesselDao;
@@ -38,7 +38,8 @@ public class WorkflowViewActionBean extends CoreActionBean {
 
     private LabEvent latestEvent;
 
-    private Map<String, ProductWorkflowDefVersion> productWorkflowDefVersionMap = new HashMap<String, ProductWorkflowDefVersion>();
+    private Map<String, ProductWorkflowDefVersion> productWorkflowDefVersionMap =
+            new HashMap<String, ProductWorkflowDefVersion>();
 
     public LabVessel getVessel() {
         return vessel;

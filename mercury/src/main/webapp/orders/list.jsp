@@ -290,7 +290,7 @@
                             <td>${order.researchProjectTitle}</td>
                             <td>${actionBean.getUserFullName(order.ownerId)}</td>
                             <td>
-                                <fmt:formatDate value="${order.placedDate}"/>
+                                <fmt:formatDate value="${order.placedDate}" pattern="${actionBean.datePattern}"/>
                             </td>
                             <td align="center">
                                 <div class="barFull" title="${actionBean.progressFetcher.getPercentInProgress(order.businessKey)}% In Progress">

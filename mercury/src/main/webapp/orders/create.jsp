@@ -269,7 +269,8 @@
                             <label class="control-label">Funding Deadline</label>
                             <div class="controls">
                                 <div class="form-value">
-                                    <fmt:formatDate value="${actionBean.editOrder.fundingDeadline}"/>
+                                    <fmt:formatDate value="${actionBean.editOrder.fundingDeadline}"
+                                                    pattern="${actionBean.datePattern}"/>
                                 </div>
                             </div>
                         </div>
@@ -278,7 +279,8 @@
                             <label class="control-label">Publication Deadline</label>
                             <div class="controls">
                                 <div class="form-value">
-                                    <fmt:formatDate value="${actionBean.editOrder.publicationDeadline}"/>
+                                    <fmt:formatDate value="${actionBean.editOrder.publicationDeadline}"
+                                                    pattern="${actionBean.datePattern}"/>
                                 </div>
                             </div>
                         </div>
