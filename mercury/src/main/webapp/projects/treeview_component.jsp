@@ -3,7 +3,6 @@
 <!-- Recursive Stripes component that will display the full tree of child projects based on the supplied parameter childProjects. -->
 
 <stripes:layout-definition>
-    <c:if test="${(childProjects != null)}">
         <stripes:useActionBean var="projectLinkBean"
                                beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" />
 
@@ -30,7 +29,5 @@
                 </li>
             </c:forEach>
         </ul>
-
-    </c:if>
 
 </stripes:layout-definition>
