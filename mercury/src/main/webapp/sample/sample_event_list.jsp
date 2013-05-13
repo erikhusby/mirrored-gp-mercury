@@ -9,32 +9,30 @@
 
 <stripes:layout-definition>
     <script type="text/javascript">
-
         $j(document).ready(function () {
-            $j(".accordion").on("accordionactivate", drawTable);
-        });
-
-        function drawTable() {
-            var resultsId = "#sampleEventListView${index}";
-            $j(resultsId).dataTable({
-                "oTableTools":ttExportDefines,
-                "aaSorting":[
-                    [1, 'asc']
-                ],
-                "aoColumns":[
-                    {"bSortable":true},
-                    {"bSortable":true, "sType":"date"},
-                    {"bSortable":true},
-                    {"bSortable":true},
-                    {"bSortable":true},
-                    {"bSortable":true, "sType":"html"}
-                ],
-                "bRetrieve": true
+            $j(".accordion").on("accordionactivate", function( event, ui ) {
+                        var active = $j('.accordion').accordion('option', 'active');
+                        var resultsId = "#sampleEventListView" + active;
+                        $j(resultsId).dataTable({
+                            "oTableTools":ttExportDefines,
+                            "aaSorting":[
+                                [1, 'asc']
+                            ],
+                            "aoColumns":[
+                                {"bSortable":true},
+                                {"bSortable":true, "sType":"date"},
+                                {"bSortable":true},
+                                {"bSortable":true},
+                                {"bSortable":true},
+                                {"bSortable":true, "sType":"html"}
+                            ],
+                            "bRetrieve": true
+                        });
             });
-        }
+        });
     </script>
 
-    <table id="sampleEventListView${index}" class="table simple" style="margin: 0 0; width: 100%;">
+    <table id="sampleEventListView${index - 1}" class="table simple" style="margin: 0 0; width: 100%;">
         <thead>
         <tr>
             <th>Event</th>

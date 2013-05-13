@@ -8,30 +8,28 @@
 
 <stripes:layout-definition>
     <script type="text/javascript">
-
         $j(document).ready(function () {
-            $j(".accordion").on("accordionactivate", drawTable);
-        });
-
-        function drawTable() {
-            var resultsId = "#vesselSampleListView${index}";
-            $j(resultsId).dataTable({
-                "oTableTools":ttExportDefines,
-                "aaSorting":[
-                    [2, 'asc']
-                ],
-                "aoColumns":[
-                    {"bSortable":true, sWidth:'100px'},
-                    {"bSortable":true},
-                    {"bSortable":true, sWidth:'1px'},
-                    {"bSortable":true, "sType":"html"}
-                ],
-                "bRetrieve": true
+            $j(".accordion").on("accordionactivate", function( event, ui ) {
+                        var active = $j('.accordion').accordion('option', 'active');
+                        var resultsId = "#vesselSampleListView" + active;
+                        $j(resultsId).dataTable({
+                            "oTableTools":ttExportDefines,
+                            "aaSorting":[
+                                [2, 'asc']
+                            ],
+                            "aoColumns":[
+                                {"bSortable":true, sWidth:'100px'},
+                                {"bSortable":true},
+                                {"bSortable":true, sWidth:'1px'},
+                                {"bSortable":true, "sType":"html"}
+                            ],
+                            "bRetrieve": true
+                        });
             });
-        }
+        });
     </script>
 
-    <table id="vesselSampleListView${index}" class="table simple" style="margin: 0 0; width: 100%;">
+    <table id="vesselSampleListView${index - 1}" class="table simple" style="margin: 0 0; width: 100%;">
         <thead>
         <tr>
             <th>Sample</th>
@@ -41,7 +39,7 @@
         </tr>
         </thead>
         <tbody>
-        <c:forEach items="${vessel.sampleInstances}" var="sample">
+        <c:forEach items="${vessel.getSampleInstances('WITH_PDO', null)}" var="sample">
             <tr>
                 <td>
                     <stripes:link
@@ -66,7 +64,7 @@
                 </td>
                 <td style="padding: 0;">
                     <table style="padding: 0">
-                        <c:forEach items="${vessel.getPositionsOfSample(sample)}" var="position">
+                        <c:forEach items="${vessel.getPositionsOfSample(sample, 'WITH_PDO')}" var="position">
                             <tr>
                                 <td style="border: none;">
                                         ${position}
