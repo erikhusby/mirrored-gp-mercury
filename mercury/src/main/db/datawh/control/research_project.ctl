@@ -12,5 +12,7 @@ TRAILING NULLCOLS
  created_date DATE "YYYYMMDDHH24MISS",
  title,
  irb_not_engaged,
- jira_ticket_key
+ jira_ticket_key,
+ parent_research_project_id,
+ root_research_project_id
 )

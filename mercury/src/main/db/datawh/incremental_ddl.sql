@@ -13,3 +13,10 @@ CREATE TABLE im_ledger_entry (
   product_order_sample_id NUMERIC(19),
   quote_id VARCHAR2(255)
 );
+alter table im_research_project add (parent_research_project_id numeric(19,0));
+alter table im_research_project add (root_research_project_id numeric(19,0));
+alter table research_project add (parent_research_project_id numeric(19,0));
+alter table research_project add (root_research_project_id numeric(19,0));
+
+create index ix_parent_project on research_project (parent_research_project_id);
+create index ix_root_project on research_project (root_research_project_id);
