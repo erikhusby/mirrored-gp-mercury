@@ -69,7 +69,7 @@ public class ResearchProjectTest {
         }
 
         /**
-         * Positive test -- this should work find, no loops.
+         * Positive test -- this should work fine, no loops.
          */
         anotherResearchProject.setParentResearchProject(null);
         researchProject.setParentResearchProject(anotherResearchProject);
