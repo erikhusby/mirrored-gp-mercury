@@ -119,6 +119,8 @@ FOR new IN im_rp_cur LOOP
       title = new.title,
       irb_not_engaged = new.irb_not_engaged,
       jira_ticket_key = new.jira_ticket_key,
+      parent_research_project_id = new.parent_research_project_id,
+      root_research_project_id = new.root_research_project_id,
       etl_date = new.etl_date
     WHERE research_project_id = new.research_project_id;
 
@@ -129,6 +131,8 @@ FOR new IN im_rp_cur LOOP
       title,
       irb_not_engaged,
       jira_ticket_key,
+      parent_research_project_id,
+      root_research_project_id,
       etl_date
     )
     SELECT
@@ -138,6 +142,8 @@ FOR new IN im_rp_cur LOOP
       new.title,
       new.irb_not_engaged,
       new.jira_ticket_key,
+      new.parent_research_project_id,
+      new.root_research_project_id,
       new.etl_date
     FROM DUAL WHERE NOT EXISTS (
       SELECT 1 FROM research_project

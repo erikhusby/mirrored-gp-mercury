@@ -60,7 +60,6 @@ import java.util.TreeSet;
 @Audited
 @Table(name = "RESEARCH_PROJECT", schema = "athena")
 public class ResearchProject implements Serializable, Comparable<ResearchProject> {
-
     public static final boolean IRB_ENGAGED = false;
     public static final boolean IRB_NOT_ENGAGED = true;
 
@@ -247,10 +246,6 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
 
     public void addIrbNotes(String irbNotes) {
         this.irbNotes += "\n" + irbNotes;
-    }
-
-    public ResearchProject getParentProject() {
-        return parentResearchProject;
     }
 
     public Set<ResearchProject> getChildProjects() {
@@ -581,6 +576,28 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
 
     public ResearchProject getParentResearchProject() {
         return parentResearchProject;
+    }
+
+    public ResearchProject getRootResearchProject() {
+        return traverseParents(parentResearchProject);
+    }
+
+    /**
+     * Traverse through all the potential parent projects until we get to the root parent.
+     *
+     * @param traverseProject the project to traverse up the tree
+     * @return the root research project for this research project or null if it's not defined
+     */
+    private ResearchProject traverseParents (ResearchProject traverseProject) {
+        if (traverseProject == null) {
+            return null;
+        }
+
+        if (traverseProject.getParentResearchProject() == null) {
+            return traverseProject;
+        }
+
+        return traverseParents(traverseProject.getParentResearchProject());
     }
 
     public void setParentResearchProject(ResearchProject parentResearchProject) {
