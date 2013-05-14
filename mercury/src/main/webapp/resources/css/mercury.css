@@ -155,3 +155,12 @@ legend { display: block; width: auto; padding: 0; margin-bottom: 0; margin-left:
 legend + .control-group { margin-top: 0px; -webkit-margin-top-collapse: separate; }
 
 .input-create-form { width: 385px; }
+
+.ui-accordion .ui-accordion-header {display: block;cursor: pointer;margin-top: 2px;zoom: 1;padding: .5em .5em .5em .5em;}
+
+.accordion .ui-state-default { color: #777777;border: 1px solid #777777; background: #f6f6f6;}
+.accordion .ui-state-hover { color: #0088CC;border: 1px solid #0088CC; background: #f9fbff;}
+.accordion .ui-state-active { color: #0088CC; border: 1px solid #0088CC;background: #f9fbff;}
+.accordion .ui-state-focus {color: #0088CC; border: 1px solid #0088CC; background: #f9fbff;}
+.accordion .ui-icon {background-image: url("/Mercury/images/ui-icons_222222_256x240.png") !important;}
+.accordion .ui-state-active .ui-icon { background-image: url("/Mercury/images/ui-icons_2e83ff_256x240.png") !important;}
