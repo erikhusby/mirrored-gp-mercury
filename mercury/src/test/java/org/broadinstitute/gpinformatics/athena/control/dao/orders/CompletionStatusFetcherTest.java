@@ -13,7 +13,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import javax.transaction.UserTransaction;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -27,36 +26,23 @@ import static org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
 public class CompletionStatusFetcherTest extends ContainerTest {
 
-    @SuppressWarnings("CdiInjectionPointsInspection")
-    @Inject
-    private UserTransaction utx;
-
     @Inject
     private ProductOrderDao pdoDao;
 
     private CompletionStatusFetcher allPDOFetcher;
 
     @BeforeMethod
-    public void setUp() throws Exception {        // Skip if no injections, meaning we're not running in container.
-        if (utx == null) {
-            return;
+    public void setUp() throws Exception {
+        // Skip if no injections, meaning we're not running in container.
+        if (pdoDao != null) {
+            // Get all statuses.
+            allPDOFetcher = new CompletionStatusFetcher();
+            allPDOFetcher.loadProgress(pdoDao);
         }
-
-        utx.begin();
-
-        // Get all statuses.
-        allPDOFetcher = new CompletionStatusFetcher();
-        allPDOFetcher.loadProgress(pdoDao);
     }
 
     @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void tearDown() throws Exception {
-        // Skip if no injections, meaning we're not running in container.
-        if (utx == null) {
-            return;
-        }
-
-        utx.rollback();
     }
 
     public void testGetPercentAbandoned() throws Exception {
@@ -80,8 +66,8 @@ public class CompletionStatusFetcherTest extends ContainerTest {
         ProductOrderCompletionStatus realStatus = calculateStatus(order.getSamples());
 
         Assert.assertEquals(
-            fetcherPercentAbandoned, realStatus.getPercentAbandoned(),
-            "Fetcher calculated different abandon percentage");
+                fetcherPercentAbandoned, realStatus.getPercentAbandoned(),
+                "Fetcher calculated different abandon percentage");
     }
 
     public void testGetPercentComplete() throws Exception {
