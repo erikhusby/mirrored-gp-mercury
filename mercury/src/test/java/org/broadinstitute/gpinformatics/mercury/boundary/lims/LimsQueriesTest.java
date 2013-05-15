@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PlateTransferType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.WellAndSourceTubeType;
+import org.hamcrest.Matchers;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -20,6 +21,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.instanceOf;
 
 /**
  * Tests for LimsQueries boundary interface.
@@ -120,6 +122,23 @@ public class LimsQueriesTest {
         assertThat(result.get(1).getSourceSection(), equalTo("ALL96"));
         assertThat(result.get(1).getDestinationBarcode(), equalTo("plate3"));
         assertThat(result.get(1).getDestinationSection(), equalTo("ALL96"));
+
+        verify(staticPlateDAO);
+    }
+
+    @Test(groups = DATABASE_FREE)
+    public void testFetchTransfersForPlateNotFound() {
+        expect(staticPlateDAO.findByBarcode("unknown_plate")).andReturn(null);
+        replay(staticPlateDAO);
+
+        Exception caught = null;
+        try {
+            limsQueries.fetchTransfersForPlate("unknown_plate", 2);
+        } catch (Exception e) {
+            caught = e;
+        }
+        assertThat(caught, instanceOf(RuntimeException.class));
+        assertThat(caught.getMessage(), Matchers.equalTo("Plate not found for barcode: unknown_plate"));
 
         verify(staticPlateDAO);
     }
