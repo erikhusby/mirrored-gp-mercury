@@ -80,7 +80,7 @@
                         <c:forEach items="${sampleInstance.getLabBatchCompositionInVesselContext(vessel)}"
                                    var="batchComposition">
                             <c:if test="${not empty batchComposition.labBatch.businessKey}">
-                                <a target="JIRA" href="${bean.jiraUrl(batchComposition.labBatch.jiraTicket)}"
+                                <a target="JIRA" href="${batchComposition.labBatch.jiraTicket.browserUrl}"
                                    class="external" target="JIRA">
                                         ${batchComposition.labBatch.businessKey}
                                     (${batchComposition.count}/${batchComposition.denominator})
