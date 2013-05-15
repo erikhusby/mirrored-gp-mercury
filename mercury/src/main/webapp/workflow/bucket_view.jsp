@@ -150,7 +150,7 @@
         </tr>
     </table>
 </c:if>
-<div class="borderHeader"> Samples</div>
+<div class="borderHeader"><h4>Samples</h4></div>
 <br/>
 <table id="bucketEntryView" class="table simple">
     <thead>
@@ -245,7 +245,7 @@
     </tbody>
 </table>
 
-<div class="borderHeader">Samples for Rework</div>
+<div class="borderHeader"><h4>Samples for Rework</h4></div>
 <br/>
 <table id="reworkEntryView" class="table simple">
     <thead>
