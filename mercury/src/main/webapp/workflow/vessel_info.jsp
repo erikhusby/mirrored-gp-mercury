@@ -17,7 +17,7 @@
         <c:forEach items="${actionBean.labVessel.nearestWorkflowLabBatches}" var="batch">
             <div class="control-group">
                 <stripes:label for="batch" class="control-label">
-                    Batch:
+                    Batch
                 </stripes:label>
                 <div class="controls">
                     <div id="batch"><stripes:link target="JIRA"
@@ -29,7 +29,7 @@
         </c:forEach>
         <div class="control-group">
             <stripes:label for="workflowName" class="control-label">
-                Workflow Name:
+                Workflow Name
             </stripes:label>
             <div class="controls">
                 <div id="workflowName`">${actionBean.workflowName}</div>
@@ -37,7 +37,7 @@
         </div>
         <div class="control-group">
             <stripes:label for="sampleCount" class="control-label">
-                Sample Count:
+                Sample Count
             </stripes:label>
             <div class="controls">
                 <div id="sampleCount">${actionBean.labVessel.getSampleInstanceCount("WITH_PDO", null)}</div>
@@ -45,7 +45,7 @@
         </div>
         <div class="control-group">
             <stripes:label for="selectedBucket" class="control-label">
-                Rework To Bucket:
+                Rework To Bucket
             </stripes:label>
             <div class="controls">
 
