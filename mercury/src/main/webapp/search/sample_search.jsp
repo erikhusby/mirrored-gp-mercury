@@ -11,6 +11,9 @@
             $(document).ready(function () {
                 $j("#accordion").accordion({ collapsible:true, active:false, heightStyle:"content", autoHeight:false });
                 $j("#accordion").show();
+                if(${fn:length(actionBean.mercurySampleToVessels) == 1}){
+                    $j("#accordion").accordion({active: 0})
+                }
 
                 if (${not actionBean.searchDone}) {
                     showSearch();
@@ -45,7 +48,7 @@
                     </div>
 
                     <div class="control-group">
-                        <div class="controls"">
+                        <div class="controls">
                             <stripes:submit name="sampleSearch" value="Search" class="btn btn-primary"/>
                         </div>
                     </div>
@@ -68,7 +71,7 @@
                                                    sample="${sampleToVessels.key}"/>
                         </div>
 
-                        <div id="sampleList-${sampleToVessels.key}" style="height: 300px;">
+                        <div id="sampleList-${sampleToVessels.key}">
                             <div>
                                 <stripes:layout-render name="/sample/sample_event_list.jsp"
                                                        vessels="${sampleToVessels.value}"

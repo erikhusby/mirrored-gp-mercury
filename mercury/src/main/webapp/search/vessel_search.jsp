@@ -11,6 +11,9 @@
 
                 $j("#accordion").accordion({  collapsible:true, active:false, heightStyle:"content", autoHeight:false});
                 $j("#accordion").show();
+                if(${fn:length(actionBean.foundVessels) == 1}){
+                    $j("#accordion").accordion({active: 0})
+                }
 
                 if (${not actionBean.searchDone}) {
                     showSearch();
@@ -70,7 +73,7 @@
                                                    vessel="${vessel}"/>
                         </div>
 
-                        <div id="vesselList-${vessel.labCentricName}" style="height: 300px;">
+                        <div id="vesselList-${vessel.labCentricName}">
                             <div>
                                 <stripes:layout-render name="/vessel/vessel_sample_list.jsp" vessel="${vessel}"
                                                        index="${status.count}" bean="${actionBean}"/>

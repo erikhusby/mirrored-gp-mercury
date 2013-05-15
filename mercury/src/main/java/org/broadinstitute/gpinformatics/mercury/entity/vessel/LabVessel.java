@@ -1238,14 +1238,20 @@ public abstract class LabVessel implements Serializable {
      */
     public Set<MolecularIndexReagent> getIndexesForSample(MercurySample sample) {
         Set<MolecularIndexReagent> indexes = new HashSet<MolecularIndexReagent>();
-        for (SampleInstance sampleInstance : getAllSamplesOfType(SampleType.WITH_PDO)) {
+        for (SampleInstance sampleInstance : getAllSamplesOfType(SampleType.ANY)) {
             if (sampleInstance.getStartingSample().equals(sample)) {
-                for (Reagent reagent : sampleInstance.getReagents()) {
-                    if (OrmUtil.proxySafeIsInstance(reagent, MolecularIndexReagent.class)) {
-                        MolecularIndexReagent indexReagent = (MolecularIndexReagent) reagent;
-                        indexes.add(indexReagent);
-                    }
-                }
+                indexes.addAll(getIndexesForSampleInstance(sampleInstance));
+            }
+        }
+        return indexes;
+    }
+
+    public Set<MolecularIndexReagent> getIndexesForSampleInstance(SampleInstance sampleInstance) {
+        Set<MolecularIndexReagent> indexes = new HashSet<MolecularIndexReagent>();
+        for (Reagent reagent : sampleInstance.getReagents()) {
+            if (OrmUtil.proxySafeIsInstance(reagent, MolecularIndexReagent.class)) {
+                MolecularIndexReagent indexReagent = (MolecularIndexReagent) reagent;
+                indexes.add(indexReagent);
             }
         }
         return indexes;
@@ -1352,18 +1358,16 @@ public abstract class LabVessel implements Serializable {
      *
      * @return A set of sample instances of the mercury sample passed in.
      */
-    public Set<SampleInstance> getSampleInstancesForSample(MercurySample sample) {
+    public Set<SampleInstance> getSampleInstancesForSample(MercurySample sample, SampleType sampleType) {
         Set<SampleInstance> allSamples = new HashSet<SampleInstance>();
         Set<SampleInstance> filteredSamples = new HashSet<SampleInstance>();
-        allSamples.addAll(getSampleInstances(SampleType.WITH_PDO, null));
-        allSamples.addAll(getSampleInstances(SampleType.ANY, null));
+        allSamples.addAll(getSampleInstances(sampleType, null));
         for (SampleInstance sampleInstance : allSamples) {
             //todo jac match on stock sample as well but really we need a way to grab every mercury sample for this instance and check them all (not just starting)
-
-           if (sampleInstance.getStartingSample() != null && sampleInstance.getStartingSample().equals(sample) ||
-                   sampleInstance.getStartingSample().getSampleKey().equals(sample.getBspSampleDTO().getStockSample())) {
+            if (sampleInstance.getStartingSample() != null && sampleInstance.getStartingSample().equals(sample)
+                    || (sample.getBspSampleDTO() != null && sampleInstance.getStartingSample().getSampleKey().equals(sample.getBspSampleDTO().getStockSample()))) {
                 filteredSamples.add(sampleInstance);
-           }
+            }
         }
         return filteredSamples;
     }
