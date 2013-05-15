@@ -1225,12 +1225,16 @@ public abstract class LabVessel implements Serializable {
         return indexes;
     }
 
+    /**
+     * This method return the unique indexes for this vessel.
+     * @return A set of unique indexes in this vessel.
+     */
     public Set<MolecularIndexReagent> getUniqueIndexes() {
         return new HashSet<MolecularIndexReagent>(getIndexes());
     }
 
     /**
-     * This method gets index information only for the single samples passed in.
+     * This method gets index information only for the single sample passed in.
      *
      * @param sample The mercury sample to get the index information for.
      *
@@ -1246,6 +1250,13 @@ public abstract class LabVessel implements Serializable {
         return indexes;
     }
 
+    /**
+     * This method gets index information only for the single sample instance passed in.
+     *
+     * @param sampleInstance The sample instance to get the index information for.
+     *
+     * @return A set of indexes for the sample instance passed in.
+     */
     public Set<MolecularIndexReagent> getIndexesForSampleInstance(SampleInstance sampleInstance) {
         Set<MolecularIndexReagent> indexes = new HashSet<MolecularIndexReagent>();
         for (Reagent reagent : sampleInstance.getReagents()) {
