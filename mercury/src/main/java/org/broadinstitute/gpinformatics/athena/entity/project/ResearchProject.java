@@ -578,26 +578,16 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
         return parentResearchProject;
     }
 
-    public ResearchProject getRootResearchProject() {
-        return traverseParents(parentResearchProject);
-    }
-
     /**
-     * Traverse through all the potential parent projects until we get to the root parent.
-     *
-     * @param traverseProject the project to traverse up the tree
-     * @return the root research project for this research project or null if it's not defined
+     * Traverse through all the potential parent projects until we get to the root parent.  If the parent research
+     * project is null, then it returns itself as the root node.
      */
-    private ResearchProject traverseParents (ResearchProject traverseProject) {
-        if (traverseProject == null) {
-            return null;
+     public ResearchProject getRootResearchProject() {
+        if (parentResearchProject == null) {
+            return this;
         }
 
-        if (traverseProject.getParentResearchProject() == null) {
-            return traverseProject;
-        }
-
-        return traverseParents(traverseProject.getParentResearchProject());
+        return parentResearchProject.getRootResearchProject();
     }
 
     public void setParentResearchProject(ResearchProject parentResearchProject) {
