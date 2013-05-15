@@ -61,7 +61,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @Inject
     private ProjectTokenInput projectTokenInput;
 
-    @Validate(required = true, on = {EDIT_ACTION, VIEW_ACTION, "projectHierarchyAwareAutocomplete"})
+    @Validate(required = true, on = {EDIT_ACTION, VIEW_ACTION})
     private String researchProject;
 
     @ValidateNestedProperties({
@@ -363,6 +363,11 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @HandlesEvent("projectHierarchyAwareAutocomplete")
     public Resolution projectHierarchyAwareAutocomplete() throws Exception {
         researchProject = getContext().getRequest().getParameter(RESEARCH_PROJECT_PARAMETER);
+
+        if (StringUtils.isEmpty(researchProject)) {
+            // Calling method when no project parameter is supplied, so just return full list.
+            return projectAutocomplete();
+        }
 
         editResearchProject = researchProjectDao.findByBusinessKey(researchProject);
         Collection<ResearchProject> childResearchProjects = editResearchProject.getAllChildren();
