@@ -17,7 +17,7 @@ public class WorkflowStepDef implements Serializable {
 
     private static final long serialVersionUID = 20130101L;
 
-    enum QuantType {
+    public enum QuantType {
         PICO,
         ECO_QPCR,
         FINAL_LIBRARY_SIZE,
