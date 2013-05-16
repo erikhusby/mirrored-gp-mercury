@@ -7,6 +7,8 @@ import net.sourceforge.stripes.validation.ValidationMethod;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
+import java.util.List;
+
 @UrlBinding(value = "/view/uploadQuants.action")
 public class UploadQuantsActionBean extends CoreActionBean {
 
@@ -31,6 +33,10 @@ public class UploadQuantsActionBean extends CoreActionBean {
 
     public void setQuantType(LabMetric.MetricType quantType) {
         this.quantType = quantType;
+    }
+
+    public List<LabMetric.MetricType> getUploadEnabledMetricTypes(){
+        return LabMetric.MetricType.getUploadSupportedMetrics();
     }
 
     @DefaultHandler

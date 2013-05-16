@@ -14,8 +14,8 @@
                     <stripes:label for="quantType" class="control-label">Quant Type</stripes:label>
                     <div class="controls">
                         <stripes:select name="quantType">
-                            <stripes:options-enumeration
-                                    enum="org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric.MetricType" label="displayName" />
+                            <stripes:options-collection collection="${actionBean.uploadEnabledMetricTypes}"
+                                                        label="displayName"/>
                         </stripes:select>
                     </div>
                     <stripes:label for="quantFile" class="control-label">
