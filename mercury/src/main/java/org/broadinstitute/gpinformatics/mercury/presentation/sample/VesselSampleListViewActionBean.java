@@ -138,7 +138,7 @@ public class VesselSampleListViewActionBean extends CoreActionBean {
         StringBuilder reagentInfo = new StringBuilder();
         for (Reagent reagent : sample.getReagents()) {
             if (!(OrmUtil.proxySafeIsInstance(reagent, MolecularIndexReagent.class))) {
-                reagentInfo.append(reagent.getReagentName());
+                reagentInfo.append(reagent.getName());
                 reagentInfo.append(" - ");
                 reagentInfo.append(reagent.getLot());
                 reagentInfo.append("\n");

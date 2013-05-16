@@ -22,7 +22,7 @@ public class GenericReagentDao extends GenericDao {
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<GenericReagent> criteriaQuery = criteriaBuilder.createQuery(GenericReagent.class);
         Root<GenericReagent> root = criteriaQuery.from(GenericReagent.class);
-        criteriaQuery.where(criteriaBuilder.equal(root.get(GenericReagent_.reagentName), reagentName));
+        criteriaQuery.where(criteriaBuilder.equal(root.get(GenericReagent_.name), reagentName));
         criteriaQuery.where(criteriaBuilder.equal(root.get(GenericReagent_.lot), lot));
         try {
             return getEntityManager().createQuery(criteriaQuery).getSingleResult();

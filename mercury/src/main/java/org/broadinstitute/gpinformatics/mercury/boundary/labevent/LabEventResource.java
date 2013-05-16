@@ -75,7 +75,7 @@ public class LabEventResource {
                     operator == null ? "Unknown user: " + labEvent.getEventOperator() : operator.getUsername(),
                     labEvent.getEventDate());
             for (Reagent reagent : labEvent.getReagents()) {
-                labEventBean.getReagents().add(new ReagentBean(reagent.getReagentName(), reagent.getLot()));
+                labEventBean.getReagents().add(new ReagentBean(reagent.getName(), reagent.getLot()));
             }
 
             labEventBean.setBatchId(labEvent.getLabBatch().getBatchName());

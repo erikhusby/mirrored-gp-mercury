@@ -2,24 +2,14 @@ package org.broadinstitute.gpinformatics.mercury.entity.reagent;
 
 import org.hibernate.envers.Audited;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.SequenceGenerator;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 /**
- * Some chemistry bits applied to Goop to help
- * transform it into a sequenceable state.
+ * Some chemistry bits applied to Goop to help transform it into a sequenceable state.
  * 
- * Basic rule of thumb: Things that you want to
- * sequence are Goop.  Things that the lab
- * consumes from other vendors (IDT, Fluidigm,
- * Illumina, etc.) are {@link Reagent}s.  Oligos
- * like primers and baits are not Goop.
- * Although they contain DNA, they are considered
- * {@link Reagent}s.
+ * Basic rule of thumb: Things that you want to sequence are Goop.  Things that the lab consumes from other
+ * vendors (IDT, Fluidigm, Illumina, etc.) are {@link Reagent}s.  Oligos like primers and baits are not Goop.
+ * Although they contain DNA, they are considered {@link Reagent}s.
  */
 @Entity
 @Audited
@@ -31,37 +21,26 @@ public abstract class Reagent {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_REAGENT")
     private Long reagentId;
 
-    private String reagentName;
+    @Column(name = "REAGENT_NAME")
+    private String name;
 
+    @Column(name = "LOT")
     private String lot;
 
-//    @ManyToOne(cascade = CascadeType.PERSIST)
-//    private MolecularEnvelope molecularEnvelope;
-
-    protected Reagent(String reagentName, String lot/*, MolecularEnvelope molecularEnvelope*/) {
-        this.reagentName = reagentName;
+    protected Reagent(String reagentName, String lot) {
+        this.name = reagentName;
         this.lot = lot;
-//        this.molecularEnvelope = molecularEnvelope;
     }
 
     protected Reagent() {
     }
 
-    /**
-     * Returns the MolecularEnvelope that this
-     * reagent applies to the target sample.
-     * @return
-     */
-//    public MolecularEnvelope getMolecularEnvelopeDelta() {
-//        return molecularEnvelope;
-//    }
-
-    public String getReagentName() {
-        return reagentName;
+    public String getName() {
+        return name;
     }
 
-    public void setReagentName(String reagentName) {
-        this.reagentName = reagentName;
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getLot() {
