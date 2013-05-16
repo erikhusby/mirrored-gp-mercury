@@ -666,7 +666,7 @@ AutoFill.prototype = {
 	
 	
 	/**
-	 * Render a string for it's position in the table after the drag (incrememt numbers)
+	 * Render a string for its position in the table after the drag (incrememt numbers).
 	 *  @method  _fnStep
 	 *  @param   {Node} nTd Cell being written to
 	 *  @param   {Object} oPrepped Prepared object for the stepper (from _fnPrep)

@@ -700,7 +700,7 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
     }
 
     /**
-     * Compare by the ResearchProject by it's title, case insensitive.
+     * Compare by the ResearchProject by its title, case insensitive.
      */
     public static final Comparator<ResearchProject> BY_TITLE = new Comparator<ResearchProject>() {
         @Override
