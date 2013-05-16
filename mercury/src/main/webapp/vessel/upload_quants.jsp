@@ -15,7 +15,7 @@
                     <div class="controls">
                         <stripes:select name="quantType">
                             <stripes:options-enumeration
-                                    enum="org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef.QuantType"/>
+                                    enum="org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric.MetricType" label="displayName" />
                         </stripes:select>
                     </div>
                     <stripes:label for="quantFile" class="control-label">

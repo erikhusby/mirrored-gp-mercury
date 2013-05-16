@@ -4,7 +4,7 @@ import net.sourceforge.stripes.action.*;
 import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidationErrors;
 import net.sourceforge.stripes.validation.ValidationMethod;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 @UrlBinding(value = "/view/uploadQuants.action")
@@ -15,7 +15,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
 
     @Validate(required = true, on = "uploadQuant")
     private FileBean quantSpreadsheet;
-    private WorkflowStepDef.QuantType quantType;
+    private LabMetric.MetricType quantType;
 
     public FileBean getQuantSpreadsheet() {
         return quantSpreadsheet;
@@ -25,11 +25,11 @@ public class UploadQuantsActionBean extends CoreActionBean {
         this.quantSpreadsheet = quantSpreadsheet;
     }
 
-    public WorkflowStepDef.QuantType getQuantType() {
+    public LabMetric.MetricType getQuantType() {
         return quantType;
     }
 
-    public void setQuantType(WorkflowStepDef.QuantType quantType) {
+    public void setQuantType(LabMetric.MetricType quantType) {
         this.quantType = quantType;
     }
 
