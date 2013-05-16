@@ -2,10 +2,10 @@ package org.broadinstitute.gpinformatics.mercury.entity.reagent;
 
 import com.sun.jersey.api.client.Client;
 import org.apache.commons.io.FileUtils;
-import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
+import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchBean;
@@ -20,6 +20,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.testng.Arquillian;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
@@ -53,7 +56,7 @@ import java.util.Map;
  *
  * As of January 2013, the test takes about 35 minutes to run.
  */
-public class ImportFromSquidTest extends ContainerTest {
+public class ImportFromSquidTest extends Arquillian {
 
     public static final String TEST_MERCURY_URL = "http://localhost:8080/Mercury";
     @PersistenceContext(unitName = "squid_pu")
@@ -85,6 +88,12 @@ public class ImportFromSquidTest extends ContainerTest {
 
     public static final String IMPORT_DATE_FORMAT = "yyyy-MM-dd";
     private SimpleDateFormat importDateFormat = new SimpleDateFormat(IMPORT_DATE_FORMAT);
+
+    @Deployment
+    public static WebArchive buildMercuryWar() {
+        return DeploymentBuilder.buildMercuryWar(
+                org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV, "dev");
+    }
 
     /**
      * Import index schemes from Squid.
