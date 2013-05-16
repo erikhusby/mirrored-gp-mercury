@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselAndPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PlateTransferType;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.WellAndSourceTubeType;
 
 import javax.inject.Inject;
@@ -83,5 +84,45 @@ public class LimsQueries {
             results.add(result);
         }
         return results;
+    }
+
+    /**
+     * service call is fetchIlluminaSeqTemplate(String id,enum idType, boolean isPoolTest)
+     * id can be a flowcell barcode, a tube barcode, a strip tube barcode, or a miseq reagent kit (no FCT ticket name)
+     * see confluence page for more details:
+     * <p/>
+     * if fields in the spec are not in mercury, the service will return null values.
+     * All field names must be in the returned json but their values can be null.
+     *
+     * @param id         can be an id for a flowcell barcode, a tube barcode, a strip tube barcode, or a miseq reagent kit
+     * @param idType     the type you are fetching. see id.
+     * @param isPoolTest
+     *
+     * @see <a href= "https://confluence.broadinstitute.org/display/GPI/Mercury+V2+ExEx+Fate+of+Thrift+Services+and+Structs">Mercury V2 ExEx Fate of Thrift Services and Structs</a><br/>
+     *      <a href= "https://gpinfojira.broadinstitute.org:8443/jira/browse/GPLIM-1309">Unified Loader Service v1</a>
+     */
+    public SequencingTemplateType fetchIlluminaSeqTemplate(Long id, IdType idType, boolean isPoolTest) {
+        SequencingTemplateType sequencingTemplate=null;
+        switch (idType) {
+        case FLOWCELL:
+            break;
+        case TUBE:
+            break;
+        case STRIP_TUBE:
+            break;
+        case MISEQ_REAGENT_KIT:
+            break;
+        case FCT:
+            break;
+        }
+        // TODO: implement this!!
+        return sequencingTemplate;
+    }
+
+    /**
+     * The type object that will be returned for the given identifier.     *
+     */
+    public static enum IdType {
+        FLOWCELL, TUBE, STRIP_TUBE, MISEQ_REAGENT_KIT, FCT;
     }
 }

@@ -286,4 +286,14 @@ public class LimsQueryResource {
         }
         return poolGroupTypes;
     }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/fetchIlluminaSeqTemplate")
+    public SequencingTemplateType fetchIlluminaSeqTemplate(@QueryParam("id") Long id,
+                                                           @QueryParam("idType") LimsQueries.IdType idType,
+                                                           @QueryParam("isPoolTest") boolean isPoolTest) {
+        return limsQueries.fetchIlluminaSeqTemplate(id, idType, isPoolTest);
+    }
+
 }

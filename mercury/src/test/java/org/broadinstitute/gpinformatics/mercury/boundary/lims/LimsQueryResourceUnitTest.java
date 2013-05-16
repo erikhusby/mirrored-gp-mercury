@@ -12,6 +12,10 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedT
 import org.broadinstitute.gpinformatics.mercury.control.lims.LimsQueryResourceResponseFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.FlowcellDesignationType;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.IndexPositionType;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.IndexingSchemeType;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateLaneType;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateType;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -25,8 +29,13 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DA
 import static org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid.BOTH;
 import static org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid.MERCURY;
 import static org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid.SQUID;
-import static org.easymock.EasyMock.*;
-import static org.hamcrest.CoreMatchers.*;
+import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.verify;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
@@ -369,6 +378,51 @@ public class LimsQueryResourceUnitTest {
         } catch (Exception e) {
 
         }
+
+        verifyAll();
+    }
+
+    @Test(groups = DATABASE_FREE)
+    public void testFetchIlluminaSeqTemplate() {
+
+        final SequencingTemplateType template = new SequencingTemplateType();
+        template.setBarcode("BARCODE_1234");
+        template.setName("NAME_1234");
+        template.setOnRigWorkflow("Resequencing");
+        template.setOnRigChemistry("Default");
+        template.setReadStructure("76T8B76T");
+        template.setPairedRun(true);
+
+        IndexingSchemeType indexingSchemeType=new IndexingSchemeType();
+        indexingSchemeType.setPosition(IndexPositionType.A);
+        indexingSchemeType.setSequence("AGCT");
+
+        SequencingTemplateLaneType laneType=new SequencingTemplateLaneType();
+        laneType.setIndexingScheme(indexingSchemeType);
+        laneType.setLaneName("LANE_1324");
+        laneType.setLoadingConcentration(3.33);
+        laneType.setLoadingVesselLabel("LOADING_VESSEL_1234");
+
+        template.getLanes().add(laneType);
+
+        expect(resource.fetchIlluminaSeqTemplate(1234L, LimsQueries.IdType.FLOWCELL, true)).andReturn(template);
+        replayAll();
+        SequencingTemplateType result = resource.fetchIlluminaSeqTemplate(1234L, LimsQueries.IdType.FLOWCELL, true);
+
+        assertThat(result, notNullValue());
+        Assert.assertEquals(result.getBarcode(), "BARCODE_1234");
+        Assert.assertEquals(result.getName(), "NAME_1234");
+        Assert.assertEquals(result.getOnRigChemistry(), "Default");
+        Assert.assertEquals(result.getOnRigWorkflow(), "Resequencing");
+        Assert.assertEquals(result.getReadStructure(), "76T8B76T");
+        Assert.assertEquals(result.isPairedRun(), true);
+        Assert.assertEquals(result.getLanes().size(), 1);
+        final SequencingTemplateLaneType laneOne = result.getLanes().get(0);
+        Assert.assertEquals(laneOne.getIndexingScheme(), indexingSchemeType);
+        Assert.assertEquals(laneOne.getLoadingConcentration(), 3.33);
+        Assert.assertEquals(laneOne.getLoadingVesselLabel(), "LOADING_VESSEL_1234");
+        Assert.assertEquals(laneOne.getLaneName(), "LANE_1324");
+        Assert.assertEquals(laneOne.getIndexingScheme(), indexingSchemeType);
 
         verifyAll();
     }
