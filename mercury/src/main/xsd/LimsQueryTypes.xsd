@@ -40,7 +40,7 @@
                     </xsd:documentation>
                 </xsd:annotation>
             </xsd:element>
-            <xsd:element name="indexingScheme" type="indexingSchemeType"/>
+            <xsd:element name="indexingScheme" type="indexingSchemeType" maxOccurs="unbounded"/>
         </xsd:sequence>
     </xsd:complexType>
 

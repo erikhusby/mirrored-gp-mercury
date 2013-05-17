@@ -398,7 +398,7 @@ public class LimsQueryResourceUnitTest {
         indexingSchemeType.setSequence("AGCT");
 
         SequencingTemplateLaneType laneType=new SequencingTemplateLaneType();
-        laneType.setIndexingScheme(indexingSchemeType);
+        laneType.getIndexingScheme().add(indexingSchemeType);
         laneType.setLaneName("LANE_1324");
         laneType.setLoadingConcentration(3.33);
         laneType.setLoadingVesselLabel("LOADING_VESSEL_1234");
