@@ -13,11 +13,11 @@ import javax.persistence.*;
 public class AnalysisType {
 
     @Id
-    @SequenceGenerator(name = "SEQ_ANALYSIS_TYPE_TYPE", schema = "mercury", sequenceName = "SEQ_ANALYSIS_TYPE_TYPE", allocationSize = 10)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_ANALYSIS_TYPE_TYPE")
+    @SequenceGenerator(name = "SEQ_ANALYSIS_TYPE", schema = "mercury", sequenceName = "SEQ_ANALYSIS_TYPE", allocationSize = 10)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_ANALYSIS_TYPE")
     private Long analysisTypeId;
 
-    @Column(name = "ANALYSIS_TYPE_TYPE_NAME")
+    @Column(name = "NAME")
     private final String name;
 
     public AnalysisType(String name) {
