@@ -17,6 +17,10 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign_;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
 import java.util.List;
 
 /**
@@ -32,5 +36,18 @@ public class ReagentDesignDao extends GenericDao {
 
     public ReagentDesign findByBusinessKey(String value) {
         return findSingle(ReagentDesign.class, ReagentDesign_.designName, value);
+    }
+
+    public ReagentDesign findBaitsByBusinessKey(String value) {
+
+        CriteriaBuilder criteriaBuilder = getCriteriaBuilder();
+        final CriteriaQuery<ReagentDesign> query = criteriaBuilder.createQuery(ReagentDesign.class);
+        Root<ReagentDesign> root = query.from(ReagentDesign.class);
+        Predicate namePredicate = criteriaBuilder.equal(root.get(ReagentDesign_.designName), value);
+        Predicate typePredicate = criteriaBuilder.equal(
+            root.get(ReagentDesign_.reagentType), ReagentDesign.ReagentType.BAIT);
+
+        query.where(criteriaBuilder.and(namePredicate, typePredicate));
+        return getEntityManager().createQuery(query).getSingleResult();
     }
 }

@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.analysis.AnalysisEjb;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.Aligner;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.AnalysisType;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReferenceSequence;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -20,8 +21,6 @@ import java.util.List;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
 public class AnalysisFixupTest extends Arquillian {
-
-    private static final Log logger = LogFactory.getLog(AnalysisFixupTest.class);
 
     @Inject
     private AnalysisEjb analysisEjb;
@@ -66,6 +65,8 @@ public class AnalysisFixupTest extends Arquillian {
         analysisEjb.addReferenceSequence(referenceSequence);
 
         // Add the baits
-
+        analysisEjb.addReagentDesign(new ReagentDesign("Secret Reagent Man", ReagentDesign.ReagentType.BAIT));
+        analysisEjb.addReagentDesign(new ReagentDesign("Agent", ReagentDesign.ReagentType.BAIT));
+        analysisEjb.addReagentDesign(new ReagentDesign("A Gent", ReagentDesign.ReagentType.BAIT));
     }
 }
