@@ -37,6 +37,8 @@ public class QtpJaxbBuilder {
     private String stripTubeBarcode;
     private final WorkflowName workflowName;
     private String denatureTubeBarcode;
+    private String ecoPlateBarcode;
+    private PlateTransferEventType ecoTransferEventJaxb;
 
     public QtpJaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageFactory, String testPrefix,
                           List<List<String>> listLcsetListNormCatchBarcodes, List<String> normCatchRackBarcodes,
@@ -120,6 +122,12 @@ public class QtpJaxbBuilder {
             bettaLimsMessageTestFactory.addMessage(messageList, poolingTransferJaxb);
             i++;
         }
+
+        // EcoTransfer
+        ecoPlateBarcode = "EcoPlate" + testPrefix;
+        ecoTransferEventJaxb = bettaLimsMessageTestFactory.buildRackToPlate("EcoTransfer", poolRackBarcode,
+                poolTubeBarcodes, ecoPlateBarcode);
+        bettaLimsMessageTestFactory.addMessage(messageList, ecoTransferEventJaxb);
 
         // DenatureTransfer
         denatureRackBarcode = "DenatureRack" + testPrefix;
