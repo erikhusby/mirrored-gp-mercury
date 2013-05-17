@@ -61,6 +61,8 @@ public class LabBatch {
 
     private Date createdOn;
 
+    private boolean isValidationBatch;
+
     /**
      * needed for fix-up test
      *
@@ -238,6 +240,14 @@ public class LabBatch {
 
     public Date getCreatedOn() {
         return createdOn;
+    }
+
+    public boolean isValidationBatch() {
+        return isValidationBatch;
+    }
+
+    public void setValidationBatch(boolean validationBatch) {
+        isValidationBatch = validationBatch;
     }
 
     public String getBatchDescription() {

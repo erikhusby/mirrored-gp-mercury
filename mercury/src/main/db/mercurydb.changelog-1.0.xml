@@ -1574,4 +1574,10 @@ END;
         </createIndex>
     </changeSet>
 
+    <changeSet id="GPLIM-1312-1" author="breilly">
+        <addColumn tableName="lab_batch" schemaName="mercury">
+            <column name="is_validation_batch" type="number(1,0)"/>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
