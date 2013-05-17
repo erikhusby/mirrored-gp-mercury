@@ -14,13 +14,16 @@
             <xsd:element name="onRigChemistry" type="xsd:string"/>
             <xsd:element name="readStructure" type="xsd:string">
                 <xsd:annotation>
-                    <xsd:documentation>A read structure object, is a textual encoding of templates, barcodes, or skips.
-                        For example:<br/>
-                        a 76-base paired-end read with one molecular barcode index will look like this "76T8B76T"<br/>
-                        a 101-base paired-end read with dual indices will look like this: "101T8B8B101T"<br/>
+                    <xsd:documentation>A read structure string is a textual encoding of templates, barcodes, or skips.
+                        For example:
+                        <br/>
+                        a 76-base paired-end read with one molecular barcode index will look like this "76T8B76T"
+                        <br/>
+                        a 101-base paired-end read with dual indices will look like this: "101T8B8B101T"
+                        <br/>
                     </xsd:documentation>
                 </xsd:annotation>
-                    </xsd:element>
+            </xsd:element>
             <xsd:element name="lanes" type="sequencingTemplateLaneType" maxOccurs="unbounded"/>
         </xsd:sequence>
     </xsd:complexType>

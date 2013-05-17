@@ -310,10 +310,14 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
                         "FLOWCELL").queryParam("isPoolTest","true");
         String result = get(resource);
         assertThat(result, equalTo("{\"name\":null,\"barcode\":\"0089526681\",\"pairedRun\":false,\"onRigWorkflow\":null,\"onRigChemistry\":null,\"readStructure\":null,\"lanes\":[]}"));
+    }
 
-        resource =
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testFetchIlluminaSeqTemplateBadEnum(@ArquillianResource URL baseUrl) {
+        WebResource resource =
                 makeWebResource(baseUrl, "fetchIlluminaSeqTemplate").queryParam("id", "0089526681").queryParam("idType",
-                        "THISWILLFAIL").queryParam("isPoolTest", "true");
+                                        "THISWILLFAIL").queryParam("isPoolTest", "true");
 
         UniformInterfaceException caught = getWithError(resource);
         assertThat(caught.getResponse().getStatus(), equalTo(500));
