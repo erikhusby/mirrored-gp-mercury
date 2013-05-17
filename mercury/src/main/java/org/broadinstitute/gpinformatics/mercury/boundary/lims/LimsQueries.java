@@ -113,17 +113,17 @@ public class LimsQueries {
             break;
         case MISEQ_REAGENT_KIT:
             break;
-        case FCT:
-            break;
         }
         // TODO: implement this!!
         return sequencingTemplate;
     }
 
     /**
-     * The type object that will be returned for the given identifier.     *
+     * The type object that will be returned for the given identifier.
+     * FTC Ticket names are not yet supported
      */
     public static enum IdType {
-        FLOWCELL, TUBE, STRIP_TUBE, MISEQ_REAGENT_KIT, FCT;
+        FLOWCELL, TUBE, STRIP_TUBE,// , FCT
+        MISEQ_REAGENT_KIT,
     }
 }
