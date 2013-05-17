@@ -24,28 +24,25 @@ public class ReferenceSequence {
     private Long sequenceId;
 
     @Column(name = "NAME", length = 100, nullable = false)
-    private String name;
+    private final String name;
 
     @Column(name = "VERSION", length = 50, nullable = false)
-    private String version;
+    private final String version;
 
     @Column(name = "IS_CURRENT", nullable = false)
     private boolean isCurrent;
+
+    public ReferenceSequence(String name, String version) {
+        this.name = name;
+        this.version = version;
+    }
 
     public String getName() {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
     public String getVersion() {
         return version;
-    }
-
-    public void setVersion(String version) {
-        this.version = version;
     }
 
     public boolean isCurrent() {
@@ -54,5 +51,9 @@ public class ReferenceSequence {
 
     public void setCurrent(boolean current) {
         isCurrent = current;
+    }
+
+    public String getBusinessKey() {
+        return name + '|' + version;
     }
 }

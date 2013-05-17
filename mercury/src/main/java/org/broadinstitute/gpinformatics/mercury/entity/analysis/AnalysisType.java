@@ -18,13 +18,17 @@ public class AnalysisType {
     private Long analysisTypeId;
 
     @Column(name = "ANALYSIS_TYPE_TYPE_NAME")
-    private String name;
+    private final String name;
+
+    public AnalysisType(String name) {
+        this.name = name;
+    }
 
     public String getName() {
         return name;
     }
 
-    public void setName(String analysisTypeName) {
-        this.name = analysisTypeName;
+    public String getBusinessKey() {
+        return name;
     }
 }

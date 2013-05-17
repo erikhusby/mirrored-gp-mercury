@@ -24,13 +24,17 @@ public class Aligner {
     private Long alignerId;
 
     @Column(name = "NAME")
-    private String name;
+    private final String name;
+
+    public Aligner(String name) {
+        this.name = name;
+    }
 
     public String getName() {
         return name;
     }
 
-    public void setName(String alignerName) {
-        this.name = alignerName;
+    public String getBusinessKey() {
+        return name;
     }
 }
