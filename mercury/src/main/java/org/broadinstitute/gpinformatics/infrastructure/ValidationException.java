@@ -1,5 +1,8 @@
 package org.broadinstitute.gpinformatics.infrastructure;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * Created by IntelliJ IDEA.
  * User: mccrory
@@ -8,8 +11,15 @@ package org.broadinstitute.gpinformatics.infrastructure;
  */
 public class ValidationException extends Exception {
 
+    Set<String> validationMessages = new HashSet<String>();
+
     public ValidationException(String s) {
         super(s);
+    }
+
+    public ValidationException(String message, Set<String> validationMessages) {
+        super(message);
+        this.validationMessages = validationMessages;
     }
 
     public ValidationException(String s, Throwable throwable) {

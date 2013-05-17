@@ -56,14 +56,15 @@ public class LabMetric {
     public enum MetricType {
 //        FRAGMENT_SIZE,
 //        VOLUME,
-        BSP_PICO("BSP Pico", true),
-        PRE_FLIGHT_PRE_NORM_PICO("Pre Flight Pre Norm Pico", true),
-        PRE_FLIGHT_POST_NORM_PICO("Pre Flight Post Norm Pico", true),
+        BSP_PICO("BSP Pico", false),
+        PRE_FLIGHT_PRE_NORM_PICO("Pre Flight Pre Norm Pico", false),
+        PRE_FLIGHT_POST_NORM_PICO("Pre Flight Post Norm Pico", false),
         POND_PICO("Pond Pico", true),
         CATCH_PICO("Catch Pico", true),
         FINAL_LIBRARY_SIZE("Final Library Size", false),
-        POST_NORMALIZATION_PICO("Post-Normalization Pico", true),
-        TSCA_PICO("TSCA Pico", true);
+        POST_NORMALIZATION_PICO("Post-Normalization Pico", false),
+        TSCA_PICO("TSCA Pico", false),
+        ECO_QPCR("ECO QPCR",true);
 
         private String displayName;
         private boolean uploadEnabled;
