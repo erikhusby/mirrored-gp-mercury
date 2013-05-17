@@ -290,10 +290,10 @@ public class LimsQueryResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchIlluminaSeqTemplate")
-    public SequencingTemplateType fetchIlluminaSeqTemplate(@QueryParam("id") Long id,
+    public SequencingTemplateType fetchIlluminaSeqTemplate(@QueryParam("id") String id,
                                                            @QueryParam("idType") LimsQueries.IdType idType,
                                                            @QueryParam("isPoolTest") boolean isPoolTest) {
-        return limsQueries.fetchIlluminaSeqTemplate(id, idType, isPoolTest);
+        return limsQueries.fetchSequencingTemplate(id, idType, isPoolTest);
     }
 
 }

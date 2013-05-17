@@ -405,9 +405,9 @@ public class LimsQueryResourceUnitTest {
 
         template.getLanes().add(laneType);
 
-        expect(resource.fetchIlluminaSeqTemplate(1234L, LimsQueries.IdType.FLOWCELL, true)).andReturn(template);
+        expect(resource.fetchIlluminaSeqTemplate("12345", LimsQueries.IdType.FLOWCELL, true)).andReturn(template);
         replayAll();
-        SequencingTemplateType result = resource.fetchIlluminaSeqTemplate(1234L, LimsQueries.IdType.FLOWCELL, true);
+        SequencingTemplateType result = resource.fetchIlluminaSeqTemplate("12345", LimsQueries.IdType.FLOWCELL, true);
 
         assertThat(result, notNullValue());
         Assert.assertEquals(result.getBarcode(), "BARCODE_1234");

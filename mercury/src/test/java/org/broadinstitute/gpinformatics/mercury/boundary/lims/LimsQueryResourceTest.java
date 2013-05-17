@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
 import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -11,18 +10,17 @@ import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.Arrays;
 
-import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.startsWith;
 
 /**
  * @author breilly
@@ -302,5 +300,24 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
                 makeWebResource(baseUrl, "fetchPoolGroups").queryParam("q", "0089526681").queryParam("q", "0089526682");
         String result = get(resource);
         assertThat(result, equalTo("[{\"name\":\"21490_pg\",\"tubeBarcodes\":[\"0089526682\",\"0089526681\"]}]"));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testFetchIlluminaSeqTemplate(@ArquillianResource URL baseUrl) {
+        WebResource resource =
+                makeWebResource(baseUrl, "fetchIlluminaSeqTemplate").queryParam("id", "0089526681").queryParam("idType",
+                        "FLOWCELL").queryParam("isPoolTest","true");
+        String result = get(resource);
+        assertThat(result, equalTo("{\"name\":null,\"barcode\":\"0089526681\",\"pairedRun\":false,\"onRigWorkflow\":null,\"onRigChemistry\":null,\"readStructure\":null,\"lanes\":[]}"));
+
+        resource =
+                makeWebResource(baseUrl, "fetchIlluminaSeqTemplate").queryParam("id", "0089526681").queryParam("idType",
+                        "THISWILLFAIL").queryParam("isPoolTest", "true");
+
+        UniformInterfaceException caught = getWithError(resource);
+        assertThat(caught.getResponse().getStatus(), equalTo(500));
+        assertThat(getResponseContent(caught),
+                          startsWith("Unable to extract parameter from http request: javax.ws.rs.QueryParam(\"idType\") value is 'THISWILLFAIL'"));
     }
 }

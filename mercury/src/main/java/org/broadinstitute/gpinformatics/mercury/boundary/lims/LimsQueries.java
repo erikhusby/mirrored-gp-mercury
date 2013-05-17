@@ -101,14 +101,15 @@ public class LimsQueries {
      * @see <a href= "https://confluence.broadinstitute.org/display/GPI/Mercury+V2+ExEx+Fate+of+Thrift+Services+and+Structs">Mercury V2 ExEx Fate of Thrift Services and Structs</a><br/>
      *      <a href= "https://gpinfojira.broadinstitute.org:8443/jira/browse/GPLIM-1309">Unified Loader Service v1</a>
      */
-    public SequencingTemplateType fetchIlluminaSeqTemplate(Long id, IdType idType, boolean isPoolTest) {
-        SequencingTemplateType sequencingTemplate=null;
+    public SequencingTemplateType fetchSequencingTemplate(String id, IdType idType, boolean isPoolTest) {
+        SequencingTemplateType sequencingTemplate = new SequencingTemplateType();
+        sequencingTemplate.setBarcode(id);
         switch (idType) {
         case FLOWCELL:
             break;
         case TUBE:
-            break;
         case STRIP_TUBE:
+
             break;
         case MISEQ_REAGENT_KIT:
             break;
