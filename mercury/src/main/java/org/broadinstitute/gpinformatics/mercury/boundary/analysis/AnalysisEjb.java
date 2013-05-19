@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.analysis.AnalysisType;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReferenceSequence;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 
+import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -36,10 +37,10 @@ public class AnalysisEjb {
     /**
      * Add a aligner.
      *
-     * @param aligner The aligner to add.
+     * @param alignerName The name of the aligner to create
      */
-    public void addAligner(Aligner aligner) {
-        alignerDao.persist(aligner);
+    public void addAligner(@Nonnull String alignerName) {
+        alignerDao.persist(new Aligner(alignerName));
     }
 
     /**
@@ -47,17 +48,18 @@ public class AnalysisEjb {
      *
      * @param aligners multiple aligners can be removed at once.
      */
-    public void removeAligner(Aligner aligners) {
+    public void removeAligner(@Nonnull Aligner aligners) {
         alignerDao.remove(aligners);
     }
 
     /**
      * Add a new analysis type.
      *
-     * @param analysisType The type to add.
+     * @param analysisTypeName The name of the type to create.
      */
-    public void addAnalysisType(AnalysisType analysisType) {
-        analysisTypeDao.persist(analysisType);
+    public void addAnalysisType(@Nonnull String analysisTypeName) {
+
+        analysisTypeDao.persist(new AnalysisType(analysisTypeName));
     }
 
     /**
@@ -65,16 +67,17 @@ public class AnalysisEjb {
      *
      * @param analysisTypes multiple analysis types can be removed at once.
      */
-    public void removeAnalysisTypes(Collection<AnalysisType> analysisTypes) {
+    public void removeAnalysisTypes(@Nonnull Collection<AnalysisType> analysisTypes) {
         analysisTypeDao.remove(analysisTypes);
     }
 
     /**
      * Add a new reference sequence.
      *
-     * @param referenceSequence The reference sequence to add.
      */
-    public void addReferenceSequence(ReferenceSequence referenceSequence) {
+    public void addReferenceSequence(@Nonnull String name, @Nonnull String version, boolean isCurrent) {
+        ReferenceSequence referenceSequence = new ReferenceSequence(name, version);
+        referenceSequence.setCurrent(isCurrent);
         referenceSequenceDao.persist(referenceSequence);
     }
 
@@ -83,16 +86,18 @@ public class AnalysisEjb {
      *
      * @param referenceSequences multiple reference sequences can be removed at once.
      */
-    public void removeReferenceSequences(Collection<ReferenceSequence> referenceSequences) {
+    public void removeReferenceSequences(@Nonnull Collection<ReferenceSequence> referenceSequences) {
         referenceSequenceDao.remove(referenceSequences);
     }
 
     /**
      * Add a new reagent design.
      *
-     * @param reagentDesign The reagent design to add.
+     * @param name The reagent design name to add.
+     * @param type The reagent type.
      */
-    public void addReagentDesign(ReagentDesign reagentDesign) {
+    public void addReagentDesign(@Nonnull String name, @Nonnull ReagentDesign.ReagentType type) {
+        ReagentDesign reagentDesign = new ReagentDesign("Secret Reagent Man", type);
         reagentDesignDao.persist(reagentDesign);
     }
 
@@ -101,7 +106,7 @@ public class AnalysisEjb {
      *
      * @param reagentDesigns multiple reagent designs can be removed at once.
      */
-    public void removeReagentDesigns(Collection<ReagentDesign> reagentDesigns) {
+    public void removeReagentDesign(@Nonnull Collection<ReagentDesign> reagentDesigns) {
         reagentDesignDao.remove(reagentDesigns);
     }
 }

@@ -2,7 +2,13 @@ package org.broadinstitute.gpinformatics.mercury.entity.analysis;
 
 import org.hibernate.envers.Audited;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
 
 /**
  * A representation of the aligner that will be used for analysis.
@@ -18,7 +24,10 @@ public class AnalysisType {
     private Long analysisTypeId;
 
     @Column(name = "NAME")
-    private final String name;
+    private String name;
+
+    AnalysisType() {
+    }
 
     public AnalysisType(String name) {
         this.name = name;

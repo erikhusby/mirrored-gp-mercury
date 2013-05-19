@@ -24,13 +24,16 @@ public class ReferenceSequence {
     private Long sequenceId;
 
     @Column(name = "NAME", length = 100, nullable = false)
-    private final String name;
+    private String name;
 
     @Column(name = "VERSION", length = 50, nullable = false)
-    private final String version;
+    private String version;
 
     @Column(name = "IS_CURRENT", nullable = false)
     private boolean isCurrent;
+
+    ReferenceSequence() {
+    }
 
     public ReferenceSequence(String name, String version) {
         this.name = name;

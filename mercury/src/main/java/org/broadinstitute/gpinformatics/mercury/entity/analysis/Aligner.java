@@ -24,7 +24,10 @@ public class Aligner {
     private Long alignerId;
 
     @Column(name = "NAME")
-    private final String name;
+    private String name;
+
+    Aligner() {
+    }
 
     public Aligner(String name) {
         this.name = name;
