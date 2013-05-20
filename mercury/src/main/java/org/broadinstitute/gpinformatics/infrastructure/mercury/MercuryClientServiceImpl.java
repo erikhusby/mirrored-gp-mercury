@@ -5,6 +5,9 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.presentation.DisplayableItem;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessKeyFinder;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessKeyable;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.Nameable;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AlignerDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AnalysisTypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.ReferenceSequenceDao;
@@ -65,44 +68,51 @@ public class MercuryClientServiceImpl implements MercuryClientService {
         return Collections.emptyList();
     }
 
-    public Collection<DisplayableItem> getReferenceSequences() {
-        List<ReferenceSequence> refSequences = referenceSequenceDao.findAll();
-        Collection<DisplayableItem> displayableItems = new ArrayList<DisplayableItem>(refSequences.size());
+    private Collection<DisplayableItem> makeDisplayableItemCollection(List<? extends BusinessKeyable> items) {
+        Collection<DisplayableItem> displayableItems = new ArrayList<DisplayableItem>(items.size());
 
-        for (ReferenceSequence refSequence : refSequences) {
-            displayableItems.add(new DisplayableItem(refSequence.getBusinessKey(), refSequence.getName()));
+        for (BusinessKeyable item : items) {
+            displayableItems.add(new DisplayableItem(item.getBusinessKey(), item.getName()));
         }
         return displayableItems;
+    }
+
+    public Collection<DisplayableItem> getReferenceSequences() {
+        return makeDisplayableItemCollection(referenceSequenceDao.findAllCurrent());
     }
 
     public Collection<DisplayableItem> getSequenceAligners() {
-        List<Aligner> sequenceAligners = alignerDao.findAll();
-        Collection<DisplayableItem> displayableItems = new ArrayList<DisplayableItem>(sequenceAligners.size());
-
-        for (Aligner sequenceAligner : sequenceAligners) {
-            displayableItems.add(new DisplayableItem(sequenceAligner.getBusinessKey(), sequenceAligner.getName()));
-        }
-        return displayableItems;
+        return makeDisplayableItemCollection(alignerDao.findAll());
     }
 
     public Collection<DisplayableItem> getAnalysisTypes() {
-        List<AnalysisType> analysisTypes = analysisTypeDao.findAll();
-        Collection<DisplayableItem> displayableItems = new ArrayList<DisplayableItem>(analysisTypes.size());
-
-        for (AnalysisType analysisType : analysisTypes) {
-            displayableItems.add(new DisplayableItem(analysisType.getBusinessKey(), analysisType.getName()));
-        }
-        return displayableItems;
+        return makeDisplayableItemCollection(analysisTypeDao.findAll());
     }
 
     public Collection<DisplayableItem> getReagentDesigns() {
-        List<ReagentDesign> reagentDesigns = reagentDesignDao.findAll();
-        Collection<DisplayableItem> displayableItems = new ArrayList<DisplayableItem>(reagentDesigns.size());
-
-        for (ReagentDesign reagentDesign : reagentDesigns) {
-            displayableItems.add(new DisplayableItem(reagentDesign.getBusinessKey(), reagentDesign.getDesignName()));
-        }
-        return displayableItems;
+        return makeDisplayableItemCollection(reagentDesignDao.findAll());
     }
 
+    private DisplayableItem getDisplayableItemInfo(String businessKey, BusinessKeyFinder dao) {
+        BusinessKeyable object = dao.findByBusinessKey(businessKey);
+        DisplayableItem displayableItem = new DisplayableItem(object.getBusinessKey(), object.getName());
+
+        return displayableItem;
+    }
+
+    public DisplayableItem getAnalysisType(String businessKey) {
+        return getDisplayableItemInfo(businessKey, analysisTypeDao);
+    }
+
+    public DisplayableItem getSequenceAligner(String businessKey) {
+        return getDisplayableItemInfo(businessKey, alignerDao);
+    }
+
+    public DisplayableItem getReagentDesign(String businessKey) {
+        return getDisplayableItemInfo(businessKey, reagentDesignDao);
+    }
+
+    public DisplayableItem getReferenceSequence(String businessKey) {
+        return getDisplayableItemInfo(businessKey, referenceSequenceDao);
+    }
 }

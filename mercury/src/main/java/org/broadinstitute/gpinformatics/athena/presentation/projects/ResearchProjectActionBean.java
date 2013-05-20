@@ -463,7 +463,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     }
 
    /**
-     * @return true if Save is a valid operation.
+     * @return true if Save is a valid operation.c
      */
     public boolean getCanSave() {
         // User must be logged into JIRA to create or edit a Research Project.
@@ -485,6 +485,27 @@ public class ResearchProjectActionBean extends CoreActionBean {
      */
     public Collection<DisplayableItem> getSequenceAligners() {
         return mercuryClientService.getSequenceAligners();
+    }
+
+    /**
+     * Get the sequence aligner.
+     *
+     * @param businessKey the businessKey
+     * @return UI helper object {@link DisplayableItem} representing the sequence aligner
+     */
+    public DisplayableItem getSequenceAligner(String businessKey) {
+        return mercuryClientService.getSequenceAligner(businessKey);
+    }
+
+
+    /**
+     * Get the reference sequence.
+     *
+     * @param businessKey the businessKey
+     * @return UI helper object {@link DisplayableItem} representing the reference sequence
+     */
+    public DisplayableItem getReferenceSequence(String businessKey) {
+        return mercuryClientService.getReferenceSequence(businessKey);
     }
 
     /**

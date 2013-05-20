@@ -271,7 +271,7 @@
                         <div class="control-group">
                             <label class="ui-outputlabel control-label" for="sequenceAligner">Sequence Aligner</label>
                             <div class="controls">
-                                <stripes:select id="sequenceAligner" name="sequenceAligner">
+                                <stripes:select id="sequenceAligner" name="editResearchProject.sequenceAlignerKey">
                                     <stripes:option value="">Select One</stripes:option>
                                     <stripes:options-collection collection="${actionBean.sequenceAligners}" label="displayName" value="businessKey"/>
                                 </stripes:select>
@@ -281,7 +281,7 @@
                         <div class="control-group">
                             <label class="ui-outputlabel control-label" for="referenceSequence">Reference Sequence</label>
                             <div class="controls">
-                                <stripes:select id="referenceSequence" name="referenceSequence">
+                                <stripes:select id="referenceSequence" name="editResearchProject.referenceSequenceKey">
                                     <stripes:option value="">Select One</stripes:option>
                                     <stripes:options-collection collection="${actionBean.referenceSequences}" label="displayName" value="businessKey"/>
                                 </stripes:select>

@@ -59,4 +59,36 @@ public interface MercuryClientService extends Serializable {
      */
     public Collection<DisplayableItem> getReagentDesigns();
 
+    /**
+     * Get a specific reagent design by its ID.
+     *
+     * @param businessKey the business key
+     * @return a UI helper object {@link DisplayableItem} to display the reagent design information
+     */
+    public DisplayableItem getReagentDesign(String businessKey);
+
+    /**
+     * Get a specific sequence aligner by its ID.
+     *
+     * @param businessKey the business key
+     * @return a UI helper object {@link DisplayableItem} to display the sequence aligner information
+     */
+    public DisplayableItem getSequenceAligner(String businessKey);
+
+    /**
+     * Get a specific reference sequence by its ID.
+     *
+     * @param businessKey the business key
+     * @return a UI helper object {@link DisplayableItem} to display the reference sequence information
+     */
+    public DisplayableItem getReferenceSequence(String businessKey);
+
+    /**
+     * Get a specific analysis type by its ID.
+     *
+     * @param businessKey the business key
+     * @return a UI helper object {@link DisplayableItem} to display the analysis type information
+     */
+    public DisplayableItem getAnalysisType(String businessKey);
+
 }

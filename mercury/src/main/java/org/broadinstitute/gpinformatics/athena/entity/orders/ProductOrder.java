@@ -18,6 +18,8 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessKeyable;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.Nameable;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
 
@@ -56,7 +58,7 @@ import java.util.Set;
 @Entity
 @Audited
 @Table(name = "PRODUCT_ORDER", schema = "athena")
-public class ProductOrder implements Serializable {
+public class ProductOrder implements BusinessKeyable, Serializable {
     private static final long serialVersionUID = 2712946561792445251L;
 
     private static final String DRAFT_PREFIX = "Draft-";
@@ -142,6 +144,7 @@ public class ProductOrder implements Serializable {
      * @return The business key is the jira ticket key when this is not a draft, otherwise it is the DRAFT_KEY plus the
      * internal database id.
      */
+    @Override
     @Nonnull
     public String getBusinessKey() {
         return createBusinessKey(productOrderId, jiraTicketKey);
@@ -553,6 +556,11 @@ public class ProductOrder implements Serializable {
 
     public String getTitle() {
         return title;
+    }
+
+    @Override
+    public String getName() {
+        return getTitle();
     }
 
     public void setTitle(String title) {

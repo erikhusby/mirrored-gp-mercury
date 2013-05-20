@@ -5,6 +5,8 @@ import javax.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessKeyable;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.Nameable;
 import org.hibernate.envers.Audited;
 
 /**
@@ -16,7 +18,7 @@ import org.hibernate.envers.Audited;
 @Entity
 @Audited
 @Table(schema = "mercury", uniqueConstraints = {@UniqueConstraint(columnNames = {"reagent_design"})})
-public class ReagentDesign {
+public class ReagentDesign implements BusinessKeyable, Nameable {
 
     @Id
     @SequenceGenerator(name = "SEQ_REAGENT_DESIGN", schema = "mercury", sequenceName = "SEQ_REAGENT_DESIGN")
@@ -29,6 +31,7 @@ public class ReagentDesign {
     private String targetSetName;
     private String manufacturersName;
 
+    @Override
     public String getBusinessKey() {
         return designName;
     }
@@ -67,6 +70,11 @@ public class ReagentDesign {
     }
 
     public String getDesignName() {
+        return designName;
+    }
+
+    @Override
+    public String getName() {
         return designName;
     }
 

@@ -1,9 +1,11 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.analysis;
 
+import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessKeyFinder;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.AnalysisType;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.AnalysisType_;
 
+import javax.ejb.LocalBean;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import java.util.List;
@@ -12,14 +14,15 @@ import java.util.List;
  * Data Access for Analysis types.
  */
 @Stateful
+@LocalBean
 @RequestScoped
-public class AnalysisTypeDao extends GenericDao {
+public class AnalysisTypeDao extends GenericDao implements BusinessKeyFinder {
 
     public List<AnalysisType> findAll() {
         return findAll(AnalysisType.class);
     }
 
-    public AnalysisType findByBusinessKey(String value) {
-        return findSingle(AnalysisType.class, AnalysisType_.name, value);
+    public AnalysisType findByBusinessKey(String businessKey) {
+        return findSingle(AnalysisType.class, AnalysisType_.name, businessKey);
     }
 }
