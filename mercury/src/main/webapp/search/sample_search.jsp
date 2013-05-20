@@ -45,7 +45,7 @@
                     </div>
 
                     <div class="control-group">
-                        <div class="controls"">
+                        <div class="controls">
                             <stripes:submit name="sampleSearch" value="Search" class="btn btn-primary"/>
                         </div>
                     </div>
