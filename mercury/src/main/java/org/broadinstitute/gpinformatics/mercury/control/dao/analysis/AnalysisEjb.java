@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.mercury.boundary.analysis;
+package org.broadinstitute.gpinformatics.mercury.control.dao.analysis;
 
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AlignerDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AnalysisTypeDao;

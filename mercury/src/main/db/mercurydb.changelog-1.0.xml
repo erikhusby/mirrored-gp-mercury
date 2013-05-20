@@ -1617,6 +1617,9 @@ END;
             </not>
         </preConditions>
         <createTable tableName="ALIGNER_AUD" schemaName="mercury">
+            <column name="ALIGNER_ID" type="VARCHAR2(50)">
+                <constraints nullable="true"/>
+            </column>
             <column name="NAME" type="VARCHAR2(50)">
                 <constraints nullable="true"/>
             </column>
@@ -1676,6 +1679,9 @@ END;
             </not>
         </preConditions>
         <createTable tableName="REFERENCE_SEQUENCE_AUD" schemaName="mercury">
+            <column name="SEQUENCE_ID" type="int">
+                <constraints nullable="true"/>
+            </column>
             <column name="NAME" type="VARCHAR2(50)">
                 <constraints nullable="true"/>
             </column>
@@ -1735,6 +1741,9 @@ END;
             </not>
         </preConditions>
         <createTable tableName="ANALYSIS_TYPE_AUD" schemaName="mercury">
+            <column name="ANALYSIS_TYPE_ID" type="int">
+                <constraints nullable="true"/>
+            </column>
             <column name="NAME" type="VARCHAR2(50)">
                 <constraints nullable="true"/>
             </column>
