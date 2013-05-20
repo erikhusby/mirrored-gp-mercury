@@ -1601,17 +1601,6 @@ END;
         <createSequence sequenceName="SEQ_ALIGNER" schemaName="mercury" startValue="1" incrementBy="10"/>
     </changeSet>
 
-    <changeSet id="GPLIM-1325-3" author="hrafal">
-        <preConditions onFail="MARK_RAN">
-            <not>
-                <indexExists tableName="ALIGNER" indexName="ix_aligner_name" schemaName="mercury"/>
-            </not>
-        </preConditions>
-        <createIndex tableName="ALIGNER" indexName="ix_aligner_name" schemaName="mercury">
-            <column name="NAME"/>
-        </createIndex>
-    </changeSet>
-
     <changeSet id="GPLIM-1325-4" author="hrafal">
         <preConditions onFail="MARK_RAN">
             <not>
@@ -1652,7 +1641,7 @@ END;
             </column>
             <column name="IS_CURRENT" type="BOOLEAN"/>
         </createTable>
-        <addUniqueConstraint tableName="REFERENCE_SEQUENCE" columnNames="NAME"
+        <addUniqueConstraint tableName="REFERENCE_SEQUENCE" columnNames="NAME, VERSION"
                              constraintName="uk_ref_sequence_name" schemaName="mercury"/>
     </changeSet>
 
@@ -1665,17 +1654,6 @@ END;
         <createSequence sequenceName="SEQ_REFERENCE_SEQUENCE" schemaName="mercury" startValue="1" incrementBy="10"/>
     </changeSet>
 
-    <changeSet id="GPLIM-1327-3" author="hrafal">
-        <preConditions onFail="MARK_RAN">
-            <not>
-                <indexExists tableName="REFERENCE_SEQUENCE" indexName="ix_sequence_name" schemaName="mercury"/>
-            </not>
-        </preConditions>
-        <createIndex tableName="REFERENCE_SEQUENCE" indexName="ix_sequence_name" schemaName="mercury">
-            <column name="NAME"/>
-        </createIndex>
-    </changeSet>
-
     <changeSet id="GPLIM-1327-4" author="hrafal">
         <preConditions onFail="MARK_RAN">
             <not>
@@ -1686,7 +1664,7 @@ END;
             <column name="SEQUENCE_ID" type="int">
                 <constraints nullable="true"/>
             </column>
-            <column name="NAME" type="VARCHAR2(50)">
+            <column name="NAME" type="VARCHAR2(100)">
                 <constraints nullable="true"/>
             </column>
             <column name="VERSION" type="VARCHAR2(30)">
@@ -1727,17 +1705,6 @@ END;
             </not>
         </preConditions>
         <createSequence sequenceName="SEQ_ANALYSIS_TYPE" schemaName="mercury" startValue="1" incrementBy="10"/>
-    </changeSet>
-
-    <changeSet id="GPLIM-1328-3" author="hrafal">
-        <preConditions onFail="MARK_RAN">
-            <not>
-                <indexExists tableName="ANALYSIS_TYPE" indexName="ix_analysis_type_name" schemaName="mercury"/>
-            </not>
-        </preConditions>
-        <createIndex tableName="ANALYSIS_TYPE" indexName="ix_analysis_type_name" schemaName="mercury">
-            <column name="NAME"/>
-        </createIndex>
     </changeSet>
 
     <changeSet id="GPLIM-1328-4" author="hrafal">

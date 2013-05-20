@@ -1,7 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.analysis;
 
-import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AlignerDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AnalysisTypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.Aligner;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.AnalysisType;
@@ -97,8 +95,11 @@ public class AnalysisEjb {
      * @param type The reagent type.
      */
     public void addReagentDesign(@Nonnull String name, @Nonnull ReagentDesign.ReagentType type) {
-        ReagentDesign reagentDesign = new ReagentDesign(name, type);
-        reagentDesignDao.persist(reagentDesign);
+        ReagentDesign foundDesign = reagentDesignDao.findByBusinessKey(name);
+        if (foundDesign == null) {
+            ReagentDesign reagentDesign = new ReagentDesign(name, type);
+            reagentDesignDao.persist(reagentDesign);
+        }
     }
 
     /**
