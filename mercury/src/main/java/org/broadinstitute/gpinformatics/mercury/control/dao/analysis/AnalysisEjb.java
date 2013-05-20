@@ -95,8 +95,11 @@ public class AnalysisEjb {
      * @param type The reagent type.
      */
     public void addReagentDesign(@Nonnull String name, @Nonnull ReagentDesign.ReagentType type) {
-        ReagentDesign reagentDesign = new ReagentDesign(name, type);
-        reagentDesignDao.persist(reagentDesign);
+        ReagentDesign foundDesign = reagentDesignDao.findByBusinessKey(name);
+        if (foundDesign == null) {
+            ReagentDesign reagentDesign = new ReagentDesign(name, type);
+            reagentDesignDao.persist(reagentDesign);
+        }
     }
 
     /**

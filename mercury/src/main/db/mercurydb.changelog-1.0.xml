@@ -1664,7 +1664,7 @@ END;
             <column name="SEQUENCE_ID" type="int">
                 <constraints nullable="true"/>
             </column>
-            <column name="NAME" type="VARCHAR2(50)">
+            <column name="NAME" type="VARCHAR2(100)">
                 <constraints nullable="true"/>
             </column>
             <column name="VERSION" type="VARCHAR2(30)">
