@@ -306,6 +306,20 @@ public enum LabEventType {
     MALARIA_BEP_PCR_NORM("Malaria_BEP_PCR_Norm", false, true, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
     MALARIA_BEP_POOL("Malaria_BEP_Pool", false, true, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
 
+    // Illumina Content Exome (ICE)
+    ICE_POOLING_TRANSFER("IcePoolingTransfer", false, true, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
+    ICE_SPRI_CONCENTRATION("IceSPRIConcentration", false, true, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
+    ICE_1ST_HYBRIDIZATION("Ice1stHybridization", false, true, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
+    ICE_1S_TBAIT_ADDITION("Ice1stBaitAddition", false, true, SystemOfRecord.SQUID, false, PlasticToValidate.TARGET, PipelineTransformation.NONE),
+    ICE_1ST_CAPTURE("Ice1stCapture", false, true, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
+    ICE_2ND_HYBRIDIZATION("Ice2ndHybridization", false, true, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
+    ICE_2ND_BAIT_ADDITION("Ice2ndBaitAddition", false, true, SystemOfRecord.SQUID, false, PlasticToValidate.TARGET, PipelineTransformation.NONE),
+    ICE_2ND_CAPTURE("Ice2ndCapture", false, true, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
+    ICE_CATCH_CLEANUP("IceCatchCleanup", false, true, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
+    ICE_CATCH_ENRICHMENT_SETUP("IceCatchEnrichmentSetup", false, true, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
+    ICE_CATCH_ENRICHMENT_CLEANUP("IceCatchEnrichmentCleanup", false, true, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
+    ICE_CATCH_PICO("IceCatchPico", false, true, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
+
     /**
      * TODO SGM  the following names are place holders.  They will be re-evaluated as development of
      */
