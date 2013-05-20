@@ -20,7 +20,7 @@ import java.util.List;
 public class ReferenceSequenceDao extends GenericDao {
 
     public List<ReferenceSequence> findAll() {
-        return super.findAll(ReferenceSequence.class);
+        return findAll(ReferenceSequence.class);
     }
 
     public ReferenceSequence findByBusinessKey(String value) {

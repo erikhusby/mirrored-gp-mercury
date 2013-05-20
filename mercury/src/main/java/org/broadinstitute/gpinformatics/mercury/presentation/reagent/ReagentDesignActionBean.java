@@ -38,7 +38,7 @@ import java.util.*;
 public class ReagentDesignActionBean extends CoreActionBean {
 
     public static final String CREATE_DESIGN = CoreActionBean.CREATE + "Reagent Design";
-    private static final String EDIT_DESIGN = CoreActionBean.EDIT + "Design";
+    private static final String EDIT_DESIGN = CoreActionBean.EDIT + "Reagent Design";
     public static final String DESIGN_PARAMETER = "reagent";
 
     private static final String REAGENT_LIST_PAGE = "/reagent/list.jsp";

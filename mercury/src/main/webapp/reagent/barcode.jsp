@@ -3,8 +3,9 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.reagent.ReagentDesignActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="${actionBean.submitString}"
-                       sectionTitle="${actionBean.submitString} ${actionBean.editReagentDesign.designName}">
+<stripes:layout-render name="/layout.jsp"
+                       pageTitle="Assign Barcode"
+                       sectionTitle="Assign Barcode">
 
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">

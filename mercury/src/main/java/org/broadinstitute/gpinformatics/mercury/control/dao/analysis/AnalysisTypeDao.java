@@ -16,7 +16,7 @@ import java.util.List;
 public class AnalysisTypeDao extends GenericDao {
 
     public List<AnalysisType> findAll() {
-        return super.findAll(AnalysisType.class);
+        return findAll(AnalysisType.class);
     }
 
     public AnalysisType findByBusinessKey(String value) {

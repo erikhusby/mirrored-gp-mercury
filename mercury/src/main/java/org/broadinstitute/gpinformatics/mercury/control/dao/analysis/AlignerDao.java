@@ -16,7 +16,7 @@ import java.util.List;
 public class AlignerDao extends GenericDao {
 
     public List<Aligner> findAll() {
-        return super.findAll(Aligner.class);
+        return findAll(Aligner.class);
     }
 
     public Aligner findByBusinessKey(String value) {

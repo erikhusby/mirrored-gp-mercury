@@ -14,8 +14,9 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.reagent.ReagentDesignActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="${actionBean.submitString}"
-                       sectionTitle="${actionBean.submitString} ${actionBean.editReagentDesign.designName}">
+<stripes:layout-render name="/layout.jsp"
+                       pageTitle="${actionBean.submitString}"
+                       sectionTitle="${actionBean.submitString}: ${actionBean.editReagentDesign.designName}">
 
     <stripes:layout-component name="extraHead"></stripes:layout-component>
 
@@ -30,7 +31,7 @@
                     Name *
                 </stripes:label>
                 <div class="controls">
-                            <stripes:text id="designName" readonly="${! actionBean.creating}"
+                            <stripes:text id="designName" readonly="${!actionBean.creating}"
                                           name="editReagentDesign.designName"
                                           class="defaultText"
                                           title="Enter the name of the reagent design"/>`

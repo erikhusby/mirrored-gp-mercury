@@ -2,12 +2,14 @@ package org.broadinstitute.gpinformatics.infrastructure.mercury;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.presentation.DisplayableItem;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 
 import javax.annotation.Nonnull;
 import javax.enterprise.inject.Alternative;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * Implementation of MercuryClientProducer, for test purposes.
@@ -35,5 +37,25 @@ public class MercuryClientServiceStub implements MercuryClientService {
             }
         }
         return addedSamples;
+    }
+
+    @Override
+    public Collection<DisplayableItem> getReferenceSequences() {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public Collection<DisplayableItem> getSequenceAligners() {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public Collection<DisplayableItem> getAnalysisTypes() {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public Collection<DisplayableItem> getReagentDesigns() {
+        return Collections.emptyList();
     }
 }

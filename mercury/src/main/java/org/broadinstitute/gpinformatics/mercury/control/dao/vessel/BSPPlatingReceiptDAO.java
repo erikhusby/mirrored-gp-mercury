@@ -18,7 +18,7 @@ public class BSPPlatingReceiptDAO extends GenericDao {
     public BSPPlatingReceipt findByReceipt(String receipt) {
 
         BSPPlatingReceipt bspPlatingReceipt = null;
-        Query query = this.getThreadEntityManager().getEntityManager().createNamedQuery("BSPPlatingReceipt.fetchByReceipt");
+        Query query = getEntityManager().createNamedQuery("BSPPlatingReceipt.fetchByReceipt");
         try {
             bspPlatingReceipt = (BSPPlatingReceipt) query.setParameter("bspReceipt", receipt).getSingleResult();
         } catch (NoResultException ignored) {

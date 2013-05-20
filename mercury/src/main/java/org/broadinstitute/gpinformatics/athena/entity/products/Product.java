@@ -40,6 +40,15 @@ public class Product implements Serializable, Comparable<Product> {
     @Column(name = "AGGREGATION_DATA_TYPE", length = 200)
     private String aggregationDataType;
 
+    @Transient
+    // @Column(name = "ANALYSIS_TYPE_KEY", nullable=true)
+    private Long analysisTypeKey;
+
+    @Transient
+    // @Column(name = "REAGENT_DESIGN_KEY", nullable=true)
+    private Long reagentDesignKey;
+
+
     @Column(unique = true)
     private String partNumber;
     private Date availabilityDate;
@@ -296,6 +305,22 @@ public class Product implements Serializable, Comparable<Product> {
 
     public String getWorkflowName() {
         return workflowName;
+    }
+
+    public Long getAnalysisTypeKey() {
+        return analysisTypeKey;
+    }
+
+    public void setAnalysisTypeKey(Long analysisTypeKey) {
+        this.analysisTypeKey = analysisTypeKey;
+    }
+
+    public Long getReagentDesignKey() {
+        return reagentDesignKey;
+    }
+
+    public void setReagentDesignKey(Long reagentDesignKey) {
+        this.reagentDesignKey = reagentDesignKey;
     }
 
     public boolean isPdmOrderableOnly() {
