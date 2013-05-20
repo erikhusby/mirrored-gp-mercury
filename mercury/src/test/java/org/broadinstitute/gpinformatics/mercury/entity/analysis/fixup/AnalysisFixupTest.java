@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.analysis.fixup;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
-import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AnalysisEjb;
+import org.broadinstitute.gpinformatics.mercury.boundary.analysis.AnalysisEjb;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
