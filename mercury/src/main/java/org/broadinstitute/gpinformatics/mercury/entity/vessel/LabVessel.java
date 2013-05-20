@@ -174,6 +174,14 @@ public abstract class LabVessel implements Serializable {
         return label;
     }
 
+    /**
+     * This is used only for fixups.
+     * @param label barcode
+     */
+    public void setLabel(String label) {
+        this.label = label;
+    }
+
     public Set<VesselToSectionTransfer> getVesselToSectionTransfersThisAsSource() {
         return vesselToSectionTransfersThisAsSource;
     }
