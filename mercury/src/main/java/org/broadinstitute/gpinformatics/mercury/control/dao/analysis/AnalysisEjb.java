@@ -97,7 +97,7 @@ public class AnalysisEjb {
      * @param type The reagent type.
      */
     public void addReagentDesign(@Nonnull String name, @Nonnull ReagentDesign.ReagentType type) {
-        ReagentDesign reagentDesign = new ReagentDesign("Secret Reagent Man", type);
+        ReagentDesign reagentDesign = new ReagentDesign(name, type);
         reagentDesignDao.persist(reagentDesign);
     }
 

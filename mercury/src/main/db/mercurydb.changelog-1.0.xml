@@ -1588,6 +1588,8 @@ END;
                 <constraints nullable="false"/>
             </column>
         </createTable>
+        <addUniqueConstraint tableName="ALIGNER" columnNames="NAME"
+                             constraintName="uk_aligner_name" schemaName="mercury"/>
     </changeSet>
 
     <changeSet id="GPLIM-1325-2" author="hrafal">
@@ -1650,6 +1652,8 @@ END;
             </column>
             <column name="IS_CURRENT" type="BOOLEAN"/>
         </createTable>
+        <addUniqueConstraint tableName="REFERENCE_SEQUENCE" columnNames="NAME"
+                             constraintName="uk_ref_sequence_name" schemaName="mercury"/>
     </changeSet>
 
     <changeSet id="GPLIM-1327-2" author="hrafal">
@@ -1712,6 +1716,8 @@ END;
                 <constraints nullable="false"/>
             </column>
         </createTable>
+        <addUniqueConstraint tableName="ANALYSIS_TYPE" columnNames="NAME"
+                             constraintName="uk_analysis_type_name" schemaName="mercury"/>
     </changeSet>
 
     <changeSet id="GPLIM-1328-2" author="hrafal">

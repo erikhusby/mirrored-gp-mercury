@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.reagent;
 
+import javax.annotation.Nonnull;
 import javax.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
@@ -52,13 +53,7 @@ public class ReagentDesign {
      * @param designName  Example: cancer_2000gene_shift170_undercovered
      * @param reagentType The reagent type
      */
-    public ReagentDesign(String designName, ReagentType reagentType) {
-        if (designName == null) {
-            throw new NullPointerException("designName cannot be null.");
-        }
-        if (reagentType == null) {
-            throw new NullPointerException("reagentType cannot be null.");
-        }
+    public ReagentDesign(@Nonnull String designName, @Nonnull ReagentType reagentType) {
         this.designName = designName;
         this.reagentType = reagentType;
     }

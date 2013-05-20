@@ -22,7 +22,7 @@ public class AnalysisFixupTest extends Arquillian {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void initializeAllLists() {
 
         // Add the analysis types
