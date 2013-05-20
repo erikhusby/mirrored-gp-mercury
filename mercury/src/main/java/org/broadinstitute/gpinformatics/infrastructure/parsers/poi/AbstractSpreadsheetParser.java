@@ -7,6 +7,7 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Iterator;
@@ -42,12 +43,9 @@ public abstract class AbstractSpreadsheetParser {
 
     protected abstract void validateAndProcess() throws ValidationException;
 
+    public void processUploadFile(InputStream fileStream) throws IOException, InvalidFormatException, ValidationException {
 
-    public void processUploadFile(String fileName) throws IOException, InvalidFormatException, ValidationException {
-
-        InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(fileName);
-
-        workbook = WorkbookFactory.create(inputStream);
+        workbook = WorkbookFactory.create(fileStream);
 
         numberOfSheets = workbook.getNumberOfSheets();
         validateAndProcess();

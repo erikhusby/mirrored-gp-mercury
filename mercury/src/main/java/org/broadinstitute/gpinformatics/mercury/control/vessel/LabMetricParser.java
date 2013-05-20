@@ -14,6 +14,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import javax.inject.Inject;
 import java.io.IOException;
+import java.io.InputStream;
+import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -24,7 +26,7 @@ public class LabMetricParser extends AbstractSpreadsheetParser {
 
     private Set<LabMetric> metrics = new HashSet<LabMetric>();
 
-    private Set<String> validationMessages = new HashSet<>();
+    private Set<String> validationMessages = new HashSet<String>();
 
     private LabMetric.MetricType metricType;
 
@@ -36,10 +38,10 @@ public class LabMetricParser extends AbstractSpreadsheetParser {
         this.vesselDao = vesselDao;
     }
 
-    public void parseMetrics(String fileName, LabMetric.MetricType metricType )
+    public void parseMetrics(InputStream inputStream, LabMetric.MetricType metricType )
             throws IOException, InvalidFormatException, ValidationException {
         this.metricType = metricType;
-        processUploadFile(fileName);
+        processUploadFile(inputStream);
     }
 
     @Override
@@ -59,25 +61,28 @@ public class LabMetricParser extends AbstractSpreadsheetParser {
 
         boolean foundError = false;
 
-        String wellLocation = rowValues.getCell(LabMetricHeaders.LOCATION.getIndex()).getStringCellValue();
-        if(StringUtils.isBlank(wellLocation)) {
-            validationMessages.add("Row #" + rowValues.getRowNum() + " value for Location is missing");
-            foundError = true;
-        }
+//        String wellLocation = rowValues.getCell(LabMetricHeaders.LOCATION.getIndex()).getStringCellValue();
+//        if(StringUtils.isBlank(wellLocation)) {
+//            validationMessages.add("Row #" + rowValues.getRowNum() + " value for Location is missing");
+//            foundError = true;
+//        }
+
         String barcode = rowValues.getCell(LabMetricHeaders.BARCODE.getIndex()).getStringCellValue();
         if(StringUtils.isBlank(barcode)) {
             validationMessages.add("Row #" + rowValues.getRowNum() + " value for Barcode is missing");
             foundError = true;
         }
 
-        String metric = rowValues.getCell(LabMetricHeaders.METRIC.getIndex()).getStringCellValue();
-        if(StringUtils.isBlank(metric)) {
-            validationMessages.add("Row #" + rowValues.getRowNum() + " value for Quant value is missing");
+        Double metric = null;
+        try {
+            metric = rowValues.getCell(LabMetricHeaders.METRIC.getIndex()).getNumericCellValue();
+        } catch (NumberFormatException e) {
+            validationMessages.add("Row #" + rowValues.getRowNum() + " value for Quant value is invalid");
             foundError = true;
         }
 
         if(!foundError) {
-            LabMetric currentMetric = new LabMetric(NumberUtils.createBigDecimal(metric), metricType,
+            LabMetric currentMetric = new LabMetric(new BigDecimal(metric), metricType,
                     LabMetric.LabUnit.UG_PER_ML);
             LabVessel metricVessel = vesselDao.findByIdentifier(barcode);
             if(metricVessel == null) {
@@ -107,12 +112,12 @@ public class LabMetricParser extends AbstractSpreadsheetParser {
 
         @Override
         public String getText() {
-            return null;
+            return this.text;
         }
 
         @Override
         public int getIndex() {
-            return 0;
+            return this.index;
         }
 
     }
