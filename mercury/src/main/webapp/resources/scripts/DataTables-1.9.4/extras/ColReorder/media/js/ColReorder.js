@@ -656,9 +656,9 @@ ColReorder.prototype = {
 		var iToPoint = 0;
 		for ( var i=0, iLen=aoColumns.length ; i<iLen ; i++ )
 		{
-			/* For the column / header in question, we want it's position to remain the same if the 
-			 * position is just to it's immediate left or right, so we only incremement the counter for
-			 * other columns
+			/* For the column / header in question, we want its position to remain the same if the
+			 * position is just to its immediate left or right, so we only increment the counter for
+			 * other columns.
 			 */
 			if ( i != this.s.mouse.fromIndex )
 			{

@@ -12,6 +12,8 @@ DROP INDEX pdo_add_on_idx1;
 DROP INDEX pdo_add_on_idx2;
 DROP INDEX event_fact_idx1;
 DROP INDEX event_fact_idx2;
+DROP index ix_parent_project;
+DROP index ix_root_project;
 
 ALTER TABLE research_project_status DROP CONSTRAINT fk_rp_status_rpid;
 ALTER TABLE research_project_person DROP CONSTRAINT fk_rp_person_rpid;
@@ -110,6 +112,8 @@ CREATE TABLE research_project (
   title VARCHAR2(255) NOT NULL,
   irb_not_engaged CHAR(1) CHECK (irb_not_engaged IN ('T','F')),
   jira_ticket_key VARCHAR2(255),
+  parent_research_project_id NUMERIC(19),
+  root_research_project_id NUMERIC(19),
   etl_date DATE NOT NULL
 );
 
@@ -290,8 +294,11 @@ CREATE TABLE im_research_project (
   created_date DATE,
   title VARCHAR2(255),
   irb_not_engaged CHAR(1) CHECK (irb_not_engaged IN ('T','F')),
-  jira_ticket_key VARCHAR2(255)
+  jira_ticket_key VARCHAR2(255),
+  parent_research_project_id numeric(19,0),
+  root_research_project_id numeric(19,0)
 );
+
 
 CREATE TABLE im_research_project_status (
   line_number NUMERIC(9) NOT NULL,
@@ -544,6 +551,7 @@ CREATE INDEX pdo_add_on_idx1 ON product_order_add_on(product_order_id);
 CREATE INDEX pdo_add_on_idx2 ON product_order_add_on(product_id);
 CREATE INDEX event_fact_idx1 ON event_fact(event_date);
 CREATE INDEX event_fact_idx2 ON event_fact(product_order_id);
-
+create index ix_parent_project on research_project (parent_research_project_id);
+create index ix_root_project on research_project (root_research_project_id);
 
 COMMIT;

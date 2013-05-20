@@ -24,17 +24,13 @@ public class ProductFamilyDao extends GenericDao {
     /**
      * Return the ProductFamily corresponding to the well known ProductFamily.Name.
      *
-     * @param productFamilyName
-     * @return
      */
     public ProductFamily find(String productFamilyName) {
         return findSingle(ProductFamily.class, ProductFamily_.name, productFamilyName);
     }
 
     /**
-     * Find a ProductFamily by it's primary key identifier
-     * @param productFamilyId
-     * @return
+     * Find a ProductFamily by its primary key identifier
      */
     public ProductFamily find(@Nonnull Long productFamilyId) {
         return findSingle(ProductFamily.class, ProductFamily_.productFamilyId, productFamilyId);

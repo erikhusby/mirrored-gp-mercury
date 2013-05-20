@@ -8,30 +8,29 @@
 
 <stripes:layout-definition>
     <script type="text/javascript">
-
         $j(document).ready(function () {
-            $j(".accordion").on("accordionactivate", drawTable);
-        });
-
-        function drawTable() {
-            var resultsId = "#vesselSampleListView${index}";
-            $j(resultsId).dataTable({
-                "oTableTools":ttExportDefines,
-                "aaSorting":[
-                    [2, 'asc']
-                ],
-                "aoColumns":[
-                    {"bSortable":true, sWidth:'100px'},
-                    {"bSortable":true},
-                    {"bSortable":true, sWidth:'1px'},
-                    {"bSortable":true, "sType":"html"}
-                ],
-                "bRetrieve": true
+            $j(".accordion").on("accordionactivate", function (event, ui) {
+                var active = $j('.accordion').accordion('option', 'active');
+                var resultsId = "#vesselSampleListView" + active;
+                $j(resultsId).dataTable({
+                    "oTableTools":ttExportDefines,
+                    "aaSorting":[
+                        [2, 'asc']
+                    ],
+                    "aoColumns":[
+                        {"bSortable":true, sWidth:'100px'},
+                        {"bSortable":true},
+                        {"bSortable":true, sWidth:'1px'},
+                        {"bSortable":true, "sType":"html"}
+                    ],
+                    "bRetrieve":true,
+                    "sScrollY": 500
+                });
             });
-        }
+        });
     </script>
 
-    <table id="vesselSampleListView${index}" class="table simple" style="margin: 0 0; width: 100%;">
+    <table id="vesselSampleListView${index - 1}" class="table simple" style="margin: 0 0; width: 100%;">
         <thead>
         <tr>
             <th>Sample</th>
@@ -41,7 +40,7 @@
         </tr>
         </thead>
         <tbody>
-        <c:forEach items="${vessel.sampleInstances}" var="sample">
+        <c:forEach items="${vessel.getSampleInstances('ANY', null)}" var="sample">
             <tr>
                 <td>
                     <stripes:link
@@ -53,7 +52,7 @@
                 </td>
                 <td style="padding: 0;">
                     <table style="padding: 0;">
-                        <c:forEach items="${vessel.getIndexesForSample(sample.startingSample)}" var="curIndex">
+                        <c:forEach items="${vessel.getIndexesForSampleInstance(sample)}" var="curIndex">
                             <tr>
                                 <td style="border: none">
                                     <c:forEach items="${curIndex.molecularIndexingScheme.indexes}" var="innerIndex">
@@ -66,7 +65,7 @@
                 </td>
                 <td style="padding: 0;">
                     <table style="padding: 0">
-                        <c:forEach items="${vessel.getPositionsOfSample(sample)}" var="position">
+                        <c:forEach items="${vessel.getPositionsOfSample(sample, 'ANY')}" var="position">
                             <tr>
                                 <td style="border: none;">
                                         ${position}
@@ -76,25 +75,28 @@
                     </table>
                 </td>
                 <td style="padding: 0;">
-                    <c:forEach items="${sample.getLabBatchCompositionInVesselContext(vessel)}"
-                               var="batchComposition">
-                        <c:if test="${not empty batchComposition.labBatch.businessKey}">
-                            <a target="JIRA" href="${bean.jiraUrl(batchComposition.labBatch.jiraTicket)}"
-                               class="external" target="JIRA">
-                                    ${batchComposition.labBatch.businessKey}
-                                (${batchComposition.count}/${batchComposition.denominator})
-                            </a>
-                        </c:if>
+                    <c:forEach items="${vessel.getSampleInstancesForSample(sample.startingSample, 'WITH_PDO')}"
+                               var="sampleInstance">
+                        <c:forEach items="${sampleInstance.getLabBatchCompositionInVesselContext(vessel)}"
+                                   var="batchComposition">
+                            <c:if test="${not empty batchComposition.labBatch.businessKey}">
+                                <a target="JIRA" href="${batchComposition.labBatch.jiraTicket.browserUrl}"
+                                   class="external" target="JIRA">
+                                        ${batchComposition.labBatch.businessKey}
+                                    (${batchComposition.count}/${batchComposition.denominator})
+                                </a>
+                            </c:if>
 
-                        <c:if test="${not empty sample.productOrderKey}">
-                            <stripes:link
-                                    beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"
-                                    event="view">
-                                <stripes:param name="productOrder" value="${sample.productOrderKey}"/>
-                                ${sample.productOrderKey}
-                            </stripes:link>
-                        </c:if>
-                        <br/>
+                            <c:if test="${not empty sample.productOrderKey}">
+                                <stripes:link
+                                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"
+                                        event="view">
+                                    <stripes:param name="productOrder" value="${sampleInstance.productOrderKey}"/>
+                                    ${sampleInstance.productOrderKey}
+                                </stripes:link>
+                            </c:if>
+                            <br/>
+                        </c:forEach>
                     </c:forEach>
                 </td>
             </tr>

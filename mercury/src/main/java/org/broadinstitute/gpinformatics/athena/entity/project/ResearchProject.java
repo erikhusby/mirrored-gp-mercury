@@ -60,7 +60,6 @@ import java.util.TreeSet;
 @Audited
 @Table(name = "RESEARCH_PROJECT", schema = "athena")
 public class ResearchProject implements Serializable, Comparable<ResearchProject> {
-
     public static final boolean IRB_ENGAGED = false;
     public static final boolean IRB_NOT_ENGAGED = true;
 
@@ -247,10 +246,6 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
 
     public void addIrbNotes(String irbNotes) {
         this.irbNotes += "\n" + irbNotes;
-    }
-
-    public ResearchProject getParentProject() {
-        return parentResearchProject;
     }
 
     public Set<ResearchProject> getChildProjects() {
@@ -583,6 +578,18 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
         return parentResearchProject;
     }
 
+    /**
+     * Traverse through all the potential parent projects until we get to the root parent.  If the parent research
+     * project is null, then it returns itself as the root node.
+     */
+     public ResearchProject getRootResearchProject() {
+        if (parentResearchProject == null) {
+            return this;
+        }
+
+        return parentResearchProject.getRootResearchProject();
+    }
+
     public void setParentResearchProject(ResearchProject parentResearchProject) {
         // Update parent/child relationships so they are correct. Hibernate will create the correct set of children
         // the next time the objects are retrieved from the database.
@@ -693,7 +700,7 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
     }
 
     /**
-     * Compare by the ResearchProject by it's title, case insensitive.
+     * Compare by the ResearchProject by its title, case insensitive.
      */
     public static final Comparator<ResearchProject> BY_TITLE = new Comparator<ResearchProject>() {
         @Override

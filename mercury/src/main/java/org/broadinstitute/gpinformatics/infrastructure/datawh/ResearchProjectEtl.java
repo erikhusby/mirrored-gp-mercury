@@ -59,7 +59,9 @@ public class ResearchProjectEtl extends GenericEntityAndStatusEtl<ResearchProjec
                 format(entity.getCreatedDate()),
                 format(entity.getTitle()),
                 format(entity.getIrbNotEngaged()),
-                format(entity.getJiraTicketKey())
+                format(entity.getJiraTicketKey()),
+                format(entity.getParentResearchProject() != null ? entity.getParentResearchProject().getResearchProjectId() : null),
+                format(entity.getRootResearchProject() != null ? entity.getRootResearchProject().getResearchProjectId() : null)
         );
     }
 }

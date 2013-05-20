@@ -58,7 +58,8 @@ public class ResearchProjectTest {
          * Create a looped association.
          */
         ResearchProject anotherResearchProject = ResearchProjectTestFactory
-                .createDummyResearchProject(10950, "AnotherResearchProject", "To Study Stuff", ResearchProject.IRB_ENGAGED);
+                .createDummyResearchProject(10950, "AnotherResearchProject", "To Study Stuff",
+                        ResearchProject.IRB_ENGAGED);
         researchProject.setParentResearchProject(anotherResearchProject);
         anotherResearchProject.setParentResearchProject(researchProject);
 
@@ -69,11 +70,23 @@ public class ResearchProjectTest {
         }
 
         /**
-         * Positive test -- this should work find, no loops.
+         * Positive test -- this should work fine, no loops.
          */
         anotherResearchProject.setParentResearchProject(null);
         researchProject.setParentResearchProject(anotherResearchProject);
         researchProject.prePersist();
+
+        // Using title to discern projects from each other because the equals() is just looking at business key.
+        Assert.assertEquals(anotherResearchProject.getTitle(),
+                anotherResearchProject.getRootResearchProject().getTitle(), "There is no parent Research Project, so " +
+                "the root should be itself.");
+
+        ResearchProject rootResearchProject = researchProject.getRootResearchProject();
+        Assert.assertNotEquals(researchProject.getTitle(), rootResearchProject.getTitle(), "The parent Research " +
+                "Project should not be the same the root.");
+
+        Assert.assertEquals(researchProject.getRootResearchProject().getTitle(), anotherResearchProject.getTitle(),
+                "The parent Research Project should be the same same as the root.");
     }
 
     @Test
@@ -171,7 +184,7 @@ public class ResearchProjectTest {
         ResearchProject p31 = createResearchProjectForACLTest(p21, true, testUser);
         ResearchProject p22 = createResearchProjectForACLTest(p2, false, testUser);
 
-        return new Object[][] {
+        return new Object[][]{
                 {anyAllowed, testUser, Collections.singleton(anyAllowed)},
                 {anyAllowed, testUser + 1, Collections.singleton(anyAllowed)},
                 {noneAllowed, testUser, Collections.emptySet()},

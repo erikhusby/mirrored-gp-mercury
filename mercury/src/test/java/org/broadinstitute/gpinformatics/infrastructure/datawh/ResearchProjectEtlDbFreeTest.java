@@ -31,12 +31,17 @@ public class ResearchProjectEtlDbFreeTest {
     private ResearchProject.Status status = ResearchProject.Status.Open;
     private boolean irbNotEngaged = false;
     private String jiraTicketKey = "PDO-0000";
+    private Long parentResearchProjectId = 12345000L;
+    private Long rootResearchProjectId = 12345600L;
     private ResearchProjectEtl tst;
+
+    private ResearchProject parentObj = createMock(ResearchProject.class);
+    private ResearchProject rootObj = createMock(ResearchProject.class);
 
     private AuditReaderDao auditReader = createMock(AuditReaderDao.class);
     private ResearchProject obj = createMock(ResearchProject.class);
     private ResearchProjectDao dao = createMock(ResearchProjectDao.class);
-    private Object[] mocks = new Object[]{auditReader, dao, obj};
+    private Object[] mocks = new Object[]{auditReader, dao, obj, parentObj, rootObj};
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void beforeMethod() {
@@ -77,6 +82,12 @@ public class ResearchProjectEtlDbFreeTest {
         expect(obj.getIrbNotEngaged()).andReturn(irbNotEngaged);
         expect(obj.getJiraTicketKey()).andReturn(jiraTicketKey);
 
+        expect(obj.getParentResearchProject()).andReturn(parentObj).times(2);
+        expect(obj.getRootResearchProject()).andReturn(rootObj).times(2);
+
+        expect(parentObj.getResearchProjectId()).andReturn(parentResearchProjectId);
+        expect(rootObj.getResearchProjectId()).andReturn(rootResearchProjectId);
+
         replay(mocks);
 
         Collection<String> records = tst.dataRecords(etlDateStr, false, entityId);
@@ -85,6 +96,13 @@ public class ResearchProjectEtlDbFreeTest {
         verifyRecord(records.iterator().next());
 
         verify(mocks);
+    }
+
+    private String formatLong(Long value) {
+        if (value == null) {
+            return "";
+        }
+        return value.toString();
     }
 
     private void verifyRecord(String record) {
@@ -98,8 +116,9 @@ public class ResearchProjectEtlDbFreeTest {
         assertEquals(parts[i++], title);
         assertEquals(parts[i++], EtlTestUtilities.format(irbNotEngaged));
         assertEquals(parts[i++], jiraTicketKey);
+        assertEquals(parts[i++], formatLong(parentResearchProjectId));
+        assertEquals(parts[i++], formatLong(rootResearchProjectId));
         assertEquals(parts.length, i);
     }
-
 }
 

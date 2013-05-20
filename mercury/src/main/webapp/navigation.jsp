@@ -88,6 +88,11 @@
                             class="icon-tasks"></span> Lab <b class="caret"></b></a>
                     <ul class="dropdown-menu" role="menu">
                         <li>
+                            <stripes:link id="uploadQuants"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.UploadQuantsActionBean"
+                                          event="view">Upload Quant</stripes:link>
+                        </li>
+                        <li>
                             <stripes:link id="viewBuckets"
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BucketViewActionBean"
                                           event="view">Buckets</stripes:link>

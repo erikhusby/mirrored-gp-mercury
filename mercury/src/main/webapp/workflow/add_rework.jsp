@@ -29,7 +29,7 @@
         <stripes:form beanclass="${actionBean.class.name}" class="form-horizontal" id="reworkEntryForm">
             <div class="control-group">
                 <stripes:label for="vesselLabel" class="control-label">
-                    Barcode:
+                    Barcode
                 </stripes:label>
                 <div id="barcodeDiv" class="controls">
                     <stripes:text id="vesselBarcode" name="vesselLabel"/>
@@ -38,7 +38,7 @@
             <div id="vesselInfo"></div>
             <div class="control-group">
                 <stripes:label for="reworkReason" class="control-label">
-                    Reason for Rework:
+                    Reason for Rework
                 </stripes:label>
                 <div class="controls">
                     <stripes:select name="reworkReason">
@@ -50,7 +50,7 @@
             </div>
             <div class="control-group">
                 <stripes:label for="commentText" class="control-label">
-                    Comments:
+                    Comments
                 </stripes:label>
                 <div class="controls">
                     <stripes:textarea name="commentText" id="commentText"/>
@@ -59,7 +59,7 @@
             <%--<stripes:hidden name="bucketName"  />--%>
             <div class="control-group">
                 <div class="controls">
-                    <stripes:submit name="reworkSample" value="Rework Sample"/>
+                    <stripes:submit name="reworkSample" value="Rework Sample" class="btn btn-primary"/>
                 </div>
             </div>
         </stripes:form>

@@ -22,20 +22,26 @@
         </script>
     </stripes:layout-component>
     <stripes:layout-component name="content">
-        <stripes:form beanclass="${actionBean.class.name}" id="scanForm">
+        <stripes:form beanclass="${actionBean.class.name}" id="scanForm" class="form-horizontal">
 
             <div class="control-group">
-                <stripes:label for="dTubeText" name="Denature Tube Barcode"/>
-                <stripes:text id="dTubeText" name="denatureTubeBarcode" onchange="showDenatureTubeInfo()"/>
-                <stripes:label for="flowcellText" name="Flowcell Barcode"/>
-                <stripes:text id="flowcellText" name="flowcellBarcode"/>
+                <stripes:label for="dTubeText" name="Denature Tube Barcode" class="control-label"/>
+                <div class="controls">
+                    <stripes:text id="dTubeText" name="denatureTubeBarcode" onchange="showDenatureTubeInfo()"/>
+                </div>
+            </div>
+            <div class="control-group">
+                <stripes:label for="flowcellText" name="Flowcell Barcode" class="control-label"/>
+                <div class="controls">
+                    <stripes:text id="flowcellText" name="flowcellBarcode"/>
+                </div>
             </div>
 
             <div id="denatureTubeInfo"></div>
 
             <div class="control-group">
                 <div class="controls actionButtons">
-                    <stripes:submit name="save" value="Submit"/>
+                    <stripes:submit name="save" value="Submit" class="btn btn-primary"/>
                 </div>
             </div>
 

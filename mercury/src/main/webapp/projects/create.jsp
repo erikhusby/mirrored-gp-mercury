@@ -110,182 +110,188 @@
         <stripes:form beanclass="${actionBean.class.name}" id="createForm" class="form-horizontal" focus="editResearchProject.title">
             <stripes:hidden name="submitString"/>
             <stripes:hidden name="researchProject" value="${actionBean.editResearchProject.jiraTicketKey}"/>
-            <div class="form-horizontal" style="float:left;">
-                <div class="control-group">
-                    <stripes:label for="title" class="control-label">Name *</stripes:label>
-                    <div class="controls">
-                        <stripes:text name="editResearchProject.title" value="${actionBean.editResearchProject.title}"
-                                      id="title"  class="defaultText input-create-form" title="Enter the project name"  maxlength="255"/>
-                    </div>
-                </div>
 
-                <!-- Synopsis -->
-                <div class="control-group">
-                    <stripes:label for="synopsis" class="control-label">Synopsis *</stripes:label>
-
-                    <div class="controls">
-                        <stripes:textarea id="synopsis" rows="5" cols="100" name="editResearchProject.synopsis" class="defaultText textarea input-create-form"
-                                      title="Enter the synopsis of the project" value="${actionBean.editResearchProject.synopsis}"/>
-                    </div>
-                </div>
-
-                <div class="control-group">
-                    <stripes:label for="accessControlEnabled" class="control-label">Access Control</stripes:label>
-                    <div class="controls">
-                        <stripes:checkbox name="editResearchProject.accessControlEnabled"
-                                          id="accessControlEnabled" style="margin-top: 10px;"/>
-                        <stripes:label for="accessControlEnabled" class="control-label" style="width:auto;">Restrict to Project Users</stripes:label>
-                    </div>
-                </div>
-
-                <div class="control-group">
-                    <stripes:label for="researchProject" class="control-label">
-                        Parent Research Project
-                    </stripes:label>
-                    <div class="controls">
-                        <stripes:text
-                                id="parentResearchProject" name="projectTokenInput.listOfKeys"
-                                class="defaultText"
-                                title="Enter the parent research project"/>
-                    </div>
-                </div>
-
-                <!-- Subproject view only. -->
-                <div class="control-group">
-                    <label class="control-label">Subprojects</label>
-
-                    <div class="controls">
-                        <div class="form-value">
-                            <div style="margin-left: -24px;">
-                                <stripes:layout-render name="/projects/treeview_component.jsp"
-                                                       childProjects="${actionBean.editResearchProject.childProjects}"
-                                                       bean="${actionBean}" />
-                            </div>
+            <div class="row">
+                <div class="form-horizontal span7" >
+                    <div class="control-group">
+                        <stripes:label for="title" class="control-label">Name *</stripes:label>
+                        <div class="controls">
+                            <stripes:text name="editResearchProject.title" value="${actionBean.editResearchProject.title}"
+                                          id="title"  class="defaultText input-create-form" title="Enter the project name"  maxlength="255"/>
                         </div>
                     </div>
-                </div>
 
-                <c:if test="${!actionBean.creating}">
+                    <!-- Synopsis -->
                     <div class="control-group">
-                        <stripes:label for="createdBy" class="control-label">Created By</stripes:label>
+                        <stripes:label for="synopsis" class="control-label">Synopsis *</stripes:label>
+
+                        <div class="controls">
+                            <stripes:textarea id="synopsis" rows="5" cols="100" name="editResearchProject.synopsis" class="defaultText textarea input-create-form"
+                                          title="Enter the synopsis of the project" value="${actionBean.editResearchProject.synopsis}"/>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <stripes:label for="accessControlEnabled" class="control-label">Access Control</stripes:label>
+                        <div class="controls">
+                            <stripes:checkbox name="editResearchProject.accessControlEnabled"
+                                              id="accessControlEnabled" style="margin-top: 10px;"/>
+                            <stripes:label for="accessControlEnabled" class="control-label" style="width:auto;">Restrict to Project Users</stripes:label>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <stripes:label for="researchProject" class="control-label">
+                            Parent Research Project
+                        </stripes:label>
+                        <div class="controls">
+                            <stripes:text
+                                    id="parentResearchProject" name="projectTokenInput.listOfKeys"
+                                    class="defaultText"
+                                    title="Enter the parent research project"/>
+                        </div>
+                    </div>
+
+                    <!-- Subproject view only. -->
+                    <div class="control-group">
+                        <label class="control-label">Subprojects</label>
 
                         <div class="controls">
                             <div class="form-value">
-                                    ${actionBean.getUserFullName(actionBean.editResearchProject.createdBy)}
-                                on <fmt:formatDate value="${actionBean.editResearchProject.createdDate}"
-                                                   pattern="${actionBean.datePattern}"/>
+                                <div style="margin-left: -24px;">
+                                    <stripes:layout-render name="/projects/treeview_component.jsp"
+                                                           childProjects="${actionBean.editResearchProject.childProjects}"
+                                                           bean="${actionBean}" />
+                                </div>
                             </div>
                         </div>
                     </div>
-                </c:if>
 
-                <div class="control-group">
-                    <stripes:label for="fundingSources" class="control-label">Funding Sources</stripes:label>
+                    <c:if test="${!actionBean.creating}">
+                        <div class="control-group">
+                            <stripes:label for="createdBy" class="control-label">Created By</stripes:label>
 
-                    <div class="controls">
-                        <stripes:text id="fundingSources" name="fundingSourceList.listOfKeys" />
+                            <div class="controls">
+                                <div class="form-value">
+                                        ${actionBean.getUserFullName(actionBean.editResearchProject.createdBy)}
+                                    on <fmt:formatDate value="${actionBean.editResearchProject.createdDate}"
+                                                       pattern="${actionBean.datePattern}"/>
+                                </div>
+                            </div>
+                        </div>
+                    </c:if>
+
+                    <div class="control-group">
+                        <stripes:label for="fundingSources" class="control-label">Funding Sources</stripes:label>
+
+                        <div class="controls">
+                            <stripes:text id="fundingSources" name="fundingSourceList.listOfKeys" />
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <stripes:label for="cohorts" class="control-label">Sample Cohorts</stripes:label>
+
+                        <div class="controls">
+                            <stripes:text id="cohorts" name="cohortsList.listOfKeys" />
+                        </div>
+                    </div>
+
+
+                    <div class="control-group">
+                        <stripes:label for="irbs" class="control-label">IRB/IACUC Numbers</stripes:label>
+
+                        <div class="controls">
+                            <stripes:text id="irbs" name="irbList" title="Enter the IRB Number" class="defaultText"/>
+                            <p>
+                                <stripes:checkbox id="irbNotEngaged" name="editResearchProject.irbNotEngaged"/>&nbsp;<stripes:label for="irbNotEngaged" style="display:inline;">IRB Not Engaged</stripes:label>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label id="j_idt130" class="ui-outputlabel control-label" for="irbNotes">IRB Notes</label>
+                        <div class="controls">
+                            <stripes:text id="irbNotes" class="defaultText input-create-form" title="Enter notes about the above IRBs" name="editResearchProject.irbNotes" value="${actionBean.editResearchProject.irbNotes}" maxlength="255" />
+                        </div>
                     </div>
                 </div>
 
-                <div class="control-group">
-                    <stripes:label for="cohorts" class="control-label">Sample Cohorts</stripes:label>
+                <div class="form-horizontal span5">
+                    <fieldset>
+                        <legend><h4>Project Users</h4></legend>
 
-                    <div class="controls">
-                        <stripes:text id="cohorts" name="cohortsList.listOfKeys" />
-                    </div>
-                </div>
+                        <!-- Project Managers -->
+                        <div class="control-group">
+                            <stripes:label for="projectManagers" class="control-label">Project Managers *</stripes:label>
 
-
-                <div class="control-group">
-                    <stripes:label for="irbs" class="control-label">IRB/IACUC Numbers</stripes:label>
-
-                    <div class="controls">
-                        <stripes:text id="irbs" name="irbList" title="Enter the IRB Number" class="defaultText"/>
-                        <p>
-                            <stripes:checkbox id="irbNotEngaged" name="editResearchProject.irbNotEngaged"/>&nbsp;<stripes:label for="irbNotEngaged" style="display:inline;">IRB Not Engaged</stripes:label>
-                        </p>
-                    </div>
-                </div>
-
-                <div class="control-group">
-                    <label id="j_idt130" class="ui-outputlabel control-label" for="irbNotes">IRB Notes</label>
-                    <div class="controls">
-                        <stripes:text id="irbNotes" class="defaultText input-create-form" title="Enter notes about the above IRBs" name="editResearchProject.irbNotes" value="${actionBean.editResearchProject.irbNotes}" maxlength="255" />
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-horizontal" style="float: left; margin-left: 30px;">
-                <fieldset>
-                    <legend>Project Users</legend>
-
-                    <!-- Project Managers -->
-                    <div class="control-group">
-                        <stripes:label for="projectManagers" class="control-label">Project Managers *</stripes:label>
-
-                        <div class="controls">
-                            <stripes:text id="projectManagers" name="projectManagerList.listOfKeys" />
+                            <div class="controls">
+                                <stripes:text id="projectManagers" name="projectManagerList.listOfKeys" />
+                            </div>
                         </div>
-                    </div>
 
-                    <!-- Broad PIs -->
-                    <div class="control-group">
-                        <stripes:label for="broadPIs" class="control-label">Broad PIs</stripes:label>
+                        <!-- Broad PIs -->
+                        <div class="control-group">
+                            <stripes:label for="broadPIs" class="control-label">Broad PIs</stripes:label>
 
-                        <div class="controls">
-                            <stripes:text id="broadPIs" name="broadPiList.listOfKeys" />
+                            <div class="controls">
+                                <stripes:text id="broadPIs" name="broadPiList.listOfKeys" />
+                            </div>
                         </div>
-                    </div>
 
-                    <!-- External Collaborators -->
-                    <div class="control-group">
-                        <stripes:label for="externalCollaborators" class="control-label">External Collaborators</stripes:label>
-                        <div class="controls">
-                            <stripes:text id="externalCollaborators" name="externalCollaboratorList.listOfKeys" />
+                        <!-- External Collaborators -->
+                        <div class="control-group">
+                            <stripes:label for="externalCollaborators" class="control-label">External Collaborators</stripes:label>
+                            <div class="controls">
+                                <stripes:text id="externalCollaborators" name="externalCollaboratorList.listOfKeys" />
+                            </div>
                         </div>
-                    </div>
 
-                    <!-- Scientists -->
-                    <div class="control-group">
-                        <stripes:label for="scientists" class="control-label">Scientists</stripes:label>
-                        <div class="controls">
-                            <stripes:text id="scientists" name="scientistList.listOfKeys" />
+                        <!-- Scientists -->
+                        <div class="control-group">
+                            <stripes:label for="scientists" class="control-label">Scientists</stripes:label>
+                            <div class="controls">
+                                <stripes:text id="scientists" name="scientistList.listOfKeys" />
+                            </div>
                         </div>
-                    </div>
 
-                    <!-- Other -->
-                    <div class="control-group">
-                        <stripes:label for="otherUsers" class="control-label">Other Users</stripes:label>
-                        <div class="controls">
-                            <stripes:text id="otherUsers" name="otherUserList.listOfKeys" />
+                        <!-- Other -->
+                        <div class="control-group">
+                            <stripes:label for="otherUsers" class="control-label">Other Users</stripes:label>
+                            <div class="controls">
+                                <stripes:text id="otherUsers" name="otherUserList.listOfKeys" />
+                            </div>
                         </div>
-                    </div>
-                </fieldset>
-            </div>
-
-            <div class="control-group" style="clear: both;">
-                <div class="controls">
-                    <div class="row-fluid">
-                        <div class="span1">
-                            <stripes:submit name="save" value="Save" disabled="${!actionBean.canSave}" class="btn btn-primary"/>
-                        </div>
-                        <div class="span1">
-                            <c:choose>
-                                <c:when test="${actionBean.creating}">
-                                    <stripes:link beanclass="${actionBean.class.name}" event="list">Cancel</stripes:link>
-                                </c:when>
-                                <c:otherwise>
-                                    <stripes:link beanclass="${actionBean.class.name}" event="view">
-                                        <stripes:param name="researchProject" value="${actionBean.researchProject}"/>
-                                        Cancel
-                                    </stripes:link>
-                                </c:otherwise>
-                            </c:choose>
-                        </div>
-                    </div>
+                    </fieldset>
                 </div>
             </div>
 
+            <div class="row">
+                <div class="form-horizontal span12" >
+                    <div class="control-group">
+                        <div class="controls">
+                            <div class="row-fluid">
+                                <div class="span1">
+                                    <stripes:submit name="save" value="Save" disabled="${!actionBean.canSave}" class="btn btn-primary"/>
+                                </div>
+                                <div class="span1">
+                                    <c:choose>
+                                        <c:when test="${actionBean.creating}">
+                                            <stripes:link beanclass="${actionBean.class.name}" event="list">Cancel</stripes:link>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <stripes:link beanclass="${actionBean.class.name}" event="view">
+                                                <stripes:param name="researchProject" value="${actionBean.researchProject}"/>
+                                                Cancel
+                                            </stripes:link>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </stripes:form>
 
     </stripes:layout-component>

@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 
+import com.google.common.collect.Multimap;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -7,19 +8,24 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderComplet
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import javax.transaction.UserTransaction;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM;
 import static org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.is;
 
 /**
  * Test the progress object.
@@ -27,37 +33,21 @@ import static org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
 public class CompletionStatusFetcherTest extends ContainerTest {
 
-    @SuppressWarnings("CdiInjectionPointsInspection")
-    @Inject
-    private UserTransaction utx;
-
     @Inject
     private ProductOrderDao pdoDao;
 
     private CompletionStatusFetcher allPDOFetcher;
 
     @BeforeMethod
-    public void setUp() throws Exception {        // Skip if no injections, meaning we're not running in container.
-        if (utx == null) {
-            return;
-        }
-
-        utx.begin();
-
-        // Get all statuses.
-        allPDOFetcher = new CompletionStatusFetcher();
-        allPDOFetcher.loadProgress(pdoDao);
-    }
-
-    @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
-    public void tearDown() throws Exception {
+    public void setUp() throws Exception {
         // Skip if no injections, meaning we're not running in container.
-        if (utx == null) {
-            return;
+        if (pdoDao != null) {
+            // Get all statuses.
+            allPDOFetcher = new CompletionStatusFetcher();
+            allPDOFetcher.loadProgress(pdoDao);
         }
-
-        utx.rollback();
     }
+
 
     public void testGetPercentAbandoned() throws Exception {
         // Find the first PDO with abandoned samples.
@@ -80,8 +70,8 @@ public class CompletionStatusFetcherTest extends ContainerTest {
         ProductOrderCompletionStatus realStatus = calculateStatus(order.getSamples());
 
         Assert.assertEquals(
-            fetcherPercentAbandoned, realStatus.getPercentAbandoned(),
-            "Fetcher calculated different abandon percentage");
+                fetcherPercentAbandoned, realStatus.getPercentAbandoned(),
+                "Fetcher calculated different abandon percentage");
     }
 
     public void testGetPercentComplete() throws Exception {
@@ -199,5 +189,48 @@ public class CompletionStatusFetcherTest extends ContainerTest {
         ProductOrder order = pdoDao.findByBusinessKey(pdoWithSamplesKey);
         Assert.assertEquals(
                 numSamples, order.getSamples().size(), "Fetcher calculated different number of samples");
+    }
+
+
+    /**
+     * Utility method to extract samples which are unique by name within a Product Order from a {@link Multimap}.
+     */
+    private ProductOrderSample getSample(Multimap<String, ProductOrderSample> multimap, String sampleName) {
+        return multimap.get(sampleName).iterator().next();
+    }
+
+
+    /**
+     * Utility method to set delivery status into samples which are unique by name within a Product Order.
+     */
+    private void setDeliveryStatus(Multimap<String, ProductOrderSample> multimap, String sampleName,
+                                   ProductOrderSample.DeliveryStatus deliveryStatus) {
+        getSample(multimap, sampleName).setDeliveryStatus(deliveryStatus);
+    }
+
+
+    /**
+     * Test over GPLIM-1206.
+     */
+    public void testCompletionPercentageWithSomeAbandonedSamples() {
+        // Two samples are Abandoned, one is in Progress.
+        final ProductOrder productOrder = ProductOrderDBTestFactory.createProductOrder(pdoDao, "SM-001A", "SM-002A", "SM-001P");
+        Multimap<String, ProductOrderSample> samplesMultimap =
+                ProductOrderTestFactory.groupBySampleId(productOrder);
+
+        setDeliveryStatus(samplesMultimap, "SM-001P", ProductOrderSample.DeliveryStatus.NOT_STARTED);
+        setDeliveryStatus(samplesMultimap, "SM-001A", ProductOrderSample.DeliveryStatus.ABANDONED);
+        setDeliveryStatus(samplesMultimap, "SM-002A", ProductOrderSample.DeliveryStatus.ABANDONED);
+
+        pdoDao.flush();
+        pdoDao.clear();
+
+        allPDOFetcher = new CompletionStatusFetcher();
+        allPDOFetcher.loadProgress(pdoDao);
+
+        String businessKey = productOrder.getBusinessKey();
+        assertThat(allPDOFetcher.getPercentCompleted(businessKey), is(equalTo(0)));
+        assertThat(allPDOFetcher.getPercentAbandoned(businessKey), is(greaterThanOrEqualTo(66)));
+        assertThat(allPDOFetcher.getPercentInProgress(businessKey), is(equalTo(33)));
     }
 }

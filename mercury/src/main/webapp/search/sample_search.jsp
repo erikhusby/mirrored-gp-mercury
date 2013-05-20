@@ -11,6 +11,9 @@
             $(document).ready(function () {
                 $j("#accordion").accordion({ collapsible:true, active:false, heightStyle:"content", autoHeight:false });
                 $j("#accordion").show();
+                if(${fn:length(actionBean.mercurySampleToVessels) == 1}){
+                    $j("#accordion").accordion({active: 0})
+                }
 
                 if (${not actionBean.searchDone}) {
                     showSearch();
@@ -35,10 +38,9 @@
         <div id="searchInput">
             <stripes:form beanclass="${actionBean.class.name}" id="searchForm" class="form-horizontal">
                 <div class="form-horizontal">
-                    <div class="control-group" style="margin-bottom:5px;">
-                        <stripes:label for="barcode" class="control-label"
-                                       style="width: 60px;">Sample ID(s)</stripes:label>
-                        <div class="controls" style="margin-left: 80px;">
+                    <div class="control-group">
+                        <stripes:label for="barcode" class="control-label">Sample ID(s)</stripes:label>
+                        <div class="controls">
                             <stripes:textarea rows="5" cols="160" name="searchKey" id="name"
                                               title="Enter the value to search"
                                               style="width:auto;" class="defaultText"/>
@@ -46,8 +48,8 @@
                     </div>
 
                     <div class="control-group">
-                        <div class="controls" style="margin-left: 80px;">
-                            <stripes:submit name="sampleSearch" value="Search"/>
+                        <div class="controls">
+                            <stripes:submit name="sampleSearch" value="Search" class="btn btn-primary"/>
                         </div>
                     </div>
                 </div>
@@ -69,7 +71,7 @@
                                                    sample="${sampleToVessels.key}"/>
                         </div>
 
-                        <div id="sampleList-${sampleToVessels.key}" style="height: 300px;">
+                        <div id="sampleList-${sampleToVessels.key}">
                             <div>
                                 <stripes:layout-render name="/sample/sample_event_list.jsp"
                                                        vessels="${sampleToVessels.value}"

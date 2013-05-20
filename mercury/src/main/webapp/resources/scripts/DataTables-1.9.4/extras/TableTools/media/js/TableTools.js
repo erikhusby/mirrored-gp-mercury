@@ -1976,7 +1976,7 @@ TableTools.prototype = {
 				var sDisplay = $(nChildren[i]).css("display");
 			 	if ( sDisplay != "none" )
 				{
-					/* Cache the node and it's previous state so we can restore it */
+					/* Cache the node and its previous state so we can restore it */
 					anHidden.push( {
 						"node": nChildren[i],
 						"display": sDisplay
