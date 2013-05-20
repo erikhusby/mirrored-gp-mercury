@@ -1,7 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.analysis;
 
-import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AlignerDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AnalysisTypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.Aligner;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.AnalysisType;

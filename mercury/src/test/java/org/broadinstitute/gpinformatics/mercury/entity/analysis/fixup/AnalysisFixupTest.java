@@ -22,6 +22,9 @@ public class AnalysisFixupTest extends Arquillian {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
+    /**
+     * This script loads the initial data for the analysis pipeline lists.
+     */
     @Test(enabled = false)
     public void initializeAllLists() {
 

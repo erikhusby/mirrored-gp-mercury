@@ -11,7 +11,8 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 /**
- * A representation of the aligner that will be used for analysis.
+ * This gives the pipeline the type of analysis that will be desired. This will be one item from a set list that
+ * is determined (and managed) by the pipeline team.
  */
 @Entity
 @Audited

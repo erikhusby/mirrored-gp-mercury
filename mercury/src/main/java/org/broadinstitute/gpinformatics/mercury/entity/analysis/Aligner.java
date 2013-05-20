@@ -11,7 +11,8 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 /**
- * A representation of the aligner that will be used for analysis.
+ * A representation of the aligner that will be used for analysis. This is managed by the pipeline team in a user
+ * interface provided by mercury.
  */
 @Entity
 @Audited
