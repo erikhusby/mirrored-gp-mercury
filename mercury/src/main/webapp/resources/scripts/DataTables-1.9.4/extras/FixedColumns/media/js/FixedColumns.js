@@ -294,10 +294,10 @@ FixedColumns.prototype = {
 	
 	
 	/**
-	 * Mark a row such that it's height should be recalculated when using 'semiauto' row
+	 * Mark a row such that its height should be recalculated when using 'semiauto' row
 	 * height matching. This function will have no effect when 'none' or 'auto' row height
 	 * matching is used.
-	 *  @param   {Node} nTr TR element that should have it's height recalculated
+	 *  @param   {Node} nTr TR element that should have its height recalculated
 	 *  @returns {void}
 	 *  @example
 	 *  	var oTable = $('#example').dataTable( {
@@ -320,7 +320,7 @@ FixedColumns.prototype = {
 	
 	/**
 	 * Set the height of a given row - provides cross browser compatibility
-	 *  @param   {Node} nTarget TR element that should have it's height recalculated
+	 *  @param   {Node} nTarget TR element that should have its height recalculated
 	 *  @param   {int} iHeight Height in pixels to set
 	 *  @returns {void}
 	 *  @example

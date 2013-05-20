@@ -741,7 +741,7 @@ Scroller.oDefaults = {
 	"trace": false,
 
 	/** 
-	 * Scroller will attempt to automatically calculate the height of rows for it's internal
+	 * Scroller will attempt to automatically calculate the height of rows for its internal
 	 * calculations. However the height that is used can be overridden using this parameter.
 	 *  @type     int|string
 	 *  @default  auto

@@ -22,7 +22,7 @@ import javax.ws.rs.core.MediaType;
 import java.util.*;
 
 /**
- * A JAX-RS web service to return Transfers etc., by various criteria
+ * A JAX-RS web service to return Transfers etc., by various criteria.
  */
 @Path("/labevent")
 @Stateful
@@ -221,7 +221,7 @@ public class LabEventResource {
         String label;
         if(labVesselEntity.getType() == LabVessel.ContainerType.TUBE_FORMATION) {
             // The "label" for a tube formation is the hash of the tube barcodes and their formations, so return the
-            // label for the rack
+            // label for the rack.
             label = OrmUtil.proxySafeCast(labVesselEntity, TubeFormation.class).getRacksOfTubes().iterator().next().getLabel();
         } else {
             label = labVesselEntity.getLabel();

@@ -10,16 +10,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.RapSheet;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
-import javax.persistence.SequenceGenerator;
-import javax.persistence.Table;
-import javax.persistence.Transient;
+import javax.persistence.*;
 
 /**
  * Represents Mercury's view of a sample.  Sample information is held in another system (initially Athena),
@@ -104,6 +95,15 @@ public class MercurySample {
         hasBspDTOBeenInitialized = true;
         this.bspSampleDTO = bspSampleDTO;
     }
+
+    public String getBspSampleName() {
+        // skip the SM- part of the name.
+        if ((sampleKey.length() > 3) && isInBspFormat()) {
+            return sampleKey.substring(3);
+        }
+        return sampleKey;
+    }
+
 
     @Override
     public boolean equals(Object o) {
