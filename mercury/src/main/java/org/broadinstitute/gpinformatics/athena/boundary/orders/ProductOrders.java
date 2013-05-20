@@ -13,8 +13,7 @@ import java.util.List;
 @XmlRootElement
 public class ProductOrders {
 
-    @XmlElement(name = "order")
-    public List<ProductOrderData> orders = new ArrayList<ProductOrderData>();
+    private List<ProductOrderData> orders = new ArrayList<ProductOrderData>();
 
     /** For JAXB. */
     public ProductOrders() {
@@ -24,6 +23,7 @@ public class ProductOrders {
         orders = productOrderDataList;
     }
 
+    @XmlElement(name = "order")
     public List<ProductOrderData> getOrders() {
         return orders;
     }

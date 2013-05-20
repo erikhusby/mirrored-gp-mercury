@@ -13,15 +13,13 @@ import java.util.List;
 @SuppressWarnings("UnusedDeclaration")
 @XmlRootElement
 public class ProductOrderData {
-    public String title;
-    public String id;
-    public String comments;
-    public Date modifiedDate;
-    public String product;
-    public String status;
-    @XmlElementWrapper
-    @XmlElement(name = "sample")
-    public List<String> samples;
+    private String title;
+    private String id;
+    private String comments;
+    private Date modifiedDate;
+    private String product;
+    private String status;
+    private List<String> samples;
 
     @SuppressWarnings("UnusedDeclaration")
     /** Required by JAXB. */
@@ -76,6 +74,8 @@ public class ProductOrderData {
         this.status = status;
     }
 
+    @XmlElementWrapper
+    @XmlElement(name = "sample")
     public List<String> getSamples() {
         return samples;
     }

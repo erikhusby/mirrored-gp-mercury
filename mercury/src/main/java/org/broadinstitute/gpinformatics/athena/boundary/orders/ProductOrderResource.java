@@ -36,6 +36,7 @@ public class ProductOrderResource {
 
     private ProductOrders buildProductOrdersFromList(@Nonnull List<ProductOrder> productOrderList,
                                                      boolean includeSamples) {
+
         List<ProductOrderData> productOrderDataList = new ArrayList<ProductOrderData>(productOrderList.size());
 
         for (ProductOrder productOrder : productOrderList) {
@@ -57,6 +58,8 @@ public class ProductOrderResource {
                 // includeSamples = false.  Is the JAXB behavior with an empty List undesirable?
                 productOrderData.setSamples(null);
             }
+
+            productOrderDataList.add(productOrderData);
         }
 
         return new ProductOrders(productOrderDataList);
