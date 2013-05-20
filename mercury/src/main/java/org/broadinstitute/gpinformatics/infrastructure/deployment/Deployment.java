@@ -13,5 +13,8 @@ public enum Deployment {
     PROD,
     STUBBY,
     /** Used when running tests on the automated build server. */
-    AUTO_BUILD
+    AUTO_BUILD,
+    CRSP_DEV,
+    CRSP_QA,
+    CRSP_TEST
 }
