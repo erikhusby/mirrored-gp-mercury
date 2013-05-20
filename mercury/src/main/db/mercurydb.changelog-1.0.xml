@@ -1641,7 +1641,7 @@ END;
             </column>
             <column name="IS_CURRENT" type="BOOLEAN"/>
         </createTable>
-        <addUniqueConstraint tableName="REFERENCE_SEQUENCE" columnNames="NAME"
+        <addUniqueConstraint tableName="REFERENCE_SEQUENCE" columnNames="NAME, VERSION"
                              constraintName="uk_ref_sequence_name" schemaName="mercury"/>
     </changeSet>
 
