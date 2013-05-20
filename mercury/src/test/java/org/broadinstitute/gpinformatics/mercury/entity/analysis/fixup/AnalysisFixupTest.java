@@ -38,15 +38,8 @@ public class AnalysisFixupTest extends Arquillian {
     @Test(enabled = false)
     public void initializeAligners() {
         // Add the aligners
-        analysisEjb.addAligner("Aligner 1");
-        analysisEjb.addAligner("Aligner 2");
-        analysisEjb.addAligner("Aligner 3");
-        analysisEjb.addAligner("Aligner 4");
-        analysisEjb.addAligner("Aligner 5");
-        analysisEjb.addAligner("Aligner 6");
-        analysisEjb.addAligner("Aligner 7");
-        analysisEjb.addAligner("Aligner 8");
-        analysisEjb.addAligner("Aligner 9");
+        analysisEjb.addAligner("bwa");
+        analysisEjb.addAligner("maq");
     }
 
     @Test(enabled = false)
