@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.athena.presentation.DisplayableItem;
 import org.broadinstitute.gpinformatics.athena.presentation.converter.IrbConverter;
 import org.broadinstitute.gpinformatics.athena.presentation.links.TableauLink;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.CohortTokenInput;
@@ -19,6 +20,7 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserT
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
+import org.broadinstitute.gpinformatics.infrastructure.mercury.MercuryClientService;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.json.JSONArray;
@@ -48,6 +50,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     @Inject
     private TableauLink tableauLink;
+
+    @Inject
+    private MercuryClientService mercuryClientService;
 
     @Inject
     private ResearchProjectDao researchProjectDao;
@@ -473,4 +478,21 @@ public class ResearchProjectActionBean extends CoreActionBean {
         return projectTokenInput;
     }
 
+    /**
+     * Get the list of available sequence aligners.
+     *
+     * @return List of strings representing the sequence aligners
+     */
+    public Collection<DisplayableItem> getSequenceAligners() {
+        return mercuryClientService.getSequenceAligners();
+    }
+
+    /**
+     * Get the list of available reference sequences.
+     *
+     * @return List of strings representing the reference sequences
+     */
+    public Collection<DisplayableItem> getReferenceSequences() {
+        return mercuryClientService.getReferenceSequences();
+    }
 }

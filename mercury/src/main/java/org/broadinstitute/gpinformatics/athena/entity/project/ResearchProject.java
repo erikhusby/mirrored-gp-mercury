@@ -123,6 +123,14 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
     @Index(name = "ix_parent_research_project")
     private ResearchProject parentResearchProject;
 
+    @Transient
+    //@Column(name = "SEQUENCE_ALIGNER_KEY", nullable = true)
+    private Long sequenceAlignerKey;
+
+    @Transient
+    //@Column(name = "REFERENCE_SEQUENCE_KEY", nullable = true)
+    private Long referenceSequenceKey;
+
     /**
      * Set of ResearchProjects that belong under this one.
      */
@@ -252,6 +260,14 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
         return childProjects;
     }
 
+    public Long getSequenceAlignerKey() {
+        return sequenceAlignerKey;
+    }
+
+    public Long getReferenceSequenceKey() {
+        return referenceSequenceKey;
+    }
+
     // Setters
 
     public void setCreatedBy(Long createdBy) {
@@ -280,6 +296,14 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
 
     public void setAccessControlEnabled(boolean accessControlEnabled) {
         this.accessControlEnabled = accessControlEnabled;
+    }
+
+    public void setSequenceAlignerKey(Long sequenceAlignerKey) {
+        this.sequenceAlignerKey = sequenceAlignerKey;
+    }
+
+    public void setReferenceSequenceKey(Long referenceSequenceKey) {
+        this.referenceSequenceKey = referenceSequenceKey;
     }
 
     /**

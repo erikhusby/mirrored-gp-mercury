@@ -132,15 +132,6 @@
                     </div>
 
                     <div class="control-group">
-                        <stripes:label for="accessControlEnabled" class="control-label">Access Control</stripes:label>
-                        <div class="controls">
-                            <stripes:checkbox name="editResearchProject.accessControlEnabled"
-                                              id="accessControlEnabled" style="margin-top: 10px;"/>
-                            <stripes:label for="accessControlEnabled" class="control-label" style="width:auto;">Restrict to Project Users</stripes:label>
-                        </div>
-                    </div>
-
-                    <div class="control-group">
                         <stripes:label for="researchProject" class="control-label">
                             Parent Research Project
                         </stripes:label>
@@ -210,11 +201,12 @@
                     </div>
 
                     <div class="control-group">
-                        <label id="j_idt130" class="ui-outputlabel control-label" for="irbNotes">IRB Notes</label>
+                        <label class="ui-outputlabel control-label" for="irbNotes">IRB Notes</label>
                         <div class="controls">
                             <stripes:text id="irbNotes" class="defaultText input-create-form" title="Enter notes about the above IRBs" name="editResearchProject.irbNotes" value="${actionBean.editResearchProject.irbNotes}" maxlength="255" />
                         </div>
                     </div>
+
                 </div>
 
                 <div class="form-horizontal span5">
@@ -262,6 +254,40 @@
                                 <stripes:text id="otherUsers" name="otherUserList.listOfKeys" />
                             </div>
                         </div>
+                    </fieldset>
+
+                    <fieldset>
+                        <legend><h4>Pipeline Analysis</h4></legend>
+
+                        <div class="control-group">
+                            <stripes:label for="accessControlEnabled" class="control-label">Access Control</stripes:label>
+                            <div class="controls">
+                                <stripes:checkbox name="editResearchProject.accessControlEnabled"
+                                                  id="accessControlEnabled" style="margin-top: 10px;"/>
+                                <stripes:label for="accessControlEnabled" class="control-label" style="width:auto;">Restrict to Project Users</stripes:label>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <label class="ui-outputlabel control-label" for="sequenceAligner">Sequence Aligner</label>
+                            <div class="controls">
+                                <stripes:select id="sequenceAligner" name="sequenceAligner">
+                                    <stripes:option value="">Select One</stripes:option>
+                                    <stripes:options-collection collection="${actionBean.sequenceAligners}" label="displayName" value="businessKey"/>
+                                </stripes:select>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <label class="ui-outputlabel control-label" for="referenceSequence">Reference Sequence</label>
+                            <div class="controls">
+                                <stripes:select id="referenceSequence" name="referenceSequence">
+                                    <stripes:option value="">Select One</stripes:option>
+                                    <stripes:options-collection collection="${actionBean.referenceSequences}" label="displayName" value="businessKey"/>
+                                </stripes:select>
+                            </div>
+                        </div>
+
                     </fieldset>
                 </div>
             </div>

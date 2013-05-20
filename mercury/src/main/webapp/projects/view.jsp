@@ -62,22 +62,6 @@
                 </div>
             </div>
 
-            <div class="control-group view-control-group">
-                <label class="control-label label-form">Access Control</label>
-                <div class="controls">
-                    <div class="form-value">
-                        <c:choose>
-                            <c:when test="${actionBean.editResearchProject.accessControlEnabled}">
-                                Restricted to Project Users
-                            </c:when>
-                            <c:otherwise>
-                                Open to All Users
-                            </c:otherwise>
-                        </c:choose>
-                    </div>
-                </div>
-            </div>
-
             <!-- Parent Project -->
             <div class="control-group view-control-group">
                 <label class="control-label label-form">Parent Project</label>
@@ -224,6 +208,41 @@
                 </div>
             </fieldset>
 
+            <fieldset>
+                <legend><h4>Pipeline Analysis</h4></legend>
+
+                <div class="control-group view-control-group">
+                    <label class="control-label label-form">Access Control</label>
+                    <div class="controls">
+                        <div class="form-value">
+                            <c:choose>
+                                <c:when test="${actionBean.editResearchProject.accessControlEnabled}">
+                                    Restricted to Project Users
+                                </c:when>
+                                <c:otherwise>
+                                    Open to All Users
+                                </c:otherwise>
+                            </c:choose>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-group view-control-group">
+                    <label class="control-label label-form">Sequence Aligner</label>
+
+                    <div class="controls">
+                        <div class="form-value">${actionBean.editResearchProject.sequenceAlignerKey}</div>
+                    </div>
+                </div>
+
+                <div class="control-group view-control-group">
+                    <label class="control-label label-form">Reference Sequence</label>
+
+                    <div class="controls">
+                        <div class="form-value">${actionBean.editResearchProject.referenceSequenceKey}</div>
+                    </div>
+                </div>
+            </fieldset>
         </div>
 
         <div class="tableBar" style="clear:both; margin-bottom: 10px;">
