@@ -2,18 +2,11 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import org.hibernate.envers.Audited;
 
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
-import javax.persistence.SequenceGenerator;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -63,16 +56,17 @@ public class LabMetric {
     public enum MetricType {
 //        FRAGMENT_SIZE,
 //        VOLUME,
-        BSP_PICO("BSP Pico"),
-        PRE_FLIGHT_PRE_NORM_PICO("Pre Flight Pre Norm Pico"),
-        PRE_FLIGHT_POST_NORM_PICO("Pre Flight Post Norm Pico"),
-        POND_PICO("Pond Pico"),
-        CATCH_PICO("Catch Pico"),
-        FINAL_LIBRARY_SIZE("Final Library Size"),
-        POST_NORMALIZATION_PICO("Post-Normalization Pico"),
-        TSCA_PICO("TSCA Pico");
+        BSP_PICO("BSP Pico", true),
+        PRE_FLIGHT_PRE_NORM_PICO("Pre Flight Pre Norm Pico", true),
+        PRE_FLIGHT_POST_NORM_PICO("Pre Flight Post Norm Pico", true),
+        POND_PICO("Pond Pico", true),
+        CATCH_PICO("Catch Pico", true),
+        FINAL_LIBRARY_SIZE("Final Library Size", false),
+        POST_NORMALIZATION_PICO("Post-Normalization Pico", true),
+        TSCA_PICO("TSCA Pico", true);
 
         private String displayName;
+        private boolean uploadEnabled;
         private static final Map<String, MetricType> mapNameToType = new HashMap<String, MetricType>();
         static {
             for (MetricType metricType : MetricType.values()) {
@@ -80,8 +74,9 @@ public class LabMetric {
             }
         }
 
-        MetricType(String displayName) {
+        MetricType(String displayName, boolean uploadEnabled) {
             this.displayName = displayName;
+            this.uploadEnabled = uploadEnabled;
         }
 
         public String getDisplayName() {
@@ -94,6 +89,17 @@ public class LabMetric {
                 throw new RuntimeException("Failed to find MetricType for name " + displayName);
             }
             return mappedMetricType;
+        }
+
+        public static List<MetricType> getUploadSupportedMetrics(){
+            List<MetricType> metricTypes = new ArrayList<MetricType>();
+            for (MetricType value : values()) {
+                if (value.uploadEnabled) {
+                    metricTypes.add(value);
+                }
+            }
+
+            return metricTypes;
         }
     }
 
