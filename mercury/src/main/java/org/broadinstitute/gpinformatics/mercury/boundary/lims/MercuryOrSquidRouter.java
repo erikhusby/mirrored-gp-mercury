@@ -100,6 +100,18 @@ public class MercuryOrSquidRouter implements Serializable {
     }
 
     /**
+     * Determines if a tube belongs to Mercury or Squid. See {@link MercuryOrSquid} for a description of "belongs".
+     *
+     * @param barcode the barcode of the tube to check
+     *
+     * @return An instance of a MercuryOrSquid enum that will assist in determining to which system requests should be
+     * routed.
+     */
+    public MercuryOrSquid routeForVessel(String barcode) {
+        return routeForVesselBarcodes(Collections.singletonList(barcode));
+    }
+
+    /**
      * Takes a collection of lab vessels for which a user wishes to determine the system of record.
      *
      * @param labVessels entities
@@ -154,56 +166,6 @@ public class MercuryOrSquidRouter implements Serializable {
         }
 
         return evaluateRoutingOption(routingOptions);
-    }
-
-    /**
-     * Helper method to assist in determining the cumulative routing suggestion for a collection of vessels.
-     * <p />
-     *
-     * This method will either give the user a determined routing suggestion, or throw a {@link RouterException} if
-     * a safe routing option cannot be determined based on the routing options given.
-     * <p />
-     *
-     * The logic is as follows:
-     * <ul>
-     *     <li>If there is but one routing option passed, that is the winner</li>
-     *     <li>If there is a combination of SQUID and BOTH as routing options, route to Squid.  Since it has
-     *     historically been the main LIMS system of record, in this scenario it is the safest bet</li>
-     *     <li>If there are any other combinations, throw a {@link RouterException}</li>
-     * </ul>
-     *
-     * @param routingOptions A navigable collection of determined routing options for a collection of lab vessels.
-     *
-     * @return An instance of a MercuryOrSquid enum that will assist in determining to which system requests should be
-     * routed.
-     */
-    private MercuryOrSquid evaluateRoutingOption(Set<MercuryOrSquid> routingOptions) {
-
-        MercuryOrSquid result;
-
-        if (routingOptions.isEmpty()) {
-            result = SQUID;
-        } else if (routingOptions.size() == 1) {
-            result = routingOptions.iterator().next();
-        } else if (routingOptions.equals(EnumSet.of(SQUID, BOTH))) {
-            result = SQUID;
-        } else {
-            throw new RouterException("The Routing cannot be determined for options: " + routingOptions);
-        }
-
-        return result;
-    }
-
-    /**
-     * Determines if a tube belongs to Mercury or Squid. See {@link MercuryOrSquid} for a description of "belongs".
-     *
-     * @param barcode the barcode of the tube to check
-     *
-     * @return An instance of a MercuryOrSquid enum that will assist in determining to which system requests should be
-     * routed.
-     */
-    public MercuryOrSquid routeForVessel(String barcode) {
-        return routeForVesselBarcodes(Collections.singletonList(barcode));
     }
 
     // TODO: figure out how to handle libraryNames for fetchLibraryDetailsByLibraryName
@@ -272,6 +234,44 @@ public class MercuryOrSquidRouter implements Serializable {
         }
 
         return evaluateRoutingOption(routingOptions);
+    }
+
+    /**
+     * Helper method to assist in determining the cumulative routing suggestion for a collection of vessels.
+     * <p />
+     *
+     * This method will either give the user a determined routing suggestion, or throw a {@link RouterException} if
+     * a safe routing option cannot be determined based on the routing options given.
+     * <p />
+     *
+     * The logic is as follows:
+     * <ul>
+     *     <li>If there is but one routing option passed, that is the winner</li>
+     *     <li>If there is a combination of SQUID and BOTH as routing options, route to Squid.  Since it has
+     *     historically been the main LIMS system of record, in this scenario it is the safest bet</li>
+     *     <li>If there are any other combinations, throw a {@link RouterException}</li>
+     * </ul>
+     *
+     * @param routingOptions A navigable collection of determined routing options for a collection of lab vessels.
+     *
+     * @return An instance of a MercuryOrSquid enum that will assist in determining to which system requests should be
+     * routed.
+     */
+    private MercuryOrSquid evaluateRoutingOption(Set<MercuryOrSquid> routingOptions) {
+
+        MercuryOrSquid result;
+
+        if (routingOptions.isEmpty()) {
+            result = SQUID;
+        } else if (routingOptions.size() == 1) {
+            result = routingOptions.iterator().next();
+        } else if (routingOptions.equals(EnumSet.of(SQUID, BOTH))) {
+            result = SQUID;
+        } else {
+            throw new RouterException("The Routing cannot be determined for options: " + routingOptions);
+        }
+
+        return result;
     }
 
     /**
