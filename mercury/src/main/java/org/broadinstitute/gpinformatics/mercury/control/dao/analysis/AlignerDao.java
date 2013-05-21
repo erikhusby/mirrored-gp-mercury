@@ -20,7 +20,7 @@ import java.util.List;
 @Stateful
 @LocalBean
 @RequestScoped
-public class AlignerDao extends GenericDao implements BusinessKeyFinder {
+public class AlignerDao extends GenericDao implements BusinessKeyFinder<Aligner> {
     public List<Aligner> findAll() {
         return findAll(Aligner.class);
     }
