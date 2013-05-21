@@ -1,12 +1,20 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
-import edu.mit.broad.prodinfo.thrift.lims.*;
+import edu.mit.broad.prodinfo.thrift.lims.FlowcellDesignation;
+import edu.mit.broad.prodinfo.thrift.lims.LibraryData;
+import edu.mit.broad.prodinfo.thrift.lims.PlateTransfer;
+import edu.mit.broad.prodinfo.thrift.lims.PoolGroup;
+import edu.mit.broad.prodinfo.thrift.lims.WellAndSourceTube;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
 import org.broadinstitute.gpinformatics.mercury.control.lims.LimsQueryResourceResponseFactory;
-import org.broadinstitute.gpinformatics.mercury.limsquery.generated.*;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.FlowcellDesignationType;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LibraryDataType;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PlateTransferType;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PoolGroupType;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.WellAndSourceTubeType;
 
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -58,8 +66,11 @@ public class LimsQueryResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchLibraryDetailsByTubeBarcode")
-    public List<LibraryDataType> fetchLibraryDetailsByTubeBarcode(@QueryParam("q") List<String> tubeBarcodes, @QueryParam("includeWorkRequestDetails") boolean includeWorkRequestDetails) {
-        List<LibraryData> libraryData = thriftService.fetchLibraryDetailsByTubeBarcode(tubeBarcodes, includeWorkRequestDetails);
+    public List<LibraryDataType> fetchLibraryDetailsByTubeBarcode(@QueryParam("q") List<String> tubeBarcodes,
+                                                                  @QueryParam(
+                                                                          "includeWorkRequestDetails") boolean includeWorkRequestDetails) {
+        List<LibraryData> libraryData =
+                thriftService.fetchLibraryDetailsByTubeBarcode(tubeBarcodes, includeWorkRequestDetails);
         List<LibraryDataType> result = new ArrayList<LibraryDataType>();
         for (LibraryData data : libraryData) {
             result.add(responseFactory.makeLibraryData(data));
@@ -100,9 +111,11 @@ public class LimsQueryResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/findFlowcellDesignationByFlowcellBarcode")
-    public FlowcellDesignationType findFlowcellDesignationByFlowcellBarcode(@QueryParam("flowcellBarcode") String flowcellBarcode) {
+    public FlowcellDesignationType findFlowcellDesignationByFlowcellBarcode(
+            @QueryParam("flowcellBarcode") String flowcellBarcode) {
         FlowcellDesignationType flowcellDesignationType;
-        FlowcellDesignation flowcellDesignation = thriftService.findFlowcellDesignationByFlowcellBarcode(flowcellBarcode);
+        FlowcellDesignation flowcellDesignation =
+                thriftService.findFlowcellDesignationByFlowcellBarcode(flowcellBarcode);
         flowcellDesignationType = responseFactory.makeFlowcellDesignation(flowcellDesignation);
         return flowcellDesignationType;
     }
@@ -110,8 +123,10 @@ public class LimsQueryResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/findFlowcellDesignationByReagentBlockBarcode")
-    public FlowcellDesignationType findFlowcellDesignationByReagentBlockBarcode(@QueryParam("reagentBlockBarcode") String reagentBlockBarcode) {
-        FlowcellDesignation flowcellDesignation = thriftService.findFlowcellDesignationByReagentBlockBarcode(reagentBlockBarcode);
+    public FlowcellDesignationType findFlowcellDesignationByReagentBlockBarcode(
+            @QueryParam("reagentBlockBarcode") String reagentBlockBarcode) {
+        FlowcellDesignation flowcellDesignation =
+                thriftService.findFlowcellDesignationByReagentBlockBarcode(reagentBlockBarcode);
         return responseFactory.makeFlowcellDesignation(flowcellDesignation);
     }
 
@@ -122,6 +137,7 @@ public class LimsQueryResource {
      * empty list if the given plate is not found in either Mercury or Squid.
      *
      * @param plateBarcode the barcode of the plate to query
+     *
      * @return the immediate plate parents, or an empty list if the given plate isn't found
      */
     @GET
@@ -129,13 +145,13 @@ public class LimsQueryResource {
     @Path("/findImmediatePlateParents")
     public List<String> findImmediatePlateParents(@QueryParam("plateBarcode") String plateBarcode) {
         switch (mercuryOrSquidRouter.routeForVessel(plateBarcode)) {
-            case MERCURY:
-                return limsQueries.findImmediatePlateParents(plateBarcode);
-            case SQUID:
-            case BOTH:
-                return thriftService.findImmediatePlateParents(plateBarcode);
-            default:
-                throw new RuntimeException("Unable to route findImmediatePlateParents for plate: " + plateBarcode);
+        case MERCURY:
+            return limsQueries.findImmediatePlateParents(plateBarcode);
+        case SQUID:
+        case BOTH:
+            return thriftService.findImmediatePlateParents(plateBarcode);
+        default:
+            throw new RuntimeException("Unable to route findImmediatePlateParents for plate: " + plateBarcode);
         }
     }
 
@@ -176,6 +192,7 @@ public class LimsQueryResource {
      * now comes from the BspUserList
      *
      * @param badgeId badge ID of a broad user
+     *
      * @return Broad User ID that corresponds to the Badge.
      */
     @GET
@@ -197,6 +214,7 @@ public class LimsQueryResource {
      * rack.
      *
      * @param plateBarcode the plate barcode
+     *
      * @return map of well position to well non-empty status
      */
     @GET
@@ -204,13 +222,13 @@ public class LimsQueryResource {
     @Path("/fetchParentRackContentsForPlate")
     public Map<String, Boolean> fetchParentRackContentsForPlate(@QueryParam("plateBarcode") String plateBarcode) {
         switch (mercuryOrSquidRouter.routeForVessel(plateBarcode)) {
-            case MERCURY:
-                return limsQueries.fetchParentRackContentsForPlate(plateBarcode);
-            case SQUID:
-            case BOTH:
-                return thriftService.fetchParentRackContentsForPlate(plateBarcode);
-            default:
-                throw new RuntimeException("Unable to route fetchParentRackContentsForPlate for plate: " + plateBarcode);
+        case MERCURY:
+            return limsQueries.fetchParentRackContentsForPlate(plateBarcode);
+        case SQUID:
+        case BOTH:
+            return thriftService.fetchParentRackContentsForPlate(plateBarcode);
+        default:
+            throw new RuntimeException("Unable to route fetchParentRackContentsForPlate for plate: " + plateBarcode);
         }
     }
 
@@ -228,15 +246,17 @@ public class LimsQueryResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchQuantForTube")
-    public Double fetchQuantForTube(@QueryParam("tubeBarcode") String tubeBarcode, @QueryParam("quantType") String quantType) {
+    public Double fetchQuantForTube(@QueryParam("tubeBarcode") String tubeBarcode,
+                                    @QueryParam("quantType") String quantType) {
         switch (mercuryOrSquidRouter.routeForVessel(tubeBarcode)) {
-            case MERCURY:
-                return limsQueries.fetchQuantForTube(tubeBarcode, quantType);
-            case SQUID:
-            case BOTH:
-                return thriftService.fetchQuantForTube(tubeBarcode, quantType);
-            default:
-                throw new RuntimeException("Tube or quant not found for barcode: " + tubeBarcode + ", quant type: " + quantType);
+        case MERCURY:
+            return limsQueries.fetchQuantForTube(tubeBarcode, quantType);
+        case SQUID:
+        case BOTH:
+            return thriftService.fetchQuantForTube(tubeBarcode, quantType);
+        default:
+            throw new RuntimeException(
+                    "Tube or quant not found for barcode: " + tubeBarcode + ", quant type: " + quantType);
         }
 
     }
@@ -246,18 +266,18 @@ public class LimsQueryResource {
     @Path("/fetchSourceTubesForPlate")
     public List<WellAndSourceTubeType> fetchSourceTubesForPlate(@QueryParam("plateBarcode") String plateBarcode) {
         switch (mercuryOrSquidRouter.routeForVessel(plateBarcode)) {
-            case MERCURY:
-                return limsQueries.fetchSourceTubesForPlate(plateBarcode);
-            case SQUID:
-            case BOTH:
-                List<WellAndSourceTubeType> wellAndSourceTubeTypes = new ArrayList<WellAndSourceTubeType>();
-                List<WellAndSourceTube> wellAndSourceTubes = thriftService.fetchSourceTubesForPlate(plateBarcode);
-                for (WellAndSourceTube wellAndSourceTube : wellAndSourceTubes) {
-                    wellAndSourceTubeTypes.add(responseFactory.makeWellAndSourceTube(wellAndSourceTube));
-                }
-                return wellAndSourceTubeTypes;
-            default:
-                throw new RuntimeException("Unable to route fetchSourceTubesForPlate for plate: " + plateBarcode);
+        case MERCURY:
+            return limsQueries.fetchSourceTubesForPlate(plateBarcode);
+        case SQUID:
+        case BOTH:
+            List<WellAndSourceTubeType> wellAndSourceTubeTypes = new ArrayList<WellAndSourceTubeType>();
+            List<WellAndSourceTube> wellAndSourceTubes = thriftService.fetchSourceTubesForPlate(plateBarcode);
+            for (WellAndSourceTube wellAndSourceTube : wellAndSourceTubes) {
+                wellAndSourceTubeTypes.add(responseFactory.makeWellAndSourceTube(wellAndSourceTube));
+            }
+            return wellAndSourceTubeTypes;
+        default:
+            throw new RuntimeException("Unable to route fetchSourceTubesForPlate for plate: " + plateBarcode);
         }
     }
 
@@ -269,18 +289,18 @@ public class LimsQueryResource {
     public List<PlateTransferType> fetchTransfersForPlate(@QueryParam("plateBarcode") String plateBarcode,
                                                           @QueryParam("depth") short depth) {
         switch (mercuryOrSquidRouter.routeForVessel(plateBarcode)) {
-            case MERCURY:
-                return limsQueries.fetchTransfersForPlate(plateBarcode, depth);
-            case SQUID:
-            case BOTH:
-                List<PlateTransferType> plateTransferTypes = new ArrayList<PlateTransferType>();
-                List<PlateTransfer> plateTransfers = thriftService.fetchTransfersForPlate(plateBarcode, depth);
-                for (PlateTransfer plateTransfer : plateTransfers) {
-                    plateTransferTypes.add(responseFactory.makePlateTransfer(plateTransfer));
-                }
-                return plateTransferTypes;
-            default:
-                throw new RuntimeException("Unable to route fetchTransfersForPlate for plate: " + plateBarcode);
+        case MERCURY:
+            return limsQueries.fetchTransfersForPlate(plateBarcode, depth);
+        case SQUID:
+        case BOTH:
+            List<PlateTransferType> plateTransferTypes = new ArrayList<PlateTransferType>();
+            List<PlateTransfer> plateTransfers = thriftService.fetchTransfersForPlate(plateBarcode, depth);
+            for (PlateTransfer plateTransfer : plateTransfers) {
+                plateTransferTypes.add(responseFactory.makePlateTransfer(plateTransfer));
+            }
+            return plateTransferTypes;
+        default:
+            throw new RuntimeException("Unable to route fetchTransfersForPlate for plate: " + plateBarcode);
         }
     }
 

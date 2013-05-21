@@ -11,8 +11,26 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.hibernate.annotations.Parent;
 import org.jetbrains.annotations.Nullable;
 
-import javax.persistence.*;
-import java.util.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Embeddable;
+import javax.persistence.EnumType;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
+import javax.persistence.MapKeyColumn;
+import javax.persistence.MapKeyEnumerated;
+import javax.persistence.OneToMany;
+import javax.persistence.Transient;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * A vessel that contains other vessels, e.g. a rack of tubes, a plate of wells, or a flowcell of lanes
@@ -98,7 +116,8 @@ public class VesselContainer<T extends LabVessel> {
     }
 
     public Collection<LabBatch> getNearestLabBatches(VesselPosition position, @Nullable LabBatch.LabBatchType type) {
-        TransferTraverserCriteria.NearestLabBatchFinder batchCriteria = new TransferTraverserCriteria.NearestLabBatchFinder(type);
+        TransferTraverserCriteria.NearestLabBatchFinder batchCriteria =
+                new TransferTraverserCriteria.NearestLabBatchFinder(type);
         evaluateCriteria(position, batchCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors, null, 0);
         return batchCriteria.getNearestLabBatches();
     }
@@ -108,16 +127,20 @@ public class VesselContainer<T extends LabVessel> {
      * by the WorkflowAnnotation for the WorkflowDescription
      *
      * @param position
+     *
      * @return
      */
     public Map<MercurySample, Collection<LabVessel>> getSingleSampleAncestors(VesselPosition position) {
-        TransferTraverserCriteria.SingleSampleLibraryCriteria singleSampleLibraryCriteria = new TransferTraverserCriteria.SingleSampleLibraryCriteria();
+        TransferTraverserCriteria.SingleSampleLibraryCriteria singleSampleLibraryCriteria =
+                new TransferTraverserCriteria.SingleSampleLibraryCriteria();
 
-        evaluateCriteria(position, singleSampleLibraryCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors, null, 0);
+        evaluateCriteria(position, singleSampleLibraryCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors,
+                null, 0);
         return singleSampleLibraryCriteria.getSingleSampleLibraries();
     }
 
-    public Set<SampleInstance> getSampleInstancesAtPosition(VesselPosition position, LabVessel.SampleType sampleType, @Nullable LabBatch.LabBatchType batchType) {
+    public Set<SampleInstance> getSampleInstancesAtPosition(VesselPosition position, LabVessel.SampleType sampleType,
+                                                            @Nullable LabBatch.LabBatchType batchType) {
         LabVessel.TraversalResults traversalResults = traverseAncestors(position, sampleType, batchType);
         return traversalResults.getSampleInstances();
     }
@@ -155,24 +178,30 @@ public class VesselContainer<T extends LabVessel> {
     }
 
     public void evaluateCriteria(VesselPosition position, TransferTraverserCriteria transferTraverserCriteria,
-                                 TransferTraverserCriteria.TraversalDirection traversalDirection, LabEvent labEvent, int hopCount) {
+                                 TransferTraverserCriteria.TraversalDirection traversalDirection, LabEvent labEvent,
+                                 int hopCount) {
         T vesselAtPosition = getVesselAtPosition(position);
-        TransferTraverserCriteria.Context context = new TransferTraverserCriteria.Context(vesselAtPosition, this, position, labEvent, hopCount, traversalDirection);
-        TransferTraverserCriteria.TraversalControl traversalControl = transferTraverserCriteria.evaluateVesselPreOrder(context);
+        TransferTraverserCriteria.Context context =
+                new TransferTraverserCriteria.Context(vesselAtPosition, this, position, labEvent, hopCount,
+                        traversalDirection);
+        TransferTraverserCriteria.TraversalControl traversalControl =
+                transferTraverserCriteria.evaluateVesselPreOrder(context);
         if (vesselAtPosition != null) {
             // handle re-arrays of tubes - look in any other racks that the tube has been in
             if (getEmbedder() instanceof TubeFormation) {
                 TubeFormation thisTubeFormation = (TubeFormation) getEmbedder();
                 for (VesselContainer<?> vesselContainer : vesselAtPosition.getContainers()) {
                     if (OrmUtil.proxySafeIsInstance(vesselContainer.getEmbedder(), TubeFormation.class)) {
-                        TubeFormation otherTubeFormation = OrmUtil.proxySafeCast(vesselContainer.getEmbedder(), TubeFormation.class);
+                        TubeFormation otherTubeFormation =
+                                OrmUtil.proxySafeCast(vesselContainer.getEmbedder(), TubeFormation.class);
                         if (!otherTubeFormation.getDigest().equals(thisTubeFormation.getDigest())) {
                             if (traversalDirection == TransferTraverserCriteria.TraversalDirection.Ancestors) {
                                 vesselContainer.traverseAncestors(vesselContainer.getPositionOfVessel(vesselAtPosition),
                                         transferTraverserCriteria, traversalDirection, hopCount);
                             } else {
-                                vesselContainer.traverseDescendants(vesselContainer.getPositionOfVessel(vesselAtPosition),
-                                        transferTraverserCriteria, traversalDirection, hopCount);
+                                vesselContainer
+                                        .traverseDescendants(vesselContainer.getPositionOfVessel(vesselAtPosition),
+                                                transferTraverserCriteria, traversalDirection, hopCount);
                             }
                         }
                     }
@@ -208,7 +237,8 @@ public class VesselContainer<T extends LabVessel> {
         }
         for (CherryPickTransfer cherryPickTransfer : cherryPickTransfersTo) {
             // todo jmt optimize this
-            if (cherryPickTransfer.getTargetPosition() == position && cherryPickTransfer.getTargetVesselContainer().equals(this)) {
+            if (cherryPickTransfer.getTargetPosition() == position && cherryPickTransfer.getTargetVesselContainer()
+                    .equals(this)) {
                 VesselContainer<?> sourceVesselContainer = cherryPickTransfer.getSourceVesselContainer();
                 VesselPosition sourcePosition = cherryPickTransfer.getSourcePosition();
                 sourceVesselContainer.evaluateCriteria(sourcePosition, transferTraverserCriteria, traversalDirection,
@@ -222,8 +252,9 @@ public class VesselContainer<T extends LabVessel> {
                     // the position parameter isn't in the section, so skip the transfer
                     continue;
                 }
-                vesselToSectionTransfer.getSourceVessel().evaluateCriteria(transferTraverserCriteria, traversalDirection,
-                        vesselToSectionTransfer.getLabEvent(), hopCount + 1);
+                vesselToSectionTransfer.getSourceVessel()
+                        .evaluateCriteria(transferTraverserCriteria, traversalDirection,
+                                vesselToSectionTransfer.getLabEvent(), hopCount + 1);
             }
         }
     }
@@ -242,7 +273,8 @@ public class VesselContainer<T extends LabVessel> {
         }
         for (CherryPickTransfer cherryPickTransfer : cherryPickTransfersFrom) {
             // todo jmt optimize this
-            if (cherryPickTransfer.getSourcePosition() == position && cherryPickTransfer.getSourceVesselContainer().equals(this)) {
+            if (cherryPickTransfer.getSourcePosition() == position && cherryPickTransfer.getSourceVesselContainer()
+                    .equals(this)) {
                 VesselContainer<?> targetVesselContainer = cherryPickTransfer.getTargetVesselContainer();
                 VesselPosition targetPosition = cherryPickTransfer.getTargetPosition();
                 targetVesselContainer.evaluateCriteria(targetPosition, transferTraverserCriteria, traversalDirection,
@@ -367,7 +399,8 @@ public class VesselContainer<T extends LabVessel> {
         }
         for (CherryPickTransfer cherryPickTransfer : cherryPickTransfersTo) {
             // todo jmt optimize this
-            if (cherryPickTransfer.getTargetPosition() == position && cherryPickTransfer.getTargetVesselContainer().equals(this)) {
+            if (cherryPickTransfer.getTargetPosition() == position && cherryPickTransfer.getTargetVesselContainer()
+                    .equals(this)) {
                 VesselPosition sourcePosition = cherryPickTransfer.getSourcePosition();
                 VesselContainer<?> sourceVesselContainer = cherryPickTransfer.getSourceVesselContainer();
                 vesselEvents.add(new LabVessel.VesselEvent(sourceVesselContainer.getVesselAtPosition(sourcePosition),
@@ -408,7 +441,8 @@ public class VesselContainer<T extends LabVessel> {
         }
         for (CherryPickTransfer cherryPickTransfer : cherryPickTransfersFrom) {
             // todo jmt optimize this
-            if (cherryPickTransfer.getSourcePosition() == position && cherryPickTransfer.getSourceVesselContainer().equals(this)) {
+            if (cherryPickTransfer.getSourcePosition() == position && cherryPickTransfer.getSourceVesselContainer()
+                    .equals(this)) {
                 VesselPosition targetPosition = cherryPickTransfer.getTargetPosition();
                 VesselContainer<?> targetVesselContainer = cherryPickTransfer.getTargetVesselContainer();
                 vesselEvents.add(new LabVessel.VesselEvent(targetVesselContainer.getVesselAtPosition(targetPosition),
@@ -427,8 +461,8 @@ public class VesselContainer<T extends LabVessel> {
         boolean anonymousVessels = false;
         LabVessel.ContainerType type = embedder.getType();
         if (type == LabVessel.ContainerType.STATIC_PLATE
-                || type == LabVessel.ContainerType.FLOWCELL
-                || type == LabVessel.ContainerType.STRIP_TUBE) {
+            || type == LabVessel.ContainerType.FLOWCELL
+            || type == LabVessel.ContainerType.STRIP_TUBE) {
             anonymousVessels = true;
         }
         return anonymousVessels;

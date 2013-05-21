@@ -22,9 +22,16 @@ import java.util.List;
 import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
-import static org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid.*;
-import static org.easymock.EasyMock.*;
-import static org.hamcrest.CoreMatchers.*;
+import static org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid.BOTH;
+import static org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid.MERCURY;
+import static org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid.SQUID;
+import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.verify;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
@@ -50,7 +57,9 @@ public class LimsQueryResourceUnitTest {
         mockTwoDBarcodedTubeDAO = createMock(TwoDBarcodedTubeDAO.class);
         mockStaticPlateDAO = createMock(StaticPlateDAO.class);
         BSPUserList bspUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
-        resource = new LimsQueryResource(mockThriftService, mockLimsQueries, mockResponseFactory, mockMercuryOrSquidRouter, bspUserList);
+        resource =
+                new LimsQueryResource(mockThriftService, mockLimsQueries, mockResponseFactory, mockMercuryOrSquidRouter,
+                        bspUserList);
 
     }
 
@@ -62,7 +71,8 @@ public class LimsQueryResourceUnitTest {
     public void testFindFlowcellDesignationByTaskName() throws TException, TZIMSException {
         FlowcellDesignation flowcellDesignation = new FlowcellDesignation();
         expect(mockThriftService.findFlowcellDesignationByTaskName("TestTask")).andReturn(flowcellDesignation);
-        expect(mockResponseFactory.makeFlowcellDesignation(flowcellDesignation)).andReturn(new FlowcellDesignationType());
+        expect(mockResponseFactory.makeFlowcellDesignation(flowcellDesignation))
+                .andReturn(new FlowcellDesignationType());
         replayAll();
 
         resource.findFlowcellDesignationByTaskName("TestTask");
@@ -94,7 +104,8 @@ public class LimsQueryResourceUnitTest {
     @Test(groups = DATABASE_FREE)
     public void testFindFlowcellDesignationByReagentBlockBarcode() throws Exception {
         FlowcellDesignation flowcellDesignation = new FlowcellDesignation();
-        expect(mockThriftService.findFlowcellDesignationByReagentBlockBarcode("TestReagentBlock")).andReturn(flowcellDesignation);
+        expect(mockThriftService.findFlowcellDesignationByReagentBlockBarcode("TestReagentBlock"))
+                .andReturn(flowcellDesignation);
         FlowcellDesignationType expected = new FlowcellDesignationType();
         expect(mockResponseFactory.makeFlowcellDesignation(flowcellDesignation)).andReturn(expected);
         replayAll();
@@ -159,7 +170,8 @@ public class LimsQueryResourceUnitTest {
         sequelTubes.put("good_barcode", new TwoDBarcodedTube("good_barcode"));
         expect(mockTwoDBarcodedTubeDAO.findByBarcodes(Arrays.asList("good_barcode"))).andReturn(sequelTubes);
         expect(mockThriftService.doesSquidRecognizeAllLibraries(Arrays.asList("bad_barcode"))).andReturn(false);
-        expect(mockTwoDBarcodedTubeDAO.findByBarcodes(Arrays.asList("bad_barcode"))).andReturn(new HashMap<String, TwoDBarcodedTube>());
+        expect(mockTwoDBarcodedTubeDAO.findByBarcodes(Arrays.asList("bad_barcode")))
+                .andReturn(new HashMap<String, TwoDBarcodedTube>());
         replayAll();
 
         boolean result1 = resource.doesLimsRecognizeAllTubes(Arrays.asList("good_barcode"));
@@ -173,7 +185,8 @@ public class LimsQueryResourceUnitTest {
 
     @Test(groups = DATABASE_FREE)
     public void testDoesLimsRecognizeAllTubesSplitBetweenSquidAndSequel() throws Exception {
-        expect(mockThriftService.doesSquidRecognizeAllLibraries(Arrays.asList("squid_barcode", "sequel_barcode"))).andReturn(false);
+        expect(mockThriftService.doesSquidRecognizeAllLibraries(Arrays.asList("squid_barcode", "sequel_barcode")))
+                .andReturn(false);
         Map<String, TwoDBarcodedTube> sequelTubes = new HashMap<String, TwoDBarcodedTube>();
         sequelTubes.put("sequel_barcode", new TwoDBarcodedTube("sequel_barcode"));
 //        expect(mockTwoDBarcodedTubeDAO.findByBarcodes(Arrays.asList("squid_barcode", "sequel_barcode"))).andReturn(sequelTubes);
@@ -233,7 +246,8 @@ public class LimsQueryResourceUnitTest {
 
     @Test(groups = DATABASE_FREE)
     public void testFetchMaterialTypesForTubeBarcodes() {
-        expect(mockThriftService.fetchMaterialTypesForTubeBarcodes(Arrays.asList("barcode1", "barcode2"))).andReturn(Arrays.asList("type1", "type2"));
+        expect(mockThriftService.fetchMaterialTypesForTubeBarcodes(Arrays.asList("barcode1", "barcode2")))
+                .andReturn(Arrays.asList("type1", "type2"));
         replayAll();
 
         List<String> result = resource.fetchMaterialTypesForTubeBarcodes(Arrays.asList("barcode1", "barcode2"));
@@ -373,10 +387,12 @@ public class LimsQueryResourceUnitTest {
     }
 
     private void replayAll() {
-        replay(mockMercuryOrSquidRouter, mockThriftService, mockLimsQueries, mockResponseFactory, mockTwoDBarcodedTubeDAO, mockStaticPlateDAO);
+        replay(mockMercuryOrSquidRouter, mockThriftService, mockLimsQueries, mockResponseFactory,
+                mockTwoDBarcodedTubeDAO, mockStaticPlateDAO);
     }
 
     private void verifyAll() {
-        verify(mockMercuryOrSquidRouter, mockThriftService, mockLimsQueries, mockResponseFactory, mockTwoDBarcodedTubeDAO, mockStaticPlateDAO);
+        verify(mockMercuryOrSquidRouter, mockThriftService, mockLimsQueries, mockResponseFactory,
+                mockTwoDBarcodedTubeDAO, mockStaticPlateDAO);
     }
 }

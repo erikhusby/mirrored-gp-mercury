@@ -18,7 +18,10 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DA
 import static org.broadinstitute.gpinformatics.infrastructure.test.dbfree.LabEventTestFactory.doSectionTransfer;
 import static org.broadinstitute.gpinformatics.infrastructure.test.dbfree.LabEventTestFactory.makeTubeFormation;
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate.PlateType.Eppendorf96;
-import static org.easymock.EasyMock.*;
+import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.verify;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -135,7 +138,8 @@ public class LimsQueriesTest {
         expect(labVesselDao.findByIdentifier("tube1")).andReturn(tube);
         replay(labVesselDao);
 
-        LabMetric quantMetric = new LabMetric(new BigDecimal(55.55), LabMetric.MetricType.POND_PICO, LabMetric.LabUnit.UG_PER_ML);
+        LabMetric quantMetric =
+                new LabMetric(new BigDecimal(55.55), LabMetric.MetricType.POND_PICO, LabMetric.LabUnit.UG_PER_ML);
         tube.addMetric(quantMetric);
 
         Double quantValue = limsQueries.fetchQuantForTube("tube1", "Pond Pico");

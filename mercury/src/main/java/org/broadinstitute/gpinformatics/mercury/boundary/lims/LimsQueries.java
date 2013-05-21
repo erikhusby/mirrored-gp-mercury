@@ -3,12 +3,20 @@ package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselAndPosition;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PlateTransferType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.WellAndSourceTubeType;
 
 import javax.inject.Inject;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Mercury-based implementations of services provided by LimsQueryResource.
@@ -34,6 +42,7 @@ public class LimsQueries {
      * Returns a list of plate barcodes that had material directly transferred into the plate with the given barcode.
      *
      * @param plateBarcode the barcode of the plate to query
+     *
      * @return the barcodes of the immediate parent plates
      */
     public List<String> findImmediatePlateParents(String plateBarcode) {
@@ -88,18 +97,22 @@ public class LimsQueries {
      *
      * @param tubeBarcode The barcode of the tube to look up quants on.
      * @param quantType   The type of quant we are looking for.
+     *
      * @return The double value of the quant we are looking for.
      */
     public Double fetchQuantForTube(String tubeBarcode, String quantType) {
         LabVessel vessel = labVesselDao.findByIdentifier(tubeBarcode);
         if (vessel != null) {
-            Collection<LabMetric> metrics = vessel.getNearestMetricsOfType(LabMetric.MetricType.getByDisplayName(quantType));
+            Collection<LabMetric> metrics =
+                    vessel.getNearestMetricsOfType(LabMetric.MetricType.getByDisplayName(quantType));
             if (metrics != null && metrics.size() == 1) {
                 return metrics.iterator().next().getValue().doubleValue();
             } else {
-                throw new RuntimeException("Got more than one quant for barcode:" + tubeBarcode + ", quant type: " + quantType);
+                throw new RuntimeException(
+                        "Got more than one quant for barcode:" + tubeBarcode + ", quant type: " + quantType);
             }
         }
-        throw new RuntimeException("Tube or quant not found for barcode: " + tubeBarcode + ", quant type: " + quantType);
+        throw new RuntimeException(
+                "Tube or quant not found for barcode: " + tubeBarcode + ", quant type: " + quantType);
     }
 }
