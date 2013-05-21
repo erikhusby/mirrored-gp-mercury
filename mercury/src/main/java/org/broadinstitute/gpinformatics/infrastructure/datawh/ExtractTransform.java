@@ -1,25 +1,23 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
-import com.sun.jersey.api.client.ClientResponse;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.infrastructure.common.SessionContextUtility;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfiguration;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 
-import javax.ejb.Stateful;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 import java.io.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
+import java.util.*;
 import java.util.concurrent.Semaphore;
 
 /**
@@ -38,9 +36,9 @@ import java.util.concurrent.Semaphore;
  * For backfill etl, the entities are obtained from the EntityManager, regardless of their audit history.
  */
 
-@Stateful
-@Path("etl")
-public class ExtractTransform {
+@ApplicationScoped
+public class ExtractTransform implements Serializable {
+    private static final long serialVersionUID = 20130517L;
     /** Record delimiter expected in sqlLoader file. */
     public static final String DELIM = ",";
     /** This filename matches what cron job expects. */
@@ -56,21 +54,25 @@ public class ExtractTransform {
     /** Name of directory where sqlLoader files are put. */
     private static String datafileDir;
 
-    private static final long MSEC_IN_SEC = 1000L;
-    private static final long SEC_IN_MIN = 60L;
+    static final long MSEC_IN_SEC = 1000L;
+    static final long SEC_IN_MIN = 60L;
+    static final int ETL_BATCH_SIZE = 500;
+
     // Number of digits in the number representing seconds since start of epoch.
-    private final int TIMESTAMP_SECONDS_SIZE = 10;
+    private static final int TIMESTAMP_SECONDS_SIZE = 10;
     private static final Log logger = LogFactory.getLog(ExtractTransform.class);
     private static final Semaphore mutex = new Semaphore(1);
     private static long incrementalRunStartTime = System.currentTimeMillis();  // only useful for logging
     private static boolean loggedConfigError = false;
-    private EtlConfig etlConfig = null;
-    private Collection<GenericEntityEtl> etlInstances = new HashSet<GenericEntityEtl>();
+    private static EtlConfig etlConfig = null;
+    private final Collection<GenericEntityEtl> etlInstances = new HashSet<GenericEntityEtl>();
 
     @Inject
     private AuditReaderDao auditReaderDao;
     @Inject
     private Deployment deployment;
+    @Inject
+    private SessionContextUtility sessionContextUtility;
 
     public ExtractTransform() {
     }
@@ -115,58 +117,25 @@ public class ExtractTransform {
         etlInstances.add(ledgerEntryEtl);
     }
 
-    public ExtractTransform(AuditReaderDao auditReaderDao, Collection<GenericEntityEtl> etlInstances) {
+    /** Constructor for testing. */
+    public ExtractTransform(AuditReaderDao auditReaderDao, SessionContextUtility sessionContextUtility,
+                            Collection<GenericEntityEtl> etlInstances) {
         this.auditReaderDao = auditReaderDao;
-        this.etlInstances = etlInstances;
-    }
-
-    /**
-        * Runs ETL on one entity class for the given range of entity ids (possibly all).
-        *
-        * @param entityClassname The fully qualified classname of the Mercury class to ETL.
-        * @param startId First entity id of a range of ids to backfill.  Set to 0 for minimum.
-        * @param endId Last entity id of a range of ids to backfill.  Set to -1 for maximum.
-        */
-    @Path("backfill/{entityClassname}/{startId}/{endId}")
-    @PUT
-    public Response entityIdRangeEtl(@PathParam("entityClassname") String entityClassname,
-                                     @PathParam("startId") long startId,
-                                     @PathParam("endId") long endId) {
-
-        initConfig();
-        Response.Status status = backfillEtl(entityClassname, startId, endId);
-        return Response.status(status).build();
-    }
-
-    /**
-     * Runs ETL for audit changes that occurred in the specified time interval.
-     * Normally the range is from previous etl end time to the current second.
-     *
-     * @param startDateTime start of interval of audited changes, in yyyyMMddHHmmss format,
-     *                      or "0" to use previous end time.
-     * @param endDateTime end of interval of audited changes, in yyyyMMddHHmmss format, or "0" for now.
-     *                    Excludes endpoint.  "0" will withhold updating the lastEtlRun file.
-     */
-    @Path("incremental/{startDateTime}/{endDateTime}")
-    @PUT
-    public Response auditDateRangeEtl(@PathParam("startDateTime") String startDateTime,
-                                      @PathParam("endDateTime") String endDateTime) {
-        initConfig();
-        incrementalEtl(startDateTime, endDateTime);
-        return Response.status(ClientResponse.Status.ACCEPTED).build();
+        this.sessionContextUtility = sessionContextUtility;
+        this.etlInstances.addAll(etlInstances);
     }
 
     /**
      * Extracts data from operational database, transforms the data into data warehouse records,
      * and writes the records to files, one per DW table.
      *
-     * @param startEtl start of interval of audited changes, in yyyyMMddHHmmss format,
+     * @param requestedStart start of interval of audited changes, in yyyyMMddHHmmss format,
      *                 or "0" to use previous end time.
-     * @param endEtl end of interval of audited changes, in yyyyMMddHHmmss format, or "0" for now.
-     *               Excludes endpoint.  "0" will withhold updating the lastEtlRun file.
+     * @param requestedEnd end of interval of audited changes, in yyyyMMddHHmmss format, or "0" for now.
+     *               Excludes endpoint.  "0" will cause updating of the lastEtlRun file.
      * @return count of records created, or -1 if could not run
      */
-    public int incrementalEtl(String startEtl, String endEtl) {
+    public int incrementalEtl(String requestedStart, String requestedEnd) {
         final String ZERO = "0";
 
         // Bails if target directory is missing.
@@ -189,49 +158,54 @@ public class ExtractTransform {
         // Forces start and end to be whole second boundaries, which the auditReaderDao needs.
         try {
             long startTimeSec;
-            if (ZERO.equals(startEtl)) {
+            if (ZERO.equals(requestedStart)) {
                 startTimeSec = readLastEtlRun();
                 if (startTimeSec == 0L) {
                     logger.warn("Cannot determine time of last incremental ETL.  ETL will not be run.");
                     return -1;
                 }
             } else {
-                startTimeSec = secTimestampFormat.parse(startEtl).getTime() / MSEC_IN_SEC;
+                startTimeSec = secTimestampFormat.parse(requestedStart).getTime() / MSEC_IN_SEC;
             }
 
             long endTimeSec;
-            if (ZERO.equals(endEtl)) {
+            if (ZERO.equals(requestedEnd)) {
                 endTimeSec = System.currentTimeMillis() / MSEC_IN_SEC;
             } else {
-                endTimeSec = secTimestampFormat.parse(endEtl).getTime() / MSEC_IN_SEC;
+                endTimeSec = secTimestampFormat.parse(requestedEnd).getTime() / MSEC_IN_SEC;
             }
 
             if (startTimeSec < endTimeSec) {
-                String etlDateStr = secTimestampFormat.format(new Date(endTimeSec * MSEC_IN_SEC));
-
-                int recordCount = incrementalEtl(startTimeSec, endTimeSec, etlDateStr);
-
-                // Withholds lastEtlRun file update if doing a limited range of changes.
-                if (recordCount >= 0 && ZERO.equals(endEtl)) {
-                    writeLastEtlRun(endTimeSec);
+                ImmutablePair<Integer, String> countAndDate = incrementalEtl(startTimeSec, endTimeSec);
+                if (countAndDate == null) {
+                    return -1;
                 }
 
-                if (recordCount > 0) {
-                    writeIsReadyFile(etlDateStr);
-                    logger.debug("Incremental ETL created " + recordCount + " data records in " +
+                // Updates the lastEtlRun file with the actual end of etl, but only when doing etl ending now,
+                // which is the case for timer-driven incremental etl.
+                if (ZERO.equals(requestedEnd)) {
+                    writeLastEtlRun(secTimestampFormat.parse(countAndDate.right).getTime() / MSEC_IN_SEC);
+                }
+
+                if (countAndDate.left > 0) {
+                    writeIsReadyFile(countAndDate.right);
+                    logger.debug("Incremental ETL created " + countAndDate.left + " data records in " +
                             minutesSince(incrementalRunStartTime) + " seconds.");
                 }
 
-                return recordCount;
+                return countAndDate.left;
             }
 
         } catch (ParseException e) {
-            logger.error("Cannot parse start time '" + startEtl + "' or end time '" + endEtl + "'");
+            logger.error("Cannot parse start time '" + requestedStart + "' or end time '" + requestedEnd + "'");
         }
         return -1;
     }
 
-    private int incrementalEtl(long startTimeSec, long endTimeSec, String etlDateStr) {
+    // Returns the record count and the date of the actual end of etl interval for this run, which will
+    // be on a whole second boundary.
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    private ImmutablePair<Integer, String> incrementalEtl(final long startTimeSec, final long endTimeSec) {
         // If previous run is still busy it is unusual but not an error.  Only one incrementalEtl
         // may run at a time.  Does not queue a new job if busy, to avoid snowball effect if system is
         // busy for a long time, for whatever reason.
@@ -240,29 +214,83 @@ public class ExtractTransform {
             if (minutes > 0) {
                 logger.info("Skipping new ETL run since previous run is still busy after " + minutes + " minutes.");
             }
-            return -1;
+            return null;
         }
+
+        final List<Integer> count = new ArrayList<Integer>(1);
+        final List<String> date = new ArrayList<String>(1);
+
         try {
             incrementalRunStartTime = System.currentTimeMillis();
+            sessionContextUtility.executeInContext(new SessionContextUtility.Function() {
+                @Override
+                public void apply() {
+                    // Gets the audit revisions for the given interval.
+                    SortedMap<Long, Date> revs = auditReaderDao.fetchAuditIds(startTimeSec, endTimeSec);
 
-            // Gets the audit revision ids for the given interval.
-            Collection<Long> revIds = auditReaderDao.fetchAuditIds(startTimeSec, endTimeSec);
-            logger.debug("Incremental ETL found " + revIds.size() + " changes.");
+                    // Limits batch size and sets end date accordingly.
+                    ImmutablePair<SortedMap<Long, Date>, Long> revsAndDate = limitBatchSize(revs, endTimeSec);
 
-            int recordCount = 0;
-            if (revIds.size() > 0) {
-                // The order of ETL is not significant since import tables have no referential integrity.
-                for (GenericEntityEtl etlInstance : etlInstances) {
-                    recordCount += etlInstance.doEtl(revIds, etlDateStr);
+                    if (revsAndDate.left.size() < revs.size()) {
+                        logger.debug("ETL run will only process " + revsAndDate.left.size() + " of the "
+                                + revs.size() + " changes.");
+                    } else {
+                        logger.debug("Incremental ETL found " + revs.size() + " changes.");
+                    }
+
+                    final String actualEtlDateStr = secTimestampFormat.format(
+                            new Date(revsAndDate.right * MSEC_IN_SEC));
+
+                    int recordCount = 0;
+                    if (revsAndDate.left.size() > 0) {
+                        // The order of ETL is not significant since import tables have no referential integrity.
+                        for (GenericEntityEtl etlInstance : etlInstances) {
+                            recordCount += etlInstance.doEtl(revsAndDate.left.keySet(), actualEtlDateStr);
+                        }
+                    }
+                    count.add(0, recordCount);
+                    date.add(0, actualEtlDateStr);
+
                 }
-            }
-
-            return recordCount;
+            });
 
         } finally {
             mutex.release();
         }
+
+        return (count.size() > 0 && date.size() > 0) ? new ImmutablePair(count.get(0), date.get(0)) : null;
     }
+
+    // Limits batch size and adjusts end time accordingly.
+    static ImmutablePair<SortedMap<Long, Date>, Long> limitBatchSize(SortedMap<Long, Date> revs, long endTimeSec) {
+        long batchEndSec = endTimeSec;
+        if (revs.size() > ETL_BATCH_SIZE) {
+            Long itemBeyondEnd = null;
+            int i = 0;
+            // Counts off items until the size is reached, and then sets the new end date to be after the
+            // last rev in the batch, on a whole second boundary.  This also ensures the etl interval is
+            // at least one second, so that etl makes forward progress.  After the end time is set, all
+            // the revs in the interval must be accepted, even if it exceeds the specified batch size, since
+            // the interval will never be queried again.
+            for (Map.Entry<Long, Date> rev : revs.entrySet()) {
+                ++i;
+                if (i == ETL_BATCH_SIZE) {
+                    batchEndSec = (rev.getValue().getTime() / MSEC_IN_SEC) + 1;
+                } else if (i > ETL_BATCH_SIZE && (rev.getValue().getTime() / MSEC_IN_SEC) >= batchEndSec) {
+                    itemBeyondEnd = rev.getKey();
+                    break;
+                }
+            }
+            if (itemBeyondEnd == null) {
+                // No revs were excluded, so use the original end time.
+                batchEndSec = endTimeSec;
+            } else {
+                revs = revs.headMap(itemBeyondEnd);
+            }
+        }
+        return new ImmutablePair<SortedMap<Long, Date>, Long>(revs, batchEndSec);
+    }
+
 
     /**
      * Does ETL for instances of a single entity class having ids in the specified range.
@@ -275,7 +303,8 @@ public class ExtractTransform {
      * @param startId First entity id of a range of ids to backfill.  Optional query param that defaults to min id.
      * @param endId Last entity id of a range of ids to backfill.  Optional query param that defaults to max id.
      */
-    public Response.Status backfillEtl(String entityClassname, long startId, long endId) {
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public Response.Status backfillEtl(String entityClassname, final long startId, long endId) {
         String dataDir = getDatafileDir();
         if (null == dataDir || dataDir.length() == 0) {
             logger.info("ETL data file directory is not configured. Backfill ETL will not be run.");
@@ -284,8 +313,6 @@ public class ExtractTransform {
             logger.error("ETL data file directory is missing: " + dataDir);
             return Response.Status.INTERNAL_SERVER_ERROR;
         }
-
-        final String etlDateStr = secTimestampFormat.format(new Date());
 
         Class entityClass;
         try {
@@ -298,6 +325,7 @@ public class ExtractTransform {
         if (endId == -1) {
             endId = Long.MAX_VALUE;
         }
+
         if (startId < 0 ||endId < startId) {
             logger.error("Invalid entity id range " + startId + " to " + endId);
             return Response.Status.BAD_REQUEST;
@@ -306,19 +334,37 @@ public class ExtractTransform {
         logger.debug("ETL backfill of " + entityClass.getName() + " having ids " + startId + " to " + endId);
         long backfillStartTime = System.currentTimeMillis();
 
-        int recordCount = 0;
-        // The one of these that matches the entityClass will make ETL records, others are no-ops.
-        for (GenericEntityEtl etlInstance : etlInstances) {
-            recordCount += etlInstance.doEtl(entityClass, startId, endId, etlDateStr);
-        }
+        final long finalEndId = endId;
+        final Class finalEntityClass = entityClass;
+        final List<Integer> count = new ArrayList<Integer>(1);
+        final List<String> date = new ArrayList<String>(1);
 
-        if (recordCount > 0) {
-            writeIsReadyFile(etlDateStr);
-        }
-        logger.info("Backfill ETL created " + recordCount + " " + entityClass.getSimpleName()
-                + " data records in " + (int) ((System.currentTimeMillis() - backfillStartTime) / MSEC_IN_SEC) + " seconds.");
+        sessionContextUtility.executeInContext(new SessionContextUtility.Function() {
+            @Override
+            public void apply() {
+                int recordCount = 0;
+                // The one of these that matches the entityClass will make ETL records, others are no-ops.
+                String etlDateStr = secTimestampFormat.format(new Date());
 
+                for (GenericEntityEtl etlInstance : etlInstances) {
+                    recordCount += etlInstance.doEtl(finalEntityClass, startId, finalEndId, etlDateStr);
+                }
+                count.add(recordCount);
+                date.add(etlDateStr);
+            }
+        });
+        if (count.size() > 0 && date.size() > 0) {
+            int recordCount = count.get(0);
+            String etlDateStr = date.get(0);
+
+            if (recordCount > 0) {
+                writeIsReadyFile(etlDateStr);
+            }
+            logger.info("Backfill ETL created " + recordCount +
+                    " data records in " + (int) ((System.currentTimeMillis() - backfillStartTime) / MSEC_IN_SEC) + " seconds.");
+        }
         return Response.Status.NO_CONTENT;
+
     }
 
     /**
@@ -326,7 +372,7 @@ public class ExtractTransform {
      * Returns seconds if file contains seconds or milliseconds.
      * @return the end time in seconds of last incremental ETL, or 0 if missing or unparsable.
      */
-    public long readLastEtlRun() {
+    public static long readLastEtlRun() {
         try {
             // Extracts the first 10 digits.
             String content = readEtlFile(LAST_ETL_FILE);
@@ -346,7 +392,7 @@ public class ExtractTransform {
      * @param end indicator of end of this etl
      * @return true if file was written ok
      */
-    public boolean writeLastEtlRun(long end) {
+    public static boolean writeLastEtlRun(long end) {
         return writeEtlFile(LAST_ETL_FILE, String.valueOf(end));
     }
 
@@ -354,7 +400,7 @@ public class ExtractTransform {
      * Writes the file used by cron job to know when this etl run has completed and data file processing can start.
      * @param etlDateStr used to name the file
      */
-    public void writeIsReadyFile(String etlDateStr) {
+    public static void writeIsReadyFile(String etlDateStr) {
         writeEtlFile(etlDateStr + READY_FILE_SUFFIX, " ");
     }
 
@@ -418,7 +464,7 @@ public class ExtractTransform {
     }
 
     /** Gets relevant configuration from the .yaml file */
-    private void initConfig() {
+    void initConfig() {
         if (null == etlConfig) {
             etlConfig = (EtlConfig) MercuryConfiguration.getInstance().getConfig(EtlConfig.class, deployment);
         }

@@ -51,7 +51,7 @@
             org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectResource,
             org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectResourceForBass,
             org.broadinstitute.gpinformatics.athena.boundary.util.PingResource,
-            org.broadinstitute.gpinformatics.infrastructure.datawh.ExtractTransform,
+            org.broadinstitute.gpinformatics.infrastructure.datawh.ExtractTransformResource,
             org.broadinstitute.gpinformatics.mercury.boundary.zims.IlluminaRunResource,
             org.broadinstitute.gpinformatics.mercury.boundary.lims.LimsQueryResource,
             org.broadinstitute.gpinformatics.mercury.boundary.lims.LimsQueryTypesResource,
