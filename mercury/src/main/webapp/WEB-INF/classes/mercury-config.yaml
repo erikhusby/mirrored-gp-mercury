@@ -143,7 +143,6 @@ squid:
       url: http://vsquidrc.broadinstitute.org:8000/squid
 
     PROD:
-
       url: http://squid-ui.broadinstitute.org:8000/squid
 
 

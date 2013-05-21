@@ -55,7 +55,12 @@
             <c:forEach items="${vessel.inPlaceAndTransferToEvents}" var="event">
                 <tr>
                     <td>
+                        <stripes:link
+                                beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.VesselSearchActionBean"
+                                event="vesselSearch">
+                            <stripes:param name="searchKey" value="${vessel.label}"/>
                             ${vessel.label}
+                        </stripes:link>
                     </td>
                     <td>
                         <c:forEach items="${vessel.getSampleInstancesForSample(sample, 'ANY')}" var="sampleInstance">
@@ -70,7 +75,6 @@
                                           href="${bean.sampleSearchUrlForBspSample(sampleInstance.startingSample.bspSampleName)}">
                                 ${sampleInstance.startingSample.sampleKey}
                             </stripes:link>
-
                         </c:forEach>
                     </td>
                     <td>
