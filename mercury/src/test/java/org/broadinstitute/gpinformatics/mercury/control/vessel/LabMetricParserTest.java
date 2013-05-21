@@ -119,7 +119,8 @@ public class LabMetricParserTest extends ContainerTest {
 
         for(LabMetric testMetric:createdMetrics) {
 
-            Assert.assertEquals(testMetric.getValue(), BigDecimal.valueOf(barcodeToQuant.get(testMetric.getLabVessel().getLabel())));
+            Assert.assertEquals(testMetric.getValue(),
+                    BigDecimal.valueOf(barcodeToQuant.get(testMetric.getLabVessel().getLabel())));
         }
 
     }

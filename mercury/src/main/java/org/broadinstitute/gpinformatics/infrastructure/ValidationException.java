@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.infrastructure;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -11,13 +13,13 @@ import java.util.Set;
  */
 public class ValidationException extends Exception {
 
-    Set<String> validationMessages = new HashSet<String>();
+    List<String> validationMessages = new ArrayList<String>();
 
     public ValidationException(String s) {
         super(s);
     }
 
-    public ValidationException(String message, Set<String> validationMessages) {
+    public ValidationException(String message, List<String> validationMessages) {
         super(message);
         this.validationMessages = validationMessages;
     }
@@ -28,5 +30,9 @@ public class ValidationException extends Exception {
 
     public ValidationException(Throwable throwable) {
         super(throwable);
+    }
+
+    public List<String> getValidationMessages() {
+        return validationMessages;
     }
 }
