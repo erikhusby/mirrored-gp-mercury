@@ -19,8 +19,7 @@ import javax.persistence.Table;
 @Entity
 @Audited
 @Table(name = "REFERENCE_SEQUENCE", schema = "mercury")
-public class ReferenceSequence implements BusinessKeyable, Nameable {
-
+public class ReferenceSequence implements BusinessKeyable {
     @Id
     @SequenceGenerator(name = "SEQ_REFERENCE_SEQUENCE", schema = "mercury", sequenceName = "SEQ_REFERENCE_SEQUENCE", allocationSize = 10)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_REFERENCE_SEQUENCE")
@@ -34,6 +33,8 @@ public class ReferenceSequence implements BusinessKeyable, Nameable {
 
     @Column(name = "IS_CURRENT", nullable = false)
     private boolean isCurrent;
+
+    private static final char SEPERATOR = '|';
 
     public ReferenceSequence() {
     }
@@ -62,6 +63,6 @@ public class ReferenceSequence implements BusinessKeyable, Nameable {
 
     @Override
     public String getBusinessKey() {
-        return name + '|' + version;
+        return name + SEPERATOR + version;
     }
 }

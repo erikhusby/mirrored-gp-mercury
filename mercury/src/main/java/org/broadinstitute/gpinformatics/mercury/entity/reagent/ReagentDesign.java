@@ -10,16 +10,13 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.Nameable;
 import org.hibernate.envers.Audited;
 
 /**
- * A ReagentDesign is the name of magical
- * elixirs, such as Baits and CATs, which
- * are ordered from companies like IDT
- * or brewed in-house.
+ * A ReagentDesign is the name of magical elixirs, such as Baits and CATs, which are ordered from companies like IDT
+ * or brewed in-house. A CAT is a Custom Amplicon Tube.
  */
 @Entity
 @Audited
 @Table(schema = "mercury", uniqueConstraints = {@UniqueConstraint(columnNames = {"reagent_design"})})
-public class ReagentDesign implements BusinessKeyable, Nameable {
-
+public class ReagentDesign implements BusinessKeyable {
     @Id
     @SequenceGenerator(name = "SEQ_REAGENT_DESIGN", schema = "mercury", sequenceName = "SEQ_REAGENT_DESIGN")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_REAGENT_DESIGN")
@@ -29,15 +26,13 @@ public class ReagentDesign implements BusinessKeyable, Nameable {
     private String designName;
 
     private String targetSetName;
-    private String manufacturersName;
 
-    @Override
-    public String getBusinessKey() {
-        return designName;
-    }
+    private String manufacturersName;
 
     @OneToMany(mappedBy = "reagentDesign")
     private Set<DesignedReagent> designedReagents = new HashSet<DesignedReagent>();
+
+    private static final char SEPERATOR = '|';
 
     /**
      * For JPA
@@ -75,6 +70,11 @@ public class ReagentDesign implements BusinessKeyable, Nameable {
 
     @Override
     public String getName() {
+        return designName;
+    }
+
+    @Override
+    public String getBusinessKey() {
         return designName;
     }
 

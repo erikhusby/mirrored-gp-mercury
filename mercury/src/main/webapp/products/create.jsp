@@ -363,6 +363,26 @@
                 </div>
 
                 <div class="control-group">
+                    <stripes:label for="analysisTypeKey" name="Analysis Type" class="control-label"/>
+                    <div class="controls">
+                        <stripes:select id="analysisTypeKey" name="editProduct.analysisTypeKey">
+                            <stripes:option value="">Select One</stripes:option>
+                            <stripes:options-collection collection="${actionBean.analysisTypes}" label="displayName" value="businessKey"/>
+                        </stripes:select>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <stripes:label for="reagentDesignKey" class="control-label"><abbr title="aka Reagent Design">Bait Design</abbr></stripes:label>
+                    <div class="controls">
+                        <stripes:select id="reagentDesignKey" name="editProduct.reagentDesignKey">
+                            <stripes:option value="">Select One</stripes:option>
+                            <stripes:options-collection collection="${actionBean.reagentDesigns}" label="displayName" value="businessKey"/>
+                        </stripes:select>
+                    </div>
+                </div>
+
+                <div class="control-group">
                     <stripes:label for="riskCriterion" name="RiskCriteria" class="control-label"/>
                     <div id="riskCriterion" class="controls" style="margin-top: 5px;">
                         A sample is on risk if:

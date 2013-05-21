@@ -13,13 +13,13 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 /**
- * A representation of the aligner that will be used for analysis. This is managed by the pipeline team in a user
- * interface provided by mercury.
+ * A representation of the sequence aligner that will be used for analysis. This is managed by the pipeline team in a
+ * user interface provided by Mercury.
  */
 @Entity
 @Audited
 @Table(name = "ALIGNER", schema = "mercury")
-public class Aligner implements BusinessKeyable, Nameable{
+public class Aligner implements BusinessKeyable {
     @Id
     @SequenceGenerator(name = "SEQ_ALIGNER", schema = "mercury", sequenceName = "SEQ_ALIGNER", allocationSize = 10)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_ALIGNER")

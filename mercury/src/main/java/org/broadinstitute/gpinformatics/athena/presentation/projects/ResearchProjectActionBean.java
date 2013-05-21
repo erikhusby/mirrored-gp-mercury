@@ -48,6 +48,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public static final String PROJECT_LIST_PAGE = "/projects/list.jsp";
     public static final String PROJECT_VIEW_PAGE = "/projects/view.jsp";
 
+    // Reference sequence that will be used for Exome projects.
+    private static final String DEFAULT_REFERENCE_SEQUENCE = "Homo_sapiens_assembly19|1";
+
     @Inject
     private TableauLink tableauLink;
 
@@ -152,6 +155,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
             } else {
                 editResearchProject = new ResearchProject();
             }
+        }
+        if (StringUtils.isEmpty(editResearchProject.getReferenceSequenceKey())) {
+            editResearchProject.setReferenceSequenceKey(DEFAULT_REFERENCE_SEQUENCE);
         }
 
         // Get the totals for the order
@@ -496,7 +502,6 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public DisplayableItem getSequenceAligner(String businessKey) {
         return mercuryClientService.getSequenceAligner(businessKey);
     }
-
 
     /**
      * Get the reference sequence.

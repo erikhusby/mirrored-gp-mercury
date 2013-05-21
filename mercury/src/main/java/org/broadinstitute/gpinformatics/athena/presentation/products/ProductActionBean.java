@@ -5,21 +5,22 @@ import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidateNestedProperties;
 import net.sourceforge.stripes.validation.ValidationMethod;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.*;
+import org.broadinstitute.gpinformatics.athena.presentation.DisplayableItem;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.MaterialTypeTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.PriceItemTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProductTokenInput;
+import org.broadinstitute.gpinformatics.infrastructure.mercury.MercuryClientService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * This class supports all the actions done on products.
@@ -36,6 +37,9 @@ public class ProductActionBean extends CoreActionBean {
     public static final String PRODUCT_CREATE_PAGE = "/products/create.jsp";
     public static final String PRODUCT_LIST_PAGE = "/products/list.jsp";
     public static final String PRODUCT_VIEW_PAGE = "/products/view.jsp";
+
+    @Inject
+    private MercuryClientService mercuryClientService;
 
     @Inject
     private ProductFamilyDao productFamilyDao;
@@ -431,5 +435,43 @@ public class ProductActionBean extends CoreActionBean {
     @Override
     public boolean isEditAllowed() {
         return getUserBean().isDeveloperUser() || getUserBean().isPDMUser();
+    }
+
+    /**
+     * Get the list of available reagent designs.
+     *
+     * @return List of strings representing the reagent designs
+     */
+    public Collection<DisplayableItem> getReagentDesigns() {
+        return mercuryClientService.getReagentDesigns();
+    }
+
+    /**
+     * Get the reagent design.
+     *
+     * @param businessKey the businessKey
+     * @return UI helper object {@link DisplayableItem} representing the reagent design
+     */
+    public DisplayableItem getReagentDesign(String businessKey) {
+        return mercuryClientService.getReagentDesign(businessKey);
+    }
+
+    /**
+     * Get the analysis type.
+     *
+     * @param businessKey the businessKey
+     * @return UI helper object {@link DisplayableItem} representing the analysis type
+     */
+    public DisplayableItem getAnalysisTypes(String businessKey) {
+        return mercuryClientService.getAnalysisType(businessKey);
+    }
+
+    /**
+     * Get the list of available analysis types.
+     *
+     * @return List of strings representing the analysis types
+     */
+    public Collection<DisplayableItem> getAnalysisTypes() {
+        return mercuryClientService.getAnalysisTypes();
     }
 }

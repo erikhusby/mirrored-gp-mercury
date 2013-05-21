@@ -19,7 +19,7 @@ import javax.persistence.Table;
 @Entity
 @Audited
 @Table(name = "ANALYSIS_TYPE", schema = "mercury")
-public class AnalysisType implements BusinessKeyable, Nameable {
+public class AnalysisType implements BusinessKeyable {
     @Id
     @SequenceGenerator(name = "SEQ_ANALYSIS_TYPE", schema = "mercury", sequenceName = "SEQ_ANALYSIS_TYPE", allocationSize = 10)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_ANALYSIS_TYPE")
