@@ -37,11 +37,11 @@ public class ReagentDesignDao extends GenericDao implements BusinessKeyFinder {
         return super.findAll(ReagentDesign.class);
     }
 
-
     public List<ReagentDesign> findAllCurrent() {
         return super.findAll(ReagentDesign.class);
     }
 
+    @Override
     public ReagentDesign findByBusinessKey(String businessKey) {
         return findSingle(ReagentDesign.class, ReagentDesign_.designName, businessKey);
     }

@@ -25,6 +25,7 @@ public class AlignerDao extends GenericDao implements BusinessKeyFinder {
         return findAll(Aligner.class);
     }
 
+    @Override
     public Aligner findByBusinessKey(String businessKey) {
         return findSingle(Aligner.class, Aligner_.name, businessKey);
     }
