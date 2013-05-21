@@ -9,7 +9,7 @@
         <xsd:sequence>
             <xsd:element name="name" type="xsd:string" minOccurs="0"/>
             <xsd:element name="barcode" type="xsd:string" minOccurs="0"/>
-            <xsd:element name="pairedRun" type="xsd:boolean"/>
+            <xsd:element name="pairedRun" nillable="true" type="xsd:boolean"/>
             <xsd:element name="onRigWorkflow" type="xsd:string"/>
             <xsd:element name="onRigChemistry" type="xsd:string"/>
             <xsd:element name="readStructure" type="xsd:string">
@@ -31,7 +31,7 @@
     <xsd:complexType name="sequencingTemplateLaneType">
         <xsd:sequence>
             <xsd:element name="laneName" type="xsd:string"/>
-            <xsd:element name="loadingConcentration" type="xsd:double"/>
+            <xsd:element name="loadingConcentration" nillable="true" type="xsd:double"/>
             <xsd:element name="loadingVesselLabel" type="xsd:string">
                 <xsd:annotation>
                     <xsd:documentation>

@@ -384,7 +384,6 @@ public class LimsQueryResourceUnitTest {
 
     @Test(groups = DATABASE_FREE)
     public void testFetchIlluminaSeqTemplate() {
-
         final SequencingTemplateType template = new SequencingTemplateType();
         template.setBarcode("BARCODE_1234");
         template.setName("NAME_1234");
@@ -405,9 +404,9 @@ public class LimsQueryResourceUnitTest {
 
         template.getLanes().add(laneType);
 
-        expect(resource.fetchIlluminaSeqTemplate("12345", LimsQueries.IdType.FLOWCELL, true)).andReturn(template);
+        expect(resource.fetchIlluminaSeqTemplate("12345", LimsQueries.QueryVesselType.FLOWCELL, true)).andReturn(template);
         replayAll();
-        SequencingTemplateType result = resource.fetchIlluminaSeqTemplate("12345", LimsQueries.IdType.FLOWCELL, true);
+        SequencingTemplateType result = resource.fetchIlluminaSeqTemplate("12345", LimsQueries.QueryVesselType.FLOWCELL, true);
 
         assertThat(result, notNullValue());
         Assert.assertEquals(result.getBarcode(), "BARCODE_1234");
@@ -415,15 +414,13 @@ public class LimsQueryResourceUnitTest {
         Assert.assertEquals(result.getOnRigChemistry(), "Default");
         Assert.assertEquals(result.getOnRigWorkflow(), "Resequencing");
         Assert.assertEquals(result.getReadStructure(), "76T8B76T");
-        Assert.assertEquals(result.isPairedRun(), true);
+        Assert.assertTrue(result.isPairedRun());
         Assert.assertEquals(result.getLanes().size(), 1);
         final SequencingTemplateLaneType laneOne = result.getLanes().get(0);
-        Assert.assertEquals(laneOne.getIndexingScheme(), indexingSchemeType);
+        Assert.assertEquals(laneOne.getIndexingScheme().get(0), indexingSchemeType);
         Assert.assertEquals(laneOne.getLoadingConcentration(), 3.33);
         Assert.assertEquals(laneOne.getLoadingVesselLabel(), "LOADING_VESSEL_1234");
         Assert.assertEquals(laneOne.getLaneName(), "LANE_1324");
-        Assert.assertEquals(laneOne.getIndexingScheme(), indexingSchemeType);
-
         verifyAll();
     }
 

@@ -302,26 +302,33 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         assertThat(result, equalTo("[{\"name\":\"21490_pg\",\"tubeBarcodes\":[\"0089526682\",\"0089526681\"]}]"));
     }
 
+
     @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testFetchIlluminaSeqTemplate(@ArquillianResource URL baseUrl) {
         WebResource resource =
-                makeWebResource(baseUrl, "fetchIlluminaSeqTemplate").queryParam("id", "0089526681").queryParam("idType",
+                makeWebResource(baseUrl, "fetchIlluminaSeqTemplate").queryParam("id", "Flowcell0513170145").queryParam("QueryVesselType",
                         "FLOWCELL").queryParam("isPoolTest","true");
         String result = get(resource);
-        assertThat(result, equalTo("{\"name\":null,\"barcode\":\"0089526681\",\"pairedRun\":false,\"onRigWorkflow\":null,\"onRigChemistry\":null,\"readStructure\":null,\"lanes\":[]}"));
+        assertThat(result, containsString("\"barcode\":\"Flowcell0513170145\""));
+        assertThat(result, containsString("{\"sequence\":\"CTACCAGG\",\"position\":\"P_7\"}"));
+        assertThat(result, containsString("{\"laneName\":\"LANE1\""));
+        assertThat(result, containsString("{\"laneName\":\"LANE2\""));
+        for (String varToTest: Arrays.asList("name","pairedRun","onRigWorkflow","onRigChemistry","readStructure")) {
+            assertThat(result, containsString(String.format("\"%s\":null,",varToTest)));
+        }
     }
 
     @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testFetchIlluminaSeqTemplateBadEnum(@ArquillianResource URL baseUrl) {
         WebResource resource =
-                makeWebResource(baseUrl, "fetchIlluminaSeqTemplate").queryParam("id", "0089526681").queryParam("idType",
+                makeWebResource(baseUrl, "fetchIlluminaSeqTemplate").queryParam("id", "0089526681").queryParam("QueryVesselType",
                                         "THISWILLFAIL").queryParam("isPoolTest", "true");
 
         UniformInterfaceException caught = getWithError(resource);
         assertThat(caught.getResponse().getStatus(), equalTo(500));
         assertThat(getResponseContent(caught),
-                          startsWith("Unable to extract parameter from http request: javax.ws.rs.QueryParam(\"idType\") value is 'THISWILLFAIL'"));
+                          startsWith("Unable to extract parameter from http request: javax.ws.rs.QueryParam(\"QueryVesselType\") value is 'THISWILLFAIL'"));
     }
 }
