@@ -19,16 +19,14 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.NavigableSet;
 import java.util.Set;
-import java.util.TreeSet;
 
 import static org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid.BOTH;
-import static org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid.MERCURY;
 import static org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid.SQUID;
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.SampleType;
 import static org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch.LabBatchType;
@@ -109,8 +107,7 @@ public class MercuryOrSquidRouter implements Serializable {
      * routed.
      */
     public MercuryOrSquid routeForVessels(Collection<LabVessel> labVessels) {
-        // todo jmt can this be an EnumSet?
-        NavigableSet<MercuryOrSquid> routingOptions = new TreeSet<MercuryOrSquid>();
+        Set<MercuryOrSquid> routingOptions = EnumSet.noneOf(MercuryOrSquid.class);
         Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<String, ProductOrder>();
         Set<SampleInstance> possibleControls = new HashSet<SampleInstance>();
         for (LabVessel labVessel : labVessels) {
@@ -178,22 +175,22 @@ public class MercuryOrSquidRouter implements Serializable {
      * @param routingOptions A navigable collection of determined routing options for a collection of lab vessels.
      *
      * @return An instance of a MercuryOrSquid enum that will assist in determining to which system requests should be
-          * routed.
+     * routed.
      */
-    private MercuryOrSquid evaluateRoutingOption(NavigableSet<MercuryOrSquid> routingOptions) {
+    private MercuryOrSquid evaluateRoutingOption(Set<MercuryOrSquid> routingOptions) {
 
-        MercuryOrSquid result = SQUID;
+        MercuryOrSquid result;
 
-        if (!routingOptions.isEmpty()) {
-            result = routingOptions.last();
-
-            if (routingOptions.size() > 1) {
-                if ((routingOptions.contains(SQUID) && routingOptions.contains(MERCURY)) ||
-                            (routingOptions.contains(BOTH) && routingOptions.contains(MERCURY))) {
-                    throw new RouterException("The Routing cannot be determined");
-                }
-            }
+        if (routingOptions.isEmpty()) {
+            result = SQUID;
+        } else if (routingOptions.size() == 1) {
+            result = routingOptions.iterator().next();
+        } else if (routingOptions.equals(EnumSet.of(SQUID, BOTH))) {
+            result = SQUID;
+        } else {
+            throw new RouterException("The Routing cannot be determined for options: " + routingOptions);
         }
+
         return result;
     }
 
@@ -229,8 +226,7 @@ public class MercuryOrSquidRouter implements Serializable {
     @DaoFree
     public MercuryOrSquid routeForVessel(LabVessel vessel, Map<String, ProductOrder> mapKeyToProductOrder,
                                          List<String> controlSampleIds, Map<String, BSPSampleDTO> mapSampleNameToDto) {
-        // todo jmt can this be an EnumSet?
-        NavigableSet<MercuryOrSquid> routingOptions = new TreeSet<MercuryOrSquid>();
+        Set<MercuryOrSquid> routingOptions = EnumSet.noneOf(MercuryOrSquid.class);
         if (vessel != null) {
 
             Set<SampleInstance> sampleInstances = vessel.getSampleInstances(SampleType.PREFER_PDO, LabBatchType.WORKFLOW);
