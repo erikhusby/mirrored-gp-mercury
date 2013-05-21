@@ -4,6 +4,7 @@ import edu.mit.broad.prodinfo.thrift.lims.IndexPosition;
 import edu.mit.broad.prodinfo.thrift.lims.TZDevExperimentData;
 import org.apache.commons.collections15.Factory;
 import org.apache.commons.collections15.map.LazyMap;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -216,9 +217,14 @@ public class ZimsIlluminaRunFactory {
             ResearchProject project = productOrder.getResearchProject();
             projectName = project.getBusinessKey();
             aligner = project.getSequenceAlignerKey();
-            String[] referenceSequenceValues = project.getReferenceSequenceKey().split("\\|");
-            referenceSequence = referenceSequenceValues[0];
-            referenceSequenceVersion = referenceSequenceValues[1];
+
+            // If there is a reference sequence value on the project, then populate the name and version.
+            String[] referenceSequenceValues = null;
+            if (!StringUtils.isBlank(project.getReferenceSequenceKey())) {
+                referenceSequenceValues = project.getReferenceSequenceKey().split("\\|");
+                referenceSequence = referenceSequenceValues[0];
+                referenceSequenceVersion = referenceSequenceValues[1];
+            }
         }
 
         return new LibraryBean(
