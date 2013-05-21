@@ -27,12 +27,12 @@ public class AnalysisFixupTest extends Arquillian {
      */
     @Test(enabled = false)
     public void initializeAnalysisTypes() {
-
         // Add the analysis types
-        analysisEjb.addAnalysisType("Analysis Type 1");
-        analysisEjb.addAnalysisType("Analysis Type 2");
-        analysisEjb.addAnalysisType("Analysis Type 3");
-        analysisEjb.addAnalysisType("Analysis Type 4");
+        analysisEjb.addAnalysisType("AssemblyWithoutReference");
+        analysisEjb.addAnalysisType("AssemblyWithReference");
+        analysisEjb.addAnalysisType("Resequencing");
+        analysisEjb.addAnalysisType("Control");
+        analysisEjb.addAnalysisType("MetaGenomics");
     }
 
     @Test(enabled = false)
