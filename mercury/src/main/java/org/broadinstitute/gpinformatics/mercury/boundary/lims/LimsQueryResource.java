@@ -42,7 +42,8 @@ public class LimsQueryResource {
     @Inject
     private BSPUserList bspUserList;
 
-    public LimsQueryResource() {}
+    public LimsQueryResource() {
+    }
 
     public LimsQueryResource(ThriftService thriftService, LimsQueries limsQueries,
                              LimsQueryResourceResponseFactory responseFactory,
@@ -120,7 +121,7 @@ public class LimsQueryResource {
      * Returns the plate barcodes of the plates that have been transferred directly into the given plate. Returns an
      * empty list if the given plate is not found in either Mercury or Squid.
      *
-     * @param plateBarcode    the barcode of the plate to query
+     * @param plateBarcode the barcode of the plate to query
      * @return the immediate plate parents, or an empty list if the given plate isn't found
      */
     @GET
@@ -152,7 +153,7 @@ public class LimsQueryResource {
         List<LibraryDataType> libraryDataTypeList = new ArrayList<LibraryDataType>();
         List<LibraryData> libraryDataList = thriftService.fetchLibraryDetailsByLibraryName(libraryNames);
         if (libraryDataList == null || libraryDataList.isEmpty()) {
-            return  null;
+            return null;
         }
 
         for (LibraryData libraryData : libraryDataList) {
@@ -173,6 +174,7 @@ public class LimsQueryResource {
     /**
      * Contrary to the path of this service, the data provided here is no longer provided by a Thrift Query.  This data
      * now comes from the BspUserList
+     *
      * @param badgeId badge ID of a broad user
      * @return Broad User ID that corresponds to the Badge.
      */
@@ -194,7 +196,7 @@ public class LimsQueryResource {
      * well contains any material that was transferred from an upstream tube
      * rack.
      *
-     * @param plateBarcode    the plate barcode
+     * @param plateBarcode the plate barcode
      * @return map of well position to well non-empty status
      */
     @GET
@@ -227,7 +229,16 @@ public class LimsQueryResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchQuantForTube")
     public Double fetchQuantForTube(@QueryParam("tubeBarcode") String tubeBarcode, @QueryParam("quantType") String quantType) {
-        return thriftService.fetchQuantForTube(tubeBarcode, quantType);
+        switch (mercuryOrSquidRouter.routeForVessel(tubeBarcode)) {
+            case MERCURY:
+                return limsQueries.fetchQuantForTube(tubeBarcode, quantType);
+            case SQUID:
+            case BOTH:
+                return thriftService.fetchQuantForTube(tubeBarcode, quantType);
+            default:
+                throw new RuntimeException("Tube or quant not found for barcode: " + tubeBarcode + ", quant type: " + quantType);
+        }
+
     }
 
     @GET

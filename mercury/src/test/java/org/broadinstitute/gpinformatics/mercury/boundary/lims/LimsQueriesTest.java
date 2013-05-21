@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PlateTransferType;
@@ -8,6 +10,7 @@ import org.broadinstitute.gpinformatics.mercury.limsquery.generated.WellAndSourc
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -29,6 +32,7 @@ import static org.hamcrest.Matchers.hasItem;
 public class LimsQueriesTest {
 
     private StaticPlateDAO staticPlateDAO;
+    private LabVesselDao labVesselDao;
     private LimsQueries limsQueries;
 
     private StaticPlate plate3;
@@ -36,13 +40,14 @@ public class LimsQueriesTest {
     @BeforeMethod(groups = DATABASE_FREE)
     public void setup() {
         staticPlateDAO = createMock(StaticPlateDAO.class);
+        labVesselDao = createMock(LabVesselDao.class);
 
         plate3 = new StaticPlate("plate3", Eppendorf96);
 
         doSectionTransfer(makeTubeFormation(new TwoDBarcodedTube("tube")), plate3);
         doSectionTransfer(new StaticPlate("plate1", Eppendorf96), plate3);
         doSectionTransfer(new StaticPlate("plate2", Eppendorf96), plate3);
-        limsQueries = new LimsQueries(staticPlateDAO);
+        limsQueries = new LimsQueries(staticPlateDAO, labVesselDao);
     }
 
     @Test(groups = DATABASE_FREE)
@@ -122,5 +127,18 @@ public class LimsQueriesTest {
         assertThat(result.get(1).getDestinationSection(), equalTo("ALL96"));
 
         verify(staticPlateDAO);
+    }
+
+    @Test(groups = DATABASE_FREE)
+    public void testFetchQuantForTube() {
+        TwoDBarcodedTube tube = new TwoDBarcodedTube("tube1");
+        expect(labVesselDao.findByIdentifier("tube1")).andReturn(tube);
+        replay(labVesselDao);
+
+        LabMetric quantMetric = new LabMetric(new BigDecimal(55.55), LabMetric.MetricType.POND_PICO, LabMetric.LabUnit.UG_PER_ML);
+        tube.addMetric(quantMetric);
+
+        Double quantValue = limsQueries.fetchQuantForTube("tube1", "Pond Pico");
+        assertThat(quantValue, equalTo(55.55));
     }
 }

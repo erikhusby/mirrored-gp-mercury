@@ -117,7 +117,7 @@ public class VesselContainer<T extends LabVessel> {
         return singleSampleLibraryCriteria.getSingleSampleLibraries();
     }
 
-    public Set<SampleInstance> getSampleInstancesAtPosition(VesselPosition position, LabVessel.SampleType sampleType, @Nullable LabBatch.LabBatchType batchType){
+    public Set<SampleInstance> getSampleInstancesAtPosition(VesselPosition position, LabVessel.SampleType sampleType, @Nullable LabBatch.LabBatchType batchType) {
         LabVessel.TraversalResults traversalResults = traverseAncestors(position, sampleType, batchType);
         return traversalResults.getSampleInstances();
     }
@@ -125,12 +125,13 @@ public class VesselContainer<T extends LabVessel> {
     public Set<SampleInstance> getSampleInstancesAtPosition(VesselPosition position) {
         return getSampleInstancesAtPosition(position, LabVessel.SampleType.ANY, null);
     }
+
     public Set<SampleInstance> getSampleInstancesAtPosition(VesselPosition position, LabVessel.SampleType sampleType) {
-            return getSampleInstancesAtPosition(position, sampleType, null);
-        }
+        return getSampleInstancesAtPosition(position, sampleType, null);
+    }
 
     LabVessel.TraversalResults traverseAncestors(VesselPosition position, LabVessel.SampleType sampleType,
-            LabBatch.LabBatchType labBatchType) {
+                                                 LabBatch.LabBatchType labBatchType) {
         LabVessel.TraversalResults traversalResults = new LabVessel.TraversalResults();
         T vesselAtPosition = getVesselAtPosition(position);
 
@@ -222,7 +223,7 @@ public class VesselContainer<T extends LabVessel> {
                     continue;
                 }
                 vesselToSectionTransfer.getSourceVessel().evaluateCriteria(transferTraverserCriteria, traversalDirection,
-                                vesselToSectionTransfer.getLabEvent(), hopCount + 1);
+                        vesselToSectionTransfer.getLabEvent(), hopCount + 1);
             }
         }
     }
@@ -474,7 +475,7 @@ public class VesselContainer<T extends LabVessel> {
 
     public List<LabBatchComposition> getLabBatchCompositions() {
         List<SampleInstance> sampleInstances = new ArrayList<SampleInstance>();
-        for(VesselPosition position : getEmbedder().getVesselGeometry().getVesselPositions()){
+        for (VesselPosition position : getEmbedder().getVesselGeometry().getVesselPositions()) {
             sampleInstances.addAll(getSampleInstancesAtPosition(position));
         }
 
@@ -494,5 +495,12 @@ public class VesselContainer<T extends LabVessel> {
         Collections.sort(batchList, LabBatchComposition.HIGHEST_COUNT_FIRST);
 
         return batchList;
+    }
+
+    public Collection<LabMetric> getNearestMetricOfType(LabMetric.MetricType quantType) {
+        TransferTraverserCriteria.NearestLabMetricOfTypeCriteria metricTypeCriteria =
+                new TransferTraverserCriteria.NearestLabMetricOfTypeCriteria(quantType);
+        applyCriteriaToAllPositions(metricTypeCriteria);
+        return metricTypeCriteria.getNearestMetrics();
     }
 }

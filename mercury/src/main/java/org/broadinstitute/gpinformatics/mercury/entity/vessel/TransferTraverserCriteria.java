@@ -287,6 +287,52 @@ public interface TransferTraverserCriteria {
         }
     }
 
+    class NearestLabMetricOfTypeCriteria implements TransferTraverserCriteria {
+        private LabMetric.MetricType metricType;
+        private Map<Integer, Collection<LabMetric>> labMetricsAtHop = new HashMap<Integer, Collection<LabMetric>>();
+
+        public NearestLabMetricOfTypeCriteria(LabMetric.MetricType metricType) {
+            this.metricType = metricType;
+        }
+
+        @Override
+        public TraversalControl evaluateVesselPreOrder(Context context) {
+            LabVessel vessel = context.getLabVessel();
+            if (context.getLabVessel() != null) {
+                for (LabMetric metric : vessel.getMetrics()) {
+                    if (metric.getName().equals(metricType)) {
+                        Collection<LabMetric> metricsAtHop;
+                        metricsAtHop = labMetricsAtHop.get(context.getHopCount());
+                        if (metricsAtHop == null) {
+                            metricsAtHop = new ArrayList<LabMetric>();
+                            labMetricsAtHop.put(context.getHopCount(), metricsAtHop);
+                        }
+                        metricsAtHop.add(metric);
+                    }
+                }
+            }
+            return TraversalControl.ContinueTraversing;
+        }
+
+        @Override
+        public void evaluateVesselInOrder(Context context) {
+        }
+
+        @Override
+        public void evaluateVesselPostOrder(Context context) {
+        }
+
+        public Collection<LabMetric> getNearestMetrics() {
+            int nearest = Integer.MAX_VALUE;
+            for (Map.Entry<Integer, Collection<LabMetric>> labMetricsForHopCount : labMetricsAtHop.entrySet()) {
+                if (labMetricsForHopCount.getKey() < nearest) {
+                    nearest = labMetricsForHopCount.getKey();
+                }
+            }
+            return labMetricsAtHop.get(nearest);
+        }
+    }
+
     class NearestProductOrderCriteria implements TransferTraverserCriteria {
 
         private final Map<Integer, Collection<String>> productOrdersAtHopCount = new HashMap<Integer, Collection<String>>();
@@ -420,7 +466,7 @@ public interface TransferTraverserCriteria {
         public void evaluateVesselPostOrder(Context context) {
         }
 
-        public Collection<LabVessel> getLabVesselDescendants() {
+        public Collection<LabVessel> getLabVesselAncestors() {
             Set<LabVessel> allVessels = new HashSet<LabVessel>();
             for (List<LabVessel> vesselList : labVesselAtHopCount.values()) {
                 allVessels.addAll(vesselList);
