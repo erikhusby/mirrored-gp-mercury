@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 
 @UrlBinding(value = "/view/uploadQuants.action")
 public class UploadQuantsActionBean extends CoreActionBean {
@@ -26,6 +27,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
     @Validate(required = true, on = "uploadQuant")
     private FileBean quantSpreadsheet;
     private LabMetric.MetricType quantType;
+    private Set<LabMetric> labMetrics;
 
     public FileBean getQuantSpreadsheet() {
         return quantSpreadsheet;
@@ -55,8 +57,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
 
     @HandlesEvent(UPLOAD_QUANT)
     public Resolution uploadQuant() {
-        //todo store the quants
-
+        quantEJB.storeQuants(labMetrics);
         addMessage("Successfully uploaded quant.");
         return new ForwardResolution(VIEW_PAGE);
     }
@@ -64,7 +65,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
     @ValidationMethod(on = UPLOAD_QUANT)
     public void validateNoExistingQuants(ValidationErrors errors) {
         try {
-            quantEJB.validateQuantsDontExist(quantSpreadsheet.getInputStream(), quantType);
+            labMetrics = quantEJB.validateQuantsDontExist(quantSpreadsheet.getInputStream(), quantType);
         } catch (IOException e) {
             errors.add("quantSpreadsheet", new SimpleError("IO exception while parsing upload. " + e.getMessage()));
         } catch (InvalidFormatException e) {

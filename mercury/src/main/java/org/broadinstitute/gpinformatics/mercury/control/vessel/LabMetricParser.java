@@ -23,7 +23,7 @@ import java.util.Set;
  */
 public class LabMetricParser extends AbstractSpreadsheetParser {
 
-    private Set<LabMetric> metrics = new HashSet<>();
+    private Set<LabMetric> metrics = new HashSet<LabMetric>();
 
     private LabMetric.MetricType metricType;
 

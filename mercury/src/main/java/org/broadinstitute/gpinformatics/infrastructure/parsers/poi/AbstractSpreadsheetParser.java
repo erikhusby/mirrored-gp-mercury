@@ -11,11 +11,11 @@ import java.util.*;
 
 public abstract class AbstractSpreadsheetParser implements Serializable {
 
-    protected List<String> validationMessages = new ArrayList<>();
+    protected List<String> validationMessages = new ArrayList<String>();
     private Workbook workbook;
     private final ColumnHeader[] matchHeaders;
 
-    protected Map<Integer, String[]> dataByRow = new HashMap<>();
+    protected Map<Integer, String[]> dataByRow = new HashMap<Integer, String[]>();
 
     int numberOfSheets;
 
