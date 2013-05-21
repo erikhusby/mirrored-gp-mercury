@@ -11,7 +11,7 @@ import java.util.List;
  */
 public class ValidationException extends Exception {
 
-    private List<String> validationMessages = new ArrayList<String>();
+    List<String> validationMessages = new ArrayList<>();
 
     public ValidationException(String s) {
         super(s);

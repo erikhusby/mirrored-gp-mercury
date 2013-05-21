@@ -8,7 +8,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedT
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
-import org.jboss.arquillian.testng.Arquillian;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -119,7 +118,8 @@ public class LabMetricParserTest extends ContainerTest {
 
         for(LabMetric testMetric:createdMetrics) {
 
-            Assert.assertEquals(testMetric.getValue(), BigDecimal.valueOf(barcodeToQuant.get(testMetric.getLabVessel().getLabel())));
+            Assert.assertEquals(testMetric.getValue(),
+                    BigDecimal.valueOf(barcodeToQuant.get(testMetric.getLabVessel().getLabel())));
         }
 
     }

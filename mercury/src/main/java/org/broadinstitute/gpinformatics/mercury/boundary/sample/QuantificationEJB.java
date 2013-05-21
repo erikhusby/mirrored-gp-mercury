@@ -24,7 +24,7 @@ public class QuantificationEJB {
     public void validateQuantsDontExist(InputStream quantSpreadsheet, LabMetric.MetricType metricType) throws ValidationException,
             IOException, InvalidFormatException {
         try {
-            labMetricParser.processUploadFile(quantSpreadsheet);
+            labMetricParser.parseMetrics(quantSpreadsheet, metricType);
             for (LabMetric metric : labMetricParser.getMetrics()) {
                 LabVessel labVessel = metric.getLabVessel();
                 if (labVessel != null) {
