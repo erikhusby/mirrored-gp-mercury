@@ -1574,4 +1574,159 @@ END;
         </createIndex>
     </changeSet>
 
+    <changeSet id="GPLIM-1325-1" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="ALIGNER" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <createTable tableName="ALIGNER" schemaName="mercury">
+            <column name="ALIGNER_ID" type="int">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="NAME" type="VARCHAR2(50)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addUniqueConstraint tableName="ALIGNER" columnNames="NAME"
+                             constraintName="uk_aligner_name" schemaName="mercury"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1325-2" author="hrafal">
+        <preConditions>
+            <not>
+                <sequenceExists sequenceName="SEQ_ALIGNER" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <createSequence sequenceName="SEQ_ALIGNER" schemaName="mercury" startValue="1" incrementBy="10"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1325-4" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="ALIGNER_AUD" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <createTable tableName="ALIGNER_AUD" schemaName="mercury">
+            <column name="ALIGNER_ID" type="VARCHAR2(50)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="NAME" type="VARCHAR2(50)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="rev" type="int">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="revtype" type="int">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-1327-1" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="REFERENCE_SEQUENCE" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <createTable tableName="REFERENCE_SEQUENCE" schemaName="mercury">
+            <column name="SEQUENCE_ID" type="int">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="NAME" type="VARCHAR2(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="VERSION" type="VARCHAR2(30)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="IS_CURRENT" type="BOOLEAN"/>
+        </createTable>
+        <addUniqueConstraint tableName="REFERENCE_SEQUENCE" columnNames="NAME, VERSION"
+                             constraintName="uk_ref_sequence_name" schemaName="mercury"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1327-2" author="hrafal">
+        <preConditions>
+            <not>
+                <sequenceExists sequenceName="SEQ_REFERENCE_SEQUENCE" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <createSequence sequenceName="SEQ_REFERENCE_SEQUENCE" schemaName="mercury" startValue="1" incrementBy="10"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1327-4" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="REFERENCE_SEQUENCE_AUD" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <createTable tableName="REFERENCE_SEQUENCE_AUD" schemaName="mercury">
+            <column name="SEQUENCE_ID" type="int">
+                <constraints nullable="true"/>
+            </column>
+            <column name="NAME" type="VARCHAR2(100)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="VERSION" type="VARCHAR2(30)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="IS_CURRENT" type="BOOLEAN"/>
+            <column name="rev" type="int">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="revtype" type="int">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-1328-1" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="ANALYSIS_TYPE" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <createTable tableName="ANALYSIS_TYPE" schemaName="mercury">
+            <column name="ANALYSIS_TYPE_ID" type="int">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="NAME" type="VARCHAR2(50)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addUniqueConstraint tableName="ANALYSIS_TYPE" columnNames="NAME"
+                             constraintName="uk_analysis_type_name" schemaName="mercury"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1328-2" author="hrafal">
+        <preConditions>
+            <not>
+                <sequenceExists sequenceName="SEQ_ANALYSIS_TYPE" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <createSequence sequenceName="SEQ_ANALYSIS_TYPE" schemaName="mercury" startValue="1" incrementBy="10"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1328-4" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="ANALYSIS_TYPE_AUD" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <createTable tableName="ANALYSIS_TYPE_AUD" schemaName="mercury">
+            <column name="ANALYSIS_TYPE_ID" type="int">
+                <constraints nullable="true"/>
+            </column>
+            <column name="NAME" type="VARCHAR2(50)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="rev" type="int">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="revtype" type="int">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
 </databaseChangeLog>

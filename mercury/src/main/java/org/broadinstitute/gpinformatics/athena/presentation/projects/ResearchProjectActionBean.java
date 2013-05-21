@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.athena.presentation.DisplayableItem;
 import org.broadinstitute.gpinformatics.athena.presentation.converter.IrbConverter;
 import org.broadinstitute.gpinformatics.athena.presentation.links.TableauLink;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.CohortTokenInput;
@@ -19,6 +20,7 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserT
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
+import org.broadinstitute.gpinformatics.infrastructure.mercury.MercuryClientService;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.json.JSONArray;
@@ -46,8 +48,14 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public static final String PROJECT_LIST_PAGE = "/projects/list.jsp";
     public static final String PROJECT_VIEW_PAGE = "/projects/view.jsp";
 
+    // Reference sequence that will be used for Exome projects.
+    private static final String DEFAULT_REFERENCE_SEQUENCE = "Homo_sapiens_assembly19|1";
+
     @Inject
     private TableauLink tableauLink;
+
+    @Inject
+    private MercuryClientService mercuryClientService;
 
     @Inject
     private ResearchProjectDao researchProjectDao;
@@ -147,6 +155,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
             } else {
                 editResearchProject = new ResearchProject();
             }
+        }
+        if (StringUtils.isBlank(editResearchProject.getReferenceSequenceKey())) {
+            editResearchProject.setReferenceSequenceKey(DEFAULT_REFERENCE_SEQUENCE);
         }
 
         // Get the totals for the order
@@ -364,7 +375,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public Resolution projectHierarchyAwareAutocomplete() throws Exception {
         researchProject = getContext().getRequest().getParameter(RESEARCH_PROJECT_PARAMETER);
 
-        if (StringUtils.isEmpty(researchProject)) {
+        if (StringUtils.isBlank(researchProject)) {
             // Calling method when no project parameter is supplied, so just return full list.
             return projectAutocomplete();
         }
@@ -458,7 +469,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     }
 
    /**
-     * @return true if Save is a valid operation.
+     * @return true if Save is a valid operation.c
      */
     public boolean getCanSave() {
         // User must be logged into JIRA to create or edit a Research Project.
@@ -473,4 +484,41 @@ public class ResearchProjectActionBean extends CoreActionBean {
         return projectTokenInput;
     }
 
+    /**
+     * Get the list of available sequence aligners.
+     *
+     * @return List of strings representing the sequence aligners
+     */
+    public Collection<DisplayableItem> getSequenceAligners() {
+        return mercuryClientService.getSequenceAligners();
+    }
+
+    /**
+     * Get the sequence aligner.
+     *
+     * @param businessKey the businessKey
+     * @return UI helper object {@link DisplayableItem} representing the sequence aligner
+     */
+    public DisplayableItem getSequenceAligner(String businessKey) {
+        return mercuryClientService.getSequenceAligner(businessKey);
+    }
+
+    /**
+     * Get the reference sequence.
+     *
+     * @param businessKey the businessKey
+     * @return UI helper object {@link DisplayableItem} representing the reference sequence
+     */
+    public DisplayableItem getReferenceSequence(String businessKey) {
+        return mercuryClientService.getReferenceSequence(businessKey);
+    }
+
+    /**
+     * Get the list of available reference sequences.
+     *
+     * @return List of strings representing the reference sequences
+     */
+    public Collection<DisplayableItem> getReferenceSequences() {
+        return mercuryClientService.getReferenceSequences();
+    }
 }

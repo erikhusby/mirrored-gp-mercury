@@ -231,7 +231,7 @@ public class ProductOrderDao extends GenericDao {
             sqlString += " WHERE ord.JIRA_TICKET_KEY in (:businessKeys)";
         }
 
-        Query query = getThreadEntityManager().getEntityManager().createNativeQuery(sqlString);
+        Query query = getEntityManager().createNativeQuery(sqlString);
         query.unwrap(SQLQuery.class).addScalar("name", StandardBasicTypes.STRING)
              .addScalar("id", StandardBasicTypes.LONG)
              .addScalar("completed", StandardBasicTypes.INTEGER).addScalar("abandoned", StandardBasicTypes.INTEGER)

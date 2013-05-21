@@ -22,6 +22,6 @@ import javax.enterprise.context.RequestScoped;
 @RequestScoped
 public class DesignedReagentDao extends GenericDao {
     public DesignedReagent findByBusinessKey(String key) {
-        return findSingle(DesignedReagent.class, DesignedReagent_.reagentName,key);
+        return findSingle(DesignedReagent.class, DesignedReagent_.name, key);
     }
 }

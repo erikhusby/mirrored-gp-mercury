@@ -27,7 +27,7 @@ public class MolecularIndexingSchemeDao extends GenericDao {
     public MolecularIndexingScheme findSingleIndexScheme(
                                                                 MolecularIndexingScheme.IndexPosition indexPosition,
             String indexSequence) {
-        Query query = this.getThreadEntityManager().getEntityManager().createNamedQuery(
+        Query query = getEntityManager().createNamedQuery(
                 "MolecularIndexingScheme.findSingleIndexScheme");
         query.setParameter("indexPosition", indexPosition.name());
         query.setParameter("indexSequence", indexSequence);
@@ -47,7 +47,7 @@ public class MolecularIndexingSchemeDao extends GenericDao {
             String indexSequence1,
             MolecularIndexingScheme.IndexPosition indexPosition2,
             String indexSequence2) {
-        Query query = this.getThreadEntityManager().getEntityManager().createNamedQuery(
+        Query query = getEntityManager().createNamedQuery(
                 "MolecularIndexingScheme.findDualIndexScheme");
         query.setParameter("indexPosition1", indexPosition1.name());
         query.setParameter("indexSequence1", indexSequence1);
@@ -71,7 +71,7 @@ public class MolecularIndexingSchemeDao extends GenericDao {
             String indexSequence2,
             MolecularIndexingScheme.IndexPosition indexPosition3,
             String indexSequence3) {
-        Query query = this.getThreadEntityManager().getEntityManager().createNamedQuery(
+        Query query = getEntityManager().createNamedQuery(
                 "MolecularIndexingScheme.findTripleIndexScheme");
         query.setParameter("indexPosition1", indexPosition1.name());
         query.setParameter("indexSequence1", indexSequence1);
@@ -91,7 +91,7 @@ public class MolecularIndexingSchemeDao extends GenericDao {
      * Queries and returns a MolecularIndexingScheme with the given name.
      */
     public MolecularIndexingScheme findByName(String name) {
-        Query query = this.getThreadEntityManager().getEntityManager().createNamedQuery(
+        Query query = getEntityManager().createNamedQuery(
                 "MolecularIndexingScheme.findByName");
         query.setParameter("name", name);
         MolecularIndexingScheme molecularIndexingScheme = null;
@@ -103,7 +103,7 @@ public class MolecularIndexingSchemeDao extends GenericDao {
     }
 
     public List<MolecularIndexingScheme> findAllIlluminaSchemes() {
-        Query query = this.getThreadEntityManager().getEntityManager().createNamedQuery(
+        Query query = getEntityManager().createNamedQuery(
                 "MolecularIndexingScheme.findAllIlluminaSchemes");
         return query.getResultList();
     }

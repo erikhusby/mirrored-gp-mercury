@@ -175,7 +175,9 @@ deckMsgs:
     PROD:
         messageStoreDirRoot: /seq/lims/mercury/prod
 
+
 bettaLimsServer:
+
     DEV:
         wsHost: node115
         wsPort: 9998

@@ -35,7 +35,6 @@ import java.util.*;
 @Stateful
 @RequestScoped
 public class MercuryClientEjb {
-
     private static final Log logger = LogFactory.getLog(MercuryClientEjb.class);
     private LabVesselDao labVesselDao;
     private BSPUserList userList;
@@ -66,7 +65,6 @@ public class MercuryClientEjb {
     }
 
     public Collection<ProductOrderSample> addFromProductOrder(ProductOrder pdo, Collection<ProductOrderSample> samples) {
-
         // Limited to ExomeExpress pdos.
         if (pdo.getProduct() == null ||
                 !WorkflowName.EXOME_EXPRESS.getWorkflowName().equals(pdo.getProduct().getWorkflowName())) {

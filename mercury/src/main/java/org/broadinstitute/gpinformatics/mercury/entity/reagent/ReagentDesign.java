@@ -1,22 +1,22 @@
 package org.broadinstitute.gpinformatics.mercury.entity.reagent;
 
+import javax.annotation.Nonnull;
 import javax.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessKeyable;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.Nameable;
 import org.hibernate.envers.Audited;
 
 /**
- * A ReagentDesign is the name of magical
- * elixirs, such as Baits and CATs, which
- * are ordered from companies like IDT
- * or brewed in-house.
+ * A ReagentDesign is the name of magical elixirs, such as Baits and CATs, which are ordered from companies like IDT
+ * or brewed in-house. A CAT is a Custom Amplicon Tube.
  */
 @Entity
 @Audited
 @Table(schema = "mercury", uniqueConstraints = {@UniqueConstraint(columnNames = {"reagent_design"})})
-public class ReagentDesign {
-
+public class ReagentDesign implements BusinessKeyable {
     @Id
     @SequenceGenerator(name = "SEQ_REAGENT_DESIGN", schema = "mercury", sequenceName = "SEQ_REAGENT_DESIGN")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_REAGENT_DESIGN")
@@ -26,14 +26,13 @@ public class ReagentDesign {
     private String designName;
 
     private String targetSetName;
-    private String manufacturersName;
 
-    public String getBusinessKey() {
-        return designName;
-    }
+    private String manufacturersName;
 
     @OneToMany(mappedBy = "reagentDesign")
     private Set<DesignedReagent> designedReagents = new HashSet<DesignedReagent>();
+
+    private static final char SEPERATOR = '|';
 
     /**
      * For JPA
@@ -52,13 +51,7 @@ public class ReagentDesign {
      * @param designName  Example: cancer_2000gene_shift170_undercovered
      * @param reagentType The reagent type
      */
-    public ReagentDesign(String designName, ReagentType reagentType) {
-        if (designName == null) {
-            throw new NullPointerException("designName cannot be null.");
-        }
-        if (reagentType == null) {
-            throw new NullPointerException("reagentType cannot be null.");
-        }
+    public ReagentDesign(@Nonnull String designName, @Nonnull ReagentType reagentType) {
         this.designName = designName;
         this.reagentType = reagentType;
     }
@@ -72,6 +65,16 @@ public class ReagentDesign {
     }
 
     public String getDesignName() {
+        return designName;
+    }
+
+    @Override
+    public String getName() {
+        return designName;
+    }
+
+    @Override
+    public String getBusinessKey() {
         return designName;
     }
 

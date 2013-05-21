@@ -1,10 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.search;
 
-import net.sourceforge.stripes.action.DefaultHandler;
-import net.sourceforge.stripes.action.ForwardResolution;
-import net.sourceforge.stripes.action.HandlesEvent;
-import net.sourceforge.stripes.action.Resolution;
-import net.sourceforge.stripes.action.UrlBinding;
+import net.sourceforge.stripes.action.*;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import java.util.HashMap;
@@ -15,6 +11,7 @@ import java.util.Map;
 @UrlBinding(VesselSearchActionBean.ACTIONBEAN_URL_BINDING)
 public class VesselSearchActionBean extends SearchActionBean {
     public static final String ACTIONBEAN_URL_BINDING = "/search/vessel.action";
+    public static final String VESSEL_SEARCH = "vesselSearch";
     private static final String SESSION_LIST_PAGE = "/search/vessel_search.jsp";
 
     @Override
@@ -24,7 +21,7 @@ public class VesselSearchActionBean extends SearchActionBean {
         return new ForwardResolution(SESSION_LIST_PAGE);
     }
 
-    @HandlesEvent("vesselSearch")
+    @HandlesEvent(VESSEL_SEARCH)
     public Resolution vesselSearch() throws Exception {
         doSearch(SearchType.VESSELS_BY_BARCODE);
         orderResults();

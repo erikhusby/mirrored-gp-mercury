@@ -5,8 +5,8 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.products.ProductActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="Details for #{actionBean.editProduct.partNumber}"
-                       sectionTitle="Details for #{actionBean.editProduct.partNumber}"
+<stripes:layout-render name="/layout.jsp" pageTitle="View Product: #{actionBean.editProduct.partNumber}"
+                       sectionTitle="View Product Order: #{actionBean.editProduct.partNumber}"
                        businessKeyValue="${actionBean.editProduct.businessKey}">
 
     <stripes:layout-component name="content">
@@ -122,6 +122,24 @@
                 <div class="controls">
                     <div class="form-value">
                         ${actionBean.editProduct.aggregationDataType}
+                    </div>
+                </div>
+            </div>
+
+            <div class="view-control-group control-group">
+                <label class="control-label label-form">Analysis Type</label>
+                <div class="controls">
+                    <div class="form-value">
+                            ${actionBean.editProduct.analysisTypeKey}
+                    </div>
+                </div>
+            </div>
+
+            <div class="view-control-group control-group">
+                <label class="control-label label-form"><abbr title="aka Reagent Design">Bait Design</abbr></label>
+                <div class="controls">
+                    <div class="form-value">
+                            ${actionBean.editProduct.reagentDesignKey}
                     </div>
                 </div>
             </div>

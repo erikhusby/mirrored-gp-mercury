@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessKeyable;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
@@ -59,7 +60,7 @@ import java.util.TreeSet;
 @Entity
 @Audited
 @Table(name = "RESEARCH_PROJECT", schema = "athena")
-public class ResearchProject implements Serializable, Comparable<ResearchProject> {
+public class ResearchProject implements BusinessKeyable, Comparable<ResearchProject>, Serializable {
     public static final boolean IRB_ENGAGED = false;
     public static final boolean IRB_NOT_ENGAGED = true;
 
@@ -123,6 +124,12 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
     @Index(name = "ix_parent_research_project")
     private ResearchProject parentResearchProject;
 
+    @Column(name = "SEQUENCE_ALIGNER_KEY", nullable = true)
+    private String sequenceAlignerKey;
+
+    @Column(name = "REFERENCE_SEQUENCE_KEY", nullable = true)
+    private String referenceSequenceKey;
+
     /**
      * Set of ResearchProjects that belong under this one.
      */
@@ -169,6 +176,7 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
         originalTitle = title;
     }
 
+    @Override
     public String getBusinessKey() {
         return jiraTicketKey;
     }
@@ -212,6 +220,11 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
         return title;
     }
 
+    @Override
+    public String getName() {
+        return title;
+    }
+
     public String getSynopsis() {
         return synopsis;
     }
@@ -252,6 +265,14 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
         return childProjects;
     }
 
+    public String getSequenceAlignerKey() {
+        return sequenceAlignerKey;
+    }
+
+    public String getReferenceSequenceKey() {
+        return referenceSequenceKey;
+    }
+
     // Setters
 
     public void setCreatedBy(Long createdBy) {
@@ -280,6 +301,14 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
 
     public void setAccessControlEnabled(boolean accessControlEnabled) {
         this.accessControlEnabled = accessControlEnabled;
+    }
+
+    public void setSequenceAlignerKey(String sequenceAlignerKey) {
+        this.sequenceAlignerKey = sequenceAlignerKey;
+    }
+
+    public void setReferenceSequenceKey(String referenceSequenceKey) {
+        this.referenceSequenceKey = referenceSequenceKey;
     }
 
     /**

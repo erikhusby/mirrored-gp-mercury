@@ -1,9 +1,13 @@
 package org.broadinstitute.gpinformatics.mercury.control.zims;
 
 import edu.mit.broad.prodinfo.thrift.lims.IndexPosition;
+import edu.mit.broad.prodinfo.thrift.lims.TZDevExperimentData;
 import org.apache.commons.collections15.Factory;
 import org.apache.commons.collections15.map.LazyMap;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
@@ -111,14 +115,17 @@ public class ZimsIlluminaRunFactory {
             if (sampleInstance.getProductOrderKey() != null) {
                 productOrder = mapKeyToProductOrder.get(sampleInstance.getProductOrderKey());
             }
-            BSPSampleDTO bspSampleDTO = mapSampleIdToDto.get(sampleInstance.getStartingSample().getSampleKey());
+
             LabBatch labBatch = labVessel.getNearestWorkflowLabBatches().iterator().next(); // TODO: change to use singular version
-            String lcSet;
-            if (labBatch.getJiraTicket() != null) {
-                lcSet = labBatch.getJiraTicket().getTicketId();
-            } else {
+            if (labBatch.getJiraTicket() == null) {
                 throw new RuntimeException("Could not find LCSET for vessel: " + labVessel.getLabel());
             }
+
+            String lcSet = labBatch.getJiraTicket().getTicketId();
+
+            // This loop goes through all the reagents and takes the last bait name (under the assumption that
+            // the lab would only ever have one for this sample instance. All cat names are collected and the
+            // last indexing scheme reagent.
             MolecularIndexingScheme indexingSchemeEntity = null;
             String baitName = null;
             List<String> catNames = new ArrayList<String>();
@@ -137,25 +144,95 @@ public class ZimsIlluminaRunFactory {
             }
 
             edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme indexingSchemeDto = null;
-            if(indexingSchemeEntity != null) {
+            if (indexingSchemeEntity != null) {
                 Map<IndexPosition, String> positionSequenceMap = new HashMap<IndexPosition, String>();
-                for (Map.Entry<MolecularIndexingScheme.IndexPosition, MolecularIndex> indexEntry : indexingSchemeEntity.getIndexes().entrySet()) {
+                Set<Map.Entry<MolecularIndexingScheme.IndexPosition, MolecularIndex>> entries =
+                        indexingSchemeEntity.getIndexes().entrySet();
+
+                for (Map.Entry<MolecularIndexingScheme.IndexPosition, MolecularIndex> indexEntry : entries) {
                     String indexName = indexEntry.getKey().toString();
                     positionSequenceMap.put(
                             IndexPosition.valueOf(indexName.substring(indexName.lastIndexOf('_') + 1)),
                             indexEntry.getValue().getSequence());
                 }
+
                 indexingSchemeDto = new edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme(
                         indexingSchemeEntity.getName(), positionSequenceMap);
             }
-            libraryBeans.add(new LibraryBean(
-                    labVessel.getLabel() + (indexingSchemeEntity == null ? "" : "_" + indexingSchemeEntity.getName()),
-                    productOrder == null ? null : productOrder.getResearchProject().getBusinessKey(), null, null, indexingSchemeDto,
-                    null/*todo jmt hasIndexingRead, designation?*/, null, null, null, null, null, null, null, null,
-                    null, null, null, null, baitName, null, 0.0, null, null, null, null, null, null,
-                    catNames, productOrder, lcSet, bspSampleDTO));
+
+            BSPSampleDTO bspSampleDTO = mapSampleIdToDto.get(sampleInstance.getStartingSample().getSampleKey());
+
+            libraryBeans.add(
+                createLibraryBean(labVessel, productOrder, bspSampleDTO, lcSet, baitName,
+                                  indexingSchemeEntity, catNames, indexingSchemeDto));
         }
+
         return libraryBeans;
+    }
+
+    private LibraryBean createLibraryBean(
+        LabVessel labVessel, ProductOrder productOrder, BSPSampleDTO bspSampleDTO, String lcSet, String baitName,
+        MolecularIndexingScheme indexingSchemeEntity, List<String> catNames,
+        edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme indexingSchemeDto) {
+
+        String library = labVessel.getLabel() + (indexingSchemeEntity == null ? "" : "_" + indexingSchemeEntity.getName());
+
+        String projectName = null;
+        String initiative = null;
+        Long workRequest = null;
+        Boolean hasIndexingRead = null;     // todo jmt hasIndexingRead, designation?
+        String expectedInsertSize = null;
+        String organism = null;
+        String species = null;
+        String strain = null;
+        String rrbsSizeRange = null;
+        String restrictionEnzyme = null;
+        double labMeasuredInsertSize = 0.0;
+        Boolean positiveControl = null;
+        Boolean negativeControl = null;
+        TZDevExperimentData devExperimentData = null;
+        Collection<String> gssrBarcodes = null;
+        String gssrSampleType = null;
+        Boolean doAggregation = null;
+
+        // default to the passed in bait name, but override if there is product specified version.
+        String bait = baitName;
+
+        // These items are pulled off the project or product.
+        String analysisType = null;
+        String referenceSequence = null;
+        String referenceSequenceVersion = null;
+        String aligner = null;
+        if (productOrder != null) {
+            // Product stuff.
+            Product product = productOrder.getProduct();
+            analysisType = product.getAnalysisTypeKey();
+
+            // If there was no bait on the actual samples, use the one defined on the product.
+            if (bait == null) {
+                bait = product.getReagentDesignKey();
+            }
+
+            // Project stuff.
+            ResearchProject project = productOrder.getResearchProject();
+            projectName = project.getBusinessKey();
+            aligner = project.getSequenceAlignerKey();
+
+            // If there is a reference sequence value on the project, then populate the name and version.
+            String[] referenceSequenceValues = null;
+            if (!StringUtils.isBlank(project.getReferenceSequenceKey())) {
+                referenceSequenceValues = project.getReferenceSequenceKey().split("\\|");
+                referenceSequence = referenceSequenceValues[0];
+                referenceSequenceVersion = referenceSequenceValues[1];
+            }
+        }
+
+        return new LibraryBean(
+                library, projectName, initiative, workRequest, indexingSchemeDto, hasIndexingRead, expectedInsertSize,
+                analysisType, referenceSequence, referenceSequenceVersion, organism, species,
+                strain, aligner, rrbsSizeRange, restrictionEnzyme, bait, labMeasuredInsertSize,
+                positiveControl, negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation,
+                catNames, productOrder, lcSet, bspSampleDTO);
     }
 
     private static class PipelineTransformationCriteria implements TransferTraverserCriteria {

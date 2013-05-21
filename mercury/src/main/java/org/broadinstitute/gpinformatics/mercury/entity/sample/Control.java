@@ -16,8 +16,7 @@ import javax.persistence.Table;
 
 /**
  * Represents a user defined control for Mercury.  Will encapsulate both the collaborator sample ID that is
- * associated
- * with the control and an indicator of what kind of control (positive or negative) this is.
+ * associated with the control and an indicator of what kind of control (positive or negative) this is.
  *
  * @author Scott Matthews
  */

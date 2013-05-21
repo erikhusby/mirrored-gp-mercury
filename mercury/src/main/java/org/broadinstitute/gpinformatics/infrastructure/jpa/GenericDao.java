@@ -48,11 +48,6 @@ public class GenericDao {
     @Inject
     private ThreadEntityManager threadEntityManager;
 
-    // TODO: replace usages of this method with getEntityManager(), then remove this method
-    public ThreadEntityManager getThreadEntityManager() {
-        return threadEntityManager;
-    }
-
     /**
      * Flushes changes in the extended persistence context to the database.
      *
@@ -138,6 +133,7 @@ public class GenericDao {
 
     /**
      * Returns all entities of the specified entity type.
+     *
      * @param entity the class of entity to return
      * @param <ENTITY_TYPE> the type of the entity to return
      * @return list of entities, or empty list if none found
@@ -148,6 +144,7 @@ public class GenericDao {
 
     /**
     * Returns all entities of the specified entity type.
+     *
     * @param entity the class of entity to return
     * @param <ENTITY_TYPE> the type of the entity to return
     * @return list of entities, or empty list if none found
@@ -170,6 +167,7 @@ public class GenericDao {
 
     /**
      * Returns all entities of the specified entity type in the specified range.
+     *
      * @param entity the class of entity to return
      * @param first index to start at
      * @param max maximum number of entities to return
@@ -194,6 +192,7 @@ public class GenericDao {
 
     /**
      * Returns a single entity that matches a specified value for a specified property.
+     *
      * @param entity the class of entity to return
      * @param singularAttribute the metadata field for the property to query
      * @param value the value to query
@@ -240,8 +239,7 @@ public class GenericDao {
      */
     public <METADATA_TYPE,
             ENTITY_TYPE extends METADATA_TYPE> ENTITY_TYPE findSingle(Class<ENTITY_TYPE> entity,
-                                                                      @Nullable GenericDaoCallback<ENTITY_TYPE> genericDaoCallback)
-    {
+                                                                      @Nullable GenericDaoCallback<ENTITY_TYPE> genericDaoCallback) {
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<ENTITY_TYPE> criteriaQuery = criteriaBuilder.createQuery(entity);
         Root<ENTITY_TYPE> root = criteriaQuery.from(entity);
@@ -259,6 +257,7 @@ public class GenericDao {
 
     /**
      * Returns a list of entities that matches a list of values for a specified property.
+     *
      * @param entity the class of entity to return
      * @param singularAttribute the metadata field for the property to query
      * @param values list of values to query
@@ -307,6 +306,7 @@ public class GenericDao {
 
     /**
      * Returns a list of entities that matches a specified value for a specified property.
+     *
      * @param entity the class of entity to return
      * @param singularAttribute the metadata field for the property to query
      * @param value the value to query
@@ -332,6 +332,7 @@ public class GenericDao {
 
     /**
      * Looks up an entity by its JPA id.
+     *
      * @param entity the class of the entity to return
      * @param id the entity's JPA id
      * @param <ENTITY_TYPE> the name of the entity class

@@ -17,7 +17,7 @@ section { margin-left: 2%; margin-right: 2% }
 a { text-decoration: underline; color: #0088CC; font-size: medium; }
 a.external {background-image:url("/Mercury/images/external-link.gif");background-position:right center;background-repeat:no-repeat;display:inline;padding:0 20px 0 0;}
 
-.control-group a, .navbar a, table a { font-size: small; }
+.control-group a, table a { font-size: 12px; }
 
 h1, h2, h3, h4, h5 {font-family: 'Carrois Gothic SC', sans-serif; color: #644436;}
 h3 {font-size: 22px; line-height: 30px;}

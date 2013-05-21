@@ -15,15 +15,11 @@ import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.search.VesselSearchActionBean;
 
 import javax.inject.Inject;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Utility methods for sending human readable updates
@@ -46,6 +42,7 @@ public class JiraCommentUtil {
 
     /**
      * Formats a message to record the receipt of a lab event
+     *
      * @param labEvent event to add to JIRA ticket
      */
     public void postUpdate(LabEvent labEvent) {
@@ -68,7 +65,7 @@ public class JiraCommentUtil {
             }
         }
         message += labEvent.getLabEventType().getName() + " for <a href=\"" + appConfig.getUrl() +
-                SearchActionBean.ACTIONBEAN_URL_BINDING + "?" + SearchActionBean.SEARCH_ACTION + "=&searchKey=" +
+                VesselSearchActionBean.ACTIONBEAN_URL_BINDING + "?" + VesselSearchActionBean.VESSEL_SEARCH + "=&searchKey=" +
                 messageLabVessel.getLabel() + "\">" + messageLabVessel.getLabel() + "</a>" +
                 " on " + labEvent.getEventLocation() + " at " + labEvent.getEventDate();
 

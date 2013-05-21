@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.entity.products;
 
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessKeyable;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
 
@@ -18,7 +19,7 @@ import java.util.*;
 @Audited
 @Table(schema = "athena",
         uniqueConstraints = @UniqueConstraint(columnNames = {"partNumber"}))
-public class Product implements Serializable, Comparable<Product> {
+public class Product implements BusinessKeyable, Serializable, Comparable<Product> {
     private static final int ONE_DAY_IN_SECONDS = 60 * 60 * 24;
 
     public static final boolean TOP_LEVEL_PRODUCT = true;
@@ -39,6 +40,14 @@ public class Product implements Serializable, Comparable<Product> {
 
     @Column(name = "AGGREGATION_DATA_TYPE", length = 200)
     private String aggregationDataType;
+
+
+    @Column(name = "ANALYSIS_TYPE_KEY", nullable = true, length = 200)
+    private String analysisTypeKey;
+
+    @Column(name = "REAGENT_DESIGN_KEY", nullable = true, length = 200)
+    private String reagentDesignKey;
+
 
     @Column(unique = true)
     private String partNumber;
@@ -139,7 +148,6 @@ public class Product implements Serializable, Comparable<Product> {
                    String workflowName,
                    boolean pdmOrderableOnly,
                    String aggregationDataType) {
-
         this.productName = productName;
         this.productFamily = productFamily;
         this.description = description;
@@ -164,6 +172,11 @@ public class Product implements Serializable, Comparable<Product> {
 
     public String getProductName() {
         return productName;
+    }
+
+    @Override
+    public String getName() {
+        return getProductName();
     }
 
     public ProductFamily getProductFamily() {
@@ -298,6 +311,22 @@ public class Product implements Serializable, Comparable<Product> {
         return workflowName;
     }
 
+    public String getAnalysisTypeKey() {
+        return analysisTypeKey;
+    }
+
+    public void setAnalysisTypeKey(String analysisTypeKey) {
+        this.analysisTypeKey = analysisTypeKey;
+    }
+
+    public String getReagentDesignKey() {
+        return reagentDesignKey;
+    }
+
+    public void setReagentDesignKey(String reagentDesignKey) {
+        this.reagentDesignKey = reagentDesignKey;
+    }
+
     public boolean isPdmOrderableOnly() {
         return pdmOrderableOnly;
     }
@@ -373,6 +402,7 @@ public class Product implements Serializable, Comparable<Product> {
         return partNumber != null ? partNumber.hashCode() : 0;
     }
 
+    @Override
     public String getBusinessKey() {
         return partNumber;
     }

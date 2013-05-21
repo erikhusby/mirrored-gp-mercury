@@ -187,38 +187,56 @@ public class LibraryBean {
         overrideSampleFieldsFromBSP(bspSampleDTO);
     }
 
+    public LibraryBean(String library, String project, String initiative, Long workRequest,
+                       MolecularIndexingScheme indexingScheme, Boolean hasIndexingRead, String expectedInsertSize,
+                       String analysisType, String referenceSequence, String referenceSequenceVersion,
+                       String organism, String species, String strain,
+                       String aligner, String rrbsSizeRange, String restrictionEnzyme,
+                       String bait, double labMeasuredInsertSize, Boolean positiveControl, Boolean negativeControl,
+                       TZDevExperimentData devExperimentData, Collection<String> gssrBarcodes,
+                       String gssrSampleType, Boolean doAggregation, Collection<String> customAmpliconSetNames,
+                       ProductOrder productOrder, String lcSet, BSPSampleDTO bspSampleDTO) {
+
+        this(library, project, initiative, workRequest, indexingScheme, hasIndexingRead, expectedInsertSize,
+             analysisType, referenceSequence, referenceSequenceVersion, null, organism, species, strain, null,
+             aligner, rrbsSizeRange, restrictionEnzyme, bait, null, labMeasuredInsertSize, positiveControl,
+             negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation, customAmpliconSetNames,
+             productOrder, lcSet, bspSampleDTO);
+    }
+
     /**
      * Sample-ish fields here are supplied for GSSR.
-     * @param library
-     * @param project
-     * @param initiative
-     * @param workRequest
-     * @param indexingScheme
-     * @param hasIndexingRead
-     * @param expectedInsertSize
-     * @param analysisType
-     * @param referenceSequence
-     * @param referenceSequenceVersion
-     * @param collaboratorSampleId
-     * @param organism
-     * @param species
-     * @param strain
-     * @param sampleLSID
-     * @param aligner
-     * @param rrbsSizeRange
-     * @param restrictionEnzyme
-     * @param bait
-     * @param individual
-     * @param labMeasuredInsertSize
-     * @param positiveControl
-     * @param negativeControl
-     * @param devExperimentData
-     * @param gssrBarcodes
-     * @param gssrSampleType
-     * @param doAggregation
-     * @param customAmpliconSetNames
-     * @param productOrder
-     * @param lcSet
+     *
+     * @param library the name of the library.
+     * @param project project name.
+     * @param initiative initiative.
+     * @param workRequest The work request specified.
+     * @param indexingScheme The indexing scheme.
+     * @param hasIndexingRead Does this have an indexing read.
+     * @param expectedInsertSize The size of the expected insert.
+     * @param analysisType The analysis type to be performed.
+     * @param referenceSequence The name of the reference sequence for analysis.
+     * @param referenceSequenceVersion The version of this reference sequence.
+     * @param collaboratorSampleId The specified collaborator sample name.
+     * @param organism The organism.
+     * @param species The species.
+     * @param strain The strain/
+     * @param sampleLSID The LSID of the sample
+     * @param aligner The aligner.
+     * @param rrbsSizeRange The size range.
+     * @param restrictionEnzyme Restriction Enzyme that was used.
+     * @param bait The bait that was used.
+     * @param individual The name of the individual.
+     * @param labMeasuredInsertSize The size that the lab measured for the insert.
+     * @param positiveControl Positive control.
+     * @param negativeControl Negative control.
+     * @param devExperimentData The data.
+     * @param gssrBarcodes barcodes.
+     * @param gssrSampleType type of sample.
+     * @param doAggregation Are we performing an aggregation?
+     * @param customAmpliconSetNames The amplicaon names.
+     * @param productOrder The PDO.
+     * @param lcSet The LC Set.
      * @param bspSampleDTO trumps all other sample-related fields.  Other sample
 *                     related fields (such as inidividual, organism, etc.) are here
 *                     for GSSR samples.  If bspSampleDTO is non-null, all sample

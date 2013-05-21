@@ -3142,4 +3142,93 @@
             <column name="parent_research_project" type="number(19,0)"/>
         </addColumn>
     </changeSet>
+
+    <changeSet id="GPLIM-1325-100" author="dinsmore">
+        <preConditions>
+            <not>
+                <columnExists tableName="research_project" columnName="SEQUENCE_ALIGNER_KEY" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="research_project">
+            <column name="SEQUENCE_ALIGNER_KEY" type="VARCHAR2(200)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-1325-101" author="dinsmore">
+        <preConditions>
+            <not>
+                <columnExists tableName="research_project" columnName="REFERENCE_SEQUENCE_KEY" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="research_project">
+            <column name="REFERENCE_SEQUENCE_KEY" type="VARCHAR2(200)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-1325-102" author="dinsmore">
+        <preConditions>
+            <not>
+                <columnExists tableName="product" columnName="ANALYSIS_TYPE_KEY" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="product">
+            <column name="ANALYSIS_TYPE_KEY" type="VARCHAR2(200)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-1325-103" author="dinsmore">
+        <preConditions>
+            <not>
+                <columnExists tableName="product" columnName="REAGENT_DESIGN_KEY" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="product">
+            <column name="REAGENT_DESIGN_KEY" type="VARCHAR2(200)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-1325-104" author="dinsmore">
+        <preConditions>
+            <not>
+                <columnExists tableName="research_project_aud" columnName="REFERENCE_SEQUENCE_KEY" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="research_project_aud">
+            <column name="REFERENCE_SEQUENCE_KEY" type="varchar(200)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-1325-105" author="dinsmore">
+        <preConditions>
+            <not>
+                <columnExists tableName="research_project_aud" columnName="SEQUENCE_ALIGNER_KEY" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="research_project_aud">
+            <column name="SEQUENCE_ALIGNER_KEY" type="varchar(200)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-1325-106" author="dinsmore">
+        <preConditions>
+            <not>
+                <columnExists tableName="product_aud" columnName="ANALYSIS_TYPE_KEY" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="product_aud">
+            <column name="ANALYSIS_TYPE_KEY" type="VARCHAR2(200)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-1325-107" author="dinsmore">
+        <preConditions>
+            <not>
+                <columnExists tableName="product_aud" columnName="REAGENT_DESIGN_KEY" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="product_aud">
+            <column name="REAGENT_DESIGN_KEY" type="VARCHAR2(200)" />
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
