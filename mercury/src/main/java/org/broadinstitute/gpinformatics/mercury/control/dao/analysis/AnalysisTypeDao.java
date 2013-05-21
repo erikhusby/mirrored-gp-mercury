@@ -17,11 +17,11 @@ import java.util.List;
 @LocalBean
 @RequestScoped
 public class AnalysisTypeDao extends GenericDao implements BusinessKeyFinder {
-
     public List<AnalysisType> findAll() {
         return findAll(AnalysisType.class);
     }
 
+    @Override
     public AnalysisType findByBusinessKey(String businessKey) {
         return findSingle(AnalysisType.class, AnalysisType_.name, businessKey);
     }

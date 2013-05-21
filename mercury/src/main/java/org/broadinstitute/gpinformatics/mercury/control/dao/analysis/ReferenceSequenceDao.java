@@ -43,7 +43,7 @@ public class ReferenceSequenceDao extends GenericDao implements BusinessKeyFinde
         return getEntityManager().createQuery(query).getResultList();
     }
 
-
+    @Override
     public ReferenceSequence findByBusinessKey(String businessKey) {
         String[] values = businessKey.split("\\|");
 
