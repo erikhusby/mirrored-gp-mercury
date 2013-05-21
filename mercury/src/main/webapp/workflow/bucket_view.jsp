@@ -76,10 +76,6 @@
 </stripes:layout-component>
 
 <stripes:layout-component name="content">
-<c:set var="readOnly" value="false"/>
-<security:authorizeBlock roles="<%= roles(LabUser, PDM) %>">
-    <c:set var="readOnly" value="true"/>
-</security:authorizeBlock>
 <stripes:form beanclass="${actionBean.class.name}" id="bucketForm">
     <div class="control-group">
         <div class="controls">
@@ -176,44 +172,24 @@
                                   value="${entry.labVessel.label}"/>
             </td>
             <td>
-                <c:choose>
-                <c:when test="${!readOnly}">
-                <a href="${ctxpath}/search/all.action?search=&searchKey=${entry.labVessel.label}">
+                <a href="${ctxpath}/search/vessel.action?vesselSearch=&searchKey=${entry.labVessel.label}">
                         ${entry.labVessel.label}
                 </a></td>
-            </c:when>
-            <c:otherwise>
-                ${entry.labVessel.label}
-            </c:otherwise>
-            </c:choose>
+
             <td>
                 <c:forEach items="${entry.labVessel.mercurySamples}"
                            var="mercurySample"
                            varStatus="stat">
-                    <c:choose>
-                        <c:when test="${!readOnly}">
-                            <a href="${ctxpath}/search/all.action?search=&searchKey=${mercurySample.sampleKey}">
-                                    ${mercurySample.sampleKey}
-                            </a>
-                        </c:when>
-                        <c:otherwise>
+                    <a href="${ctxpath}/search/sample.action?sampleSearch=&searchKey=${mercurySample.sampleKey}">
                             ${mercurySample.sampleKey}
-                        </c:otherwise>
-                    </c:choose>
+                    </a>
+
                     <c:if test="${!stat.last}">&nbsp;</c:if>
                 </c:forEach>
             </td>
             <td>
-                <c:choose>
-                    <c:when test="${!readOnly}">
-                        <a href="${ctxpath}/search/all.action?search=&searchKey=${entry.poBusinessKey}">
-                                ${entry.poBusinessKey}
-                        </a>
-                    </c:when>
-                    <c:otherwise>
-                        ${entry.poBusinessKey}
-                    </c:otherwise>
-                </c:choose>
+
+                    ${entry.poBusinessKey}
             </td>
             <td>
                 <div class="tdfield">${actionBean.getPDODetails(entry.poBusinessKey).title}</div>
@@ -224,16 +200,8 @@
             <td>
                 <c:forEach items="${entry.labVessel.nearestWorkflowLabBatches}" var="batch"
                            varStatus="stat">
-                    <c:choose>
-                        <c:when test="${!readOnly}">
-                            <a href="${ctxpath}/search/all.action?search=&searchKey=${batch.businessKey}">
-                                    ${batch.businessKey}
-                            </a>
-                        </c:when>
-                        <c:otherwise>
-                            ${batch.businessKey}
-                        </c:otherwise>
-                    </c:choose>
+
+                    ${batch.businessKey}
                     <c:if test="${!stat.last}">&nbsp;</c:if></c:forEach>
 
             </td>
@@ -273,42 +241,22 @@
                                   value="${reworkVessel.label}"/>
             </td>
             <td>
-                <c:choose>
-                    <c:when test="${!readOnly}">
-                        <a href="${ctxpath}/search/all.action?search=&searchKey=${reworkVessel.label}">
-                                ${reworkVessel.label}
-                        </a>
-                    </c:when>
-                    <c:otherwise>
+
+                <a href="${ctxpath}/search/vessel.action?vesselSearch=&searchKey=${reworkVessel.label}">
                         ${reworkVessel.label}
-                    </c:otherwise>
-                </c:choose>
+                </a>
             </td>
             <td>
                 <c:forEach items="${actionBean.getSampleNames(reworkVessel)}" var="sampleName"
                            varStatus="loopstatus">
-                    <c:choose>
-                        <c:when test="${!readOnly}">
-                            <a href="${ctxpath}/search/all.action?search=&searchKey=${sampleName}"> ${sampleName} </a>
-                        </c:when>
-                        <c:otherwise>
-                            ${sampleName}
-                        </c:otherwise>
-                    </c:choose>
+
+                    <a href="${ctxpath}/search/sample.action?sampleSearch=&searchKey=${sampleName}"> ${sampleName} </a>
                     <c:if test="${!loopstatus.last}">, </c:if>
                 </c:forEach>
             </td>
             <td>
-                <c:choose>
-                    <c:when test="${!readOnly}">
-                        <a href="${ctxpath}/search/all.action?search=&searchKey=${actionBean.getSinglePDOBusinessKey(reworkVessel)}">
-                                ${actionBean.getSinglePDOBusinessKey(reworkVessel)}
-                        </a>
-                    </c:when>
-                    <c:otherwise>
-                        ${actionBean.getSinglePDOBusinessKey(reworkVessel)}
-                    </c:otherwise>
-                </c:choose>
+
+                    ${actionBean.getSinglePDOBusinessKey(reworkVessel)}
             </td>
             <td>
                 <div class="tdfield">${actionBean.getPDODetails(actionBean.getSinglePDOBusinessKey(reworkVessel)).title}</div>
@@ -319,16 +267,7 @@
             <td>
                 <c:forEach items="${reworkVessel.nearestWorkflowLabBatches}" var="batch"
                            varStatus="stat">
-                    <c:choose>
-                        <c:when test="${!readOnly}">
-                            <a href="${ctxpath}/search/all.action?search=&searchKey=${batch.businessKey}">
-                                    ${batch.businessKey}
-                            </a>
-                        </c:when>
-                        <c:otherwise>
-                            ${actionBean.getSinglePDOBusinessKey(reworkVessel)}
-                        </c:otherwise>
-                    </c:choose>
+                    ${actionBean.getSinglePDOBusinessKey(reworkVessel)}
                     <c:if test="${!stat.last}">&nbsp;</c:if>
                 </c:forEach>
 
