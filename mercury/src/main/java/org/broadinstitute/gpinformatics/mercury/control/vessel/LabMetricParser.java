@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Row;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
@@ -16,7 +15,9 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -26,7 +27,7 @@ public class LabMetricParser extends AbstractSpreadsheetParser {
 
     private Set<LabMetric> metrics = new HashSet<LabMetric>();
 
-    private Set<String> validationMessages = new HashSet<String>();
+    private List<String> validationMessages = new ArrayList<String>();
 
     private LabMetric.MetricType metricType;
 
@@ -49,7 +50,7 @@ public class LabMetricParser extends AbstractSpreadsheetParser {
 
         processWorkbook();
 
-        if (CollectionUtils.isEmpty(validationMessages)) {
+        if (!CollectionUtils.isEmpty(validationMessages)) {
             throw new ValidationException("Validation Errors were found while processing quant data",
                     validationMessages);
         }
@@ -66,7 +67,9 @@ public class LabMetricParser extends AbstractSpreadsheetParser {
 //            validationMessages.add("Row #" + rowValues.getRowNum() + " value for Location is missing");
 //            foundError = true;
 //        }
-
+        if(rowValues.getCell(LabMetricHeaders.BARCODE.getIndex()) == null){
+            return;
+        }
         String barcode = rowValues.getCell(LabMetricHeaders.BARCODE.getIndex()).getStringCellValue();
         if(StringUtils.isBlank(barcode)) {
             validationMessages.add("Row #" + rowValues.getRowNum() + " value for Barcode is missing");

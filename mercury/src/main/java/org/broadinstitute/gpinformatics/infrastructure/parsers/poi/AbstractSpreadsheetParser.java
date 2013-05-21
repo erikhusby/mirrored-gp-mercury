@@ -7,12 +7,12 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.util.Iterator;
 
-public abstract class AbstractSpreadsheetParser {
+public abstract class AbstractSpreadsheetParser implements Serializable {
 
 
     private Workbook workbook;
