@@ -10,6 +10,7 @@
             <xsd:element name="indexedRun" type="xsd:boolean"/>
             <xsd:element name="controlLane" type="xsd:int"/>
             <xsd:element name="keepIntensityFiles" type="xsd:boolean"/>
+            <xsd:element name="indexingReadConfiguration" type="xsd:string"/>
         </xsd:sequence>
     </xsd:complexType>
 
