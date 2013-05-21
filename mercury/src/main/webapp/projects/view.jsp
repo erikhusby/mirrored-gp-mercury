@@ -231,7 +231,11 @@
                     <label class="control-label label-form">Sequence Aligner</label>
 
                     <div class="controls">
-                        <div class="form-value">${actionBean.editResearchProject.sequenceAlignerKey}</div>
+                        <div class="form-value">
+                            <c:if test="${!empty actionBean.editResearchProject.sequenceAlignerKey}">
+                                ${(actionBean.getSequenceAligner(actionBean.editResearchProject.sequenceAlignerKey)).displayName}
+                            </c:if>
+                        </div>
                     </div>
                 </div>
 
@@ -239,7 +243,11 @@
                     <label class="control-label label-form">Reference Sequence</label>
 
                     <div class="controls">
-                        <div class="form-value">${actionBean.editResearchProject.referenceSequenceKey}</div>
+                        <div class="form-value">
+                            <c:if test="${!empty actionBean.editResearchProject.referenceSequenceKey}">
+                                ${(actionBean.getReferenceSequence(actionBean.editResearchProject.referenceSequenceKey)).displayName}
+                            </c:if>
+                        </div>
                     </div>
                 </div>
             </fieldset>

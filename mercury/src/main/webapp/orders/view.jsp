@@ -13,7 +13,6 @@
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
             $j(document).ready(function() {
-
                 updateFundsRemaining();
 
                 setupDialogs();

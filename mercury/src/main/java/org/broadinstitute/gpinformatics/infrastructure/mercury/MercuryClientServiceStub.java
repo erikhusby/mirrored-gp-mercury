@@ -58,4 +58,24 @@ public class MercuryClientServiceStub implements MercuryClientService {
     public Collection<DisplayableItem> getReagentDesigns() {
         return Collections.emptyList();
     }
+
+    @Override
+    public DisplayableItem getReagentDesign(String businessKey) {
+        return null;
+    }
+
+    @Override
+    public DisplayableItem getSequenceAligner(String businessKey) {
+        return null;
+    }
+
+    @Override
+    public DisplayableItem getReferenceSequence(String businessKey) {
+        return null;
+    }
+
+    @Override
+    public DisplayableItem getAnalysisType(String businessKey) {
+        return null;
+    }
 }

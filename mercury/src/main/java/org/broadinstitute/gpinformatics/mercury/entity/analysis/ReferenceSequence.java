@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.analysis;
 
+import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessKeyable;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.Nameable;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Column;
@@ -17,7 +19,7 @@ import javax.persistence.Table;
 @Entity
 @Audited
 @Table(name = "REFERENCE_SEQUENCE", schema = "mercury")
-public class ReferenceSequence {
+public class ReferenceSequence implements BusinessKeyable, Nameable {
 
     @Id
     @SequenceGenerator(name = "SEQ_REFERENCE_SEQUENCE", schema = "mercury", sequenceName = "SEQ_REFERENCE_SEQUENCE", allocationSize = 10)
@@ -33,7 +35,7 @@ public class ReferenceSequence {
     @Column(name = "IS_CURRENT", nullable = false)
     private boolean isCurrent;
 
-    ReferenceSequence() {
+    public ReferenceSequence() {
     }
 
     public ReferenceSequence(String name, String version) {
@@ -41,6 +43,7 @@ public class ReferenceSequence {
         this.version = version;
     }
 
+    @Override
     public String getName() {
         return name;
     }
@@ -57,6 +60,7 @@ public class ReferenceSequence {
         isCurrent = current;
     }
 
+    @Override
     public String getBusinessKey() {
         return name + '|' + version;
     }
