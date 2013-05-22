@@ -27,9 +27,31 @@ import org.hibernate.envers.NotAudited;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Embedded;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
+import javax.persistence.OneToMany;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+import javax.persistence.UniqueConstraint;
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 /**
  * A piece of plastic or glass that holds sample, reagent or other plastic.
@@ -427,6 +449,17 @@ public abstract class LabVessel implements Serializable {
         }
     }
 
+    public Collection<LabMetric> getNearestMetricsOfType(LabMetric.MetricType quantType) {
+        if (getContainerRole() != null) {
+            return getContainerRole().getNearestMetricOfType(quantType);
+        } else {
+            TransferTraverserCriteria.NearestLabMetricOfTypeCriteria quantTypeCriteria =
+                    new TransferTraverserCriteria.NearestLabMetricOfTypeCriteria(quantType);
+            evaluateCriteria(quantTypeCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+            return quantTypeCriteria.getNearestMetrics();
+        }
+    }
+
     public enum ContainerType {
         STATIC_PLATE("Plate"),
         PLATE_WELL("Plate Well"),
@@ -603,9 +636,13 @@ public abstract class LabVessel implements Serializable {
          * Only MercurySamples that have a PDO.
          */
         WITH_PDO,
-        /** MercurySamples with PDO, if found, else any. */
+        /**
+         * MercurySamples with PDO, if found, else any.
+         */
         PREFER_PDO,
-        /** Any MercurySample. */
+        /**
+         * Any MercurySample.
+         */
         ANY
     }
 
@@ -627,7 +664,7 @@ public abstract class LabVessel implements Serializable {
         if (sampleType == SampleType.WITH_PDO) {
             filteredSampleInstances = new HashSet<SampleInstance>();
             for (SampleInstance sampleInstance : traversalResults.getSampleInstances()) {
-                if(sampleInstance.getProductOrderKey() != null) {
+                if (sampleInstance.getProductOrderKey() != null) {
                     filteredSampleInstances.add(sampleInstance);
                 }
             }
@@ -717,12 +754,12 @@ public abstract class LabVessel implements Serializable {
         switch (sampleType) {
         case WITH_PDO:
         case PREFER_PDO:
-            if(!bucketEntries.isEmpty() && !mercurySamples.isEmpty()) {
+            if (!bucketEntries.isEmpty() && !mercurySamples.isEmpty()) {
                 continueTraversing = false;
             }
             break;
         case ANY:
-            if(!mercurySamples.isEmpty()) {
+            if (!mercurySamples.isEmpty()) {
                 continueTraversing = false;
             }
             break;
@@ -740,13 +777,13 @@ public abstract class LabVessel implements Serializable {
                 }
             }
         }
-        if(traversalResults.getSampleInstances().isEmpty() && !mercurySamples.isEmpty()) {
+        if (traversalResults.getSampleInstances().isEmpty() && !mercurySamples.isEmpty()) {
             for (MercurySample mercurySample : mercurySamples) {
                 SampleInstance sampleInstance = new SampleInstance(mercurySample, null, null);
                 traversalResults.add(sampleInstance);
             }
         }
-        for(SampleInstance sampleInstance : traversalResults.getSampleInstances()){
+        for (SampleInstance sampleInstance : traversalResults.getSampleInstances()) {
             sampleInstance.addLabBatches(getLabBatchesOfType(labBatchType));
         }
         if (bucketEntries.size() > 1) {
@@ -1209,9 +1246,9 @@ public abstract class LabVessel implements Serializable {
 
     public Collection<LabVessel> getAncestorVessels() {
         TransferTraverserCriteria.LabVesselAncestorCriteria ancestorCritera =
-                        new TransferTraverserCriteria.LabVesselAncestorCriteria();
+                new TransferTraverserCriteria.LabVesselAncestorCriteria();
         evaluateCriteria(ancestorCritera, TransferTraverserCriteria.TraversalDirection.Ancestors);
-        return ancestorCritera.getLabVesselDescendants();
+        return ancestorCritera.getLabVesselAncestors();
     }
 
     /**
@@ -1235,6 +1272,7 @@ public abstract class LabVessel implements Serializable {
 
     /**
      * This method return the unique indexes for this vessel.
+     *
      * @return A set of unique indexes in this vessel.
      */
     public Set<MolecularIndexReagent> getUniqueIndexes() {
@@ -1361,7 +1399,7 @@ public abstract class LabVessel implements Serializable {
         return allSamples;
     }
 
-    public Set<SampleInstance> getAllSamplesOfType(SampleType sampleType){
+    public Set<SampleInstance> getAllSamplesOfType(SampleType sampleType) {
         Set<SampleInstance> allSamples = new HashSet<SampleInstance>();
         allSamples.addAll(getSampleInstances(sampleType, null));
         if (getContainerRole() != null) {
@@ -1384,7 +1422,8 @@ public abstract class LabVessel implements Serializable {
         for (SampleInstance sampleInstance : allSamples) {
             //todo jac match on stock sample as well but really we need a way to grab every mercury sample for this instance and check them all (not just starting)
             if (sampleInstance.getStartingSample() != null && sampleInstance.getStartingSample().equals(sample)
-                    || (sample.getBspSampleDTO() != null && sampleInstance.getStartingSample().getSampleKey().equals(sample.getBspSampleDTO().getStockSample()))) {
+                || (sample.getBspSampleDTO() != null && sampleInstance.getStartingSample().getSampleKey()
+                    .equals(sample.getBspSampleDTO().getStockSample()))) {
                 filteredSamples.add(sampleInstance);
             }
         }
