@@ -10,6 +10,7 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
 import org.broadinstitute.gpinformatics.mercury.control.lims.LimsQueryResourceResponseFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.FlowcellDesignationType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LibraryDataType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PlateTransferType;
@@ -240,7 +241,17 @@ public class LimsQueryResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchQpcrForTube")
     public Double fetchQpcrForTube(@QueryParam("tubeBarcode") String tubeBarcode) {
-        return thriftService.fetchQpcrForTube(tubeBarcode);
+        switch (mercuryOrSquidRouter.routeForVessel(tubeBarcode)) {
+        case MERCURY:
+            return limsQueries.fetchQuantForTube(tubeBarcode, LabMetric.MetricType.ECO_QPCR.getDisplayName());
+        case SQUID:
+        case BOTH:
+            return thriftService.fetchQpcrForTube(tubeBarcode);
+        default:
+            throw new RuntimeException(
+                    "Tube or quant not found for barcode: " + tubeBarcode + ", quant type: " + LabMetric.MetricType
+                            .ECO_QPCR.getDisplayName());
+        }
     }
 
     @GET
@@ -258,7 +269,6 @@ public class LimsQueryResource {
             throw new RuntimeException(
                     "Tube or quant not found for barcode: " + tubeBarcode + ", quant type: " + quantType);
         }
-
     }
 
     @GET

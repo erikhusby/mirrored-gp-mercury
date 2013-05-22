@@ -145,4 +145,18 @@ public class LimsQueriesTest {
         Double quantValue = limsQueries.fetchQuantForTube("tube1", "Pond Pico");
         assertThat(quantValue, equalTo(55.55));
     }
+
+    @Test(groups = DATABASE_FREE)
+    public void testFetchQPCRForTube() {
+        TwoDBarcodedTube tube = new TwoDBarcodedTube("tube1");
+        expect(labVesselDao.findByIdentifier("tube1")).andReturn(tube);
+        replay(labVesselDao);
+
+        LabMetric quantMetric =
+                new LabMetric(new BigDecimal(55.55), LabMetric.MetricType.ECO_QPCR, LabMetric.LabUnit.UG_PER_ML);
+        tube.addMetric(quantMetric);
+
+        Double quantValue = limsQueries.fetchQuantForTube("tube1", LabMetric.MetricType.ECO_QPCR.getDisplayName());
+        assertThat(quantValue, equalTo(55.55));
+    }
 }

@@ -331,6 +331,7 @@ public class LimsQueryResourceUnitTest {
 
     @Test(groups = DATABASE_FREE)
     public void testFetchQpcrForTube() throws Exception {
+        expect(mockMercuryOrSquidRouter.routeForVessel("barcode")).andReturn(BOTH);
         expect(mockThriftService.fetchQpcrForTube("barcode")).andReturn(1.23);
         replayAll();
 
