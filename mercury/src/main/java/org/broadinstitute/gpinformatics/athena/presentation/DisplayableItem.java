@@ -7,7 +7,7 @@ package org.broadinstitute.gpinformatics.athena.presentation;
  * @author <a href="mailto:dinsmore@broadinstitute.org">Michael Dinsmore</a>
  */
 public class DisplayableItem implements Displayable {
-    private String businessKey;
+    private final String businessKey;
 
     private String displayName;
 

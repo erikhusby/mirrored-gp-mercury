@@ -190,7 +190,7 @@ public class ExtractTransform implements Serializable {
                 if (countAndDate.left > 0) {
                     writeIsReadyFile(countAndDate.right);
                     logger.debug("Incremental ETL created " + countAndDate.left + " data records in " +
-                            minutesSince(incrementalRunStartTime) + " seconds.");
+                            minutesSince(incrementalRunStartTime) + " minutes.");
                 }
 
                 return countAndDate.left;

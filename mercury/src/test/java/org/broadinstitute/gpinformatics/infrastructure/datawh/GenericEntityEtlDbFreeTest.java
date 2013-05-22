@@ -72,7 +72,7 @@ public class GenericEntityEtlDbFreeTest {
         List<Object[]> dataChanges = new ArrayList<Object[]>();
         dataChanges.add(new Object[]{obj, revInfo[0], RevisionType.ADD});
 
-        expect(auditReader.fetchDataChanges(revIds, tst.entityClass)).andReturn(dataChanges);
+        expect(auditReader.fetchDataChanges(revIds, tst.entityClass, true)).andReturn(dataChanges);
         expect(dao.findById(LabBatch.class, entityId)).andReturn(obj);
 
         expect(obj.getLabBatchId()).andReturn(entityId).times(2);
@@ -102,7 +102,7 @@ public class GenericEntityEtlDbFreeTest {
         dataChanges.add(new Object[]{obj, revInfo[1], RevisionType.MOD});
         dataChanges.add(new Object[]{obj, revInfo[2], RevisionType.DEL});
 
-        expect(auditReader.fetchDataChanges(eq(revIds), (Class)anyObject())).andReturn(dataChanges);
+        expect(auditReader.fetchDataChanges(eq(revIds), (Class)anyObject(), eq(true))).andReturn(dataChanges);
         expect(obj.getLabBatchId()).andReturn(entityId).times(3);
 
         replay(mocks);
