@@ -43,6 +43,7 @@ public class LimsQueriesTest {
 
     @BeforeMethod(groups = DATABASE_FREE)
     public void setup() {
+        // todo jmt mocks could be removed by small refactoring into @DaoFree methods
         staticPlateDAO = createMock(StaticPlateDAO.class);
         labVesselDao = createMock(LabVesselDao.class);
 
