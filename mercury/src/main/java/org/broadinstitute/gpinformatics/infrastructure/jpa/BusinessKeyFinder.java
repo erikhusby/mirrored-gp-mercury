@@ -7,7 +7,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReferenceSequenc
  *
  * @author <a href="mailto:dinsmore@broadinstitute.org">Michael Dinsmore</a>
  */
-public interface BusinessKeyFinder<T extends BusinessKeyable<T>> {
+public interface BusinessKeyFinder<T extends BusinessKeyable> {
 
     /**
      * Look up an object by its business key to uniquely identify it.

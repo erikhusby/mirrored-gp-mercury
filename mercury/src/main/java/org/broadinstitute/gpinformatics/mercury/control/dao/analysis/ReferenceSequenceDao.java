@@ -22,7 +22,7 @@ import java.util.List;
 @Stateful
 @LocalBean
 @RequestScoped
-public class ReferenceSequenceDao extends GenericDao implements BusinessKeyFinder {
+public class ReferenceSequenceDao extends GenericDao implements BusinessKeyFinder<ReferenceSequence> {
 
     public List<ReferenceSequence> findAll() {
         return findAll(ReferenceSequence.class);

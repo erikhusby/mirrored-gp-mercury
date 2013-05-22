@@ -31,8 +31,7 @@ import java.util.List;
 @Stateful
 @LocalBean
 @RequestScoped
-public class ReagentDesignDao extends GenericDao implements BusinessKeyFinder {
-
+public class ReagentDesignDao extends GenericDao implements BusinessKeyFinder<ReagentDesign> {
     public List<ReagentDesign> findAll() {
         return super.findAll(ReagentDesign.class);
     }
