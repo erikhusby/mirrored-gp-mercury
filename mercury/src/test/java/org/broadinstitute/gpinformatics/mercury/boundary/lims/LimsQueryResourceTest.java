@@ -43,7 +43,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testFetchLibraryDetailsByTubeBarcode(@ArquillianResource URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "fetchLibraryDetailsByTubeBarcode")
-                                       .queryParam("includeWorkRequestDetails", "true");
+                .queryParam("includeWorkRequestDetails", "true");
 
         String result1 = get(addQueryParam(resource, "q", Arrays.asList("0099443960", "406164")));
         assertThat(result1, notNullValue());
@@ -86,7 +86,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
 
         String result1 = get(addQueryParam(resource, "q", Arrays.asList("0099443960", "406164")));
         assertThat(result1,
-                          equalTo("[\"454 Material-Diluted ssDNA Library\",\"454 Beads-Recovered Sequencing Beads\"]"));
+                equalTo("[\"454 Material-Diluted ssDNA Library\",\"454 Beads-Recovered Sequencing Beads\"]"));
     }
 
     @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
@@ -112,7 +112,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testFindFlowcellDesignationByFlowcellBarcode(@ArquillianResource URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "findFlowcellDesignationByFlowcellBarcode")
-                                       .queryParam("flowcellBarcode", "C0GHCACXX");
+                .queryParam("flowcellBarcode", "C0GHCACXX");
         String result = get(resource);
         assertThat(result, notNullValue());
     }
@@ -121,7 +121,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testFindFlowcellDesignationByFlowcellBarcodeInvalid(@ArquillianResource URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "findFlowcellDesignationByFlowcellBarcode")
-                                       .queryParam("flowcellBarcode", "invalid_flowcell");
+                .queryParam("flowcellBarcode", "invalid_flowcell");
         UniformInterfaceException caught = getWithError(resource);
         assertThat(caught.getResponse().getStatus(), equalTo(500));
         assertThat(getResponseContent(caught), equalTo("Designation not found for flowcell barcode: invalid_flowcell"));
@@ -131,7 +131,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testFindFlowcellDesignationByReagentBlockBarcode(@ArquillianResource URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "findFlowcellDesignationByReagentBlockBarcode")
-                                       .queryParam("reagentBlockBarcode", "MS0000252-50");
+                .queryParam("reagentBlockBarcode", "MS0000252-50");
         String result = get(resource);
         assertThat(result, notNullValue());
         assertThat(result, containsString("9A_10.26.2011"));
@@ -225,7 +225,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testFetchQuantForTube(@ArquillianResource URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "fetchQuantForTube").queryParam("tubeBarcode", "0108462600")
-                                       .queryParam("quantType", "Catch Pico");
+                .queryParam("quantType", "Catch Pico");
         String result = get(resource);
         assertThat(result, equalTo("5.33803"));
     }
@@ -234,33 +234,33 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testFetchQuantForTubeNotFound(@ArquillianResource URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "fetchQuantForTube").queryParam("tubeBarcode", "invalid_tube")
-                                       .queryParam("quantType", "Catch Pico");
+                .queryParam("quantType", "Catch Pico");
         UniformInterfaceException caught = getWithError(resource);
         assertThat(caught.getResponse().getStatus(), equalTo(500));
         assertThat(getResponseContent(caught),
-                          equalTo("Tube or quant not found for barcode: invalid_tube, quant type: Catch Pico"));
+                equalTo("Tube or quant not found for barcode: invalid_tube, quant type: Catch Pico"));
     }
 
     @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testFetchQuantForTubeUnknownQuant(@ArquillianResource URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "fetchQuantForTube").queryParam("tubeBarcode", "0108462600")
-                                       .queryParam("quantType", "Bogus Pico");
+                .queryParam("quantType", "Bogus Pico");
         UniformInterfaceException caught = getWithError(resource);
         assertThat(caught.getResponse().getStatus(), equalTo(500));
         assertThat(getResponseContent(caught),
-                          equalTo("Tube or quant not found for barcode: 0108462600, quant type: Bogus Pico"));
+                equalTo("Tube or quant not found for barcode: 0108462600, quant type: Bogus Pico"));
     }
 
     @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testFetchQuantForTubeNoQuant(@ArquillianResource URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "fetchQuantForTube").queryParam("tubeBarcode", "000001859062")
-                                       .queryParam("quantType", "Catch Pico");
+                .queryParam("quantType", "Catch Pico");
         UniformInterfaceException caught = getWithError(resource);
         assertThat(caught.getResponse().getStatus(), equalTo(500));
         assertThat(getResponseContent(caught),
-                          equalTo("Tube or quant not found for barcode: 000001859062, quant type: Catch Pico"));
+                equalTo("Tube or quant not found for barcode: 000001859062, quant type: Catch Pico"));
     }
 
     @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
@@ -307,15 +307,17 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testFetchIlluminaSeqTemplateWithFlowCell(@ArquillianResource URL baseUrl) {
         WebResource resource =
-                makeWebResource(baseUrl, "fetchIlluminaSeqTemplate").queryParam("id", "Flowcell0513170145").queryParam("QueryVesselType",
-                        "FLOWCELL").queryParam("isPoolTest","true");
+                makeWebResource(baseUrl, "fetchIlluminaSeqTemplate").queryParam("id", "Flowcell0513170145")
+                        .queryParam("idType",
+                                "FLOWCELL").queryParam("isPoolTest", "true");
         String result = get(resource);
         assertThat(result, containsString("\"barcode\":\"Flowcell0513170145\""));
         assertThat(result, containsString("{\"sequence\":\"CTACCAGG\",\"position\":\"P_7\"}"));
         assertThat(result, containsString("{\"laneName\":\"LANE1\""));
         assertThat(result, containsString("{\"laneName\":\"LANE2\""));
-        for (String varToTest: Arrays.asList("name","pairedRun","onRigWorkflow","onRigChemistry","readStructure")) {
-            assertThat(result, containsString(String.format("\"%s\":null,",varToTest)));
+        for (String varToTest : Arrays
+                .asList("name", "pairedRun", "onRigWorkflow", "onRigChemistry", "readStructure")) {
+            assertThat(result, containsString(String.format("\"%s\":null,", varToTest)));
         }
     }
 
@@ -323,15 +325,16 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testFetchIlluminaSeqTemplateWithStripTube(@ArquillianResource URL baseUrl) {
         WebResource resource =
-                makeWebResource(baseUrl, "fetchIlluminaSeqTemplate").queryParam("id", "DenatureTube05131701450").queryParam("QueryVesselType",
-                        "STRIP_TUBE").queryParam("isPoolTest","true");
+                makeWebResource(baseUrl, "fetchIlluminaSeqTemplate").queryParam("id", "DenatureTube05131701450")
+                        .queryParam("idType",
+                                "STRIP_TUBE").queryParam("isPoolTest", "true");
         String result = get(resource);
-        assertThat(result, containsString("\"barcode\":\"DenatureTube05131701450\""));
         assertThat(result, containsString("{\"sequence\":\"CTACCAGG\",\"position\":\"P_7\"}"));
         assertThat(result, containsString("{\"laneName\":\"A01\""));
         assertThat(result, containsString("{\"laneName\":\"H12\""));
-        for (String varToTest: Arrays.asList("name","pairedRun","onRigWorkflow","onRigChemistry","readStructure")) {
-            assertThat(result, containsString(String.format("\"%s\":null,",varToTest)));
+        for (String varToTest : Arrays
+                .asList("barcode", "name", "pairedRun", "onRigWorkflow", "onRigChemistry", "readStructure")) {
+            assertThat(result, containsString(String.format("\"%s\":null,", varToTest)));
         }
     }
 
@@ -339,12 +342,14 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testFetchIlluminaSeqTemplateBadEnum(@ArquillianResource URL baseUrl) {
         WebResource resource =
-                makeWebResource(baseUrl, "fetchIlluminaSeqTemplate").queryParam("id", "0089526681").queryParam("QueryVesselType",
-                                        "THISWILLFAIL").queryParam("isPoolTest", "true");
+                makeWebResource(baseUrl, "fetchIlluminaSeqTemplate").queryParam("id", "0089526681")
+                        .queryParam("idType",
+                                "THISWILLFAIL").queryParam("isPoolTest", "true");
 
         UniformInterfaceException caught = getWithError(resource);
         assertThat(caught.getResponse().getStatus(), equalTo(500));
         assertThat(getResponseContent(caught),
-                          startsWith("Unable to extract parameter from http request: javax.ws.rs.QueryParam(\"QueryVesselType\") value is 'THISWILLFAIL'"));
+                startsWith(
+                        "Unable to extract parameter from http request: javax.ws.rs.QueryParam(\"QueryVesselType\") value is 'THISWILLFAIL'"));
     }
 }

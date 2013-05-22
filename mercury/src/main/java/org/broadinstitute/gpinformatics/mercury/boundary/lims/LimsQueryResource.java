@@ -293,7 +293,7 @@ public class LimsQueryResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchIlluminaSeqTemplate")
     public SequencingTemplateType fetchIlluminaSeqTemplate(@QueryParam("id") String id,
-                                                           @QueryParam("QueryVesselType") UnifiedLoader.QueryVesselType queryVesselType,
+                                                           @QueryParam("idType") UnifiedLoader.QueryVesselType queryVesselType,
                                                            @QueryParam("isPoolTest") boolean isPoolTest) {
         return unifiedLoader.fetchSequencingTemplate(id, queryVesselType, isPoolTest);
     }

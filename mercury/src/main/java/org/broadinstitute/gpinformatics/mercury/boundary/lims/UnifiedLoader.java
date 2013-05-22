@@ -81,7 +81,7 @@ public class UnifiedLoader {
         switch (queryVesselType) {
         case FLOWCELL:
             labVessel = illuminaFlowcellDao.findByBarcode(id);
-            searchEvents = EnumSet.of(LabEventType.DENATURE_TO_FLOWCELL_TRANSFER, LabEventType.FLOWCELL_TRANSFER);
+            searchEvents = EnumSet.of(LabEventType.DENATURE_TO_FLOWCELL_TRANSFER, LabEventType.DENATURE_TRANSFER);
             break;
         case STRIP_TUBE:
             labVessel = labVesselDao.findByIdentifier(id);
@@ -109,42 +109,62 @@ public class UnifiedLoader {
 
     /**
      * Use information from the source and target lab vessels to populate a the sequencing template with lanes.
-     * @param labVessel lab vessel from the original query.
-     * @param labEvent the lab event that populated the lab vessel.
+     *
+     * @param labVessel  lab vessel from the original query.
+     * @param labEvent   the lab event that populated the lab vessel.
      * @param vesselType type of vessel being queried.
+     *
      * @return
      */
     private SequencingTemplateType getSequencingTemplate(LabVessel labVessel, LabEvent labEvent,
                                                          QueryVesselType vesselType) {
+        LabVessel flowcell = null;
+
         SequencingTemplateType sequencingTemplate = new SequencingTemplateType();
-        sequencingTemplate.setBarcode(labVessel.getLabel());
         VesselGeometry targetGeometry = null;
         LabVessel sourceVessel = null;
 
-        if (vesselType == QueryVesselType.STRIP_TUBE) {
+        switch (vesselType) {
+        case STRIP_TUBE:
             for (CherryPickTransfer transfer : labEvent.getCherryPickTransfers()) {
                 sourceVessel = transfer.getSourceVesselContainer().getEmbedder();
                 targetGeometry =
                         transfer.getTargetVesselContainer().getEmbedder().getVesselGeometry();
-                sequencingTemplate = populateTemplateLanes(sequencingTemplate, labVessel, sourceVessel, targetGeometry);
             }
-        } else if (vesselType == QueryVesselType.FLOWCELL) {
+
+            break;
+        case FLOWCELL:
+            flowcell = labVessel;
             for (VesselToSectionTransfer vesselToSectionTransfer : labEvent.getVesselToSectionTransfers()) {
                 sourceVessel = vesselToSectionTransfer.getSourceVessel();
                 targetGeometry = vesselToSectionTransfer.getTargetVesselContainer().getEmbedder().getVesselGeometry();
-                sequencingTemplate = populateTemplateLanes(sequencingTemplate, labVessel, sourceVessel, targetGeometry);
             }
+
+            break;
+        case TUBE:
+            break;
+        case MISEQ_REAGENT_KIT:
+            break;
+        default:
         }
+
+        if (flowcell != null) {
+            sequencingTemplate.setBarcode(flowcell.getLabel());
+        }
+
+        sequencingTemplate = populateTemplateLanes(sequencingTemplate, labVessel, sourceVessel, targetGeometry);
 
         return sequencingTemplate;
     }
 
     /**
      * Use information from the source and target lab vessels to populate a the sequencing template with lanes.
+     *
      * @param sequencingTemplate template to populate.
-     * @param labVessel lab vessel from the original query.
-     * @param sourceVessel the lab vessel that populated the lab vessel being queried.
-     * @param targetGeometry the geometry of the lab vessel.
+     * @param labVessel          lab vessel from the original query.
+     * @param sourceVessel       the lab vessel that populated the lab vessel being queried.
+     * @param targetGeometry     the geometry of the lab vessel.
+     *
      * @return
      */
     private SequencingTemplateType populateTemplateLanes(SequencingTemplateType sequencingTemplate, LabVessel labVessel,
