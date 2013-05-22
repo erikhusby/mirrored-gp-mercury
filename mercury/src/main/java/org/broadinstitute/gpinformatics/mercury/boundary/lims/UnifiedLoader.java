@@ -107,6 +107,13 @@ public class UnifiedLoader {
         return sequencingTemplate;
     }
 
+    /**
+     * Use information from the source and target lab vessels to populate a the sequencing template with lanes.
+     * @param labVessel lab vessel from the original query.
+     * @param labEvent the lab event that populated the lab vessel.
+     * @param vesselType type of vessel being queried.
+     * @return
+     */
     private SequencingTemplateType getSequencingTemplate(LabVessel labVessel, LabEvent labEvent,
                                                          QueryVesselType vesselType) {
         SequencingTemplateType sequencingTemplate = new SequencingTemplateType();
@@ -119,26 +126,35 @@ public class UnifiedLoader {
                 sourceVessel = transfer.getSourceVesselContainer().getEmbedder();
                 targetGeometry =
                         transfer.getTargetVesselContainer().getEmbedder().getVesselGeometry();
-                sequencingTemplate = populateTemplate(labVessel, sourceVessel, targetGeometry);
+                sequencingTemplate = populateTemplateLanes(sequencingTemplate, labVessel, sourceVessel, targetGeometry);
             }
         } else if (vesselType == QueryVesselType.FLOWCELL) {
             for (VesselToSectionTransfer vesselToSectionTransfer : labEvent.getVesselToSectionTransfers()) {
                 sourceVessel = vesselToSectionTransfer.getSourceVessel();
                 targetGeometry = vesselToSectionTransfer.getTargetVesselContainer().getEmbedder().getVesselGeometry();
-                sequencingTemplate = populateTemplate(labVessel, sourceVessel, targetGeometry);
+                sequencingTemplate = populateTemplateLanes(sequencingTemplate, labVessel, sourceVessel, targetGeometry);
             }
         }
 
         return sequencingTemplate;
     }
 
-    private SequencingTemplateType populateTemplate(LabVessel labVessel, LabVessel sourceVessel,
-                                                    VesselGeometry targetGeometry) {
-        SequencingTemplateType sequencingTemplate = new SequencingTemplateType();
-        sequencingTemplate.setBarcode(labVessel.getLabel());
+    /**
+     * Use information from the source and target lab vessels to populate a the sequencing template with lanes.
+     * @param sequencingTemplate template to populate.
+     * @param labVessel lab vessel from the original query.
+     * @param sourceVessel the lab vessel that populated the lab vessel being queried.
+     * @param targetGeometry the geometry of the lab vessel.
+     * @return
+     */
+    private SequencingTemplateType populateTemplateLanes(SequencingTemplateType sequencingTemplate, LabVessel labVessel,
+                                                         LabVessel sourceVessel,
+                                                         VesselGeometry targetGeometry) {
         for (VesselPosition targetPosition : targetGeometry.getVesselPositions()) {
             SequencingTemplateLaneType lane = new SequencingTemplateLaneType();
             lane.setLaneName(targetPosition.name());
+            lane.setLoadingVesselLabel(sourceVessel.getLabel());
+
             for (MolecularIndexReagent molecularIndexReagent : labVessel.getIndexes()) {
                 final MolecularIndexingScheme molecularIndexingScheme =
                         molecularIndexReagent.getMolecularIndexingScheme();
@@ -153,7 +169,6 @@ public class UnifiedLoader {
                 }
 
             }
-            lane.setLoadingVesselLabel(sourceVessel.getLabel());
             sequencingTemplate.getLanes().add(lane);
         }
         return sequencingTemplate;
