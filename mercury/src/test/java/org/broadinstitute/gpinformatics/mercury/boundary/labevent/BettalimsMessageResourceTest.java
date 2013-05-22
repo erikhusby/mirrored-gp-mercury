@@ -13,8 +13,6 @@ import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.mercury.MercuryClientEjb;
@@ -116,10 +114,6 @@ public class BettalimsMessageResourceTest extends Arquillian {
     @Inject
     private ProductOrderDao productOrderDao;
 
-    @SuppressWarnings("CdiInjectionPointsInspection")
-    @Inject
-    private AthenaClientService athenaClientService;
-
     @Inject
     private ResearchProjectDao researchProjectDao;
 
@@ -130,7 +124,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
     private IlluminaFlowcellDao flowcellDao;
 
     @Inject
-    private BSPSampleDataFetcher bspSampleDataFetcher;
+    private ZimsIlluminaRunFactory zimsIlluminaRunFactory;
 
     @Inject
     private IlluminaSequencingRunFactory illuminaSequencingRunFactory;
@@ -284,8 +278,6 @@ public class BettalimsMessageResourceTest extends Arquillian {
 
         IlluminaSequencingRun illuminaSequencingRun = registerIlluminaSequencingRun(testPrefix,
                 hiSeq2500JaxbBuilder.getFlowcellBarcode());
-        ZimsIlluminaRunFactory zimsIlluminaRunFactory =
-                new ZimsIlluminaRunFactory(bspSampleDataFetcher, athenaClientService);
         ZimsIlluminaRun zimsIlluminaRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(illuminaSequencingRun);
         Assert.assertEquals(zimsIlluminaRun.getLanes().size(), 2, "Wrong number of lanes");
 
@@ -518,8 +510,6 @@ public class BettalimsMessageResourceTest extends Arquillian {
 
         IlluminaSequencingRun illuminaSequencingRun =
                 registerIlluminaSequencingRun(testPrefix, qtpJaxbBuilder.getFlowcellBarcode());
-        ZimsIlluminaRunFactory zimsIlluminaRunFactory =
-                new ZimsIlluminaRunFactory(bspSampleDataFetcher, athenaClientService);
         ZimsIlluminaRun zimsIlluminaRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(illuminaSequencingRun);
         Assert.assertEquals(zimsIlluminaRun.getLanes().size(), 8, "Wrong number of lanes");
     }

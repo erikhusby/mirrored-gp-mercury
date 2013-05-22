@@ -29,6 +29,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexingSchemeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
@@ -48,6 +49,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexing
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -297,6 +299,15 @@ public class LabEventTest extends BaseEventTest {
                     public Collection<ProductOrder> retrieveMultipleProductOrderDetails(
                             @Nonnull Collection<String> poBusinessKeys) {
                         return null;
+                    }
+                },
+                new ControlDao() {
+                    @Override
+                    public List<Control> findAllActive() {
+                        List<Control> controlList = new ArrayList<>();
+                        controlList.add(new Control("NA12878", Control.ControlType.POSITIVE));
+                        controlList.add(new Control("WATER_CONTROL", Control.ControlType.NEGATIVE));
+                        return controlList;
                     }
                 }
         );
