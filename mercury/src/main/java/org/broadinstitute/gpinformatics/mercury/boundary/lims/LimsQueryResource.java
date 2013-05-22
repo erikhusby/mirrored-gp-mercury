@@ -23,7 +23,6 @@ import java.util.Map;
  */
 @Path("/limsQuery")
 public class LimsQueryResource {
-
     @Inject
     private Log log;
 
@@ -32,6 +31,9 @@ public class LimsQueryResource {
 
     @Inject
     private LimsQueries limsQueries;
+
+    @Inject
+    UnifiedLoader unifiedLoader;
 
     @Inject
     private LimsQueryResourceResponseFactory responseFactory;
@@ -291,9 +293,9 @@ public class LimsQueryResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchIlluminaSeqTemplate")
     public SequencingTemplateType fetchIlluminaSeqTemplate(@QueryParam("id") String id,
-                                                           @QueryParam("QueryVesselType") LimsQueries.QueryVesselType queryVesselType,
+                                                           @QueryParam("QueryVesselType") UnifiedLoader.QueryVesselType queryVesselType,
                                                            @QueryParam("isPoolTest") boolean isPoolTest) {
-        return limsQueries.fetchSequencingTemplate(id, queryVesselType, isPoolTest);
+        return unifiedLoader.fetchSequencingTemplate(id, queryVesselType, isPoolTest);
     }
 
 }

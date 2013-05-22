@@ -305,7 +305,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
 
     @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testFetchIlluminaSeqTemplate(@ArquillianResource URL baseUrl) {
+    public void testFetchIlluminaSeqTemplateWithFlowCell(@ArquillianResource URL baseUrl) {
         WebResource resource =
                 makeWebResource(baseUrl, "fetchIlluminaSeqTemplate").queryParam("id", "Flowcell0513170145").queryParam("QueryVesselType",
                         "FLOWCELL").queryParam("isPoolTest","true");
@@ -314,6 +314,22 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         assertThat(result, containsString("{\"sequence\":\"CTACCAGG\",\"position\":\"P_7\"}"));
         assertThat(result, containsString("{\"laneName\":\"LANE1\""));
         assertThat(result, containsString("{\"laneName\":\"LANE2\""));
+        for (String varToTest: Arrays.asList("name","pairedRun","onRigWorkflow","onRigChemistry","readStructure")) {
+            assertThat(result, containsString(String.format("\"%s\":null,",varToTest)));
+        }
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testFetchIlluminaSeqTemplateWithStripTube(@ArquillianResource URL baseUrl) {
+        WebResource resource =
+                makeWebResource(baseUrl, "fetchIlluminaSeqTemplate").queryParam("id", "DenatureTube05131701450").queryParam("QueryVesselType",
+                        "STRIP_TUBE").queryParam("isPoolTest","true");
+        String result = get(resource);
+        assertThat(result, containsString("\"barcode\":\"DenatureTube05131701450\""));
+        assertThat(result, containsString("{\"sequence\":\"CTACCAGG\",\"position\":\"P_7\"}"));
+        assertThat(result, containsString("{\"laneName\":\"A01\""));
+        assertThat(result, containsString("{\"laneName\":\"H12\""));
         for (String varToTest: Arrays.asList("name","pairedRun","onRigWorkflow","onRigChemistry","readStructure")) {
             assertThat(result, containsString(String.format("\"%s\":null,",varToTest)));
         }
