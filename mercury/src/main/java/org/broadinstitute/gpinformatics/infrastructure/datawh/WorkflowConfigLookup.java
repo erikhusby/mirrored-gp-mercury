@@ -72,7 +72,7 @@ public class WorkflowConfigLookup implements Serializable {
 
         String workflowName = productOrder.getProduct().getWorkflowName();
         if (workflowName == null) {
-            logger.warn("Product " + productOrder.getBusinessKey() + " has no workflow name");
+            logger.debug("Product " + productOrder.getBusinessKey() + " has no workflow name");
             synchronized (configIdCache) {
                 configIdCache.put(cacheKey, null);
             }
@@ -81,7 +81,7 @@ public class WorkflowConfigLookup implements Serializable {
 
         List<WorkflowConfigDenorm> denormConfigs = mapEventToWorkflows.get(eventName);
         if (denormConfigs == null) {
-            logger.warn("No WorkflowConfig records have event " + eventName);
+            logger.debug("No WorkflowConfig records have event " + eventName);
             synchronized (configIdCache) {
                 configIdCache.put(cacheKey, null);
             }
@@ -97,7 +97,7 @@ public class WorkflowConfigLookup implements Serializable {
                 return denorm;
             }
         }
-        logger.warn("No denormalized workflow config for product " + workflowName + " having eventName " + eventName
+        logger.debug("No denormalized workflow config for product " + workflowName + " having eventName " + eventName
                 + " on date " + eventDate.toString());
         synchronized (configIdCache) {
             configIdCache.put(cacheKey, null);

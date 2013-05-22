@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.analysis;
 
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessKeyFinder;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessKeyable;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.Aligner;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.Aligner_;
@@ -20,7 +21,7 @@ import java.util.List;
 @Stateful
 @LocalBean
 @RequestScoped
-public class AlignerDao extends GenericDao implements BusinessKeyFinder {
+public class AlignerDao extends GenericDao implements BusinessKeyFinder<Aligner> {
     public List<Aligner> findAll() {
         return findAll(Aligner.class);
     }

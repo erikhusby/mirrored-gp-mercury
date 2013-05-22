@@ -21,7 +21,11 @@ import javax.annotation.Nonnull;
 import javax.enterprise.context.RequestScoped;
 import javax.enterprise.inject.Default;
 import javax.inject.Inject;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+
 
 @Impl
 @Default
@@ -77,41 +81,54 @@ public class MercuryClientServiceImpl implements MercuryClientService {
         return displayableItems;
     }
 
+    @Override
     public Collection<DisplayableItem> getReferenceSequences() {
         return makeDisplayableItemCollection(referenceSequenceDao.findAllCurrent());
     }
 
+    @Override
     public Collection<DisplayableItem> getSequenceAligners() {
         return makeDisplayableItemCollection(alignerDao.findAll());
     }
 
+    @Override
     public Collection<DisplayableItem> getAnalysisTypes() {
         return makeDisplayableItemCollection(analysisTypeDao.findAll());
     }
 
+    @Override
     public Collection<DisplayableItem> getReagentDesigns() {
         return makeDisplayableItemCollection(reagentDesignDao.findAll());
     }
 
     private DisplayableItem getDisplayableItemInfo(String businessKey, BusinessKeyFinder dao) {
         BusinessKeyable object = dao.findByBusinessKey(businessKey);
+        if (object == null) {
+            // Object of that business key was not found.
+            return null;
+        }
+
         DisplayableItem displayableItem = new DisplayableItem(object.getBusinessKey(), object.getName());
 
         return displayableItem;
     }
 
+    @Override
     public DisplayableItem getAnalysisType(String businessKey) {
         return getDisplayableItemInfo(businessKey, analysisTypeDao);
     }
 
+    @Override
     public DisplayableItem getSequenceAligner(String businessKey) {
         return getDisplayableItemInfo(businessKey, alignerDao);
     }
 
+    @Override
     public DisplayableItem getReagentDesign(String businessKey) {
         return getDisplayableItemInfo(businessKey, reagentDesignDao);
     }
 
+    @Override
     public DisplayableItem getReferenceSequence(String businessKey) {
         return getDisplayableItemInfo(businessKey, referenceSequenceDao);
     }

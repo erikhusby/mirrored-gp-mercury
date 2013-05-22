@@ -462,7 +462,7 @@ public class ProductActionBean extends CoreActionBean {
      * @param businessKey the businessKey
      * @return UI helper object {@link DisplayableItem} representing the analysis type
      */
-    public DisplayableItem getAnalysisTypes(String businessKey) {
+    public DisplayableItem getAnalysisType(String businessKey) {
         return mercuryClientService.getAnalysisType(businessKey);
     }
 

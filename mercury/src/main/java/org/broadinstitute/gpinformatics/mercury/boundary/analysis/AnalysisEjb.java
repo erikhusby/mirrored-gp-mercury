@@ -35,7 +35,7 @@ public class AnalysisEjb {
     private ReagentDesignDao referenceSequenceDao;
 
     /**
-     * Add a aligner.
+     * Add an aligner.
      *
      * @param alignerName The name of the aligner to create
      */
