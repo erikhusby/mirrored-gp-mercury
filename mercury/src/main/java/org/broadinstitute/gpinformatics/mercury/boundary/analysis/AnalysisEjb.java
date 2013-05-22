@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.analysis;
 
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AlignerDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AnalysisTypeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.ReferenceSequenceDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.Aligner;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.AnalysisType;
@@ -13,6 +14,7 @@ import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * This provides all the APIs for working with the information that is managed by the pipeline
@@ -32,7 +34,7 @@ public class AnalysisEjb {
     private AlignerDao alignerDao;
 
     @Inject
-    private ReagentDesignDao referenceSequenceDao;
+    private ReferenceSequenceDao referenceSequenceDao;
 
     /**
      * Add a aligner.
@@ -72,7 +74,6 @@ public class AnalysisEjb {
 
     /**
      * Add a new reference sequence.
-     *
      */
     public void addReferenceSequence(@Nonnull String name, @Nonnull String version, boolean isCurrent) {
         ReferenceSequence referenceSequence = new ReferenceSequence(name, version);
@@ -80,13 +81,42 @@ public class AnalysisEjb {
         referenceSequenceDao.persist(referenceSequence);
     }
 
+
     /**
-     * Remove reference sequence.
+     * Create a new reference sequence with a name and version. It will also ensure that all older versions of the matching sequence name will be set to 'not current'.
      *
-     * @param referenceSequences multiple reference sequences can be removed at once.
+     * @param name    String representing the name of the reference sequence.
+     * @param version String representing the version of the reference sequence.
+     */
+    public void addReferenceSequence(@Nonnull String name, @Nonnull String version) {
+
+        //Do a dao call to find all the versions if there are any, loop thru and set all the 'isCurrent' to false and then create the new one.
+        List<ReferenceSequence> matching = referenceSequenceDao.findAllByName(name);
+        for (ReferenceSequence sequence : matching) {
+            sequence.setCurrent(false);
+            // do we need to update the version too?..
+//            referenceSequenceDao.persist(sequence); // Would it be better to create a method to set the reference sequence?
+        }
+
+        addReferenceSequence(name, version, true);
+    }
+
+    /**
+     * Remove reference sequence(s).
+     *
+     * @param referenceSequences Collection of reference sequences to be removed.
      */
     public void removeReferenceSequences(@Nonnull Collection<ReferenceSequence> referenceSequences) {
         referenceSequenceDao.remove(referenceSequences);
+    }
+
+    /**
+     * Remove reference sequence.
+     *
+     * @param referenceSequence Reference sequence instance to be removed.
+     */
+    public void removeReferenceSequence(@Nonnull ReferenceSequence referenceSequence) {
+        referenceSequenceDao.remove(referenceSequence);
     }
 
     /**
