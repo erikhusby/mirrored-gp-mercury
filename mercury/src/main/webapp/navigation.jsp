@@ -123,14 +123,26 @@
                 </li>
             </security:authorizeBlock>
 
-            <security:authorizeBlock roles="<%= roles(Developer) %>">
+            <security:authorizeBlock roles="<%= roles(Developer, PipelineManager) %>">
                 <li class="dropdown">
                     <a id="adminNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span
                             class="icon-cog"></span> Admin <b class="caret"></b></a>
                     <ul class="dropdown-menu" role="menu">
                         <li><stripes:link
                                 beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.CreateBatchActionBean"
-                                tabindex="1" event="startBatch">Create Batch</stripes:link></li>
+                                event="startBatch">Create Batch</stripes:link></li>
+                        <li><stripes:link
+                                beanclass="org.broadinstitute.gpinformatics.mercury.presentation.analysis.ManageAnalysisFieldsActionBean"
+                                event="showAligner">Manage Aligners</stripes:link></li>
+                        <li><stripes:link
+                                beanclass="org.broadinstitute.gpinformatics.mercury.presentation.analysis.ManageAnalysisFieldsActionBean"
+                                event="showAnalysisType">Manage Analysis Type</stripes:link></li>
+                        <li><stripes:link
+                                beanclass="org.broadinstitute.gpinformatics.mercury.presentation.analysis.ManageAnalysisFieldsActionBean"
+                                event="showBait">Manage Bait</stripes:link></li>
+                        <li><stripes:link
+                                beanclass="org.broadinstitute.gpinformatics.mercury.presentation.analysis.ManageAnalysisFieldsActionBean"
+                                event="showReferenceSequence">Manage Reference Sequence</stripes:link></li>
                     </ul>
                 </li>
             </security:authorizeBlock>
