@@ -556,6 +556,12 @@ public class LabEventFactory implements Serializable {
             if (sourceTubeFormation == null) {
                 sourceTubeFormation = buildRackDaoFree(mapBarcodeToSourceTubes, sourceRackOfTubes, plateTransferEvent.getSourcePlate(),
                         plateTransferEvent.getSourcePositionMap(), true, LabEventType.getByName(plateTransferEvent.getEventType()).isCreateSources());
+            } else {
+                if (sourceRackOfTubes == null) {
+                    sourceRackOfTubes = new RackOfTubes(plateTransferEvent.getSourcePlate().getBarcode(), RackOfTubes.RackType.Matrix96);
+                }
+                sourceTubeFormation.addRackOfTubes(sourceRackOfTubes);
+
             }
         }
 
