@@ -130,7 +130,9 @@
                 <label class="control-label label-form">Analysis Type</label>
                 <div class="controls">
                     <div class="form-value">
-                            ${actionBean.editProduct.analysisTypeKey}
+                            <c:if test="${!empty actionBean.editProduct.analysisTypeKey}">
+                                ${(actionBean.getAnalysisType(actionBean.editProduct.analysisTypeKey)).displayName}
+                            </c:if>
                     </div>
                 </div>
             </div>
@@ -139,7 +141,9 @@
                 <label class="control-label label-form"><abbr title="aka Reagent Design">Bait Design</abbr></label>
                 <div class="controls">
                     <div class="form-value">
-                            ${actionBean.editProduct.reagentDesignKey}
+                        <c:if test="${!empty actionBean.editProduct.reagentDesignKey}">
+                            ${(actionBean.getReagentDesign(actionBean.editProduct.reagentDesignKey)).displayName}
+                        </c:if>
                     </div>
                 </div>
             </div>

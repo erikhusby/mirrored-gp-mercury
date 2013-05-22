@@ -469,7 +469,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     }
 
    /**
-     * @return true if Save is a valid operation.c
+     * @return true if Save is a valid operation.
      */
     public boolean getCanSave() {
         // User must be logged into JIRA to create or edit a Research Project.

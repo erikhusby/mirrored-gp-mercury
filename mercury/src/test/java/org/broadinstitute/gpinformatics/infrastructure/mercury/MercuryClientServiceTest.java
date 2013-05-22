@@ -42,7 +42,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
  * @author epolk
  */
 
-@Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
 public class MercuryClientServiceTest extends Arquillian {
     private Log logger = LogFactory.getLog(getClass());
     // Id used for jira ticket and batch that are only used by this test.
