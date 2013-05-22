@@ -37,8 +37,16 @@ public class ReagentDesignDao extends GenericDao implements BusinessKeyFinder {
         return super.findAll(ReagentDesign.class);
     }
 
-    public List<ReagentDesign> findAllCurrent() {
-        return super.findAll(ReagentDesign.class);
+    public List<ReagentDesign> findAllBaits() {
+        CriteriaBuilder criteriaBuilder = getCriteriaBuilder();
+
+        final CriteriaQuery<ReagentDesign> query = criteriaBuilder.createQuery(ReagentDesign.class);
+        Root<ReagentDesign> root = query.from(ReagentDesign.class);
+        Predicate typePredicate = criteriaBuilder.equal(
+                root.get(ReagentDesign_.reagentType), ReagentDesign.ReagentType.BAIT);
+
+        query.where(typePredicate);
+        return getEntityManager().createQuery(query).getResultList();
     }
 
     @Override
@@ -53,7 +61,7 @@ public class ReagentDesignDao extends GenericDao implements BusinessKeyFinder {
         Root<ReagentDesign> root = query.from(ReagentDesign.class);
         Predicate namePredicate = criteriaBuilder.equal(root.get(ReagentDesign_.designName), value);
         Predicate typePredicate = criteriaBuilder.equal(
-            root.get(ReagentDesign_.reagentType), ReagentDesign.ReagentType.BAIT);
+                root.get(ReagentDesign_.reagentType), ReagentDesign.ReagentType.BAIT);
 
         query.where(criteriaBuilder.and(namePredicate, typePredicate));
         return getEntityManager().createQuery(query).getSingleResult();

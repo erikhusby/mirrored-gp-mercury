@@ -31,7 +31,7 @@ public class ReferenceSequenceDao extends GenericDao implements BusinessKeyFinde
     /**
      * Get all the current reference sequences.
      *
-     * @return list of all the current {@link ReferenceSequence}s
+     * @return List of all the current {@link ReferenceSequence}s.
      */
     public List<ReferenceSequence> findAllCurrent() {
         CriteriaBuilder criteriaBuilder = getCriteriaBuilder();
@@ -40,6 +40,21 @@ public class ReferenceSequenceDao extends GenericDao implements BusinessKeyFinde
         Root<ReferenceSequence> root = query.from(ReferenceSequence.class);
         Predicate currentPredicate = criteriaBuilder.equal(root.get(ReferenceSequence_.isCurrent), true);
         query.where(currentPredicate);
+        return getEntityManager().createQuery(query).getResultList();
+    }
+
+    /**
+     * Get all of the reference sequences that match the name.
+     *
+     * @return List of all the {@link ReferenceSequence}s matching the passed name.
+     */
+    public List<ReferenceSequence> findAllByName(String name) {
+        CriteriaBuilder criteriaBuilder = getCriteriaBuilder();
+        final CriteriaQuery<ReferenceSequence> query = criteriaBuilder.createQuery(ReferenceSequence.class);
+        Root<ReferenceSequence> root = query.from(ReferenceSequence.class);
+        Predicate namePredicate = criteriaBuilder.equal(root.get(ReferenceSequence_.name), name);
+
+        query.where(criteriaBuilder.and(namePredicate));
         return getEntityManager().createQuery(query).getResultList();
     }
 
