@@ -198,6 +198,7 @@ public abstract class LabVessel implements Serializable {
 
     /**
      * This is used only for fixups.
+     *
      * @param label barcode
      */
     public void setLabel(String label) {
@@ -449,14 +450,21 @@ public abstract class LabVessel implements Serializable {
         }
     }
 
-    public Collection<LabMetric> getNearestMetricsOfType(LabMetric.MetricType quantType) {
+    /**
+     * This method gets a collection of the nearest lab metrics of the specified type. This only traverses ancestors.
+     *
+     * @param metricType The type of metric to search for during the traversal.
+     *
+     * @return A collection of the closest metrics of the type specified.
+     */
+    public Collection<LabMetric> getNearestMetricsOfType(LabMetric.MetricType metricType) {
         if (getContainerRole() != null) {
-            return getContainerRole().getNearestMetricOfType(quantType);
+            return getContainerRole().getNearestMetricOfType(metricType);
         } else {
-            TransferTraverserCriteria.NearestLabMetricOfTypeCriteria quantTypeCriteria =
-                    new TransferTraverserCriteria.NearestLabMetricOfTypeCriteria(quantType);
-            evaluateCriteria(quantTypeCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
-            return quantTypeCriteria.getNearestMetrics();
+            TransferTraverserCriteria.NearestLabMetricOfTypeCriteria metricOfTypeCriteria =
+                    new TransferTraverserCriteria.NearestLabMetricOfTypeCriteria(metricType);
+            evaluateCriteria(metricOfTypeCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+            return metricOfTypeCriteria.getNearestMetrics();
         }
     }
 
