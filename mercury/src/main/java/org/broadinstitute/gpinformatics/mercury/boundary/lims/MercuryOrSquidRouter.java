@@ -61,6 +61,10 @@ public class MercuryOrSquidRouter implements Serializable {
         BOTH, MERCURY, SQUID
     }
 
+    private enum Intent {
+        ROUTE, SYSTEM_OF_RECORD
+    }
+
     private LabVesselDao         labVesselDao;
     private ControlDao           controlDao;
     private AthenaClientService  athenaClientService;
@@ -90,13 +94,17 @@ public class MercuryOrSquidRouter implements Serializable {
      * routed.
      */
     public MercuryOrSquid routeForVesselBarcodes(Collection<String> barcodes) {
+        return routeForVesselBarcodes(barcodes, Intent.ROUTE);
+    }
+
+    private MercuryOrSquid routeForVesselBarcodes(Collection<String> barcodes, Intent intent) {
         Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(new ArrayList<String>(barcodes));
         // can't use mapBarcodeToVessel.values(), because it doesn't include nulls
         List<LabVessel> labVessels = new ArrayList<LabVessel>();
         for (Map.Entry<String, LabVessel> stringLabVesselEntry : mapBarcodeToVessel.entrySet()) {
             labVessels.add(stringLabVesselEntry.getValue());
         }
-        return routeForVessels(labVessels);
+        return routeForVessels(labVessels, intent);
     }
 
     /**
@@ -108,7 +116,11 @@ public class MercuryOrSquidRouter implements Serializable {
      * routed.
      */
     public MercuryOrSquid routeForVessel(String barcode) {
-        return routeForVesselBarcodes(Collections.singletonList(barcode));
+        return routeForVesselBarcodes(Collections.singletonList(barcode), Intent.ROUTE);
+    }
+
+    public MercuryOrSquid getSystemOfRecordForVessel(String barcode) {
+        return routeForVesselBarcodes(Collections.singletonList(barcode), Intent.SYSTEM_OF_RECORD);
     }
 
     /**
@@ -119,7 +131,13 @@ public class MercuryOrSquidRouter implements Serializable {
      * routed.
      */
     public MercuryOrSquid routeForVessels(Collection<LabVessel> labVessels) {
+        return routeForVessels(labVessels, Intent.ROUTE);
+    }
+
+    private MercuryOrSquid routeForVessels(Collection<LabVessel> labVessels, Intent intent) {
         Set<MercuryOrSquid> routingOptions = EnumSet.noneOf(MercuryOrSquid.class);
+
+        // Fetch unique product orders and determine which samples might be controls
         Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<String, ProductOrder>();
         Set<SampleInstance> possibleControls = new HashSet<SampleInstance>();
         for (LabVessel labVessel : labVessels) {
@@ -159,9 +177,8 @@ public class MercuryOrSquidRouter implements Serializable {
                 }
             }
             for (LabVessel labVessel : labVessels) {
-                MercuryOrSquid determinedRoute =
-                        routeForVessel(labVessel, mapKeyToProductOrder, controlSampleIds, mapSampleNameToDto);
-                routingOptions.add(determinedRoute);
+                routingOptions.add(
+                        routeForVessel(labVessel, mapKeyToProductOrder, controlSampleIds, mapSampleNameToDto, intent));
             }
         }
 
@@ -184,10 +201,12 @@ public class MercuryOrSquidRouter implements Serializable {
      * @param mapKeyToProductOrder map from product order key to product order entity
      * @param controlSampleIds @return An instance of a MercuryOrSquid enum that will assist in determining to which system requests should be
      * @param mapSampleNameToDto map from sample name to BSP sample DTO
+     * @param intent
      */
     @DaoFree
     public MercuryOrSquid routeForVessel(LabVessel vessel, Map<String, ProductOrder> mapKeyToProductOrder,
-                                         List<String> controlSampleIds, Map<String, BSPSampleDTO> mapSampleNameToDto) {
+                                         List<String> controlSampleIds, Map<String, BSPSampleDTO> mapSampleNameToDto,
+                                         Intent intent) {
         Set<MercuryOrSquid> routingOptions = EnumSet.noneOf(MercuryOrSquid.class);
         if (vessel != null) {
 
@@ -251,6 +270,10 @@ public class MercuryOrSquidRouter implements Serializable {
      *     historically been the main LIMS system of record, in this scenario it is the safest bet</li>
      *     <li>If there are any other combinations, throw a {@link RouterException}</li>
      * </ul>
+     *
+     * TODO: Consider routing for controls
+     * Controls recognized by Mercury currently route to BOTH. When Mercury is the system of record for a workflow,
+     * we'll start to see routingOptions of { BOTH, MERCURY }, which this implementation will currently reject.
      *
      * @param routingOptions A navigable collection of determined routing options for a collection of lab vessels.
      *

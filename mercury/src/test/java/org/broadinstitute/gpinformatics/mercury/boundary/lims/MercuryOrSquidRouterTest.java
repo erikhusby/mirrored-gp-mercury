@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -27,12 +28,14 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
 import static org.broadinstitute.gpinformatics.infrastructure.test.dbfree.LabEventTestFactory.doSectionTransfer;
 import static org.broadinstitute.gpinformatics.infrastructure.test.dbfree.LabEventTestFactory.makeTubeFormation;
 import static org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid.BOTH;
+import static org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid.MERCURY;
 import static org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid.SQUID;
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate.PlateType.Eppendorf96;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -309,6 +312,21 @@ public class MercuryOrSquidRouterTest {
     }
 
     /*
+     * Tests for routing and system of record for a validation LCSET
+     */
+
+    // TODO: enable this test after modifying MercuryOrSquidRouter
+    @Test(groups = DATABASE_FREE, enabled = false)
+    public void testGetSystemOfRecordForVesselInValidationLCSET() {
+        ProductOrder order = placeOrderForTubeAndBucket(tube1, exomeExpress, picoBucket);
+        LabBatch lcset = createBatch(picoBucket, tube1);
+        lcset.setValidationBatch(true);
+        assertThat(mercuryOrSquidRouter.getSystemOfRecordForVessel(MERCURY_TUBE_1), is(MERCURY));
+        verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>(){{add(MERCURY_TUBE_1);}});
+        verify(mockAthenaClientService).retrieveProductOrderDetails(order.getBusinessKey());
+    }
+
+    /*
      * Test fixture utilities
      */
 
@@ -327,5 +345,11 @@ public class MercuryOrSquidRouterTest {
             bucket.addEntry(jiraTicketKey, tube);
         }
         return order;
+    }
+
+    private LabBatch createBatch(Bucket bucket, TwoDBarcodedTube... tubes) {
+        LabBatch batch =
+                new LabBatch("LCSET-123", new HashSet<LabVessel>(Arrays.asList(tubes)), LabBatch.LabBatchType.WORKFLOW);
+        return batch;
     }
 }
