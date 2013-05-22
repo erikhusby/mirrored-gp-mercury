@@ -98,6 +98,9 @@ public class LabMetricParser extends AbstractSpreadsheetParser {
         }
     }
 
+    /**
+     * Definition of the headers defined in the Lab Metrics (Quant) upload file
+     */
     private enum LabMetricHeaders implements ColumnHeader {
         LOCATION("Location", 0),
         BARCODE("Barcode", 1),
@@ -124,6 +127,10 @@ public class LabMetricParser extends AbstractSpreadsheetParser {
 
     }
 
+    /**
+     * Accessor for the Metrics that were derived from the Lab Metrics upload file
+     * @return a Set of newly constructed LabMetric entities based on information in an upload file
+     */
     public Set<LabMetric> getMetrics() {
         return metrics;
     }
