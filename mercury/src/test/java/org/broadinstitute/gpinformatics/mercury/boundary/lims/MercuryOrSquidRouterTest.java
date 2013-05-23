@@ -315,8 +315,7 @@ public class MercuryOrSquidRouterTest {
      * Tests for routing and system of record for a validation LCSET
      */
 
-    // TODO: enable this test after modifying MercuryOrSquidRouter
-    @Test(groups = DATABASE_FREE, enabled = false)
+    @Test(groups = DATABASE_FREE, enabled = true)
     public void testGetSystemOfRecordForVesselInValidationLCSET() {
         ProductOrder order = placeOrderForTubeAndBucket(tube1, exomeExpress, picoBucket);
         LabBatch lcset = createBatch(picoBucket, tube1);

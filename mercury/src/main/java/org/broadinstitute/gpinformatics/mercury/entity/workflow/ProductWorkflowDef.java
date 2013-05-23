@@ -28,8 +28,11 @@ public class ProductWorkflowDef implements Serializable {
     /** e.g. Exome Express */
     private String name;
 
+    /** e.g. SQUID, MERCURY or BOTH*/
     private String routingRule;
 
+    /** true if a validation LCSET is expected in the near future */
+    private Boolean inValidation;
 
     /** List of versions */
     private List<ProductWorkflowDefVersion> productWorkflowDefVersions = new ArrayList<ProductWorkflowDefVersion>();
@@ -118,4 +121,7 @@ public class ProductWorkflowDef implements Serializable {
         return MercuryOrSquidRouter.MercuryOrSquid.valueOf(getRoutingRule());
     }
 
+    public Boolean getInValidation() {
+        return inValidation;
+    }
 }

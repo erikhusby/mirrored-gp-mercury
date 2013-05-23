@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
@@ -27,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid.BOTH;
+import static org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid.MERCURY;
 import static org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid.SQUID;
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.SampleType;
 import static org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch.LabBatchType;
@@ -62,7 +64,10 @@ public class MercuryOrSquidRouter implements Serializable {
     }
 
     private enum Intent {
-        ROUTE, SYSTEM_OF_RECORD
+        /** route messages (possibly to multiple systems) */
+        ROUTE,
+        /** determine which system will handle LIMS queries (only one system) */
+        SYSTEM_OF_RECORD
     }
 
     private LabVesselDao         labVesselDao;
@@ -201,7 +206,7 @@ public class MercuryOrSquidRouter implements Serializable {
      * @param mapKeyToProductOrder map from product order key to product order entity
      * @param controlSampleIds @return An instance of a MercuryOrSquid enum that will assist in determining to which system requests should be
      * @param mapSampleNameToDto map from sample name to BSP sample DTO
-     * @param intent
+     * @param intent whether to return one routing option, or multiple
      */
     @DaoFree
     public MercuryOrSquid routeForVessel(LabVessel vessel, Map<String, ProductOrder> mapKeyToProductOrder,
@@ -220,7 +225,33 @@ public class MercuryOrSquidRouter implements Serializable {
                         possibleControls.add(sampleInstance);
                     } else {
                         ProductOrder order = mapKeyToProductOrder.get(sampleInstance.getProductOrderKey());
-                        routingOptions.add(getWorkflow(order.getProduct().getWorkflowName()).getRouting());
+                        ProductWorkflowDef productWorkflowDef = getWorkflow(order.getProduct().getWorkflowName());
+                        if (intent ==  Intent.SYSTEM_OF_RECORD) {
+                            MercuryOrSquid mercuryOrSquid;
+                            if (productWorkflowDef.getInValidation() != null && productWorkflowDef.getInValidation()) {
+                                LabBatch labBatch = sampleInstance.getLabBatch();
+                                // Per Andrew, we can assume that validation plastic has only one LCSET
+                                if(labBatch != null && labBatch.isValidationBatch()) {
+                                    mercuryOrSquid = MERCURY;
+                                } else {
+                                    mercuryOrSquid = productWorkflowDef.getRouting();
+                                }
+                            } else {
+                                mercuryOrSquid = productWorkflowDef.getRouting();
+                            }
+                            switch (mercuryOrSquid) {
+                            case BOTH:
+                                routingOptions.add(SQUID);
+                                break;
+                            case MERCURY:
+                                // deliberate fall through
+                            case SQUID:
+                                routingOptions.add(mercuryOrSquid);
+                                break;
+                            }
+                        } else {
+                            routingOptions.add(productWorkflowDef.getRouting());
+                        }
                     }
                 }
                 if (!possibleControls.isEmpty()) {
@@ -302,7 +333,7 @@ public class MercuryOrSquidRouter implements Serializable {
      * does this by querying to the "Athena" side of Mercury for the ProductOrder Definition and looks up the
      * workflow definition based on the workflow name defined on the ProductOrder
      *
-     * @param workflowName
+     * @param workflowName e.g. Exome Express
      *
      * @return Workflow Definition for the defined workflow for the product order represented by productOrderKey
      */
