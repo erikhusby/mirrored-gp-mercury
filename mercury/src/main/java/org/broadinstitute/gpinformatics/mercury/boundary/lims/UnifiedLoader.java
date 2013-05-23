@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
+import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -119,7 +120,8 @@ public class UnifiedLoader {
      *
      * @return a populated Sequencing template
      */
-    private SequencingTemplateType getSequencingTemplate(IlluminaFlowcell flowcell,
+    @DaoFree
+    public SequencingTemplateType getSequencingTemplate(IlluminaFlowcell flowcell,
                                                          Map<VesselPosition, LabVessel> sourceVessels) {
         SequencingTemplateType sequencingTemplate = new SequencingTemplateType();
         List<SequencingTemplateLaneType> lanes = new ArrayList<SequencingTemplateLaneType>();
@@ -143,7 +145,7 @@ public class UnifiedLoader {
         }
 
 
-        if (!lanes.isEmpty()) {
+        if (lanes.isEmpty()) {
             // Do we need to create "null" lanes to satisfy the user requirement of returning null
             // when we don't have the data?
             SequencingTemplateLaneType lane = new SequencingTemplateLaneType();
