@@ -5,17 +5,12 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.presentation.DisplayableItem;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessKeyFinder;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessKeyable;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.Nameable;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObjectFinder;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AlignerDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AnalysisTypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.ReferenceSequenceDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
-import org.broadinstitute.gpinformatics.mercury.entity.analysis.Aligner;
-import org.broadinstitute.gpinformatics.mercury.entity.analysis.AnalysisType;
-import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReferenceSequence;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 
 import javax.annotation.Nonnull;
 import javax.enterprise.context.RequestScoped;
@@ -72,10 +67,10 @@ public class MercuryClientServiceImpl implements MercuryClientService {
         return Collections.emptyList();
     }
 
-    private Collection<DisplayableItem> makeDisplayableItemCollection(List<? extends BusinessKeyable> items) {
+    private Collection<DisplayableItem> makeDisplayableItemCollection(List<? extends BusinessObject> items) {
         Collection<DisplayableItem> displayableItems = new ArrayList<DisplayableItem>(items.size());
 
-        for (BusinessKeyable item : items) {
+        for (BusinessObject item : items) {
             displayableItems.add(new DisplayableItem(item.getBusinessKey(), item.getName()));
         }
         return displayableItems;
@@ -101,8 +96,8 @@ public class MercuryClientServiceImpl implements MercuryClientService {
         return makeDisplayableItemCollection(reagentDesignDao.findAll());
     }
 
-    private DisplayableItem getDisplayableItemInfo(String businessKey, BusinessKeyFinder dao) {
-        BusinessKeyable object = dao.findByBusinessKey(businessKey);
+    private DisplayableItem getDisplayableItemInfo(String businessKey, BusinessObjectFinder dao) {
+        BusinessObject object = dao.findByBusinessKey(businessKey);
         if (object == null) {
             // Object of that business key was not found.
             return null;

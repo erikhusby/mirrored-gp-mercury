@@ -18,8 +18,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessKeyable;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.Nameable;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
 
@@ -58,7 +57,7 @@ import java.util.Set;
 @Entity
 @Audited
 @Table(name = "PRODUCT_ORDER", schema = "athena")
-public class ProductOrder implements BusinessKeyable, Serializable {
+public class ProductOrder implements BusinessObject, Serializable {
     private static final long serialVersionUID = 2712946561792445251L;
 
     private static final String DRAFT_PREFIX = "Draft-";

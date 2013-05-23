@@ -11,8 +11,7 @@
 
 package org.broadinstitute.gpinformatics.mercury.control.dao.reagent;
 
-import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessKeyFinder;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessKeyable;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObjectFinder;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign_;
@@ -32,7 +31,7 @@ import java.util.List;
 @Stateful
 @LocalBean
 @RequestScoped
-public class ReagentDesignDao extends GenericDao implements BusinessKeyFinder<ReagentDesign> {
+public class ReagentDesignDao extends GenericDao implements BusinessObjectFinder<ReagentDesign> {
     public List<ReagentDesign> findAll() {
         return super.findAll(ReagentDesign.class);
     }

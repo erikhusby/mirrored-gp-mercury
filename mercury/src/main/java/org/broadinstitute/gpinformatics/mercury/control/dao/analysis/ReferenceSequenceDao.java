@@ -1,9 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.analysis;
 
-import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessKeyFinder;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObjectFinder;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
-import org.broadinstitute.gpinformatics.mercury.entity.analysis.Aligner;
-import org.broadinstitute.gpinformatics.mercury.entity.analysis.Aligner_;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReferenceSequence;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReferenceSequence_;
 
@@ -23,7 +21,7 @@ import java.util.List;
 @Stateful
 @LocalBean
 @RequestScoped
-public class ReferenceSequenceDao extends GenericDao implements BusinessKeyFinder<ReferenceSequence> {
+public class ReferenceSequenceDao extends GenericDao implements BusinessObjectFinder<ReferenceSequence> {
 
     public List<ReferenceSequence> findAll() {
         return findAll(ReferenceSequence.class);
