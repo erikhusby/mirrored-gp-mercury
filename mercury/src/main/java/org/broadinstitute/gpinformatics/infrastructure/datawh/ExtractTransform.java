@@ -142,7 +142,7 @@ public class ExtractTransform implements Serializable {
         String dataDir = getDatafileDir();
         if (null == dataDir || dataDir.length() == 0) {
             if (!loggedConfigError) {
-                logger.info("ETL data file directory is not configured. ETL will not be run.");
+                logger.warn("ETL data file directory is not configured. ETL will not be run.");
                 loggedConfigError = true;
             }
             return -1;
