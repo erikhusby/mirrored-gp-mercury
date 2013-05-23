@@ -119,7 +119,7 @@ public class AnalysisEjb {
      * @param isCurrent boolean flag to determine if this {@link ReferenceSequence} is the current one
      * @return true if a new {@link ReferenceSequence} was created
      */
-    protected boolean addReferenceSequence(@Nonnull String name, @Nonnull String version, boolean isCurrent) {
+    public boolean addReferenceSequence(@Nonnull String name, @Nonnull String version, boolean isCurrent) {
         boolean wasCreated = false;
         ReferenceSequence referenceSequence = referenceSequenceDao.findByNameAndVersion(name, version);
 
