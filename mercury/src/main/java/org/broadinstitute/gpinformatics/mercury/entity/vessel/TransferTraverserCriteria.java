@@ -8,7 +8,15 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import javax.annotation.Nonnull;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria.TraversalDirection.Ancestors;
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria.TraversalDirection.Descendants;
@@ -83,7 +91,8 @@ public interface TransferTraverserCriteria {
          * @param hopCount           the traversal depth
          * @param traversalDirection the direction of traversal
          */
-        public Context(@Nonnull LabVessel labVessel, LabEvent event, int hopCount, @Nonnull TraversalDirection traversalDirection) {
+        public Context(@Nonnull LabVessel labVessel, LabEvent event, int hopCount,
+                       @Nonnull TraversalDirection traversalDirection) {
             this.labVessel = labVessel;
             this.event = event;
             this.hopCount = hopCount;
@@ -101,7 +110,9 @@ public interface TransferTraverserCriteria {
          * @param hopCount           the traversal depth
          * @param traversalDirection the direction of traversal
          */
-        public Context(LabVessel labVessel, @Nonnull VesselContainer vesselContainer, @Nonnull VesselPosition vesselPosition, LabEvent event, int hopCount, @Nonnull TraversalDirection traversalDirection) {
+        public Context(LabVessel labVessel, @Nonnull VesselContainer vesselContainer,
+                       @Nonnull VesselPosition vesselPosition, LabEvent event, int hopCount,
+                       @Nonnull TraversalDirection traversalDirection) {
             this.labVessel = labVessel;
             this.vesselContainer = vesselContainer;
             this.vesselPosition = vesselPosition;
@@ -139,6 +150,7 @@ public interface TransferTraverserCriteria {
      * Callback method called before processing the next level of vessels in the traversal.
      *
      * @param context
+     *
      * @return
      */
     TraversalControl evaluateVesselPreOrder(Context context);
@@ -165,7 +177,8 @@ public interface TransferTraverserCriteria {
         // index -1 is for batches for sampleInstance's starter (think BSP stock)
         private static final int STARTER_INDEX = -1;
 
-        private final Map<Integer, Collection<LabBatch>> labBatchesAtHopCount = new HashMap<Integer, Collection<LabBatch>>();
+        private final Map<Integer, Collection<LabBatch>> labBatchesAtHopCount =
+                new HashMap<Integer, Collection<LabBatch>>();
         private LabBatch.LabBatchType type;
 
         /**
@@ -255,7 +268,8 @@ public interface TransferTraverserCriteria {
      * Traverses transfers to find the single sample libraries.
      */
     class SingleSampleLibraryCriteria implements TransferTraverserCriteria {
-        private final Map<MercurySample, Collection<LabVessel>> singleSampleLibrariesForInstance = new HashMap<MercurySample, Collection<LabVessel>>();
+        private final Map<MercurySample, Collection<LabVessel>> singleSampleLibrariesForInstance =
+                new HashMap<MercurySample, Collection<LabVessel>>();
 
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
@@ -287,9 +301,56 @@ public interface TransferTraverserCriteria {
         }
     }
 
+    class NearestLabMetricOfTypeCriteria implements TransferTraverserCriteria {
+        private LabMetric.MetricType metricType;
+        private Map<Integer, Collection<LabMetric>> labMetricsAtHop = new HashMap<Integer, Collection<LabMetric>>();
+
+        public NearestLabMetricOfTypeCriteria(LabMetric.MetricType metricType) {
+            this.metricType = metricType;
+        }
+
+        @Override
+        public TraversalControl evaluateVesselPreOrder(Context context) {
+            LabVessel vessel = context.getLabVessel();
+            if (context.getLabVessel() != null) {
+                for (LabMetric metric : vessel.getMetrics()) {
+                    if (metric.getName().equals(metricType)) {
+                        Collection<LabMetric> metricsAtHop;
+                        metricsAtHop = labMetricsAtHop.get(context.getHopCount());
+                        if (metricsAtHop == null) {
+                            metricsAtHop = new ArrayList<LabMetric>();
+                            labMetricsAtHop.put(context.getHopCount(), metricsAtHop);
+                        }
+                        metricsAtHop.add(metric);
+                    }
+                }
+            }
+            return TraversalControl.ContinueTraversing;
+        }
+
+        @Override
+        public void evaluateVesselInOrder(Context context) {
+        }
+
+        @Override
+        public void evaluateVesselPostOrder(Context context) {
+        }
+
+        public Collection<LabMetric> getNearestMetrics() {
+            int nearest = Integer.MAX_VALUE;
+            for (Map.Entry<Integer, Collection<LabMetric>> labMetricsForHopCount : labMetricsAtHop.entrySet()) {
+                if (labMetricsForHopCount.getKey() < nearest) {
+                    nearest = labMetricsForHopCount.getKey();
+                }
+            }
+            return labMetricsAtHop.get(nearest);
+        }
+    }
+
     class NearestProductOrderCriteria implements TransferTraverserCriteria {
 
-        private final Map<Integer, Collection<String>> productOrdersAtHopCount = new HashMap<Integer, Collection<String>>();
+        private final Map<Integer, Collection<String>> productOrdersAtHopCount =
+                new HashMap<Integer, Collection<String>>();
 
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
@@ -420,7 +481,7 @@ public interface TransferTraverserCriteria {
         public void evaluateVesselPostOrder(Context context) {
         }
 
-        public Collection<LabVessel> getLabVesselDescendants() {
+        public Collection<LabVessel> getLabVesselAncestors() {
             Set<LabVessel> allVessels = new HashSet<LabVessel>();
             for (List<LabVessel> vesselList : labVesselAtHopCount.values()) {
                 allVessels.addAll(vesselList);
