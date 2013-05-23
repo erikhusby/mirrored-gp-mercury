@@ -182,4 +182,11 @@ public class ResearchProjectDao extends GenericDao {
         return list;
     }
 
+    /**
+     * @param accessControlEnabled the access control setting to match
+     * @return all Research Projects with the access control setting provided
+     */
+    public Collection<ResearchProject> findAllWithAccess(boolean accessControlEnabled) {
+        return findList(ResearchProject.class, ResearchProject_.accessControlEnabled, accessControlEnabled);
+    }
 }

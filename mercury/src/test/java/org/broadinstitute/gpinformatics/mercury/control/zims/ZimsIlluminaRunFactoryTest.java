@@ -16,6 +16,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -23,6 +24,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.*;
@@ -50,12 +52,15 @@ public class ZimsIlluminaRunFactoryTest {
 
     private BSPSampleDataFetcher mockBSPSampleDataFetcher;
     private AthenaClientService mockAthenaClientService;
+    private ControlDao mockControlDao;
     private ProductOrder testProductOrder;
 
     @BeforeMethod(groups = DATABASE_FREE)
     public void setUp() {
         mockBSPSampleDataFetcher = mock(BSPSampleDataFetcher.class);
         mockAthenaClientService = mock(AthenaClientServiceImpl.class);
+        mockControlDao = mock(ControlDao.class);
+
         JiraService mockJiraService = mock(JiraService.class);
         when(mockJiraService.createTicketUrl(anyString())).thenReturn("jira://LCSET-1");
 
@@ -64,7 +69,8 @@ public class ZimsIlluminaRunFactoryTest {
                 "P-TEST-1", new Date(), new Date(), 0, 0, 0, 0, "Test samples only", "None", true,
                 "Test Workflow", false, "agg type");
 
-        zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(mockBSPSampleDataFetcher, mockAthenaClientService);
+        zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(mockBSPSampleDataFetcher, mockAthenaClientService,
+                mockControlDao);
         LabEventFactory labEventFactory = new LabEventFactory();
         labEventFactory.setLabEventRefDataFetcher(new LabEventFactory.LabEventRefDataFetcher() {
             @Override
@@ -212,7 +218,9 @@ public class ZimsIlluminaRunFactoryTest {
         mapSampleIdToDto.put("TestSM-1", sampleDTO);
         Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<String, ProductOrder>();
         mapKeyToProductOrder.put("TestPDO-1", testProductOrder);
-        LibraryBean libraryBean = zimsIlluminaRunFactory.makeLibraryBeans(testTube, mapSampleIdToDto, mapKeyToProductOrder).get(0);
+        Map<String, Control> mapNameToControl = new HashMap<>();
+        LibraryBean libraryBean = zimsIlluminaRunFactory.makeLibraryBeans(testTube, mapSampleIdToDto,
+                mapKeyToProductOrder, mapNameToControl).get(0);
         assertThat(libraryBean.getLibrary(), equalTo("testTube")); // TODO: expand with full definition of generated library name
         assertThat(libraryBean.getProject(), equalTo("TestRP-1"));
 //        assertThat(libraryBean.getMolecularIndexingScheme(), equalTo("???")); // TODO
