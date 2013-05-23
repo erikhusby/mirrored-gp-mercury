@@ -14,13 +14,12 @@ package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselAndPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.IndexPositionType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.IndexingSchemeType;
@@ -29,10 +28,10 @@ import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTe
 
 import javax.inject.Inject;
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class SequencingTemplateFactory {
     @Inject
@@ -80,12 +79,21 @@ public class SequencingTemplateFactory {
      */
     public SequencingTemplateType fetchSequencingTemplate(String id, QueryVesselType queryVesselType,
                                                           boolean isPoolTest) {
-        IlluminaFlowcell illuminaFlowcell = null;
-        EnumSet<LabEventType> searchEvents = null;
+        IlluminaFlowcell illuminaFlowcell;
+        Map<VesselPosition, LabVessel> loadedVessels = new HashMap<VesselPosition, LabVessel>();
+        Set<VesselAndPosition> loadedVesselsAndPositions;
+
         switch (queryVesselType) {
         case FLOWCELL:
             illuminaFlowcell = illuminaFlowcellDao.findByBarcode(id);
-            searchEvents = EnumSet.of(LabEventType.DENATURE_TO_FLOWCELL_TRANSFER, LabEventType.DENATURE_TRANSFER);
+            TransferTraverserCriteria.NearestTubeAncestorsCriteria criteria =
+                    new TransferTraverserCriteria.NearestTubeAncestorsCriteria();
+            illuminaFlowcell.evaluateCriteria(criteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+            loadedVesselsAndPositions = criteria.getVesselAndPositions();
+            for (VesselAndPosition vesselsAndPosition : loadedVesselsAndPositions) {
+                loadedVessels.put(vesselsAndPosition.getPosition(), vesselsAndPosition.getVessel());
+            }
+
             break;
         case TUBE:
         case STRIP_TUBE:
@@ -94,40 +102,27 @@ public class SequencingTemplateFactory {
             throw new RuntimeException(String.format("Sequencing template unavailable for %s.", queryVesselType));
         }
 
-        Map<VesselPosition, LabVessel> loadedVessels = new HashMap<VesselPosition, LabVessel>();
-        for (LabEvent labEvent : illuminaFlowcell.getEvents()) {
-            if (searchEvents.contains(labEvent.getLabEventType())) {
-                for (VesselToSectionTransfer vesselToSectionTransfer : labEvent.getVesselToSectionTransfers()) {
-                    //region Description
-                    for (VesselPosition vesselPosition : vesselToSectionTransfer.getTargetSection().getWells()) {
-                        loadedVessels.put(vesselPosition, vesselToSectionTransfer.getSourceVessel());
-                    }
-
-                    //endregion
-//                    loadedVessels.add(vesselToSectionTransfer.getSourceVessel());
-                }
-
-            }
-        }
-        return getSequencingTemplate(illuminaFlowcell, loadedVessels);
+        return getSequencingTemplate(illuminaFlowcell, loadedVesselsAndPositions);
     }
 
     /**
      * Use information from the source and target lab vessels to populate a the sequencing template with lanes.
      *
-     * @param flowcell      the flowcell we are loading.
-     * @param sourceVessels the lab vessels loading the flowcell.
+     * @param flowcell                  the flowcell we are loading.
+     * @param loadedVesselsAndPositions the lab vessels loading the flowcell.
      *
      * @return a populated Sequencing template
      */
     @DaoFree
     public SequencingTemplateType getSequencingTemplate(IlluminaFlowcell flowcell,
-                                                         Map<VesselPosition, LabVessel> sourceVessels) {
+                                                        Set<VesselAndPosition> loadedVesselsAndPositions) {
         SequencingTemplateType sequencingTemplate = new SequencingTemplateType();
         List<SequencingTemplateLaneType> lanes = new ArrayList<SequencingTemplateLaneType>();
 
-        for (VesselPosition vesselPosition : sourceVessels.keySet()) {
-            LabVessel sourceVessel = sourceVessels.get(vesselPosition);
+        for (VesselAndPosition vesselAndPosition : loadedVesselsAndPositions) {
+            LabVessel sourceVessel = vesselAndPosition.getVessel();
+            VesselPosition vesselPosition = vesselAndPosition.getPosition();
+
             SequencingTemplateLaneType lane = new SequencingTemplateLaneType();
             lane.setLaneName(vesselPosition.name());
             lane.setLoadingVesselLabel(sourceVessel.getLabel());
