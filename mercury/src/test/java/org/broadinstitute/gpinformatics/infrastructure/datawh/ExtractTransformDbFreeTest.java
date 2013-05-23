@@ -1,7 +1,9 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.infrastructure.common.SessionContextUtility;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -15,15 +17,14 @@ import javax.ws.rs.core.Response;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 import static org.easymock.EasyMock.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotEquals;
 
 
 /**
  * dbfree test of ExtractTransform.
- *
- * @author epolk
  */
 
 @Test(groups = TestGroups.DATABASE_FREE)
@@ -81,11 +82,18 @@ public class ExtractTransformDbFreeTest {
 
         Collection<GenericEntityEtl> etlInstances = new HashSet<GenericEntityEtl>();
         for (Object mock : mocks) {
-            if (mock != auditReaderDao) {
+            if (mock.getClass().getName().contains("Etl")) {
                 etlInstances.add((GenericEntityEtl)mock);
             }
         }
-        extractTransform = new ExtractTransform(auditReaderDao, etlInstances);
+        extractTransform = new ExtractTransform(auditReaderDao,
+                new SessionContextUtility(null, null) {
+                    @Override
+                    public void executeInContext(Function function) {
+                        function.apply();
+                    }
+                },
+                etlInstances);
     }
 
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
@@ -137,7 +145,7 @@ public class ExtractTransformDbFreeTest {
     public void testNoChanges() {
         long futureSec = 9999999999L;
         replay(mocks);
-        extractTransform.writeLastEtlRun(futureSec);
+        ExtractTransform.writeLastEtlRun(futureSec);
         Assert.assertEquals(extractTransform.incrementalEtl("0", "0"), -1);
         Assert.assertTrue(ExtractTransform.getIncrementalRunStartTime() >= 0);
         verify(mocks);
@@ -172,7 +180,7 @@ public class ExtractTransformDbFreeTest {
      */
     public void testInvalidLastEtlBadDir() {
         ExtractTransform.setDatafileDir(badDataDir);
-        Assert.assertEquals(extractTransform.readLastEtlRun(), 0);
+        Assert.assertEquals(ExtractTransform.readLastEtlRun(), 0);
     }
 
     /**
@@ -183,10 +191,10 @@ public class ExtractTransformDbFreeTest {
         final long sec  = 1351112223L;
         final long mSec = 1351112223789L;
         FileUtils.write(file, String.valueOf(sec));
-        Assert.assertEquals(extractTransform.readLastEtlRun(), sec);
+        Assert.assertEquals(ExtractTransform.readLastEtlRun(), sec);
 
         FileUtils.write(file, String.valueOf(mSec));
-        Assert.assertEquals(extractTransform.readLastEtlRun(), sec);
+        Assert.assertEquals(ExtractTransform.readLastEtlRun(), sec);
     }
 
     /**
@@ -196,8 +204,7 @@ public class ExtractTransformDbFreeTest {
         replay(mocks);
         Assert.assertTrue(ExtractTransform.getMutex().tryAcquire());
         try {
-            int recordCount = extractTransform.incrementalEtl("20130327155950", "20130327160200");
-            Assert.assertEquals(recordCount, -1);
+            Assert.assertEquals(extractTransform.incrementalEtl("20130327155950", "20130327160200"), -1);
         } finally {
             ExtractTransform.getMutex().release();
         }
@@ -208,22 +215,22 @@ public class ExtractTransformDbFreeTest {
         String etlDateStr = "20130215091500";
         File f = new File(datafileDir, etlDateStr + ExtractTransform.READY_FILE_SUFFIX);
         Assert.assertFalse(f.exists());
-        extractTransform.writeIsReadyFile(etlDateStr);
+        ExtractTransform.writeIsReadyFile(etlDateStr);
         Assert.assertTrue(f.exists());
     }
 
     public void testOnDemandIncr1() {
         long startEtl = 1364411920L;
 
-        expect(auditReaderDao.fetchAuditIds(eq(startEtl), anyLong())).andReturn(Collections.EMPTY_LIST);
+        expect(auditReaderDao.fetchAuditIds(eq(startEtl), anyLong())).andReturn(new TreeMap<Long, Date>());
         replay(mocks);
 
-        extractTransform.writeLastEtlRun(startEtl);
-        Assert.assertEquals(extractTransform.readLastEtlRun(), startEtl);
+        ExtractTransform.writeLastEtlRun(startEtl);
+        Assert.assertEquals(ExtractTransform.readLastEtlRun(), startEtl);
 
         Assert.assertEquals(extractTransform.incrementalEtl("0", "0"), 0);
 
-        Assert.assertTrue(extractTransform.readLastEtlRun() > startEtl);
+        Assert.assertTrue(ExtractTransform.readLastEtlRun() > startEtl);
         verify(mocks);
     }
 
@@ -232,14 +239,14 @@ public class ExtractTransformDbFreeTest {
         long endEtl = 1364411930L;
         String endEtlStr = ExtractTransform.secTimestampFormat.format(new Date(endEtl * 1000L));
 
-        expect(auditReaderDao.fetchAuditIds(startEtl, endEtl)).andReturn(Collections.EMPTY_LIST);
+        expect(auditReaderDao.fetchAuditIds(startEtl, endEtl)).andReturn(new TreeMap<Long, Date>());
         replay(mocks);
 
-        extractTransform.writeLastEtlRun(startEtl);
+        ExtractTransform.writeLastEtlRun(startEtl);
 
         Assert.assertEquals(extractTransform.incrementalEtl("0", endEtlStr), 0);
         // Limited range etl should not update lastEtlRun file.
-        Assert.assertEquals(extractTransform.readLastEtlRun(), startEtl);
+        Assert.assertEquals(ExtractTransform.readLastEtlRun(), startEtl);
         verify(mocks);
     }
 
@@ -264,9 +271,9 @@ public class ExtractTransformDbFreeTest {
         expect(ledgerEntryEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
 
         replay(mocks);
-        extractTransform.writeLastEtlRun(0L);
-        extractTransform.entityIdRangeEtl(testClass.getName(), 0, 0);
-        Assert.assertEquals(0L, extractTransform.readLastEtlRun());
+        ExtractTransform.writeLastEtlRun(0L);
+        new ExtractTransformResource(extractTransform).entityIdRangeEtl(testClass.getName(), 0, 0);
+        Assert.assertEquals(0L, ExtractTransform.readLastEtlRun());
         verify(mocks);
     }
 
@@ -292,8 +299,8 @@ public class ExtractTransformDbFreeTest {
         expect(ledgerEntryEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
 
         replay(mocks);
-        extractTransform.writeLastEtlRun(0L);
-        extractTransform.entityIdRangeEtl(testClass.getName(), 0, -1);
+        ExtractTransform.writeLastEtlRun(0L);
+        new ExtractTransformResource(extractTransform).entityIdRangeEtl(testClass.getName(), 0, -1);
         long endEtl = System.currentTimeMillis();
         File[] files = EtlTestUtilities.getDirFiles(datafileDir, startEtl, endEtl);
         boolean readyFileFound = false;
@@ -309,21 +316,22 @@ public class ExtractTransformDbFreeTest {
 
     public void testOnDemandIncrementalNoChanges() {
         final long startEtlSec = 1360000000L;
-        Collection<Long> revIds = new ArrayList<Long>();
-        expect(auditReaderDao.fetchAuditIds(eq(startEtlSec), anyLong())).andReturn(revIds);
+        SortedMap<Long, Date> revs = new TreeMap<Long, Date>();
+        expect(auditReaderDao.fetchAuditIds(eq(startEtlSec), anyLong())).andReturn(revs);
 
         replay(mocks);
-        extractTransform.writeLastEtlRun(startEtlSec);
-        extractTransform.auditDateRangeEtl("0", "0");
-        Assert.assertTrue(extractTransform.readLastEtlRun() > startEtlSec);
+        ExtractTransform.writeLastEtlRun(startEtlSec);
+        new ExtractTransformResource(extractTransform).auditDateRangeEtl("0", "0");
+        Assert.assertTrue(ExtractTransform.readLastEtlRun() > startEtlSec);
         verify(mocks);
     }
 
     public void testOnDemandIncremental() {
         final long startEtlSec = 1360000000L;
-        Collection<Long> revIds = new ArrayList<Long>();
-        revIds.add(1L);
-        expect(auditReaderDao.fetchAuditIds(eq(startEtlSec), anyLong())).andReturn(revIds);
+        SortedMap<Long, Date> revs = new TreeMap<Long, Date>();
+        revs.put(1L, new Date(startEtlSec));
+        expect(auditReaderDao.fetchAuditIds(eq(startEtlSec), anyLong())).andReturn(revs);
+        Collection<Long> revIds = revs.keySet();
         expect(productEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(1);
         expect(priceItemEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
         expect(researchProjectEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
@@ -343,16 +351,84 @@ public class ExtractTransformDbFreeTest {
         expect(ledgerEntryEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
 
         replay(mocks);
-        extractTransform.writeLastEtlRun(startEtlSec);
-        extractTransform.auditDateRangeEtl("0", "0");
-        long etlEnd = extractTransform.readLastEtlRun();
+        ExtractTransform.writeLastEtlRun(startEtlSec);
+        new ExtractTransformResource(extractTransform).auditDateRangeEtl("0", "0");
+        long etlEnd = ExtractTransform.readLastEtlRun();
         Assert.assertTrue(etlEnd >= startEtlSec);
-        String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date(TimeUnit.SECONDS.toMillis(etlEnd)));
-        Assert.assertTrue((new File(datafileDir, etlDateStr + ExtractTransform.READY_FILE_SUFFIX)).exists());
+
+        File[] files = EtlTestUtilities.getDirFiles(datafileDir, startEtlSec, System.currentTimeMillis());
+        boolean readyFileFound = false;
+        for (File dataFile : files) {
+            if (dataFile.getName().endsWith(ExtractTransform.READY_FILE_SUFFIX)) {
+                readyFileFound = true;
+            }
+        }
+        Assert.assertTrue(readyFileFound);
 
         verify(mocks);
     }
+
+    public void testNoLimitEmptyBatch() {
+        SortedMap<Long, Date> revs = new TreeMap<Long, Date>();
+        long startTimeSec = 136000000;
+        long endTimeSec =  startTimeSec + ExtractTransform.ETL_BATCH_SIZE;
+        ImmutablePair<SortedMap<Long, Date>, Long> revAndDate = ExtractTransform.limitBatchSize(revs, endTimeSec);
+        assertEquals(revAndDate.left.size(), revs.size());
+        assertEquals(revAndDate.right.longValue(), endTimeSec);
+    }
+
+    public void testNoLimitSmallSameTimeBatch() {
+        SortedMap<Long, Date> revs = new TreeMap<Long, Date>();
+        long startTimeSec = 136000000;
+        long endTimeSec =  startTimeSec + ExtractTransform.ETL_BATCH_SIZE;
+        Date revDate = new Date(startTimeSec * ExtractTransform.MSEC_IN_SEC);
+        for (long i = 0; i < ExtractTransform.ETL_BATCH_SIZE; ++i) {
+            revs.put(i, revDate);
+        }
+        ImmutablePair<SortedMap<Long, Date>, Long> revAndDate = ExtractTransform.limitBatchSize(revs, endTimeSec);
+        assertEquals(revAndDate.left.size(), revs.size());
+        assertEquals(revAndDate.right.longValue(), endTimeSec);
+    }
+
+    public void testNoLimitBigSameTimeBatch() {
+        SortedMap<Long, Date> revs = new TreeMap<Long, Date>();
+        long startTimeSec = 136000000;
+        long endTimeSec =  startTimeSec + ExtractTransform.ETL_BATCH_SIZE + 1001;
+        Date revDate = new Date(startTimeSec * ExtractTransform.MSEC_IN_SEC);
+        for (long i = 0; i < ExtractTransform.ETL_BATCH_SIZE + 1000; ++i) {
+            revs.put(i, revDate);
+        }
+        ImmutablePair<SortedMap<Long, Date>, Long> revAndDate = ExtractTransform.limitBatchSize(revs, endTimeSec);
+        assertEquals(revAndDate.left.size(), revs.size());
+        assertEquals(revAndDate.right.longValue(), endTimeSec);
+    }
+
+    public void testLimitExcessBigBatch() {
+        SortedMap<Long, Date> revs = new TreeMap<Long, Date>();
+        long startTimeSec = 136000000;
+        long endTimeSec =  startTimeSec + ExtractTransform.ETL_BATCH_SIZE + 1001;
+        for (long i = 0; i < ExtractTransform.ETL_BATCH_SIZE + 1001; ++i) {
+            Date revDate = new Date(startTimeSec * ExtractTransform.MSEC_IN_SEC + i);
+            revs.put(i, revDate);
+        }
+        ImmutablePair<SortedMap<Long, Date>, Long> revAndDate = ExtractTransform.limitBatchSize(revs, endTimeSec);
+        // Must include all items within the same second, i.e. items 0-999.
+        assertEquals(revAndDate.left.size(), 1000);
+        assertEquals(revAndDate.right.longValue(), startTimeSec + 1);
+    }
+
+    public void testLimitNormalBigBatch() {
+        SortedMap<Long, Date> revs = new TreeMap<Long, Date>();
+        long startTimeSec = 136000000;
+        long endTimeSec = 0;
+        for (long i = 0; i < ExtractTransform.ETL_BATCH_SIZE + 102; ++i) {
+            endTimeSec = startTimeSec + i;
+            Date revDate = new Date(endTimeSec * ExtractTransform.MSEC_IN_SEC);
+            revs.put(i, revDate);
+        }
+        ImmutablePair<SortedMap<Long, Date>, Long> revAndDate = ExtractTransform.limitBatchSize(revs, endTimeSec);
+        assertEquals(revAndDate.left.size(), ExtractTransform.ETL_BATCH_SIZE);
+        assertEquals(revAndDate.right.longValue(), startTimeSec + ExtractTransform.ETL_BATCH_SIZE);
+        assertNotEquals(revAndDate.left, revs);
+    }
 }
-
-
-

@@ -4,6 +4,7 @@ import edu.mit.broad.prodinfo.thrift.lims.IndexPosition;
 import edu.mit.broad.prodinfo.thrift.lims.TZDevExperimentData;
 import org.apache.commons.collections15.Factory;
 import org.apache.commons.collections15.map.LazyMap;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -11,6 +12,7 @@ import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServic
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -23,6 +25,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
 import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -46,11 +49,14 @@ public class ZimsIlluminaRunFactory {
 
     private AthenaClientService athenaClientService;
     private BSPSampleDataFetcher bspSampleDataFetcher;
+    private ControlDao controlDao;
 
     @Inject
-    public ZimsIlluminaRunFactory(BSPSampleDataFetcher bspSampleDataFetcher, AthenaClientService athenaClientService) {
+    public ZimsIlluminaRunFactory(BSPSampleDataFetcher bspSampleDataFetcher, AthenaClientService athenaClientService,
+                                  ControlDao controlDao) {
         this.bspSampleDataFetcher = bspSampleDataFetcher;
         this.athenaClientService = athenaClientService;
+        this.controlDao = controlDao;
     }
 
     public ZimsIlluminaRun makeZimsIlluminaRun(SequencingRun sequencingRun) {
@@ -77,6 +83,12 @@ public class ZimsIlluminaRunFactory {
             mapKeyToProductOrder.put(productOrderKey, athenaClientService.retrieveProductOrderDetails(productOrderKey));
         }
 
+        List<Control> activeControls = controlDao.findAllActive();
+        Map<String, Control> mapNameToControl = new HashMap<>();
+        for (Control activeControl : activeControls) {
+            mapNameToControl.put(activeControl.getCollaboratorSampleId(), activeControl);
+        }
+
         DateFormat dateFormat = new SimpleDateFormat(ZimsIlluminaRun.DATE_FORMAT);
         // TODO: fill in sequencerModel and isPaired
         ZimsIlluminaRun run = new ZimsIlluminaRun(sequencingRun.getRunName(), sequencingRun.getRunBarcode(),
@@ -92,7 +104,7 @@ public class ZimsIlluminaRunFactory {
             flowcell.getContainerRole().evaluateCriteria(vesselPosition, criteria, Ancestors, null, 0);
             ArrayList<LibraryBean> libraryBeans = new ArrayList<LibraryBean>();
             for (LabVessel labVessel : criteria.getNearestLabVessels()) {
-                libraryBeans.addAll(makeLibraryBeans(labVessel, mapSampleIdToDto, mapKeyToProductOrder));
+                libraryBeans.addAll(makeLibraryBeans(labVessel, mapSampleIdToDto, mapKeyToProductOrder, mapNameToControl));
             }
             ZimsIlluminaChamber lane = new ZimsIlluminaChamber(laneNum, libraryBeans, null, null);
             run.addLane(lane);
@@ -104,7 +116,7 @@ public class ZimsIlluminaRunFactory {
 
     @DaoFree
     public List<LibraryBean> makeLibraryBeans(LabVessel labVessel, Map<String, BSPSampleDTO> mapSampleIdToDto,
-            Map<String, ProductOrder> mapKeyToProductOrder) {
+            Map<String, ProductOrder> mapKeyToProductOrder, Map<String, Control> mapNameToControl) {
         List<LibraryBean> libraryBeans = new ArrayList<LibraryBean>();
         // todo jmt reuse the sampleInstances fetched in makeZimsIlluminaRun? Would save a few milliseconds.
         Set<SampleInstance> sampleInstances = labVessel.getSampleInstances(LabVessel.SampleType.PREFER_PDO,
@@ -163,7 +175,7 @@ public class ZimsIlluminaRunFactory {
 
             libraryBeans.add(
                 createLibraryBean(labVessel, productOrder, bspSampleDTO, lcSet, baitName,
-                                  indexingSchemeEntity, catNames, indexingSchemeDto));
+                                  indexingSchemeEntity, catNames, indexingSchemeDto, mapNameToControl));
         }
 
         return libraryBeans;
@@ -172,7 +184,7 @@ public class ZimsIlluminaRunFactory {
     private LibraryBean createLibraryBean(
         LabVessel labVessel, ProductOrder productOrder, BSPSampleDTO bspSampleDTO, String lcSet, String baitName,
         MolecularIndexingScheme indexingSchemeEntity, List<String> catNames,
-        edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme indexingSchemeDto) {
+        edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme indexingSchemeDto, Map<String, Control> mapNameToControl) {
 
         String library = labVessel.getLabel() + (indexingSchemeEntity == null ? "" : "_" + indexingSchemeEntity.getName());
 
@@ -193,6 +205,20 @@ public class ZimsIlluminaRunFactory {
         Collection<String> gssrBarcodes = null;
         String gssrSampleType = null;
         Boolean doAggregation = null;
+
+        if (bspSampleDTO != null) {
+            Control control = mapNameToControl.get(bspSampleDTO.getCollaboratorsSampleName());
+            if (control != null) {
+                switch (control.getType()) {
+                case POSITIVE:
+                    positiveControl = true;
+                    break;
+                case NEGATIVE:
+                    negativeControl = true;
+                    break;
+                }
+            }
+        }
 
         // default to the passed in bait name, but override if there is product specified version.
         String bait = baitName;
@@ -216,9 +242,14 @@ public class ZimsIlluminaRunFactory {
             ResearchProject project = productOrder.getResearchProject();
             projectName = project.getBusinessKey();
             aligner = project.getSequenceAlignerKey();
-            String[] referenceSequenceValues = project.getReferenceSequenceKey().split("\\|");
-            referenceSequence = referenceSequenceValues[0];
-            referenceSequenceVersion = referenceSequenceValues[1];
+
+            // If there is a reference sequence value on the project, then populate the name and version.
+            String[] referenceSequenceValues = null;
+            if (!StringUtils.isBlank(project.getReferenceSequenceKey())) {
+                referenceSequenceValues = project.getReferenceSequenceKey().split("\\|");
+                referenceSequence = referenceSequenceValues[0];
+                referenceSequenceVersion = referenceSequenceValues[1];
+            }
         }
 
         return new LibraryBean(

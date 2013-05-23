@@ -37,12 +37,18 @@ public class AnalysisEjb {
     private ReferenceSequenceDao referenceSequenceDao;
 
     /**
-     * Add a aligner.
+     * Add an aligner.
      *
-     * @param alignerName The name of the aligner to create
+     * @param alignerName The name of the aligner to create.
      */
-    public void addAligner(@Nonnull String alignerName) {
-        alignerDao.persist(new Aligner(alignerName));
+    public boolean addAligner(@Nonnull String alignerName) {
+        Aligner foundAligner = alignerDao.findByBusinessKey(alignerName);
+        if (foundAligner == null) {
+            alignerDao.persist(new Aligner(alignerName));
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -50,8 +56,13 @@ public class AnalysisEjb {
      *
      * @param aligners multiple aligners can be removed at once.
      */
-    public void removeAligner(@Nonnull Aligner aligners) {
-        alignerDao.remove(aligners);
+    public void removeAligners(@Nonnull String... alignerKeys) {
+        for (String alignerKey : alignerKeys) {
+            Aligner aligner = alignerDao.findByBusinessKey(alignerKey);
+            if (alignerDao != null) {
+                alignerDao.remove(aligner);
+            }
+        }
     }
 
     /**
@@ -59,8 +70,14 @@ public class AnalysisEjb {
      *
      * @param analysisTypeName The name of the type to create.
      */
-    public void addAnalysisType(@Nonnull String analysisTypeName) {
-        analysisTypeDao.persist(new AnalysisType(analysisTypeName));
+    public boolean addAnalysisType(@Nonnull String analysisTypeName) {
+        AnalysisType foundType = analysisTypeDao.findByBusinessKey(analysisTypeName);
+        if (foundType == null) {
+            analysisTypeDao.persist(new AnalysisType(analysisTypeName));
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -68,17 +85,30 @@ public class AnalysisEjb {
      *
      * @param analysisTypes multiple analysis types can be removed at once.
      */
-    public void removeAnalysisTypes(@Nonnull Collection<AnalysisType> analysisTypes) {
-        analysisTypeDao.remove(analysisTypes);
+    public void removeAnalysisTypes(@Nonnull String... analysisTypeKeys) {
+        for (String analysisTypeKey : analysisTypeKeys) {
+            AnalysisType analysisType = analysisTypeDao.findByBusinessKey(analysisTypeKey);
+            if (analysisTypeDao != null) {
+                analysisTypeDao.remove(analysisType);
+            }
+        }
     }
 
     /**
      * Add a new reference sequence.
      */
-    public void addReferenceSequence(@Nonnull String name, @Nonnull String version, boolean isCurrent) {
+    public boolean addReferenceSequence(@Nonnull String name, @Nonnull String version, boolean isCurrent) {
         ReferenceSequence referenceSequence = new ReferenceSequence(name, version);
         referenceSequence.setCurrent(isCurrent);
-        referenceSequenceDao.persist(referenceSequence);
+
+        ReferenceSequence foundSequence = referenceSequenceDao.findByBusinessKey(referenceSequence.getBusinessKey());
+
+        if (foundSequence == null) {
+            referenceSequenceDao.persist(referenceSequence);
+            return true;
+        }
+
+        return false;
     }
 
 
@@ -106,8 +136,13 @@ public class AnalysisEjb {
      *
      * @param referenceSequences Collection of reference sequences to be removed.
      */
-    public void removeReferenceSequences(@Nonnull Collection<ReferenceSequence> referenceSequences) {
-        referenceSequenceDao.remove(referenceSequences);
+    public void removeReferenceSequences(@Nonnull String... referenceSequenceKeys) {
+        for (String referenceSequenceKey : referenceSequenceKeys) {
+            ReferenceSequence referenceSequence = referenceSequenceDao.findByBusinessKey(referenceSequenceKey);
+            if (referenceSequence != null) {
+                referenceSequenceDao.remove(referenceSequence);
+            }
+        }
     }
 
     /**
@@ -125,12 +160,15 @@ public class AnalysisEjb {
      * @param name The reagent design name to add.
      * @param type The reagent type.
      */
-    public void addReagentDesign(@Nonnull String name, @Nonnull ReagentDesign.ReagentType type) {
+    public boolean addReagentDesign(@Nonnull String name, @Nonnull ReagentDesign.ReagentType type) {
         ReagentDesign foundDesign = reagentDesignDao.findByBusinessKey(name);
         if (foundDesign == null) {
             ReagentDesign reagentDesign = new ReagentDesign(name, type);
             reagentDesignDao.persist(reagentDesign);
+            return true;
         }
+
+        return false;
     }
 
     /**
@@ -138,7 +176,12 @@ public class AnalysisEjb {
      *
      * @param reagentDesigns multiple reagent designs can be removed at once.
      */
-    public void removeReagentDesign(@Nonnull Collection<ReagentDesign> reagentDesigns) {
-        reagentDesignDao.remove(reagentDesigns);
+    public void removeReagentDesigns(@Nonnull String... reagentDesignKeys) {
+        for (String reagentDesignKey : reagentDesignKeys) {
+            ReagentDesign reagentDesign = reagentDesignDao.findByBusinessKey(reagentDesignKey);
+            if (reagentDesign != null) {
+                reagentDesignDao.remove(reagentDesign);
+            }
+        }
     }
 }

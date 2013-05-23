@@ -1,13 +1,24 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.transfervis;
 
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.testng.Arquillian;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
+
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
 /**
  * Start a server that deploys the EJB
  */
-public class TransferEntityGrapherTest extends ContainerTest {
+public class TransferEntityGrapherTest extends Arquillian {
+
+    @Deployment
+    public static WebArchive buildMercuryWar() {
+        return DeploymentBuilder.buildMercuryWar(DEV, "dev");
+    }
+
     @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testRun() {
         try {

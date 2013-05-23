@@ -16,7 +16,7 @@ import java.util.List;
 @Stateful
 @LocalBean
 @RequestScoped
-public class AnalysisTypeDao extends GenericDao implements BusinessKeyFinder {
+public class AnalysisTypeDao extends GenericDao implements BusinessKeyFinder<AnalysisType> {
     public List<AnalysisType> findAll() {
         return findAll(AnalysisType.class);
     }

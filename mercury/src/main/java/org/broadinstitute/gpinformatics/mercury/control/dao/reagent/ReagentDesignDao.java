@@ -26,13 +26,12 @@ import javax.persistence.criteria.Root;
 import java.util.List;
 
 /**
- * Data Access for DesignedReagents
+ * Data Access for DesignedReagents.
  */
 @Stateful
 @LocalBean
 @RequestScoped
-public class ReagentDesignDao extends GenericDao implements BusinessKeyFinder {
-
+public class ReagentDesignDao extends GenericDao implements BusinessKeyFinder<ReagentDesign> {
     public List<ReagentDesign> findAll() {
         return super.findAll(ReagentDesign.class);
     }
@@ -47,6 +46,10 @@ public class ReagentDesignDao extends GenericDao implements BusinessKeyFinder {
 
         query.where(typePredicate);
         return getEntityManager().createQuery(query).getResultList();
+    }
+
+    public List<ReagentDesign> findAllCurrent() {
+        return super.findAll(ReagentDesign.class);
     }
 
     @Override

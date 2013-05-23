@@ -156,7 +156,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
                 editResearchProject = new ResearchProject();
             }
         }
-        if (StringUtils.isEmpty(editResearchProject.getReferenceSequenceKey())) {
+        if (StringUtils.isBlank(editResearchProject.getReferenceSequenceKey())) {
             editResearchProject.setReferenceSequenceKey(DEFAULT_REFERENCE_SEQUENCE);
         }
 
@@ -375,7 +375,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public Resolution projectHierarchyAwareAutocomplete() throws Exception {
         researchProject = getContext().getRequest().getParameter(RESEARCH_PROJECT_PARAMETER);
 
-        if (StringUtils.isEmpty(researchProject)) {
+        if (StringUtils.isBlank(researchProject)) {
             // Calling method when no project parameter is supplied, so just return full list.
             return projectAutocomplete();
         }
@@ -469,7 +469,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     }
 
    /**
-     * @return true if Save is a valid operation.c
+     * @return true if Save is a valid operation.
      */
     public boolean getCanSave() {
         // User must be logged into JIRA to create or edit a Research Project.

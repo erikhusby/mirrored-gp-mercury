@@ -1,27 +1,34 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.envers;
 
+import com.sun.xml.ws.developer.Stateful;
+import org.apache.commons.collections15.SortedBidiMap;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.infrastructure.datawh.ExtractTransform;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.RevInfo;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.RevInfo_;
 import org.hibernate.envers.AuditReader;
 import org.hibernate.envers.AuditReaderFactory;
+import org.hibernate.envers.exception.AuditException;
 import org.hibernate.envers.query.AuditEntity;
 import org.hibernate.envers.query.AuditQuery;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.context.RequestScoped;
 import javax.persistence.NoResultException;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
+import javax.persistence.Tuple;
+import javax.persistence.criteria.*;
 import java.util.*;
 
 /**
  * Access to Mercury AuditReader for data warehouse.
  */
-@ApplicationScoped
+@Stateful
+@RequestScoped
 public class AuditReaderDao extends GenericDao {
     private final long MSEC_IN_SEC = 1000L;
+    private static final Log logger = LogFactory.getLog(ExtractTransform.class);
 
     private AuditReader getAuditReader() {
         return AuditReaderFactory.get(getEntityManager());
@@ -32,9 +39,10 @@ public class AuditReaderDao extends GenericDao {
      *
      * @param startTimeSec     start of interval, in seconds
      * @param endTimeSec  end of interval, in seconds
+     * @return Map of rev info id and the rev's timestamp.
      * @throws IllegalArgumentException if params are not whole second values.
      */
-    public Collection<Long> fetchAuditIds(long startTimeSec, long endTimeSec) {
+    public SortedMap<Long, Date> fetchAuditIds(long startTimeSec, long endTimeSec) {
         Date startDate = new Date(startTimeSec * MSEC_IN_SEC);
         Date endDate = new Date(endTimeSec * MSEC_IN_SEC);
 
@@ -48,21 +56,25 @@ public class AuditReaderDao extends GenericDao {
         // can possibly leave the very most recent events to be picked up in the next etl.
 
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
-        CriteriaQuery<Long> criteriaQuery = criteriaBuilder.createQuery(Long.class);
+        CriteriaQuery<Tuple> criteriaQuery = criteriaBuilder.createTupleQuery();
         Root<RevInfo> root = criteriaQuery.from(RevInfo.class);
-        criteriaQuery.select(root.get(RevInfo_.revInfoId));
+        Path<Long> revId = root.get(RevInfo_.revInfoId);
+        Path<Date> revDate = root.get(RevInfo_.revDate);
+        criteriaQuery.multiselect(revId, revDate);
+        // Includes the start of interval but excludes the end of interval.
         Predicate predicate = criteriaBuilder.and(
                 criteriaBuilder.greaterThanOrEqualTo(root.get(RevInfo_.revDate), startDate),
                 criteriaBuilder.lessThan(root.get(RevInfo_.revDate), endDate));
         criteriaQuery.where(predicate);
 
+        SortedMap<Long, Date> map = new TreeMap<Long, Date>();
         try {
-            Collection<Long> revList = getEntityManager().createQuery(criteriaQuery).getResultList();
-            return revList;
-
-        } catch (NoResultException ignored) {
-            return Collections.EMPTY_LIST;
-        }
+            List<Tuple> list = getEntityManager().createQuery(criteriaQuery).getResultList();
+            for (Tuple tuple : list) {
+                map.put(tuple.get(revId), tuple.get(revDate));
+            }
+        } catch (NoResultException ignored) {}
+        return map;
     }
 
     /**
@@ -70,16 +82,16 @@ public class AuditReaderDao extends GenericDao {
      *
      * @param revIds      audit revision ids
      * @param entityClass the class of entity to process
+     * @param doChunks    process multiple revIds in sql IN clause
      */
-    public List<Object[]> fetchDataChanges(Collection<Long> revIds, Class entityClass) {
+    public List<Object[]> fetchDataChanges(Collection<Long> revIds, Class entityClass, boolean doChunks) {
         List<Object[]> dataChanges = new ArrayList<Object[]>();
 
         if (revIds == null || revIds.size() == 0) {
             return dataChanges;
         }
-        // TODO Splitterize
-        // Chunks revIds as necessary to limit sql "in" clause to 1000 elements.
-        final int IN_CLAUSE_LIMIT = 1000;
+        // Chunks revIds as necessary to limit sql "in" clause to 1000 elements, or 1 element if not chunking.
+        final int IN_CLAUSE_LIMIT = doChunks ? 1000 : 1;
         Collection<Long> sublist = new ArrayList<Long>();
         for (Long id : revIds) {
             sublist.add(id);
@@ -91,6 +103,14 @@ public class AuditReaderDao extends GenericDao {
                         .add(AuditEntity.revisionNumber().in(sublist));
                 try {
                     dataChanges.addAll(query.getResultList());
+                } catch (AuditException e) {
+                    if (doChunks) {
+                        // Retries sublist one rev at a time in order to skip the one causing problems.
+                        dataChanges.addAll(fetchDataChanges(sublist, entityClass, false));
+                    } else {
+                        // Log and ignore single rev id problem.
+                        logger.debug("Cannot query " + entityClass.getSimpleName() + " with audit rev " + id);
+                    }
                 } catch (NoResultException e) {
                     // Ignore, continue querying.
                 }

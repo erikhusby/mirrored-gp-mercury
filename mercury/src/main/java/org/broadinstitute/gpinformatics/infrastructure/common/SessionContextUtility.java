@@ -6,6 +6,7 @@ import org.jboss.weld.context.bound.BoundSessionContext;
 import javax.enterprise.context.RequestScoped;
 import javax.enterprise.inject.spi.BeanManager;
 import javax.inject.Inject;
+import java.io.Serializable;
 import java.util.HashMap;
 
 /**
@@ -13,9 +14,9 @@ import java.util.HashMap;
  * exists.  This is useful in cases such as JMS message handlers and EJB Timers, where we need to call code
  * that injects {@link org.broadinstitute.gpinformatics.mercury.presentation.UserBean}.
  */
-public class SessionContextUtility {
-
-    private final BoundSessionContext sessionContext;
+public class SessionContextUtility implements Serializable {
+    private static final long serialVersionUID = 20130517L;
+    protected final BoundSessionContext sessionContext;
     private final BeanManager beanManager;
 
     @Inject
