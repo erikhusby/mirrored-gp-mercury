@@ -42,15 +42,15 @@ public class BucketBean {
 
     private LabBatchEjb batchEjb;
 
-    private final static Log logger = LogFactory.getLog(BucketBean.class);
+    private static final Log logger = LogFactory.getLog(BucketBean.class);
 
     public BucketBean() {
     }
 
     @Inject
-    public BucketBean(LabEventFactory labEventFactoryIn, JiraService testjiraService, LabBatchEjb batchEjb) {
-        this.labEventFactory = labEventFactoryIn;
-        this.jiraService = testjiraService;
+    public BucketBean(LabEventFactory labEventFactory, JiraService jiraService, LabBatchEjb batchEjb) {
+        this.labEventFactory = labEventFactory;
+        this.jiraService = jiraService;
         this.batchEjb = batchEjb;
     }
 
@@ -122,13 +122,13 @@ public class BucketBean {
      */
     public void add(@Nonnull Collection<LabVessel> entriesToAdd, @Nonnull Bucket bucket,
                     @Nonnull String operator, @Nonnull String labEventLocation, LabEventType eventType,
-                    final String singlePdoBusinessKey) {
+                    String singlePdoBusinessKey) {
 
         List<BucketEntry> listOfNewEntries = new LinkedList<BucketEntry>();
         Map<String, Collection<LabVessel>> pdoKeyToVesselMap = new HashMap<String, Collection<LabVessel>>();
 
         for (LabVessel currVessel : entriesToAdd) {
-            String pdoBusinessKey = null;
+            String pdoBusinessKey;
             if (singlePdoBusinessKey == null) {
                 Collection<String> productOrderBusinessKeys = currVessel.getNearestProductOrders();
 
@@ -269,7 +269,7 @@ public class BucketBean {
      *                             prioritized item and work down the queue from there.
      * @param workingBucket        instance of a bucket entity associated with a workflow bucket step
      */
-    public void start(String operator, final int numberOfBatchSamples, @Nonnull Bucket workingBucket) {
+    public void start(String operator, int numberOfBatchSamples, @Nonnull Bucket workingBucket) {
         start(operator, numberOfBatchSamples, workingBucket, null);
     }
 
@@ -287,7 +287,7 @@ public class BucketBean {
      * @param workingBucket        instance of a bucket entity associated with a workflow bucket step
      */
     @DaoFree
-    public LabBatch startDBFree(@Nonnull String operator, final int numberOfBatchSamples,
+    public LabBatch startDBFree(@Nonnull String operator, int numberOfBatchSamples,
                                 @Nonnull Bucket workingBucket) {
         Set<BucketEntry> bucketEntrySet = buildBatchListBySize(numberOfBatchSamples, workingBucket);
         return startBucketDrain(bucketEntrySet, operator, LabEvent.UI_EVENT_LOCATION, true);
@@ -307,8 +307,8 @@ public class BucketBean {
      * @param workingBucket        instance of a bucket entity associated with a workflow bucket step
      * @param batchTicket          Key of the Jira Ticket to be associated with a batch for the vessels processed
      */
-    public void start(@Nonnull String operator, final int numberOfBatchSamples, @Nonnull Bucket workingBucket,
-                      final String batchTicket) {
+    public void start(@Nonnull String operator, int numberOfBatchSamples, @Nonnull Bucket workingBucket,
+                      String batchTicket) {
 
 //        LabBatch bucketBatch = null;
 //
@@ -547,7 +547,7 @@ public class BucketBean {
      * @return Set of all PDO business keys that are references in the collection of bucket entries being
      *         processed
      */
-    private Set<String> extractProductOrderSet(Collection<BucketEntry> entries) {
+    private static Set<String> extractProductOrderSet(Collection<BucketEntry> entries) {
         Set<String> pdoSet = new HashSet<String>();
 
         for (BucketEntry currEntry : entries) {
@@ -566,7 +566,7 @@ public class BucketBean {
      *
      * @return
      */
-    private Collection<LabVessel> extractPdoLabVessels(String pdo, Collection<BucketEntry> entries) {
+    private static Collection<LabVessel> extractPdoLabVessels(String pdo, Collection<BucketEntry> entries) {
         List<LabVessel> labVessels = new LinkedList<LabVessel>();
 
         for (BucketEntry currEntry : entries) {
