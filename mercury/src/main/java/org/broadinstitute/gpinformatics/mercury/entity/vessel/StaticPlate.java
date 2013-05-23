@@ -13,8 +13,6 @@ import java.io.Serializable;
 import java.util.*;
 
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.ContainerType.STATIC_PLATE;
-import static org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria.TraversalControl.ContinueTraversing;
-import static org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria.TraversalControl.StopTraversing;
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria.TraversalDirection.Ancestors;
 
 /**
@@ -194,37 +192,6 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
         return criteria.getResult();
     }
 
-    public static class NearestTubeAncestorsCriteria implements TransferTraverserCriteria {
-
-        private Set<LabVessel> tubes = new HashSet<LabVessel>();
-        private Set<VesselAndPosition> vesselAndPositions = new LinkedHashSet<VesselAndPosition>();
-
-        @Override
-        public TraversalControl evaluateVesselPreOrder(Context context) {
-            if (OrmUtil.proxySafeIsInstance(context.getLabVessel(), TwoDBarcodedTube.class)) {
-                tubes.add(context.getLabVessel());
-                vesselAndPositions.add(new VesselAndPosition(context.getLabVessel(), context.getVesselPosition()));
-                return StopTraversing;
-            } else {
-                return ContinueTraversing;
-            }
-        }
-
-        @Override
-        public void evaluateVesselInOrder(Context context) {}
-
-        @Override
-        public void evaluateVesselPostOrder(Context context) {}
-
-        public Set<LabVessel> getTubes() {
-            return tubes;
-        }
-
-        public Set<VesselAndPosition> getVesselAndPositions() {
-            return vesselAndPositions;
-        }
-    }
-
     /**
      * Returns a list of the most immediate tube ancestors for each well. The "distance" from this plate across upstream
      * plate transfers is not relevant; all upstream branches are traversed until either a tube is found or the branch
@@ -247,7 +214,8 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
         }
         return vesselAndPositions;
 */
-        NearestTubeAncestorsCriteria criteria = new NearestTubeAncestorsCriteria();
+        TransferTraverserCriteria.NearestTubeAncestorsCriteria
+                criteria = new TransferTraverserCriteria.NearestTubeAncestorsCriteria();
         applyCriteriaToAllWells(criteria);
         return new ArrayList<VesselAndPosition>(criteria.getVesselAndPositions());
     }
