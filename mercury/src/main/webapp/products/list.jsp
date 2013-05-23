@@ -9,18 +9,15 @@
 <stripes:layout-render name="/layout.jsp" pageTitle="Products" sectionTitle="List Products" showCreate="true">
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
-            $j(document).ready(function () {
-                $j('#productList').dataTable({
+            $j(document).ready(function() {
+                $j('#productList').dataTable( {
                     "oTableTools": ttExportDefines,
-                    "aaSorting": [
-                        [0, 'asc']
-                    ],
+                    "aaSorting": [[0,'asc']],
                     "aoColumns": [
                         {"bSortable": true, "sType": "title-string"},
                         {"bSortable": true},
                         {"bSortable": true},
-                        {"bSortable": true, "sType": "title-string"}
-                    ]
+                        {"bSortable": true, "sType" : "title-string"}]
                 })
             });
         </script>
@@ -42,9 +39,8 @@
             <c:forEach items="${actionBean.allProducts}" var="product">
                 <tr>
                     <td>
-                        <stripes:link beanclass="${actionBean.class.name}" event="view"
-                                      title="${product.businessKeyList}">
-                            <stripes:param name="product" value="${product.businessKeyList}"/>
+                        <stripes:link beanclass="${actionBean.class.name}" event="view" title="${product.businessKey}">
+                            <stripes:param name="product" value="${product.businessKey}"/>
                             ${product.partNumber}
                         </stripes:link>
                     </td>

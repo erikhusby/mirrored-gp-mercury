@@ -12,22 +12,22 @@
             $j(document).ready(function () {
 
                 $j('#positiveControlList').dataTable({
-                    "oTableTools": ttExportDefines,
-                    "aaSorting": [
+                    "oTableTools":ttExportDefines,
+                    "aaSorting":[
                         [1, 'desc']
                     ],
-                    "aoColumns": [
-                        {"bSortable": true}//Collaborator Sample ID
+                    "aoColumns":[
+                        {"bSortable":true}//Collaborator Sample ID
                     ]
                 });
 
                 $j('#negativeControlList').dataTable({
-                    "oTableTools": ttExportDefines,
-                    "aaSorting": [
+                    "oTableTools":ttExportDefines,
+                    "aaSorting":[
                         [1, 'desc']
                     ],
-                    "aoColumns": [
-                        {"bSortable": true}//Collaborator Sample ID
+                    "aoColumns":[
+                        {"bSortable":true}//Collaborator Sample ID
                     ]
                 });
 
@@ -63,8 +63,8 @@
                     <td>
                         <stripes:link beanclass="${actionBean.class.name}" event="view">
                             <stripes:param name="${actionBean.controlParameter}"
-                                           value="${positiveControl.businessKeyList}"/>
-                            ${positiveControl.businessKeyList}
+                                           value="${positiveControl.businessKey}"/>
+                            ${positiveControl.businessKey}
                         </stripes:link>
                     </td>
                 </tr>
@@ -88,8 +88,8 @@
                     <td>
                         <stripes:link beanclass="${actionBean.class.name}" event="view">
                             <stripes:param name="${actionBean.controlParameter}"
-                                           value="${negativeControl.businessKeyList}"/>
-                            ${negativeControl.businessKeyList}
+                                           value="${negativeControl.businessKey}"/>
+                            ${negativeControl.businessKey}
                         </stripes:link>
                     </td>
                 </tr>

@@ -7,30 +7,30 @@
     <script type="text/javascript">
         $j(document).ready(function () {
             $j('#pdoListView').dataTable({
-                "oTableTools": ttExportDefines,
-                "aaSorting": [
+                "oTableTools":ttExportDefines,
+                "aaSorting":[
                     [1, 'asc']
                 ],
-                "aoColumns": [
-                    {"bSortable": false},
-                    {"bSortable": true},
-                    {"bSortable": true},
-                    {"bSortable": true},
-                    {"bSortable": true, "sType": "numeric"},
-                    {"bSortable": true},
-                    {"bSortable": true, "sType": "date"}
+                "aoColumns":[
+                    {"bSortable":false},
+                    {"bSortable":true},
+                    {"bSortable":true},
+                    {"bSortable":true},
+                    {"bSortable":true, "sType":"numeric"},
+                    {"bSortable":true},
+                    {"bSortable":true, "sType":"date"}
                 ]
             });
 
             if (${fn:length(pdos) == 1}) {
-                showPDOSampleHistory('${pdos[0].businessKeyList}');
+                showPDOSampleHistory('${pdos[0].businessKey}');
             }
 
         });
 
         function showPDOSampleHistory(label) {
             $j('#viewerDiv').html("<img src=\"${ctxpath}/images/spinner.gif\"/>");
-            $j('#viewerDiv').load('${ctxpath}/view/pdoSampleHistory.action?businessKeyList=' + label);
+            $j('#viewerDiv').load('${ctxpath}/view/pdoSampleHistory.action?businessKey=' + label);
             $j('#viewerDiv').show();
         }
 
@@ -51,21 +51,21 @@
         <c:forEach items="${pdos}" var="pdo">
             <tr>
                 <td>
-                    <a href="javascript:showPDOSampleHistory('${pdo.businessKeyList}')">
+                    <a href="javascript:showPDOSampleHistory('${pdo.businessKey}')">
                         <img width="30" height="30" name="" title="show sample history"
                              src="${ctxpath}/images/list.png"/>
                     </a>
                 </td>
                 <td>
-                    <a href="${ctxpath}/search/all.action?search=&searchKey=${pdo.businessKeyList}">
-                            ${pdo.businessKeyList}
+                    <a href="${ctxpath}/search/all.action?search=&searchKey=${pdo.businessKey}">
+                            ${pdo.businessKey}
                     </a>
                 </td>
                 <td>
                     <stripes:link
                             beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"
                             event="view" class="external">
-                        <stripes:param name="productOrder" value="${pdo.businessKeyList}"/>
+                        <stripes:param name="productOrder" value="${pdo.businessKey}"/>
                         ${pdo.title}
                     </stripes:link>
                 </td>

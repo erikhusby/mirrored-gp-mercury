@@ -25,9 +25,7 @@
     <#list validationErrors as validationError>
     <tr>
         <td>${validationError.sampleInstance.startingSample.sampleKey}</td>
-        <td>
-            <a href="${(validationError.sampleInstance.labBatch.jiraTicket.browserUrl)!}">${(validationError.sampleInstance.labBatch.batchName)!''}</a>
-        </td>
+        <td><a href="${(validationError.sampleInstance.labBatch.jiraTicket.browserUrl)!}">${(validationError.sampleInstance.labBatch.batchName)!''}</a></td>
         <td>
             <#list validationError.errors as error>${error.message}
                 <#list error.expectedEventNames as expectedEventName>${expectedEventName} </#list>
@@ -38,11 +36,8 @@
                 <#list error.actualEventNames as actualEventName>${actualEventName} </#list>
             </#list>
         </td>
-        <td><a href="${validationError.linkToProductOrder}">${(validationError.productOrder.businessKeyList)!''}</a>
-        </td>
-        <td>
-            <a href="${validationError.linkToResearchProject}">${(validationError.productOrder.researchProject.businessKeyList!'')}</a>
-        </td>
+        <td><a href="${validationError.linkToProductOrder}">${(validationError.productOrder.businessKey)!''}</a></td>
+        <td><a href="${validationError.linkToResearchProject}">${(validationError.productOrder.researchProject.businessKey!'')}</a></td>
     </tr>
     </#list>
     </tbody>

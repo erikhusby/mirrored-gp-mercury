@@ -7,48 +7,48 @@
 
             if (${showCheckboxes}) {
                 $j('#batchListView').dataTable({
-                    "oTableTools": ttExportDefines,
-                    "aaSorting": [
+                    "oTableTools":ttExportDefines,
+                    "aaSorting":[
                         [2, 'asc']
                     ],
-                    "aoColumns": [
-                        {"bSortable": false},
-                        {"bSortable": false},
-                        {"bSortable": true},
-                        {"bSortable": true},
-                        {"bSortable": true},
-                        {"bSortable": true},
-                        {"bSortable": true},
-                        {"bSortable": true},
-                        {"bSortable": true, "sType": "date"},
-                        {"bSortable": true, "sType": "date"}
+                    "aoColumns":[
+                        {"bSortable":false},
+                        {"bSortable":false},
+                        {"bSortable":true},
+                        {"bSortable":true},
+                        {"bSortable":true},
+                        {"bSortable":true},
+                        {"bSortable":true},
+                        {"bSortable":true},
+                        {"bSortable":true, "sType":"date"},
+                        {"bSortable":true, "sType":"date"}
                     ]
                 });
             }
             else {
                 $j('#batchListView').dataTable({
-                    "oTableTools": ttExportDefines,
-                    "aaSorting": [
+                    "oTableTools":ttExportDefines,
+                    "aaSorting":[
                         [1, 'asc']
                     ],
-                    "aoColumns": [
-                        {"bSortable": false},
-                        {"bSortable": true},
-                        {"bSortable": true},
-                        {"bSortable": true},
-                        {"bSortable": true},
-                        {"bSortable": true},
-                        {"bSortable": true},
-                        {"bSortable": true, "sType": "date"},
-                        {"bSortable": true, "sType": "date"}
+                    "aoColumns":[
+                        {"bSortable":false},
+                        {"bSortable":true},
+                        {"bSortable":true},
+                        {"bSortable":true},
+                        {"bSortable":true},
+                        {"bSortable":true},
+                        {"bSortable":true},
+                        {"bSortable":true, "sType":"date"},
+                        {"bSortable":true, "sType":"date"}
                     ]
                 });
             }
 
             $j('.batch-checkbox').enableCheckboxRangeSelection({
-                checkAllClass: 'batch-checkAll',
-                countDisplayClass: 'batch-checkedCount',
-                checkboxClass: 'batch-checkbox'});
+                checkAllClass:'batch-checkAll',
+                countDisplayClass:'batch-checkedCount',
+                checkboxClass:'batch-checkbox'});
         });
         function showPlasticHistoryVisualizer(batchKey) {
             $j('#plasticViewDiv').html("<img src=\"${ctxpath}/images/spinner.gif\"/>");
@@ -56,9 +56,9 @@
 
             // Dynamically created table needs ajax load to allow calling into script in plastic_history_list.jsp
             $j.ajax({
-                url: "${ctxpath}/view/plasticHistoryView.action?batchKey=" + batchKey,
-                dataType: 'html',
-                success: function (plasticViewHtml) {
+                url:"${ctxpath}/view/plasticHistoryView.action?batchKey=" + batchKey,
+                dataType:'html',
+                success:function (plasticViewHtml) {
                     $j('#plasticViewDiv').html(plasticViewHtml);
                     $j('#plasticViewDiv').show();
                     plasticHistoryListRedraw();
@@ -97,19 +97,19 @@
                     <td>
 
                         <stripes:checkbox class="batch-checkbox" name="selectedBatchLabels"
-                                          value="${batch.businessKeyList}"/>
+                                          value="${batch.businessKey}"/>
 
                     </td>
                 </c:if>
                 <td>
-                    <a href="javascript:showPlasticHistoryVisualizer('${batch.businessKeyList}')">
+                    <a href="javascript:showPlasticHistoryVisualizer('${batch.businessKey}')">
                         <img width="30" height="30" name="" title="show plastic history view"
                              src="${ctxpath}/images/plate.png"/>
                     </a>
                 </td>
                 <td>
-                    <a href="${ctxpath}/search/all.action?search=&searchKey=${batch.businessKeyList}">
-                            ${batch.businessKeyList}
+                    <a href="${ctxpath}/search/all.action?search=&searchKey=${batch.businessKey}">
+                            ${batch.businessKey}
                     </a>
                 </td>
                 <td>
