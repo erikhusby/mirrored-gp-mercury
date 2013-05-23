@@ -514,11 +514,11 @@ public class BucketBean {
      * @param reason  captures the information about why this entry is being removed from the bucket
      */
     private void jiraRemovalUpdate(@Nonnull Collection<BucketEntry> entries, String reason) {
-        Map<String, Collection<BucketEntry>> pdoToEntries = new HashMap<>();
+        Map<String, Collection<BucketEntry>> pdoToEntries = new HashMap<String, Collection<BucketEntry>>();
         for (BucketEntry entry : entries) {
             Collection<BucketEntry> pdoEntries = pdoToEntries.get(entry.getPoBusinessKey());
             if (pdoEntries == null) {
-                pdoEntries = new ArrayList<>();
+                pdoEntries = new ArrayList<BucketEntry>();
                 pdoToEntries.put(entry.getPoBusinessKey(), pdoEntries);
             }
             pdoEntries.add(entry);

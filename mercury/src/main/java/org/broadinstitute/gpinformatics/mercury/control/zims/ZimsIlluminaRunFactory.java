@@ -84,7 +84,7 @@ public class ZimsIlluminaRunFactory {
         }
 
         List<Control> activeControls = controlDao.findAllActive();
-        Map<String, Control> mapNameToControl = new HashMap<>();
+        Map<String, Control> mapNameToControl = new HashMap<String, Control>();
         for (Control activeControl : activeControls) {
             mapNameToControl.put(activeControl.getCollaboratorSampleId(), activeControl);
         }
