@@ -126,10 +126,10 @@ public class SequencingTemplateFactory {
         SequencingTemplateType sequencingTemplate = new SequencingTemplateType();
         List<SequencingTemplateLaneType> lanes = new ArrayList<SequencingTemplateLaneType>();
 
-        for (VesselPosition vesselPosition : sourceVessels.keySet()) {
-            LabVessel sourceVessel = sourceVessels.get(vesselPosition);
+        for (Map.Entry<VesselPosition, LabVessel> vesselPositionMap : sourceVessels.entrySet()) {
+            LabVessel sourceVessel = vesselPositionMap.getValue();
             SequencingTemplateLaneType lane = new SequencingTemplateLaneType();
-            lane.setLaneName(vesselPosition.name());
+            lane.setLaneName(vesselPositionMap.getKey().name());
             lane.setLoadingVesselLabel(sourceVessel.getLabel());
 
             for (MolecularIndexReagent molecularIndexReagent : flowcell.getIndexes()) {
