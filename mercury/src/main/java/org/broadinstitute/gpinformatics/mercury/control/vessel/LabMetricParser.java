@@ -37,8 +37,9 @@ public class LabMetricParser extends AbstractSpreadsheetParser {
 
     /**
      *
-     * Initial point of contact for the parser.  parseMetrics will begin the process of reading in and parsing out
+     * Initial point of contact for the parser.  processUploadFile will begin the process of reading in and parsing out
      * the lab Metrics based on a given metric type.
+     *
      *
      * @param inputStream stream representation of a spreadsheet file uploaded by a user
      * @param metricType type of metrics to be parsed
@@ -46,7 +47,7 @@ public class LabMetricParser extends AbstractSpreadsheetParser {
      * @throws InvalidFormatException
      * @throws ValidationException
      */
-    public void parseMetrics(InputStream inputStream, LabMetric.MetricType metricType)
+    public Set<LabMetric> processUploadFile(InputStream inputStream, LabMetric.MetricType metricType)
             throws IOException, InvalidFormatException, ValidationException {
         this.metricType = metricType;
         processUploadFile(inputStream);
@@ -54,7 +55,7 @@ public class LabMetricParser extends AbstractSpreadsheetParser {
             throw new ValidationException("Validation Errors were found while processing quant data",
                     validationMessages);
         }
-
+          return metrics;
     }
 
     @Override
@@ -127,11 +128,4 @@ public class LabMetricParser extends AbstractSpreadsheetParser {
 
     }
 
-    /**
-     * Accessor for the Metrics that were derived from the Lab Metrics upload file
-     * @return a Set of newly constructed LabMetric entities based on information in an upload file
-     */
-    public Set<LabMetric> getMetrics() {
-        return metrics;
-    }
 }

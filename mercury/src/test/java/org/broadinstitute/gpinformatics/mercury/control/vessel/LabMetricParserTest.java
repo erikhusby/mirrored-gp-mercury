@@ -110,9 +110,7 @@ public class LabMetricParserTest extends ContainerTest {
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testQuantParser() throws InvalidFormatException, IOException, ValidationException {
 
-        parser.parseMetrics(resourceFile, LabMetric.MetricType.ECO_QPCR);
-
-        Collection<LabMetric> createdMetrics = parser.getMetrics();
+        Collection<LabMetric> createdMetrics = parser.processUploadFile(resourceFile, LabMetric.MetricType.ECO_QPCR);
 
         Assert.assertEquals(createdMetrics.size(), barcodeToQuant.size());
 

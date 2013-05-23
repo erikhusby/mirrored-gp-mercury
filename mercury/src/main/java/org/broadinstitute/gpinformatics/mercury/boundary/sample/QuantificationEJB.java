@@ -28,8 +28,8 @@ public class QuantificationEJB {
             IOException, InvalidFormatException {
         try {
             List<String> validationErrors = new ArrayList<String>();
-            labMetricParser.parseMetrics(quantSpreadsheet, metricType);
-            for (LabMetric metric : labMetricParser.getMetrics()) {
+            Set<LabMetric> labMetrics = labMetricParser.processUploadFile(quantSpreadsheet, metricType);
+            for (LabMetric metric : labMetrics) {
                 LabVessel labVessel = metric.getLabVessel();
                 if (labVessel != null) {
                     for (LabMetric persistedMetric : labVessel.getMetrics()) {
@@ -45,7 +45,7 @@ public class QuantificationEJB {
             if(validationErrors.size() > 0){
                throw new ValidationException("Error during upload validation : ", validationErrors);
             }
-            return labMetricParser.getMetrics();
+            return labMetrics;
         } catch (IllegalArgumentException e) {
             throw new ValidationException(e);
         }
