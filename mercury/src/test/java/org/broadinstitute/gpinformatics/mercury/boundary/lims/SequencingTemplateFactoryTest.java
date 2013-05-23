@@ -4,12 +4,12 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateType;
 import org.testng.annotations.Test;
 
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -29,7 +29,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 @Test(groups = DATABASE_FREE)
 public class SequencingTemplateFactoryTest {
 
-    private UnifiedLoader factory = new UnifiedLoader();
+    private SequencingTemplateFactory factory = new SequencingTemplateFactory();
 
     public void testGetSequencingTemplate() {
         TwoDBarcodedTube denatureTube = new TwoDBarcodedTube("denature_tube_barcode");
@@ -39,11 +39,13 @@ public class SequencingTemplateFactoryTest {
                         new LabEvent(DENATURE_TO_FLOWCELL_TRANSFER, new Date(),
                                 "SequencingTemplateFactoryTest#testGetSequencingTemplate", 1L, 1L));
 
-        Map<VesselPosition, LabVessel> sourceTubesByLane = new HashMap<VesselPosition, LabVessel>();
-        sourceTubesByLane.put(VesselPosition.LANE1, denatureTube);
-        sourceTubesByLane.put(VesselPosition.LANE2, denatureTube);
-        SequencingTemplateType template = factory.getSequencingTemplate(flowcell, sourceTubesByLane);
+        final List<VesselPosition> vesselPositions = SBSSection.ALL2.getWells();
+        Map<VesselPosition, LabVessel> labVessels=new HashMap<VesselPosition, LabVessel>();
+        for (VesselPosition vesselPosition : vesselPositions) {
+            labVessels.put(vesselPosition,denatureTube);
+        }
 
+        SequencingTemplateType template = factory.getSequencingTemplate(flowcell, labVessels);
         assertThat(template.getBarcode(), equalTo("flowcell_barcode"));
         assertThat(template.getLanes().size(), is(2));
     }
