@@ -1729,4 +1729,19 @@ END;
         </createTable>
     </changeSet>
 
+    <changeSet id="GPLIM-1328-5" author="hrafal">
+        <dropPrimaryKey schemaName="MERCURY" tableName="ANALYSIS_TYPE_AUD"/>
+        <addPrimaryKey schemaName="MERCURY" tableName="ANALYSIS_TYPE_AUD"
+                   constraintName="PK_ANALYSIS_TYPE_AUD"
+                   columnNames="rev, ANALYSIS_TYPE_ID"/>
+        <dropPrimaryKey schemaName="MERCURY" tableName="ALIGNER_AUD"/>
+        <addPrimaryKey schemaName="MERCURY" tableName="ALIGNER_AUD"
+                       constraintName="PK_ALIGNER_AUD"
+                       columnNames="rev, ALIGNER_ID"/>
+        <dropPrimaryKey schemaName="MERCURY" tableName="REFERENCE_SEQUENCE_AUD"/>
+        <addPrimaryKey schemaName="MERCURY" tableName="REFERENCE_SEQUENCE_AUD"
+                       constraintName="PK_REFERENCE_SEQUENCE_AUD"
+                       columnNames="rev, SEQUENCE_ID"/>
+    </changeSet>
+
 </databaseChangeLog>

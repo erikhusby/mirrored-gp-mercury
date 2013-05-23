@@ -1,0 +1,175 @@
+package org.broadinstitute.gpinformatics.mercury.boundary.analysis;
+
+import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb;
+import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.withdb.AnalysisDataTestFactory;
+import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AlignerDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AnalysisTypeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.ReferenceSequenceDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
+import org.broadinstitute.gpinformatics.mercury.entity.analysis.Aligner;
+import org.broadinstitute.gpinformatics.mercury.entity.analysis.AnalysisType;
+import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReferenceSequence;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
+import org.jboss.arquillian.testng.Arquillian;
+import org.testng.Assert;
+import org.testng.annotations.Test;
+
+import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.Collection;
+
+/**
+ * This test class works the analysis ejb and the associated DAOs to cover the kinds of queries and saves that
+ * will typically be perormed.
+ */
+@Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
+public class AnalysisEjbTest extends ContainerTest {
+
+    @Inject
+    private AnalysisEjb analysisEjb;
+
+    @Inject
+    private AlignerDao alignerDao;
+
+    @Inject
+    private ReagentDesignDao reagentDesignDao;
+
+    @Inject
+    private ReferenceSequenceDao referenceSequenceDao;
+
+    @Inject
+    private AnalysisTypeDao analysisTypeDao;
+
+    @Test(enabled = true)
+    public void testAligner() throws Exception {
+
+        // create and save some random aligners.
+        Aligner aligner1 = AnalysisDataTestFactory.createTestAligner();
+        Aligner aligner2 = AnalysisDataTestFactory.createTestAligner();
+        Aligner aligner3 = AnalysisDataTestFactory.createTestAligner();
+        Aligner aligner4 = AnalysisDataTestFactory.createTestAligner();
+        alignerDao.persist(aligner1);
+        alignerDao.persist(aligner2);
+        alignerDao.persist(aligner3);
+        alignerDao.persist(aligner4);
+
+        boolean added = analysisEjb.addAligner(aligner1.getName());
+        Assert.assertFalse(added, "Creating an Aligner with a duplicate name should not add anything");
+
+        // Remove all the aligners.
+        analysisEjb.removeAligners(
+            aligner1.getBusinessKey(), aligner2.getBusinessKey(), aligner3.getBusinessKey(), aligner4.getBusinessKey());
+
+        // should be able to add the aligner now.
+        added = analysisEjb.addAligner(aligner1.getName());
+        Assert.assertTrue(added, "Aligner should be added here");
+
+        // remove this one.
+        analysisEjb.removeAligners(aligner1.getBusinessKey());
+
+        // Now find the aligner and then remove it and try to find it again.
+        Aligner foundAligner = alignerDao.findByBusinessKey(aligner1.getBusinessKey());
+        Assert.assertNull(foundAligner, "Now the aligner should NOT be found");
+    }
+
+    @Test(enabled = true)
+    public void testAddAnalysisType() throws Exception {
+
+        // create and save some random analysis types.
+        AnalysisType analysisType1 = AnalysisDataTestFactory.createTestAnalysisType();
+        AnalysisType analysisType2 = AnalysisDataTestFactory.createTestAnalysisType();
+        AnalysisType analysisType3 = AnalysisDataTestFactory.createTestAnalysisType();
+        AnalysisType analysisType4 = AnalysisDataTestFactory.createTestAnalysisType();
+        analysisTypeDao.persist(analysisType1);
+        analysisTypeDao.persist(analysisType2);
+        analysisTypeDao.persist(analysisType3);
+        analysisTypeDao.persist(analysisType4);
+
+        boolean added = analysisEjb.addAnalysisType(analysisType1.getName());
+        Assert.assertFalse(added, "Creating an Analysis Type with a duplicate name should not add anything");
+
+        // Remove all the analysis types.
+        analysisEjb.removeAnalysisTypes(
+                analysisType1.getBusinessKey(), analysisType2.getBusinessKey(),
+                analysisType3.getBusinessKey(), analysisType4.getBusinessKey());
+
+        // should be able to add the analysis type now.
+        added = analysisEjb.addAnalysisType(analysisType1.getName());
+        Assert.assertTrue(added, "Analysis Type should be added here");
+
+        // remove this one.
+        analysisEjb.removeAnalysisTypes(analysisType1.getBusinessKey());
+
+        // Now find the type and then remove it and try to find it again.
+        AnalysisType foundType = analysisTypeDao.findByBusinessKey(analysisType1.getBusinessKey());
+        Assert.assertNull(foundType, "Now the type should NOT be found");
+    }
+
+    @Test(enabled = true)
+    public void testAddReferenceSequence() throws Exception {
+
+        // create and save some random reference sequences.
+        ReferenceSequence referenceSequence1 = AnalysisDataTestFactory.createTestReferenceSequence(true);
+        ReferenceSequence referenceSequence2 = AnalysisDataTestFactory.createTestReferenceSequence(false);
+        ReferenceSequence referenceSequence3 = AnalysisDataTestFactory.createTestReferenceSequence(false);
+        ReferenceSequence referenceSequence4 = AnalysisDataTestFactory.createTestReferenceSequence(false);
+        alignerDao.persist(referenceSequence1);
+        alignerDao.persist(referenceSequence2);
+        alignerDao.persist(referenceSequence3);
+        alignerDao.persist(referenceSequence4);
+
+        boolean added = analysisEjb.addReferenceSequence(referenceSequence1.getName(), referenceSequence1.getVersion(), true);
+        Assert.assertFalse(added, "Creating a reference sequence with a duplicate name should not add anything");
+
+        // Remove all the reference sequences.
+        analysisEjb.removeReferenceSequences(
+                referenceSequence1.getBusinessKey(), referenceSequence2.getBusinessKey(),
+                referenceSequence3.getBusinessKey(), referenceSequence4.getBusinessKey());
+
+        // should be able to add the reference sequence now.
+        added = analysisEjb.addReferenceSequence(referenceSequence1.getName(), referenceSequence1.getVersion(), true);
+        Assert.assertTrue(added, "Reference Sequence should be added here");
+
+        // remove this one.
+        analysisEjb.removeReferenceSequences(referenceSequence1.getBusinessKey());
+
+        // Now find the sequence and then remove it and try to find it again.
+        ReferenceSequence foundSequence = referenceSequenceDao.findByBusinessKey(referenceSequence1.getBusinessKey());
+        Assert.assertNull(foundSequence, "Now the sequence should NOT be found");
+    }
+
+    @Test(enabled = true)
+    public void testAddReagentDesign() throws Exception {
+
+        // create and save some random baits.
+        ReagentDesign reagentDesign1 = AnalysisDataTestFactory.createTestReagentDesign(ReagentDesign.ReagentType.BAIT);
+        ReagentDesign reagentDesign2 = AnalysisDataTestFactory.createTestReagentDesign(ReagentDesign.ReagentType.BAIT);
+        ReagentDesign reagentDesign3 = AnalysisDataTestFactory.createTestReagentDesign(ReagentDesign.ReagentType.BAIT);
+        ReagentDesign reagentDesign4 = AnalysisDataTestFactory.createTestReagentDesign(ReagentDesign.ReagentType.BAIT);
+        alignerDao.persist(reagentDesign1);
+        alignerDao.persist(reagentDesign2);
+        alignerDao.persist(reagentDesign3);
+        alignerDao.persist(reagentDesign4);
+
+        boolean added = analysisEjb.addReagentDesign(reagentDesign1.getName(), ReagentDesign.ReagentType.BAIT);
+        Assert.assertFalse(added, "Creating a bait with a duplicate name should not add anything");
+
+        // Remove all the baits.
+        analysisEjb.removeReagentDesigns(
+                reagentDesign1.getBusinessKey(), reagentDesign2.getBusinessKey(),
+                reagentDesign3.getBusinessKey(), reagentDesign4.getBusinessKey());
+
+        // should be able to add the bait now.
+        added = analysisEjb.addReagentDesign(reagentDesign1.getName(), ReagentDesign.ReagentType.BAIT);
+        Assert.assertTrue(added, "Bait should be added here");
+
+        // remove this one.
+        analysisEjb.removeReagentDesigns(reagentDesign1.getBusinessKey());
+
+        // Now find the bait and then remove it and try to find it again.
+        ReagentDesign foundDesign = reagentDesignDao.findByBusinessKey(reagentDesign1.getBusinessKey());
+        Assert.assertNull(foundDesign, "Now the bait should NOT be found");
+    }
+}

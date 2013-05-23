@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReferenceSequenc
 import javax.ejb.LocalBean;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
+import javax.persistence.NoResultException;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
@@ -46,6 +47,9 @@ public class ReferenceSequenceDao extends GenericDao implements BusinessKeyFinde
     @Override
     public ReferenceSequence findByBusinessKey(String businessKey) {
         String[] values = businessKey.split("\\|");
+        if (values.length != 2) {
+            throw new IllegalArgumentException("Reference Sequence business key must only contain a name and a version: ");
+        }
 
         CriteriaBuilder criteriaBuilder = getCriteriaBuilder();
         final CriteriaQuery<ReferenceSequence> query = criteriaBuilder.createQuery(ReferenceSequence.class);
@@ -54,6 +58,12 @@ public class ReferenceSequenceDao extends GenericDao implements BusinessKeyFinde
         Predicate versionPredicate = criteriaBuilder.equal(root.get(ReferenceSequence_.version), values[1]);
 
         query.where(criteriaBuilder.and(namePredicate, versionPredicate));
-        return getEntityManager().createQuery(query).getSingleResult();
+
+        try {
+            return getEntityManager().createQuery(query).getSingleResult();
+        } catch (NoResultException exception) {
+            // return null if there is no entity
+            return null;
+        }
     }
 }
