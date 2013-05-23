@@ -27,10 +27,10 @@ import java.util.List;
 @UrlBinding(value = "/view/analysisFields.action")
 public class ManageAnalysisFieldsActionBean extends CoreActionBean {
 
-    public static final String MANAGE_ALIGNER_PAGE = "/analysis/manageAligners.jsp";
-    public static final String MANAGE_ANALYSIS_TYPE_PAGE = "/analysis/manageAnalysisTypes.jsp";
-    public static final String MANAGE_BAIT_PAGE = "/analysis/manageBaits.jsp";
-    public static final String MANAGE_REFERENCE_SEQUENCE_PAGE = "/analysis/manageReferenceSequences.jsp";
+    public static final String MANAGE_ALIGNER_PAGE = "/analysis/manage_aligners.jsp";
+    public static final String MANAGE_ANALYSIS_TYPE_PAGE = "/analysis/manage_analysis_types.jsp";
+    public static final String MANAGE_BAIT_PAGE = "/analysis/manage_baits.jsp";
+    public static final String MANAGE_REFERENCE_SEQUENCE_PAGE = "/analysis/manage_reference_sequences.jsp";
 
     @Inject
     AnalysisEjb analysisEjb;
@@ -48,13 +48,13 @@ public class ManageAnalysisFieldsActionBean extends CoreActionBean {
     private List<ReagentDesign> reagentDesignList;
     private List<ReferenceSequence> referenceSequenceList;
 
-    @Validate(required = true, on = {"RemoveReferenceSequence", "RemoveAligner"})
+    @Validate(required = true, on = {"RemoveReferenceSequence", "RemoveAligner", "RemoveAnalysisType"})
     private String businessKey;
 
     /**
      * The variables below are used for adding a new analysis field.
      */
-    @Validate(required = true, on = {"AddReferenceSequence", "AddAligner"})
+    @Validate(required = true, on = {"AddReferenceSequence", "AddAligner", "AddAnalysisType"})
     private String newName;
     @Validate(required = true, on = {"AddReferenceSequence"})
     private String newVersion;
@@ -87,7 +87,7 @@ public class ManageAnalysisFieldsActionBean extends CoreActionBean {
         return alignerList;
     }
 
-    public List<AnalysisType> getAnalysisType() {
+    public List<AnalysisType> getAnalysisTypeList() {
         return analysisTypeList;
     }
 
@@ -113,6 +113,25 @@ public class ManageAnalysisFieldsActionBean extends CoreActionBean {
         analysisEjb.removeAligners(businessKey);
 
         return showAligner();
+    }
+
+    /**
+     * Method used to add a new analysis type field.
+     */
+    @HandlesEvent("AddAnalysisType")
+    public Resolution addAnalysisType() {
+
+        analysisEjb.addAnalysisType(newName);
+
+        return showAnalysisType();
+    }
+
+    @HandlesEvent("RemoveAnalysisType")
+    public Resolution removeAnalysisType() {
+
+        analysisEjb.removeAnalysisTypes(businessKey);
+
+        return showAnalysisType();
     }
 
     /**
