@@ -173,7 +173,7 @@ public class AnalysisEjbTest extends ContainerTest {
         reagentDesignDao.persist(reagentDesign4);
 
         boolean added = analysisEjb.addReagentDesign(reagentDesign1.getName(), ReagentDesign.ReagentType.BAIT);
-        Assert.assertTrue(added, "Creating a bait with a duplicate name should not add anything");
+        Assert.assertFalse(added, "Creating a bait with a duplicate name should not add anything");
 
         // Remove all the baits.
         int deleteCount = analysisEjb.removeReagentDesigns(
