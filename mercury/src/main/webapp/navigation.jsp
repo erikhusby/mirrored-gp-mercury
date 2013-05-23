@@ -128,9 +128,11 @@
                     <a id="adminNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span
                             class="icon-cog"></span> Admin <b class="caret"></b></a>
                     <ul class="dropdown-menu" role="menu">
-                        <li><stripes:link
-                                beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.CreateBatchActionBean"
-                                event="startBatch">Create Batch</stripes:link></li>
+                        <security:authorizeBlock roles="<%= roles(Developer) %>">
+                            <li><stripes:link
+                                    beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.CreateBatchActionBean"
+                                    event="startBatch">Create Batch</stripes:link></li>
+                        </security:authorizeBlock>
                         <li><stripes:link
                                 beanclass="org.broadinstitute.gpinformatics.mercury.presentation.analysis.ManageAnalysisFieldsActionBean"
                                 event="showAligner">Manage Aligners</stripes:link></li>
