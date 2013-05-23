@@ -36,123 +36,147 @@ public class AnalysisEjb {
     private ReferenceSequenceDao referenceSequenceDao;
 
     /**
-     * Add an aligner.
+     * Add and return the newly created {@link Aligner} or have the existing one returned.
      *
-     * @param alignerName The name of the aligner to create.
+     * @param alignerName The name of the {@link Aligner} to create.
+     * @return the new or existing {@link Aligner}
      */
-    public boolean addAligner(@Nonnull String alignerName) {
-        Aligner foundAligner = alignerDao.findByBusinessKey(alignerName);
-        if (foundAligner == null) {
+    public Aligner addAligner(@Nonnull String alignerName) {
+        Aligner aligner = alignerDao.findByBusinessKey(alignerName);
+        if (aligner == null) {
             alignerDao.persist(new Aligner(alignerName));
-            return true;
         }
 
-        return false;
+        return aligner;
     }
 
     /**
-     * Remove aligner.
+     * Remove a {@link Collection} of aligners from the database.
      *
-     * @param aligners multiple aligners can be removed at once.
+     * @param alignerKeys a collection of aligners to delete
+     * @return the number of {@link Aligner}s that were deleted
      */
-    public void removeAligners(@Nonnull String... alignerKeys) {
+    public int removeAligners(@Nonnull String... alignerKeys) {
+        int deleteCount = 0;
         for (String alignerKey : alignerKeys) {
             Aligner aligner = alignerDao.findByBusinessKey(alignerKey);
             if (alignerDao != null) {
                 alignerDao.remove(aligner);
+                deleteCount++;
             }
         }
+
+        return deleteCount;
     }
 
     /**
-     * Add a new analysis type.
+     * Add and return the newly created {@link AnalysisType} or have the existing one returned.
      *
-     * @param analysisTypeName The name of the type to create.
+     * @param analysisTypeKey the name and business key of the {@link AnalysisType} to create
+     * @return the new or existing {@link AnalysisType}
      */
-    public boolean addAnalysisType(@Nonnull String analysisTypeName) {
-        AnalysisType foundType = analysisTypeDao.findByBusinessKey(analysisTypeName);
-        if (foundType == null) {
-            analysisTypeDao.persist(new AnalysisType(analysisTypeName));
-            return true;
+    public AnalysisType addAnalysisType(@Nonnull String analysisTypeKey) {
+        AnalysisType analysisType = analysisTypeDao.findByBusinessKey(analysisTypeKey);
+        if (analysisType == null) {
+            analysisTypeDao.persist(new AnalysisType(analysisTypeKey));
         }
 
-        return false;
+        return analysisType;
     }
 
     /**
-     * Remove analysis types.
+     * Remove a {@link Collection} of analysis types from the database.
      *
-     * @param analysisTypes multiple analysis types can be removed at once.
+     * @param analysisTypeKeys a collection of {@link AnalysisType}s to delete
+     * @return the number of {@link AnalysisType}s that were deleted
      */
-    public void removeAnalysisTypes(@Nonnull String... analysisTypeKeys) {
+    public int removeAnalysisTypes(@Nonnull String... analysisTypeKeys) {
+        int deleteCount = 0;
         for (String analysisTypeKey : analysisTypeKeys) {
             AnalysisType analysisType = analysisTypeDao.findByBusinessKey(analysisTypeKey);
             if (analysisTypeDao != null) {
                 analysisTypeDao.remove(analysisType);
             }
+            deleteCount++;
         }
+
+        return deleteCount;
     }
 
     /**
-     * Add a new reference sequence.
+     * Add and return the newly created {@link ReferenceSequence} or have the existing one returned.
      *
+     * @param name and business key the displayed name of the {@link ReferenceSequence}
+     * @param version the version for the {@link ReferenceSequence}
+     * @param isCurrent boolean flag to determine if this {@link ReferenceSequence} is the current one
+     * @return the new or existing {@link ReferenceSequence}
      */
-    public boolean addReferenceSequence(@Nonnull String name, @Nonnull String version, boolean isCurrent) {
-        ReferenceSequence referenceSequence = new ReferenceSequence(name, version);
-        referenceSequence.setCurrent(isCurrent);
+    public ReferenceSequence addReferenceSequence(@Nonnull String name, @Nonnull String version, boolean isCurrent) {
+        ReferenceSequence referenceSequence = referenceSequenceDao.findByBusinessKey(name);
 
-        ReferenceSequence foundSequence = referenceSequenceDao.findByBusinessKey(referenceSequence.getBusinessKey());
-
-        if (foundSequence == null) {
+        if (referenceSequence == null) {
+            referenceSequence = new ReferenceSequence(name, version);
+            referenceSequence.setCurrent(isCurrent);
             referenceSequenceDao.persist(referenceSequence);
-            return true;
         }
 
-        return false;
+        return referenceSequence;
     }
 
     /**
-     * Remove reference sequence.
+     * Remove a list of {@link ReferenceSequence}s from the database.
      *
-     * @param referenceSequences multiple reference sequences can be removed at once.
+     * @param referenceSequenceKeys  a list of {@link ReferenceSequence} business keys to delete
+     * @return the number of {@link ReferenceSequence}s that were deleted
      */
-    public void removeReferenceSequences(@Nonnull String... referenceSequenceKeys) {
+    public int removeReferenceSequences(@Nonnull String... referenceSequenceKeys) {
+        int deleteCount = 0;
         for (String referenceSequenceKey : referenceSequenceKeys) {
             ReferenceSequence referenceSequence = referenceSequenceDao.findByBusinessKey(referenceSequenceKey);
             if (referenceSequence != null) {
                 referenceSequenceDao.remove(referenceSequence);
             }
+
+            deleteCount++;
         }
+
+        return deleteCount;
     }
 
     /**
-     * Add a new reagent design.
+     * Add and return the newly created {@link ReagentDesign} or have the existing one returned.
      *
-     * @param name The reagent design name to add.
-     * @param type The reagent type.
+     * @param name the reagent design name to add
+     * @param type the reagent type
+     * @return the new or existing {@link ReagentDesign}
      */
-    public boolean addReagentDesign(@Nonnull String name, @Nonnull ReagentDesign.ReagentType type) {
-        ReagentDesign foundDesign = reagentDesignDao.findByBusinessKey(name);
-        if (foundDesign == null) {
-            ReagentDesign reagentDesign = new ReagentDesign(name, type);
+    public ReagentDesign addReagentDesign(@Nonnull String name, @Nonnull ReagentDesign.ReagentType type) {
+        ReagentDesign reagentDesign = reagentDesignDao.findByBusinessKey(name);
+        if (reagentDesign == null) {
+            reagentDesign = new ReagentDesign(name, type);
             reagentDesignDao.persist(reagentDesign);
-            return true;
         }
 
-        return false;
+        return reagentDesign;
     }
 
     /**
-     * Remove reagent design.
+     * Remove a list of {@link ReagentDesign}s from the database.
      *
-     * @param reagentDesigns multiple reagent designs can be removed at once.
+     * @param reagentDesignKeys  a list of {@link ReagentDesign} business keys to delete
+     * @return the number of {@link ReagentDesign}s that were deleted
      */
-    public void removeReagentDesigns(@Nonnull String... reagentDesignKeys) {
+    public int removeReagentDesigns(@Nonnull String... reagentDesignKeys) {
+        int deleteCount = 0;
         for (String reagentDesignKey : reagentDesignKeys) {
             ReagentDesign reagentDesign = reagentDesignDao.findByBusinessKey(reagentDesignKey);
             if (reagentDesign != null) {
                 reagentDesignDao.remove(reagentDesign);
             }
+
+            deleteCount++;
         }
+
+        return deleteCount;
     }
 }
