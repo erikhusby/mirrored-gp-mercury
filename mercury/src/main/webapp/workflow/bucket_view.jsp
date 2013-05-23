@@ -19,52 +19,52 @@
     <script type="text/javascript">
         $(document).ready(function () {
             $j('#bucketEntryView').dataTable({
-                "oTableTools":ttExportDefines,
-                "aaSorting":[
+                "oTableTools": ttExportDefines,
+                "aaSorting": [
                     [1, 'asc']
                 ],
-                "aoColumns":[
-                    {"bSortable":false},
-                    {"bSortable":true},
-                    {"bSortable":true},
-                    {"bSortable":true},
-                    {"bSortable":true},
-                    {"bSortable":true},
-                    {"bSortable":true},
-                    {"bSortable":true, "sType":"date"}
+                "aoColumns": [
+                    {"bSortable": false},
+                    {"bSortable": true},
+                    {"bSortable": true},
+                    {"bSortable": true},
+                    {"bSortable": true},
+                    {"bSortable": true},
+                    {"bSortable": true},
+                    {"bSortable": true, "sType": "date"}
                 ]
             });
 
             $j('.bucket-checkbox').enableCheckboxRangeSelection({
-                checkAllClass:'bucket-checkAll',
-                countDisplayClass:'bucket-checkedCount',
-                checkboxClass:'bucket-checkbox'});
+                checkAllClass: 'bucket-checkAll',
+                countDisplayClass: 'bucket-checkedCount',
+                checkboxClass: 'bucket-checkbox'});
 
             $j('#reworkEntryView').dataTable({
-                "oTableTools":ttExportDefines,
-                "aaSorting":[
+                "oTableTools": ttExportDefines,
+                "aaSorting": [
                     [1, 'asc']
                 ],
-                "aoColumns":[
-                    {"bSortable":false},
-                    {"bSortable":true},
-                    {"bSortable":true},
-                    {"bSortable":true},
-                    {"bSortable":true},
-                    {"bSortable":true},
-                    {"bSortable":true},
-                    {"bSortable":true},
-                    {"bSortable":true},
-                    {"bSortable":true},
-                    {"bSortable":true, "sType":"date"}
+                "aoColumns": [
+                    {"bSortable": false},
+                    {"bSortable": true},
+                    {"bSortable": true},
+                    {"bSortable": true},
+                    {"bSortable": true},
+                    {"bSortable": true},
+                    {"bSortable": true},
+                    {"bSortable": true},
+                    {"bSortable": true},
+                    {"bSortable": true},
+                    {"bSortable": true, "sType": "date"}
                 ]
             });
 
 
             $j('.rework-checkbox').enableCheckboxRangeSelection({
-                checkAllClass:'rework-checkAll',
-                countDisplayClass:'rework-checkedCount',
-                checkboxClass:'rework-checkbox'});
+                checkAllClass: 'rework-checkAll',
+                countDisplayClass: 'rework-checkedCount',
+                checkboxClass: 'rework-checkbox'});
 
             $j("#dueDate").datepicker();
         });
@@ -201,7 +201,7 @@
                 <c:forEach items="${entry.labVessel.nearestWorkflowLabBatches}" var="batch"
                            varStatus="stat">
 
-                    ${batch.businessKey}
+                    ${batch.businessKeyList}
                     <c:if test="${!stat.last}">&nbsp;</c:if></c:forEach>
 
             </td>

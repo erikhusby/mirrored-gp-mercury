@@ -15,14 +15,17 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.reagent.ReagentDesignActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="List of Designed Reagents" sectionTitle="Reagent Designs" showCreate="true">
+<stripes:layout-render name="/layout.jsp" pageTitle="List of Designed Reagents" sectionTitle="Reagent Designs"
+                       showCreate="true">
 
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
-            $j(document).ready(function() {
-                $j('#reagentList').dataTable( {
+            $j(document).ready(function () {
+                $j('#reagentList').dataTable({
                     "oTableTools": ttExportDefines,
-                    "aaSorting": [[0,'asc']],
+                    "aaSorting": [
+                        [0, 'asc']
+                    ],
                     "aoColumns": [
                         {"bSortable": true, "sType": "html"},
                         {"bSortable": true},
@@ -51,7 +54,7 @@
                 <th>Reagent Type</th>
                 <th>Target Set</th>
                 <th>Manufacturer</th>
-                <%--<th>Barcodes</th>--%>
+                    <%--<th>Barcodes</th>--%>
             </tr>
             </thead>
             <tbody>
@@ -59,7 +62,7 @@
                 <tr>
                     <td>
                         <stripes:link beanclass="${actionBean.class.name}" event="edit">
-                            <stripes:param name="reagentDesign" value="${design.businessKey}"/>
+                            <stripes:param name="reagentDesign" value="${design.businessKeyList}"/>
                             ${design.designName}
                         </stripes:link>
                     </td>

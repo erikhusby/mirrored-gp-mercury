@@ -46,30 +46,37 @@
                 </stripes:form>
             </div>
 
-            <table id="alignerData" class="table simple">
-                <thead>
-                <tr>
-                    <security:authorizeBlock roles="<%= roles(Developer, PipelineManager) %>">
-                        <th></th>
-                    </security:authorizeBlock>
-                    <th>Name</th>
-                </tr>
-                </thead>
-                <tbody>
-                <c:forEach items="${actionBean.alignerList}" var="aligner">
+            <stripes:form beanclass="${actionBean.class.name}" id="deleteForm">
+                <div class="control-group">
+                    <stripes:submit name="RemoveReferenceSequences" value="Remove Selected"/>
+                </div>
+                <table id="alignerData" class="table simple">
+                    <thead>
                     <tr>
                         <security:authorizeBlock roles="<%= roles(Developer, PipelineManager) %>">
-                            <td><stripes:link
-                                    beanclass="org.broadinstitute.gpinformatics.mercury.presentation.analysis.ManageAnalysisFieldsActionBean"
-                                    event="RemoveAligner">
-                                <stripes:param name="businessKey" value="${aligner.businessKey}"/>
-                                X</stripes:link></td>
+                            <th width="40">
+                                <input for="count" type="checkbox" class="checkAll"/><span id="count"
+                                                                                           class="checkedCount"></span>
+                            </th>
                         </security:authorizeBlock>
-                        <td>${aligner.name}</td>
+                        <th>Name</th>
                     </tr>
-                </c:forEach>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                    <c:forEach items="${actionBean.alignerList}" var="aligner">
+                        <tr>
+                            <security:authorizeBlock roles="<%= roles(Developer, PipelineManager) %>">
+                                <td><stripes:checkbox
+                                        class="shiftCheckbox"
+                                        value="${aligner.businessKey}"
+                                        name="businessKeyList"></stripes:checkbox></td>
+                            </security:authorizeBlock>
+                            <td>${aligner.name}</td>
+                        </tr>
+                    </c:forEach>
+                    </tbody>
+                </table>
+            </stripes:form>
         </div>
     </stripes:layout-component>
 </stripes:layout-render>

@@ -19,10 +19,10 @@
                         [1, 'asc']
                     ],
                     "aoColumns": [
-                        {"bSortable": false},
+                        {"bSortable": true},
                         {"bSortable": true},
                         {"bSortable": false},
-                        {"bSortable": false}
+                        {"bSortable": true}
                     ]
                 });
             });
@@ -53,34 +53,45 @@
                 </stripes:form>
             </div>
 
-            <table id="refSeqData" class="table simple">
-                <thead>
-                <tr>
-                    <security:authorizeBlock roles="<%= roles(Developer, PipelineManager) %>">
-                        <th></th>
-                    </security:authorizeBlock>
-                    <th>Name</th>
-                    <th>Version</th>
-                    <th>Current</th>
-                </tr>
-                </thead>
-                <tbody>
-                <c:forEach items="${actionBean.referenceSequenceList}" var="refSeq">
+            <stripes:form beanclass="${actionBean.class.name}" id="deleteForm">
+                <div class="control-group">
+                    <stripes:submit name="RemoveReferenceSequences" value="Remove Selected"/>
+                </div>
+                <table id="refSeqData" class="table simple">
+                    <thead>
                     <tr>
                         <security:authorizeBlock roles="<%= roles(Developer, PipelineManager) %>">
-                            <td><stripes:link
-                                    beanclass="org.broadinstitute.gpinformatics.mercury.presentation.analysis.ManageAnalysisFieldsActionBean"
-                                    event="RemoveReferenceSequence">
-                                <stripes:param name="businessKey" value="${refSeq.businessKey}"/>
-                                X</stripes:link></td>
+                            <th width="40">
+                                <input for="count" type="checkbox" class="checkAll"/><span id="count"
+                                                                                           class="checkedCount"></span>
+                            </th>
                         </security:authorizeBlock>
-                        <td>${refSeq.name}</td>
-                        <td>${refSeq.version}</td>
-                        <td>${refSeq.current}</td>
+                        <th width="150">Name</th>
+                        <th width="25">Version</th>
+                        <th width="25">Current</th>
                     </tr>
-                </c:forEach>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                    <c:forEach items="${actionBean.referenceSequenceList}" var="refSeq">
+                        <tr>
+                            <security:authorizeBlock roles="<%= roles(Developer, PipelineManager) %>">
+                                <td><stripes:checkbox
+                                        class="shiftCheckbox"
+                                        value="${refSeq.businessKey}"
+                                        name="businessKeyList"></stripes:checkbox></td>
+                            </security:authorizeBlock>
+                            <td>${refSeq.name}</td>
+                            <td>${refSeq.version}</td>
+                            <td>
+                                <c:if test="${refSeq.current}">
+                                    <stripes:image name="" title="Yes" src="/images/check.png"/>
+                                </c:if>
+                            </td>
+                        </tr>
+                    </c:forEach>
+                    </tbody>
+                </table>
+            </stripes:form>
         </div>
     </stripes:layout-component>
 </stripes:layout-render>

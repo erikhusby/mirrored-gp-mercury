@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.analysis;
 
+import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
@@ -48,8 +49,8 @@ public class ManageAnalysisFieldsActionBean extends CoreActionBean {
     private List<ReagentDesign> reagentDesignList;
     private List<ReferenceSequence> referenceSequenceList;
 
-    @Validate(required = true, on = {"RemoveReferenceSequence", "RemoveAligner", "RemoveAnalysisType"})
-    private String businessKey;
+    @Validate(required = true, on = {"RemoveReferenceSequences", "RemoveAligners", "RemoveAnalysisTypes"})
+    private List<String> businessKeyList;
 
     /**
      * The variables below are used for adding a new analysis field.
@@ -59,6 +60,7 @@ public class ManageAnalysisFieldsActionBean extends CoreActionBean {
     @Validate(required = true, on = {"AddReferenceSequence"})
     private String newVersion;
 
+    @DefaultHandler
     @HandlesEvent("showAligner")
     public Resolution showAligner() {
         alignerList = alignerDao.findAll();
@@ -110,7 +112,7 @@ public class ManageAnalysisFieldsActionBean extends CoreActionBean {
     @HandlesEvent("RemoveAligner")
     public Resolution removeAligner() {
 
-        analysisEjb.removeAligners(businessKey);
+        analysisEjb.removeAligners(getBusinessKeyArray());
 
         return showAligner();
     }
@@ -129,7 +131,7 @@ public class ManageAnalysisFieldsActionBean extends CoreActionBean {
     @HandlesEvent("RemoveAnalysisType")
     public Resolution removeAnalysisType() {
 
-        analysisEjb.removeAnalysisTypes(businessKey);
+        analysisEjb.removeAnalysisTypes(getBusinessKeyArray());
 
         return showAnalysisType();
     }
@@ -149,14 +151,23 @@ public class ManageAnalysisFieldsActionBean extends CoreActionBean {
         return showReferenceSequence();
     }
 
-    @HandlesEvent("RemoveReferenceSequence")
+    @HandlesEvent("RemoveReferenceSequences")
     public Resolution removeReferenceSequence() {
 
-        analysisEjb.removeReferenceSequences(businessKey);
+        analysisEjb.removeReferenceSequences(getBusinessKeyArray());
 
         return showReferenceSequence();
     }
 
+    /**
+     * This is used to return an array of business keys for objects that we want to delete.
+     * This is a utility method that will reduce code replication.
+     *
+     * @return String array of business keys for selected analysis fields.
+     */
+    public String[] getBusinessKeyArray() {
+        return businessKeyList.toArray(new String[businessKeyList.size()]);
+    }
 
     public String getNewName() {
         return newName;
@@ -174,11 +185,11 @@ public class ManageAnalysisFieldsActionBean extends CoreActionBean {
         this.newVersion = newVersion;
     }
 
-    public String getBusinessKey() {
-        return businessKey;
+    public List<String> getBusinessKeyList() {
+        return businessKeyList;
     }
 
-    public void setBusinessKey(String businessKey) {
-        this.businessKey = businessKey;
+    public void setBusinessKeyList(List<String> businessKeyList) {
+        this.businessKeyList = businessKeyList;
     }
 }

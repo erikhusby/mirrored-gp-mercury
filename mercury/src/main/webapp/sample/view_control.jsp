@@ -17,27 +17,27 @@
 
         <stripes:form action="/sample/controls.action" id="sampleControlForm" class="form-horizontal">
 
-            <stripes:hidden name="sampleCollaboratorId" value="${actionBean.workingControl.businessKey}"/>
+            <stripes:hidden name="sampleCollaboratorId" value="${actionBean.workingControl.businessKeyList}"/>
 
             <div class="actionButtons">
-                <stripes:link title="Click to edit ${actionBean.workingControl.businessKey}"
+                <stripes:link title="Click to edit ${actionBean.workingControl.businessKeyList}"
                               beanclass="${actionBean.class.name}" event="edit" class="pull-right">
                     <span class="icon-shopping-cart"></span> <%=CollaboratorControlsActionBean.EDIT_CONTROL%>
                     <stripes:param name="sampleCollaboratorId"
-                                   value="${actionBean.workingControl.businessKey}"/>
+                                   value="${actionBean.workingControl.businessKeyList}"/>
                 </stripes:link>
             </div>
         </stripes:form>
 
         <stripes:form action="/sample/controls.action" id="sampleControlForm" class="form-horizontal">
 
-            <stripes:hidden name="sampleCollaboratorId" value="${actionBean.workingControl.businessKey}"/>
+            <stripes:hidden name="sampleCollaboratorId" value="${actionBean.workingControl.businessKeyList}"/>
 
             <div class="view-control-group control-group">
                 <label class="control-label label-form">Collaborator Sample Id</label>
 
                 <div class="controls">
-                    <div class="form-value">${actionBean.workingControl.businessKey}</div>
+                    <div class="form-value">${actionBean.workingControl.businessKeyList}</div>
                 </div>
             </div>
 

@@ -14,22 +14,22 @@
                 var active = $j('.accordion').accordion('option', 'active');
                 var resultsId = "#sampleEventListView" + active;
                 $j(resultsId).dataTable({
-                    "oTableTools":ttExportDefines,
-                    "aaSorting":[
+                    "oTableTools": ttExportDefines,
+                    "aaSorting": [
                         [4, 'asc']
                     ],
-                    "aoColumns":[
-                        {"bSortable":true},
-                        {"bSortable":true},
-                        {"bSortable":true, "sType":"html"},
-                        {"bSortable":true},
-                        {"bSortable":true, "sType":"date"},
-                        {"bSortable":true},
-                        {"bSortable":true},
-                        {"bSortable":true},
-                        {"bSortable":true, "sType":"html"}
+                    "aoColumns": [
+                        {"bSortable": true},
+                        {"bSortable": true},
+                        {"bSortable": true, "sType": "html"},
+                        {"bSortable": true},
+                        {"bSortable": true, "sType": "date"},
+                        {"bSortable": true},
+                        {"bSortable": true},
+                        {"bSortable": true},
+                        {"bSortable": true, "sType": "html"}
                     ],
-                    "bRetrieve":true,
+                    "bRetrieve": true,
                     "sScrollY": 500
                 });
             });
@@ -107,10 +107,10 @@
                                    var="sampleInstance">
                             <c:forEach items="${sampleInstance.getLabBatchCompositionInVesselContext(vessel)}"
                                        var="batchComposition">
-                                <c:if test="${not empty batchComposition.labBatch.businessKey}">
+                                <c:if test="${not empty batchComposition.labBatch.businessKeyList}">
                                     <a target="JIRA" href="${batchComposition.labBatch.jiraTicket.browserUrl}"
                                        class="external" target="JIRA">
-                                            ${batchComposition.labBatch.businessKey}
+                                            ${batchComposition.labBatch.businessKeyList}
                                         (${batchComposition.count}/${batchComposition.denominator})
                                     </a>
                                 </c:if>

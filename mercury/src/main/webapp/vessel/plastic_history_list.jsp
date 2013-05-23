@@ -11,33 +11,33 @@
         function plasticHistoryListRedraw() {
             var eventDateIdx = 9;
 
-            var table = $j('#plasticHistoryList').dataTable({"bDestroy":"true",
-                "oTableTools":ttExportDefines,
-                "aaSorting":[
+            var table = $j('#plasticHistoryList').dataTable({"bDestroy": "true",
+                "oTableTools": ttExportDefines,
+                "aaSorting": [
                     [eventDateIdx, 'asc']
                 ],
-                "aoColumns":[
-                    {"bSortable":true, "sType":"html"},
+                "aoColumns": [
+                    {"bSortable": true, "sType": "html"},
                     //Label
-                    {"bSortable":true, "sType":"numeric"},
+                    {"bSortable": true, "sType": "numeric"},
                     //Sample count
-                    {"bSortable":true},
+                    {"bSortable": true},
                     //Type
-                    {"bSortable":true, "sType":"numeric"},
+                    {"bSortable": true, "sType": "numeric"},
                     //Pdo count
-                    {"bSortable":true, "sType":"numeric"},
+                    {"bSortable": true, "sType": "numeric"},
                     //Index count
-                    {"bSortable":true, "sType":"html"},
+                    {"bSortable": true, "sType": "html"},
                     //Lab batch count
-                    {"bSortable":true},
+                    {"bSortable": true},
                     //Latest event
-                    {"bSortable":true},
+                    {"bSortable": true},
                     //Event location
-                    {"bSortable":true},
+                    {"bSortable": true},
                     //Event user
-                    {"bSortable":true, "sType":"date"},
+                    {"bSortable": true, "sType": "date"},
                     //Event date
-                    {"bSortable":true, "sType":"date"}     //Creation date
+                    {"bSortable": true, "sType": "date"}     //Creation date
                 ]
             });
             includeAdvancedFilter(table, '#plasticHistoryList');
@@ -86,7 +86,7 @@
                             <stripes:link target="JIRA"
                                           href="${composition.labBatch.jiraTicket.browserUrl}"
                                           class="external">
-                                ${composition.labBatch.businessKey}
+                                ${composition.labBatch.businessKeyList}
                             </stripes:link>
                             ${composition.count}/${composition.denominator}
                         </span>

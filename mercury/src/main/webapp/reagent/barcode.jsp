@@ -11,7 +11,7 @@
         <script type="text/javascript">
             $j(document).ready(function () {
                 $j("#reagentDesign").tokenInput(
-                        "${ctxpath}/reagent/design.action?reagentListAutocomplete=&reagentDesign=${actionBean.editReagentDesign.businessKey}", {
+                        "${ctxpath}/reagent/design.action?reagentListAutocomplete=&reagentDesign=${actionBean.editReagentDesign.businessKeyList}", {
                             prePopulate: ${actionBean.ensureStringResult(actionBean.reagentDesignTokenInput.completeData)},
                             resultsFormatter: formatInput,
                             tokenLimit: 1,

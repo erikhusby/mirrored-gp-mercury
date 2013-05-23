@@ -23,7 +23,7 @@
     <stripes:layout-component name="content">
 
         <stripes:form beanclass="${actionBean.class.name}" id="createForm" class="form-horizontal">
-            <stripes:hidden name="reagentDesign" value="${actionBean.editReagentDesign.businessKey}"/>
+            <stripes:hidden name="reagentDesign" value="${actionBean.editReagentDesign.businessKeyList}"/>
             <stripes:hidden name="submitString" value="${actionBean.submitString}"/>
 
             <div class="control-group">
@@ -31,10 +31,10 @@
                     Name *
                 </stripes:label>
                 <div class="controls">
-                            <stripes:text id="designName" readonly="${!actionBean.creating}"
-                                          name="editReagentDesign.designName"
-                                          class="defaultText"
-                                          title="Enter the name of the reagent design"/>`
+                    <stripes:text id="designName" readonly="${!actionBean.creating}"
+                                  name="editReagentDesign.designName"
+                                  class="defaultText"
+                                  title="Enter the name of the reagent design"/>`
 
                 </div>
             </div>
@@ -64,12 +64,14 @@
                     Reagent Type *
                 </stripes:label>
                 <div class="controls">
-                    <stripes:select name="editReagentDesign.reagentType"  disabled="${!actionBean.creating}" id="reagentType">
+                    <stripes:select name="editReagentDesign.reagentType" disabled="${!actionBean.creating}"
+                                    id="reagentType">
                         <stripes:option value="">Select a Reagent Type</stripes:option>
                         <stripes:options-enumeration
                                 enum="org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign.ReagentType"/>
                     </stripes:select>
-                    <stripes:hidden name="editReagentDesign.reagentType" value="${actionBean.editReagentDesign.reagentType}"/>
+                    <stripes:hidden name="editReagentDesign.reagentType"
+                                    value="${actionBean.editReagentDesign.reagentType}"/>
                 </div>
             </div>
 

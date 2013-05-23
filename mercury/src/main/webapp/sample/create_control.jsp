@@ -37,7 +37,7 @@
                             <label class="control-label label-form">Collaborator Sample Id</label>
 
                             <div class="controls">
-                                <div class="form-value">${actionBean.workingControl.businessKey}</div>
+                                <div class="form-value">${actionBean.workingControl.businessKeyList}</div>
                             </div>
                         </div>
                     </c:otherwise>
@@ -103,7 +103,7 @@
                             <c:otherwise>
                                 <stripes:link beanclass="${actionBean.class.name}" event="view">
                                     <stripes:param name="sampleCollaboratorId"
-                                                   value="${actionBean.workingControl.businessKey}"/>
+                                                   value="${actionBean.workingControl.businessKeyList}"/>
                                     Cancel
                                 </stripes:link>
                             </c:otherwise>

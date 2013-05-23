@@ -41,35 +41,42 @@
                     </div>
 
                     <div class="controls">
-                        <stripes:submit name="AddAnalysisTypes" value="Add"/>
+                        <stripes:submit name="AddAnalysisType" value="Add"/>
                     </div>
                 </stripes:form>
             </div>
 
-            <table id="analysisTypesData" class="table simple">
-                <thead>
-                <tr>
-                    <security:authorizeBlock roles="<%= roles(Developer, PipelineManager) %>">
-                        <th></th>
-                    </security:authorizeBlock>
-                    <th>Name</th>
-                </tr>
-                </thead>
-                <tbody>
-                <c:forEach items="${actionBean.analysisTypeList}" var="analysisType">
+            <stripes:form beanclass="${actionBean.class.name}" id="deleteForm">
+                <div class="control-group">
+                    <stripes:submit name="RemoveReferenceSequences" value="Remove Selected"/>
+                </div>
+                <table id="analysisTypesData" class="table simple">
+                    <thead>
                     <tr>
                         <security:authorizeBlock roles="<%= roles(Developer, PipelineManager) %>">
-                            <td><stripes:link
-                                    beanclass="org.broadinstitute.gpinformatics.mercury.presentation.analysis.ManageAnalysisFieldsActionBean"
-                                    event="RemoveAnalysisType">
-                                <stripes:param name="businessKey" value="${analysisType.businessKey}"/>
-                                X</stripes:link></td>
+                            <th width="40">
+                                <input for="count" type="checkbox" class="checkAll"/><span id="count"
+                                                                                           class="checkedCount"></span>
+                            </th>
                         </security:authorizeBlock>
-                        <td>${analysisType.name}</td>
+                        <th>Name</th>
                     </tr>
-                </c:forEach>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                    <c:forEach items="${actionBean.analysisTypeList}" var="analysisType">
+                        <tr>
+                            <security:authorizeBlock roles="<%= roles(Developer, PipelineManager) %>">
+                                <td><stripes:checkbox
+                                        class="shiftCheckbox"
+                                        value="${analysisType.businessKey}"
+                                        name="businessKeyList"></stripes:checkbox></td>
+                            </security:authorizeBlock>
+                            <td>${analysisType.name}</td>
+                        </tr>
+                    </c:forEach>
+                    </tbody>
+                </table>
+            </stripes:form>
         </div>
     </stripes:layout-component>
 </stripes:layout-render>

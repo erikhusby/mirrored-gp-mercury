@@ -14,40 +14,40 @@
             var firstSortColumn = 4;
             if (${showCheckboxes}) {
                 firstSortColumn++;
-                tableOptions.push({"bSortable":false});
+                tableOptions.push({"bSortable": false});
             }
             tableOptions.push([
-                {"bSortable":false},
-                {"bSortable":false},
-                {"bSortable":false},
-                {"bSortable":false},
-                {"bSortable":false},
-                {"bSortable":false},
-                {"bSortable":true},
-                {"bSortable":true, "sType":"numeric"},
-                {"bSortable":true},
-                {"bSortable":true, "sType":"numeric"},
-                {"bSortable":true, "sType":"numeric"},
-                {"bSortable":true},
-                {"bSortable":true},
-                {"bSortable":true},
-                {"bSortable":true},
-                {"bSortable":true, "sType":"date"},
-                {"bSortable":true, "sType":"date"}
+                {"bSortable": false},
+                {"bSortable": false},
+                {"bSortable": false},
+                {"bSortable": false},
+                {"bSortable": false},
+                {"bSortable": false},
+                {"bSortable": true},
+                {"bSortable": true, "sType": "numeric"},
+                {"bSortable": true},
+                {"bSortable": true, "sType": "numeric"},
+                {"bSortable": true, "sType": "numeric"},
+                {"bSortable": true},
+                {"bSortable": true},
+                {"bSortable": true},
+                {"bSortable": true},
+                {"bSortable": true, "sType": "date"},
+                {"bSortable": true, "sType": "date"}
             ]);
 
             $j('#vesselList').dataTable({
-                "oTableTools":ttExportDefines,
-                "aaSorting":[
+                "oTableTools": ttExportDefines,
+                "aaSorting": [
                     [tableOptions.length, 'asc']
                 ],
-                "aoColumns":tableOptions
+                "aoColumns": tableOptions
             });
 
             $j('.vessel-checkbox').enableCheckboxRangeSelection({
-                checkAllClass:'vessel-checkAll',
-                countDisplayClass:'vessel-checkedCount',
-                checkboxClass:'vessel-checkbox'});
+                checkAllClass: 'vessel-checkAll',
+                countDisplayClass: 'vessel-checkedCount',
+                checkboxClass: 'vessel-checkbox'});
         });
 
         function showVesselVisualizer(label) {
@@ -153,7 +153,7 @@
                             <stripes:link target="JIRA"
                                           href="${composition.labBatch.jiraTicket.browserUrl}"
                                           class="external">
-                                ${composition.labBatch.businessKey}
+                                ${composition.labBatch.businessKeyList}
                             </stripes:link>
                             ${composition.count}/${composition.denominator}
                         </span>
