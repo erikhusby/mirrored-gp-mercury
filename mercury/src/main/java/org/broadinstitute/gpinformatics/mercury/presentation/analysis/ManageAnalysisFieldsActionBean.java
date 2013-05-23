@@ -222,4 +222,8 @@ public class ManageAnalysisFieldsActionBean extends CoreActionBean {
     public ReagentDesign.ReagentType getSelectedReagentType() {
         return selectedReagentType;
     }
+
+    public void setSelectedReagentType(ReagentDesign.ReagentType selectedReagentType) {
+        this.selectedReagentType = selectedReagentType;
+    }
 }
