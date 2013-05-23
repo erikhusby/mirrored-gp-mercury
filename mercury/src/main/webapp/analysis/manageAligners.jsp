@@ -1,44 +1,75 @@
+<%@ page import="org.broadinstitute.gpinformatics.mercury.presentation.analysis.ManageAnalysisFieldsActionBean" %>
+<%@ page import="static org.broadinstitute.gpinformatics.mercury.entity.DB.roles" %>
+<%@ page import="static org.broadinstitute.gpinformatics.mercury.entity.DB.Role.*" %>
+<%@ page import="org.broadinstitute.gpinformatics.mercury.entity.DB" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
-<stripes:layout-definition>
-    <stripes:useActionBean var="actionBean"
-                           beanclass="org.broadinstitute.gpinformatics.athena.presentation.analysis.ManageAnalysisFieldsActionBean"/>
+<stripes:useActionBean var="actionBean"
+                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.analysis.ManageAnalysisFieldsActionBean"/>
 
-    <div id="alignerId">
-        <div id="add">
-            <stripes:form beanclass="${actionBean.class.name}" id="addForm" class="form-horizontal">
-                <label for="alignerName">Aligner Name:</label><stripes:text name="alignerName"/>
-                <label for="alignerVersion">Aligner Version:</label><stripes:text name="alignerVersion"/>
-                <stripes:submit style="margin-top:4px;" name="addAligner" id="addAligner"
-                                value="Add New Aligner"></stripes:submit>
-            </stripes:form>
-        </div>
+<stripes:layout-render name="/layout.jsp" pageTitle="Manage Aligners"
+                       sectionTitle="Manage Aligners">
 
-        <table id="alignerData">
-            <thead>
-            <tr>
-                <th></th>
-                <th>Aligner</th>
-            </tr>
-            </thead>
-            <tbody>"/>
-            <c:forEach items="${actionBean.alignerList}" var="aligner">
+    <stripes:layout-component name="extraHead">
+        <script type="text/javascript">
+            $j(document).ready(function () {
+                $j('#alignerData').dataTable({
+                    "oTableTools": ttExportDefines,
+                    "aaSorting": [
+                        [1, 'asc']
+                    ],
+                    "aoColumns": [
+                        {"bSortable": false},
+                        {"bSortable": true},
+                        {"bSortable": false},
+                        {"bSortable": false}
+                    ]
+                });
+            });
+        </script>
+    </stripes:layout-component>
+
+    <stripes:layout-component name="content">
+        <div id="alignerId">
+            <div id="add" class="form-horizontal span4">
+                <stripes:form beanclass="${actionBean.class.name}" id="addForm">
+                    <div class="control-group">
+                        <stripes:label for="newName" class="control-label">Name * </stripes:label>
+                        <div class="controls">
+                            <stripes:text name="newName"/>
+                        </div>
+                    </div>
+
+                    <div class="controls">
+                        <stripes:submit name="AddAligner" value="Add"/>
+                    </div>
+                </stripes:form>
+            </div>
+
+            <table id="alignerData" class="table simple">
+                <thead>
                 <tr>
-                    <td><stripes:link
-                            beanclass="org.broadinstitute.gpinformatics.mercury.presentation.analysis.ManageAnalysisFieldsActionBean"
-                            event="deleteAligner">
-                        <stripes:param name="id" value="${refSeq.id}"/>
-                        X</stripes:link></td>
-                    <td>${aligner.name}</td>
+                    <security:authorizeBlock roles="<%= roles(Developer, PipelineManager) %>">
+                        <th></th>
+                    </security:authorizeBlock>
+                    <th>Name</th>
                 </tr>
-            </c:forEach>
-            </tbody>
-        </table>
-    </div>
-    <script type="text/javascript">
-        $j(document).ready(function () {
-            // Add in the jquery data tables here.
-        });
-    </script>
-</stripes:layout-definition>
-
+                </thead>
+                <tbody>
+                <c:forEach items="${actionBean.alignerList}" var="refSeq">
+                    <tr>
+                        <security:authorizeBlock roles="<%= roles(Developer, PipelineManager) %>">
+                            <td><stripes:link
+                                    beanclass="org.broadinstitute.gpinformatics.mercury.presentation.analysis.ManageAnalysisFieldsActionBean"
+                                    event="RemoveAligner">
+                                <stripes:param name="businessKey" value="${aligner.businessKey}"/>
+                                X</stripes:link></td>
+                        </security:authorizeBlock>
+                        <td>${aligner.name}</td>
+                    </tr>
+                </c:forEach>
+                </tbody>
+            </table>
+        </div>
+    </stripes:layout-component>
+</stripes:layout-render>

@@ -54,7 +54,7 @@ public class AnalysisEjb {
     /**
      * Remove aligner.
      *
-     * @param aligners multiple aligners can be removed at once.
+     * @param alignerKeys multiple aligners can be removed at once.
      */
     public void removeAligners(@Nonnull String... alignerKeys) {
         for (String alignerKey : alignerKeys) {
@@ -83,7 +83,7 @@ public class AnalysisEjb {
     /**
      * Remove analysis types.
      *
-     * @param analysisTypes multiple analysis types can be removed at once.
+     * @param analysisTypeKeys multiple analysis types can be removed at once.
      */
     public void removeAnalysisTypes(@Nonnull String... analysisTypeKeys) {
         for (String analysisTypeKey : analysisTypeKeys) {
@@ -120,7 +120,7 @@ public class AnalysisEjb {
      */
     public void addReferenceSequence(@Nonnull String name, @Nonnull String version) {
 
-        //Do a dao call to find all the versions if there are any, loop thru and set all the 'isCurrent' to false and then create the new one.
+        // Do a dao call to find all the versions if there are any, loop through and set all the 'isCurrent' to false and then create the new one.
         List<ReferenceSequence> matching = referenceSequenceDao.findAllByName(name);
         for (ReferenceSequence sequence : matching) {
             sequence.setCurrent(false);
@@ -134,7 +134,7 @@ public class AnalysisEjb {
     /**
      * Remove reference sequence(s).
      *
-     * @param referenceSequences Collection of reference sequences to be removed.
+     * @param referenceSequenceKeys List of reference sequence business keys to be removed.
      */
     public void removeReferenceSequences(@Nonnull String... referenceSequenceKeys) {
         for (String referenceSequenceKey : referenceSequenceKeys) {
@@ -143,15 +143,6 @@ public class AnalysisEjb {
                 referenceSequenceDao.remove(referenceSequence);
             }
         }
-    }
-
-    /**
-     * Remove reference sequence.
-     *
-     * @param referenceSequence Reference sequence instance to be removed.
-     */
-    public void removeReferenceSequence(@Nonnull ReferenceSequence referenceSequence) {
-        referenceSequenceDao.remove(referenceSequence);
     }
 
     /**
@@ -174,7 +165,7 @@ public class AnalysisEjb {
     /**
      * Remove reagent design.
      *
-     * @param reagentDesigns multiple reagent designs can be removed at once.
+     * @param reagentDesignKeys multiple reagent designs can be removed at once.
      */
     public void removeReagentDesigns(@Nonnull String... reagentDesignKeys) {
         for (String reagentDesignKey : reagentDesignKeys) {

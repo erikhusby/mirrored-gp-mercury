@@ -19,8 +19,6 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -50,13 +48,13 @@ public class ManageAnalysisFieldsActionBean extends CoreActionBean {
     private List<ReagentDesign> reagentDesignList;
     private List<ReferenceSequence> referenceSequenceList;
 
-    @Validate(required = true, on = {"RemoveReferenceSequence"})
+    @Validate(required = true, on = {"RemoveReferenceSequence", "RemoveAligner"})
     private String businessKey;
 
     /**
      * The variables below are used for adding a new analysis field.
      */
-    @Validate(required = true, on = {"AddReferenceSequence"})
+    @Validate(required = true, on = {"AddReferenceSequence", "AddAligner"})
     private String newName;
     @Validate(required = true, on = {"AddReferenceSequence"})
     private String newVersion;
@@ -97,6 +95,26 @@ public class ManageAnalysisFieldsActionBean extends CoreActionBean {
         return referenceSequenceList;
     }
 
+
+    /**
+     * Method used to add a new aligner analysis field.
+     */
+    @HandlesEvent("AddAligner")
+    public Resolution addAligner() {
+
+        analysisEjb.addAligner(newName);
+
+        return showAligner();
+    }
+
+    @HandlesEvent("RemoveAligner")
+    public Resolution removeAligner() {
+
+        analysisEjb.removeAligners(businessKey);
+
+        return showAligner();
+    }
+
     /**
      * Method used to add a new reference sequence analysis field.
      */
@@ -114,14 +132,8 @@ public class ManageAnalysisFieldsActionBean extends CoreActionBean {
 
     @HandlesEvent("RemoveReferenceSequence")
     public Resolution removeReferenceSequence() {
-        // We must ensure that referenceSequenceList is populated with at least one object...
-        ReferenceSequence sequence = referenceSequenceDao.findByBusinessKey(businessKey);
 
-        if (sequence != null) {
-            analysisEjb.removeReferenceSequence(sequence);
-        } else {
-            addGlobalValidationError(MessageFormat.format("Unable to find reference sequence ''{0}''.", businessKey));
-        }
+        analysisEjb.removeReferenceSequences(businessKey);
 
         return showReferenceSequence();
     }
