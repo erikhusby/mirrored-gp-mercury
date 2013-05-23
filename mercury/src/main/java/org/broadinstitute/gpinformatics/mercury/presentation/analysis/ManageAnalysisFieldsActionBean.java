@@ -23,7 +23,7 @@ import java.text.MessageFormat;
 import java.util.List;
 
 /**
- * Class used to Add/Delete analysis field data, such as aligners, analysis type, bait and ref seq.
+ * Class used to Add/Delete analysis field data, such as aligners, analysis types, reagent designs and reference sequences.
  */
 @UrlBinding(value = "/view/analysisFields.action")
 public class ManageAnalysisFieldsActionBean extends CoreActionBean {
@@ -56,11 +56,9 @@ public class ManageAnalysisFieldsActionBean extends CoreActionBean {
     @Validate(required = true, on = {"AddReagentDesign"})
     private ReagentDesign.ReagentType selectedReagentType;
 
-    /**
-     * The variables below are used for adding a new analysis field.
-     */
     @Validate(required = true, on = {"AddAligner", "AddAnalysisType", "AddReagentDesign", "AddReferenceSequence"})
     private String newName;
+
     @Validate(required = true, on = {"AddReferenceSequence"})
     private String newVersion;
 
@@ -89,9 +87,6 @@ public class ManageAnalysisFieldsActionBean extends CoreActionBean {
         return new ForwardResolution(MANAGE_REAGENT_DESIGN_PAGE);
     }
 
-    /**
-     * Method used to add a new aligner analysis field.
-     */
     @HandlesEvent("AddAligner")
     public Resolution addAligner() {
 
@@ -108,9 +103,6 @@ public class ManageAnalysisFieldsActionBean extends CoreActionBean {
         return showAligner();
     }
 
-    /**
-     * Method used to add a new analysis type field.
-     */
     @HandlesEvent("AddAnalysisType")
     public Resolution addAnalysisType() {
 
@@ -127,9 +119,6 @@ public class ManageAnalysisFieldsActionBean extends CoreActionBean {
         return showAnalysisType();
     }
 
-    /**
-     * Method used to add a new reagent design.
-     */
     @HandlesEvent("AddReagentDesign")
     public Resolution addReagentDesign() {
 
@@ -146,16 +135,14 @@ public class ManageAnalysisFieldsActionBean extends CoreActionBean {
         return showReferenceSequence();
     }
 
-    /**
-     * Method used to add a new reference sequence analysis field.
-     */
     @HandlesEvent("AddReferenceSequence")
     public Resolution addReferenceSequence() {
 
         if (NumberUtils.isNumber(newVersion)) {
             analysisEjb.addReferenceSequence(newName, newVersion);
         } else {
-            addGlobalValidationError(MessageFormat.format("Invalid version provided ''{0}''.", newVersion));
+            addGlobalValidationError(
+                    MessageFormat.format("Invalid version provided ''{0}''. It must be a number.", newVersion));
         }
 
         return showReferenceSequence();

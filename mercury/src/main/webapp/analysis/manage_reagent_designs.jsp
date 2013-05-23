@@ -71,7 +71,7 @@
                             </th>
                         </security:authorizeBlock>
                         <th>Name</th>
-                        <th>Reagent Type</th>
+                        <th width="90">Reagent Type</th>
                     </tr>
                     </thead>
                     <tbody>

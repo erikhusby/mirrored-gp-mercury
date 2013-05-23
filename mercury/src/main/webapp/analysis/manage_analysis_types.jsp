@@ -13,7 +13,7 @@
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
             $j(document).ready(function () {
-                $j('#analysisTypesData').dataTable({
+                $j('#analysisTypeData').dataTable({
                     "oTableTools": ttExportDefines,
                     "aaSorting": [
                         [1, 'asc']
@@ -50,7 +50,7 @@
                 <div class="actionButtons">
                     <stripes:submit name="RemoveAnalysisTypes" value="Remove Selected"/>
                 </div>
-                <table id="analysisTypesData" class="table simple">
+                <table id="analysisTypeData" class="table simple">
                     <thead>
                     <tr>
                         <security:authorizeBlock roles="<%= roles(Developer, PipelineManager) %>">
