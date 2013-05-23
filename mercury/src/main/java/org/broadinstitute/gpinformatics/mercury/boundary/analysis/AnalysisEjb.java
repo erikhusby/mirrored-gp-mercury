@@ -124,8 +124,6 @@ public class AnalysisEjb {
         List<ReferenceSequence> matching = referenceSequenceDao.findAllByName(name);
         for (ReferenceSequence sequence : matching) {
             sequence.setCurrent(false);
-            // do we need to update the version too?..
-//            referenceSequenceDao.persist(sequence); // Would it be better to create a method to set the reference sequence?
         }
 
         addReferenceSequence(name, version, true);
