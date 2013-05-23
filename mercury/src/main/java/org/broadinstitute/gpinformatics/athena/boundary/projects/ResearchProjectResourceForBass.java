@@ -124,9 +124,11 @@ public class ResearchProjectResourceForBass {
         if (!StringUtils.isBlank(userName)) {
             BspUser bspUser = bspUserList.getByUsername(userName);
             if (bspUser == null) {
-                throw new RuntimeException("No user name found for " + userName);
+                // Can't map to BSP user. Return all RPs with no access control restrictions.
+                projects = researchProjectDao.findAllWithAccess(false);
+            } else {
+                projects = researchProjectDao.findAllAccessibleByUser(bspUser.getUserId());
             }
-            projects = researchProjectDao.findAllAccessibleByUser(bspUser.getUserId());
         }
         return new ResearchProjects(projects);
     }

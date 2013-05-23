@@ -177,8 +177,12 @@ public class LabVesselFactory implements Serializable {
                     staticPlate.addInPlaceEvent(new LabEvent(labEventType, eventDate, "BSP", disambiguator, operator));
                     disambiguator++;
                 } else if (vesselType.contains("rack")) {
-                    RackOfTubes rackOfTubes = new RackOfTubes(parentVesselBean.getManufacturerBarcode(),
-                            RackOfTubes.RackType.Matrix96);
+                    RackOfTubes rackOfTubes =
+                            (RackOfTubes) mapBarcodeToVessel.get(parentVesselBean.getManufacturerBarcode());
+                    if (rackOfTubes == null) {
+                        rackOfTubes = new RackOfTubes(parentVesselBean.getManufacturerBarcode(),
+                                RackOfTubes.RackType.Matrix96);
+                    }
                     Map<VesselPosition, TwoDBarcodedTube> mapPositionToTube = new HashMap<VesselPosition, TwoDBarcodedTube>();
                     for (ChildVesselBean childVesselBean : parentVesselBean.getChildVesselBeans()) {
                         VesselPosition vesselPosition = VesselPosition.getByName(childVesselBean.getPosition());
