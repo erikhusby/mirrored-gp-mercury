@@ -7,18 +7,19 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.analysis.ManageAnalysisFieldsActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="Manage Aligners"
-                       sectionTitle="Manage Aligners">
+<stripes:layout-render name="/layout.jsp" pageTitle="Manage Reagent Designs"
+                       sectionTitle="Manage Reagent Designs">
 
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
             $j(document).ready(function () {
-                $j('#alignerData').dataTable({
+                $j('#reagentDesignData').dataTable({
                     "oTableTools": ttExportDefines,
                     "aaSorting": [
                         [1, 'asc']
                     ],
                     "aoColumns": [
+                        {"bSortable": true},
                         {"bSortable": true},
                         {"bSortable": true}
                     ]
@@ -28,7 +29,7 @@
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
-        <div id="alignerId">
+        <div id="reagentDataId">
             <div id="add" class="form-horizontal span4">
                 <stripes:form beanclass="${actionBean.class.name}" id="addForm">
                     <div class="control-group">
@@ -37,9 +38,19 @@
                             <stripes:text name="newName"/>
                         </div>
                     </div>
+                    <div class="control-group">
+                        <stripes:label for="reagentType" class="control-label">Reagent Type * </stripes:label>
+                        <div class="controls">
+                            <stripes:select name="selectedReagentType" id="reagentType">
+                                <stripes:option value="">Select a Reagent Type</stripes:option>
+                                <stripes:options-enumeration
+                                        enum="org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign.ReagentType"/>
+                            </stripes:select>
+                        </div>
+                    </div>
 
                     <div class="controls">
-                        <stripes:submit name="AddAligner" value="Add"/>
+                        <stripes:submit name="AddReagentDesign" value="Add"/>
                     </div>
                 </stripes:form>
             </div>
@@ -48,10 +59,9 @@
 
             <stripes:form beanclass="${actionBean.class.name}" id="deleteForm">
                 <div class="actionButtons">
-                    <stripes:submit name="RemoveAligners" value="Remove Selected"/>
+                    <stripes:submit name="RemoveReagentDesigns" value="Remove Selected"/>
                 </div>
-
-                <table id="alignerData" class="table simple">
+                <table id="reagentDesignData" class="table simple">
                     <thead>
                     <tr>
                         <security:authorizeBlock roles="<%= roles(Developer, PipelineManager) %>">
@@ -61,18 +71,20 @@
                             </th>
                         </security:authorizeBlock>
                         <th>Name</th>
+                        <th>Reagent Type</th>
                     </tr>
                     </thead>
                     <tbody>
-                    <c:forEach items="${actionBean.alignerList}" var="aligner">
+                    <c:forEach items="${actionBean.reagentDesignList}" var="reagentDesign">
                         <tr>
                             <security:authorizeBlock roles="<%= roles(Developer, PipelineManager) %>">
                                 <td><stripes:checkbox
                                         class="shiftCheckbox"
-                                        value="${aligner.businessKey}"
+                                        value="${reagentDesign.businessKey}"
                                         name="businessKeyList"></stripes:checkbox></td>
                             </security:authorizeBlock>
-                            <td>${aligner.name}</td>
+                            <td>${reagentDesign.name}</td>
+                            <td>${reagentDesign.reagentType}</td>
                         </tr>
                     </c:forEach>
                     </tbody>

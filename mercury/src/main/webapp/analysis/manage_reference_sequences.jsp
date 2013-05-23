@@ -53,10 +53,13 @@
                 </stripes:form>
             </div>
 
+            <div class="clearfix"></div>
+
             <stripes:form beanclass="${actionBean.class.name}" id="deleteForm">
-                <div class="control-group">
+                <div class="actionButtons">
                     <stripes:submit name="RemoveReferenceSequences" value="Remove Selected"/>
                 </div>
+
                 <table id="refSeqData" class="table simple">
                     <thead>
                     <tr>
@@ -66,7 +69,7 @@
                                                                                            class="checkedCount"></span>
                             </th>
                         </security:authorizeBlock>
-                        <th width="150">Name</th>
+                        <th>Name</th>
                         <th width="25">Version</th>
                         <th width="25">Current</th>
                     </tr>

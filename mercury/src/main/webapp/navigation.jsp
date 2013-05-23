@@ -139,7 +139,7 @@
                                 event="showAnalysisType">Manage Analysis Type</stripes:link></li>
                         <li><stripes:link
                                 beanclass="org.broadinstitute.gpinformatics.mercury.presentation.analysis.ManageAnalysisFieldsActionBean"
-                                event="showBait">Manage Bait</stripes:link></li>
+                                event="showReagentDesign">Manage Reagent Design</stripes:link></li>
                         <li><stripes:link
                                 beanclass="org.broadinstitute.gpinformatics.mercury.presentation.analysis.ManageAnalysisFieldsActionBean"
                                 event="showReferenceSequence">Manage Reference Sequence</stripes:link></li>

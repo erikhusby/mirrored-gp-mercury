@@ -30,7 +30,7 @@ public class ManageAnalysisFieldsActionBean extends CoreActionBean {
 
     public static final String MANAGE_ALIGNER_PAGE = "/analysis/manage_aligners.jsp";
     public static final String MANAGE_ANALYSIS_TYPE_PAGE = "/analysis/manage_analysis_types.jsp";
-    public static final String MANAGE_BAIT_PAGE = "/analysis/manage_baits.jsp";
+    public static final String MANAGE_REAGENT_DESIGN_PAGE = "/analysis/manage_reagent_designs.jsp";
     public static final String MANAGE_REFERENCE_SEQUENCE_PAGE = "/analysis/manage_reference_sequences.jsp";
 
     @Inject
@@ -49,13 +49,17 @@ public class ManageAnalysisFieldsActionBean extends CoreActionBean {
     private List<ReagentDesign> reagentDesignList;
     private List<ReferenceSequence> referenceSequenceList;
 
-    @Validate(required = true, on = {"RemoveReferenceSequences", "RemoveAligners", "RemoveAnalysisTypes"})
+    @Validate(required = true,
+            on = {"RemoveAligners", "RemoveAnalysisTypes", "RemoveReagentDesigns", "RemoveReferenceSequences"})
     private List<String> businessKeyList;
+
+    @Validate(required = true, on = {"AddReagentDesign"})
+    private ReagentDesign.ReagentType selectedReagentType;
 
     /**
      * The variables below are used for adding a new analysis field.
      */
-    @Validate(required = true, on = {"AddReferenceSequence", "AddAligner", "AddAnalysisType"})
+    @Validate(required = true, on = {"AddAligner", "AddAnalysisType", "AddReagentDesign", "AddReferenceSequence"})
     private String newName;
     @Validate(required = true, on = {"AddReferenceSequence"})
     private String newVersion;
@@ -73,30 +77,17 @@ public class ManageAnalysisFieldsActionBean extends CoreActionBean {
         return new ForwardResolution(MANAGE_ANALYSIS_TYPE_PAGE);
     }
 
-    @HandlesEvent("showBait")
-    public Resolution showBait() {
-        return new ForwardResolution(MANAGE_BAIT_PAGE);
-    }
-
     @HandlesEvent("showReferenceSequence")
     public Resolution showReferenceSequence() {
         referenceSequenceList = referenceSequenceDao.findAll();
         return new ForwardResolution(MANAGE_REFERENCE_SEQUENCE_PAGE);
     }
 
-
-    public List<Aligner> getAlignerList() {
-        return alignerList;
+    @HandlesEvent("showReagentDesign")
+    public Resolution showReagentDesign() {
+        reagentDesignList = reagentDesignDao.findAll();
+        return new ForwardResolution(MANAGE_REAGENT_DESIGN_PAGE);
     }
-
-    public List<AnalysisType> getAnalysisTypeList() {
-        return analysisTypeList;
-    }
-
-    public List<ReferenceSequence> getReferenceSequenceList() {
-        return referenceSequenceList;
-    }
-
 
     /**
      * Method used to add a new aligner analysis field.
@@ -109,8 +100,8 @@ public class ManageAnalysisFieldsActionBean extends CoreActionBean {
         return showAligner();
     }
 
-    @HandlesEvent("RemoveAligner")
-    public Resolution removeAligner() {
+    @HandlesEvent("RemoveAligners")
+    public Resolution removeAligners() {
 
         analysisEjb.removeAligners(getBusinessKeyArray());
 
@@ -128,12 +119,31 @@ public class ManageAnalysisFieldsActionBean extends CoreActionBean {
         return showAnalysisType();
     }
 
-    @HandlesEvent("RemoveAnalysisType")
-    public Resolution removeAnalysisType() {
+    @HandlesEvent("RemoveAnalysisTypes")
+    public Resolution removeAnalysisTypes() {
 
         analysisEjb.removeAnalysisTypes(getBusinessKeyArray());
 
         return showAnalysisType();
+    }
+
+    /**
+     * Method used to add a new reagent design.
+     */
+    @HandlesEvent("AddReagentDesign")
+    public Resolution addReagentDesign() {
+
+        analysisEjb.addReagentDesign(newName, selectedReagentType);
+
+        return showReagentDesign();
+    }
+
+    @HandlesEvent("RemoveReferenceSequences")
+    public Resolution removeReferenceSequences() {
+
+        analysisEjb.removeReferenceSequences(getBusinessKeyArray());
+
+        return showReferenceSequence();
     }
 
     /**
@@ -151,12 +161,12 @@ public class ManageAnalysisFieldsActionBean extends CoreActionBean {
         return showReferenceSequence();
     }
 
-    @HandlesEvent("RemoveReferenceSequences")
-    public Resolution removeReferenceSequence() {
+    @HandlesEvent("RemoveReagentDesigns")
+    public Resolution removeReagentDesigns() {
 
-        analysisEjb.removeReferenceSequences(getBusinessKeyArray());
+        analysisEjb.removeReagentDesigns(getBusinessKeyArray());
 
-        return showReferenceSequence();
+        return showReagentDesign();
     }
 
     /**
@@ -191,5 +201,25 @@ public class ManageAnalysisFieldsActionBean extends CoreActionBean {
 
     public void setBusinessKeyList(List<String> businessKeyList) {
         this.businessKeyList = businessKeyList;
+    }
+
+    public List<Aligner> getAlignerList() {
+        return alignerList;
+    }
+
+    public List<AnalysisType> getAnalysisTypeList() {
+        return analysisTypeList;
+    }
+
+    public List<ReagentDesign> getReagentDesignList() {
+        return reagentDesignList;
+    }
+
+    public List<ReferenceSequence> getReferenceSequenceList() {
+        return referenceSequenceList;
+    }
+
+    public ReagentDesign.ReagentType getSelectedReagentType() {
+        return selectedReagentType;
     }
 }

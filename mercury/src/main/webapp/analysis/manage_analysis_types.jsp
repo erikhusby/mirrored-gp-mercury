@@ -19,10 +19,8 @@
                         [1, 'asc']
                     ],
                     "aoColumns": [
-                        {"bSortable": false},
                         {"bSortable": true},
-                        {"bSortable": false},
-                        {"bSortable": false}
+                        {"bSortable": true}
                     ]
                 });
             });
@@ -46,9 +44,11 @@
                 </stripes:form>
             </div>
 
+            <div class="clearfix"></div>
+
             <stripes:form beanclass="${actionBean.class.name}" id="deleteForm">
-                <div class="control-group">
-                    <stripes:submit name="RemoveReferenceSequences" value="Remove Selected"/>
+                <div class="actionButtons">
+                    <stripes:submit name="RemoveAnalysisTypes" value="Remove Selected"/>
                 </div>
                 <table id="analysisTypesData" class="table simple">
                     <thead>
