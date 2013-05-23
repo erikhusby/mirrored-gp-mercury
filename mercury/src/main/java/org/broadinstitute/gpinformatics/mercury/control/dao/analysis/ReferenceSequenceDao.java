@@ -44,6 +44,52 @@ public class ReferenceSequenceDao extends GenericDao implements BusinessKeyFinde
         return getEntityManager().createQuery(query).getResultList();
     }
 
+    /**
+     * Get the current reference sequence of a given name.
+     *
+     * @return The current {@link ReferenceSequence}s if it exists
+     */
+    public ReferenceSequence findCurrent(String name) {
+        CriteriaBuilder criteriaBuilder = getCriteriaBuilder();
+
+        final CriteriaQuery<ReferenceSequence> query = criteriaBuilder.createQuery(ReferenceSequence.class);
+        Root<ReferenceSequence> root = query.from(ReferenceSequence.class);
+        Predicate currentPredicate = criteriaBuilder.equal(root.get(ReferenceSequence_.isCurrent), true);
+        Predicate namePredicate = criteriaBuilder.equal(root.get(ReferenceSequence_.name), name);
+        query.where(criteriaBuilder.and(currentPredicate, namePredicate));
+
+        try {
+            return getEntityManager().createQuery(query).getSingleResult();
+        } catch (NoResultException exception) {
+            // return null if there is no entity
+            return null;
+        }
+    }
+
+    /**
+     * Find the current reference sequence of a given name and version.
+     *
+     * @param name    the display name of the {@link ReferenceSequence}
+     * @param version the version of the {@link ReferenceSequence}
+     * @return The current {@link ReferenceSequence}s if it exists or null if it is not found
+     */
+    public ReferenceSequence findByNameAndVersion(String name, String version) {
+        CriteriaBuilder criteriaBuilder = getCriteriaBuilder();
+
+        final CriteriaQuery<ReferenceSequence> query = criteriaBuilder.createQuery(ReferenceSequence.class);
+        Root<ReferenceSequence> root = query.from(ReferenceSequence.class);
+        Predicate namePredicate = criteriaBuilder.equal(root.get(ReferenceSequence_.name), name);
+        Predicate versionPredicate = criteriaBuilder.equal(root.get(ReferenceSequence_.version), version);
+        query.where(criteriaBuilder.and(namePredicate, versionPredicate));
+
+        try {
+            return getEntityManager().createQuery(query).getSingleResult();
+        } catch (NoResultException exception) {
+            // return null if there is no entity
+            return null;
+        }
+    }
+
     @Override
     public ReferenceSequence findByBusinessKey(String businessKey) {
         String[] values = businessKey.split("\\|");

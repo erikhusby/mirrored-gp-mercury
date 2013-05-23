@@ -54,8 +54,8 @@ public class AnalysisEjbTest extends ContainerTest {
         alignerDao.persist(aligner3);
         alignerDao.persist(aligner4);
 
-        Aligner added = analysisEjb.addAligner(aligner1.getName());
-        Assert.assertEquals(added, aligner1, "Creating an Aligner with a duplicate name should not add a new one");
+        boolean added = analysisEjb.addAligner(aligner1.getName());
+        Assert.assertTrue(added, "Creating an Aligner with a duplicate name should not add a new one");
 
         // Remove all the aligners.
         int deleteCount = analysisEjb.removeAligners(
@@ -87,8 +87,8 @@ public class AnalysisEjbTest extends ContainerTest {
         analysisTypeDao.persist(analysisType3);
         analysisTypeDao.persist(analysisType4);
 
-        AnalysisType added = analysisEjb.addAnalysisType(analysisType1.getName());
-        Assert.assertEquals(added, analysisType1, "Creating an Analysis Type with a duplicate name should not add anything");
+        boolean added = analysisEjb.addAnalysisType(analysisType1.getName());
+        Assert.assertTrue(added, "Creating an Analysis Type with a duplicate name should not add anything");
 
         // Remove all the analysis types.
         int deleteCount = analysisEjb.removeAnalysisTypes(
@@ -120,8 +120,15 @@ public class AnalysisEjbTest extends ContainerTest {
         alignerDao.persist(referenceSequence3);
         alignerDao.persist(referenceSequence4);
 
-        ReferenceSequence added = analysisEjb.addReferenceSequence(referenceSequence1.getName(), referenceSequence1.getVersion(), true);
-        Assert.assertEquals(added, referenceSequence1, "Creating a reference sequence with a duplicate name should not add anything");
+        boolean added = analysisEjb.addReferenceSequence(referenceSequence1.getName(), referenceSequence1.getVersion(), true);
+        Assert.assertTrue(added, "Creating a reference sequence with a duplicate name should not add anything");
+
+        // Now find the sequence with different finders
+        ReferenceSequence foundSequence = referenceSequenceDao.findByBusinessKey(referenceSequence1.getBusinessKey());
+        Assert.assertNotNull(foundSequence, "The sequence should be found");
+        foundSequence = referenceSequenceDao.findByNameAndVersion(referenceSequence1.getName(), referenceSequence1.getVersion());
+        Assert.assertNotNull(foundSequence, "The sequence should be found");
+
 
         // Remove all the reference sequences.
         int deleteCount = analysisEjb.removeReferenceSequences(
@@ -129,16 +136,27 @@ public class AnalysisEjbTest extends ContainerTest {
                 referenceSequence3.getBusinessKey(), referenceSequence4.getBusinessKey());
         Assert.assertTrue(deleteCount > 0, "Should have deleted the reference sequences");
 
-        // should be able to add the reference sequence now.
+        // Should be able to add the reference sequence now and also reset the current one
         added = analysisEjb.addReferenceSequence(referenceSequence1.getName(), referenceSequence1.getVersion(), true);
         Assert.assertNotNull(added, "Reference Sequence should be added here");
+        foundSequence = referenceSequenceDao.findByNameAndVersion(referenceSequence1.getName(), referenceSequence1.getVersion());
+        Assert.assertNotNull(foundSequence, "The sequence should be found");
 
-        // remove this one.
+        String newVersion = referenceSequence1.getVersion()+referenceSequence1.getVersion();
+        added = analysisEjb.addReferenceSequence(referenceSequence1.getName(), newVersion);
+        Assert.assertTrue(added);
+        ReferenceSequence notCurrentReferenceSequence = referenceSequenceDao.findByNameAndVersion(referenceSequence1.getName(), referenceSequence1.getVersion());
+        Assert.assertFalse(notCurrentReferenceSequence.isCurrent(), "Should no longer be the current reference sequence");
+        ReferenceSequence currentReferenceSequence = referenceSequenceDao.findByNameAndVersion(referenceSequence1.getName(), newVersion);
+        Assert.assertNotNull(currentReferenceSequence, "Should have been found");
+        Assert.assertTrue(currentReferenceSequence.isCurrent(), "Should be the current sequence");
+
+        // Remove this one.
         deleteCount = analysisEjb.removeReferenceSequences(referenceSequence1.getBusinessKey());
         Assert.assertTrue(deleteCount > 0, "Should have deleted the reference sequence");
 
         // Now find the sequence and then remove it and try to find it again.
-        ReferenceSequence foundSequence = referenceSequenceDao.findByBusinessKey(referenceSequence1.getBusinessKey());
+        foundSequence = referenceSequenceDao.findByBusinessKey(referenceSequence1.getBusinessKey());
         Assert.assertNull(foundSequence, "The sequence should NOT be found");
     }
 
@@ -154,8 +172,8 @@ public class AnalysisEjbTest extends ContainerTest {
         reagentDesignDao.persist(reagentDesign3);
         reagentDesignDao.persist(reagentDesign4);
 
-        ReagentDesign added = analysisEjb.addReagentDesign(reagentDesign1.getName(), ReagentDesign.ReagentType.BAIT);
-        Assert.assertEquals(added, reagentDesign1, "Creating a bait with a duplicate name should not add anything");
+        boolean added = analysisEjb.addReagentDesign(reagentDesign1.getName(), ReagentDesign.ReagentType.BAIT);
+        Assert.assertTrue(added, "Creating a bait with a duplicate name should not add anything");
 
         // Remove all the baits.
         int deleteCount = analysisEjb.removeReagentDesigns(
