@@ -63,7 +63,7 @@ public class AnalysisEjb {
         int deleteCount = 0;
         for (String alignerKey : alignerKeys) {
             Aligner aligner = alignerDao.findByBusinessKey(alignerKey);
-            if (alignerDao != null) {
+            if (aligner != null) {
                 alignerDao.remove(aligner);
                 deleteCount++;
             }
@@ -100,7 +100,7 @@ public class AnalysisEjb {
         int deleteCount = 0;
         for (String analysisTypeKey : analysisTypeKeys) {
             AnalysisType analysisType = analysisTypeDao.findByBusinessKey(analysisTypeKey);
-            if (analysisTypeDao != null) {
+            if (analysisType != null) {
                 analysisTypeDao.remove(analysisType);
             }
             deleteCount++;
