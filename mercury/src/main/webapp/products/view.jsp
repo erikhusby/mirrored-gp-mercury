@@ -11,7 +11,7 @@
 
     <stripes:layout-component name="content">
 
-        <div class="form-horizontal">
+        <div class="form-horizontal span7">
 
             <div class="view-control-group control-group">
                 <label class="control-label label-form">Part Number</label>
@@ -118,37 +118,6 @@
             </div>
 
             <div class="view-control-group control-group">
-                <label class="control-label label-form">Aggregation Data Type</label>
-                <div class="controls">
-                    <div class="form-value">
-                        ${actionBean.editProduct.aggregationDataType}
-                    </div>
-                </div>
-            </div>
-
-            <div class="view-control-group control-group">
-                <label class="control-label label-form">Analysis Type</label>
-                <div class="controls">
-                    <div class="form-value">
-                            <c:if test="${!empty actionBean.editProduct.analysisTypeKey}">
-                                ${(actionBean.getAnalysisType(actionBean.editProduct.analysisTypeKey)).displayName}
-                            </c:if>
-                    </div>
-                </div>
-            </div>
-
-            <div class="view-control-group control-group">
-                <label class="control-label label-form"><abbr title="aka Reagent Design">Bait Design</abbr></label>
-                <div class="controls">
-                    <div class="form-value">
-                        <c:if test="${!empty actionBean.editProduct.reagentDesignKey}">
-                            ${(actionBean.getReagentDesign(actionBean.editProduct.reagentDesignKey)).displayName}
-                        </c:if>
-                    </div>
-                </div>
-            </div>
-
-            <div class="view-control-group control-group">
                 <label class="control-label label-form">Risk Criteria</label>
                 <div class="controls">
                     <div class="form-value">
@@ -192,7 +161,46 @@
 
         </div>
 
-        <div class="tableBar">
+        <div class="form-horizontal span5">
+            <fieldset>
+                <legend><h4>Pipeline Analysis</h4></legend>
+
+                <!-- Aggregation Data Type -->
+
+                <div class="view-control-group control-group">
+                    <label class="control-label label-form">Aggregation Data Type</label>
+                    <div class="controls">
+                        <div class="form-value">
+                                ${actionBean.editProduct.aggregationDataType}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="view-control-group control-group">
+                    <label class="control-label label-form">Analysis Type</label>
+                    <div class="controls">
+                        <div class="form-value">
+                            <c:if test="${!empty actionBean.editProduct.analysisTypeKey}">
+                                ${(actionBean.getAnalysisType(actionBean.editProduct.analysisTypeKey)).displayName}
+                            </c:if>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="view-control-group control-group">
+                    <label class="control-label label-form"><abbr title="aka Reagent Design">Bait Design</abbr></label>
+                    <div class="controls">
+                        <div class="form-value">
+                            <c:if test="${!empty actionBean.editProduct.reagentDesignKey}">
+                                ${(actionBean.getReagentDesign(actionBean.editProduct.reagentDesignKey)).displayName}
+                            </c:if>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+        </div>
+
+        <div class="tableBar" style="clear:both;">
             <h4 style="display:inline">Add-ons</h4>
         </div>
 
