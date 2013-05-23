@@ -33,7 +33,7 @@ public class LimsQueryResource {
     private LimsQueries limsQueries;
 
     @Inject
-    UnifiedLoader unifiedLoader;
+    SequencingTemplateFactory sequencingTemplateFactory;
 
     @Inject
     private LimsQueryResourceResponseFactory responseFactory;
@@ -293,9 +293,9 @@ public class LimsQueryResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchIlluminaSeqTemplate")
     public SequencingTemplateType fetchIlluminaSeqTemplate(@QueryParam("id") String id,
-                                                           @QueryParam("idType") UnifiedLoader.QueryVesselType queryVesselType,
+                                                           @QueryParam("idType") SequencingTemplateFactory.QueryVesselType queryVesselType,
                                                            @QueryParam("isPoolTest") boolean isPoolTest) {
-        return unifiedLoader.fetchSequencingTemplate(id, queryVesselType, isPoolTest);
+        return sequencingTemplateFactory.fetchSequencingTemplate(id, queryVesselType, isPoolTest);
     }
 
 }

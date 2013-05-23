@@ -29,7 +29,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 @Test(groups = DATABASE_FREE)
 public class SequencingTemplateFactoryTest {
 
-    private UnifiedLoader factory = new UnifiedLoader();
+    private SequencingTemplateFactory factory = new SequencingTemplateFactory();
 
     public void testGetSequencingTemplate() {
         TwoDBarcodedTube denatureTube = new TwoDBarcodedTube("denature_tube_barcode");
