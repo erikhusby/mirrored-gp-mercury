@@ -55,7 +55,7 @@ public class AnalysisEjbTest extends ContainerTest {
         alignerDao.persist(aligner4);
 
         boolean added = analysisEjb.addAligner(aligner1.getName());
-        Assert.assertTrue(added, "Creating an Aligner with a duplicate name should not add a new one");
+        Assert.assertFalse(added, "Creating an Aligner with a duplicate name should not add a new one");
 
         // Remove all the aligners.
         int deleteCount = analysisEjb.removeAligners(
@@ -88,7 +88,7 @@ public class AnalysisEjbTest extends ContainerTest {
         analysisTypeDao.persist(analysisType4);
 
         boolean added = analysisEjb.addAnalysisType(analysisType1.getName());
-        Assert.assertTrue(added, "Creating an Analysis Type with a duplicate name should not add anything");
+        Assert.assertFalse(added, "Creating an Analysis Type with a duplicate name should not add anything");
 
         // Remove all the analysis types.
         int deleteCount = analysisEjb.removeAnalysisTypes(
@@ -121,7 +121,7 @@ public class AnalysisEjbTest extends ContainerTest {
         alignerDao.persist(referenceSequence4);
 
         boolean added = analysisEjb.addReferenceSequence(referenceSequence1.getName(), referenceSequence1.getVersion(), true);
-        Assert.assertTrue(added, "Creating a reference sequence with a duplicate name should not add anything");
+        Assert.assertFalse(added, "Creating a reference sequence with a duplicate name should not add anything");
 
         // Now find the sequence with different finders
         ReferenceSequence foundSequence = referenceSequenceDao.findByBusinessKey(referenceSequence1.getBusinessKey());
