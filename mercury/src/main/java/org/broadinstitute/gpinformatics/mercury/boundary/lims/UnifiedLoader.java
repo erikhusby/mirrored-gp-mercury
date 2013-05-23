@@ -13,14 +13,13 @@ package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.IndexPositionType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.IndexingSchemeType;
@@ -28,7 +27,11 @@ import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTe
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateType;
 
 import javax.inject.Inject;
+import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class UnifiedLoader {
     @Inject
@@ -76,121 +79,83 @@ public class UnifiedLoader {
      */
     public SequencingTemplateType fetchSequencingTemplate(String id, QueryVesselType queryVesselType,
                                                           boolean isPoolTest) {
-        LabVessel labVessel = null;
+        IlluminaFlowcell illuminaFlowcell = null;
         EnumSet<LabEventType> searchEvents = null;
         switch (queryVesselType) {
         case FLOWCELL:
-            labVessel = illuminaFlowcellDao.findByBarcode(id);
+            illuminaFlowcell = illuminaFlowcellDao.findByBarcode(id);
             searchEvents = EnumSet.of(LabEventType.DENATURE_TO_FLOWCELL_TRANSFER, LabEventType.DENATURE_TRANSFER);
             break;
-        case STRIP_TUBE:
-            labVessel = labVesselDao.findByIdentifier(id);
-            searchEvents = EnumSet.of(LabEventType.DENATURE_TRANSFER);
-            break;
         case TUBE:
+        case STRIP_TUBE:
         case MISEQ_REAGENT_KIT:
         default:
-            throw new RuntimeException(String.format("Sequencing template not available for %s.", queryVesselType));
+            throw new RuntimeException(String.format("Sequencing template unavailable for %s.", queryVesselType));
         }
 
-        SequencingTemplateType sequencingTemplate = null;
-        if (!searchEvents.isEmpty()) {
-            for (LabEvent labEvent : labVessel.getEvents()) {
-                if (searchEvents.contains(labEvent.getLabEventType())) {
-                    sequencingTemplate = getSequencingTemplate(labVessel, labEvent, queryVesselType);
+        Map<VesselPosition, LabVessel> loadedVessels = new HashMap<VesselPosition, LabVessel>();
+        for (LabEvent labEvent : illuminaFlowcell.getEvents()) {
+            if (searchEvents.contains(labEvent.getLabEventType())) {
+                for (VesselToSectionTransfer vesselToSectionTransfer : labEvent.getVesselToSectionTransfers()) {
+                    //region Description
+                    for (VesselPosition vesselPosition : vesselToSectionTransfer.getTargetSection().getWells()) {
+                        loadedVessels.put(vesselPosition, vesselToSectionTransfer.getSourceVessel());
+                    }
+
+                    //endregion
+//                    loadedVessels.add(vesselToSectionTransfer.getSourceVessel());
                 }
-            }
-        } else {
-            sequencingTemplate = getSequencingTemplate(labVessel, labVessel.getLatestEvent(), queryVesselType);
-        }
 
-        return sequencingTemplate;
+            }
+        }
+        return getSequencingTemplate(illuminaFlowcell, loadedVessels);
     }
 
     /**
      * Use information from the source and target lab vessels to populate a the sequencing template with lanes.
      *
-     * @param labVessel  lab vessel from the original query.
-     * @param labEvent   the lab event that populated the lab vessel.
-     * @param vesselType type of vessel being queried.
+     * @param flowcell      the flowcell we are loading.
+     * @param sourceVessels the lab vessels loading the flowcell.
      *
-     * @return
+     * @return a populated Sequencing template
      */
-    private SequencingTemplateType getSequencingTemplate(LabVessel labVessel, LabEvent labEvent,
-                                                         QueryVesselType vesselType) {
-        LabVessel flowcell = null;
-
+    private SequencingTemplateType getSequencingTemplate(IlluminaFlowcell flowcell,
+                                                         Map<VesselPosition, LabVessel> sourceVessels) {
         SequencingTemplateType sequencingTemplate = new SequencingTemplateType();
-        VesselGeometry targetGeometry = null;
-        LabVessel sourceVessel = null;
+        List<SequencingTemplateLaneType> lanes = new ArrayList<SequencingTemplateLaneType>();
 
-        switch (vesselType) {
-        case STRIP_TUBE:
-            for (CherryPickTransfer transfer : labEvent.getCherryPickTransfers()) {
-                sourceVessel = transfer.getSourceVesselContainer().getEmbedder();
-                targetGeometry =
-                        transfer.getTargetVesselContainer().getEmbedder().getVesselGeometry();
+        for (VesselPosition vesselPosition : sourceVessels.keySet()) {
+            LabVessel sourceVessel = sourceVessels.get(vesselPosition);
+            SequencingTemplateLaneType lane = new SequencingTemplateLaneType();
+            lane.setLaneName(vesselPosition.name());
+            lane.setLoadingVesselLabel(sourceVessel.getLabel());
+
+            for (MolecularIndexReagent molecularIndexReagent : flowcell.getIndexes()) {
+                final MolecularIndexingScheme molecularIndexingScheme = molecularIndexReagent.getMolecularIndexingScheme();
+                for (MolecularIndexingScheme.IndexPosition indexPosition : molecularIndexingScheme.getIndexes().keySet()) {
+                    IndexingSchemeType indexingSchemeType = new IndexingSchemeType();
+                    indexingSchemeType.setSequence(molecularIndexingScheme.getIndex(indexPosition).getSequence());
+                    indexingSchemeType.setPosition(IndexPositionType.fromValue(indexPosition.getPosition()));
+                    lane.getIndexingScheme().add(indexingSchemeType);
+                }
             }
-
-            break;
-        case FLOWCELL:
-            flowcell = labVessel;
-            for (VesselToSectionTransfer vesselToSectionTransfer : labEvent.getVesselToSectionTransfers()) {
-                sourceVessel = vesselToSectionTransfer.getSourceVessel();
-                targetGeometry = vesselToSectionTransfer.getTargetVesselContainer().getEmbedder().getVesselGeometry();
-            }
-
-            break;
-        case TUBE:
-            break;
-        case MISEQ_REAGENT_KIT:
-            break;
-        default:
+            lanes.add(lane);
         }
+
+
+        if (!lanes.isEmpty()) {
+            // Do we need to create "null" lanes to satisfy the user requirement of returning null
+            // when we don't have the data?
+            SequencingTemplateLaneType lane = new SequencingTemplateLaneType();
+            lane.getIndexingScheme().add(new IndexingSchemeType());
+            lanes.add(lane);
+        }
+        sequencingTemplate.getLanes().addAll(lanes);
 
         if (flowcell != null) {
             sequencingTemplate.setBarcode(flowcell.getLabel());
         }
 
-        sequencingTemplate = populateTemplateLanes(sequencingTemplate, labVessel, sourceVessel, targetGeometry);
-
-        return sequencingTemplate;
-    }
-
-    /**
-     * Use information from the source and target lab vessels to populate a the sequencing template with lanes.
-     *
-     * @param sequencingTemplate template to populate.
-     * @param labVessel          lab vessel from the original query.
-     * @param sourceVessel       the lab vessel that populated the lab vessel being queried.
-     * @param targetGeometry     the geometry of the lab vessel.
-     *
-     * @return
-     */
-    private SequencingTemplateType populateTemplateLanes(SequencingTemplateType sequencingTemplate, LabVessel labVessel,
-                                                         LabVessel sourceVessel,
-                                                         VesselGeometry targetGeometry) {
-        for (VesselPosition targetPosition : targetGeometry.getVesselPositions()) {
-            SequencingTemplateLaneType lane = new SequencingTemplateLaneType();
-            lane.setLaneName(targetPosition.name());
-            lane.setLoadingVesselLabel(sourceVessel.getLabel());
-
-            for (MolecularIndexReagent molecularIndexReagent : labVessel.getIndexes()) {
-                final MolecularIndexingScheme molecularIndexingScheme =
-                        molecularIndexReagent.getMolecularIndexingScheme();
-                for (MolecularIndexingScheme.IndexPosition indexPosition : molecularIndexingScheme
-                        .getIndexes().keySet()) {
-                    IndexingSchemeType indexingSchemeType = new IndexingSchemeType();
-                    indexingSchemeType.setSequence(
-                            molecularIndexingScheme.getIndex(indexPosition).getSequence());
-                    indexingSchemeType.setPosition(
-                            IndexPositionType.fromValue(indexPosition.getPosition()));
-                    lane.getIndexingScheme().add(indexingSchemeType);
-                }
-
-            }
-            sequencingTemplate.getLanes().add(lane);
-        }
         return sequencingTemplate;
     }
 }
