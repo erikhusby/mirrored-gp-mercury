@@ -38,7 +38,7 @@ public class AnalysisEjb {
     /**
      * Add and return true the if a newly created {@link Aligner} was made.
      *
-     * @param alignerName The name and bussiness key of the {@link Aligner} to create.
+     * @param alignerName The name and business key of the {@link Aligner} to create.
      * @return true if a new {@link Aligner} was created
      */
     public boolean addAligner(@Nonnull String alignerName) {
