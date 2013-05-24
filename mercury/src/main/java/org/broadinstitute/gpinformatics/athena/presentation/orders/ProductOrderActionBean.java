@@ -1036,8 +1036,12 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.editOrder = editOrder;
     }
 
+    public String getQuoteUrl(String quoteIdentifier) {
+        return quoteLink.quoteUrl(quoteIdentifier);
+    }
+
     public String getQuoteUrl() {
-        return quoteLink.quoteUrl(editOrder.getQuoteId());
+        return getQuoteUrl(editOrder.getQuoteId());
     }
 
     public String sampleSearchUrlForBspSample(ProductOrderSample sample) {

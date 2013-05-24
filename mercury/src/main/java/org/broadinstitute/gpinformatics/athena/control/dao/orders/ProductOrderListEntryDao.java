@@ -86,7 +86,8 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
                         productProductFamilyJoin.get(ProductFamily_.name),
                         productOrderResearchProjectJoin.get(ResearchProject_.title),
                         productOrderRoot.get(ProductOrder_.createdBy),
-                        productOrderRoot.get(ProductOrder_.placedDate)));
+                        productOrderRoot.get(ProductOrder_.placedDate),
+                        productOrderRoot.get(ProductOrder_.quoteId)));
 
         List<Predicate> listOfAndTerms = new ArrayList<Predicate>();
 

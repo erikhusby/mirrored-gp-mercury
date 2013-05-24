@@ -45,9 +45,10 @@
                         {"bSortable": true},                    // Owner
                         {"bSortable": true, "sType": "date"},   // Placed
                         {"bSortable": true, "sType": "title-numeric"},   // % Complete
-                        {"bSortable": true, "sType": "numeric"},   // Count
-                        {"bSortable": true},                   // Billing Session ID
-                        {"bSortable": true, "sType" : "title-string"}]  // eligible for billing
+                        {"bSortable": true, "sType": "numeric"},         // Count
+                        {"bSortable": true, "sType": "html"},            // Quote
+                        {"bSortable": true},                             // Billing Session ID
+                        {"bSortable": true, "sType" : "title-string"}]   // eligible for billing
                 });
 
                 setupDialogs();
@@ -247,6 +248,7 @@
                         <th width="70">Placed</th>
                         <th width="80">%&nbsp;Complete</th>
                         <th width="25">Sample Count</th>
+                        <th width="55">Quote</th>
                         <th width="35">Billing Session</th>
                         <th width="25">Can Bill</th>
                     </tr>
@@ -303,6 +305,11 @@
                                 </div>
                             </td>
                             <td>${actionBean.progressFetcher.getNumberOfSamples(order.businessKey)}</td>
+                            <td>
+                                <a href="${actionBean.getQuoteUrl(order.quoteId)}" class="external" target="QUOTE">
+                                        ${order.quoteId}
+                                </a>
+                            </td>
                             <td>
                                 <c:if test="${order.billingSessionBusinessKey != null}">
                                     <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean"
