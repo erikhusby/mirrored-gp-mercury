@@ -39,7 +39,7 @@
                     </div>
 
                     <div class="controls">
-                        <stripes:submit name="addAligner" value="Add"/>
+                        <stripes:submit name="addAligner" value="Add" class="btn btn-primary"/>
                     </div>
                 </stripes:form>
             </div>
@@ -48,7 +48,7 @@
 
             <stripes:form beanclass="${actionBean.class.name}" id="deleteForm">
                 <div class="actionButtons">
-                    <stripes:submit name="removeAligners" value="Remove Selected"/>
+                    <stripes:submit name="removeAligners" value="Remove Selected" class="btn"/>
                 </div>
 
                 <table id="alignerData" class="table simple">
