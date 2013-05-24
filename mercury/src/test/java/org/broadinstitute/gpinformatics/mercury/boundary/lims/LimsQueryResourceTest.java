@@ -303,7 +303,8 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     }
 
 
-    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    // todo: Re-enable when we have some test data
+    @Test(enabled = false, groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testFetchIlluminaSeqTemplateWithFlowCell(@ArquillianResource URL baseUrl) {
         WebResource resource =
@@ -321,7 +322,8 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         }
     }
 
-    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    // todo: Re-enable when we have some test data
+    @Test(enabled = false, groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testFetchIlluminaSeqTemplateWithStripTube(@ArquillianResource URL baseUrl) {
         WebResource resource =

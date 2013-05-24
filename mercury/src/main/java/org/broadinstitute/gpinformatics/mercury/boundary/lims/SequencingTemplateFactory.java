@@ -14,15 +14,11 @@ package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselAndPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
-import org.broadinstitute.gpinformatics.mercury.limsquery.generated.IndexPositionType;
-import org.broadinstitute.gpinformatics.mercury.limsquery.generated.IndexingSchemeType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateLaneType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateType;
 
@@ -43,6 +39,7 @@ public class SequencingTemplateFactory {
      * What you will be searching for with the ID parameter in fetchSequencingTemplate.
      * Yes, this is an enum of enums. Having a unique enum which was basically a subset of
      * LabVessel.ContainterType seemed creepy.
+     *
      * FTC Ticket names are not yet supported
      */
     public static enum QueryVesselType {
@@ -95,6 +92,7 @@ public class SequencingTemplateFactory {
             }
 
             break;
+        // Only support for FLOWCELLs for now, so fall through and throw exception.
         case TUBE:
         case STRIP_TUBE:
         case MISEQ_REAGENT_KIT:
@@ -126,16 +124,6 @@ public class SequencingTemplateFactory {
             SequencingTemplateLaneType lane = new SequencingTemplateLaneType();
             lane.setLaneName(vesselPosition.name());
             lane.setLoadingVesselLabel(sourceVessel.getLabel());
-
-            for (MolecularIndexReagent molecularIndexReagent : flowcell.getIndexes()) {
-                final MolecularIndexingScheme molecularIndexingScheme = molecularIndexReagent.getMolecularIndexingScheme();
-                for (MolecularIndexingScheme.IndexPosition indexPosition : molecularIndexingScheme.getIndexes().keySet()) {
-                    IndexingSchemeType indexingSchemeType = new IndexingSchemeType();
-                    indexingSchemeType.setSequence(molecularIndexingScheme.getIndex(indexPosition).getSequence());
-                    indexingSchemeType.setPosition(IndexPositionType.fromValue(indexPosition.getPosition()));
-                    lane.getIndexingScheme().add(indexingSchemeType);
-                }
-            }
             lanes.add(lane);
         }
 
@@ -144,7 +132,7 @@ public class SequencingTemplateFactory {
             // Do we need to create "null" lanes to satisfy the user requirement of returning null
             // when we don't have the data?
             SequencingTemplateLaneType lane = new SequencingTemplateLaneType();
-            lane.getIndexingScheme().add(new IndexingSchemeType());
+
             lanes.add(lane);
         }
         sequencingTemplate.getLanes().addAll(lanes);
