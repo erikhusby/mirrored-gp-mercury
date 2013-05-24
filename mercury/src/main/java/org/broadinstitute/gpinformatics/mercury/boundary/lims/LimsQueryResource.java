@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.mercury.limsquery.generated.FlowcellDesi
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LibraryDataType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PlateTransferType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PoolGroupType;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.WellAndSourceTubeType;
 
 import javax.inject.Inject;
