@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselAndPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
@@ -42,16 +43,17 @@ public class SequencingTemplateFactoryTest {
 
     public void testGetSequencingTemplate() {
         TwoDBarcodedTube denatureTube = new TwoDBarcodedTube("denature_tube_barcode");
+        denatureTube.addSample(new MercurySample("SM-1"));
         Map<MolecularIndexingScheme.IndexPosition, MolecularIndex> indexPositions = new HashMap<MolecularIndexingScheme.IndexPosition, MolecularIndex>();
         indexPositions.put(ILLUMINA_P7, new MolecularIndex("AAA"));
         indexPositions.put(ILLUMINA_P5, new MolecularIndex("CCC"));
         MolecularIndexingScheme indexingScheme = new MolecularIndexingScheme(indexPositions);
         denatureTube.addReagent(new MolecularIndexReagent(indexingScheme));
         IlluminaFlowcell flowcell = new IlluminaFlowcell(HiSeq2500Flowcell, "flowcell_barcode");
-        VesselToSectionTransfer denatureToFlowcellTransfer =
-                new VesselToSectionTransfer(denatureTube, ALL2, flowcell.getContainerRole(),
-                        new LabEvent(DENATURE_TO_FLOWCELL_TRANSFER, new Date(),
-                                "SequencingTemplateFactoryTest#testGetSequencingTemplate", 1L, 1L));
+        LabEvent event = new LabEvent(DENATURE_TO_FLOWCELL_TRANSFER, new Date(),
+                "SequencingTemplateFactoryTest#testGetSequencingTemplate", 1L, 1L);
+        event.getVesselToSectionTransfers()
+                .add(new VesselToSectionTransfer(denatureTube, ALL2, flowcell.getContainerRole(), event));
 
         Set<VesselAndPosition> vesselsAndPositions = new HashSet<VesselAndPosition>();
         for (VesselPosition vesselPosition : ALL2.getWells()) {
