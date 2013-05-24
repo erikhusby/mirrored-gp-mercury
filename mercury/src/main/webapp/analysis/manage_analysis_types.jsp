@@ -39,7 +39,7 @@
                     </div>
 
                     <div class="controls">
-                        <stripes:submit name="AddAnalysisType" value="Add"/>
+                        <stripes:submit name="addAnalysisType" value="Add"/>
                     </div>
                 </stripes:form>
             </div>
@@ -48,7 +48,7 @@
 
             <stripes:form beanclass="${actionBean.class.name}" id="deleteForm">
                 <div class="actionButtons">
-                    <stripes:submit name="RemoveAnalysisTypes" value="Remove Selected"/>
+                    <stripes:submit name="removeAnalysisTypes" value="Remove Selected"/>
                 </div>
                 <table id="analysisTypeData" class="table simple">
                     <thead>

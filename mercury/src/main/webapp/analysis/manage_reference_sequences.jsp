@@ -48,7 +48,7 @@
                     </div>
 
                     <div class="controls">
-                        <stripes:submit name="AddReferenceSequence" value="Add"/>
+                        <stripes:submit name="addReferenceSequence" value="Add"/>
                     </div>
                 </stripes:form>
             </div>
@@ -57,7 +57,7 @@
 
             <stripes:form beanclass="${actionBean.class.name}" id="deleteForm">
                 <div class="actionButtons">
-                    <stripes:submit name="RemoveReferenceSequences" value="Remove Selected"/>
+                    <stripes:submit name="removeReferenceSequences" value="Remove Selected"/>
                 </div>
 
                 <table id="refSeqData" class="table simple">
