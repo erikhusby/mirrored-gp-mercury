@@ -11,6 +11,12 @@ public class VesselAndPosition {
     private VesselPosition position;
 
     public VesselAndPosition(@Nonnull LabVessel vessel, @Nonnull VesselPosition position) {
+        if (vessel == null) {
+            throw new RuntimeException("Vessel must not be null");
+        }
+        if (position == null) {
+            throw new RuntimeException("Position must not be null");
+        }
         this.vessel = vessel;
         this.position = position;
     }

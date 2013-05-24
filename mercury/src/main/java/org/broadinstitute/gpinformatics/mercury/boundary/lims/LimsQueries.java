@@ -83,7 +83,7 @@ public class LimsQueries {
         List<SectionTransfer> transfers = plate.getUpstreamPlateTransfers(depth);
         for (SectionTransfer transfer : transfers) {
             PlateTransferType result = new PlateTransferType();
-            result.setSourceBarcode(transfer.getSourceVesselContainer().getEmbedder().getLabel());
+            result.setSourceBarcode(transfer.getSourceVesselContainer().getEmbedder().getLabCentricName());
             result.setSourceSection(transfer.getSourceSection().getSectionName());
             result.setDestinationBarcode(transfer.getTargetVesselContainer().getEmbedder().getLabel());
             result.setDestinationSection(transfer.getTargetSection().getSectionName());

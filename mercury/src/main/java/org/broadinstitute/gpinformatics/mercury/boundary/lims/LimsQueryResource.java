@@ -148,14 +148,13 @@ public class LimsQueryResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/findImmediatePlateParents")
     public List<String> findImmediatePlateParents(@QueryParam("plateBarcode") String plateBarcode) {
-        switch (mercuryOrSquidRouter.routeForVessel(plateBarcode)) {
-        case MERCURY:
-            return limsQueries.findImmediatePlateParents(plateBarcode);
-        case SQUID:
-        case BOTH:
-            return thriftService.findImmediatePlateParents(plateBarcode);
-        default:
-            throw new RuntimeException("Unable to route findImmediatePlateParents for plate: " + plateBarcode);
+        switch (mercuryOrSquidRouter.getSystemOfRecordForVessel(plateBarcode)) {
+            case MERCURY:
+                return limsQueries.findImmediatePlateParents(plateBarcode);
+            case SQUID:
+                return thriftService.findImmediatePlateParents(plateBarcode);
+            default:
+                throw new RuntimeException("Unable to route findImmediatePlateParents for plate: " + plateBarcode);
         }
     }
 
@@ -225,14 +224,13 @@ public class LimsQueryResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchParentRackContentsForPlate")
     public Map<String, Boolean> fetchParentRackContentsForPlate(@QueryParam("plateBarcode") String plateBarcode) {
-        switch (mercuryOrSquidRouter.routeForVessel(plateBarcode)) {
-        case MERCURY:
-            return limsQueries.fetchParentRackContentsForPlate(plateBarcode);
-        case SQUID:
-        case BOTH:
-            return thriftService.fetchParentRackContentsForPlate(plateBarcode);
-        default:
-            throw new RuntimeException("Unable to route fetchParentRackContentsForPlate for plate: " + plateBarcode);
+        switch (mercuryOrSquidRouter.getSystemOfRecordForVessel(plateBarcode)) {
+            case MERCURY:
+                return limsQueries.fetchParentRackContentsForPlate(plateBarcode);
+            case SQUID:
+                return thriftService.fetchParentRackContentsForPlate(plateBarcode);
+            default:
+                throw new RuntimeException("Unable to route fetchParentRackContentsForPlate for plate: " + plateBarcode);
         }
     }
 
@@ -278,19 +276,18 @@ public class LimsQueryResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchSourceTubesForPlate")
     public List<WellAndSourceTubeType> fetchSourceTubesForPlate(@QueryParam("plateBarcode") String plateBarcode) {
-        switch (mercuryOrSquidRouter.routeForVessel(plateBarcode)) {
-        case MERCURY:
-            return limsQueries.fetchSourceTubesForPlate(plateBarcode);
-        case SQUID:
-        case BOTH:
-            List<WellAndSourceTubeType> wellAndSourceTubeTypes = new ArrayList<WellAndSourceTubeType>();
-            List<WellAndSourceTube> wellAndSourceTubes = thriftService.fetchSourceTubesForPlate(plateBarcode);
-            for (WellAndSourceTube wellAndSourceTube : wellAndSourceTubes) {
-                wellAndSourceTubeTypes.add(responseFactory.makeWellAndSourceTube(wellAndSourceTube));
-            }
-            return wellAndSourceTubeTypes;
-        default:
-            throw new RuntimeException("Unable to route fetchSourceTubesForPlate for plate: " + plateBarcode);
+        switch (mercuryOrSquidRouter.getSystemOfRecordForVessel(plateBarcode)) {
+            case MERCURY:
+                return limsQueries.fetchSourceTubesForPlate(plateBarcode);
+            case SQUID:
+                List<WellAndSourceTubeType> wellAndSourceTubeTypes = new ArrayList<WellAndSourceTubeType>();
+                List<WellAndSourceTube> wellAndSourceTubes = thriftService.fetchSourceTubesForPlate(plateBarcode);
+                for (WellAndSourceTube wellAndSourceTube : wellAndSourceTubes) {
+                    wellAndSourceTubeTypes.add(responseFactory.makeWellAndSourceTube(wellAndSourceTube));
+                }
+                return wellAndSourceTubeTypes;
+            default:
+                throw new RuntimeException("Unable to route fetchSourceTubesForPlate for plate: " + plateBarcode);
         }
     }
 
@@ -301,19 +298,18 @@ public class LimsQueryResource {
     @Path("/fetchTransfersForPlate")
     public List<PlateTransferType> fetchTransfersForPlate(@QueryParam("plateBarcode") String plateBarcode,
                                                           @QueryParam("depth") short depth) {
-        switch (mercuryOrSquidRouter.routeForVessel(plateBarcode)) {
-        case MERCURY:
-            return limsQueries.fetchTransfersForPlate(plateBarcode, depth);
-        case SQUID:
-        case BOTH:
-            List<PlateTransferType> plateTransferTypes = new ArrayList<PlateTransferType>();
-            List<PlateTransfer> plateTransfers = thriftService.fetchTransfersForPlate(plateBarcode, depth);
-            for (PlateTransfer plateTransfer : plateTransfers) {
-                plateTransferTypes.add(responseFactory.makePlateTransfer(plateTransfer));
-            }
-            return plateTransferTypes;
-        default:
-            throw new RuntimeException("Unable to route fetchTransfersForPlate for plate: " + plateBarcode);
+        switch (mercuryOrSquidRouter.getSystemOfRecordForVessel(plateBarcode)) {
+            case MERCURY:
+                return limsQueries.fetchTransfersForPlate(plateBarcode, depth);
+            case SQUID:
+                List<PlateTransferType> plateTransferTypes = new ArrayList<PlateTransferType>();
+                List<PlateTransfer> plateTransfers = thriftService.fetchTransfersForPlate(plateBarcode, depth);
+                for (PlateTransfer plateTransfer : plateTransfers) {
+                    plateTransferTypes.add(responseFactory.makePlateTransfer(plateTransfer));
+                }
+                return plateTransferTypes;
+            default:
+                throw new RuntimeException("Unable to route fetchTransfersForPlate for plate: " + plateBarcode);
         }
     }
 

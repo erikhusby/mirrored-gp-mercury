@@ -157,10 +157,12 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
              * possible for that test to pass even with this check. Note that this may also make code coverage waver
              * ever so slightly based on whether or not this expression evaluates to true for a particular test run.
              */
-            if (!result.containsKey(context.getVesselPosition())) {
-                result.put(context.getVesselPosition(), false);
+            if (context.getVesselPosition() != null) {
+                if (!result.containsKey(context.getVesselPosition())) {
+                    result.put(context.getVesselPosition(), false);
+                }
             }
-            if (context.getLabVessel() != null) {
+            if (context.getLabVessel() != null && context.getVesselContainer() != null) {
                 if (OrmUtil.proxySafeIsInstance(context.getVesselContainer().getEmbedder(), TubeFormation.class)) {
                     result.put(context.getVesselPosition(), true);
                     return TraversalControl.StopTraversing;
@@ -190,6 +192,40 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
         HasRackContentByWellCriteria criteria = new HasRackContentByWellCriteria();
         applyCriteriaToAllWells(criteria);
         return criteria.getResult();
+    }
+
+    public static class NearestTubeAncestorsCriteria implements TransferTraverserCriteria {
+
+        private Set<LabVessel> tubes = new HashSet<LabVessel>();
+        private Set<VesselAndPosition> vesselAndPositions = new LinkedHashSet<VesselAndPosition>();
+
+        @Override
+        public TraversalControl evaluateVesselPreOrder(Context context) {
+            if (OrmUtil.proxySafeIsInstance(context.getLabVessel(), TwoDBarcodedTube.class)) {
+                tubes.add(context.getLabVessel());
+                // Check for null, because source tubes in VesselToSectionTransfers (baits) don't have positions.
+                if (context.getVesselPosition() != null) {
+                    vesselAndPositions.add(new VesselAndPosition(context.getLabVessel(), context.getVesselPosition()));
+                }
+                return StopTraversing;
+            } else {
+                return ContinueTraversing;
+            }
+        }
+
+        @Override
+        public void evaluateVesselInOrder(Context context) {}
+
+        @Override
+        public void evaluateVesselPostOrder(Context context) {}
+
+        public Set<LabVessel> getTubes() {
+            return tubes;
+        }
+
+        public Set<VesselAndPosition> getVesselAndPositions() {
+            return vesselAndPositions;
+        }
     }
 
     /**
