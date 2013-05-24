@@ -263,21 +263,18 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
      */
     public List<SectionTransfer> getUpstreamPlateTransfers(int depth) {
         Set<SectionTransfer> sectionTransfers = new LinkedHashSet<SectionTransfer>();
-        recursePlateTransfers(sectionTransfers, vesselContainer, depth, 1);
+        collectPlateTransfers(sectionTransfers, vesselContainer, depth, 1);
         return new ArrayList<SectionTransfer>(sectionTransfers);
     }
 
-    private void recursePlateTransfers(Set<SectionTransfer> transfers, VesselContainer vesselContainer, int depth, int currentDepth) {
+    private void collectPlateTransfers(Set<SectionTransfer> transfers, VesselContainer vesselContainer, int depth,
+                                       int currentDepth) {
         Set<SectionTransfer> sectionTransfersTo = vesselContainer.getSectionTransfersTo();
         for (SectionTransfer sectionTransfer : sectionTransfersTo) {
-            recurseSectionTransfer(transfers, depth, currentDepth, sectionTransfer);
-        }
-    }
-
-    private void recurseSectionTransfer(Set<SectionTransfer> transfers, int depth, int currentDepth, SectionTransfer sectionTransfer) {
-        transfers.add(sectionTransfer);
-        if (currentDepth < depth) {
-            recursePlateTransfers(transfers, sectionTransfer.getSourceVesselContainer(), depth, currentDepth + 1);
+            transfers.add(sectionTransfer);
+            if (currentDepth < depth) {
+                collectPlateTransfers(transfers, sectionTransfer.getSourceVesselContainer(), depth, currentDepth + 1);
+            }
         }
     }
 

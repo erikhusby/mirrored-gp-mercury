@@ -397,15 +397,13 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
-            <!--
-                    <workflowStepDefs>
-                        <name>EcoTransfer?</name>
-                        <labEventTypes></labEventTypes>
-                        <optional>false</optional>
-                        <entryPoint>false</entryPoint>
-                        <reEntryPoint>false</reEntryPoint>
-                    </workflowStepDefs>
-            -->
+            <workflowStepDefs>
+                <name>EcoTransfer</name>
+                <labEventTypes>ECO_TRANSFER</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
             <workflowStepDefs>
                 <name>Normalization Transfer</name>
                 <labEventTypes>NORMALIZATION_TRANSFER</labEventTypes>
