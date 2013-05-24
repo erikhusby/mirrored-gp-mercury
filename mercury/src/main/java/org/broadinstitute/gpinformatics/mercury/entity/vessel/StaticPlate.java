@@ -203,7 +203,10 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
         public TraversalControl evaluateVesselPreOrder(Context context) {
             if (OrmUtil.proxySafeIsInstance(context.getLabVessel(), TwoDBarcodedTube.class)) {
                 tubes.add(context.getLabVessel());
-                vesselAndPositions.add(new VesselAndPosition(context.getLabVessel(), context.getVesselPosition()));
+                // Check for null, because source tubes in VesselToSectionTransfers (baits) don't have positions.
+                if (context.getVesselPosition() != null) {
+                    vesselAndPositions.add(new VesselAndPosition(context.getLabVessel(), context.getVesselPosition()));
+                }
                 return StopTraversing;
             } else {
                 return ContinueTraversing;
