@@ -50,7 +50,7 @@
                     </div>
 
                     <div class="controls">
-                        <stripes:submit name="addReagentDesign" value="Add"/>
+                        <stripes:submit name="addReagentDesign" value="Add" class="btn btn-primary"/>
                     </div>
                 </stripes:form>
             </div>
@@ -59,7 +59,7 @@
 
             <stripes:form beanclass="${actionBean.class.name}" id="deleteForm">
                 <div class="actionButtons">
-                    <stripes:submit name="removeReagentDesigns" value="Remove Selected"/>
+                    <stripes:submit name="removeReagentDesigns" value="Remove Selected" class="btn"/>
                 </div>
                 <table id="reagentDesignData" class="table simple">
                     <thead>
