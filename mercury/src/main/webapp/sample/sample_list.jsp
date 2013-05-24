@@ -6,13 +6,13 @@
 
         $j(document).ready(function () {
             $j('#sampleListView').dataTable({
-                "oTableTools":ttExportDefines,
-                "aaSorting":[
+                "oTableTools": ttExportDefines,
+                "aaSorting": [
                     [1, 'asc']
                 ],
-                "aoColumns":[
-                    {"bSortable":false},
-                    {"bSortable":true},
+                "aoColumns": [
+                    {"bSortable": false},
+                    {"bSortable": true}
                 ]
             });
 
@@ -27,9 +27,9 @@
 
             // Dynamically created table needs ajax load to allow calling into script in plasic_history_list.jsp
             $j.ajax({
-                url:"${ctxpath}/view/plasticHistoryView.action?sampleKey=" + sampleKey,
-                dataType:'html',
-                success:function (plasticViewHtml) {
+                url: "${ctxpath}/view/plasticHistoryView.action?sampleKey=" + sampleKey,
+                dataType: 'html',
+                success: function (plasticViewHtml) {
                     $j('#plasticViewDiv').html(plasticViewHtml);
                     $j('#plasticViewDiv').show();
                     plasticHistoryListRedraw();
