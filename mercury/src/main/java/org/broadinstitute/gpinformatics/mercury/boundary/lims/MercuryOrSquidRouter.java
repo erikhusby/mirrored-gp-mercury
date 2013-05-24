@@ -228,7 +228,7 @@ public class MercuryOrSquidRouter implements Serializable {
                         ProductWorkflowDef productWorkflowDef = getWorkflow(order.getProduct().getWorkflowName());
                         if (intent ==  Intent.SYSTEM_OF_RECORD) {
                             MercuryOrSquid mercuryOrSquid;
-                            if (productWorkflowDef.getInValidation() != null && productWorkflowDef.getInValidation()) {
+                            if (productWorkflowDef.getInValidation()) {
                                 LabBatch labBatch = sampleInstance.getLabBatch();
                                 // Per Andrew, we can assume that validation plastic has only one LCSET
                                 if(labBatch != null && labBatch.isValidationBatch()) {
@@ -239,16 +239,10 @@ public class MercuryOrSquidRouter implements Serializable {
                             } else {
                                 mercuryOrSquid = productWorkflowDef.getRouting();
                             }
-                            switch (mercuryOrSquid) {
-                            case BOTH:
-                                routingOptions.add(SQUID);
-                                break;
-                            case MERCURY:
-                                // deliberate fall through
-                            case SQUID:
-                                routingOptions.add(mercuryOrSquid);
-                                break;
+                            if (mercuryOrSquid == BOTH) {
+                                mercuryOrSquid = SQUID;
                             }
+                            routingOptions.add(mercuryOrSquid);
                         } else {
                             routingOptions.add(productWorkflowDef.getRouting());
                         }

@@ -261,6 +261,10 @@ public class SampleInstance {
         return indexes;
     }
 
+    /**
+     * This is set only when there is a single lab batch.
+     * @return lab batch
+     */
     public LabBatch getLabBatch() {
         return labBatch;
     }
