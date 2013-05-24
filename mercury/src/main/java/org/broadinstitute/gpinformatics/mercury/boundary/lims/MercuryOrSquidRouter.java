@@ -272,7 +272,11 @@ public class MercuryOrSquidRouter implements Serializable {
                                 routingOptions.add(SQUID);
                             } else {
                                 if (controlSampleIds.contains(sampleDTO.getCollaboratorsSampleName())) {
-                                    routingOptions.add(BOTH);
+                                    if (intent == Intent.SYSTEM_OF_RECORD) {
+                                        routingOptions.add(MERCURY);
+                                    } else {
+                                        routingOptions.add(BOTH);
+                                    }
                                 } else {
                                     routingOptions.add(SQUID);
                                 }
