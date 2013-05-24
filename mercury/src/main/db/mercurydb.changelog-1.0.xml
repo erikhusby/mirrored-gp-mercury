@@ -1580,4 +1580,10 @@ END;
         </addColumn>
     </changeSet>
 
+    <changeSet id="GPLIM-1312-2" author="scottmat">
+        <addColumn tableName="lab_batch_aud" schemaName="mercury">
+            <column name="is_validation_batch" type="number(1,0)"/>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
