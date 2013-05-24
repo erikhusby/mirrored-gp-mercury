@@ -207,9 +207,9 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
                 if (context.getVesselPosition() != null) {
                     vesselAndPositions.add(new VesselAndPosition(context.getLabVessel(), context.getVesselPosition()));
                 }
-                return StopTraversing;
+                return TraversalControl.StopTraversing;
             } else {
-                return ContinueTraversing;
+                return TraversalControl.ContinueTraversing;
             }
         }
 
