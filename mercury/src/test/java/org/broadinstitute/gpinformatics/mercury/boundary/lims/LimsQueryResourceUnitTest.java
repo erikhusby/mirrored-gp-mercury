@@ -12,6 +12,10 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedT
 import org.broadinstitute.gpinformatics.mercury.control.lims.LimsQueryResourceResponseFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.FlowcellDesignationType;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.IndexPositionType;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.IndexingSchemeType;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateLaneType;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateType;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -384,6 +388,49 @@ public class LimsQueryResourceUnitTest {
 
         }
 
+        verifyAll();
+    }
+
+    @Test(groups = DATABASE_FREE)
+    public void testFetchIlluminaSeqTemplate() {
+        final SequencingTemplateType template = new SequencingTemplateType();
+        template.setBarcode("BARCODE_1234");
+        template.setName("NAME_1234");
+        template.setOnRigWorkflow("Resequencing");
+        template.setOnRigChemistry("Default");
+        template.setReadStructure("76T8B76T");
+        template.setPairedRun(true);
+
+        IndexingSchemeType indexingSchemeType=new IndexingSchemeType();
+        indexingSchemeType.setPosition(IndexPositionType.A);
+        indexingSchemeType.setSequence("AGCT");
+
+        SequencingTemplateLaneType laneType=new SequencingTemplateLaneType();
+        laneType.getIndexingScheme().add(indexingSchemeType);
+        laneType.setLaneName("LANE_1324");
+        laneType.setLoadingConcentration(3.33);
+        laneType.setLoadingVesselLabel("LOADING_VESSEL_1234");
+
+        template.getLanes().add(laneType);
+
+        expect(resource.fetchIlluminaSeqTemplate("12345", SequencingTemplateFactory.QueryVesselType.FLOWCELL, true)).andReturn(
+                template);
+        replayAll();
+        SequencingTemplateType result = resource.fetchIlluminaSeqTemplate("12345", SequencingTemplateFactory.QueryVesselType.FLOWCELL, true);
+
+        assertThat(result, notNullValue());
+        Assert.assertEquals(result.getBarcode(), "BARCODE_1234");
+        Assert.assertEquals(result.getName(), "NAME_1234");
+        Assert.assertEquals(result.getOnRigChemistry(), "Default");
+        Assert.assertEquals(result.getOnRigWorkflow(), "Resequencing");
+        Assert.assertEquals(result.getReadStructure(), "76T8B76T");
+        Assert.assertTrue(result.isPairedRun());
+        Assert.assertEquals(result.getLanes().size(), 1);
+        final SequencingTemplateLaneType laneOne = result.getLanes().get(0);
+        Assert.assertEquals(laneOne.getIndexingScheme().get(0), indexingSchemeType);
+        Assert.assertEquals(laneOne.getLoadingConcentration(), 3.33);
+        Assert.assertEquals(laneOne.getLoadingVesselLabel(), "LOADING_VESSEL_1234");
+        Assert.assertEquals(laneOne.getLaneName(), "LANE_1324");
         verifyAll();
     }
 

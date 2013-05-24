@@ -32,7 +32,6 @@ import java.util.Map;
  */
 @Path("/limsQuery")
 public class LimsQueryResource {
-
     @Inject
     private Log log;
 
@@ -41,6 +40,9 @@ public class LimsQueryResource {
 
     @Inject
     private LimsQueries limsQueries;
+
+    @Inject
+    SequencingTemplateFactory sequencingTemplateFactory;
 
     @Inject
     private LimsQueryResourceResponseFactory responseFactory;
@@ -327,4 +329,14 @@ public class LimsQueryResource {
         }
         return poolGroupTypes;
     }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/fetchIlluminaSeqTemplate")
+    public SequencingTemplateType fetchIlluminaSeqTemplate(@QueryParam("id") String id,
+                                                           @QueryParam("idType") SequencingTemplateFactory.QueryVesselType queryVesselType,
+                                                           @QueryParam("isPoolTest") boolean isPoolTest) {
+        return sequencingTemplateFactory.fetchSequencingTemplate(id, queryVesselType, isPoolTest);
+    }
+
 }

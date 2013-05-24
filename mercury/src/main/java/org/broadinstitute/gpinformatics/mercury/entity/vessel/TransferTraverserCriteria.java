@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -18,6 +19,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import static org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria.TraversalControl.ContinueTraversing;
+import static org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria.TraversalControl.StopTraversing;
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria.TraversalDirection.Ancestors;
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria.TraversalDirection.Descendants;
 
@@ -494,4 +497,34 @@ public interface TransferTraverserCriteria {
         }
     }
 
+    class NearestTubeAncestorsCriteria implements TransferTraverserCriteria {
+
+        private Set<LabVessel> tubes = new HashSet<LabVessel>();
+        private Set<VesselAndPosition> vesselAndPositions = new LinkedHashSet<VesselAndPosition>();
+
+        @Override
+        public TraversalControl evaluateVesselPreOrder(Context context) {
+            if (OrmUtil.proxySafeIsInstance(context.getLabVessel(), TwoDBarcodedTube.class)) {
+                tubes.add(context.getLabVessel());
+                vesselAndPositions.add(new VesselAndPosition(context.getLabVessel(), context.getVesselPosition()));
+                return StopTraversing;
+            } else {
+                return ContinueTraversing;
+            }
+        }
+
+        @Override
+        public void evaluateVesselInOrder(Context context) {}
+
+        @Override
+        public void evaluateVesselPostOrder(Context context) {}
+
+        public Set<LabVessel> getTubes() {
+            return tubes;
+        }
+
+        public Set<VesselAndPosition> getVesselAndPositions() {
+            return vesselAndPositions;
+        }
+    }
 }

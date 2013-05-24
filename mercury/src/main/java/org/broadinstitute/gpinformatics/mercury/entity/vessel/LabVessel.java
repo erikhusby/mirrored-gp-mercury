@@ -478,7 +478,8 @@ public abstract class LabVessel implements Serializable {
         STRIP_TUBE("Strip Tube"),
         STRIP_TUBE_WELL("Strip Tube Well"),
         PACBIO_PLATE("PacBio Plate"),
-        ILLUMINA_RUN_CHAMBER("Illumina Run Chamber");
+        ILLUMINA_RUN_CHAMBER("Illumina Run Chamber"),
+        MISEQ_REAGENT_KIT("MiSeq Reagent Kit");
 
         private String name;
 
@@ -1262,7 +1263,7 @@ public abstract class LabVessel implements Serializable {
     /**
      * This method get index information for all samples in this vessel.
      *
-     * @return a set of strings representing all indexes in this vessel.
+     * @return a set of strings representing all indexes in tQhis vessel.
      */
     public List<MolecularIndexReagent> getIndexes() {
         List<MolecularIndexReagent> indexes = new ArrayList<MolecularIndexReagent>();
