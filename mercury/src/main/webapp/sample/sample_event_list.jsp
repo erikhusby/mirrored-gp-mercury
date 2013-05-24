@@ -30,7 +30,7 @@
                         {"bSortable":true, "sType":"html"}
                     ],
                     "bRetrieve":true,
-                    "sScrollY": 500
+                    "sScrollY":500
                 });
             });
         });
@@ -64,7 +64,7 @@
                     </td>
                     <td>
                         <c:forEach items="${vessel.getSampleInstancesForSample(sample, 'ANY')}" var="sampleInstance">
-                            <c:forEach items="${vessel.getPositionsOfSample(sampleInstance)}" var="position">
+                            <c:forEach items="${vessel.getLastKnownPositionsOfSample(sampleInstance)}" var="position">
                                 ${position}
                             </c:forEach>
                         </c:forEach>

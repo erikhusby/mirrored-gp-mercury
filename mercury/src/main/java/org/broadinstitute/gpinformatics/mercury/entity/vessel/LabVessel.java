@@ -577,6 +577,31 @@ public abstract class LabVessel implements Serializable {
         return positionList;
     }
 
+    /**
+     * This method will get the last known position of a sample. If the sample is in a tube it will check the last rack
+     * it was in. Otherwise it will defer to the getPositionsOfSample.
+     *
+     * @param sampleInstance The sample instance to find the last position for.
+     *
+     * @return A list of vessel positions that the sample instance was last known to be at.
+     */
+    public List<VesselPosition> getLastKnownPositionsOfSample(@Nonnull SampleInstance sampleInstance) {
+        Map<Date, List<VesselPosition>> positionList = new TreeMap<Date, List<VesselPosition>>();
+        if (getContainerRole() == null) {
+            for (VesselContainer container : getContainers()) {
+                List<VesselPosition> curPositionLists = positionList.get(container.getEmbedder().getCreatedOn());
+                if (curPositionLists == null) {
+                    curPositionLists = new ArrayList<VesselPosition>();
+                    positionList.put(container.getEmbedder().getCreatedOn(), curPositionLists);
+                }
+                curPositionLists.add(container.getPositionOfVessel(this));
+            }
+        } else {
+            return getPositionsOfSample(sampleInstance);
+        }
+        return positionList.get(positionList.keySet().iterator().next());
+    }
+
     private Set<SampleInstance> getSamplesAtPosition(VesselPosition position, SampleType sampleType) {
         Set<SampleInstance> sampleInstances;
         VesselContainer<?> vesselContainer = getContainerRole();
