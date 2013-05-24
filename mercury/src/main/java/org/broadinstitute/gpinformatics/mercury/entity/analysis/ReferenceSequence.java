@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.analysis;
 
-import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessKeyable;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.Nameable;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Column;
@@ -19,7 +18,7 @@ import javax.persistence.Table;
 @Entity
 @Audited
 @Table(name = "REFERENCE_SEQUENCE", schema = "mercury")
-public class ReferenceSequence implements BusinessKeyable {
+public class ReferenceSequence implements BusinessObject {
     @Id
     @SequenceGenerator(name = "SEQ_REFERENCE_SEQUENCE", schema = "mercury", sequenceName = "SEQ_REFERENCE_SEQUENCE", allocationSize = 10)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_REFERENCE_SEQUENCE")

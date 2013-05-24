@@ -5,8 +5,7 @@ import javax.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessKeyable;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.Nameable;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.hibernate.envers.Audited;
 
 /**
@@ -16,7 +15,7 @@ import org.hibernate.envers.Audited;
 @Entity
 @Audited
 @Table(schema = "mercury", uniqueConstraints = {@UniqueConstraint(columnNames = {"reagent_design"})})
-public class ReagentDesign implements BusinessKeyable {
+public class ReagentDesign implements BusinessObject {
     @Id
     @SequenceGenerator(name = "SEQ_REAGENT_DESIGN", schema = "mercury", sequenceName = "SEQ_REAGENT_DESIGN")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_REAGENT_DESIGN")

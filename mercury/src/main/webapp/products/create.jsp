@@ -194,7 +194,9 @@
 
         <stripes:form beanclass="${actionBean.class.name}" id="createForm" class="form-horizontal">
             <stripes:hidden name="submitString"/>
-            <div class="form-horizontal">
+
+            <div class="row">
+                <div class="form-horizontal span7" >
                 <stripes:hidden name="product"/>
                 <div class="control-group">
                     <stripes:label for="productFamily" class="control-label">
@@ -355,34 +357,6 @@
                 </div>
 
                 <div class="control-group">
-                    <stripes:label for="aggregationDataType" name="AggregationDataType" class="control-label"/>
-                    <div class="controls">
-                        <stripes:text id="aggregationDataType" name="editProduct.aggregationDataType"
-                                      class="defaultText" title="Enter data type to use for aggregation"/>
-                    </div>
-                </div>
-
-                <div class="control-group">
-                    <stripes:label for="analysisTypeKey" name="Analysis Type" class="control-label"/>
-                    <div class="controls">
-                        <stripes:select id="analysisTypeKey" name="editProduct.analysisTypeKey">
-                            <stripes:option value="">Select One</stripes:option>
-                            <stripes:options-collection collection="${actionBean.analysisTypes}" label="displayName" value="businessKey"/>
-                        </stripes:select>
-                    </div>
-                </div>
-
-                <div class="control-group">
-                    <stripes:label for="reagentDesignKey" class="control-label"><abbr title="aka Reagent Design">Bait Design</abbr></stripes:label>
-                    <div class="controls">
-                        <stripes:select id="reagentDesignKey" name="editProduct.reagentDesignKey">
-                            <stripes:option value="">Select One</stripes:option>
-                            <stripes:options-collection collection="${actionBean.reagentDesigns}" label="displayName" value="businessKey"/>
-                        </stripes:select>
-                    </div>
-                </div>
-
-                <div class="control-group">
                     <stripes:label for="riskCriterion" name="RiskCriteria" class="control-label"/>
                     <div id="riskCriterion" class="controls" style="margin-top: 5px;">
                         A sample is on risk if:
@@ -422,25 +396,64 @@
                         </div>
                     </div>
                 </security:authorizeBlock>
+            </div>
 
-                <div class="control-group">
-                    <div class="controls">
-                        <div class="row-fluid">
-                            <div class="span1">
-                                <stripes:submit name="save" value="Save" class="btn btn-primary"/>
+                <div class="form-horizontal span5">
+                    <fieldset>
+                        <legend><h4>Pipeline Analysis</h4></legend>
+
+                        <div class="control-group">
+                            <stripes:label for="aggregationDataType" name="AggregationDataType" class="control-label"/>
+                            <div class="controls">
+                                <stripes:text id="aggregationDataType" name="editProduct.aggregationDataType"
+                                              class="defaultText" title="Enter data type to use for aggregation"/>
                             </div>
-                            <div class="span1">
-                                <c:choose>
-                                    <c:when test="${actionBean.creating}">
-                                        <stripes:link beanclass="${actionBean.class.name}" event="list">Cancel</stripes:link>
-                                    </c:when>
-                                    <c:otherwise>
-                                        <stripes:link beanclass="${actionBean.class.name}" event="view">
-                                            <stripes:param name="product" value="${actionBean.product}"/>
-                                            Cancel
-                                        </stripes:link>
-                                    </c:otherwise>
-                                </c:choose>
+                        </div>
+
+                        <div class="control-group">
+                            <stripes:label for="analysisTypeKey" name="Analysis Type" class="control-label"/>
+                            <div class="controls">
+                                <stripes:select id="analysisTypeKey" name="editProduct.analysisTypeKey">
+                                    <stripes:option value="">Select One</stripes:option>
+                                    <stripes:options-collection collection="${actionBean.analysisTypes}" label="displayName" value="businessKey"/>
+                                </stripes:select>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <stripes:label for="reagentDesignKey" class="control-label"><abbr title="aka Reagent Design">Bait Design</abbr></stripes:label>
+                            <div class="controls">
+                                <stripes:select id="reagentDesignKey" name="editProduct.reagentDesignKey">
+                                    <stripes:option value="">Select One</stripes:option>
+                                    <stripes:options-collection collection="${actionBean.reagentDesigns}" label="displayName" value="businessKey"/>
+                                </stripes:select>
+                            </div>
+                        </div>
+                    </fieldset>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="form-horizontal span12">
+                    <div class="control-group">
+                        <div class="controls">
+                            <div class="row-fluid">
+                                <div class="span1">
+                                    <stripes:submit name="save" value="Save" class="btn btn-primary"/>
+                                </div>
+                                <div class="span1">
+                                    <c:choose>
+                                        <c:when test="${actionBean.creating}">
+                                            <stripes:link beanclass="${actionBean.class.name}" event="list">Cancel</stripes:link>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <stripes:link beanclass="${actionBean.class.name}" event="view">
+                                                <stripes:param name="product" value="${actionBean.product}"/>
+                                                Cancel
+                                            </stripes:link>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </div>
                             </div>
                         </div>
                     </div>

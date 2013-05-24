@@ -1,9 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.analysis;
 
-import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessKeyFinder;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObjectFinder;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
-import org.broadinstitute.gpinformatics.mercury.entity.analysis.Aligner;
-import org.broadinstitute.gpinformatics.mercury.entity.analysis.Aligner_;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReferenceSequence;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReferenceSequence_;
 
@@ -23,7 +21,7 @@ import java.util.List;
 @Stateful
 @LocalBean
 @RequestScoped
-public class ReferenceSequenceDao extends GenericDao implements BusinessKeyFinder<ReferenceSequence> {
+public class ReferenceSequenceDao extends GenericDao implements BusinessObjectFinder<ReferenceSequence> {
 
     public List<ReferenceSequence> findAll() {
         return findAll(ReferenceSequence.class);
@@ -32,7 +30,7 @@ public class ReferenceSequenceDao extends GenericDao implements BusinessKeyFinde
     /**
      * Get all the current reference sequences.
      *
-     * @return List of all the current {@link ReferenceSequence}s.
+     * @return list of all the current {@link ReferenceSequence}s
      */
     public List<ReferenceSequence> findAllCurrent() {
         CriteriaBuilder criteriaBuilder = getCriteriaBuilder();
@@ -45,18 +43,49 @@ public class ReferenceSequenceDao extends GenericDao implements BusinessKeyFinde
     }
 
     /**
-     * Get all of the reference sequences that match the name.
+     * Get the current reference sequence of a given name.
      *
-     * @return List of all the {@link ReferenceSequence}s matching the passed name.
+     * @return The current {@link ReferenceSequence}s if it exists
      */
-    public List<ReferenceSequence> findAllByName(String name) {
+    public ReferenceSequence findCurrent(String name) {
         CriteriaBuilder criteriaBuilder = getCriteriaBuilder();
+
+        final CriteriaQuery<ReferenceSequence> query = criteriaBuilder.createQuery(ReferenceSequence.class);
+        Root<ReferenceSequence> root = query.from(ReferenceSequence.class);
+        Predicate currentPredicate = criteriaBuilder.equal(root.get(ReferenceSequence_.isCurrent), true);
+        Predicate namePredicate = criteriaBuilder.equal(root.get(ReferenceSequence_.name), name);
+        query.where(criteriaBuilder.and(currentPredicate, namePredicate));
+
+        try {
+            return getEntityManager().createQuery(query).getSingleResult();
+        } catch (NoResultException exception) {
+            // return null if there is no entity
+            return null;
+        }
+    }
+
+    /**
+     * Find the current reference sequence of a given name and version.
+     *
+     * @param name    the display name of the {@link ReferenceSequence}
+     * @param version the version of the {@link ReferenceSequence}
+     * @return The current {@link ReferenceSequence}s if it exists or null if it is not found
+     */
+    public ReferenceSequence findByNameAndVersion(String name, String version) {
+        CriteriaBuilder criteriaBuilder = getCriteriaBuilder();
+
         final CriteriaQuery<ReferenceSequence> query = criteriaBuilder.createQuery(ReferenceSequence.class);
         Root<ReferenceSequence> root = query.from(ReferenceSequence.class);
         Predicate namePredicate = criteriaBuilder.equal(root.get(ReferenceSequence_.name), name);
+        Predicate versionPredicate = criteriaBuilder.equal(root.get(ReferenceSequence_.version), version);
+        query.where(criteriaBuilder.and(namePredicate, versionPredicate));
 
-        query.where(criteriaBuilder.and(namePredicate));
-        return getEntityManager().createQuery(query).getResultList();
+        try {
+            return getEntityManager().createQuery(query).getSingleResult();
+        } catch (NoResultException exception) {
+            // return null if there is no entity
+            return null;
+        }
     }
 
     @Override

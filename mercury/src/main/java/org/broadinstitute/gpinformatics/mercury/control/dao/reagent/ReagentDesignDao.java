@@ -11,7 +11,7 @@
 
 package org.broadinstitute.gpinformatics.mercury.control.dao.reagent;
 
-import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessKeyFinder;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObjectFinder;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign_;
@@ -31,21 +31,9 @@ import java.util.List;
 @Stateful
 @LocalBean
 @RequestScoped
-public class ReagentDesignDao extends GenericDao implements BusinessKeyFinder<ReagentDesign> {
+public class ReagentDesignDao extends GenericDao implements BusinessObjectFinder<ReagentDesign> {
     public List<ReagentDesign> findAll() {
         return super.findAll(ReagentDesign.class);
-    }
-
-    public List<ReagentDesign> findAllBaits() {
-        CriteriaBuilder criteriaBuilder = getCriteriaBuilder();
-
-        final CriteriaQuery<ReagentDesign> query = criteriaBuilder.createQuery(ReagentDesign.class);
-        Root<ReagentDesign> root = query.from(ReagentDesign.class);
-        Predicate typePredicate = criteriaBuilder.equal(
-                root.get(ReagentDesign_.reagentType), ReagentDesign.ReagentType.BAIT);
-
-        query.where(typePredicate);
-        return getEntityManager().createQuery(query).getResultList();
     }
 
     public List<ReagentDesign> findAllCurrent() {
@@ -63,10 +51,8 @@ public class ReagentDesignDao extends GenericDao implements BusinessKeyFinder<Re
         final CriteriaQuery<ReagentDesign> query = criteriaBuilder.createQuery(ReagentDesign.class);
         Root<ReagentDesign> root = query.from(ReagentDesign.class);
         Predicate namePredicate = criteriaBuilder.equal(root.get(ReagentDesign_.designName), value);
-        Predicate typePredicate = criteriaBuilder.equal(
-                root.get(ReagentDesign_.reagentType), ReagentDesign.ReagentType.BAIT);
 
-        query.where(criteriaBuilder.and(namePredicate, typePredicate));
+        query.where(namePredicate);
         return getEntityManager().createQuery(query).getSingleResult();
     }
 }

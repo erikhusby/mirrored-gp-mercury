@@ -33,7 +33,6 @@ import java.util.List;
 @TransactionAttribute(TransactionAttributeType.SUPPORTS)
 @RequestScoped
 public class GenericDao {
-
     /**
      * Interface for callbacks that want to specify fetches from the specified {@link Root}, make the query distinct,
      * etc.
@@ -43,7 +42,6 @@ public class GenericDao {
     public interface GenericDaoCallback<ENTITY_TYPE> {
         void callback(CriteriaQuery<ENTITY_TYPE> criteriaQuery, Root<ENTITY_TYPE> root);
     }
-
 
     @Inject
     private ThreadEntityManager threadEntityManager;
@@ -130,7 +128,6 @@ public class GenericDao {
         return getEntityManager().getCriteriaBuilder();
     }
 
-
     /**
      * Returns all entities of the specified entity type.
      *
@@ -182,6 +179,7 @@ public class GenericDao {
         TypedQuery<ENTITY_TYPE> typedQuery = getEntityManager().createQuery(select);
         typedQuery.setFirstResult(first);
         typedQuery.setMaxResults(max);
+
         try {
             return typedQuery.getResultList();
         } catch (NoResultException ignored) {
@@ -212,8 +210,7 @@ public class GenericDao {
         Predicate predicate;
         if (value == null) {
             predicate = criteriaBuilder.isNull(root.get(singularAttribute));
-        }
-        else {
+        } else {
             predicate = criteriaBuilder.equal(root.get(singularAttribute), value);
         }
         criteriaQuery.where(predicate);
@@ -365,6 +362,7 @@ public class GenericDao {
         if (ignoreCase) {
             value = value.toLowerCase();
         }
+
         for (int i = 0; i < singularAttributes.length; i++) {
             Expression<String> expression = root.get(singularAttributes[i]).as(String.class);
             if (ignoreCase) {
@@ -372,6 +370,7 @@ public class GenericDao {
             }
             predicates[i] = criteriaBuilder.like(expression, '%' + value + '%');
         }
+
         criteriaQuery.where(criteriaBuilder.or(predicates));
         try {
             return getEntityManager().createQuery(criteriaQuery).getResultList();
