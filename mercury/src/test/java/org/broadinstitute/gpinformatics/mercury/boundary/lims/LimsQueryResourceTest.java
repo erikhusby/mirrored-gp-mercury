@@ -352,6 +352,6 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         assertThat(caught.getResponse().getStatus(), equalTo(500));
         assertThat(getResponseContent(caught),
                 startsWith(
-                        "Unable to extract parameter from http request: javax.ws.rs.QueryParam(\"QueryVesselType\") value is 'THISWILLFAIL'"));
+                        "Unable to extract parameter from http request: javax.ws.rs.QueryParam(\"idType\") value is 'THISWILLFAIL'"));
     }
 }
