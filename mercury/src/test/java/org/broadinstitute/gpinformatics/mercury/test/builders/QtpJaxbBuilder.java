@@ -37,6 +37,11 @@ public class QtpJaxbBuilder {
     private String stripTubeBarcode;
     private final WorkflowName workflowName;
     private String denatureTubeBarcode;
+    private String normalizationTubeBarcode;
+    private String normalizationRackBarcode;
+    private PlateCherryPickEvent normalizationJaxb;
+    private final List<String> normalizationTubeBarcodes = new ArrayList<String>();
+    private List<String> denatureTubeBarcodes = new ArrayList<String>();
 
     public QtpJaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageFactory, String testPrefix,
                           List<List<String>> listLcsetListNormCatchBarcodes, List<String> normCatchRackBarcodes,
@@ -100,6 +105,18 @@ public class QtpJaxbBuilder {
         return denatureTubeBarcode;
     }
 
+    public String getNormalizationTubeBarcode() {
+        return normalizationTubeBarcode;
+    }
+
+    public String getNormalizationRackBarcode() {
+        return normalizationRackBarcode;
+    }
+
+    public PlateCherryPickEvent getNormalizationJaxb() {
+        return normalizationJaxb;
+    }
+
     public QtpJaxbBuilder invoke() {
         int i = 0;
         for (List<String> normCatchBarcodes : listLcsetListNormCatchBarcodes) {
@@ -121,13 +138,31 @@ public class QtpJaxbBuilder {
             i++;
         }
 
+        // NormalizationTransfer
+        normalizationRackBarcode = "NormalizationRack" + testPrefix;
+        List<BettaLimsMessageTestFactory.CherryPick> normaliztionCherryPicks = new ArrayList<BettaLimsMessageTestFactory.CherryPick>();
+        for (int j = 0; j < poolTubeBarcodes.size(); j++) {
+            normaliztionCherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(
+                    poolRackBarcode, bettaLimsMessageTestFactory.buildWellName(j + 1,
+                    BettaLimsMessageTestFactory.WellNameType.SHORT),
+                    normalizationRackBarcode, bettaLimsMessageTestFactory.buildWellName(j + 1,
+                    BettaLimsMessageTestFactory.WellNameType.SHORT)));
+            normalizationTubeBarcode = "NormalizationTube" + testPrefix + j;
+            normalizationTubeBarcodes.add(normalizationTubeBarcode);
+        }
+        normalizationJaxb = bettaLimsMessageTestFactory.buildCherryPick("NormalizationTransfer",
+                Collections.singletonList(poolRackBarcode), Collections.singletonList(poolTubeBarcodes),
+                normalizationRackBarcode, normalizationTubeBarcodes, normaliztionCherryPicks);
+        bettaLimsMessageTestFactory.addMessage(messageList, normalizationJaxb);
+
+
         // DenatureTransfer
         denatureRackBarcode = "DenatureRack" + testPrefix;
         List<BettaLimsMessageTestFactory.CherryPick> denatureCherryPicks = new ArrayList<BettaLimsMessageTestFactory.CherryPick>();
-        List<String> denatureTubeBarcodes = new ArrayList<String>();
-        for (int j = 0; j < poolTubeBarcodes.size(); j++) {
+
+        for (int j = 0; j < normalizationTubeBarcodes.size(); j++) {
             denatureCherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(
-                    poolRackBarcode, bettaLimsMessageTestFactory.buildWellName(j + 1,
+                    normalizationRackBarcode, bettaLimsMessageTestFactory.buildWellName(j + 1,
                     BettaLimsMessageTestFactory.WellNameType.SHORT),
                     denatureRackBarcode, bettaLimsMessageTestFactory.buildWellName(j + 1,
                     BettaLimsMessageTestFactory.WellNameType.SHORT)));
@@ -135,7 +170,8 @@ public class QtpJaxbBuilder {
             denatureTubeBarcodes.add(denatureTubeBarcode);
         }
         denatureJaxb = bettaLimsMessageTestFactory.buildCherryPick("DenatureTransfer",
-                Collections.singletonList(poolRackBarcode), Collections.singletonList(poolTubeBarcodes),
+                Collections.singletonList(normalizationRackBarcode), Collections.singletonList(
+                normalizationTubeBarcodes),
                 denatureRackBarcode, denatureTubeBarcodes, denatureCherryPicks);
         bettaLimsMessageTestFactory.addMessage(messageList, denatureJaxb);
 
