@@ -21,19 +21,20 @@ import java.util.*;
  * Builds entity graph for Qtp events
  */
 public class QtpEntityBuilder {
-    private final BettaLimsMessageTestFactory   bettaLimsMessageTestFactory;
-    private final LabEventFactory               labEventFactory;
-    private final LabEventHandler               labEventHandler;
-    private final List<TubeFormation>           normCatchRacks;
+    private final BettaLimsMessageTestFactory bettaLimsMessageTestFactory;
+    private final LabEventFactory labEventFactory;
+    private final LabEventHandler labEventHandler;
+    private final List<TubeFormation> normCatchRacks;
     private final List<String> normCatchRackBarcodes;
     private final List<List<String>> listLcsetListNormCatchBarcodes;
     private final Map<String, TwoDBarcodedTube> mapBarcodeToNormCatchTubes;
-    private final WorkflowName                  workflowName;
+    private final WorkflowName workflowName;
 
     private TubeFormation denatureRack;
     private IlluminaFlowcell illuminaFlowcell;
-    private StripTube        stripTube;
+    private StripTube stripTube;
     private String testPrefix;
+    private TubeFormation normalizationRack;
 
     public QtpEntityBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
                             LabEventFactory labEventFactory, LabEventHandler labEventHandler,
@@ -58,6 +59,8 @@ public class QtpEntityBuilder {
         PlateCherryPickEvent cherryPickJaxb = qtpJaxbBuilder.getPoolingTransferJaxb();
         final String poolRackBarcode = qtpJaxbBuilder.getPoolRackBarcode();
         PlateCherryPickEvent denatureJaxb = qtpJaxbBuilder.getDenatureJaxb();
+        final String normalizationRackBarcode = qtpJaxbBuilder.getNormalizationRackBarcode();
+        PlateCherryPickEvent normalizationJaxb = qtpJaxbBuilder.getNormalizationJaxb();
         final String denatureRackBarcode = qtpJaxbBuilder.getDenatureRackBarcode();
         PlateCherryPickEvent stripTubeTransferJaxb = qtpJaxbBuilder.getStripTubeTransferJaxb();
         final String stripTubeHolderBarcode = qtpJaxbBuilder.getStripTubeHolderBarcode();
@@ -89,9 +92,10 @@ public class QtpEntityBuilder {
             TubeFormation poolingRack = (TubeFormation) poolingEntity.getTargetLabVessels().iterator().next();
             poolingRacks.add(poolingRack);
             poolTubes.add(poolingRack.getContainerRole().getVesselAtPosition(VesselPosition.A01));
-            Set<SampleInstance> pooledSampleInstances = poolingRack.getContainerRole().getSampleInstancesAtPosition(VesselPosition.A01);
+            Set<SampleInstance> pooledSampleInstances =
+                    poolingRack.getContainerRole().getSampleInstancesAtPosition(VesselPosition.A01);
             Assert.assertEquals(pooledSampleInstances.size(), normCatchRack.getSampleInstances().size(),
-                                       "Wrong number of pooled samples");
+                    "Wrong number of pooled samples");
             i++;
         }
 
@@ -109,15 +113,53 @@ public class QtpEntityBuilder {
             rearrayedPoolingRack = poolingRacks.get(0);
         }
 
+
+        // Normalization
+        LabEventTest.validateWorkflow("NormalizationTransfer", rearrayedPoolingRack);
+        Map<String, TwoDBarcodedTube> mapBarcodeToNormalizationTube = new HashMap<String, TwoDBarcodedTube>();
+        Map<String, TubeFormation> mapNormalizationBarcodeToPoolRack = new HashMap<String, TubeFormation>();
+        mapNormalizationBarcodeToPoolRack.put(poolRackBarcode, rearrayedPoolingRack);
+        LabEvent normalizationEntity = labEventFactory.buildCherryPickRackToRackDbFree(normalizationJaxb,
+                mapNormalizationBarcodeToPoolRack,
+                new HashMap<String, RackOfTubes>(),
+                mapBarcodeToPoolTube,
+                new HashMap<String, TubeFormation>() {{
+                    put(normalizationRackBarcode, null);
+                }}, mapBarcodeToNormalizationTube, null
+        );
+        labEventHandler.processEvent(normalizationEntity);
+        // asserts
+        normalizationRack = (TubeFormation) normalizationEntity.getTargetLabVessels().iterator().next();
+        Set<SampleInstance> normalizedSampleInstances =
+                normalizationRack.getContainerRole().getSampleInstancesAtPosition(VesselPosition.A01);
+        int catchSampleInstanceCount = 0;
+        for (TubeFormation normCatchRack : normCatchRacks) {
+            catchSampleInstanceCount += normCatchRack.getSampleInstances().size();
+        }
+
+        Assert.assertEquals(normalizedSampleInstances.size(), catchSampleInstanceCount,
+                "Wrong number of normalized samples");
+        Assert.assertEquals(
+                normalizationRack.getContainerRole().getVesselAtPosition(VesselPosition.A01).getSampleInstances()
+                        .size(),
+                catchSampleInstanceCount, "Wrong number of normalized samples");
+
+
         // DenatureTransfer
         LabEventTest.validateWorkflow("DenatureTransfer", rearrayedPoolingRack);
         Map<String, TwoDBarcodedTube> mapBarcodeToDenatureTube = new HashMap<String, TwoDBarcodedTube>();
-        Map<String, TubeFormation> mapBarcodeToPoolRack = new HashMap<String, TubeFormation>();
-        mapBarcodeToPoolRack.put(poolRackBarcode, rearrayedPoolingRack);
+
+        Map<String, TubeFormation> mapBarcodeToNormRack = new HashMap<String, TubeFormation>() {{
+            put(normalizationRackBarcode, normalizationRack);
+        }};
+
         LabEvent denatureEntity = labEventFactory.buildCherryPickRackToRackDbFree(denatureJaxb,
-                mapBarcodeToPoolRack,
-                new HashMap<String, RackOfTubes>(),
-                mapBarcodeToPoolTube,
+                mapBarcodeToNormRack,
+                new HashMap<String, RackOfTubes>() {{
+                    put(normalizationRackBarcode, normalizationRack.getRacksOfTubes().iterator().next());
+                }
+                },
+                mapBarcodeToNormalizationTube,
                 new HashMap<String, TubeFormation>() {{
                     put(denatureRackBarcode, null);
                 }}, mapBarcodeToDenatureTube, null
@@ -125,14 +167,17 @@ public class QtpEntityBuilder {
         labEventHandler.processEvent(denatureEntity);
         // asserts
         denatureRack = (TubeFormation) denatureEntity.getTargetLabVessels().iterator().next();
-        Set<SampleInstance> denaturedSampleInstances = denatureRack.getContainerRole().getSampleInstancesAtPosition(VesselPosition.A01);
-        int catchSampleInstanceCount = 0;
+        Set<SampleInstance> denaturedSampleInstances =
+                denatureRack.getContainerRole().getSampleInstancesAtPosition(VesselPosition.A01);
+        catchSampleInstanceCount = 0;
         for (TubeFormation normCatchRack : normCatchRacks) {
             catchSampleInstanceCount += normCatchRack.getSampleInstances().size();
         }
 
-        Assert.assertEquals(denaturedSampleInstances.size(), catchSampleInstanceCount, "Wrong number of denatured samples");
-        Assert.assertEquals(denatureRack.getContainerRole().getVesselAtPosition(VesselPosition.A01).getSampleInstances().size(),
+        Assert.assertEquals(denaturedSampleInstances.size(), catchSampleInstanceCount,
+                "Wrong number of denatured samples");
+        Assert.assertEquals(
+                denatureRack.getContainerRole().getVesselAtPosition(VesselPosition.A01).getSampleInstances().size(),
                 catchSampleInstanceCount, "Wrong number of denatured samples");
         LabEvent flowcellTransferEntity;
         // StripTubeBTransfer
