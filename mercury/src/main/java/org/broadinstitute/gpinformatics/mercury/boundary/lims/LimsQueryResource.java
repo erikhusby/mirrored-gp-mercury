@@ -73,11 +73,10 @@ public class LimsQueryResource {
     public List<LibraryDataType> fetchLibraryDetailsByTubeBarcode(
             @QueryParam("q") List<String> tubeBarcodes,
             @QueryParam("includeWorkRequestDetails") boolean includeWorkRequestDetails) {
-        switch (mercuryOrSquidRouter.routeForVesselBarcodes(tubeBarcodes)) {
+        switch (mercuryOrSquidRouter.getSystemOfRecordForVesselBarcodes(tubeBarcodes)) {
         case MERCURY:
             return limsQueries.fetchLibraryDetailsByTubeBarcode(tubeBarcodes, includeWorkRequestDetails);
         case SQUID:
-        case BOTH:
             List<LibraryData> libraryData = thriftService.fetchLibraryDetailsByTubeBarcode(tubeBarcodes, includeWorkRequestDetails);
             List<LibraryDataType> result = new ArrayList<LibraryDataType>();
             for (LibraryData data : libraryData) {
@@ -249,11 +248,10 @@ public class LimsQueryResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchQpcrForTube")
     public Double fetchQpcrForTube(@QueryParam("tubeBarcode") String tubeBarcode) {
-        switch (mercuryOrSquidRouter.routeForVessel(tubeBarcode)) {
+        switch (mercuryOrSquidRouter.getSystemOfRecordForVessel(tubeBarcode)) {
         case MERCURY:
             return limsQueries.fetchQuantForTube(tubeBarcode, LabMetric.MetricType.ECO_QPCR.getDisplayName());
         case SQUID:
-        case BOTH:
             return thriftService.fetchQpcrForTube(tubeBarcode);
         default:
             throw new RuntimeException(
@@ -267,11 +265,10 @@ public class LimsQueryResource {
     @Path("/fetchQuantForTube")
     public Double fetchQuantForTube(@QueryParam("tubeBarcode") String tubeBarcode,
                                     @QueryParam("quantType") String quantType) {
-        switch (mercuryOrSquidRouter.routeForVessel(tubeBarcode)) {
+        switch (mercuryOrSquidRouter.getSystemOfRecordForVessel(tubeBarcode)) {
         case MERCURY:
             return limsQueries.fetchQuantForTube(tubeBarcode, quantType);
         case SQUID:
-        case BOTH:
             return thriftService.fetchQuantForTube(tubeBarcode, quantType);
         default:
             throw new RuntimeException(

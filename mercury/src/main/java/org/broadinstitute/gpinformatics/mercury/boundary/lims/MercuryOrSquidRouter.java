@@ -102,6 +102,10 @@ public class MercuryOrSquidRouter implements Serializable {
         return routeForVesselBarcodes(barcodes, Intent.ROUTE);
     }
 
+    public MercuryOrSquid getSystemOfRecordForVesselBarcodes(Collection<String> barcodes) {
+        return routeForVesselBarcodes(barcodes, Intent.SYSTEM_OF_RECORD);
+    }
+
     private MercuryOrSquid routeForVesselBarcodes(Collection<String> barcodes, Intent intent) {
         Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(new ArrayList<String>(barcodes));
         // can't use mapBarcodeToVessel.values(), because it doesn't include nulls
