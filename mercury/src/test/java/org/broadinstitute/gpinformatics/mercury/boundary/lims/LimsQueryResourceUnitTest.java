@@ -391,7 +391,7 @@ public class LimsQueryResourceUnitTest {
         verifyAll();
     }
 
-    @Test(groups = DATABASE_FREE)
+    @Test(groups = DATABASE_FREE, enabled = false)
     public void testFetchIlluminaSeqTemplate() {
         final SequencingTemplateType template = new SequencingTemplateType();
         template.setBarcode("BARCODE_1234");
