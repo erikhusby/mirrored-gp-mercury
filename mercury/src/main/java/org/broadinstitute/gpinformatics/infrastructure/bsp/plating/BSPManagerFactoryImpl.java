@@ -43,22 +43,26 @@ public class BSPManagerFactoryImpl implements BSPManagerFactory {
     public BSPManagerFactoryImpl () {
     }
 
-    public BSPManagerFactoryImpl (BSPConfig configParams) {
-        this.params = configParams;
+    public BSPManagerFactoryImpl (BSPConfig params) {
+        this.params = params;
     }
 
+    @Override
     public WorkRequestManager createWorkRequestManager() {
         return (WorkRequestManager) create(BspWorkRequestManager.class);
     }
 
+    @Override
     public ContainerManager createContainerManager() {
         return (ContainerManager) create(BspContainerManager.class);
     }
 
+    @Override
     public UserManager createUserManager() {
         return (UserManager) create(BspUserManager.class);
     }
 
+    @Override
     public SampleManager createSampleManager() {
         return (SampleManager) create(BspSampleManager.class);
     }

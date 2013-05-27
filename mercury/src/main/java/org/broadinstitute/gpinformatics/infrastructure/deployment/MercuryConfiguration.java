@@ -17,17 +17,19 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Date;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 
 
 /**
  * Core class of Mercury configuration.  The two Maps in this class contain
- * <p/>
  * <ol>
- * <p/>
  * <li>Descriptions of external deployments.  These correspond to all stanzas except the "mercury" stanza in the
  * configuration files.</li>
- * <p/>
  * <li>Descriptions of how Mercury deployments connect to those external deployments.  This corresponds to the "mercury"
  * stanza in the configuration file(s).</li>
  * </ol>
@@ -47,15 +49,15 @@ public class MercuryConfiguration {
     private static Map<String, Class<? extends AbstractConfig>> configKeyToClassMap;
 
 
-    private class ExternalSystems {
+    private static class ExternalSystems {
         // Map of system key ("bsp", "squid", "thrift") to a Map of external system Deployments (TEST, QA, PROD) to
         // AbstractConfigs describing those deployments.
-        private Map<String, Map<Deployment, AbstractConfig>> map =
+        private final Map<String, Map<Deployment, AbstractConfig>> map =
                 new HashMap<String, Map<Deployment, AbstractConfig>>();
 
         public void set(String systemKey, Deployment deployment, AbstractConfig config) {
             if (!map.containsKey(systemKey)) {
-                map.put(systemKey, new HashMap<Deployment, AbstractConfig>());
+                map.put(systemKey, new EnumMap<Deployment, AbstractConfig>(Deployment.class));
             }
 
             map.get(systemKey).put(deployment, config);
@@ -75,19 +77,19 @@ public class MercuryConfiguration {
     }
 
 
-    private class MercuryConnections {
+    private static class MercuryConnections {
         // Map of system key ("bsp", "squid", "thrift") to a Map of *Mercury* Deployments to the corresponding external
         // system Deployment.
-        private Map<String, Map<Deployment, Deployment>> map =
+        private final Map<String, Map<Deployment, Deployment>> map =
                 new HashMap<String, Map<Deployment, Deployment>>();
 
         public boolean isInitialized() {
-            return map.size() != 0;
+            return !map.isEmpty();
         }
 
         public void set(String systemKey, Deployment mercuryDeployment, Deployment externalDeployment) {
             if (!map.containsKey(systemKey)) {
-                map.put(systemKey, new HashMap<Deployment, Deployment>());
+                map.put(systemKey, new EnumMap<Deployment, Deployment>(Deployment.class));
             }
 
             map.get(systemKey).put(mercuryDeployment, externalDeployment);
@@ -114,7 +116,7 @@ public class MercuryConfiguration {
     // system Deployment.
     private MercuryConnections mercuryConnections = new MercuryConnections();
 
-    private String getConfigKey(Class<? extends AbstractConfig> configClass) {
+    private static String getConfigKey(Class<? extends AbstractConfig> configClass) {
         ConfigKey annotation = configClass.getAnnotation(ConfigKey.class);
         if (annotation == null) {
             throw new RuntimeException("Failed to get config key for " + configClass.getName());
@@ -129,11 +131,11 @@ public class MercuryConfiguration {
      *
      * @return the ServletContext.
      */
-    private ServletContext getServletContext() {
+    private static ServletContext getServletContext() {
         return AuthorizationFilter.getServletContext();
     }
 
-    private Class<? extends AbstractConfig> getConfigClass(String configKey) {
+    private static Class<? extends AbstractConfig> getConfigClass(String configKey) {
 
         if (configKeyToClassMap == null) {
             configKeyToClassMap = new HashMap<String, Class<? extends AbstractConfig>>();
@@ -192,8 +194,8 @@ public class MercuryConfiguration {
      *
      * @param doc Top-level YAML document.
      */
-    private void loadExternalSystems(Map<String, Map> doc) {
-        for (Map.Entry<String, Map> section : doc.entrySet()) {
+    private void loadExternalSystems(Map<String, Map<String, Map<String, String>>> doc) {
+        for (Map.Entry<String, Map<String, Map<String, String>>> section : doc.entrySet()) {
             String systemKey = section.getKey();
 
             // This method doesn't deal with Mercury connections to external systems.
@@ -201,16 +203,15 @@ public class MercuryConfiguration {
                 continue;
             }
 
-            final Class<? extends AbstractConfig> configClass = getConfigClass(systemKey);
+            Class<? extends AbstractConfig> configClass = getConfigClass(systemKey);
 
             if (configClass == null) {
                 throw new RuntimeException("Unrecognized top-level key: '" + systemKey + "'");
             }
 
             // Iterate the deployments for this external system.
-            @SuppressWarnings("unchecked")
-            Set<Map.Entry<String, Map>> entrySet = ((Map<String, Map>) section.getValue()).entrySet();
-            for (Map.Entry<String, Map> deploymentEntry : entrySet) {
+            Set<Map.Entry<String, Map<String, String>>> entrySet = section.getValue().entrySet();
+            for (Map.Entry<String, Map<String, String>> deploymentEntry : entrySet) {
                 String deploymentString = deploymentEntry.getKey();
 
                 if (Deployment.valueOf(deploymentString) == null) {
@@ -229,7 +230,6 @@ public class MercuryConfiguration {
 
                 config.setExternalDeployment(deployment);
 
-                @SuppressWarnings("unchecked")
                 Map<String, String> deploymentEntryValue = deploymentEntry.getValue();
                 setPropertiesIntoConfig(deploymentEntryValue, config);
 
@@ -291,7 +291,7 @@ public class MercuryConfiguration {
      * @param globalConfig Whether this invocation represents the parsing of the global configuration file
      *                     (mercury-config.yaml) or the local overrides file (mercury-config-local.yaml).
      */
-    private void loadMercuryConnections(Map<String, Map> doc, boolean globalConfig) {
+    private void loadMercuryConnections(Map<String, Map<String, Map<String, String>>> doc, boolean globalConfig) {
 
         if (!doc.containsKey(MERCURY_STANZA)) {
             if (globalConfig) {
@@ -301,17 +301,15 @@ public class MercuryConfiguration {
             return;
         }
 
-        @SuppressWarnings("unchecked")
-        Map<String, Map> deploymentsMap = doc.get(MERCURY_STANZA);
+        Map<String, Map<String, String>> deploymentsMap = doc.get(MERCURY_STANZA);
 
-        for (Map.Entry<String, Map> deployments : deploymentsMap.entrySet()) {
+        for (Map.Entry<String, Map<String, String>> deployments : deploymentsMap.entrySet()) {
             String mercuryDeploymentString = deployments.getKey();
             if (Deployment.valueOf(mercuryDeploymentString) == null) {
                 throw new RuntimeException("Unrecognized deployment '" + mercuryDeploymentString + "'.");
             }
 
             Deployment mercuryDeployment = Deployment.valueOf(mercuryDeploymentString);
-            @SuppressWarnings("unchecked")
             Map<String, String> systemsMappings = deployments.getValue();
 
             for (Map.Entry<String, String> systemsMapping : systemsMappings.entrySet()) {
@@ -326,7 +324,7 @@ public class MercuryConfiguration {
 
                 String systemKey = systemsMapping.getKey();
 
-                final AbstractConfig config = externalSystems.getConfig(systemKey, externalDeployment);
+                AbstractConfig config = externalSystems.getConfig(systemKey, externalDeployment);
 
                 if (config == null) {
                     throw new RuntimeException("Unrecognized external system in mercury connections: '" + systemKey + "'.");
@@ -348,7 +346,8 @@ public class MercuryConfiguration {
     }
 
     /* package */
-    void load(Map<String, Map> globalConfigDoc, Map<String, Map> localConfigDoc) {
+    void load(Map<String, Map<String, Map<String, String>>> globalConfigDoc,
+              Map<String, Map<String, Map<String, String>>> localConfigDoc) {
         // Load up external systems and overrides.
         loadExternalSystems(globalConfigDoc);
 
@@ -382,15 +381,16 @@ public class MercuryConfiguration {
                         Yaml yaml = new Yaml();
 
                         @SuppressWarnings("unchecked")
-                        final Map<String, Map> globalConfigDoc = (Map<String, Map>) yaml.load(is);
+                        Map<String, Map<String, Map<String, String>>> globalConfigDoc =
+                                (Map<String, Map<String, Map<String, String>>>) yaml.load(is);
 
                         // take local overrides if any
-                        Map<String, Map> localConfigDoc = null;
+                        Map<String, Map<String, Map<String, String>>> localConfigDoc = null;
                         is = getClass().getResourceAsStream(MERCURY_CONFIG_LOCAL);
 
                         if (is != null) {
                             //noinspection unchecked
-                            localConfigDoc = (Map<String, Map>) yaml.load(is);
+                            localConfigDoc = (Map<String, Map<String, Map<String, String>>>) yaml.load(is);
                         }
 
                         load(globalConfigDoc, localConfigDoc);
@@ -419,12 +419,12 @@ public class MercuryConfiguration {
      * @param propertyMap Map of property keys to property values.
      * @param config The configuration object that will receive the specified configuration property settings.
      */
-    private void setPropertiesIntoConfig(Map<String, String> propertyMap, AbstractConfig config) {
+    private static void setPropertiesIntoConfig(Map<String, String> propertyMap, AbstractConfig config) {
         try {
             // Find the list of gettable properties on the bean to sanity check whether the specified property exists.
             // We should really validate settable properties too since this system doesn't work without setters.
             //noinspection unchecked
-            final Set<String> properties = BeanUtils.describe(config).keySet();
+            Set<String> properties = BeanUtils.describe(config).keySet();
 
 
             for (Map.Entry<String, String> property : propertyMap.entrySet()) {
@@ -453,7 +453,7 @@ public class MercuryConfiguration {
      * @param clazz The class extending {@link AbstractConfig} of which this method should create a new instance.
      * @return The new instance.
      */
-    private AbstractConfig newConfig(Class<? extends AbstractConfig> clazz) {
+    private static AbstractConfig newConfig(Class<? extends AbstractConfig> clazz) {
         try {
             // This will throw NoSuchMethodException if the constructor does not exist, so no need to null check.
             Constructor<? extends AbstractConfig> constructor = clazz.getConstructor(Deployment.class);

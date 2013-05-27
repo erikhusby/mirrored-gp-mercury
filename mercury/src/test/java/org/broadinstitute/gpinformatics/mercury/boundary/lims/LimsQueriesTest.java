@@ -1,9 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LibraryDataType;
@@ -14,7 +11,6 @@ import org.hamcrest.Matchers;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -22,7 +18,10 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DA
 import static org.broadinstitute.gpinformatics.infrastructure.test.dbfree.LabEventTestFactory.doSectionTransfer;
 import static org.broadinstitute.gpinformatics.infrastructure.test.dbfree.LabEventTestFactory.makeTubeFormation;
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate.PlateType.Eppendorf96;
-import static org.easymock.EasyMock.*;
+import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.verify;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -150,5 +149,33 @@ public class LimsQueriesTest {
         assertThat(result.get(1).getDestinationSection(), equalTo("ALL96"));
 
         verify(staticPlateDAO);
+    }
+
+    @Test(groups = DATABASE_FREE)
+    public void testFetchQuantForTube() {
+        TwoDBarcodedTube tube = new TwoDBarcodedTube("tube1");
+        expect(labVesselDao.findByIdentifier("tube1")).andReturn(tube);
+        replay(labVesselDao);
+
+        LabMetric quantMetric =
+                new LabMetric(new BigDecimal(55.55), LabMetric.MetricType.POND_PICO, LabMetric.LabUnit.UG_PER_ML);
+        tube.addMetric(quantMetric);
+
+        Double quantValue = limsQueries.fetchQuantForTube("tube1", "Pond Pico");
+        assertThat(quantValue, equalTo(55.55));
+    }
+
+    @Test(groups = DATABASE_FREE)
+    public void testFetchQPCRForTube() {
+        TwoDBarcodedTube tube = new TwoDBarcodedTube("tube1");
+        expect(labVesselDao.findByIdentifier("tube1")).andReturn(tube);
+        replay(labVesselDao);
+
+        LabMetric quantMetric =
+                new LabMetric(new BigDecimal(55.55), LabMetric.MetricType.ECO_QPCR, LabMetric.LabUnit.UG_PER_ML);
+        tube.addMetric(quantMetric);
+
+        Double quantValue = limsQueries.fetchQuantForTube("tube1", LabMetric.MetricType.ECO_QPCR.getDisplayName());
+        assertThat(quantValue, equalTo(55.55));
     }
 }

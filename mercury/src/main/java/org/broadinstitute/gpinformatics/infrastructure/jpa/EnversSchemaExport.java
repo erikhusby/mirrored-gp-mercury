@@ -88,8 +88,6 @@ public class EnversSchemaExport {
             throw new RuntimeException(e);
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         } finally {
             if (writer != null) {
                 writer.close();

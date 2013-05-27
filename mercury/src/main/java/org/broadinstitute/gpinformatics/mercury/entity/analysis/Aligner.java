@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.analysis;
 
-import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessKeyable;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.Nameable;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Column;
@@ -19,7 +18,7 @@ import javax.persistence.Table;
 @Entity
 @Audited
 @Table(name = "ALIGNER", schema = "mercury")
-public class Aligner implements BusinessKeyable {
+public class Aligner implements BusinessObject {
     @Id
     @SequenceGenerator(name = "SEQ_ALIGNER", schema = "mercury", sequenceName = "SEQ_ALIGNER", allocationSize = 10)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_ALIGNER")

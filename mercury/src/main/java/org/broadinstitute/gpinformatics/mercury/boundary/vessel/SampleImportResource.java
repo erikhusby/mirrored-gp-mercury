@@ -92,6 +92,7 @@ public class SampleImportResource {
     @SuppressWarnings("FeatureEnvy")
     @POST
     public String importSamples(SampleImportBean sampleImportBean) {
+        // todo jmt store the text of the message
         List<ParentVesselBean> parentVesselBeans = sampleImportBean.getParentVesselBeans();
 
         List<LabVessel> labVessels = labVesselFactory.buildLabVessels(parentVesselBeans, sampleImportBean.getUserName(),

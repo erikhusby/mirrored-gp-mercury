@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.analysis;
 
-import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessKeyFinder;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObjectFinder;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.AnalysisType;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.AnalysisType_;
@@ -16,7 +16,7 @@ import java.util.List;
 @Stateful
 @LocalBean
 @RequestScoped
-public class AnalysisTypeDao extends GenericDao implements BusinessKeyFinder {
+public class AnalysisTypeDao extends GenericDao implements BusinessObjectFinder<AnalysisType> {
     public List<AnalysisType> findAll() {
         return findAll(AnalysisType.class);
     }

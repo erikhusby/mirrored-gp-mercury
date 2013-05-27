@@ -118,7 +118,7 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
     public int doEtl(Collection<Long> revIds, String etlDateStr) {
 
         // Retrieves the Envers-formatted list of entity changes in the given revision range.
-        List<Object[]> auditEntities = auditReaderDao.fetchDataChanges(revIds, entityClass);
+        List<Object[]> auditEntities = auditReaderDao.fetchDataChanges(revIds, entityClass, true);
         AuditLists auditLists = fetchAuditIds(auditEntities);
 
         // The convert calls optionally convert entity types for cross-entity etl classes.

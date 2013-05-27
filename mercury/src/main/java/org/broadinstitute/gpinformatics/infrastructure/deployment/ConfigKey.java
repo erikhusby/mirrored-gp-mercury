@@ -7,7 +7,7 @@ import java.lang.annotation.Target;
 import static java.lang.annotation.ElementType.*;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target({TYPE})
+@Target(TYPE)
 /**
  * Used to mark an {@link AbstractConfig}-derived class with its corresponding configuration key as seen in
  * mercury-config.yaml or mercury-config-local.yaml

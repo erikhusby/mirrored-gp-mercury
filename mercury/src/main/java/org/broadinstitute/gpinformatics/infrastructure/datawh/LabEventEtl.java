@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
@@ -10,8 +9,11 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch.LabBatchType;
 
 import javax.ejb.Stateful;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.inject.Inject;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
@@ -55,7 +57,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
     @Override
     Collection<String> dataRecords(String etlDateStr, boolean isDelete, LabEvent entity) {
 
-        Collection<EventFactDto> facts = traverseGraph(entity);
+        Collection<EventFactDto> facts = makeEventFacts(entity);
         updateIds(facts);
 
         Collection<String> records = new ArrayList<String>();
@@ -77,7 +79,6 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
 
     private class EventFactDto {
         private LabEvent labEvent;
-        private boolean noLabBatch;
         private LabVessel labVessel;
         private String eventName;
         private SampleInstance sampleInstance;
@@ -88,74 +89,63 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         private ProductOrder productOrder;
         private WorkflowConfigDenorm wfDenorm;
 
-        private EventFactDto(LabEvent labEvent, boolean noLabBatch, LabVessel labVessel, String eventName,
-                             SampleInstance sampleInstance, LabBatch labBatch, Long labBatchId, MercurySample sample,
-                             String productOrderKey) {
+        private EventFactDto(LabEvent labEvent, LabVessel labVessel, String eventName, SampleInstance sampleInstance,
+                             LabBatch labBatch, MercurySample sample, String productOrderKey) {
             this.labEvent = labEvent;
-            this.noLabBatch = noLabBatch;
             this.labVessel = labVessel;
             this.eventName = eventName;
             this.sampleInstance = sampleInstance;
             this.labBatch = labBatch;
-            this.labBatchId = labBatchId;
+            this.labBatchId = labBatch == null ? null : labBatch.getLabBatchId();
             this.sample = sample;
             this.productOrderKey = productOrderKey;
         }
     }
 
-    @DaoFree
-    private Collection<EventFactDto> traverseGraph(LabEvent entity) {
+    public Collection<EventFactDto> makeEventFacts(LabEvent entity) {
         Collection<EventFactDto> facts = new ArrayList<EventFactDto>();
-        if (entity == null) {
-            return facts;
-        }
+        if (entity != null && entity.getLabEventType() != null) {
+            String eventName = entity.getLabEventType().getName();
 
-        if (entity.getLabEventType() == null) {
-            logger.warn("Cannot ETL labEvent " + entity.getLabEventId() + " that has no LabEventType.");
-            return facts;
-        }
-
-        boolean noLabBatch = entity.getLabBatch() == null;
-
-        Collection<LabVessel> vessels = entity.getTargetLabVessels();
-        if (vessels.size() == 0 && entity.getInPlaceLabVessel() != null) {
-            vessels.add(entity.getInPlaceLabVessel());
-        }
-        if (vessels.size() == 0) {
-            logger.warn("Cannot ETL event " + entity.getLabEventId() + " that has no vessels.");
-            return facts;
-        }
-
-        String eventName = entity.getLabEventType().getName();
-
-        for (LabVessel vessel : vessels) {
-
-            Set<SampleInstance> sampleInstances = vessel.getSampleInstances();
-            if (sampleInstances.size() == 0) {
-                logger.warn("Cannot ETL event " + entity.getLabEventId() + " vessel " + vessel.getLabel() +
-                        " that has no SampleInstances.");
-                continue;
+            Collection<LabVessel> vessels = entity.getTargetLabVessels();
+            if (vessels.size() == 0 && entity.getInPlaceLabVessel() != null) {
+                vessels.add(entity.getInPlaceLabVessel());
             }
 
-            for (SampleInstance si : sampleInstances) {
+            for (LabVessel vessel : vessels) {
+                try {
+                    Set<SampleInstance> sampleInstances = vessel.getSampleInstances();
+                    if (sampleInstances.size() > 0) {
+                        for (SampleInstance si : sampleInstances) {
 
-                LabBatch labBatch = noLabBatch ? si.getLabBatch() : entity.getLabBatch();
-                Long labBatchId = labBatch != null ? labBatch.getLabBatchId() : null;
+                            LabBatch labBatch = si.getLabBatch() != null ? si.getLabBatch() : entity.getLabBatch();
+                            if (labBatch != null) {
 
-                MercurySample sample = si.getStartingSample();
-                if (sample == null) {
-                    logger.warn("Cannot find starting sample for sampleInstance " + si.toString());
-                    continue;
+                                MercurySample sample = si.getStartingSample();
+                                if (sample != null) {
+                                    String productOrderKey = si.getProductOrderKey();
+                                    if (productOrderKey != null) {
+
+                                        facts.add(new EventFactDto(entity, vessel, eventName, si, labBatch, sample,
+                                                productOrderKey));
+
+                                    } else {
+                                        if (labBatch.getLabBatchType() == LabBatchType.WORKFLOW) {
+                                            logger.debug("Sample " + sample.getSampleKey() + " in " +
+                                                    labBatch.getBusinessKey() + " has no product order");
+                                        }
+                                    }
+                                } else {
+                                    logger.debug("SampleInstance " + si.toString() + " has no starting sample.");
+                                }
+                            }
+                        }
+                    } else {
+                        logger.debug("Vessel " + vessel.getLabel() + " has no SampleInstances.");
+                    }
+                } catch (RuntimeException e) {
+                    logger.debug("Skipping ETL on vessel " + vessel.getLabel() + " due to: " + e);
                 }
-                String productOrderKey = si.getProductOrderKey();
-                if (productOrderKey == null) {
-                    logger.warn("Sample " + sample.getSampleKey() + " has null productOrderKey");
-                    continue;
-                }
-
-                facts.add(new EventFactDto(entity, noLabBatch, vessel, eventName, si, labBatch, labBatchId,
-                        sample, productOrderKey));
-
             }
         }
         return facts;

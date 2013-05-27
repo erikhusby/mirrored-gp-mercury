@@ -19,7 +19,16 @@ import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Stateful
 @RequestScoped
@@ -33,15 +42,15 @@ public class BucketBean {
 
     private LabBatchEjb batchEjb;
 
-    private final static Log logger = LogFactory.getLog(BucketBean.class);
+    private static final Log logger = LogFactory.getLog(BucketBean.class);
 
     public BucketBean() {
     }
 
     @Inject
-    public BucketBean(LabEventFactory labEventFactoryIn, JiraService testjiraService, LabBatchEjb batchEjb) {
-        this.labEventFactory = labEventFactoryIn;
-        this.jiraService = testjiraService;
+    public BucketBean(LabEventFactory labEventFactory, JiraService jiraService, LabBatchEjb batchEjb) {
+        this.labEventFactory = labEventFactory;
+        this.jiraService = jiraService;
         this.batchEjb = batchEjb;
     }
 
@@ -55,6 +64,7 @@ public class BucketBean {
      * @param operator      Represents the user that initiated adding the vessels to the bucket
      * @param eventType     Type of the Lab Event that initiated this bucket add request
      * @param eventLocation Machine location from which operator initiated this action
+     *
      * @return New bucket entry that was created
      */
     public BucketEntry add(@Nonnull LabVessel vessel, @Nonnull Bucket bucket, @Nonnull String operator,
@@ -103,29 +113,29 @@ public class BucketBean {
      * Adds a pre-defined collection of {@link LabVessel}s to a given bucket.  When the vessels do not already
      * have a product order association, uses the specified pdoBusinessKey instead.
      *
-     * @param entriesToAdd     Collection of LabVessels to be added to a bucket
-     * @param bucket           instance of a bucket entity associated with a workflow bucket step
-     * @param operator         Represents the user that initiated adding the vessels to the bucket
-     * @param labEventLocation Machine location from which operator initiated this action
-     * @param eventType        Type of the Lab Event that initiated this bucket add request
-     * @param singlePdoBusinessKey   Product order key for all vessels
+     * @param entriesToAdd         Collection of LabVessels to be added to a bucket
+     * @param bucket               instance of a bucket entity associated with a workflow bucket step
+     * @param operator             Represents the user that initiated adding the vessels to the bucket
+     * @param labEventLocation     Machine location from which operator initiated this action
+     * @param eventType            Type of the Lab Event that initiated this bucket add request
+     * @param singlePdoBusinessKey Product order key for all vessels
      */
     public void add(@Nonnull Collection<LabVessel> entriesToAdd, @Nonnull Bucket bucket,
                     @Nonnull String operator, @Nonnull String labEventLocation, LabEventType eventType,
-                    final String singlePdoBusinessKey) {
+                    String singlePdoBusinessKey) {
 
         List<BucketEntry> listOfNewEntries = new LinkedList<BucketEntry>();
         Map<String, Collection<LabVessel>> pdoKeyToVesselMap = new HashMap<String, Collection<LabVessel>>();
 
         for (LabVessel currVessel : entriesToAdd) {
-            String pdoBusinessKey = null;
+            String pdoBusinessKey;
             if (singlePdoBusinessKey == null) {
                 Collection<String> productOrderBusinessKeys = currVessel.getNearestProductOrders();
 
                 if (productOrderBusinessKeys.size() > 1) {
                     logger.error("Vessel " + currVessel.getLabel() +
-                            " has more than one PDO's associated with it, Using the first found: " +
-                            StringUtils.join(productOrderBusinessKeys, ", "));
+                                 " has more than one PDO's associated with it, Using the first found: " +
+                                 StringUtils.join(productOrderBusinessKeys, ", "));
                 }
                 pdoBusinessKey = productOrderBusinessKeys.iterator().next();
             } else {
@@ -209,7 +219,7 @@ public class BucketBean {
         Set<BucketEntry> bucketEntrySet = buildBatchListByVessels(vesselsToBatch, workingBucket);
 
 //        LabBatch bucketBatch =
-                startBucketDrain(bucketEntrySet, operator, batchInitiationLocation, false);
+        startBucketDrain(bucketEntrySet, operator, batchInitiationLocation, false);
 
 //        if (bucketBatch.getJiraTicket() == null) {
 //            batchEjb.batchToJira(operator, batchTicket, bucketBatch);
@@ -226,6 +236,7 @@ public class BucketBean {
      *
      * @param vesselsToBatch {@link LabVessel}s for which the user needs to find bucket entries
      * @param workingBucket  The bucket from which to find the the bucket entries
+     *
      * @return
      */
     public Set<BucketEntry> buildBatchListByVessels(Collection<LabVessel> vesselsToBatch, Bucket workingBucket) {
@@ -237,11 +248,11 @@ public class BucketBean {
             if (foundEntry != null) {
                 logger.info("Adding entry " + foundEntry.getBucketEntryId() + " for vessel " + foundEntry.getLabVessel()
                         .getLabCentricName() +
-                        " and PDO " + foundEntry.getPoBusinessKey() + " to be popped from bucket.");
+                            " and PDO " + foundEntry.getPoBusinessKey() + " to be popped from bucket.");
                 bucketEntrySet.add(foundEntry);
             } else {
                 logger.info("Attempting to pull a vessel, " + workingVessel.getLabel() + ", from a bucket, " +
-                        workingBucket.getBucketDefinitionName() + ", when it does not exist in that bucket");
+                            workingBucket.getBucketDefinitionName() + ", when it does not exist in that bucket");
             }
         }
         return bucketEntrySet;
@@ -258,7 +269,7 @@ public class BucketBean {
      *                             prioritized item and work down the queue from there.
      * @param workingBucket        instance of a bucket entity associated with a workflow bucket step
      */
-    public void start(String operator, final int numberOfBatchSamples, @Nonnull Bucket workingBucket) {
+    public void start(String operator, int numberOfBatchSamples, @Nonnull Bucket workingBucket) {
         start(operator, numberOfBatchSamples, workingBucket, null);
     }
 
@@ -276,7 +287,7 @@ public class BucketBean {
      * @param workingBucket        instance of a bucket entity associated with a workflow bucket step
      */
     @DaoFree
-    public LabBatch startDBFree(@Nonnull String operator, final int numberOfBatchSamples,
+    public LabBatch startDBFree(@Nonnull String operator, int numberOfBatchSamples,
                                 @Nonnull Bucket workingBucket) {
         Set<BucketEntry> bucketEntrySet = buildBatchListBySize(numberOfBatchSamples, workingBucket);
         return startBucketDrain(bucketEntrySet, operator, LabEvent.UI_EVENT_LOCATION, true);
@@ -296,13 +307,13 @@ public class BucketBean {
      * @param workingBucket        instance of a bucket entity associated with a workflow bucket step
      * @param batchTicket          Key of the Jira Ticket to be associated with a batch for the vessels processed
      */
-    public void start(@Nonnull String operator, final int numberOfBatchSamples, @Nonnull Bucket workingBucket,
-                      final String batchTicket) {
+    public void start(@Nonnull String operator, int numberOfBatchSamples, @Nonnull Bucket workingBucket,
+                      String batchTicket) {
 
 //        LabBatch bucketBatch = null;
 //
 //        bucketBatch =
-                startDBFree(operator, numberOfBatchSamples, workingBucket);
+        startDBFree(operator, numberOfBatchSamples, workingBucket);
 
     }
 
@@ -312,6 +323,7 @@ public class BucketBean {
      *
      * @param numberOfBatchSamples Batch size/Nuber of entries to retrieve from the bucket
      * @param workingBucket        bucket from which to create a batch of entries
+     *
      * @return a set of bucket entries found in the given bucket.  The size of the set is defined by
      *         numberOfBatchSamples
      */
@@ -370,7 +382,7 @@ public class BucketBean {
          * Create (if necessary) a new batch
          */
 //        LabBatch bucketBatch =
-                startBucketDrain(bucketEntries, operator, batchInitiationLocation, false);
+        startBucketDrain(bucketEntries, operator, batchInitiationLocation, false);
 
     }
 
@@ -384,6 +396,7 @@ public class BucketBean {
      * @param operator                Represents the user that initiated adding the vessels to the bucket
      * @param batchInitiationLocation Machine location from which operator initiated this action
      * @param autoBatch               Indicator to let the system know if they should even perform Auto Batching.
+     *
      * @return Either a newly created batch object, or the most recent one found that incorporates all
      *         lab vessels being processed in this request.
      */
@@ -437,17 +450,17 @@ public class BucketBean {
                         " and PDO " + currEntry.getPoBusinessKey() + " to be popped from bucket.");
             currEntry.getBucket().removeEntry(currEntry);
             removeRework(currEntry.getLabVessel());
-            jiraRemovalUpdate(currEntry, "Extracted for Batch");
-
         }
+        jiraRemovalUpdate(bucketEntries, "Extracted for Batch");
     }
 
     /**
      * All the samples in this vessel are being reworked, so mark them as such
      * so they don't show up in the bucket.
+     *
      * @param labVessel vessel full of samples for rework.
      */
-    public void removeRework(LabVessel labVessel){
+    public void removeRework(LabVessel labVessel) {
         labVessel.deactivateRework();
     }
 
@@ -494,14 +507,47 @@ public class BucketBean {
     }
 
     /**
+     * This is a helper method to make a comment on the Jira ticket for the Product Order associated with the entry being
+     * removed. This method takes in a collection of bucket entries and rolls them up into one JIRA comment.
+     *
+     * @param entries All of the entries rolled up in this message.
+     * @param reason  captures the information about why this entry is being removed from the bucket
+     */
+    private void jiraRemovalUpdate(@Nonnull Collection<BucketEntry> entries, String reason) {
+        Map<String, Collection<BucketEntry>> pdoToEntries = new HashMap<String, Collection<BucketEntry>>();
+        for (BucketEntry entry : entries) {
+            Collection<BucketEntry> pdoEntries = pdoToEntries.get(entry.getPoBusinessKey());
+            if (pdoEntries == null) {
+                pdoEntries = new ArrayList<BucketEntry>();
+                pdoToEntries.put(entry.getPoBusinessKey(), pdoEntries);
+            }
+            pdoEntries.add(entry);
+        }
+        for (Map.Entry<String, Collection<BucketEntry>> entry : pdoToEntries.entrySet()) {
+            try {
+                jiraService.addComment(entry.getKey(), entry.getKey() + ":" + entry.getValue().size()
+                                                       + " sample(s) removed from bucket "
+                                                       + entry.getValue().iterator().next().getBucket()
+                        .getBucketDefinitionName()
+                                                       + ":: " + reason);
+            } catch (IOException ioe) {
+                logger.error("Error attempting to create jira removal comment for " +
+                             entry.getKey() + " " +
+                             entry.getValue().size() + " samples.", ioe);
+            }
+        }
+    }
+
+    /**
      * Helper method to extract the Pdo Business Keys for a given list of Bucket Entries
      *
      * @param entries Collection of Entities that represent the PDO->lab Vessel combination that is to
      *                be removed from the bucket.
+     *
      * @return Set of all PDO business keys that are references in the collection of bucket entries being
      *         processed
      */
-    private Set<String> extractProductOrderSet(Collection<BucketEntry> entries) {
+    private static Set<String> extractProductOrderSet(Collection<BucketEntry> entries) {
         Set<String> pdoSet = new HashSet<String>();
 
         for (BucketEntry currEntry : entries) {
@@ -517,9 +563,10 @@ public class BucketBean {
      *
      * @param pdo     Product Order Business key associated with the returned vessels
      * @param entries
+     *
      * @return
      */
-    private Collection<LabVessel> extractPdoLabVessels(String pdo, Collection<BucketEntry> entries) {
+    private static Collection<LabVessel> extractPdoLabVessels(String pdo, Collection<BucketEntry> entries) {
         List<LabVessel> labVessels = new LinkedList<LabVessel>();
 
         for (BucketEntry currEntry : entries) {

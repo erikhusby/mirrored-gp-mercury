@@ -13,100 +13,59 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import java.util.*;
 
 /**
- * An aliquot of a sample in a particular
- * molecular state.
+ * An aliquot of a sample in a particular molecular state.
  * <p/>
- * "Molecular state" describes the molecular
- * changes the target has undergone.  Knowing
- * the molecular state is key to identifying
- * what lab processes the sample instance
- * can undergo.
+ * "Molecular state" describes the molecular changes the target has undergone.  Knowing the molecular state is key to
+ * identifying what lab processes the sample instance can undergo.
  * <p/>
- * This might all seem a bit too abstract.  Consider
- * what our users are trying to do when the search
- * for lims materials: they're trying to find
- * some piece of plastic that contains a sample
- * in a state that is amenable to a particular
+ * This might all seem a bit too abstract.  Consider what our users are trying to do when the search for lims materials:
+ * they're trying to find some piece of plastic that contains a sample in a state that is amenable to a particular
  * "next" lab step.
  * <p/>
- * For example, currently you ask for
- * denatured illumina libraries so you
- * can do some topoff sequencing.  But
- * "denatured" doesn't tell the whole story
- * of the state of the DNA.  So you say
- * "Oh, I want the denatured libraries
- * for hybrid selection."  This turns into
- * a bit of a workflow query in the current
- * squid, but if we want users to be able
- * to inject samples in any state into
- * our lab, we don't want to rely on
- * our workflow to tell us the state of
- * the library.  We want to know the molecular
- * state.
+ * For example, currently you ask for denatured illumina libraries so you can do some topoff sequencing.  But
+ * "denatured" doesn't tell the whole story of the state of the DNA.  So you say "Oh, I want the denatured libraries for
+ * hybrid selection."  This turns into a bit of a workflow query in the current squid, but if we want users to be able
+ * to inject samples in any state into our lab, we don't want to rely on our workflow to tell us the state of the
+ * library.  We want to know the molecular state.
  * <p/>
- * So instead of saying "give me the denatured
- * libraries which are associated with a
- * hybrid selection work request", we say
- * "give me the libraries that are denatured
- * and are in a molecular status which is
- * amenable to pooling for the catch operation."
+ * So instead of saying "give me the denatured libraries which are associated with a hybrid selection work request", we
+ * say "give me the libraries that are denatured and are in a molecular status which is amenable to pooling for the
+ * catch operation."
  * <p/>
- * This might seem like an overly subtle difference,
- * but when a collaborator says to us "Hey, I
- * did my own hybrid selection and pooling, can
- * you just sequence my library?", the current answer
- * is "not unless we backfill a bunch of fake
- * workflow information first.", which then
- * breaks reporting because what we're doing is
- * saying we actually did all the prep work,
- * when in fact we didn't.
+ * This might seem like an overly subtle difference, but when a collaborator says to us "Hey, I did my own hybrid
+ * selection and pooling, can you just sequence my library?", the current answer is "not unless we backfill a bunch of
+ * fake workflow information first.", which then breaks reporting because what we're doing is saying we actually did all
+ * the prep work, when in fact we didn't.
  * <p/>
- * A good challenge for whether this model
- * works in reality is to take all possible
- * molecular state configurations and map
- * them to solexa_library_type, four54_library_type,
- * etc.  If you can take the molecular state
- * and produce a simple string that summarizes
- * that state, we're all good.  One caveat is that the current library "types"
- * conflate they "why" (for example, 454 library
- * type "RNA rework aliquot") with the molecular
- * status.
+ * A good challenge for whether this model works in reality is to take all possible molecular state configurations and
+ * map them to solexa_library_type, four54_library_type, etc.  If you can take the molecular state and produce a simple
+ * string that summarizes that state, we're all good.  One caveat is that the current library "types" conflate they
+ * "why" (for example, 454 library type "RNA rework aliquot") with the molecular status.
  * <p/>
- * There's a fuzzy line between molecular
- * state "facts" and measured attributes,
- * like concentration and volume.  Metrics
- * are captured on containers for many things
- * at 320.  See LabVessel.getMetric() for
- * examples.  At the same time, however, external
- * collaborators may ship us samples and tell
- * us various metrics, so we have to be able
- * to resolve metrics either at the
- * aliquot instance level as part of the
- * sample sheet, or by traversing lims event
- * histories.
+ * There's a fuzzy line between molecular state "facts" and measured attributes, like concentration and volume.  Metrics
+ * are captured on containers for many things at 320.  See LabVessel.getMetric() for examples.  At the same time,
+ * however, external collaborators may ship us samples and tell us various metrics, so we have to be able to resolve
+ * metrics either at the aliquot instance level as part of the sample sheet, or by traversing lims event histories.
  * <p/>
- * The unique key of a SampleAliquotInstance
- * is the {@Link SampleAliquot} and the
- * {@link org.broadinstitute.gpinformatics.mercury.entity.vessel.MolecularState}.  You can have the same
- * Goop in a SampleSheet or
- * a {@link org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel}, in which case they'll
- * have to have different {@link org.broadinstitute.gpinformatics.mercury.entity.vessel.MolecularState}.
+ * The unique key of a SampleInstance is the {@link MercurySample} and the {@link MolecularState}.  You can have the
+ * same Goop in a SampleSheet or a {@link LabVessel}, in which case they'll have to have different {@link
+ * MolecularState}.
  */
 public class SampleInstance {
 
-    public enum GSP_CONTROL_ROLE {
+    public enum GspControlRole {
         NEGATIVE, POSITIVE, NONE
     }
 
-    private static Log gLog = LogFactory.getLog(SampleInstance.class);
+    private static final Log log = LogFactory.getLog(SampleInstance.class);
 
-    private MercurySample sample;
+    private final MercurySample sample;
 
-    private GSP_CONTROL_ROLE controlRole;
+    private final GspControlRole controlRole;
 
     private MolecularState molecularState;
 
-    private List<Reagent> reagents = new ArrayList<Reagent>();
+    private final List<Reagent> reagents = new ArrayList<Reagent>();
 
     // todo use this when the definitive batch is known
     private LabBatch labBatch;
@@ -117,7 +76,7 @@ public class SampleInstance {
     private String productOrderKey;
 
     public SampleInstance(MercurySample sample,
-                          GSP_CONTROL_ROLE controlRole,
+                          GspControlRole controlRole,
                           MolecularState molecularState) {
         this.sample = sample;
         this.controlRole = controlRole;
@@ -133,7 +92,7 @@ public class SampleInstance {
      *
      * @return
      */
-    public GSP_CONTROL_ROLE getControlRole() {
+    public GspControlRole getControlRole() {
         return controlRole;
     }
 
@@ -261,6 +220,10 @@ public class SampleInstance {
         return indexes;
     }
 
+    /**
+     * This is set only when there is a single lab batch.
+     * @return lab batch
+     */
     public LabBatch getLabBatch() {
         return labBatch;
     }
@@ -269,19 +232,15 @@ public class SampleInstance {
         return allLabBatches;
     }
 
-    public void setAllLabBatches(Collection<LabBatch> allLabBatches) {
-        this.allLabBatches = new HashSet<LabBatch>(allLabBatches);
-        // todo jmt improve this logic
-        if (allLabBatches.size() == 1) {
-            labBatch = allLabBatches.iterator().next();
-        }
-    }
-
     public void addLabBatches(Collection<LabBatch> batches){
         if(allLabBatches == null){
             allLabBatches = new HashSet<LabBatch>();
         }
         allLabBatches.addAll(batches);
+        // todo jmt improve this logic
+        if (allLabBatches.size() == 1) {
+            labBatch = allLabBatches.iterator().next();
+        }
     }
 
     public Collection<LabBatch> getAllWorkflowLabBatches() {

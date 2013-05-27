@@ -13,9 +13,6 @@ import org.testng.annotations.Test;
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 
-/**
- * @author Scott Matthews
- */
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class ProductOrderSampleContainerTest extends ContainerTest {
 
@@ -88,7 +85,8 @@ public class ProductOrderSampleContainerTest extends ContainerTest {
      *
      * @param expectedCount The number of PDO samples in the specified PDO that are expected to have billing ledger entries.
      */
-    @Test(dataProvider = PDO_TO_LEDGER_ENTRY_COUNT_PROVIDER)
+    // TODO Rewrite this to not use existing data.
+    @Test(dataProvider = PDO_TO_LEDGER_ENTRY_COUNT_PROVIDER, enabled = false)
     public void testCountSamplesWithLedgerEntries(@Nonnull String pdoBusinessKey, @Nonnull Integer expectedCount) {
 
         ProductOrder productOrder = pdoDao.findByBusinessKey(pdoBusinessKey);

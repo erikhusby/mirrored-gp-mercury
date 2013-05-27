@@ -22,9 +22,11 @@ public class DB implements Serializable {
         LabUser("Mercury-LabUsers"),
         LabManager("Mercury-LabManagers"),
         BillingManager("Mercury-BillingManagers"),
+        PipelineManager("Mercury-PipelineAdmins"),
         All("All");
 
         public final String name;
+
         Role(String name) {
             this.name = name;
         }
@@ -86,7 +88,7 @@ public class DB implements Serializable {
      * @return array of comma delimited role names.
      */
     public static String[] roles(@Nonnull Role... roles) {
-        String [] roleNames = new String[roles.length];
+        String[] roleNames = new String[roles.length];
 
         for (int i = 0; i < roles.length; i++) {
             roleNames[i] = roles[i].name;

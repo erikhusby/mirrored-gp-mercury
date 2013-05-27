@@ -123,14 +123,28 @@
                 </li>
             </security:authorizeBlock>
 
-            <security:authorizeBlock roles="<%= roles(Developer) %>">
+            <security:authorizeBlock roles="<%= roles(Developer, PipelineManager) %>">
                 <li class="dropdown">
                     <a id="adminNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span
                             class="icon-cog"></span> Admin <b class="caret"></b></a>
                     <ul class="dropdown-menu" role="menu">
+                        <security:authorizeBlock roles="<%= roles(Developer) %>">
+                            <li><stripes:link
+                                    beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.CreateBatchActionBean"
+                                    event="startBatch">Create Batch</stripes:link></li>
+                        </security:authorizeBlock>
                         <li><stripes:link
-                                beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.CreateBatchActionBean"
-                                tabindex="1" event="startBatch">Create Batch</stripes:link></li>
+                                beanclass="org.broadinstitute.gpinformatics.mercury.presentation.analysis.ManageAnalysisFieldsActionBean"
+                                event="showAligner">Manage Aligners</stripes:link></li>
+                        <li><stripes:link
+                                beanclass="org.broadinstitute.gpinformatics.mercury.presentation.analysis.ManageAnalysisFieldsActionBean"
+                                event="showAnalysisType">Manage Analysis Type</stripes:link></li>
+                        <li><stripes:link
+                                beanclass="org.broadinstitute.gpinformatics.mercury.presentation.analysis.ManageAnalysisFieldsActionBean"
+                                event="showReagentDesign">Manage Reagent Design</stripes:link></li>
+                        <li><stripes:link
+                                beanclass="org.broadinstitute.gpinformatics.mercury.presentation.analysis.ManageAnalysisFieldsActionBean"
+                                event="showReferenceSequence">Manage Reference Sequence</stripes:link></li>
                     </ul>
                 </li>
             </security:authorizeBlock>

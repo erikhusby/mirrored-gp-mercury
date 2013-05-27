@@ -158,7 +158,7 @@
             </div>
         </div>
 
-        <div class="form-horizontal help-block span5">
+        <div class="form-horizontal span5">
             <fieldset>
                 <legend><h4>Project Users</h4></legend>
 
@@ -253,7 +253,7 @@
             </fieldset>
         </div>
 
-        <div class="tableBar" style="clear:both; margin-bottom: 10px;">
+        <div class="tableBar" style="clear:both;">
             <h4 style="display:inline">Orders</h4>
 
             <stripes:link title="Create product with research project ${actionBean.editResearchProject.title}"

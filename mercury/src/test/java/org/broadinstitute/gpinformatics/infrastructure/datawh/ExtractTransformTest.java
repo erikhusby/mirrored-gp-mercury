@@ -6,6 +6,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.RiskItem;
+import org.broadinstitute.gpinformatics.infrastructure.common.SessionContextUtilityKeepScope;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
@@ -18,14 +19,12 @@ import org.hibernate.type.LongType;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.persistence.Query;
-import javax.transaction.Status;
 import javax.transaction.UserTransaction;
 import javax.ws.rs.core.Response;
 import java.io.File;
@@ -36,7 +35,10 @@ import java.util.Date;
 import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
 
 /**
  * Container test of ExtractTransform.
@@ -59,13 +61,14 @@ public class ExtractTransformTest extends Arquillian {
     private ProductOrderSampleDao pdoSampleDao;
     @Inject
     private LabVesselDao labVesselDao;
+
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private UserTransaction utx;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(DEV);
+        return DeploymentBuilder.buildMercuryWarWithAlternatives(DEV, SessionContextUtilityKeepScope.class);
     }
 
     @BeforeClass(groups = TestGroups.EXTERNAL_INTEGRATION)
@@ -77,22 +80,6 @@ public class ExtractTransformTest extends Arquillian {
     public void beforeMethod() throws Exception {
         ExtractTransform.setDatafileDir(datafileDir);
         EtlTestUtilities.deleteEtlFiles(datafileDir);
-    }
-
-    @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
-    public void tearDown() throws Exception {
-        // Deletes any test entity in case the test prematurely ended.
-        if (utx != null) {
-            if (utx.getStatus() == Status.STATUS_NO_TRANSACTION) {
-                utx.begin();
-            }
-            LabVessel labVessel = labVesselDao.findByIdentifier(barcode);
-            if (labVessel != null) {
-                labVesselDao.remove(labVessel);
-                labVesselDao.flush();
-            }
-            utx.commit();
-        }
     }
 
     public void testEtl() throws Exception {
@@ -110,9 +97,9 @@ public class ExtractTransformTest extends Arquillian {
         // Incremental etl won't pick up entities in the current second.
         Thread.sleep(MSEC_IN_SEC);
 
-        extractTransform.writeLastEtlRun(startSec);
+        ExtractTransform.writeLastEtlRun(startSec);
         int recordCount = extractTransform.incrementalEtl("0", "0");
-        long endEtlSec = extractTransform.readLastEtlRun();
+        long endEtlSec = ExtractTransform.readLastEtlRun();
         assertTrue(recordCount > 0);
 
         // Gets the entity.
@@ -159,9 +146,9 @@ public class ExtractTransformTest extends Arquillian {
         utx.commit();
         Thread.sleep(MSEC_IN_SEC);
 
-        extractTransform.writeLastEtlRun(startSec);
+        ExtractTransform.writeLastEtlRun(startSec);
         recordCount = extractTransform.incrementalEtl("0", "0");
-        endEtlSec = extractTransform.readLastEtlRun();
+        endEtlSec = ExtractTransform.readLastEtlRun();
         assertTrue(recordCount > 0);
 
         // Finds the deletion entity in a data file (may be more than one data file if another commit
