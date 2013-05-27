@@ -335,7 +335,7 @@ public class LimsQueryResourceUnitTest {
 
     @Test(groups = DATABASE_FREE)
     public void testFetchQpcrForTube() throws Exception {
-        expect(mockMercuryOrSquidRouter.routeForVessel("barcode")).andReturn(BOTH);
+        expect(mockMercuryOrSquidRouter.getSystemOfRecordForVessel("barcode")).andReturn(SQUID);
         expect(mockThriftService.fetchQpcrForTube("barcode")).andReturn(1.23);
         replayAll();
 
@@ -351,7 +351,7 @@ public class LimsQueryResourceUnitTest {
 
     @Test(groups = DATABASE_FREE)
     public void testFetchQuantForTube() throws Exception {
-        expect(mockMercuryOrSquidRouter.routeForVessel("barcode")).andReturn(BOTH);
+        expect(mockMercuryOrSquidRouter.getSystemOfRecordForVessel("barcode")).andReturn(SQUID);
         expect(mockThriftService.fetchQuantForTube("barcode", "test")).andReturn(1.23);
         replayAll();
 
