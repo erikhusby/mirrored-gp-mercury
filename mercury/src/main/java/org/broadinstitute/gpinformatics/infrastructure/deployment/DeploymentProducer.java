@@ -48,9 +48,12 @@ public class DeploymentProducer implements Serializable {
             // to abort deployment if we don't like the value of MERCURY_DEPLOYMENT.
             deployment = Deployment.valueOf(deploymentString);
 
-            String crsp = jndiResolver.lookupProperty(CRSP);
-
-            Deployment.isCRSP = Boolean.valueOf(crsp);
+            try {
+                String crsp = jndiResolver.lookupProperty(CRSP);
+                Deployment.isCRSP = Boolean.valueOf(crsp);
+            } catch (Exception e) {
+                // Ignore exception; if name can't be resolved, we're not using CRSP.
+            }
 
             log.info(MessageFormat.format("Mercury deployment specified in JNDI, set to {0}.", deploymentString));
         } catch (NamingException e) {
