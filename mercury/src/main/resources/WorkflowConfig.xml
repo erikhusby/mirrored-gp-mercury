@@ -583,6 +583,7 @@
             <workflowProcessDefs>HiSEQ 2500</workflowProcessDefs>
         </productWorkflowDefVersions>
         <routingRule>BOTH</routingRule>
+        <inValidation>true</inValidation>
     </productWorkflowDefs>
     <productWorkflowDefs>
         <name>Hybrid Selection</name>

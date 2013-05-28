@@ -1744,4 +1744,16 @@ END;
                        columnNames="rev, SEQUENCE_ID"/>
     </changeSet>
 
+    <changeSet id="GPLIM-1312-1" author="breilly">
+        <addColumn tableName="lab_batch" schemaName="mercury">
+            <column name="is_validation_batch" type="number(1,0)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-1312-2" author="scottmat">
+        <addColumn tableName="lab_batch_aud" schemaName="mercury">
+            <column name="is_validation_batch" type="number(1,0)"/>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

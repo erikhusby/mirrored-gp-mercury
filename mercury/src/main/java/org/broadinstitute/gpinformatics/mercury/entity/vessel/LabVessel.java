@@ -478,7 +478,8 @@ public abstract class LabVessel implements Serializable {
         STRIP_TUBE("Strip Tube"),
         STRIP_TUBE_WELL("Strip Tube Well"),
         PACBIO_PLATE("PacBio Plate"),
-        ILLUMINA_RUN_CHAMBER("Illumina Run Chamber");
+        ILLUMINA_RUN_CHAMBER("Illumina Run Chamber"),
+        MISEQ_REAGENT_KIT("MiSeq Reagent Kit");
 
         private String name;
 
@@ -574,6 +575,31 @@ public abstract class LabVessel implements Serializable {
         }
 
         return positionList;
+    }
+
+    /**
+     * This method will get the last known position of a sample. If the sample is in a tube it will check the last rack
+     * it was in. Otherwise it will defer to the getPositionsOfSample.
+     *
+     * @param sampleInstance The sample instance to find the last position for.
+     *
+     * @return A list of vessel positions that the sample instance was last known to be at.
+     */
+    public List<VesselPosition> getLastKnownPositionsOfSample(@Nonnull SampleInstance sampleInstance) {
+        Map<Date, List<VesselPosition>> positionList = new TreeMap<Date, List<VesselPosition>>();
+        if (getContainerRole() == null) {
+            for (VesselContainer container : getContainers()) {
+                List<VesselPosition> curPositionLists = positionList.get(container.getEmbedder().getCreatedOn());
+                if (curPositionLists == null) {
+                    curPositionLists = new ArrayList<VesselPosition>();
+                    positionList.put(container.getEmbedder().getCreatedOn(), curPositionLists);
+                }
+                curPositionLists.add(container.getPositionOfVessel(this));
+            }
+        } else {
+            return getPositionsOfSample(sampleInstance);
+        }
+        return positionList.get(positionList.keySet().iterator().next());
     }
 
     private Set<SampleInstance> getSamplesAtPosition(VesselPosition position, SampleType sampleType) {
@@ -1262,7 +1288,7 @@ public abstract class LabVessel implements Serializable {
     /**
      * This method get index information for all samples in this vessel.
      *
-     * @return a set of strings representing all indexes in this vessel.
+     * @return a set of strings representing all indexes in tQhis vessel.
      */
     public List<MolecularIndexReagent> getIndexes() {
         List<MolecularIndexReagent> indexes = new ArrayList<MolecularIndexReagent>();

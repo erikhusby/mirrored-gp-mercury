@@ -2,16 +2,21 @@ package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LibraryDataType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PlateTransferType;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SampleInfoType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.WellAndSourceTubeType;
 import org.hamcrest.Matchers;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -44,6 +49,7 @@ public class LimsQueriesTest {
 
     @BeforeMethod(groups = DATABASE_FREE)
     public void setup() {
+        // todo jmt mocks could be removed by small refactoring into @DaoFree methods
         staticPlateDAO = createMock(StaticPlateDAO.class);
         labVesselDao = createMock(LabVesselDao.class);
 
@@ -53,6 +59,24 @@ public class LimsQueriesTest {
         doSectionTransfer(new StaticPlate("plate1", Eppendorf96), plate3);
         doSectionTransfer(new StaticPlate("plate2", Eppendorf96), plate3);
         limsQueries = new LimsQueries(staticPlateDAO, labVesselDao);
+    }
+
+    @Test(groups = DATABASE_FREE)
+    public void testFetchLibraryDetailsByTubeBarcode() {
+        Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
+        String twoDBarcode = "1234";
+        TwoDBarcodedTube twoDBarcodedTube = new TwoDBarcodedTube(twoDBarcode);
+        String sampleKey = "SM-1234";
+        twoDBarcodedTube.addSample(new MercurySample(sampleKey));
+        mapBarcodeToVessel.put(twoDBarcode, twoDBarcodedTube);
+        List<LibraryDataType> libraryDataTypes = limsQueries.fetchLibraryDetailsByTubeBarcode(mapBarcodeToVessel);
+        assertThat(libraryDataTypes.size(), equalTo(1));
+        LibraryDataType libraryDataType = libraryDataTypes.get(0);
+        assertThat(libraryDataType.getLibraryName(), Matchers.equalTo(twoDBarcode));
+        assertThat(libraryDataType.getTubeBarcode(), Matchers.equalTo(twoDBarcode));
+        assertThat(libraryDataType.getSampleDetails().size(), equalTo(1));
+        SampleInfoType sampleInfoType = libraryDataType.getSampleDetails().get(0);
+        assertThat(sampleInfoType.getSampleName(), Matchers.equalTo(sampleKey));
     }
 
     @Test(groups = DATABASE_FREE)

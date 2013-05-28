@@ -13,8 +13,6 @@ import java.io.Serializable;
 import java.util.*;
 
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.ContainerType.STATIC_PLATE;
-import static org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria.TraversalControl.ContinueTraversing;
-import static org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria.TraversalControl.StopTraversing;
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria.TraversalDirection.Ancestors;
 
 /**
@@ -159,10 +157,12 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
              * possible for that test to pass even with this check. Note that this may also make code coverage waver
              * ever so slightly based on whether or not this expression evaluates to true for a particular test run.
              */
-            if (!result.containsKey(context.getVesselPosition())) {
-                result.put(context.getVesselPosition(), false);
+            if (context.getVesselPosition() != null) {
+                if (!result.containsKey(context.getVesselPosition())) {
+                    result.put(context.getVesselPosition(), false);
+                }
             }
-            if (context.getLabVessel() != null) {
+            if (context.getLabVessel() != null && context.getVesselContainer() != null) {
                 if (OrmUtil.proxySafeIsInstance(context.getVesselContainer().getEmbedder(), TubeFormation.class)) {
                     result.put(context.getVesselPosition(), true);
                     return TraversalControl.StopTraversing;
@@ -203,10 +203,13 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
         public TraversalControl evaluateVesselPreOrder(Context context) {
             if (OrmUtil.proxySafeIsInstance(context.getLabVessel(), TwoDBarcodedTube.class)) {
                 tubes.add(context.getLabVessel());
-                vesselAndPositions.add(new VesselAndPosition(context.getLabVessel(), context.getVesselPosition()));
-                return StopTraversing;
+                // Check for null, because source tubes in VesselToSectionTransfers (baits) don't have positions.
+                if (context.getVesselPosition() != null) {
+                    vesselAndPositions.add(new VesselAndPosition(context.getLabVessel(), context.getVesselPosition()));
+                }
+                return TraversalControl.StopTraversing;
             } else {
-                return ContinueTraversing;
+                return TraversalControl.ContinueTraversing;
             }
         }
 
@@ -247,7 +250,8 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
         }
         return vesselAndPositions;
 */
-        NearestTubeAncestorsCriteria criteria = new NearestTubeAncestorsCriteria();
+        TransferTraverserCriteria.NearestTubeAncestorsCriteria
+                criteria = new TransferTraverserCriteria.NearestTubeAncestorsCriteria();
         applyCriteriaToAllWells(criteria);
         return new ArrayList<VesselAndPosition>(criteria.getVesselAndPositions());
     }

@@ -28,6 +28,8 @@ public class ProductOrderListEntry implements Serializable {
 
     private Date placedDate;
 
+    private String quoteId;
+
     private Long billingSessionId;
 
     private Long unbilledLedgerEntryCount = 0L;
@@ -38,8 +40,7 @@ public class ProductOrderListEntry implements Serializable {
      */
     public ProductOrderListEntry(Long orderId, String title, String jiraTicketKey, ProductOrder.OrderStatus orderStatus,
                                  String productName, String productFamilyName, String researchProjectTitle,
-                                 Long ownerId,
-                                 Date placedDate) {
+                                 Long ownerId, Date placedDate, String quoteId) {
         this.orderId = orderId;
         this.title = title;
         this.jiraTicketKey = jiraTicketKey;
@@ -49,6 +50,7 @@ public class ProductOrderListEntry implements Serializable {
         this.researchProjectTitle = researchProjectTitle;
         this.ownerId = ownerId;
         this.placedDate = placedDate;
+        this.quoteId = quoteId;
     }
 
     /**
@@ -56,7 +58,9 @@ public class ProductOrderListEntry implements Serializable {
      * into the objects from the first query.
      *
      */
-    public ProductOrderListEntry(Long orderId, String jiraTicketKey, Long billingSessionId, Long unbilledLedgerEntryCount) {
+    public ProductOrderListEntry(
+        Long orderId, String jiraTicketKey, Long billingSessionId, Long unbilledLedgerEntryCount) {
+
         this.orderId = orderId;
         this.jiraTicketKey = jiraTicketKey;
         this.billingSessionId = billingSessionId;
@@ -103,6 +107,10 @@ public class ProductOrderListEntry implements Serializable {
 
     public Date getPlacedDate() {
         return placedDate;
+    }
+
+    public String getQuoteId() {
+        return quoteId;
     }
 
     public String getBillingSessionBusinessKey() {
