@@ -131,6 +131,16 @@ public class BettaLimsMessageTestFactory {
         return plateTransferEvent;
     }
 
+    public PlateTransferEventType buildRackToPlate(String eventType, String rackBarcode, List<String> tubeBarcodes,
+                                                   String plateBarcode, String plateType, String sourceSection,
+                                                   String targetSection) {
+        PlateTransferEventType event = buildRackToPlate(eventType, rackBarcode, tubeBarcodes, plateBarcode);
+        event.getSourcePlate().setSection(sourceSection);
+        event.getPlate().setSection(targetSection);
+        event.getPlate().setPhysType(plateType);
+        return event;
+    }
+
     public PlateTransferEventType buildPlateToRack(String eventType, String plateBarcode, String rackBarcode,
             List<String> tubeBarcodes) {
         PlateTransferEventType plateTransferEvent = new PlateTransferEventType();

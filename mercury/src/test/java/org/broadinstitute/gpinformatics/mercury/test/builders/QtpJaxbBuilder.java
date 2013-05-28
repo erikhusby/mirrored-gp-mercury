@@ -141,7 +141,7 @@ public class QtpJaxbBuilder {
         // EcoTransfer
         ecoPlateBarcode = "EcoPlate" + testPrefix;
         ecoTransferJaxb = bettaLimsMessageTestFactory.buildRackToPlate("EcoTransfer", poolRackBarcode,
-                poolTubeBarcodes, ecoPlateBarcode);
+                poolTubeBarcodes, ecoPlateBarcode, "Eco48", "3BY6A1", "8BY6A3ALTROWS");
         ecoTransferMessage = bettaLimsMessageTestFactory.addMessage(messageList, ecoTransferJaxb);
 
         // DenatureTransfer

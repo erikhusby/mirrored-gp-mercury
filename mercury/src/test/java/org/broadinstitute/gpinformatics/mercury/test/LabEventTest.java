@@ -342,6 +342,7 @@ public class LabEventTest extends BaseEventTest {
                 "CatchEnrichmentCleanup",
                 "NormalizedCatchRegistration",
                 "PoolingTransfer",
+                "EcoTransfer",
                 "DenatureTransfer",
                 "StripTubeBTransfer",
                 "FlowcellTransfer",
@@ -372,7 +373,7 @@ public class LabEventTest extends BaseEventTest {
         transferEntityGrapher.setMaxNumVesselsPerRequest(1000);
         Graph graph = new Graph();
         transferEntityGrapher.startWithTube(startingTube, graph, new ArrayList<TransferVisualizer.AlternativeId>());
-        Assert.assertEquals(graph.getMapIdToVertex().size(), 1208, "Wrong number of vertices");
+        Assert.assertEquals(graph.getMapIdToVertex().size(), 1209, "Wrong number of vertices");
 //        Controller.stopCPURecording();
     }
 
@@ -464,6 +465,7 @@ public class LabEventTest extends BaseEventTest {
                 "CatchEnrichmentCleanup",
                 "NormalizedCatchRegistration",
                 "PoolingTransfer",
+                "EcoTransfer",
                 "DenatureTransfer",
                 "DenatureToFlowcellTransfer",
         };
@@ -547,6 +549,7 @@ public class LabEventTest extends BaseEventTest {
                 "SageUnloading",
                 "SageCleanup",
                 "PoolingTransfer",
+                "EcoTransfer",
                 "DenatureTransfer",
                 "StripTubeBTransfer",
                 "FlowcellTransfer",
