@@ -40,6 +40,44 @@ app:
       #limsworkflowvalidation@broadinstitute.org
 
 
+bsp:
+
+    DEV:
+      login:    xxxx
+      password: xxxx
+      host:     xxxx
+      port:     1
+
+    QA:
+      login:    xxxx
+      password: xxxx
+      host:     xxxx
+      port:     1
+
+    PROD:
+      login:    xxxx
+      password: xxxx
+      host:     xxxx
+      port:     1
+
+
+gap:
+
+    DEV:
+      login:    xxxx
+      password: xxxx
+      url:      xxxx
+
+    QA:
+      login:    xxxx
+      password: xxxx
+      url:      xxxx
+
+    PROD:
+      login:    xxxx
+      password: xxxx
+      url:      xxxx
+
 
 jira:
 
