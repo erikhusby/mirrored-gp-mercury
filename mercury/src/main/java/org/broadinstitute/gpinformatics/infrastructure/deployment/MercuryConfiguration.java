@@ -365,11 +365,17 @@ public class MercuryConfiguration {
         }
     }
 
-    private String getConfigPath() {
+    private static String getConfigPath() {
+        if (Deployment.isCRSP) {
+            return CRSP_MERCURY_CONFIG;
+        }
         return MERCURY_CONFIG;
     }
 
-    private String getLocalConfigPath() {
+    private static String getLocalConfigPath() {
+        if (Deployment.isCRSP) {
+            return CRSP_MERCURY_CONFIG_LOCAL;
+        }
         return MERCURY_CONFIG_LOCAL;
     }
 

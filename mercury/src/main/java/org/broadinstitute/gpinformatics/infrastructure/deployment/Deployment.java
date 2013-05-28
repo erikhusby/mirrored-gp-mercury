@@ -19,11 +19,4 @@ public enum Deployment {
      * True if we are in a CRSP build of Mercury. This is set manually when the deployment object is first constructed.
      */
     public static boolean isCRSP;
-
-    /**
-     * True if we are in a CRSP build of Mercury.
-     */
-    public boolean isCRSP() {
-        return isCRSP;
-    }
 }
