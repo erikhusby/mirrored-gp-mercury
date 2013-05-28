@@ -27,12 +27,27 @@ import java.util.List;
 @UrlBinding(value = "/view/analysisFields.action")
 public class ManageAnalysisFieldsActionBean extends CoreActionBean {
 
+    public static final String ANALYSIS_FIELDS_ACTION = "/view/analysisFields.action";
+
     private static final String MANAGE_ALIGNER_PAGE = "/analysis/manage_aligners.jsp";
     private static final String MANAGE_ANALYSIS_TYPE_PAGE = "/analysis/manage_analysis_types.jsp";
     private static final String MANAGE_REAGENT_DESIGN_PAGE = "/analysis/manage_reagent_designs.jsp";
     private static final String MANAGE_REFERENCE_SEQUENCE_PAGE = "/analysis/manage_reference_sequences.jsp";
 
-    public static final String ANALYSIS_FIELDS_ACTION = "/view/analysisFields.action";
+    public static final String REMOVE_ALIGNERS = "removeAligners";
+    public static final String REMOVE_ANALYSIS_TYPES = "removeAnalysisTypes";
+    public static final String REMOVE_REAGENT_DESIGNS = "removeReagentDesigns";
+    public static final String REMOVE_REFERENCE_SEQUENCES = "removeReferenceSequences";
+
+    public static final String ADD_ALIGNER = "addAligner";
+    public static final String ADD_ANALYSIS_TYPE = "addAnalysisType";
+    public static final String ADD_REAGENT_DESIGN = "addReagentDesign";
+    public static final String ADD_REFERENCE_SEQUENCE = "addReferenceSequence";
+
+    public static final String SHOW_ALIGNER = "showAligner";
+    public static final String SHOW_ANALYSIS_TYPE = "showAnalysisType";
+    public static final String SHOW_REFERENCE_SEQUENCE = "showReferenceSequence";
+    public static final String SHOW_REAGENT_DESIGN = "showReagentDesign";
 
     @Inject
     AnalysisEjb analysisEjb;
@@ -51,54 +66,57 @@ public class ManageAnalysisFieldsActionBean extends CoreActionBean {
     private List<ReferenceSequence> referenceSequenceList;
 
     @Validate(required = true,
-            on = {"removeAligners", "removeAnalysisTypes", "removeReagentDesigns", "removeReferenceSequences"})
+            on = {REMOVE_ALIGNERS, REMOVE_ANALYSIS_TYPES, REMOVE_REAGENT_DESIGNS, REMOVE_REFERENCE_SEQUENCES})
     private List<String> businessKeyList;
 
-    @Validate(required = true, on = {"AddReagentDesign"})
+    @Validate(required = true, on = {ADD_REAGENT_DESIGN})
     private ReagentDesign.ReagentType selectedReagentType;
 
-    @Validate(required = true, on = {"addAligner", "addAnalysisType", "addReagentDesign", "addReferenceSequence"})
+    @Validate(required = true, on = {ADD_ALIGNER, ADD_ANALYSIS_TYPE, ADD_REAGENT_DESIGN, ADD_REFERENCE_SEQUENCE})
     private String newName;
 
-    @Validate(required = true, on = {"addReferenceSequence"})
+    @Validate(required = true, on = {ADD_REFERENCE_SEQUENCE})
     private String newVersion;
 
-    @After(stages = LifecycleStage.BindingAndValidation, on = {"showAligner", "addAligner", "removeAligners"})
+    @After(stages = LifecycleStage.BindingAndValidation, on = {SHOW_ALIGNER, ADD_ALIGNER, REMOVE_ALIGNERS})
     public void afterAlignerValidations() {
-            alignerList = alignerDao.findAll();
+        alignerList = alignerDao.findAll();
     }
 
-    @After(stages = LifecycleStage.BindingAndValidation, on = {"showAnalysisType", "addAnalysisType", "removeAnalysisTypes"})
+    @After(stages = LifecycleStage.BindingAndValidation,
+            on = {SHOW_ANALYSIS_TYPE, ADD_ANALYSIS_TYPE, REMOVE_ANALYSIS_TYPES})
     public void afterAnalysisTypeValidations() {
         analysisTypeList = analysisTypeDao.findAll();
     }
 
-    @After(stages = LifecycleStage.BindingAndValidation, on = {"showReferenceSequence", "addReferenceSequence", "removeReferenceSequences"})
+    @After(stages = LifecycleStage.BindingAndValidation,
+            on = {SHOW_REFERENCE_SEQUENCE, ADD_REFERENCE_SEQUENCE, REMOVE_REFERENCE_SEQUENCES})
     public void afterReferenceSequenceValidation() {
         referenceSequenceList = referenceSequenceDao.findAll();
     }
 
-    @After(stages = LifecycleStage.BindingAndValidation, on = {"showReagentDesign", "addReagentDesign", "removeReagentDesigns"})
+    @After(stages = LifecycleStage.BindingAndValidation,
+            on = {SHOW_REAGENT_DESIGN, ADD_REAGENT_DESIGN, REMOVE_REAGENT_DESIGNS})
     public void aferReagentDesignValidation() {
         reagentDesignList = reagentDesignDao.findAll();
     }
 
     @DefaultHandler
-    @HandlesEvent("showAligner")
+    @HandlesEvent(SHOW_ALIGNER)
     public Resolution showAligner() {
         return new ForwardResolution(MANAGE_ALIGNER_PAGE);
     }
 
-    @HandlesEvent("addAligner")
+    @HandlesEvent(ADD_ALIGNER)
     public Resolution addAligner() {
         analysisEjb.addAligner(newName);
-        return new RedirectResolution(ANALYSIS_FIELDS_ACTION).addParameter("showAligner", "");
+        return new RedirectResolution(ANALYSIS_FIELDS_ACTION).addParameter(SHOW_ALIGNER, "");
     }
 
-    @HandlesEvent("removeAligners")
+    @HandlesEvent(REMOVE_ALIGNERS)
     public Resolution removeAligners() {
         analysisEjb.removeAligners(getBusinessKeyArray());
-        return new RedirectResolution(ANALYSIS_FIELDS_ACTION).addParameter("showAligner", "");
+        return new RedirectResolution(ANALYSIS_FIELDS_ACTION).addParameter(SHOW_ALIGNER, "");
     }
 
     @HandlesEvent("showAnalysisType")
@@ -106,55 +124,55 @@ public class ManageAnalysisFieldsActionBean extends CoreActionBean {
         return new ForwardResolution(MANAGE_ANALYSIS_TYPE_PAGE);
     }
 
-    @HandlesEvent("addAnalysisType")
+    @HandlesEvent(ADD_ANALYSIS_TYPE)
     public Resolution addAnalysisType() {
         analysisEjb.addAnalysisType(newName);
-        return new RedirectResolution(ANALYSIS_FIELDS_ACTION).addParameter("showAnalysisType", "");
+        return new RedirectResolution(ANALYSIS_FIELDS_ACTION).addParameter(SHOW_ANALYSIS_TYPE, "");
     }
 
-    @HandlesEvent("removeAnalysisTypes")
+    @HandlesEvent(REMOVE_ANALYSIS_TYPES)
     public Resolution removeAnalysisTypes() {
         analysisEjb.removeAnalysisTypes(getBusinessKeyArray());
-        return new RedirectResolution(ANALYSIS_FIELDS_ACTION).addParameter("showAnalysisType", "");
+        return new RedirectResolution(ANALYSIS_FIELDS_ACTION).addParameter(SHOW_ANALYSIS_TYPE, "");
     }
 
-    @HandlesEvent("showReferenceSequence")
+    @HandlesEvent(SHOW_REFERENCE_SEQUENCE)
     public Resolution showReferenceSequence() {
         return new ForwardResolution(MANAGE_REFERENCE_SEQUENCE_PAGE);
     }
 
-    @HandlesEvent("addReferenceSequence")
+    @HandlesEvent(ADD_REFERENCE_SEQUENCE)
     public Resolution addReferenceSequence() {
         analysisEjb.addReferenceSequence(newName, newVersion);
-        return new RedirectResolution(ANALYSIS_FIELDS_ACTION).addParameter("showReferenceSequence", "");
+        return new RedirectResolution(ANALYSIS_FIELDS_ACTION).addParameter(SHOW_REFERENCE_SEQUENCE, "");
     }
 
-    @HandlesEvent("removeReferenceSequences")
+    @HandlesEvent(REMOVE_REFERENCE_SEQUENCES)
     public Resolution removeReferenceSequences() {
         analysisEjb.removeReferenceSequences(getBusinessKeyArray());
-        return new RedirectResolution(ANALYSIS_FIELDS_ACTION).addParameter("showReferenceSequence", "");
+        return new RedirectResolution(ANALYSIS_FIELDS_ACTION).addParameter(SHOW_REFERENCE_SEQUENCE, "");
     }
 
-    @HandlesEvent("showReagentDesign")
+    @HandlesEvent(SHOW_REAGENT_DESIGN)
     public Resolution showReagentDesign() {
         return new ForwardResolution(MANAGE_REAGENT_DESIGN_PAGE);
     }
 
-    @HandlesEvent("addReagentDesign")
+    @HandlesEvent(ADD_REAGENT_DESIGN)
     public Resolution addReagentDesign() {
         analysisEjb.addReagentDesign(newName, selectedReagentType);
-        return new RedirectResolution(ANALYSIS_FIELDS_ACTION).addParameter("showReagentDesign", "");
+        return new RedirectResolution(ANALYSIS_FIELDS_ACTION).addParameter(SHOW_REAGENT_DESIGN, "");
     }
 
-    @HandlesEvent("removeReagentDesigns")
+    @HandlesEvent(REMOVE_REAGENT_DESIGNS)
     public Resolution removeReagentDesigns() {
         analysisEjb.removeReagentDesigns(getBusinessKeyArray());
-        return new RedirectResolution(ANALYSIS_FIELDS_ACTION).addParameter("showReagentDesign", "");
+        return new RedirectResolution(ANALYSIS_FIELDS_ACTION).addParameter(SHOW_REAGENT_DESIGN, "");
     }
 
     /**
      * This is used to return an array of business keys for objects that we want to delete.
-     * This is a utility method that will reduce code replication.
+     * This is a utility method that will reduce code duplication.
      *
      * @return String array of business keys for selected analysis fields.
      */
