@@ -144,6 +144,7 @@ public class EventEtlDbFreeTest {
         expect(obj.getLabEventType()).andReturn(eventType).times(2);
         expect(obj.getTargetLabVessels()).andReturn(vesselList);
         expect(vessel.getSampleInstances(SampleType.WITH_PDO, LabBatchType.WORKFLOW)).andReturn(sampleInstList);
+        expect(sampleInst.getProductOrderKey()).andReturn(pdoKey);
         expect(sampleInst.getStartingSample()).andReturn(null);
 
         replay(mocks);
@@ -160,7 +161,7 @@ public class EventEtlDbFreeTest {
         expect(vessel.getSampleInstances(SampleType.WITH_PDO, LabBatchType.WORKFLOW)).andReturn(sampleInstList);
         expect(sampleInst.getStartingSample()).andReturn(sample);
         expect(sampleInst.getAllWorkflowLabBatches()).andReturn(workflowLabBatches);
-        expect(sampleInst.getProductOrderKey()).andReturn(pdoKey);
+        expect(sampleInst.getProductOrderKey()).andReturn(pdoKey).times(2);
 
         expect(labBatch.getLabBatchId()).andReturn(labBatchId);
         expect(sample.getSampleKey()).andReturn(sampleKey);
@@ -192,7 +193,7 @@ public class EventEtlDbFreeTest {
         expect(vessel.getSampleInstances(SampleType.WITH_PDO, LabBatchType.WORKFLOW)).andReturn(sampleInstList);
         expect(sampleInst.getStartingSample()).andReturn(sample);
         expect(sampleInst.getAllWorkflowLabBatches()).andReturn(workflowLabBatches);
-        expect(sampleInst.getProductOrderKey()).andReturn(pdoKey);
+        expect(sampleInst.getProductOrderKey()).andReturn(pdoKey).times(2);
 
         expect(labBatch.getLabBatchId()).andReturn(labBatchId);
         expect(sample.getSampleKey()).andReturn(sampleKey);

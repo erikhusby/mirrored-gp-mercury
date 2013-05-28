@@ -111,6 +111,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         Collection<EventFactDto> facts = new ArrayList<EventFactDto>();
         Set<String> missingSampleInstances = new HashSet<String>();
         Set<String> missingStartingSamples = new HashSet<String>();
+        Set<String> missingPdoKeys = new HashSet<String>();
 
         if (entity != null && entity.getLabEventType() != null) {
             String eventName = entity.getLabEventType().getName();
@@ -126,14 +127,18 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                             vessel.getSampleInstances(SampleType.WITH_PDO, LabBatchType.WORKFLOW);
                     if (sampleInstances.size() > 0) {
                         for (SampleInstance si : sampleInstances) {
-                            MercurySample sample = si.getStartingSample();
-                            if (sample != null) {
-                                for (LabBatch labBatch : si.getAllWorkflowLabBatches()) {
-                                    facts.add(new EventFactDto(entity, vessel, eventName, si, labBatch, sample,
-                                            si.getProductOrderKey()));
+                            if (si.getProductOrderKey() != null) {
+                                MercurySample sample = si.getStartingSample();
+                                if (sample != null) {
+                                    for (LabBatch labBatch : si.getAllWorkflowLabBatches()) {
+                                        facts.add(new EventFactDto(entity, vessel, eventName, si, labBatch, sample,
+                                                si.getProductOrderKey()));
+                                    }
+                                } else {
+                                    missingStartingSamples.add(si.toString());
                                 }
                             } else {
-                                missingStartingSamples.add(si.toString());
+                                missingPdoKeys.add(si.toString());
                             }
                         }
                     } else {
@@ -146,12 +151,13 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         }
         // Aggregates log messages.
         if (missingSampleInstances.size() > 0) {
-            String missing = StringUtils.join(missingSampleInstances, ", ");
-            logger.debug("Vessels having no SampleInstance: " + missing);
+            logger.debug(missingSampleInstances.size() + " vessels have no SampleInstance.");
         }
         if (missingStartingSamples.size() > 0) {
-            String missing = StringUtils.join(missingStartingSamples, ", ");
-            logger.debug("SampleInstances having no starting sample: " + missing);
+            logger.debug(missingStartingSamples.size() + " sampleInstances have no starting sample.");
+        }
+        if (missingPdoKeys.size() > 0) {
+            logger.debug(missingPdoKeys.size() + " sampleInstances have no product order.");
         }
         return facts;
     }
@@ -201,11 +207,11 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         // Aggregates log messages.
         if (missingPdoEntities.size() > 0) {
             String missing = StringUtils.join(missingPdoEntities.iterator(), ", ");
-            logger.warn("Cannot find product order entity for: " + missing);
+            logger.debug("Cannot find product order entity for: " + missing);
         }
         if (missingWorkflows.size() > 0) {
             String missing = StringUtils.join(missingPdoEntities.iterator(), ", ");
-            logger.warn("Cannot find workflow config for: " + missing);
+            logger.debug("Cannot find workflow config for: " + missing);
         }
     }
 
