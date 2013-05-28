@@ -33,9 +33,9 @@ public class BSPManagerFactoryTest extends Arquillian {
         UserManager userManager = bspManagerFactory.createUserManager();
         Assert.assertNotNull(userManager);
 
-        List<BspUser> projectManagers = userManager.getProjectManagers();
-        Assert.assertNotNull(projectManagers);
+        List<BspUser> users = userManager.getUsers();
+        Assert.assertNotNull(users);
 
-        Assert.assertTrue(projectManagers.size() > 10);
+        Assert.assertTrue(users.size() > 10);
     }
 }
