@@ -70,7 +70,8 @@ public class BSPManagerFactoryImpl implements BSPManagerFactory {
             jowalsh("jowalsh", "John", "Walsh", "jowalsh@broadinstitute.org"),
             hrafal("hrafal", "Howard", "Rafal", "hrafal@broadinstitute.org"),
             pdunlea("pdunlea", "Phil", "Dunlea", "pdunlea@broadinstitute.org"),
-            pshapiro("pshapiro", "Phil", "Shapiro", "pshapiro@broadinstitute.org");
+            pshapiro("pshapiro", "Phil", "Shapiro", "pshapiro@broadinstitute.org"),
+            dinsmore("dinsmore", "Michael", "Dinsmore", "dinsmore@broadinstitute.org");
 
             private final long userId;
             private final String username;
