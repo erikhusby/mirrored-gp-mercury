@@ -27,8 +27,9 @@ import java.text.MessageFormat;
 @Singleton
 public class DeploymentProducer implements Serializable {
     public static final String MERCURY_DEPLOYMENT = "MERCURY_DEPLOYMENT";
+    public static final String CRSP = "CRSP";
 
-    private Log log = LogFactory.getLog(DeploymentProducer.class);
+    private static final Log log = LogFactory.getLog(DeploymentProducer.class);
 
     @Inject
     private JNDIResolver jndiResolver;
@@ -46,6 +47,10 @@ public class DeploymentProducer implements Serializable {
             // NullPointerException or IllegalArgumentException from Enum#valueOf() checked below, exceptions propagated
             // to abort deployment if we don't like the value of MERCURY_DEPLOYMENT.
             deployment = Deployment.valueOf(deploymentString);
+
+            String crsp = jndiResolver.lookupProperty(CRSP);
+
+            Deployment.isCRSP = Boolean.valueOf(crsp);
 
             log.info(MessageFormat.format("Mercury deployment specified in JNDI, set to {0}.", deploymentString));
         } catch (NamingException e) {

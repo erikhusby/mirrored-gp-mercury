@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.test;
 
 import org.apache.commons.io.FileUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.DeploymentProducer;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.StringAsset;
@@ -51,7 +52,7 @@ public class DeploymentBuilder {
                 .addAsResource(new File("src/main/resources/WorkflowConfig.xml"), "WorkflowConfig.xml")
                 .addAsResource(new File("src/main/resources/templates/WorkflowValidation.ftl"), "templates/WorkflowValidation.ftl")
                 .addPackages(true, "org.broadinstitute.gpinformatics")
-                .addAsWebInfResource(new StringAsset("MERCURY_DEPLOYMENT=" + deployment.name()),
+                .addAsWebInfResource(new StringAsset(DeploymentProducer.MERCURY_DEPLOYMENT + "=" + deployment.name()),
                         "classes/jndi.properties");
         addWebResourcesTo(war, "src/test/resources/testdata");
         war = addWarDependencies(war);

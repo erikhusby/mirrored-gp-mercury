@@ -39,6 +39,10 @@ public class MercuryConfiguration {
 
     private static final String MERCURY_CONFIG_LOCAL = "/mercury-config-local.yaml";
 
+    private static final String CRSP_MERCURY_CONFIG = "/crsp-mercury-config.yaml";
+
+    private static final String CRSP_MERCURY_CONFIG_LOCAL = "/crsp-mercury-config-local.yaml";
+
     private static final String MERCURY_STANZA = "mercury";
 
     private static MercuryConfiguration instance;
@@ -361,6 +365,14 @@ public class MercuryConfiguration {
         }
     }
 
+    private String getConfigPath() {
+        return MERCURY_CONFIG;
+    }
+
+    private String getLocalConfigPath() {
+        return MERCURY_CONFIG_LOCAL;
+    }
+
      public AbstractConfig getConfig(Class<? extends AbstractConfig> clazz, Deployment deployment) {
         InputStream is = null;
         try {
@@ -368,10 +380,10 @@ public class MercuryConfiguration {
                 synchronized (this) {
                     if (!mercuryConnections.isInitialized()) {
 
-                        is = getClass().getResourceAsStream(MERCURY_CONFIG);
+                        is = getClass().getResourceAsStream(getConfigPath());
 
                         if (is == null) {
-                            throw new RuntimeException("Cannot find global config file '" + MERCURY_CONFIG + "'.");
+                            throw new RuntimeException("Cannot find global config file '" + getConfigPath() + "'.");
                         }
 
                         Yaml yaml = new Yaml();
@@ -382,7 +394,7 @@ public class MercuryConfiguration {
 
                         // take local overrides if any
                         Map<String, Map<String, Map<String, String>>> localConfigDoc = null;
-                        is = getClass().getResourceAsStream(MERCURY_CONFIG_LOCAL);
+                        is = getClass().getResourceAsStream(getLocalConfigPath());
 
                         if (is != null) {
                             //noinspection unchecked

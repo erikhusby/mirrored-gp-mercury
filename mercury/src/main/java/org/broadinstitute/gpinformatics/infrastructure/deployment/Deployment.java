@@ -13,8 +13,17 @@ public enum Deployment {
     PROD,
     STUBBY,
     /** Used when running tests on the automated build server. */
-    AUTO_BUILD,
-    CRSP_DEV,
-    CRSP_QA,
-    CRSP_TEST
+    AUTO_BUILD;
+
+    /**
+     * True if we are in a CRSP build of Mercury. This is set manually when the deployment object is first constructed.
+     */
+    public static boolean isCRSP;
+
+    /**
+     * True if we are in a CRSP build of Mercury.
+     */
+    public boolean isCRSP() {
+        return isCRSP;
+    }
 }
