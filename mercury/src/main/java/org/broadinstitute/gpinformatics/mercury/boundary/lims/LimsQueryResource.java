@@ -58,10 +58,12 @@ public class LimsQueryResource {
     }
 
     public LimsQueryResource(ThriftService thriftService, LimsQueries limsQueries,
+                             SequencingTemplateFactory sequencingTemplateFactory,
                              LimsQueryResourceResponseFactory responseFactory,
                              MercuryOrSquidRouter mercuryOrSquidRouter, BSPUserList bspUserList) {
         this.thriftService = thriftService;
         this.limsQueries = limsQueries;
+        this.sequencingTemplateFactory = sequencingTemplateFactory;
         this.responseFactory = responseFactory;
         this.mercuryOrSquidRouter = mercuryOrSquidRouter;
         this.bspUserList = bspUserList;
