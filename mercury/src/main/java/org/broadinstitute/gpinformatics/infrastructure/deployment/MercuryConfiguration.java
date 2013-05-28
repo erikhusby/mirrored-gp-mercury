@@ -35,11 +35,10 @@ import java.util.Set;
  * </ol>
  */
 public class MercuryConfiguration {
-
-
     private static final String MERCURY_CONFIG = "/mercury-config.yaml";
 
     private static final String MERCURY_CONFIG_LOCAL = "/mercury-config-local.yaml";
+
     private static final String MERCURY_STANZA = "mercury";
 
     private static MercuryConfiguration instance;
@@ -47,7 +46,6 @@ public class MercuryConfiguration {
     private static String MERCURY_BUILD_INFO;
 
     private static Map<String, Class<? extends AbstractConfig>> configKeyToClassMap;
-
 
     private static class ExternalSystems {
         // Map of system key ("bsp", "squid", "thrift") to a Map of external system Deployments (TEST, QA, PROD) to
@@ -75,7 +73,6 @@ public class MercuryConfiguration {
             return map.get(systemKey).get(deployment);
         }
     }
-
 
     private static class MercuryConnections {
         // Map of system key ("bsp", "squid", "thrift") to a Map of *Mercury* Deployments to the corresponding external
@@ -136,7 +133,6 @@ public class MercuryConfiguration {
     }
 
     private static Class<? extends AbstractConfig> getConfigClass(String configKey) {
-
         if (configKeyToClassMap == null) {
             configKeyToClassMap = new HashMap<String, Class<? extends AbstractConfig>>();
 
@@ -410,7 +406,6 @@ public class MercuryConfiguration {
         }
 
     }
-
 
     /**
      * Utility method to check for existence of properties on an {@link AbstractConfig}-derived bean and wrap a slew of

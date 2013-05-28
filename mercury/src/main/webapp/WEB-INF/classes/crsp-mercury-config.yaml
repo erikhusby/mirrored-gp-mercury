@@ -16,13 +16,13 @@ app:
       workflowValidationEmail: andrew@broadinstitute.org
 
     TEST:
-      host:     mercurydev.broadinstitute.org
+      host:     crsp-dev-mercury.broadinstitute.org
       port:     8080
       jmsPort:  5445
       workflowValidationEmail: andrew@broadinstitute.org
 
     QA:
-      host:     mercuryqa.broadinstitute.org
+      host:     crsp-qa-mercury.broadinstitute.org
       port:     8081
       jmsPort:  5445
       workflowValidationEmail: smcdonou@broadinstitute.org
@@ -34,48 +34,11 @@ app:
       workflowValidationEmail: smcdonou@broadinstitute.org
 
     PROD:
-      host:     mercury.broadinstitute.org
+      host:     crsp-mercury.broadinstitute.org
       jmsPort:  5445
       workflowValidationEmail: gplims@broadinstitute.org
       #limsworkflowvalidation@broadinstitute.org
 
-bsp:
-
-    DEV:
-      login:    seqsystem
-      password: bspbsp
-      host:     gapdev.broadinstitute.org
-      port:     8080
-
-    QA:
-      login:    seqsystem
-      password: bspbsp
-      host:     gapqa.broadinstitute.org
-      port:     8080
-
-    PROD:
-      login:    seqsystem
-      password: bspbsp
-      host:     bsp.broadinstitute.org
-      port:     80
-
-
-gap:
-
-    DEV:
-      login:    pmbridge
-      password: bspbsp
-      url:      http://gapdevanalysis.broadinstitute.org:8080
-
-    QA:
-      login:    pmbridge
-      password: bspbsp
-      url:      http://gapqaanalysis.broadinstitute.org:8080
-
-    PROD:
-      login:    pmbridge
-      password: bspbsp
-      url:      http://gapanalysis.broadinstitute.org:8080
 
 
 jira:
@@ -220,6 +183,7 @@ hipchat:
         authorizationToken: db3e86c451ef8ac0cddb94133e0455
 
 # Mercury configuration, this describes how Mercury deployments are connected to external system deployments.
+
 
 
 mercury:
