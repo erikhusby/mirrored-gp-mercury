@@ -10,7 +10,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.SampleType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch.LabBatchType;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -57,7 +59,7 @@ public class EventEtlDbFreeTest {
 
     private final Set<LabVessel> vesselList = new HashSet<LabVessel>();
     private final Set<SampleInstance> sampleInstList = new HashSet<SampleInstance>();
-
+    private final Set<LabBatch> workflowLabBatches = new HashSet<LabBatch>();
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void setUp() {
@@ -67,6 +69,8 @@ public class EventEtlDbFreeTest {
         vesselList.add(vessel);
         sampleInstList.clear();
         sampleInstList.add(sampleInst);
+        workflowLabBatches.clear();
+        workflowLabBatches.add(labBatch);
 
         tst = new LabEventEtl(wfLookup, dao, pdoDao);
         tst.setAuditReaderDao(auditReader);
@@ -108,7 +112,8 @@ public class EventEtlDbFreeTest {
         expect(dao.findById(LabEvent.class, entityId)).andReturn(obj);
         expect(obj.getLabEventType()).andReturn(eventType).times(2);
         expect(obj.getTargetLabVessels()).andReturn(vesselList);
-        expect(vessel.getSampleInstances()).andReturn(new HashSet<SampleInstance>());
+        expect(vessel.getSampleInstances(SampleType.WITH_PDO, LabBatchType.WORKFLOW)).
+                andReturn(new HashSet<SampleInstance>());
         expect(vessel.getLabel()).andReturn("");
         replay(mocks);
 
@@ -121,7 +126,8 @@ public class EventEtlDbFreeTest {
         expect(dao.findById(LabEvent.class, entityId)).andReturn(obj);
         expect(obj.getLabEventType()).andReturn(eventType).times(2);
         expect(obj.getTargetLabVessels()).andReturn(vesselList);
-        expect(vessel.getSampleInstances()).andReturn(new HashSet<SampleInstance>());
+        expect(vessel.getSampleInstances(SampleType.WITH_PDO, LabBatchType.WORKFLOW)).
+                andReturn(new HashSet<SampleInstance>());
         String vesselLabel = "03138970";
         expect(vessel.getLabel()).andReturn(vesselLabel);
 
@@ -136,11 +142,9 @@ public class EventEtlDbFreeTest {
     public void testMissingSampleRecord() throws Exception {
         expect(dao.findById(LabEvent.class, entityId)).andReturn(obj);
         expect(obj.getLabEventType()).andReturn(eventType).times(2);
-        expect(obj.getLabBatch()).andReturn(null);
         expect(obj.getTargetLabVessels()).andReturn(vesselList);
-        expect(vessel.getSampleInstances()).andReturn(sampleInstList);
-        expect(sampleInst.getLabBatch()).andReturn(null);
-        //expect(sampleInst.getStartingSample()).andReturn(null);
+        expect(vessel.getSampleInstances(SampleType.WITH_PDO, LabBatchType.WORKFLOW)).andReturn(sampleInstList);
+        expect(sampleInst.getStartingSample()).andReturn(null);
 
         replay(mocks);
 
@@ -149,35 +153,17 @@ public class EventEtlDbFreeTest {
         verify(mocks);
     }
 
-    public void testMissingPdo() throws Exception {
-        expect(dao.findById(LabEvent.class, entityId)).andReturn(obj);
-        expect(obj.getLabEventType()).andReturn(eventType).times(2);
-        expect(obj.getTargetLabVessels()).andReturn(vesselList);
-        expect(vessel.getSampleInstances()).andReturn(sampleInstList);
-        expect(sampleInst.getStartingSample()).andReturn(sample);
-        expect(sampleInst.getLabBatch()).andReturn(labBatch).times(2);
-        expect(labBatch.getLabBatchId()).andReturn(labBatchId);
-        expect(sampleInst.getProductOrderKey()).andReturn(pdoKey);
-        expect(pdoDao.findByBusinessKey(pdoKey)).andReturn(null);
-
-        replay(mocks);
-
-        Collection<String> records = tst.dataRecords(etlDateStr, false, entityId);
-        assertEquals(records.size(), 0);
-
-        verify(mocks);
-    }
-
     public void testIncrementalEtl() throws Exception {
         expect(dao.findById(LabEvent.class, entityId)).andReturn(obj);
         expect(obj.getLabEventType()).andReturn(eventType).times(2);
         expect(obj.getTargetLabVessels()).andReturn(vesselList);
-        expect(vessel.getSampleInstances()).andReturn(sampleInstList);
+        expect(vessel.getSampleInstances(SampleType.WITH_PDO, LabBatchType.WORKFLOW)).andReturn(sampleInstList);
+        expect(sampleInst.getStartingSample()).andReturn(sample);
+        expect(sampleInst.getAllWorkflowLabBatches()).andReturn(workflowLabBatches);
+        expect(sampleInst.getProductOrderKey()).andReturn(pdoKey);
+
         expect(labBatch.getLabBatchId()).andReturn(labBatchId);
         expect(sample.getSampleKey()).andReturn(sampleKey);
-        expect(sampleInst.getStartingSample()).andReturn(sample);
-        expect(sampleInst.getProductOrderKey()).andReturn(pdoKey);
-        expect(sampleInst.getLabBatch()).andReturn(labBatch).times(2);
         expect(pdoDao.findByBusinessKey(pdoKey)).andReturn(pdo);
         expect(pdo.getProductOrderId()).andReturn(pdoId);
         expect(obj.getEventDate()).andReturn(eventDate);
@@ -203,13 +189,13 @@ public class EventEtlDbFreeTest {
         expect(obj.getLabEventType()).andReturn(eventType).times(2);
         expect(obj.getTargetLabVessels()).andReturn(new HashSet<LabVessel>());
         expect(obj.getInPlaceLabVessel()).andReturn(vessel).times(2);
-        expect(vessel.getSampleInstances()).andReturn(sampleInstList);
-        expect(sampleInst.getLabBatch()).andReturn(null);
-        expect(obj.getLabBatch()).andReturn(labBatch);
-        expect(labBatch.getLabBatchId()).andReturn(labBatchId);
+        expect(vessel.getSampleInstances(SampleType.WITH_PDO, LabBatchType.WORKFLOW)).andReturn(sampleInstList);
         expect(sampleInst.getStartingSample()).andReturn(sample);
-        expect(sample.getSampleKey()).andReturn(sampleKey);
+        expect(sampleInst.getAllWorkflowLabBatches()).andReturn(workflowLabBatches);
         expect(sampleInst.getProductOrderKey()).andReturn(pdoKey);
+
+        expect(labBatch.getLabBatchId()).andReturn(labBatchId);
+        expect(sample.getSampleKey()).andReturn(sampleKey);
         expect(pdoDao.findByBusinessKey(pdoKey)).andReturn(pdo);
         expect(pdo.getProductOrderId()).andReturn(pdoId);
         expect(obj.getEventDate()).andReturn(eventDate);
