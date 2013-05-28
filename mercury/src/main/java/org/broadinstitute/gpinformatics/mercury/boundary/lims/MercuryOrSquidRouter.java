@@ -166,29 +166,23 @@ public class MercuryOrSquidRouter implements Serializable {
             }
         }
 
-        // If everything might be a control (i.e., nothing has a PDO), don't bother checking controls; just route to
-        // Squid. This will avoid unnecessary BSP queries.
-        if (mapKeyToProductOrder.isEmpty()) {
-            routingOptions.add(SQUID);
-        } else {
-            List<String> controlSampleIds = new ArrayList<String>();
-            Collection<String> sampleNames = new ArrayList<String>();
-            Map<String, BSPSampleDTO> mapSampleNameToDto = null;
-            if (!possibleControls.isEmpty()) {
-                for (SampleInstance sampleInstance : possibleControls) {
-                    sampleNames.add(sampleInstance.getStartingSample().getSampleKey());
-                }
-                mapSampleNameToDto = bspSampleDataFetcher.fetchSamplesFromBSP(sampleNames);
+        List<String> controlSampleIds = new ArrayList<String>();
+        Collection<String> sampleNames = new ArrayList<String>();
+        Map<String, BSPSampleDTO> mapSampleNameToDto = null;
+        if (!possibleControls.isEmpty()) {
+            for (SampleInstance sampleInstance : possibleControls) {
+                sampleNames.add(sampleInstance.getStartingSample().getSampleKey());
+            }
+            mapSampleNameToDto = bspSampleDataFetcher.fetchSamplesFromBSP(sampleNames);
 
-                List<Control> controls = controlDao.findAllActive();
-                for (Control control : controls) {
-                    controlSampleIds.add(control.getCollaboratorSampleId());
-                }
+            List<Control> controls = controlDao.findAllActive();
+            for (Control control : controls) {
+                controlSampleIds.add(control.getCollaboratorSampleId());
             }
-            for (LabVessel labVessel : labVessels) {
-                routingOptions.add(
-                        routeForVessel(labVessel, mapKeyToProductOrder, controlSampleIds, mapSampleNameToDto, intent));
-            }
+        }
+        for (LabVessel labVessel : labVessels) {
+            routingOptions.add(
+                    routeForVessel(labVessel, mapKeyToProductOrder, controlSampleIds, mapSampleNameToDto, intent));
         }
 
         return evaluateRoutingOption(routingOptions);
