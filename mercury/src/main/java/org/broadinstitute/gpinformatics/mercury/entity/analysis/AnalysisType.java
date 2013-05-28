@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.analysis;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.hibernate.envers.Audited;
 
+import javax.annotation.Nonnull;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -24,13 +25,13 @@ public class AnalysisType implements BusinessObject {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_ANALYSIS_TYPE")
     private Long analysisTypeId;
 
-    @Column(name = "NAME")
+    @Column(name = "NAME", nullable = false)
     private String name;
 
     protected AnalysisType() {
     }
 
-    public AnalysisType(String name) {
+    public AnalysisType(@Nonnull String name) {
         this.name = name;
     }
 
