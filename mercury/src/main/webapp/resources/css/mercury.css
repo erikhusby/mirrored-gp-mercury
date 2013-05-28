@@ -78,7 +78,7 @@ input[type="text"].defaultText, .defaultText { }
 input[type="text"].defaultTextActive, .defaultTextActive { font-size: 12px; color: #A1A1A1; }
 
 /* jquery date picker */
-.ui-datepicker-trigger { width: 19px; height: 19px; vertical-align: top; margin-top: 2px; }
+.ui-datepicker-trigger { width: 19px; height: 19px; vertical-align: baseline; }
 
 input[type='checkbox'].checkAll { margin-left: -8px; }
 
@@ -133,9 +133,9 @@ textarea.controlledText { width: 550px; }
 .simpletab .ui-widget-header { border-bottom: 1px solid #c2c2c2; }
 .simpletab .ui-state-hover { border: 1px solid #0088cc; color: #0088cc; background: #e6f7ff; }
 
-.search-select { width: auto; font-weight: bold; font-size: x-small; height: 25px; padding: 0; margin-right: 10px; }
-input.search-input { width: auto; font-weight: bold; font-size: x-small; height: 25px;  padding: 0; }
-.search-checkbox-label { float: left; font-weight: bold; font-size: x-small; }
+.search-select { width: auto; margin-right: 10px; }
+input.search-input { width: auto; }
+.search-checkbox-label { float: left; font-weight: bold; }
 input.search-checkbox { float: left; margin-right: 3px; }
 
 .search-horizontal .control-group { margin-bottom: 3px; *zoom: 1; }
@@ -149,7 +149,7 @@ input.search-checkbox { float: left; margin-right: 3px; }
 .search-horizontal input + .help-block, .search-horizontal select + .help-block, .search-horizontal textarea + .help-block { margin-top: 0px; }
 .search-horizontal .form-actions { padding-left: 180px; }
 
-.help-text { font-size: x-small; }
+.help-text { color: #644436; font-size: 11px; font-style: italic; }
 
 fieldset { padding-right: 10px; padding-bottom: 10px; margin: 0; border: 1px solid #b9b9b9; }
 legend { display: block; width: auto; padding: 0; margin-bottom: 0; margin-left: 10px; font-size: inherit; color: #333333; border: 1px; }
