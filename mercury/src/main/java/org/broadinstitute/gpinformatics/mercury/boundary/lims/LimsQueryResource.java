@@ -70,16 +70,22 @@ public class LimsQueryResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchLibraryDetailsByTubeBarcode")
-    public List<LibraryDataType> fetchLibraryDetailsByTubeBarcode(@QueryParam("q") List<String> tubeBarcodes,
-                                                                  @QueryParam(
-                                                                          "includeWorkRequestDetails") boolean includeWorkRequestDetails) {
-        List<LibraryData> libraryData =
-                thriftService.fetchLibraryDetailsByTubeBarcode(tubeBarcodes, includeWorkRequestDetails);
-        List<LibraryDataType> result = new ArrayList<LibraryDataType>();
-        for (LibraryData data : libraryData) {
-            result.add(responseFactory.makeLibraryData(data));
+    public List<LibraryDataType> fetchLibraryDetailsByTubeBarcode(
+            @QueryParam("q") List<String> tubeBarcodes,
+            @QueryParam("includeWorkRequestDetails") boolean includeWorkRequestDetails) {
+        switch (mercuryOrSquidRouter.getSystemOfRecordForVesselBarcodes(tubeBarcodes)) {
+        case MERCURY:
+            return limsQueries.fetchLibraryDetailsByTubeBarcode(tubeBarcodes, includeWorkRequestDetails);
+        case SQUID:
+            List<LibraryData> libraryData = thriftService.fetchLibraryDetailsByTubeBarcode(tubeBarcodes, includeWorkRequestDetails);
+            List<LibraryDataType> result = new ArrayList<LibraryDataType>();
+            for (LibraryData data : libraryData) {
+                result.add(responseFactory.makeLibraryData(data));
+            }
+            return result;
+        default:
+            throw new RuntimeException("Unable to route fetchLibraryDetailsByTubeBarcode for tubes: " + tubeBarcodes);
         }
-        return result;
     }
 
     // TODO round 3: map<string,ConcentrationAndVolume> fetchConcentrationAndVolumeForTubeBarcodes(1:list<string> tubeBarcodes)
@@ -242,11 +248,10 @@ public class LimsQueryResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchQpcrForTube")
     public Double fetchQpcrForTube(@QueryParam("tubeBarcode") String tubeBarcode) {
-        switch (mercuryOrSquidRouter.routeForVessel(tubeBarcode)) {
+        switch (mercuryOrSquidRouter.getSystemOfRecordForVessel(tubeBarcode)) {
         case MERCURY:
             return limsQueries.fetchQuantForTube(tubeBarcode, LabMetric.MetricType.ECO_QPCR.getDisplayName());
         case SQUID:
-        case BOTH:
             return thriftService.fetchQpcrForTube(tubeBarcode);
         default:
             throw new RuntimeException(
@@ -260,11 +265,10 @@ public class LimsQueryResource {
     @Path("/fetchQuantForTube")
     public Double fetchQuantForTube(@QueryParam("tubeBarcode") String tubeBarcode,
                                     @QueryParam("quantType") String quantType) {
-        switch (mercuryOrSquidRouter.routeForVessel(tubeBarcode)) {
+        switch (mercuryOrSquidRouter.getSystemOfRecordForVessel(tubeBarcode)) {
         case MERCURY:
             return limsQueries.fetchQuantForTube(tubeBarcode, quantType);
         case SQUID:
-        case BOTH:
             return thriftService.fetchQuantForTube(tubeBarcode, quantType);
         default:
             throw new RuntimeException(

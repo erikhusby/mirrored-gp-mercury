@@ -160,6 +160,48 @@ public enum SBSSection {
             VesselPosition.H05,
             VesselPosition.H06
     )),
+    // 3 columns by 6 rows, starting at A1; source for transfer into 8x6 Eco plate
+    P3_BY_6_A1("3BY6A1", Arrays.asList(
+            VesselPosition.A01,
+            VesselPosition.A02,
+            VesselPosition.A03,
+            VesselPosition.B01,
+            VesselPosition.B02,
+            VesselPosition.B03,
+            VesselPosition.C01,
+            VesselPosition.C02,
+            VesselPosition.C03,
+            VesselPosition.D01,
+            VesselPosition.D02,
+            VesselPosition.D03,
+            VesselPosition.E01,
+            VesselPosition.E02,
+            VesselPosition.E03,
+            VesselPosition.F01,
+            VesselPosition.F02,
+            VesselPosition.F03
+            )),
+    // In an 8 by 6 plate, start at A3 and skip rows, i.e. A3, C3, E3, A4 etc.
+    P8_BY_6_A3_ALT_ROWS("8BY6A3ALTROWS", Arrays.asList(
+            VesselPosition.A03,
+            VesselPosition.A04,
+            VesselPosition.A05,
+            VesselPosition.A06,
+            VesselPosition.A07,
+            VesselPosition.A08,
+            VesselPosition.C03,
+            VesselPosition.C04,
+            VesselPosition.C05,
+            VesselPosition.C06,
+            VesselPosition.C07,
+            VesselPosition.C08,
+            VesselPosition.E03,
+            VesselPosition.E04,
+            VesselPosition.E05,
+            VesselPosition.E06,
+            VesselPosition.E07,
+            VesselPosition.E08
+            )),
     // Columns 4-6 of a 384 well plate, ordered by row; sample inputs for a Fluidigm 48.48 chip
     P384COLS4_6BYROW("P384COLS4-6BYROW", Arrays.asList(
             VesselPosition.A04,
