@@ -16,8 +16,8 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class BSPUserListTest extends Arquillian {
-    private final String TEST_BADGE_ID = "bsptestuser_badge_id_1234";
-    private final String BSP_TEST_USER = "tester";
+    private static final String TEST_BADGE_ID = "bsptestuser_badge_id_1234";
+    private static final String BSP_TEST_USER = "tester";
 
     @Deployment
     public static WebArchive deployment() {
