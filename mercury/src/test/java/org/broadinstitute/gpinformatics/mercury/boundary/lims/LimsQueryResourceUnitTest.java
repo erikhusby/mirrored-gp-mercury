@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
 import edu.mit.broad.prodinfo.thrift.lims.FlowcellDesignation;
+import edu.mit.broad.prodinfo.thrift.lims.PlateTransfer;
 import edu.mit.broad.prodinfo.thrift.lims.TZIMSException;
 import org.apache.thrift.TException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -14,12 +15,14 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.FlowcellDesignationType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.IndexPositionType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.IndexingSchemeType;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PlateTransferType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateLaneType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateType;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -387,6 +390,36 @@ public class LimsQueryResourceUnitTest {
         } catch (Exception e) {
 
         }
+
+        verifyAll();
+    }
+
+    /**
+     * Test that fetchTransfersForPlate calls the Mercury version of the lookup when the router says that Mercury is the
+     * system of record for the plate.
+     */
+    @Test(groups = DATABASE_FREE)
+    public void testFetchTransfersForPlateForMercury() {
+        expect(mockMercuryOrSquidRouter.getSystemOfRecordForVessel("barcode")).andReturn(MERCURY);
+        expect(mockLimsQueries.fetchTransfersForPlate("barcode", 2)).andReturn(new ArrayList<PlateTransferType>());
+        replayAll();
+
+        resource.fetchTransfersForPlate("barcode", (short) 2);
+
+        verifyAll();
+    }
+
+    /**
+     * Test that fetchTransfersForPlate calls the Squid version of the lookup when the router says that Squid is the
+     * system of record for the plate.
+     */
+    @Test(groups = DATABASE_FREE)
+    public void testFetchTransfersForPlateForSquid() {
+        expect(mockMercuryOrSquidRouter.getSystemOfRecordForVessel("barcode")).andReturn(SQUID);
+        expect(mockThriftService.fetchTransfersForPlate("barcode", (short) 2)).andReturn(new ArrayList<PlateTransfer>());
+        replayAll();
+
+        resource.fetchTransfersForPlate("barcode", (short) 2);
 
         verifyAll();
     }

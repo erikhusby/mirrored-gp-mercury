@@ -58,6 +58,7 @@ public class QtpEntityBuilder {
                 listLcsetListNormCatchBarcodes, normCatchRackBarcodes, workflowName).invoke();
         PlateCherryPickEvent cherryPickJaxb = qtpJaxbBuilder.getPoolingTransferJaxb();
         final String poolRackBarcode = qtpJaxbBuilder.getPoolRackBarcode();
+        final String ecoPlateBarcode = qtpJaxbBuilder.getEcoPlateBarcode();
         PlateCherryPickEvent denatureJaxb = qtpJaxbBuilder.getDenatureJaxb();
         final String normalizationRackBarcode = qtpJaxbBuilder.getNormalizationRackBarcode();
         PlateCherryPickEvent normalizationJaxb = qtpJaxbBuilder.getNormalizationJaxb();
@@ -99,6 +100,7 @@ public class QtpEntityBuilder {
             i++;
         }
 
+        // Pre-EcoTransfer/DenatureTransfer rearray
         TubeFormation rearrayedPoolingRack;
         if (poolTubes.size() > 1) {
             Map<VesselPosition, TwoDBarcodedTube> mapPositionToTube = new HashMap<VesselPosition, TwoDBarcodedTube>();
@@ -113,6 +115,19 @@ public class QtpEntityBuilder {
             rearrayedPoolingRack = poolingRacks.get(0);
         }
 
+        int catchSampleInstanceCount = 0;
+        for (TubeFormation normCatchRack : normCatchRacks) {
+            catchSampleInstanceCount += normCatchRack.getSampleInstances().size();
+        }
+
+        // EcoTransfer
+        LabEventTest.validateWorkflow("EcoTransfer", rearrayedPoolingRack);
+        LabEvent ecoTransferEventEntity = labEventFactory.buildFromBettaLimsRackToPlateDbFree(qtpJaxbBuilder.getEcoTransferJaxb(), rearrayedPoolingRack, null);
+        labEventHandler.processEvent(ecoTransferEventEntity);
+        // asserts
+        StaticPlate ecoPlate = (StaticPlate) ecoTransferEventEntity.getTargetLabVessels().iterator().next();
+        Assert.assertEquals(ecoPlate.getSampleInstances().size(), catchSampleInstanceCount,
+                "Wrong number of sample instances");
 
         // Normalization
         LabEventTest.validateWorkflow("NormalizationTransfer", rearrayedPoolingRack);
@@ -132,18 +147,12 @@ public class QtpEntityBuilder {
         normalizationRack = (TubeFormation) normalizationEntity.getTargetLabVessels().iterator().next();
         Set<SampleInstance> normalizedSampleInstances =
                 normalizationRack.getContainerRole().getSampleInstancesAtPosition(VesselPosition.A01);
-        int catchSampleInstanceCount = 0;
-        for (TubeFormation normCatchRack : normCatchRacks) {
-            catchSampleInstanceCount += normCatchRack.getSampleInstances().size();
-        }
-
         Assert.assertEquals(normalizedSampleInstances.size(), catchSampleInstanceCount,
                 "Wrong number of normalized samples");
         Assert.assertEquals(
                 normalizationRack.getContainerRole().getVesselAtPosition(VesselPosition.A01).getSampleInstances()
                         .size(),
                 catchSampleInstanceCount, "Wrong number of normalized samples");
-
 
         // DenatureTransfer
         LabEventTest.validateWorkflow("DenatureTransfer", rearrayedPoolingRack);
@@ -169,10 +178,6 @@ public class QtpEntityBuilder {
         denatureRack = (TubeFormation) denatureEntity.getTargetLabVessels().iterator().next();
         Set<SampleInstance> denaturedSampleInstances =
                 denatureRack.getContainerRole().getSampleInstancesAtPosition(VesselPosition.A01);
-        catchSampleInstanceCount = 0;
-        for (TubeFormation normCatchRack : normCatchRacks) {
-            catchSampleInstanceCount += normCatchRack.getSampleInstances().size();
-        }
 
         Assert.assertEquals(denaturedSampleInstances.size(), catchSampleInstanceCount,
                 "Wrong number of denatured samples");

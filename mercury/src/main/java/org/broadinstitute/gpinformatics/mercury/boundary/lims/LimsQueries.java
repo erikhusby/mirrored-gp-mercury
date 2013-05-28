@@ -127,6 +127,9 @@ public class LimsQueries {
     public List<PlateTransferType> fetchTransfersForPlate(String plateBarcode, int depth) {
         List<PlateTransferType> results = new ArrayList<PlateTransferType>();
         StaticPlate plate = staticPlateDAO.findByBarcode(plateBarcode);
+        if (plate == null) {
+            throw new RuntimeException("Plate not found for barcode: " + plateBarcode);
+        }
         List<SectionTransfer> transfers = plate.getUpstreamPlateTransfers(depth);
         for (SectionTransfer transfer : transfers) {
             PlateTransferType result = new PlateTransferType();

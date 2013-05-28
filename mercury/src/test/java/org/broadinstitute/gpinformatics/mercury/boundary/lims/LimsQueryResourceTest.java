@@ -282,9 +282,13 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         assertThat(result, containsString("0116240473"));
     }
 
+    /**
+     * Test that fetchTransfersForPlate fetches and returns the correct data from Squid. Relies on some existing data in
+     * the Squid database.
+     */
     @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testFetchTransfersForPlate(@ArquillianResource URL baseUrl) {
+    public void testFetchTransfersForPlateFromSquid(@ArquillianResource URL baseUrl) {
         WebResource resource =
                 makeWebResource(baseUrl, "fetchTransfersForPlate").queryParam("plateBarcode", "000009873173")
                         .queryParam("depth", "2");
