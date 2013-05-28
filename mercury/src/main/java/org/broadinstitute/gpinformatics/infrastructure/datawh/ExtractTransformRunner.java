@@ -7,7 +7,6 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import javax.ejb.*;
-import javax.ejb.Startup;
 import javax.inject.Inject;
 import java.util.Date;
 

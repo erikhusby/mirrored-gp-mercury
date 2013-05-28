@@ -220,6 +220,10 @@ public class SampleInstance {
         return indexes;
     }
 
+    /**
+     * This is set only when there is a single lab batch.
+     * @return lab batch
+     */
     public LabBatch getLabBatch() {
         return labBatch;
     }
@@ -228,19 +232,15 @@ public class SampleInstance {
         return allLabBatches;
     }
 
-    public void setAllLabBatches(Collection<LabBatch> allLabBatches) {
-        this.allLabBatches = new HashSet<LabBatch>(allLabBatches);
-        // todo jmt improve this logic
-        if (allLabBatches.size() == 1) {
-            labBatch = allLabBatches.iterator().next();
-        }
-    }
-
     public void addLabBatches(Collection<LabBatch> batches){
         if(allLabBatches == null){
             allLabBatches = new HashSet<LabBatch>();
         }
         allLabBatches.addAll(batches);
+        // todo jmt improve this logic
+        if (allLabBatches.size() == 1) {
+            labBatch = allLabBatches.iterator().next();
+        }
     }
 
     public Collection<LabBatch> getAllWorkflowLabBatches() {

@@ -120,27 +120,27 @@ public class AnalysisEjb {
      * @return true if a new {@link ReferenceSequence} was created
      */
     public boolean addReferenceSequence(@Nonnull String name, @Nonnull String version, boolean isCurrent) {
-        boolean wasCreated = false;
         ReferenceSequence referenceSequence = referenceSequenceDao.findByNameAndVersion(name, version);
 
-        if (referenceSequence == null) {
-            if (isCurrent) {
-                // We need to change the existing current reference sequence to not be current before saving the new one as
-                // current, if there is one set to that
-                ReferenceSequence currentReferenceSequence = referenceSequenceDao.findCurrent(name);
-                if (currentReferenceSequence != null) {
-                    currentReferenceSequence.setCurrent(false);
-                    referenceSequenceDao.persist(currentReferenceSequence);
-                }
-            }
-
-            referenceSequence = new ReferenceSequence(name, version);
-            referenceSequence.setCurrent(isCurrent);
-            referenceSequenceDao.persist(referenceSequence);
-            wasCreated = true;
+        // If there is already a reference sequence, then this exists, so return that nothing was added.
+        if (referenceSequence != null) {
+            return false;
         }
 
-        return wasCreated;
+        if (isCurrent) {
+            // We need to change the existing current reference sequence to not be current before saving the new one as
+            // current, if there is one set to that
+            ReferenceSequence currentReferenceSequence = referenceSequenceDao.findCurrent(name);
+            if (currentReferenceSequence != null) {
+                currentReferenceSequence.setCurrent(false);
+                referenceSequenceDao.persist(currentReferenceSequence);
+            }
+        }
+
+        referenceSequence = new ReferenceSequence(name, version);
+        referenceSequence.setCurrent(isCurrent);
+        referenceSequenceDao.persist(referenceSequence);
+        return true;
     }
 
 

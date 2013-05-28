@@ -1,6 +1,48 @@
 <?xml version="1.0" ?>
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
 
+    <xsd:complexType  name="sequencingTemplateType">
+        <xsd:annotation>
+            <xsd:documentation>This structure defines run setup data for integrating mercury with the unified loader app.
+                It is roughly equivalent to a designation, in Squid.</xsd:documentation>
+        </xsd:annotation>
+        <xsd:sequence>
+            <xsd:element name="name" type="xsd:string" minOccurs="0"/>
+            <xsd:element name="barcode" type="xsd:string" minOccurs="0"/>
+            <xsd:element name="pairedRun" nillable="true" type="xsd:boolean"/>
+            <xsd:element name="onRigWorkflow" type="xsd:string"/>
+            <xsd:element name="onRigChemistry" type="xsd:string"/>
+            <xsd:element name="readStructure" type="xsd:string">
+                <xsd:annotation>
+                    <xsd:documentation>A read structure string is a textual encoding of templates, barcodes, or skips.
+                        For example:
+                        <br/>
+                        a 76-base paired-end read with one molecular barcode index will look like this "76T8B76T"
+                        <br/>
+                        a 101-base paired-end read with dual indices will look like this: "101T8B8B101T"
+                        <br/>
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="lanes" type="sequencingTemplateLaneType" maxOccurs="unbounded"/>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="sequencingTemplateLaneType">
+        <xsd:sequence>
+            <xsd:element name="laneName" type="xsd:string"/>
+            <xsd:element name="loadingConcentration" nillable="true" type="xsd:double"/>
+            <xsd:element name="loadingVesselLabel" type="xsd:string">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        The Barcode/label of the tube that should be used to load the lane. Note that for ExEx,
+                        MiSeq and 2500, this is the same tube.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+        </xsd:sequence>
+    </xsd:complexType>
+
     <xsd:complexType name="flowcellDesignationType">
         <xsd:sequence>
             <xsd:element name="lanes" type="laneType" maxOccurs="unbounded"/>

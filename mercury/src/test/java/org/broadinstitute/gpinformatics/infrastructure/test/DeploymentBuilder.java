@@ -13,6 +13,7 @@ import org.jboss.shrinkwrap.resolver.api.maven.MavenDependency;
 import org.jboss.shrinkwrap.resolver.api.maven.MavenImporter;
 import org.jboss.shrinkwrap.resolver.api.maven.MavenResolutionFilter;
 
+import javax.enterprise.inject.Alternative;
 import java.io.File;
 import java.util.Collection;
 
@@ -88,6 +89,12 @@ public class DeploymentBuilder {
                 .merge(buildMercuryWar(deployment));
     }
 
+    private static WebArchive buildMercuryWar(String beansXml, String dataSourceEnvironment, Deployment deployment) {
+        return ShrinkWrap.create(WebArchive.class, MERCURY_WAR)
+                .addAsWebInfResource(new StringAsset(beansXml), "beans.xml")
+                .merge(buildMercuryWar(deployment, dataSourceEnvironment));
+    }
+
     @SuppressWarnings("UnusedDeclaration")
     public static WebArchive buildMercuryWarWithAlternatives(String... alternatives) {
         StringBuilder sb = new StringBuilder();
@@ -103,22 +110,16 @@ public class DeploymentBuilder {
 
 
     public static WebArchive buildMercuryWarWithAlternatives(Class... alternatives) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("<beans>\n")
-                .append("  <alternatives>\n");
-        for (Class alternative : alternatives) {
-            if (alternative.isAnnotation()) {
-                sb.append("    <stereotype>").append(alternative.getName()).append("</stereotype>\n");
-            } else {
-                sb.append("    <class>").append(alternative.getName()).append("</class>\n");
-            }
-        }
-        sb.append("  </alternatives>\n")
-                .append("</beans>");
-        return buildMercuryWar(sb.toString());
+        return buildMercuryWarWithAlternatives(null, null, alternatives);
     }
 
+    public static WebArchive buildMercuryWarWithAlternatives(Deployment deployment, Class... alternatives) {
+        return buildMercuryWarWithAlternatives(deployment, null, alternatives);
+    }
+
+    /** Uses the alternative data source e.g. "prod" or "dev", and adds the @Alternative classes. */
     public static WebArchive buildMercuryWarWithAlternatives(Deployment deployment,
+                                                             String dataSourceEnvironment,
                                                              Class... alternatives) {
         StringBuilder sb = new StringBuilder();
         sb.append("<beans>\n")
@@ -132,7 +133,14 @@ public class DeploymentBuilder {
         }
         sb.append("  </alternatives>\n")
                 .append("</beans>");
-        return buildMercuryWar(sb.toString(), deployment);
+
+        if (deployment == null) {
+            return buildMercuryWar(sb.toString());
+        } else if (dataSourceEnvironment == null) {
+            return buildMercuryWar(sb.toString(), deployment);
+        } else {
+            return buildMercuryWar(sb.toString(), dataSourceEnvironment, deployment);
+        }
     }
 
     @SuppressWarnings("UnusedDeclaration")

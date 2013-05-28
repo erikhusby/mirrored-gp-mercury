@@ -13,8 +13,6 @@ import java.io.Serializable;
 import java.util.*;
 
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.ContainerType.STATIC_PLATE;
-import static org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria.TraversalControl.ContinueTraversing;
-import static org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria.TraversalControl.StopTraversing;
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria.TraversalDirection.Ancestors;
 
 /**
@@ -33,8 +31,8 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
         Fluidigm48_48AccessArrayIFC("Fluidigm48.48AccessArrayIFC", VesselGeometry.FLUIDIGM_48_48),
         FilterPlate96("FilterPlate96", VesselGeometry.G12x8),
         Eppendorf384("Eppendorf384", VesselGeometry.G24x16),
-        NinetySixDeepWell("96DeepWell", VesselGeometry.G12x8);
-        // todo jmt Eco48
+        NinetySixDeepWell("96DeepWell", VesselGeometry.G12x8),
+        Eco48("Eco48", VesselGeometry.G8x6);
 
         /**
          * The name that will be supplied by automation scripts.
@@ -159,10 +157,12 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
              * possible for that test to pass even with this check. Note that this may also make code coverage waver
              * ever so slightly based on whether or not this expression evaluates to true for a particular test run.
              */
-            if (!result.containsKey(context.getVesselPosition())) {
-                result.put(context.getVesselPosition(), false);
+            if (context.getVesselPosition() != null) {
+                if (!result.containsKey(context.getVesselPosition())) {
+                    result.put(context.getVesselPosition(), false);
+                }
             }
-            if (context.getLabVessel() != null) {
+            if (context.getLabVessel() != null && context.getVesselContainer() != null) {
                 if (OrmUtil.proxySafeIsInstance(context.getVesselContainer().getEmbedder(), TubeFormation.class)) {
                     result.put(context.getVesselPosition(), true);
                     return TraversalControl.StopTraversing;
@@ -203,10 +203,13 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
         public TraversalControl evaluateVesselPreOrder(Context context) {
             if (OrmUtil.proxySafeIsInstance(context.getLabVessel(), TwoDBarcodedTube.class)) {
                 tubes.add(context.getLabVessel());
-                vesselAndPositions.add(new VesselAndPosition(context.getLabVessel(), context.getVesselPosition()));
-                return StopTraversing;
+                // Check for null, because source tubes in VesselToSectionTransfers (baits) don't have positions.
+                if (context.getVesselPosition() != null) {
+                    vesselAndPositions.add(new VesselAndPosition(context.getLabVessel(), context.getVesselPosition()));
+                }
+                return TraversalControl.StopTraversing;
             } else {
-                return ContinueTraversing;
+                return TraversalControl.ContinueTraversing;
             }
         }
 
@@ -247,7 +250,8 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
         }
         return vesselAndPositions;
 */
-        NearestTubeAncestorsCriteria criteria = new NearestTubeAncestorsCriteria();
+        TransferTraverserCriteria.NearestTubeAncestorsCriteria
+                criteria = new TransferTraverserCriteria.NearestTubeAncestorsCriteria();
         applyCriteriaToAllWells(criteria);
         return new ArrayList<VesselAndPosition>(criteria.getVesselAndPositions());
     }
@@ -263,21 +267,18 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
      */
     public List<SectionTransfer> getUpstreamPlateTransfers(int depth) {
         Set<SectionTransfer> sectionTransfers = new LinkedHashSet<SectionTransfer>();
-        recursePlateTransfers(sectionTransfers, vesselContainer, depth, 1);
+        collectPlateTransfers(sectionTransfers, vesselContainer, depth, 1);
         return new ArrayList<SectionTransfer>(sectionTransfers);
     }
 
-    private void recursePlateTransfers(Set<SectionTransfer> transfers, VesselContainer vesselContainer, int depth, int currentDepth) {
+    private void collectPlateTransfers(Set<SectionTransfer> transfers, VesselContainer vesselContainer, int depth,
+                                       int currentDepth) {
         Set<SectionTransfer> sectionTransfersTo = vesselContainer.getSectionTransfersTo();
         for (SectionTransfer sectionTransfer : sectionTransfersTo) {
-            recurseSectionTransfer(transfers, depth, currentDepth, sectionTransfer);
-        }
-    }
-
-    private void recurseSectionTransfer(Set<SectionTransfer> transfers, int depth, int currentDepth, SectionTransfer sectionTransfer) {
-        transfers.add(sectionTransfer);
-        if (currentDepth < depth) {
-            recursePlateTransfers(transfers, sectionTransfer.getSourceVesselContainer(), depth, currentDepth + 1);
+            transfers.add(sectionTransfer);
+            if (currentDepth < depth) {
+                collectPlateTransfers(transfers, sectionTransfer.getSourceVesselContainer(), depth, currentDepth + 1);
+            }
         }
     }
 

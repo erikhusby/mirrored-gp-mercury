@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>Mercury</groupId>
     <artifactId>Mercury</artifactId>
-    <version>1.24-SNAPSHOT</version>
+    <version>1.25-SNAPSHOT</version>
     <packaging>war</packaging>
     <inceptionYear>2012</inceptionYear>
 
@@ -1751,6 +1751,7 @@
                         <configuration>
                             <!-- each execution needs to specify the schemaFile(s) to use -->
                             <schemaFiles>bettalims.xsd</schemaFiles>
+                            <schemaDirectory>src/main/webapp/xsd</schemaDirectory>
                             <packageName>org.broadinstitute.gpinformatics.mercury.bettalims.generated</packageName>
                             <!-- each execution must have a unique staleFile -->
                             <staleFile>${project.build.directory}/jaxb2/.bettalimsXjcStaleFlag</staleFile>
@@ -1766,6 +1767,7 @@
                         <configuration>
                             <!-- each execution needs to specify the schemaFile(s) to use -->
                             <schemaFiles>LimsQueryTypes.xsd</schemaFiles>
+                            <schemaDirectory>src/main/webapp/xsd</schemaDirectory>
                             <packageName>org.broadinstitute.gpinformatics.mercury.limsquery.generated</packageName>
                             <!-- each execution must have a unique staleFile -->
                             <staleFile>${project.build.directory}/jaxb2/.limsqueryXjcStaleFlag</staleFile>

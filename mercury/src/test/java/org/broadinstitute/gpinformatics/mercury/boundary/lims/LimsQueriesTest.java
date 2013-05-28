@@ -2,15 +2,21 @@ package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LibraryDataType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PlateTransferType;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SampleInfoType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.WellAndSourceTubeType;
+import org.hamcrest.Matchers;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -26,6 +32,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.instanceOf;
 
 /**
  * Tests for LimsQueries boundary interface.
@@ -42,6 +49,7 @@ public class LimsQueriesTest {
 
     @BeforeMethod(groups = DATABASE_FREE)
     public void setup() {
+        // todo jmt mocks could be removed by small refactoring into @DaoFree methods
         staticPlateDAO = createMock(StaticPlateDAO.class);
         labVesselDao = createMock(LabVesselDao.class);
 
@@ -51,6 +59,24 @@ public class LimsQueriesTest {
         doSectionTransfer(new StaticPlate("plate1", Eppendorf96), plate3);
         doSectionTransfer(new StaticPlate("plate2", Eppendorf96), plate3);
         limsQueries = new LimsQueries(staticPlateDAO, labVesselDao);
+    }
+
+    @Test(groups = DATABASE_FREE)
+    public void testFetchLibraryDetailsByTubeBarcode() {
+        Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
+        String twoDBarcode = "1234";
+        TwoDBarcodedTube twoDBarcodedTube = new TwoDBarcodedTube(twoDBarcode);
+        String sampleKey = "SM-1234";
+        twoDBarcodedTube.addSample(new MercurySample(sampleKey));
+        mapBarcodeToVessel.put(twoDBarcode, twoDBarcodedTube);
+        List<LibraryDataType> libraryDataTypes = limsQueries.fetchLibraryDetailsByTubeBarcode(mapBarcodeToVessel);
+        assertThat(libraryDataTypes.size(), equalTo(1));
+        LibraryDataType libraryDataType = libraryDataTypes.get(0);
+        assertThat(libraryDataType.getLibraryName(), Matchers.equalTo(twoDBarcode));
+        assertThat(libraryDataType.getTubeBarcode(), Matchers.equalTo(twoDBarcode));
+        assertThat(libraryDataType.getSampleDetails().size(), equalTo(1));
+        SampleInfoType sampleInfoType = libraryDataType.getSampleDetails().get(0);
+        assertThat(sampleInfoType.getSampleName(), Matchers.equalTo(sampleKey));
     }
 
     @Test(groups = DATABASE_FREE)
@@ -128,6 +154,23 @@ public class LimsQueriesTest {
         assertThat(result.get(1).getSourceSection(), equalTo("ALL96"));
         assertThat(result.get(1).getDestinationBarcode(), equalTo("plate3"));
         assertThat(result.get(1).getDestinationSection(), equalTo("ALL96"));
+
+        verify(staticPlateDAO);
+    }
+
+    @Test(groups = DATABASE_FREE)
+    public void testFetchTransfersForPlateNotFound() {
+        expect(staticPlateDAO.findByBarcode("unknown_plate")).andReturn(null);
+        replay(staticPlateDAO);
+
+        Exception caught = null;
+        try {
+            limsQueries.fetchTransfersForPlate("unknown_plate", 2);
+        } catch (Exception e) {
+            caught = e;
+        }
+        assertThat(caught, instanceOf(RuntimeException.class));
+        assertThat(caught.getMessage(), Matchers.equalTo("Plate not found for barcode: unknown_plate"));
 
         verify(staticPlateDAO);
     }

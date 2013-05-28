@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
@@ -19,13 +20,12 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.NavigableSet;
 import java.util.Set;
-import java.util.TreeSet;
 
 import static org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid.BOTH;
 import static org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid.MERCURY;
@@ -63,6 +63,13 @@ public class MercuryOrSquidRouter implements Serializable {
         BOTH, MERCURY, SQUID
     }
 
+    private enum Intent {
+        /** route messages (possibly to multiple systems) */
+        ROUTE,
+        /** determine which system will handle LIMS queries (only one system) */
+        SYSTEM_OF_RECORD
+    }
+
     private LabVesselDao         labVesselDao;
     private ControlDao           controlDao;
     private AthenaClientService  athenaClientService;
@@ -92,13 +99,37 @@ public class MercuryOrSquidRouter implements Serializable {
      * routed.
      */
     public MercuryOrSquid routeForVesselBarcodes(Collection<String> barcodes) {
+        return routeForVesselBarcodes(barcodes, Intent.ROUTE);
+    }
+
+    public MercuryOrSquid getSystemOfRecordForVesselBarcodes(Collection<String> barcodes) {
+        return routeForVesselBarcodes(barcodes, Intent.SYSTEM_OF_RECORD);
+    }
+
+    private MercuryOrSquid routeForVesselBarcodes(Collection<String> barcodes, Intent intent) {
         Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(new ArrayList<String>(barcodes));
         // can't use mapBarcodeToVessel.values(), because it doesn't include nulls
         List<LabVessel> labVessels = new ArrayList<LabVessel>();
         for (Map.Entry<String, LabVessel> stringLabVesselEntry : mapBarcodeToVessel.entrySet()) {
             labVessels.add(stringLabVesselEntry.getValue());
         }
-        return routeForVessels(labVessels);
+        return routeForVessels(labVessels, intent);
+    }
+
+    /**
+     * Determines if a tube belongs to Mercury or Squid. See {@link MercuryOrSquid} for a description of "belongs".
+     *
+     * @param barcode the barcode of the tube to check
+     *
+     * @return An instance of a MercuryOrSquid enum that will assist in determining to which system requests should be
+     * routed.
+     */
+    public MercuryOrSquid routeForVessel(String barcode) {
+        return routeForVesselBarcodes(Collections.singletonList(barcode), Intent.ROUTE);
+    }
+
+    public MercuryOrSquid getSystemOfRecordForVessel(String barcode) {
+        return routeForVesselBarcodes(Collections.singletonList(barcode), Intent.SYSTEM_OF_RECORD);
     }
 
     /**
@@ -109,8 +140,13 @@ public class MercuryOrSquidRouter implements Serializable {
      * routed.
      */
     public MercuryOrSquid routeForVessels(Collection<LabVessel> labVessels) {
-        // todo jmt can this be an EnumSet?
-        NavigableSet<MercuryOrSquid> routingOptions = new TreeSet<MercuryOrSquid>();
+        return routeForVessels(labVessels, Intent.ROUTE);
+    }
+
+    private MercuryOrSquid routeForVessels(Collection<LabVessel> labVessels, Intent intent) {
+        Set<MercuryOrSquid> routingOptions = EnumSet.noneOf(MercuryOrSquid.class);
+
+        // Fetch unique product orders and determine which samples might be controls
         Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<String, ProductOrder>();
         Set<SampleInstance> possibleControls = new HashSet<SampleInstance>();
         for (LabVessel labVessel : labVessels) {
@@ -130,29 +166,116 @@ public class MercuryOrSquidRouter implements Serializable {
             }
         }
 
-        // If everything might be a control (i.e., nothing has a PDO), don't bother checking controls; just route to
-        // Squid. This will avoid unnecessary BSP queries.
-        if (mapKeyToProductOrder.isEmpty()) {
-            routingOptions.add(SQUID);
-        } else {
-            List<String> controlSampleIds = new ArrayList<String>();
-            Collection<String> sampleNames = new ArrayList<String>();
-            Map<String, BSPSampleDTO> mapSampleNameToDto = null;
-            if (!possibleControls.isEmpty()) {
-                for (SampleInstance sampleInstance : possibleControls) {
-                    sampleNames.add(sampleInstance.getStartingSample().getSampleKey());
-                }
-                mapSampleNameToDto = bspSampleDataFetcher.fetchSamplesFromBSP(sampleNames);
-
-                List<Control> controls = controlDao.findAllActive();
-                for (Control control : controls) {
-                    controlSampleIds.add(control.getCollaboratorSampleId());
-                }
+        List<String> controlSampleIds = new ArrayList<String>();
+        Collection<String> sampleNames = new ArrayList<String>();
+        Map<String, BSPSampleDTO> mapSampleNameToDto = null;
+        if (!possibleControls.isEmpty()) {
+            for (SampleInstance sampleInstance : possibleControls) {
+                sampleNames.add(sampleInstance.getStartingSample().getSampleKey());
             }
-            for (LabVessel labVessel : labVessels) {
-                MercuryOrSquid determinedRoute =
-                        routeForVessel(labVessel, mapKeyToProductOrder, controlSampleIds, mapSampleNameToDto);
-                routingOptions.add(determinedRoute);
+            mapSampleNameToDto = bspSampleDataFetcher.fetchSamplesFromBSP(sampleNames);
+
+            List<Control> controls = controlDao.findAllActive();
+            for (Control control : controls) {
+                controlSampleIds.add(control.getCollaboratorSampleId());
+            }
+        }
+        for (LabVessel labVessel : labVessels) {
+            routingOptions.add(
+                    routeForVessel(labVessel, mapKeyToProductOrder, controlSampleIds, mapSampleNameToDto, intent));
+        }
+
+        return evaluateRoutingOption(routingOptions);
+    }
+
+    // TODO: figure out how to handle libraryNames for fetchLibraryDetailsByLibraryName
+
+    /**
+     *
+     * This is the main method that will determine, for a given lab vessel, to which system transactions for that
+     * vessel should be routed.
+     * <p />
+     *
+     * The logic within this method will utilize the vessel to navigate back to the correct PDO and determine what
+     * routing is configured for the workflow associated with the PDO.
+     *
+     *
+     * @param vessel an instance of a LabVessel for which system routing is to be determined
+     * @param mapKeyToProductOrder map from product order key to product order entity
+     * @param controlSampleIds @return An instance of a MercuryOrSquid enum that will assist in determining to which system requests should be
+     * @param mapSampleNameToDto map from sample name to BSP sample DTO
+     * @param intent whether to return one routing option, or multiple
+     */
+    @DaoFree
+    public MercuryOrSquid routeForVessel(LabVessel vessel, Map<String, ProductOrder> mapKeyToProductOrder,
+                                         List<String> controlSampleIds, Map<String, BSPSampleDTO> mapSampleNameToDto,
+                                         Intent intent) {
+        Set<MercuryOrSquid> routingOptions = EnumSet.noneOf(MercuryOrSquid.class);
+        if (vessel != null) {
+
+            Set<SampleInstance> sampleInstances = vessel.getSampleInstances(SampleType.PREFER_PDO, LabBatchType.WORKFLOW);
+            if (sampleInstances.isEmpty()) {
+                routingOptions.add(SQUID);
+            } else {
+                Set<SampleInstance> possibleControls = new HashSet<SampleInstance>();
+                for (SampleInstance sampleInstance : sampleInstances) {
+                    if (sampleInstance.getProductOrderKey() == null) {
+                        possibleControls.add(sampleInstance);
+                    } else {
+                        ProductOrder order = mapKeyToProductOrder.get(sampleInstance.getProductOrderKey());
+                        ProductWorkflowDef productWorkflowDef = getWorkflow(order.getProduct().getWorkflowName());
+                        if (intent ==  Intent.SYSTEM_OF_RECORD) {
+                            MercuryOrSquid mercuryOrSquid;
+                            if (productWorkflowDef.getInValidation()) {
+                                LabBatch labBatch = sampleInstance.getLabBatch();
+                                // Per Andrew, we can assume that validation plastic has only one LCSET
+                                if(labBatch != null && labBatch.isValidationBatch()) {
+                                    mercuryOrSquid = MERCURY;
+                                } else {
+                                    mercuryOrSquid = productWorkflowDef.getRouting();
+                                }
+                            } else {
+                                mercuryOrSquid = productWorkflowDef.getRouting();
+                            }
+                            if (mercuryOrSquid == BOTH) {
+                                mercuryOrSquid = SQUID;
+                            }
+                            routingOptions.add(mercuryOrSquid);
+                        } else {
+                            routingOptions.add(productWorkflowDef.getRouting());
+                        }
+                    }
+                }
+                if (!possibleControls.isEmpty()) {
+
+                    // TODO: change this logic if SampleInstance.controlRole is ever populated
+
+                    // TODO: move this logic into ControlEjb?
+
+                    // Don't bother querying BSP if Mercury doesn't have any active controls.
+                    if (controlSampleIds.isEmpty()) {
+                        routingOptions.add(SQUID);
+                    } else {
+                        for (SampleInstance possibleControl : possibleControls) {
+                            String sampleKey = possibleControl.getStartingSample().getSampleKey();
+                            BSPSampleDTO sampleDTO = mapSampleNameToDto.get(sampleKey);
+                            if (sampleDTO == null) {
+                                // Don't know what this is, but it isn't for Mercury.
+                                routingOptions.add(SQUID);
+                            } else {
+                                if (controlSampleIds.contains(sampleDTO.getCollaboratorsSampleName())) {
+                                    if (intent == Intent.SYSTEM_OF_RECORD) {
+                                        routingOptions.add(MERCURY);
+                                    } else {
+                                        routingOptions.add(BOTH);
+                                    }
+                                } else {
+                                    routingOptions.add(SQUID);
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -175,107 +298,30 @@ public class MercuryOrSquidRouter implements Serializable {
      *     <li>If there are any other combinations, throw a {@link RouterException}</li>
      * </ul>
      *
+     * TODO: Consider routing for controls
+     * Controls recognized by Mercury currently route to BOTH. When Mercury is the system of record for a workflow,
+     * we'll start to see routingOptions of { BOTH, MERCURY }, which this implementation will currently reject.
+     *
      * @param routingOptions A navigable collection of determined routing options for a collection of lab vessels.
-     *
-     * @return An instance of a MercuryOrSquid enum that will assist in determining to which system requests should be
-          * routed.
-     */
-    private MercuryOrSquid evaluateRoutingOption(NavigableSet<MercuryOrSquid> routingOptions) {
-
-        MercuryOrSquid result = SQUID;
-
-        if (!routingOptions.isEmpty()) {
-            result = routingOptions.last();
-
-            if (routingOptions.size() > 1) {
-                if ((routingOptions.contains(SQUID) && routingOptions.contains(MERCURY)) ||
-                            (routingOptions.contains(BOTH) && routingOptions.contains(MERCURY))) {
-                    throw new RouterException("The Routing cannot be determined");
-                }
-            }
-        }
-        return result;
-    }
-
-    /**
-     * Determines if a tube belongs to Mercury or Squid. See {@link MercuryOrSquid} for a description of "belongs".
-     *
-     * @param barcode the barcode of the tube to check
      *
      * @return An instance of a MercuryOrSquid enum that will assist in determining to which system requests should be
      * routed.
      */
-    public MercuryOrSquid routeForVessel(String barcode) {
-        return routeForVesselBarcodes(Collections.singletonList(barcode));
-    }
+    private MercuryOrSquid evaluateRoutingOption(Set<MercuryOrSquid> routingOptions) {
 
-    // TODO: figure out how to handle libraryNames for fetchLibraryDetailsByLibraryName
+        MercuryOrSquid result;
 
-    /**
-     *
-     * This is the main method that will determine, for a given lab vessel, to which system transactions for that
-     * vessel should be routed.
-     * <p />
-     *
-     * The logic within this method will utilize the vessel to navigate back to the correct PDO and determine what
-     * routing is configured for the workflow associated with the PDO.
-     *
-     *
-     * @param vessel an instance of a LabVessel for which system routing is to be determined
-     * @param mapKeyToProductOrder map from product order key to product order entity
-     * @param controlSampleIds @return An instance of a MercuryOrSquid enum that will assist in determining to which system requests should be
-     * @param mapSampleNameToDto map from sample name to BSP sample DTO
-     */
-    @DaoFree
-    public MercuryOrSquid routeForVessel(LabVessel vessel, Map<String, ProductOrder> mapKeyToProductOrder,
-                                         List<String> controlSampleIds, Map<String, BSPSampleDTO> mapSampleNameToDto) {
-        // todo jmt can this be an EnumSet?
-        NavigableSet<MercuryOrSquid> routingOptions = new TreeSet<MercuryOrSquid>();
-        if (vessel != null) {
-
-            Set<SampleInstance> sampleInstances = vessel.getSampleInstances(SampleType.PREFER_PDO, LabBatchType.WORKFLOW);
-            if (sampleInstances.isEmpty()) {
-                routingOptions.add(SQUID);
-            } else {
-                Set<SampleInstance> possibleControls = new HashSet<SampleInstance>();
-                for (SampleInstance sampleInstance : sampleInstances) {
-                    if (sampleInstance.getProductOrderKey() == null) {
-                        possibleControls.add(sampleInstance);
-                    } else {
-                        ProductOrder order = mapKeyToProductOrder.get(sampleInstance.getProductOrderKey());
-                        routingOptions.add(getWorkflow(order.getProduct().getWorkflowName()).getRouting());
-                    }
-                }
-                if (!possibleControls.isEmpty()) {
-
-                    // TODO: change this logic if SampleInstance.controlRole is ever populated
-
-                    // TODO: move this logic into ControlEjb?
-
-                    // Don't bother querying BSP if Mercury doesn't have any active controls.
-                    if (controlSampleIds.isEmpty()) {
-                        routingOptions.add(SQUID);
-                    } else {
-                        for (SampleInstance possibleControl : possibleControls) {
-                            String sampleKey = possibleControl.getStartingSample().getSampleKey();
-                            BSPSampleDTO sampleDTO = mapSampleNameToDto.get(sampleKey);
-                            if (sampleDTO == null) {
-                                // Don't know what this is, but it isn't for Mercury.
-                                routingOptions.add(SQUID);
-                            } else {
-                                if (controlSampleIds.contains(sampleDTO.getCollaboratorsSampleName())) {
-                                    routingOptions.add(BOTH);
-                                } else {
-                                    routingOptions.add(SQUID);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+        if (routingOptions.isEmpty()) {
+            result = SQUID;
+        } else if (routingOptions.size() == 1) {
+            result = routingOptions.iterator().next();
+        } else if (routingOptions.equals(EnumSet.of(SQUID, BOTH))) {
+            result = SQUID;
+        } else {
+            throw new RouterException("The Routing cannot be determined for options: " + routingOptions);
         }
 
-        return evaluateRoutingOption(routingOptions);
+        return result;
     }
 
     /**
@@ -283,7 +329,7 @@ public class MercuryOrSquidRouter implements Serializable {
      * does this by querying to the "Athena" side of Mercury for the ProductOrder Definition and looks up the
      * workflow definition based on the workflow name defined on the ProductOrder
      *
-     * @param workflowName
+     * @param workflowName e.g. Exome Express
      *
      * @return Workflow Definition for the defined workflow for the product order represented by productOrderKey
      */

@@ -58,8 +58,9 @@ public class BettaLimsMessageTestFactory {
      * constraint violations.
      * @param messageList list of bettalims messages, typically sent to the BettaLIMS web service, in a loop
      * @param stationEventTypes one or more station events
+     * @return the created BettaLIMS message
      */
-    public void addMessage(List<BettaLIMSMessage> messageList, StationEventType... stationEventTypes) {
+    public BettaLIMSMessage addMessage(List<BettaLIMSMessage> messageList, StationEventType... stationEventTypes) {
         BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
         if (mercuryMode) {
             bettaLIMSMessage.setMode(LabEventFactory.MODE_MERCURY);
@@ -81,6 +82,7 @@ public class BettaLimsMessageTestFactory {
         }
         messageList.add(bettaLIMSMessage);
         advanceTime();
+        return bettaLIMSMessage;
     }
 
     /**
@@ -127,6 +129,16 @@ public class BettaLimsMessageTestFactory {
         plateTransferEvent.setPlate(buildPlate(plateBarcode));
 
         return plateTransferEvent;
+    }
+
+    public PlateTransferEventType buildRackToPlate(String eventType, String rackBarcode, List<String> tubeBarcodes,
+                                                   String plateBarcode, String plateType, String sourceSection,
+                                                   String targetSection) {
+        PlateTransferEventType event = buildRackToPlate(eventType, rackBarcode, tubeBarcodes, plateBarcode);
+        event.getSourcePlate().setSection(sourceSection);
+        event.getPlate().setSection(targetSection);
+        event.getPlate().setPhysType(plateType);
+        return event;
     }
 
     public PlateTransferEventType buildPlateToRack(String eventType, String plateBarcode, String rackBarcode,

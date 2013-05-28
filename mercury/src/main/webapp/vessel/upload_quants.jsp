@@ -27,7 +27,7 @@
                 </div>
                 <div class="control-group">
                     <div class="controls">
-                        <stripes:submit name="uploadQuant" value="Upload Quant" class="btn btn-primary"/>
+                        <stripes:submit name="uploadQuant" value="Upload Quants" class="btn btn-primary"/>
                     </div>
                 </div>
             </div>
