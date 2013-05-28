@@ -115,6 +115,19 @@ public class QtpEntityBuilder {
             rearrayedPoolingRack = poolingRacks.get(0);
         }
 
+        int catchSampleInstanceCount = 0;
+        for (TubeFormation normCatchRack : normCatchRacks) {
+            catchSampleInstanceCount += normCatchRack.getSampleInstances().size();
+        }
+
+        // EcoTransfer
+        LabEventTest.validateWorkflow("EcoTransfer", rearrayedPoolingRack);
+        LabEvent ecoTransferEventEntity = labEventFactory.buildFromBettaLimsRackToPlateDbFree(qtpJaxbBuilder.getEcoTransferJaxb(), rearrayedPoolingRack, null);
+        labEventHandler.processEvent(ecoTransferEventEntity);
+        // asserts
+        StaticPlate ecoPlate = (StaticPlate) ecoTransferEventEntity.getTargetLabVessels().iterator().next();
+        Assert.assertEquals(ecoPlate.getSampleInstances().size(), catchSampleInstanceCount,
+                "Wrong number of sample instances");
 
         // Normalization
         LabEventTest.validateWorkflow("NormalizationTransfer", rearrayedPoolingRack);
@@ -134,32 +147,12 @@ public class QtpEntityBuilder {
         normalizationRack = (TubeFormation) normalizationEntity.getTargetLabVessels().iterator().next();
         Set<SampleInstance> normalizedSampleInstances =
                 normalizationRack.getContainerRole().getSampleInstancesAtPosition(VesselPosition.A01);
-        int catchSampleInstanceCount = 0;
-        for (TubeFormation normCatchRack : normCatchRacks) {
-            catchSampleInstanceCount += normCatchRack.getSampleInstances().size();
-        }
-
         Assert.assertEquals(normalizedSampleInstances.size(), catchSampleInstanceCount,
                 "Wrong number of normalized samples");
         Assert.assertEquals(
                 normalizationRack.getContainerRole().getVesselAtPosition(VesselPosition.A01).getSampleInstances()
                         .size(),
                 catchSampleInstanceCount, "Wrong number of normalized samples");
-
-
-        int catchSampleInstanceCount = 0;
-        for (TubeFormation normCatchRack : normCatchRacks) {
-            catchSampleInstanceCount += normCatchRack.getSampleInstances().size();
-        }
-
-        // EcoTransfer
-        LabEventTest.validateWorkflow("EcoTransfer", rearrayedPoolingRack);
-        LabEvent ecoTransferEventEntity = labEventFactory.buildFromBettaLimsRackToPlateDbFree(qtpJaxbBuilder.getEcoTransferJaxb(), rearrayedPoolingRack, null);
-        labEventHandler.processEvent(ecoTransferEventEntity);
-        // asserts
-        StaticPlate ecoPlate = (StaticPlate) ecoTransferEventEntity.getTargetLabVessels().iterator().next();
-        Assert.assertEquals(ecoPlate.getSampleInstances().size(), catchSampleInstanceCount,
-                "Wrong number of sample instances");
 
         // DenatureTransfer
         LabEventTest.validateWorkflow("DenatureTransfer", rearrayedPoolingRack);

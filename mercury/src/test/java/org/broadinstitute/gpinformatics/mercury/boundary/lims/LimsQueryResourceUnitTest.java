@@ -400,7 +400,7 @@ public class LimsQueryResourceUnitTest {
      */
     @Test(groups = DATABASE_FREE)
     public void testFetchTransfersForPlateForMercury() {
-        expect(mockMercuryOrSquidRouter.routeForVessel("barcode")).andReturn(MERCURY);
+        expect(mockMercuryOrSquidRouter.getSystemOfRecordForVessel("barcode")).andReturn(MERCURY);
         expect(mockLimsQueries.fetchTransfersForPlate("barcode", 2)).andReturn(new ArrayList<PlateTransferType>());
         replayAll();
 
@@ -415,7 +415,7 @@ public class LimsQueryResourceUnitTest {
      */
     @Test(groups = DATABASE_FREE)
     public void testFetchTransfersForPlateForSquid() {
-        expect(mockMercuryOrSquidRouter.routeForVessel("barcode")).andReturn(SQUID);
+        expect(mockMercuryOrSquidRouter.getSystemOfRecordForVessel("barcode")).andReturn(SQUID);
         expect(mockThriftService.fetchTransfersForPlate("barcode", (short) 2)).andReturn(new ArrayList<PlateTransfer>());
         replayAll();
 
