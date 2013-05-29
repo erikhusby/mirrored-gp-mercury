@@ -292,13 +292,10 @@ public enum LabEventType {
             PlasticToValidate.SOURCE, PipelineTransformation.NONE),
 
     // Malaria Illumina
-    MALARIA_TEP_PCR("Malaria_TEP_PCR", false, true, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE, PipelineTransformation.LIGATION),
-    MALARIA_PF_PCR("Malaria_PF_PCR", false, true, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE, PipelineTransformation.LIGATION),
-    MALARIA_MAL_PCR("Malaria_MAL_PCR", false, true, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE, PipelineTransformation.LIGATION),
-    MALARIA_TEP_PCR_NORM("Malaria_TEP_PCR_Norm", false, true, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
-    MALARIA_PF_PCR_NORM("Malaria_PF_PCR_Norm", false, true, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
-    MALARIA_MAL_PCR_NORM("Malaria_MAL_PCR_Norm", false, true, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
-    MALARIA_PCR_NORM_POOL("MalariaPCRNormPool", false, true, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
+    MALARIA_PCR1("Malaria_PCR1", false, true, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE, PipelineTransformation.LIGATION),
+    MALARIA_PCRTAIL2("Malaria_PCRTail2", false, true, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE, PipelineTransformation.LIGATION),
+    MALARIA_PCR_NORM("Malaria_PCR_Norm", false, true, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
+    MALARIA_MISEQ_PCR_POOL_SPRI("MalariaMiseqPCRPoolSPRI", false, true, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
 
     // Malaria PacBio
     MALARIA_BEP_PCR("Malaria_BEP_PCR", false, true, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
