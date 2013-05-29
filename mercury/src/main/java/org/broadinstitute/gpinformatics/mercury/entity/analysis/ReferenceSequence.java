@@ -33,7 +33,7 @@ public class ReferenceSequence implements BusinessObject {
     @Column(name = "IS_CURRENT", nullable = false)
     private boolean isCurrent;
 
-    private static final char SEPERATOR = '|';
+    public static final char SEPERATOR = '|';
 
     public ReferenceSequence() {
     }

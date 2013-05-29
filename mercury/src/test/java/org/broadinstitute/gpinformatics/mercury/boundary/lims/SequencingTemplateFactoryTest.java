@@ -6,9 +6,10 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselAndPosition;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateLaneType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateType;
+import org.hamcrest.MatcherAssert;
+import org.hamcrest.Matchers;
 import org.testng.annotations.Test;
 
 import java.util.Date;
@@ -23,6 +24,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.IsNot.not;
 
 /**
  * Database-free test for SequencingTemplateFactory.
@@ -41,11 +43,8 @@ public class SequencingTemplateFactoryTest {
         event.getVesselToSectionTransfers()
                 .add(new VesselToSectionTransfer(denatureTube, ALL2, flowcell.getContainerRole(), event));
 
-        Set<VesselAndPosition> vesselsAndPositions = new HashSet<VesselAndPosition>();
-        for (VesselPosition vesselPosition : ALL2.getWells()) {
-            vesselsAndPositions.add(new VesselAndPosition(denatureTube, vesselPosition));
-        }
-
+        Set<VesselAndPosition> vesselsAndPositions = factory.getLoadingVesselsForFlowcell(flowcell);
+        MatcherAssert.assertThat(vesselsAndPositions, not(Matchers.empty()));
         SequencingTemplateType template = factory.getSequencingTemplate(flowcell, vesselsAndPositions);
         assertThat(template.getBarcode(), equalTo("flowcell_barcode"));
         assertThat(template.getLanes().size(), is(2));

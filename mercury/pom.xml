@@ -637,6 +637,95 @@
             </build>
         </profile>
 
+	    <profile>
+            <id>CRSP-DEV</id>
+            <properties>
+                <!--  Oracle Dev database -->
+                <database>oracle</database>
+                <database.delimiterType>row</database.delimiterType>
+
+                <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
+                <database.url>jdbc:oracle:thin:@crsp-db-dev-vm:1521:crspdev</database.url>
+                <mercury.password>welcome1</mercury.password>
+                <athena.password>welcome1</athena.password>
+            </properties>
+            <build>
+                <testResources>
+                    <testResource>
+                        <directory>src/test/resources-dev</directory>
+                    </testResource>
+	            <testResource>
+                        <directory>src/main/webapp/WEB-INF/classes</directory>
+                        <includes>
+                            <include>crsp-mercury-config.yaml</include>
+                        </includes>
+                    </testResource>
+                </testResources>
+            </build>
+        </profile>
+
+        <profile>
+            <id>CRSP-PROD</id><!-- THis is for CRSP PRODUCTION ONLY -->
+            <properties>
+                <!-- Oracle Dev -->
+                <database>oracle</database>
+                <database.delimiterType>row</database.delimiterType>
+
+                <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
+                <database.url>jdbc:oracle:thin:@crsp-db-prod-vm:1521:gpinfprd</database.url>
+                <mercury.password>mercury_prod</mercury.password>
+                <athena.password>athena_prod</athena.password>
+            </properties>
+            <build>
+                <!-- This allows us to overwrite the ejb-jar.xml for development with the special version for crsp production -->
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-war-plugin</artifactId>
+                        <version>2.2</version>
+                        <configuration>
+                            <webResources>
+                                <resource>
+                                    <directory>src/main/webapp-crsp-prod</directory>
+                                </resource>
+                            </webResources>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>Dinsmore</id>
+            <properties>
+                <!--  Oracle Dev database -->
+                <database>oracle</database>
+                <database.delimiterType>row</database.delimiterType>
+
+                <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
+                <database.url>jdbc:oracle:thin:@192.168.1.7:1521:gpinfprd</database.url>
+                <mercury.password>guest</mercury.password>
+                <athena.password>guest</athena.password>
+            </properties>
+            <build>
+                <testResources>
+                    <testResource>
+                        <directory>src/test/resources</directory>
+                    </testResource>
+                    <testResource>
+                        <directory>src/test/resources-build</directory>
+                        <filtering>true</filtering>
+                    </testResource>
+                    <testResource>
+                        <directory>src/main/webapp/WEB-INF/classes</directory>
+                        <includes>
+                            <include>mercury-config.yaml</include>
+                        </includes>
+                    </testResource>
+                </testResources>
+            </build>
+        </profile>
+
         <profile>
             <id>HOW</id>
             <properties>

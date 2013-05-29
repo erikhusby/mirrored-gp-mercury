@@ -16,7 +16,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowc
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselAndPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateLaneType;
@@ -24,9 +23,8 @@ import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTe
 
 import javax.inject.Inject;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 public class SequencingTemplateFactory {
@@ -77,20 +75,12 @@ public class SequencingTemplateFactory {
     public SequencingTemplateType fetchSequencingTemplate(String id, QueryVesselType queryVesselType,
                                                           boolean isPoolTest) {
         IlluminaFlowcell illuminaFlowcell;
-        Map<VesselPosition, LabVessel> loadedVessels = new HashMap<VesselPosition, LabVessel>();
         Set<VesselAndPosition> loadedVesselsAndPositions;
 
         switch (queryVesselType) {
         case FLOWCELL:
             illuminaFlowcell = illuminaFlowcellDao.findByBarcode(id);
-            TransferTraverserCriteria.NearestTubeAncestorsCriteria criteria =
-                    new TransferTraverserCriteria.NearestTubeAncestorsCriteria();
-            illuminaFlowcell.evaluateCriteria(criteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
-            loadedVesselsAndPositions = criteria.getVesselAndPositions();
-            for (VesselAndPosition vesselsAndPosition : loadedVesselsAndPositions) {
-                loadedVessels.put(vesselsAndPosition.getPosition(), vesselsAndPosition.getVessel());
-            }
-
+            loadedVesselsAndPositions = getLoadingVesselsForFlowcell(illuminaFlowcell);
             break;
         // Only support for FLOWCELLs for now, so fall through and throw exception.
         case TUBE:
@@ -101,6 +91,24 @@ public class SequencingTemplateFactory {
         }
 
         return getSequencingTemplate(illuminaFlowcell, loadedVesselsAndPositions);
+    }
+
+    /**
+     * get information on what vessels loaded given flowcell.
+     *
+     * @param flowcell the flowcell to get lane information on
+     *
+     * @return Map of VesselAndPosition representing what is loaded onto the flowcell
+     */
+    @DaoFree
+    public Set<VesselAndPosition> getLoadingVesselsForFlowcell(IlluminaFlowcell flowcell) {
+        Set<VesselAndPosition> loadedVesselsAndPositions = new HashSet<>();
+        for (VesselPosition vesselPosition : flowcell.getVesselGeometry().getVesselPositions()) {
+            for (LabVessel.VesselEvent vesselEvent : flowcell.getContainerRole().getAncestors(vesselPosition)) {
+                loadedVesselsAndPositions.add(new VesselAndPosition(vesselEvent.getLabVessel(), vesselPosition));
+            }
+        }
+        return loadedVesselsAndPositions;
     }
 
     /**

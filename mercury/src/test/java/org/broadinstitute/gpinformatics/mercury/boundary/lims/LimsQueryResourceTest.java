@@ -312,12 +312,11 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testFetchIlluminaSeqTemplateWithFlowCell(@ArquillianResource URL baseUrl) {
         WebResource resource =
-                makeWebResource(baseUrl, "fetchIlluminaSeqTemplate").queryParam("id", "Flowcell0513170145")
+                makeWebResource(baseUrl, "fetchIlluminaSeqTemplate").queryParam("id", "Flowcell0528112517")
                         .queryParam("idType",
                                 "FLOWCELL").queryParam("isPoolTest", "true");
         String result = get(resource);
-        assertThat(result, containsString("\"barcode\":\"Flowcell0513170145\""));
-        assertThat(result, containsString("{\"sequence\":\"CTACCAGG\",\"position\":\"P_7\"}"));
+        assertThat(result, containsString("\"barcode\":\"Flowcell0528112517\""));
         assertThat(result, containsString("{\"laneName\":\"LANE1\""));
         assertThat(result, containsString("{\"laneName\":\"LANE2\""));
         for (String varToTest : Arrays
