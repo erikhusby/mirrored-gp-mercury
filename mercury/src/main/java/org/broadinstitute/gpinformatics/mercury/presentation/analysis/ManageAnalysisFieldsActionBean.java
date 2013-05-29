@@ -24,10 +24,10 @@ import java.util.List;
 /**
  * Class used to Add/Delete analysis field data, such as aligners, analysis types, reagent designs and reference sequences.
  */
-@UrlBinding(value = "/view/analysisFields.action")
+@UrlBinding(value = "/admin/analysisFields.action")
 public class ManageAnalysisFieldsActionBean extends CoreActionBean {
 
-    public static final String ANALYSIS_FIELDS_ACTION = "/view/analysisFields.action";
+    public static final String ANALYSIS_FIELDS_ACTION = "/admin/analysisFields.action";
 
     private static final String MANAGE_ALIGNER_PAGE = "/analysis/manage_aligners.jsp";
     private static final String MANAGE_ANALYSIS_TYPE_PAGE = "/analysis/manage_analysis_types.jsp";
