@@ -1,13 +1,16 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.SampleType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch.LabBatchType;
 
@@ -17,12 +20,14 @@ import javax.ejb.TransactionAttributeType;
 import javax.inject.Inject;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Stateful
 public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
     private ProductOrderDao pdoDao;
     private WorkflowConfigLookup workflowConfigLookup;
+    private SimpleDateFormat sdf = new SimpleDateFormat("M/d/yy");
 
     public LabEventEtl() {
     }
@@ -64,9 +69,9 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         for (EventFactDto fact : facts) {
             records.add(genericRecord(etlDateStr, isDelete,
                     fact.labEvent.getLabEventId(),
-                    format(fact.wfDenorm.getWorkflowId()),
-                    format(fact.wfDenorm.getProcessId()),
-                    format(fact.productOrder.getProductOrderId()),
+                    format(fact.wfDenorm == null ? null : fact.wfDenorm.getWorkflowId()),
+                    format(fact.wfDenorm == null ? null : fact.wfDenorm.getProcessId()),
+                    format(fact.productOrder == null ? null : fact.productOrder.getProductOrderId()),
                     format(fact.sample.getSampleKey()),
                     format(fact.labBatchId),
                     format(fact.labEvent.getEventLocation()),
@@ -104,6 +109,10 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
 
     public Collection<EventFactDto> makeEventFacts(LabEvent entity) {
         Collection<EventFactDto> facts = new ArrayList<EventFactDto>();
+        Set<String> missingSampleInstances = new HashSet<String>();
+        Set<String> missingStartingSamples = new HashSet<String>();
+        Set<String> missingPdoKeys = new HashSet<String>();
+
         if (entity != null && entity.getLabEventType() != null) {
             String eventName = entity.getLabEventType().getName();
 
@@ -114,82 +123,95 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
 
             for (LabVessel vessel : vessels) {
                 try {
-                    Set<SampleInstance> sampleInstances = vessel.getSampleInstances();
+                    Set<SampleInstance> sampleInstances =
+                            vessel.getSampleInstances(SampleType.WITH_PDO, LabBatchType.WORKFLOW);
                     if (sampleInstances.size() > 0) {
                         for (SampleInstance si : sampleInstances) {
-
-                            LabBatch labBatch = si.getLabBatch() != null ? si.getLabBatch() : entity.getLabBatch();
-                            if (labBatch != null) {
-
+                            if (si.getProductOrderKey() != null) {
                                 MercurySample sample = si.getStartingSample();
                                 if (sample != null) {
-                                    String productOrderKey = si.getProductOrderKey();
-                                    if (productOrderKey != null) {
-
+                                    for (LabBatch labBatch : si.getAllWorkflowLabBatches()) {
                                         facts.add(new EventFactDto(entity, vessel, eventName, si, labBatch, sample,
-                                                productOrderKey));
-
-                                    } else {
-                                        if (labBatch.getLabBatchType() == LabBatchType.WORKFLOW) {
-                                            logger.debug("Sample " + sample.getSampleKey() + " in " +
-                                                    labBatch.getBusinessKey() + " has no product order");
-                                        }
+                                                si.getProductOrderKey()));
                                     }
                                 } else {
-                                    logger.debug("SampleInstance " + si.toString() + " has no starting sample.");
+                                    missingStartingSamples.add(si.toString());
                                 }
+                            } else {
+                                missingPdoKeys.add(si.toString());
                             }
                         }
                     } else {
-                        logger.debug("Vessel " + vessel.getLabel() + " has no SampleInstances.");
+                        missingSampleInstances.add(vessel.getLabel());
                     }
                 } catch (RuntimeException e) {
                     logger.debug("Skipping ETL on vessel " + vessel.getLabel() + " due to: " + e);
                 }
             }
         }
+        // Aggregates log messages.
+        if (missingSampleInstances.size() > 0) {
+            logger.debug(missingSampleInstances.size() + " vessels have no SampleInstance.");
+        }
+        if (missingStartingSamples.size() > 0) {
+            logger.debug(missingStartingSamples.size() + " sampleInstances have no starting sample.");
+        }
+        if (missingPdoKeys.size() > 0) {
+            logger.debug(missingPdoKeys.size() + " sampleInstances have no product order.");
+        }
         return facts;
     }
 
-    // Updates fields in each EventFactDto, and removes it from the collection if unusable.
+    // Looks up workflow and product and updates the fact.
     private void updateIds(Collection<EventFactDto> facts) {
 
         Map<String, ProductOrder> pdoMap = new HashMap<String, ProductOrder>();
         Map<String, WorkflowConfigDenorm> wfMap = new HashMap<String, WorkflowConfigDenorm>();
+        Set<String> missingWorkflows = new HashSet<String>();
+        Set<String> missingPdoEntities = new HashSet<String>();
 
         // Spins through and updates pdo and workflow, reusing already looked up values.
         for (Iterator<EventFactDto> iter = facts.iterator(); iter.hasNext(); ) {
             EventFactDto fact = iter.next();
 
-            // First checks the map to reuse any lookups that were already done.
-            if (pdoMap.containsKey(fact.productOrderKey)) {
-                fact.productOrder = pdoMap.get(fact.productOrderKey);
-                fact.wfDenorm = wfMap.get(fact.productOrderKey);
-            } else {
+            if (fact.productOrderKey != null) {
+                // First checks the local cache.
+                if (pdoMap.containsKey(fact.productOrderKey)) {
+                    fact.productOrder = pdoMap.get(fact.productOrderKey);
+                    fact.wfDenorm = wfMap.get(fact.productOrderKey);
 
-                // Does the lookups and warns once if entity is missing.
-                fact.productOrder = pdoDao.findByBusinessKey(fact.productOrderKey);
-                pdoMap.put(fact.productOrderKey, fact.productOrder);
-
-                if (fact.productOrder == null) {
-                    logger.warn("ProductOrder " + fact.productOrderKey + " is missing.");
                 } else {
+                    // Does the product order lookup.
+                    fact.productOrder = pdoDao.findByBusinessKey(fact.productOrderKey);
+                    if (fact.productOrder != null) {
+                        pdoMap.put(fact.productOrderKey, fact.productOrder);
 
-                    fact.wfDenorm = workflowConfigLookup.lookupWorkflowConfig(fact.eventName, fact.productOrder,
-                            fact.labEvent.getEventDate());
-                    wfMap.put(fact.productOrderKey, fact.wfDenorm);
+                        // Does the workflow lookup.
+                        fact.wfDenorm = workflowConfigLookup.lookupWorkflowConfig(fact.eventName, fact.productOrder,
+                                fact.labEvent.getEventDate());
+                        wfMap.put(fact.productOrderKey, fact.wfDenorm);
 
-                    if (fact.wfDenorm == null) {
-                        logger.warn("No workflow config for" +
-                                " event " + fact.eventName +
-                                " productOrder " + fact.productOrderKey +
-                                " eventDate " + fact.labEvent.getEventDate());
+                        if (fact.wfDenorm == null) {
+                            String epe = "(event " + fact.eventName + " productOrder " + fact.productOrderKey +
+                                    " eventDate " + sdf.format(fact.labEvent.getEventDate()) + ")";
+                            missingWorkflows.add(epe);
+                        }
+
+                    } else {
+                        missingPdoEntities.add(fact.productOrderKey);
                     }
+
                 }
             }
-            if (fact.productOrder == null || fact.wfDenorm == null) {
-                iter.remove();
-            }
+        }
+        // Aggregates log messages.
+        if (missingPdoEntities.size() > 0) {
+            String missing = StringUtils.join(missingPdoEntities.iterator(), ", ");
+            logger.debug("Cannot find product order entity for: " + missing);
+        }
+        if (missingWorkflows.size() > 0) {
+            String missing = StringUtils.join(missingPdoEntities.iterator(), ", ");
+            logger.debug("Cannot find workflow config for: " + missing);
         }
     }
 

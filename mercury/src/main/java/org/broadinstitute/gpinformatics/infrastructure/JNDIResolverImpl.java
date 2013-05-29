@@ -17,9 +17,9 @@ public class JNDIResolverImpl implements JNDIResolver {
 
     @Override
     public String lookupProperty(String name) throws NamingException {
-        final InitialContext initialContext = new InitialContext();
+        InitialContext initialContext = new InitialContext();
 
-        final Hashtable<?, ?> environment = initialContext.getEnvironment();
+        Hashtable<?, ?> environment = initialContext.getEnvironment();
 
         // The SEQUEL_DEPLOYMENT setting specified in WEB-INF/classes/jndi.properties in Arquillian micro-deployments
         // shows up not in the context but in the environment of the context
@@ -35,6 +35,6 @@ public class JNDIResolverImpl implements JNDIResolver {
         }
 
         // failing JBoss lookup, look up in regular JNDI for Glassfish
-        return initialContext.<String>doLookup(name);
+        return InitialContext.doLookup(name);
     }
 }

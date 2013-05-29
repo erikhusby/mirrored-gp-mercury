@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.RevInfo;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.hibernate.SQLQuery;
@@ -68,7 +69,7 @@ public class ExtractTransformTest extends Arquillian {
 
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWarWithAlternatives(DEV, SessionContextUtilityKeepScope.class);
+        return DeploymentBuilder.buildMercuryWarWithAlternatives(DEV, "dev", SessionContextUtilityKeepScope.class);
     }
 
     @BeforeClass(groups = TestGroups.EXTERNAL_INTEGRATION)
@@ -82,6 +83,7 @@ public class ExtractTransformTest extends Arquillian {
         EtlTestUtilities.deleteEtlFiles(datafileDir);
     }
 
+    @Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testEtl() throws Exception {
         final TwoDBarcodedTube labVessel = new TwoDBarcodedTube(barcode);
         final String datFileEnding = "_lab_vessel.dat";
@@ -200,6 +202,7 @@ public class ExtractTransformTest extends Arquillian {
         return ids;
     }
 
+    @Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testUndeletedRiskOnDevDb() throws Exception {
         Long[] ids = getRiskJoin(false);
         if (ids == null || ids.length < 3) {
@@ -235,6 +238,7 @@ public class ExtractTransformTest extends Arquillian {
         assertTrue(searchEtlFile(startMsec, endMsec, datFileEnding, "F", pdoSampleId));
     }
 
+    @Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testDeletedRiskOnDevDb() throws Exception {
         Long[] ids = getRiskJoin(true);
         if (ids == null || ids.length < 3) {
@@ -258,8 +262,8 @@ public class ExtractTransformTest extends Arquillian {
     }
 
 
-
-    public void testaUndeletedLedgerOnDevDb() throws Exception {
+    @Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION)
+    public void testUndeletedLedgerOnDevDb() throws Exception {
         Long[] ids = getLedgerJoin(false);
         if (ids == null || ids.length < 3) {
             logger.info("Skipping test, cannot find undeleted product order ledger entry");
@@ -294,6 +298,7 @@ public class ExtractTransformTest extends Arquillian {
         assertTrue(searchEtlFile(startMsec, endMsec, datFileEnding, "F", pdoSampleId));
     }
 
+    @Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testDeletedLedgerOnDevDb() throws Exception {
         Long[] ids = getLedgerJoin(true);
         if (ids == null || ids.length < 3 || ids[0] == null) {

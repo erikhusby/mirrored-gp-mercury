@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.reagent;
 
 import org.hibernate.envers.Audited;
 
+import javax.annotation.Nullable;
 import javax.persistence.*;
 
 /**
@@ -15,19 +16,18 @@ import javax.persistence.*;
 @Audited
 @Table(schema = "mercury")
 public abstract class Reagent {
-
     @Id
     @SequenceGenerator(name = "SEQ_REAGENT", schema = "mercury", sequenceName = "SEQ_REAGENT")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_REAGENT")
     private Long reagentId;
 
-    @Column(name = "REAGENT_NAME")
+    @Column(name = "REAGENT_NAME", nullable = true)
     private String name;
 
-    @Column(name = "LOT")
+    @Column(name = "LOT", nullable = true)
     private String lot;
 
-    protected Reagent(String reagentName, String lot) {
+    protected Reagent(@Nullable String reagentName, @Nullable String lot) {
         this.name = reagentName;
         this.lot = lot;
     }

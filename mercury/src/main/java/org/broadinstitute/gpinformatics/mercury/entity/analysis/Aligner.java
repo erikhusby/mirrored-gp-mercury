@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.analysis;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.hibernate.envers.Audited;
 
+import javax.annotation.Nonnull;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -24,10 +25,10 @@ public class Aligner implements BusinessObject {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_ALIGNER")
     private Long alignerId;
 
-    @Column(name = "NAME")
+    @Column(name = "NAME", nullable = false)
     private String name;
 
-    public Aligner(Long alignerId, String name) {
+    public Aligner(@Nonnull Long alignerId, @Nonnull String name) {
         this.alignerId = alignerId;
         this.name = name;
     }
@@ -35,8 +36,8 @@ public class Aligner implements BusinessObject {
     protected Aligner() {
     }
 
-    public Aligner(String name) {
-        this.name = name;
+    public Aligner(@Nonnull String name) {
+        this(null, name);
     }
 
     @Override

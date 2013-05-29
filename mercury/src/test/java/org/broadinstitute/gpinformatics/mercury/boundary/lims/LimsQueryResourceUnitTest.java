@@ -13,8 +13,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedT
 import org.broadinstitute.gpinformatics.mercury.control.lims.LimsQueryResourceResponseFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.FlowcellDesignationType;
-import org.broadinstitute.gpinformatics.mercury.limsquery.generated.IndexPositionType;
-import org.broadinstitute.gpinformatics.mercury.limsquery.generated.IndexingSchemeType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PlateTransferType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateLaneType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateType;
@@ -29,7 +27,6 @@ import java.util.List;
 import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
-import static org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid.BOTH;
 import static org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid.MERCURY;
 import static org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid.SQUID;
 import static org.easymock.EasyMock.createMock;
@@ -54,19 +51,21 @@ public class LimsQueryResourceUnitTest {
     private TwoDBarcodedTubeDAO mockTwoDBarcodedTubeDAO;
     private LimsQueryResource resource;
     private StaticPlateDAO mockStaticPlateDAO;
+    private SequencingTemplateFactory sequencingTemplateFactory;
 
     @BeforeMethod(groups = DATABASE_FREE)
     public void setUp() throws Exception {
         mockMercuryOrSquidRouter = createMock(MercuryOrSquidRouter.class);
         mockThriftService = createMock(ThriftService.class);
         mockLimsQueries = createMock(LimsQueries.class);
+        sequencingTemplateFactory = createMock(SequencingTemplateFactory.class);
         mockResponseFactory = createMock(LimsQueryResourceResponseFactory.class);
         mockTwoDBarcodedTubeDAO = createMock(TwoDBarcodedTubeDAO.class);
         mockStaticPlateDAO = createMock(StaticPlateDAO.class);
         BSPUserList bspUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
         resource =
-                new LimsQueryResource(mockThriftService, mockLimsQueries, mockResponseFactory, mockMercuryOrSquidRouter,
-                        bspUserList);
+                new LimsQueryResource(mockThriftService, mockLimsQueries, sequencingTemplateFactory,
+                        mockResponseFactory, mockMercuryOrSquidRouter, bspUserList);
 
     }
 
@@ -424,7 +423,7 @@ public class LimsQueryResourceUnitTest {
         verifyAll();
     }
 
-    @Test(groups = DATABASE_FREE, enabled = false)
+    @Test(groups = DATABASE_FREE, enabled = true)
     public void testFetchIlluminaSeqTemplate() {
         final SequencingTemplateType template = new SequencingTemplateType();
         template.setBarcode("BARCODE_1234");
@@ -434,12 +433,7 @@ public class LimsQueryResourceUnitTest {
         template.setReadStructure("76T8B76T");
         template.setPairedRun(true);
 
-        IndexingSchemeType indexingSchemeType=new IndexingSchemeType();
-        indexingSchemeType.setPosition(IndexPositionType.A);
-        indexingSchemeType.setSequence("AGCT");
-
         SequencingTemplateLaneType laneType=new SequencingTemplateLaneType();
-        laneType.getIndexingScheme().add(indexingSchemeType);
         laneType.setLaneName("LANE_1324");
         laneType.setLoadingConcentration(3.33);
         laneType.setLoadingVesselLabel("LOADING_VESSEL_1234");
@@ -460,7 +454,6 @@ public class LimsQueryResourceUnitTest {
         Assert.assertTrue(result.isPairedRun());
         Assert.assertEquals(result.getLanes().size(), 1);
         final SequencingTemplateLaneType laneOne = result.getLanes().get(0);
-        Assert.assertEquals(laneOne.getIndexingScheme().get(0), indexingSchemeType);
         Assert.assertEquals(laneOne.getLoadingConcentration(), 3.33);
         Assert.assertEquals(laneOne.getLoadingVesselLabel(), "LOADING_VESSEL_1234");
         Assert.assertEquals(laneOne.getLaneName(), "LANE_1324");
@@ -468,12 +461,12 @@ public class LimsQueryResourceUnitTest {
     }
 
     private void replayAll() {
-        replay(mockMercuryOrSquidRouter, mockThriftService, mockLimsQueries, mockResponseFactory,
-                mockTwoDBarcodedTubeDAO, mockStaticPlateDAO);
+        replay(mockMercuryOrSquidRouter, mockThriftService, mockLimsQueries, sequencingTemplateFactory,
+                mockResponseFactory, mockTwoDBarcodedTubeDAO, mockStaticPlateDAO);
     }
 
     private void verifyAll() {
-        verify(mockMercuryOrSquidRouter, mockThriftService, mockLimsQueries, mockResponseFactory,
-                mockTwoDBarcodedTubeDAO, mockStaticPlateDAO);
+        verify(mockMercuryOrSquidRouter, mockThriftService, mockLimsQueries, sequencingTemplateFactory,
+                mockResponseFactory, mockTwoDBarcodedTubeDAO, mockStaticPlateDAO);
     }
 }

@@ -51,9 +51,9 @@
 
     drop table athena.research_projectirb_aud cascade constraints;
 
-    drop table if exists athena.product_order_add_on_aud cascade constraints;
+    drop table athena.product_order_add_on_aud cascade constraints;
 
-    drop table if exists athena.product_order_add_on cascade constraints;
+    drop table athena.product_order_add_on cascade constraints;
 
 
 
@@ -207,21 +207,21 @@
 --
 --     drop table mercury.workflow_description_aud cascade constraints;
 
-    drop table if exists mercury.lab_vessel_mercury_samples_aud cascade constraints;
+    drop table mercury.lab_vessel_mercury_samples_aud cascade constraints;
 
-    drop table if exists mercury.lab_vessel_mercury_samples cascade constraints;
+    drop table mercury.lab_vessel_mercury_samples cascade constraints;
 
-    drop table if exists mercury.mercury_sample cascade constraints;
+    drop table mercury.mercury_sample cascade constraints;
 
-    drop table if exists mercury.mercury_sample_aud cascade constraints;
+    drop table mercury.mercury_sample_aud cascade constraints;
 
-    drop table if exists mercury.bucket_entry cascade;
+    drop table mercury.bucket_entry cascade constraints;
 
-    drop table if exists mercury.bucket_entry_aud cascade;
+    drop table mercury.bucket_entry_aud cascade constraints;
 
-    drop table if exists mercury.bucket cascade;
+    drop table mercury.bucket cascade constraints;
 
-    drop table if exists mercury.bucket_aud cascade;
+    drop table mercury.bucket_aud cascade constraints;
 
 
 /*

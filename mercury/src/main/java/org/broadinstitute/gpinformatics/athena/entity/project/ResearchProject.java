@@ -728,17 +728,6 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
         return false;
     }
 
-    /**
-     * Compare by the ResearchProject by its title, case insensitive.
-     */
-    public static final Comparator<ResearchProject> BY_TITLE = new Comparator<ResearchProject>() {
-        @Override
-        public int compare(ResearchProject lhs, ResearchProject rhs) {
-            return lhs.getTitle().toUpperCase().compareTo(
-                    rhs.getTitle().toUpperCase());
-        }
-    };
-
     @Override
     public boolean equals(Object other) {
         if ((this == other)) {
@@ -815,4 +804,13 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
         }
     }
 
+    /**
+     * Compare by modified date.
+     */
+    public static final Comparator<ResearchProject> BY_DATE = new Comparator<ResearchProject>() {
+        @Override
+        public int compare(ResearchProject lhs, ResearchProject rhs) {
+            return rhs.getModifiedDate().compareTo(lhs.getModifiedDate());
+        }
+    };
 }

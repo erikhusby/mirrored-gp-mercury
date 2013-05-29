@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.jpa;
 
+import javax.annotation.Nonnull;
+
 /**
  * This interface is for allowing DAOs to have a common means for finding business objects by specifying the business
  * key lookups.
@@ -13,5 +15,5 @@ public interface BusinessObjectFinder<T extends BusinessObject> {
      * @param businessKey the business key for the object
      * @return object associated by the business key
      */
-    public T findByBusinessKey(String businessKey);
+    public T findByBusinessKey(@Nonnull String businessKey);
 }

@@ -25,6 +25,12 @@ import java.util.EnumSet;
 public class UserBean implements Serializable {
     private static final String SUPPORT_EMAIL = "mercury-support@broadinstitute.org";
 
+    /**
+     * Prefix for CRSP roles. This is added to regular mercury roles; you can map from one to the other by adding
+     * or removing it.
+     */
+    private static final String CRSP_ROLE_PREFIX = "CRSP-";
+
     public static final String LOGIN_WARNING = "You need to log into JIRA and BSP before you can {0}.";
 
     private BspUser bspUser;
@@ -48,6 +54,21 @@ public class UserBean implements Serializable {
 
     private boolean isTestUser() {
         return BSPUserList.isTestUser(bspUser);
+    }
+
+    /**
+     * Check and see if the role string is a role on this user.
+     *
+     * @param roleName the role name
+     * @return true if user has this role
+     */
+    public boolean isUserInRole(String roleName) {
+        for (DB.Role role : roles) {
+            if (role.name.equals(roleName)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public enum ServerStatus {
@@ -170,7 +191,7 @@ public class UserBean implements Serializable {
         updateBspStatus();
         updateJiraStatus();
         for (DB.Role role : DB.Role.values()) {
-            if (request.isUserInRole(role.name)) {
+            if (request.isUserInRole(role.name) || request.isUserInRole(CRSP_ROLE_PREFIX + role.name)) {
                 roles.add(role);
             }
         }
