@@ -40,34 +40,8 @@
                     </xsd:documentation>
                 </xsd:annotation>
             </xsd:element>
-            <xsd:element name="indexingScheme" type="indexingSchemeType" maxOccurs="unbounded"/>
         </xsd:sequence>
     </xsd:complexType>
-
-    <xsd:complexType name="indexingSchemeType">
-        <xsd:sequence>
-            <xsd:element name="sequence" type="xsd:string"/>
-            <xsd:element name="position" type="indexPositionType"/>
-        </xsd:sequence>
-    </xsd:complexType>
-
-    <xsd:simpleType name="indexPositionType">
-        <xsd:restriction base="xsd:string">
-            <xsd:enumeration value="P5"/>
-            <xsd:enumeration value="P7"/>
-            <xsd:enumeration value="IS1"/>
-            <xsd:enumeration value="IS2"/>
-            <xsd:enumeration value="IS3"/>
-            <xsd:enumeration value="IS4"/>
-            <xsd:enumeration value="IS5"/>
-            <xsd:enumeration value="IS6"/>
-            <xsd:enumeration value="INTRA"/>
-            <xsd:enumeration value="DEV"/>
-            <xsd:enumeration value="ONLY"/>
-            <xsd:enumeration value="A"/>
-            <xsd:enumeration value="B"/>
-        </xsd:restriction>
-    </xsd:simpleType>
 
     <xsd:complexType name="flowcellDesignationType">
         <xsd:sequence>

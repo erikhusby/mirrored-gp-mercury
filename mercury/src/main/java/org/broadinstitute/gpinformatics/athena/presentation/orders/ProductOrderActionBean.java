@@ -111,6 +111,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private static final String ABANDON_SAMPLES_ACTION = "abandonSamples";
     private static final String DELETE_SAMPLES_ACTION = "deleteSamples";
     private static final String SET_RISK = "setRisk";
+    private static final String RECALCULATE_RISK = "recalculateRisk";
     private static final String PLACE_ORDER = "placeOrder";
 
     // Search field constants
@@ -229,9 +230,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Validate(required = true, on = ADD_SAMPLES_ACTION)
     private String addSamplesText;
-
-    @Validate(required = true, on = SET_RISK)
-    private boolean onlyNew = true;
 
     @Validate(required = true, on = SET_RISK)
     private boolean riskStatus = true;
@@ -357,9 +355,21 @@ public class ProductOrderActionBean extends CoreActionBean {
         // Since we are only validating from view, we can persist without worry of saving something bad.
         // We are doing on risk calculation only when everything passes, but informing the user no matter what.
         if (!hasErrors()) {
-            int numSamplesOnRisk = editOrder.calculateRisk();
-            editOrder.prepareToSave(getUserBean().getBspUser());
-            productOrderDao.persist(editOrder);
+            String errorMessage;
+            try {
+                errorMessage = productOrderEjb.calculateRisk(getUserBean().getBspUser(), editOrder.getBusinessKey());
+            } catch (Exception e) {
+                errorMessage = "Error calculating risk";
+            }
+
+            if (!StringUtils.isBlank(errorMessage)) {
+                addGlobalValidationError(errorMessage);
+                return;
+            }
+
+            // refetch the order to get updated risk status on the order.
+            editOrder = productOrderDao.findByBusinessKey(editOrder.getBusinessKey());
+            int numSamplesOnRisk = editOrder.countItemsOnRisk();
 
             if (numSamplesOnRisk == 0) {
                 addMessage("None of the samples for this order are on risk");
@@ -550,7 +560,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     // All actions that can result in the view page loading (either by a validation error or view itself)
     @After(stages = LifecycleStage.BindingAndValidation,
-           on = { EDIT_ACTION, VIEW_ACTION, ADD_SAMPLES_ACTION, ABANDON_SAMPLES_ACTION, DELETE_SAMPLES_ACTION })
+           on = { EDIT_ACTION, VIEW_ACTION, ADD_SAMPLES_ACTION, SET_RISK, RECALCULATE_RISK, ABANDON_SAMPLES_ACTION, DELETE_SAMPLES_ACTION })
     public void entryInit() {
         productOrderListEntry = editOrder.isDraft() ? ProductOrderListEntry.createDummy() :
                 orderListEntryDao.findSingle(editOrder.getJiraTicketKey());
@@ -936,28 +946,39 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent(SET_RISK)
     public Resolution setRisk() throws Exception {
 
-        // If we are creating a manual on risk, then need to set it up and persist it for reuse.
-        RiskCriterion criterion = null;
-        if (riskStatus) {
-            criterion = RiskCriterion.createManual();
-            productOrderDao.persist(criterion);
-        }
-
-        for (ProductOrderSample sample : selectedProductOrderSamples) {
-            if (riskStatus) {
-                sample.setManualOnRisk(criterion, riskComment);
-            } else {
-                sample.setManualNotOnRisk(riskComment);
-            }
-        }
-
-        editOrder.prepareToSave(getUserBean().getBspUser());
-        productOrderDao.persist(editOrder);
+        productOrderEjb.setManualOnRisk(
+            getUserBean().getBspUser(), editOrder, selectedProductOrderSamples, riskStatus, riskComment);
 
         addMessage("Set manual on risk for {0} samples.", selectedProductOrderSampleIds.size());
         JiraIssue issue = jiraService.getIssue(editOrder.getJiraTicketKey());
         issue.addComment(MessageFormat.format("{0} set manual on risk for {1} samples.",
                 userBean.getLoginUserName(), selectedProductOrderSampleIds.size()));
+        return createViewResolution();
+    }
+
+    @HandlesEvent(RECALCULATE_RISK)
+    public Resolution recalculateRisk() throws Exception {
+
+        int originalOnRiskCount = editOrder.countItemsOnRisk();
+
+        String errorMessage =
+            productOrderEjb.calculateRisk(
+                getUserBean().getBspUser(), editOrder.getBusinessKey(), selectedProductOrderSamples);
+
+        if (!StringUtils.isBlank(errorMessage)) {
+            addGlobalValidationError(errorMessage);
+        } else {
+            // refetch the order to get updated risk status on the order.
+            editOrder = productOrderDao.findByBusinessKey(editOrder.getBusinessKey());
+            int afterOnRiskCount = editOrder.countItemsOnRisk();
+
+            String fullString = addMessage(
+                "Successfully recalculated On Risk. {0} samples are on risk. Previously there were {1} samples on risk.",
+                afterOnRiskCount, originalOnRiskCount);
+            JiraIssue issue = jiraService.getIssue(editOrder.getJiraTicketKey());
+            issue.addComment(fullString);
+        }
+
         return createViewResolution();
     }
 
@@ -1004,7 +1025,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private void handleSamplesAdded(List<ProductOrderSample> newSamples) {
         Collection<ProductOrderSample> samples = mercuryClientService.addSampleToPicoBucket(editOrder, newSamples);
         if (!samples.isEmpty()) {
-                addMessage("{0} samples have been added to the pico bucket.", samples.size());
+            addMessage("{0} samples have been added to the pico bucket.", samples.size());
         }
     }
 
@@ -1241,14 +1262,6 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.riskStatus = riskStatus;
     }
 
-    public boolean isOnlyNew() {
-        return onlyNew;
-    }
-
-    public void setOnlyNew(boolean onlyNew) {
-        this.onlyNew = onlyNew;
-    }
-
     public String getRiskComment() {
         return riskComment;
     }
@@ -1270,7 +1283,6 @@ public class ProductOrderActionBean extends CoreActionBean {
         return productOrderListEntry;
     }
 
-
     /**
      * Convenience method to determine if the current PDO for the view page is eligible for billing.
      *
@@ -1279,7 +1291,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     public boolean isEligibleForBilling() {
         return editOrder.getBusinessKey() != null && getProductOrderListEntry().isEligibleForBilling();
     }
-
 
     /**
      * Convenience method to return the billing session ID for the current PDO in the view page, if any.  Throws

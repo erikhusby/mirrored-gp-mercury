@@ -183,16 +183,25 @@ public class ProductOrder implements BusinessObject, Serializable {
      *
      * @return The number of samples calculated to be on risk.
      */
-    public int calculateRisk() {
+    public int calculateRisk(List<ProductOrderSample> selectedSamples) {
         Set<String> uniqueSampleNamesOnRisk = new HashSet<String>();
 
-        for (ProductOrderSample sample : samples) {
+        for (ProductOrderSample sample : selectedSamples) {
             if (sample.calculateRisk()) {
                 uniqueSampleNamesOnRisk.add(sample.getSampleName());
             }
         }
 
         return uniqueSampleNamesOnRisk.size();
+    }
+
+    /**
+     * This calculates risk for all samples in the order.
+     *
+     * @return The number of samples calculated to be on risk.
+     */
+    public int calculateRisk() {
+        return calculateRisk(samples);
     }
 
     /**
@@ -208,6 +217,25 @@ public class ProductOrder implements BusinessObject, Serializable {
         }
 
         return jiraTicketKey;
+    }
+
+    /**
+     * Count the number of unique samples on risk on the produt order. This is calculated on the summary page, but
+     * for this call, we only want to do the calculation without going to BSP.
+     *
+     * @return The count of items on risk.
+     */
+    public int countItemsOnRisk() {
+        int count = 0;
+        Set<String> uniqueKeys = new HashSet<String> ();
+
+        for (ProductOrderSample sample : samples) {
+            if (sample.isOnRisk() && (!uniqueKeys.contains(sample.getSampleName()))) {
+                count++;
+            }
+        }
+
+        return count;
     }
 
     public static class JiraOrId {

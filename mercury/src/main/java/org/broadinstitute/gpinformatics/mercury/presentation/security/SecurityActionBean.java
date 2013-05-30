@@ -78,14 +78,14 @@ public class SecurityActionBean extends CoreActionBean {
 
         if (request.getUserPrincipal() != null && username.equalsIgnoreCase(request.getUserPrincipal().getName())) {
             // User is already logged in, don't try to login again.
-            return new RedirectResolution(UserRole.fromRequest(request).landingPage);
+            return new RedirectResolution(UserRole.fromUserBean(userBean).landingPage);
         }
 
         try {
             request.login(username, password);
-            UserRole role = UserRole.fromRequest(request);
-            targetPage = role.landingPage;
             userBean.login(request);
+            UserRole role = UserRole.fromUserBean(userBean);
+            targetPage = role.landingPage;
 
             if (!userBean.isValidBspUser()) {
                 logger.error(userBean.getBspStatus() + ": " + username);
@@ -116,8 +116,6 @@ public class SecurityActionBean extends CoreActionBean {
 
     /**
      * Logout and invalidate the HTTP session.
-     *
-     * @return
      */
     public Resolution signOut() {
         try {
@@ -132,28 +130,28 @@ public class SecurityActionBean extends CoreActionBean {
 
     public enum UserRole {
         // Order of roles is important, if user is both PDM and PM we want to go to PDM's page.
-        PDM("/orders/order.action?list", DB.Role.PDM.name),
-        PM(ResearchProjectActionBean.PROJECT_LIST_PAGE, DB.Role.PM.name),
-        OTHER("/index.jsp", "");
+        PDM("/orders/order.action?list", DB.Role.PDM),
+        PM(ResearchProjectActionBean.PROJECT_LIST_PAGE, DB.Role.PM),
+        OTHER("/index.jsp", null);
 
         private static final String INDEX = "/index.jsp";
         private static final String APP_CONTEXT = "/Mercury"; // getContext().getRequest().getContextPath();
 
-        public static UserRole fromRequest(HttpServletRequest request) {
-            for (UserRole role : values()) {
-                if (request.isUserInRole(role.roleName)) {
-                    return role;
+        public static UserRole fromUserBean(UserBean userBean) {
+            for (UserRole userRole : values()) {
+                if (userBean.getRoles().contains(userRole.role)) {
+                    return userRole;
                 }
             }
             return OTHER;
         }
 
         public final String landingPage;
-        public final String roleName;
+        public final DB.Role role;
 
-        private UserRole(String landingPage, String roleName) {
+        private UserRole(String landingPage, DB.Role role) {
             this.landingPage = landingPage;
-            this.roleName = roleName;
+            this.role = role;
         }
 
         private String checkUrlForRoleRedirect(String targetPage) {

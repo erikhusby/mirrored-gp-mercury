@@ -1,7 +1,9 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.tags.security;
 
 import net.sourceforge.stripes.util.Log;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
+import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.tagext.TagSupport;
@@ -30,6 +32,9 @@ public class AuthorizeBlockStripesTag extends TagSupport {
 
     public static final String ALLOW_ALL_ROLES = "All";
 
+    @Inject
+    UserBean userBean;
+
     public String[] getRoles() {
         return roles;
     }
@@ -53,12 +58,10 @@ public class AuthorizeBlockStripesTag extends TagSupport {
             HttpServletRequest request = (HttpServletRequest) pageContext.getRequest();
 
             // Now check the roles to include the jsp code block.
-            if (roles != null) {
-                for (String role : roles) {
-                    if (request.isUserInRole(role) || role.equals(ALLOW_ALL_ROLES)) {
-                        // User in role or all roles allowed.
-                        return EVAL_BODY_INCLUDE;
-                    }
+            for (String role : roles) {
+                if (userBean.isUserInRole(role) || role.equals(ALLOW_ALL_ROLES)) {
+                    // User in role or all roles allowed.
+                    return EVAL_BODY_INCLUDE;
                 }
             }
         } catch (Exception e) {

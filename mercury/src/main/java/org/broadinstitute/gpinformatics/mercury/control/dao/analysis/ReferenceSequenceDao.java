@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReferenceSequence;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReferenceSequence_;
 
+import javax.annotation.Nonnull;
 import javax.ejb.LocalBean;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -33,13 +34,7 @@ public class ReferenceSequenceDao extends GenericDao implements BusinessObjectFi
      * @return list of all the current {@link ReferenceSequence}s
      */
     public List<ReferenceSequence> findAllCurrent() {
-        CriteriaBuilder criteriaBuilder = getCriteriaBuilder();
-
-        final CriteriaQuery<ReferenceSequence> query = criteriaBuilder.createQuery(ReferenceSequence.class);
-        Root<ReferenceSequence> root = query.from(ReferenceSequence.class);
-        Predicate currentPredicate = criteriaBuilder.equal(root.get(ReferenceSequence_.isCurrent), true);
-        query.where(currentPredicate);
-        return getEntityManager().createQuery(query).getResultList();
+        return findList(ReferenceSequence.class, ReferenceSequence_.isCurrent, true);
     }
 
     /**
@@ -47,7 +42,7 @@ public class ReferenceSequenceDao extends GenericDao implements BusinessObjectFi
      *
      * @return The current {@link ReferenceSequence}s if it exists
      */
-    public ReferenceSequence findCurrent(String name) {
+    public ReferenceSequence findCurrent(@Nonnull String name) {
         CriteriaBuilder criteriaBuilder = getCriteriaBuilder();
 
         final CriteriaQuery<ReferenceSequence> query = criteriaBuilder.createQuery(ReferenceSequence.class);
@@ -71,7 +66,7 @@ public class ReferenceSequenceDao extends GenericDao implements BusinessObjectFi
      * @param version the version of the {@link ReferenceSequence}
      * @return The current {@link ReferenceSequence}s if it exists or null if it is not found
      */
-    public ReferenceSequence findByNameAndVersion(String name, String version) {
+    public ReferenceSequence findByNameAndVersion(@Nonnull String name, @Nonnull String version) {
         CriteriaBuilder criteriaBuilder = getCriteriaBuilder();
 
         final CriteriaQuery<ReferenceSequence> query = criteriaBuilder.createQuery(ReferenceSequence.class);
@@ -89,8 +84,9 @@ public class ReferenceSequenceDao extends GenericDao implements BusinessObjectFi
     }
 
     @Override
-    public ReferenceSequence findByBusinessKey(String businessKey) {
-        String[] values = businessKey.split("\\|");
+    public ReferenceSequence findByBusinessKey(@Nonnull String businessKey) {
+        String[] values = businessKey.split("\\" + ReferenceSequence.SEPARATOR);
+
         if (values.length != 2) {
             throw new IllegalArgumentException("Reference Sequence business key must only contain a name and a version: ");
         }

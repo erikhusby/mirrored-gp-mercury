@@ -2,10 +2,14 @@ package org.broadinstitute.gpinformatics.mercury.presentation.security;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.mercury.entity.DB;
 
-import javax.inject.Inject;
-import javax.servlet.*;
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 
@@ -17,16 +21,11 @@ import java.io.IOException;
  * @author Scott Matthews
  */
 public class AuthorizationFilter implements Filter {
-    private static Log logger = LogFactory.getLog(AuthorizationFilter.class);
-
-    public static final String HOME_PAGE = "/index.jsp";
+    private static final Log log = LogFactory.getLog(AuthorizationFilter.class);
 
     private FilterConfig filterConfig;
 
     private static ServletContext servletContext;
-
-    @Inject
-    AuthorizationManager authManager;
 
     public static final String TARGET_PAGE_ATTRIBUTE = "targeted_page";
 
@@ -74,13 +73,13 @@ public class AuthorizationFilter implements Filter {
         String pageUri = request.getServletPath();
 
         if (!excludeFromFilter(pageUri)) {
-            if (logger.isDebugEnabled()) {
-                logger.debug("Checking authentication for: " + pageUri);
+            if (log.isDebugEnabled()) {
+                log.debug("Checking authentication for: " + pageUri);
             }
 
             if (request.getRemoteUser() == null) {
-                if (logger.isDebugEnabled()) {
-                    logger.debug("User is not authenticated, redirecting to login page");
+                if (log.isDebugEnabled()) {
+                    log.debug("User is not authenticated, redirecting to login page");
                 }
 
                 StringBuilder requestedUrl = new StringBuilder(request.getRequestURL());
@@ -91,16 +90,6 @@ public class AuthorizationFilter implements Filter {
                 redirectTo(request, servletResponse, SecurityActionBean.LOGIN_PAGE);
                 return;
             }
-        }
-
-        // FIXME: With this code enabled, the URLs don't get updated in the browser after
-        // the redirect.  Need to debug and then re-enable.  This is bug GPLIM-100.
-        if (false && pageUri.equals(SecurityActionBean.LOGIN_PAGE) && request.getRemoteUser() != null) {
-            // Already logged in user is trying to view the login page.  Redirect to the role default page.
-            UserRole role = UserRole.fromRequest(request);
-            redirectTo(request, servletResponse, role.landingPage);
-
-            return;
         }
 
         filterChain.doFilter(servletRequest, servletResponse);
@@ -136,47 +125,5 @@ public class AuthorizationFilter implements Filter {
 
     @Override
     public void destroy() {
-    }
-
-    public enum UserRole {
-        // Order of roles is important, if user is both PDM and PM we want to go to PDM's page.
-        PDM("/orders/list", DB.Role.PDM.name),
-        PM("/projects/list", DB.Role.PM.name),
-        OTHER("/index.jsp", "");
-
-        private static final String INDEX = HOME_PAGE;
-        private static final String MERCURY_PAGE = "/Mercury";
-
-        public static UserRole fromRequest(HttpServletRequest request) {
-            for (UserRole role : values()) {
-                if (request.isUserInRole(role.roleName)) {
-                    return role;
-                }
-            }
-            return OTHER;
-        }
-
-        public final String landingPage;
-        public final String roleName;
-
-        private UserRole(String landingPage, String roleName) {
-            this.landingPage = landingPage;
-            this.roleName = roleName;
-        }
-
-        private String checkUrlForRoleRedirect(String targetPage) {
-            StringBuilder newUrlBuilder = new StringBuilder(targetPage);
-            if (this != OTHER) {
-                if (targetPage.endsWith(MERCURY_PAGE) || targetPage.endsWith(MERCURY_PAGE + "/")) {
-                    if (targetPage.endsWith("/")) {
-                        newUrlBuilder.deleteCharAt(targetPage.lastIndexOf("/"));
-                    }
-                    newUrlBuilder.append(landingPage).append(".jsp");
-                } else if (targetPage.endsWith(INDEX) || targetPage.endsWith(INDEX + ".jsp")) {
-                    newUrlBuilder = new StringBuilder(targetPage.replace(INDEX, landingPage));
-                }
-            }
-            return newUrlBuilder.toString();
-        }
     }
 }

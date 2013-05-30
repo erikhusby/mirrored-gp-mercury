@@ -9,10 +9,15 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselAndPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateLaneType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateType;
+import org.hamcrest.MatcherAssert;
+import org.hamcrest.Matchers;
+import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
@@ -23,6 +28,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.IsNot.not;
 
 /**
  * Database-free test for SequencingTemplateFactory.
@@ -30,22 +36,34 @@ import static org.hamcrest.MatcherAssert.assertThat;
 @Test(groups = DATABASE_FREE)
 public class SequencingTemplateFactoryTest {
 
-    private SequencingTemplateFactory factory = new SequencingTemplateFactory();
+    private SequencingTemplateFactory factory = null;
+    private TwoDBarcodedTube denatureTube = null;
+    private IlluminaFlowcell flowcell = null;
 
-    public void testGetSequencingTemplate() {
-        TwoDBarcodedTube denatureTube = new TwoDBarcodedTube("denature_tube_barcode");
+    @BeforeTest
+    public void setUp() {
+        factory = new SequencingTemplateFactory();
+        denatureTube = new TwoDBarcodedTube("denature_tube_barcode");
         denatureTube.addSample(new MercurySample("SM-1"));
-        IlluminaFlowcell flowcell = new IlluminaFlowcell(HiSeq2500Flowcell, "flowcell_barcode");
+        flowcell = new IlluminaFlowcell(HiSeq2500Flowcell, "flowcell_barcode");
         LabEvent event = new LabEvent(DENATURE_TO_FLOWCELL_TRANSFER, new Date(),
                 "SequencingTemplateFactoryTest#testGetSequencingTemplate", 1L, 1L);
         event.getVesselToSectionTransfers()
                 .add(new VesselToSectionTransfer(denatureTube, ALL2, flowcell.getContainerRole(), event));
 
-        Set<VesselAndPosition> vesselsAndPositions = new HashSet<VesselAndPosition>();
-        for (VesselPosition vesselPosition : ALL2.getWells()) {
-            vesselsAndPositions.add(new VesselAndPosition(denatureTube, vesselPosition));
-        }
+    }
 
+    public void testGetSequencingTemplate() {
+        denatureTube = new TwoDBarcodedTube("denature_tube_barcode");
+        denatureTube.addSample(new MercurySample("SM-1"));
+        flowcell = new IlluminaFlowcell(HiSeq2500Flowcell, "flowcell_barcode");
+        LabEvent event = new LabEvent(DENATURE_TO_FLOWCELL_TRANSFER, new Date(),
+                "SequencingTemplateFactoryTest#testGetSequencingTemplate", 1L, 1L);
+        event.getVesselToSectionTransfers()
+                .add(new VesselToSectionTransfer(denatureTube, ALL2, flowcell.getContainerRole(), event));
+
+        Set<VesselAndPosition> vesselsAndPositions = factory.getLoadingVesselsForFlowcell(flowcell);
+        MatcherAssert.assertThat(vesselsAndPositions, not(Matchers.empty()));
         SequencingTemplateType template = factory.getSequencingTemplate(flowcell, vesselsAndPositions);
         assertThat(template.getBarcode(), equalTo("flowcell_barcode"));
         assertThat(template.getLanes().size(), is(2));
@@ -56,5 +74,16 @@ public class SequencingTemplateFactoryTest {
         }
         assertThat(allLanes, hasItem("LANE1"));
         assertThat(allLanes, hasItem("LANE2"));
+    }
+
+    public void testGetLoadingVesselsForFlowcell() {
+        Set<VesselAndPosition> vesselsAndPositions = factory.getLoadingVesselsForFlowcell(flowcell);
+        MatcherAssert.assertThat(vesselsAndPositions, not(Matchers.empty()));
+        final List<VesselPosition> vesselPositions = Arrays.asList(VesselPosition.LANE1, VesselPosition.LANE2);
+        for (VesselAndPosition vesselsAndPosition : vesselsAndPositions) {
+            assertThat(denatureTube, equalTo(vesselsAndPosition.getVessel()));
+            assertThat(vesselPositions, hasItem(vesselsAndPosition.getPosition()));
+        }
+
     }
 }

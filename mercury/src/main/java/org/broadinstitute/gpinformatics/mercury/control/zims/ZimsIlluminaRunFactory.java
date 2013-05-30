@@ -127,12 +127,11 @@ public class ZimsIlluminaRunFactory {
                 productOrder = mapKeyToProductOrder.get(sampleInstance.getProductOrderKey());
             }
 
-            LabBatch labBatch = labVessel.getNearestWorkflowLabBatches().iterator().next(); // TODO: change to use singular version
-            if (labBatch.getJiraTicket() == null) {
-                throw new RuntimeException("Could not find LCSET for vessel: " + labVessel.getLabel());
+            LabBatch labBatch = sampleInstance.getLabBatch();
+            String lcSet = null;
+            if (labBatch != null && labBatch.getJiraTicket() != null) {
+                lcSet = labBatch.getJiraTicket().getTicketId();
             }
-
-            String lcSet = labBatch.getJiraTicket().getTicketId();
 
             // This loop goes through all the reagents and takes the last bait name (under the assumption that
             // the lab would only ever have one for this sample instance. All cat names are collected and the
