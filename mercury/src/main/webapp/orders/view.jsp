@@ -213,9 +213,10 @@
                 if (bspDataCount < 1) {
                     var oTable = $j('#sampleData').dataTable( {
                         "oTableTools": ttExportDefines,
-                        "aaSorting": [[0, 'asc']],
+                        "aaSorting": [[1, 'asc']],
                         "aoColumns": [
-                            {"bSortable": true, "sType": "title-numeric"},  // Position and checkbox
+                            {"bSortable": false,},                          // Checkbox
+                            {"bSortable": true, "sType": "numeric"},        // Position
                             {"bSortable": true},                            // ID
                             {"bSortable": true},                            // Collaborator Sample ID
                             {"bSortable": true},                            // Participant ID
@@ -510,7 +511,6 @@
                 </div>
             </div>
 
-
             <c:if test="${actionBean.editOrder.placedDate != null}">
                 <div class="view-control-group control-group">
                     <label class="control-label label-form">Placed Date</label>
@@ -656,11 +656,12 @@
                 <table id="sampleData" class="table simple">
                     <thead>
                         <tr>
-                            <th width="40">
+                            <th width="20">
                                 <c:if test="${!actionBean.editOrder.draft}">
                                     <input for="count" type="checkbox" class="checkAll"/><span id="count" class="checkedCount"></span>
                                 </c:if>
                             </th>
+                            <th width="10">#</th>
                             <th width="90">ID</th>
                             <th width="110">Collaborator Sample ID</th>
                             <th width="60">Participant ID</th>
@@ -687,6 +688,8 @@
                                     <c:if test="${!actionBean.editOrder.draft}">
                                         <stripes:checkbox title="${sample.samplePosition}" class="shiftCheckbox" name="selectedProductOrderSampleIds" value="${sample.productOrderSampleId}"/>
                                     </c:if>
+                                </td>
+                                <td>
                                     ${sample.samplePosition + 1}
                                 </td>
                                 <td id="sampleId-${sample.productOrderSampleId}" class="sampleName">
