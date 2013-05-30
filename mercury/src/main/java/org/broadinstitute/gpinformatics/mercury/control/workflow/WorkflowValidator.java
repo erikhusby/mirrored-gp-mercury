@@ -39,6 +39,7 @@ import java.util.*;
 public class WorkflowValidator {
 
     private static final Log log = LogFactory.getLog(WorkflowValidator.class);
+    private final WorkflowLoader workflowLoader = new WorkflowLoader();
 
     @Inject
     private LabVesselDao labVesselDao;
@@ -192,21 +193,14 @@ public class WorkflowValidator {
      */
     public List<WorkflowValidationError> validateWorkflow(Collection<LabVessel> labVessels, String eventType) {
         List<WorkflowValidationError> validationErrors = new ArrayList<WorkflowValidationError>();
-        // Cache the workflows, because it's likely that there are only a few unique product orders on each plate
-        Map<String, ProductWorkflowDefVersion> mapProductOrderToWorkflow = new HashMap<String, ProductWorkflowDefVersion>();
 
         for (LabVessel labVessel : labVessels) { // todo jmt can this be null?
             Set<SampleInstance> sampleInstances = labVessel.getSampleInstances(LabVessel.SampleType.WITH_PDO,
                     LabBatch.LabBatchType.WORKFLOW);
             for (SampleInstance sampleInstance : sampleInstances) {
-                if (sampleInstance.getProductOrderKey() != null) {
-                    ProductWorkflowDefVersion workflowVersion =
-                            mapProductOrderToWorkflow.get(sampleInstance.getProductOrderKey());
-                    if (workflowVersion == null) {
-                        workflowVersion = getWorkflowVersion(sampleInstance.getProductOrderKey());
-                    }
+                if (sampleInstance.getLabBatch() != null) {
+                    ProductWorkflowDefVersion workflowVersion = getWorkflowVersion(sampleInstance.getLabBatch());
                     if (workflowVersion != null) {
-                        mapProductOrderToWorkflow.put(sampleInstance.getProductOrderKey(), workflowVersion);
                         List<ProductWorkflowDefVersion.ValidationError> errors = workflowVersion.validate(labVessel, eventType);
                         if (!errors.isEmpty()) {
                             validationErrors.add(new WorkflowValidationError(sampleInstance, errors,
@@ -230,14 +224,12 @@ public class WorkflowValidator {
      * @param productOrderKey Business Key for a previously defined product order
      * @return Workflow Definition for the defined workflow for the product order represented by productOrderKey
      */
-    public ProductWorkflowDefVersion getWorkflowVersion(@Nonnull String productOrderKey) {
-        WorkflowConfig workflowConfig = new WorkflowLoader().load();
+    private ProductWorkflowDefVersion getWorkflowVersion(@Nonnull LabBatch labBatch) {
+        WorkflowConfig workflowConfig = workflowLoader.load();
         ProductWorkflowDefVersion versionResult = null;
-        ProductOrder productOrder = athenaClientService.retrieveProductOrderDetails(productOrderKey);
 
-        if (StringUtils.isNotBlank(productOrder.getProduct().getWorkflowName())) {
-            ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(
-                    productOrder.getProduct().getWorkflowName());
+        if (StringUtils.isNotBlank(labBatch.getWorkflowName())) {
+            ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(labBatch.getWorkflowName());
             versionResult = productWorkflowDef.getEffectiveVersion();
         }
         return versionResult;
