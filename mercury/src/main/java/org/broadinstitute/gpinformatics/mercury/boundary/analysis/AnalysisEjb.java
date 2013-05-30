@@ -36,9 +36,10 @@ public class AnalysisEjb {
     private ReferenceSequenceDao referenceSequenceDao;
 
     /**
-     * Add and return true the if a newly created {@link Aligner} was made.
+     * Add and return true if a newly created {@link Aligner} was made.
      *
      * @param alignerName The name and business key of the {@link Aligner} to create.
+     *
      * @return true if a new {@link Aligner} was created
      */
     public boolean addAligner(@Nonnull String alignerName) {
@@ -57,6 +58,7 @@ public class AnalysisEjb {
      * Remove a {@link Collection} of aligners from the database.
      *
      * @param alignerKeys a collection of aligners to delete
+     *
      * @return the number of {@link Aligner}s that were deleted
      */
     public int removeAligners(@Nonnull String... alignerKeys) {
@@ -73,9 +75,10 @@ public class AnalysisEjb {
     }
 
     /**
-     * Add and return true the if a newly created {@link AnalysisType} was made.
+     * Add and return true if a newly created {@link AnalysisType} was made.
      *
      * @param analysisTypeKey the name and business key of the {@link AnalysisType} to create
+     *
      * @return true if a new {@link AnalysisType} was created
      */
     public boolean addAnalysisType(@Nonnull String analysisTypeKey) {
@@ -94,6 +97,7 @@ public class AnalysisEjb {
      * Remove a list of {@link AnalysisType}s from the database.
      *
      * @param analysisTypeKeys a collection of {@link AnalysisType}s to delete
+     *
      * @return the number of {@link AnalysisType}s that were deleted
      */
     public int removeAnalysisTypes(@Nonnull String... analysisTypeKeys) {
@@ -110,13 +114,14 @@ public class AnalysisEjb {
     }
 
     /**
-     * Add and return true the if a newly created {@link ReferenceSequence} was made.  If the isCurrent flag is
-     * true, then it will find and update any existing {@link ReferenceSequence} of the same name that was previously
-     * set to current.
+     * Add and return true if a newly created {@link ReferenceSequence} was made.  If the isCurrent flag is
+     * true, then it will find and update the existing {@link ReferenceSequence} of the same name that was previously
+     * set to current and change it to not be current.
      *
      * @param name      the displayed name of the {@link ReferenceSequence}
      * @param version   the version for the {@link ReferenceSequence}
      * @param isCurrent boolean flag to determine if this {@link ReferenceSequence} is the current one
+     *
      * @return true if a new {@link ReferenceSequence} was created
      */
     public boolean addReferenceSequence(@Nonnull String name, @Nonnull String version, boolean isCurrent) {
@@ -128,8 +133,7 @@ public class AnalysisEjb {
         }
 
         if (isCurrent) {
-            // We need to change the existing current reference sequence to not be current before saving the new one as
-            // current, if there is one set to that
+            // We must set the current matching reference sequence so that it is no longer the current one.
             ReferenceSequence currentReferenceSequence = referenceSequenceDao.findCurrent(name);
             if (currentReferenceSequence != null) {
                 currentReferenceSequence.setCurrent(false);
@@ -145,12 +149,13 @@ public class AnalysisEjb {
 
 
     /**
-     * Add and return true the if a newly created {@link ReferenceSequence} was made.  The newly created
+     * Add and return true if a newly created {@link ReferenceSequence} was made.  The newly created
      * {@link ReferenceSequence} will be automatically set to the current one and any existing {@link ReferenceSequence}
      * will be no longer be the current one.
      *
-     * @param name      the displayed name of the {@link ReferenceSequence}
-     * @param version   the version for the {@link ReferenceSequence}
+     * @param name    the displayed name of the {@link ReferenceSequence}
+     * @param version the version for the {@link ReferenceSequence}
+     *
      * @return true if a new {@link ReferenceSequence} was created
      */
     public boolean addReferenceSequence(@Nonnull String name, @Nonnull String version) {
@@ -161,6 +166,7 @@ public class AnalysisEjb {
      * Remove a list of {@link ReferenceSequence}s from the database.
      *
      * @param referenceSequenceKeys a list of {@link ReferenceSequence} business keys to delete
+     *
      * @return the number of {@link ReferenceSequence}s that were deleted
      */
     public int removeReferenceSequences(@Nonnull String... referenceSequenceKeys) {
@@ -178,10 +184,11 @@ public class AnalysisEjb {
     }
 
     /**
-     * Add and return true the if a newly created {@link ReagentDesign} was made.
+     * Add and return true if a newly created {@link ReagentDesign} was made.
      *
      * @param name the reagent design name to add
      * @param type the reagent type
+     *
      * @return true if a new {@link ReagentDesign} was created
      */
     public boolean addReagentDesign(@Nonnull String name, @Nonnull ReagentDesign.ReagentType type) {
@@ -201,6 +208,7 @@ public class AnalysisEjb {
      * Remove a list of {@link ReagentDesign}s from the database.
      *
      * @param reagentDesignKeys a list of {@link ReagentDesign} business keys to delete
+     *
      * @return the number of {@link ReagentDesign}s that were deleted
      */
     public int removeReagentDesigns(@Nonnull String... reagentDesignKeys) {
