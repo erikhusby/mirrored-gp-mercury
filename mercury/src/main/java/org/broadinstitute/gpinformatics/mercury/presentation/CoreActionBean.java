@@ -286,8 +286,10 @@ public class CoreActionBean implements ActionBean {
      *
      * @param message The message to put into a SimpleMessage
      */
-    protected void addMessage(String message, Object... arguments) {
-        getContext().getMessages().add(createSafeMessage(message, arguments));
+    protected String addMessage(String message, Object... arguments) {
+        Message safeMessage = createSafeMessage(message, arguments);
+        getContext().getMessages().add(safeMessage);
+        return safeMessage.getMessage(getContext().getLocale());
     }
 
     /**

@@ -349,7 +349,7 @@
 
         <div id="recalculateRiskDialog" style="width:600px;display:none;">
             <p>Recalculate Risk (<span id="selectedCountId"> </span> selected)</p>
-            <p><span style="float:left;">Recalculate On Risk status for all samples. This will clear out all previous statuses.</span>
+            <p><span style="float:left;">Recalculate On Risk status for selected samples. This will clear out all previous statuses.</span>
         </div>
 
         <div style="display:none" id="deleteConfirmation">

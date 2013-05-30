@@ -946,23 +946,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent(SET_RISK)
     public Resolution setRisk() throws Exception {
 
-        // If we are creating a manual on risk, then need to set it up and persist it for reuse.
-        RiskCriterion criterion = null;
-        if (riskStatus) {
-            criterion = RiskCriterion.createManual();
-            productOrderDao.persist(criterion);
-        }
-
-        for (ProductOrderSample sample : selectedProductOrderSamples) {
-            if (riskStatus) {
-                sample.setManualOnRisk(criterion, riskComment);
-            } else {
-                sample.setManualNotOnRisk(riskComment);
-            }
-        }
-
-        editOrder.prepareToSave(getUserBean().getBspUser());
-        productOrderDao.persist(editOrder);
+        productOrderEjb.setManualOnRisk(
+            getUserBean().getBspUser(), editOrder, selectedProductOrderSamples, riskStatus, riskComment);
 
         addMessage("Set manual on risk for {0} samples.", selectedProductOrderSampleIds.size());
         JiraIssue issue = jiraService.getIssue(editOrder.getJiraTicketKey());
@@ -979,16 +964,20 @@ public class ProductOrderActionBean extends CoreActionBean {
         String errorMessage =
             productOrderEjb.calculateRisk(
                 getUserBean().getBspUser(), editOrder.getBusinessKey(), selectedProductOrderSamples);
+
         if (!StringUtils.isBlank(errorMessage)) {
             addGlobalValidationError(errorMessage);
+        } else {
+            // refetch the order to get updated risk status on the order.
+            editOrder = productOrderDao.findByBusinessKey(editOrder.getBusinessKey());
+            int afterOnRiskCount = editOrder.countItemsOnRisk();
+
+            String fullString = addMessage(
+                "Successfully recalculated On Risk. {0} samples are on risk. Previously there were {1} samples on risk.",
+                afterOnRiskCount, originalOnRiskCount);
+            JiraIssue issue = jiraService.getIssue(editOrder.getJiraTicketKey());
+            issue.addComment(fullString);
         }
-
-        // refetch the order to get updated risk status on the order.
-        editOrder = productOrderDao.findByBusinessKey(editOrder.getBusinessKey());
-        int afterOnRiskCount = editOrder.countItemsOnRisk();
-
-        addMessage("{0} samples are on risk. Previously there were {1} samples on risk.",
-                    afterOnRiskCount, originalOnRiskCount);
 
         return createViewResolution();
     }

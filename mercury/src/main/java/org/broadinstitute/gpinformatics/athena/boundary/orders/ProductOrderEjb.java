@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.work.MessageDataValue;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPLSIDUtil;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
@@ -253,7 +254,7 @@ public class ProductOrderEjb {
             }
         } else {
             log.debug(
-                    MessageFormat.format("Product {0} doesn''t support automated billing.", product.getProductName()));
+                MessageFormat.format("Product {0} doesn''t support automated billing.", product.getProductName()));
         }
         return true;
     }
@@ -296,10 +297,28 @@ public class ProductOrderEjb {
         }
 
         editOrder.prepareToSave(bspUser);
-
-        // If the issue gets a run time error, it will not save the calculation.
-        JiraIssue issue = jiraService.getIssue(editOrder.getJiraTicketKey());
         return "";
+    }
+
+    public void setManualOnRisk(
+        BspUser user, ProductOrder order,
+        List<ProductOrderSample> selectedProductOrderSamples, boolean riskStatus, String riskComment) {
+
+        // If we are creating a manual on risk, then need to set it up and persist it for reuse.
+        RiskCriterion criterion = null;
+        if (riskStatus) {
+            criterion = RiskCriterion.createManual();
+        }
+
+        for (ProductOrderSample sample : selectedProductOrderSamples) {
+            if (riskStatus) {
+                sample.setManualOnRisk(criterion, riskComment);
+            } else {
+                sample.setManualNotOnRisk(riskComment);
+            }
+        }
+
+        order.prepareToSave(user);
     }
 
     /**
