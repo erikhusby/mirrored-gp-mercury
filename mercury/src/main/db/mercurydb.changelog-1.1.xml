@@ -9,4 +9,14 @@
      Keep changeSets small, it's harder to recover from an error in a large changeSet.
       -->
 
+    <changeSet id="GPLIM-1376-1" author="thompson">
+        <addColumn tableName="LAB_BATCH" schemaName="MERCURY">
+            <column name="WORKFLOW_NAME" type="varchar(255)"></column>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-1376-2" author="thompson">
+        <addColumn tableName="LAB_BATCH_AUD" schemaName="MERCURY">
+            <column name="WORKFLOW_NAME" type="varchar(255)"></column>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>
