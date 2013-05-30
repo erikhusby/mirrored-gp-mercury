@@ -80,49 +80,48 @@ public class SolexaRunResource {
     @Produces({"application/xml", "application/json"})
     public Response createRun(SolexaRunBean solexaRunBean, @Context UriInfo uriInfo) {
 
-        String runname = new File(solexaRunBean.getRunDirectory()).getName();
+        String runName = new File(solexaRunBean.getRunDirectory()).getName();
 
-        IlluminaSequencingRun run = illuminaSequencingRunDao.findByRunName(runname);
-
+        IlluminaSequencingRun run = illuminaSequencingRunDao.findByRunName(runName);
         if (run != null) {
             throw new ResourceException("Attempting to create a run that is already registered in the system",
                                                Response.Status.INTERNAL_SERVER_ERROR);
         }
 
-        IlluminaFlowcell flowcell =
-                illuminaFlowcellDao.findByBarcode(solexaRunBean.getFlowcellBarcode());
+        IlluminaFlowcell flowcell = illuminaFlowcellDao.findByBarcode(solexaRunBean.getFlowcellBarcode());
+        MercuryOrSquidRouter.MercuryOrSquid route = router.routeForVessels(
+                Collections.<LabVessel>singletonList(flowcell));
 
-        Response callerResponse;
-
-        SquidConnector.SquidResponse connectorRun = connector.createRun(solexaRunBean);
-
-        /**
-         * TODO SGM  To get past the demo and pre ExExV2 release, we will not forcibly return if there is an error with
-         * the Squid call.  For now, we will run, call mercury and return the Squid response if there was an error.
-         *
-         * In the future, this will be encompassed by MercuryOrSquidRouter tests.
-         */
+        Response callerResponse = null;
         UriBuilder absolutePathBuilder = uriInfo.getAbsolutePathBuilder();
-        if (connectorRun.getCode() != Response.Status.CREATED.getStatusCode()) {
-            callerResponse = Response.status(connectorRun.getCode()).entity(solexaRunBean).build();
-        } else {
+        if (EnumSet.of(MercuryOrSquidRouter.MercuryOrSquid.SQUID,
+                MercuryOrSquidRouter.MercuryOrSquid.BOTH).contains(route)) {
+            SquidConnector.SquidResponse connectorRun = connector.createRun(solexaRunBean);
 
-            callerResponse = Response.created(absolutePathBuilder.path(runname).build())
-                                     .entity(solexaRunBean).build();
+            /**
+             * TODO SGM  To get past the demo and pre ExExV2 release, we will not forcibly return if there is an error with
+             * the Squid call.  For now, we will run, call mercury and return the Squid response if there was an error.
+             *
+             * In the future, this will be encompassed by MercuryOrSquidRouter tests.
+             */
+            if (connectorRun.getCode() == Response.Status.CREATED.getStatusCode()) {
+                callerResponse = Response.created(absolutePathBuilder.path(runName).build())
+                        .entity(solexaRunBean).build();
+            } else {
+                callerResponse = Response.status(connectorRun.getCode()).entity(solexaRunBean).build();
+            }
         }
 
         /*
             updated which routing should determine if a run should be registered in Mercury.  If BOTH is returned, we
              must cover Mercury as well as Squid
          */
-        MercuryOrSquidRouter.MercuryOrSquid route = router.routeForVessels(
-                Collections.<LabVessel>singletonList(flowcell));
         if(EnumSet.of(MercuryOrSquidRouter.MercuryOrSquid.MERCURY,
                       MercuryOrSquidRouter.MercuryOrSquid.BOTH).contains(route)) {
             try {
                 run = registerRun(solexaRunBean, flowcell);
                 URI createdUri = absolutePathBuilder.path(run.getRunName()).build();
-                if (callerResponse.getStatus() == Response.Status.CREATED.getStatusCode()) {
+                if (callerResponse != null && callerResponse.getStatus() == Response.Status.CREATED.getStatusCode()) {
                     callerResponse = Response.created(createdUri).entity(solexaRunBean).build();
                 }
             } catch (Exception e) {
