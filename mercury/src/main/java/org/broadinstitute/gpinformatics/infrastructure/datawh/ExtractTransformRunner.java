@@ -32,7 +32,7 @@ public class ExtractTransformRunner {
 
     @PostConstruct
     public void initialize() {
-        if (!Deployment.isCRSP) {
+        if (isEnabled()) {
             ScheduleExpression expression = new ScheduleExpression();
             expression.minute("*/" + timerMinutes).hour("*");
             timerService.createCalendarTimer(expression, new TimerConfig("ETL timer", false));
@@ -41,7 +41,7 @@ public class ExtractTransformRunner {
 
     @Timeout
     void scheduledEtl(Timer timer) {
-        if (!Deployment.isCRSP) {
+        if (isEnabled()) {
             // Skips retries, indicated by a repeated nextTimeout value.
             Date nextTimeout = timer.getNextTimeout();
             if (nextTimeout.after(previousNextTimeout)) {
@@ -54,4 +54,17 @@ public class ExtractTransformRunner {
         }
     }
 
+    /**
+     * Iterate through a list of different reasons why the ETL should not be running.  Currently the only instance
+     * where it should not run is for the CRSP deployment.
+     *
+     * @return true if it's an environment where ETL should be run
+     */
+    private boolean isEnabled() {
+        if (Deployment.isCRSP) {
+            return false;
+        }
+
+        return true;
+    }
 }

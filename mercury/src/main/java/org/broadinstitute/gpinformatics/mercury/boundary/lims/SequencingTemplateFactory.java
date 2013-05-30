@@ -30,6 +30,7 @@ import java.util.Set;
 public class SequencingTemplateFactory {
     @Inject
     IlluminaFlowcellDao illuminaFlowcellDao;
+
     @Inject
     LabVesselDao labVesselDao;
 
