@@ -1,7 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
@@ -21,7 +19,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -72,7 +69,6 @@ public class MercuryOrSquidRouter implements Serializable {
 
     private LabVesselDao         labVesselDao;
     private ControlDao           controlDao;
-    private AthenaClientService  athenaClientService;
     private WorkflowLoader       workflowLoader;
     private BSPSampleDataFetcher bspSampleDataFetcher;
 
@@ -81,11 +77,9 @@ public class MercuryOrSquidRouter implements Serializable {
 
     @Inject
     public MercuryOrSquidRouter(LabVesselDao labVesselDao, ControlDao controlDao,
-                                AthenaClientService athenaClientService,
                                 WorkflowLoader workflowLoader, BSPSampleDataFetcher bspSampleDataFetcher) {
         this.labVesselDao = labVesselDao;
         this.controlDao = controlDao;
-        this.athenaClientService = athenaClientService;
         this.workflowLoader = workflowLoader;
         this.bspSampleDataFetcher = bspSampleDataFetcher;
     }
@@ -146,8 +140,7 @@ public class MercuryOrSquidRouter implements Serializable {
     private MercuryOrSquid routeForVessels(Collection<LabVessel> labVessels, Intent intent) {
         Set<MercuryOrSquid> routingOptions = EnumSet.noneOf(MercuryOrSquid.class);
 
-        // Fetch unique product orders and determine which samples might be controls
-        Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<String, ProductOrder>();
+        // Determine which samples might be controls
         Set<SampleInstance> possibleControls = new HashSet<SampleInstance>();
         for (LabVessel labVessel : labVessels) {
             if (labVessel != null) {
@@ -156,17 +149,12 @@ public class MercuryOrSquidRouter implements Serializable {
                     String productOrderKey = sampleInstance.getProductOrderKey();
                     if (productOrderKey == null) {
                         possibleControls.add(sampleInstance);
-                    } else {
-                        if(!mapKeyToProductOrder.containsKey(productOrderKey)) {
-                            mapKeyToProductOrder.put(productOrderKey,
-                                    athenaClientService.retrieveProductOrderDetails(sampleInstance.getProductOrderKey()));
-                        }
                     }
                 }
             }
         }
 
-        List<String> controlSampleIds = new ArrayList<String>();
+        List<String> controlCollaboratorSampleIds = new ArrayList<String>();
         Collection<String> sampleNames = new ArrayList<String>();
         Map<String, BSPSampleDTO> mapSampleNameToDto = null;
         if (!possibleControls.isEmpty()) {
@@ -177,12 +165,11 @@ public class MercuryOrSquidRouter implements Serializable {
 
             List<Control> controls = controlDao.findAllActive();
             for (Control control : controls) {
-                controlSampleIds.add(control.getCollaboratorSampleId());
+                controlCollaboratorSampleIds.add(control.getCollaboratorSampleId());
             }
         }
         for (LabVessel labVessel : labVessels) {
-            routingOptions.add(
-                    routeForVessel(labVessel, mapKeyToProductOrder, controlSampleIds, mapSampleNameToDto, intent));
+            routingOptions.add(routeForVessel(labVessel, controlCollaboratorSampleIds, mapSampleNameToDto, intent));
         }
 
         return evaluateRoutingOption(routingOptions);
@@ -201,15 +188,14 @@ public class MercuryOrSquidRouter implements Serializable {
      *
      *
      * @param vessel an instance of a LabVessel for which system routing is to be determined
-     * @param mapKeyToProductOrder map from product order key to product order entity
-     * @param controlSampleIds @return An instance of a MercuryOrSquid enum that will assist in determining to which system requests should be
+     * @param controlCollaboratorSampleIds list of collaborator IDs for controls
      * @param mapSampleNameToDto map from sample name to BSP sample DTO
      * @param intent whether to return one routing option, or multiple
+     * @return An instance of a MercuryOrSquid enum that will assist in determining to which system requests should be
      */
     @DaoFree
-    public MercuryOrSquid routeForVessel(LabVessel vessel, Map<String, ProductOrder> mapKeyToProductOrder,
-                                         List<String> controlSampleIds, Map<String, BSPSampleDTO> mapSampleNameToDto,
-                                         Intent intent) {
+    public MercuryOrSquid routeForVessel(LabVessel vessel, List<String> controlCollaboratorSampleIds,
+                                         Map<String, BSPSampleDTO> mapSampleNameToDto, Intent intent) {
         Set<MercuryOrSquid> routingOptions = EnumSet.noneOf(MercuryOrSquid.class);
         if (vessel != null) {
 
@@ -222,12 +208,14 @@ public class MercuryOrSquidRouter implements Serializable {
                     if (sampleInstance.getProductOrderKey() == null) {
                         possibleControls.add(sampleInstance);
                     } else {
-                        ProductOrder order = mapKeyToProductOrder.get(sampleInstance.getProductOrderKey());
-                        ProductWorkflowDef productWorkflowDef = getWorkflow(order.getProduct().getWorkflowName());
+                        LabBatch labBatch = sampleInstance.getLabBatch();
+                        if(labBatch == null) {
+                            throw new RuntimeException("No lab batch for sample " + sampleInstance.getStartingSample().getSampleKey());
+                        }
+                        ProductWorkflowDef productWorkflowDef = getWorkflow(labBatch.getWorkflowName());
                         if (intent ==  Intent.SYSTEM_OF_RECORD) {
                             MercuryOrSquid mercuryOrSquid;
                             if (productWorkflowDef.getInValidation()) {
-                                LabBatch labBatch = sampleInstance.getLabBatch();
                                 // Per Andrew, we can assume that validation plastic has only one LCSET
                                 if(labBatch != null && labBatch.isValidationBatch()) {
                                     mercuryOrSquid = MERCURY;
@@ -253,7 +241,7 @@ public class MercuryOrSquidRouter implements Serializable {
                     // TODO: move this logic into ControlEjb?
 
                     // Don't bother querying BSP if Mercury doesn't have any active controls.
-                    if (controlSampleIds.isEmpty()) {
+                    if (controlCollaboratorSampleIds.isEmpty()) {
                         routingOptions.add(SQUID);
                     } else {
                         for (SampleInstance possibleControl : possibleControls) {
@@ -263,7 +251,7 @@ public class MercuryOrSquidRouter implements Serializable {
                                 // Don't know what this is, but it isn't for Mercury.
                                 routingOptions.add(SQUID);
                             } else {
-                                if (controlSampleIds.contains(sampleDTO.getCollaboratorsSampleName())) {
+                                if (controlCollaboratorSampleIds.contains(sampleDTO.getCollaboratorsSampleName())) {
                                     if (intent == Intent.SYSTEM_OF_RECORD) {
                                         routingOptions.add(MERCURY);
                                     } else {

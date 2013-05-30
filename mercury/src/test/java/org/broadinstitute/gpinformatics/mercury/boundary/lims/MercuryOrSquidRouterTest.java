@@ -28,7 +28,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
@@ -42,7 +41,11 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.AdditionalMatchers.or;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.atMost;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * Test of logic to route messages and queries to Mercury or Squid as appropriate.
@@ -98,7 +101,7 @@ public class MercuryOrSquidRouterTest {
         mockControlDao = mock(ControlDao.class);
         mockAthenaClientService = mock(AthenaClientService.class);
         mockBspSampleDataFetcher = mock(BSPSampleDataFetcher.class);
-        mercuryOrSquidRouter = new MercuryOrSquidRouter(mockLabVesselDao, mockControlDao, mockAthenaClientService,
+        mercuryOrSquidRouter = new MercuryOrSquidRouter(mockLabVesselDao, mockControlDao,
                 new WorkflowLoader(), mockBspSampleDataFetcher);
 
 //        when(mockTwoDBarcodedTubeDAO.findByBarcode(anyString())).thenReturn(null); // TODO: Make this explicit and required? Currently this is the default behavior even without this call
@@ -195,17 +198,22 @@ public class MercuryOrSquidRouterTest {
     public void testRouteForTubesSomeInMercuryWithExomeExpressOrders() {
         ProductOrder order = placeOrderForTubeAndBucket(tube1, exomeExpress, picoBucket);
         assertThat(mercuryOrSquidRouter.routeForVesselBarcodes(Arrays.asList("squidTube", MERCURY_TUBE_1)), is(SQUID));
-        verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>(){{add("squidTube"); add(MERCURY_TUBE_1);}});
-        verify(mockAthenaClientService).retrieveProductOrderDetails(order.getBusinessKey());
+        verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>() {{
+            add("squidTube");
+            add(MERCURY_TUBE_1);
+        }});
     }
 
     @Test(groups = DATABASE_FREE)
     public void testRouteForTubesAllInMercuryWithOrdersSomeExomeExpress() {
         placeOrderForTube(tube1, testProduct);
         ProductOrder order = placeOrderForTubeAndBucket(tube2, exomeExpress, picoBucket);
-        assertThat(mercuryOrSquidRouter.routeForVesselBarcodes(Arrays.asList(MERCURY_TUBE_1, MERCURY_TUBE_2)), is(SQUID));
-        verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>(){{add(MERCURY_TUBE_1); add(MERCURY_TUBE_2);}});
-        verify(mockAthenaClientService).retrieveProductOrderDetails(order.getBusinessKey());
+        assertThat(mercuryOrSquidRouter.routeForVesselBarcodes(Arrays.asList(MERCURY_TUBE_1, MERCURY_TUBE_2)),
+                is(SQUID));
+        verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>() {{
+            add(MERCURY_TUBE_1);
+            add(MERCURY_TUBE_2);
+        }});
     }
 
     @Test(groups = DATABASE_FREE)
@@ -214,9 +222,10 @@ public class MercuryOrSquidRouterTest {
         ProductOrder order2 = placeOrderForTubeAndBucket(tube2, exomeExpress, picoBucket);
         assertThat(mercuryOrSquidRouter.routeForVesselBarcodes(Arrays.asList(MERCURY_TUBE_1, MERCURY_TUBE_2)), is(BOTH));
         // only verify for one tube because current implementation short-circuits once one qualifying order is found
-        verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>(){{add(MERCURY_TUBE_1); add(MERCURY_TUBE_2);}});
-        verify(mockAthenaClientService).retrieveProductOrderDetails(order1.getBusinessKey());
-        verify(mockAthenaClientService).retrieveProductOrderDetails(order2.getBusinessKey());
+        verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>() {{
+            add(MERCURY_TUBE_1);
+            add(MERCURY_TUBE_2);
+        }});
     }
 
     @Test(groups = DATABASE_FREE)
@@ -226,9 +235,11 @@ public class MercuryOrSquidRouterTest {
         assertThat(mercuryOrSquidRouter.routeForVesselBarcodes(
                 Arrays.asList(MERCURY_TUBE_1, MERCURY_TUBE_2, CONTROL_TUBE)),
                 is(BOTH));
-        verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>(){{add(MERCURY_TUBE_1); add(MERCURY_TUBE_2); add(CONTROL_TUBE);}});
-        verify(mockAthenaClientService).retrieveProductOrderDetails(order1.getBusinessKey());
-        verify(mockAthenaClientService).retrieveProductOrderDetails(order2.getBusinessKey());
+        verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>() {{
+            add(MERCURY_TUBE_1);
+            add(MERCURY_TUBE_2);
+            add(CONTROL_TUBE);
+        }});
         verify(mockControlDao).findAllActive();
         verify(mockBspSampleDataFetcher).fetchSamplesFromBSP(Arrays.asList(CONTROL_SAMPLE_ID));
     }
@@ -263,8 +274,9 @@ public class MercuryOrSquidRouterTest {
         ProductOrder order = placeOrderForTubeAndBucket(tube2, exomeExpress, picoBucket);
         doSectionTransfer(makeTubeFormation(tube1, tube2), plate);
         assertThat(mercuryOrSquidRouter.routeForVessel(MERCURY_PLATE), equalTo(SQUID));
-        verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>(){{add(MERCURY_PLATE);}});
-        verify(mockAthenaClientService).retrieveProductOrderDetails(order.getBusinessKey());
+        verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>() {{
+            add(MERCURY_PLATE);
+        }});
     }
 
     @Test(groups = DATABASE_FREE)
@@ -307,8 +319,9 @@ public class MercuryOrSquidRouterTest {
     public void testRouteForTubeInMercuryWithExomeExpressOrder() {
         ProductOrder order = placeOrderForTubeAndBucket(tube1, exomeExpress, picoBucket);
         assertThat(mercuryOrSquidRouter.routeForVessel(MERCURY_TUBE_1), is(BOTH));
-        verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>(){{add(MERCURY_TUBE_1);}});
-        verify(mockAthenaClientService).retrieveProductOrderDetails(order.getBusinessKey());
+        verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>() {{
+            add(MERCURY_TUBE_1);
+        }});
     }
 
     /*
@@ -318,11 +331,11 @@ public class MercuryOrSquidRouterTest {
     @Test(groups = DATABASE_FREE, enabled = true)
     public void testGetSystemOfRecordForVesselInValidationLCSET() {
         ProductOrder order = placeOrderForTubeAndBucket(tube1, exomeExpress, picoBucket);
-        LabBatch lcset = createBatch(picoBucket, tube1);
-        lcset.setValidationBatch(true);
+        tube1.getAllLabBatches().iterator().next().setValidationBatch(true);
         assertThat(mercuryOrSquidRouter.getSystemOfRecordForVessel(MERCURY_TUBE_1), is(MERCURY));
-        verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>(){{add(MERCURY_TUBE_1);}});
-        verify(mockAthenaClientService).retrieveProductOrderDetails(order.getBusinessKey());
+        verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>() {{
+            add(MERCURY_TUBE_1);
+        }});
     }
 
     /*
@@ -336,19 +349,18 @@ public class MercuryOrSquidRouterTest {
     private ProductOrder placeOrderForTubeAndBucket(TwoDBarcodedTube tube, Product product, Bucket bucket) {
         ProductOrder order = new ProductOrder(101L, "Test Order",
                 Collections.singletonList(new ProductOrderSample("SM-1")), "Quote-1", product, testProject);
-        String jiraTicketKey = "PDO-" + productOrderSequence++;
+        productOrderSequence++;
+        String jiraTicketKey = "PDO-" + productOrderSequence;
         order.setJiraTicketKey(jiraTicketKey);
         when(mockAthenaClientService.retrieveProductOrderDetails(jiraTicketKey)).thenReturn(order);
         tube.addSample(new MercurySample("SM-1"));
         if (bucket != null) {
             bucket.addEntry(jiraTicketKey, tube);
         }
+        LabBatch labBatch = new LabBatch("LCSET-" + productOrderSequence, Collections.<LabVessel>singleton(tube),
+                LabBatch.LabBatchType.WORKFLOW);
+        labBatch.setWorkflowName(product.getWorkflowName());
         return order;
     }
 
-    private LabBatch createBatch(Bucket bucket, TwoDBarcodedTube... tubes) {
-        LabBatch batch =
-                new LabBatch("LCSET-123", new HashSet<LabVessel>(Arrays.asList(tubes)), LabBatch.LabBatchType.WORKFLOW);
-        return batch;
-    }
 }

@@ -230,6 +230,7 @@ public class LabEventTest extends BaseEventTest {
 
         LabBatch workflowBatch = new LabBatch("Hybrid Selection Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
+        workflowBatch.setWorkflowName("Hybrid Selection");
 
         PreFlightEntityBuilder preFlightEntityBuilder =
                 runPreflightProcess(mapBarcodeToTube, productOrder, workflowBatch, "1");
@@ -392,6 +393,7 @@ public class LabEventTest extends BaseEventTest {
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
+        workflowBatch.setWorkflowName("Exome Express");
 
         PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube, productOrder,
                 workflowBatch, null, String.valueOf(runDate.getTime()), "1");
@@ -504,6 +506,7 @@ public class LabEventTest extends BaseEventTest {
 
         LabBatch workflowBatch = new LabBatch("whole Genome Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
+        workflowBatch.setWorkflowName("Whole Genome");
 
         PreFlightEntityBuilder preFlightEntityBuilder =
                 runPreflightProcess(mapBarcodeToTube, productOrder, workflowBatch, "1");
@@ -774,11 +777,10 @@ public class LabEventTest extends BaseEventTest {
         for (LabVessel labVessel : labVessels) {
             for (SampleInstance sampleInstance : labVessel.getSampleInstances(LabVessel.SampleType.WITH_PDO,
                     LabBatch.LabBatchType.WORKFLOW)) {
-                ProductOrder productOrder = athenaClientService.retrieveProductOrderDetails(
-                        sampleInstance.getProductOrderKey());
-                // get workflow name from product order
+                // get workflow name from LCSET
+                // todo jmt do better than getAllLabBatches
                 ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(
-                        productOrder.getProduct().getWorkflowName());
+                        sampleInstance.getAllLabBatches().iterator().next().getWorkflowName());
                 List<ProductWorkflowDefVersion.ValidationError> errors =
                         productWorkflowDef.getEffectiveVersion().validate(labVessel, nextEventTypeName);
                 if (!errors.isEmpty()) {
