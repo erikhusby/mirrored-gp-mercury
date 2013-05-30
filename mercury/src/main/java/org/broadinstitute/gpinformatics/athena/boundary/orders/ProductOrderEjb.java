@@ -5,6 +5,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
@@ -255,6 +256,50 @@ public class ProductOrderEjb {
                     MessageFormat.format("Product {0} doesn''t support automated billing.", product.getProductName()));
         }
         return true;
+    }
+
+    /**
+     * Calculate the risk for all samples on the product order specified by business key.
+     *
+     * @param bspUser The user updating the risk.
+     * @param productOrderKey The product order business key.
+     *
+     * @return Any error strings.
+     * @throws IOException Any errors in reporting the risk.
+     */
+    public String calculateRisk(BspUser bspUser, String productOrderKey) throws IOException {
+        return calculateRisk(bspUser, productOrderKey, null);
+    }
+
+    /**
+     * Calculate the risk for all samples on the product order specified by business key. If the selected samples
+     * parameter is null, then all samples on the order will be used.
+     *
+     * @param bspUser The user updating the risk.
+     * @param productOrderKey The product order business key.
+     * @param selectedSamples The samples to calculate risk on. Null if all.
+     *
+     * @return Any error strings.
+     * @throws IOException Any errors in reporting the risk.
+     */
+    public String calculateRisk(BspUser bspUser, String productOrderKey, List<ProductOrderSample> selectedSamples) throws IOException {
+        ProductOrder editOrder = productOrderDao.findByBusinessKey(productOrderKey);
+        if (editOrder == null) {
+            return MessageFormat.format("Invalid PDO key ''{0}'', for calculating risk.", productOrderKey);
+        }
+
+        // If null, then it will calculate for all samples.
+        if (selectedSamples == null) {
+            editOrder.calculateRisk();
+        } else {
+            editOrder.calculateRisk(selectedSamples);
+        }
+
+        editOrder.prepareToSave(bspUser);
+
+        // If the issue gets a run time error, it will not save the calculation.
+        JiraIssue issue = jiraService.getIssue(editOrder.getJiraTicketKey());
+        return "";
     }
 
     /**

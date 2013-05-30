@@ -63,6 +63,29 @@
                     ]
                 });
 
+                $j("#recalculateRiskDialog").dialog({
+                    modal: true,
+                    autoOpen: false,
+                    buttons: [
+                        {
+                            id: "recalculateRiskOkButton",
+                            text: "OK",
+                            click: function () {
+                                $j(this).dialog("close");
+                                $j("#recalculateRiskOkButton").attr("disabled", "disabled");
+
+                                $j("#orderSamplesForm").submit();
+                            }
+                        },
+                        {
+                            text: "Cancel",
+                            click : function () {
+                                $j(this).dialog("close");
+                            }
+                        }
+                    ]
+                });
+
                 $j("#riskDialog").dialog({
                     modal: true,
                     autoOpen: false,
@@ -74,7 +97,6 @@
                                 $j(this).dialog("close");
                                 $j("#riskOkButton").attr("disabled", "disabled");
                                 $j("#riskStatus").attr("value", $j("#onRiskDialogId").attr("checked") != undefined);
-                                $j("#onlyNew").attr("value", $j("#onlyNewDialogId").attr("checked") != undefined);
                                 $j("#riskComment").attr("value", $j("#riskCommentId").val());
 
                                 $j("#orderSamplesForm").submit();
@@ -248,6 +270,18 @@
                 $j('#summaryId').html(dataList);
             }
 
+            function showRecalculateRiskDialog() {
+                var numChecked = $("input.shiftCheckbox:checked").size();
+                if (numChecked) {
+                    $j("#dialogAction").attr("name", "recalculateRisk");
+                    $j("#selectedCountId").text(numChecked);
+                    $j("#recalculateRiskDialog").dialog("open").dialog("option", "width", 600);
+                } else {
+                    $j("#noneSelectedDialogMessage").text("Recalculate Risk");
+                    $j("#noneSelectedDialog").dialog("open");
+                }
+            }
+
             function showRiskDialog() {
                 var numChecked = $("input.shiftCheckbox:checked").size();
                 if (numChecked) {
@@ -306,12 +340,16 @@
                 <label style="float:left;width:60px;" for="onRiskDialogId">On Risk</label>
                 <input type="radio" id="notOnRiskDialogId" name="riskRadio" value="false" style="float:left;margin-right:5px;">
                 <label style="float:left;margin-right:10px;width:auto;" for="notOnRiskDialogId">Not On Risk</label>
-                <input type="hidden" id="allDialogId" name="sampleRadio" value="false">
             <p style="clear:both">
             <label for="riskCommentId">Comment:</label>
             </p>
 
             <textarea id="riskCommentId" name="comment" class="controlledText" cols="80" rows="4"> </textarea>
+        </div>
+
+        <div id="recalculateRiskDialog" style="width:600px;display:none;">
+            <p>Recalculate Risk (<span id="selectedCountId"> </span> selected)</p>
+            <p><span style="float:left;">Recalculate On Risk status for all samples. This will clear out all previous statuses.</span>
         </div>
 
         <div style="display:none" id="deleteConfirmation">
@@ -387,7 +425,6 @@
 
             <stripes:hidden id="riskStatus" name="riskStatus" value=""/>
             <stripes:hidden id="riskComment" name="riskComment" value=""/>
-            <stripes:hidden id="onlyNew" name="onlyNew" value=""/>
 
             <div class="view-control-group control-group">
                 <label class="control-label label-form">Order ID</label>
@@ -596,8 +633,11 @@
                             <stripes:button name="abandonSamples" value="Abandon Samples" class="btn"
                                         style="margin-left:15px;" onclick="showConfirm('abandonSamples', 'abandon')"/>
 
+                            <stripes:button name="recalculateRisk" value="Recalculate Risk" class="btn"
+                                            style="margin-left:15px;" onclick="showRecalculateRiskDialog()"/>
+
                             <stripes:button name="setRisk" value="Set Risk" class="btn"
-                                            style="margin-left:15px;" onclick="showRiskDialog()"/>
+                                            style="margin-left:5px;" onclick="showRiskDialog()"/>
                         </span>
 
                         <div class="pull-right">
