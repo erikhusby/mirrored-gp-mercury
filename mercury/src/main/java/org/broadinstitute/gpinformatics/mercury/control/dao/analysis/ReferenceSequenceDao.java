@@ -34,13 +34,7 @@ public class ReferenceSequenceDao extends GenericDao implements BusinessObjectFi
      * @return list of all the current {@link ReferenceSequence}s
      */
     public List<ReferenceSequence> findAllCurrent() {
-        CriteriaBuilder criteriaBuilder = getCriteriaBuilder();
-
-        final CriteriaQuery<ReferenceSequence> query = criteriaBuilder.createQuery(ReferenceSequence.class);
-        Root<ReferenceSequence> root = query.from(ReferenceSequence.class);
-        Predicate currentPredicate = criteriaBuilder.equal(root.get(ReferenceSequence_.isCurrent), true);
-        query.where(currentPredicate);
-        return getEntityManager().createQuery(query).getResultList();
+        return findList(ReferenceSequence.class, ReferenceSequence_.isCurrent, true);
     }
 
     /**
@@ -91,7 +85,7 @@ public class ReferenceSequenceDao extends GenericDao implements BusinessObjectFi
 
     @Override
     public ReferenceSequence findByBusinessKey(@Nonnull String businessKey) {
-        String[] values = businessKey.split("\\" + ReferenceSequence.SEPERATOR);
+        String[] values = businessKey.split("\\" + ReferenceSequence.SEPARATOR);
 
         if (values.length != 2) {
             throw new IllegalArgumentException("Reference Sequence business key must only contain a name and a version: ");
