@@ -59,20 +59,23 @@ import java.util.Set;
 public class ReworkEjb {
     private final static Log logger = LogFactory.getLog(ReworkEjb.class);
 
-    @Inject
-    BucketEntryDao bucketEntryDao;
-
-    @Inject
     MercurySampleDao mercurySampleDao;
 
-    @Inject
     ReworkEntryDao reworkEntryDao;
 
-    @Inject
     LabVesselDao labVesselDao;
 
+    public ReworkEjb() {
+    }
+
     @Inject
-    WorkflowLoader workflowLoader;
+    public ReworkEjb(MercurySampleDao mercurySampleDao,
+                     ReworkEntryDao reworkEntryDao,
+                     LabVesselDao labVesselDao) {
+        this.mercurySampleDao = mercurySampleDao;
+        this.reworkEntryDao = reworkEntryDao;
+        this.labVesselDao = labVesselDao;
+    }
 
     /**
      * Create rework for all samples in a LabVessel;
@@ -82,8 +85,8 @@ public class ReworkEjb {
      * @param reworkLevel    What level to rework to
      * @param reworkFromStep Where should the rework be reworked from.
      * @param comment        text describing why you are doing this.
+     * @param workflowName   Name of the workflow in which this vessel is to be reworked
      *
-     * @param workflowName
      * @throws InformaticsServiceException
      */
     @DaoFree
@@ -95,8 +98,8 @@ public class ReworkEjb {
             throws ValidationException {
 
         Set<MercurySample> reworks = new HashSet<MercurySample>();
-        VesselPosition[] vesselPositions=labVessel.getVesselGeometry().getVesselPositions();
-        if (vesselPositions==null){
+        VesselPosition[] vesselPositions = labVessel.getVesselGeometry().getVesselPositions();
+        if (vesselPositions == null) {
             vesselPositions = new VesselPosition[]{VesselPosition.TUBE1};
         }
 
@@ -109,14 +112,14 @@ public class ReworkEjb {
             for (SampleInstance sampleInstance : samplesAtPosition) {
                 MercurySample mercurySample = sampleInstance.getStartingSample();
 
-                if(labVessel.isAncestorInBucket(sampleInstance.getProductOrderKey(), ""/* TODO SGM Insert Bucket Name*/)) {
-                        String error =
-                                String.format("Sample %s in product order %s already exists in the %s bucket.",
-                                        mercurySample.getSampleKey(), sampleInstance.getProductOrderKey(),
-                                        ""/* TODO SGM Insert Bucket Name*/);
-                        logger.error(error);
-                        throw new ValidationException(error);
-//                    }
+                if (labVessel
+                        .isAncestorInBucket(sampleInstance.getProductOrderKey(), bucketDef.getName())) {
+                    String error =
+                            String.format("Sample %s in product order %s already exists in the %s bucket.",
+                                    mercurySample.getSampleKey(), sampleInstance.getProductOrderKey(),
+                                    bucketDef.getName());
+                    logger.error(error);
+                    throw new ValidationException(error);
                 }
 
                 getReworkEntryDaoFree(mercurySample, labVessel, vesselPosition,
@@ -139,14 +142,13 @@ public class ReworkEjb {
      * @param reworkFromStep Where should the rework be reworked from.
      * @param comment        text describing why you are doing this.
      *
-     * @return a sample with ReworkEntry added
      */
     @DaoFree
     public void getReworkEntryDaoFree(@Nonnull MercurySample mercurySample, @Nonnull LabVessel labVessel,
-                                               @Nonnull VesselPosition vesselPosition,
-                                               @Nonnull ReworkEntry.ReworkReason reworkReason,
-                                               ReworkEntry.ReworkLevel reworkLevel, @Nonnull LabEventType reworkFromStep,
-                                               String comment) {
+                                      @Nonnull VesselPosition vesselPosition,
+                                      @Nonnull ReworkEntry.ReworkReason reworkReason,
+                                      ReworkEntry.ReworkLevel reworkLevel, @Nonnull LabEventType reworkFromStep,
+                                      String comment) {
         LabVesselPosition labVesselPosition = new LabVesselPosition(vesselPosition, mercurySample);
         LabVesselComment<ReworkEntry> reworkComment =
                 new LabVesselComment<ReworkEntry>(labVessel.getLatestEvent(), labVessel, comment);
@@ -158,17 +160,19 @@ public class ReworkEjb {
     /**
      * Create rework for all samples in a LabVessel;
      *
+     * @param labVesselBarcode 2D Barcode of any type of LabVessel, with samples in it.
+     * @param reworkReason     Why is the rework being done.
+     * @param reworkFromStep   Where should the rework be reworked from.
+     * @param comment          text describing why you are doing this.
+     * @param workflowName     Name of the workflow in which this vessel is to be reworked
      *
-     * @param labVesselBarcode      any type of LabVessel, with samples in it.
-     * @param reworkReason   Why is the rework being done.
-     * @param reworkFromStep Where should the rework be reworked from.
-     * @param comment        text describing why you are doing this.
+     * @return The LabVessel instance related to the 2D Barcode given in the method call
      *
-     * @param workflowName
      * @throws ValidationException
      */
     public LabVessel addRework(@Nonnull String labVesselBarcode, @Nonnull ReworkEntry.ReworkReason reworkReason,
-                               @Nonnull LabEventType reworkFromStep, @Nonnull String comment, String workflowName)
+                               @Nonnull LabEventType reworkFromStep, @Nonnull String comment,
+                               @Nonnull String workflowName)
             throws ValidationException {
 
         LabVessel reworkVessel = labVesselDao.findByIdentifier(labVesselBarcode);
@@ -185,35 +189,61 @@ public class ReworkEjb {
         return reworkVessel;
     }
 
+    /**
+     * addAndValidateRework will, like
+     * {@link #addRework(String, org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry.ReworkReason,
+     * org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType, String, String)}, create a
+     * {@link ReworkEntry} for all samples in a vessel.
+     * <p/>
+     * In addition to creating a ReworkEntry, this method will execute some validation rules against the rework entry
+     * for the sole purpose of informing the user of the state of the vessel that they have just submitted for rework.
+     *
+     * @param reworkVesselBarcode 2D Barcode of a vessel to be reworked.
+     * @param reworkReason        predefined Text describing why the given vessel needs to be reworked
+     * @param reworkFromStep      Step in the workflow at which rework is to begin
+     * @param comment             Brief user comment to associate with this rework.
+     * @param workflowName        Name of the workflow in which this vessel is to be reworked
+     *
+     * @return Collection of validation messages
+     *
+     * @throws ValidationException Thrown in the case that some checked state of the Lab Vessel will not allow the
+     *                             method to continue
+     */
     public Collection<String> addAndValidateRework(@Nonnull String reworkVesselBarcode,
                                                    @Nonnull ReworkEntry.ReworkReason reworkReason,
                                                    @Nonnull LabEventType reworkFromStep, @Nonnull String comment,
-                                                   String workflowName)
+                                                   @Nonnull String workflowName)
             throws ValidationException {
 
         LabVessel reworkVessel = addRework(reworkVesselBarcode, reworkReason, reworkFromStep, comment, workflowName);
 
-
-        Collection<String> validationMessages = validateReworkItem(reworkVessel, reworkFromStep,
-                workflowName);
-
-        return validationMessages;
+        return validateReworkItem(reworkVessel, reworkFromStep, workflowName);
     }
 
-    private Collection<String> validateReworkItem(@Nonnull LabVessel reworkVessel, @Nonnull LabEventType reworkStep,
-                                                  String workflowName) {
+    /**
+     * validateReworkItem will execute certain validation rules on a rework sample in order to inform a submitter of
+     * any issues with the state of the LabVessel with regards to using it for Rework.
+     *
+     * @param reworkVessel a LabVessel instance being submitted for rework
+     * @param reworkStep   Step in the workflow at which rework is to begin
+     * @param workflowName Name of the workflow in which this vessel is to be reworked
+     *
+     * @return Collection of validation messages
+     */
+    public Collection<String> validateReworkItem(@Nonnull LabVessel reworkVessel, @Nonnull LabEventType reworkStep,
+                                                 @Nonnull String workflowName) {
         List<String> validationMessages = new ArrayList<String>();
 
         WorkflowBucketDef bucketDef = LabEventHandler
                 .findBucketDef(workflowName, reworkStep);
 
-        if(Boolean.FALSE.equals(reworkVessel.hasAncestorBeenInBucket(bucketDef.getName()))) {
+        if (Boolean.FALSE.equals(reworkVessel.hasAncestorBeenInBucket(bucketDef.getName()))) {
             validationMessages.add("You have submitted a vessel to the bucket that may not be considered a rework.  " +
                                    "No anscestor of " + reworkVessel.getLabel() + " has ever been in been in the " +
                                    bucketDef.getName() + " before.");
         }
 
-        if(!bucketDef.meetsBucketCriteria(reworkVessel)) {
+        if (!bucketDef.meetsBucketCriteria(reworkVessel)) {
             validationMessages.add("You have submitted a vessel to the bucket that contains at least one sample that " +
                                    "is not Genomic DNA");
         }
@@ -230,16 +260,12 @@ public class ReworkEjb {
     }
 
 
-    public void setBucketEntryDao(BucketEntryDao bucketEntryDao) {
-        this.bucketEntryDao = bucketEntryDao;
-    }
-
     public void setMercurySampleDao(MercurySampleDao mercurySampleDao) {
         this.mercurySampleDao = mercurySampleDao;
     }
 
-    public Collection<LabVessel> getVesselsForRework(){
-        Set<LabVessel> inactiveVessels=new HashSet<LabVessel>();
+    public Collection<LabVessel> getVesselsForRework() {
+        Set<LabVessel> inactiveVessels = new HashSet<LabVessel>();
         for (ReworkEntry rework : reworkEntryDao.getActive()) {
             inactiveVessels.add(rework.getLabVesselComment().getLabVessel());
         }
