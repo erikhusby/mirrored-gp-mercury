@@ -355,9 +355,13 @@ public class ProductOrderActionBean extends CoreActionBean {
         // Since we are only validating from view, we can persist without worry of saving something bad.
         // We are doing on risk calculation only when everything passes, but informing the user no matter what.
         if (!hasErrors()) {
-            String errorMessage;
+            String errorMessage = "";
             try {
-                errorMessage = productOrderEjb.calculateRisk(getUserBean().getBspUser(), editOrder.getBusinessKey());
+                // Only calculate on risk with this validation is being done on a draft order. After draft, this
+                // is a user driven feature.
+                if (editOrder.isDraft()) {
+                    errorMessage = productOrderEjb.calculateRisk(getUserBean().getBspUser(), editOrder.getBusinessKey());
+                }
             } catch (Exception e) {
                 errorMessage = "Error calculating risk";
             }
