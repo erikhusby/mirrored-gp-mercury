@@ -21,7 +21,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.BuildInfoBean;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.presentation.links.JiraLink;
+import org.broadinstitute.gpinformatics.athena.presentation.links.SampleLink;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
@@ -49,7 +51,6 @@ public class CoreActionBean implements ActionBean {
     private static final String DATE_PATTERN = "MM/dd/yyyy";
     private static final String DATE_TIME_PATTERN = "MM/dd/yyyy HH:mm";
     private static final String PRECISE_DATE_TIME_PATTERN = "MM/dd/yyyy HH:mm:ss.S";
-    private static final String SEARCH_SAMPLE = "samplesearch/SampleSummary.action?sampleId=";
 
     // These are used for the create and edit strings in the UI and the submit string.
     public static final String CREATE = "Create ";
@@ -85,6 +86,9 @@ public class CoreActionBean implements ActionBean {
 
     @Inject
     private JiraLink jiraLink;
+
+    @Inject
+    private SampleLink.Factory sampleLinkFactory;
 
     // These fields are generic title fields used by the master layout to determine what links to show in the title
     // pull right field.
@@ -538,7 +542,7 @@ public class CoreActionBean implements ActionBean {
         return PRECISE_DATE_TIME_PATTERN;
     }
 
-    public String sampleSearchUrlForBspSample(String sampleName) {
-        return  bspConfig.getUrl(SEARCH_SAMPLE + sampleName);
+    public SampleLink getSampleLink(ProductOrderSample sample) {
+        return sampleLinkFactory.create(sample);
     }
 }
