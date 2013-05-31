@@ -25,6 +25,8 @@ CURSOR im_event_fact_cur IS SELECT * FROM im_event_fact WHERE is_delete = 'F';
 CURSOR im_po_sample_risk_cur IS SELECT * FROM im_product_order_sample_risk WHERE is_delete = 'F';
 CURSOR im_po_sample_bill_cur IS SELECT * FROM im_product_order_sample_bill WHERE is_delete = 'F';
 CURSOR im_ledger_entry_cur IS SELECT * FROM im_ledger_entry WHERE is_delete = 'F';
+CURSOR im_sequencing_run_cur IS SELECT * FROM im_sequencing_run WHERE is_delete = 'F';
+CURSOR im_seq_sample_fact_cur IS SELECT * FROM im_sequencing_sample_fact WHERE is_delete = 'F';
 
 errmsg VARCHAR2(255);
 dup_sample_id NUMERIC(19);
@@ -36,7 +38,7 @@ BEGIN
 -- Does the most dependent (FK dependency) tables first.
 ---------------------------------------------------------------------------
 
--- Since this is a fact table, a reexport of identical data will delete the first set.
+-- For this fact table, a re-export of audited entity ids should replace existing ones.
 DELETE FROM event_fact
 WHERE lab_event_id IN (SELECT DISTINCT lab_event_id FROM im_event_fact);
 
@@ -104,6 +106,15 @@ DELETE FROM research_project
 WHERE research_project_id IN (
   SELECT research_project_id FROM im_research_project WHERE is_delete = 'T'
 );
+
+DELETE FROM sequencing_run
+WHERE sequencing_run_id IN (
+  SELECT sequencing_run_id FROM im_sequencing_run WHERE is_delete = 'T'
+);
+
+-- For this fact table, a re-export of audited entity ids should replace existing ones.
+DELETE FROM sequencing_sample_fact
+WHERE sequencing_run_id IN (SELECT DISTINCT sequencing_run_id FROM im_sequencing_sample_fact);
 
 COMMIT;
 
@@ -340,6 +351,44 @@ FOR new IN im_workflow_process_cur LOOP
   EXCEPTION WHEN OTHERS THEN 
     errmsg := SQLERRM;
     DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_workflow_process.dat line '||new.line_number||'  '||errmsg);
+    CONTINUE;
+  END;
+
+END LOOP;
+
+
+FOR new IN im_sequencing_run_cur LOOP
+  BEGIN
+    UPDATE sequencing_run SET
+      run_name = new.run_name,
+      barcode = new.barcode,
+      registration_date = new.registration_date,
+      instrument = new.instrument,
+      etl_date = new.etl_date
+    WHERE sequencing_run_id = new.sequencing_run_id;
+
+    INSERT INTO sequencing_run (
+      sequencing_run_id,
+      run_name,
+      barcode,
+      registration_date,
+      instrument,
+      etl_date
+    ) 
+    SELECT
+      new.sequencing_run_id,
+      new.run_name,
+      new.barcode,
+      new.registration_date,
+      new.instrument,
+      new.etl_date
+    FROM DUAL WHERE NOT EXISTS (
+      SELECT 1 FROM sequencing_run
+      WHERE sequencing_run_id = new.sequencing_run_id
+    );
+  EXCEPTION WHEN OTHERS THEN 
+    errmsg := SQLERRM;
+    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_sequencing_run.dat line '||new.line_number||'  '||errmsg);
     CONTINUE;
   END;
 
@@ -847,6 +896,48 @@ FOR new IN im_ledger_entry_cur LOOP
   END;
 
 END LOOP;
+
+-- Only sets PK when it is null, so we can do an idempotent repeatable merge.
+UPDATE im_sequencing_sample_fact SET sequencing_sample_fact_id = sequencing_sample_id_seq.nextval
+ WHERE sequencing_sample_fact_id IS NULL;
+
+FOR new IN im_seq_sample_fact_cur LOOP
+  BEGIN
+    -- No update is possible due to lack of common unique key
+
+    INSERT INTO sequencing_sample_fact (
+      sequencing_sample_fact_id,
+      flowcell_barcode,
+      lane_name,
+      molecular_indexing_scheme,
+      sequencing_run_id,
+      product_order_id,
+      sample_name,
+      research_project_id,
+      etl_date
+    ) 
+    SELECT
+      new.sequencing_sample_fact_id,
+      new.flowcell_barcode,
+      new.lane_name,
+      new.molecular_indexing_scheme,
+      new.sequencing_run_id,
+      new.product_order_id,
+      new.sample_name,
+      new.research_project_id,
+      new.etl_date
+    FROM DUAL WHERE NOT EXISTS (
+      SELECT 1 FROM sequencing_sample_fact
+      WHERE sequencing_sample_fact_id = new.sequencing_sample_fact_id
+    );
+  EXCEPTION WHEN OTHERS THEN 
+    errmsg := SQLERRM;
+    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_sequencing_sample_fact.dat line '||new.line_number||'  '||errmsg);
+    CONTINUE;
+  END;
+
+END LOOP;
+
 
 COMMIT;
 

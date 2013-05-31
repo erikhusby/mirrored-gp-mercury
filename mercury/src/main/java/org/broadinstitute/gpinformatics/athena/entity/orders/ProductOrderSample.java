@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
-import clover.org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
@@ -45,6 +45,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * Class to describe Athena's view of a Sample. A Sample is identified by a sample Id and
@@ -57,9 +58,10 @@ import java.util.Set;
 public class ProductOrderSample implements Serializable {
     private static final long serialVersionUID = 8645451167948826402L;
 
-    /**
-     * Count shown when no billing has occurred.
-     */
+    // FIXME: replace with real sample name pattern when CRSP jira is configured.
+    public static final Pattern CRSP_SAMPLE_NAME_PATTERN = Pattern.compile("PDO-[A-Z1-9]{4,6}");
+
+    /** Count shown when no billing has occurred. */
     public static final double NO_BILL_COUNT = 0;
     public static final String TUMOR_IND = BSPSampleDTO.TUMOR_IND;
     public static final String NORMAL_IND = BSPSampleDTO.NORMAL_IND;
@@ -84,9 +86,8 @@ public class ProductOrderSample implements Serializable {
     @JoinColumn(insertable = false, updatable = false)
     private ProductOrder productOrder;
 
-    @OneToMany(mappedBy = "productOrderSample", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
-            orphanRemoval = true)
-    private Set<LedgerEntry> ledgerItems = new HashSet<LedgerEntry>();
+    @OneToMany(mappedBy = "productOrderSample", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
+    private final Set<LedgerEntry> ledgerItems = new HashSet<LedgerEntry>();
 
     @Column(name = "SAMPLE_POSITION", updatable = false, insertable = false, nullable = false)
     private Integer samplePosition;
@@ -94,7 +95,7 @@ public class ProductOrderSample implements Serializable {
     @OneToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     @JoinColumn(name = "product_order_sample", nullable = false)
     @AuditJoinTable(name = "po_sample_risk_join_aud")
-    private Set<RiskItem> riskItems = new HashSet<RiskItem>();
+    private final Set<RiskItem> riskItems = new HashSet<RiskItem>();
 
     /**
      * Aliquot ID is used by the auto-bill code to track pipeline results.  It will only be set when a sample has
@@ -297,6 +298,9 @@ public class ProductOrderSample implements Serializable {
         return BSPUtil.isInBspFormat(sampleName);
     }
 
+    public boolean isInCrspFormat() {
+        return CRSP_SAMPLE_NAME_PATTERN.matcher(sampleName).matches();
+    }
 
     public Set<LedgerEntry> getBillableLedgerItems() {
         Set<LedgerEntry> billableLedgerItems = new HashSet<LedgerEntry>();
@@ -313,13 +317,17 @@ public class ProductOrderSample implements Serializable {
         return billableLedgerItems;
     }
 
+    /**
+     * Go through each ledger item and and construct the messages.
+     *
+     * @return The messages.
+     */
     public String getUnbilledLedgerItemMessages() {
         StringBuilder builder = new StringBuilder();
 
         if (getLedgerItems() != null) {
-            for (LedgerEntry ledgerEntry : getLedgerItems()) {
-                // If there is a message that is not success, add the message to the end.
-                if ((ledgerEntry.getBillingMessage() != null) && ledgerEntry.isBilled()) {
+            for (LedgerEntry ledgerEntry : getLedgerItems() ) {
+                if ((ledgerEntry.getBillingMessage() != null) && !ledgerEntry.isBilled()) {
                     builder.append(ledgerEntry.getBillingMessage()).append("\n");
                 }
             }

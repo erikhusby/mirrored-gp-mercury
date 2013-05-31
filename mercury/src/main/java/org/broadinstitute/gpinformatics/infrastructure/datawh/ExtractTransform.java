@@ -95,7 +95,9 @@ public class ExtractTransform implements Serializable {
             WorkflowConfigEtl workflowConfigEtl,
             RiskItemEtl riskItemEtl,
             LedgerEntryCrossEtl ledgerEntryCrossEtl,
-            LedgerEntryEtl ledgerEntryEtl
+            LedgerEntryEtl ledgerEntryEtl,
+            SequencingRunEtl sequencingRunEtl,
+            SequencingSampleFactEtl sequencingSampleFactEtl
     ) {
 
         etlInstances.add(labEventEtl);
@@ -115,6 +117,8 @@ public class ExtractTransform implements Serializable {
         etlInstances.add(riskItemEtl);
         etlInstances.add(ledgerEntryCrossEtl);
         etlInstances.add(ledgerEntryEtl);
+        etlInstances.add(sequencingRunEtl);
+        etlInstances.add(sequencingSampleFactEtl);
     }
 
     /** Constructor for testing. */
