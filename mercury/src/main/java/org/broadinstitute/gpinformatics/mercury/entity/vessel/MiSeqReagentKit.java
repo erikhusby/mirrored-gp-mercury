@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import org.hibernate.envers.Audited;
 
-import javax.annotation.Nonnull;
 import javax.persistence.Entity;
 
 /**
@@ -10,9 +9,11 @@ import javax.persistence.Entity;
  */
 @Entity
 @Audited
-public class MiSeqReagentKit extends LabVessel  {
-    public MiSeqReagentKit(@Nonnull String label) {
-        super(label);
+public class MiSeqReagentKit extends StaticPlate  {
+    public static final String LOADING_WELL = "D4";
+
+    public MiSeqReagentKit(String label) {
+        super(label, PlateType.Matrix96);
     }
 
     public MiSeqReagentKit() {

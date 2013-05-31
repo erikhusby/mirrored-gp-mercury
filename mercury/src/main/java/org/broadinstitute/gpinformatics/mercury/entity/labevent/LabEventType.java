@@ -120,6 +120,11 @@ public enum LabEventType {
     DENATURE_TO_FLOWCELL_TRANSFER("DenatureToFlowcellTransfer", false, true, SystemOfRecord.WORKFLOW_DEPENDENT, false,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE),
 
+    // for MiSeq
+    DENATURE_TO_REAGENT_KIT_TRANSFER("MiseqReagentKitLoading", false, true, SystemOfRecord.WORKFLOW_DEPENDENT, false,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE),
+
+
     // Sage
     SAGE_LOADING("SageLoading", true, false, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
     SAGE_LOADED("SageLoaded", true, false, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
