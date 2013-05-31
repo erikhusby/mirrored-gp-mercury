@@ -46,7 +46,7 @@ public class LimsQueryResourceResponseFactoryTest {
         libraryDateCreated = calendar.getTime();
         libraryData = new LibraryData(true, "TestLibrary-1", "TestLibrary", "12345678", Arrays.asList(sampleInfo), new SimpleDateFormat("yyyy/MM/dd HH:mm").format(libraryDateCreated), true, true);
         lane = new Lane("1", Arrays.asList(libraryData), 1.23, Arrays.asList(libraryData));
-        flowcellDesignation = new FlowcellDesignation(Arrays.asList(lane), "TestDesignation", (short) 101, true, true, (short) 3, true);
+        flowcellDesignation = new FlowcellDesignation(Arrays.asList(lane), "TestDesignation", (short) 101, true, true, (short) 3, true, "Single");
 
         wellAndSourceTube = new WellAndSourceTube("A01", "tube_barcode");
 
@@ -126,6 +126,7 @@ public class LimsQueryResourceResponseFactoryTest {
         assertThat(outFlowcellDesignation.isIndexedRun(), equalTo(expected.isIsIndexedRun()));
         assertThat(outFlowcellDesignation.getControlLane(), equalTo(Integer.valueOf(expected.getControlLane())));
         assertThat(outFlowcellDesignation.isKeepIntensityFiles(), equalTo(expected.isKeepIntensityFiles()));
+        assertThat(outFlowcellDesignation.getIndexingReadConfiguration(), equalTo(expected.getIndexingReadConfiguration()));
     }
 
     private void assertLane(LaneType outLane, Lane expected) {
