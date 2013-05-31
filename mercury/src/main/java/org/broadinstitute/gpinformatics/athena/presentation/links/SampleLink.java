@@ -2,13 +2,14 @@ package org.broadinstitute.gpinformatics.athena.presentation.links;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 
 import javax.inject.Inject;
 
 /**
  * This class is used to generate sample links for the UI.
  */
-// Suppress warnings because intellij can't seem to get the correct type from a <c:set> variable.
+// Suppress warnings because intellij isn't getting the correct type from a <c:set> variable.
 @SuppressWarnings("UnusedDeclaration")
 public class SampleLink {
     private static final String BSP_SEARCH_SAMPLE = "samplesearch/SampleSummary.action?sampleId=";
@@ -35,10 +36,10 @@ public class SampleLink {
         }
 
         static Format fromSample(ProductOrderSample sample) {
-            if (sample.isInBspFormat()) {
+            if (!Deployment.isCRSP && sample.isInBspFormat()) {
                 return Format.BSP;
             }
-            if (sample.isInCrspFormat()) {
+            if (Deployment.isCRSP && sample.isInCrspFormat()) {
                 return Format.CRSP;
             }
             return Format.UNKNOWN;
