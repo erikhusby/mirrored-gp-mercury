@@ -10,9 +10,12 @@ import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
 import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
@@ -25,13 +28,50 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDe
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 @UrlBinding(value = "/workflow/AddRework.action")
 public class AddReworkActionBean extends CoreActionBean {
+
+    public static class ReworkCandidate {
+        private String sampleKey;
+        private String productOrderKey;
+        private String tubeBarcode;
+        private LabVessel labVessel;
+
+        public ReworkCandidate(@Nonnull String sampleKey, @Nonnull String productOrderKey, @Nonnull String tubeBarcode, LabVessel labVessel) {
+            this.sampleKey = sampleKey;
+            this.productOrderKey = productOrderKey;
+            this.tubeBarcode = tubeBarcode;
+            this.labVessel = labVessel;
+        }
+
+        public String getSampleKey() {
+            return sampleKey;
+        }
+
+        public String getProductOrderKey() {
+            return productOrderKey;
+        }
+
+        public String getTubeBarcode() {
+            return tubeBarcode;
+        }
+
+        public LabVessel getLabVessel() {
+            return labVessel;
+        }
+    }
+
     @Inject
     private LabVesselDao labVesselDao;
+    @Inject
+    private ProductOrderSampleDao productOrderSampleDao;
     @Inject
     private ReworkEjb reworkEjb;
     @Inject
@@ -45,6 +85,7 @@ public class AddReworkActionBean extends CoreActionBean {
 
     private String workflowName;
     private LabVessel labVessel;
+    private List<ReworkCandidate> reworkCandidates = new ArrayList<ReworkCandidate>();
     private List<WorkflowBucketDef> buckets;
 
     @Validate(required = true, on = {VESSEL_INFO_ACTION, REWORK_SAMPLE_ACTION})
@@ -101,7 +142,45 @@ public class AddReworkActionBean extends CoreActionBean {
 
     @After(stages = LifecycleStage.BindingAndValidation, on = {VESSEL_INFO_ACTION, REWORK_SAMPLE_ACTION})
     public void setUpLabVessel() {
-        labVessel = labVesselDao.findByIdentifier(vesselLabel);
+
+        // TODO: move all of this logic out of the action bean!
+
+        if (BSPUtil.isInBspFormat(vesselLabel)) {
+            List<ProductOrderSample> samples =
+                    productOrderSampleDao.findMapBySamples(Collections.singletonList(vesselLabel)).get(
+                            vesselLabel);
+
+            List<LabVessel> labVessels = labVesselDao.findBySampleKey(vesselLabel);
+            for (LabVessel vessel : labVessels) {
+                Set<SampleInstance> sampleInstances = vessel.getSampleInstances();
+
+                // per Zimmer, ignore tubes that are pools when querying by sample
+                if (sampleInstances.size() == 1) {
+                    SampleInstance sampleInstance = sampleInstances.iterator().next();
+
+                    // make sure we have a matching product order sample
+                    for (ProductOrderSample sample : samples) {
+                        if (sampleInstance.getProductOrderKey() == null ||
+                            sampleInstance.getProductOrderKey().equals(sample.getProductOrder().getBusinessKey())) {
+                            reworkCandidates.add(new ReworkCandidate(sample.getSampleName(),
+                                    sample.getProductOrder().getBusinessKey(), vessel.getLabel(), vessel));
+                        }
+                    }
+                }
+            }
+
+            // TODO: handle the case where LIMS doesn't know the tube, but we can still look it up in BSP
+
+            if (getReworkCandidates().size() == 1) {
+                labVessel = getReworkCandidates().get(0).getLabVessel();
+            }
+
+            // TODO: handle the case where there is more than one vessel to choose from
+
+        } else {
+            labVessel = labVesselDao.findByIdentifier(vesselLabel);
+        }
+
         if (labVessel != null) {
             for (SampleInstance sample : labVessel.getAllSamples()) {
                 String productOrderKey = sample.getProductOrderKey();
@@ -188,5 +267,9 @@ public class AddReworkActionBean extends CoreActionBean {
 
     public void setBucketName(String bucketName) {
         this.bucketName = bucketName;
+    }
+
+    public List<ReworkCandidate> getReworkCandidates() {
+        return reworkCandidates;
     }
 }

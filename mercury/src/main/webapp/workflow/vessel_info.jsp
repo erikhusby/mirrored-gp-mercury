@@ -14,6 +14,14 @@
         </div>
     </c:when>
     <c:otherwise>
+        <div class="control-group">
+            <stripes:label for="barcode" class="control-label">
+                Barcode
+            </stripes:label>
+            <div class="controls">
+                <div id="barcode">${actionBean.labVessel.label}</div>
+            </div>
+        </div>
         <c:forEach items="${actionBean.labVessel.nearestWorkflowLabBatches}" var="batch">
             <div class="control-group">
                 <stripes:label for="batch" class="control-label">
@@ -32,7 +40,7 @@
                 Workflow Name
             </stripes:label>
             <div class="controls">
-                <div id="workflowName`">${actionBean.workflowName}</div>
+                <div id="workflowName">${actionBean.workflowName}</div>
             </div>
         </div>
         <div class="control-group">
