@@ -309,13 +309,17 @@ public class ProductOrderSample implements Serializable {
         return billableLedgerItems;
     }
 
+    /**
+     * Go through each ledger item and and construct the messages.
+     *
+     * @return The messages.
+     */
     public String getUnbilledLedgerItemMessages() {
         StringBuilder builder = new StringBuilder();
 
         if (getLedgerItems() != null) {
             for (LedgerEntry ledgerEntry : getLedgerItems() ) {
-                // If there is a message that is not success, add the message to the end.
-                if ((ledgerEntry.getBillingMessage() != null) && ledgerEntry.isBilled()) {
+                if ((ledgerEntry.getBillingMessage() != null) && !ledgerEntry.isBilled()) {
                     builder.append(ledgerEntry.getBillingMessage()).append("\n");
                 }
             }
