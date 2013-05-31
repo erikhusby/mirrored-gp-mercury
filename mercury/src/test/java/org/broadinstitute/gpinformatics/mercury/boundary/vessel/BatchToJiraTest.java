@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -102,8 +103,8 @@ public class BatchToJiraTest extends Arquillian {
         LabEvent event = new LabEvent(LabEventType.DENATURE_TO_FLOWCELL_TRANSFER, new Date(), "TEST-LAND", 0L, 101L);
         tube2.addInPlaceEvent(event);
         LabBatch batch = new LabBatch("Test batch 2", startingVessels, LabBatch.LabBatchType.WORKFLOW);
-        reworkEjb.addReworkToBatch(batch, tube2, ReworkEntry.ReworkReason.MACHINE_ERROR, LabEventType.PICO_PLATING_BUCKET,
-                "I am reworking this");
+        reworkEjb.addReworkToBatch(batch, tube2.getLabel(), ReworkEntry.ReworkReason.MACHINE_ERROR, LabEventType.PICO_PLATING_BUCKET,
+                "I am reworking this", WorkflowName.EXOME_EXPRESS.getWorkflowName());
 
 
         batchEjb.batchToJira("andrew", null, batch);

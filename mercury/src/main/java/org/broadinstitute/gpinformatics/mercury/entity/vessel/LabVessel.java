@@ -182,6 +182,15 @@ public abstract class LabVessel implements Serializable {
         return vesselNames;
     }
 
+    public boolean isGenomicDNA() {
+        for (SampleInstance si : this.getSampleInstances()) {
+            if (si.getStartingSample().getBspSampleDTO().getMaterialType().equals("DNA:DNA Genomic")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
      * Well A01, Lane 3, Region 6 all might
      * be considered a labeled sub-section
@@ -1484,5 +1493,49 @@ public abstract class LabVessel implements Serializable {
             }
         }
         return sampleNames;
+    }
+
+
+    /**
+     * Helper method to determine if a given vessel or any of its ancestors are currently in a bucket.
+     * @param pdoKey
+     * @param bucketName
+     * @return
+     */
+    public boolean isAncestorInBucket(@Nonnull String pdoKey, @Nonnull String bucketName) {
+
+        List<LabVessel> vesselHeirarchy = new ArrayList<LabVessel>();
+
+        vesselHeirarchy.add(this);
+        vesselHeirarchy.addAll(this.getAncestorVessels());
+
+        for(LabVessel currAncestor:vesselHeirarchy){
+            for(BucketEntry currentEntry: currAncestor.getBucketEntries()) {
+                if(pdoKey.equals(currentEntry.getPoBusinessKey()) &&
+                   bucketName.equals(currentEntry.getBucket().getBucketDefinitionName()) &&
+                        BucketEntry.Status.Active == currentEntry.getStatus()) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+    public boolean hasAncestorBeenInBucket(@Nonnull String bucketName) {
+
+        List<LabVessel> vesselHeirarchy = new ArrayList<LabVessel>();
+
+        vesselHeirarchy.add(this);
+        vesselHeirarchy.addAll(this.getAncestorVessels());
+
+        for(LabVessel currAncestor:vesselHeirarchy){
+            for(BucketEntry currentEntry: currAncestor.getBucketEntries()) {
+                if(bucketName.equals(currentEntry.getBucket().getBucketDefinitionName())) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 }

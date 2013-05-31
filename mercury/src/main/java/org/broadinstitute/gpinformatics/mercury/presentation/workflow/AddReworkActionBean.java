@@ -9,6 +9,7 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
@@ -26,6 +27,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
+import java.util.Collection;
 import java.util.List;
 
 @UrlBinding(value = "/workflow/AddRework.action")
@@ -75,14 +77,24 @@ public class AddReworkActionBean extends CoreActionBean {
         } else {
             reworkStep = LabEventType.SHEARING_BUCKET;
         }
+
+        Collection<String> validationMessages = null;
         try {
-            reworkEjb.addRework(labVessel, reworkReason, reworkStep, commentText);
+            validationMessages = reworkEjb.addAndValidateRework(vesselLabel, reworkReason, reworkStep, commentText,
+                    WorkflowName.EXOME_EXPRESS.getWorkflowName());
+            addMessage("Vessel {0} has been added to the {1} bucket.", labVessel.getLabel(), bucketName);
+
+            if(CollectionUtils.isNotEmpty(validationMessages)) {
+                for(String validationMessage:validationMessages) {
+                    addGlobalValidationError(validationMessage);
+                }
+            }
+
         } catch (ValidationException e) {
             addGlobalValidationError(e.getMessage());
             return view();
         }
 
-        addMessage("Vessel {0} has been added to the {1} bucket.", labVessel.getLabel(), bucketName);
         return new RedirectResolution(this.getClass());
     }
 
@@ -99,18 +111,25 @@ public class AddReworkActionBean extends CoreActionBean {
         return new ForwardResolution(VIEW_PAGE);
     }
 
-    @After(stages = LifecycleStage.BindingAndValidation, on = {VESSEL_INFO_ACTION, REWORK_SAMPLE_ACTION})
+    @After(stages = LifecycleStage.BindingAndValidation, on = {VESSEL_INFO_ACTION})
     public void setUpLabVessel() {
         labVessel = labVesselDao.findByIdentifier(vesselLabel);
+
         if (labVessel != null) {
+
+            ProductWorkflowDefVersion workflowDef =
+                    labEventHandler.getWorkflowVersionByWorkflow(WorkflowName.EXOME_EXPRESS.getWorkflowName());
+            buckets = workflowDef.getBuckets();
+
             for (SampleInstance sample : labVessel.getAllSamples()) {
                 String productOrderKey = sample.getProductOrderKey();
                 if (StringUtils.isNotEmpty(productOrderKey)) {
                     ProductOrder order = athenaClientService.retrieveProductOrderDetails(productOrderKey);
                     workflowName = order.getProduct().getWorkflowName();
-                    ProductWorkflowDefVersion workflowDef = labEventHandler.getWorkflowVersion(order.getBusinessKey());
-                    if (workflowName.equals(WorkflowName.EXOME_EXPRESS.getWorkflowName())) {
-                        buckets = workflowDef.getBuckets();
+
+                    ProductWorkflowDefVersion tempWorkflowDef = labEventHandler.getWorkflowVersion(order.getBusinessKey());
+                    if (!workflowName.equals(WorkflowName.EXOME_EXPRESS.getWorkflowName())) {
+                        addGlobalValidationError("Attempting to add {0} as a rework even though its workflow is {1}", vesselLabel, workflowName);
                     }
                     break;
                 }

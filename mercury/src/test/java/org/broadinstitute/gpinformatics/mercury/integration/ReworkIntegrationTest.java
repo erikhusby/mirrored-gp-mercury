@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.broadinstitute.gpinformatics.mercury.presentation.TestCoreActionBeanContext;
 import org.broadinstitute.gpinformatics.mercury.presentation.workflow.BucketViewActionBean;
 import org.broadinstitute.gpinformatics.mocks.EverythingYouAskForYouGetAndItsHuman;
@@ -148,10 +149,10 @@ public class ReworkIntegrationTest extends Arquillian {
         LabVessel aTubeFromBatch2 = batch2.getStartingLabVessels().iterator().next();
 
         // arz not sure what to set for other params
-        reworkEjb.addRework(aTubeFromBatch1, null, null, null);
+        reworkEjb.addRework(aTubeFromBatch1.getLabel(), null, null, null, WorkflowName.EXOME_EXPRESS.getWorkflowName());
         // arz for the "do rework with different PDO" case, seems like this
         // method's signature would change to include a PDO...but that's for later
-        reworkEjb.addRework(aTubeFromBatch1, null, null, null);
+        reworkEjb.addRework(aTubeFromBatch1.getLabel(), null, null, null, WorkflowName.EXOME_EXPRESS.getWorkflowName());
 
         List<String> selectedReworks = new ArrayList<String>(2);
         selectedReworks.add(aTubeFromBatch1.getLabel());
