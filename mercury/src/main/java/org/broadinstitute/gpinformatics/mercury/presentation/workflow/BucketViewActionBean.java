@@ -90,6 +90,8 @@ public class BucketViewActionBean extends CoreActionBean {
     private String description;
     private String summary;
     private Date dueDate;
+    private String selectedProductWorkflowDef;
+    private List<ProductWorkflowDef> allProductWorkflowDefs = new ArrayList<ProductWorkflowDef>();
 
     @Before(stages = LifecycleStage.BindingAndValidation)
     public void init() {
@@ -99,8 +101,14 @@ public class BucketViewActionBean extends CoreActionBean {
         for (ProductWorkflowDef workflowDef : workflowDefs) {
             ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
             if (workflowDef.getName().equals(WorkflowName.EXOME_EXPRESS.getWorkflowName())) {
+                allProductWorkflowDefs.add(workflowDef);
                 buckets.addAll(workflowVersion.getBuckets());
             }
+        }
+        //set the initial bucket to the first in the list and load it
+        if (buckets.size() > 0) {
+            selectedBucket = buckets.get(0).getName();
+            viewBucket();
         }
     }
 
@@ -150,6 +158,22 @@ public class BucketViewActionBean extends CoreActionBean {
 
     public void setReworkEntries(Collection<LabVessel> reworkEntries) {
         this.reworkEntries = reworkEntries;
+    }
+
+    public String getSelectedProductWorkflowDef() {
+        return selectedProductWorkflowDef;
+    }
+
+    public void setSelectedProductWorkflowDef(String selectedProductWorkflowDef) {
+        this.selectedProductWorkflowDef = selectedProductWorkflowDef;
+    }
+
+    public List<ProductWorkflowDef> getAllProductWorkflowDefs() {
+        return allProductWorkflowDefs;
+    }
+
+    public void setAllProductWorkflowDefs(List<ProductWorkflowDef> allProductWorkflowDefs) {
+        this.allProductWorkflowDefs = allProductWorkflowDefs;
     }
 
     @DefaultHandler
@@ -259,6 +283,8 @@ public class BucketViewActionBean extends CoreActionBean {
     @HandlesEvent(CREATE_BATCH_ACTION)
     public Resolution createBatch() throws Exception {
         LabBatch batchObject;
+
+        ProductWorkflowDef workflowDef = workflowLoader.load().getWorkflowByName(selectedProductWorkflowDef);
 
         Set<LabVessel> vesselSet = new HashSet<LabVessel>(labVesselDao.findByListIdentifiers(selectedVesselLabels));
 

@@ -5,7 +5,8 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-2.0.xsd">
 
-    <!-- add more includes as each file becomes unmanageably large -->
-    <include file="src/main/db/athenadb.changelog-1.0.xml"/>
-    <include file="src/main/db/athenadb.changelog-1.1.xml"/>
+    <!-- changeSet ids include the ticket number, with -n appended to allow multiple changeSets per ticket.
+     Keep changeSets small, it's harder to recover from an error in a large changeSet.
+      -->
+
 </databaseChangeLog>
