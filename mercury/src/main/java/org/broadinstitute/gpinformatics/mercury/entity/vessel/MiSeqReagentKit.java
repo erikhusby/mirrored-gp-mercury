@@ -10,10 +10,8 @@ import javax.persistence.Entity;
 @Entity
 @Audited
 public class MiSeqReagentKit extends StaticPlate  {
-    public static final String LOADING_WELL = "D4";
-
     public MiSeqReagentKit(String label) {
-        super(label, PlateType.Matrix96);
+        super(label, PlateType.MiSeqReagentKit);
     }
 
     public MiSeqReagentKit() {
@@ -21,7 +19,7 @@ public class MiSeqReagentKit extends StaticPlate  {
 
     @Override
     public VesselGeometry getVesselGeometry() {
-        return VesselGeometry.TUBE;
+        return VesselGeometry.MISEQ_REAGENT_KIT;
     }
 
     @Override
