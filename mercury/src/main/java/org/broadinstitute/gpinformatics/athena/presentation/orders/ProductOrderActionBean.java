@@ -46,11 +46,9 @@ import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceDefin
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
-import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
-import org.broadinstitute.gpinformatics.athena.presentation.links.SampleSearchLink;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProductTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProjectTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
@@ -173,9 +171,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Inject
     private QuoteLink quoteLink;
-
-    @Inject
-    private SampleSearchLink sampleSearchLink;
 
     @Inject
     private ProductOrderEjb productOrderEjb;
@@ -1069,10 +1064,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public String getQuoteUrl() {
         return getQuoteUrl(editOrder.getQuoteId());
-    }
-
-    public String sampleSearchUrlForBspSample(ProductOrderSample sample) {
-        return sampleSearchLink.getUrl(sample);
     }
 
     public static Resolution getTrackerForOrders(

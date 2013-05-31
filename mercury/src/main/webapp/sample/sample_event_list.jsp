@@ -71,10 +71,17 @@
                     </td>
                     <td>
                         <c:forEach items="${vessel.getSampleInstancesForSample(sample, 'ANY')}" var="sampleInstance">
-                            <stripes:link class="external" target="BSP_SAMPLE" title="BSP Sample"
-                                          href="${bean.sampleSearchUrlForBspSample(sampleInstance.startingSample.bspSampleName)}">
-                                ${sampleInstance.startingSample.sampleKey}
-                            </stripes:link>
+                            <c:set var="sampleLink" value="${bean.getSampleLink(sampleInstance)}"/>
+                            <c:choose>
+                                <c:when test="${sampleLink.hasLink}">
+                                    <stripes:link class="external" target="${sampleLink.target}" title="${sampleLink.label}" href="${sampleLink.url}">
+                                        ${sample.sampleName}
+                                    </stripes:link>
+                                </c:when>
+                                <c:otherwise>
+                                    ${sample.sampleName}
+                                </c:otherwise>
+                            </c:choose>
                         </c:forEach>
                     </td>
                     <td>
