@@ -26,6 +26,8 @@ execute immediate 'TRUNCATE TABLE im_event_fact';
 execute immediate 'TRUNCATE TABLE im_product_order_sample_risk';
 execute immediate 'TRUNCATE TABLE im_product_order_sample_bill';
 execute immediate 'TRUNCATE TABLE im_ledger_entry';
+execute immediate 'TRUNCATE TABLE im_sequencing_sample_fact';
+execute immediate 'TRUNCATE TABLE im_sequencing_run';
 
 COMMIT;
 END prep_import;
