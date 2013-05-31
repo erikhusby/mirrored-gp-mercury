@@ -8,6 +8,15 @@ import java.util.Date;
 
 public class EtlTestUtilities {
 
+    public static String recordRegex = ExtractTransform.DELIM + "(?=([^\"]*\"[^\"]*\")*[^\"]*$)";
+
+    /**
+     * @return Regular expression string for splitting the records by the {@link ExtractTransform}.DELIM that are not within an even number of double quotes.
+     */
+    public static String getRecordSplitRegex() {
+        return recordRegex;
+    }
+
     /**
      * Deletes all the files written by these tests including .dat, isReady, and lastEtlRun files.
      */
@@ -17,8 +26,8 @@ public class EtlTestUtilities {
             public boolean accept(File dirname, String filename) {
                 return (filename.endsWith(".dat")
                         || filename.endsWith(ExtractTransform.READY_FILE_SUFFIX))
-                        || filename.equals(ExtractTransform.LAST_ETL_FILE)
-                        || filename.equals(ExtractTransform.LAST_WF_CONFIG_HASH_FILE);
+                       || filename.equals(ExtractTransform.LAST_ETL_FILE)
+                       || filename.equals(ExtractTransform.LAST_WF_CONFIG_HASH_FILE);
             }
         };
         for (File file : new File(dir).listFiles(filter)) {
@@ -35,7 +44,8 @@ public class EtlTestUtilities {
         return getDirFiles(directoryName, etlDateStart, etlDateEnd);
     }
 
-    public static File[] getDirFiles(String directoryName, final String etlDateStringStart, final String etlDateStringEnd) {
+    public static File[] getDirFiles(String directoryName, final String etlDateStringStart,
+                                     final String etlDateStringEnd) {
         final long yyyymmddHHMMSSstart = Long.parseLong(etlDateStringStart);
         final long yyyymmddHHMMSSend = Long.parseLong(etlDateStringEnd);
         File dir = new File(directoryName);

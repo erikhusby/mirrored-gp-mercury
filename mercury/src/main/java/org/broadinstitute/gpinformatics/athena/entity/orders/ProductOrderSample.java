@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
+import clover.org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
@@ -49,22 +50,23 @@ import java.util.Set;
  * Class to describe Athena's view of a Sample. A Sample is identified by a sample Id and
  * a billableItem and an optionally comment which may be in most cases empty but on
  * occasion can actually have a value to describe "exceptions" that occur for a particular sample.
- *
  */
 @Entity
 @Audited
-@Table(name= "PRODUCT_ORDER_SAMPLE", schema = "athena")
+@Table(name = "PRODUCT_ORDER_SAMPLE", schema = "athena")
 public class ProductOrderSample implements Serializable {
     private static final long serialVersionUID = 8645451167948826402L;
 
-    /** Count shown when no billing has occurred. */
+    /**
+     * Count shown when no billing has occurred.
+     */
     public static final double NO_BILL_COUNT = 0;
     public static final String TUMOR_IND = BSPSampleDTO.TUMOR_IND;
     public static final String NORMAL_IND = BSPSampleDTO.NORMAL_IND;
     public static final String FEMALE_IND = BSPSampleDTO.FEMALE_IND;
     public static final String MALE_IND = BSPSampleDTO.MALE_IND;
     public static final String ACTIVE_IND = BSPSampleDTO.ACTIVE_IND;
- 
+
     @Id
     @SequenceGenerator(name = "SEQ_ORDER_SAMPLE", schema = "athena", sequenceName = "SEQ_ORDER_SAMPLE")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_ORDER_SAMPLE")
@@ -82,10 +84,11 @@ public class ProductOrderSample implements Serializable {
     @JoinColumn(insertable = false, updatable = false)
     private ProductOrder productOrder;
 
-    @OneToMany(mappedBy = "productOrderSample", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
+    @OneToMany(mappedBy = "productOrderSample", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
+            orphanRemoval = true)
     private Set<LedgerEntry> ledgerItems = new HashSet<LedgerEntry>();
 
-    @Column(name="SAMPLE_POSITION", updatable = false, insertable = false, nullable=false)
+    @Column(name = "SAMPLE_POSITION", updatable = false, insertable = false, nullable = false)
     private Integer samplePosition;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
@@ -102,6 +105,7 @@ public class ProductOrderSample implements Serializable {
 
     /**
      * Convert a list of ProductOrderSamples into a list of sample names.
+     *
      * @param samples the samples to convert.
      *
      * @return the names of the samples, in the same order as the input.
@@ -313,7 +317,7 @@ public class ProductOrderSample implements Serializable {
         StringBuilder builder = new StringBuilder();
 
         if (getLedgerItems() != null) {
-            for (LedgerEntry ledgerEntry : getLedgerItems() ) {
+            for (LedgerEntry ledgerEntry : getLedgerItems()) {
                 // If there is a message that is not success, add the message to the end.
                 if ((ledgerEntry.getBillingMessage() != null) && ledgerEntry.isBilled()) {
                     builder.append(ledgerEntry.getBillingMessage()).append("\n");
@@ -336,6 +340,7 @@ public class ProductOrderSample implements Serializable {
      * Given a sample, compute its billable price items based on its material type.  We assume that all add-ons
      * in the sample's order's product that can accept the sample's material type are required, in addition to the
      * product's primary price item.
+     *
      * @return the list of required add-ons.
      */
     List<PriceItem> getBillablePriceItems() {
@@ -363,8 +368,9 @@ public class ProductOrderSample implements Serializable {
     /**
      * Automatically generate the billing ledger items for this sample.  Once this is done, its price items will be
      * correctly billed when the next billing session is created.
+     *
      * @param completedDate completion date for billing
-     * @param quantity quantity for billing
+     * @param quantity      quantity for billing
      */
     public void autoBillSample(Date completedDate, double quantity) {
         List<PriceItem> itemsToBill = getBillablePriceItems();
@@ -472,16 +478,34 @@ public class ProductOrderSample implements Serializable {
         return false;
     }
 
+    /**
+     * @return A string with the full details for each {@link RiskItem} for the sample.
+     */
     public String getRiskString() {
-        StringBuilder riskStringBuilder = new StringBuilder();
+        List<String> riskStrings = new ArrayList<String>();
 
         if (isOnRisk()) {
             for (RiskItem riskItem : riskItems) {
-                riskStringBuilder.append(riskItem.getInformation());
+                riskStrings.add(riskItem.getInformation());
             }
         }
 
-        return riskStringBuilder.toString();
+        return StringUtils.join(riskStrings, " AND ");
+    }
+
+    /**
+     * @return A string of each {@link RiskItem}s {@link RiskCriterion} type for the sample.
+     */
+    public String getRiskTypeString() {
+        List<String> riskStrings = new ArrayList<String>();
+
+        if (isOnRisk()) {
+            for (RiskItem riskItem : riskItems) {
+                riskStrings.add(riskItem.getRiskCriterion().getType().getLabel());
+            }
+        }
+
+        return StringUtils.join(riskStrings, " AND ");
     }
 
     @SuppressWarnings("UnusedDeclaration")

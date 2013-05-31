@@ -1,7 +1,9 @@
-
 -------------------------------------------------------
--- For release 1.24
+-- For release 1.25
 -------------------------------------------------------
-alter table im_event_fact modify (workflow_id NULL);
-alter table im_event_fact modify (process_id NULL);
 
+alter table im_product_order_sample_risk add risk_types VARCHAR2(255);
+alter table im_product_order_sample_risk add risk_messages VARCHAR2(500);
+
+alter table product_order_sample add risk_types VARCHAR2(255);
+alter table product_order_sample add risk_messages VARCHAR2(500);

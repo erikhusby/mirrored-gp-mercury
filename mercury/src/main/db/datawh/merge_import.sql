@@ -805,7 +805,9 @@ FOR new IN im_po_sample_risk_cur LOOP
   BEGIN
 
     UPDATE product_order_sample SET
-      on_risk = new.on_risk
+      on_risk = new.on_risk,
+      risk_types = new.risk_types,
+      risk_messages = new.risk_messages
     WHERE product_order_sample_id = new.product_order_sample_id;
 
   EXCEPTION WHEN OTHERS THEN 

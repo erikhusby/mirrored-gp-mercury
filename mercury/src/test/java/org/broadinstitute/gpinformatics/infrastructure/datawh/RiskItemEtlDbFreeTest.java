@@ -1,10 +1,14 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
+import org.apache.commons.lang3.text.StrMatcher;
+import org.apache.commons.lang3.text.StrTokenizer;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.RiskItemDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.RiskItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
+import org.broadinstitute.gpinformatics.infrastructure.common.BaseSplitter;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.testng.annotations.AfterMethod;
@@ -13,6 +17,7 @@ import org.testng.annotations.Test;
 
 import java.util.Collection;
 import java.util.Date;
+import java.util.StringTokenizer;
 
 import static org.easymock.EasyMock.*;
 import static org.testng.Assert.*;
@@ -36,6 +41,8 @@ public class RiskItemEtlDbFreeTest {
     private ProductOrderSampleDao pdoDao = createMock(ProductOrderSampleDao.class);
     private ProductOrderSample pos = createMock(ProductOrderSample.class);
     private Object[] mocks = new Object[]{auditReader, obj, dao, pdoDao, pos};
+    private String riskType = RiskCriterion.RiskCriteriaType.TOTAL_DNA.getLabel();
+    private String riskMessage = "At 4:56:41 PM on May 23, 2013, calculated (Total DNA > 5) risk on value 7.67";
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void beforeMethod() {
@@ -80,6 +87,8 @@ public class RiskItemEtlDbFreeTest {
         expect(dao.findById(ProductOrderSample.class, posId)).andReturn(pos);
         expect(pos.getProductOrderSampleId()).andReturn(posId);
         expect(pos.isOnRisk()).andReturn(true);
+        expect(pos.getRiskTypeString()).andReturn(riskType);
+        expect(pos.getRiskString()).andReturn(riskMessage);
         replay(mocks);
 
         Collection<String> records = tst.dataRecords(etlDateStr, false, posId);
@@ -92,11 +101,18 @@ public class RiskItemEtlDbFreeTest {
 
     private void verifyRecord(String record) {
         int i = 0;
-        String[] parts = record.split(",");
+
+        // This regular expression is used to ensure that we are splitting on commas that are not inside surrounding quotes.
+        //String[] parts = record.split(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)");
+        String[] parts = record.split(EtlTestUtilities.getRecordSplitRegex());
         assertEquals(parts[i++], etlDateStr);
         assertEquals(parts[i++], "F");
         assertEquals(parts[i++], String.valueOf(posId));
         assertEquals(parts[i++], "T");
+        assertEquals(parts[i++], GenericEntityEtl.format(riskType));
+
+        // For strings that could contain commas we must use the GenericEntityEtl.format() method as it will add quotes around the string.
+        assertEquals(parts[i++], GenericEntityEtl.format(riskMessage));
         assertEquals(parts.length, i);
     }
 
