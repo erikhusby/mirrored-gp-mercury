@@ -23,6 +23,7 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
@@ -152,6 +153,7 @@ public class BaseEventTest {
     /**
      * This method runs the entities through the pico/plating process.
      *
+     *
      * @param mapBarcodeToTube  A map of barcodes to tubes that will be run the starting point of the pico/plating process.
      * @param productOrder      The product order to use for bucket entries.
      * @param workflowBatch     The batch that will be used for this process.
@@ -159,12 +161,14 @@ public class BaseEventTest {
      * @param rackBarcodeSuffix rack barcode suffix.
      * @param barcodeSuffix     Uniquifies the generated vessel barcodes. NOT date if test quickly invokes twice.
      *
+     * @param archiveBucketEntries allows a DBFree test case to force "ancestor" tubes to be currently in a bucket
+     *                             for scenarios where that state is important to the test
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
     public PicoPlatingEntityBuilder runPicoPlatingProcess(Map<String, TwoDBarcodedTube> mapBarcodeToTube,
                                                           ProductOrder productOrder, LabBatch workflowBatch,
                                                           String lcsetSuffix, String rackBarcodeSuffix,
-                                                          String barcodeSuffix) {
+                                                          String barcodeSuffix, boolean archiveBucketEntries) {
         String rackBarcode = "REXEX" + rackBarcodeSuffix;
 
         // Controls what the created lcset id is by temporarily overriding the static variable.
@@ -177,9 +181,17 @@ public class BaseEventTest {
 
         Bucket workingBucket = createAndPopulateBucket(mapBarcodeToTube, productOrder, "Pico/Plating Bucket");
 
-        return new PicoPlatingEntityBuilder(bettaLimsMessageTestFactory,
+        PicoPlatingEntityBuilder invoke = new PicoPlatingEntityBuilder(bettaLimsMessageTestFactory,
                 labEventFactory, getLabEventHandler(),
                 mapBarcodeToTube, rackBarcode, barcodeSuffix).invoke();
+
+        if (archiveBucketEntries) {
+            for (BucketEntry picoEntries : workingBucket.getBucketEntries()) {
+                picoEntries.setStatus(BucketEntry.Status.Archived);
+            }
+        }
+
+        return invoke;
     }
 
     /**
