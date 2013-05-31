@@ -86,6 +86,10 @@ public class ProductWorkflowDefVersion implements Serializable {
         return rootLabEventNode;
     }
 
+    public ProductWorkflowDef getProductWorkflowDef() {
+        return productWorkflowDef;
+    }
+
     public List<WorkflowBucketDef> getBuckets() {
         List<WorkflowBucketDef> workflowBucketDefs = new ArrayList<WorkflowBucketDef>();
         for (WorkflowProcessDef workflowProcessDef : workflowProcessDefs) {

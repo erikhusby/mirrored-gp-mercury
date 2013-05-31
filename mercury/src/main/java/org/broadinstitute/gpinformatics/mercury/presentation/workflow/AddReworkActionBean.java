@@ -9,10 +9,7 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
-import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
@@ -20,6 +17,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
@@ -34,8 +32,6 @@ public class AddReworkActionBean extends CoreActionBean {
     private LabVesselDao labVesselDao;
     @Inject
     private ReworkEjb reworkEjb;
-    @Inject
-    private AthenaClientService athenaClientService;
     @Inject
     private LabEventHandler labEventHandler;
 
@@ -104,11 +100,10 @@ public class AddReworkActionBean extends CoreActionBean {
         labVessel = labVesselDao.findByIdentifier(vesselLabel);
         if (labVessel != null) {
             for (SampleInstance sample : labVessel.getAllSamples()) {
-                String productOrderKey = sample.getProductOrderKey();
-                if (StringUtils.isNotEmpty(productOrderKey)) {
-                    ProductOrder order = athenaClientService.retrieveProductOrderDetails(productOrderKey);
-                    workflowName = order.getProduct().getWorkflowName();
-                    ProductWorkflowDefVersion workflowDef = labEventHandler.getWorkflowVersion(order.getBusinessKey());
+                LabBatch labBatch = sample.getLabBatch();
+                if (labBatch != null) {
+                    workflowName = labBatch.getWorkflowName();
+                    ProductWorkflowDefVersion workflowDef = labEventHandler.getWorkflowVersion(labBatch);
                     if (workflowName.equals(WorkflowName.EXOME_EXPRESS.getWorkflowName())) {
                         buckets = workflowDef.getBuckets();
                     }
