@@ -299,7 +299,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         // If this is not a draft, some fields are required.
         if (!editOrder.isDraft()) {
-            doValidation("save");
+            doValidation(SAVE_ACTION);
         } else {
             // Even in draft, created by must be set. This can't be checked using @Validate (yet),
             // since its value isn't set until updateTokenInputFields() has been called.
@@ -353,38 +353,40 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         // Since we are only validating from view, we can persist without worry of saving something bad.
-        // We are doing on risk calculation only when everything passes, but informing the user no matter what.
-        if (!hasErrors()) {
-            String errorMessage = "";
-            try {
-                // Only calculate on risk with this validation is being done on a draft order. After draft, this
-                // is a user driven feature.
-                if (editOrder.isDraft()) {
-                    errorMessage = productOrderEjb.calculateRisk(getUserBean().getBspUser(), editOrder.getBusinessKey());
-                }
-            } catch (Exception e) {
-                errorMessage = "Error calculating risk";
-            }
-
-            if (!StringUtils.isBlank(errorMessage)) {
-                addGlobalValidationError(errorMessage);
-                return;
-            }
-
-            // refetch the order to get updated risk status on the order.
-            editOrder = productOrderDao.findByBusinessKey(editOrder.getBusinessKey());
-            int numSamplesOnRisk = editOrder.countItemsOnRisk();
-
-            if (numSamplesOnRisk == 0) {
-                addMessage("None of the samples for this order are on risk");
-            } else {
-                addMessage("{0} {1} for this order {2} on risk",
-                        numSamplesOnRisk, Noun.pluralOf("sample", numSamplesOnRisk), numSamplesOnRisk == 1 ? "is" : "are");
-            }
+        // We are doing on risk calculation only when everything passes and when we are not doing save.
+        if (!hasErrors() && !SAVE_ACTION.equals(action)) {
+            doOnRiskUpdate();
         } else {
             addGlobalValidationError("On risk was not calculated.  Please fix the other errors first.");
             // Initialize ProductOrderListEntry if we're implicitly going to redisplay the source page.
             entryInit();
+        }
+    }
+
+    private void doOnRiskUpdate() {
+        String errorMessage = "";
+        try {
+            // Only calculate on risk with this validation when this is not a save action. This will help
+            // save performance AND make it only performed during validation
+            errorMessage = productOrderEjb.calculateRisk(getUserBean().getBspUser(), editOrder.getBusinessKey());
+        } catch (Exception e) {
+            errorMessage = "Error calculating risk";
+        }
+
+        if (!StringUtils.isBlank(errorMessage)) {
+            addGlobalValidationError(errorMessage);
+            return;
+        }
+
+        // refetch the order to get updated risk status on the order.
+        editOrder = productOrderDao.findByBusinessKey(editOrder.getBusinessKey());
+        int numSamplesOnRisk = editOrder.countItemsOnRisk();
+
+        if (numSamplesOnRisk == 0) {
+            addMessage("None of the samples for this order are on risk");
+        } else {
+            addMessage("{0} {1} for this order {2} on risk",
+                    numSamplesOnRisk, Noun.pluralOf("sample", numSamplesOnRisk), numSamplesOnRisk == 1 ? "is" : "are");
         }
     }
 
