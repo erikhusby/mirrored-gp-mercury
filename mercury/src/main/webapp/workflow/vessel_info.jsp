@@ -4,6 +4,12 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.AddReworkActionBean"/>
 
+<script type="text/javascript">
+//    $(document).ready(function () {
+//        $j('#reworkCandidates').dataTable();
+//    });
+</script>
+
 <c:choose>
     <c:when test="${actionBean.labVessel == null}">
         <div class="control-group">
@@ -15,40 +21,43 @@
     </c:when>
     <c:otherwise>
         <div class="control-group">
-            <stripes:label for="barcode" class="control-label">
-                Barcode
-            </stripes:label>
             <div class="controls">
-                <div id="barcode">${actionBean.labVessel.label}</div>
-            </div>
-        </div>
-        <c:forEach items="${actionBean.labVessel.nearestWorkflowLabBatches}" var="batch">
-            <div class="control-group">
-                <stripes:label for="batch" class="control-label">
-                    Batch
-                </stripes:label>
-                <div class="controls">
-                    <div id="batch"><stripes:link target="JIRA"
+                <table id="reworkCandidates" class="table simple">
+                    <thead>
+                    <tr>
+                        <%--<th></th>--%>
+                        <th>Barcode</th>
+                        <th>Sample</th>
+                        <th>PDO</th>
+                        <th>Batches</th>
+                        <th>Workflow</th>
+                        <th>Sample Count</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <c:forEach items="${actionBean.reworkCandidates}" var="candidate">
+                        <tr>
+<%--
+                            <td>
+                                <input type="radio" name="reworkBarcode" value="${candidate.tubeBarcode}"/>
+                            </td>
+--%>
+                            <td>${candidate.tubeBarcode}</td>
+                            <td>${candidate.sampleKey}</td>
+                            <td>${candidate.productOrderKey}</td>
+                            <td>
+                                <c:forEach items="${candidate.labVessel.nearestWorkflowLabBatches}" var="batch">
+                                    <stripes:link target="_new"
                                                   href="${batch.jiraTicket.browserUrl}"
                                                   class="external">${batch.batchName}</stripes:link>
-                    </div>
-                </div>
-            </div>
-        </c:forEach>
-        <div class="control-group">
-            <stripes:label for="workflowName" class="control-label">
-                Workflow Name
-            </stripes:label>
-            <div class="controls">
-                <div id="workflowName">${actionBean.workflowName}</div>
-            </div>
-        </div>
-        <div class="control-group">
-            <stripes:label for="sampleCount" class="control-label">
-                Sample Count
-            </stripes:label>
-            <div class="controls">
-                <div id="sampleCount">${actionBean.labVessel.getSampleInstanceCount("WITH_PDO", null)}</div>
+                                </c:forEach>
+                            </td>
+                            <td>${candidate.productOrder.product.workflowName}</td>
+                            <td>${candidate.labVessel.sampleInstanceCount}</td>
+                        </tr>
+                    </c:forEach>
+                    </tbody>
+                </table>
             </div>
         </div>
         <div class="control-group">

@@ -42,12 +42,15 @@ public class AddReworkActionBean extends CoreActionBean {
         private String sampleKey;
         private String productOrderKey;
         private String tubeBarcode;
+        private ProductOrder productOrder;
         private LabVessel labVessel;
 
-        public ReworkCandidate(@Nonnull String sampleKey, @Nonnull String productOrderKey, @Nonnull String tubeBarcode, LabVessel labVessel) {
+        public ReworkCandidate(@Nonnull String sampleKey, @Nonnull String productOrderKey, @Nonnull String tubeBarcode,
+                               ProductOrder productOrder, LabVessel labVessel) {
             this.sampleKey = sampleKey;
             this.productOrderKey = productOrderKey;
             this.tubeBarcode = tubeBarcode;
+            this.productOrder = productOrder;
             this.labVessel = labVessel;
         }
 
@@ -61,6 +64,10 @@ public class AddReworkActionBean extends CoreActionBean {
 
         public String getTubeBarcode() {
             return tubeBarcode;
+        }
+
+        public ProductOrder getProductOrder() {
+            return productOrder;
         }
 
         public LabVessel getLabVessel() {
@@ -90,6 +97,9 @@ public class AddReworkActionBean extends CoreActionBean {
 
     @Validate(required = true, on = {VESSEL_INFO_ACTION, REWORK_SAMPLE_ACTION})
     private String vesselLabel;
+
+    @Validate(required = true, on = REWORK_SAMPLE_ACTION)
+    private String reworkBarcode;
 
     @Validate(required = true, on = REWORK_SAMPLE_ACTION)
     private String bucketName;
@@ -160,10 +170,16 @@ public class AddReworkActionBean extends CoreActionBean {
 
                     // make sure we have a matching product order sample
                     for (ProductOrderSample sample : samples) {
-                        if (sampleInstance.getProductOrderKey() == null ||
-                            sampleInstance.getProductOrderKey().equals(sample.getProductOrder().getBusinessKey())) {
+                        String productOrderKey = sampleInstance.getProductOrderKey();
+                        if (productOrderKey == null ||
+                            productOrderKey.equals(sample.getProductOrder().getBusinessKey())) {
+                            ProductOrder productOrder = null;
+                            if (productOrderKey != null) {
+                                productOrder = athenaClientService.retrieveProductOrderDetails(productOrderKey);
+                            }
                             reworkCandidates.add(new ReworkCandidate(sample.getSampleName(),
-                                    sample.getProductOrder().getBusinessKey(), vessel.getLabel(), vessel));
+                                    sample.getProductOrder().getBusinessKey(), vessel.getLabel(), productOrder,
+                                    vessel));
                         }
                     }
                 }
@@ -271,5 +287,13 @@ public class AddReworkActionBean extends CoreActionBean {
 
     public List<ReworkCandidate> getReworkCandidates() {
         return reworkCandidates;
+    }
+
+    public String getReworkBarcode() {
+        return reworkBarcode;
+    }
+
+    public void setReworkBarcode(String reworkBarcode) {
+        this.reworkBarcode = reworkBarcode;
     }
 }
