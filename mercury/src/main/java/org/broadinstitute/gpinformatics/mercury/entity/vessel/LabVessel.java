@@ -813,7 +813,7 @@ public abstract class LabVessel implements Serializable {
         }
         if (traversalResults.getSampleInstances().isEmpty() && !mercurySamples.isEmpty()) {
             for (MercurySample mercurySample : mercurySamples) {
-                SampleInstance sampleInstance = new SampleInstance(mercurySample, null, null);
+                SampleInstance sampleInstance = new SampleInstance(mercurySample, null);
                 traversalResults.add(sampleInstance);
             }
         }

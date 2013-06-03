@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -208,35 +209,36 @@ public class MercuryOrSquidRouter implements Serializable {
                     if (sampleInstance.getProductOrderKey() == null) {
                         possibleControls.add(sampleInstance);
                     } else {
-                        LabBatch labBatch = sampleInstance.getLabBatch();
-                        if(labBatch == null) {
-                            throw new RuntimeException("No lab batch for sample " + sampleInstance.getStartingSample().getSampleKey());
-                        }
-                        ProductWorkflowDef productWorkflowDef = getWorkflow(labBatch.getWorkflowName());
-                        if (intent ==  Intent.SYSTEM_OF_RECORD) {
-                            MercuryOrSquid mercuryOrSquid;
-                            if (productWorkflowDef.getInValidation()) {
-                                // Per Andrew, we can assume that validation plastic has only one LCSET
-                                if(labBatch != null && labBatch.isValidationBatch()) {
-                                    mercuryOrSquid = MERCURY;
+                        String workflowName = sampleInstance.getWorkflowName();
+                        if (workflowName != null) {
+                            ProductWorkflowDef productWorkflowDef = getWorkflow(workflowName);
+                            if (intent ==  Intent.SYSTEM_OF_RECORD) {
+                                MercuryOrSquid mercuryOrSquid;
+                                if (productWorkflowDef.getInValidation()) {
+                                    LabBatch labBatch = sampleInstance.getLabBatch();
+                                    if(labBatch == null) {
+                                        throw new RuntimeException("No lab batch for sample " + sampleInstance.getStartingSample().getSampleKey());
+                                    }
+                                    // Per Andrew, we can assume that validation plastic has only one LCSET
+                                    if(labBatch.isValidationBatch()) {
+                                        mercuryOrSquid = MERCURY;
+                                    } else {
+                                        mercuryOrSquid = productWorkflowDef.getRouting();
+                                    }
                                 } else {
                                     mercuryOrSquid = productWorkflowDef.getRouting();
                                 }
+                                if (mercuryOrSquid == BOTH) {
+                                    mercuryOrSquid = SQUID;
+                                }
+                                routingOptions.add(mercuryOrSquid);
                             } else {
-                                mercuryOrSquid = productWorkflowDef.getRouting();
+                                routingOptions.add(productWorkflowDef.getRouting());
                             }
-                            if (mercuryOrSquid == BOTH) {
-                                mercuryOrSquid = SQUID;
-                            }
-                            routingOptions.add(mercuryOrSquid);
-                        } else {
-                            routingOptions.add(productWorkflowDef.getRouting());
                         }
                     }
                 }
                 if (!possibleControls.isEmpty()) {
-
-                    // TODO: change this logic if SampleInstance.controlRole is ever populated
 
                     // TODO: move this logic into ControlEjb?
 
@@ -321,7 +323,7 @@ public class MercuryOrSquidRouter implements Serializable {
      *
      * @return Workflow Definition for the defined workflow for the product order represented by productOrderKey
      */
-    private ProductWorkflowDef getWorkflow(String workflowName) {
+    private ProductWorkflowDef getWorkflow(@Nonnull String workflowName) {
 
         WorkflowConfig workflowConfig = workflowLoader.load();
 
