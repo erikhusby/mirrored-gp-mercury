@@ -54,8 +54,7 @@ public class MercuryConfiguration {
     private static class ExternalSystems {
         // Map of system key ("bsp", "squid", "thrift") to a Map of external system Deployments (TEST, QA, PROD) to
         // AbstractConfigs describing those deployments.
-        private final Map<String, Map<Deployment, AbstractConfig>> map =
-                new HashMap<String, Map<Deployment, AbstractConfig>>();
+        private final Map<String, Map<Deployment, AbstractConfig>> map = new HashMap<>();
 
         public void set(String systemKey, Deployment deployment, AbstractConfig config) {
             if (!map.containsKey(systemKey)) {
@@ -81,8 +80,7 @@ public class MercuryConfiguration {
     private static class MercuryConnections {
         // Map of system key ("bsp", "squid", "thrift") to a Map of *Mercury* Deployments to the corresponding external
         // system Deployment.
-        private final Map<String, Map<Deployment, Deployment>> map =
-                new HashMap<String, Map<Deployment, Deployment>>();
+        private final Map<String, Map<Deployment, Deployment>> map = new HashMap<>();
 
         public boolean isInitialized() {
             return !map.isEmpty();
@@ -138,7 +136,7 @@ public class MercuryConfiguration {
 
     private static Class<? extends AbstractConfig> getConfigClass(String configKey) {
         if (configKeyToClassMap == null) {
-            configKeyToClassMap = new HashMap<String, Class<? extends AbstractConfig>>();
+            configKeyToClassMap = new HashMap<>();
 
             ServletContext servletContext = getServletContext();
 
@@ -165,9 +163,7 @@ public class MercuryConfiguration {
                     configKeyToClassMap.put(getConfigKey(annotatedClass), annotatedClass);
                 }
 
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            } catch (ClassNotFoundException e) {
+            } catch (IOException | ClassNotFoundException e) {
                 throw new RuntimeException(e);
             }
         }
@@ -450,11 +446,7 @@ public class MercuryConfiguration {
                 BeanUtils.setProperty(config, property.getKey(), property.getValue());
             }
 
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        } catch (InvocationTargetException e) {
-            throw new RuntimeException(e);
-        } catch (NoSuchMethodException e) {
+        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
             throw new RuntimeException(e);
         }
 
@@ -472,13 +464,7 @@ public class MercuryConfiguration {
             Constructor<? extends AbstractConfig> constructor = clazz.getConstructor(Deployment.class);
             return constructor.newInstance(Deployment.STUBBY);
 
-        } catch (InstantiationException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        } catch (NoSuchMethodException e) {
-            throw new RuntimeException(e);
-        } catch (InvocationTargetException e) {
+        } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
             throw new RuntimeException(e);
         }
     }
