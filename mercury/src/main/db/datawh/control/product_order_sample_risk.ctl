@@ -10,5 +10,5 @@ TRAILING NULLCOLS
  product_order_sample_id,
  on_risk,
  risk_types,
- risk_msgs
+ risk_messages
 )

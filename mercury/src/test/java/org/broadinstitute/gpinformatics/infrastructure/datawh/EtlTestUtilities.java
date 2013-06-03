@@ -5,16 +5,20 @@ import org.apache.commons.io.FileUtils;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.Date;
+import java.util.regex.Pattern;
 
 public class EtlTestUtilities {
 
-    public static String recordRegex = ExtractTransform.DELIM + "(?=([^\"]*\"[^\"]*\")*[^\"]*$)";
+    public static final Pattern RECORD_REGEX =
+            Pattern.compile(ExtractTransform.DELIM + "(?=([^\"]*\"[^\"]*\")*[^\"]*$)");
 
     /**
-     * @return Regular expression string for splitting the records by the {@link ExtractTransform}.DELIM that are not within an even number of double quotes.
+     * Uses a regular expression string for splitting the records by the {@link ExtractTransform}.DELIM that are not within an even number of double quotes.
+     *
+     * @return String array of records split based on the string pattern.
      */
-    public static String getRecordSplitRegex() {
-        return recordRegex;
+    public static String[] splitRecords(CharSequence records) {
+        return RECORD_REGEX.split(records);
     }
 
     /**

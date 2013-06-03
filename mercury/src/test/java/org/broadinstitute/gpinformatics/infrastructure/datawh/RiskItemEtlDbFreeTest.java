@@ -101,9 +101,8 @@ public class RiskItemEtlDbFreeTest {
     private void verifyRecord(String record) {
         int i = 0;
 
-        // This regular expression is used to ensure that we are splitting on commas that are not inside surrounding quotes.
-        //String[] parts = record.split(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)");
-        String[] parts = record.split(EtlTestUtilities.getRecordSplitRegex());
+        // Get record data splitting on commas that are not inside surrounding quotes.
+        String[] parts = EtlTestUtilities.splitRecords(record);
         assertEquals(parts[i++], etlDateStr);
         assertEquals(parts[i++], "F");
         assertEquals(parts[i++], String.valueOf(posId));
