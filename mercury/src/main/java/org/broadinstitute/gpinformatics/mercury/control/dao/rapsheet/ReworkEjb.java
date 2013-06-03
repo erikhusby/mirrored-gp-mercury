@@ -16,11 +16,9 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
-import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.LabVesselComment;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.LabVesselPosition;
@@ -97,7 +95,7 @@ public class ReworkEjb {
                                                        @Nonnull String comment, String workflowName)
             throws ValidationException {
 
-        Set<MercurySample> reworks = new HashSet<MercurySample>();
+        Set<MercurySample> reworks = new HashSet<>();
         VesselPosition[] vesselPositions = labVessel.getVesselGeometry().getVesselPositions();
         if (vesselPositions == null) {
             vesselPositions = new VesselPosition[]{VesselPosition.TUBE1};
@@ -153,7 +151,7 @@ public class ReworkEjb {
                                       String comment) {
         LabVesselPosition labVesselPosition = new LabVesselPosition(vesselPosition, mercurySample);
         LabVesselComment<ReworkEntry> reworkComment =
-                new LabVesselComment<ReworkEntry>(labVessel.getLatestEvent(), labVessel, comment);
+                new LabVesselComment<>(labVessel.getLatestEvent(), labVessel, comment);
         ReworkEntry reworkEntry = new ReworkEntry(labVesselPosition, reworkComment, reworkReason,
                 reworkLevel, reworkFromStep);
         mercurySample.getRapSheet().addRework(reworkEntry);
@@ -179,7 +177,7 @@ public class ReworkEjb {
 
         LabVessel reworkVessel = labVesselDao.findByIdentifier(labVesselBarcode);
 
-        List<MercurySample> reworks = new ArrayList<MercurySample>(
+        List<MercurySample> reworks = new ArrayList<>(
                 getVesselRapSheet(reworkVessel, reworkReason, ReworkEntry.ReworkLevel.ONE_SAMPLE_RELEASE_REST_BATCH,
                         reworkFromStep,
                         comment, workflowName));
@@ -234,14 +232,14 @@ public class ReworkEjb {
      */
     public Collection<String> validateReworkItem(@Nonnull LabVessel reworkVessel, @Nonnull LabEventType reworkStep,
                                                  @Nonnull String workflowName) {
-        List<String> validationMessages = new ArrayList<String>();
+        List<String> validationMessages = new ArrayList<>();
 
         WorkflowBucketDef bucketDef = LabEventHandler
                 .findBucketDef(workflowName, reworkStep);
 
         if (Boolean.FALSE.equals(reworkVessel.hasAncestorBeenInBucket(bucketDef.getName()))) {
             validationMessages.add("You have submitted a vessel to the bucket that may not be considered a rework.  " +
-                                   "No anscestor of " + reworkVessel.getLabel() + " has ever been in been in the " +
+                                   "No ancestor of " + reworkVessel.getLabel() + " has ever been in been in the " +
                                    bucketDef.getName() + " before.");
         }
 
@@ -267,7 +265,7 @@ public class ReworkEjb {
     }
 
     public Collection<LabVessel> getVesselsForRework() {
-        Set<LabVessel> inactiveVessels = new HashSet<LabVessel>();
+        Set<LabVessel> inactiveVessels = new HashSet<>();
         for (ReworkEntry rework : reworkEntryDao.getActive()) {
             inactiveVessels.add(rework.getLabVesselComment().getLabVessel());
         }

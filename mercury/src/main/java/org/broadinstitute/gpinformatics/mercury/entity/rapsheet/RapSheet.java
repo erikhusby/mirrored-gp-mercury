@@ -47,11 +47,11 @@ public class RapSheet {
 
     @Column(nullable = false)
     @OneToMany(mappedBy = "rapSheet", cascade = CascadeType.ALL )
-    private List<MercurySample> samples=new ArrayList<MercurySample>();
+    private List<MercurySample> samples=new ArrayList<>();
 
     @Column(nullable = false)
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "rapSheet")
-    private List<RapSheetEntry> rapSheetEntries = new ArrayList<RapSheetEntry>();
+    private List<RapSheetEntry> rapSheetEntries = new ArrayList<>();
 
     public RapSheet() {
     }
@@ -119,7 +119,7 @@ public class RapSheet {
     }
 
     public Collection<ReworkEntry> getReworkEntries() {
-        Collection<ReworkEntry> entries = new ArrayList<ReworkEntry>();
+        Collection<ReworkEntry> entries = new ArrayList<>();
         for (RapSheetEntry rapSheetEntry : getRapSheetEntries()) {
             if (rapSheetEntry instanceof ReworkEntry) {
                 entries.add((ReworkEntry) rapSheetEntry);
