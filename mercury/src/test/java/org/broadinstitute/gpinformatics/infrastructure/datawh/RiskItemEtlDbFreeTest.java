@@ -1,14 +1,10 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
-import org.apache.commons.lang3.text.StrMatcher;
-import org.apache.commons.lang3.text.StrTokenizer;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
-import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.RiskItemDao;
-import org.broadinstitute.gpinformatics.athena.entity.orders.RiskItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.orders.RiskItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
-import org.broadinstitute.gpinformatics.infrastructure.common.BaseSplitter;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.testng.annotations.AfterMethod;
@@ -17,10 +13,13 @@ import org.testng.annotations.Test;
 
 import java.util.Collection;
 import java.util.Date;
-import java.util.StringTokenizer;
 
-import static org.easymock.EasyMock.*;
-import static org.testng.Assert.*;
+import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.verify;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.reset;
+import static org.easymock.EasyMock.replay;
+import static org.testng.Assert.assertEquals;
 
 /**
  * dbfree unit test of entity etl.
