@@ -215,6 +215,11 @@ public class MercuryConfiguration {
                 }
 
                 Deployment deployment = Deployment.valueOf(deploymentString);
+                // NOT_SUPPORTED is a sentinel value for use only in the 'mercury' stanza, there should not be
+                // any external system definitions for this deployment.
+                if (deployment == Deployment.NOT_SUPPORTED) {
+                    throw new RuntimeException("Unexpectedly saw NOT_SUPPORTED deployment section for system '" + deploymentEntry.getKey() + "'");
+                }
 
                 AbstractConfig config = externalSystems.getConfig(systemKey, deployment);
 
@@ -230,7 +235,6 @@ public class MercuryConfiguration {
                 setPropertiesIntoConfig(deploymentEntryValue, config);
 
                 externalSystems.set(systemKey, deployment, config);
-
             }
         }
     }
@@ -300,6 +304,12 @@ public class MercuryConfiguration {
         Map<String, Map<String, String>> deploymentsMap = doc.get(MERCURY_STANZA);
 
         for (Map.Entry<String, Map<String, String>> deployments : deploymentsMap.entrySet()) {
+            // An entry in the map goes from a Mercury deployment to a list of system deployments.
+            //
+            // mercury:
+            //   QA:
+            //     jira: DEV
+            //     ...
             String mercuryDeploymentString = deployments.getKey();
             if (Deployment.valueOf(mercuryDeploymentString) == null) {
                 throw new RuntimeException("Unrecognized deployment '" + mercuryDeploymentString + "'.");
@@ -311,18 +321,22 @@ public class MercuryConfiguration {
             for (Map.Entry<String, String> systemsMapping : systemsMappings.entrySet()) {
                 String externalDeploymentString = systemsMapping.getValue();
 
-                // This must point to a known external deployment for this system.
-                if (Deployment.valueOf(externalDeploymentString) == null) {
+                // This corresponds to the system deployment, which in the example above would be 'DEV' for jira.
+                // This first test is to see if the value in the YAML file is a recognized member of the Deployment enum.
+                Deployment externalDeployment = Deployment.valueOf(externalDeploymentString);
+
+                if (externalDeployment == null) {
                     throw new RuntimeException("Unrecognized deployment '" + externalDeploymentString + "'.");
                 }
 
-                Deployment externalDeployment = Deployment.valueOf(externalDeploymentString);
-
+                // Next check if there is a config for this system for the given system deployment.
                 String systemKey = systemsMapping.getKey();
 
                 AbstractConfig config = externalSystems.getConfig(systemKey, externalDeployment);
 
-                if (config == null) {
+                // It is okay to see NOT_SUPPORTED and not find a configuration as this is a sentinel value for
+                // the absence of a configuration.
+                if (config == null && externalDeployment != Deployment.NOT_SUPPORTED) {
                     throw new RuntimeException("Unrecognized external system in mercury connections: '" + systemKey + "'.");
                 }
 

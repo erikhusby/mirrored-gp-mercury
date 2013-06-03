@@ -236,7 +236,7 @@ mercury:
       deckMsgs: DEV
       datawhEtl: DEV
       bettaLimsServer: DEV
-      tableau:  PROD
+      tableau:  NOT_SUPPORTED
       hipchat: DEV
 
 
