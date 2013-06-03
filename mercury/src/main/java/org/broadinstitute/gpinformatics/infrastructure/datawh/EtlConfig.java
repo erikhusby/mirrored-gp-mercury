@@ -28,5 +28,4 @@ public class EtlConfig extends AbstractConfig implements Serializable {
     public void setDatawhEtlDirRoot(String datawhEtlDirRoot) {
         this.datawhEtlDirRoot = datawhEtlDirRoot;
     }
-
 }
