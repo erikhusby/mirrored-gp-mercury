@@ -5,7 +5,6 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
@@ -15,13 +14,16 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch.LabBatchType;
 
 import javax.ejb.Stateful;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
 import javax.inject.Inject;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 @Stateful
 public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
@@ -68,25 +70,24 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         Collection<String> records = new ArrayList<String>();
         for (EventFactDto fact : facts) {
             records.add(genericRecord(etlDateStr, isDelete,
-                    fact.labEvent.getLabEventId(),
-                    format(fact.wfDenorm == null ? null : fact.wfDenorm.getWorkflowId()),
-                    format(fact.wfDenorm == null ? null : fact.wfDenorm.getProcessId()),
-                    format(fact.productOrder == null ? null : fact.productOrder.getProductOrderId()),
-                    format(fact.sample.getSampleKey()),
-                    format(fact.labBatchId),
-                    format(fact.labEvent.getEventLocation()),
-                    format(fact.labVessel.getLabVesselId()),
-                    format(ExtractTransform.secTimestampFormat.format(fact.labEvent.getEventDate()))
+                    fact.getLabEvent().getLabEventId(),
+                    format(fact.getWfDenorm() == null ? null : fact.getWfDenorm().getWorkflowId()),
+                    format(fact.getWfDenorm() == null ? null : fact.getWfDenorm().getProcessId()),
+                    format(fact.getProductOrder() == null ? null : fact.getProductOrder().getProductOrderId()),
+                    format(fact.getSample().getSampleKey()),
+                    format(fact.getLabBatchId()),
+                    format(fact.getLabEvent().getEventLocation()),
+                    format(fact.getLabVessel().getLabVesselId()),
+                    format(ExtractTransform.secTimestampFormat.format(fact.getLabEvent().getEventDate()))
             ));
         }
         return records;
     }
 
-    private class EventFactDto {
+    private static class EventFactDto {
         private LabEvent labEvent;
         private LabVessel labVessel;
         private String eventName;
-        private SampleInstance sampleInstance;
         private LabBatch labBatch;
         private Long labBatchId;
         private MercurySample sample;
@@ -94,16 +95,59 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         private ProductOrder productOrder;
         private WorkflowConfigDenorm wfDenorm;
 
-        private EventFactDto(LabEvent labEvent, LabVessel labVessel, String eventName, SampleInstance sampleInstance,
+        private EventFactDto(LabEvent labEvent, LabVessel labVessel, String eventName,
                              LabBatch labBatch, MercurySample sample, String productOrderKey) {
             this.labEvent = labEvent;
             this.labVessel = labVessel;
             this.eventName = eventName;
-            this.sampleInstance = sampleInstance;
             this.labBatch = labBatch;
             this.labBatchId = labBatch == null ? null : labBatch.getLabBatchId();
             this.sample = sample;
             this.productOrderKey = productOrderKey;
+        }
+
+        public LabEvent getLabEvent() {
+            return labEvent;
+        }
+
+        public LabVessel getLabVessel() {
+            return labVessel;
+        }
+
+        public String getEventName() {
+            return eventName;
+        }
+
+        public LabBatch getLabBatch() {
+            return labBatch;
+        }
+
+        public Long getLabBatchId() {
+            return labBatchId;
+        }
+
+        public MercurySample getSample() {
+            return sample;
+        }
+
+        public String getProductOrderKey() {
+            return productOrderKey;
+        }
+
+        public ProductOrder getProductOrder() {
+            return productOrder;
+        }
+
+        public WorkflowConfigDenorm getWfDenorm() {
+            return wfDenorm;
+        }
+
+        public void setProductOrder(ProductOrder productOrder) {
+            this.productOrder = productOrder;
+        }
+
+        public void setWfDenorm(WorkflowConfigDenorm wfDenorm) {
+            this.wfDenorm = wfDenorm;
         }
     }
 
@@ -117,7 +161,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             String eventName = entity.getLabEventType().getName();
 
             Collection<LabVessel> vessels = entity.getTargetLabVessels();
-            if (vessels.size() == 0 && entity.getInPlaceLabVessel() != null) {
+            if (vessels.isEmpty() && entity.getInPlaceLabVessel() != null) {
                 vessels.add(entity.getInPlaceLabVessel());
             }
 
@@ -125,19 +169,21 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                 try {
                     Set<SampleInstance> sampleInstances =
                             vessel.getSampleInstances(SampleType.WITH_PDO, LabBatchType.WORKFLOW);
-                    if (sampleInstances.size() > 0) {
+                    if (!sampleInstances.isEmpty()) {
                         for (SampleInstance si : sampleInstances) {
                             if (si.getProductOrderKey() != null) {
                                 MercurySample sample = si.getStartingSample();
                                 if (sample != null) {
                                     for (LabBatch labBatch : si.getAllWorkflowLabBatches()) {
-                                        facts.add(new EventFactDto(entity, vessel, eventName, si, labBatch, sample,
+                                        facts.add(new EventFactDto(entity, vessel, eventName, labBatch, sample,
                                                 si.getProductOrderKey()));
                                     }
                                 } else {
+                                    // todo jmt why calling default toString()?
                                     missingStartingSamples.add(si.toString());
                                 }
                             } else {
+                                // todo jmt why calling default toString()?
                                 missingPdoKeys.add(si.toString());
                             }
                         }
@@ -150,13 +196,13 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             }
         }
         // Aggregates log messages.
-        if (missingSampleInstances.size() > 0) {
+        if (!missingSampleInstances.isEmpty()) {
             logger.debug(missingSampleInstances.size() + " vessels have no SampleInstance.");
         }
-        if (missingStartingSamples.size() > 0) {
+        if (!missingStartingSamples.isEmpty()) {
             logger.debug(missingStartingSamples.size() + " sampleInstances have no starting sample.");
         }
-        if (missingPdoKeys.size() > 0) {
+        if (!missingPdoKeys.isEmpty()) {
             logger.debug(missingPdoKeys.size() + " sampleInstances have no product order.");
         }
         return facts;
@@ -171,45 +217,42 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         Set<String> missingPdoEntities = new HashSet<String>();
 
         // Spins through and updates pdo and workflow, reusing already looked up values.
-        for (Iterator<EventFactDto> iter = facts.iterator(); iter.hasNext(); ) {
-            EventFactDto fact = iter.next();
-
-            if (fact.productOrderKey != null) {
+        for (EventFactDto fact : facts) {
+            if (fact.getProductOrderKey() != null) {
                 // First checks the local cache.
-                if (pdoMap.containsKey(fact.productOrderKey)) {
-                    fact.productOrder = pdoMap.get(fact.productOrderKey);
-                    fact.wfDenorm = wfMap.get(fact.productOrderKey);
-
+                if (pdoMap.containsKey(fact.getProductOrderKey())) {
+                    fact.setProductOrder(pdoMap.get(fact.getProductOrderKey()));
+                    fact.setWfDenorm(wfMap.get(fact.getProductOrderKey()));
                 } else {
                     // Does the product order lookup.
-                    fact.productOrder = pdoDao.findByBusinessKey(fact.productOrderKey);
-                    if (fact.productOrder != null) {
-                        pdoMap.put(fact.productOrderKey, fact.productOrder);
+                    fact.setProductOrder(pdoDao.findByBusinessKey(fact.getProductOrderKey()));
+                    if (fact.getProductOrder() != null) {
+                        pdoMap.put(fact.getProductOrderKey(), fact.getProductOrder());
 
                         // Does the workflow lookup.
-                        fact.wfDenorm = workflowConfigLookup.lookupWorkflowConfig(fact.eventName, fact.productOrder,
-                                fact.labEvent.getEventDate());
-                        wfMap.put(fact.productOrderKey, fact.wfDenorm);
+                        fact.setWfDenorm(workflowConfigLookup.lookupWorkflowConfig(fact.getEventName(),
+                                fact.getLabBatch(), fact.getLabEvent().getEventDate()));
+                        wfMap.put(fact.getProductOrderKey(), fact.getWfDenorm());
 
-                        if (fact.wfDenorm == null) {
-                            String epe = "(event " + fact.eventName + " productOrder " + fact.productOrderKey +
-                                    " eventDate " + sdf.format(fact.labEvent.getEventDate()) + ")";
+                        if (fact.getWfDenorm() == null) {
+                            String epe = "(event " + fact.getEventName() + " productOrder " + fact.getProductOrderKey()
+                                         + " eventDate " + sdf.format(fact.getLabEvent().getEventDate()) + ")";
                             missingWorkflows.add(epe);
                         }
 
                     } else {
-                        missingPdoEntities.add(fact.productOrderKey);
+                        missingPdoEntities.add(fact.getProductOrderKey());
                     }
 
                 }
             }
         }
         // Aggregates log messages.
-        if (missingPdoEntities.size() > 0) {
+        if (!missingPdoEntities.isEmpty()) {
             String missing = StringUtils.join(missingPdoEntities.iterator(), ", ");
             logger.debug("Cannot find product order entity for: " + missing);
         }
-        if (missingWorkflows.size() > 0) {
+        if (!missingWorkflows.isEmpty()) {
             String missing = StringUtils.join(missingPdoEntities.iterator(), ", ");
             logger.debug("Cannot find workflow config for: " + missing);
         }
