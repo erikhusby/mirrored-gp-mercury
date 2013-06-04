@@ -26,6 +26,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.IssueFieldsResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.BadBusinessKeyException;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
@@ -115,8 +116,8 @@ public class ProductOrderEjb {
         }
     }
 
-
-    private static void setSamples(ProductOrder productOrder, List<String> sampleIds) throws NoSamplesException {
+    // Could be static, but EJB spec does not like it.
+    private void setSamples(ProductOrder productOrder, List<String> sampleIds) throws NoSamplesException {
         if (sampleIds.isEmpty()) {
             throw new NoSamplesException();
         }
@@ -136,8 +137,8 @@ public class ProductOrderEjb {
         productOrder.updateAddOnProducts(addOns);
     }
 
-
-    private static void setStatus(ProductOrder productOrder) {
+    // Could be static, but EJB spec does not like it.
+    private void setStatus(ProductOrder productOrder) {
         // DRAFT orders not yet supported; force state of new PDOs to Submitted.
         productOrder.setOrderStatus(OrderStatus.Submitted);
     }
@@ -262,47 +263,44 @@ public class ProductOrderEjb {
     /**
      * Calculate the risk for all samples on the product order specified by business key.
      *
-     * @param bspUser The user updating the risk.
      * @param productOrderKey The product order business key.
      *
-     * @return Any error strings.
-     * @throws IOException Any errors in reporting the risk.
+     * @throws Exception Any errors in reporting the risk.
      */
-    public String calculateRisk(BspUser bspUser, String productOrderKey) throws IOException {
-        return calculateRisk(bspUser, productOrderKey, null);
+    public void calculateRisk(String productOrderKey) throws Exception {
+        calculateRisk(productOrderKey, null);
     }
 
     /**
-     * Calculate the risk for all samples on the product order specified by business key. If the selected samples
+     * Calculate the risk for all samples on the product order specified by business key. If the samples
      * parameter is null, then all samples on the order will be used.
      *
-     * @param bspUser The user updating the risk.
      * @param productOrderKey The product order business key.
-     * @param selectedSamples The samples to calculate risk on. Null if all.
+     * @param samples The samples to calculate risk on. Null if all.
      *
-     * @return Any error strings.
-     * @throws IOException Any errors in reporting the risk.
+     * @throws Exception Any errors in reporting the risk.
      */
-    public String calculateRisk(BspUser bspUser, String productOrderKey, List<ProductOrderSample> selectedSamples) throws IOException {
+    public void calculateRisk(String productOrderKey, List<ProductOrderSample> samples) throws Exception {
         ProductOrder editOrder = productOrderDao.findByBusinessKey(productOrderKey);
         if (editOrder == null) {
-            return MessageFormat.format("Invalid PDO key ''{0}'', for calculating risk.", productOrderKey);
+            String message = MessageFormat.format("Invalid PDO key ''{0}'', for calculating risk.", productOrderKey);
+            throw new BadBusinessKeyException(message);
         }
 
         // If null, then it will calculate for all samples.
-        if (selectedSamples == null) {
+        if (samples == null) {
             editOrder.calculateRisk();
         } else {
-            editOrder.calculateRisk(selectedSamples);
+            editOrder.calculateRisk(samples);
         }
 
-        editOrder.prepareToSave(bspUser);
-        return "";
+        // Set the create and modified information.
+        editOrder.prepareToSave(userBean.getBspUser());
     }
 
     public void setManualOnRisk(
         BspUser user, ProductOrder order,
-        List<ProductOrderSample> selectedProductOrderSamples, boolean riskStatus, String riskComment) {
+        List<ProductOrderSample> orderSamples, boolean riskStatus, String riskComment) {
 
         // If we are creating a manual on risk, then need to set it up and persist it for reuse.
         RiskCriterion criterion = null;
@@ -310,7 +308,7 @@ public class ProductOrderEjb {
             criterion = RiskCriterion.createManual();
         }
 
-        for (ProductOrderSample sample : selectedProductOrderSamples) {
+        for (ProductOrderSample sample : orderSamples) {
             if (riskStatus) {
                 sample.setManualOnRisk(criterion, riskComment);
             } else {
@@ -318,6 +316,7 @@ public class ProductOrderEjb {
             }
         }
 
+        // Set the create and modified information.
         order.prepareToSave(user);
     }
 
@@ -460,10 +459,10 @@ public class ProductOrderEjb {
     /**
      * Allow updated quotes, products, and add-ons.
      *
-     * @param productOrder             product order
-     * @param selectedAddOnPartNumbers selected add-on part numbers
+     * @param productOrder     product order
+     * @param addOnPartNumbers add-on part numbers
      */
-    public void update(ProductOrder productOrder, List<String> selectedAddOnPartNumbers) throws QuoteNotFoundException {
+    public void update(ProductOrder productOrder, List<String> addOnPartNumbers) throws QuoteNotFoundException {
 
         // update JIRA ticket with new quote
         // GPLIM-488
@@ -487,7 +486,7 @@ public class ProductOrderEjb {
 
         // set new add-ons in
         Set<ProductOrderAddOn> productOrderAddOns = new HashSet<ProductOrderAddOn>();
-        for (Product addOn : productDao.findByPartNumbers(selectedAddOnPartNumbers)) {
+        for (Product addOn : productDao.findByPartNumbers(addOnPartNumbers)) {
             ProductOrderAddOn productOrderAddOn = new ProductOrderAddOn(addOn, updatedProductOrder);
             productOrderDao.persist(productOrderAddOn);
             productOrderAddOns.add(productOrderAddOn);
