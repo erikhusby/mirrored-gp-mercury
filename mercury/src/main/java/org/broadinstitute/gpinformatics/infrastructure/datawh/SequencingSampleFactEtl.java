@@ -213,7 +213,7 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
             }
             if (missingPdoCount > 0) {
                 StringBuilder sb = new StringBuilder();
-                for (Map.Entry entry : pdoKeyToPdoId.entrySet()) {
+                for (Map.Entry<String, String> entry : pdoKeyToPdoId.entrySet()) {
                     if (entry.getValue() == null) {
                         if (sb.length() > 0) {
                             sb.append(", ");
@@ -221,9 +221,9 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
                         sb.append(entry.getKey());
                     }
                 }
-                logger.debug("SequencingRun cannot find ProductOrder entity for key " + sb.toString());
+                logger.debug("SequencingRun cannot find ProductOrder entity for key " + sb);
             }
-            if (sampleInstances.size() == 0) {
+            if (sampleInstances.isEmpty()) {
                 logger.debug("No sample instances found for sequencingRun " +
                         entity.getSequencingRunId() + " lane " + laneName);
             }
