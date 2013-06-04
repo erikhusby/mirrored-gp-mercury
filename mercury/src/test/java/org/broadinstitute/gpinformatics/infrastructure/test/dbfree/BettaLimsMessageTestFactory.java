@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.test.dbfree;
 
+import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.CherryPickSourceType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
@@ -12,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePl
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -21,6 +23,7 @@ import javax.xml.datatype.DatatypeFactory;
 import java.io.StringWriter;
 import java.util.GregorianCalendar;
 import java.util.List;
+import java.util.Map;
 
 /**
  * This class is a factory for BettaLIMSMessage JAXB objects.  It is intended to facilitate building messages in test cases.
@@ -216,38 +219,33 @@ public class BettaLimsMessageTestFactory {
         return receptacleEventType;
     }
 
-    public static class CherryPick {
-        private final String sourceRackBarcode;
-        private final String sourceWell;
-        private final String destinationRackBarcode;
-        private final String destinationWell;
 
-        public CherryPick(String sourceRackBarcode, String sourceWell, String destinationRackBarcode, String destinationWell) {
-            this.sourceRackBarcode = sourceRackBarcode;
-            this.sourceWell = sourceWell;
-            this.destinationRackBarcode = destinationRackBarcode;
-            this.destinationWell = destinationWell;
-        }
+    /**
+     * Create a PlateCherryPickEvent for transferring from a rack of tubes to a plate.
+     *
+     * @param eventType Event type of transfer
+     * @param sourceRackBarcode barcode of the Rack holding the tubes.
+     * @param sourceTubeMap mapping of tube barcodes to their position on the rack
+     * @param targetPlateBarcode barcode of the final plate
+     * @param plateType type of plate you are transferring to.
+     * @param cherryPicks list of cherryPicks
+     * @return the event object
+     */
+    @DaoFree
+    public PlateCherryPickEvent buildCherryPickToPlate(String eventType, String sourceRackBarcode,
+                Map<String,VesselPosition> sourceTubeMap, String targetPlateBarcode, String plateType, List<LabEventFactory.CherryPick> cherryPicks){
 
-        public String getSourceRackBarcode() {
-            return sourceRackBarcode;
-        }
+        final PlateCherryPickEvent stationEvent = new PlateCherryPickEvent();
+        setStationEventData(eventType, stationEvent);
 
-        public String getSourceWell() {
-            return sourceWell;
-        }
-
-        public String getDestinationRackBarcode() {
-            return destinationRackBarcode;
-        }
-
-        public String getDestinationWell() {
-            return destinationWell;
-        }
+        final PlateCherryPickEvent plateCherryPickEvent = new LabEventFactory()
+                .buildCherryPickRackToPlateDbFree(stationEvent, sourceRackBarcode, sourceTubeMap, targetPlateBarcode,
+                        plateType, cherryPicks);
+        return plateCherryPickEvent;
     }
 
-    public PlateCherryPickEvent buildCherryPickToPlate(String eventType, List<String> sourceRackBarcodes,
-                List<List<String>> sourceTubeBarcodes, String targetPlateBarcode, String plateType, List<CherryPick> cherryPicks){
+    public PlateCherryPickEvent buildCherryPickToPzlate(String eventType, List<String> sourceRackBarcodes,
+                List<List<String>> sourceTubeBarcodes, String targetPlateBarcode, String plateType, List<LabEventFactory.CherryPick> cherryPicks){
         PlateCherryPickEvent plateCherryPickEvent = new PlateCherryPickEvent();
         setStationEventData(eventType, plateCherryPickEvent);
 
@@ -267,7 +265,7 @@ public class BettaLimsMessageTestFactory {
 
         PositionMapType targetPositionMap = new PositionMapType();
 
-        for (CherryPick cherryPick : cherryPicks) {
+        for (LabEventFactory.CherryPick cherryPick : cherryPicks) {
             CherryPickSourceType cherryPickSource = new CherryPickSourceType();
             cherryPickSource.setBarcode(cherryPick.getSourceRackBarcode());
             cherryPickSource.setWell(cherryPick.getSourceWell());
@@ -288,7 +286,7 @@ public class BettaLimsMessageTestFactory {
 
     public PlateCherryPickEvent buildCherryPick(String eventType, List<String> sourceRackBarcodes,
             List<List<String>> sourceTubeBarcodes, String targetRackBarcode, List<String> targetTubeBarcodes,
-            List<CherryPick> cherryPicks) {
+            List<LabEventFactory.CherryPick> cherryPicks) {
         PlateCherryPickEvent plateCherryPickEvent = new PlateCherryPickEvent();
         setStationEventData(eventType, plateCherryPickEvent);
 
@@ -303,7 +301,7 @@ public class BettaLimsMessageTestFactory {
         plateCherryPickEvent.setPlate(buildRack(targetRackBarcode));
         plateCherryPickEvent.setPositionMap(buildPositionMap(targetRackBarcode, targetTubeBarcodes));
 
-        for (CherryPick cherryPick : cherryPicks) {
+        for (LabEventFactory.CherryPick cherryPick : cherryPicks) {
             CherryPickSourceType cherryPickSource = new CherryPickSourceType();
             cherryPickSource.setBarcode(cherryPick.getSourceRackBarcode());
             cherryPickSource.setWell(cherryPick.getSourceWell());
@@ -317,7 +315,7 @@ public class BettaLimsMessageTestFactory {
 
     public PlateCherryPickEvent buildCherryPickToStripTube(String eventType, List<String> sourceRackBarcodes,
             List<List<String>> sourceTubeBarcodes, String targetRackBarcode, List<String> targetStripTubeBarcodes,
-            List<CherryPick> cherryPicks) {
+            List<LabEventFactory.CherryPick> cherryPicks) {
         PlateCherryPickEvent plateCherryPickEvent = new PlateCherryPickEvent();
         setStationEventData(eventType, plateCherryPickEvent);
 
@@ -347,7 +345,7 @@ public class BettaLimsMessageTestFactory {
         }
         plateCherryPickEvent.setPositionMap(targetPositionMap);
 
-        for (CherryPick cherryPick : cherryPicks) {
+        for (LabEventFactory.CherryPick cherryPick : cherryPicks) {
             CherryPickSourceType cherryPickSource = new CherryPickSourceType();
             cherryPickSource.setBarcode(cherryPick.getSourceRackBarcode());
             cherryPickSource.setWell(cherryPick.getSourceWell());

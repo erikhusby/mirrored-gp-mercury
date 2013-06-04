@@ -128,10 +128,10 @@ public class ZimsIlluminaRunFactoryTest {
         TwoDBarcodedTube catchTube = catchTubeFormation. getContainerRole().getVesselAtPosition(VesselPosition.A01);
 
         // Strip tube B transfer
-        List<BettaLimsMessageTestFactory.CherryPick> cherryPicks = new ArrayList<BettaLimsMessageTestFactory.CherryPick>();
+        List<LabEventFactory.CherryPick> cherryPicks = new ArrayList<LabEventFactory.CherryPick>();
         String[] stripTubeWells = {"A01", "B01", "C01", "D01", "E01", "F01", "G01", "H01"};
         for (int i = 0; i < 8; i++) {
-            cherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(catchRackBarcode, "A01", "testStripTubeHolder", stripTubeWells[i]));
+            cherryPicks.add(new LabEventFactory.CherryPick(catchRackBarcode, "A01", "testStripTubeHolder", stripTubeWells[i]));
         }
         PlateCherryPickEvent stripTubeBTransferEvent = bettaLimsMessageFactory.buildCherryPickToStripTube(
                 LabEventType.STRIP_TUBE_B_TRANSFER.getName(), Collections.singletonList(catchRackBarcode),

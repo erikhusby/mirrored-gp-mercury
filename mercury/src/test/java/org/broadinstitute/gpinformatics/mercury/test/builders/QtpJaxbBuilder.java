@@ -139,10 +139,10 @@ public class QtpJaxbBuilder {
         for (List<String> normCatchBarcodes : listLcsetListNormCatchBarcodes) {
             // PoolingTransfer
             poolRackBarcode = "PoolRack" + testPrefix;
-            List<BettaLimsMessageTestFactory.CherryPick> poolingCherryPicks =
-                    new ArrayList<BettaLimsMessageTestFactory.CherryPick>();
+            List<LabEventFactory.CherryPick> poolingCherryPicks =
+                    new ArrayList<LabEventFactory.CherryPick>();
             for (int rackPosition = 1; rackPosition <= normCatchBarcodes.size(); rackPosition++) {
-                poolingCherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(normCatchRackBarcodes.get(i),
+                poolingCherryPicks.add(new LabEventFactory.CherryPick(normCatchRackBarcodes.get(i),
                         bettaLimsMessageTestFactory.buildWellName(rackPosition,
                                 BettaLimsMessageTestFactory.WellNameType.SHORT), poolRackBarcode,
                         "A1"));
@@ -163,9 +163,9 @@ public class QtpJaxbBuilder {
 
         // NormalizationTransfer
         normalizationRackBarcode = "NormalizationRack" + testPrefix;
-        List<BettaLimsMessageTestFactory.CherryPick> normaliztionCherryPicks = new ArrayList<BettaLimsMessageTestFactory.CherryPick>();
+        List<LabEventFactory.CherryPick> normaliztionCherryPicks = new ArrayList<LabEventFactory.CherryPick>();
         for (int j = 0; j < poolTubeBarcodes.size(); j++) {
-            normaliztionCherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(
+            normaliztionCherryPicks.add(new LabEventFactory.CherryPick(
                     poolRackBarcode, bettaLimsMessageTestFactory.buildWellName(j + 1,
                     BettaLimsMessageTestFactory.WellNameType.SHORT),
                     normalizationRackBarcode, bettaLimsMessageTestFactory.buildWellName(j + 1,
@@ -180,10 +180,10 @@ public class QtpJaxbBuilder {
 
         // DenatureTransfer
         denatureRackBarcode = "DenatureRack" + testPrefix;
-        List<BettaLimsMessageTestFactory.CherryPick> denatureCherryPicks = new ArrayList<BettaLimsMessageTestFactory.CherryPick>();
+        List<LabEventFactory.CherryPick> denatureCherryPicks = new ArrayList<LabEventFactory.CherryPick>();
 
         for (int j = 0; j < normalizationTubeBarcodes.size(); j++) {
-            denatureCherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(
+            denatureCherryPicks.add(new LabEventFactory.CherryPick(
                     normalizationRackBarcode, bettaLimsMessageTestFactory.buildWellName(j + 1,
                     BettaLimsMessageTestFactory.WellNameType.SHORT),
                     denatureRackBarcode, bettaLimsMessageTestFactory.buildWellName(j + 1,
@@ -200,11 +200,11 @@ public class QtpJaxbBuilder {
         if (workflowName != WorkflowName.EXOME_EXPRESS) {
             // StripTubeBTransfer
             stripTubeHolderBarcode = "StripTubeHolder" + testPrefix;
-            List<BettaLimsMessageTestFactory.CherryPick> stripTubeCherryPicks = new ArrayList<BettaLimsMessageTestFactory.CherryPick>();
+            List<LabEventFactory.CherryPick> stripTubeCherryPicks = new ArrayList<LabEventFactory.CherryPick>();
             int sourcePosition = 0;
             // Transfer column 1 to 8 rows, using non-empty source rows
             for (int destinationPosition = 0; destinationPosition < 8; destinationPosition++) {
-                stripTubeCherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(
+                stripTubeCherryPicks.add(new LabEventFactory.CherryPick(
                         denatureRackBarcode, Character.toString((char) ('A' + sourcePosition)) + "01",
                         stripTubeHolderBarcode, Character.toString((char) ('A' + destinationPosition)) + "01"));
                 if (sourcePosition + 1 < poolTubeBarcodes.size()) {

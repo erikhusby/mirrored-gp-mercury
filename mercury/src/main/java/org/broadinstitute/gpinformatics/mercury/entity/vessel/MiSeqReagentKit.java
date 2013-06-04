@@ -10,7 +10,7 @@ import javax.persistence.Entity;
 @Entity
 @Audited
 public class MiSeqReagentKit extends StaticPlate  {
-    public static final String LOADING_WELL = VesselPosition.D04.name();
+    public static final VesselPosition LOADING_WELL = VesselPosition.D04;
     public MiSeqReagentKit(String label) {
         super(label, PlateType.MiSeqReagentKit);
     }
