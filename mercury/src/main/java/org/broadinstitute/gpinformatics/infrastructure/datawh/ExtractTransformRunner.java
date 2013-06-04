@@ -20,8 +20,13 @@ import static javax.ejb.ConcurrencyManagementType.BEAN;
 @Singleton
 @ConcurrencyManagement(BEAN)
 public class ExtractTransformRunner {
-    private static final Log logger = LogFactory.getLog(ExtractTransform.class);
-    private int timerMinutes = 5;
+    private static final Log log = LogFactory.getLog(ExtractTransform.class);
+
+    /**
+     * Interval in minutes for the timer to fire off.
+     */
+    private int timerPeriod = 5;
+
     private static Date previousNextTimeout = new Date(0);
 
     @Resource
@@ -34,7 +39,7 @@ public class ExtractTransformRunner {
     public void initialize() {
         if (isEnabled()) {
             ScheduleExpression expression = new ScheduleExpression();
-            expression.minute("*/" + timerMinutes).hour("*");
+            expression.minute("*/" + timerPeriod).hour("*");
             timerService.createCalendarTimer(expression, new TimerConfig("ETL timer", false));
         }
     }
@@ -49,7 +54,7 @@ public class ExtractTransformRunner {
                 extractTransform.initConfig();
                 extractTransform.incrementalEtl("0", "0");
             } else {
-                logger.debug("Skipping ETL timer retry.");
+                log.debug("Skipping ETL timer retry.");
             }
         }
     }
