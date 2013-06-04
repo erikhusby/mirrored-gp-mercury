@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.envers;
 
 import com.sun.xml.ws.developer.Stateful;
-import org.apache.commons.collections15.SortedBidiMap;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.datawh.ExtractTransform;
@@ -14,12 +14,21 @@ import org.hibernate.envers.exception.AuditException;
 import org.hibernate.envers.query.AuditEntity;
 import org.hibernate.envers.query.AuditQuery;
 
-import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.NoResultException;
 import javax.persistence.Tuple;
-import javax.persistence.criteria.*;
-import java.util.*;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Path;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 /**
  * Access to Mercury AuditReader for data warehouse.
@@ -84,12 +93,13 @@ public class AuditReaderDao extends GenericDao {
      * @param entityClass the class of entity to process
      * @param doChunks    process multiple revIds in sql IN clause
      */
-    public List<Object[]> fetchDataChanges(Collection<Long> revIds, Class entityClass, boolean doChunks) {
-        List<Object[]> dataChanges = new ArrayList<Object[]>();
-
-        if (revIds == null || revIds.size() == 0) {
-            return dataChanges;
+    public <T> List<T[]> fetchDataChanges(Collection<Long> revIds, Class<?> entityClass, boolean doChunks) {
+        if (CollectionUtils.isEmpty(revIds)) {
+            return Collections.emptyList();
         }
+
+        List<T[]> dataChanges = new ArrayList<T[]>();
+
         // Chunks revIds as necessary to limit sql "in" clause to 1000 elements, or 1 element if not chunking.
         final int IN_CLAUSE_LIMIT = doChunks ? 1000 : 1;
         Collection<Long> sublist = new ArrayList<Long>();
@@ -106,7 +116,8 @@ public class AuditReaderDao extends GenericDao {
                 } catch (AuditException e) {
                     if (doChunks) {
                         // Retries sublist one rev at a time in order to skip the one causing problems.
-                        dataChanges.addAll(fetchDataChanges(sublist, entityClass, false));
+                        List<T[]> objects = fetchDataChanges(sublist, entityClass, false);
+                        dataChanges.addAll(objects);
                     } else {
                         // Log and ignore single rev id problem.
                         logger.debug("Cannot query " + entityClass.getSimpleName() + " with audit rev " + id);
@@ -119,5 +130,4 @@ public class AuditReaderDao extends GenericDao {
         }
         return dataChanges;
     }
-
 }

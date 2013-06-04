@@ -27,7 +27,7 @@ public class ResearchProjectFundingEtl extends GenericEntityEtl<ResearchProjectF
     }
 
     @Override
-    Path rootId(Root root) {
+    Path rootId(Root<ResearchProjectFunding> root) {
         return root.get(ResearchProjectFunding_.researchProjectFundingId);
     }
 

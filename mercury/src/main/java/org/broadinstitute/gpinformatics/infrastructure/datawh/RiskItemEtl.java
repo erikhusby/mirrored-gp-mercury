@@ -36,7 +36,7 @@ public class RiskItemEtl extends GenericEntityEtl<RiskItem, ProductOrderSample> 
     }
 
     @Override
-    Path rootId(Root root) {
+    Path rootId(Root<RiskItem> root) {
         return root.get(RiskItem_.riskItemId);
     }
 
