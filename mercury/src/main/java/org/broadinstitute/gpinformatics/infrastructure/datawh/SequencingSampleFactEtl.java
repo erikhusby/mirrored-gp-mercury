@@ -58,20 +58,23 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
 
     @Override
     Collection<String> dataRecords(String etlDateStr, boolean isDelete, SequencingRun entity) {
-
         Collection<String> records = new ArrayList<String>();
 
-        for (SequencingRunDto dto : makeSequencingRunDtos(entity)) {
-            records.add(genericRecord(etlDateStr, isDelete,
-                    entity.getSequencingRunId(),
-                    format(dto.flowcellBarcode),
-                    format(dto.laneName),
-                    format(dto.molecularIndexingSchemeName),
-                    format(dto.productOrderId),
-                    format(dto.sampleKey),
-                    format(dto.researchProjectId)
-            ));
+        if (entity != null) {
+            Collection<SequencingRunDto> dtos = makeSequencingRunDtos(entity);
+            for (SequencingRunDto dto : dtos) {
+                records.add(genericRecord(etlDateStr, isDelete,
+                        entity.getSequencingRunId(),
+                        format(dto.flowcellBarcode),
+                        format(dto.laneName),
+                        format(dto.molecularIndexingSchemeName),
+                        format(dto.productOrderId),
+                        format(dto.sampleKey),
+                        format(dto.researchProjectId)
+                ));
+            }
         }
+
         return records;
     }
 
@@ -118,116 +121,119 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
     private Collection<SequencingRunDto> makeSequencingRunDtos(SequencingRun entity) {
         Collection<SequencingRunDto> dtos = new ArrayList<>();
 
-        String flowcellBarcode = entity.getRunBarcode();
+        RunCartridge cartridge = entity.getSampleCartridge();
+        String laneName = cartridge.getCartridgeName();
+        String flowcellBarcode = cartridge.getCartridgeBarcode();
 
-        if (!StringUtils.isBlank(flowcellBarcode)) {
-            RunCartridge cartridge = entity.getSampleCartridge();
-            String laneName = cartridge.getCartridgeName();
+        if (!StringUtils.isBlank(laneName) && !StringUtils.isBlank(flowcellBarcode)) {
+            int uniquifierForNone = 0;
+            int uniquifierForMultiple = 0;
+            int missingStartingSampleCount = 0;
+            int missingPdoKeyCount = 0;
+            int missingPdoCount = 0;
+            Set<String> molecularIndexingSchemeNames = new HashSet<String>();
+            Collection<SampleInstance> sampleInstances =
+                    cartridge.getSampleInstances(SampleType.WITH_PDO, LabBatchType.WORKFLOW);
 
-            if (!StringUtils.isBlank(laneName)) {
-                int uniquifierForNone = 0;
-                int uniquifierForMultiple = 0;
-                int missingStartingSampleCount = 0;
-                int missingPdoKeyCount = 0;
-                int missingPdoCount = 0;
-                Set<String> molecularIndexingSchemeNames = new HashSet<String>();
+            for (SampleInstance si : sampleInstances) {
+                String molecularIndexingSchemeName = null;
+                String sampleKey = null;
+                String productOrderId = null;
+                String researchProjectId = null;
 
-                for (SampleInstance si : cartridge.getSampleInstances(SampleType.WITH_PDO, LabBatchType.WORKFLOW)) {
-                    String molecularIndexingSchemeName = null;
-                    String sampleKey = null;
-                    String productOrderId = null;
-                    String researchProjectId = null;
+                String pdoKey = si.getProductOrderKey();
+                if (pdoKey != null) {
 
-                    String pdoKey = si.getProductOrderKey();
-                    if (pdoKey != null) {
+                    if (pdoKeyToPdoId.containsKey(pdoKey)) {
+                        productOrderId = pdoKeyToPdoId.get(pdoKey);
+                        researchProjectId = pdoKeyToResearchProjectId.get(pdoKey);
+                    } else {
+                        // Fills cache with either value or null, to avoid gratuitous lookups.
+                        ProductOrder pdo = pdoDao.findByBusinessKey(pdoKey);
 
-                        if (pdoKeyToPdoId.containsKey(pdoKey)) {
-                            productOrderId = pdoKeyToPdoId.get(pdoKey);
-                            researchProjectId = pdoKeyToResearchProjectId.get(pdoKey);
-                        } else {
-                            // Fills cache with either value or null, to avoid gratuitous lookups.
-                            ProductOrder pdo = pdoDao.findByBusinessKey(pdoKey);
+                        productOrderId = (pdo != null) ? String.valueOf(pdo.getProductOrderId()) : null;
+                        pdoKeyToPdoId.put(pdoKey, productOrderId);
 
-                            productOrderId = (pdo != null) ? String.valueOf(pdo.getProductOrderId()) : null;
-                            pdoKeyToPdoId.put(pdoKey, productOrderId);
+                        researchProjectId = (pdo != null && pdo.getResearchProject() != null) ?
+                                String.valueOf(pdo.getResearchProject().getResearchProjectId()) : null;
+                        pdoKeyToResearchProjectId.put(pdoKey, researchProjectId);
+                    }
 
-                            researchProjectId = (pdo != null && pdo.getResearchProject() != null) ?
-                                    String.valueOf(pdo.getResearchProject().getResearchProjectId()) : null;
-                            pdoKeyToResearchProjectId.put(pdoKey, researchProjectId);
+                    if (productOrderId != null) {
+                        MercurySample sample = si.getStartingSample();
+                        if (sample != null) {
+                            sampleKey = sample.getSampleKey();
                         }
-
-                        if (productOrderId != null) {
-                            MercurySample sample = si.getStartingSample();
-                            if (sample != null) {
-                                sampleKey = sample.getSampleKey();
-                            }
-                            if (sampleKey != null) {
-                                for (Reagent reagent : si.getReagents()) {
-                                    if (OrmUtil.proxySafeIsInstance(reagent, MolecularIndexReagent.class)) {
-                                        if (molecularIndexingSchemeName == null) {
-                                            MolecularIndexingScheme molecularIdxScheme =
-                                                    ((MolecularIndexReagent) reagent).getMolecularIndexingScheme();
-                                            molecularIndexingSchemeName = molecularIdxScheme.getName();
-                                        } else {
-                                            molecularIndexingSchemeName = "MULTIPLE_" + uniquifierForMultiple++;
-                                        }
+                        if (sampleKey != null) {
+                            for (Reagent reagent : si.getReagents()) {
+                                if (OrmUtil.proxySafeIsInstance(reagent, MolecularIndexReagent.class)) {
+                                    if (molecularIndexingSchemeName == null) {
+                                        MolecularIndexingScheme molecularIdxScheme =
+                                                ((MolecularIndexReagent) reagent).getMolecularIndexingScheme();
+                                        molecularIndexingSchemeName = molecularIdxScheme.getName();
+                                    } else {
+                                        molecularIndexingSchemeName = "MULTIPLE_" + uniquifierForMultiple++;
                                     }
                                 }
-                                if (molecularIndexingSchemeName == null) {
-                                    molecularIndexingSchemeName = "NONE_" + uniquifierForNone++;
-                                }
-                                // Removes expected duplicates.
-                                if (!molecularIndexingSchemeNames.contains(molecularIndexingSchemeName)) {
-                                    molecularIndexingSchemeNames.add(molecularIndexingSchemeName);
-                                    dtos.add(new SequencingRunDto(
-                                            flowcellBarcode,
-                                            laneName,
-                                            molecularIndexingSchemeName,
-                                            entity.getRunDate(),
-                                            entity.getRunName(),
-                                            entity.getSequencingRunId(),
-                                            productOrderId,
-                                            sampleKey,
-                                            researchProjectId));
-                                }
-                            } else {
-                                ++missingStartingSampleCount;
+                            }
+                            if (molecularIndexingSchemeName == null) {
+                                molecularIndexingSchemeName = "NONE_" + uniquifierForNone++;
+                            }
+                            // Removes expected duplicates.
+                            if (!molecularIndexingSchemeNames.contains(molecularIndexingSchemeName)) {
+                                molecularIndexingSchemeNames.add(molecularIndexingSchemeName);
+                                dtos.add(new SequencingRunDto(
+                                        flowcellBarcode,
+                                        laneName,
+                                        molecularIndexingSchemeName,
+                                        entity.getRunDate(),
+                                        entity.getRunName(),
+                                        entity.getSequencingRunId(),
+                                        productOrderId,
+                                        sampleKey,
+                                        researchProjectId));
                             }
                         } else {
-                            ++missingPdoCount;
+                            ++missingStartingSampleCount;
                         }
                     } else {
-                        ++missingPdoKeyCount;
+                        ++missingPdoCount;
                     }
+                } else {
+                    ++missingPdoKeyCount;
                 }
-                if (missingStartingSampleCount > 0) {
-                    logger.debug(missingStartingSampleCount + " missing startingSamples in sequencingRun " +
-                            entity.getSequencingRunId() + " lane " + laneName);
-                }
-                if (missingPdoKeyCount > 0) {
-                    logger.debug(missingPdoKeyCount + " missing productOrderKeys in sequencingRun " +
-                            entity.getSequencingRunId() + " lane " + laneName);
-                }
-                if (missingPdoCount > 0) {
-                    StringBuilder sb = new StringBuilder();
-                    for (Map.Entry entry : pdoKeyToPdoId.entrySet()) {
-                        if (entry.getValue() == null) {
-                            if (sb.length() > 0) {
-                                sb.append(", ");
-                            }
-                            sb.append(entry.getKey());
+            }
+            if (missingStartingSampleCount > 0) {
+                logger.debug(missingStartingSampleCount + " missing startingSamples in sequencingRun " +
+                        entity.getSequencingRunId() + " lane " + laneName);
+            }
+            if (missingPdoKeyCount > 0) {
+                logger.debug(missingPdoKeyCount + " missing productOrderKeys in sequencingRun " +
+                        entity.getSequencingRunId() + " lane " + laneName);
+            }
+            if (missingPdoCount > 0) {
+                StringBuilder sb = new StringBuilder();
+                for (Map.Entry entry : pdoKeyToPdoId.entrySet()) {
+                    if (entry.getValue() == null) {
+                        if (sb.length() > 0) {
+                            sb.append(", ");
                         }
+                        sb.append(entry.getKey());
                     }
-                    logger.debug("SequencingRun cannot find ProductOrder entity for key " + sb.toString());
                 }
-
-            } else {
-                logger.debug("SequencingRun " + entity.getSequencingRunId() + " has no cartridge (lane) name.");
+                logger.debug("SequencingRun cannot find ProductOrder entity for key " + sb.toString());
+            }
+            if (sampleInstances.size() == 0) {
+                logger.debug("No sample instances found for sequencingRun " +
+                        entity.getSequencingRunId() + " lane " + laneName);
             }
 
         } else {
-            logger.debug("SequencingRun " + entity.getSequencingRunId() + " has no run barcode.");
+            logger.debug("SequencingRun " + entity.getSequencingRunId() +
+                    " is missing either cartridge (lane) name or flowcell barcode.");
         }
+
+
         return dtos;
     }
 

@@ -267,7 +267,7 @@ public class MolecularIndexingScheme {
         return this.name;
     }
 
-    protected void setName(final String name) {
+    public void setName(final String name) {
         this.name = name;
     }
 
