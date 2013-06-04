@@ -81,13 +81,25 @@ public class LimsQueriesTest {
 
     @Test(groups = DATABASE_FREE)
     public void testFindImmediatePlateParents() {
-        expect(staticPlateDAO.findByBarcode("plate3")).andReturn(plate3);
-        replay(staticPlateDAO);
-
-        List<String> parents = limsQueries.findImmediatePlateParents("plate3");
+        List<String> parents = limsQueries.findImmediatePlateParents(plate3);
         assertThat(parents.size(), equalTo(2));
         assertThat(parents, hasItem("plate1"));
         assertThat(parents, hasItem("plate2"));
+    }
+
+    @Test(groups = DATABASE_FREE)
+    public void testFindImmediatePlateParentsNotFound() {
+        expect(staticPlateDAO.findByBarcode("unknown_plate")).andReturn(null);
+        replay(staticPlateDAO);
+
+        Exception caught = null;
+        try {
+            limsQueries.findImmediatePlateParents("unknown_plate");
+        } catch (Exception e) {
+            caught = e;
+        }
+        assertThat(caught, instanceOf(RuntimeException.class));
+        assertThat(caught.getMessage(), Matchers.equalTo("Plate not found for barcode: unknown_plate"));
 
         verify(staticPlateDAO);
     }

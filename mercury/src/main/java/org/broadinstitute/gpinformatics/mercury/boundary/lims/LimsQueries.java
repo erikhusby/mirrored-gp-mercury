@@ -98,6 +98,19 @@ public class LimsQueries {
      */
     public List<String> findImmediatePlateParents(String plateBarcode) {
         StaticPlate plate = staticPlateDAO.findByBarcode(plateBarcode);
+        if (plate == null) {
+            throw new RuntimeException("Plate not found for barcode: " + plateBarcode);
+        }
+        return findImmediatePlateParents(plate);
+    }
+
+    /**
+     * DaoFree implementation of {@link #findImmediatePlateParents(String)}
+     * @param plate entity
+     * @return list of barcodes
+     */
+    @DaoFree
+    public List<String> findImmediatePlateParents(StaticPlate plate) {
         List<StaticPlate> parents = plate.getImmediatePlateParents();
         List<String> parentPlateBarcodes = new ArrayList<>();
         for (StaticPlate parent : parents) {
@@ -109,6 +122,9 @@ public class LimsQueries {
     public Map<String, Boolean> fetchParentRackContentsForPlate(String plateBarcode) {
         Map<String, Boolean> map = new HashMap<>();
         StaticPlate plate = staticPlateDAO.findByBarcode(plateBarcode);
+        if (plate == null) {
+            throw new RuntimeException("Plate not found for barcode: " + plateBarcode);
+        }
         Map<VesselPosition, Boolean> hasRackContentByWell = plate.getHasRackContentByWell();
         for (Map.Entry<VesselPosition, Boolean> entry : hasRackContentByWell.entrySet()) {
             map.put(entry.getKey().name(), entry.getValue());
@@ -119,6 +135,9 @@ public class LimsQueries {
     public List<WellAndSourceTubeType> fetchSourceTubesForPlate(String plateBarcode) {
         List<WellAndSourceTubeType> results = new ArrayList<>();
         StaticPlate plate = staticPlateDAO.findByBarcode(plateBarcode);
+        if (plate == null) {
+            throw new RuntimeException("Plate not found for barcode: " + plateBarcode);
+        }
         for (VesselAndPosition vesselAndPosition : plate.getNearestTubeAncestors()) {
             WellAndSourceTubeType result = new WellAndSourceTubeType();
             result.setWellName(vesselAndPosition.getPosition().name());

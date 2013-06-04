@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.test.builders;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.LimsQueries;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -115,6 +116,11 @@ public class LibraryConstructionEntityBuilder {
         labEventHandler.processEvent(ligationCleanupEntity);
         StaticPlate ligationCleanupPlate =
                 (StaticPlate) ligationCleanupEntity.getTargetLabVessels().iterator().next();
+
+        LimsQueries limsQueries = new LimsQueries(null, null);
+        List<String> plateParents = limsQueries.findImmediatePlateParents(ligationCleanupPlate);
+        Assert.assertEquals(plateParents.size(), 1, "Wrong number of plate parents");
+        Assert.assertEquals(plateParents.get(0), shearingCleanupPlate.getLabel(), "Wrong parent barcode");
 
         // PondEnrichment
         LabEventTest.validateWorkflow("PondEnrichment", ligationCleanupPlate);
