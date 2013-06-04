@@ -73,3 +73,8 @@ CREATE INDEX seq_sample_fact_idx2 ON sequencing_sample_fact(product_order_id, sa
 CREATE INDEX seq_sample_fact_idx3 ON sequencing_sample_fact(sequencing_run_id);
 -- add this for efficient re-export of existing entity ids
 CREATE INDEX event_fact_idx3 ON event_fact(lab_event_id);
+
+ALTER TABLE product ADD (primary_price_item_id number(19,0));
+
+ALTER TABLE product ADD CONSTRAINT fk_product_price_item_id FOREIGN KEY (primary_price_item_id)
+REFERENCES price_item(price_item_id) ON DELETE CASCADE;

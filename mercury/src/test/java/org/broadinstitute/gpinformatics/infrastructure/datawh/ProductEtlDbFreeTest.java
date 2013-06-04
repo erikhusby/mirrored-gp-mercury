@@ -1,8 +1,10 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
@@ -37,13 +39,16 @@ public class ProductEtlDbFreeTest {
     private boolean isTopLevelProduct = true;
     private String workflowName = "Test Workflow 1";
     private String productFamilyName = "Test ProductFamily";
+    private long primaryPriceItemId = 987654321L;
     private ProductEtl tst;
 
     private AuditReaderDao auditReader = createMock(AuditReaderDao.class);
+
     private Product obj = createMock(Product.class);
     private ProductDao dao = createMock(ProductDao.class);
     private ProductFamily family = createMock(ProductFamily.class);
-    private Object[] mocks = new Object[]{auditReader, dao, obj, family};
+    private PriceItem primaryPriceItem = createMock(PriceItem.class);
+    private Object[] mocks = new Object[]{auditReader, dao, obj, family, primaryPriceItem};
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void beforeMethod() {
@@ -88,6 +93,9 @@ public class ProductEtlDbFreeTest {
         expect(obj.isTopLevelProduct()).andReturn(isTopLevelProduct);
         expect(obj.getWorkflowName()).andReturn(workflowName);
         expect(obj.getProductFamily()).andReturn(family).times(2);
+        expect(obj.getPrimaryPriceItem()).andReturn(primaryPriceItem).times(2);
+
+        expect(primaryPriceItem.getPriceItemId()).andReturn(primaryPriceItemId);
 
         expect(family.getName()).andReturn(productFamilyName);
 
@@ -117,6 +125,7 @@ public class ProductEtlDbFreeTest {
         assertEquals(parts[i++], EtlTestUtilities.format(isTopLevelProduct));
         assertEquals(parts[i++], workflowName);
         assertEquals(parts[i++], productFamilyName);
+        assertEquals(parts[i++], String.valueOf(primaryPriceItemId));
         assertEquals(parts.length, i);
     }
 

@@ -10,9 +10,7 @@ import java.lang.reflect.InvocationTargetException;
  * Base class of concrete configurations.
  */
 public abstract class AbstractConfig {
-
     protected AbstractConfig(@Nonnull Deployment mercuryDeployment) {
-
         if (mercuryDeployment != Deployment.STUBBY) {
             AbstractConfig source = produce(getClass(), mercuryDeployment);
             try {
@@ -26,7 +24,6 @@ public abstract class AbstractConfig {
 
         this.mercuryDeployment = mercuryDeployment;
     }
-
 
     /**
      * This appears to be unused but has proven useful in past debugging to explicitly identify the external deployment.
@@ -45,7 +42,6 @@ public abstract class AbstractConfig {
         this.externalDeployment = externalDeployment;
     }
 
-
     /**
      * Return the AbstractConfig appropriate to the explicitly specified Mercury deployment.
      *
@@ -54,10 +50,8 @@ public abstract class AbstractConfig {
      * @return Appropriately configured AbstractConfig-derived instance.
      */
     protected static <C extends AbstractConfig> C produce(Class<C> clazz, Deployment deployment) {
-
         @SuppressWarnings({"UnnecessaryLocalVariable", "unchecked"})
         C config = (C) MercuryConfiguration.getInstance().getConfig(clazz, deployment);
         return config;
     }
-
 }
