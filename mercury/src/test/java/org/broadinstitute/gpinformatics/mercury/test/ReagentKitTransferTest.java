@@ -61,7 +61,7 @@ public class ReagentKitTransferTest  {
         plateCherryPickEvent.setEventType(LabEventType.DENATURE_TO_REAGENT_KIT_TRANSFER.getName());
 
         PlateCherryPickEvent transferEventType = bettaLimsMessageTestFactory
-                .buildCherryPickToPlate(new LabEventFactory(),LabEventType.DENATURE_TO_REAGENT_KIT_TRANSFER.getName(),
+                .buildCherryPickToPlate(LabEventType.DENATURE_TO_REAGENT_KIT_TRANSFER.getName(),
                         denatureRackBarcode, sourceBarcodes,
                         miSeqReagentKitBarcode,
                         MiSeqReagentKit.PlateType.MiSeqReagentKit.getDisplayName(), cherryPicks);
