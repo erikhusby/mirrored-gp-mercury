@@ -61,10 +61,7 @@ public class DeploymentProducer implements Serializable {
             // we are treating this as a Big Deal and aborting the deployment by throwing a RuntimeException.
             log.error(MessageFormat.format("JNDI lookup of {0} property failed!", MERCURY_DEPLOYMENT), e);
             throw new RuntimeException(e);
-        } catch (NullPointerException e) {
-            log.error(MessageFormat.format("JNDI lookup of {0} failed, found {0}={1}.", MERCURY_DEPLOYMENT, deploymentString), e);
-            throw e;
-        } catch (IllegalArgumentException e) {
+        } catch (NullPointerException | IllegalArgumentException e) {
             log.error(MessageFormat.format("JNDI lookup of {0} failed, found {0}={1}.", MERCURY_DEPLOYMENT, deploymentString), e);
             throw e;
         }
