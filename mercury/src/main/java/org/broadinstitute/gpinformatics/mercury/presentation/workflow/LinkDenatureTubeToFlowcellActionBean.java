@@ -8,8 +8,6 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidationMethod;
-import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateType;
@@ -35,7 +33,7 @@ public class LinkDenatureTubeToFlowcellActionBean extends CoreActionBean {
     private static String VIEW_PAGE = "/workflow/link_dtube_to_fc.jsp";
 
     @Inject
-    BettalimsMessageResource bettalimsMessageResource;
+    private BettalimsMessageResource bettalimsMessageResource;
 
     @Inject
     private LabVesselDao labVesselDao;
@@ -118,10 +116,8 @@ public class LinkDenatureTubeToFlowcellActionBean extends CoreActionBean {
         denatureTube = (TwoDBarcodedTube) labVesselDao.findByIdentifier(denatureTubeBarcode);
         if (denatureTube != null) {
             for (SampleInstance sample : denatureTube.getAllSamples()) {
-                String productOrderKey = sample.getProductOrderKey();
-                if (StringUtils.isNotEmpty(productOrderKey)) {
-                    ProductOrder order = athenaClientService.retrieveProductOrderDetails(productOrderKey);
-                    workflowName = order.getProduct().getWorkflowName();
+                if(sample.getWorkflowName() != null) {
+                    workflowName = sample.getWorkflowName();
                     break;
                 }
             }

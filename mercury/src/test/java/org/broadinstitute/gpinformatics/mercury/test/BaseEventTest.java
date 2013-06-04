@@ -8,7 +8,6 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProducer;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceStub;
@@ -145,8 +144,7 @@ public class BaseEventTest {
 
     protected LabEventHandler getLabEventHandler() {
         AthenaClientService athenaClientService = AthenaClientProducer.stubInstance();
-        return new LabEventHandler(new WorkflowLoader(), athenaClientService,
-                new BSPUserList(BSPManagerFactoryProducer.stubInstance()));
+        return new LabEventHandler(new WorkflowLoader(), athenaClientService);
     }
 
     /**

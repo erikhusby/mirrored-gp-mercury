@@ -1,22 +1,31 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.*;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowProcessDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowProcessDefVersion;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 
-import static org.easymock.EasyMock.*;
-import static org.testng.Assert.*;
+import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.reset;
+import static org.easymock.EasyMock.verify;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNull;
 
 /**
  * unit test of Event Etl doing a lookup of WorkflowConfigDenorm.
@@ -25,14 +34,14 @@ import static org.testng.Assert.*;
 public class WorkflowConfigLookupDbFreeTest {
 
     // 3 successive days starting 1-jan-2013 00:00:00 EST
-    static final long[] MSEC_DATES = new long[]{1357016400000L, 1357016400000L + 86400000L, 1357016400000L + 2 * 86400000L};
+    static final long[] MSEC_DATES = {1357016400000L, 1357016400000L + 86400000L, 1357016400000L + 2L * 86400000L};
 
     private WorkflowConfigLookup wfConfigLookup;
     private WorkflowConfig workflowConfig = buildWorkflowConfig();
 
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
-    public void setUp() throws Exception {
+    public void setUp() {
 
         WorkflowLoader workflowLoader = createMock(WorkflowLoader.class);
         expect(workflowLoader.load()).andReturn(workflowConfig);
@@ -46,44 +55,37 @@ public class WorkflowConfigLookupDbFreeTest {
     }
 
     @Test
-    public void testLookupWorkflowForEvent() throws Exception {
+    public void testLookupWorkflowForEvent() {
 
-        Product product1 = new Product(true);
-        product1.setProductName("Product 1");
-        product1.setWorkflowName("Workflow 1");
+        HashSet<LabVessel> starters = new HashSet<>();
+        LabBatch labBatch1 = new LabBatch("Product 1", starters, LabBatch.LabBatchType.WORKFLOW);
+        labBatch1.setWorkflowName("Workflow 1");
 
-        Product product2 = new Product(true);
-        product2.setProductName("Product 2");
-        product2.setWorkflowName("Workflow 1");
+        LabBatch labBatch2 = new LabBatch("Product 2", starters, LabBatch.LabBatchType.WORKFLOW);
+        labBatch2.setWorkflowName("Workflow 1");
 
-        Product product3 = new Product(true);
-        product3.setProductName("Product 3");
-        product3.setWorkflowName("Workflow 2");
-
-        List<ProductOrderSample> emptyList = Collections.emptyList();
-        ProductOrder pdo1 = new ProductOrder(0L, "", emptyList, null, product1, null);
-        ProductOrder pdo2 = new ProductOrder(0L, "", emptyList, null, product2, null);
-        ProductOrder pdo3 = new ProductOrder(0L, "", emptyList, null, product3, null);
+        LabBatch labBatch3 = new LabBatch("Product 3", starters, LabBatch.LabBatchType.WORKFLOW);
+        labBatch3.setWorkflowName("Workflow 2");
 
         // Does lookups based on product and date.  Checks the denorm cache for hits.
-        assertNull(wfConfigLookup.lookupWorkflowConfig("No such event", pdo1, new Date(MSEC_DATES[0] + 1000)));
-        assertNull(wfConfigLookup.lookupWorkflowConfig("GSWash1", pdo1, new Date(MSEC_DATES[0] - 1000)));
-        assertEquals((Long)wfConfigLookup.lookupWorkflowConfig("GSWash1", pdo1, new Date(MSEC_DATES[0] + 1000)).getWorkflowConfigDenormId(),
+        assertNull(wfConfigLookup.lookupWorkflowConfig("No such event", labBatch1, new Date(MSEC_DATES[0] + 1000L)));
+        assertNull(wfConfigLookup.lookupWorkflowConfig("GSWash1", labBatch1, new Date(MSEC_DATES[0] - 1000L)));
+        assertEquals((Long)wfConfigLookup.lookupWorkflowConfig("GSWash1", labBatch1, new Date(MSEC_DATES[0] + 1000L)).getWorkflowConfigDenormId(),
                 Long.valueOf(7366990729258982731L));
         assertEquals(wfConfigLookup.cacheHit, 0);
-        assertEquals((Long)wfConfigLookup.lookupWorkflowConfig("GSWash1", pdo1, new Date(MSEC_DATES[1] + 1000)).getWorkflowConfigDenormId(),
+        assertEquals((Long)wfConfigLookup.lookupWorkflowConfig("GSWash1", labBatch1, new Date(MSEC_DATES[1] + 1000L)).getWorkflowConfigDenormId(),
                 Long.valueOf(1625593456990639556L));
         assertEquals(wfConfigLookup.cacheHit, 0);
-        assertEquals((Long)wfConfigLookup.lookupWorkflowConfig("GSWash1", pdo1, new Date(MSEC_DATES[2] + 1000)).getWorkflowConfigDenormId(),
+        assertEquals((Long)wfConfigLookup.lookupWorkflowConfig("GSWash1", labBatch1, new Date(MSEC_DATES[2] + 1000L)).getWorkflowConfigDenormId(),
                 Long.valueOf(-2472811271328835449L));
         assertEquals(wfConfigLookup.cacheHit, 0);
-        assertEquals((Long)wfConfigLookup.lookupWorkflowConfig("GSWash1", pdo2, new Date(MSEC_DATES[2] + 1000)).getWorkflowConfigDenormId(),
+        assertEquals((Long)wfConfigLookup.lookupWorkflowConfig("GSWash1", labBatch2, new Date(MSEC_DATES[2] + 1000L)).getWorkflowConfigDenormId(),
                 Long.valueOf(-2472811271328835449L));
         assertEquals(wfConfigLookup.cacheHit, 1);
-        assertEquals((Long)wfConfigLookup.lookupWorkflowConfig("SageCleanup", pdo3, new Date(MSEC_DATES[2] + 1000)).getWorkflowConfigDenormId(),
+        assertEquals((Long)wfConfigLookup.lookupWorkflowConfig("SageCleanup", labBatch3, new Date(MSEC_DATES[2] + 1000L)).getWorkflowConfigDenormId(),
                 Long.valueOf(-961977840485104866L));
         assertEquals(wfConfigLookup.cacheHit, 1);
-        assertEquals((Long)wfConfigLookup.lookupWorkflowConfig("GSWash1", pdo2, new Date(MSEC_DATES[2] + 1000)).getWorkflowConfigDenormId(),
+        assertEquals((Long)wfConfigLookup.lookupWorkflowConfig("GSWash1", labBatch2, new Date(MSEC_DATES[2] + 1000L)).getWorkflowConfigDenormId(),
                 Long.valueOf(-2472811271328835449L));
         assertEquals(wfConfigLookup.cacheHit, 2);
     }

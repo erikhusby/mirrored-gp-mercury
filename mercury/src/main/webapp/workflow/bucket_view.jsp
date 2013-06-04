@@ -82,15 +82,6 @@
               action="bucketView.action?viewBucket=">
     <div class="form-horizontal">
         <div class="control-group">
-            <stripes:label for="workflowSelect" name="Select Workflow" class="control-label"/>
-            <div class="controls">
-                <stripes:select id="workflowSelect" name="selectedProductWorkflowDef">
-                    <stripes:options-collection collection="${actionBean.allProductWorkflowDefs}" label="name"
-                                                value="name"/>
-                </stripes:select>
-            </div>
-        </div>
-        <div class="control-group">
             <stripes:label for="bucketselect" name="Select Bucket" class="control-label"/>
             <div class="controls">
                 <stripes:select id="bucketSelect" name="selectedBucket" onchange="submitBucket()">
@@ -108,6 +99,15 @@
     <stripes:hidden name="selectedProductWorkflowDef" value="${actionBean.selectedProductWorkflowDef}"/>
     <c:if test="${actionBean.jiraEnabled}">
         <div id="newTicketDiv">
+            <div class="control-group">
+                <stripes:label for="workflowSelect" name="Select Workflow" class="control-label"/>
+                <div class="controls">
+                    <stripes:select id="workflowSelect" name="selectedProductWorkflowDef">
+                        <stripes:options-collection collection="${actionBean.allProductWorkflowDefs}" label="name"
+                                                    value="name"/>
+                    </stripes:select>
+                </div>
+            </div>
             <div class="control-group">
                 <stripes:label for="summary" name="Summary" class="control-label"/>
                 <div class="controls">

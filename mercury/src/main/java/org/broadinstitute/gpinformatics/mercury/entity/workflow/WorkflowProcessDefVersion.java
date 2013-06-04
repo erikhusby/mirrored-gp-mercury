@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 
+import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import java.io.Serializable;
@@ -26,6 +27,7 @@ public class WorkflowProcessDefVersion implements Serializable {
      * Treating steps as lists would simplify visualization and editing. */
     private List<WorkflowStepDef> workflowStepDefs = new ArrayList<WorkflowStepDef>();
     private Map<String, WorkflowStepDef> workflowStepsByName = new HashMap<String, WorkflowStepDef>();
+    private WorkflowProcessDef workflowProcessDef;
 
     /** For JAXB */
     WorkflowProcessDefVersion() {
@@ -54,6 +56,10 @@ public class WorkflowProcessDefVersion implements Serializable {
         return effectiveDate;
     }
 
+    public WorkflowProcessDef getWorkflowProcessDef() {
+        return workflowProcessDef;
+    }
+
     /** At a QC review, the user needs to know the options for re-entry */
     public List<WorkflowStepDef> getReEntryPoints() {
         List<WorkflowStepDef> reEntryPoints = new ArrayList<WorkflowStepDef>();
@@ -74,4 +80,15 @@ public class WorkflowProcessDefVersion implements Serializable {
         }
         return workflowBucketDefs;
     }
+
+    /**
+     * Called by JAXB, sets relationship to parent.
+     * @param unmarshaller JAXB
+     * @param parent enclosing XML element
+     */
+    @SuppressWarnings("UnusedDeclaration")
+    void afterUnmarshal(Unmarshaller unmarshaller, Object parent) {
+        workflowProcessDef = (WorkflowProcessDef) parent;
+    }
+
 }

@@ -182,8 +182,7 @@ public class SamplesPicoEndToEndTest {
             TemplateEngine templateEngine = new TemplateEngine();
             templateEngine.postConstruct();
             LabEventHandler labEventHandler = new LabEventHandler(new WorkflowLoader(),
-                    AthenaClientProducer.stubInstance(),
-                    new BSPUserList(BSPManagerFactoryProducer.stubInstance()));
+                    AthenaClientProducer.stubInstance());
 
             LabEvent picoDilutionTransferEntityA1 = labEventFactory.buildFromBettaLimsRackToPlateDbFree(
                     samplesPicoJaxbBuilder.getPicoDilutionTransferJaxbA1(), mapBarcodeToTube, null, null);

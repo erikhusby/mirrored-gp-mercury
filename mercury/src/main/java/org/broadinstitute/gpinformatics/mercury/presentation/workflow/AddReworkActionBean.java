@@ -9,13 +9,10 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
-import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
@@ -34,10 +31,8 @@ public class AddReworkActionBean extends CoreActionBean {
     private LabVesselDao labVesselDao;
     @Inject
     private ReworkEjb reworkEjb;
-    @Inject
-    private AthenaClientService athenaClientService;
-    @Inject
-    private LabEventHandler labEventHandler;
+
+    private WorkflowLoader workflowLoader = new WorkflowLoader();
 
     private static final String FIND_VESSEL_ACTION = "viewVessel";
     private static final String VESSEL_INFO_ACTION = "vesselInfo";
@@ -83,7 +78,7 @@ public class AddReworkActionBean extends CoreActionBean {
         }
 
         addMessage("Vessel {0} has been added to the {1} bucket.", labVessel.getLabel(), bucketName);
-        return new RedirectResolution(this.getClass());
+        return new RedirectResolution(getClass());
     }
 
 
@@ -104,11 +99,11 @@ public class AddReworkActionBean extends CoreActionBean {
         labVessel = labVesselDao.findByIdentifier(vesselLabel);
         if (labVessel != null) {
             for (SampleInstance sample : labVessel.getAllSamples()) {
-                String productOrderKey = sample.getProductOrderKey();
-                if (StringUtils.isNotEmpty(productOrderKey)) {
-                    ProductOrder order = athenaClientService.retrieveProductOrderDetails(productOrderKey);
-                    workflowName = order.getProduct().getWorkflowName();
-                    ProductWorkflowDefVersion workflowDef = labEventHandler.getWorkflowVersion(order.getBusinessKey());
+                String workflowNameLocal = sample.getWorkflowName();
+                if (workflowNameLocal != null) {
+                    workflowName = workflowNameLocal;
+                    ProductWorkflowDefVersion workflowDef = workflowLoader.load().getWorkflowByName(workflowNameLocal).
+                            getEffectiveVersion();
                     if (workflowName.equals(WorkflowName.EXOME_EXPRESS.getWorkflowName())) {
                         buckets = workflowDef.getBuckets();
                     }
@@ -119,7 +114,7 @@ public class AddReworkActionBean extends CoreActionBean {
     }
 
     @HandlesEvent(VESSEL_INFO_ACTION)
-    public ForwardResolution vesselInfo() throws Exception {
+    public ForwardResolution vesselInfo() {
         if (labVessel == null) {
             addGlobalValidationError("Mercury does not recognize vessel with barcode {0}.", vesselLabel);
         }

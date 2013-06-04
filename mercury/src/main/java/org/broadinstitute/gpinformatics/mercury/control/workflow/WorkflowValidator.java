@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.control.workflow;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -11,24 +10,32 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.*;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.BettalimsMessageUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.VesselSearchActionBean;
 
-import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.StringWriter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Validates messages against workflow definitions
@@ -39,6 +46,7 @@ import java.util.*;
 public class WorkflowValidator {
 
     private static final Log log = LogFactory.getLog(WorkflowValidator.class);
+    private final WorkflowLoader workflowLoader = new WorkflowLoader();
 
     @Inject
     private LabVesselDao labVesselDao;
@@ -192,21 +200,16 @@ public class WorkflowValidator {
      */
     public List<WorkflowValidationError> validateWorkflow(Collection<LabVessel> labVessels, String eventType) {
         List<WorkflowValidationError> validationErrors = new ArrayList<WorkflowValidationError>();
-        // Cache the workflows, because it's likely that there are only a few unique product orders on each plate
-        Map<String, ProductWorkflowDefVersion> mapProductOrderToWorkflow = new HashMap<String, ProductWorkflowDefVersion>();
 
         for (LabVessel labVessel : labVessels) { // todo jmt can this be null?
             Set<SampleInstance> sampleInstances = labVessel.getSampleInstances(LabVessel.SampleType.WITH_PDO,
                     LabBatch.LabBatchType.WORKFLOW);
             for (SampleInstance sampleInstance : sampleInstances) {
-                if (sampleInstance.getProductOrderKey() != null) {
-                    ProductWorkflowDefVersion workflowVersion =
-                            mapProductOrderToWorkflow.get(sampleInstance.getProductOrderKey());
-                    if (workflowVersion == null) {
-                        workflowVersion = getWorkflowVersion(sampleInstance.getProductOrderKey());
-                    }
+                String workflowName = sampleInstance.getWorkflowName();
+                if (workflowName != null) {
+                    ProductWorkflowDefVersion workflowVersion = workflowLoader.load().getWorkflowByName(workflowName).
+                            getEffectiveVersion();
                     if (workflowVersion != null) {
-                        mapProductOrderToWorkflow.put(sampleInstance.getProductOrderKey(), workflowVersion);
                         List<ProductWorkflowDefVersion.ValidationError> errors = workflowVersion.validate(labVessel, eventType);
                         if (!errors.isEmpty()) {
                             validationErrors.add(new WorkflowValidationError(sampleInstance, errors,
@@ -218,29 +221,6 @@ public class WorkflowValidator {
             }
         }
         return validationErrors;
-    }
-
-    // todo jmt copy/pasted from LabEventHandler, decide where to put it so it can be shared
-
-    /**
-     * Based on the BusinessKey of a product order, find the defined Workflow Version.  Query to the "Athena" side of
-     * Mercury for the ProductOrder Definition and look up the workflow definition based on the workflow name defined
-     * on the ProductOrder
-     *
-     * @param productOrderKey Business Key for a previously defined product order
-     * @return Workflow Definition for the defined workflow for the product order represented by productOrderKey
-     */
-    public ProductWorkflowDefVersion getWorkflowVersion(@Nonnull String productOrderKey) {
-        WorkflowConfig workflowConfig = new WorkflowLoader().load();
-        ProductWorkflowDefVersion versionResult = null;
-        ProductOrder productOrder = athenaClientService.retrieveProductOrderDetails(productOrderKey);
-
-        if (StringUtils.isNotBlank(productOrder.getProduct().getWorkflowName())) {
-            ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(
-                    productOrder.getProduct().getWorkflowName());
-            versionResult = productWorkflowDef.getEffectiveVersion();
-        }
-        return versionResult;
     }
 
     public void setAthenaClientService(AthenaClientService athenaClientService) {
