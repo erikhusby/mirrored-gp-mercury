@@ -246,6 +246,46 @@ public class BettaLimsMessageTestFactory {
         }
     }
 
+    public PlateCherryPickEvent buildCherryPickToPlate(String eventType, List<String> sourceRackBarcodes,
+                List<List<String>> sourceTubeBarcodes, String targetPlateBarcode, String plateType, List<CherryPick> cherryPicks){
+        PlateCherryPickEvent plateCherryPickEvent = new PlateCherryPickEvent();
+        setStationEventData(eventType, plateCherryPickEvent);
+
+        for (String sourceRackBarcode : sourceRackBarcodes) {
+            plateCherryPickEvent.getSourcePlate().add(buildRack(sourceRackBarcode));
+        }
+        for (int i = 0, sourceTubeBarcodesSize = sourceTubeBarcodes.size(); i < sourceTubeBarcodesSize; i++) {
+            List<String> sourceTubeBarcode = sourceTubeBarcodes.get(i);
+            plateCherryPickEvent.getSourcePositionMap().add(buildPositionMap(sourceRackBarcodes.get(i), sourceTubeBarcode));
+        }
+
+        PlateType targetPlate = new PlateType();
+        targetPlate.setBarcode(targetPlateBarcode);
+        targetPlate.setPhysType(plateType);
+        targetPlate.setSection(LabEventFactory.SECTION_ALL_96);
+        plateCherryPickEvent.setPlate(targetPlate);
+
+        PositionMapType targetPositionMap = new PositionMapType();
+
+        for (CherryPick cherryPick : cherryPicks) {
+            CherryPickSourceType cherryPickSource = new CherryPickSourceType();
+            cherryPickSource.setBarcode(cherryPick.getSourceRackBarcode());
+            cherryPickSource.setWell(cherryPick.getSourceWell());
+            cherryPickSource.setDestinationBarcode(cherryPick.getDestinationRackBarcode());
+            cherryPickSource.setDestinationWell(cherryPick.getDestinationWell());
+            ReceptacleType receptacleType = new ReceptacleType();
+            receptacleType.setReceptacleType(plateType);
+            receptacleType.setBarcode(targetPlateBarcode);
+            receptacleType.setPosition(cherryPick.getDestinationWell());
+            targetPositionMap.getReceptacle().add(receptacleType);
+            plateCherryPickEvent.getSource().add(cherryPickSource);
+        }
+        plateCherryPickEvent.setPositionMap(targetPositionMap);
+
+        return plateCherryPickEvent;
+
+    }
+
     public PlateCherryPickEvent buildCherryPick(String eventType, List<String> sourceRackBarcodes,
             List<List<String>> sourceTubeBarcodes, String targetRackBarcode, List<String> targetTubeBarcodes,
             List<CherryPick> cherryPicks) {

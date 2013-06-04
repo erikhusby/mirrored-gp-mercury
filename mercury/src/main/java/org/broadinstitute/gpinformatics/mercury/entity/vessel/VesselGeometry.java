@@ -88,7 +88,7 @@ public enum VesselGeometry {
             "MiSeq Reagent Kit",
             new String[]{"04"},
             new String[]{"D"},
-            new VesselPosition[]{VesselPosition.LANE1}),
+            new VesselPosition[]{VesselPosition.D04}),
 
 
     RUN_CHAMBER(
