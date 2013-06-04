@@ -134,9 +134,14 @@ public class TubeFormation extends LabVessel implements VesselContainerEmbedder<
     @Override
     public String getLabCentricName() {
         StringBuilder builder = new StringBuilder();
+        boolean first = true;
         for (RackOfTubes rack : racksOfTubes) {
+            if (first) {
+                first = false;
+            } else {
+                builder.append(" ");
+            }
             builder.append(rack.getLabel());
-            builder.append(" ");
         }
         return builder.toString();
     }
