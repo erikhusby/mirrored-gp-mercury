@@ -69,10 +69,10 @@ public class BucketViewActionBean extends CoreActionBean {
     public static final String NEW_TICKET = "newTicket";
     public static final String CREATE_BATCH_ACTION = "createBatch";
 
-    private List<WorkflowBucketDef> buckets = new ArrayList<WorkflowBucketDef>();
-    private List<String> selectedVesselLabels = new ArrayList<String>();
+    private List<WorkflowBucketDef> buckets = new ArrayList<>();
+    private List<String> selectedVesselLabels = new ArrayList<>();
     private List<LabVessel> selectedBatchVessels;
-    private List<String> selectedReworks = new ArrayList<String>();
+    private List<String> selectedReworks = new ArrayList<>();
 
     @Validate(required = true, on = {CREATE_BATCH_ACTION, "viewBucket"})
     private String selectedBucket;
@@ -80,7 +80,7 @@ public class BucketViewActionBean extends CoreActionBean {
     private Collection<BucketEntry> bucketEntries;
     private Collection<LabVessel> reworkEntries;
 
-    private Map<String, ProductOrder> pdoByKeyMap = new HashMap<String, ProductOrder>();
+    private Map<String, ProductOrder> pdoByKeyMap = new HashMap<>();
 
     private boolean jiraEnabled = false;
 
@@ -91,7 +91,7 @@ public class BucketViewActionBean extends CoreActionBean {
     private String summary;
     private Date dueDate;
     private String selectedProductWorkflowDef;
-    private List<ProductWorkflowDef> allProductWorkflowDefs = new ArrayList<ProductWorkflowDef>();
+    private List<ProductWorkflowDef> allProductWorkflowDefs = new ArrayList<>();
 
     @Before(stages = LifecycleStage.BindingAndValidation)
     public void init() {
@@ -106,7 +106,7 @@ public class BucketViewActionBean extends CoreActionBean {
             }
         }
         //set the initial bucket to the first in the list and load it
-        if (buckets.size() > 0) {
+        if (!buckets.isEmpty()) {
             selectedBucket = buckets.get(0).getName();
             viewBucket();
         }
@@ -209,7 +209,7 @@ public class BucketViewActionBean extends CoreActionBean {
             if (bucket != null) {
                 bucketEntries = bucket.getBucketEntries();
             } else {
-                bucketEntries = new ArrayList<BucketEntry>();
+                bucketEntries = new ArrayList<>();
             }
             if (!bucketEntries.isEmpty() || !reworkEntries.isEmpty()) {
                 jiraEnabled = true;
@@ -256,8 +256,8 @@ public class BucketViewActionBean extends CoreActionBean {
     }
 
     public Set<String> getSampleNames(LabVessel vessel) {
-        final Set<SampleInstance> allSamples = vessel.getAllSamples();
-        Set<String> sampleNames = new HashSet<String>();
+        Set<SampleInstance> allSamples = vessel.getAllSamples();
+        Set<String> sampleNames = new HashSet<>();
         for (SampleInstance sampleInstance : allSamples) {
             sampleNames.add(sampleInstance.getStartingSample().getSampleKey());
         }
@@ -282,16 +282,16 @@ public class BucketViewActionBean extends CoreActionBean {
      */
     @HandlesEvent(CREATE_BATCH_ACTION)
     public Resolution createBatch() throws Exception {
-        LabBatch batchObject;
 
-        ProductWorkflowDef workflowDef = workflowLoader.load().getWorkflowByName(selectedProductWorkflowDef);
+//        ProductWorkflowDef workflowDef = workflowLoader.load().getWorkflowByName(selectedProductWorkflowDef);
 
-        Set<LabVessel> vesselSet = new HashSet<LabVessel>(labVesselDao.findByListIdentifiers(selectedVesselLabels));
+        Set<LabVessel> vesselSet = new HashSet<>(labVesselDao.findByListIdentifiers(selectedVesselLabels));
 
-        Set<LabVessel> reworks = new HashSet<LabVessel>(labVesselDao.findByListIdentifiers(selectedReworks));
+        Set<LabVessel> reworks = new HashSet<>(labVesselDao.findByListIdentifiers(selectedReworks));
 
-        batchObject = new LabBatch(summary.trim(), vesselSet, LabBatch.LabBatchType.WORKFLOW, description, dueDate,
-                important);
+        LabBatch batchObject = new LabBatch(summary.trim(), vesselSet, LabBatch.LabBatchType.WORKFLOW, description,
+                dueDate, important);
+        batchObject.setWorkflowName(selectedProductWorkflowDef);
         batchObject.addReworks(reworks);
 
         labBatchEjb.createLabBatchAndRemoveFromBucket(batchObject, userBean.getBspUser().getUsername(), selectedBucket,
