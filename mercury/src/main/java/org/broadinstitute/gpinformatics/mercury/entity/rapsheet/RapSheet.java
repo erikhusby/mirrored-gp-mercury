@@ -46,11 +46,11 @@ public class RapSheet {
     private Long rapSheetId;
 
     @Column(nullable = false)
-    @OneToMany(mappedBy = "rapSheet", cascade = CascadeType.ALL )
+    @OneToMany(mappedBy = "rapSheet" )
     private List<MercurySample> samples=new ArrayList<>();
 
     @Column(nullable = false)
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "rapSheet")
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "rapSheet")
     private List<RapSheetEntry> rapSheetEntries = new ArrayList<>();
 
     public RapSheet() {

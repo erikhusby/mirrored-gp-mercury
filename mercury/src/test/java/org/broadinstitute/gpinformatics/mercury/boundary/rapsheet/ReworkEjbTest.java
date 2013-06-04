@@ -61,7 +61,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 /**
  *
  */
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
+@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class ReworkEjbTest extends Arquillian {
 
     @Inject
@@ -130,6 +130,7 @@ public class ReworkEjbTest extends Arquillian {
     private String pdo2JiraKey;
 
     private String pdo3JiraKey;
+    private boolean newBucket;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -142,6 +143,7 @@ public class ReworkEjbTest extends Arquillian {
             return;
         }
 
+        newBucket = false;
         Date currDate = new Date();
 
         String testPrefix = "SGM_Test";
@@ -211,6 +213,7 @@ public class ReworkEjbTest extends Arquillian {
         if (pBucket == null) {
 
             pBucket = new Bucket(bucketName);
+            newBucket = true;
         }
 
         bucketDao.persist(pBucket);
@@ -252,7 +255,7 @@ public class ReworkEjbTest extends Arquillian {
             }
         }
 
-        if (pBucket != null) {
+        if (newBucket) {
 
             bucketDao.remove(pBucket);
         }
