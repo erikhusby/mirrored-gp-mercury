@@ -28,7 +28,7 @@ public class LabVesselEtl extends GenericEntityEtl<LabVessel, LabVessel> {
     }
 
     @Override
-    Path rootId(Root root) {
+    Path rootId(Root<LabVessel> root) {
         return root.get(LabVessel_.labVesselId);
     }
 

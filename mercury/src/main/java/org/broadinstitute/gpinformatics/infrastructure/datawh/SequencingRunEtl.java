@@ -29,7 +29,7 @@ public class SequencingRunEtl extends GenericEntityEtl<SequencingRun, Sequencing
     }
 
     @Override
-    Path rootId(Root root) {
+    Path rootId(Root<SequencingRun> root) {
         return root.get(SequencingRun_.sequencingRunId);
     }
 

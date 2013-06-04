@@ -26,7 +26,7 @@ public class PriceItemEtl extends GenericEntityEtl<PriceItem, PriceItem> {
     }
 
     @Override
-    Path rootId(Root root) {
+    Path rootId(Root<PriceItem> root) {
         return root.get(PriceItem_.priceItemId);
     }
 

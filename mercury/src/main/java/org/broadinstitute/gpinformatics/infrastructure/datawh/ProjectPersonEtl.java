@@ -31,7 +31,7 @@ public class ProjectPersonEtl extends GenericEntityEtl<ProjectPerson, ProjectPer
     }
 
     @Override
-    Path rootId(Root root) {
+    Path rootId(Root<ProjectPerson> root) {
         return root.get(ProjectPerson_.projectPersonId);
     }
 

@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
-import org.apache.commons.collections.map.LRUMap;
+import org.apache.commons.collections15.map.LRUMap;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -42,7 +42,7 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
     }
 
     @Override
-    Path rootId(Root root) {
+    Path rootId(Root<SequencingRun> root) {
         return root.get(SequencingRun_.sequencingRunId);
     }
 
@@ -75,7 +75,7 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
         return records;
     }
 
-    private class SequencingRunDto {
+    private static class SequencingRunDto {
         String flowcellBarcode;
         String laneName;
         String molecularIndexingSchemeName;
@@ -112,8 +112,8 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
 
     // Cache lookups for efficiency.
     private static final int CACHE_SIZE = 16;
-    private static Map<String, String> pdoKeyToPdoId = new LRUMap(CACHE_SIZE);
-    private static Map<String, String> pdoKeyToResearchProjectId = new LRUMap(CACHE_SIZE);
+    private static Map<String, String> pdoKeyToPdoId = new LRUMap<>(CACHE_SIZE);
+    private static Map<String, String> pdoKeyToResearchProjectId = new LRUMap<>(CACHE_SIZE);
 
     private Collection<SequencingRunDto> makeSequencingRunDtos(SequencingRun entity) {
         Collection<SequencingRunDto> dtos = new ArrayList<>();
@@ -210,7 +210,7 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
                 }
                 if (missingPdoCount > 0) {
                     StringBuilder sb = new StringBuilder();
-                    for (Map.Entry entry : pdoKeyToPdoId.entrySet()) {
+                    for (Map.Entry<String, String> entry : pdoKeyToPdoId.entrySet()) {
                         if (entry.getValue() == null) {
                             if (sb.length() > 0) {
                                 sb.append(", ");
@@ -218,7 +218,7 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
                             sb.append(entry.getKey());
                         }
                     }
-                    logger.debug("SequencingRun cannot find ProductOrder entity for key " + sb.toString());
+                    logger.debug("SequencingRun cannot find ProductOrder entity for key " + sb);
                 }
 
             } else {
