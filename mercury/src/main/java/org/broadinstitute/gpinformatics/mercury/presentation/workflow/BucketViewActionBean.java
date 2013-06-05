@@ -46,7 +46,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@UrlBinding(value = "/view/bucketView.action")
+@UrlBinding(value = "/view/bucketView.action?{$event}")
 public class BucketViewActionBean extends CoreActionBean {
 
     private static final String VIEW_PAGE = "/workflow/bucket_view.jsp";
