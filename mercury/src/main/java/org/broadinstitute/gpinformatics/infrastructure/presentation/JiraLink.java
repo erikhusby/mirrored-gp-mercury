@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.athena.presentation.links;
+package org.broadinstitute.gpinformatics.infrastructure.presentation;
 
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
 

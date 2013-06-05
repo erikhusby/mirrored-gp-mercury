@@ -9,7 +9,16 @@
  */
 package org.broadinstitute.gpinformatics.mercury.presentation;
 
-import net.sourceforge.stripes.action.*;
+import net.sourceforge.stripes.action.ActionBean;
+import net.sourceforge.stripes.action.ActionBeanContext;
+import net.sourceforge.stripes.action.Before;
+import net.sourceforge.stripes.action.FileBean;
+import net.sourceforge.stripes.action.ForwardResolution;
+import net.sourceforge.stripes.action.Message;
+import net.sourceforge.stripes.action.OnwardResolution;
+import net.sourceforge.stripes.action.Resolution;
+import net.sourceforge.stripes.action.SimpleMessage;
+import net.sourceforge.stripes.action.StreamingResolution;
 import net.sourceforge.stripes.controller.FlashScope;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.exception.SourcePageNotFoundException;
@@ -21,11 +30,11 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.BuildInfoBean;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.athena.presentation.links.JiraLink;
-import org.broadinstitute.gpinformatics.athena.presentation.links.SampleLink;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
+import org.broadinstitute.gpinformatics.infrastructure.presentation.JiraLink;
+import org.broadinstitute.gpinformatics.infrastructure.presentation.SampleLink;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
 import org.broadinstitute.gpinformatics.mercury.entity.DB;
 
@@ -542,7 +551,7 @@ public class CoreActionBean implements ActionBean {
         return PRECISE_DATE_TIME_PATTERN;
     }
 
-    public SampleLink getSampleLink(ProductOrderSample sample) {
+    public SampleLink getSampleLink(AbstractSample sample) {
         return sampleLinkFactory.create(sample);
     }
 }

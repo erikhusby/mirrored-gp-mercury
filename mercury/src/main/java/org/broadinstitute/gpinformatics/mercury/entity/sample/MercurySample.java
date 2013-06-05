@@ -3,14 +3,20 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
-import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
+import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.RapSheet;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.ManyToOne;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
 
 /**
  * Represents Mercury's view of a sample.  Sample information is held in another system (initially Athena),
@@ -19,7 +25,7 @@ import javax.persistence.*;
 @Entity
 @Audited
 @Table(schema = "mercury")
-public class MercurySample {
+public class MercurySample extends AbstractSample {
 
     @Id
     @SequenceGenerator(name = "SEQ_MERCURY_SAMPLE", schema = "mercury", sequenceName = "SEQ_MERCURY_SAMPLE")
@@ -33,12 +39,6 @@ public class MercurySample {
     @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE, CascadeType.PERSIST})
     private RapSheet rapSheet;
 
-    @Transient
-    private BSPSampleDTO bspSampleDTO;
-
-    @Transient
-    private boolean hasBspDTOBeenInitialized;
-
     /**
      * For JPA
      */
@@ -50,9 +50,8 @@ public class MercurySample {
     }
 
     public MercurySample(String sampleKey, BSPSampleDTO bspSampleDTO) {
+        super(bspSampleDTO);
         this.sampleKey = sampleKey;
-        this.bspSampleDTO = bspSampleDTO;
-        hasBspDTOBeenInitialized = true;
     }
 
     public RapSheet getRapSheet() {
@@ -66,44 +65,10 @@ public class MercurySample {
         this.rapSheet = rapSheet;
     }
 
+    @Override
     public String getSampleKey() {
         return sampleKey;
     }
-
-    public boolean isInBspFormat() {
-        return BSPUtil.isInBspFormat(sampleKey);
-    }
-
-    public BSPSampleDTO getBspSampleDTO() {
-        if (!hasBspDTOBeenInitialized) {
-            if (isInBspFormat()) {
-                BSPSampleDataFetcher bspSampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
-                bspSampleDTO = bspSampleDataFetcher.fetchSingleSampleFromBSP(getSampleKey());
-                if (bspSampleDTO == null) {
-                    // No BSP sample exists with this name, but we still need a semblance of a BSP DTO.
-                    bspSampleDTO = new BSPSampleDTO();
-                }
-            }
-
-            hasBspDTOBeenInitialized = true;
-        }
-
-        return bspSampleDTO;
-    }
-
-    public void setBspSampleDTO(BSPSampleDTO bspSampleDTO) {
-        hasBspDTOBeenInitialized = true;
-        this.bspSampleDTO = bspSampleDTO;
-    }
-
-    public String getBspSampleName() {
-        // skip the SM- part of the name.
-        if ((sampleKey.length() > 3) && isInBspFormat()) {
-            return sampleKey.substring(3);
-        }
-        return sampleKey;
-    }
-
 
     @Override
     public boolean equals(Object o) {
@@ -111,7 +76,7 @@ public class MercurySample {
             return true;
         }
 
-        if (o == null || !(o instanceof MercurySample)) {
+        if (!(o instanceof MercurySample)) {
             return false;
         }
 

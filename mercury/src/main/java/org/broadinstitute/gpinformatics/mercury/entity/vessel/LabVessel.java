@@ -586,9 +586,9 @@ public abstract class LabVessel implements Serializable {
      * @return A list of vessel positions that the sample instance was last known to be at.
      */
     public List<VesselPosition> getLastKnownPositionsOfSample(@Nonnull SampleInstance sampleInstance) {
-        Map<Date, List<VesselPosition>> positionList = new TreeMap<Date, List<VesselPosition>>();
         if (getContainerRole() == null) {
-            for (VesselContainer container : getContainers()) {
+            Map<Date, List<VesselPosition>> positionList = new TreeMap<Date, List<VesselPosition>>();
+            for (VesselContainer<?> container : getContainers()) {
                 List<VesselPosition> curPositionLists = positionList.get(container.getEmbedder().getCreatedOn());
                 if (curPositionLists == null) {
                     curPositionLists = new ArrayList<VesselPosition>();
@@ -596,10 +596,14 @@ public abstract class LabVessel implements Serializable {
                 }
                 curPositionLists.add(container.getPositionOfVessel(this));
             }
-        } else {
-            return getPositionsOfSample(sampleInstance);
+
+            if (positionList.isEmpty()) {
+                return Collections.emptyList();
+            }
+
+            return positionList.get(positionList.keySet().iterator().next());
         }
-        return positionList.get(positionList.keySet().iterator().next());
+        return getPositionsOfSample(sampleInstance);
     }
 
     private Set<SampleInstance> getSamplesAtPosition(VesselPosition position, SampleType sampleType) {
