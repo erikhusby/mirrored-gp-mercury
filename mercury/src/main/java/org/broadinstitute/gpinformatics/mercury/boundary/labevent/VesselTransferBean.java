@@ -37,6 +37,17 @@ public class VesselTransferBean {
     @Inject
     LabEventFactory labEventFactory;
 
+    /**
+     * Create a vessel transfer for denature to reagent kit.
+     *
+     * @param denatureRackBarcode  The barcode of denature rack. If null a fake one will be created.
+     * @param denatureTubeBarcodes A list of barcodes to be transferred.
+     * @param reagentKitBarcode    The barcode of reagent kit that will receive the transfer.
+     * @param username             Name of the user performing the action.
+     * @param stationName          Where the transfer occurred (such as UI)
+     *
+     * @return The newly created event.
+     */
     public PlateCherryPickEvent denatureToReagentKitTransfer(String denatureRackBarcode,
                                                              List<String> denatureTubeBarcodes,
                                                              String reagentKitBarcode, String username,
@@ -45,17 +56,17 @@ public class VesselTransferBean {
         final String eventType = LabEventType.DENATURE_TO_REAGENT_KIT_TRANSFER.getName();
 
 
-        PlateCherryPickEvent event = new PlateCherryPickEvent();
-        event.setEventType(eventType);
+        PlateCherryPickEvent transferEvent = new PlateCherryPickEvent();
+        transferEvent.setEventType(eventType);
         GregorianCalendar gregorianCalendar = new GregorianCalendar();
         try {
-            event.setStart(DatatypeFactory.newInstance().newXMLGregorianCalendar(gregorianCalendar));
+            transferEvent.setStart(DatatypeFactory.newInstance().newXMLGregorianCalendar(gregorianCalendar));
         } catch (DatatypeConfigurationException e) {
             throw new RuntimeException(e);
         }
-        event.setDisambiguator(1L);
-        event.setOperator(username);
-        event.setStation(stationName);
+        transferEvent.setDisambiguator(1L);
+        transferEvent.setOperator(username);
+        transferEvent.setStation(stationName);
 
         List<LabEventFactory.CherryPick> cherryPicks = new ArrayList<>();
         Map<String, VesselPosition> sourceBarcodes = new HashMap<>();
@@ -70,11 +81,9 @@ public class VesselTransferBean {
             cherryPicks.add(cherryPick);
         }
 
-        labEventFactory.buildCherryPickRackToPlateDbFree(event,
+        return labEventFactory.buildCherryPickRackToPlateDbFree(transferEvent,
                 denatureRackBarcode, sourceBarcodes,
                 reagentKitBarcode,
                 MiSeqReagentKit.PlateType.MiSeqReagentKit.getDisplayName(), cherryPicks);
-
-        return event;
     }
 }
