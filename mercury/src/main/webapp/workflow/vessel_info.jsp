@@ -10,11 +10,12 @@
 //    });
 </script>
 
+<stripes:form partial="true" beanclass="${actionBean.class}">
 <c:choose>
-    <c:when test="${actionBean.labVessel == null}">
+    <c:when test="${actionBean.reworkCandidates.isEmpty()}">
         <div class="control-group">
             <div class="controls">
-                <div id="error" class="text-error">Mercury does not recognize tube barcode ${actionBean.vesselLabel}.
+                <div id="error" class="text-error">Mercury does not recognize tube barcode or sample ID: ${actionBean.vesselLabel}.
                 </div>
             </div>
         </div>
@@ -25,7 +26,7 @@
                 <table id="reworkCandidates" class="table simple">
                     <thead>
                     <tr>
-                        <%--<th></th>--%>
+                        <th></th>
                         <th>Barcode</th>
                         <th>Sample</th>
                         <th>PDO</th>
@@ -37,11 +38,9 @@
                     <tbody>
                     <c:forEach items="${actionBean.reworkCandidates}" var="candidate">
                         <tr>
-<%--
                             <td>
-                                <input type="radio" name="reworkBarcode" value="${candidate.tubeBarcode}"/>
+                                <stripes:radio name="reworkBarcode" value="${candidate.tubeBarcode}"/>
                             </td>
---%>
                             <td>${candidate.tubeBarcode}</td>
                             <td>${candidate.sampleKey}</td>
                             <td>${candidate.productOrderKey}</td>
@@ -75,3 +74,4 @@
         </div>
     </c:otherwise>
 </c:choose>
+</stripes:form>

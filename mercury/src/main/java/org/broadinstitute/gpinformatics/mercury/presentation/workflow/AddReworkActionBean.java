@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.workflow;
 
 import net.sourceforge.stripes.action.After;
+import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
@@ -9,35 +10,31 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
 import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
-import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 @UrlBinding(value = "/workflow/AddRework.action")
 public class AddReworkActionBean extends CoreActionBean {
 
+/*
     public static class ReworkCandidate {
         private String sampleKey;
         private String productOrderKey;
@@ -74,6 +71,7 @@ public class AddReworkActionBean extends CoreActionBean {
             return labVessel;
         }
     }
+*/
 
     @Inject
     private LabVesselDao labVesselDao;
@@ -85,17 +83,18 @@ public class AddReworkActionBean extends CoreActionBean {
     private AthenaClientService athenaClientService;
     @Inject
     private LabEventHandler labEventHandler;
+    @Inject
+    private WorkflowLoader workflowLoader;
 
     private static final String FIND_VESSEL_ACTION = "viewVessel";
     private static final String VESSEL_INFO_ACTION = "vesselInfo";
     private static final String REWORK_SAMPLE_ACTION = "reworkSample";
 
-    private String workflowName;
     private LabVessel labVessel;
-    private List<ReworkCandidate> reworkCandidates = new ArrayList<ReworkCandidate>();
-    private List<WorkflowBucketDef> buckets;
+    private List<ReworkEjb.ReworkCandidate> reworkCandidates = new ArrayList<>();
+    private List<WorkflowBucketDef> buckets = new ArrayList<>();
 
-    @Validate(required = true, on = {VESSEL_INFO_ACTION, REWORK_SAMPLE_ACTION})
+    @Validate(required = true, on = {VESSEL_INFO_ACTION})
     private String vesselLabel;
 
     @Validate(required = true, on = REWORK_SAMPLE_ACTION)
@@ -118,6 +117,7 @@ public class AddReworkActionBean extends CoreActionBean {
 
     @HandlesEvent(REWORK_SAMPLE_ACTION)
     public Resolution reworkSample() {
+        labVessel = labVesselDao.findByIdentifier(reworkBarcode);
         if (getBuckets().isEmpty()) {
             addValidationError("vesselLabel", "{2} is not in a bucket.", vesselLabel);
         }
@@ -150,67 +150,26 @@ public class AddReworkActionBean extends CoreActionBean {
         return new ForwardResolution(VIEW_PAGE);
     }
 
-    @After(stages = LifecycleStage.BindingAndValidation, on = {VESSEL_INFO_ACTION, REWORK_SAMPLE_ACTION})
+    @Before(stages = LifecycleStage.BindingAndValidation, on = { VESSEL_INFO_ACTION, REWORK_SAMPLE_ACTION })
+    public void initWorkflowBuckets() {
+        WorkflowConfig workflowConfig = workflowLoader.load();
+        List<ProductWorkflowDef> workflowDefs = workflowConfig.getProductWorkflowDefs();
+        //currently only do ExEx
+        for (ProductWorkflowDef workflowDef : workflowDefs) {
+            ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
+            if (workflowDef.getName().equals(WorkflowName.EXOME_EXPRESS.getWorkflowName())) {
+                buckets.addAll(workflowVersion.getBuckets());
+            }
+        }
+        //set the initial bucket to the first in the list and load it
+        if (buckets.size() > 0) {
+            bucketName = buckets.get(0).getName();
+        }
+    }
+
+    @After(stages = LifecycleStage.BindingAndValidation, on = VESSEL_INFO_ACTION)
     public void setUpLabVessel() {
-
-        // TODO: move all of this logic out of the action bean!
-
-        if (BSPUtil.isInBspFormat(vesselLabel)) {
-            List<ProductOrderSample> samples =
-                    productOrderSampleDao.findMapBySamples(Collections.singletonList(vesselLabel)).get(
-                            vesselLabel);
-
-            List<LabVessel> labVessels = labVesselDao.findBySampleKey(vesselLabel);
-            for (LabVessel vessel : labVessels) {
-                Set<SampleInstance> sampleInstances = vessel.getSampleInstances();
-
-                // per Zimmer, ignore tubes that are pools when querying by sample
-                if (sampleInstances.size() == 1) {
-                    SampleInstance sampleInstance = sampleInstances.iterator().next();
-
-                    // make sure we have a matching product order sample
-                    for (ProductOrderSample sample : samples) {
-                        String productOrderKey = sampleInstance.getProductOrderKey();
-                        if (productOrderKey == null ||
-                            productOrderKey.equals(sample.getProductOrder().getBusinessKey())) {
-                            ProductOrder productOrder = null;
-                            if (productOrderKey != null) {
-                                productOrder = athenaClientService.retrieveProductOrderDetails(productOrderKey);
-                            }
-                            reworkCandidates.add(new ReworkCandidate(sample.getSampleName(),
-                                    sample.getProductOrder().getBusinessKey(), vessel.getLabel(), productOrder,
-                                    vessel));
-                        }
-                    }
-                }
-            }
-
-            // TODO: handle the case where LIMS doesn't know the tube, but we can still look it up in BSP
-
-            if (getReworkCandidates().size() == 1) {
-                labVessel = getReworkCandidates().get(0).getLabVessel();
-            }
-
-            // TODO: handle the case where there is more than one vessel to choose from
-
-        } else {
-            labVessel = labVesselDao.findByIdentifier(vesselLabel);
-        }
-
-        if (labVessel != null) {
-            for (SampleInstance sample : labVessel.getAllSamples()) {
-                String productOrderKey = sample.getProductOrderKey();
-                if (StringUtils.isNotEmpty(productOrderKey)) {
-                    ProductOrder order = athenaClientService.retrieveProductOrderDetails(productOrderKey);
-                    workflowName = order.getProduct().getWorkflowName();
-                    ProductWorkflowDefVersion workflowDef = labEventHandler.getWorkflowVersion(order.getBusinessKey());
-                    if (workflowName.equals(WorkflowName.EXOME_EXPRESS.getWorkflowName())) {
-                        buckets = workflowDef.getBuckets();
-                    }
-                    break;
-                }
-            }
-        }
+        reworkCandidates = new ArrayList(reworkEjb.findReworkCandidates(vesselLabel));
     }
 
     @HandlesEvent(VESSEL_INFO_ACTION)
@@ -245,14 +204,6 @@ public class AddReworkActionBean extends CoreActionBean {
         this.labVessel = labVessel;
     }
 
-    public String getWorkflowName() {
-        return workflowName;
-    }
-
-    public void setWorkflowName(String workflowName) {
-        this.workflowName = workflowName;
-    }
-
     public List<WorkflowBucketDef> getBuckets() {
         return buckets;
     }
@@ -285,7 +236,7 @@ public class AddReworkActionBean extends CoreActionBean {
         this.bucketName = bucketName;
     }
 
-    public List<ReworkCandidate> getReworkCandidates() {
+    public List<ReworkEjb.ReworkCandidate> getReworkCandidates() {
         return reworkCandidates;
     }
 
