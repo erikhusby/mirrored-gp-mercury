@@ -36,7 +36,6 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowValidator;
 import org.broadinstitute.gpinformatics.mercury.control.zims.ZimsIlluminaRunFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
@@ -61,9 +60,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
@@ -230,6 +227,7 @@ public class LabEventTest extends BaseEventTest {
 
         LabBatch workflowBatch = new LabBatch("Hybrid Selection Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
+        workflowBatch.setWorkflowName("Hybrid Selection");
 
         PreFlightEntityBuilder preFlightEntityBuilder =
                 runPreflightProcess(mapBarcodeToTube, productOrder, workflowBatch, "1");
@@ -385,16 +383,18 @@ public class LabEventTest extends BaseEventTest {
     @Test(groups = {DATABASE_FREE})
     public void testExomeExpress() throws Exception {
 //        Controller.startCPURecording(true);
-        ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
+        // Use Standard Exome product, to verify that workflow is taken from LCSet, not Product
+        ProductOrder productOrder = ProductOrderTestFactory.buildHybridSelectionProductOrder(96);
         AthenaClientServiceStub.addProductOrder(productOrder);
         final Date runDate = new Date();
         // todo jmt create bucket, then batch, rather than rack than batch then bucket
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
+        workflowBatch.setWorkflowName("Exome Express");
 
         PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube, productOrder,
-                workflowBatch, null, String.valueOf(runDate.getTime()), "1");
+                workflowBatch, null, String.valueOf(runDate.getTime()), "1", true);
         ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder =
                 runExomeExpressShearingProcess(productOrder, picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
                         picoPlatingEntityBuilder.getNormTubeFormation(),
@@ -504,6 +504,7 @@ public class LabEventTest extends BaseEventTest {
 
         LabBatch workflowBatch = new LabBatch("whole Genome Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
+        workflowBatch.setWorkflowName("Whole Genome");
 
         PreFlightEntityBuilder preFlightEntityBuilder =
                 runPreflightProcess(mapBarcodeToTube, productOrder, workflowBatch, "1");
@@ -768,25 +769,13 @@ public class LabEventTest extends BaseEventTest {
         WorkflowValidator workflowValidator = new WorkflowValidator();
         AthenaClientService athenaClientService = AthenaClientProducer.stubInstance();
         workflowValidator.setAthenaClientService(athenaClientService);
-        workflowValidator.validateWorkflow(labVessels, nextEventTypeName);
-        WorkflowLoader workflowLoader = new WorkflowLoader();
-        WorkflowConfig workflowConfig = workflowLoader.load();
-        for (LabVessel labVessel : labVessels) {
-            for (SampleInstance sampleInstance : labVessel.getSampleInstances(LabVessel.SampleType.WITH_PDO,
-                    LabBatch.LabBatchType.WORKFLOW)) {
-                ProductOrder productOrder = athenaClientService.retrieveProductOrderDetails(
-                        sampleInstance.getProductOrderKey());
-                // get workflow name from product order
-                ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(
-                        productOrder.getProduct().getWorkflowName());
-                List<ProductWorkflowDefVersion.ValidationError> errors =
-                        productWorkflowDef.getEffectiveVersion().validate(labVessel, nextEventTypeName);
-                if (!errors.isEmpty()) {
-                    ProductWorkflowDefVersion.ValidationError validationError = errors.get(0);
-                    Assert.fail(validationError.getMessage() + " expected " + validationError.getExpectedEventNames() +
-                                " actual " + validationError.getActualEventNames());
-                }
-            }
+        List<WorkflowValidator.WorkflowValidationError> workflowValidationErrors =
+                workflowValidator.validateWorkflow(labVessels, nextEventTypeName);
+        if (!workflowValidationErrors.isEmpty()) {
+            WorkflowValidator.WorkflowValidationError workflowValidationError = workflowValidationErrors.get(0);
+            ProductWorkflowDefVersion.ValidationError validationError = workflowValidationError.getErrors().get(0);
+            Assert.fail(validationError.getMessage() + " expected " + validationError.getExpectedEventNames() +
+                        " actual " + validationError.getActualEventNames());
         }
     }
 

@@ -10,7 +10,13 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MolecularState;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
-import java.util.*;
+import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * An aliquot of a sample in a particular molecular state.
@@ -53,15 +59,9 @@ import java.util.*;
  */
 public class SampleInstance {
 
-    public enum GspControlRole {
-        NEGATIVE, POSITIVE, NONE
-    }
-
     private static final Log log = LogFactory.getLog(SampleInstance.class);
 
     private final MercurySample sample;
-
-    private final GspControlRole controlRole;
 
     private MolecularState molecularState;
 
@@ -76,25 +76,11 @@ public class SampleInstance {
     private String productOrderKey;
 
     public SampleInstance(MercurySample sample,
-                          GspControlRole controlRole,
                           MolecularState molecularState) {
         this.sample = sample;
-        this.controlRole = controlRole;
         this.molecularState = molecularState;
     }
 
-
-    /**
-     * Positive control or negative control?
-     * not a sample attribute, but an attribute
-     * of the sample in a group of samples
-     * in a container.
-     *
-     * @return
-     */
-    public GspControlRole getControlRole() {
-        return controlRole;
-    }
 
     /**
      * Ultimately from whence this instance
@@ -111,55 +97,6 @@ public class SampleInstance {
     }
 
     /**
-     *
-     * Major assumption: an aliquot for a production
-     * process is only ever used for a single {@link Project}.
-     * It can be used for multiple {@link org.broadinstitute.gpinformatics.mercury.entity.project.BasicProjectPlan}s
-     * within the same {@link Project}, however, and so
-     * the challenge here is to map a {@link SampleInstance}
-     * to a single {@link org.broadinstitute.gpinformatics.mercury.entity.project.BasicProjectPlan}
-     * whenever possible, and tolerate ambiguity when necessary,
-     * for example for "universal LC" with Fluidigm.
-     *
-     * Can be empty for control samples.
-     *
-     * It's critical that reworks (topoffs in particular)
-     * are <b>not implemented by a new {@link org.broadinstitute.gpinformatics.mercury.entity.project.BasicProjectPlan}!</b>
-     * Instead, topoffs are just another entry into the appropriate
-     * {@link org.broadinstitute.gpinformatics.mercury.entity.queue.LabWorkQueue}.
-     * If you want to know the status of your topoff work,
-     * look in the {@link org.broadinstitute.gpinformatics.mercury.entity.queue.LabWorkQueue},
-     * or search jira to see what jira tickets exist starting
-     * from the {@link org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel}
-     * that you put into the queue.
-     *
-     * If there's more than one possible project for this
-     * {@link SampleInstance}, an exception is thrown.
-     * If your client can tolerate this ambiguity, use
-     * {@link #getAllProjectPlans()}.
-     * @return
-     */
-//    public ProjectPlan getSingleProjectPlan() {
-//        if (projectPlans.isEmpty()) {
-//            return null;
-//        }
-//        else if (projectPlans.size() <= 1) {
-//            return projectPlans.iterator().next();
-//        }
-//        else {
-//            throw new RuntimeException("There are " + projectPlans.size() + " possible project plans for " + this);
-//        }
-//    }
-
-    /**
-     * @see #getSingleProjectPlan()
-     * @return
-     */
-//    public Collection<ProjectPlan> getAllProjectPlans() {
-//        return projectPlans;
-//    }
-
-    /**
      * What is the molecular state  of this
      * sample in this container?
      *
@@ -173,30 +110,6 @@ public class SampleInstance {
         this.molecularState = molecularState;
     }
 
-    /**
-     * This seems at odds with Project#getWorkflowDescription(SampleInstance)}.
-     * We already declared the expected {org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescription} up at
-     * the project, right?
-     * <p/>
-     * We have a history of pioneering some kind of sample prep
-     * in-house, and then sharing the protocols with the outside
-     * world, and then accepting samples prepped with our
-     * protocols but outisde the Broad.  In these situations,
-     * the sample sheet sent to us tells us what process
-     * the sample has been through, which is different
-     * from the project being configured with isntructions
-     * about what process the sample is supposed to go
-     * from when it starts life as an aliquot.
-     * <p/>
-     * Perhaps we should remove the bit on the project
-     * and declare that all workflow lookups go through
-     * the aliquotInstance.  Either the instance looks
-     * up active projects and finds the intended workflow
-     * there, or it stores it internal to itself.
-     *
-     * @return
-     */
-    //public WorkflowDescription getWorkflowDescription();
     public void addReagent(Reagent reagent) {
         reagents.add(reagent);
     }
@@ -224,6 +137,7 @@ public class SampleInstance {
      * This is set only when there is a single lab batch.
      * @return lab batch
      */
+    @Nullable
     public LabBatch getLabBatch() {
         return labBatch;
     }
@@ -276,11 +190,34 @@ public class SampleInstance {
         return filteredBatchCompositions;
     }
 
+    @Nullable
     public String getProductOrderKey() {
         return productOrderKey;
     }
 
     public void setProductOrderKey(String productOrderKey) {
         this.productOrderKey = productOrderKey;
+    }
+
+    /**
+     * Gets the name of the sample's workflow, based on LCSETs.
+     * @return workflow name
+     */
+    @Nullable
+    public String getWorkflowName() {
+        String workflowName = null;
+        for (LabBatch localLabBatch : allLabBatches) {
+            if (localLabBatch.getWorkflowName() != null) {
+                if(workflowName == null) {
+                    workflowName = localLabBatch.getWorkflowName();
+                } else {
+                    if(!workflowName.equals(localLabBatch.getWorkflowName())) {
+                        throw new RuntimeException("Conflicting workflows: " + workflowName + ", " +
+                                                   localLabBatch.getWorkflowName());
+                    }
+                }
+            }
+        }
+        return workflowName;
     }
 }

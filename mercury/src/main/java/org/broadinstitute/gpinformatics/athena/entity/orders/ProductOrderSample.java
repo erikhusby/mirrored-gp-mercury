@@ -9,10 +9,8 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
+import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
-import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
@@ -44,7 +42,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 /**
  * Class to describe Athena's view of a Sample. A Sample is identified by a sample Id and
@@ -55,11 +52,8 @@ import java.util.regex.Pattern;
 @Entity
 @Audited
 @Table(name= "PRODUCT_ORDER_SAMPLE", schema = "athena")
-public class ProductOrderSample implements Serializable {
+public class ProductOrderSample extends AbstractSample implements Serializable {
     private static final long serialVersionUID = 8645451167948826402L;
-
-    // FIXME: replace with real sample name pattern when CRSP jira is configured.
-    public static final Pattern CRSP_SAMPLE_NAME_PATTERN = Pattern.compile("PDO-[A-Z1-9]{4,6}");
 
     /** Count shown when no billing has occurred. */
     public static final double NO_BILL_COUNT = 0;
@@ -74,7 +68,6 @@ public class ProductOrderSample implements Serializable {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_ORDER_SAMPLE")
     private Long productOrderSampleId;
 
-    // This is the name of the BSP or Non-BSP sample.
     @Index(name = "ix_pos_sample_name")
     @Column(nullable = false)
     private String sampleName;
@@ -163,7 +156,7 @@ public class ProductOrderSample implements Serializable {
         return false;
     }
 
-    public static enum DeliveryStatus implements StatusType {
+    public enum DeliveryStatus implements StatusType {
         NOT_STARTED(""),
         DELIVERED("Delivered"),
         ABANDONED("Abandoned");
@@ -182,12 +175,6 @@ public class ProductOrderSample implements Serializable {
 
     @Enumerated(EnumType.STRING)
     private DeliveryStatus deliveryStatus = DeliveryStatus.NOT_STARTED;
-
-    @Transient
-    private BSPSampleDTO bspDTO = new BSPSampleDTO();
-
-    @Transient
-    private boolean hasBspDTOBeenInitialized;
 
     @Transient
     private final Log log = LogFactory.getLog(ProductOrderSample.class);
@@ -214,11 +201,16 @@ public class ProductOrderSample implements Serializable {
      */
     public ProductOrderSample(@Nonnull String sampleName,
                               @Nonnull BSPSampleDTO bspDTO) {
+        super(bspDTO);
         this.sampleName = sampleName;
-        setBspDTO(bspDTO);
     }
 
     public String getSampleName() {
+        return sampleName;
+    }
+
+    @Override
+    public String getSampleKey() {
         return sampleName;
     }
 
@@ -230,41 +222,12 @@ public class ProductOrderSample implements Serializable {
         this.sampleComment = sampleComment;
     }
 
-    public boolean needsBspMetaData() {
-        return isInBspFormat() && !hasBspDTOBeenInitialized;
-    }
-
     public Integer getSamplePosition() {
         return samplePosition;
     }
 
     public void setSamplePosition(Integer samplePosition) {
         this.samplePosition = samplePosition;
-    }
-
-    /**
-     * @return true if sample is a loaded BSP sample but BSP didn't have any data for it.
-     */
-    public boolean bspMetaDataMissing() {
-        return isInBspFormat() && hasBspDTOBeenInitialized && !bspDTO.hasData();
-    }
-
-    public BSPSampleDTO getBspDTO() {
-        if (!hasBspDTOBeenInitialized) {
-            if (isInBspFormat()) {
-                BSPSampleDataFetcher bspSampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
-                bspDTO = bspSampleDataFetcher.fetchSingleSampleFromBSP(getSampleName());
-
-                // If there is no DTO, create one with no data populated.
-                if (bspDTO == null) {
-                    bspDTO = new BSPSampleDTO();
-                }
-            }
-
-            hasBspDTOBeenInitialized = true;
-        }
-
-        return bspDTO;
     }
 
     public Set<LedgerEntry> getLedgerItems() {
@@ -281,24 +244,6 @@ public class ProductOrderSample implements Serializable {
 
     public void setDeliveryStatus(DeliveryStatus deliveryStatus) {
         this.deliveryStatus = deliveryStatus;
-    }
-
-    public void setBspDTO(@Nonnull BSPSampleDTO bspDTO) {
-        //noinspection ConstantConditions
-        if (bspDTO == null) {
-            throw new NullPointerException("BSP Sample DTO cannot be null");
-        }
-
-        this.bspDTO = bspDTO;
-        hasBspDTOBeenInitialized = true;
-    }
-
-    public boolean isInBspFormat() {
-        return BSPUtil.isInBspFormat(sampleName);
-    }
-
-    public boolean isInCrspFormat() {
-        return CRSP_SAMPLE_NAME_PATTERN.matcher(sampleName).matches();
     }
 
     public Set<LedgerEntry> getBillableLedgerItems() {
@@ -335,14 +280,6 @@ public class ProductOrderSample implements Serializable {
         return builder.toString();
     }
 
-    public String getBspSampleName() {
-        // skip the SM- part of the name.
-        if ((sampleName.length() > 3) && isInBspFormat()) {
-            return sampleName.substring(3);
-        }
-        return sampleName;
-    }
-
     /**
      * Given a sample, compute its billable price items based on its material type.  We assume that all add-ons
      * in the sample's order's product that can accept the sample's material type are required, in addition to the
@@ -352,7 +289,7 @@ public class ProductOrderSample implements Serializable {
     List<PriceItem> getBillablePriceItems() {
         List<PriceItem> items = new ArrayList<PriceItem>();
         items.add(getProductOrder().getProduct().getPrimaryPriceItem());
-        org.broadinstitute.bsp.client.sample.MaterialType materialTypeObject = getBspDTO().getMaterialTypeObject();
+        org.broadinstitute.bsp.client.sample.MaterialType materialTypeObject = getBspSampleDTO().getMaterialTypeObject();
         Set<Product> productAddOns = productOrder.getProduct().getAddOns();
         if (materialTypeObject != null && !productAddOns.isEmpty()) {
             MaterialType sampleMaterialType =

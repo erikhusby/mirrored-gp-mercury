@@ -63,6 +63,8 @@ public class LabBatch {
 
     private Boolean isValidationBatch;
 
+    private String workflowName;
+
     /**
      * needed for fix-up test
      *
@@ -248,6 +250,14 @@ public class LabBatch {
 
     public void setValidationBatch(Boolean validationBatch) {
         isValidationBatch = validationBatch;
+    }
+
+    public String getWorkflowName() {
+        return workflowName;
+    }
+
+    public void setWorkflowName(String workflowName) {
+        this.workflowName = workflowName;
     }
 
     public String getBatchDescription() {

@@ -1,6 +1,6 @@
-package org.broadinstitute.gpinformatics.athena.presentation.links;
+package org.broadinstitute.gpinformatics.infrastructure.presentation;
 
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 
@@ -9,7 +9,7 @@ import javax.inject.Inject;
 /**
  * This class is used to generate sample links for the UI.
  */
-// Suppress warnings because intellij isn't getting the correct type from a <c:set> variable.
+// Suppress warnings because the IDE can't infer the correct type from a <c:set> variable.
 @SuppressWarnings("UnusedDeclaration")
 public class SampleLink {
     private static final String BSP_SEARCH_SAMPLE = "samplesearch/SampleSummary.action?sampleId=";
@@ -18,7 +18,7 @@ public class SampleLink {
 
     private final JiraLink jiraLink;
 
-    private final ProductOrderSample sample;
+    private final AbstractSample sample;
 
     private final Format format;
 
@@ -35,7 +35,7 @@ public class SampleLink {
             this.label = label;
         }
 
-        static Format fromSample(ProductOrderSample sample) {
+        static Format fromSample(AbstractSample sample) {
             if (!Deployment.isCRSP && sample.isInBspFormat()) {
                 return Format.BSP;
             }
@@ -46,7 +46,7 @@ public class SampleLink {
         }
     }
 
-    private SampleLink(BSPConfig bspConfig, JiraLink jiraLink, ProductOrderSample sample) {
+    private SampleLink(BSPConfig bspConfig, JiraLink jiraLink, AbstractSample sample) {
         this.bspConfig = bspConfig;
         this.jiraLink = jiraLink;
         this.sample = sample;
@@ -70,9 +70,9 @@ public class SampleLink {
         case BSP:
            return bspConfig.getUrl(BSP_SEARCH_SAMPLE + sample.getBspSampleName());
         case CRSP:
-            return jiraLink.browseUrl(sample.getSampleName());
+            return jiraLink.browseUrl(sample.getSampleKey());
         default:
-            return sample.getSampleName();
+            return sample.getSampleKey();
         }
     }
 
@@ -80,7 +80,7 @@ public class SampleLink {
         @Inject private BSPConfig bspConfig;
         @Inject private JiraLink jiraLink;
 
-        public SampleLink create(ProductOrderSample sample) {
+        public SampleLink create(AbstractSample sample) {
             return new SampleLink(bspConfig, jiraLink, sample);
         }
     }

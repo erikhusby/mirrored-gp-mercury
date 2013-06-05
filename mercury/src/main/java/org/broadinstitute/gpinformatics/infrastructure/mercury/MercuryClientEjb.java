@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
@@ -123,6 +124,7 @@ public class MercuryClientEjb {
 
         Collection<LabVessel> validVessels = applyPicoBucketCriteria(vessels, picoBucketDef);
 
+        //TODO RE-VISIT HARD Coding.  Needs to have Workflow Step passed in to avoid hard coding!!!!!!
         bucketBean.add(validVessels, picoBucket, username, LabEvent.UI_EVENT_LOCATION, LabEventType.PICO_PLATING_BUCKET,
                 pdo.getBusinessKey());
 
@@ -156,19 +158,7 @@ public class MercuryClientEjb {
             return null;
         }
 
-        WorkflowConfig workflowConfig = workflowLoader.load();
-        assert(workflowConfig != null && workflowConfig.getProductWorkflowDefs() != null &&
-                !workflowConfig.getProductWorkflowDefs().isEmpty());
-        ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(product.getWorkflowName());
-        ProductWorkflowDefVersion versionResult = productWorkflowDef.getEffectiveVersion();
-
-        ProductWorkflowDefVersion.LabEventNode labEventNode =
-                versionResult.findStepByEventType(LabEventType.PICO_PLATING_BUCKET.getName());
-        if (labEventNode == null) {
-            return null;
-        } else {
-            return (WorkflowBucketDef) labEventNode.getStepDef();
-        }
+        return LabEventHandler.findBucketDef(WorkflowName.EXOME_EXPRESS.getWorkflowName(), LabEventType.PICO_PLATING_BUCKET);
     }
 
     private Bucket findPicoBucket(WorkflowBucketDef bucketStep) {

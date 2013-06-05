@@ -207,10 +207,10 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         getWriter().writeCell(sample.getSampleName());
 
         // collaborator sample ID, looks like this is properly initialized.
-        getWriter().writeCell(sample.getBspDTO().getCollaboratorsSampleName());
+        getWriter().writeCell(sample.getBspSampleDTO().getCollaboratorsSampleName());
 
         // Material type.
-        getWriter().writeCell(sample.getBspDTO().getMaterialType());
+        getWriter().writeCell(sample.getBspSampleDTO().getMaterialType());
 
         // Risk Information.
         String riskString = sample.getRiskString();

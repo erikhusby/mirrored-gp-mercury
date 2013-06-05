@@ -15,6 +15,11 @@ public class ProductEtl extends GenericEntityEtl<Product, Product> {
     public ProductEtl() {
     }
 
+    /**
+     * This method is used for just the Database Free tests.
+     *
+     * @param dao the {@link ProductDao} to use with this bean
+     */
     @Inject
     public ProductEtl(ProductDao dao) {
         super(Product.class, "product", dao);
@@ -26,7 +31,7 @@ public class ProductEtl extends GenericEntityEtl<Product, Product> {
     }
 
     @Override
-    Path rootId(Root root) {
+    Path rootId(Root<Product> root) {
         return root.get(Product_.productId);
     }
 

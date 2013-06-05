@@ -50,13 +50,16 @@ public class ReworkDbFreeTest extends BaseEventTest {
         Map<String, TwoDBarcodedTube> origRackMap = createInitialRack(productOrder, origTubePrefix);
         Bucket workingBucket = createAndPopulateBucket(origRackMap, productOrder, "Pico/Plating Bucket");
 
+        LabBatch origBatch =
+                new LabBatch("origBatch", new HashSet<LabVessel>(origRackMap.values()), LabBatch.LabBatchType.WORKFLOW);
+        origBatch.setWorkflowName("Exome Express");
         PicoPlatingEntityBuilder pplatingEntityBuilder1 = runPicoPlatingProcess(
                 origRackMap,
                 productOrder,
-                new LabBatch("origBatch", new HashSet<LabVessel>(origRackMap.values()), LabBatch.LabBatchType.WORKFLOW),
+                origBatch,
                 origLcsetSuffix,
                 origRackBarcodeSuffix,
-                "1");
+                "1", true);
 
         ExomeExpressShearingEntityBuilder shearingEntityBuilder1 = runExomeExpressShearingProcess(
                 productOrder,
@@ -83,13 +86,16 @@ public class ReworkDbFreeTest extends BaseEventTest {
             workingBucket.addEntry(productOrder.getBusinessKey(), tube);
         }
 
+        LabBatch reworkBatch = new LabBatch("reworkBatch", new HashSet<LabVessel>(reworkRackMap.values()),
+                LabBatch.LabBatchType.WORKFLOW);
+        reworkBatch.setWorkflowName("Exome Express");
         PicoPlatingEntityBuilder pplatingEntityBuilder2 = runPicoPlatingProcess(
                 reworkRackMap,
                 productOrder,
-                new LabBatch("reworkBatch", new HashSet<LabVessel>(reworkRackMap.values()), LabBatch.LabBatchType.WORKFLOW),
+                reworkBatch,
                 reworkLcsetSuffix,
                 reworkRackBarcodeSuffix,
-                "2");
+                "2", true);
 
         ExomeExpressShearingEntityBuilder shearingEntityBuilder2 = runExomeExpressShearingProcess(
                 productOrder,
@@ -156,13 +162,15 @@ public class ReworkDbFreeTest extends BaseEventTest {
 
         LabBatch workflowBatch1 = new LabBatch("Exome Express Batch 1",
                 new HashSet<LabVessel>(mapBarcodeToTube1.values()), LabBatch.LabBatchType.WORKFLOW);
+        workflowBatch1.setWorkflowName("Exome Express");
         LabBatch workflowBatch2 = new LabBatch("Exome Express Batch 2",
                 new HashSet<LabVessel>(mapBarcodeToTube2.values()), LabBatch.LabBatchType.WORKFLOW);
+        workflowBatch2.setWorkflowName("Exome Express");
 
         PicoPlatingEntityBuilder picoPlatingEntityBuilder1 = runPicoPlatingProcess(mapBarcodeToTube1, productOrder1,
-                workflowBatch1, null, String.valueOf(runDate.getTime()), "1");
+                workflowBatch1, null, String.valueOf(runDate.getTime()), "1", true);
         PicoPlatingEntityBuilder picoPlatingEntityBuilder2 = runPicoPlatingProcess(mapBarcodeToTube2, productOrder2,
-                workflowBatch2, null, String.valueOf(runDate.getTime()), "2");
+                workflowBatch2, null, String.valueOf(runDate.getTime()), "2", true);
 
         ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder1 = runExomeExpressShearingProcess(
                 productOrder1, picoPlatingEntityBuilder1.getNormBarcodeToTubeMap(),

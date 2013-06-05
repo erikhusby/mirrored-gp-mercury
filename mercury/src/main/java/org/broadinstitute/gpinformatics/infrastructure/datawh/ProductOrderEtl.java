@@ -32,7 +32,7 @@ public class ProductOrderEtl extends GenericEntityAndStatusEtl<ProductOrder, Pro
     }
 
     @Override
-    Path rootId(Root root) {
+    Path rootId(Root<ProductOrder> root) {
         return root.get(ProductOrder_.productOrderId);
     }
 
@@ -49,9 +49,8 @@ public class ProductOrderEtl extends GenericEntityAndStatusEtl<ProductOrder, Pro
                     format(statusDate),
                     format(entity.getOrderStatus().getDisplayName())
             );
-        } else {
-            return null;
         }
+        return null;
     }
 
 

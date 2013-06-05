@@ -28,7 +28,7 @@ public class ProductOrderSampleEtl extends GenericEntityAndStatusEtl<ProductOrde
     }
 
     @Override
-    Path rootId(Root root) {
+    Path rootId(Root<ProductOrderSample> root) {
         return root.get(ProductOrderSample_.productOrderSampleId);
     }
 

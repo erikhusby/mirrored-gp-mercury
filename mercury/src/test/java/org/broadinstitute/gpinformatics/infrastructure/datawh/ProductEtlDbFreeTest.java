@@ -4,20 +4,17 @@ import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.List;
 
 import static org.easymock.EasyMock.*;
 import static org.testng.Assert.*;
+
 
 /**
  * dbfree unit test of entity etl.
@@ -128,6 +125,5 @@ public class ProductEtlDbFreeTest {
         assertEquals(parts[i++], String.valueOf(primaryPriceItemId));
         assertEquals(parts.length, i);
     }
-
 }
 
