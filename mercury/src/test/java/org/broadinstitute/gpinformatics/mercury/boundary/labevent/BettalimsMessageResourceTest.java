@@ -177,7 +177,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
         HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = sendMessagesUptoCatch(testPrefix,
                 mapBarcodeToTube, bettaLimsMessageFactory, WorkflowName.EXOME_EXPRESS, bettalimsMessageResource,
                 indexedPlateFactory, staticPlateDAO, reagentDesignDao, twoDBarcodedTubeDAO,
-                ImportFromSquidTest.TEST_MERCURY_URL);
+                ImportFromSquidTest.TEST_MERCURY_URL, LabEventTest.NUM_POSITIONS_IN_RACK);
 
         QtpJaxbBuilder qtpJaxbBuilder = new QtpJaxbBuilder(bettaLimsMessageFactory, testPrefix,
                 Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchBarcodes()),
@@ -228,7 +228,8 @@ public class BettalimsMessageResourceTest extends Arquillian {
         // message
         hybridSelectionJaxbBuilder = sendMessagesUptoCatch(testPrefix, mapBarcodeToTube2, bettaLimsMessageFactory,
                 WorkflowName.EXOME_EXPRESS, bettalimsMessageResource, indexedPlateFactory, staticPlateDAO,
-                reagentDesignDao, twoDBarcodedTubeDAO, ImportFromSquidTest.TEST_MERCURY_URL);
+                reagentDesignDao, twoDBarcodedTubeDAO, ImportFromSquidTest.TEST_MERCURY_URL,
+                LabEventTest.NUM_POSITIONS_IN_RACK);
 
         qtpJaxbBuilder = new QtpJaxbBuilder(bettaLimsMessageFactory, testPrefix,
                 Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchBarcodes()),
@@ -262,7 +263,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
         HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = sendMessagesUptoCatch(testPrefix,
                 mapBarcodeToTube, bettaLimsMessageFactory, WorkflowName.EXOME_EXPRESS, bettalimsMessageResource,
                 indexedPlateFactory, staticPlateDAO, reagentDesignDao, twoDBarcodedTubeDAO,
-                ImportFromSquidTest.TEST_MERCURY_URL);
+                ImportFromSquidTest.TEST_MERCURY_URL, LabEventTest.NUM_POSITIONS_IN_RACK);
 
         QtpJaxbBuilder qtpJaxbBuilder = new QtpJaxbBuilder(bettaLimsMessageFactory, testPrefix,
                 Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchBarcodes()),
@@ -320,6 +321,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
      * @param reagentDesignDao
      * @param twoDBarcodedTubeDAO
      * @param testMercuryUrl
+     * @param numPositionsInRack
      * @param testPrefix              make barcodes unique
      * @param mapBarcodeToTube        map from tube barcode to sample tube
      * @param bettaLimsMessageFactory to build messages
@@ -335,7 +337,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
                                                                    StaticPlateDAO staticPlateDAO,
                                                                    ReagentDesignDao reagentDesignDao,
                                                                    TwoDBarcodedTubeDAO twoDBarcodedTubeDAO,
-                                                                   String testMercuryUrl) {
+                                                                   String testMercuryUrl, int numPositionsInRack) {
 
         String shearingRackBarcode;
         if (workflowName == WorkflowName.EXOME_EXPRESS) {
@@ -344,7 +346,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
             PreFlightJaxbBuilder preFlightJaxbBuilder = new PreFlightJaxbBuilder(
                     bettaLimsMessageFactory, testPrefix, new ArrayList<String>(mapBarcodeToTube.keySet())).invoke();
             for (BettaLIMSMessage bettaLIMSMessage : preFlightJaxbBuilder.getMessageList()) {
-                sendMessage(bettaLIMSMessage, bettalimsMessageResource, ImportFromSquidTest.TEST_MERCURY_URL);
+                sendMessage(bettaLIMSMessage, bettalimsMessageResource, testMercuryUrl);
             }
             shearingRackBarcode = preFlightJaxbBuilder.getRackBarcode();
         }
@@ -365,10 +367,10 @@ public class BettalimsMessageResourceTest extends Arquillian {
         LibraryConstructionJaxbBuilder libraryConstructionJaxbBuilder = new LibraryConstructionJaxbBuilder(
                 bettaLimsMessageFactory, testPrefix, shearingJaxbBuilder.getShearCleanPlateBarcode(),
                 indexPlate.getLabel(),
-                LabEventTest.NUM_POSITIONS_IN_RACK).invoke();
+                numPositionsInRack).invoke();
 
         for (BettaLIMSMessage bettaLIMSMessage : libraryConstructionJaxbBuilder.getMessageList()) {
-            sendMessage(bettaLIMSMessage, bettalimsMessageResource, ImportFromSquidTest.TEST_MERCURY_URL);
+            sendMessage(bettaLIMSMessage, bettalimsMessageResource, testMercuryUrl);
         }
 
         HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = new HybridSelectionJaxbBuilder(bettaLimsMessageFactory,
@@ -384,7 +386,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
                 baitDesign));
 
         for (BettaLIMSMessage bettaLIMSMessage : hybridSelectionJaxbBuilder.getMessageList()) {
-            sendMessage(bettaLIMSMessage, bettalimsMessageResource, ImportFromSquidTest.TEST_MERCURY_URL);
+            sendMessage(bettaLIMSMessage, bettalimsMessageResource, testMercuryUrl);
         }
         return hybridSelectionJaxbBuilder;
     }
@@ -511,7 +513,8 @@ public class BettalimsMessageResourceTest extends Arquillian {
             HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder =
                     sendMessagesUptoCatch(testPrefix, mapBarcodeToTube, bettaLimsMessageFactory,
                             WorkflowName.HYBRID_SELECTION, bettalimsMessageResource, indexedPlateFactory,
-                            staticPlateDAO, reagentDesignDao, twoDBarcodedTubeDAO, ImportFromSquidTest.TEST_MERCURY_URL);
+                            staticPlateDAO, reagentDesignDao, twoDBarcodedTubeDAO, ImportFromSquidTest.TEST_MERCURY_URL,
+                            LabEventTest.NUM_POSITIONS_IN_RACK);
             listLcsetListNormCatchBarcodes.add(hybridSelectionJaxbBuilder.getNormCatchBarcodes());
             normCatchRackBarcodes.add(hybridSelectionJaxbBuilder.getNormCatchRackBarcode());
         }

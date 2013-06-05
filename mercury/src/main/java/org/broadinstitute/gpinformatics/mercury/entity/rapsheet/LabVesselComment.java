@@ -31,7 +31,7 @@ public class LabVesselComment<T extends RapSheetEntry> {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_LV_COMMENT")
     private Long labVesselCommentId;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST, optional = true)
     protected LabEvent labEvent;
 
     @Column(name = "LAB_VESSEL_COMMENT")

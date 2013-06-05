@@ -8,8 +8,12 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -36,6 +40,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
+import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionJaxbBuilder;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -63,6 +68,55 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
  */
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class ReworkEjbTest extends Arquillian {
+
+    public static final String SM_SGM_Test_Somatic_1_PATIENT_ID = "PT-1TS1";
+    public static final String SM_SGM_Test_Somatic_1_STOCK_SAMP = "SM-SGM_Test_Somatic2";
+    public static final String SM_SGM_Test_Somatic_1_COLLAB_SAMP_ID = "CollaboratorSampleX";
+    public static final String SM_SGM_Test_Somatic_1_COLL = "Hungarian Goulash";
+    public static final String SM_SGM_Test_Somatic_1_VOLUME = "1.3";
+    public static final String SM_SGM_Test_Somatic_1_CONC = "0.293";
+    public static final String SM_SGM_Test_Somatic_1_SPECIES = "Canine";
+    public static final String SM_SGM_Test_Somatic_1_COLLAB_PID = "CHTN_SEW";
+    public static final String SM_SGM_Test_Somatic_1_DNA = "3.765242738037109374";
+    public static final String SM_SGM_Test_Somatic_1_FP =
+            "AACTCCCCGGAAAGCTACAAAACG--AATTAGAGTTAATTCTCCAATTGTCTAG--GGACAGGGGGTTCTAAACCCAA--GTCTCCCGCTAGTTTTGGAGAGAGCCGGAGCCCTTTCCAGAGTTCTCTAGTTGGCTGGAGTTCCAAAACTTTCCAATTCTTTGTCGCCGGTTTTACCCCCGGAGAGCTCCCT";
+    public static final String SM_SGM_Test_Somatic_1_DISEASE = "Carcinoid Tumor";
+    public static final String SM_SGM_Test_Somatic_2_PATIENT_ID = "PT-1TS1";
+    public static final String SM_SGM_Test_Somatic_2_STOCK_SAMP = "SM-SGM_Test_Somatic2";
+    public static final String SM_SGM_Test_Somatic_2_COLLAB_SAMP_ID = "CollaboratorSampleX";
+    public static final String SM_SGM_Test_Somatic_2_COLL = "Hungarian Goulash";
+    public static final String SM_SGM_Test_Somatic_2_VOLUME = "1.3";
+    public static final String SM_SGM_Test_Somatic_2_CONC = "0.293";
+    public static final String SM_SGM_Test_Somatic_2_SPECIES = "Canine";
+    public static final String SM_SGM_Test_Somatic_2_COLLAB_PID = "CHTN_SEW";
+    public static final String SM_SGM_Test_Somatic_2_DNA = "3.765242738037109374";
+    public static final String SM_SGM_Test_Somatic_2_FP =
+            "AACTCCCCGGAAAGCTACAAAACG--AATTAGAGTTAATTCTCCAATTGTCTAG--GGACAGGGGGTTCTAAACCCAA--GTCTCCCGCTAGTTTTGGAGAGAGCCGGAGCCCTTTCCAGAGTTCTCTAGTTGGCTGGAGTTCCAAAACTTTCCAATTCTTTGTCGCCGGTTTTACCCCCGGAGAGCTCCCT";
+    public static final String SM_SGM_Test_Somatic_2_DISEASE = "Carcinoid Tumor";
+    public static final String SM_SGM_Test_Genomic_1_PATIENT_ID = "PT-1TS1";
+    public static final String SM_SGM_Test_Genomic_1_STOCK_SAMP = "SM-SGM_Test_Genomic2";
+    public static final String SM_SGM_Test_Genomic_1_COLLAB_SAMP_ID = "CollaboratorSampleX";
+    public static final String SM_SGM_Test_Genomic_1_COLL = "Hungarian Goulash";
+    public static final String SM_SGM_Test_Genomic_1_VOLUME = "1.3";
+    public static final String SM_SGM_Test_Genomic_1_CONC = "0.293";
+    public static final String SM_SGM_Test_Genomic_1_SPECIES = "Canine";
+    public static final String SM_SGM_Test_Genomic_1_COLLAB_PID = "CHTN_SEW";
+    public static final String SM_SGM_Test_Genomic_1_DNA = "3.765242738037109374";
+    public static final String SM_SGM_Test_Genomic_1_FP =
+            "AACTCCCCGGAAAGCTACAAAACG--AATTAGAGTTAATTCTCCAATTGTCTAG--GGACAGGGGGTTCTAAACCCAA--GTCTCCCGCTAGTTTTGGAGAGAGCCGGAGCCCTTTCCAGAGTTCTCTAGTTGGCTGGAGTTCCAAAACTTTCCAATTCTTTGTCGCCGGTTTTACCCCCGGAGAGCTCCCT";
+    public static final String SM_SGM_Test_Genomic_1_DISEASE = "Carcinoid Tumor";
+    public static final String SM_SGM_Test_Genomic_2_PATIENT_ID = "PT-1TS1";
+    public static final String SM_SGM_Test_Genomic_2_STOCK_SAMP = "SM-SGM_Test_Genomic2";
+    public static final String SM_SGM_Test_Genomic_2_COLLAB_SAMP_ID = "CollaboratorSampleX";
+    public static final String SM_SGM_Test_Genomic_2_COLL = "Hungarian Goulash";
+    public static final String SM_SGM_Test_Genomic_2_VOLUME = "1.3";
+    public static final String SM_SGM_Test_Genomic_2_CONC = "0.293";
+    public static final String SM_SGM_Test_Genomic_2_SPECIES = "Canine";
+    public static final String SM_SGM_Test_Genomic_2_COLLAB_PID = "CHTN_SEW";
+    public static final String SM_SGM_Test_Genomic_2_DNA = "3.765242738037109374";
+    public static final String SM_SGM_Test_Genomic_2_FP =
+            "AACTCCCCGGAAAGCTACAAAACG--AATTAGAGTTAATTCTCCAATTGTCTAG--GGACAGGGGGTTCTAAACCCAA--GTCTCCCGCTAGTTTTGGAGAGAGCCGGAGCCCTTTCCAGAGTTCTCTAGTTGGCTGGAGTTCCAAAACTTTCCAATTCTTTGTCGCCGGTTTTACCCCCGGAGAGCTCCCT";
+    public static final String SM_SGM_Test_Genomic_2_DISEASE = "Carcinoid Tumor";
 
     @Inject
     ReworkEjb reworkEjb;
@@ -130,7 +184,9 @@ public class ReworkEjbTest extends Arquillian {
     private String pdo2JiraKey;
 
     private String pdo3JiraKey;
-    private boolean newBucket;
+    private int existingReworks;
+    private BSPSampleDataFetcher bspSampleDataFetcher;
+    private Date currDate;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -143,10 +199,111 @@ public class ReworkEjbTest extends Arquillian {
             return;
         }
 
-        newBucket = false;
-        Date currDate = new Date();
+        bspSampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
+
+        currDate = new Date();
 
         String testPrefix = "SGM_Test";
+
+        final String somaticSample1 = "SM-SGM_Test_Somatic1" + currDate.getTime();
+        final String somaticSample2 = "SM-SGM_Test_Somatic2" + currDate.getTime();
+
+        final String genomicSample1 = "SM-SGM_Test_Genomic1" + currDate.getTime();
+        final String genomicSample2 = "SM-SGM_Test_Genomic2" + currDate.getTime();
+
+        final String SM_SGM_Test_Genomic_1_CONTAINER_ID = "CO-" + testPrefix + currDate.getTime() + "2851";
+        final String SM_SGM_Test_Genomic_2_CONTAINER_ID = "CO-" + testPrefix + currDate.getTime() + "2852";
+        final String SM_SGM_Test_Somatic_1_CONTAINER_ID = "CO-" + testPrefix + currDate.getTime() + "2853";
+        final String SM_SGM_Test_Somatic_2_CONTAINER_ID = "CO-" + testPrefix + currDate.getTime() + "2854";
+
+
+        BSPSampleSearchServiceStub.samples.put(somaticSample2, new HashMap<BSPSampleSearchColumn, String>() {{
+            put(BSPSampleSearchColumn.PARTICIPANT_ID, SM_SGM_Test_Somatic_2_PATIENT_ID);
+            put(BSPSampleSearchColumn.ROOT_SAMPLE, BSPSampleSearchServiceStub.ROOT);
+            put(BSPSampleSearchColumn.STOCK_SAMPLE, SM_SGM_Test_Somatic_2_STOCK_SAMP);
+            put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, SM_SGM_Test_Somatic_2_COLLAB_SAMP_ID);
+            put(BSPSampleSearchColumn.COLLECTION, SM_SGM_Test_Somatic_2_COLL);
+            put(BSPSampleSearchColumn.VOLUME, SM_SGM_Test_Somatic_2_VOLUME);
+            put(BSPSampleSearchColumn.CONCENTRATION, SM_SGM_Test_Somatic_2_CONC);
+            put(BSPSampleSearchColumn.SPECIES, SM_SGM_Test_Somatic_2_SPECIES);
+            put(BSPSampleSearchColumn.LSID, BSPSampleSearchServiceStub.LSID_PREFIX + somaticSample2);
+            put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, SM_SGM_Test_Somatic_2_COLLAB_PID);
+            put(BSPSampleSearchColumn.MATERIAL_TYPE, BSPSampleSearchServiceStub.SOMATIC_MAT_TYPE);
+            put(BSPSampleSearchColumn.TOTAL_DNA, SM_SGM_Test_Somatic_2_DNA);
+            put(BSPSampleSearchColumn.SAMPLE_TYPE, BSPSampleDTO.NORMAL_IND);
+            put(BSPSampleSearchColumn.PRIMARY_DISEASE, SM_SGM_Test_Somatic_2_DISEASE);
+            put(BSPSampleSearchColumn.GENDER, BSPSampleDTO.FEMALE_IND);
+            put(BSPSampleSearchColumn.STOCK_TYPE, BSPSampleDTO.ACTIVE_IND);
+            put(BSPSampleSearchColumn.FINGERPRINT, SM_SGM_Test_Somatic_2_FP);
+            put(BSPSampleSearchColumn.CONTAINER_ID, SM_SGM_Test_Somatic_2_CONTAINER_ID);
+            put(BSPSampleSearchColumn.SAMPLE_ID, somaticSample2);
+        }});
+
+        BSPSampleSearchServiceStub.samples.put(somaticSample1, new HashMap<BSPSampleSearchColumn, String>() {{
+            put(BSPSampleSearchColumn.PARTICIPANT_ID, SM_SGM_Test_Somatic_1_PATIENT_ID);
+            put(BSPSampleSearchColumn.ROOT_SAMPLE, BSPSampleSearchServiceStub.ROOT);
+            put(BSPSampleSearchColumn.STOCK_SAMPLE, SM_SGM_Test_Somatic_1_STOCK_SAMP);
+            put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, SM_SGM_Test_Somatic_1_COLLAB_SAMP_ID);
+            put(BSPSampleSearchColumn.COLLECTION, SM_SGM_Test_Somatic_1_COLL);
+            put(BSPSampleSearchColumn.VOLUME, SM_SGM_Test_Somatic_1_VOLUME);
+            put(BSPSampleSearchColumn.CONCENTRATION, SM_SGM_Test_Somatic_1_CONC);
+            put(BSPSampleSearchColumn.SPECIES, SM_SGM_Test_Somatic_1_SPECIES);
+            put(BSPSampleSearchColumn.LSID, BSPSampleSearchServiceStub.LSID_PREFIX + somaticSample1);
+            put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, SM_SGM_Test_Somatic_1_COLLAB_PID);
+            put(BSPSampleSearchColumn.MATERIAL_TYPE, BSPSampleSearchServiceStub.SOMATIC_MAT_TYPE);
+            put(BSPSampleSearchColumn.TOTAL_DNA, SM_SGM_Test_Somatic_1_DNA);
+            put(BSPSampleSearchColumn.SAMPLE_TYPE, BSPSampleDTO.NORMAL_IND);
+            put(BSPSampleSearchColumn.PRIMARY_DISEASE, SM_SGM_Test_Somatic_1_DISEASE);
+            put(BSPSampleSearchColumn.GENDER, BSPSampleDTO.FEMALE_IND);
+            put(BSPSampleSearchColumn.STOCK_TYPE, BSPSampleDTO.ACTIVE_IND);
+            put(BSPSampleSearchColumn.FINGERPRINT, SM_SGM_Test_Somatic_1_FP);
+            put(BSPSampleSearchColumn.CONTAINER_ID, SM_SGM_Test_Somatic_1_CONTAINER_ID);
+            put(BSPSampleSearchColumn.SAMPLE_ID, somaticSample1);
+        }});
+        BSPSampleSearchServiceStub.samples.put(genomicSample2, new HashMap<BSPSampleSearchColumn, String>() {{
+            put(BSPSampleSearchColumn.PARTICIPANT_ID, SM_SGM_Test_Genomic_2_PATIENT_ID);
+            put(BSPSampleSearchColumn.ROOT_SAMPLE, BSPSampleSearchServiceStub.ROOT);
+            put(BSPSampleSearchColumn.STOCK_SAMPLE, SM_SGM_Test_Genomic_2_STOCK_SAMP);
+            put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, SM_SGM_Test_Genomic_2_COLLAB_SAMP_ID);
+            put(BSPSampleSearchColumn.COLLECTION, SM_SGM_Test_Genomic_2_COLL);
+            put(BSPSampleSearchColumn.VOLUME, SM_SGM_Test_Genomic_2_VOLUME);
+            put(BSPSampleSearchColumn.CONCENTRATION, SM_SGM_Test_Genomic_2_CONC);
+            put(BSPSampleSearchColumn.SPECIES, SM_SGM_Test_Genomic_2_SPECIES);
+            put(BSPSampleSearchColumn.LSID, BSPSampleSearchServiceStub.LSID_PREFIX + genomicSample2);
+            put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, SM_SGM_Test_Genomic_2_COLLAB_PID);
+            put(BSPSampleSearchColumn.MATERIAL_TYPE, BSPSampleSearchServiceStub.GENOMIC_MAT_TYPE);
+            put(BSPSampleSearchColumn.TOTAL_DNA, SM_SGM_Test_Genomic_2_DNA);
+            put(BSPSampleSearchColumn.SAMPLE_TYPE, BSPSampleDTO.NORMAL_IND);
+            put(BSPSampleSearchColumn.PRIMARY_DISEASE, SM_SGM_Test_Genomic_2_DISEASE);
+            put(BSPSampleSearchColumn.GENDER, BSPSampleDTO.FEMALE_IND);
+            put(BSPSampleSearchColumn.STOCK_TYPE, BSPSampleDTO.ACTIVE_IND);
+            put(BSPSampleSearchColumn.FINGERPRINT, SM_SGM_Test_Genomic_2_FP);
+            put(BSPSampleSearchColumn.CONTAINER_ID, SM_SGM_Test_Genomic_2_CONTAINER_ID);
+            put(BSPSampleSearchColumn.SAMPLE_ID, genomicSample2);
+        }});
+
+        BSPSampleSearchServiceStub.samples.put(genomicSample1, new HashMap<BSPSampleSearchColumn, String>() {{
+            put(BSPSampleSearchColumn.PARTICIPANT_ID, SM_SGM_Test_Genomic_1_PATIENT_ID);
+            put(BSPSampleSearchColumn.ROOT_SAMPLE, BSPSampleSearchServiceStub.ROOT);
+            put(BSPSampleSearchColumn.STOCK_SAMPLE, SM_SGM_Test_Genomic_1_STOCK_SAMP);
+            put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, SM_SGM_Test_Genomic_1_COLLAB_SAMP_ID);
+            put(BSPSampleSearchColumn.COLLECTION, SM_SGM_Test_Genomic_1_COLL);
+            put(BSPSampleSearchColumn.VOLUME, SM_SGM_Test_Genomic_1_VOLUME);
+            put(BSPSampleSearchColumn.CONCENTRATION, SM_SGM_Test_Genomic_1_CONC);
+            put(BSPSampleSearchColumn.SPECIES, SM_SGM_Test_Genomic_1_SPECIES);
+            put(BSPSampleSearchColumn.LSID, BSPSampleSearchServiceStub.LSID_PREFIX + genomicSample1);
+            put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, SM_SGM_Test_Genomic_1_COLLAB_PID);
+            put(BSPSampleSearchColumn.MATERIAL_TYPE, BSPSampleSearchServiceStub.GENOMIC_MAT_TYPE);
+            put(BSPSampleSearchColumn.TOTAL_DNA, SM_SGM_Test_Genomic_1_DNA);
+            put(BSPSampleSearchColumn.SAMPLE_TYPE, BSPSampleDTO.NORMAL_IND);
+            put(BSPSampleSearchColumn.PRIMARY_DISEASE, SM_SGM_Test_Genomic_1_DISEASE);
+            put(BSPSampleSearchColumn.GENDER, BSPSampleDTO.FEMALE_IND);
+            put(BSPSampleSearchColumn.STOCK_TYPE, BSPSampleDTO.ACTIVE_IND);
+            put(BSPSampleSearchColumn.FINGERPRINT, SM_SGM_Test_Genomic_1_FP);
+            put(BSPSampleSearchColumn.CONTAINER_ID, SM_SGM_Test_Genomic_1_CONTAINER_ID);
+            put(BSPSampleSearchColumn.SAMPLE_ID, genomicSample2);
+        }});
+
 
         rpJiraTicketKey = "RP-SGM-Rework_tst1" + currDate.getTime() + "RP";
         researchProject = new ResearchProject(bspUserList.getByUsername("scottmat").getUserId(),
@@ -161,17 +318,17 @@ public class ReworkEjbTest extends Arquillian {
         Product nonExExProduct = productDao.findByPartNumber(
                 BettalimsMessageResourceTest.mapWorkflowToPartNum.get(WorkflowName.HYBRID_SELECTION));
 
-        bucketReadySamples1 =
-                Collections.singletonList(new ProductOrderSample(BSPSampleSearchServiceStub.SM_SGM_Test_Genomic_1));
+        bucketReadySamples1  = new ArrayList<>(2);
+                bucketReadySamples1.add(new ProductOrderSample(genomicSample1));
+                bucketReadySamples1.add(new ProductOrderSample(genomicSample2));
 
         bucketReadySamples2 = new ArrayList<>(2);
-        bucketReadySamples2.add(new ProductOrderSample(BSPSampleSearchServiceStub.SM_SGM_Test_Genomic_2));
-        bucketReadySamples2.add(new ProductOrderSample(BSPSampleSearchServiceStub.SM_SGM_Test_Somatic_1));
+        bucketReadySamples2.add(new ProductOrderSample(genomicSample2));
+        bucketReadySamples2.add(new ProductOrderSample(somaticSample1));
 
         bucketSamples1 = new ArrayList<>(2);
-        bucketSamples1.add(new ProductOrderSample(BSPSampleSearchServiceStub.SM_SGM_Test_Genomic_2));
-        bucketSamples1.add(new ProductOrderSample(BSPSampleSearchServiceStub.SM_SGM_Test_Somatic_1));
-
+        bucketSamples1.add(new ProductOrderSample(genomicSample2));
+        bucketSamples1.add(new ProductOrderSample(somaticSample2));
 
         exExProductOrder1 =
                 new ProductOrder(bspUserList.getByUsername("scottmat").getUserId(),
@@ -181,7 +338,6 @@ public class ReworkEjbTest extends Arquillian {
         pdo1JiraKey = "PDO-SGM-RWINT_tst" + currDate.getTime() + 1;
         exExProductOrder1.setJiraTicketKey(pdo1JiraKey);
         productOrderDao.persist(exExProductOrder1);
-//        exExProductOrder1.placeOrder();
 
         exExProductOrder2 =
                 new ProductOrder(bspUserList.getByUsername("scottmat").getUserId(),
@@ -191,7 +347,6 @@ public class ReworkEjbTest extends Arquillian {
         pdo2JiraKey = "PDO-SGM-RWINT_tst" + currDate.getTime() + 2;
         exExProductOrder2.setJiraTicketKey(pdo2JiraKey);
         productOrderDao.persist(exExProductOrder2);
-//        exExProductOrder2.placeOrder();
 
         nonExExProductOrder =
                 new ProductOrder(bspUserList.getByUsername("scottmat").getUserId(),
@@ -201,7 +356,6 @@ public class ReworkEjbTest extends Arquillian {
         pdo3JiraKey = "PDO-SGM-RWINT_tst" + currDate.getTime() + 3;
         nonExExProductOrder.setJiraTicketKey(pdo3JiraKey);
         productOrderDao.persist(nonExExProductOrder);
-//        nonExExProductOrder.placeOrder();
 
         WorkflowBucketDef bucketDef = LabEventHandler
                 .findBucketDef(WorkflowName.EXOME_EXPRESS.getWorkflowName(), LabEventType.PICO_PLATING_BUCKET);
@@ -213,8 +367,9 @@ public class ReworkEjbTest extends Arquillian {
         if (pBucket == null) {
 
             pBucket = new Bucket(bucketName);
-            newBucket = true;
         }
+
+        existingReworks = reworkEjb.getVesselsForRework().size();
 
         bucketDao.persist(pBucket);
 
@@ -226,39 +381,51 @@ public class ReworkEjbTest extends Arquillian {
             return;
         }
 
-        pBucket = bucketDao.findByName(bucketName);
-
-        exExProductOrder1 = productOrderDao.findByBusinessKey(pdo1JiraKey);
-        productOrderDao.remove(exExProductOrder1);
-
-        exExProductOrder2 = productOrderDao.findByBusinessKey(pdo2JiraKey);
-        productOrderDao.remove(exExProductOrder2);
-
-        nonExExProductOrder = productOrderDao.findByBusinessKey(pdo3JiraKey);
-        productOrderDao.remove(nonExExProductOrder);
-
-        researchProject = researchProjectDao.findByBusinessKey(rpJiraTicketKey);
-
-        researchProjectDao.remove(researchProject);
-
-        for (String currVessel : mapBarcodeToTube.keySet()) {
-            LabVessel tempTube = labVesselDao.findByIdentifier(currVessel);
-
-            BucketEntry vesselBucketEntry = null;
-            if (pBucket != null) {
-                vesselBucketEntry = bucketEntryDao.findByVesselAndBucket(tempTube, pBucket);
-            }
-
-            labVesselDao.remove(tempTube);
-            if (vesselBucketEntry != null) {
-                bucketEntryDao.remove(vesselBucketEntry);
-            }
-        }
-
-        if (newBucket) {
-
-            bucketDao.remove(pBucket);
-        }
+//        pBucket = bucketDao.findByName(bucketName);
+//
+//        exExProductOrder1 = productOrderDao.findByBusinessKey(pdo1JiraKey);
+//        productOrderDao.remove(exExProductOrder1);
+//
+//        exExProductOrder2 = productOrderDao.findByBusinessKey(pdo2JiraKey);
+//        productOrderDao.remove(exExProductOrder2);
+//
+//        nonExExProductOrder = productOrderDao.findByBusinessKey(pdo3JiraKey);
+//        productOrderDao.remove(nonExExProductOrder);
+//
+//        researchProject = researchProjectDao.findByBusinessKey(rpJiraTicketKey);
+//
+//        researchProjectDao.remove(researchProject);
+//
+//        for (String currVessel : mapBarcodeToTube.keySet()) {
+//            LabVessel tempTube = labVesselDao.findByIdentifier(currVessel);
+//
+//            Set<LabVessel> removableVessels = new HashSet<>();
+//            removableVessels.add(tempTube);
+//            removableVessels.addAll(tempTube.getDescendantVessels());
+//
+//            for (LabVessel dumpThisVessel : removableVessels) {
+//                BucketEntry vesselBucketEntry = null;
+//                if (pBucket != null) {
+//                    vesselBucketEntry = bucketEntryDao.findByVesselAndBucket(dumpThisVessel, pBucket);
+//                }
+//                for(MercurySample dumpThisSample:dumpThisVessel.getMercurySamples()) {
+//                    for(ReworkEntry dumpThisRework:dumpThisSample.getRapSheet().getReworkEntries()) {
+//                        labVesselDao.remove(dumpThisRework);
+//                    }
+//                    labVesselDao.remove(dumpThisSample.getRapSheet());
+//                    labVesselDao.remove(dumpThisSample);
+//                }
+//                labVesselDao.remove(dumpThisVessel);
+//                if (vesselBucketEntry != null) {
+//                    bucketEntryDao.remove(vesselBucketEntry);
+//                }
+//            }
+//        }
+//
+//        if (newBucket) {
+//
+//            bucketDao.remove(pBucket);
+//        }
 
         mapBarcodeToTube.clear();
     }
@@ -268,22 +435,17 @@ public class ReworkEjbTest extends Arquillian {
 
         createInitialTubes(bucketReadySamples1, String.valueOf((new Date()).getTime()));
 
-//        utx.begin();
-
         for (String barcode : mapBarcodeToTube.keySet()) {
             reworkEjb.addRework(barcode, ReworkEntry.ReworkReason.UNKNOWN_ERROR, LabEventType.PICO_PLATING_BUCKET,
                     "test Rework",
                     WorkflowName.EXOME_EXPRESS.getWorkflowName());
         }
-//        productOrderDao.flush();
-//        productOrderDao.clear();
+
         Collection<LabVessel> entries = reworkEjb.getVesselsForRework();
 
-        Assert.assertEquals(entries.size(), 1);
+        Assert.assertEquals(entries.size(), existingReworks + 2);
 
         Assert.assertTrue(entries.contains(mapBarcodeToTube.values().iterator().next()));
-
-//        utx.rollback();
 
     }
 
@@ -291,7 +453,6 @@ public class ReworkEjbTest extends Arquillian {
     public void testHappyPathWithValidation() throws Exception {
 
         createInitialTubes(bucketReadySamples1, String.valueOf((new Date()).getTime()));
-
 
         List<String> validationMessages = new ArrayList<>();
 
@@ -302,16 +463,13 @@ public class ReworkEjbTest extends Arquillian {
                             WorkflowName.EXOME_EXPRESS.getWorkflowName()));
         }
 
-        productOrderDao.flush();
-        productOrderDao.clear();
         Collection<LabVessel> entries = reworkEjb.getVesselsForRework();
 
-        Assert.assertEquals(validationMessages.size(), 1);
+        Assert.assertEquals(validationMessages.size(), 2);
 
-        Assert.assertEquals(entries.size(), 1);
+        Assert.assertEquals(entries.size(), existingReworks + 2);
 
         Assert.assertTrue(entries.contains(mapBarcodeToTube.values().iterator().next()));
-
 
     }
 
@@ -322,7 +480,6 @@ public class ReworkEjbTest extends Arquillian {
 
         createInitialTubes(bucketReadySamples1, String.valueOf((new Date()).getTime()));
 
-
         for (Map.Entry<String, TwoDBarcodedTube> currEntry : mapBarcodeToTube.entrySet()) {
 
             bucketDao.findByName(bucketName);
@@ -330,8 +487,6 @@ public class ReworkEjbTest extends Arquillian {
                     twoDBarcodedTubeDAO.findByBarcode(currEntry.getKey()));
             newEntry.setStatus(BucketEntry.Status.Archived);
             bucketDao.persist(pBucket);
-            bucketDao.flush();
-            bucketDao.clear();
 
             validationMessages
                     .addAll(reworkEjb
@@ -340,16 +495,13 @@ public class ReworkEjbTest extends Arquillian {
                                     WorkflowName.EXOME_EXPRESS.getWorkflowName()));
         }
 
-        productOrderDao.flush();
-        productOrderDao.clear();
         Collection<LabVessel> entries = reworkEjb.getVesselsForRework();
 
         Assert.assertEquals(validationMessages.size(), 0);
 
-        Assert.assertEquals(entries.size(), 1);
+        Assert.assertEquals(entries.size(), existingReworks + 2);
 
         Assert.assertTrue(entries.contains(mapBarcodeToTube.values().iterator().next()));
-
 
     }
 
@@ -360,7 +512,6 @@ public class ReworkEjbTest extends Arquillian {
 
         createInitialTubes(bucketReadySamples1, String.valueOf((new Date()).getTime()));
 
-
         try {
             for (Map.Entry<String, TwoDBarcodedTube> currEntry : mapBarcodeToTube.entrySet()) {
 
@@ -368,22 +519,16 @@ public class ReworkEjbTest extends Arquillian {
                 pBucket.addEntry(exExProductOrder1.getBusinessKey(),
                         twoDBarcodedTubeDAO.findByBarcode(currEntry.getKey()));
                 bucketDao.persist(pBucket);
-                bucketDao.flush();
-                bucketDao.clear();
             }
             for (Map.Entry<String, TwoDBarcodedTube> currEntry : mapBarcodeToTube.entrySet()) {
 
-                validationMessages
-                        .addAll(reworkEjb
-                                .addAndValidateRework(currEntry.getKey(), ReworkEntry.ReworkReason.UNKNOWN_ERROR,
-                                        LabEventType.PICO_PLATING_BUCKET, "",
-                                        WorkflowName.EXOME_EXPRESS.getWorkflowName()));
+                reworkEjb.addAndValidateRework(currEntry.getKey(), ReworkEntry.ReworkReason.UNKNOWN_ERROR,
+                        LabEventType.PICO_PLATING_BUCKET, "", WorkflowName.EXOME_EXPRESS.getWorkflowName());
             }
             Assert.fail("With the tube in the bucket, Calling Rework should throw an Exception");
         } catch (ValidationException e) {
 
         }
-
 
     }
 
@@ -392,17 +537,16 @@ public class ReworkEjbTest extends Arquillian {
 
         createInitialTubes(bucketReadySamples1, String.valueOf((new Date()).getTime()));
 
-
         List<String> validationMessages = new ArrayList<String>();
 
         BettaLimsMessageTestFactory bettaLimsMessageFactory = new BettaLimsMessageTestFactory(true);
 
         HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = BettalimsMessageResourceTest
-                .sendMessagesUptoCatch("SGM_RWIT", mapBarcodeToTube, bettaLimsMessageFactory,
+                .sendMessagesUptoCatch("SGM_RWIT1"+currDate.getTime(), mapBarcodeToTube, bettaLimsMessageFactory,
                         WorkflowName.EXOME_EXPRESS,
                         bettalimsMessageResource,
                         indexedPlateFactory, staticPlateDAO, reagentDesignDao, twoDBarcodedTubeDAO,
-                        appConfig.getUrl());
+                        appConfig.getUrl(), 2);
 
         for (String barcode : hybridSelectionJaxbBuilder.getNormCatchBarcodes()) {
             validationMessages
@@ -410,18 +554,13 @@ public class ReworkEjbTest extends Arquillian {
                             LabEventType.PICO_PLATING_BUCKET, "", WorkflowName.EXOME_EXPRESS.getWorkflowName()));
         }
 
-        productOrderDao.flush();
-        productOrderDao.clear();
         Collection<LabVessel> entries = reworkEjb.getVesselsForRework();
 
         Assert.assertEquals(validationMessages.size(), 1);
 
-        Assert.assertEquals(entries.size(), 1);
+        Assert.assertEquals(entries.size(), existingReworks + 1);
 
-        for (LabVessel reworkEntry : entries) {
-            Assert.assertTrue(hybridSelectionJaxbBuilder.getNormCatchBarcodes().contains(reworkEntry.getLabel()));
-        }
-
+        validateBarcodeExistence(hybridSelectionJaxbBuilder, entries);
 
     }
 
@@ -432,23 +571,19 @@ public class ReworkEjbTest extends Arquillian {
 
         createInitialTubes(bucketReadySamples2, String.valueOf((new Date()).getTime()));
 
-
         for (String barcode : mapBarcodeToTube.keySet()) {
             validationMessages
                     .addAll(reworkEjb.addAndValidateRework(barcode, ReworkEntry.ReworkReason.UNKNOWN_ERROR,
                             LabEventType.PICO_PLATING_BUCKET, "", WorkflowName.EXOME_EXPRESS.getWorkflowName()));
         }
 
-        productOrderDao.flush();
-        productOrderDao.clear();
         Collection<LabVessel> entries = reworkEjb.getVesselsForRework();
 
-        Assert.assertEquals(validationMessages.size(), 3);
+        Assert.assertEquals(validationMessages.size(), 2);
 
-        Assert.assertEquals(entries.size(), 2);
+        Assert.assertEquals(entries.size(), existingReworks + 1);
 
         Assert.assertTrue(entries.contains(mapBarcodeToTube.values().iterator().next()));
-
 
     }
 
@@ -459,37 +594,28 @@ public class ReworkEjbTest extends Arquillian {
 
         createInitialTubes(bucketReadySamples2, String.valueOf((new Date()).getTime()));
 
-
         BettaLimsMessageTestFactory bettaLimsMessageFactory = new BettaLimsMessageTestFactory(true);
 
         HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = BettalimsMessageResourceTest
-                .sendMessagesUptoCatch("SGM_RWIT", mapBarcodeToTube, bettaLimsMessageFactory,
+                .sendMessagesUptoCatch("SGM_RWIT2"+currDate.getTime(), mapBarcodeToTube, bettaLimsMessageFactory,
                         WorkflowName.EXOME_EXPRESS,
                         bettalimsMessageResource,
                         indexedPlateFactory, staticPlateDAO, reagentDesignDao, twoDBarcodedTubeDAO,
-                        appConfig.getUrl());
+                        appConfig.getUrl(), 2);
 
-        productOrderDao.flush();
-        productOrderDao.clear();
         for (String barcode : hybridSelectionJaxbBuilder.getNormCatchBarcodes()) {
             validationMessages
                     .addAll(reworkEjb.addAndValidateRework(barcode, ReworkEntry.ReworkReason.UNKNOWN_ERROR,
                             LabEventType.PICO_PLATING_BUCKET, "", WorkflowName.EXOME_EXPRESS.getWorkflowName()));
         }
 
-        productOrderDao.flush();
-        productOrderDao.clear();
         Collection<LabVessel> entries = reworkEjb.getVesselsForRework();
 
-        Assert.assertEquals(validationMessages.size(), 3);
+        Assert.assertEquals(validationMessages.size(), 2);
 
-        Assert.assertEquals(entries.size(), 2);
+        Assert.assertEquals(entries.size(), existingReworks + 1);
 
-        for (LabVessel reworkEntry : entries) {
-            Assert.assertTrue(hybridSelectionJaxbBuilder.getNormCatchBarcodes().contains(reworkEntry.getLabel()));
-        }
-
-
+        validateBarcodeExistence(hybridSelectionJaxbBuilder, entries);
     }
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
@@ -499,15 +625,7 @@ public class ReworkEjbTest extends Arquillian {
 
         createInitialTubes(bucketReadySamples2, String.valueOf((new Date()).getTime()));
 
-
         BettaLimsMessageTestFactory bettaLimsMessageFactory = new BettaLimsMessageTestFactory(true);
-
-        HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = BettalimsMessageResourceTest
-                .sendMessagesUptoCatch("SGM_RWIT", mapBarcodeToTube, bettaLimsMessageFactory,
-                        WorkflowName.EXOME_EXPRESS,
-                        bettalimsMessageResource,
-                        indexedPlateFactory, staticPlateDAO, reagentDesignDao, twoDBarcodedTubeDAO,
-                        appConfig.getUrl());
 
         for (Map.Entry<String, TwoDBarcodedTube> currEntry : mapBarcodeToTube.entrySet()) {
 
@@ -516,10 +634,14 @@ public class ReworkEjbTest extends Arquillian {
                     twoDBarcodedTubeDAO.findByBarcode(currEntry.getKey()));
             newEntry.setStatus(BucketEntry.Status.Archived);
             bucketDao.persist(pBucket);
-            bucketDao.flush();
-            bucketDao.clear();
-
         }
+
+        HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = BettalimsMessageResourceTest
+                .sendMessagesUptoCatch("SGM_RWIT4"+currDate.getTime(), mapBarcodeToTube, bettaLimsMessageFactory,
+                        WorkflowName.EXOME_EXPRESS,
+                        bettalimsMessageResource,
+                        indexedPlateFactory, staticPlateDAO, reagentDesignDao, twoDBarcodedTubeDAO,
+                        appConfig.getUrl(), 2);
 
         for (String barcode : hybridSelectionJaxbBuilder.getNormCatchBarcodes()) {
             validationMessages
@@ -527,18 +649,13 @@ public class ReworkEjbTest extends Arquillian {
                             LabEventType.PICO_PLATING_BUCKET, "", WorkflowName.EXOME_EXPRESS.getWorkflowName()));
         }
 
-        productOrderDao.flush();
-        productOrderDao.clear();
         Collection<LabVessel> entries = reworkEjb.getVesselsForRework();
 
-        Assert.assertEquals(validationMessages.size(), 3);
+        Assert.assertEquals(validationMessages.size(), 1);
 
-        Assert.assertEquals(entries.size(), 2);
+        Assert.assertEquals(entries.size(), existingReworks + 1);
 
-        for (LabVessel reworkEntry : entries) {
-            Assert.assertTrue(hybridSelectionJaxbBuilder.getNormCatchBarcodes().contains(reworkEntry.getLabel()));
-        }
-
+        validateBarcodeExistence(hybridSelectionJaxbBuilder, entries);
 
     }
 
@@ -549,15 +666,14 @@ public class ReworkEjbTest extends Arquillian {
 
         createInitialTubes(bucketReadySamples2, String.valueOf((new Date()).getTime()));
 
-
         BettaLimsMessageTestFactory bettaLimsMessageFactory = new BettaLimsMessageTestFactory(true);
 
         HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = BettalimsMessageResourceTest
-                .sendMessagesUptoCatch("SGM_RWIT", mapBarcodeToTube, bettaLimsMessageFactory,
+                .sendMessagesUptoCatch("SGM_RWIT3"+currDate.getTime(), mapBarcodeToTube, bettaLimsMessageFactory,
                         WorkflowName.EXOME_EXPRESS,
                         bettalimsMessageResource,
                         indexedPlateFactory, staticPlateDAO, reagentDesignDao, twoDBarcodedTubeDAO,
-                        appConfig.getUrl());
+                        appConfig.getUrl(), 2);
 
         try {
             for (Map.Entry<String, TwoDBarcodedTube> currEntry : mapBarcodeToTube.entrySet()) {
@@ -566,9 +682,6 @@ public class ReworkEjbTest extends Arquillian {
                 pBucket.addEntry(exExProductOrder1.getBusinessKey(),
                         twoDBarcodedTubeDAO.findByBarcode(currEntry.getKey()));
                 bucketDao.persist(pBucket);
-                bucketDao.flush();
-                bucketDao.clear();
-
             }
 
             for (String barcode : hybridSelectionJaxbBuilder.getNormCatchBarcodes()) {
@@ -593,10 +706,28 @@ public class ReworkEjbTest extends Arquillian {
         for (ProductOrderSample currSamp : pos) {
             String twoDBarcode = "RWIT" + barcodePrefix + counter;
             TwoDBarcodedTube aliquot = new TwoDBarcodedTube(twoDBarcode);
-            aliquot.addSample(new MercurySample(currSamp.getBspSampleName()));
+            aliquot.addSample(new MercurySample(currSamp.getBspSampleName(),
+                    bspSampleDataFetcher.fetchSingleSampleFromBSP(currSamp.getBspSampleName())));
             mapBarcodeToTube.put(twoDBarcode, aliquot);
             labVesselDao.persist(aliquot);
             counter++;
         }
     }
+
+    private void validateBarcodeExistence(HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder,
+                                          Collection<LabVessel> entries) {
+        List<String> reworkEntryBarcodes = new ArrayList<>(entries.size());
+
+        for (LabVessel reworkEntry : entries) {
+            reworkEntryBarcodes.add(reworkEntry.getLabel());
+        }
+
+        for(String normCatchBarcode:hybridSelectionJaxbBuilder.getNormCatchBarcodes()) {
+
+            Assert.assertTrue(reworkEntryBarcodes.contains(normCatchBarcode),
+                    "Norm catch barcode with vessel of " + normCatchBarcode
+                    + " Not found in the list of rework entry barcodes");
+        }
+    }
+
 }

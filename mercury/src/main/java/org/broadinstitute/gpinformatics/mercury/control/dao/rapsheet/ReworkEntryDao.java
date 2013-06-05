@@ -14,10 +14,13 @@ package org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry_;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 @Stateful
 @RequestScoped
