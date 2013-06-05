@@ -128,6 +128,7 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
     public static final String SM_12MD2_CONTAINER_ID = "CO-2859994";
 
     public final static Map<String, Map<BSPSampleSearchColumn, String>> samples = new HashMap<String, Map<BSPSampleSearchColumn, String>>();
+    public static final String CANINE_SPECIES = "Canine";
 
     public BSPSampleSearchServiceStub() {
 
