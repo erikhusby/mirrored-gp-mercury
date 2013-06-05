@@ -190,6 +190,7 @@ public class SampleInstance {
         return filteredBatchCompositions;
     }
 
+    @Nullable
     public String getProductOrderKey() {
         return productOrderKey;
     }

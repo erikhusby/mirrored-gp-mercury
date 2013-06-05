@@ -924,7 +924,8 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
         }
 
         //THis will automatically add the batch to the tubes via the internal set methods
-        new LabBatch(" ", tubes, LabBatch.LabBatchType.WORKFLOW);
+        LabBatch labBatch = new LabBatch(" ", tubes, LabBatch.LabBatchType.WORKFLOW);
+        labBatch.setWorkflowName("Exome Express");
 
         Map<String, TwoDBarcodedTube> mapBarcodeToTube =
                 new LinkedHashMap<String, TwoDBarcodedTube>(productOrder.getTotalSampleCount());

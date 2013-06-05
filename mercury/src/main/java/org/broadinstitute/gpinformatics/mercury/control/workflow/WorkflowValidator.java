@@ -154,15 +154,23 @@ public class WorkflowValidator {
         }
 
         public String getLinkToProductOrder() {
-            return appConfig.getUrl() + ProductOrderActionBean.ACTIONBEAN_URL_BINDING + "?" +
-                    CoreActionBean.VIEW_ACTION + "&" + ProductOrderActionBean.PRODUCT_ORDER_PARAMETER +
-                    "=" + productOrder.getBusinessKey();
+            if (productOrder == null) {
+                return "";
+            } else {
+                return appConfig.getUrl() + ProductOrderActionBean.ACTIONBEAN_URL_BINDING + "?" +
+                        CoreActionBean.VIEW_ACTION + "&" + ProductOrderActionBean.PRODUCT_ORDER_PARAMETER +
+                        "=" + productOrder.getBusinessKey();
+            }
         }
 
         public String getLinkToResearchProject() {
-            return appConfig.getUrl() + ResearchProjectActionBean.ACTIONBEAN_URL_BINDING + "?" +
-                    CoreActionBean.VIEW_ACTION + "&" + ResearchProjectActionBean.RESEARCH_PROJECT_PARAMETER +
-                    "=" + productOrder.getResearchProject().getBusinessKey();
+            if (productOrder == null) {
+                return "";
+            } else {
+                return appConfig.getUrl() + ResearchProjectActionBean.ACTIONBEAN_URL_BINDING + "?" +
+                        CoreActionBean.VIEW_ACTION + "&" + ResearchProjectActionBean.RESEARCH_PROJECT_PARAMETER +
+                        "=" + productOrder.getResearchProject().getBusinessKey();
+            }
         }
     }
 
@@ -212,9 +220,13 @@ public class WorkflowValidator {
                     if (workflowVersion != null) {
                         List<ProductWorkflowDefVersion.ValidationError> errors = workflowVersion.validate(labVessel, eventType);
                         if (!errors.isEmpty()) {
-                            validationErrors.add(new WorkflowValidationError(sampleInstance, errors,
-                                    athenaClientService.retrieveProductOrderDetails(
-                                            sampleInstance.getProductOrderKey()), appConfig));
+                            ProductOrder productOrder = null;
+                            if (sampleInstance.getProductOrderKey() != null) {
+                                productOrder = athenaClientService.retrieveProductOrderDetails(
+                                        sampleInstance.getProductOrderKey());
+                            }
+                            validationErrors.add(new WorkflowValidationError(sampleInstance, errors, productOrder,
+                                    appConfig));
                         }
                     }
                 }
