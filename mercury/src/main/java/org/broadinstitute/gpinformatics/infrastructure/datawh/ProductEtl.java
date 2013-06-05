@@ -12,10 +12,14 @@ import java.util.Collection;
 
 @Stateful
 public class ProductEtl extends GenericEntityEtl<Product, Product> {
-
     public ProductEtl() {
     }
 
+    /**
+     * This method is used for just the Database Free tests.
+     *
+     * @param dao the {@link ProductDao} to use with this bean
+     */
     @Inject
     public ProductEtl(ProductDao dao) {
         super(Product.class, "product", dao);
@@ -27,7 +31,7 @@ public class ProductEtl extends GenericEntityEtl<Product, Product> {
     }
 
     @Override
-    Path rootId(Root root) {
+    Path rootId(Root<Product> root) {
         return root.get(Product_.productId);
     }
 
@@ -49,7 +53,8 @@ public class ProductEtl extends GenericEntityEtl<Product, Product> {
                 format(entity.getSamplesPerWeek()),
                 format(entity.isTopLevelProduct()),
                 format(entity.getWorkflowName()),
-                format(entity.getProductFamily() != null ? entity.getProductFamily().getName() : null)
+                format(entity.getProductFamily() != null ? entity.getProductFamily().getName() : null),
+                format(entity.getPrimaryPriceItem() != null ? entity.getPrimaryPriceItem().getPriceItemId() : null)
         );
     }
 }

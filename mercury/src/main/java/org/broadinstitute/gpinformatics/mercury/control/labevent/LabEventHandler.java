@@ -1,31 +1,21 @@
 package org.broadinstitute.gpinformatics.mercury.control.labevent;
 
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.io.Serializable;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
 
 // Implements Serializable because it's used by a Stateful session bean.
 public class LabEventHandler implements Serializable {
@@ -45,8 +35,6 @@ public class LabEventHandler implements Serializable {
 
     private AthenaClientService athenaClientService;
 
-    private BSPUserList bspUserList;
-
     @Inject
     private JiraCommentUtil jiraCommentUtil;
 
@@ -54,11 +42,9 @@ public class LabEventHandler implements Serializable {
     }
 
     @Inject
-    public LabEventHandler(WorkflowLoader workflowLoader, AthenaClientService athenaClientService,
-                           BSPUserList bspUserList) {
+    public LabEventHandler(WorkflowLoader workflowLoader, AthenaClientService athenaClientService) {
         this.workflowLoader = workflowLoader;
         this.athenaClientService = athenaClientService;
-        this.bspUserList = bspUserList;
     }
 
     public HandlerResponse processEvent(LabEvent labEvent) {
@@ -84,49 +70,6 @@ public class LabEventHandler implements Serializable {
 
         return HandlerResponse.OK;
 
-    }
-
-    /**
-     * If a relevant project considers this event a checkpointable
-     * event, notify each project, taking care to only post a single
-     * message for the entire event, instead of spamming them
-     * with a jira ticket comment per aliquot.
-     *
-     * @param event
-     */
-    public void notifyCheckpoints(LabEvent event) {
-        //        Map<Project,Collection<StartingSample>> samplesForProject = new HashMap<Project,Collection<StartingSample>>();
-        for (LabVessel container : event.getAllLabVessels()) {
-            for (SampleInstance sampleInstance : container.getSampleInstances()) {
-                //                for (ProjectPlan projectPlan : sampleInstance.getAllProjectPlans()) {
-                //                    Project p = projectPlan.getProject();
-                //                    if (!samplesForProject.containsKey(p)) {
-                //                        samplesForProject.put(p,new HashSet<StartingSample>());
-                //                    }
-                //                    if (p.getCheckpointableEvents().contains(event.getEventName())) {
-                //                        samplesForProject.get(p).add(sampleInstance.getStartingSample());
-                //                    }
-                //                }
-
-            }
-        }
-        //        for (Map.Entry<Project, Collection<StartingSample>> entry : samplesForProject.entrySet()) {
-        //            String message = entry.getValue().size() + " aliquots for " + entry.getKey().getProjectName() + " have been processed through the " + event.getEventName() + " event";
-        //            entry.getKey().addJiraComment(message);
-        //        }
-    }
-
-    /**
-     * Probably farm this out to a thread queue
-     *
-     * @param event
-     */
-    private void updateSampleStatus(LabEvent event) {
-        for (LabVessel target : event.getTargetLabVessels()) {
-            for (SampleInstance sampleInstance : target.getSampleInstances()) {
-                //                sampleInstance.getStartingSample().logNote(new StatusNote(event.getEventName()));
-            }
-        }
     }
 
     /**
@@ -191,19 +134,21 @@ public class LabEventHandler implements Serializable {
 //    }
 
     /**
-     * Sends an alert message to the lab somehow.  Email list?
+     * getWorkflowVersion will, based on a lab batch, find the defined Workflow Version.
      *
-     * @param message
-     * @param event
+     * @param labBatch LCSET
+     * @return Workflow Definition for the defined workflow for the LCSET
      */
-    private void sendAlertToLab(String message, LabEvent event) {
-        StringBuilder alertText = new StringBuilder();
+    public ProductWorkflowDefVersion getWorkflowVersion(@Nonnull LabBatch labBatch) {
+        WorkflowConfig workflowConfig = workflowLoader.load();
 
-        alertText.append(message).append("\n");
+        ProductWorkflowDefVersion versionResult = null;
 
-        alertText.append(event.getLabEventType().getName() + " from " +
-                bspUserList.getById(event.getEventOperator()).getUsername() +
-                " sent on " + event.getEventDate());
+        String workflowName = labBatch.getWorkflowName();
+        if (StringUtils.isNotBlank(workflowName)) {
+            versionResult = workflowConfig.getWorkflowByName(workflowName).getEffectiveVersion();
+        }
+        return versionResult;
     }
 
     /**
@@ -246,34 +191,34 @@ public class LabEventHandler implements Serializable {
      * @return a map consisting of all lab vessels referenced in the lab event indexed by the workflow step that
      *         relates to the viable bucket.
      */
-    public Map<WorkflowStepDef, Collection<LabVessel>> itemizeBucketItems(LabEvent labEvent) {
-        Map<WorkflowStepDef, Collection<LabVessel>> bucketVessels = new HashMap<WorkflowStepDef, Collection<LabVessel>>();
-
-        for (LabVessel currVessel : labEvent.getSourceVesselTubes()) {
-
-            Collection<String> productOrders = currVessel.getNearestProductOrders();
-            WorkflowStepDef workingBucketName = null;
-            if (CollectionUtils.isNotEmpty(productOrders)) {
-                ProductWorkflowDefVersion workflowDef = getWorkflowVersion(productOrders.iterator().next());
-
-                String eventTypeName = labEvent.getLabEventType().getName();
-                if (workflowDef != null && workflowDef.isPreviousStepBucket(eventTypeName)) {
-                    workingBucketName = workflowDef.getPreviousStep(eventTypeName);
-                }
-            }
-
-            if (workingBucketName != null) {
-                if (!bucketVessels.containsKey(workingBucketName)) {
-                    bucketVessels.put(workingBucketName, new LinkedList<LabVessel>());
-                    if (bucketVessels.keySet().size() > 1) {
-                        LOG.warn("Samples are coming from multiple Buckets");
-                    }
-                }
-                bucketVessels.get(workingBucketName).add(currVessel);
-            }
-        }
-        return bucketVessels;
-    }
+//    public Map<WorkflowStepDef, Collection<LabVessel>> itemizeBucketItems(LabEvent labEvent) {
+//        Map<WorkflowStepDef, Collection<LabVessel>> bucketVessels = new HashMap<WorkflowStepDef, Collection<LabVessel>>();
+//
+//        for (LabVessel currVessel : labEvent.getSourceVesselTubes()) {
+//
+//            Collection<String> productOrders = currVessel.getNearestProductOrders();
+//            WorkflowStepDef workingBucketName = null;
+//            if (CollectionUtils.isNotEmpty(productOrders)) {
+//                ProductWorkflowDefVersion workflowDef = getWorkflowVersion(productOrders.iterator().next());
+//
+//                String eventTypeName = labEvent.getLabEventType().getName();
+//                if (workflowDef != null && workflowDef.isPreviousStepBucket(eventTypeName)) {
+//                    workingBucketName = workflowDef.getPreviousStep(eventTypeName);
+//                }
+//            }
+//
+//            if (workingBucketName != null) {
+//                if (!bucketVessels.containsKey(workingBucketName)) {
+//                    bucketVessels.put(workingBucketName, new LinkedList<LabVessel>());
+//                    if (bucketVessels.keySet().size() > 1) {
+//                        LOG.warn("Samples are coming from multiple Buckets");
+//                    }
+//                }
+//                bucketVessels.get(workingBucketName).add(currVessel);
+//            }
+//        }
+//        return bucketVessels;
+//    }
 
     /**
      * Primarily utilized for adding items to a bucket, this method determines the proper Bucket->Vessel Combination.
@@ -288,77 +233,59 @@ public class LabEventHandler implements Serializable {
      * @return a map consisting of all lab vessels referenced in the lab event indexed by the workflow step that
      *         relates to the viable bucket.
      */
-    public Map<WorkflowStepDef, Collection<LabVessel>> itemizeBucketCandidates(LabEvent labEvent) {
-
-
-        Map<WorkflowStepDef, Collection<LabVessel>> bucketVessels =
-                new HashMap<WorkflowStepDef, Collection<LabVessel>>();
-
-        for (LabVessel currVessel : labEvent.getTargetVesselTubes()) {
-
-            /*
-                Retrieve product orders related to the lab vessel
-             */
-            Collection<String> productOrders = currVessel.getNearestProductOrders();
-            WorkflowStepDef workingBucketName = null;
-
-            if (CollectionUtils.isNotEmpty(productOrders)) {
-
-                /*
-                    Determine the appropriate workflow version based on the product order
-                 */
-                ProductWorkflowDefVersion workflowDef = getWorkflowVersion(productOrders.iterator().next());
-
-                /*
-                    As long as this step is not on a workflow branch, Find the next workflow step that is not on a
-                    workflow branch and determine if it is a bucket.
-                 */
-                if (workflowDef != null &&
-                        !workflowDef.isStepDeadBranch(labEvent.getLabEventType().getName()) &&
-                        workflowDef.isNextNonDeadBranchStepBucket(labEvent.getLabEventType().getName())) {
-
-                    /*
-                        If the next viable step is a bucket, save it for indexing it to the appropriate lab vessels
-                     */
-                    workingBucketName = workflowDef.getNextNonDeadBranchStep(
-                            labEvent.getLabEventType().getName());
-                }
-            }
-
-            if (workingBucketName != null) {
-                if (!bucketVessels.containsKey(workingBucketName)) {
-
-                    /*
-                        if we have found the right bucket, index the vessel with that bucket in the return map
-                     */
-                    bucketVessels.put(workingBucketName, new LinkedList<LabVessel>());
-                    if (bucketVessels.keySet().size() > 1) {
-                        LOG.warn("Samples are coming from multiple Buckets");
-                    }
-                }
-                bucketVessels.get(workingBucketName).add(currVessel);
-            }
-        }
-        return bucketVessels;
-    }
-
-    public static WorkflowBucketDef findBucketDef(@Nonnull String workflowName, @Nonnull LabEventType stepDef) {
-
-        WorkflowConfig workflowConfig = (new WorkflowLoader()).load();
-        assert(workflowConfig != null && workflowConfig.getProductWorkflowDefs() != null &&
-               !workflowConfig.getProductWorkflowDefs().isEmpty());
-        ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(workflowName);
-        ProductWorkflowDefVersion versionResult = productWorkflowDef.getEffectiveVersion();
-
-        ProductWorkflowDefVersion.LabEventNode labEventNode =
-                versionResult.findStepByEventType(stepDef.getName());
-        if (labEventNode == null) {
-            return null;
-        } else {
-            return (WorkflowBucketDef) labEventNode.getStepDef();
-        }
-    }
-
+//    public Map<WorkflowStepDef, Collection<LabVessel>> itemizeBucketCandidates(LabEvent labEvent) {
+//
+//
+//        Map<WorkflowStepDef, Collection<LabVessel>> bucketVessels =
+//                new HashMap<WorkflowStepDef, Collection<LabVessel>>();
+//
+//        for (LabVessel currVessel : labEvent.getTargetVesselTubes()) {
+//
+//            /*
+//                Retrieve product orders related to the lab vessel
+//             */
+//            Collection<String> productOrders = currVessel.getNearestProductOrders();
+//            WorkflowStepDef workingBucketName = null;
+//
+//            if (CollectionUtils.isNotEmpty(productOrders)) {
+//
+//                /*
+//                    Determine the appropriate workflow version based on the product order
+//                 */
+//                ProductWorkflowDefVersion workflowDef = getWorkflowVersion(productOrders.iterator().next());
+//
+//                /*
+//                    As long as this step is not on a workflow branch, Find the next workflow step that is not on a
+//                    workflow branch and determine if it is a bucket.
+//                 */
+//                if (workflowDef != null &&
+//                        !workflowDef.isStepDeadBranch(labEvent.getLabEventType().getName()) &&
+//                        workflowDef.isNextNonDeadBranchStepBucket(labEvent.getLabEventType().getName())) {
+//
+//                    /*
+//                        If the next viable step is a bucket, save it for indexing it to the appropriate lab vessels
+//                     */
+//                    workingBucketName = workflowDef.getNextNonDeadBranchStep(
+//                            labEvent.getLabEventType().getName());
+//                }
+//            }
+//
+//            if (workingBucketName != null) {
+//                if (!bucketVessels.containsKey(workingBucketName)) {
+//
+//                    /*
+//                        if we have found the right bucket, index the vessel with that bucket in the return map
+//                     */
+//                    bucketVessels.put(workingBucketName, new LinkedList<LabVessel>());
+//                    if (bucketVessels.keySet().size() > 1) {
+//                        LOG.warn("Samples are coming from multiple Buckets");
+//                    }
+//                }
+//                bucketVessels.get(workingBucketName).add(currVessel);
+//            }
+//        }
+//        return bucketVessels;
+//    }
 
 
 }

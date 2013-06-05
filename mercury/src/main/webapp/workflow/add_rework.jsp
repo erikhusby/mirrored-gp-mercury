@@ -29,7 +29,7 @@
         <stripes:form beanclass="${actionBean.class.name}" class="form-horizontal" id="reworkEntryForm">
             <div class="control-group">
                 <stripes:label for="vesselLabel" class="control-label">
-                    Barcode
+                    Barcode or Sample ID
                 </stripes:label>
                 <div id="barcodeDiv" class="controls">
                     <stripes:text id="vesselBarcode" name="vesselLabel"/>

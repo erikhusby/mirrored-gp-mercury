@@ -409,7 +409,8 @@ FOR new IN im_po_cur LOOP
       jira_ticket_key = new.jira_ticket_key,
       owner = new.owner,
       placed_date = new.placed_date,
-      etl_date = new.etl_date
+      etl_date = new.etl_date,
+      primary_price_item_id = new.primary_price_item_id
     WHERE product_order_id = new.product_order_id;
 
     INSERT INTO product_order (
@@ -424,7 +425,8 @@ FOR new IN im_po_cur LOOP
       jira_ticket_key,
       owner,
       placed_date,
-      etl_date
+      etl_date,
+      primary_price_item_id
     )
     SELECT
       new.product_order_id,
@@ -438,7 +440,8 @@ FOR new IN im_po_cur LOOP
       new.jira_ticket_key,
       new.owner,
       new.placed_date,
-      new.etl_date
+      new.etl_date,
+      new.primary_price_item_id
     FROM DUAL WHERE NOT EXISTS (
       SELECT 1 FROM product_order
       WHERE product_order_id = new.product_order_id

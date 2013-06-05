@@ -237,9 +237,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     // This is used to determine whether a special warning message needs to be confirmed before normal abandon.
     private boolean abandonWarning;
-    /**
-     * Single {@link ProductOrderListEntry} for the view page, gives us billing session information.
-     */
+
+    // Single {@link ProductOrderListEntry} for the view page, gives us billing session information.
     private ProductOrderListEntry productOrderListEntry;
 
     private Long productFamilyId;
@@ -346,48 +345,39 @@ public class ProductOrderActionBean extends CoreActionBean {
         } catch (QuoteNotFoundException ex) {
             addGlobalValidationError("The quote id {2} was not found ", editOrder.getQuoteId());
         }
-
-        // Since we are only validating from view, we can persist without worry of saving something bad.
-        // We are doing on risk calculation only when everything passes and when we are not doing save.
-        if (!hasErrors() && !SAVE_ACTION.equals(action)) {
-            doOnRiskUpdate();
-        } else {
-            addGlobalValidationError("On risk was not calculated.  Please fix the other errors first.");
-            // Initialize ProductOrderListEntry if we're implicitly going to redisplay the source page.
-            entryInit();
-        }
     }
 
     private void doOnRiskUpdate() {
-        String errorMessage = "";
         try {
-            // Only calculate on risk with this validation when this is not a save action. This will help
-            // save performance AND make it only performed during validation
-            errorMessage = productOrderEjb.calculateRisk(getUserBean().getBspUser(), editOrder.getBusinessKey());
+            // Calculate risk here and get back any error message.
+            productOrderEjb.calculateRisk(editOrder.getBusinessKey());
+
+            // refetch the order to get updated risk status on the order.
+            editOrder = productOrderDao.findByBusinessKey(editOrder.getBusinessKey());
+            int numSamplesOnRisk = editOrder.countItemsOnRisk();
+
+            if (numSamplesOnRisk == 0) {
+                addMessage("None of the samples for this order are on risk");
+            } else {
+                addMessage("{0} {1} for this order {2} on risk",
+                        numSamplesOnRisk, Noun.pluralOf("sample", numSamplesOnRisk), numSamplesOnRisk == 1 ? "is" : "are");
+            }
         } catch (Exception e) {
-            errorMessage = "Error calculating risk";
-        }
-
-        if (!StringUtils.isBlank(errorMessage)) {
-            addGlobalValidationError(errorMessage);
-            return;
-        }
-
-        // refetch the order to get updated risk status on the order.
-        editOrder = productOrderDao.findByBusinessKey(editOrder.getBusinessKey());
-        int numSamplesOnRisk = editOrder.countItemsOnRisk();
-
-        if (numSamplesOnRisk == 0) {
-            addMessage("None of the samples for this order are on risk");
-        } else {
-            addMessage("{0} {1} for this order {2} on risk",
-                    numSamplesOnRisk, Noun.pluralOf("sample", numSamplesOnRisk), numSamplesOnRisk == 1 ? "is" : "are");
+            addGlobalValidationError(e.getMessage());
         }
     }
 
     @ValidationMethod(on = PLACE_ORDER)
     public void validatePlacedOrder() {
-        doValidation("place order");
+        validatePlacedOrder(PLACE_ORDER);
+    }
+
+    public void validatePlacedOrder(String action) {
+        doValidation(action);
+
+        if (!hasErrors()) {
+            doOnRiskUpdate();
+        }
     }
 
     @ValidationMethod(on = {"startBilling", "downloadBillingTracker"})
@@ -692,8 +682,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent("validate")
     public Resolution validate() {
-        validatePlacedOrder();
-
+        validatePlacedOrder("validate");
         if (!hasErrors()) {
             addMessage("Draft Order is valid and ready to be placed");
         }
@@ -962,13 +951,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         int originalOnRiskCount = editOrder.countItemsOnRisk();
 
-        String errorMessage =
-            productOrderEjb.calculateRisk(
-                getUserBean().getBspUser(), editOrder.getBusinessKey(), selectedProductOrderSamples);
+        try {
+            productOrderEjb.calculateRisk(editOrder.getBusinessKey(), selectedProductOrderSamples);
 
-        if (!StringUtils.isBlank(errorMessage)) {
-            addGlobalValidationError(errorMessage);
-        } else {
             // refetch the order to get updated risk status on the order.
             editOrder = productOrderDao.findByBusinessKey(editOrder.getBusinessKey());
             int afterOnRiskCount = editOrder.countItemsOnRisk();
@@ -978,6 +963,8 @@ public class ProductOrderActionBean extends CoreActionBean {
                 afterOnRiskCount, originalOnRiskCount);
             JiraIssue issue = jiraService.getIssue(editOrder.getJiraTicketKey());
             issue.addComment(fullString);
+        } catch (Exception ex) {
+            addGlobalValidationError(ex.getMessage());
         }
 
         return createViewResolution();

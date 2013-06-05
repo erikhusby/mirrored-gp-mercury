@@ -168,7 +168,7 @@ public class EventEtlDbFreeTest {
         expect(pdoDao.findByBusinessKey(pdoKey)).andReturn(pdo);
         expect(pdo.getProductOrderId()).andReturn(pdoId);
         expect(obj.getEventDate()).andReturn(eventDate);
-        expect(wfLookup.lookupWorkflowConfig(eventType.getName(), pdo, eventDate)).andReturn(wfConfig);
+        expect(wfLookup.lookupWorkflowConfig(eventType.getName(), labBatch, eventDate)).andReturn(wfConfig);
         expect(wfConfig.getWorkflowId()).andReturn(workflowId);
         expect(wfConfig.getProcessId()).andReturn(processId);
         expect(obj.getLabEventId()).andReturn(entityId);
@@ -200,7 +200,7 @@ public class EventEtlDbFreeTest {
         expect(pdoDao.findByBusinessKey(pdoKey)).andReturn(pdo);
         expect(pdo.getProductOrderId()).andReturn(pdoId);
         expect(obj.getEventDate()).andReturn(eventDate);
-        expect(wfLookup.lookupWorkflowConfig(eventType.getName(), pdo, eventDate)).andReturn(wfConfig);
+        expect(wfLookup.lookupWorkflowConfig(eventType.getName(), labBatch, eventDate)).andReturn(wfConfig);
         expect(wfConfig.getWorkflowId()).andReturn(workflowId);
         expect(wfConfig.getProcessId()).andReturn(processId);
         expect(obj.getLabEventId()).andReturn(entityId);

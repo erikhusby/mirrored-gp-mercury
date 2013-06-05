@@ -41,7 +41,7 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
     static final int AUDIT_READER_TYPE_IDX = 2;
 
     /** Equivalent to AUDITED_ENTITY_CLASS.class, i.e. the audited entity class handled by the subclass. */
-    public Class entityClass;
+    public Class<AUDITED_ENTITY_CLASS> entityClass;
     /** The entity-related name of the data file, and must sync with the ETL cron script and control file. */
     public String baseFilename;
 
@@ -58,7 +58,7 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
     protected GenericEntityEtl() {
     }
 
-    protected GenericEntityEtl(Class entityClass, String baseFilename, GenericDao dao) {
+    protected GenericEntityEtl(Class<AUDITED_ENTITY_CLASS> entityClass, String baseFilename, GenericDao dao) {
         this.entityClass = entityClass;
         this.baseFilename = baseFilename;
         this.dao = dao;
@@ -72,7 +72,7 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
     abstract Long entityId(AUDITED_ENTITY_CLASS entity);
 
     /** Returns Criteria.Path to entityId given an entity root. */
-    abstract Path rootId(Root root);
+    abstract Path rootId(Root<AUDITED_ENTITY_CLASS> root);
 
     /** Returns sqlLoader records for the ETL_DATA_SOURCE_CLASS-typed entity given by entityId. */
     abstract Collection<String> dataRecords(String etlDateStr, boolean isDelete, Long entityId);
@@ -105,6 +105,7 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
     protected Collection<ETL_DATA_SOURCE_CLASS> convertAuditedEntityToDataSourceEntity(
             Collection<AUDITED_ENTITY_CLASS> entities) {
 
+        //noinspection unchecked
         return (Collection<ETL_DATA_SOURCE_CLASS>)entities;
     }
 
@@ -118,7 +119,7 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
     public int doEtl(Collection<Long> revIds, String etlDateStr) {
 
         // Retrieves the Envers-formatted list of entity changes in the given revision range.
-        List<Object[]> auditEntities = auditReaderDao.fetchDataChanges(revIds, entityClass, true);
+        List<AUDITED_ENTITY_CLASS[]> auditEntities = auditReaderDao.fetchDataChanges(revIds, entityClass, true);
         AuditLists auditLists = fetchAuditIds(auditEntities);
 
         // The convert calls optionally convert entity types for cross-entity etl classes.
@@ -139,7 +140,7 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
      * @param etlDateStr etlDate formatted as YYYYMMDDHHMMSS
      * @return the number of records created in the data file (deletes and modifies).
      */
-    public int doEtl(Class requestedClass, long startId, long endId, String etlDateStr) {
+    public int doEtl(Class<?> requestedClass, long startId, long endId, String etlDateStr) {
 
         // No-op unless the implementing class is the requested entity class.  Not an error.
         if (!entityClass.equals(requestedClass)) {
@@ -166,14 +167,14 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
 
     /** Parses AuditReader output into more useful lists of entities. */
     @DaoFree
-    protected AuditLists fetchAuditIds(Collection<Object[]> auditEntities) {
+    protected AuditLists fetchAuditIds(Collection<AUDITED_ENTITY_CLASS[]> auditEntities) {
         Set<Long> deletedEntityIds = new HashSet<Long>();
         Set<Long> changedEntityIds = new HashSet<Long>();
 
-        for (Object[] dataChange : auditEntities) {
+        for (AUDITED_ENTITY_CLASS[] dataChange : auditEntities) {
             RevisionType revType = (RevisionType) dataChange[AUDIT_READER_TYPE_IDX];
             boolean isDelete = revType == RevisionType.DEL;
-            AUDITED_ENTITY_CLASS entity = (AUDITED_ENTITY_CLASS)dataChange[AUDIT_READER_ENTITY_IDX];
+            AUDITED_ENTITY_CLASS entity = dataChange[AUDIT_READER_ENTITY_IDX];
             Long entityId = entityId(entity);
             if (isDelete) {
                 deletedEntityIds.add(entityId);
@@ -183,7 +184,7 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
         }
         changedEntityIds.removeAll(deletedEntityIds);
 
-        return new AuditLists(deletedEntityIds, changedEntityIds, Collections.EMPTY_LIST);
+        return new AuditLists(deletedEntityIds, changedEntityIds, Collections.<RevInfoPair>emptyList());
      }
 
     /** DTO class used for audit reader data. */

@@ -13,6 +13,5 @@ import static java.lang.annotation.ElementType.*;
  * mercury-config.yaml or mercury-config-local.yaml
  */
 public @interface ConfigKey {
-
     String value();
 }

@@ -3,12 +3,16 @@ package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselAndPosition;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LibraryDataType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PlateTransferType;
@@ -95,7 +99,7 @@ public class LimsQueries {
     public List<String> findImmediatePlateParents(String plateBarcode) {
         StaticPlate plate = staticPlateDAO.findByBarcode(plateBarcode);
         List<StaticPlate> parents = plate.getImmediatePlateParents();
-        List<String> parentPlateBarcodes = new ArrayList<String>();
+        List<String> parentPlateBarcodes = new ArrayList<>();
         for (StaticPlate parent : parents) {
             parentPlateBarcodes.add(parent.getLabel());
         }
@@ -103,7 +107,7 @@ public class LimsQueries {
     }
 
     public Map<String, Boolean> fetchParentRackContentsForPlate(String plateBarcode) {
-        Map<String, Boolean> map = new HashMap<String, Boolean>();
+        Map<String, Boolean> map = new HashMap<>();
         StaticPlate plate = staticPlateDAO.findByBarcode(plateBarcode);
         Map<VesselPosition, Boolean> hasRackContentByWell = plate.getHasRackContentByWell();
         for (Map.Entry<VesselPosition, Boolean> entry : hasRackContentByWell.entrySet()) {
@@ -113,7 +117,7 @@ public class LimsQueries {
     }
 
     public List<WellAndSourceTubeType> fetchSourceTubesForPlate(String plateBarcode) {
-        List<WellAndSourceTubeType> results = new ArrayList<WellAndSourceTubeType>();
+        List<WellAndSourceTubeType> results = new ArrayList<>();
         StaticPlate plate = staticPlateDAO.findByBarcode(plateBarcode);
         for (VesselAndPosition vesselAndPosition : plate.getNearestTubeAncestors()) {
             WellAndSourceTubeType result = new WellAndSourceTubeType();
@@ -124,22 +128,59 @@ public class LimsQueries {
         return results;
     }
 
+    /**
+     * Fetch ancestor transfers for a plate
+     * @param plateBarcode barcode of plate for which to fetch transfers
+     * @param depth how many levels of transfer to recurse
+     * @return plate transfer details
+     */
     public List<PlateTransferType> fetchTransfersForPlate(String plateBarcode, int depth) {
-        List<PlateTransferType> results = new ArrayList<PlateTransferType>();
         StaticPlate plate = staticPlateDAO.findByBarcode(plateBarcode);
         if (plate == null) {
             throw new RuntimeException("Plate not found for barcode: " + plateBarcode);
         }
+        return fetchTransfersForPlate(plate, depth);
+    }
+
+    /**
+     * DaoFree implementation of {@link #fetchTransfersForPlate(String, int)}
+     */
+    @DaoFree
+    public List<PlateTransferType> fetchTransfersForPlate(StaticPlate plate, int depth) {
+        List<PlateTransferType> results = new ArrayList<>();
         List<SectionTransfer> transfers = plate.getUpstreamPlateTransfers(depth);
         for (SectionTransfer transfer : transfers) {
             PlateTransferType result = new PlateTransferType();
             result.setSourceBarcode(transfer.getSourceVesselContainer().getEmbedder().getLabCentricName());
             result.setSourceSection(transfer.getSourceSection().getSectionName());
-            result.setDestinationBarcode(transfer.getTargetVesselContainer().getEmbedder().getLabel());
+            addWellsAndTubes(transfer.getSourceVesselContainer(), result.getSourcePositionMap());
+
+            result.setDestinationBarcode(transfer.getTargetVesselContainer().getEmbedder().getLabCentricName());
             result.setDestinationSection(transfer.getTargetSection().getSectionName());
+            addWellsAndTubes(transfer.getTargetVesselContainer(), result.getDestinationPositionMap());
             results.add(result);
         }
         return results;
+    }
+
+    /**
+     * Adds WellAndTube DTOs to {@link PlateTransferType}
+     * @param vesselContainer entity
+     * @param wellAndSourceTubeTypes list to which to add DTOs
+     */
+    @DaoFree
+    private void addWellsAndTubes(VesselContainer vesselContainer, List<WellAndSourceTubeType> wellAndSourceTubeTypes) {
+        if (OrmUtil.proxySafeIsInstance(vesselContainer.getEmbedder(), TubeFormation.class)) {
+            TubeFormation tubeFormation = OrmUtil.proxySafeCast(vesselContainer.getEmbedder(),
+                    TubeFormation.class);
+            for (Map.Entry<VesselPosition, TwoDBarcodedTube> vesselPositionTwoDBarcodedTubeEntry : tubeFormation
+                    .getContainerRole().getMapPositionToVessel().entrySet()) {
+                WellAndSourceTubeType wellAndSourceTubeType = new WellAndSourceTubeType();
+                wellAndSourceTubeType.setTubeBarcode(vesselPositionTwoDBarcodedTubeEntry.getValue().getLabel());
+                wellAndSourceTubeType.setWellName(vesselPositionTwoDBarcodedTubeEntry.getKey().name());
+                wellAndSourceTubeTypes.add(wellAndSourceTubeType);
+            }
+        }
     }
 
     /**

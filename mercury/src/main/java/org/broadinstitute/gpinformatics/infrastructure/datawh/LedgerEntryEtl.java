@@ -28,7 +28,7 @@ public class LedgerEntryEtl extends GenericEntityEtl<LedgerEntry, LedgerEntry> {
     }
 
     @Override
-    Path rootId(Root root) {
+    Path rootId(Root<LedgerEntry> root) {
         return root.get(LedgerEntry_.ledgerId);
     }
 

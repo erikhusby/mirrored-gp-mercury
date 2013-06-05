@@ -4,13 +4,13 @@ import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
@@ -18,7 +18,6 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 @UrlBinding("/view/workflowView.action")
 public class WorkflowViewActionBean extends CoreActionBean {
@@ -27,8 +26,7 @@ public class WorkflowViewActionBean extends CoreActionBean {
 
     @Inject
     private LabVesselDao labVesselDao;
-    @Inject
-    private AthenaClientService athenaClientService;
+
     @Inject
     private LabEventHandler labEventHandler;
 
@@ -78,11 +76,12 @@ public class WorkflowViewActionBean extends CoreActionBean {
         if (vesselLabel != null) {
             this.vessel = labVesselDao.findByIdentifier(vesselLabel);
         }
-        Set<String> pdoKeys = vessel.getPdoKeys();
-        for (String pdoKey : pdoKeys) {
-            ProductWorkflowDefVersion productWorkflowDefVersion = labEventHandler.getWorkflowVersion(pdoKey);
-            ProductOrder productOrder = athenaClientService.retrieveProductOrderDetails(pdoKey);
-            productWorkflowDefVersionMap.put(productOrder.getProduct().getProductName(), productWorkflowDefVersion);
+        for (SampleInstance sampleInstance : vessel
+                .getSampleInstances(LabVessel.SampleType.PREFER_PDO, LabBatch.LabBatchType.WORKFLOW)) {
+            for (LabBatch labBatch : sampleInstance.getAllLabBatches()) {
+                ProductWorkflowDefVersion productWorkflowDefVersion = labEventHandler.getWorkflowVersion(labBatch);
+                productWorkflowDefVersionMap.put(productWorkflowDefVersion.getProductWorkflowDef().getName(), productWorkflowDefVersion);
+            }
         }
 
         return new ForwardResolution(VIEW_PAGE);

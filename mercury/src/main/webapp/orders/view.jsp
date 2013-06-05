@@ -372,9 +372,9 @@
             <div class="actionButtons">
                 <c:choose>
                     <c:when test="${actionBean.editOrder.draft}">
-                        <%-- PDOs can be placed by PM or PDMs, so the security tag accepts either of those roles for 'Place Order'.
-                             'Validate' is also under that same security tag since that has the power to alter 'On-Riskedness'
-                             for PDO samples. --%>
+                        <%-- PDOs can be placed by PM or PDMs, so the security tag accepts either of those roles for 'Place Order'. --%>
+                        <%--'Validate' is also under that same security tag since that has the power to alter 'On-Riskedness' --%>
+                        <%-- for PDO samples. --%>
                         <security:authorizeBlock roles="<%= roles(Developer, PDM, PM) %>">
 
                             <stripes:submit name="placeOrder" value="Validate and Place Order"
