@@ -443,7 +443,7 @@ public class ReworkEjbTest extends Arquillian {
 
         Collection<LabVessel> entries = reworkEjb.getVesselsForRework();
 
-        Assert.assertEquals(entries.size(), existingReworks + 2);
+        Assert.assertEquals(entries.size(), existingReworks + mapBarcodeToTube.size());
 
         Assert.assertTrue(entries.contains(mapBarcodeToTube.values().iterator().next()));
 
@@ -467,7 +467,7 @@ public class ReworkEjbTest extends Arquillian {
 
         Assert.assertEquals(validationMessages.size(), 2);
 
-        Assert.assertEquals(entries.size(), existingReworks + 2);
+        Assert.assertEquals(entries.size(), existingReworks + mapBarcodeToTube.size());
 
         Assert.assertTrue(entries.contains(mapBarcodeToTube.values().iterator().next()));
 
@@ -499,7 +499,7 @@ public class ReworkEjbTest extends Arquillian {
 
         Assert.assertEquals(validationMessages.size(), 0);
 
-        Assert.assertEquals(entries.size(), existingReworks + 2);
+        Assert.assertEquals(entries.size(), existingReworks + mapBarcodeToTube.size());
 
         Assert.assertTrue(entries.contains(mapBarcodeToTube.values().iterator().next()));
 
@@ -558,7 +558,7 @@ public class ReworkEjbTest extends Arquillian {
 
         Assert.assertEquals(validationMessages.size(), 1);
 
-        Assert.assertEquals(entries.size(), existingReworks + 1);
+        Assert.assertEquals(entries.size(), existingReworks + hybridSelectionJaxbBuilder.getNormCatchBarcodes().size());
 
         validateBarcodeExistence(hybridSelectionJaxbBuilder, entries);
 
@@ -579,9 +579,9 @@ public class ReworkEjbTest extends Arquillian {
 
         Collection<LabVessel> entries = reworkEjb.getVesselsForRework();
 
-        Assert.assertEquals(validationMessages.size(), 2);
+        Assert.assertEquals(validationMessages.size(), 3);
 
-        Assert.assertEquals(entries.size(), existingReworks + 1);
+        Assert.assertEquals(entries.size(), existingReworks + mapBarcodeToTube.size());
 
         Assert.assertTrue(entries.contains(mapBarcodeToTube.values().iterator().next()));
 
@@ -613,7 +613,7 @@ public class ReworkEjbTest extends Arquillian {
 
         Assert.assertEquals(validationMessages.size(), 2);
 
-        Assert.assertEquals(entries.size(), existingReworks + 1);
+        Assert.assertEquals(entries.size(), existingReworks + hybridSelectionJaxbBuilder.getNormCatchBarcodes().size());
 
         validateBarcodeExistence(hybridSelectionJaxbBuilder, entries);
     }
@@ -653,7 +653,7 @@ public class ReworkEjbTest extends Arquillian {
 
         Assert.assertEquals(validationMessages.size(), 1);
 
-        Assert.assertEquals(entries.size(), existingReworks + 1);
+        Assert.assertEquals(entries.size(), existingReworks + hybridSelectionJaxbBuilder.getNormCatchBarcodes().size());
 
         validateBarcodeExistence(hybridSelectionJaxbBuilder, entries);
 
@@ -675,7 +675,6 @@ public class ReworkEjbTest extends Arquillian {
                         indexedPlateFactory, staticPlateDAO, reagentDesignDao, twoDBarcodedTubeDAO,
                         appConfig.getUrl(), 2);
 
-        try {
             for (Map.Entry<String, TwoDBarcodedTube> currEntry : mapBarcodeToTube.entrySet()) {
 
                 bucketDao.findByName(bucketName);
@@ -691,11 +690,13 @@ public class ReworkEjbTest extends Arquillian {
                                 WorkflowName.EXOME_EXPRESS.getWorkflowName()));
             }
 
-            Assert.fail("With an ancestor in the bucket currently, adding Rework should fail");
-        } catch (ValidationException e) {
+        Collection<LabVessel> entries = reworkEjb.getVesselsForRework();
 
-        }
+        Assert.assertEquals(validationMessages.size(), 1);
 
+        Assert.assertEquals(entries.size(), existingReworks + hybridSelectionJaxbBuilder.getNormCatchBarcodes().size());
+
+        validateBarcodeExistence(hybridSelectionJaxbBuilder, entries);
     }
 
 
