@@ -1521,6 +1521,31 @@ public abstract class LabVessel implements Serializable {
 
         return false;
     }
+
+    /**
+     * Helper method to determine if a given vessel is in a bucket.
+     * @param pdoKey PDO Key with which a vessel may be associated in a bucket
+     * @param bucketName Name of the bucket to search for associations
+     * @return
+     */
+    public boolean isVesselInBucket(@Nonnull String pdoKey, @Nonnull String bucketName) {
+
+        for(BucketEntry currentEntry: getBucketEntries()) {
+            if(pdoKey.equals(currentEntry.getPoBusinessKey()) &&
+               bucketName.equals(currentEntry.getBucket().getBucketDefinitionName()) &&
+               BucketEntry.Status.Active == currentEntry.getStatus()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    /**
+     * Helper method to determine if a given vessel or any of its ancestors have ever been in a bucket.
+     * @param bucketName Name of the bucket to search for associations
+     * @return
+     */
     public boolean hasAncestorBeenInBucket(@Nonnull String bucketName) {
 
         List<LabVessel> vesselHeirarchy = new ArrayList<LabVessel>();

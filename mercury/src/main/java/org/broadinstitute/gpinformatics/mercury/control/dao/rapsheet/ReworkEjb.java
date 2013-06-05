@@ -110,10 +110,8 @@ public class ReworkEjb {
             for (SampleInstance sampleInstance : samplesAtPosition) {
                 MercurySample mercurySample = sampleInstance.getStartingSample();
 
-
                 //TODO SGM Revisit.  Ensure that this is truly what we wish to do.
-                if (labVessel
-                        .isAncestorInBucket(sampleInstance.getProductOrderKey(), bucketDef.getName())) {
+                if (labVessel.isVesselInBucket(sampleInstance.getProductOrderKey(), bucketDef.getName())) {
                     String error =
                             String.format("Sample %s in product order %s already exists in the %s bucket.",
                                     mercurySample.getSampleKey(), sampleInstance.getProductOrderKey(),
