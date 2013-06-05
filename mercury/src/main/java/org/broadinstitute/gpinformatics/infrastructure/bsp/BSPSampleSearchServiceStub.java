@@ -9,8 +9,14 @@ import java.util.*;
 @Alternative
 public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
 
+
+    public static final String SOMATIC_MAT_TYPE = "DNA:DNA Somatic";
+    public static final String GENOMIC_MAT_TYPE = "DNA:DNA Genomic";
+    public static final String ROOT = "ROOT";
+
     public static final String SM_1P3XN = "SM-1P3XN";
-    public static final String SM_1P3XN_LSID = "broadinstitute.org:bsp.prod.sample:1P3XN";
+    public static final String LSID_PREFIX = "broadinstitute.org:bsp.prod.sample:";
+    public static final String SM_1P3XN_LSID = LSID_PREFIX + "1P3XN";
     public static final String SM_1P3XN_SPECIES = "Chicken";
     public static final String SM_1P3XN_CONC = "0.293";
     public static final String SM_1P3XN_VOLUME = "1.3";
@@ -34,7 +40,7 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
     public static final String SM_1P3WY_MAT_TYPE = "DNA:DNA Genomic";
     public static final String SM_1P3WY_COLLAB_PID = "CHTN_CA1";
     public static final String SM_1P3WY = "SM-1P3WY";
-    public static final String SM_1P3WY_LSID = "broadinstitute.org:bsp.prod.sample:1P3WY";
+    public static final String SM_1P3WY_LSID = LSID_PREFIX + "1P3WY";
     public static final String SM_1P3WY_SPECIES = "Chicken";
     public static final String SM_1P3WY_CONC = "0.293";
     public static final String SM_1P3WY_VOLUME = "1.3";
@@ -53,7 +59,7 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
     public static final String SM_12CO4_VOLUME = "1.3";
     public static final String SM_12CO4_CONC = "0.293";
     public static final String SM_12CO4_SPECIES = "Chicken";
-    public static final String SM_12CO4_LSID = "broadinstitute.org:bsp.prod.sample:12CO4";
+    public static final String SM_12CO4_LSID = LSID_PREFIX + "12CO4";
     public static final String SM_12CO4_COLLAB_PID = "CHTN_CA1";
     public static final String SM_12CO4_MAT_TYPE = "DNA:DNA Somatic";
     public static final String SM_12CO4_DNA = "3.765242738037109374";
@@ -72,7 +78,7 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
     public static final String SM_12FO4_VOLUME = "1.3";
     public static final String SM_12FO4_CONC = "0.293";
     public static final String SM_12FO4_SPECIES = "Human";
-    public static final String SM_12FO4_LSID = "broadinstitute.org:bsp.prod.sample:12FO4";
+    public static final String SM_12FO4_LSID = LSID_PREFIX + "12FO4";
     public static final String SM_12FO4_COLLAB_PID = "CHTN_SEW";
     public static final String SM_12FO4_MAT_TYPE = "DNA:DNA Somatic";
     public static final String SM_12FO4_DNA = "3.765242738037109374";
@@ -89,7 +95,7 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
     public static final String SM_12DW4_VOLUME = "1.3";
     public static final String SM_12DW4_CONC = "0.293";
     public static final String SM_12DW4_SPECIES = "Canine";
-    public static final String SM_12DW4_LSID = "broadinstitute.org:bsp.prod.sample:12DW4";
+    public static final String SM_12DW4_LSID = LSID_PREFIX + "12DW4";
     public static final String SM_12DW4_COLLAB_PID = "CHTN_SEW";
     public static final String SM_12DW4_MAT_TYPE = "DNA:DNA Somatic";
     public static final String SM_12DW4_DNA = "3.765242738037109374";
@@ -106,12 +112,14 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
     public static final String SM_12MD2_VOLUME = "1.3";
     public static final String SM_12MD2_CONC = "0.293";
     public static final String SM_12MD2_SPECIES = "Canine";
-    public static final String SM_12MD2_LSID = "broadinstitute.org:bsp.prod.sample:12MD2";
+    public static final String SM_12MD2_LSID = LSID_PREFIX + "12MD2";
     public static final String SM_12MD2_COLLAB_PID = "CHTN_SEW";
     public static final String SM_12MD2_MAT_TYPE = "DNA:DNA Somatic";
     public static final String SM_12MD2_DNA = "3.765242738037109374";
     public static final String SM_12MD2_FP = "AACTCCCCGGAAAGCTACAAAACG--AATTAGAGTTAATTCTCCAATTGTCTAG--GGACAGGGGGTTCTAAACCCAA--GTCTCCCGCTAGTTTTGGAGAGAGCCGGAGCCCTTTCCAGAGTTCTCTAGTTGGCTGGAGTTCCAAAACTTTCCAATTCTTTGTCGCCGGTTTTACCCCCGGAGAGCTCCCT";
     public static final String SM_12MD2_DISEASE = "Carcinoid Tumor";
+
+
     public static final String SM_12CO4_CONTAINER_ID = "CO-2859994";
     public static final String SM_1P3WY_CONTAINER_ID = "CO-2859994";
     public static final String SM_1P3XN_CONTAINER_ID = "CO-2859994";
@@ -119,9 +127,12 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
     public static final String SM_12DW4_CONTAINER_ID = "CO-2859994";
     public static final String SM_12MD2_CONTAINER_ID = "CO-2859994";
 
-    private final Map<String, Map<BSPSampleSearchColumn, String>> samples = new HashMap<String, Map<BSPSampleSearchColumn, String>>();
+    public final static Map<String, Map<BSPSampleSearchColumn, String>> samples = new HashMap<String, Map<BSPSampleSearchColumn, String>>();
 
     public BSPSampleSearchServiceStub() {
+
+        samples.clear();
+
         addToMap( SM_12CO4, new HashMap<BSPSampleSearchColumn, String>() {{
             put(BSPSampleSearchColumn.PARTICIPANT_ID, SM_12CO4_PATIENT_ID);
             put(BSPSampleSearchColumn.ROOT_SAMPLE, SM_12CO4_ROOT_SAMP);
@@ -253,6 +264,7 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
             put(BSPSampleSearchColumn.CONTAINER_ID, SM_12MD2_CONTAINER_ID);
             put(BSPSampleSearchColumn.SAMPLE_ID, SM_12MD2);
         }} );
+
     }
 
     private void addToMap(String sampleName, Map<BSPSampleSearchColumn, String> attributes) {

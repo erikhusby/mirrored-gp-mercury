@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -92,18 +93,28 @@ public class BatchToJiraTest extends Arquillian {
     public void testJiraCreationFromBatch() throws Exception {
         String expectedGssrText = "SM-01\n\nSM-02 (rework)";
         Set<LabVessel> startingVessels = new HashSet<LabVessel>();
-        LabVessel tube1 = new TwoDBarcodedTube("Starter01");
+        String tube1_label = "Starter01";
+        String tube2_label = "Rework01";
+
+        LabVessel tube1 = new TwoDBarcodedTube(tube1_label);
         tube1.addSample(new MercurySample("SM-01"));
         startingVessels.add(tube1);
         Set<LabVessel> reworkVessels = new HashSet<LabVessel>();
-        LabVessel tube2 = new TwoDBarcodedTube("Rework01");
+        LabVessel tube2 = new TwoDBarcodedTube(tube2_label);
         tube2.addSample(new MercurySample("SM-02"));
         labVesselDao.persistAll(Arrays.asList(tube1, tube2));
+
+        labVesselDao.flush();
+        labVesselDao.clear();
+
+        tube1 = labVesselDao.findByIdentifier(tube1_label);
+        tube2 = labVesselDao.findByIdentifier(tube2_label);
+
         LabEvent event = new LabEvent(LabEventType.DENATURE_TO_FLOWCELL_TRANSFER, new Date(), "TEST-LAND", 0L, 101L);
         tube2.addInPlaceEvent(event);
         LabBatch batch = new LabBatch("Test batch 2", startingVessels, LabBatch.LabBatchType.WORKFLOW);
-        reworkEjb.addReworkToBatch(batch, tube2, ReworkEntry.ReworkReason.MACHINE_ERROR, LabEventType.PICO_PLATING_BUCKET,
-                "I am reworking this");
+        reworkEjb.addReworkToBatch(batch, tube2_label, ReworkEntry.ReworkReason.MACHINE_ERROR, LabEventType.PICO_PLATING_BUCKET,
+                "I am reworking this", WorkflowName.EXOME_EXPRESS.getWorkflowName());
 
 
         batchEjb.batchToJira("andrew", null, batch);

@@ -10,6 +10,9 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
@@ -27,6 +30,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
+import java.util.Collection;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -75,7 +79,6 @@ public class AddReworkActionBean extends CoreActionBean {
 
     @HandlesEvent(REWORK_SAMPLE_ACTION)
     public Resolution reworkSample() {
-        labVessel = labVesselDao.findByIdentifier(reworkBarcode);
         if (getBuckets().isEmpty()) {
             addValidationError("vesselLabel", "{2} is not in a bucket.", vesselLabel);
         }
@@ -84,8 +87,19 @@ public class AddReworkActionBean extends CoreActionBean {
         } else {
             reworkStep = LabEventType.SHEARING_BUCKET;
         }
+
+        Collection<String> validationMessages = null;
         try {
-            reworkEjb.addRework(labVessel, reworkReason, reworkStep, commentText);
+            validationMessages = reworkEjb.addAndValidateRework(reworkBarcode, reworkReason, reworkStep, commentText,
+                    WorkflowName.EXOME_EXPRESS.getWorkflowName());
+            addMessage("Vessel {0} has been added to the {1} bucket.", labVessel.getLabel(), bucketName);
+
+            if(CollectionUtils.isNotEmpty(validationMessages)) {
+                for(String validationMessage:validationMessages) {
+                    addGlobalValidationError(validationMessage);
+                }
+            }
+
         } catch (ValidationException e) {
             addGlobalValidationError(e.getMessage());
             return view();
@@ -107,6 +121,7 @@ public class AddReworkActionBean extends CoreActionBean {
         labVessel = labVesselDao.findByIdentifier(vesselLabel);
         return new ForwardResolution(VIEW_PAGE);
     }
+
 
     @Before(stages = LifecycleStage.BindingAndValidation, on = { VESSEL_INFO_ACTION, REWORK_SAMPLE_ACTION })
     public void initWorkflowBuckets() {
