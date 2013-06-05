@@ -40,10 +40,6 @@ import java.util.Map;
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ReagentKitTransferTest {
     BettaLimsMessageTestFactory bettaLimsMessageTestFactory = null;
-    //    String denatureRackBarcode=null;
-//    String miSeqReagentKitBarcode=null;
-//    Map<String, VesselPosition> sourceBarcodes=null;
-//    List<LabEventFactory.CherryPick> cherryPicks=null;
     BettaLIMSMessage bettaLIMSMessage = null;
 
     @BeforeTest
