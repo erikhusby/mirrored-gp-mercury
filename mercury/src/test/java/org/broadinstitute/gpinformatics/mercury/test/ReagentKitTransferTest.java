@@ -28,6 +28,7 @@ import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.testng.Assert;
 import org.testng.annotations.BeforeTest;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
@@ -39,15 +40,20 @@ import java.util.Map;
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ReagentKitTransferTest {
     BettaLimsMessageTestFactory bettaLimsMessageTestFactory = null;
+    //    String denatureRackBarcode=null;
+//    String miSeqReagentKitBarcode=null;
+//    Map<String, VesselPosition> sourceBarcodes=null;
+//    List<LabEventFactory.CherryPick> cherryPicks=null;
+    BettaLIMSMessage bettaLIMSMessage = null;
 
     @BeforeTest
     public void setUp() {
         bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
+        bettaLIMSMessage = new BettaLIMSMessage();
     }
 
-    public void testDenatureToReagentKit() {
-        BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
-
+    @DataProvider(name = "denatureTubeDataProvider")
+    public Object[][] getDataProvider() {
         final long time = new Date().getTime();
         String denatureRackBarcode = "denatureRack" + time;
         String miSeqReagentKitBarcode = "reagentKit" + time;
@@ -62,7 +68,19 @@ public class ReagentKitTransferTest {
             cherryPicks.add(cherryPick);
         }
 
+        return new Object[][]{
+                {denatureRackBarcode, sourceBarcodes, miSeqReagentKitBarcode, cherryPicks},
+                {null, sourceBarcodes, miSeqReagentKitBarcode, cherryPicks}
+        };
 
+
+    }
+
+    @Test(dataProvider = "denatureTubeDataProvider")
+    public void testDenatureToReagentKit(String denatureRackBarcode,
+                                         Map<String, VesselPosition> sourceBarcodes,
+                                         String miSeqReagentKitBarcode,
+                                         List<LabEventFactory.CherryPick> cherryPicks) {
         final PlateCherryPickEvent plateCherryPickEvent = new PlateCherryPickEvent();
         plateCherryPickEvent.setEventType(LabEventType.DENATURE_TO_REAGENT_KIT_TRANSFER.getName());
 
@@ -103,6 +121,4 @@ public class ReagentKitTransferTest {
         final String message = BettalimsMessageBeanTest.marshalMessage(bettaLIMSMessage);
         Assert.assertFalse(message.isEmpty());
     }
-
-
 }
