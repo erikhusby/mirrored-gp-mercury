@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
@@ -37,11 +38,14 @@ public class LimsQueries {
 
     private StaticPlateDAO staticPlateDAO;
     private LabVesselDao labVesselDao;
+    private TwoDBarcodedTubeDAO twoDBarcodedTubeDAO;
 
     @Inject
-    public LimsQueries(StaticPlateDAO staticPlateDAO, LabVesselDao labVesselDao) {
+    public LimsQueries(StaticPlateDAO staticPlateDAO, LabVesselDao labVesselDao,
+                       TwoDBarcodedTubeDAO twoDBarcodedTubeDAO) {
         this.staticPlateDAO = staticPlateDAO;
         this.labVesselDao = labVesselDao;
+        this.twoDBarcodedTubeDAO = twoDBarcodedTubeDAO;
     }
 
     /**
@@ -85,8 +89,19 @@ public class LimsQueries {
         return libraryDataTypes;
     }
 
+    /**
+     * Determines whether all tube barcodes are in the database
+     * @param barcodes list of tube barcodes
+     * @return true if all tube barcodes are in the database
+     */
     public boolean doesLimsRecognizeAllTubes(List<String> barcodes) {
-        return false;
+        Map<String, TwoDBarcodedTube> mapBarcodeToTube = twoDBarcodedTubeDAO.findByBarcodes(barcodes);
+        for (Map.Entry<String, TwoDBarcodedTube> stringTwoDBarcodedTubeEntry : mapBarcodeToTube.entrySet()) {
+            if (stringTwoDBarcodedTubeEntry.getValue() == null) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**

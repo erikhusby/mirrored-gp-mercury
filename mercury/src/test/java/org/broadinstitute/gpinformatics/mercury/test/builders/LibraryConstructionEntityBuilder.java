@@ -117,7 +117,7 @@ public class LibraryConstructionEntityBuilder {
         StaticPlate ligationCleanupPlate =
                 (StaticPlate) ligationCleanupEntity.getTargetLabVessels().iterator().next();
 
-        LimsQueries limsQueries = new LimsQueries(null, null);
+        LimsQueries limsQueries = new LimsQueries(null, null, null);
         List<String> plateParents = limsQueries.findImmediatePlateParents(ligationCleanupPlate);
         Assert.assertEquals(plateParents.size(), 1, "Wrong number of plate parents");
         Assert.assertEquals(plateParents.get(0), shearingCleanupPlate.getLabel(), "Wrong parent barcode");

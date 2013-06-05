@@ -17,6 +17,11 @@ import java.util.TreeMap;
 @RequestScoped
 public class TwoDBarcodedTubeDAO extends GenericDao {
 
+    /**
+     * Finds tube entities for given barcodes
+     * @param barcodes tube barcodes
+     * @return map from barcode to tube, tube is null if not found
+     */
     public Map<String, TwoDBarcodedTube> findByBarcodes(List<String> barcodes) {
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new TreeMap<String, TwoDBarcodedTube>();
         for (String barcode : barcodes) {

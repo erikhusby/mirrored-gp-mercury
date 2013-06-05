@@ -98,9 +98,14 @@ public class LimsQueryResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/doesLimsRecognizeAllTubes")
     public boolean doesLimsRecognizeAllTubes(@QueryParam("q") List<String> barcodes) {
-        boolean doesSquidRecognizeAllTubes = thriftService.doesSquidRecognizeAllLibraries(barcodes);
-//        boolean doesSequelRecognizeAllTubes = twoDBarcodedTubeDAO.findByBarcodes(barcodes).size() == barcodes.size();
-        return doesSquidRecognizeAllTubes; // || doesSequelRecognizeAllTubes;
+        switch (mercuryOrSquidRouter.getSystemOfRecordForVesselBarcodes(barcodes)) {
+        case MERCURY:
+            return limsQueries.doesLimsRecognizeAllTubes(barcodes);
+        case SQUID:
+            return thriftService.doesSquidRecognizeAllLibraries(barcodes);
+        default:
+            throw new RuntimeException("Unable to route doesLimsRecognizeAllTubes for tubes: " + barcodes);
+        }
     }
 
     @GET
