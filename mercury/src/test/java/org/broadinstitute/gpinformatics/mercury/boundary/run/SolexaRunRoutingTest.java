@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProducer;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.monitoring.HipChatMessageSender;
@@ -80,6 +79,7 @@ public class SolexaRunRoutingTest extends BaseEventTest{
 
         LabBatch workflowBatch = new LabBatch("Whole Genome Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
+        workflowBatch.setWorkflowName("Whole Genome");
 
         PreFlightEntityBuilder preFlightEntityBuilder = runPreflightProcess(mapBarcodeToTube, productOrder, workflowBatch, "1");
         ShearingEntityBuilder shearingEntityBuilder = runShearingProcess(mapBarcodeToTube, preFlightEntityBuilder.getTubeFormation(),
@@ -123,7 +123,7 @@ public class SolexaRunRoutingTest extends BaseEventTest{
         LabVesselDao vesselDao = EasyMock.createNiceMock(LabVesselDao.class);
 
         MercuryOrSquidRouter router = new MercuryOrSquidRouter(vesselDao, EasyMock.createNiceMock(ControlDao.class),
-                AthenaClientProducer.stubInstance(), new WorkflowLoader(),
+                new WorkflowLoader(),
                 EasyMock.createNiceMock(BSPSampleDataFetcher.class));
         HipChatMessageSender hipChatMsgSender = EasyMock.createNiceMock(HipChatMessageSender.class);
 
@@ -163,7 +163,7 @@ public class SolexaRunRoutingTest extends BaseEventTest{
 
         IlluminaSequencingRunFactory runFactory = EasyMock.createMock(IlluminaSequencingRunFactory.class);
         MercuryOrSquidRouter router = new MercuryOrSquidRouter(vesselDao, EasyMock.createNiceMock(ControlDao.class),
-                AthenaClientProducer.stubInstance(), new WorkflowLoader(),
+                new WorkflowLoader(),
                 EasyMock.createNiceMock(BSPSampleDataFetcher.class));
 
         HipChatMessageSender hipChatMsgSender = EasyMock.createNiceMock(HipChatMessageSender.class);

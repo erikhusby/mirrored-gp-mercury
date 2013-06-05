@@ -545,6 +545,9 @@ ALTER TABLE product_order_add_on ADD CONSTRAINT fk_po_add_on_prodid FOREIGN KEY 
 ALTER TABLE product_order_add_on ADD CONSTRAINT fk_po_add_on_poid FOREIGN KEY (product_order_id)
   REFERENCES product_order(product_order_id) ON DELETE CASCADE;
 
+ALTER TABLE product ADD CONSTRAINT fk_product_price_item_id FOREIGN KEY (primary_price_item_id)
+REFERENCES price_item(price_item_id) ON DELETE CASCADE;
+
 ALTER TABLE event_fact ADD CONSTRAINT fk_event_lab_vessel FOREIGN KEY (lab_vessel_id)
   REFERENCES lab_vessel(lab_vessel_id) ON DELETE CASCADE;
 

@@ -13,7 +13,6 @@ import java.util.Collection;
 
 @Stateful
 public class SequencingRunEtl extends GenericEntityEtl<SequencingRun, SequencingRun> {
-    private IlluminaSequencingRunDao dao;
 
     public SequencingRunEtl() {
     }
@@ -29,7 +28,7 @@ public class SequencingRunEtl extends GenericEntityEtl<SequencingRun, Sequencing
     }
 
     @Override
-    Path rootId(Root root) {
+    Path rootId(Root<SequencingRun> root) {
         return root.get(SequencingRun_.sequencingRunId);
     }
 
@@ -45,16 +44,17 @@ public class SequencingRunEtl extends GenericEntityEtl<SequencingRun, Sequencing
 
     @Override
     Collection<String> dataRecords(String etlDateStr, boolean isDelete, SequencingRun entity) {
+        Collection<String> records = new ArrayList<>();
 
-        Collection<String> records = new ArrayList<String>();
-
-        records.add(genericRecord(etlDateStr, isDelete,
-                entity.getSequencingRunId(),
-                format(entity.getRunName()),
-                format(entity.getRunBarcode()),
-                format(entity.getRunDate()),
-                format(entity.getMachineName())
-        ));
+        if (entity != null) {
+            records.add(genericRecord(etlDateStr, isDelete,
+                    entity.getSequencingRunId(),
+                    format(entity.getRunName()),
+                    format(entity.getRunBarcode()),
+                    format(entity.getRunDate()),
+                    format(entity.getMachineName())
+            ));
+        }
 
         return records;
     }

@@ -3,21 +3,28 @@ package org.broadinstitute.gpinformatics.infrastructure.datawh;
 import org.apache.commons.collections.map.LRUMap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
 import javax.ejb.Stateful;
 import javax.inject.Inject;
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Stateful
 public class WorkflowConfigLookup implements Serializable {
     private Log logger = LogFactory.getLog(getClass());
-    public WorkflowLoader workflowLoader;
+    private WorkflowLoader workflowLoader;
     private Map<String, List<WorkflowConfigDenorm>> mapEventToWorkflows = null;
-    private final int CONFIG_ID_CACHE_SIZE = 4;
+    private static final int CONFIG_ID_CACHE_SIZE = 4;
     private final LRUMap configIdCache = new LRUMap(CONFIG_ID_CACHE_SIZE);
     int cacheHit = 0; //instrumentation variable for testing
 
@@ -59,10 +66,10 @@ public class WorkflowConfigLookup implements Serializable {
      *
      * @return null if no id found
      */
-    public WorkflowConfigDenorm lookupWorkflowConfig(String eventName, ProductOrder productOrder, Date eventDate) {
+    public WorkflowConfigDenorm lookupWorkflowConfig(String eventName, LabBatch labBatch, Date eventDate) {
 
         // Checks for a cache hit, which may be a null.
-        String cacheKey = eventName + productOrder.getBusinessKey() + eventDate.toString();
+        String cacheKey = eventName + labBatch.getWorkflowName() + eventDate.toString();
         synchronized (configIdCache) {
             if (configIdCache.containsKey(cacheKey)) {
                 ++cacheHit;
@@ -70,9 +77,9 @@ public class WorkflowConfigLookup implements Serializable {
             }
         }
 
-        String workflowName = productOrder.getProduct().getWorkflowName();
+        String workflowName = labBatch.getWorkflowName();
         if (workflowName == null) {
-            logger.debug("Product " + productOrder.getBusinessKey() + " has no workflow name");
+            logger.debug("Product " + labBatch.getBusinessKey() + " has no workflow name");
             synchronized (configIdCache) {
                 configIdCache.put(cacheKey, null);
             }

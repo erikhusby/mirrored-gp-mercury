@@ -27,6 +27,7 @@ public class LimsQueryResourceResponseFactory {
         outDesignation.setIndexedRun(designation.isIsIndexedRun());
         outDesignation.setControlLane(designation.getControlLane());
         outDesignation.setKeepIntensityFiles(designation.isKeepIntensityFiles());
+        outDesignation.setIndexingReadConfiguration(designation.getIndexingReadConfiguration());
         return outDesignation;
     }
 

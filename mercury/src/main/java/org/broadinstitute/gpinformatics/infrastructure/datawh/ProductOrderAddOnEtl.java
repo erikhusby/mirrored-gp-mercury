@@ -27,7 +27,7 @@ public class ProductOrderAddOnEtl extends GenericEntityEtl<ProductOrderAddOn, Pr
     }
 
     @Override
-    Path rootId(Root root) {
+    Path rootId(Root<ProductOrderAddOn> root) {
         return root.get(ProductOrderAddOn_.productOrderAddOnId);
     }
 

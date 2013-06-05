@@ -42,7 +42,7 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
     private final Map<String,ProductWorkflowDef> workflowDefs = new HashMap<String,ProductWorkflowDef>();
 //    private final Collection<String> pdos;
 
-    private final static Log logger = LogFactory.getLog(LCSetJiraFieldFactory.class);
+    private static final Log logger = LogFactory.getLog(LCSetJiraFieldFactory.class);
 
 
     /**
@@ -67,13 +67,13 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
             ProductOrder pdo = athenaClientService.retrieveProductOrderDetails(currPdo);
 
             if (pdo != null) {
-                if (pdo.getProduct().getWorkflowName() != null) {
-                    workflowDefs.put(currPdo, wfConfig.getWorkflowByName(pdo.getProduct().getWorkflowName()));
-                }
                 foundResearchProjectList.put(currPdo, pdo.getResearchProject());
             } else {
                 //TODO SGM: Throw an exception here (?)
                 logger.error("Unable to find a PDO for the business key of " + currPdo);
+            }
+            if (batch.getWorkflowName() != null) {
+                workflowDefs.put(currPdo, wfConfig.getWorkflowByName(batch.getWorkflowName()));
             }
         }
 
@@ -83,8 +83,8 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
      * Takes the initial samples and the rework samples
      * from the batch and builds a string to display
      * on the batch ticket
-     * @param labBatch
-     * @return
+     * @param labBatch contains samples
+     * @return sample list
      */
     public static String buildSamplesListString(LabBatch labBatch) {
         StringBuilder samplesText = new StringBuilder();
@@ -135,8 +135,6 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
         customFields.add(new CustomField(
                 submissionFields.get(LabBatch.RequiredSubmissionFields.LIBRARY_QC_SEQUENCING_REQUIRED.getFieldName()),
                 new CustomField.SelectOption(LIB_QC_SEQ_REQUIRED_DEFAULT)));
-
-        StringBuilder sampleList = new StringBuilder();
 
         int sampleCount = batch.getReworks().size() + batch.getStartingLabVessels().size();
 

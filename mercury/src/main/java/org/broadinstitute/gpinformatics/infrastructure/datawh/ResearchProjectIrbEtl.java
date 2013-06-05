@@ -27,7 +27,7 @@ public class ResearchProjectIrbEtl extends GenericEntityEtl<ResearchProjectIRB, 
     }
 
     @Override
-    Path rootId(Root root) {
+    Path rootId(Root<ResearchProjectIRB> root) {
         return root.get(ResearchProjectIRB_.researchProjectIRBId);
     }
 

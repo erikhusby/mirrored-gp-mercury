@@ -27,7 +27,7 @@ public class LabBatchEtl extends GenericEntityEtl<LabBatch, LabBatch> {
     }
 
     @Override
-    Path rootId(Root root) {
+    Path rootId(Root<LabBatch> root) {
         return root.get(LabBatch_.labBatchId);
     }
 

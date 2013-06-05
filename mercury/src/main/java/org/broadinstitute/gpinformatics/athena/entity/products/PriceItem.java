@@ -40,6 +40,7 @@ public class PriceItem implements Serializable, Comparable<PriceItem> {
     private String platform;
 
     // There are null categories.
+    @Column(nullable = true)
     private String category;
 
     @Column(nullable = false)
@@ -47,6 +48,7 @@ public class PriceItem implements Serializable, Comparable<PriceItem> {
 
     // We are currently recording this and it certainly exists on the quote server, but it's possible we might
     // stop recording it at some point since our having a copy of it doesn't seem all that useful at the moment.
+    @Column(nullable = true)
     private String quoteServerId;
 
     // The @Transient fields below are "owned" by the quote server, what we hold in this class are just cached copies.

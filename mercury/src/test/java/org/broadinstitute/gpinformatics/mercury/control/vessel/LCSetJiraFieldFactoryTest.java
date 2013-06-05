@@ -98,6 +98,7 @@ public class LCSetJiraFieldFactoryTest {
     public void testLCSetFieldGeneration() throws IOException {
         LabBatch testBatch = new LabBatch(LabBatch.generateBatchName(workflowName, pdoNames),
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
+        testBatch.setWorkflowName("Exome Express");
 
         Set<LabVessel> reworks = new HashSet<LabVessel>();
         reworks.add(new TwoDBarcodedTube("Rework1"));

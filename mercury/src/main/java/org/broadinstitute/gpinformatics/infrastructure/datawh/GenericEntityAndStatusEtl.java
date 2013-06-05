@@ -51,16 +51,16 @@ public abstract class GenericEntityAndStatusEtl<AUDITED_ENTITY_CLASS, ETL_DATA_S
 
 
     @Override
-    protected AuditLists fetchAuditIds(Collection<Object[]> auditEntities) {
+    protected AuditLists fetchAuditIds(Collection<AUDITED_ENTITY_CLASS[]> auditEntities) {
         Set<Long> deletedEntityIds = new HashSet<Long>();
         Set<Long> changedEntityIds = new HashSet<Long>();
         List<RevInfoPair> revInfoPairs = new ArrayList<RevInfoPair>();
 
-        for (Object[] dataChange : auditEntities) {
+        for (AUDITED_ENTITY_CLASS[] dataChange : auditEntities) {
             RevisionType revType = (RevisionType) dataChange[AUDIT_READER_TYPE_IDX];
             boolean isDelete = revType == RevisionType.DEL;
 
-            AUDITED_ENTITY_CLASS entity = (AUDITED_ENTITY_CLASS) dataChange[AUDIT_READER_ENTITY_IDX];
+            AUDITED_ENTITY_CLASS entity = dataChange[AUDIT_READER_ENTITY_IDX];
             Long entityId = entityId(entity);
 
             if (isDelete) {

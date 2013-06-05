@@ -20,7 +20,7 @@ import java.util.Set;
  * and because of this, ETL cannot update existing records, only add new records.
  */
 @Stateful
-public class WorkflowConfigEtl extends GenericEntityEtl<Object, Object> {
+public class WorkflowConfigEtl extends GenericEntityEtl<WorkflowConfig, Object> {
     private Log logger = LogFactory.getLog(getClass());
     private WorkflowLoader workflowLoader;
     static final String WORKFLOW_BASE_FILENAME = "workflow";
@@ -36,12 +36,12 @@ public class WorkflowConfigEtl extends GenericEntityEtl<Object, Object> {
     }
 
     @Override
-    Long entityId(Object entity) {
+    Long entityId(WorkflowConfig entity) {
         throw new RuntimeException("This method cannot apply to this etl class.");
     }
 
     @Override
-    Path rootId(Root root) {
+    Path rootId(Root<WorkflowConfig> root) {
         throw new RuntimeException("This method cannot apply to this etl class.");
     }
 

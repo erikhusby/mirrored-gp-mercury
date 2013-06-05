@@ -138,13 +138,11 @@ public class LimsQueriesTest {
         StaticPlate plate2 = new StaticPlate("plate2", Eppendorf96);
         StaticPlate plate3 = new StaticPlate("plate3", Eppendorf96);
         StaticPlate plate4 = new StaticPlate("plate4", Eppendorf96);
-        expect(staticPlateDAO.findByBarcode("plate4")).andReturn(plate4);
         doSectionTransfer(plate1, plate2);
         doSectionTransfer(plate2, plate3);
         doSectionTransfer(plate3, plate4);
-        replay(staticPlateDAO);
 
-        List<PlateTransferType> result = limsQueries.fetchTransfersForPlate("plate4", 2);
+        List<PlateTransferType> result = limsQueries.fetchTransfersForPlate(plate4, 2);
         assertThat(result.size(), is(2));
         assertThat(result.get(0).getSourceBarcode(), equalTo("plate3"));
         assertThat(result.get(0).getSourceSection(), equalTo("ALL96"));
@@ -154,8 +152,6 @@ public class LimsQueriesTest {
         assertThat(result.get(1).getSourceSection(), equalTo("ALL96"));
         assertThat(result.get(1).getDestinationBarcode(), equalTo("plate3"));
         assertThat(result.get(1).getDestinationSection(), equalTo("ALL96"));
-
-        verify(staticPlateDAO);
     }
 
     @Test(groups = DATABASE_FREE)
@@ -182,7 +178,7 @@ public class LimsQueriesTest {
         replay(labVesselDao);
 
         LabMetric quantMetric =
-                new LabMetric(new BigDecimal(55.55), LabMetric.MetricType.POND_PICO, LabMetric.LabUnit.UG_PER_ML);
+                new LabMetric(new BigDecimal("55.55"), LabMetric.MetricType.POND_PICO, LabMetric.LabUnit.UG_PER_ML);
         tube.addMetric(quantMetric);
 
         Double quantValue = limsQueries.fetchQuantForTube("tube1", "Pond Pico");
@@ -196,7 +192,7 @@ public class LimsQueriesTest {
         replay(labVesselDao);
 
         LabMetric quantMetric =
-                new LabMetric(new BigDecimal(55.55), LabMetric.MetricType.ECO_QPCR, LabMetric.LabUnit.UG_PER_ML);
+                new LabMetric(new BigDecimal("55.55"), LabMetric.MetricType.ECO_QPCR, LabMetric.LabUnit.UG_PER_ML);
         tube.addMetric(quantMetric);
 
         Double quantValue = limsQueries.fetchQuantForTube("tube1", LabMetric.MetricType.ECO_QPCR.getDisplayName());

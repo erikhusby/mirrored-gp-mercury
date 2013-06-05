@@ -32,7 +32,7 @@ public class LedgerEntryCrossEtl extends GenericEntityEtl<LedgerEntry, ProductOr
     }
 
     @Override
-    Path rootId(Root root) {
+    Path rootId(Root<LedgerEntry> root) {
         return root.get(LedgerEntry_.ledgerId);
     }
 

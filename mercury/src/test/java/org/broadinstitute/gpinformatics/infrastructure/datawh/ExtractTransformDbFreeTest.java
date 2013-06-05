@@ -53,6 +53,8 @@ public class ExtractTransformDbFreeTest {
     private final RiskItemEtl riskItemEtl = createMock(RiskItemEtl.class);
     private final LedgerEntryCrossEtl ledgerEntryCrossEtl = createMock(LedgerEntryCrossEtl.class);
     private final LedgerEntryEtl ledgerEntryEtl = createMock(LedgerEntryEtl.class);
+    private final SequencingRunEtl sequencingRunEtl = createMock(SequencingRunEtl.class);
+    private final SequencingSampleFactEtl sequencingSampleFactEtl = createMock(SequencingSampleFactEtl.class);
 
     private Object[] mocks = new Object[]{
             auditReaderDao,
@@ -72,7 +74,9 @@ public class ExtractTransformDbFreeTest {
             workflowConfigEtl,
             riskItemEtl,
             ledgerEntryCrossEtl,
-            ledgerEntryEtl
+            ledgerEntryEtl,
+            sequencingRunEtl,
+            sequencingSampleFactEtl
     };
 
     @BeforeClass(groups = TestGroups.DATABASE_FREE)
@@ -269,6 +273,8 @@ public class ExtractTransformDbFreeTest {
         expect(riskItemEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
         expect(ledgerEntryCrossEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
         expect(ledgerEntryEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(sequencingRunEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(sequencingSampleFactEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
 
         replay(mocks);
         ExtractTransform.writeLastEtlRun(0L);
@@ -297,6 +303,8 @@ public class ExtractTransformDbFreeTest {
         expect(riskItemEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
         expect(ledgerEntryCrossEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
         expect(ledgerEntryEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(sequencingRunEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(sequencingSampleFactEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
 
         replay(mocks);
         ExtractTransform.writeLastEtlRun(0L);
@@ -349,6 +357,8 @@ public class ExtractTransformDbFreeTest {
         expect(riskItemEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
         expect(ledgerEntryCrossEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
         expect(ledgerEntryEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
+        expect(sequencingRunEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
+        expect(sequencingSampleFactEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
 
         replay(mocks);
         ExtractTransform.writeLastEtlRun(startEtlSec);
