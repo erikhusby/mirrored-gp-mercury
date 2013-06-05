@@ -551,7 +551,12 @@ public class CoreActionBean implements ActionBean {
         return PRECISE_DATE_TIME_PATTERN;
     }
 
-    public SampleLink getSampleLink(AbstractSample sample) {
+    /**
+     * Given a sample, return an object that can be used to generate a hyperlink in HTML.
+     *
+     * @return the link object
+     */
+    public SampleLink getSampleLink(@Nonnull AbstractSample sample) {
         return sampleLinkFactory.create(sample);
     }
 }
