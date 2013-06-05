@@ -549,13 +549,10 @@ public class LabEventFactory implements Serializable {
                                                                  List<LabEventFactory.CherryPick> cherryPicks) {
         // create a position map based on sourceTubeBarcodes
         for (Map.Entry<String, VesselPosition> sourceBarcodeEntry : sourceTubeBarcodes.entrySet()) {
-            PositionMapType positionMap = new PositionMapType();
             ReceptacleType receptacleType = new ReceptacleType();
             receptacleType.setBarcode(sourceBarcodeEntry.getKey());
             receptacleType.setReceptacleType("tube");
             receptacleType.setPosition(sourceBarcodeEntry.getValue().name());
-            positionMap.getReceptacle().add(receptacleType);
-            positionMap.setBarcode(sourceRackBarcode);
         }
         // The source TubeRack
         PlateType sourcePlate = new PlateType();

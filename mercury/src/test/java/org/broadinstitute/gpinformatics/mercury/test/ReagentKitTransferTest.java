@@ -40,12 +40,10 @@ import java.util.Map;
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ReagentKitTransferTest {
     BettaLimsMessageTestFactory bettaLimsMessageTestFactory = null;
-    BettaLIMSMessage bettaLIMSMessage = null;
 
     @BeforeTest
     public void setUp() {
         bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
-        bettaLIMSMessage = new BettaLIMSMessage();
     }
 
     @DataProvider(name = "denatureTubeDataProvider")
@@ -68,8 +66,6 @@ public class ReagentKitTransferTest {
                 {denatureRackBarcode, sourceBarcodes, miSeqReagentKitBarcode, cherryPicks},
                 {null, sourceBarcodes, miSeqReagentKitBarcode, cherryPicks}
         };
-
-
     }
 
     @Test(dataProvider = "denatureTubeDataProvider")
@@ -101,7 +97,6 @@ public class ReagentKitTransferTest {
             MatcherAssert.assertThat(sourceBarcodes.keySet(), Matchers.hasItem(receptacle.getBarcode()));
         }
 
-
         // Test the created kit.
         final PlateType reagentKit = transferEventType.getPlate();
         MatcherAssert.assertThat(reagentKit.getBarcode(), Matchers.equalTo(miSeqReagentKitBarcode));
@@ -112,7 +107,7 @@ public class ReagentKitTransferTest {
         // test the kind of event returned
         MatcherAssert.assertThat(transferEventType.getEventType(),
                 Matchers.equalTo(LabEventType.DENATURE_TO_REAGENT_KIT_TRANSFER.getName()));
-
+        BettaLIMSMessage bettaLIMSMessage  = new BettaLIMSMessage();
         bettaLIMSMessage.getPlateCherryPickEvent().add(transferEventType);
         final String message = BettalimsMessageBeanTest.marshalMessage(bettaLIMSMessage);
         Assert.assertFalse(message.isEmpty());
