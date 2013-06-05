@@ -28,8 +28,8 @@ public class EverythingYouAskForYouGetAndItsHuman implements BSPSampleSearchServ
             put(BSPSampleSearchColumn.SPECIES,"Homo : Homo sapiens");
         }};
 
-        final List<Map<BSPSampleSearchColumn, String>> samples = new ArrayList<Map<BSPSampleSearchColumn, String>>();
-        for (String sampleID : sampleIDs) {
+        final List<Map<BSPSampleSearchColumn, String>> samples = new ArrayList<>();
+        for (String ignored : sampleIDs) {
             samples.add(dataMap);
         }
 

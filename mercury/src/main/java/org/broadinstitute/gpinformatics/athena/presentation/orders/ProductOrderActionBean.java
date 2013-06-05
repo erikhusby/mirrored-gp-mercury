@@ -52,6 +52,7 @@ import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProductTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProjectTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
@@ -835,17 +836,18 @@ public class ProductOrderActionBean extends CoreActionBean {
 
             for (ProductOrderSample sample : samples) {
                 JSONObject item = new JSONObject();
+                BSPSampleDTO bspSampleDTO = sample.getBspSampleDTO();
 
                 item.put("sampleId", sample.getProductOrderSampleId());
-                item.put("collaboratorSampleId", sample.getBspDTO().getCollaboratorsSampleName());
-                item.put("patientId", sample.getBspDTO().getPatientId());
-                item.put("collaboratorParticipantId", sample.getBspDTO().getCollaboratorParticipantId());
-                item.put("volume", sample.getBspDTO().getVolume());
-                item.put("concentration", sample.getBspDTO().getConcentration());
-                item.put("rin", sample.getBspDTO().getRin());
-                item.put("total", sample.getBspDTO().getTotal());
-                item.put("hasFingerprint", sample.getBspDTO().getHasFingerprint());
-                item.put("hasSampleKitUploadRackscanMismatch", sample.getBspDTO().getHasSampleKitUploadRackscanMismatch());
+                item.put("collaboratorSampleId", bspSampleDTO.getCollaboratorsSampleName());
+                item.put("patientId", bspSampleDTO.getPatientId());
+                item.put("collaboratorParticipantId", bspSampleDTO.getCollaboratorParticipantId());
+                item.put("volume", bspSampleDTO.getVolume());
+                item.put("concentration", bspSampleDTO.getConcentration());
+                item.put("rin", bspSampleDTO.getRin());
+                item.put("total", bspSampleDTO.getTotal());
+                item.put("hasFingerprint", bspSampleDTO.getHasFingerprint());
+                item.put("hasSampleKitUploadRackscanMismatch", bspSampleDTO.getHasSampleKitUploadRackscanMismatch());
 
                 itemList.put(item);
             }

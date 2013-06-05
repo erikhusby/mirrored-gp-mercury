@@ -3,7 +3,7 @@
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <%--@elvariable id="vessels" type="java.util.Collection<org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel>"--%>
-<%--@elvariable id="sample" type="org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample>"--%>
+<%--@elvariable id="sample" type="org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample"--%>
 <%--@elvariable id="bean" type="org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean"--%>
 <%--@elvariable id="index" type="java.lang.Integer"--%>
 
@@ -71,15 +71,15 @@
                     </td>
                     <td>
                         <c:forEach items="${vessel.getSampleInstancesForSample(sample, 'ANY')}" var="sampleInstance">
-                            <c:set var="sampleLink" value="${bean.getSampleLink(sampleInstance)}"/>
+                            <c:set var="sampleLink" value="${bean.getSampleLink(sampleInstance.startingSample)}"/>
                             <c:choose>
                                 <c:when test="${sampleLink.hasLink}">
                                     <stripes:link class="external" target="${sampleLink.target}" title="${sampleLink.label}" href="${sampleLink.url}">
-                                        ${sample.sampleName}
+                                        ${sample.sampleKey}
                                     </stripes:link>
                                 </c:when>
                                 <c:otherwise>
-                                    ${sample.sampleName}
+                                    ${sample.sampleKey}
                                 </c:otherwise>
                             </c:choose>
                         </c:forEach>

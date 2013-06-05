@@ -69,7 +69,7 @@ public class RiskCriterion {
      */
     public boolean onRisk(ProductOrderSample sample) {
         boolean onRiskStatus = false;
-        if ((sample != null) && (sample.getBspDTO() != null)) {
+        if ((sample != null) && (sample.getBspSampleDTO() != null)) {
             onRiskStatus = type.getRiskStatus(sample, operator, value);
         }
 
@@ -146,7 +146,7 @@ public class RiskCriterion {
 
             @Override
             public String getValue(ProductOrderSample sample) {
-                return String.valueOf(sample.getBspDTO().getVolume());
+                return String.valueOf(sample.getBspSampleDTO().getVolume());
             }
         }),
         CONCENTRATION("Concentration", NUMERIC, new ValueProvider() {
@@ -154,7 +154,7 @@ public class RiskCriterion {
 
             @Override
             public String getValue(ProductOrderSample sample) {
-                return String.valueOf(sample.getBspDTO().getConcentration());
+                return String.valueOf(sample.getBspSampleDTO().getConcentration());
             }
         }),
         WGA("Is WGA", BOOLEAN, new ValueProvider() {
@@ -162,7 +162,7 @@ public class RiskCriterion {
 
             @Override
             public String getValue(ProductOrderSample sample) {
-                return String.valueOf(sample.getBspDTO().getMaterialType().contains("WGA"));
+                return String.valueOf(sample.getBspSampleDTO().getMaterialType().contains("WGA"));
             }
         }),
         FFPE("Is FFPE", BOOLEAN, new ValueProvider() {
@@ -170,7 +170,7 @@ public class RiskCriterion {
 
             @Override
             public String getValue(ProductOrderSample sample) {
-                return String.valueOf(sample.getBspDTO().getFfpeStatus());
+                return String.valueOf(sample.getBspSampleDTO().getFfpeStatus());
             }
         }),
         MANUAL("Manual", BOOLEAN, new ValueProvider() {
@@ -193,7 +193,7 @@ public class RiskCriterion {
 
             @Override
             public String getValue(ProductOrderSample sample) {
-                return String.valueOf(sample.getBspDTO().getTotal());
+                return String.valueOf(sample.getBspSampleDTO().getTotal());
             }
         }),
         RIN("RIN", NUMERIC, new ValueProvider() {
@@ -201,7 +201,7 @@ public class RiskCriterion {
 
             @Override
             public String getValue(ProductOrderSample sample) {
-                return String.valueOf(sample.getBspDTO().getRin());
+                return String.valueOf(sample.getBspSampleDTO().getRin());
             }
         });
 

@@ -358,7 +358,7 @@ public class ProductOrder implements BusinessObject, Serializable {
                         if (sample.bspMetaDataMissing()) {
                             missingBspMetaDataCount++;
                         } else {
-                            updateDTOCounts(participantSet, sample.getBspDTO());
+                            updateDTOCounts(participantSet, sample.getBspSampleDTO());
                         }
                     }
                 }
@@ -823,7 +823,7 @@ public class ProductOrder implements BusinessObject, Serializable {
 
             // If the DTO is null, we do not need to set it because it defaults to DUMMY inside sample.
             if (bspSampleDTO != null) {
-                sample.setBspDTO(bspSampleDTO);
+                sample.setBspSampleDTO(bspSampleDTO);
                 nonNullDTOs.add(bspSampleDTO);
             }
         }
