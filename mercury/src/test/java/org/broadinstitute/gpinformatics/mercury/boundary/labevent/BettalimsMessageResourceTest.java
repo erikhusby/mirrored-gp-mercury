@@ -143,16 +143,12 @@ public class BettalimsMessageResourceTest extends Arquillian {
 
     private final SimpleDateFormat testPrefixDateFormat = new SimpleDateFormat("MMddHHmmss");
 
-    public static final Map<String, String> mapWorkflowToPartNum = new HashMap<String, String>();
-
-    static {
-        mapWorkflowToPartNum.put("Custom Amplicon", "P-VAL-0002");
-//        ("IGN WGS", "?")
-//        ("Fluidigm Multi", "?")
-        mapWorkflowToPartNum.put("Whole Genome", "P-WG-0002");
-        mapWorkflowToPartNum.put("Exome Express", "P-EX-0002");
-        mapWorkflowToPartNum.put("Hybrid Selection", "P-EX-0001");
-    }
+    public static final Map<String, String> mapWorkflowToPartNum = new HashMap<String, String>(){{
+        put("Custom Amplicon", "P-VAL-0002");
+        put("Whole Genome", "P-WG-0002");
+        put("Exome Express", "P-EX-0002");
+        put("Hybrid Selection", "P-EX-0001");
+    }};
 
 
     @Deployment
