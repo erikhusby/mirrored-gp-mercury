@@ -11,6 +11,10 @@ import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
+import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettalimsMessageResource;
+import org.broadinstitute.gpinformatics.mercury.boundary.labevent.VesselTransferBean;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -18,6 +22,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
+import java.util.Arrays;
 
 @UrlBinding("/workflow/LinkDenatureTubeToReagentBlock.action")
 public class LinkDenatureTubeToReagentBlockActionBean extends CoreActionBean {
@@ -28,6 +33,12 @@ public class LinkDenatureTubeToReagentBlockActionBean extends CoreActionBean {
 
     @Inject
     AthenaClientService athenaClientService;
+
+    @Inject
+    VesselTransferBean vesselTransferBean;
+
+    @Inject
+    BettalimsMessageResource bettalimsMessageResource;
 
     @Validate(required = true, on = SAVE_ACTION)
     private String denatureTubeBarcode;
@@ -79,6 +90,14 @@ public class LinkDenatureTubeToReagentBlockActionBean extends CoreActionBean {
 
     @HandlesEvent(SAVE_ACTION)
     public Resolution save() {
+        PlateCherryPickEvent transferEventType = vesselTransferBean
+                .denatureToReagentKitTransfer(null, Arrays.asList(denatureTubeBarcode), reagentBlockBarcode,
+                        getUserBean().getLoginUserName(), "UI");
+        BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
+
+        bettaLIMSMessage.getPlateCherryPickEvent().add(transferEventType);
+        bettalimsMessageResource.processMessage(bettaLIMSMessage);
+
         addMessage("Denature Tube {0} associated with Reagent Block {1}", denatureTubeBarcode, reagentBlockBarcode);
         return new RedirectResolution(VIEW_PAGE);
     }

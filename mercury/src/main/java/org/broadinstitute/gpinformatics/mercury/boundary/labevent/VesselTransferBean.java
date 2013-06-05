@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MiSeqReagentKit;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
+import javax.annotation.Nullable;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -48,7 +49,7 @@ public class VesselTransferBean {
      *
      * @return The newly created event.
      */
-    public PlateCherryPickEvent denatureToReagentKitTransfer(String denatureRackBarcode,
+    public PlateCherryPickEvent denatureToReagentKitTransfer(@Nullable String denatureRackBarcode,
                                                              List<String> denatureTubeBarcodes,
                                                              String reagentKitBarcode, String username,
                                                              String stationName) {
@@ -71,7 +72,7 @@ public class VesselTransferBean {
         List<LabEventFactory.CherryPick> cherryPicks = new ArrayList<>();
         Map<String, VesselPosition> sourceBarcodes = new HashMap<>();
         for (String barcode : denatureTubeBarcodes) {
-            if (denatureRackBarcode.isEmpty()) {
+            if (denatureRackBarcode == null || denatureRackBarcode.isEmpty()) {
                 denatureRackBarcode = "DenatureRack" + barcode;
             }
             sourceBarcodes.put(barcode, VesselPosition.valueOf(barcode));
