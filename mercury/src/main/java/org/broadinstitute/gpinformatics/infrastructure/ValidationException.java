@@ -3,12 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: mccrory
- * Date: 5/10/12
- * Time: 5:37 PM
- */
+
 public class ValidationException extends Exception {
 
     List<String> validationMessages = new ArrayList<String>();

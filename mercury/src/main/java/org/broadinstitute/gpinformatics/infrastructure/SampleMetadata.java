@@ -12,7 +12,6 @@ public interface SampleMetadata {
 
     /**
      * What does the collaborator call this sample?
-     * @return
      */
     public String getSampleAlias();
 

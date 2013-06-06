@@ -11,7 +11,7 @@ import java.util.Collection;
 @JsonSerialize(using = IssueTransitionSerializer.class)
 public class IssueTransitionRequest {
 
-    // assumes we only want to update custom fields, which for the current GPLIM-488 and GPLIM-371 use cases is true
+    // Assumes we only want to update custom fields, which for the current GPLIM-488 and GPLIM-371 use cases is true.
     private final UpdateFields fields = new UpdateFields();
 
     private final Transition transition;
@@ -19,6 +19,7 @@ public class IssueTransitionRequest {
     @Nullable
     private final String comment;
 
+    @SuppressWarnings("UnusedDeclaration")
     public IssueTransitionRequest(Transition transition, @Nullable String comment) {
         this.transition = transition;
         this.comment = comment;
