@@ -67,11 +67,16 @@ public class RiskItemEtl extends GenericEntityEtl<RiskItem, ProductOrderSample> 
 
     @Override
     String dataRecord(String etlDateStr, boolean isDelete, ProductOrderSample entity) {
+
+        String riskString = entity.getRiskString();
+        if (riskString.length() > 500) {
+            riskString = riskString.substring(0, 500);
+        }
         return genericRecord(etlDateStr, isDelete,
                 entity.getProductOrderSampleId(),
                 format(entity.isOnRisk()),
                 format(entity.getRiskTypeString()),
-                format(entity.getRiskString())
+                format(riskString)
         );
     }
 }

@@ -61,7 +61,9 @@ public class ProductOrderSample implements Serializable {
     // FIXME: replace with real sample name pattern when CRSP jira is configured.
     public static final Pattern CRSP_SAMPLE_NAME_PATTERN = Pattern.compile("PDO-[A-Z1-9]{4,6}");
 
-    /** Count shown when no billing has occurred. */
+    /**
+     * Count shown when no billing has occurred.
+     */
     public static final double NO_BILL_COUNT = 0;
     public static final String TUMOR_IND = BSPSampleDTO.TUMOR_IND;
     public static final String NORMAL_IND = BSPSampleDTO.NORMAL_IND;
@@ -86,7 +88,8 @@ public class ProductOrderSample implements Serializable {
     @JoinColumn(insertable = false, updatable = false)
     private ProductOrder productOrder;
 
-    @OneToMany(mappedBy = "productOrderSample", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
+    @OneToMany(mappedBy = "productOrderSample", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
+            orphanRemoval = true)
     private final Set<LedgerEntry> ledgerItems = new HashSet<LedgerEntry>();
 
     @Column(name = "SAMPLE_POSITION", updatable = false, insertable = false, nullable = false)
@@ -326,7 +329,7 @@ public class ProductOrderSample implements Serializable {
         StringBuilder builder = new StringBuilder();
 
         if (getLedgerItems() != null) {
-            for (LedgerEntry ledgerEntry : getLedgerItems() ) {
+            for (LedgerEntry ledgerEntry : getLedgerItems()) {
                 if ((ledgerEntry.getBillingMessage() != null) && !ledgerEntry.isBilled()) {
                     builder.append(ledgerEntry.getBillingMessage()).append("\n");
                 }
@@ -494,7 +497,7 @@ public class ProductOrderSample implements Serializable {
 
         if (isOnRisk()) {
             for (RiskItem riskItem : riskItems) {
-                riskStrings.add(riskItem.getInformation());
+                riskStrings.add(riskItem.getInformation().replaceAll("\r?\n", " "));
             }
         }
 
