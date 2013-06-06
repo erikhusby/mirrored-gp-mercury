@@ -2,11 +2,19 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 
+import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Alternative;
 import java.util.*;
 
+/**
+ * Stub for BSP's sample search service.
+ *
+ * This class is @ApplicationScoped because it should only be used in integration tests (so threading shouldn't be an
+ * issue) and because it more closely emulates the concept of an endpoint to a single remote system.
+ */
 @Stub
 @Alternative
+@ApplicationScoped
 public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
 
 
@@ -127,13 +135,14 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
     public static final String SM_12DW4_CONTAINER_ID = "CO-2859994";
     public static final String SM_12MD2_CONTAINER_ID = "CO-2859994";
 
-    public final static Map<String, Map<BSPSampleSearchColumn, String>> samples = new HashMap<String, Map<BSPSampleSearchColumn, String>>();
     public static final String CANINE_SPECIES = "Canine";
 
+    /**
+     * Samples that this service stub knows about and can return.
+     */
+    private final Map<String, Map<BSPSampleSearchColumn, String>> samples = new HashMap<>();
+
     public BSPSampleSearchServiceStub() {
-
-        samples.clear();
-
         addToMap( SM_12CO4, new HashMap<BSPSampleSearchColumn, String>() {{
             put(BSPSampleSearchColumn.PARTICIPANT_ID, SM_12CO4_PATIENT_ID);
             put(BSPSampleSearchColumn.ROOT_SAMPLE, SM_12CO4_ROOT_SAMP);
@@ -268,7 +277,15 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
 
     }
 
-    private void addToMap(String sampleName, Map<BSPSampleSearchColumn, String> attributes) {
+    /**
+     * Configures a sample for this stub to be able to return.
+     *
+     * @param sampleName    the sample name
+     * @param attributes    a map of attributes to return when the sample name is queried
+     *
+     * @throws RuntimeException if the sampleName is already configured for this stub
+     */
+    public void addToMap(String sampleName, Map<BSPSampleSearchColumn, String> attributes) {
         if (samples.containsKey(sampleName)) {
             throw new RuntimeException("The mock BSP service already contains " + sampleName);
         }
