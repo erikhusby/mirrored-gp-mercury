@@ -26,7 +26,7 @@ import java.util.Set;
 
 
 /**
- * Core class of Mercury configuration.  The two Maps in this class contain
+ * Singleton core class of Mercury configuration based from YAML files.  The two {@link Map}s in this class contain:
  * <ol>
  * <li>Descriptions of external deployments.  These correspond to all stanzas except the "mercury" stanza in the
  * configuration files.</li>
