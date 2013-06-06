@@ -54,7 +54,7 @@ public class LimsQueryResourceUnitTest {
     private SequencingTemplateFactory sequencingTemplateFactory;
 
     @BeforeMethod(groups = DATABASE_FREE)
-    public void setUp() throws Exception {
+    public void setUp() {
         mockMercuryOrSquidRouter = createMock(MercuryOrSquidRouter.class);
         mockThriftService = createMock(ThriftService.class);
         mockLimsQueries = createMock(LimsQueries.class);
@@ -87,7 +87,7 @@ public class LimsQueryResourceUnitTest {
     }
 
     @Test(groups = DATABASE_FREE)
-    public void testFindFlowcellDesignationByTaskNameRuntimeException() throws Exception {
+    public void testFindFlowcellDesignationByTaskNameRuntimeException() {
         RuntimeException thrown = new RuntimeException("Runtime exception!");
         expect(mockThriftService.findFlowcellDesignationByTaskName("TestTask")).andThrow(thrown);
         replayAll();
@@ -108,7 +108,7 @@ public class LimsQueryResourceUnitTest {
      */
 
     @Test(groups = DATABASE_FREE)
-    public void testFindFlowcellDesignationByReagentBlockBarcode() throws Exception {
+    public void testFindFlowcellDesignationByReagentBlockBarcode() {
         FlowcellDesignation flowcellDesignation = new FlowcellDesignation();
         expect(mockThriftService.findFlowcellDesignationByReagentBlockBarcode("TestReagentBlock"))
                 .andReturn(flowcellDesignation);
@@ -144,9 +144,9 @@ public class LimsQueryResourceUnitTest {
      */
 
     @Test(groups = DATABASE_FREE)
-    public void testDoesLimsRecognizeAllTubesFromSquid() throws Exception {
+    public void testDoesLimsRecognizeAllTubesFromSquid() {
+        expect(mockMercuryOrSquidRouter.getSystemOfRecordForVesselBarcodes(Arrays.asList("squid_barcode"))).andReturn(SQUID);
         expect(mockThriftService.doesSquidRecognizeAllLibraries(Arrays.asList("squid_barcode"))).andReturn(true);
-//        expect(mockTwoDBarcodedTubeDAO.findByBarcodes(Arrays.asList("squid_barcode"))).andReturn(new HashMap<String, TwoDBarcodedTube>());
         replayAll();
 
         boolean result = resource.doesLimsRecognizeAllTubes(Arrays.asList("squid_barcode"));
@@ -155,29 +155,15 @@ public class LimsQueryResourceUnitTest {
         verifyAll();
     }
 
-    // TODO: enable when Mercury implementation is complete
-    @Test(enabled = false, groups = DATABASE_FREE)
-    public void testDoesLimsRecognizeAllTubesFromSequel() throws Exception {
-        expect(mockThriftService.doesSquidRecognizeAllLibraries(Arrays.asList("sequel_barcode"))).andReturn(false);
-        Map<String, TwoDBarcodedTube> sequelTubes = new HashMap<String, TwoDBarcodedTube>();
-        sequelTubes.put("sequel_barcode", new TwoDBarcodedTube("sequel_barcode"));
-        expect(mockTwoDBarcodedTubeDAO.findByBarcodes(Arrays.asList("sequel_barcode"))).andReturn(sequelTubes);
-        replayAll();
+    @Test(groups = DATABASE_FREE)
+    public void testDoesLimsRecognizeAllTubesFromMercury() {
+        expect(mockMercuryOrSquidRouter.getSystemOfRecordForVesselBarcodes(Arrays.asList("good_barcode"))).
+                andReturn(MERCURY);
+        expect(mockLimsQueries.doesLimsRecognizeAllTubes(Arrays.asList("good_barcode"))).andReturn(true);
 
-        boolean result = resource.doesLimsRecognizeAllTubes(Arrays.asList("sequel_barcode"));
-        assertThat(result, is(true));
-    }
-
-    // TODO: enable when Mercury implementation is complete
-    @Test(enabled = false, groups = DATABASE_FREE)
-    public void testDoesLimsRecognizeAllTubesInBothSquidAndSequel() throws Exception {
-        expect(mockThriftService.doesSquidRecognizeAllLibraries(Arrays.asList("good_barcode"))).andReturn(true);
-        Map<String, TwoDBarcodedTube> sequelTubes = new HashMap<String, TwoDBarcodedTube>();
-        sequelTubes.put("good_barcode", new TwoDBarcodedTube("good_barcode"));
-        expect(mockTwoDBarcodedTubeDAO.findByBarcodes(Arrays.asList("good_barcode"))).andReturn(sequelTubes);
+        expect(mockMercuryOrSquidRouter.getSystemOfRecordForVesselBarcodes(Arrays.asList("bad_barcode"))).
+                andReturn(SQUID);
         expect(mockThriftService.doesSquidRecognizeAllLibraries(Arrays.asList("bad_barcode"))).andReturn(false);
-        expect(mockTwoDBarcodedTubeDAO.findByBarcodes(Arrays.asList("bad_barcode")))
-                .andReturn(new HashMap<String, TwoDBarcodedTube>());
         replayAll();
 
         boolean result1 = resource.doesLimsRecognizeAllTubes(Arrays.asList("good_barcode"));
@@ -185,22 +171,6 @@ public class LimsQueryResourceUnitTest {
 
         boolean result2 = resource.doesLimsRecognizeAllTubes(Arrays.asList("bad_barcode"));
         assertThat(result2, is(false));
-
-        verifyAll();
-    }
-
-    @Test(groups = DATABASE_FREE)
-    public void testDoesLimsRecognizeAllTubesSplitBetweenSquidAndSequel() throws Exception {
-        expect(mockThriftService.doesSquidRecognizeAllLibraries(Arrays.asList("squid_barcode", "sequel_barcode")))
-                .andReturn(false);
-        Map<String, TwoDBarcodedTube> sequelTubes = new HashMap<String, TwoDBarcodedTube>();
-        sequelTubes.put("sequel_barcode", new TwoDBarcodedTube("sequel_barcode"));
-//        expect(mockTwoDBarcodedTubeDAO.findByBarcodes(Arrays.asList("squid_barcode", "sequel_barcode"))).andReturn(sequelTubes);
-        replayAll();
-
-        boolean result = resource.doesLimsRecognizeAllTubes(Arrays.asList("squid_barcode", "sequel_barcode"));
-        // result is false because one system does not know about both tubes (TBD if this is correct behavior)
-        assertThat(result, is(false));
 
         verifyAll();
     }
@@ -269,7 +239,7 @@ public class LimsQueryResourceUnitTest {
      */
 
     @Test(groups = DATABASE_FREE)
-    public void testFindFlowcellDesignationByFlowcellBarcode() throws Exception {
+    public void testFindFlowcellDesignationByFlowcellBarcode() {
         FlowcellDesignation designation = new FlowcellDesignation();
         expect(mockThriftService.findFlowcellDesignationByFlowcellBarcode("good_barcode")).andReturn(designation);
         expect(mockResponseFactory.makeFlowcellDesignation(designation)).andReturn(new FlowcellDesignationType());
@@ -289,7 +259,7 @@ public class LimsQueryResourceUnitTest {
     @Test(groups = DATABASE_FREE)
     public void testFetchParentRackContentsForPlateFromMercury() {
         expect(mockMercuryOrSquidRouter.getSystemOfRecordForVessel("mercuryPlate")).andReturn(MERCURY);
-        Map<String, Boolean> map = new HashMap<String, Boolean>();
+        Map<String, Boolean> map = new HashMap<>();
         map.put("A01", true);
         map.put("A02", false);
         expect(mockLimsQueries.fetchParentRackContentsForPlate("mercuryPlate")).andReturn(map);
@@ -304,7 +274,7 @@ public class LimsQueryResourceUnitTest {
     @Test(groups = DATABASE_FREE)
     public void testFetchParentRackContentsForPlateFromSquid() {
         expect(mockMercuryOrSquidRouter.getSystemOfRecordForVessel("squidPlate")).andReturn(SQUID);
-        Map<String, Boolean> map = new HashMap<String, Boolean>();
+        Map<String, Boolean> map = new HashMap<>();
         map.put("A01", true);
         map.put("A02", false);
         expect(mockThriftService.fetchParentRackContentsForPlate("squidPlate")).andReturn(map);
@@ -319,7 +289,7 @@ public class LimsQueryResourceUnitTest {
     @Test(groups = DATABASE_FREE)
     public void testFetchParentRackContentsForPlateFromBoth() {
         expect(mockMercuryOrSquidRouter.getSystemOfRecordForVessel("squidPlate")).andReturn(SQUID);
-        Map<String, Boolean> map = new HashMap<String, Boolean>();
+        Map<String, Boolean> map = new HashMap<>();
         map.put("A01", true);
         map.put("A02", false);
         expect(mockThriftService.fetchParentRackContentsForPlate("squidPlate")).andReturn(map);
@@ -336,7 +306,7 @@ public class LimsQueryResourceUnitTest {
      */
 
     @Test(groups = DATABASE_FREE)
-    public void testFetchQpcrForTube() throws Exception {
+    public void testFetchQpcrForTube() {
         expect(mockMercuryOrSquidRouter.getSystemOfRecordForVessel("barcode")).andReturn(SQUID);
         expect(mockThriftService.fetchQpcrForTube("barcode")).andReturn(1.23);
         replayAll();
@@ -352,7 +322,7 @@ public class LimsQueryResourceUnitTest {
      */
 
     @Test(groups = DATABASE_FREE)
-    public void testFetchQuantForTube() throws Exception {
+    public void testFetchQuantForTube() {
         expect(mockMercuryOrSquidRouter.getSystemOfRecordForVessel("barcode")).andReturn(SQUID);
         expect(mockThriftService.fetchQuantForTube("barcode", "test")).andReturn(1.23);
         replayAll();
@@ -364,7 +334,7 @@ public class LimsQueryResourceUnitTest {
     }
 
     @Test(groups = DATABASE_FREE, enabled = false)
-    public void testFetchUserByBadge() throws Exception {
+    public void testFetchUserByBadge() {
 
         String testUserBadge = "Test" + BSPManagerFactoryStub.QA_DUDE_USER_ID;
         replayAll();
@@ -377,7 +347,7 @@ public class LimsQueryResourceUnitTest {
     }
 
     @Test(groups = DATABASE_FREE, enabled = false)
-    public void testFetchNoUserByBogusBadge() throws Exception {
+    public void testFetchNoUserByBogusBadge() {
 
         String testUserBadge = "BOGUSFAKENONEXISTANTBADGE";
         replayAll();
@@ -425,7 +395,7 @@ public class LimsQueryResourceUnitTest {
 
     @Test(groups = DATABASE_FREE, enabled = true)
     public void testFetchIlluminaSeqTemplate() {
-        final SequencingTemplateType template = new SequencingTemplateType();
+        SequencingTemplateType template = new SequencingTemplateType();
         template.setBarcode("BARCODE_1234");
         template.setName("NAME_1234");
         template.setOnRigWorkflow("Resequencing");
@@ -453,7 +423,7 @@ public class LimsQueryResourceUnitTest {
         Assert.assertEquals(result.getReadStructure(), "76T8B76T");
         Assert.assertTrue(result.isPairedRun());
         Assert.assertEquals(result.getLanes().size(), 1);
-        final SequencingTemplateLaneType laneOne = result.getLanes().get(0);
+        SequencingTemplateLaneType laneOne = result.getLanes().get(0);
         Assert.assertEquals(laneOne.getLoadingConcentration(), 3.33);
         Assert.assertEquals(laneOne.getLoadingVesselLabel(), "LOADING_VESSEL_1234");
         Assert.assertEquals(laneOne.getLaneName(), "LANE_1324");
