@@ -276,7 +276,7 @@ public class ExtractTransform implements Serializable {
             }
             return null;
         }
-
+        log.debug("Starting incremental ETL.");
         final List<Integer> count = new ArrayList<Integer>(1);
         final List<String> date = new ArrayList<String>(1);
 
@@ -398,7 +398,7 @@ public class ExtractTransform implements Serializable {
             return Response.Status.BAD_REQUEST;
         }
 
-        log.debug("ETL backfill of " + entityClass.getName() + " having ids " + startId + " to " + endId);
+        log.debug("Starting ETL backfill of " + entityClass.getName() + " having ids " + startId + " to " + endId);
         long backfillStartTime = System.currentTimeMillis();
 
         final long finalEndId = endId;
@@ -544,9 +544,6 @@ public class ExtractTransform implements Serializable {
         if (null == datafileDir) {
             setDatafileDir(etlConfig.getDatawhEtlDirRoot() + DATAFILE_SUBDIR);
         }
-
-        // Should we add a flag to configure if the Data Warehouse is enabled in YAML?
-        log.info("The ETL Data Warehouse is" + (!StringUtils.isBlank(datafileDir) ? "" : " not") + " running.");
     }
 
     /**

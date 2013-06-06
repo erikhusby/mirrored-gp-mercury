@@ -91,14 +91,18 @@ public class AuditReaderDao extends GenericDao {
      *
      * @param revIds      audit revision ids
      * @param entityClass the class of entity to process
-     * @param doChunks    process multiple revIds in sql IN clause
      */
-    public <T> List<T[]> fetchDataChanges(Collection<Long> revIds, Class<?> entityClass, boolean doChunks) {
-        if (CollectionUtils.isEmpty(revIds)) {
-            return Collections.emptyList();
-        }
+    public <T> List<T[]> fetchDataChanges(Collection<Long> revIds, Class<?> entityClass) {
+        return fetchDataChanges(revIds, entityClass, true);
+    }
 
-        List<T[]> dataChanges = new ArrayList<T[]>();
+    // Allows "unrolling" the batch to handle AuditReader failures on individual records.
+    public <T> List<T[]> fetchDataChanges(Collection<Long> revIds, Class<?> entityClass, boolean doChunks) {
+        List<T[]> dataChanges = new ArrayList<>();
+
+        if (revIds == null || revIds.size() == 0) {
+            return dataChanges;
+        }
 
         // Chunks revIds as necessary to limit sql "in" clause to 1000 elements, or 1 element if not chunking.
         final int IN_CLAUSE_LIMIT = doChunks ? 1000 : 1;
