@@ -19,4 +19,23 @@
             <column name="WORKFLOW_NAME" type="varchar(255)"></column>
         </addColumn>
     </changeSet>
+    <changeSet id="GPLIM-1377-1" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <columnExists schemaName="mercury" tableName="lv_comment" columnName="lab_event"/>
+        </preConditions>
+        <dropNotNullConstraint columnName="lab_event" schemaName="mercury" tableName="lv_comment" />
+    </changeSet>
+    <changeSet id="GPLIM-1377-2" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <columnExists schemaName="mercury" tableName="lv_comment_aud" columnName="lab_event"/>
+        </preConditions>
+        <dropNotNullConstraint columnName="lab_event" schemaName="mercury" tableName="lv_comment_aud" />
+    </changeSet>
+    <changeSet id="GPLIM-1377-3" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <foreignKeyConstraintExists foreignKeyName="FK_LV_COMMENT_LAB_EVENT" schemaName="mercury"/>
+        </preConditions>
+        <dropForeignKeyConstraint
+                constraintName="FK_LV_COMMENT_LAB_EVENT" baseTableName="lv_comment" baseTableSchemaName="mercury"/>
+    </changeSet>
 </databaseChangeLog>

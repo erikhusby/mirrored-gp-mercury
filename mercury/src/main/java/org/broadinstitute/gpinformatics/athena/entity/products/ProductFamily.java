@@ -32,6 +32,30 @@ public class ProductFamily implements Serializable, Comparable<ProductFamily> {
     private static final String SEQUENCE_ONLY_NAME = "Sequence Only";
     public static final String RNA_FAMILY_NAME = "RNA";
 
+    public enum ProductFamilyName {
+        RNA("RNA"),
+        SMALL_DESIGN_VALIDATION_EXTENSION("Small Design, Validation & Extension"),
+        SAMPLE_INITIATION_QUALIFICATION_CELL_CULTURE("Sample Initiation, Qualification & Cell Culture"),
+        EXOME("Exome"),
+        WHOLE_GENOME("Whole Genome"),
+        DE_NOVO_ASSEMBLY("de novo Assembly"),
+        MICROBIAL_VIRAL_ANALYSIS("Microbial & Viral Analysis"),
+        SEQUENCE_ONLY("Sequence Only"),
+        METAGENOMICS("Metagenomics"),
+        ALTERNATE_LIBRARY_PREP_DEVELOPMENT("Alternate Library Prep & Development"),
+        EPIGENOMICS("Epigenomics"),
+        DATA_ANALYSIS("Data Analysis");
+
+        private final String familyName;
+        ProductFamilyName(String familyName) {
+            this.familyName = familyName;
+        }
+
+        public String getFamilyName() {
+            return familyName;
+        }
+    }
+
     /**
      * JPA package visible constructor. Stripes requires the empty constructor.
      */

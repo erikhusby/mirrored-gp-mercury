@@ -31,7 +31,7 @@ public class ProductOrderSampleContainerTest extends ContainerTest {
         Assert.assertTrue(testSample.needsBspMetaData());
 
         try {
-            BSPSampleDTO bspDTO = testSample.getBspDTO();
+            BSPSampleDTO bspDTO = testSample.getBspSampleDTO();
             Assert.assertTrue(bspDTO.isSampleReceived());
             Assert.assertTrue(bspDTO.isActiveStock());
 

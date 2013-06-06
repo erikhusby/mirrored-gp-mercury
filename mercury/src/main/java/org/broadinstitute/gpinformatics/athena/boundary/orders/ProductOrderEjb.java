@@ -122,7 +122,7 @@ public class ProductOrderEjb {
             throw new NoSamplesException();
         }
 
-        List<ProductOrderSample> orderSamples = new ArrayList<ProductOrderSample>(sampleIds.size());
+        List<ProductOrderSample> orderSamples = new ArrayList<>(sampleIds.size());
         for (String sampleId : sampleIds) {
             orderSamples.add(new ProductOrderSample(sampleId));
         }
@@ -434,7 +434,7 @@ public class ProductOrderEjb {
         IssueFieldsResponse issueFieldsResponse =
                 jiraService.getIssueFields(productOrder.getJiraTicketKey(), customFieldDefinitions.values());
 
-        List<CustomField> customFields = new ArrayList<CustomField>();
+        List<CustomField> customFields = new ArrayList<>();
 
         StringBuilder updateCommentBuilder = new StringBuilder();
 
@@ -485,7 +485,7 @@ public class ProductOrderEjb {
         }
 
         // set new add-ons in
-        Set<ProductOrderAddOn> productOrderAddOns = new HashSet<ProductOrderAddOn>();
+        Set<ProductOrderAddOn> productOrderAddOns = new HashSet<>();
         for (Product addOn : productDao.findByPartNumbers(addOnPartNumbers)) {
             ProductOrderAddOn productOrderAddOn = new ProductOrderAddOn(addOn, updatedProductOrder);
             productOrderDao.persist(productOrderAddOn);
@@ -512,7 +512,7 @@ public class ProductOrderEjb {
 
         protected static String createErrorMessage(DeliveryStatus status,
                                                    List<ProductOrderSample> samples) {
-            List<String> messages = new ArrayList<String>();
+            List<String> messages = new ArrayList<>();
 
             for (ProductOrderSample sample : samples) {
                 messages.add(sample.getSampleName() + " @ " + sample.getSamplePosition()
@@ -561,9 +561,9 @@ public class ProductOrderEjb {
                                    DeliveryStatus targetStatus,
                                    Collection<ProductOrderSample> samples) throws SampleDeliveryStatusChangeException {
 
-        Set<ProductOrderSample> transitionSamples = new HashSet<ProductOrderSample>(samples);
+        Set<ProductOrderSample> transitionSamples = new HashSet<>(samples);
 
-        List<ProductOrderSample> untransitionableSamples = new ArrayList<ProductOrderSample>();
+        List<ProductOrderSample> untransitionableSamples = new ArrayList<>();
 
         for (ProductOrderSample sample : order.getSamples()) {
             // If the transition sample set is empty we try to transition all samples in the PDO.

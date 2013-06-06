@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -41,12 +40,7 @@ public class WorkflowBucketDef extends WorkflowStepDef {
 
         // todo remove this code block when Bamboo works with MVEL
         if (entryExpression != null && entryExpression.contains("getMaterialType() == \"DNA:DNA Genomic\"")) {
-            for (SampleInstance si : labVessel.getSampleInstances()) {
-                if (si.getStartingSample().getBspSampleDTO().getMaterialType().equals("DNA:DNA Genomic")) {
-                    return true;
-                }
-            }
-            return false;
+            return labVessel.isGenomicDNA();
         }
 
         // Compile, even though we're using it only once, because MVEL sometimes has

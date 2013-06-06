@@ -182,6 +182,15 @@ public abstract class LabVessel implements Serializable {
         return vesselNames;
     }
 
+    public boolean isGenomicDNA() {
+        for (SampleInstance si : this.getSampleInstances()) {
+            if (!si.getStartingSample().getBspSampleDTO().getMaterialType().equals("DNA:DNA Genomic")) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     /**
      * Well A01, Lane 3, Region 6 all might
      * be considered a labeled sub-section
@@ -586,9 +595,9 @@ public abstract class LabVessel implements Serializable {
      * @return A list of vessel positions that the sample instance was last known to be at.
      */
     public List<VesselPosition> getLastKnownPositionsOfSample(@Nonnull SampleInstance sampleInstance) {
-        Map<Date, List<VesselPosition>> positionList = new TreeMap<Date, List<VesselPosition>>();
         if (getContainerRole() == null) {
-            for (VesselContainer container : getContainers()) {
+            Map<Date, List<VesselPosition>> positionList = new TreeMap<Date, List<VesselPosition>>();
+            for (VesselContainer<?> container : getContainers()) {
                 List<VesselPosition> curPositionLists = positionList.get(container.getEmbedder().getCreatedOn());
                 if (curPositionLists == null) {
                     curPositionLists = new ArrayList<VesselPosition>();
@@ -596,10 +605,14 @@ public abstract class LabVessel implements Serializable {
                 }
                 curPositionLists.add(container.getPositionOfVessel(this));
             }
-        } else {
-            return getPositionsOfSample(sampleInstance);
+
+            if (positionList.isEmpty()) {
+                return Collections.emptyList();
+            }
+
+            return positionList.get(positionList.keySet().iterator().next());
         }
-        return positionList.get(positionList.keySet().iterator().next());
+        return getPositionsOfSample(sampleInstance);
     }
 
     private Set<SampleInstance> getSamplesAtPosition(VesselPosition position, SampleType sampleType) {
@@ -1484,5 +1497,74 @@ public abstract class LabVessel implements Serializable {
             }
         }
         return sampleNames;
+    }
+
+
+    /**
+     * Helper method to determine if a given vessel or any of its ancestors are currently in a bucket.
+     * @param pdoKey
+     * @param bucketName
+     * @return
+     */
+    public boolean isAncestorInBucket(@Nonnull String pdoKey, @Nonnull String bucketName) {
+
+        List<LabVessel> vesselHeirarchy = new ArrayList<LabVessel>();
+
+        vesselHeirarchy.add(this);
+        vesselHeirarchy.addAll(this.getAncestorVessels());
+
+        for(LabVessel currAncestor:vesselHeirarchy){
+            for(BucketEntry currentEntry: currAncestor.getBucketEntries()) {
+                if(pdoKey.equals(currentEntry.getPoBusinessKey()) &&
+                   bucketName.equals(currentEntry.getBucket().getBucketDefinitionName()) &&
+                        BucketEntry.Status.Active == currentEntry.getStatus()) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Helper method to determine if a given vessel is in a bucket.
+     * @param pdoKey PDO Key with which a vessel may be associated in a bucket
+     * @param bucketName Name of the bucket to search for associations
+     * @return
+     */
+    public boolean isVesselInBucket(@Nonnull String pdoKey, @Nonnull String bucketName) {
+
+        for(BucketEntry currentEntry: getBucketEntries()) {
+            if(pdoKey.equals(currentEntry.getPoBusinessKey()) &&
+               bucketName.equals(currentEntry.getBucket().getBucketDefinitionName()) &&
+               BucketEntry.Status.Active == currentEntry.getStatus()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    /**
+     * Helper method to determine if a given vessel or any of its ancestors have ever been in a bucket.
+     * @param bucketName Name of the bucket to search for associations
+     * @return
+     */
+    public boolean hasAncestorBeenInBucket(@Nonnull String bucketName) {
+
+        List<LabVessel> vesselHeirarchy = new ArrayList<LabVessel>();
+
+        vesselHeirarchy.add(this);
+        vesselHeirarchy.addAll(this.getAncestorVessels());
+
+        for(LabVessel currAncestor:vesselHeirarchy){
+            for(BucketEntry currentEntry: currAncestor.getBucketEntries()) {
+                if(bucketName.equals(currentEntry.getBucket().getBucketDefinitionName())) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 }

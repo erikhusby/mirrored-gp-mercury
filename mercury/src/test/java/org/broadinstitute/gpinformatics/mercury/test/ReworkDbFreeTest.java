@@ -59,7 +59,7 @@ public class ReworkDbFreeTest extends BaseEventTest {
                 origBatch,
                 origLcsetSuffix,
                 origRackBarcodeSuffix,
-                "1");
+                "1", true);
 
         ExomeExpressShearingEntityBuilder shearingEntityBuilder1 = runExomeExpressShearingProcess(
                 productOrder,
@@ -95,7 +95,7 @@ public class ReworkDbFreeTest extends BaseEventTest {
                 reworkBatch,
                 reworkLcsetSuffix,
                 reworkRackBarcodeSuffix,
-                "2");
+                "2", true);
 
         ExomeExpressShearingEntityBuilder shearingEntityBuilder2 = runExomeExpressShearingProcess(
                 productOrder,
@@ -168,9 +168,9 @@ public class ReworkDbFreeTest extends BaseEventTest {
         workflowBatch2.setWorkflowName("Exome Express");
 
         PicoPlatingEntityBuilder picoPlatingEntityBuilder1 = runPicoPlatingProcess(mapBarcodeToTube1, productOrder1,
-                workflowBatch1, null, String.valueOf(runDate.getTime()), "1");
+                workflowBatch1, null, String.valueOf(runDate.getTime()), "1", true);
         PicoPlatingEntityBuilder picoPlatingEntityBuilder2 = runPicoPlatingProcess(mapBarcodeToTube2, productOrder2,
-                workflowBatch2, null, String.valueOf(runDate.getTime()), "2");
+                workflowBatch2, null, String.valueOf(runDate.getTime()), "2", true);
 
         ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder1 = runExomeExpressShearingProcess(
                 productOrder1, picoPlatingEntityBuilder1.getNormBarcodeToTubeMap(),

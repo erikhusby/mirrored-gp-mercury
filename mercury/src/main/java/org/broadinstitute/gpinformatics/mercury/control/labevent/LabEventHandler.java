@@ -8,8 +8,11 @@ import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServic
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
 import javax.annotation.Nonnull;
@@ -159,13 +162,18 @@ public class LabEventHandler implements Serializable {
      * @return Workflow Definition for the defined workflow for the product order represented by productOrderKey
      */
     public ProductWorkflowDefVersion getWorkflowVersion(@Nonnull String productOrderKey) {
-        WorkflowConfig workflowConfig = workflowLoader.load();
-
-        ProductWorkflowDefVersion versionResult = null;
 
         ProductOrder productOrder = athenaClientService.retrieveProductOrderDetails(productOrderKey);
 
         String workflowName = productOrder.getProduct().getWorkflowName();
+        ProductWorkflowDefVersion versionResult = getWorkflowVersionByWorkflow(workflowName);
+        return versionResult;
+    }
+
+    public ProductWorkflowDefVersion getWorkflowVersionByWorkflow(String workflowName) {
+        WorkflowConfig workflowConfig = workflowLoader.load();
+
+        ProductWorkflowDefVersion versionResult = null;
         if (StringUtils.isNotBlank(workflowName)) {
             versionResult = workflowConfig.getWorkflowByName(workflowName).getEffectiveVersion();
         }
@@ -280,6 +288,30 @@ public class LabEventHandler implements Serializable {
 //        }
 //        return bucketVessels;
 //    }
+
+    /**
+     * findBucketDef will utilize the WorkflowConfig to return an instance of a {@link WorkflowBucketDef} based
+     * on a given workflow definition and and step labEventType
+     * @param workflowName
+     * @param stepDef
+     * @return
+     */
+    public static WorkflowBucketDef findBucketDef(@Nonnull String workflowName, @Nonnull LabEventType stepDef) {
+
+        WorkflowConfig workflowConfig = (new WorkflowLoader()).load();
+        assert(workflowConfig != null && workflowConfig.getProductWorkflowDefs() != null &&
+               !workflowConfig.getProductWorkflowDefs().isEmpty());
+        ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(workflowName);
+        ProductWorkflowDefVersion versionResult = productWorkflowDef.getEffectiveVersion();
+
+        ProductWorkflowDefVersion.LabEventNode labEventNode =
+                versionResult.findStepByEventType(stepDef.getName());
+        if (labEventNode == null) {
+            return null;
+        } else {
+            return (WorkflowBucketDef) labEventNode.getStepDef();
+        }
+    }
 
 
 }
