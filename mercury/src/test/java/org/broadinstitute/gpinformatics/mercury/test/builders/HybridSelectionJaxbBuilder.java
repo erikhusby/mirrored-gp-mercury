@@ -204,7 +204,7 @@ public class HybridSelectionJaxbBuilder {
         }
         normCatchRackBarcode = "NormCatchRack";
         normCatchJaxb = bettaLimsMessageTestFactory.buildPlateToRack("NormalizedCatchRegistration",
-                hybridizationPlateBarcode, normCatchRackBarcode,
+                catchCleanupBarcode, normCatchRackBarcode,
                 normCatchBarcodes);
         bettaLimsMessageTestFactory.addMessage(messageList, normCatchJaxb);
 

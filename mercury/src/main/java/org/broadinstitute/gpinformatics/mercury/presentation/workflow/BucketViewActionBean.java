@@ -265,8 +265,12 @@ public class BucketViewActionBean extends CoreActionBean {
     }
 
     public Long getReworkOperator(LabVessel vessel) {
-        return getRapSheet(vessel)
-                .getCurrentReworkEntry().getLabVesselComment().getLabEvent().getEventOperator();
+        LabEvent labEvent = getRapSheet(vessel).getCurrentReworkEntry().getLabVesselComment().getLabEvent();
+        if (labEvent == null) {
+            return 0L;
+        } else {
+            return labEvent.getEventOperator();
+        }
     }
 
 

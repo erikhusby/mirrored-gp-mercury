@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
@@ -37,11 +38,14 @@ public class LimsQueries {
 
     private StaticPlateDAO staticPlateDAO;
     private LabVesselDao labVesselDao;
+    private TwoDBarcodedTubeDAO twoDBarcodedTubeDAO;
 
     @Inject
-    public LimsQueries(StaticPlateDAO staticPlateDAO, LabVesselDao labVesselDao) {
+    public LimsQueries(StaticPlateDAO staticPlateDAO, LabVesselDao labVesselDao,
+                       TwoDBarcodedTubeDAO twoDBarcodedTubeDAO) {
         this.staticPlateDAO = staticPlateDAO;
         this.labVesselDao = labVesselDao;
+        this.twoDBarcodedTubeDAO = twoDBarcodedTubeDAO;
     }
 
     /**
@@ -85,8 +89,19 @@ public class LimsQueries {
         return libraryDataTypes;
     }
 
+    /**
+     * Determines whether all tube barcodes are in the database
+     * @param barcodes list of tube barcodes
+     * @return true if all tube barcodes are in the database
+     */
     public boolean doesLimsRecognizeAllTubes(List<String> barcodes) {
-        return false;
+        Map<String, TwoDBarcodedTube> mapBarcodeToTube = twoDBarcodedTubeDAO.findByBarcodes(barcodes);
+        for (Map.Entry<String, TwoDBarcodedTube> stringTwoDBarcodedTubeEntry : mapBarcodeToTube.entrySet()) {
+            if (stringTwoDBarcodedTubeEntry.getValue() == null) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -98,6 +113,19 @@ public class LimsQueries {
      */
     public List<String> findImmediatePlateParents(String plateBarcode) {
         StaticPlate plate = staticPlateDAO.findByBarcode(plateBarcode);
+        if (plate == null) {
+            throw new RuntimeException("Plate not found for barcode: " + plateBarcode);
+        }
+        return findImmediatePlateParents(plate);
+    }
+
+    /**
+     * DaoFree implementation of {@link #findImmediatePlateParents(String)}
+     * @param plate entity
+     * @return list of barcodes
+     */
+    @DaoFree
+    public List<String> findImmediatePlateParents(StaticPlate plate) {
         List<StaticPlate> parents = plate.getImmediatePlateParents();
         List<String> parentPlateBarcodes = new ArrayList<>();
         for (StaticPlate parent : parents) {
@@ -109,6 +137,9 @@ public class LimsQueries {
     public Map<String, Boolean> fetchParentRackContentsForPlate(String plateBarcode) {
         Map<String, Boolean> map = new HashMap<>();
         StaticPlate plate = staticPlateDAO.findByBarcode(plateBarcode);
+        if (plate == null) {
+            throw new RuntimeException("Plate not found for barcode: " + plateBarcode);
+        }
         Map<VesselPosition, Boolean> hasRackContentByWell = plate.getHasRackContentByWell();
         for (Map.Entry<VesselPosition, Boolean> entry : hasRackContentByWell.entrySet()) {
             map.put(entry.getKey().name(), entry.getValue());
@@ -119,6 +150,9 @@ public class LimsQueries {
     public List<WellAndSourceTubeType> fetchSourceTubesForPlate(String plateBarcode) {
         List<WellAndSourceTubeType> results = new ArrayList<>();
         StaticPlate plate = staticPlateDAO.findByBarcode(plateBarcode);
+        if (plate == null) {
+            throw new RuntimeException("Plate not found for barcode: " + plateBarcode);
+        }
         for (VesselAndPosition vesselAndPosition : plate.getNearestTubeAncestors()) {
             WellAndSourceTubeType result = new WellAndSourceTubeType();
             result.setWellName(vesselAndPosition.getPosition().name());
