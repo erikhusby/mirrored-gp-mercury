@@ -18,6 +18,8 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
@@ -46,6 +48,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.SampleType.WITH_PDO;
@@ -82,6 +85,9 @@ public class ReworkEjb {
 
     @Inject
     private AthenaClientService athenaClientService;
+
+    @Inject
+    private BSPSampleDataFetcher bspSampleDataFetcher;
 
     /**
      * Create rework for all samples in a LabVessel;
@@ -179,10 +185,6 @@ public class ReworkEjb {
             }
         }
 
-        // TODO: handle the case where LIMS doesn't know the tube, but we can still look it up in BSP
-//        List<ProductOrderSample> samples =
-//                productOrderSampleDao.findMapBySamples(Collections.singletonList(query)).get(query);
-
         for (LabVessel vessel : labVessels) {
             Set<SampleInstance> sampleInstances = vessel.getSampleInstances(WITH_PDO, null);
 
@@ -205,6 +207,24 @@ public class ReworkEjb {
                                 productOrder, vessel));
                     }
                 }
+            }
+        }
+
+        if (reworkCandidates.isEmpty() && BSPUtil.isInBspFormat(query)) {
+            List<ProductOrderSample> samples =
+                    productOrderSampleDao.findMapBySamples(Collections.singletonList(query)).get(query);
+
+            Collection<String> sampleIDs = new ArrayList<>();
+            for (ProductOrderSample sample : samples) {
+                sampleIDs.add(sample.getSampleName());
+            }
+            Map<String, BSPSampleDTO> bspResult = bspSampleDataFetcher.fetchSamplesFromBSP(sampleIDs);
+            bspSampleDataFetcher.fetchSamplePlastic(bspResult.values());
+            for (ProductOrderSample sample : samples) {
+                String sampleKey = sample.getSampleName();
+                String tubeBarcode = bspResult.get(sampleKey).getPlasticBarcodes().get(0);
+                reworkCandidates.add(new ReworkCandidate(sampleKey, sample.getProductOrder().getBusinessKey(),
+                        tubeBarcode, sample.getProductOrder(), null));
             }
         }
 
