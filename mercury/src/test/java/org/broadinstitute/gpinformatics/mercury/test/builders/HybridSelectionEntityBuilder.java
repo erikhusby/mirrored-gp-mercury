@@ -239,6 +239,15 @@ public class HybridSelectionEntityBuilder {
         }
         Assert.assertEquals(matches, 4, "Wrong number of plate transfer matches");
 
+        Map<String, Boolean> mapPositionToOccupied = limsQueries.fetchParentRackContentsForPlate(hybridizationPlate);
+        int occupiedCount = 0;
+        for (Boolean occupied : mapPositionToOccupied.values()) {
+            if (occupied) {
+                occupiedCount++;
+            }
+        }
+        Assert.assertEquals(occupiedCount, pondRegTubeBarcodes.size() / 2);
+
         // NormalizedCatchRegistration
         LabEventTest.validateWorkflow("NormalizedCatchRegistration", catchCleanPlate);
         mapBarcodeToNormCatchTubes = new HashMap<>();

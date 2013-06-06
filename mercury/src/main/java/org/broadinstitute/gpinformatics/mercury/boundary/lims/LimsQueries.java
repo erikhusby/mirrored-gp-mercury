@@ -134,13 +134,26 @@ public class LimsQueries {
         return parentPlateBarcodes;
     }
 
+    /**
+     * See {@link LimsQueryResource#fetchParentRackContentsForPlate(String)}.
+     */
     public Map<String, Boolean> fetchParentRackContentsForPlate(String plateBarcode) {
-        Map<String, Boolean> map = new HashMap<>();
         StaticPlate plate = staticPlateDAO.findByBarcode(plateBarcode);
         if (plate == null) {
             throw new RuntimeException("Plate not found for barcode: " + plateBarcode);
         }
+        return fetchParentRackContentsForPlate(plate);
+    }
+
+    /**
+     * DaoFree implementation of {@link #fetchParentRackContentsForPlate(String)}
+     * @param plate entity
+     * @return map from well position to true if position occupied
+     */
+    @DaoFree
+    public Map<String, Boolean> fetchParentRackContentsForPlate(StaticPlate plate) {
         Map<VesselPosition, Boolean> hasRackContentByWell = plate.getHasRackContentByWell();
+        Map<String, Boolean> map = new HashMap<>();
         for (Map.Entry<VesselPosition, Boolean> entry : hasRackContentByWell.entrySet()) {
             map.put(entry.getKey().name(), entry.getValue());
         }
