@@ -237,7 +237,7 @@ mercury:
       squid:    DEV
       thrift:   QA
       deckMsgs: DEV
-      datawhEtl: DEV
+      datawhEtl: NOT_SUPPORTED
       bettaLimsServer: DEV
       tableau:  PROD
       hipchat: DEV
@@ -253,7 +253,7 @@ mercury:
       squid:    DEV
       thrift:   QA
       deckMsgs: DEV
-      datawhEtl: DEV
+      datawhEtl: NOT_SUPPORTED
       bettaLimsServer: DEV
       tableau:  PROD
       hipchat: DEV
@@ -269,7 +269,7 @@ mercury:
       squid:    TEST
       thrift:   TEST
       deckMsgs: DEV
-      datawhEtl: DEV
+      datawhEtl: NOT_SUPPORTED
       bettaLimsServer: TEST
       tableau:  PROD
       hipchat: DEV
@@ -285,7 +285,7 @@ mercury:
       squid:    QA
       thrift:   QA
       deckMsgs: QA
-      datawhEtl: QA
+      datawhEtl: NOT_SUPPORTED
       bettaLimsServer: QA
       tableau:  PROD
       hipchat: DEV
@@ -301,7 +301,7 @@ mercury:
       squid:    QA
       thrift:   QA
       deckMsgs: QA
-      datawhEtl: QA
+      datawhEtl: NOT_SUPPORTED
       bettaLimsServer: QA
       tableau:  PROD
       hipchat: DEV
@@ -317,7 +317,7 @@ mercury:
       squid:    PROD
       thrift:   PROD
       deckMsgs: PROD
-      datawhEtl: PROD
+      datawhEtl: NOT_SUPPORTED
       bettaLimsServer: PROD
       tableau:  PROD
       hipchat: PROD
