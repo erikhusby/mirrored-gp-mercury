@@ -1533,19 +1533,23 @@ public abstract class LabVessel implements Serializable {
      * Helper method to determine if a given vessel is in a bucket.
      * @param pdoKey PDO Key with which a vessel may be associated in a bucket
      * @param bucketName Name of the bucket to search for associations
+     * @param active
      * @return
      */
-    public boolean isVesselInBucket(@Nonnull String pdoKey, @Nonnull String bucketName) {
+    public boolean checkCurrentBucketStatus(@Nonnull String pdoKey, @Nonnull String bucketName,
+                                            BucketEntry.Status active) {
 
         for(BucketEntry currentEntry: getBucketEntries()) {
             if(pdoKey.equals(currentEntry.getPoBusinessKey()) &&
                bucketName.equals(currentEntry.getBucket().getBucketDefinitionName()) &&
-               BucketEntry.Status.Active == currentEntry.getStatus()) {
+               active == currentEntry.getStatus()) {
                 return true;
             }
         }
         return false;
     }
+
+
 
 
     /**

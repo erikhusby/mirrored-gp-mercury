@@ -25,6 +25,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceExcep
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.LabVesselComment;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.LabVesselPosition;
@@ -117,7 +118,8 @@ public class ReworkEjb {
                 MercurySample mercurySample = sampleInstance.getStartingSample();
 
                 //TODO SGM Revisit.  Ensure that this is truly what we wish to do.
-                if (labVessel.isVesselInBucket(sampleInstance.getProductOrderKey(), bucketDef.getName())) {
+                if (labVessel.checkCurrentBucketStatus(sampleInstance.getProductOrderKey(), bucketDef.getName(),
+                        BucketEntry.Status.Active)) {
                     String error =
                             String.format("Sample %s in product order %s already exists in the %s bucket.",
                                     mercurySample.getSampleKey(), sampleInstance.getProductOrderKey(),
@@ -315,7 +317,7 @@ public class ReworkEjb {
 
         WorkflowBucketDef bucketDef = LabEventHandler.findBucketDef(workflowName, reworkStep);
 
-        if (reworkVessel.hasAncestorBeenInBucket(bucketDef.getName())) {
+        if (!reworkVessel.hasAncestorBeenInBucket(bucketDef.getName())) {
             validationMessages.add("You have submitted a vessel to the bucket that may not be considered a rework.  " +
                                    "No ancestor of " + reworkVessel.getLabel() + " has ever been in been in the " +
                                    bucketDef.getName() + " before.");
