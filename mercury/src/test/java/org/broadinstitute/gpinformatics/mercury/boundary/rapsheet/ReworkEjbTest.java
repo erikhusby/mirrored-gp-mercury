@@ -55,6 +55,7 @@ import javax.transaction.UserTransaction;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -183,6 +184,9 @@ public class ReworkEjbTest extends Arquillian {
 
     private int existingReworks;
     private Date currDate;
+    private Product exExProduct;
+    private Product nonExExProduct;
+    private ResearchProject researchProject;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -217,7 +221,7 @@ public class ReworkEjbTest extends Arquillian {
         // The injected BSPSampleSearchService must be a stub because it's requested when building the Mercury WAR.
         BSPSampleSearchServiceStub bspSampleSearchServiceStub = (BSPSampleSearchServiceStub) bspSampleSearchService;
 
-        bspSampleSearchServiceStub.addToMap(somaticSample2, new HashMap<BSPSampleSearchColumn, String>() {{
+        bspSampleSearchServiceStub.addToMap(somaticSample2, new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
             put(BSPSampleSearchColumn.PARTICIPANT_ID, SM_SGM_Test_Somatic_2_PATIENT_ID);
             put(BSPSampleSearchColumn.ROOT_SAMPLE, BSPSampleSearchServiceStub.ROOT);
             put(BSPSampleSearchColumn.STOCK_SAMPLE, SM_SGM_Test_Somatic_2_STOCK_SAMP);
@@ -239,7 +243,7 @@ public class ReworkEjbTest extends Arquillian {
             put(BSPSampleSearchColumn.SAMPLE_ID, somaticSample2);
         }});
 
-        bspSampleSearchServiceStub.addToMap(somaticSample1, new HashMap<BSPSampleSearchColumn, String>() {{
+        bspSampleSearchServiceStub.addToMap(somaticSample1, new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
             put(BSPSampleSearchColumn.PARTICIPANT_ID, SM_SGM_Test_Somatic_1_PATIENT_ID);
             put(BSPSampleSearchColumn.ROOT_SAMPLE, BSPSampleSearchServiceStub.ROOT);
             put(BSPSampleSearchColumn.STOCK_SAMPLE, SM_SGM_Test_Somatic_1_STOCK_SAMP);
@@ -260,7 +264,7 @@ public class ReworkEjbTest extends Arquillian {
             put(BSPSampleSearchColumn.CONTAINER_ID, SM_SGM_Test_Somatic_1_CONTAINER_ID);
             put(BSPSampleSearchColumn.SAMPLE_ID, somaticSample1);
         }});
-        bspSampleSearchServiceStub.addToMap(somaticSample3, new HashMap<BSPSampleSearchColumn, String>() {{
+        bspSampleSearchServiceStub.addToMap(somaticSample3, new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
             put(BSPSampleSearchColumn.PARTICIPANT_ID, SM_SGM_Test_Somatic_1_PATIENT_ID);
             put(BSPSampleSearchColumn.ROOT_SAMPLE, BSPSampleSearchServiceStub.ROOT);
             put(BSPSampleSearchColumn.STOCK_SAMPLE, SM_SGM_Test_Somatic_3_STOCK_SAMP);
@@ -281,7 +285,7 @@ public class ReworkEjbTest extends Arquillian {
             put(BSPSampleSearchColumn.CONTAINER_ID, SM_SGM_Test_Somatic_3_CONTAINER_ID);
             put(BSPSampleSearchColumn.SAMPLE_ID, somaticSample3);
         }});
-        bspSampleSearchServiceStub.addToMap(genomicSample2, new HashMap<BSPSampleSearchColumn, String>() {{
+        bspSampleSearchServiceStub.addToMap(genomicSample2, new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
             put(BSPSampleSearchColumn.PARTICIPANT_ID, SM_SGM_Test_Genomic_2_PATIENT_ID);
             put(BSPSampleSearchColumn.ROOT_SAMPLE, BSPSampleSearchServiceStub.ROOT);
             put(BSPSampleSearchColumn.STOCK_SAMPLE, SM_SGM_Test_Genomic_2_STOCK_SAMP);
@@ -303,7 +307,7 @@ public class ReworkEjbTest extends Arquillian {
             put(BSPSampleSearchColumn.SAMPLE_ID, genomicSample2);
         }});
 
-        bspSampleSearchServiceStub.addToMap(genomicSample1, new HashMap<BSPSampleSearchColumn, String>() {{
+        bspSampleSearchServiceStub.addToMap(genomicSample1, new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
             put(BSPSampleSearchColumn.PARTICIPANT_ID, SM_SGM_Test_Genomic_1_PATIENT_ID);
             put(BSPSampleSearchColumn.ROOT_SAMPLE, BSPSampleSearchServiceStub.ROOT);
             put(BSPSampleSearchColumn.STOCK_SAMPLE, SM_SGM_Test_Genomic_1_STOCK_SAMP);
@@ -324,7 +328,7 @@ public class ReworkEjbTest extends Arquillian {
             put(BSPSampleSearchColumn.CONTAINER_ID, SM_SGM_Test_Genomic_1_CONTAINER_ID);
             put(BSPSampleSearchColumn.SAMPLE_ID, genomicSample2);
         }});
-        bspSampleSearchServiceStub.addToMap(genomicSample3, new HashMap<BSPSampleSearchColumn, String>() {{
+        bspSampleSearchServiceStub.addToMap(genomicSample3, new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
             put(BSPSampleSearchColumn.PARTICIPANT_ID, SM_SGM_Test_Genomic_1_PATIENT_ID);
             put(BSPSampleSearchColumn.ROOT_SAMPLE, BSPSampleSearchServiceStub.ROOT);
             put(BSPSampleSearchColumn.STOCK_SAMPLE, SM_SGM_Test_Genomic_3_STOCK_SAMP);
@@ -348,16 +352,14 @@ public class ReworkEjbTest extends Arquillian {
 
 
         String rpJiraTicketKey = "RP-SGM-Rework_tst1" + currDate.getTime() + "RP";
-        ResearchProject researchProject = new ResearchProject(bspUserList.getByUsername("scottmat").getUserId(),
+        researchProject = new ResearchProject(bspUserList.getByUsername("scottmat").getUserId(),
                 "Rework Integration Test RP " + currDate.getTime() + "RP", "Rework Integration Test RP", false);
         researchProject.setJiraTicketKey(rpJiraTicketKey);
         researchProjectDao.persist(researchProject);
 
-//        researchProject = researchProjectDao.findByBusinessKey(rpJiraTicketKey);
-
-        Product exExProduct = productDao.findByPartNumber(
+        exExProduct = productDao.findByPartNumber(
                 BettalimsMessageResourceTest.mapWorkflowToPartNum.get(WorkflowName.EXOME_EXPRESS.getWorkflowName()));
-        Product nonExExProduct = productDao.findByPartNumber(
+        nonExExProduct = productDao.findByPartNumber(
                 BettalimsMessageResourceTest.mapWorkflowToPartNum.get(WorkflowName.WHOLE_GENOME.getWorkflowName()));
 
         bucketReadySamples1  = new ArrayList<>(2);
@@ -499,7 +501,7 @@ public class ReworkEjbTest extends Arquillian {
                         indexedPlateFactory, staticPlateDAO, reagentDesignDao, twoDBarcodedTubeDAO,
                         appConfig.getUrl(), 2);
 
-        for (String barcode : mapBarcodeToTube.keySet()) {
+        for (String barcode : hybridSelectionJaxbBuilder.getNormCatchBarcodes()) {
 
             bucketDao.findByName(bucketName);
             BucketEntry newEntry = pBucket.addEntry(exExProductOrder1.getBusinessKey(),
@@ -510,10 +512,10 @@ public class ReworkEjbTest extends Arquillian {
             candiates.addAll(reworkEjb.findReworkCandidates(barcode));
         }
 
-        Assert.assertEquals(candiates.size(), mapBarcodeToTube.size());
+        Assert.assertEquals(candiates.size(), hybridSelectionJaxbBuilder.getNormCatchBarcodes().size());
 
         for(ReworkEjb.ReworkCandidate candidate:candiates) {
-            Assert.assertTrue(mapBarcodeToTube.keySet().contains(candidate.getTubeBarcode()));
+            Assert.assertTrue(hybridSelectionJaxbBuilder.getNormCatchBarcodes().contains(candidate.getTubeBarcode()));
         }
 
     }
@@ -573,7 +575,7 @@ public class ReworkEjbTest extends Arquillian {
                         indexedPlateFactory, staticPlateDAO, reagentDesignDao, twoDBarcodedTubeDAO,
                         appConfig.getUrl(), 2);
 
-        for (String barcode : mapBarcodeToTube.keySet()) {
+        for (String barcode : hybridSelectionJaxbBuilder.getNormCatchBarcodes()) {
 
             //TODO SGM:  This way of forcing finding a PDO for non Exome Express seems sketchy since non EXEX
             // product orders cannot enter a bucket to get a bucket
@@ -586,11 +588,11 @@ public class ReworkEjbTest extends Arquillian {
             candidates.addAll(reworkEjb.findReworkCandidates(barcode));
         }
 
-        Assert.assertEquals(candidates.size(), mapBarcodeToTube.size());
+        Assert.assertEquals(candidates.size(), hybridSelectionJaxbBuilder.getNormCatchBarcodes().size());
 
         for(ReworkEjb.ReworkCandidate candidate:candidates) {
             Assert.assertFalse(candidate.isValid());
-            Assert.assertTrue(mapBarcodeToTube.keySet().contains(candidate.getTubeBarcode()));
+            Assert.assertTrue(hybridSelectionJaxbBuilder.getNormCatchBarcodes().contains(candidate.getTubeBarcode()));
         }
 
     }

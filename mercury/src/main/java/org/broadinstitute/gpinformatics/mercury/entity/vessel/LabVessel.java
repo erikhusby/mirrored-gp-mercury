@@ -1508,12 +1508,12 @@ public abstract class LabVessel implements Serializable {
      */
     public boolean isAncestorInBucket(@Nonnull String pdoKey, @Nonnull String bucketName) {
 
-        List<LabVessel> vesselHeirarchy = new ArrayList<LabVessel>();
+        List<LabVessel> vesselHierarchy = new ArrayList<LabVessel>();
 
-        vesselHeirarchy.add(this);
-        vesselHeirarchy.addAll(this.getAncestorVessels());
+        vesselHierarchy.add(this);
+        vesselHierarchy.addAll(this.getAncestorVessels());
 
-        for(LabVessel currAncestor:vesselHeirarchy){
+        for(LabVessel currAncestor:vesselHierarchy){
             for(BucketEntry currentEntry: currAncestor.getBucketEntries()) {
                 if(pdoKey.equals(currentEntry.getPoBusinessKey()) &&
                    bucketName.equals(currentEntry.getBucket().getBucketDefinitionName()) &&

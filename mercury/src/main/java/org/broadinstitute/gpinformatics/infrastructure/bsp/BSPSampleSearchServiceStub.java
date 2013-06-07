@@ -143,7 +143,7 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
     private final Map<String, Map<BSPSampleSearchColumn, String>> samples = new HashMap<>();
 
     public BSPSampleSearchServiceStub() {
-        addToMap( SM_12CO4, new HashMap<BSPSampleSearchColumn, String>() {{
+        addToMap( SM_12CO4, new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
             put(BSPSampleSearchColumn.PARTICIPANT_ID, SM_12CO4_PATIENT_ID);
             put(BSPSampleSearchColumn.ROOT_SAMPLE, SM_12CO4_ROOT_SAMP);
             put(BSPSampleSearchColumn.STOCK_SAMPLE, SM_12CO4_STOCK_SAMP);
@@ -165,7 +165,7 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
             put(BSPSampleSearchColumn.SAMPLE_ID, SM_12CO4);
         }} );
 
-        addToMap( SM_1P3WY, new HashMap<BSPSampleSearchColumn, String>() {{
+        addToMap( SM_1P3WY, new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
             put(BSPSampleSearchColumn.PARTICIPANT_ID, SM_1P3WY_PATIENT_ID);
             put(BSPSampleSearchColumn.ROOT_SAMPLE, SM_1P3WY_ROOT_SAMP);
             put(BSPSampleSearchColumn.STOCK_SAMPLE, SM_1P3WY_STOCK_SAMP);
@@ -187,7 +187,7 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
             put(BSPSampleSearchColumn.SAMPLE_ID, SM_1P3WY);
         }} );
 
-        addToMap( SM_1P3XN, new HashMap<BSPSampleSearchColumn, String>() {{
+        addToMap( SM_1P3XN, new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
             put(BSPSampleSearchColumn.PARTICIPANT_ID, SM_1P3XN_PATIENT_ID);
             put(BSPSampleSearchColumn.ROOT_SAMPLE, SM_1P3XN_ROOT_SAMP);
             put(BSPSampleSearchColumn.STOCK_SAMPLE, SM_1P3XN_STOCK_SAMP);
@@ -209,7 +209,7 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
             put(BSPSampleSearchColumn.SAMPLE_ID, SM_1P3XN);
         }} );
 
-        addToMap( SM_12FO4, new HashMap<BSPSampleSearchColumn, String>() {{
+        addToMap( SM_12FO4, new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
             put(BSPSampleSearchColumn.PARTICIPANT_ID, SM_12FO4_PATIENT_ID);
             put(BSPSampleSearchColumn.ROOT_SAMPLE, SM_12FO4_ROOT_SAMP);
             put(BSPSampleSearchColumn.STOCK_SAMPLE, SM_12FO4_STOCK_SAMP);
@@ -231,7 +231,7 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
             put(BSPSampleSearchColumn.SAMPLE_ID, SM_12FO4);
         }} );
 
-        addToMap( SM_12DW4, new HashMap<BSPSampleSearchColumn, String>() {{
+        addToMap( SM_12DW4, new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
             put(BSPSampleSearchColumn.PARTICIPANT_ID, SM_12DW4_PATIENT_ID);
             put(BSPSampleSearchColumn.ROOT_SAMPLE, SM_12DW4_ROOT_SAMP);
             put(BSPSampleSearchColumn.STOCK_SAMPLE, SM_12DW4_STOCK_SAMP);
@@ -253,7 +253,7 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
             put(BSPSampleSearchColumn.SAMPLE_ID, SM_12DW4);
         }} );
 
-        addToMap( SM_12MD2, new HashMap<BSPSampleSearchColumn, String>() {{
+        addToMap( SM_12MD2, new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
             put(BSPSampleSearchColumn.PARTICIPANT_ID, SM_12MD2_PATIENT_ID);
             put(BSPSampleSearchColumn.ROOT_SAMPLE, SM_12MD2_ROOT_SAMP);
             put(BSPSampleSearchColumn.STOCK_SAMPLE, SM_12MD2_STOCK_SAMP);

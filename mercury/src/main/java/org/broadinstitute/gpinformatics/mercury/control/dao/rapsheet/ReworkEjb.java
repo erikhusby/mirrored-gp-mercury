@@ -311,7 +311,7 @@ public class ReworkEjb {
 
         WorkflowBucketDef bucketDef = LabEventHandler.findBucketDef(workflowName, reworkStep);
 
-        if (Boolean.FALSE.equals(reworkVessel.hasAncestorBeenInBucket(bucketDef.getName()))) {
+        if (reworkVessel.hasAncestorBeenInBucket(bucketDef.getName())) {
             validationMessages.add("You have submitted a vessel to the bucket that may not be considered a rework.  " +
                                    "No ancestor of " + reworkVessel.getLabel() + " has ever been in been in the " +
                                    bucketDef.getName() + " before.");
