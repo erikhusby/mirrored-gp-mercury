@@ -230,11 +230,7 @@ public class ReworkEjb {
             bspSampleDataFetcher.fetchSamplePlastic(bspResult.values());
             for (ProductOrderSample sample : samples) {
                 String sampleKey = sample.getSampleName();
-                String tubeBarcode = null;
-                List<String> plasticBarcodes = bspResult.get(sampleKey).getPlasticBarcodes();
-                if (plasticBarcodes != null && !plasticBarcodes.isEmpty()) {
-                    tubeBarcode = plasticBarcodes.get(0);
-                }
+                String tubeBarcode = bspResult.get(sampleKey).getBarcodeForLabVessel();
                 reworkCandidates.add(new ReworkCandidate(sampleKey, sample.getProductOrder().getBusinessKey(),
                         tubeBarcode, sample.getProductOrder(), null));
             }
@@ -277,8 +273,7 @@ public class ReworkEjb {
 
     /**
      * addAndValidateRework will, like
-     * {@link #addRework(String, org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry.ReworkReason,
-     * org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType, String, String)}, create a
+     * {@link #addRework(String, org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry.ReworkReason, org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType, String, String)}, create a
      * {@link ReworkEntry} for all samples in a vessel.
      * <p/>
      * In addition to creating a ReworkEntry, this method will execute some validation rules against the rework entry
