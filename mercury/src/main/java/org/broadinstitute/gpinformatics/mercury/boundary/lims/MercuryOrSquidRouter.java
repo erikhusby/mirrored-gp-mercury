@@ -102,9 +102,9 @@ public class MercuryOrSquidRouter implements Serializable {
     }
 
     private MercuryOrSquid routeForVesselBarcodes(Collection<String> barcodes, Intent intent) {
-        Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(new ArrayList<String>(barcodes));
+        Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(new ArrayList<>(barcodes));
         // can't use mapBarcodeToVessel.values(), because it doesn't include nulls
-        List<LabVessel> labVessels = new ArrayList<LabVessel>();
+        List<LabVessel> labVessels = new ArrayList<>();
         for (Map.Entry<String, LabVessel> stringLabVesselEntry : mapBarcodeToVessel.entrySet()) {
             labVessels.add(stringLabVesselEntry.getValue());
         }
@@ -142,7 +142,7 @@ public class MercuryOrSquidRouter implements Serializable {
         Set<MercuryOrSquid> routingOptions = EnumSet.noneOf(MercuryOrSquid.class);
 
         // Determine which samples might be controls
-        Set<SampleInstance> possibleControls = new HashSet<SampleInstance>();
+        Set<SampleInstance> possibleControls = new HashSet<>();
         for (LabVessel labVessel : labVessels) {
             if (labVessel != null) {
                 Set<SampleInstance> sampleInstances = labVessel.getSampleInstances(SampleType.PREFER_PDO, LabBatchType.WORKFLOW);
@@ -155,8 +155,8 @@ public class MercuryOrSquidRouter implements Serializable {
             }
         }
 
-        List<String> controlCollaboratorSampleIds = new ArrayList<String>();
-        Collection<String> sampleNames = new ArrayList<String>();
+        List<String> controlCollaboratorSampleIds = new ArrayList<>();
+        Collection<String> sampleNames = new ArrayList<>();
         Map<String, BSPSampleDTO> mapSampleNameToDto = null;
         if (!possibleControls.isEmpty()) {
             for (SampleInstance sampleInstance : possibleControls) {
@@ -173,7 +173,7 @@ public class MercuryOrSquidRouter implements Serializable {
             routingOptions.add(routeForVessel(labVessel, controlCollaboratorSampleIds, mapSampleNameToDto, intent));
         }
 
-        return evaluateRoutingOption(routingOptions);
+        return evaluateRoutingOption(routingOptions, intent);
     }
 
     // TODO: figure out how to handle libraryNames for fetchLibraryDetailsByLibraryName
@@ -204,7 +204,7 @@ public class MercuryOrSquidRouter implements Serializable {
             if (sampleInstances.isEmpty()) {
                 routingOptions.add(SQUID);
             } else {
-                Set<SampleInstance> possibleControls = new HashSet<SampleInstance>();
+                Set<SampleInstance> possibleControls = new HashSet<>();
                 for (SampleInstance sampleInstance : sampleInstances) {
                     if (sampleInstance.getProductOrderKey() == null) {
                         possibleControls.add(sampleInstance);
@@ -269,7 +269,7 @@ public class MercuryOrSquidRouter implements Serializable {
             }
         }
 
-        return evaluateRoutingOption(routingOptions);
+        return evaluateRoutingOption(routingOptions, intent);
     }
 
     /**
@@ -292,12 +292,14 @@ public class MercuryOrSquidRouter implements Serializable {
      * Controls recognized by Mercury currently route to BOTH. When Mercury is the system of record for a workflow,
      * we'll start to see routingOptions of { BOTH, MERCURY }, which this implementation will currently reject.
      *
+     *
      * @param routingOptions A navigable collection of determined routing options for a collection of lab vessels.
      *
+     * @param intent routing or queries
      * @return An instance of a MercuryOrSquid enum that will assist in determining to which system requests should be
      * routed.
      */
-    private MercuryOrSquid evaluateRoutingOption(Set<MercuryOrSquid> routingOptions) {
+    private MercuryOrSquid evaluateRoutingOption(Set<MercuryOrSquid> routingOptions, Intent intent) {
 
         MercuryOrSquid result;
 
@@ -305,7 +307,8 @@ public class MercuryOrSquidRouter implements Serializable {
             result = SQUID;
         } else if (routingOptions.size() == 1) {
             result = routingOptions.iterator().next();
-        } else if (routingOptions.equals(EnumSet.of(SQUID, BOTH))) {
+        } else if (routingOptions.equals(EnumSet.of(SQUID, BOTH)) ||
+                (intent == Intent.SYSTEM_OF_RECORD && routingOptions.equals(EnumSet.of(SQUID, MERCURY)))) {
             result = SQUID;
         } else {
             throw new RouterException("The Routing cannot be determined for options: " + routingOptions);
