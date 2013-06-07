@@ -48,25 +48,35 @@ public class RiskItemEtl extends GenericEntityEtl<RiskItem, ProductOrderSample> 
     @Override
     protected Collection<Long> convertAuditedEntityIdToDataSourceEntityId(Collection<Long> auditIds) {
         String queryString = "select distinct product_order_sample entity_id from ATHENA.PO_SAMPLE_RISK_JOIN_AUD " +
-                " where product_order_sample is not null and risk_item_id in (" + IN_CLAUSE_PLACEHOLDER + ")";
+                             " where product_order_sample is not null and risk_item_id in (" + IN_CLAUSE_PLACEHOLDER
+                             + ")";
         return lookupAssociatedIds(auditIds, queryString);
     }
 
     @Override
-    protected Collection<ProductOrderSample> convertAuditedEntityToDataSourceEntity(Collection<RiskItem> auditEntities) {
+    protected Collection<ProductOrderSample> convertAuditedEntityToDataSourceEntity(
+            Collection<RiskItem> auditEntities) {
         Collection<Long> riskIds = new ArrayList<Long>();
         for (RiskItem auditedEntity : auditEntities) {
             riskIds.add(auditedEntity.getRiskItemId());
         }
         List<Long> pdoSampleIds = new ArrayList<Long>(convertAuditedEntityIdToDataSourceEntityId(riskIds));
-        return pdoSampleDao.findListByList(ProductOrderSample.class, ProductOrderSample_.productOrderSampleId, pdoSampleIds);
+        return pdoSampleDao
+                .findListByList(ProductOrderSample.class, ProductOrderSample_.productOrderSampleId, pdoSampleIds);
     }
 
     @Override
     String dataRecord(String etlDateStr, boolean isDelete, ProductOrderSample entity) {
+
+        String riskString = entity.getRiskString();
+        if (riskString.length() > 500) {
+            riskString = riskString.substring(0, 500);
+        }
         return genericRecord(etlDateStr, isDelete,
                 entity.getProductOrderSampleId(),
-                format(entity.isOnRisk())
+                format(entity.isOnRisk()),
+                format(entity.getRiskTypeString()),
+                format(riskString)
         );
     }
 }

@@ -164,7 +164,9 @@ CREATE TABLE product_order_sample (
   is_billed CHAR(1) DEFAULT 'F' NOT NULL CHECK (is_billed IN ('T','F')),
   is_abandoned CHAR(1) generated always as (case when delivery_status = 'ABANDONED' then 'T' else 'F' end) virtual,
   ledger_quote_id VARCHAR2(255),
-  etl_date DATE NOT NULL
+  etl_date DATE NOT NULL,
+  risk_types VARCHAR2(255),
+  risk_messages VARCHAR2(500)
 );
 
 CREATE TABLE product_order_sample_status (
@@ -458,7 +460,9 @@ CREATE TABLE im_product_order_sample_risk (
   etl_date DATE NOT NULL,
   is_delete CHAR(1) NOT NULL,
   product_order_sample_id NUMERIC(19) NOT NULL,
-  on_risk CHAR(1)
+  on_risk CHAR(1),
+  risk_types VARCHAR2(255),
+  risk_messages VARCHAR2(500)
 );
 
 CREATE TABLE im_product_order_sample_bill (

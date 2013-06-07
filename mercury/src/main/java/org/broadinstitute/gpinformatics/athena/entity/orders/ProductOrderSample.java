@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
@@ -9,8 +10,10 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
+import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
@@ -42,6 +45,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * Class to describe Athena's view of a Sample. A Sample is identified by a sample Id and
@@ -420,16 +424,37 @@ public class ProductOrderSample extends AbstractSample implements Serializable {
         return false;
     }
 
+    /**
+     * @return A string with the full details for each {@link RiskItem} for the sample.
+     */
     public String getRiskString() {
         StringBuilder riskStringBuilder = new StringBuilder();
 
         if (isOnRisk()) {
             for (RiskItem riskItem : riskItems) {
-                riskStringBuilder.append(riskItem.getInformation());
+                // We need to remove newlines and carriage returns as ETL will not accept the values.
+                riskStringBuilder.append(riskItem.getInformation().replaceAll("\r?\n", " "));
+                riskStringBuilder.append(" AND ");
             }
         }
 
-        return riskStringBuilder.toString();
+        String riskString = riskStringBuilder.toString();
+        return riskString.substring(0, riskString.lastIndexOf(" AND " ));
+    }
+
+    /**
+     * @return A string of each {@link RiskItem}s {@link RiskCriterion} type for the sample.
+     */
+    public String getRiskTypeString() {
+        List<String> riskStrings = new ArrayList<String>();
+
+        if (isOnRisk()) {
+            for (RiskItem riskItem : riskItems) {
+                riskStrings.add(riskItem.getRiskCriterion().getType().getLabel());
+            }
+        }
+
+        return StringUtils.join(riskStrings, " AND ");
     }
 
     @SuppressWarnings("UnusedDeclaration")
