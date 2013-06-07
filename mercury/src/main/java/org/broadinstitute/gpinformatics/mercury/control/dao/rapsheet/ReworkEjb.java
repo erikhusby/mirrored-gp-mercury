@@ -21,7 +21,6 @@ import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
@@ -86,17 +85,6 @@ public class ReworkEjb {
 
     @Inject
     private BSPSampleDataFetcher bspSampleDataFetcher;
-
-    public ReworkEjb() {
-    }
-
-    public ReworkEjb(MercurySampleDao mercurySampleDao,
-                     ReworkEntryDao reworkEntryDao,
-                     LabVesselDao labVesselDao) {
-        this.mercurySampleDao = mercurySampleDao;
-        this.reworkEntryDao = reworkEntryDao;
-        this.labVesselDao = labVesselDao;
-    }
 
     /**
      * Create rework for all samples in a LabVessel;
@@ -189,14 +177,11 @@ public class ReworkEjb {
         Collection<ReworkCandidate> reworkCandidates = new ArrayList<>();
 
         List<LabVessel> labVessels = new ArrayList<>();
-        if (BSPUtil.isInBspFormat(query)) {
-            labVessels.addAll(labVesselDao.findBySampleKey(query));
-        } else {
-            LabVessel labVessel = labVesselDao.findByIdentifier(query);
-            if (labVessel != null) {
-                labVessels.add(labVessel);
-            }
+        LabVessel labVessel = labVesselDao.findByIdentifier(query);
+        if (labVessel != null) {
+            labVessels.add(labVessel);
         }
+        labVessels.addAll(labVesselDao.findBySampleKey(query));
 
         for (LabVessel vessel : labVessels) {
             Set<SampleInstance> sampleInstances = vessel.getSampleInstances(WITH_PDO, null);
@@ -233,7 +218,7 @@ public class ReworkEjb {
             }
         }
 
-        if (reworkCandidates.isEmpty() && BSPUtil.isInBspFormat(query)) {
+        if (reworkCandidates.isEmpty()) {
             List<ProductOrderSample> samples =
                     productOrderSampleDao.findMapBySamples(Collections.singletonList(query)).get(query);
 
@@ -245,7 +230,11 @@ public class ReworkEjb {
             bspSampleDataFetcher.fetchSamplePlastic(bspResult.values());
             for (ProductOrderSample sample : samples) {
                 String sampleKey = sample.getSampleName();
-                String tubeBarcode = bspResult.get(sampleKey).getPlasticBarcodes().get(0);
+                String tubeBarcode = null;
+                List<String> plasticBarcodes = bspResult.get(sampleKey).getPlasticBarcodes();
+                if (plasticBarcodes != null && !plasticBarcodes.isEmpty()) {
+                    tubeBarcode = plasticBarcodes.get(0);
+                }
                 reworkCandidates.add(new ReworkCandidate(sampleKey, sample.getProductOrder().getBusinessKey(),
                         tubeBarcode, sample.getProductOrder(), null));
             }
