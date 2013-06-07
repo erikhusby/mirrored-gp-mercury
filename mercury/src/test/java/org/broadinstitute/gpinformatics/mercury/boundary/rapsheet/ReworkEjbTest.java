@@ -892,7 +892,7 @@ public class ReworkEjbTest extends Arquillian {
 
         createInitialTubes(bucketReadySamples1, String.valueOf((new Date()).getTime())+"tst2");
 
-        List<ReworkEjb.ReworkCandidate> candiates = new ArrayList<>();
+        List<ReworkEjb.ReworkCandidate> candidates = new ArrayList<>();
 
         List<ProductOrderSample> bucketReadySamplesDupe  = new ArrayList<>(2);
         bucketReadySamplesDupe.add(new ProductOrderSample(genomicSample1));
@@ -911,10 +911,10 @@ public class ReworkEjbTest extends Arquillian {
 
         for (Map.Entry<String, TwoDBarcodedTube> tubes : mapBarcodeToTube.entrySet()) {
 
-            candiates.addAll(reworkEjb.findReworkCandidates(tubes.getValue().getSampleNames().iterator().next()));
+            candidates.addAll(reworkEjb.findReworkCandidates(tubes.getValue().getSampleNames().iterator().next()));
         }
 
-        Assert.assertEquals(candiates.size(), mapBarcodeToTube.size() * 2);
+        Assert.assertEquals(candidates.size(), mapBarcodeToTube.size() * 2);
 
 //        for(ReworkEjb.ReworkCandidate candidate:candiates) {
 //            Assert.assertTrue(mapBarcodeToTube.keySet().contains(candidate.getTubeBarcode()),"Did not find barcode " + candidate.getTubeBarcode() + "In the map of created tubes");
@@ -922,13 +922,12 @@ public class ReworkEjbTest extends Arquillian {
 
     }
 
-
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testFindCandidatesMultiplePdosWithBuckets() throws Exception {
 
         createInitialTubes(bucketReadySamples2, String.valueOf((new Date()).getTime())+"tst2");
 
-        List<ReworkEjb.ReworkCandidate> candiates = new ArrayList<>();
+        List<ReworkEjb.ReworkCandidate> candidates = new ArrayList<>();
 
         List<ProductOrderSample> bucketReadySamplesDupe  = new ArrayList<>(2);
         bucketReadySamplesDupe.add(new ProductOrderSample(genomicSample3));
@@ -952,18 +951,16 @@ public class ReworkEjbTest extends Arquillian {
             newEntry.setStatus(BucketEntry.Status.Archived);
             bucketDao.persist(pBucket);
 
-            candiates.addAll(reworkEjb.findReworkCandidates(tubes.getValue().getSampleNames().iterator().next()));
+            candidates.addAll(reworkEjb.findReworkCandidates(tubes.getValue().getSampleNames().iterator().next()));
         }
 
-        Assert.assertEquals(candiates.size(), mapBarcodeToTube.size());
+        Assert.assertEquals(candidates.size(), mapBarcodeToTube.size());
 
-//        for(ReworkEjb.ReworkCandidate candidate:candiates) {
-//            Assert.assertTrue(mapBarcodeToTube.keySet().contains(candidate.getTubeBarcode()));
-//        }
+        for(ReworkEjb.ReworkCandidate candidate:candidates) {
+            Assert.assertEquals(candidate.getProductOrderKey(), duplicatePO.getBusinessKey());
+        }
 
     }
-
-
 
     private void createInitialTubes(@Nonnull List<ProductOrderSample> pos,
                                     @Nonnull String barcodePrefix) {
