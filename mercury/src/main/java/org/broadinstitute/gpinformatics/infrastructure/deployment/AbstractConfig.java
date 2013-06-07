@@ -13,12 +13,13 @@ public abstract class AbstractConfig {
     protected AbstractConfig(@Nonnull Deployment mercuryDeployment) {
         if (mercuryDeployment != Deployment.STUBBY) {
             AbstractConfig source = produce(getClass(), mercuryDeployment);
-            try {
-                BeanUtils.copyProperties(this, source);
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-            } catch (InvocationTargetException e) {
-                throw new RuntimeException(e);
+            // source can be null if this config is NOT_SUPPORTED.
+            if (source != null) {
+                try {
+                    BeanUtils.copyProperties(this, source);
+                } catch (IllegalAccessException | InvocationTargetException e) {
+                    throw new RuntimeException(e);
+                }
             }
         }
 
@@ -35,7 +36,7 @@ public abstract class AbstractConfig {
      * Useful for debugging.
      */
     @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
-    private Deployment mercuryDeployment;
+    private final Deployment mercuryDeployment;
 
 
     public void setExternalDeployment(Deployment externalDeployment) {

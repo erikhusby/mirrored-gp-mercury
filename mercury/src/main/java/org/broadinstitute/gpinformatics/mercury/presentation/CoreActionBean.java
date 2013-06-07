@@ -36,7 +36,6 @@ import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.infrastructure.presentation.JiraLink;
 import org.broadinstitute.gpinformatics.infrastructure.presentation.SampleLink;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
-import org.broadinstitute.gpinformatics.mercury.entity.DB;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -501,9 +500,6 @@ public class CoreActionBean implements ActionBean {
         return jiraLink.browseUrl(jiraTicketKey);
     }
 
-    public String[] getRoles(@Nonnull DB.Role... roles) {
-        return DB.roles(roles);
-    }
     /**
      * @return The name of the business key parameter used in URLs to edit the object being viewed.
      */

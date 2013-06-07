@@ -1,7 +1,4 @@
 <%@ include file="/resources/layout/taglibs.jsp" %>
-<%@ page import="static org.broadinstitute.gpinformatics.mercury.entity.DB.Role.*" %>
-<%@ page import="static org.broadinstitute.gpinformatics.mercury.entity.DB.roles" %>
-<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.products.ProductActionBean" %>
 
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.products.ProductActionBean"/>

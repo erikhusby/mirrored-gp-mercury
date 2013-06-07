@@ -5,7 +5,7 @@ import net.sourceforge.stripes.validation.Validate;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean;
-import org.broadinstitute.gpinformatics.mercury.entity.DB;
+import org.broadinstitute.gpinformatics.infrastructure.presentation.Role;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
@@ -130,8 +130,8 @@ public class SecurityActionBean extends CoreActionBean {
 
     public enum UserRole {
         // Order of roles is important, if user is both PDM and PM we want to go to PDM's page.
-        PDM("/orders/order.action?list", DB.Role.PDM),
-        PM(ResearchProjectActionBean.PROJECT_LIST_PAGE, DB.Role.PM),
+        PDM("/orders/order.action?list", Role.PDM),
+        PM(ResearchProjectActionBean.PROJECT_LIST_PAGE, Role.PM),
         OTHER("/index.jsp", null);
 
         private static final String INDEX = "/index.jsp";
@@ -147,9 +147,9 @@ public class SecurityActionBean extends CoreActionBean {
         }
 
         public final String landingPage;
-        public final DB.Role role;
+        public final Role role;
 
-        private UserRole(String landingPage, DB.Role role) {
+        private UserRole(String landingPage, Role role) {
             this.landingPage = landingPage;
             this.role = role;
         }

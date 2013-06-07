@@ -7,7 +7,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
-import org.broadinstitute.gpinformatics.mercury.entity.DB;
+import org.broadinstitute.gpinformatics.infrastructure.presentation.Role;
 
 import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
@@ -63,7 +63,7 @@ public class UserBean implements Serializable {
      * @return true if user has this role
      */
     public boolean isUserInRole(String roleName) {
-        for (DB.Role role : roles) {
+        for (Role role : roles) {
             if (role.name.equals(roleName)) {
                 return true;
             }
@@ -78,7 +78,7 @@ public class UserBean implements Serializable {
                 "You do not have an account on the {0} server, which is needed to use this application. "
                 + "Please contact {3} to fix this problem.");
 
-        /** The CSS class used to display the status test. */
+        /** The CSS class used to display the status text. */
         private final String cssClass;
         
         /** A short message used to show the status of this server in a tooltip. */
@@ -95,11 +95,12 @@ public class UserBean implements Serializable {
             return MessageFormat.format(messageFormat, serviceName, host, username, SUPPORT_EMAIL);
         }
 
-        private ServerStatus(String cssClass, String statusFormat) {
+        ServerStatus(String cssClass, String statusFormat) {
             this(cssClass, statusFormat, statusFormat);
         }
 
-        private ServerStatus(String cssClass, String statusFormat, String messageFormat) {
+
+        ServerStatus(String cssClass, String statusFormat, String messageFormat) {
             this.cssClass = cssClass;
             this.statusFormat = statusFormat;
             this.messageFormat = messageFormat;
@@ -115,11 +116,11 @@ public class UserBean implements Serializable {
 
     private String jiraUsername;
 
-    private final EnumSet<DB.Role> roles = EnumSet.noneOf(DB.Role.class);
+    private final EnumSet<Role> roles = EnumSet.noneOf(Role.class);
 
     private String loginUserName;
 
-    public Collection<DB.Role> getRoles() {
+    public Collection<Role> getRoles() {
         return ImmutableSet.copyOf(roles);
     }
 
@@ -177,7 +178,7 @@ public class UserBean implements Serializable {
     public void loginTestUser() {
         loginUserName = "QADudeTest";
         updateBspStatus();
-        roles.add(DB.Role.Developer);
+        roles.add(Role.Developer);
     }
 
     /**
@@ -190,7 +191,7 @@ public class UserBean implements Serializable {
         loginUserName = request.getUserPrincipal().getName();
         updateBspStatus();
         updateJiraStatus();
-        for (DB.Role role : DB.Role.values()) {
+        for (Role role : Role.values()) {
             if (request.isUserInRole(role.name) || request.isUserInRole(CRSP_ROLE_PREFIX + role.name)) {
                 roles.add(role);
             }
@@ -262,11 +263,11 @@ public class UserBean implements Serializable {
     }
 
     public boolean isPDMUser() {
-        return roles.contains(DB.Role.PDM);
+        return roles.contains(Role.PDM);
     }
 
     public boolean isDeveloperUser() {
-        return roles.contains(DB.Role.Developer);
+        return roles.contains(Role.Developer);
     }
 
     public String getRolesString() {
@@ -274,34 +275,6 @@ public class UserBean implements Serializable {
             return "No Roles";
         }
         return "Roles: " + StringUtils.join(roles, ", ");
-    }
-
-    public String getDeveloperRole() {
-        return DB.Role.Developer.name;
-    }
-
-    public String getProjectManagerRole() {
-        return DB.Role.PM.name;
-    }
-
-    public String getBillingManagerRole() {
-        return DB.Role.BillingManager.name;
-    }
-
-    public String getProductManagerRole() {
-        return DB.Role.PDM.name;
-    }
-
-    public String getLabUserRole() {
-        return DB.Role.LabUser.name;
-    }
-
-    public String getLabManagerRole() {
-        return DB.Role.LabManager.name;
-    }
-
-    public String getAllRole() {
-        return DB.Role.All.name;
     }
 }
 
