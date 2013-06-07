@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
@@ -9,8 +10,11 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
 import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
+import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
@@ -42,27 +46,29 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * Class to describe Athena's view of a Sample. A Sample is identified by a sample Id and
  * a billableItem and an optionally comment which may be in most cases empty but on
  * occasion can actually have a value to describe "exceptions" that occur for a particular sample.
- *
  */
 @Entity
 @Audited
-@Table(name= "PRODUCT_ORDER_SAMPLE", schema = "athena")
+@Table(name = "PRODUCT_ORDER_SAMPLE", schema = "athena")
 public class ProductOrderSample extends AbstractSample implements Serializable {
     private static final long serialVersionUID = 8645451167948826402L;
 
-    /** Count shown when no billing has occurred. */
+    /**
+     * Count shown when no billing has occurred.
+     */
     public static final double NO_BILL_COUNT = 0;
     public static final String TUMOR_IND = BSPSampleDTO.TUMOR_IND;
     public static final String NORMAL_IND = BSPSampleDTO.NORMAL_IND;
     public static final String FEMALE_IND = BSPSampleDTO.FEMALE_IND;
     public static final String MALE_IND = BSPSampleDTO.MALE_IND;
     public static final String ACTIVE_IND = BSPSampleDTO.ACTIVE_IND;
- 
+
     @Id
     @SequenceGenerator(name = "SEQ_ORDER_SAMPLE", schema = "athena", sequenceName = "SEQ_ORDER_SAMPLE")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_ORDER_SAMPLE")
@@ -79,10 +85,11 @@ public class ProductOrderSample extends AbstractSample implements Serializable {
     @JoinColumn(insertable = false, updatable = false)
     private ProductOrder productOrder;
 
-    @OneToMany(mappedBy = "productOrderSample", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
+    @OneToMany(mappedBy = "productOrderSample", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
+            orphanRemoval = true)
     private final Set<LedgerEntry> ledgerItems = new HashSet<LedgerEntry>();
 
-    @Column(name="SAMPLE_POSITION", updatable = false, insertable = false, nullable=false)
+    @Column(name = "SAMPLE_POSITION", updatable = false, insertable = false, nullable = false)
     private Integer samplePosition;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
@@ -99,6 +106,7 @@ public class ProductOrderSample extends AbstractSample implements Serializable {
 
     /**
      * Convert a list of ProductOrderSamples into a list of sample names.
+     *
      * @param samples the samples to convert.
      *
      * @return the names of the samples, in the same order as the input.
@@ -270,7 +278,7 @@ public class ProductOrderSample extends AbstractSample implements Serializable {
         StringBuilder builder = new StringBuilder();
 
         if (getLedgerItems() != null) {
-            for (LedgerEntry ledgerEntry : getLedgerItems() ) {
+            for (LedgerEntry ledgerEntry : getLedgerItems()) {
                 if ((ledgerEntry.getBillingMessage() != null) && !ledgerEntry.isBilled()) {
                     builder.append(ledgerEntry.getBillingMessage()).append("\n");
                 }
@@ -284,12 +292,14 @@ public class ProductOrderSample extends AbstractSample implements Serializable {
      * Given a sample, compute its billable price items based on its material type.  We assume that all add-ons
      * in the sample's order's product that can accept the sample's material type are required, in addition to the
      * product's primary price item.
+     *
      * @return the list of required add-ons.
      */
     List<PriceItem> getBillablePriceItems() {
         List<PriceItem> items = new ArrayList<PriceItem>();
         items.add(getProductOrder().getProduct().getPrimaryPriceItem());
-        org.broadinstitute.bsp.client.sample.MaterialType materialTypeObject = getBspSampleDTO().getMaterialTypeObject();
+        org.broadinstitute.bsp.client.sample.MaterialType materialTypeObject =
+                getBspSampleDTO().getMaterialTypeObject();
         Set<Product> productAddOns = productOrder.getProduct().getAddOns();
         if (materialTypeObject != null && !productAddOns.isEmpty()) {
             MaterialType sampleMaterialType =
@@ -311,8 +321,9 @@ public class ProductOrderSample extends AbstractSample implements Serializable {
     /**
      * Automatically generate the billing ledger items for this sample.  Once this is done, its price items will be
      * correctly billed when the next billing session is created.
+     *
      * @param completedDate completion date for billing
-     * @param quantity quantity for billing
+     * @param quantity      quantity for billing
      */
     public void autoBillSample(Date completedDate, double quantity) {
         List<PriceItem> itemsToBill = getBillablePriceItems();
@@ -420,17 +431,49 @@ public class ProductOrderSample extends AbstractSample implements Serializable {
         return false;
     }
 
+    /**
+     * @return A string with the full details for each {@link RiskItem} for the sample.
+     */
     public String getRiskString() {
         StringBuilder riskStringBuilder = new StringBuilder();
 
         if (isOnRisk()) {
             for (RiskItem riskItem : riskItems) {
-                riskStringBuilder.append(riskItem.getInformation());
+                // We need to remove newlines and carriage returns as ETL will not accept the values.
+                riskStringBuilder.append(riskItem.getInformation().replaceAll("\r?\n", " "));
+                riskStringBuilder.append(" AND ");
             }
         }
 
-        return riskStringBuilder.toString();
+        return formatAndString(riskStringBuilder.toString());
     }
+
+    /**
+     * @return A string of each {@link RiskItem}s {@link RiskCriterion} type for the sample.
+     */
+    public String getRiskTypeString() {
+        StringBuilder riskTypeStringBuilder = new StringBuilder();
+
+        if (isOnRisk()) {
+            for (RiskItem riskItem : riskItems) {
+                riskTypeStringBuilder.append(riskItem.getRiskCriterion().getType().getLabel());
+                riskTypeStringBuilder.append(" AND ");
+            }
+        }
+
+        return formatAndString(riskTypeStringBuilder.toString());
+    }
+
+
+    public String formatAndString(String criteriaString) {
+        if (StringUtils.isBlank(criteriaString)) {
+            return "";
+        }
+
+        // If the string had a value then we need to strip the trailing ' AND '.
+        return criteriaString.substring(0, criteriaString.lastIndexOf(" AND "));
+    }
+
 
     @SuppressWarnings("UnusedDeclaration")
     public Collection<RiskItem> getRiskItems() {
