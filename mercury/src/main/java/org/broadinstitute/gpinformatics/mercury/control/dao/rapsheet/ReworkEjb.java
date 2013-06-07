@@ -19,7 +19,8 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
@@ -47,6 +48,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.SampleType.WITH_PDO;
@@ -66,10 +68,13 @@ import static org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.S
 public class ReworkEjb {
     private final static Log logger = LogFactory.getLog(ReworkEjb.class);
 
+    @Inject
     MercurySampleDao mercurySampleDao;
 
+    @Inject
     ReworkEntryDao reworkEntryDao;
 
+    @Inject
     LabVesselDao labVesselDao;
 
     @Inject
@@ -78,17 +83,8 @@ public class ReworkEjb {
     @Inject
     private AthenaClientService athenaClientService;
 
-    public ReworkEjb() {
-    }
-
     @Inject
-    public ReworkEjb(MercurySampleDao mercurySampleDao,
-                     ReworkEntryDao reworkEntryDao,
-                     LabVesselDao labVesselDao) {
-        this.mercurySampleDao = mercurySampleDao;
-        this.reworkEntryDao = reworkEntryDao;
-        this.labVesselDao = labVesselDao;
-    }
+    private BSPSampleDataFetcher bspSampleDataFetcher;
 
     /**
      * Create rework for all samples in a LabVessel;
@@ -181,18 +177,11 @@ public class ReworkEjb {
         Collection<ReworkCandidate> reworkCandidates = new ArrayList<>();
 
         List<LabVessel> labVessels = new ArrayList<>();
-        if (BSPUtil.isInBspFormat(query)) {
-            labVessels.addAll(labVesselDao.findBySampleKey(query));
-        } else {
-            LabVessel labVessel = labVesselDao.findByIdentifier(query);
-            if (labVessel != null) {
-                labVessels.add(labVessel);
-            }
+        LabVessel labVessel = labVesselDao.findByIdentifier(query);
+        if (labVessel != null) {
+            labVessels.add(labVessel);
         }
-
-        // TODO: handle the case where LIMS doesn't know the tube, but we can still look it up in BSP
-//        List<ProductOrderSample> samples =
-//                productOrderSampleDao.findMapBySamples(Collections.singletonList(query)).get(query);
+        labVessels.addAll(labVesselDao.findBySampleKey(query));
 
         for (LabVessel vessel : labVessels) {
             Set<SampleInstance> sampleInstances = vessel.getSampleInstances(WITH_PDO, null);
@@ -226,6 +215,24 @@ public class ReworkEjb {
                         reworkCandidates.add(candidate);
                     }
                 }
+            }
+        }
+
+        if (reworkCandidates.isEmpty()) {
+            List<ProductOrderSample> samples =
+                    productOrderSampleDao.findMapBySamples(Collections.singletonList(query)).get(query);
+
+            Collection<String> sampleIDs = new ArrayList<>();
+            for (ProductOrderSample sample : samples) {
+                sampleIDs.add(sample.getSampleName());
+            }
+            Map<String, BSPSampleDTO> bspResult = bspSampleDataFetcher.fetchSamplesFromBSP(sampleIDs);
+            bspSampleDataFetcher.fetchSamplePlastic(bspResult.values());
+            for (ProductOrderSample sample : samples) {
+                String sampleKey = sample.getSampleName();
+                String tubeBarcode = bspResult.get(sampleKey).getBarcodeForLabVessel();
+                reworkCandidates.add(new ReworkCandidate(sampleKey, sample.getProductOrder().getBusinessKey(),
+                        tubeBarcode, sample.getProductOrder(), null));
             }
         }
 
@@ -266,8 +273,7 @@ public class ReworkEjb {
 
     /**
      * addAndValidateRework will, like
-     * {@link #addRework(String, org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry.ReworkReason,
-     * org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType, String, String)}, create a
+     * {@link #addRework(String, org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry.ReworkReason, org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType, String, String)}, create a
      * {@link ReworkEntry} for all samples in a vessel.
      * <p/>
      * In addition to creating a ReworkEntry, this method will execute some validation rules against the rework entry
