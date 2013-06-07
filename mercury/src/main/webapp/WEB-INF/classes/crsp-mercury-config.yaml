@@ -202,14 +202,6 @@ datawhEtl:
         datawhEtlDirRoot: /seq/lims/datawh/prod
 
 
-tableau:
-
-    PROD:
-        tableauServer: https://tableau.broadinstitute.org
-        reportUrls:
-            - {name: PASS, url: "/views/PMBPASSSampleDashboard/PMBridgeSamplesDashboard?Research%20Project="}
-
-
 hipchat:
     DEV:
         baseUrl: https://www.hipchat.com/v1/rooms/message
@@ -239,7 +231,6 @@ mercury:
       deckMsgs: DEV
       datawhEtl: DEV
       bettaLimsServer: DEV
-      tableau:  PROD
       hipchat: DEV
 
 
@@ -255,7 +246,6 @@ mercury:
       deckMsgs: DEV
       datawhEtl: DEV
       bettaLimsServer: DEV
-      tableau:  PROD
       hipchat: DEV
 
 
@@ -271,7 +261,6 @@ mercury:
       deckMsgs: DEV
       datawhEtl: DEV
       bettaLimsServer: TEST
-      tableau:  PROD
       hipchat: DEV
 
 
@@ -287,7 +276,6 @@ mercury:
       deckMsgs: QA
       datawhEtl: QA
       bettaLimsServer: QA
-      tableau:  PROD
       hipchat: DEV
 
 
@@ -303,7 +291,6 @@ mercury:
       deckMsgs: QA
       datawhEtl: QA
       bettaLimsServer: QA
-      tableau:  PROD
       hipchat: DEV
 
 
@@ -319,5 +306,4 @@ mercury:
       deckMsgs: PROD
       datawhEtl: PROD
       bettaLimsServer: PROD
-      tableau:  PROD
       hipchat: PROD

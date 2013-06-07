@@ -1,18 +1,28 @@
 package org.broadinstitute.gpinformatics.athena.presentation.projects;
 
-import net.sourceforge.stripes.action.*;
+import net.sourceforge.stripes.action.After;
+import net.sourceforge.stripes.action.Before;
+import net.sourceforge.stripes.action.DefaultHandler;
+import net.sourceforge.stripes.action.ForwardResolution;
+import net.sourceforge.stripes.action.HandlesEvent;
+import net.sourceforge.stripes.action.RedirectResolution;
+import net.sourceforge.stripes.action.Resolution;
+import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
-import net.sourceforge.stripes.validation.*;
+import net.sourceforge.stripes.validation.SimpleError;
+import net.sourceforge.stripes.validation.Validate;
+import net.sourceforge.stripes.validation.ValidateNestedProperties;
+import net.sourceforge.stripes.validation.ValidationErrors;
+import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
-import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.DisplayableItem;
 import org.broadinstitute.gpinformatics.athena.presentation.converter.IrbConverter;
-import org.broadinstitute.gpinformatics.athena.presentation.links.TableauLink;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.CohortTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.FundingTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProjectTokenInput;
@@ -28,7 +38,12 @@ import org.json.JSONException;
 
 import javax.inject.Inject;
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This class is for research projects action bean / web page.
@@ -50,9 +65,6 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     // Reference sequence that will be used for Exome projects.
     private static final String DEFAULT_REFERENCE_SEQUENCE = "Homo_sapiens_assembly19|1";
-
-    @Inject
-    private TableauLink tableauLink;
 
     @Inject
     private MercuryClientService mercuryClientService;
@@ -465,11 +477,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
         this.q = q;
     }
 
-    public String getTableauLink() {
-        return tableauLink.tableauReportUrl("PASS", editResearchProject.getTitle());
-    }
-
-   /**
+    /**
      * @return true if Save is a valid operation.
      */
     public boolean getCanSave() {
