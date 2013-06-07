@@ -13,7 +13,6 @@ package org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
@@ -76,9 +75,6 @@ public class ReworkEjb {
 
     @Inject
     LabVesselDao labVesselDao;
-
-    @Inject
-    private ProductOrderSampleDao productOrderSampleDao;
 
     @Inject
     private AthenaClientService athenaClientService;
@@ -194,8 +190,10 @@ public class ReworkEjb {
                 String sampleKey = sampleInstance.getStartingSample().getSampleKey();
                 String productOrderKey = sampleInstance.getProductOrderKey();
 
+                // TODO: fetch for all vessels in a single call and make looping over labVessels a @DaoFree method
                 List<ProductOrderSample> productOrderSamples =
-                        productOrderSampleDao.findMapBySamples(Collections.singletonList(sampleKey)).get(sampleKey);
+                        athenaClientService.findMapSampleNameToPoSample(Collections.singletonList(sampleKey))
+                                .get(sampleKey);
 
                 // make sure we have a matching product order sample
                 for (ProductOrderSample sample : productOrderSamples) {
@@ -219,8 +217,8 @@ public class ReworkEjb {
         }
 
         if (reworkCandidates.isEmpty()) {
-            List<ProductOrderSample> samples =
-                    productOrderSampleDao.findMapBySamples(Collections.singletonList(query)).get(query);
+            List<ProductOrderSample> samples = athenaClientService.findMapSampleNameToPoSample(
+                    Collections.singletonList(query)).get(query);
 
             Collection<String> sampleIDs = new ArrayList<>();
             for (ProductOrderSample sample : samples) {
