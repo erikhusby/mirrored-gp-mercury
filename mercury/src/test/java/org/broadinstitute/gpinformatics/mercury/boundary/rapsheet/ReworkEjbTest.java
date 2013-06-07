@@ -486,7 +486,7 @@ public class ReworkEjbTest extends Arquillian {
     }
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
-    public void testHappyPathFindCandidatesWithAncestors() throws Exception {
+    public void testSingleSampleTwoPDOs() throws Exception {
 
         Collection<ReworkEjb.ReworkCandidate> candidates = reworkEjb.findReworkCandidates(genomicSample3);
         Assert.assertEquals(candidates.size(), 2);
@@ -510,8 +510,51 @@ public class ReworkEjbTest extends Arquillian {
         Assert.assertTrue(expectedPDOs.isEmpty());
     }
 
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    public void testHappyPathFindCandidatesWithAncestors() throws Exception {
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
+        createInitialTubes(bucketReadySamples1, String.valueOf((new Date()).getTime())+"tst3");
+
+        List<ReworkEjb.ReworkCandidate> candidates = new ArrayList<>();
+
+        BettaLimsMessageTestFactory bettaLimsMessageFactory = new BettaLimsMessageTestFactory(true);
+
+        for (Map.Entry<String, TwoDBarcodedTube> currEntry : mapBarcodeToTube.entrySet()) {
+
+            bucketDao.findByName(bucketName);
+            BucketEntry newEntry = pBucket.addEntry(exExProductOrder1.getBusinessKey(),
+                    twoDBarcodedTubeDAO.findByBarcode(currEntry.getKey()));
+            newEntry.setStatus(BucketEntry.Status.Archived);
+            bucketDao.persist(pBucket);
+        }
+
+        HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = BettalimsMessageResourceTest
+                .sendMessagesUptoCatch("SGM_RWIT4"+currDate.getTime(), mapBarcodeToTube, bettaLimsMessageFactory,
+                        WorkflowName.EXOME_EXPRESS,
+                        bettalimsMessageResource,
+                        indexedPlateFactory, staticPlateDAO, reagentDesignDao, twoDBarcodedTubeDAO,
+                        appConfig.getUrl(), 2);
+
+        for (String barcode : mapBarcodeToTube.keySet()) {
+
+            bucketDao.findByName(bucketName);
+            BucketEntry newEntry = pBucket.addEntry(exExProductOrder1.getBusinessKey(),
+                    twoDBarcodedTubeDAO.findByBarcode(barcode));
+            newEntry.setStatus(BucketEntry.Status.Archived);
+            bucketDao.persist(pBucket);
+
+            candidates.addAll(reworkEjb.findReworkCandidates(barcode));
+        }
+
+        Assert.assertEquals(candidates.size(), mapBarcodeToTube.size());
+
+        for(ReworkEjb.ReworkCandidate candidate:candidates) {
+            Assert.assertTrue(mapBarcodeToTube.keySet().contains(candidate.getTubeBarcode()));
+        }
+
+    }
+
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testNonExomePathFindCandidates() throws Exception {
 
         createInitialTubes(bucketSamples1, String.valueOf((new Date()).getTime())+"tst4");
@@ -523,7 +566,7 @@ public class ReworkEjbTest extends Arquillian {
             //TODO SGM:  This way of forcing finding a PDO for non Exome Express seems sketchy since non EXEX
             // product orders cannot enter a bucket to get a bucket
             bucketDao.findByName(bucketName);
-            BucketEntry newEntry = pBucket.addEntry(exExProductOrder1.getBusinessKey(),
+            BucketEntry newEntry = pBucket.addEntry(nonExExProductOrder.getBusinessKey(),
                     twoDBarcodedTubeDAO.findByBarcode(barcode));
             newEntry.setStatus(BucketEntry.Status.Archived);
             bucketDao.persist(pBucket);
@@ -540,7 +583,7 @@ public class ReworkEjbTest extends Arquillian {
 
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testNonExomePathFindCandidatesWithAncestors() throws Exception {
 
         createInitialTubes(bucketSamples1, String.valueOf((new Date()).getTime())+"tst5");
@@ -552,7 +595,7 @@ public class ReworkEjbTest extends Arquillian {
         for (Map.Entry<String, TwoDBarcodedTube> currEntry : mapBarcodeToTube.entrySet()) {
 
             bucketDao.findByName(bucketName);
-            BucketEntry newEntry = pBucket.addEntry(exExProductOrder2.getBusinessKey(),
+            BucketEntry newEntry = pBucket.addEntry(nonExExProductOrder.getBusinessKey(),
                     twoDBarcodedTubeDAO.findByBarcode(currEntry.getKey()));
             newEntry.setStatus(BucketEntry.Status.Archived);
             bucketDao.persist(pBucket);
@@ -570,7 +613,7 @@ public class ReworkEjbTest extends Arquillian {
             //TODO SGM:  This way of forcing finding a PDO for non Exome Express seems sketchy since non EXEX
             // product orders cannot enter a bucket to get a bucket
             bucketDao.findByName(bucketName);
-            BucketEntry newEntry = pBucket.addEntry(exExProductOrder1.getBusinessKey(),
+            BucketEntry newEntry = pBucket.addEntry(nonExExProductOrder.getBusinessKey(),
                     twoDBarcodedTubeDAO.findByBarcode(barcode));
             newEntry.setStatus(BucketEntry.Status.Archived);
             bucketDao.persist(pBucket);
