@@ -24,7 +24,6 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
-import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -84,12 +83,12 @@ public class AddEntriesToPicoBucketTest extends Arquillian {
                 for (ProductOrderSample sample : order.getSamples()) {
 
                     MercurySample mercurySample = new MercurySample(sample.getSampleName());
-                    List<String> plasticBarcodes = sample.getBspSampleDTO().getPlasticBarcodes();
-                    if (plasticBarcodes != null && plasticBarcodes.size() > 0) {
+                    String tubeBarcode = sample.getBspSampleDTO().getBarcodeForLabVessel();
+                    if (tubeBarcode != null) {
                         //lookup the vessel... if it doesn't exist create one
-                        LabVessel vessel = labVesselDao.findByIdentifier(plasticBarcodes.get(0));
+                        LabVessel vessel = labVesselDao.findByIdentifier(tubeBarcode);
                         if (vessel == null) {
-                            vessel = new TwoDBarcodedTube(plasticBarcodes.get(0));
+                            vessel = new TwoDBarcodedTube(tubeBarcode);
                         }
                         vessel.addSample(mercurySample);
                         // if (workingBucketIdentifier.getEntryMaterialType().getName().equals(materialType)) {

@@ -11,7 +11,6 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -177,14 +176,8 @@ public class MercuryClientEjb {
         for (String sampleName : samplesWithoutVessel) {
             BSPSampleDTO bspDto = bspDtoMap.get(sampleName);
             if (bspDto != null && bspDto.isSampleReceived()) {
-                // Prefers the manufacturer's barcode i.e. not the SM-id.
-                String barcode = null;
-                for (String bspBarcode : bspDto.getPlasticBarcodes()) {
-                    if (barcode == null || !BSPUtil.isInBspFormat(sampleName)) {
-                        barcode = bspBarcode;
-                    }
-                }
-                vessels.addAll(labVesselFactory.buildInitialLabVessels(sampleName, barcode, username, new Date()));
+                vessels.addAll(labVesselFactory
+                        .buildInitialLabVessels(sampleName, bspDto.getBarcodeForLabVessel(), username, new Date()));
             }
         }
         return vessels;

@@ -288,4 +288,40 @@ public class BSPSampleDTO {
         }
         plasticBarcodes.add(barcode);
     }
+
+    /**
+     * Finds the most appropriate label/barcode for a Mercury LabVessel. BSPSampleDTO has a notion of potentially having
+     * more than one "plastic barcode". Not all receptacles in BSP have a manufacturer barcode, in which case the
+     * barcode on the label (which resolves to the sample ID) is the best we can do. This utility looks through all of
+     * the candidate barcodes and chooses the "best" fit for a Mercury LabVessel, preferring something that does not
+     * look like a BSP sample ID.
+     *
+     * @return the appropriate barcode for a Mercury LabVessel
+     */
+    public String getBarcodeForLabVessel() {
+        String manufacturerBarcode = null;
+        String bspLabelBarcode = null;
+
+        List<String> barcodes = getPlasticBarcodes();
+        if (barcodes != null) {
+            for (String barcode : barcodes) {
+
+                // plasticBarcodes shouldn't contain nulls, but the code for that seems to be in flux at the moment -BPR
+                if (barcode != null) {
+                    if (BSPUtil.isInBspFormat(barcode)) {
+                        bspLabelBarcode = barcode;
+                    } else {
+                        manufacturerBarcode = barcode;
+                    }
+                }
+            }
+        }
+
+        // Prefers the manufacturer's barcode i.e. not the SM-id.
+        if (manufacturerBarcode != null) {
+            return manufacturerBarcode;
+        } else {
+            return bspLabelBarcode;
+        }
+    }
 }
