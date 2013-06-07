@@ -882,6 +882,74 @@ public class ReworkEjbTest extends Arquillian {
         validateBarcodeExistence(hybridSelectionJaxbBuilder, entries);
     }
 
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    public void testFindCandidatesMultiplePdosNoBuckets() throws Exception {
+
+        createInitialTubes(bucketReadySamples1, String.valueOf((new Date()).getTime())+"tst2");
+
+        List<ReworkEjb.ReworkCandidate> candiates = new ArrayList<>();
+
+        ProductOrder duplicatePO =
+                new ProductOrder(bspUserList.getByUsername("scottmat").getUserId(),
+                        "Rework Integration TestOrder DuplicatePDORework" + currDate.getTime(),
+                        bucketReadySamples1, "GSP-123", exExProduct, researchProject);
+        duplicatePO.setProduct(exExProduct);
+        duplicatePO.prepareToSave(bspUserList.getByUsername("scottmat"));
+        String dupePdo1JiraKey = "PDO-SGM-RWINT_Dupe_tst" + currDate.getTime() + 1;
+        duplicatePO.setJiraTicketKey(dupePdo1JiraKey);
+        productOrderDao.persist(duplicatePO);
+
+        for (Map.Entry<String, TwoDBarcodedTube> tubes : mapBarcodeToTube.entrySet()) {
+
+            candiates.addAll(reworkEjb.findReworkCandidates(tubes.getValue().getSampleNames().iterator().next()));
+        }
+
+        Assert.assertEquals(candiates.size(), mapBarcodeToTube.size() * 2);
+
+        for(ReworkEjb.ReworkCandidate candidate:candiates) {
+            Assert.assertTrue(mapBarcodeToTube.keySet().contains(candidate.getTubeBarcode()));
+        }
+
+    }
+
+
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    public void testFindCandidatesMultiplePdosWithBuckets() throws Exception {
+
+        createInitialTubes(bucketReadySamples1, String.valueOf((new Date()).getTime())+"tst2");
+
+        List<ReworkEjb.ReworkCandidate> candiates = new ArrayList<>();
+
+        ProductOrder duplicatePO =
+                new ProductOrder(bspUserList.getByUsername("scottmat").getUserId(),
+                        "Rework Integration TestOrder DuplicatePDORework" + currDate.getTime(),
+                        bucketReadySamples1, "GSP-123", exExProduct, researchProject);
+        duplicatePO.setProduct(exExProduct);
+        duplicatePO.prepareToSave(bspUserList.getByUsername("scottmat"));
+        String dupePdo1JiraKey = "PDO-SGM-RWINT_Dupe_tst" + currDate.getTime() + 1;
+        duplicatePO.setJiraTicketKey(dupePdo1JiraKey);
+        productOrderDao.persist(duplicatePO);
+
+        for (Map.Entry<String, TwoDBarcodedTube> tubes : mapBarcodeToTube.entrySet()) {
+
+            bucketDao.findByName(bucketName);
+            BucketEntry newEntry = pBucket.addEntry(duplicatePO.getBusinessKey(),
+                    twoDBarcodedTubeDAO.findByBarcode(tubes.getKey()));
+            newEntry.setStatus(BucketEntry.Status.Archived);
+            bucketDao.persist(pBucket);
+
+            candiates.addAll(reworkEjb.findReworkCandidates(tubes.getValue().getSampleNames().iterator().next()));
+        }
+
+        Assert.assertEquals(candiates.size(), mapBarcodeToTube.size());
+
+        for(ReworkEjb.ReworkCandidate candidate:candiates) {
+            Assert.assertTrue(mapBarcodeToTube.keySet().contains(candidate.getTubeBarcode()));
+        }
+
+    }
+
+
 
     private void createInitialTubes(@Nonnull List<ProductOrderSample> pos,
                                     @Nonnull String barcodePrefix) {
