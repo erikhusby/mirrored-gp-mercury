@@ -1,5 +1,6 @@
 <%@ include file="/resources/layout/taglibs.jsp" %>
-<%@ page import="org.broadinstitute.gpinformatics.mercury.entity.DB" %>
+<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.presentation.Role.*" %>
+<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.presentation.Role.roles" %>
 
 <stripes:layout-render name="/layout.jsp" pageTitle="Mercury">
     <stripes:layout-component name="content">
@@ -29,7 +30,7 @@
 
                     <br/><br/><br/>
 
-                    <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name}%>">
+                    <security:authorizeBlock roles="<%= roles(Developer)%>">
                         <div style="border: 1px dotted #FF0000; border-radius: 10px;-moz-border-radius: 10px; -webkit-border-radius: 10px; padding: 10px;">
                             <h3>Additional information from the stack trace:</h3>
 
@@ -52,6 +53,3 @@
         </div>
     </stripes:layout-component>
 </stripes:layout-render>
-
-
-

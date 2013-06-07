@@ -1,4 +1,6 @@
-<%@ page import="org.broadinstitute.gpinformatics.mercury.entity.DB" %>
+<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.presentation.Role.*" %>
+<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.presentation.Role.roles" %>
+<%@ page import="org.broadinstitute.gpinformatics.infrastructure.presentation.Role" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -364,7 +366,7 @@
                     </div>
                 </div>
 
-                <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name}%>">
+                <security:authorizeBlock roles="<%= Role.roles(Developer)%>">
 
                     <div class="control-group">
                         <stripes:label for="useAutomatedBilling" class="control-label">

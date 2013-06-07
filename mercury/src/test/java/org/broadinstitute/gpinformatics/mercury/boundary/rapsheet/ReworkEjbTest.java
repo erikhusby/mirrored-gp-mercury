@@ -11,9 +11,9 @@ import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -166,7 +166,7 @@ public class ReworkEjbTest extends Arquillian {
     AppConfig appConfig;
 
     @Inject
-    private BSPSampleSearchServiceStub bspSampleSearchServiceStub;
+    private BSPSampleSearchService bspSampleSearchService;
 
     @Inject
     private BSPSampleDataFetcher bspSampleDataFetcher;
@@ -214,6 +214,8 @@ public class ReworkEjbTest extends Arquillian {
         final String SM_SGM_Test_Somatic_2_CONTAINER_ID = "CO-" + testPrefix + currDate.getTime() + "2854";
         final String SM_SGM_Test_Somatic_3_CONTAINER_ID = "CO-" + testPrefix + currDate.getTime() + "2856";
 
+        // The injected BSPSampleSearchService must be a stub because it's requested when building the Mercury WAR.
+        BSPSampleSearchServiceStub bspSampleSearchServiceStub = (BSPSampleSearchServiceStub) bspSampleSearchService;
 
         bspSampleSearchServiceStub.addToMap(somaticSample2, new HashMap<BSPSampleSearchColumn, String>() {{
             put(BSPSampleSearchColumn.PARTICIPANT_ID, SM_SGM_Test_Somatic_2_PATIENT_ID);

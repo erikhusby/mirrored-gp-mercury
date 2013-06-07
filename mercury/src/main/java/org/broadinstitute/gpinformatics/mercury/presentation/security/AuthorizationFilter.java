@@ -23,8 +23,6 @@ import java.io.IOException;
 public class AuthorizationFilter implements Filter {
     private static final Log log = LogFactory.getLog(AuthorizationFilter.class);
 
-    private FilterConfig filterConfig;
-
     private static ServletContext servletContext;
 
     public static final String TARGET_PAGE_ATTRIBUTE = "targeted_page";
@@ -38,7 +36,6 @@ public class AuthorizationFilter implements Filter {
      */
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
-        this.filterConfig = filterConfig;
         servletContext = filterConfig.getServletContext();
     }
 
@@ -47,20 +44,9 @@ public class AuthorizationFilter implements Filter {
     }
 
     /**
-     * This method contains the logic for authorizing a given page.
-     * <p/>
-     * The logic within this method will determine if
-     * <ul>
-     * <li>A user is currently logged in</li>
-     * <li>If the page they are trying to access needs authorization</li>
-     * <li>If the user is authorized to gain access to the page</li>
-     * </ul>
-     * <p/>
-     * A failure on any of these items will result in the user being redirected to an appropriate page.
+     * Check to see if a user is already authenticated. If not, we redirect to the login page preserving the
+     * current page so we can navigate to it once the user has been authenticated.
      *
-     * @param servletRequest
-     * @param servletResponse
-     * @param filterChain
      * @throws IOException
      * @throws ServletException
      */
@@ -73,40 +59,22 @@ public class AuthorizationFilter implements Filter {
         String pageUri = request.getServletPath();
 
         if (!excludeFromFilter(pageUri)) {
-            if (log.isDebugEnabled()) {
-                log.debug("Checking authentication for: " + pageUri);
-            }
+            log.debug("Checking authentication for: " + pageUri);
 
             if (request.getRemoteUser() == null) {
-                if (log.isDebugEnabled()) {
-                    log.debug("User is not authenticated, redirecting to login page");
-                }
+                log.debug("User is not authenticated, redirecting to login page");
 
                 StringBuilder requestedUrl = new StringBuilder(request.getRequestURL());
                 if (request.getQueryString() != null) {
                     requestedUrl.append("?").append(request.getQueryString());
                 }
                 request.getSession().setAttribute(TARGET_PAGE_ATTRIBUTE, requestedUrl.toString());
-                redirectTo(request, servletResponse, SecurityActionBean.LOGIN_PAGE);
+                servletContext.getRequestDispatcher(SecurityActionBean.LOGIN_PAGE).forward(request, servletResponse);
                 return;
             }
         }
 
         filterChain.doFilter(servletRequest, servletResponse);
-    }
-
-    /**
-     * This is a helper method that redirects to a page instead of chaining to the next in the filter.
-     *
-     * @param request
-     * @param response
-     * @param errorPage
-     * @throws IOException
-     * @throws ServletException
-     */
-    private void redirectTo(ServletRequest request, ServletResponse response, String errorPage)
-            throws IOException, ServletException {
-        filterConfig.getServletContext().getRequestDispatcher(errorPage).forward(request, response);
     }
 
     /**
