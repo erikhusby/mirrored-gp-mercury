@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.infrastructure.datawh;
 import org.apache.commons.io.IOUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -11,11 +10,16 @@ import org.testng.annotations.Test;
 import java.io.File;
 import java.io.FileReader;
 import java.io.Reader;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
 import static org.easymock.EasyMock.*;
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 /**
  * dbfree unit test of entity etl.
@@ -29,12 +33,13 @@ public class WorkflowConfigEtlDbFreeTest {
 
     // Reuses the setup and values from WorkflowConfigLookupDbFreeTest
     private WorkflowConfig config = WorkflowConfigLookupDbFreeTest.buildWorkflowConfig();
+    private Collection<WorkflowConfigDenorm> configs = new ArrayList<>();
     private String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
     private final int EXPECTED_RECORD_COUNT = 15;
     private WorkflowConfigEtl tst;
 
     private AuditReaderDao auditReader = createMock(AuditReaderDao.class);
-    private WorkflowLoader loader = createMock(WorkflowLoader.class);
+    private WorkflowConfigLookup loader = createMock(WorkflowConfigLookup.class);
     private Object[] mocks = new Object[]{auditReader, loader};
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
@@ -43,6 +48,9 @@ public class WorkflowConfigEtlDbFreeTest {
         EtlTestUtilities.deleteEtlFiles(datafileDir);
 
         reset(mocks);
+
+        configs.clear();
+        configs.addAll(WorkflowConfigDenorm.parse(config));
 
         tst = new WorkflowConfigEtl(loader);
         tst.setAuditReaderDao(auditReader);
@@ -88,7 +96,7 @@ public class WorkflowConfigEtlDbFreeTest {
     }
 
     public void testIncrementalEtl() throws Exception {
-        expect(loader.load()).andReturn(config);
+        expect(loader.getDenormConfigs()).andReturn(configs);
         replay(mocks);
 
         File workflowDatafile = new File(datafileDir, etlDateStr + "_" + WorkflowConfigEtl.WORKFLOW_BASE_FILENAME + ".dat");

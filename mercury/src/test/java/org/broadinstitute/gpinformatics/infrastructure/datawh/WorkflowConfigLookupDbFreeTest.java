@@ -14,10 +14,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.expect;
@@ -25,6 +22,7 @@ import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.reset;
 import static org.easymock.EasyMock.verify;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotEquals;
 import static org.testng.Assert.assertNull;
 
 /**
@@ -38,17 +36,20 @@ public class WorkflowConfigLookupDbFreeTest {
 
     private WorkflowConfigLookup wfConfigLookup;
     private WorkflowConfig workflowConfig = buildWorkflowConfig();
-
+    private Collection<WorkflowConfigDenorm> workflowConfigDenorms;
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void setUp() {
 
         WorkflowLoader workflowLoader = createMock(WorkflowLoader.class);
-        expect(workflowLoader.load()).andReturn(workflowConfig);
+        expect(workflowLoader.load()).andReturn(workflowConfig).times(2);
         replay(workflowLoader);
 
         wfConfigLookup = new WorkflowConfigLookup();
         wfConfigLookup.setWorkflowLoader(workflowLoader);
+
+        workflowConfigDenorms = wfConfigLookup.getDenormConfigs();
+        assert(workflowConfigDenorms.size() >= 4);
 
         verify(workflowLoader);
         reset(workflowLoader);
@@ -68,25 +69,41 @@ public class WorkflowConfigLookupDbFreeTest {
         labBatch3.setWorkflowName("Workflow 2");
 
         // Does lookups based on product and date.  Checks the denorm cache for hits.
-        assertNull(wfConfigLookup.lookupWorkflowConfig("No such event", labBatch1, new Date(MSEC_DATES[0] + 1000L)));
-        assertNull(wfConfigLookup.lookupWorkflowConfig("GSWash1", labBatch1, new Date(MSEC_DATES[0] - 1000L)));
-        assertEquals((Long)wfConfigLookup.lookupWorkflowConfig("GSWash1", labBatch1, new Date(MSEC_DATES[0] + 1000L)).getWorkflowConfigDenormId(),
-                Long.valueOf(7366990729258982731L));
+        assertNull(wfConfigLookup.lookupWorkflowConfig(
+                "No such event", labBatch1.getWorkflowName(), new Date(MSEC_DATES[0] + 1000L)));
+        assertNull(wfConfigLookup.lookupWorkflowConfig(
+                "GSWash1", labBatch1.getWorkflowName(), new Date(MSEC_DATES[0] - 1000L)));
+
+        long day1 = wfConfigLookup.lookupWorkflowConfig(
+                "GSWash1", labBatch1.getWorkflowName(), new Date(MSEC_DATES[0] + 1000L)).getWorkflowConfigDenormId();
         assertEquals(wfConfigLookup.cacheHit, 0);
-        assertEquals((Long)wfConfigLookup.lookupWorkflowConfig("GSWash1", labBatch1, new Date(MSEC_DATES[1] + 1000L)).getWorkflowConfigDenormId(),
-                Long.valueOf(1625593456990639556L));
+
+        long day2 = wfConfigLookup.lookupWorkflowConfig(
+                "GSWash1", labBatch1.getWorkflowName(), new Date(MSEC_DATES[1] + 1000L)).getWorkflowConfigDenormId();
+        assertNotEquals(day2, day1);
         assertEquals(wfConfigLookup.cacheHit, 0);
-        assertEquals((Long)wfConfigLookup.lookupWorkflowConfig("GSWash1", labBatch1, new Date(MSEC_DATES[2] + 1000L)).getWorkflowConfigDenormId(),
-                Long.valueOf(-2472811271328835449L));
+
+        long day3 = wfConfigLookup.lookupWorkflowConfig(
+                "GSWash1", labBatch1.getWorkflowName(), new Date(MSEC_DATES[2] + 1000L)).getWorkflowConfigDenormId();
+        assertNotEquals(day3, day2);
+        assertNotEquals(day3, day1);
         assertEquals(wfConfigLookup.cacheHit, 0);
-        assertEquals((Long)wfConfigLookup.lookupWorkflowConfig("GSWash1", labBatch2, new Date(MSEC_DATES[2] + 1000L)).getWorkflowConfigDenormId(),
-                Long.valueOf(-2472811271328835449L));
+
+        long day3again = wfConfigLookup.lookupWorkflowConfig(
+                "GSWash1", labBatch2.getWorkflowName(), new Date(MSEC_DATES[2] + 1000L)).getWorkflowConfigDenormId();
+        assertEquals(day3again, day3);
         assertEquals(wfConfigLookup.cacheHit, 1);
-        assertEquals((Long)wfConfigLookup.lookupWorkflowConfig("SageCleanup", labBatch3, new Date(MSEC_DATES[2] + 1000L)).getWorkflowConfigDenormId(),
-                Long.valueOf(-961977840485104866L));
+
+        long w2day3 = wfConfigLookup.lookupWorkflowConfig(
+                "SageCleanup", labBatch3.getWorkflowName(), new Date(MSEC_DATES[2] + 1000L)).getWorkflowConfigDenormId();
+        assertNotEquals(w2day3, day3);
+        assertNotEquals(w2day3, day2);
+        assertNotEquals(w2day3, day1);
         assertEquals(wfConfigLookup.cacheHit, 1);
-        assertEquals((Long)wfConfigLookup.lookupWorkflowConfig("GSWash1", labBatch2, new Date(MSEC_DATES[2] + 1000L)).getWorkflowConfigDenormId(),
-                Long.valueOf(-2472811271328835449L));
+
+        long day3again2 = wfConfigLookup.lookupWorkflowConfig(
+                "GSWash1", labBatch2.getWorkflowName(), new Date(MSEC_DATES[2] + 1000L)).getWorkflowConfigDenormId();
+        assertEquals(day3again2, day3);
         assertEquals(wfConfigLookup.cacheHit, 2);
     }
 
@@ -99,21 +116,21 @@ public class WorkflowConfigLookupDbFreeTest {
 
         WorkflowProcessDef w1 = new WorkflowProcessDef("Process 1");
 
-        // these steps valid only for day 0
+        // these steps valid day 0 onward
         WorkflowProcessDefVersion w1v1 = new WorkflowProcessDefVersion("1.0", new Date(MSEC_DATES[0]));
         w1v1.addStep(new WorkflowStepDef("Step 1").addLabEvent(LabEventType.GS_WASH_1));
         w1v1.addStep(new WorkflowStepDef("Step 2").addLabEvent(LabEventType.GS_WASH_2));
         w1v1.addStep(new WorkflowStepDef("Step 3").addLabEvent(LabEventType.GS_WASH_3));
         w1.addWorkflowProcessDefVersion(w1v1);
 
-        // these steps valid only for day 1
+        // these steps valid day 1 onward
         WorkflowProcessDefVersion w1v2 = new WorkflowProcessDefVersion("2.0", new Date(MSEC_DATES[1]));
         w1v2.addStep(new WorkflowStepDef("Step 1").addLabEvent(LabEventType.GS_WASH_4));
         w1v2.addStep(new WorkflowStepDef("Step 2").addLabEvent(LabEventType.GS_WASH_5));
         w1v2.addStep(new WorkflowStepDef("Step 3").addLabEvent(LabEventType.GS_WASH_6));
         w1.addWorkflowProcessDefVersion(w1v2);
 
-        // these steps valid day 2 and later
+        // these steps valid day 2 onward
         WorkflowProcessDefVersion w1v3 = new WorkflowProcessDefVersion("3.0", new Date(MSEC_DATES[2]));
         w1v3.addStep(new WorkflowStepDef("Step 1").addLabEvent(LabEventType.GS_WASH_1));
         w1v3.addStep(new WorkflowStepDef("Step 2").addLabEvent(LabEventType.GS_WASH_2));

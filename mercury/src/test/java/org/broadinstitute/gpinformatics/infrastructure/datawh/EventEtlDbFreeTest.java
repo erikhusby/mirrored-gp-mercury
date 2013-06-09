@@ -2,11 +2,13 @@ package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.infrastructure.datawh.LabEventEtl.EventFactDto;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -41,6 +43,7 @@ public class EventEtlDbFreeTest {
     private final long vesselId = 5511223344L;
     private final Date eventDate = new Date(1350000000000L);
     private final LabEventType eventType = LabEventType.PICO_PLATING_BUCKET;
+    private final String workflowName = "ExEx";
     private LabEventEtl tst;
 
     private final AuditReaderDao auditReader = createMock(AuditReaderDao.class);
@@ -108,13 +111,12 @@ public class EventEtlDbFreeTest {
         verify(mocks);
     }
 
-    public void testCantMakeEtlRecordNoVessels() throws Exception {
+    public void testNoVessels() throws Exception {
         expect(dao.findById(LabEvent.class, entityId)).andReturn(obj);
         expect(obj.getLabEventType()).andReturn(eventType).times(2);
+        vesselList.clear();
         expect(obj.getTargetLabVessels()).andReturn(vesselList);
-        expect(vessel.getSampleInstances(SampleType.WITH_PDO, LabBatchType.WORKFLOW)).
-                andReturn(new HashSet<SampleInstance>());
-        expect(vessel.getLabel()).andReturn("");
+        expect(obj.getInPlaceLabVessel()).andReturn(null);
         replay(mocks);
 
         assertEquals(tst.dataRecords(etlDateStr, false, entityId).size(), 0);
@@ -128,8 +130,6 @@ public class EventEtlDbFreeTest {
         expect(obj.getTargetLabVessels()).andReturn(vesselList);
         expect(vessel.getSampleInstances(SampleType.WITH_PDO, LabBatchType.WORKFLOW)).
                 andReturn(new HashSet<SampleInstance>());
-        String vesselLabel = "03138970";
-        expect(vessel.getLabel()).andReturn(vesselLabel);
 
         replay(mocks);
 
@@ -146,6 +146,8 @@ public class EventEtlDbFreeTest {
         expect(vessel.getSampleInstances(SampleType.WITH_PDO, LabBatchType.WORKFLOW)).andReturn(sampleInstList);
         expect(sampleInst.getProductOrderKey()).andReturn(pdoKey);
         expect(sampleInst.getStartingSample()).andReturn(null);
+        expect(vessel.getIndexesString(sampleInst)).andReturn("dummy string");
+        expect(pdoDao.findByBusinessKey(pdoKey)).andReturn(pdo);
 
         replay(mocks);
 
@@ -161,20 +163,20 @@ public class EventEtlDbFreeTest {
         expect(vessel.getSampleInstances(SampleType.WITH_PDO, LabBatchType.WORKFLOW)).andReturn(sampleInstList);
         expect(sampleInst.getStartingSample()).andReturn(sample);
         expect(sampleInst.getAllWorkflowLabBatches()).andReturn(workflowLabBatches);
-        expect(sampleInst.getProductOrderKey()).andReturn(pdoKey).times(2);
+        expect(sampleInst.getProductOrderKey()).andReturn(pdoKey);
 
         expect(labBatch.getLabBatchId()).andReturn(labBatchId);
+        expect(labBatch.getWorkflowName()).andReturn(workflowName);
         expect(sample.getSampleKey()).andReturn(sampleKey);
         expect(pdoDao.findByBusinessKey(pdoKey)).andReturn(pdo);
         expect(pdo.getProductOrderId()).andReturn(pdoId);
-        expect(obj.getEventDate()).andReturn(eventDate);
-        expect(wfLookup.lookupWorkflowConfig(eventType.getName(), labBatch, eventDate)).andReturn(wfConfig);
+        expect(wfLookup.lookupWorkflowConfig(eventType.getName(), workflowName, eventDate)).andReturn(wfConfig);
         expect(wfConfig.getWorkflowId()).andReturn(workflowId);
         expect(wfConfig.getProcessId()).andReturn(processId);
         expect(obj.getLabEventId()).andReturn(entityId);
         expect(obj.getEventLocation()).andReturn(location);
         expect(vessel.getLabVesselId()).andReturn(vesselId);
-        expect(obj.getEventDate()).andReturn(eventDate);
+        expect(obj.getEventDate()).andReturn(eventDate).times(2);
 
         replay(mocks);
 
@@ -193,14 +195,15 @@ public class EventEtlDbFreeTest {
         expect(vessel.getSampleInstances(SampleType.WITH_PDO, LabBatchType.WORKFLOW)).andReturn(sampleInstList);
         expect(sampleInst.getStartingSample()).andReturn(sample);
         expect(sampleInst.getAllWorkflowLabBatches()).andReturn(workflowLabBatches);
-        expect(sampleInst.getProductOrderKey()).andReturn(pdoKey).times(2);
+        expect(sampleInst.getProductOrderKey()).andReturn(pdoKey);
 
         expect(labBatch.getLabBatchId()).andReturn(labBatchId);
+        expect(labBatch.getWorkflowName()).andReturn(workflowName);
         expect(sample.getSampleKey()).andReturn(sampleKey);
         expect(pdoDao.findByBusinessKey(pdoKey)).andReturn(pdo);
         expect(pdo.getProductOrderId()).andReturn(pdoId);
         expect(obj.getEventDate()).andReturn(eventDate);
-        expect(wfLookup.lookupWorkflowConfig(eventType.getName(), labBatch, eventDate)).andReturn(wfConfig);
+        expect(wfLookup.lookupWorkflowConfig(eventType.getName(), workflowName, eventDate)).andReturn(wfConfig);
         expect(wfConfig.getWorkflowId()).andReturn(workflowId);
         expect(wfConfig.getProcessId()).andReturn(processId);
         expect(obj.getLabEventId()).andReturn(entityId);

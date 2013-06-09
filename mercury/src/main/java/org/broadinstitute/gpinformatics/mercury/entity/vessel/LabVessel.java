@@ -1365,18 +1365,20 @@ public abstract class LabVessel implements Serializable {
     }
 
     /**
-     * This method gets a string concatenated representation of all the indexes.
+     * This method gets a string concatenated representation of all the indexes for a given sample instance.
      *
+     * @param sampleInstance Gets indexes for this sample instance, or if null, for all sample instances in the vessel.
      * @return A string containing information about all the indexes.
      */
-    public String getIndexesString() {
-        Collection<MolecularIndexReagent> indexes = getIndexes();
+    public String getIndexesString(SampleInstance sampleInstance) {
+        Collection<MolecularIndexReagent> indexes =
+                (sampleInstance == null ? getIndexes() : getIndexesForSampleInstance(sampleInstance));
+
         if ((indexes == null) || indexes.isEmpty()) {
             return "";
         }
-
         StringBuilder indexInfo = new StringBuilder();
-        for (MolecularIndexReagent indexReagent : getIndexes()) {
+        for (MolecularIndexReagent indexReagent : indexes) {
             indexInfo.append(indexReagent.getMolecularIndexingScheme().getName());
             indexInfo.append(" - ");
             for (MolecularIndexingScheme.IndexPosition hint : indexReagent.getMolecularIndexingScheme()
@@ -1387,6 +1389,15 @@ public abstract class LabVessel implements Serializable {
             }
         }
         return indexInfo.toString();
+    }
+
+    /**
+     * This method gets a string concatenated representation of all the indexes.
+     *
+     * @return A string containing information about all the indexes.
+     */
+    public String getIndexesString() {
+        return getIndexesString(null);
     }
 
     public int getIndexesCount() {

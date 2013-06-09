@@ -126,7 +126,10 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
         Collection<Long> deletedEntityIds = convertAuditedEntityIdToDataSourceEntityId(auditLists.deletedEntityIds);
         Collection<Long> changedEntityIds = convertAuditedEntityIdToDataSourceEntityId(auditLists.changedEntityIds);
 
-        return writeRecords(deletedEntityIds, changedEntityIds, auditLists.revInfoPairs, etlDateStr);
+        int count =writeRecords(deletedEntityIds, changedEntityIds, auditLists.revInfoPairs, etlDateStr);
+
+        postEtlLogging();
+        return count;
     }
 
     /**
@@ -150,7 +153,10 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
         Collection<AUDITED_ENTITY_CLASS> auditEntities = entitiesInRange(startId, endId);
         Collection<ETL_DATA_SOURCE_CLASS> entities = convertAuditedEntityToDataSourceEntity(auditEntities);
 
-        return writeRecords(entities, etlDateStr);
+        int count = writeRecords(entities, etlDateStr);
+
+        postEtlLogging();
+        return count;
     }
 
     /** Returns entities having id in the given range, including endpoints. */
@@ -419,13 +425,7 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
         return GenericEntityEtl.hash(sb.toString());
     }
 
-    /** Calculates a hash on all workflow config elements. */
-    public static long hash(Collection<WorkflowConfigDenorm> denorms) {
-        long h = HASH_PRIME;
-        for (WorkflowConfigDenorm denorm : denorms) {
-            // Reuses the existing hash of this record, which is its id.
-            h = HASH_MULTIPLIER * h + denorm.getWorkflowConfigDenormId();
-        }
-        return h;
+    /** Tells ETL class to do per-run logging, at the end of the run. */
+    protected void postEtlLogging() {
     }
 }

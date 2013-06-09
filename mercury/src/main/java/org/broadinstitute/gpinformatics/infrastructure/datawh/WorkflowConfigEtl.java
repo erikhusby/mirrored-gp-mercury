@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
 import javax.ejb.Stateful;
@@ -21,8 +20,8 @@ import java.util.Set;
  */
 @Stateful
 public class WorkflowConfigEtl extends GenericEntityEtl<WorkflowConfig, Object> {
-    private Log logger = LogFactory.getLog(getClass());
-    private WorkflowLoader workflowLoader;
+    private static Log logger = LogFactory.getLog(WorkflowConfigEtl.class);
+    private WorkflowConfigLookup workflowConfigLookup;
     static final String WORKFLOW_BASE_FILENAME = "workflow";
     static final String PROCESS_BASE_FILENAME = "workflow_process";
 
@@ -30,9 +29,9 @@ public class WorkflowConfigEtl extends GenericEntityEtl<WorkflowConfig, Object> 
     }
 
     @Inject
-    public WorkflowConfigEtl(WorkflowLoader workflowLoader) {
+    public WorkflowConfigEtl(WorkflowConfigLookup workflowConfigLookup) {
         super(WorkflowConfig.class, WORKFLOW_BASE_FILENAME, null);
-        this.workflowLoader = workflowLoader;
+        this.workflowConfigLookup = workflowConfigLookup;
     }
 
     @Override
@@ -64,7 +63,7 @@ public class WorkflowConfigEtl extends GenericEntityEtl<WorkflowConfig, Object> 
     @Override
     public int doEtl(Collection<Long> revIds, String etlDateStr) {
         // Does nothing if no change in WorkflowConfig, indicated by the hash.
-        HashMatchResult res = hashesMatch(workflowLoader);
+        HashMatchResult res = hashesMatch();
         if (res.isMatch) {
             return 0;
         }
@@ -85,8 +84,7 @@ public class WorkflowConfigEtl extends GenericEntityEtl<WorkflowConfig, Object> 
         if (!entityClass.equals(requestedClass)) {
             return 0;
         }
-        Collection<WorkflowConfigDenorm> denormConfig = WorkflowConfigDenorm.parse(workflowLoader.load());
-        return doEtlFiles(denormConfig, etlDateStr);
+        return doEtlFiles(workflowConfigLookup.getDenormConfigs(), etlDateStr);
     }
 
     /** Creates the wrapped Writer to the sqlLoader data files and exports flattened records. */
@@ -199,11 +197,15 @@ public class WorkflowConfigEtl extends GenericEntityEtl<WorkflowConfig, Object> 
      * previously exported one's hash.
      * @return HashMatchResult
      */
-    private HashMatchResult hashesMatch(WorkflowLoader workflowLoader) {
-        Collection<WorkflowConfigDenorm> flatConfig = WorkflowConfigDenorm.parse(workflowLoader.load());
-        long currentHashValue = hash(flatConfig);
+    private HashMatchResult hashesMatch() {
+        Collection<WorkflowConfigDenorm> workflowConfigDenorms = workflowConfigLookup.getDenormConfigs();
+        StringBuilder sb = new StringBuilder();
+        for (WorkflowConfigDenorm denorm : workflowConfigDenorms) {
+            sb.append(denorm.toString());
+        }
+        long currentHashValue = GenericEntityEtl.hash(sb.toString());
         long previousHashValue = readWorkflowConfigHash();
-        return new HashMatchResult((currentHashValue == previousHashValue), currentHashValue, flatConfig);
+        return new HashMatchResult((currentHashValue == previousHashValue), currentHashValue, workflowConfigDenorms);
     }
 
     private class HashMatchResult {
@@ -217,4 +219,6 @@ public class WorkflowConfigEtl extends GenericEntityEtl<WorkflowConfig, Object> 
             this.denormConfig = denormConfig;
         }
     }
+
+
 }

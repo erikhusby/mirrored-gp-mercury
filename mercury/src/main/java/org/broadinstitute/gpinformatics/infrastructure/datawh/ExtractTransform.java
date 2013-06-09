@@ -6,6 +6,7 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.common.SessionContextUtility;
+import org.broadinstitute.gpinformatics.infrastructure.datawh.LabEventEtl.EventFactDto;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfiguration;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
@@ -15,23 +16,10 @@ import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.ws.rs.core.Response;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.Reader;
-import java.io.Serializable;
-import java.io.Writer;
+import java.io.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.SortedMap;
+import java.util.*;
 import java.util.concurrent.Semaphore;
 
 /**
@@ -121,6 +109,10 @@ public class ExtractTransform implements Serializable {
 
     @Inject
     private SessionContextUtility sessionContextUtility;
+
+    // A separate instance from one used by incremental etl.
+    @Inject
+    private LabEventEtl labEventEtlAnalysis;
 
     public ExtractTransform() {
     }
@@ -531,6 +523,10 @@ public class ExtractTransform implements Serializable {
 
     public static long getIncrementalRunStartTime() {
         return incrementalRunStartTime;
+    }
+
+    public Collection<EventFactDto> analyzeEvent(long labEventId) {
+        return labEventEtlAnalysis.makeEventFacts(labEventId);
     }
 
     /**
