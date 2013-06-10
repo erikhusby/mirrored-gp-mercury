@@ -185,14 +185,10 @@ public class ReworkEjb {
         for (LabVessel vessel : labVessels) {
             Set<SampleInstance> sampleInstances = vessel.getSampleInstances(PREFER_PDO, null);
 
-//            if (sampleInstances.size() != 1) {
-//                // per Zimmer, ignore tubes that are pools when querying by sample
-//                // TODO: report a warning?
-//            } else {
-
             /*
-             * By using PREFER_PDO, we are able to get all samples for a vessel, with the PDO association bubbling
-             * to the beginning of the returned
+             * By using PREFER_PDO, we are able to get all samples for a vessel.  If there are samples associated with
+             * PDOs, we will get Just the PDO associated Samples.  If there are samples that are NOT associated with
+             * PDOs, we will get those samples.
              */
             List<ProductOrderSample> productOrderSamples = null;
 
@@ -234,7 +230,6 @@ public class ReworkEjb {
                     }
                 }
             }
-//            }
         }
 
         if (reworkCandidates.isEmpty()) {
