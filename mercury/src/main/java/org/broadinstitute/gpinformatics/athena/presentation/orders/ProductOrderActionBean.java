@@ -941,10 +941,10 @@ public class ProductOrderActionBean extends CoreActionBean {
         productOrderEjb.setManualOnRisk(
             getUserBean().getBspUser(), editOrder, selectedProductOrderSamples, riskStatus, riskComment);
 
-        addMessage("Set manual on risk for {0} samples.", selectedProductOrderSampleIds.size());
+        addMessage("Set manual on risk to {1} for {0} samples.", selectedProductOrderSampleIds.size(), riskStatus);
         JiraIssue issue = jiraService.getIssue(editOrder.getJiraTicketKey());
-        issue.addComment(MessageFormat.format("{0} set manual on risk for {1} samples.",
-                userBean.getLoginUserName(), selectedProductOrderSampleIds.size()));
+        issue.addComment(MessageFormat.format("{0} set manual on risk to {2} for {1} samples.",
+                userBean.getLoginUserName(), selectedProductOrderSampleIds.size(), riskStatus));
         return createViewResolution();
     }
 
