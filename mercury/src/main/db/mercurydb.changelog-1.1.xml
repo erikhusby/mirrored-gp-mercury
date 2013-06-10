@@ -43,19 +43,19 @@
             <not>
                 <columnExists columnName="ENTRY_TYPE" schemaName="mercury" tableName="BUCKET_ENTRY" />
             </not>
-            <addColumn tableName="BUCKET_ENTRY" schemaName="mercury" >
-                <column name="ENTRY_TYPE" type="varchar(255)"></column>
-            </addColumn>
         </preConditions>
+        <addColumn tableName="BUCKET_ENTRY" schemaName="mercury" >
+            <column name="ENTRY_TYPE" type="varchar(255)"></column>
+        </addColumn>
     </changeSet>
     <changeSet id="GPLIM-1377-5" author="scottmat">
         <preConditions onFail="MARK_RAN">
             <not>
                 <columnExists columnName="ENTRY_TYPE" schemaName="mercury" tableName="BUCKET_ENTRY_AUD" />
             </not>
-            <addColumn tableName="BUCKET_ENTRY_AUD" schemaName="mercury" >
-                <column name="ENTRY_TYPE" type="varchar(255)"></column>
-            </addColumn>
         </preConditions>
+        <addColumn tableName="BUCKET_ENTRY_AUD" schemaName="mercury" >
+            <column name="ENTRY_TYPE" type="varchar(255)"></column>
+        </addColumn>
     </changeSet>
 </databaseChangeLog>
