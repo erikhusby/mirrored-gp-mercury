@@ -165,6 +165,9 @@ public abstract class LabVessel implements Serializable {
 
     protected LabVessel(String label) {
         createdOn = new Date();
+        if (label == null || label.equals("0")) {
+            throw new RuntimeException("Invalid label " + label);
+        }
         this.label = label;
     }
 
@@ -1362,18 +1365,20 @@ public abstract class LabVessel implements Serializable {
     }
 
     /**
-     * This method gets a string concatenated representation of all the indexes.
+     * This method gets a string concatenated representation of all the indexes for a given sample instance.
      *
+     * @param sampleInstance Gets indexes for this sample instance, or if null, for all sample instances in the vessel.
      * @return A string containing information about all the indexes.
      */
-    public String getIndexesString() {
-        Collection<MolecularIndexReagent> indexes = getIndexes();
+    public String getIndexesString(SampleInstance sampleInstance) {
+        Collection<MolecularIndexReagent> indexes =
+                (sampleInstance == null ? getIndexes() : getIndexesForSampleInstance(sampleInstance));
+
         if ((indexes == null) || indexes.isEmpty()) {
             return "";
         }
-
         StringBuilder indexInfo = new StringBuilder();
-        for (MolecularIndexReagent indexReagent : getIndexes()) {
+        for (MolecularIndexReagent indexReagent : indexes) {
             indexInfo.append(indexReagent.getMolecularIndexingScheme().getName());
             indexInfo.append(" - ");
             for (MolecularIndexingScheme.IndexPosition hint : indexReagent.getMolecularIndexingScheme()
@@ -1384,6 +1389,15 @@ public abstract class LabVessel implements Serializable {
             }
         }
         return indexInfo.toString();
+    }
+
+    /**
+     * This method gets a string concatenated representation of all the indexes.
+     *
+     * @return A string containing information about all the indexes.
+     */
+    public String getIndexesString() {
+        return getIndexesString(null);
     }
 
     public int getIndexesCount() {
@@ -1508,12 +1522,12 @@ public abstract class LabVessel implements Serializable {
      */
     public boolean isAncestorInBucket(@Nonnull String pdoKey, @Nonnull String bucketName) {
 
-        List<LabVessel> vesselHeirarchy = new ArrayList<LabVessel>();
+        List<LabVessel> vesselHierarchy = new ArrayList<LabVessel>();
 
-        vesselHeirarchy.add(this);
-        vesselHeirarchy.addAll(this.getAncestorVessels());
+        vesselHierarchy.add(this);
+        vesselHierarchy.addAll(this.getAncestorVessels());
 
-        for(LabVessel currAncestor:vesselHeirarchy){
+        for(LabVessel currAncestor:vesselHierarchy){
             for(BucketEntry currentEntry: currAncestor.getBucketEntries()) {
                 if(pdoKey.equals(currentEntry.getPoBusinessKey()) &&
                    bucketName.equals(currentEntry.getBucket().getBucketDefinitionName()) &&
@@ -1530,19 +1544,23 @@ public abstract class LabVessel implements Serializable {
      * Helper method to determine if a given vessel is in a bucket.
      * @param pdoKey PDO Key with which a vessel may be associated in a bucket
      * @param bucketName Name of the bucket to search for associations
+     * @param active
      * @return
      */
-    public boolean isVesselInBucket(@Nonnull String pdoKey, @Nonnull String bucketName) {
+    public boolean checkCurrentBucketStatus(@Nonnull String pdoKey, @Nonnull String bucketName,
+                                            BucketEntry.Status active) {
 
         for(BucketEntry currentEntry: getBucketEntries()) {
             if(pdoKey.equals(currentEntry.getPoBusinessKey()) &&
                bucketName.equals(currentEntry.getBucket().getBucketDefinitionName()) &&
-               BucketEntry.Status.Active == currentEntry.getStatus()) {
+               active == currentEntry.getStatus()) {
                 return true;
             }
         }
         return false;
     }
+
+
 
 
     /**

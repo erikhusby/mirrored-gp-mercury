@@ -4,29 +4,43 @@ import org.apache.commons.collections.map.LRUMap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 
 import javax.ejb.Stateful;
 import javax.inject.Inject;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.text.ParseException;
+import java.util.*;
 
 @Stateful
 public class WorkflowConfigLookup implements Serializable {
-    private Log logger = LogFactory.getLog(getClass());
+    private static Log logger = LogFactory.getLog(WorkflowConfigLookup.class);
     private WorkflowLoader workflowLoader;
     private Map<String, List<WorkflowConfigDenorm>> mapEventToWorkflows = null;
     private static final int CONFIG_ID_CACHE_SIZE = 4;
     private final LRUMap configIdCache = new LRUMap(CONFIG_ID_CACHE_SIZE);
     int cacheHit = 0; //instrumentation variable for testing
+
+    // The synthetic workflowConfig records needed to etl BSP events.
+    private static Collection<WorkflowConfigDenorm> syntheticWorkflowConfigs = new ArrayList<>();
+    private static Date NOV_1_2012;
+
+    static {
+        // This should move to WorkflowConfigDao if it ever exists.
+        try {
+            NOV_1_2012 = ExtractTransform.secTimestampFormat.parse("20121101000000");
+        } catch (ParseException e) {
+            logger.error("Cannot create syntheticWorkflowConfigs.");
+        }
+        syntheticWorkflowConfigs.add(new WorkflowConfigDenorm(NOV_1_2012, "BSP", "0", "BSP", "0",
+                LabEventType.SAMPLE_RECEIPT.getName(), LabEventType.SAMPLE_RECEIPT.getName(), false));
+        syntheticWorkflowConfigs.add(new WorkflowConfigDenorm(NOV_1_2012, "BSP", "0", "BSP", "0",
+                LabEventType.SAMPLES_DAUGHTER_PLATE_CREATION.getName(),
+                LabEventType.SAMPLES_DAUGHTER_PLATE_CREATION.getName()));
+        syntheticWorkflowConfigs.add(new WorkflowConfigDenorm(NOV_1_2012, "BSP", "0", "BSP", "0",
+                LabEventType.SAMPLES_EXTRACTION_START.getName(), LabEventType.SAMPLES_EXTRACTION_START.getName()));
+    }
+
 
     @Inject
     public void setWorkflowLoader(WorkflowLoader workflowLoader) {
@@ -38,9 +52,8 @@ public class WorkflowConfigLookup implements Serializable {
      * Builds 1:N mapping of event name to denorm workflow configs that contain that event name.
      */
     public void initWorkflowConfigDenorm() {
-        mapEventToWorkflows = new HashMap<String, List<WorkflowConfigDenorm>>();
-        WorkflowConfig workflowConfig = workflowLoader.load();
-        Collection<WorkflowConfigDenorm> configs = WorkflowConfigDenorm.parse(workflowConfig);
+        mapEventToWorkflows = new HashMap<>();
+        Collection<WorkflowConfigDenorm> configs = getDenormConfigs();
         for (WorkflowConfigDenorm config : configs) {
             List<WorkflowConfigDenorm> workflows = mapEventToWorkflows.get(config.getWorkflowStepEventName());
             if (workflows == null) {
@@ -66,10 +79,11 @@ public class WorkflowConfigLookup implements Serializable {
      *
      * @return null if no id found
      */
-    public WorkflowConfigDenorm lookupWorkflowConfig(String eventName, LabBatch labBatch, Date eventDate) {
+    public WorkflowConfigDenorm lookupWorkflowConfig(String eventName, String workflowName, Date eventDate) {
 
         // Checks for a cache hit, which may be a null.
-        String cacheKey = eventName + labBatch.getWorkflowName() + eventDate.toString();
+        String cacheKey = eventName + workflowName + (eventDate != null ? eventDate.toString() : "null");
+
         synchronized (configIdCache) {
             if (configIdCache.containsKey(cacheKey)) {
                 ++cacheHit;
@@ -77,38 +91,39 @@ public class WorkflowConfigLookup implements Serializable {
             }
         }
 
-        String workflowName = labBatch.getWorkflowName();
-        if (workflowName == null) {
-            logger.debug("Product " + labBatch.getBusinessKey() + " has no workflow name");
-            synchronized (configIdCache) {
-                configIdCache.put(cacheKey, null);
-            }
-            return null;
+        WorkflowConfigDenorm match = null;
+        List<WorkflowConfigDenorm> denormConfigs = null;
+
+        if (eventName != null) {
+            denormConfigs = mapEventToWorkflows.get(eventName);
         }
 
-        List<WorkflowConfigDenorm> denormConfigs = mapEventToWorkflows.get(eventName);
-        if (denormConfigs == null) {
-            logger.debug("No WorkflowConfig records have event " + eventName);
-            synchronized (configIdCache) {
-                configIdCache.put(cacheKey, null);
-            }
-            return null;
-        }
-
-        // Iterates on the sorted list of workflow configs to find a match having latest effective date.
-        for (WorkflowConfigDenorm denorm : denormConfigs) {
-            if (workflowName.equals(denorm.getProductWorkflowName()) && eventDate.after(denorm.getEffectiveDate())) {
-                synchronized (configIdCache) {
-                    configIdCache.put(cacheKey, denorm);
+        if (denormConfigs != null) {
+            // Iterates on the sorted list of workflow configs to find a match having latest effective date.
+            for (WorkflowConfigDenorm denorm : denormConfigs) {
+                if (workflowName != null && workflowName.equals(denorm.getProductWorkflowName())
+                        && eventDate != null && eventDate.after(denorm.getEffectiveDate())
+                        || denormConfigs.size() == 1) {
+                    match = denorm;
+                    break;
                 }
-                return denorm;
             }
         }
-        logger.debug("No denormalized workflow config for product " + workflowName + " having eventName " + eventName
-                + " on date " + eventDate.toString());
-        synchronized (configIdCache) {
-            configIdCache.put(cacheKey, null);
+        if (match == null) {
+            logger.debug("No WorkflowConfig records apply to event " + eventName + " in workflow " + workflowName +
+                    " on date " + eventDate.toString());
         }
-        return null;
+
+        synchronized (configIdCache) {
+            configIdCache.put(cacheKey, match);
+        }
+        return match;
+    }
+
+    /** Returns the workflowConfigDenorms obtained from WorkflowConfig plus the synthetic ones needed for etl. */
+    public Collection<WorkflowConfigDenorm> getDenormConfigs() {
+        Collection<WorkflowConfigDenorm> denormConfigs = WorkflowConfigDenorm.parse(workflowLoader.load());
+        denormConfigs.addAll(syntheticWorkflowConfigs);
+        return denormConfigs;
     }
 }

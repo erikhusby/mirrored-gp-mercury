@@ -1,6 +1,5 @@
-<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" %>
-<%@ page import="static org.broadinstitute.gpinformatics.mercury.entity.DB.roles" %>
-<%@ page import="static org.broadinstitute.gpinformatics.mercury.entity.DB.Role.*" %>
+<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.presentation.Role.roles" %>
+<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.presentation.Role.*" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 

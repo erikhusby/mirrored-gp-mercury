@@ -5,7 +5,6 @@ import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidateNestedProperties;
 import net.sourceforge.stripes.validation.ValidationMethod;
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
@@ -171,7 +170,7 @@ public class ProductActionBean extends CoreActionBean {
             addGlobalValidationError("Availability date must precede discontinued date.");
         }
 
-        if (priceItemTokenInput.getMercuryTokenObject() == null) {
+        if (priceItemTokenInput.getTokenObject() == null) {
             addValidationError("token-input-primaryPriceItem", "Primary price item is required");
         }
 
@@ -323,7 +322,7 @@ public class ProductActionBean extends CoreActionBean {
         editProduct.getAddOns().clear();
         editProduct.getAddOns().addAll(addOnTokenInput.getTokenObjects());
 
-        editProduct.setPrimaryPriceItem(priceItemTokenInput.getMercuryTokenObject());
+        editProduct.setPrimaryPriceItem(priceItemTokenInput.getTokenObject());
 
         editProduct.getAllowableMaterialTypes().clear();
         editProduct.getAllowableMaterialTypes().addAll(materialTypeTokenInput.getMercuryTokenObjects());

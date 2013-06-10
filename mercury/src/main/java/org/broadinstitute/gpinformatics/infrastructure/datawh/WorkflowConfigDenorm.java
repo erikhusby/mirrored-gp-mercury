@@ -26,7 +26,32 @@ public class WorkflowConfigDenorm implements Serializable {
     private final String workflowProcessVersion;
     private final String workflowStepName;
     private final String workflowStepEventName;
+    private final boolean productOrderNeeded;
 
+
+    public WorkflowConfigDenorm(Date effectiveDate,
+                                String productWorkflowName,
+                                String productWorkflowVersion,
+                                String workflowProcessName,
+                                String workflowProcessVersion,
+                                String workflowStepName,
+                                String workflowStepEventName,
+                                boolean productOrderNeeded) {
+
+        this.effectiveDate = effectiveDate;
+        this.productWorkflowName = productWorkflowName;
+        this.productWorkflowVersion = productWorkflowVersion;
+        this.workflowProcessName = workflowProcessName;
+        this.workflowProcessVersion = workflowProcessVersion;
+        this.workflowStepName = workflowStepName;
+        this.workflowStepEventName = workflowStepEventName;
+        this.productOrderNeeded = productOrderNeeded;
+
+        workflowConfigDenormId = calculateId();
+        workflowId = calculateWorkflowId(productWorkflowName, productWorkflowVersion);
+        processId = calculateProcessId(
+                workflowProcessName, workflowProcessVersion, workflowStepName, workflowStepEventName);
+    }
 
     public WorkflowConfigDenorm(Date effectiveDate,
                                 String productWorkflowName,
@@ -36,19 +61,8 @@ public class WorkflowConfigDenorm implements Serializable {
                                 String workflowStepName,
                                 String workflowStepEventName) {
 
-        this.effectiveDate = effectiveDate;
-        this.productWorkflowName = productWorkflowName;
-        this.productWorkflowVersion = productWorkflowVersion;
-        this.workflowProcessName = workflowProcessName;
-        this.workflowProcessVersion = workflowProcessVersion;
-        this.workflowStepName = workflowStepName;
-        this.workflowStepEventName = workflowStepEventName;
-
-        workflowConfigDenormId = calculateId(effectiveDate, productWorkflowName, productWorkflowVersion,
-                workflowProcessName, workflowProcessVersion, workflowStepName, workflowStepEventName);
-
-        workflowId = calculateWorkflowId(productWorkflowName, productWorkflowVersion);
-        processId = calculateProcessId(workflowProcessName, workflowProcessVersion, workflowStepName, workflowStepEventName);
+        this(effectiveDate, productWorkflowName, productWorkflowVersion, workflowProcessName,
+                workflowProcessVersion, workflowStepName, workflowStepEventName, false);
     }
 
     public long calculateProcessId(String processName, String version, String stepName, String eventName) {
@@ -103,11 +117,14 @@ public class WorkflowConfigDenorm implements Serializable {
         return workflowStepEventName;
     }
 
+    public boolean isProductOrderNeeded() {
+        return productOrderNeeded;
+    }
+
     /**
      * Calculates a workflowConfigDenormId using a deterministic algorithm.
      */
-    public long calculateId(Date effectiveDate, String productWorkflowName, String productWorkflowVersion, String workflowProcessName,
-                            String workflowProcessVersion, String workflowStepName, String workflowStepEventName) {
+    public long calculateId() {
         return GenericEntityEtl.hash(String.valueOf(effectiveDate.getTime()), productWorkflowName, productWorkflowVersion,
                 workflowProcessName, workflowProcessVersion, workflowStepName, workflowStepEventName);
     }
@@ -171,5 +188,20 @@ public class WorkflowConfigDenorm implements Serializable {
         }
         return list;
     }
+
+    @Override
+    public String toString() {
+        return " workflowId=" + workflowId +
+                ", processId=" + processId +
+                ", effectiveDate=" + effectiveDate +
+                ", productWorkflowName='" + productWorkflowName + '\'' +
+                ", productWorkflowVersion='" + productWorkflowVersion + '\'' +
+                ", workflowProcessName='" + workflowProcessName + '\'' +
+                ", workflowProcessVersion='" + workflowProcessVersion + '\'' +
+                ", workflowStepName='" + workflowStepName + '\'' +
+                ", workflowStepEventName='" + workflowStepEventName + '\'';
+    }
+
+
 }
 

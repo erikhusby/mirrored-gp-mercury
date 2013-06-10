@@ -46,9 +46,10 @@ public class ReworkEjbDaoFreeTest extends BaseEventTest {
                         ReworkEntry.ReworkReason.UNKNOWN_ERROR, ReworkEntry.ReworkLevel.ONE_SAMPLE_HOLD_REST_BATCH,
                         LabEventType.PICO_PLATING_BUCKET, "", WorkflowName.EXOME_EXPRESS.getWorkflowName());
 
-        Assert.assertEquals(reworkSamples.size(),1);
+        Assert.assertEquals(reworkSamples.size(), 1);
 
-        Assert.assertEquals(reworkSamples.iterator().next().getBspSampleName(),productOrder.getSamples().iterator().next().getBspSampleName());
+        Assert.assertEquals(reworkSamples.iterator().next().getBspSampleName(),
+                productOrder.getSamples().iterator().next().getBspSampleName());
 
     }
 
@@ -74,9 +75,10 @@ public class ReworkEjbDaoFreeTest extends BaseEventTest {
                         ReworkEntry.ReworkReason.UNKNOWN_ERROR, ReworkEntry.ReworkLevel.ONE_SAMPLE_HOLD_REST_BATCH,
                         LabEventType.PICO_PLATING_BUCKET, "", WorkflowName.EXOME_EXPRESS.getWorkflowName());
 
-        Assert.assertEquals(reworkSamples.size(),1);
+        Assert.assertEquals(reworkSamples.size(), 1);
 
-        Assert.assertEquals(reworkSamples.iterator().next().getBspSampleName(),productOrder.getSamples().iterator().next().getBspSampleName());
+        Assert.assertEquals(reworkSamples.iterator().next().getBspSampleName(),
+                productOrder.getSamples().iterator().next().getBspSampleName());
 
     }
 
@@ -104,9 +106,10 @@ public class ReworkEjbDaoFreeTest extends BaseEventTest {
                         ReworkEntry.ReworkReason.UNKNOWN_ERROR, ReworkEntry.ReworkLevel.ONE_SAMPLE_HOLD_REST_BATCH,
                         LabEventType.PICO_PLATING_BUCKET, "", WorkflowName.EXOME_EXPRESS.getWorkflowName());
 
-        Assert.assertEquals(reworkSamples.size(),1);
+        Assert.assertEquals(reworkSamples.size(), 1);
 
-        Assert.assertEquals(reworkSamples.iterator().next().getBspSampleName(),productOrder.getSamples().iterator().next().getBspSampleName());
+        Assert.assertEquals(reworkSamples.iterator().next().getBspSampleName(),
+                productOrder.getSamples().iterator().next().getBspSampleName());
 
     }
 
@@ -130,13 +133,14 @@ public class ReworkEjbDaoFreeTest extends BaseEventTest {
 
         Collection<MercurySample> reworkSamples =
                 reworkEjb.getVesselRapSheet(
-                    picoPlatingEntityBuilder.getNormBarcodeToTubeMap().values().iterator().next(),
-                    ReworkEntry.ReworkReason.UNKNOWN_ERROR, ReworkEntry.ReworkLevel.ONE_SAMPLE_HOLD_REST_BATCH,
-                    LabEventType.PICO_PLATING_BUCKET, "", WorkflowName.EXOME_EXPRESS.getWorkflowName());
+                        picoPlatingEntityBuilder.getNormBarcodeToTubeMap().values().iterator().next(),
+                        ReworkEntry.ReworkReason.UNKNOWN_ERROR, ReworkEntry.ReworkLevel.ONE_SAMPLE_HOLD_REST_BATCH,
+                        LabEventType.PICO_PLATING_BUCKET, "", WorkflowName.EXOME_EXPRESS.getWorkflowName());
 
-        Assert.assertEquals(reworkSamples.size(),1);
+        Assert.assertEquals(reworkSamples.size(), 1);
 
-        Assert.assertEquals(reworkSamples.iterator().next().getBspSampleName(),productOrder.getSamples().iterator().next().getBspSampleName());
+        Assert.assertEquals(reworkSamples.iterator().next().getBspSampleName(),
+                productOrder.getSamples().iterator().next().getBspSampleName());
 
     }
 

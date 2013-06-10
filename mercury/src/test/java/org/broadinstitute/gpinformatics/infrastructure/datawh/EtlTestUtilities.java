@@ -5,8 +5,21 @@ import org.apache.commons.io.FileUtils;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.Date;
+import java.util.regex.Pattern;
 
 public class EtlTestUtilities {
+
+    public static final Pattern RECORD_REGEX =
+            Pattern.compile(ExtractTransform.DELIM + "(?=([^\"]*\"[^\"]*\")*[^\"]*$)");
+
+    /**
+     * Uses a regular expression string for splitting the records by the {@link ExtractTransform}.DELIM that are not within an even number of double quotes.
+     *
+     * @return String array of records split based on the string pattern.
+     */
+    public static String[] splitRecords(CharSequence records) {
+        return RECORD_REGEX.split(records);
+    }
 
     /**
      * Deletes all the files written by these tests including .dat, isReady, and lastEtlRun files.
@@ -17,8 +30,8 @@ public class EtlTestUtilities {
             public boolean accept(File dirname, String filename) {
                 return (filename.endsWith(".dat")
                         || filename.endsWith(ExtractTransform.READY_FILE_SUFFIX))
-                        || filename.equals(ExtractTransform.LAST_ETL_FILE)
-                        || filename.equals(ExtractTransform.LAST_WF_CONFIG_HASH_FILE);
+                       || filename.equals(ExtractTransform.LAST_ETL_FILE)
+                       || filename.equals(ExtractTransform.LAST_WF_CONFIG_HASH_FILE);
             }
         };
         for (File file : new File(dir).listFiles(filter)) {
@@ -35,7 +48,8 @@ public class EtlTestUtilities {
         return getDirFiles(directoryName, etlDateStart, etlDateEnd);
     }
 
-    public static File[] getDirFiles(String directoryName, final String etlDateStringStart, final String etlDateStringEnd) {
+    public static File[] getDirFiles(String directoryName, final String etlDateStringStart,
+                                     final String etlDateStringEnd) {
         final long yyyymmddHHMMSSstart = Long.parseLong(etlDateStringStart);
         final long yyyymmddHHMMSSend = Long.parseLong(etlDateStringEnd);
         File dir = new File(directoryName);

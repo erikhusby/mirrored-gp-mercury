@@ -1,15 +1,13 @@
-
 -------------------------------------------------------
 -- For release 1.25
 -------------------------------------------------------
-/*
-For debug purposes:
-DROP SEQUENCE sequencing_sample_id_seq;
-DROP TABLE sequencing_sample_fact CASCADE CONSTRAINTS;
-DROP TABLE sequencing_run CASCADE CONSTRAINTS;
-DROP TABLE im_sequencing_sample_fact CASCADE CONSTRAINTS;
-DROP TABLE im_sequencing_run CASCADE CONSTRAINTS;
-*/
+
+alter table im_product_order_sample_risk add risk_types VARCHAR2(255);
+alter table im_product_order_sample_risk add risk_messages VARCHAR2(500);
+
+alter table product_order_sample add risk_types VARCHAR2(255);
+alter table product_order_sample add risk_messages VARCHAR2(500);
+
 
 CREATE TABLE sequencing_sample_fact (
   sequencing_sample_fact_id NUMERIC(19) NOT NULL PRIMARY KEY,
