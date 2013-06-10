@@ -21,8 +21,13 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleTy
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettalimsMessageBeanTest;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MiSeqReagentKit;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
@@ -68,19 +73,58 @@ public class ReagentKitTransferTest {
         };
     }
 
-    @Test(dataProvider = "denatureTubeDataProvider")
-    public void testDenatureToReagentKit(String denatureRackBarcode,
-                                         Map<String, VesselPosition> sourceBarcodes,
-                                         String miSeqReagentKitBarcode,
-                                         List<LabEventFactory.CherryPick> cherryPicks) {
+    public void testDenatureToReagentKit() {
+        final long time = new Date().getTime();
+        String denatureRackBarcode = "denatureRack" + time;
+        String miSeqReagentKitBarcode = "reagentKit" + time;
+        List<LabEventFactory.CherryPick> cherryPicks = new ArrayList<>();
+        Map<String, VesselPosition> sourceBarcodes = new HashMap<>();
+        RackOfTubes denatureRack=new RackOfTubes(denatureRackBarcode, RackOfTubes.RackType.Matrix96);
+
+        for (int i = 1; i <= 8; i++) {
+            final String tubeBarcode = String.format("denatureTube0%s-%s", i, time);
+            final String position = "A0" + i;
+            sourceBarcodes.put(tubeBarcode, VesselPosition.valueOf(position));
+            LabEventFactory.CherryPick cherryPick = new LabEventFactory.CherryPick(
+                    tubeBarcode, position, miSeqReagentKitBarcode, MiSeqReagentKit.LOADING_WELL.name());
+            cherryPicks.add(cherryPick);
+            final TwoDBarcodedTube tube = new TwoDBarcodedTube(tubeBarcode);
+            TubeFormation tubeFormation = new TubeFormation(new HashMap < VesselPosition, TwoDBarcodedTube >()
+                    {{
+
+                    put(VesselPosition.getByName(position), tube);}}, RackOfTubes.RackType.Matrix96);
+            tubeFormation.setVesselContainer(new VesselContainer<TwoDBarcodedTube>(tube));
+            denatureRack.getTubeFormations().add(tubeFormation);
+        }
+
         final PlateCherryPickEvent plateCherryPickEvent = new PlateCherryPickEvent();
         plateCherryPickEvent.setEventType(LabEventType.DENATURE_TO_REAGENT_KIT_TRANSFER.getName());
 
+        final List<String> sourceBarcodeList = new ArrayList(sourceBarcodes.keySet());
+
+        Map<String, TubeFormation> mapBarcodeToSourceTubeFormation = new HashMap<>();
+        Map<String, RackOfTubes> mapBarcodeToSourceRackOfTubes = new HashMap<>();
+        Map<String, TwoDBarcodedTube> mapBarcodeToSourceTube = new HashMap<>();
+        Map<VesselPosition, TwoDBarcodedTube> mapPositionToTube = new HashMap<>();
+        Map<String, VesselPosition> denatureRackMap = new HashMap<>();
+
+        mapBarcodeToSourceRackOfTubes.put(denatureRack.getLabel(), denatureRack);
+        for (TubeFormation tubeFormation : denatureRack.getTubeFormations()) {
+            mapBarcodeToSourceTubeFormation.put(tubeFormation.getLabel(), tubeFormation);
+            for (VesselPosition vesselPosition : tubeFormation.getVesselGeometry().getVesselPositions()) {
+                final LabVessel tube =
+                        tubeFormation.getContainerRole().getEmbedder();
+                denatureRackMap.put(tube.getLabel(), vesselPosition);
+//                mapPositionToTube.put(vesselPosition, tube);
+//                mapBarcodeToSourceTube.put(tube.getLabel(), tube);
+
+            }
+        }
+
         PlateCherryPickEvent transferEventType = bettaLimsMessageTestFactory
-                .buildCherryPickToPlate(LabEventType.DENATURE_TO_REAGENT_KIT_TRANSFER.getName(),
-                        denatureRackBarcode, sourceBarcodes,
-                        miSeqReagentKitBarcode,
-                        MiSeqReagentKit.PlateType.MiSeqReagentKit.getDisplayName(), cherryPicks);
+                .buildCherryPickToReagentKit(
+                        LabEventType.DENATURE_TO_REAGENT_KIT_TRANSFER.getName(),mapBarcodeToSourceRackOfTubes,
+                        mapBarcodeToSourceTube,miSeqReagentKitBarcode);
 
         // test the source denature tube
         MatcherAssert.assertThat(transferEventType.getSourcePlate(), Matchers.hasSize(1));
@@ -94,7 +138,7 @@ public class ReagentKitTransferTest {
         MatcherAssert.assertThat(sourceMap.getBarcode(), Matchers.equalTo(denatureRackBarcode));
         MatcherAssert.assertThat(sourceMap.getReceptacle(), Matchers.hasSize(8));
         for (ReceptacleType receptacle : transferEventType.getSourcePositionMap().get(0).getReceptacle()) {
-            MatcherAssert.assertThat(sourceBarcodes.keySet(), Matchers.hasItem(receptacle.getBarcode()));
+            MatcherAssert.assertThat(sourceBarcodeList, Matchers.hasItem(receptacle.getBarcode()));
         }
 
         // Test the created kit.

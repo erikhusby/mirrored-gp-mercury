@@ -42,6 +42,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressSheari
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.MiSeqReagentKitEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
 import org.easymock.EasyMock;
@@ -292,6 +293,15 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
                         qtpEntityBuilder.getDenatureRack(),
                         flowcellBarcode, "testPrefix", "designationName").invoke();
         // MiSeq reagent block transfer message
+        String mySeqReagentKitBarcode="MiSeqReagentKit"+new Date().getTime();
+
+        MiSeqReagentKitEntityBuilder miSeqReagentKitEntityBuilder =
+                new MiSeqReagentKitEntityBuilder(bettaLimsMessageTestFactory, labEventFactory,
+                        leHandler,
+                        qtpEntityBuilder.getDenatureRack(),
+                        mySeqReagentKitBarcode
+                ).invoke();
+
         // Register run
         IlluminaSequencingRunFactory illuminaSequencingRunFactory =
                 new IlluminaSequencingRunFactory(EasyMock.createNiceMock(JiraCommentUtil.class));
