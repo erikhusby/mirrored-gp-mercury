@@ -58,7 +58,7 @@ public class AddReworkActionBean extends CoreActionBean {
     private String vesselLabel;
 
     @Validate(required = true, on = REWORK_SAMPLE_ACTION)
-    private String reworkBarcode;
+    private String reworkCandidate;
 
     @Validate(required = true, on = REWORK_SAMPLE_ACTION)
     private String bucketName;
@@ -86,11 +86,13 @@ public class AddReworkActionBean extends CoreActionBean {
             reworkStep = LabEventType.SHEARING_BUCKET;
         }
 
+        ReworkEjb.ReworkCandidate candidate = ReworkEjb.ReworkCandidate.fromString(reworkCandidate);
+
         try {
             Collection<String> validationMessages =
-                    reworkEjb.addAndValidateRework(reworkBarcode, reworkReason, reworkStep, commentText,
+                    reworkEjb.addAndValidateRework(candidate.getTubeBarcode(), reworkReason, reworkStep, commentText,
                             WorkflowName.EXOME_EXPRESS.getWorkflowName());
-            addMessage("Vessel {0} has been added to the {1} bucket.", labVessel.getLabel(), bucketName);
+            addMessage("Vessel {0} has been added to the {1} bucket.", candidate.getTubeBarcode(), bucketName);
 
             if (CollectionUtils.isNotEmpty(validationMessages)) {
                 for (String validationMessage : validationMessages) {
@@ -103,7 +105,6 @@ public class AddReworkActionBean extends CoreActionBean {
             return view();
         }
 
-        addMessage("Vessel {0} has been added to the {1} bucket.", labVessel.getLabel(), bucketName);
         return new RedirectResolution(getClass());
     }
 
@@ -211,11 +212,11 @@ public class AddReworkActionBean extends CoreActionBean {
         return reworkCandidates;
     }
 
-    public String getReworkBarcode() {
-        return reworkBarcode;
+    public String getReworkCandidate() {
+        return reworkCandidate;
     }
 
-    public void setReworkBarcode(String reworkBarcode) {
-        this.reworkBarcode = reworkBarcode;
+    public void setReworkCandidate(String reworkCandidate) {
+        this.reworkCandidate = reworkCandidate;
     }
 }

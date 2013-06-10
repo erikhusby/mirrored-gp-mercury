@@ -259,6 +259,10 @@ public class ReworkEjb {
 
         LabVessel reworkVessel = labVesselDao.findByIdentifier(labVesselBarcode);
 
+        if (reworkVessel == null) {
+            // TODO: call MercuryClientEjb.createInitialVessels
+        }
+
         List<MercurySample> reworks = new ArrayList<>(
                 getVesselRapSheet(reworkVessel, reworkReason, ReworkEntry.ReworkLevel.ONE_SAMPLE_RELEASE_REST_BATCH,
                         reworkFromStep,
@@ -331,6 +335,7 @@ public class ReworkEjb {
         return validationMessages;
     }
 
+    // TODO: Only called from BatchToJiraTest. Can that be modified to use a method that is used by application code?
     public void addReworkToBatch(@Nonnull LabBatch batch, @Nonnull String labVesselBarcode,
                                  @Nonnull ReworkEntry.ReworkReason reworkReason,
                                  @Nonnull LabEventType reworkFromStep, @Nonnull String comment, String workflowName)
@@ -370,6 +375,12 @@ public class ReworkEjb {
         private LabVessel labVessel;
         private List<String> validationMessages = new ArrayList<>();
 
+        ReworkCandidate(@Nonnull String sampleKey, @Nonnull String productOrderKey, @Nonnull String tubeBarcode) {
+            this.sampleKey = sampleKey;
+            this.productOrderKey = productOrderKey;
+            this.tubeBarcode = tubeBarcode;
+        }
+
         public ReworkCandidate(@Nonnull String sampleKey, @Nonnull String productOrderKey, @Nonnull String tubeBarcode,
                                ProductOrder productOrder, LabVessel labVessel) {
             this.sampleKey = sampleKey;
@@ -405,6 +416,19 @@ public class ReworkEjb {
 
         public boolean isValid() {
             return validationMessages.isEmpty();
+        }
+
+        @Override
+        public String toString() {
+            return String.format("%s|%s|%s", tubeBarcode, sampleKey, productOrderKey);
+        }
+
+        public static ReworkCandidate fromString(String s) {
+            String[] parts = s.split("\\|");
+            String tubeBarcode = parts[0];
+            String sampleKey = parts[1];
+            String productOrderKey = parts[2];
+            return new ReworkCandidate(sampleKey, productOrderKey, tubeBarcode);
         }
     }
 }
