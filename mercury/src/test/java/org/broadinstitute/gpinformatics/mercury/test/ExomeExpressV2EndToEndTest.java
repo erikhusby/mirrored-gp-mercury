@@ -295,10 +295,17 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
         // MiSeq reagent block transfer message
         String mySeqReagentKitBarcode="MiSeqReagentKit"+new Date().getTime();
 
+        Map<String,TwoDBarcodedTube> tubeMap = new HashMap<>();
+        final String denatureBarcode = qtpEntityBuilder.getDenatureRack().getLabel();
+        tubeMap.put(denatureBarcode,new TwoDBarcodedTube(denatureBarcode));
+        Map<String,String> tubePositionMap= new HashMap<>();
+        tubePositionMap.put(denatureBarcode, "A01");
+        TubeFormation denatureRack = buildTubeFormation(tubeMap,denatureBarcode,tubePositionMap);
+
         MiSeqReagentKitEntityBuilder miSeqReagentKitEntityBuilder =
                 new MiSeqReagentKitEntityBuilder(bettaLimsMessageTestFactory, labEventFactory,
                         leHandler,
-                        qtpEntityBuilder.getDenatureRack(),
+                        denatureRack,
                         mySeqReagentKitBarcode
                 ).invoke();
 
@@ -346,7 +353,7 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
                 twoDBarcodedTube = new TwoDBarcodedTube(tubeEntry.getValue());
                 mapBarcodeToTubes.put(tubeEntry.getValue(), twoDBarcodedTube);
             }
-            mapPositionToTube.put(VesselPosition.getByName(tubeEntry.getKey()), twoDBarcodedTube);
+            mapPositionToTube.put(VesselPosition.getByName(tubeEntry.getValue()), twoDBarcodedTube);
         }
         TubeFormation formation = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
 

@@ -534,10 +534,10 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
          // Strip Tube B Transfer  (Rack to Strip tube)
         String stripTubeHolderBarcode = "StripTubeHolder" + testPrefix;
-        List<LabEventFactory.CherryPick> stripTubeCherryPicks =
-                new ArrayList<LabEventFactory.CherryPick>();
+        List<BettaLimsMessageTestFactory.CherryPick> stripTubeCherryPicks =
+                new ArrayList<BettaLimsMessageTestFactory.CherryPick>();
         for (int rackPosition = 0; rackPosition < 8; rackPosition++) {
-            stripTubeCherryPicks.add(new LabEventFactory.CherryPick(pondRegJaxb.getPlate().getBarcode(), "A01",
+            stripTubeCherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(pondRegJaxb.getPlate().getBarcode(), "A01",
                                                                                    stripTubeHolderBarcode,
                                                                                    Character.toString(
                                                                                                              (char) ('A' + rackPosition)) + "01"));
@@ -657,10 +657,10 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
          // Strip Tube B Transfer  (Rack to Strip tube)
         String stripTubeHolderBarcode = "StripTubeHolder" + testPrefix;
-        List<LabEventFactory.CherryPick> stripTubeCherryPicks =
-                new ArrayList<LabEventFactory.CherryPick>();
+        List<BettaLimsMessageTestFactory.CherryPick> stripTubeCherryPicks =
+                new ArrayList<BettaLimsMessageTestFactory.CherryPick>();
         for (int rackPosition = 0; rackPosition < 8; rackPosition++) {
-            stripTubeCherryPicks.add(new LabEventFactory.CherryPick(pondRegJaxb.getPlate().getBarcode(), "A01",
+            stripTubeCherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(pondRegJaxb.getPlate().getBarcode(), "A01",
                                                                                    stripTubeHolderBarcode,
                                                                                    Character.toString(
                                                                                                              (char) ('A' + rackPosition)) + "01"));
@@ -800,10 +800,10 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
          // Strip Tube B Transfer  (Rack to Strip tube)
         String stripTubeHolderBarcode = "StripTubeHolder" + testPrefix;
-        List<LabEventFactory.CherryPick> stripTubeCherryPicks =
-                new ArrayList<LabEventFactory.CherryPick>();
+        List<BettaLimsMessageTestFactory.CherryPick> stripTubeCherryPicks =
+                new ArrayList<BettaLimsMessageTestFactory.CherryPick>();
         for (int rackPosition = 0; rackPosition < 8; rackPosition++) {
-            stripTubeCherryPicks.add(new LabEventFactory.CherryPick(pondRegJaxb.getPlate().getBarcode(), "A01",
+            stripTubeCherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(pondRegJaxb.getPlate().getBarcode(), "A01",
                                                                                    stripTubeHolderBarcode,
                                                                                    Character.toString(
                                                                                                              (char) ('A' + rackPosition)) + "01"));
