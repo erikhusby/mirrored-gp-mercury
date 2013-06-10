@@ -16,14 +16,17 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.CherryPickSo
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.RackOfTubesDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MiSeqReagentKit;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
@@ -126,6 +129,34 @@ public class VesselTransferBean {
 
         bettaLIMSMessage.getPlateCherryPickEvent().add(transferEvent);
         return bettaLIMSMessage;
+    }
+
+    public ReceptaclePlateTransferEvent buildDenatureTubeToFlowcell(String eventType, String denatureTubeBarcode,
+                                                                    String flowcellBarcode, String username) {
+        ReceptaclePlateTransferEvent event = new ReceptaclePlateTransferEvent();
+        event.setEventType(eventType);
+        GregorianCalendar gregorianCalendar = new GregorianCalendar();
+        try {
+            event.setStart(DatatypeFactory.newInstance().newXMLGregorianCalendar(gregorianCalendar));
+        } catch (DatatypeConfigurationException e) {
+            throw new RuntimeException(e);
+        }
+        event.setDisambiguator(1L);
+        event.setOperator(username);
+        event.setStation("UI");
+
+        ReceptacleType denatureTube = new ReceptacleType();
+        denatureTube.setBarcode(denatureTubeBarcode);
+        denatureTube.setReceptacleType("tube");
+        event.setSourceReceptacle(denatureTube);
+
+        PlateType flowcell = new PlateType();
+        flowcell.setBarcode(flowcellBarcode);
+        flowcell.setPhysType(IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell.getAutomationName());
+        flowcell.setSection(SBSSection.ALL2.getSectionName());
+        event.setDestinationPlate(flowcell);
+
+        return event;
     }
 
     private PlateType buildReagentKit(String reagentKitBarcode) {

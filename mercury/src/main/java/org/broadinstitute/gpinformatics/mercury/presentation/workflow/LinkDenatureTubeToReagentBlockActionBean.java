@@ -9,20 +9,15 @@ import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
-import org.broadinstitute.gpinformatics.mercury.boundary.labevent.VesselTransferBean;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
-import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.Map;
 
 @UrlBinding("/workflow/LinkDenatureTubeToReagentBlock.action")
 public class LinkDenatureTubeToReagentBlockActionBean extends LinkDenatureTubeCoreActionBean {
     private static String VIEW_PAGE = "/workflow/link_dtube_to_rb.jsp";
-
-    @Inject
-    VesselTransferBean vesselTransferBean;
 
     @Validate(required = true, on = SAVE_ACTION)
     private String reagentBlockBarcode;
@@ -44,23 +39,23 @@ public class LinkDenatureTubeToReagentBlockActionBean extends LinkDenatureTubeCo
     @HandlesEvent(SAVE_ACTION)
     public Resolution save() {
         Map<String, VesselPosition> denatureMap = new HashMap<>();
-        denatureMap.put(getDenatureTubeBarcode(), VesselPosition.A01);
+        denatureMap.put(denatureTubeBarcode, VesselPosition.A01);
 
         BettaLIMSMessage bettaLIMSMessage = vesselTransferBean
                 .denatureToReagentKitTransfer(null, denatureMap, reagentBlockBarcode,
                         getUserBean().getLoginUserName(), "UI");
-        getBettalimsMessageResource().processMessage(bettaLIMSMessage);
+        bettalimsMessageResource.processMessage(bettaLIMSMessage);
 
-        addMessage("Denature Tube {0} associated with Reagent Block {1}", getDenatureTubeBarcode(),
+        addMessage("Denature Tube {0} associated with Reagent Block {1}", denatureTubeBarcode,
                 reagentBlockBarcode);
         return new RedirectResolution(VIEW_PAGE);
     }
 
     @ValidationMethod(on = SAVE_ACTION)
     public void validateData() {
-        setDenatureTube((TwoDBarcodedTube) getLabVesselDao().findByIdentifier(getDenatureTubeBarcode()));
+        setDenatureTube((TwoDBarcodedTube) labVesselDao.findByIdentifier(denatureTubeBarcode));
         if (getDenatureTube() == null) {
-            addValidationError("denatureTubeBarcode", "Could not find denature tube {0}", getDenatureTubeBarcode());
+            addValidationError("denatureTubeBarcode", "Could not find denature tube {0}", denatureTubeBarcode);
         }
     }
 

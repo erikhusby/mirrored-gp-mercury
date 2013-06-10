@@ -7,6 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettalimsMessageResource;
+import org.broadinstitute.gpinformatics.mercury.boundary.labevent.VesselTransferBean;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -17,23 +18,18 @@ import javax.inject.Inject;
 
 public class LinkDenatureTubeCoreActionBean extends CoreActionBean {
     @Inject
-    private LabVesselDao labVesselDao;
+    protected LabVesselDao labVesselDao;
     @Inject
-    private AthenaClientService athenaClientService;
+    protected AthenaClientService athenaClientService;
     @Inject
-    private BettalimsMessageResource bettalimsMessageResource;
+    protected BettalimsMessageResource bettalimsMessageResource;
+    @Inject
+    protected VesselTransferBean vesselTransferBean;
+
     @Validate(required = true, on = SAVE_ACTION)
-    private String denatureTubeBarcode;
+    protected String denatureTubeBarcode;
     private TwoDBarcodedTube denatureTube;
-    private String workflowName;
-
-    public String getDenatureTubeBarcode() {
-        return denatureTubeBarcode;
-    }
-
-    public void setDenatureTubeBarcode(String denatureTubeBarcode) {
-        this.denatureTubeBarcode = denatureTubeBarcode;
-    }
+    protected String workflowName;
 
     public LabVessel getDenatureTube() {
         if (denatureTube == null && !denatureTubeBarcode.isEmpty()) {
@@ -48,22 +44,6 @@ public class LinkDenatureTubeCoreActionBean extends CoreActionBean {
 
     public String getWorkflowName() {
         return workflowName;
-    }
-
-    public void setWorkflowName(String workflowName) {
-        this.workflowName = workflowName;
-    }
-
-    public LabVesselDao getLabVesselDao() {
-        return labVesselDao;
-    }
-
-    public AthenaClientService getAthenaClientService() {
-        return athenaClientService;
-    }
-
-    public BettalimsMessageResource getBettalimsMessageResource() {
-        return bettalimsMessageResource;
     }
 
     @HandlesEvent("denatureInfo")
