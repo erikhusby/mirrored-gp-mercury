@@ -47,15 +47,15 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
         }
 
         // Check to see if BSP is supported before trying to get data.
-        if (sampleIDs.isEmpty() || AbstractConfig.isSupported(bspConfig)) {
+        if (sampleIDs.isEmpty() || !AbstractConfig.isSupported(bspConfig)) {
             return Collections.emptyList();
         }
 
-        final List<Map<BSPSampleSearchColumn, String>> ret = new ArrayList<Map<BSPSampleSearchColumn, String>>();
+        final List<Map<BSPSampleSearchColumn, String>> ret = new ArrayList<>();
 
         String urlString = bspConfig.getWSUrl(SEARCH_RUN_SAMPLE_SEARCH);
 
-        List<String> parameters = new ArrayList<String>();
+        List<String> parameters = new ArrayList<>();
 
         try {
             for (BSPSampleSearchColumn column : queryColumns) {
@@ -69,7 +69,7 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
             post(urlString, parameterString, ExtraTab.TRUE, new PostCallback() {
                 @Override
                 public void callback(String[] bspData) {
-                    Map<BSPSampleSearchColumn, String> newMap = new HashMap<BSPSampleSearchColumn, String>();
+                    Map<BSPSampleSearchColumn, String> newMap = new HashMap<>();
 
                     // It turns out that BSP truncates the rest of the columns, if there are no more values, which
                     // is consistent with what Excel does, so it probably comes from that. SO, need to make all
