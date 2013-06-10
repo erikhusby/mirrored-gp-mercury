@@ -8,8 +8,8 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidationMethod;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.VesselTransferBean;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
@@ -45,9 +45,11 @@ public class LinkDenatureTubeToReagentBlockActionBean extends LinkDenatureTubeCo
     public Resolution save() {
         Map<String, VesselPosition> denatureMap = new HashMap<>();
         denatureMap.put(getDenatureTubeBarcode(), VesselPosition.A01);
-        LabEvent transferEventType = vesselTransferBean
+
+        BettaLIMSMessage bettaLIMSMessage = vesselTransferBean
                 .denatureToReagentKitTransfer(null, denatureMap, reagentBlockBarcode,
                         getUserBean().getLoginUserName(), "UI");
+        getBettalimsMessageResource().processMessage(bettaLIMSMessage);
 
         addMessage("Denature Tube {0} associated with Reagent Block {1}", getDenatureTubeBarcode(),
                 reagentBlockBarcode);

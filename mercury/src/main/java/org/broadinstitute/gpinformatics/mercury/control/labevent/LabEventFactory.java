@@ -96,6 +96,10 @@ public class LabEventFactory implements Serializable {
      */
     public static final String PHYS_TYPE_FLOWCELL = "Flowcell";
     /**
+     * Physical type for a MiSeq reagent block.
+     */
+    public static final String PHYS_TYPE_REAGENT_BLOCK = "MiseqReagentKit";
+    /**
      * Pattern that groups non-zero trailing digits
      */
     private static final Pattern LEADING_ZERO_PATTERN = Pattern.compile("^0+(?!$)");
@@ -379,7 +383,7 @@ public class LabEventFactory implements Serializable {
             Map<String, StripTube> mapBarcodeToTargetStripTube = new HashMap<String, StripTube>();
             labEvent = buildCherryPickRackToStripTubeDbFree(plateCherryPickEvent, mapBarcodeToSourceTubeFormation,
                     mapBarcodeToSourceTube, null, mapBarcodeToTargetStripTube, mapBarcodeToSourceRackOfTubes);
-        } else if (plateCherryPickEvent.getPlate().getPhysType().equals(StaticPlate.PlateType.MiSeqReagentKit)) {
+        } else if (plateCherryPickEvent.getPlate().getPhysType().equals(PHYS_TYPE_REAGENT_BLOCK)) {
             labEvent = buildCherryPickRackToReagentKitDbFree(plateCherryPickEvent, mapBarcodeToSourceTubeFormation,
                     mapBarcodeToSourceRackOfTubes, mapBarcodeToSourceTube);
 
