@@ -12,6 +12,10 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePl
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.MiSeqReagentKit;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -19,8 +23,10 @@ import javax.xml.bind.Marshaller;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.GregorianCalendar;
 import java.util.List;
+import java.util.Map;
 
 /**
  * This class is a factory for BettaLIMSMessage JAXB objects.  It is intended to facilitate building messages in test cases.
@@ -93,11 +99,13 @@ public class BettaLimsMessageTestFactory {
     public void advanceTime() {
         // The Mercury constraint has millisecond resolution, but the Squid equivalent has second resolution, so to
         // allow cross system testing we advance by 1 second.
-        time+=1000L;
+        time += 1000L;
     }
 
     public enum WellNameType {
-        LONG, /** long form of well name, e.g. A01 */
+        LONG, /**
+         * long form of well name, e.g. A01
+         */
         SHORT /** short form of well name, e.g. A1 */
     }
 
@@ -216,39 +224,57 @@ public class BettaLimsMessageTestFactory {
         return receptacleEventType;
     }
 
-    public static class CherryPick {
-        private final String sourceRackBarcode;
-        private final String sourceWell;
-        private final String destinationRackBarcode;
-        private final String destinationWell;
 
-        public CherryPick(String sourceRackBarcode, String sourceWell, String destinationRackBarcode, String destinationWell) {
-            this.sourceRackBarcode = sourceRackBarcode;
-            this.sourceWell = sourceWell;
-            this.destinationRackBarcode = destinationRackBarcode;
-            this.destinationWell = destinationWell;
+    /**
+     * Create a PlateCherryPickEvent for transferring from a rack of tubes to a ReagentKit.
+     *
+     * @param eventType                     Event type of transfer
+     * @param mapBarcodeToSourceRackOfTubes map from target rack barcode to RackOfTubes entities;
+     *                                      newly created RackOfTubes will NOT be added to this map
+     * @param mapBarcodeToSourceTube        map from source tube barcode to TwoDBarcodedTube entities;
+     *                                      newly created TwoDBarcodedTubes will be added to this this map
+     *
+     * @return the LabEvent object
+     */
+    public PlateCherryPickEvent buildCherryPickToReagentKit(java.lang.String eventType,
+                                                            Map<String, RackOfTubes> mapBarcodeToSourceRackOfTubes,
+                                                            Map<String, TwoDBarcodedTube> mapBarcodeToSourceTube,
+                                                            String reagentKitBarcode) {
+        PlateCherryPickEvent stationEvent = new PlateCherryPickEvent();
+
+
+        setStationEventData(eventType, stationEvent);
+
+        List<String> sourceRackBarcodes = new ArrayList<>(mapBarcodeToSourceRackOfTubes.keySet());
+        List<String> sourceTubeBarcodes = new ArrayList<>(mapBarcodeToSourceTube.keySet());
+        for (String sourceRackBarcode : sourceRackBarcodes) {
+            stationEvent.getSourcePlate().add(buildRack(sourceRackBarcode));
+            stationEvent.getSourcePositionMap()
+                    .add(buildPositionMap(sourceRackBarcode, sourceTubeBarcodes));
+            PositionMapType positionMap = new PositionMapType();
+            for (String sourceBarcode : sourceTubeBarcodes) {
+                ReceptacleType receptacleType = new ReceptacleType();
+                receptacleType.setBarcode(sourceBarcode);
+                receptacleType.setPosition(VesselPosition.A01.name());
+                receptacleType.setReceptacleType("tube");
+                positionMap.getReceptacle().add(receptacleType);
+                stationEvent.setPositionMap(positionMap);
+            }
         }
 
-        public String getSourceRackBarcode() {
-            return sourceRackBarcode;
-        }
+        PlateType kit = new PlateType();
+        kit.setBarcode(reagentKitBarcode);
+        kit.setPhysType(MiSeqReagentKit.PlateType.MiSeqReagentKit.getDisplayName());
+        kit.setSection(MiSeqReagentKit.LOADING_WELL.name());
+        stationEvent.setPlate(kit);
 
-        public String getSourceWell() {
-            return sourceWell;
-        }
-
-        public String getDestinationRackBarcode() {
-            return destinationRackBarcode;
-        }
-
-        public String getDestinationWell() {
-            return destinationWell;
-        }
+        return stationEvent;
     }
 
     public PlateCherryPickEvent buildCherryPick(String eventType, List<String> sourceRackBarcodes,
-            List<List<String>> sourceTubeBarcodes, String targetRackBarcode, List<String> targetTubeBarcodes,
-            List<CherryPick> cherryPicks) {
+                                                List<List<String>> sourceTubeBarcodes, String targetRackBarcode,
+                                                List<String> targetTubeBarcodes,
+                                                List<CherryPick> cherryPicks) {
         PlateCherryPickEvent plateCherryPickEvent = new PlateCherryPickEvent();
         setStationEventData(eventType, plateCherryPickEvent);
 
@@ -257,7 +283,8 @@ public class BettaLimsMessageTestFactory {
         }
         for (int i = 0, sourceTubeBarcodesSize = sourceTubeBarcodes.size(); i < sourceTubeBarcodesSize; i++) {
             List<String> sourceTubeBarcode = sourceTubeBarcodes.get(i);
-            plateCherryPickEvent.getSourcePositionMap().add(buildPositionMap(sourceRackBarcodes.get(i), sourceTubeBarcode));
+            plateCherryPickEvent.getSourcePositionMap()
+                    .add(buildPositionMap(sourceRackBarcodes.get(i), sourceTubeBarcode));
         }
 
         plateCherryPickEvent.setPlate(buildRack(targetRackBarcode));
@@ -286,7 +313,8 @@ public class BettaLimsMessageTestFactory {
         }
         for (int i = 0, sourceTubeBarcodesSize = sourceTubeBarcodes.size(); i < sourceTubeBarcodesSize; i++) {
             List<String> sourceTubeBarcode = sourceTubeBarcodes.get(i);
-            plateCherryPickEvent.getSourcePositionMap().add(buildPositionMap(sourceRackBarcodes.get(i), sourceTubeBarcode));
+            plateCherryPickEvent.getSourcePositionMap().add(
+                    buildPositionMap(sourceRackBarcodes.get(i), sourceTubeBarcode));
         }
 
         PlateType targetRack = new PlateType();
@@ -433,5 +461,35 @@ public class BettaLimsMessageTestFactory {
         receptacleType.setPosition(buildWellName(rackPosition, WellNameType.SHORT));
         receptacleType.setReceptacleType("tube");
         targetPositionMap.getReceptacle().add(receptacleType);
+    }
+
+    public static class CherryPick {
+        private final String sourceRackBarcode;
+        private final String sourceWell;
+        private final String destinationRackBarcode;
+        private final String destinationWell;
+
+        public CherryPick(String sourceRackBarcode, String sourceWell, String destinationRackBarcode, String destinationWell) {
+            this.sourceRackBarcode = sourceRackBarcode;
+            this.sourceWell = sourceWell;
+            this.destinationRackBarcode = destinationRackBarcode;
+            this.destinationWell = destinationWell;
+        }
+
+        public String getSourceRackBarcode() {
+            return sourceRackBarcode;
+        }
+
+        public String getSourceWell() {
+            return sourceWell;
+        }
+
+        public String getDestinationRackBarcode() {
+            return destinationRackBarcode;
+        }
+
+        public String getDestinationWell() {
+            return destinationWell;
+        }
     }
 }

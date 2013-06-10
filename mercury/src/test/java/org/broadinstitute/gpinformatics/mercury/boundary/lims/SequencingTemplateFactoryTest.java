@@ -4,6 +4,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.MiSeqReagentKit;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselAndPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
@@ -23,6 +25,7 @@ import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
 import static org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType.DENATURE_TO_FLOWCELL_TRANSFER;
+import static org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType.DENATURE_TO_REAGENT_KIT_TRANSFER;
 import static org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell;
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection.ALL2;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -40,30 +43,38 @@ public class SequencingTemplateFactoryTest {
     private SequencingTemplateFactory factory = null;
     private TwoDBarcodedTube denatureTube = null;
     private IlluminaFlowcell flowcell = null;
-
+    private MiSeqReagentKit reagentKit = null;
     @BeforeTest
     public void setUp() {
         factory = new SequencingTemplateFactory();
         denatureTube = new TwoDBarcodedTube("denature_tube_barcode");
         denatureTube.addSample(new MercurySample("SM-1"));
-        flowcell = new IlluminaFlowcell(HiSeq2500Flowcell, "flowcell_barcode");
-        LabEvent event = new LabEvent(DENATURE_TO_FLOWCELL_TRANSFER, new Date(),
-                "SequencingTemplateFactoryTest#testGetSequencingTemplate", 1L, 1L);
-        event.getVesselToSectionTransfers()
-                .add(new VesselToSectionTransfer(denatureTube, ALL2, flowcell.getContainerRole(), event));
 
+        flowcell = new IlluminaFlowcell(HiSeq2500Flowcell, "flowcell_barcode");
+        LabEvent denatureToFlowcellEvent = new LabEvent(DENATURE_TO_FLOWCELL_TRANSFER, new Date(),
+                "SequencingTemplateFactoryTest#testGetSequencingTemplate", 1L, 1L);
+        denatureToFlowcellEvent.getVesselToSectionTransfers()
+                .add(new VesselToSectionTransfer(denatureTube, ALL2, flowcell.getContainerRole(), denatureToFlowcellEvent));
+
+        reagentKit = new MiSeqReagentKit("reagent_kit_barcode");
+        LabEvent denatureToReagentKitEvent = new LabEvent(DENATURE_TO_REAGENT_KIT_TRANSFER, new Date(),
+                "ZLAB", 1L, 1L);
+        final  VesselToSectionTransfer sectionTransfer =
+                new VesselToSectionTransfer(denatureTube, SBSSection.getBySectionName(MiSeqReagentKit.LOADING_WELL.name()),
+                        reagentKit.getContainerRole(),denatureToReagentKitEvent);
+        denatureToReagentKitEvent.getVesselToSectionTransfers().add(sectionTransfer);
+    }
+
+    public void testGetSequencingTemplateFromReagentKit(){
+        SequencingTemplateType template = factory.getSequencingTemplate(reagentKit);
+        assertThat(template.getBarcode(), Matchers.nullValue());
+        assertThat(template.getLanes().size(), is(1));
+        assertThat(template.getLanes().get(0).getLaneName(), is("D04"));
+        assertThat(template.getLanes().get(0).getLoadingVesselLabel(), is("reagent_kit_barcode"));
     }
 
     public void testGetSequencingTemplate() {
-        denatureTube = new TwoDBarcodedTube("denature_tube_barcode");
-        denatureTube.addSample(new MercurySample("SM-1"));
-        flowcell = new IlluminaFlowcell(HiSeq2500Flowcell, "flowcell_barcode");
-        LabEvent event = new LabEvent(DENATURE_TO_FLOWCELL_TRANSFER, new Date(),
-                "SequencingTemplateFactoryTest#testGetSequencingTemplate", 1L, 1L);
-        event.getVesselToSectionTransfers()
-                .add(new VesselToSectionTransfer(denatureTube, ALL2, flowcell.getContainerRole(), event));
-
-        Set<VesselAndPosition> vesselsAndPositions = factory.getLoadingVesselsForFlowcell(flowcell);
+        Set<VesselAndPosition> vesselsAndPositions = factory.getLoadingVessels(flowcell);
         MatcherAssert.assertThat(vesselsAndPositions, not(Matchers.empty()));
         SequencingTemplateType template = factory.getSequencingTemplate(flowcell, vesselsAndPositions);
         assertThat(template.getBarcode(), equalTo("flowcell_barcode"));
@@ -79,7 +90,7 @@ public class SequencingTemplateFactoryTest {
     }
 
     public void testGetLoadingVesselsForFlowcell() {
-        Set<VesselAndPosition> vesselsAndPositions = factory.getLoadingVesselsForFlowcell(flowcell);
+        Set<VesselAndPosition> vesselsAndPositions = factory.getLoadingVessels(flowcell);
         MatcherAssert.assertThat(vesselsAndPositions, not(Matchers.empty()));
         final List<VesselPosition> vesselPositions = Arrays.asList(VesselPosition.LANE1, VesselPosition.LANE2);
 

@@ -42,6 +42,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressSheari
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.MiSeqReagentKitEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
 import org.easymock.EasyMock;
@@ -293,6 +294,22 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
                         qtpEntityBuilder.getDenatureRack(),
                         flowcellBarcode, "testPrefix", "designationName").invoke();
         // MiSeq reagent block transfer message
+        String mySeqReagentKitBarcode="MiSeqReagentKit"+new Date().getTime();
+
+        Map<String,TwoDBarcodedTube> tubeMap = new HashMap<>();
+        final String denatureBarcode = qtpEntityBuilder.getDenatureRack().getLabel();
+        tubeMap.put(denatureBarcode,new TwoDBarcodedTube(denatureBarcode));
+        Map<String,String> tubePositionMap= new HashMap<>();
+        tubePositionMap.put(denatureBarcode, "A01");
+        TubeFormation denatureRack = buildTubeFormation(tubeMap,denatureBarcode,tubePositionMap);
+
+        MiSeqReagentKitEntityBuilder miSeqReagentKitEntityBuilder =
+                new MiSeqReagentKitEntityBuilder(bettaLimsMessageTestFactory, labEventFactory,
+                        leHandler,
+                        denatureRack,
+                        mySeqReagentKitBarcode
+                ).invoke();
+
         // Register run
         IlluminaSequencingRunFactory illuminaSequencingRunFactory =
                 new IlluminaSequencingRunFactory(EasyMock.createNiceMock(JiraCommentUtil.class));
@@ -334,10 +351,10 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
         for (Map.Entry<String, String> tubeEntry : barcodeByPositionMap.entrySet()) {
             TwoDBarcodedTube twoDBarcodedTube = mapBarcodeToTubes.get(tubeEntry.getValue());
             if (twoDBarcodedTube == null) {
-                twoDBarcodedTube = new TwoDBarcodedTube(tubeEntry.getValue());
-                mapBarcodeToTubes.put(tubeEntry.getValue(), twoDBarcodedTube);
+                twoDBarcodedTube = new TwoDBarcodedTube(tubeEntry.getKey());
+                mapBarcodeToTubes.put(tubeEntry.getKey(), twoDBarcodedTube);
             }
-            mapPositionToTube.put(VesselPosition.getByName(tubeEntry.getKey()), twoDBarcodedTube);
+            mapPositionToTube.put(VesselPosition.getByName(tubeEntry.getValue()), twoDBarcodedTube);
         }
         TubeFormation formation = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
 

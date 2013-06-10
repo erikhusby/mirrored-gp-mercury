@@ -14,8 +14,10 @@ package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.MiSeqReagentKitDao;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.MiSeqReagentKit;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselAndPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateLaneType;
@@ -30,6 +32,8 @@ import java.util.Set;
 public class SequencingTemplateFactory {
     @Inject
     IlluminaFlowcellDao illuminaFlowcellDao;
+    @Inject
+    MiSeqReagentKitDao miSeqReagentKitDao;
 
     @Inject
     LabVesselDao labVesselDao;
@@ -75,23 +79,23 @@ public class SequencingTemplateFactory {
      */
     public SequencingTemplateType fetchSequencingTemplate(String id, QueryVesselType queryVesselType,
                                                           boolean isPoolTest) {
-        IlluminaFlowcell illuminaFlowcell;
+
         Set<VesselAndPosition> loadedVesselsAndPositions;
 
         switch (queryVesselType) {
         case FLOWCELL:
-            illuminaFlowcell = illuminaFlowcellDao.findByBarcode(id);
-            loadedVesselsAndPositions = getLoadingVesselsForFlowcell(illuminaFlowcell);
-            break;
-        // Only support for FLOWCELLs for now, so fall through and throw exception.
+            IlluminaFlowcell illuminaFlowcell = illuminaFlowcellDao.findByBarcode(id);
+            loadedVesselsAndPositions = getLoadingVessels(illuminaFlowcell);
+            return getSequencingTemplate(illuminaFlowcell, loadedVesselsAndPositions);
+        case MISEQ_REAGENT_KIT:
+            MiSeqReagentKit miSeqReagentKit = miSeqReagentKitDao.findByBarcode(id);
+            return getSequencingTemplate(miSeqReagentKit);
+            // Don't support the following for now, so fall through and throw exception.
         case TUBE:
         case STRIP_TUBE:
-        case MISEQ_REAGENT_KIT:
         default:
             throw new RuntimeException(String.format("Sequencing template unavailable for %s.", queryVesselType));
         }
-
-        return getSequencingTemplate(illuminaFlowcell, loadedVesselsAndPositions);
     }
 
     /**
@@ -102,7 +106,7 @@ public class SequencingTemplateFactory {
      * @return Map of VesselAndPosition representing what is loaded onto the flowcell
      */
     @DaoFree
-    public Set<VesselAndPosition> getLoadingVesselsForFlowcell(IlluminaFlowcell flowcell) {
+    public Set<VesselAndPosition> getLoadingVessels(IlluminaFlowcell flowcell) {
         Set<VesselAndPosition> loadedVesselsAndPositions = new HashSet<>();
         for (VesselPosition vesselPosition : flowcell.getVesselGeometry().getVesselPositions()) {
             for (LabVessel.VesselEvent vesselEvent : flowcell.getContainerRole().getAncestors(vesselPosition)) {
@@ -149,6 +153,29 @@ public class SequencingTemplateFactory {
         if (flowcell != null) {
             sequencingTemplate.setBarcode(flowcell.getLabel());
         }
+
+        return sequencingTemplate;
+    }
+    /**
+     * Populate a the sequencing template with lanes.
+     *
+     * @param miSeqReagentKit           the reagentKit we are querying.
+     *
+     * @return a populated Sequencing template
+     */
+    @DaoFree
+    public SequencingTemplateType getSequencingTemplate(MiSeqReagentKit miSeqReagentKit) {
+        SequencingTemplateType sequencingTemplate = new SequencingTemplateType();
+        List<SequencingTemplateLaneType> lanes = new ArrayList<>();
+
+        SequencingTemplateLaneType lane = new SequencingTemplateLaneType();
+        lane.setLaneName(MiSeqReagentKit.LOADING_WELL.name());
+        lane.setLoadingVesselLabel(miSeqReagentKit.getLabel());
+        final Float concentration = miSeqReagentKit.getConcentration();
+        if (concentration!=null) {
+            lane.setLoadingConcentration(concentration.doubleValue());
+        }
+        sequencingTemplate.getLanes().add(lane);
 
         return sequencingTemplate;
     }
