@@ -2,11 +2,20 @@ package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfiguration;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
-import javax.ejb.*;
+import javax.ejb.ConcurrencyManagement;
+import javax.ejb.ScheduleExpression;
+import javax.ejb.Singleton;
+import javax.ejb.Startup;
+import javax.ejb.Timeout;
+import javax.ejb.Timer;
+import javax.ejb.TimerConfig;
+import javax.ejb.TimerService;
 import javax.inject.Inject;
 import java.util.Date;
 
@@ -21,6 +30,9 @@ import static javax.ejb.ConcurrencyManagementType.BEAN;
 @ConcurrencyManagement(BEAN)
 public class ExtractTransformRunner {
     private static final Log log = LogFactory.getLog(ExtractTransform.class);
+
+    @Inject
+    private Deployment deployment;
 
     /**
      * Interval in minutes for the timer to fire off.
@@ -37,13 +49,20 @@ public class ExtractTransformRunner {
 
     @PostConstruct
     public void initialize() {
-        if (isEnabled()) {
-            ScheduleExpression expression = new ScheduleExpression();
-            expression.minute("*/" + timerPeriod).hour("*");
-            timerService.createCalendarTimer(expression, new TimerConfig("ETL timer", false));
-        }
+        ScheduleExpression expression = new ScheduleExpression();
+        expression.minute("*/" + timerPeriod).hour("*");
+        timerService.createCalendarTimer(expression, new TimerConfig("ETL timer", false));
     }
 
+    /**
+     * This method does all the work -- it gets called at every interval defined by the timerPeriod.  The check for the
+     * isEnabled() is done here instead of the initialize() is simply because YAML needs to get a servlet or file
+     * protocol handler.
+     *
+     * @see {@link AbstractConfig}
+     *
+     * @param timer the defined {@Timer}
+     */
     @Timeout
     void scheduledEtl(Timer timer) {
         if (isEnabled()) {
@@ -54,22 +73,20 @@ public class ExtractTransformRunner {
                 extractTransform.initConfig();
                 extractTransform.incrementalEtl("0", "0");
             } else {
-                log.debug("Skipping ETL timer retry.");
+                log.trace("Skipping ETL timer retry");
             }
         }
     }
 
     /**
-     * Iterate through a list of different reasons why the ETL should not be running.  Currently the only instance
-     * where it should not run is for the CRSP deployment.
+     * Check Mercury configuration in the YAML file and see if the Data Warehouse system is enabled for this
+     * environment.  If it is not, then the configuration will be null.
      *
      * @return true if it's an environment where ETL should be run
      */
     private boolean isEnabled() {
-        if (Deployment.isCRSP) {
-            return false;
-        }
-
-        return true;
+        // Can't use @Inject for this object or we'll run into VFS protocol errors.
+        EtlConfig etlConfig = (EtlConfig) MercuryConfiguration.getInstance().getConfig(EtlConfig.class, deployment);
+        return AbstractConfig.isSupported(etlConfig);
     }
 }

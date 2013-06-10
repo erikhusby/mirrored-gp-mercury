@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
@@ -170,6 +171,8 @@ public class ProductOrderTest {
         List<ProductOrderSample> notBilledSamples = ProductOrderSampleTestFactory.createDBFreeSampleList("ZZZ", "YYY");
         List<ProductOrderSample> atLeastOneNotBilled = Arrays.asList(ProductOrderSampleTest.createBilledSample("ABC"),
                 new ProductOrderSample("ZZZ"));
+        List<ProductOrderSample> billedToAddOnSamples = Arrays.asList(ProductOrderSampleTest.createBilledSample("ABC"),
+                ProductOrderSampleTest.createBilledSample("ZZZ", LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM));
         return new Object[][] {
                 // Can't transition from Draft or Abandoned, regardless of the sample state.
                 {createOrderWithSamples(billedSamples, OrderStatus.Draft), false, OrderStatus.Draft},
@@ -186,6 +189,9 @@ public class ProductOrderTest {
                 // If at least one is not billed, transition to Submitted.
                 {createOrderWithSamples(atLeastOneNotBilled, OrderStatus.Submitted), false, OrderStatus.Submitted},
                 {createOrderWithSamples(atLeastOneNotBilled, OrderStatus.Completed), true, OrderStatus.Submitted},
+                // Sample is billed to add-on price item, should treat as unbilled and transition to Submitted.
+                {createOrderWithSamples(billedToAddOnSamples, OrderStatus.Submitted), false, OrderStatus.Submitted},
+                {createOrderWithSamples(billedToAddOnSamples, OrderStatus.Completed), true, OrderStatus.Submitted},
         };
     }
 

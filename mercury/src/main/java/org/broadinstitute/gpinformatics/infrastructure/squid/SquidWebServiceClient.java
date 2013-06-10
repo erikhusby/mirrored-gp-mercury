@@ -2,16 +2,16 @@ package org.broadinstitute.gpinformatics.infrastructure.squid;
 
 import org.broadinstitute.gpinformatics.infrastructure.AbstractWebServiceClient;
 
-
 /**
- * Convenience class for calling into Squid Web Services
+ * Convenience class for calling into Squid Web Services.
  *
  * @param <T> service port type
  */
 public abstract class SquidWebServiceClient<T> extends AbstractWebServiceClient<T> {
+    protected abstract SquidConfig getSquidConfig();
 
     /**
-     * a tiny bit of syntactic sugar to make it clear we're invoking a webservice on Squid
+     * A tiny bit of syntactic sugar to make it clear we're invoking a webservice on Squid.
      *
      * @return service port
      */
@@ -19,12 +19,13 @@ public abstract class SquidWebServiceClient<T> extends AbstractWebServiceClient<
         return wsCall();
     }
 
-
-    protected abstract SquidConfig getSquidConfig();
-
-
     @Override
     protected String getBaseUrl() {
-        return getSquidConfig().getUrl();
+        SquidConfig squidConfig = getSquidConfig();
+        if (squidConfig == null) {
+            return null;
+        }
+
+        return squidConfig.getUrl();
     }
 }

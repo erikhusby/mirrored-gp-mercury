@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
-
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 
 import javax.enterprise.context.SessionScoped;
@@ -13,10 +12,8 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.STUBBY;
 
 public class BSPSampleSearchServiceProducer {
-
     @Inject
     private Deployment deployment;
-
 
     @Produces
     @Default
@@ -34,7 +31,6 @@ public class BSPSampleSearchServiceProducer {
         return new BSPSampleSearchServiceStub();
     }
 
-
     /**
      * Creates a BSPSampleSearchService with plain old new operator for container-free testing,
      * not a managed bean!
@@ -43,9 +39,7 @@ public class BSPSampleSearchServiceProducer {
      * injection will give you a Stub BSP service, not an Impl.
      */
     public static BSPSampleSearchService testInstance() {
-
         BSPConfig bspConfig = BSPConfig.produce(DEV);
-
         return new BSPSampleSearchServiceImpl(bspConfig);
     }
 }

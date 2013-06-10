@@ -5,6 +5,7 @@ import com.sun.jersey.api.client.config.ClientConfig;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
 
 import javax.annotation.Nonnull;
@@ -106,7 +107,7 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
     }
 
     /**
-     * There is much copying and pasting of code from BSPSampleSearchServiceImpl into here, a refactoring is needed
+     * There is much copying and pasting of code from BSPSampleSearchServiceImpl into here -- a refactoring is needed.
      *
      * @param bspSampleDTOs BSP DTOs whose sampleID field will be referenced for the barcode value, and which will
      *                      be filled with the ffpeDerived value returned by the FFPE webservice
@@ -121,22 +122,25 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
             barcodeToDTOMap.put(bspSampleDTO.getSampleId(), bspSampleDTO);
         }
 
-        String urlString = bspConfig.getWSUrl(WS_FFPE_DERIVED);
-        String queryString = "barcodes=" + StringUtils.join(barcodeToDTOMap.keySet(), "&barcodes=");
-        final int SAMPLE_BARCODE = 0;
-        final int FFPE = 1;
+        // Check to see if BSP is supported before trying to get data.
+        if (AbstractConfig.isSupported(bspConfig)) {
+            String urlString = bspConfig.getWSUrl(WS_FFPE_DERIVED);
+            String queryString = "barcodes=" + StringUtils.join(barcodeToDTOMap.keySet(), "&barcodes=");
+            final int SAMPLE_BARCODE = 0;
+            final int FFPE = 1;
 
-        post(urlString, queryString, ExtraTab.FALSE, new PostCallback() {
-            @Override
-            public void callback(String[] bspOutput) {
-                BSPSampleDTO bspSampleDTO = barcodeToDTOMap.get(bspOutput[SAMPLE_BARCODE]);
-                if (bspSampleDTO == null) {
-                    throw new RuntimeException("Unrecognized return barcode: " + bspOutput[SAMPLE_BARCODE]);
+            post(urlString, queryString, ExtraTab.FALSE, new PostCallback() {
+                @Override
+                public void callback(String[] bspOutput) {
+                    BSPSampleDTO bspSampleDTO = barcodeToDTOMap.get(bspOutput[SAMPLE_BARCODE]);
+                    if (bspSampleDTO == null) {
+                        throw new RuntimeException("Unrecognized return barcode: " + bspOutput[SAMPLE_BARCODE]);
+                    }
+
+                    bspSampleDTO.setFfpeStatus(Boolean.valueOf(bspOutput[FFPE]));
                 }
-
-                bspSampleDTO.setFfpeStatus(Boolean.valueOf(bspOutput[FFPE]));
-            }
-        });
+            });
+        }
     }
 
     public void fetchSamplePlastic(@Nonnull Collection<BSPSampleDTO> bspSampleDTOs) {

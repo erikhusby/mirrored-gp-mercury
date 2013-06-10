@@ -21,7 +21,6 @@ import java.util.List;
 
 @Impl
 public class BSPManagerFactoryImpl implements BSPManagerFactory {
-
     @Inject
     private BSPConfig params;
 
@@ -29,17 +28,8 @@ public class BSPManagerFactoryImpl implements BSPManagerFactory {
         try {
             Constructor<?> constructor = clazz.getConstructor(String.class, Integer.class, String.class, String.class);
             return constructor.newInstance(params.getHost(), params.getPort(), params.getLogin(), params.getPassword());
-        } catch (SecurityException e) {
-            throw new RuntimeException(e);
-        } catch (NoSuchMethodException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalArgumentException e) {
-            throw new RuntimeException(e);
-        } catch (InstantiationException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        } catch (InvocationTargetException e) {
+        } catch (SecurityException | NoSuchMethodException | IllegalArgumentException | InstantiationException |
+                IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException(e);
         }
     }

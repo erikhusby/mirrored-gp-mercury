@@ -8,8 +8,8 @@ import java.net.URL;
 
 /**
  *
- * AbstractSquidWSConnector defines the generic set of steps necessary for the Mercury application to connect to a known
- * webservice port exposed by the Squid application.
+ * AbstractWebServiceClient defines the generic set of steps necessary for the Mercury application to connect to a known
+ * webservice port exposed by an application.
  *
  * Since the portTypes are generated and do not extend a common class or interface, we are able to share the logic
  * necessary for retrieving a desired port type utilizing Generics.
@@ -22,12 +22,9 @@ import java.net.URL;
  *         Time: 1:35 PM
  */
 public abstract class AbstractWebServiceClient<T> {
-
     private T servicePort;
 
-
     protected abstract String getBaseUrl();
-
 
     /**
      *
@@ -35,37 +32,32 @@ public abstract class AbstractWebServiceClient<T> {
      */
     protected abstract String getNameSpace();
 
-
     /**
      *
      * @return A String representing the Service name associated with the WebService for port type {@code T}
      */
     protected abstract String getServiceName();
 
-
     /**
      *
-     * @return A string representing the location, relative to the Squid base URL, of the WSDL for port type {@code T}
+     * @return A string representing the location, relative to the base URL, of the WSDL for port type {@code T}
      */
     protected abstract String getWsdlLocation();
 
     /**
-     *
-     * squidCall gives a client access to a Port type instance {@code T} defined by the Concrete class of
-     * AbstractSquidWSConnector
+     * wsCall gives a client access to a Port type instance {@code T} defined by the Concrete class.
      *
      * @return An instance of port type {@code T}.
      */
     public T wsCall() {
-
         initializePort();
         return servicePort;
     }
 
     /**
      * initializePort is a helper method to create a usable instance of port type {@code T}.  The instance is base on
-     * not only the port type defined by the Concrete implementation of AbstractSquidWSConnector but also the
-     * connection parameters defined by the concrete implementation
+     * not only the port type defined by the Concrete implementation of the class but also the connection parameters
+     * defined by the concrete implementation.
      */
     private void initializePort() {
         if (servicePort == null) {
@@ -89,5 +81,4 @@ public abstract class AbstractWebServiceClient<T> {
             servicePort = service.getPort(serviceName, typeArgument);
         }
     }
-
 }

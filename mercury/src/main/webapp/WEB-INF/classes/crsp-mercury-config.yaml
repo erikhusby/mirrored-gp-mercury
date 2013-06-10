@@ -231,6 +231,7 @@ mercury:
       deckMsgs: DEV
       datawhEtl: DEV
       bettaLimsServer: DEV
+      tableau:  NOT_SUPPORTED
       hipchat: DEV
 
 
@@ -246,6 +247,7 @@ mercury:
       deckMsgs: DEV
       datawhEtl: DEV
       bettaLimsServer: DEV
+      tableau:  NOT_SUPPORTED
       hipchat: DEV
 
 
@@ -261,6 +263,7 @@ mercury:
       deckMsgs: DEV
       datawhEtl: DEV
       bettaLimsServer: TEST
+      tableau:  NOT_SUPPORTED
       hipchat: DEV
 
 
@@ -276,6 +279,7 @@ mercury:
       deckMsgs: QA
       datawhEtl: QA
       bettaLimsServer: QA
+      tableau:  NOT_SUPPORTED
       hipchat: DEV
 
 
@@ -291,6 +295,7 @@ mercury:
       deckMsgs: QA
       datawhEtl: QA
       bettaLimsServer: QA
+      tableau:  NOT_SUPPORTED
       hipchat: DEV
 
 
@@ -306,4 +311,5 @@ mercury:
       deckMsgs: PROD
       datawhEtl: PROD
       bettaLimsServer: PROD
+      tableau:  NOT_SUPPORTED
       hipchat: PROD
