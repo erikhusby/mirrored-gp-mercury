@@ -16,6 +16,7 @@ public abstract class AbstractConfig {
     protected AbstractConfig(@Nonnull Deployment mercuryDeployment) {
         if (mercuryDeployment != Deployment.STUBBY) {
             AbstractConfig source = produce(getClass(), mercuryDeployment);
+            // Only get the properties if the configuration is supported.
             if (AbstractConfig.isSupported(source)) {
                 try {
                     BeanUtils.copyProperties(this, source);
@@ -52,7 +53,7 @@ public abstract class AbstractConfig {
      * Useful for debugging.
      */
     @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
-    private Deployment mercuryDeployment;
+    private final Deployment mercuryDeployment;
 
     public void setExternalDeployment(Deployment externalDeployment) {
         this.externalDeployment = externalDeployment;
@@ -63,6 +64,7 @@ public abstract class AbstractConfig {
      *
      * @param deployment Explicitly specified Mercury deployment.
      * @param <C> The type of the AbstractConfig-derived configuration class.
+     *
      * @return Appropriately configured AbstractConfig-derived instance.
      */
     protected static <C extends AbstractConfig> C produce(Class<C> clazz, Deployment deployment) {

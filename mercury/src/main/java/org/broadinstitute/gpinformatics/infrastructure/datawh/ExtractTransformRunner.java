@@ -37,7 +37,7 @@ public class ExtractTransformRunner {
     /**
      * Interval in minutes for the timer to fire off.
      */
-    private int timerPeriod = 2;
+    private int timerPeriod = 5;
 
     private static Date previousNextTimeout = new Date(0);
 

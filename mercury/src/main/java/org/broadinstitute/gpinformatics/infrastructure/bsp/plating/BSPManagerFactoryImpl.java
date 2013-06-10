@@ -10,7 +10,6 @@ import org.broadinstitute.bsp.client.users.UserManager;
 import org.broadinstitute.bsp.client.workrequest.BspWorkRequestManager;
 import org.broadinstitute.bsp.client.workrequest.WorkRequestManager;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 
@@ -22,25 +21,15 @@ import java.util.List;
 
 @Impl
 public class BSPManagerFactoryImpl implements BSPManagerFactory {
-
     @Inject
-    private BSPConfig bspConfig;
+    private BSPConfig params;
 
     private Object create(Class<?> clazz) {
         try {
             Constructor<?> constructor = clazz.getConstructor(String.class, Integer.class, String.class, String.class);
-            return constructor.newInstance(bspConfig.getHost(), bspConfig.getPort(), bspConfig.getLogin(), bspConfig.getPassword());
-        } catch (SecurityException e) {
-            throw new RuntimeException(e);
-        } catch (NoSuchMethodException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalArgumentException e) {
-            throw new RuntimeException(e);
-        } catch (InstantiationException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        } catch (InvocationTargetException e) {
+            return constructor.newInstance(params.getHost(), params.getPort(), params.getLogin(), params.getPassword());
+        } catch (SecurityException | NoSuchMethodException | IllegalArgumentException | InstantiationException |
+                IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException(e);
         }
     }
@@ -48,8 +37,8 @@ public class BSPManagerFactoryImpl implements BSPManagerFactory {
     public BSPManagerFactoryImpl () {
     }
 
-    public BSPManagerFactoryImpl (BSPConfig bspConfig) {
-        this.bspConfig = bspConfig;
+    public BSPManagerFactoryImpl (BSPConfig params) {
+        this.params = params;
     }
 
     @Override
@@ -128,12 +117,9 @@ public class BSPManagerFactoryImpl implements BSPManagerFactory {
 
     @Override
     public UserManager createUserManager() {
-        // Check using isCRSP instead of AbstractConfig.isSupported(bspConfig) because there may be other user
-        // managers to support that have nothing to do with CRSP.
         if (Deployment.isCRSP) {
             return new CRSPUserManager();
         }
-
         return (UserManager) create(BspUserManager.class);
     }
 

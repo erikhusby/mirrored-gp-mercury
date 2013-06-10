@@ -39,9 +39,7 @@ public class BSPSampleSearchServiceProducer {
      * injection will give you a Stub BSP service, not an Impl.
      */
     public static BSPSampleSearchService testInstance() {
-
         BSPConfig bspConfig = BSPConfig.produce(DEV);
-
         return new BSPSampleSearchServiceImpl(bspConfig);
     }
 }
