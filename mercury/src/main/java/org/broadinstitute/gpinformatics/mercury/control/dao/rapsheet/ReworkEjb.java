@@ -22,6 +22,7 @@ import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServic
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
+import org.broadinstitute.gpinformatics.infrastructure.mercury.MercuryClientEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -83,6 +84,9 @@ public class ReworkEjb {
 
     @Inject
     private BSPSampleDataFetcher bspSampleDataFetcher;
+
+    @Inject
+    private MercuryClientEjb mercuryClientEjb;
 
     /**
      * Create rework for all samples in a LabVessel;
@@ -265,25 +269,27 @@ public class ReworkEjb {
     /**
      * Create rework for all samples in a LabVessel;
      *
-     * @param labVesselBarcode 2D Barcode of any type of LabVessel, with samples in it.
+     * @param reworkCandidate  tube/sample/PDO that is to be reworked
      * @param reworkReason     Why is the rework being done.
      * @param reworkFromStep   Where should the rework be reworked from.
      * @param comment          text describing why you are doing this.
      * @param workflowName     Name of the workflow in which this vessel is to be reworked
+     * @param userName         the user adding the rework, in case vessels/samples need to be created on-the-fly
      *
      * @return The LabVessel instance related to the 2D Barcode given in the method call
      *
      * @throws ValidationException
      */
-    public LabVessel addRework(@Nonnull String labVesselBarcode, @Nonnull ReworkEntry.ReworkReason reworkReason,
+    public LabVessel addRework(@Nonnull ReworkCandidate reworkCandidate, @Nonnull ReworkEntry.ReworkReason reworkReason,
                                @Nonnull LabEventType reworkFromStep, @Nonnull String comment,
-                               @Nonnull String workflowName)
+                               @Nonnull String workflowName, @Nonnull String userName)
             throws ValidationException {
 
-        LabVessel reworkVessel = labVesselDao.findByIdentifier(labVesselBarcode);
+        LabVessel reworkVessel = labVesselDao.findByIdentifier(reworkCandidate.getTubeBarcode());
 
         if (reworkVessel == null) {
-            // TODO: call MercuryClientEjb.createInitialVessels
+            reworkVessel = mercuryClientEjb.createInitialVessels(Collections.singleton(reworkCandidate.getSampleKey()),
+                    userName).iterator().next();
         }
 
         List<MercurySample> reworks = new ArrayList<>(
@@ -300,30 +306,32 @@ public class ReworkEjb {
 
     /**
      * addAndValidateRework will, like
-     * {@link #addRework(String, org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry.ReworkReason, org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType, String, String)}, create a
+     * {@link #addRework(ReworkCandidate, org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry.ReworkReason, org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType, String, String, String)}, create a
      * {@link ReworkEntry} for all samples in a vessel.
      * <p/>
      * In addition to creating a ReworkEntry, this method will execute some validation rules against the rework entry
      * for the sole purpose of informing the user of the state of the vessel that they have just submitted for rework.
      *
-     * @param reworkVesselBarcode 2D Barcode of a vessel to be reworked.
+     * @param reworkCandidate     tube/sample/PDO that is to be reworked
      * @param reworkReason        predefined Text describing why the given vessel needs to be reworked
      * @param reworkFromStep      Step in the workflow at which rework is to begin
      * @param comment             Brief user comment to associate with this rework.
      * @param workflowName        Name of the workflow in which this vessel is to be reworked
+     * @param userName            the user adding the rework, in case vessels/samples need to be created on-the-fly
      *
      * @return Collection of validation messages
      *
      * @throws ValidationException Thrown in the case that some checked state of the Lab Vessel will not allow the
      *                             method to continue
      */
-    public Collection<String> addAndValidateRework(@Nonnull String reworkVesselBarcode,
+    public Collection<String> addAndValidateRework(@Nonnull ReworkCandidate reworkCandidate,
                                                    @Nonnull ReworkEntry.ReworkReason reworkReason,
                                                    @Nonnull LabEventType reworkFromStep, @Nonnull String comment,
-                                                   @Nonnull String workflowName)
+                                                   @Nonnull String workflowName, @Nonnull String userName)
             throws ValidationException {
 
-        LabVessel reworkVessel = addRework(reworkVesselBarcode, reworkReason, reworkFromStep, comment, workflowName);
+        LabVessel reworkVessel = addRework(reworkCandidate, reworkReason, reworkFromStep, comment, workflowName,
+                userName);
 
         return validateReworkItem(reworkVessel, reworkFromStep, workflowName);
     }
@@ -361,9 +369,11 @@ public class ReworkEjb {
     // TODO: Only called from BatchToJiraTest. Can that be modified to use a method that is used by application code?
     public void addReworkToBatch(@Nonnull LabBatch batch, @Nonnull String labVesselBarcode,
                                  @Nonnull ReworkEntry.ReworkReason reworkReason,
-                                 @Nonnull LabEventType reworkFromStep, @Nonnull String comment, String workflowName)
+                                 @Nonnull LabEventType reworkFromStep, @Nonnull String comment, String workflowName,
+                                 String userName)
             throws ValidationException {
-        LabVessel reworkVessel = addRework(labVesselBarcode, reworkReason, reworkFromStep, comment, workflowName);
+        LabVessel reworkVessel = addRework(new ReworkCandidate(labVesselBarcode), reworkReason, reworkFromStep,
+                comment, workflowName, userName);
         batch.addReworks(Arrays.asList(reworkVessel));
     }
 
@@ -398,7 +408,17 @@ public class ReworkEjb {
         private LabVessel labVessel;
         private List<String> validationMessages = new ArrayList<>();
 
-        ReworkCandidate(@Nonnull String sampleKey, @Nonnull String productOrderKey, @Nonnull String tubeBarcode) {
+        /**
+         * Create a rework candidate with just the tube barcode. Useful mainly in tests because, since a PDO isn't
+         * specified, the tube's sample had better be in only one PDO.
+         *
+         * @param tubeBarcode
+         */
+        public ReworkCandidate(@Nonnull String tubeBarcode) {
+            this.tubeBarcode = tubeBarcode;
+        }
+
+        public ReworkCandidate(@Nonnull String sampleKey, @Nonnull String productOrderKey, @Nonnull String tubeBarcode) {
             this.sampleKey = sampleKey;
             this.productOrderKey = productOrderKey;
             this.tubeBarcode = tubeBarcode;
