@@ -284,7 +284,7 @@ public class BSPSampleDTO {
 
     public void addPlastic(String barcode) {
         if (plasticBarcodes == null) {
-            plasticBarcodes = new ArrayList<String>();
+            plasticBarcodes = new ArrayList<>();
         }
         plasticBarcodes.add(barcode);
     }
