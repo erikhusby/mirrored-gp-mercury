@@ -240,18 +240,16 @@ public class BettaLimsMessageTestFactory {
                                                             Map<String, RackOfTubes> mapBarcodeToSourceRackOfTubes,
                                                             Map<String, TwoDBarcodedTube> mapBarcodeToSourceTube,
                                                             String reagentKitBarcode) {
+        PlateCherryPickEvent stationEvent = new PlateCherryPickEvent();
 
 
-        final PlateCherryPickEvent stationEvent = new PlateCherryPickEvent();
         setStationEventData(eventType, stationEvent);
 
-        PlateCherryPickEvent plateCherryPickEvent = new PlateCherryPickEvent();
-        setStationEventData(eventType, plateCherryPickEvent);
         List<String> sourceRackBarcodes = new ArrayList<>(mapBarcodeToSourceRackOfTubes.keySet());
         List<String> sourceTubeBarcodes = new ArrayList<>(mapBarcodeToSourceTube.keySet());
         for (String sourceRackBarcode : sourceRackBarcodes) {
-            plateCherryPickEvent.getSourcePlate().add(buildRack(sourceRackBarcode));
-            plateCherryPickEvent.getSourcePositionMap()
+            stationEvent.getSourcePlate().add(buildRack(sourceRackBarcode));
+            stationEvent.getSourcePositionMap()
                     .add(buildPositionMap(sourceRackBarcode, sourceTubeBarcodes));
             PositionMapType positionMap = new PositionMapType();
             for (String sourceBarcode : sourceTubeBarcodes) {
@@ -260,7 +258,7 @@ public class BettaLimsMessageTestFactory {
                 receptacleType.setPosition(VesselPosition.A01.name());
                 receptacleType.setReceptacleType("tube");
                 positionMap.getReceptacle().add(receptacleType);
-                plateCherryPickEvent.setPositionMap(positionMap);
+                stationEvent.setPositionMap(positionMap);
             }
         }
 
@@ -268,15 +266,15 @@ public class BettaLimsMessageTestFactory {
         kit.setBarcode(reagentKitBarcode);
         kit.setPhysType(MiSeqReagentKit.PlateType.MiSeqReagentKit.getDisplayName());
         kit.setSection(MiSeqReagentKit.LOADING_WELL.name());
-        plateCherryPickEvent.setPlate(kit);
+        stationEvent.setPlate(kit);
 
-        return plateCherryPickEvent;
+        return stationEvent;
     }
 
     public PlateCherryPickEvent buildCherryPick(String eventType, List<String> sourceRackBarcodes,
                                                 List<List<String>> sourceTubeBarcodes, String targetRackBarcode,
                                                 List<String> targetTubeBarcodes,
-                                                List<LabEventFactory.CherryPick> cherryPicks) {
+                                                List<CherryPick> cherryPicks) {
         PlateCherryPickEvent plateCherryPickEvent = new PlateCherryPickEvent();
         setStationEventData(eventType, plateCherryPickEvent);
 
@@ -292,7 +290,7 @@ public class BettaLimsMessageTestFactory {
         plateCherryPickEvent.setPlate(buildRack(targetRackBarcode));
         plateCherryPickEvent.setPositionMap(buildPositionMap(targetRackBarcode, targetTubeBarcodes));
 
-        for (LabEventFactory.CherryPick cherryPick : cherryPicks) {
+        for (CherryPick cherryPick : cherryPicks) {
             CherryPickSourceType cherryPickSource = new CherryPickSourceType();
             cherryPickSource.setBarcode(cherryPick.getSourceRackBarcode());
             cherryPickSource.setWell(cherryPick.getSourceWell());
@@ -306,7 +304,7 @@ public class BettaLimsMessageTestFactory {
 
     public PlateCherryPickEvent buildCherryPickToStripTube(String eventType, List<String> sourceRackBarcodes,
             List<List<String>> sourceTubeBarcodes, String targetRackBarcode, List<String> targetStripTubeBarcodes,
-            List<LabEventFactory.CherryPick> cherryPicks) {
+            List<CherryPick> cherryPicks) {
         PlateCherryPickEvent plateCherryPickEvent = new PlateCherryPickEvent();
         setStationEventData(eventType, plateCherryPickEvent);
 
@@ -337,7 +335,7 @@ public class BettaLimsMessageTestFactory {
         }
         plateCherryPickEvent.setPositionMap(targetPositionMap);
 
-        for (LabEventFactory.CherryPick cherryPick : cherryPicks) {
+        for (CherryPick cherryPick : cherryPicks) {
             CherryPickSourceType cherryPickSource = new CherryPickSourceType();
             cherryPickSource.setBarcode(cherryPick.getSourceRackBarcode());
             cherryPickSource.setWell(cherryPick.getSourceWell());
@@ -463,5 +461,35 @@ public class BettaLimsMessageTestFactory {
         receptacleType.setPosition(buildWellName(rackPosition, WellNameType.SHORT));
         receptacleType.setReceptacleType("tube");
         targetPositionMap.getReceptacle().add(receptacleType);
+    }
+
+    public static class CherryPick {
+        private final String sourceRackBarcode;
+        private final String sourceWell;
+        private final String destinationRackBarcode;
+        private final String destinationWell;
+
+        public CherryPick(String sourceRackBarcode, String sourceWell, String destinationRackBarcode, String destinationWell) {
+            this.sourceRackBarcode = sourceRackBarcode;
+            this.sourceWell = sourceWell;
+            this.destinationRackBarcode = destinationRackBarcode;
+            this.destinationWell = destinationWell;
+        }
+
+        public String getSourceRackBarcode() {
+            return sourceRackBarcode;
+        }
+
+        public String getSourceWell() {
+            return sourceWell;
+        }
+
+        public String getDestinationRackBarcode() {
+            return destinationRackBarcode;
+        }
+
+        public String getDestinationWell() {
+            return destinationWell;
+        }
     }
 }

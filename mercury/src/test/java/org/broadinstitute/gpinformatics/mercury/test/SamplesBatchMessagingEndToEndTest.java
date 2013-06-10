@@ -11,7 +11,6 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransfe
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventResponseBean;
-import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
@@ -77,11 +76,11 @@ public class SamplesBatchMessagingEndToEndTest extends ContainerTest {
 
         String extEndRackBarcode = "ExtEndRack" + timestamp;
         List<String> extractionEndTubeBarcodes = new ArrayList<String>();
-        List<LabEventFactory.CherryPick> cherryPicks = new ArrayList<LabEventFactory.CherryPick>();
+        List<BettaLimsMessageTestFactory.CherryPick> cherryPicks = new ArrayList<BettaLimsMessageTestFactory.CherryPick>();
         for(int i = 0; i < sampleBarcodes.size() * 15; i++){
             extractionEndTubeBarcodes.add("2DExt" + i + timestamp);
             // todo jmt different source tube types - falcon?
-            cherryPicks.add(new LabEventFactory.CherryPick(extStartRackBarcode, "A0" + ((i / 15) + 1),
+            cherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(extStartRackBarcode, "A0" + ((i / 15) + 1),
                     extEndRackBarcode, bettaLimsMessageTestFactory.buildWellName(i + 1,
                     BettaLimsMessageTestFactory.WellNameType.SHORT)));
         }
