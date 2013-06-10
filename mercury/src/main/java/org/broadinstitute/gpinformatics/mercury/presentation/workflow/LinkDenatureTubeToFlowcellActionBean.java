@@ -57,47 +57,4 @@ public class LinkDenatureTubeToFlowcellActionBean extends LinkDenatureTubeCoreAc
         }
     }
 
-    @HandlesEvent("denatureInfo")
-    public ForwardResolution denatureTubeInfo() {
-        denatureTube = (TwoDBarcodedTube) labVesselDao.findByIdentifier(denatureTubeBarcode);
-        if (denatureTube != null) {
-            for (SampleInstance sample : denatureTube.getAllSamples()) {
-                String productOrderKey = sample.getProductOrderKey();
-                if (StringUtils.isNotEmpty(productOrderKey)) {
-                    ProductOrder order = athenaClientService.retrieveProductOrderDetails(productOrderKey);
-                    workflowName = order.getProduct().getWorkflowName();
-                    break;
-                }
-            }
-        }
-        return new ForwardResolution("/workflow/denature_tube_info.jsp");
-    }
-
-    public ReceptaclePlateTransferEvent buildDenatureTubeToFlowcell(String eventType, String denatureTubeBarcode,
-                                                                    String flowcellBarcode) {
-        ReceptaclePlateTransferEvent event = new ReceptaclePlateTransferEvent();
-        event.setEventType(eventType);
-        GregorianCalendar gregorianCalendar = new GregorianCalendar();
-        try {
-            event.setStart(DatatypeFactory.newInstance().newXMLGregorianCalendar(gregorianCalendar));
-        } catch (DatatypeConfigurationException e) {
-            throw new RuntimeException(e);
-        }
-        event.setDisambiguator(1L);
-        event.setOperator(getContext().getUsername());
-        event.setStation("UI");
-
-        ReceptacleType denatureTube = new ReceptacleType();
-        denatureTube.setBarcode(denatureTubeBarcode);
-        denatureTube.setReceptacleType("tube");
-        event.setSourceReceptacle(denatureTube);
-
-        PlateType flowcell = new PlateType();
-        flowcell.setBarcode(flowcellBarcode);
-        flowcell.setPhysType(IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell.getAutomationName());
-        flowcell.setSection(SBSSection.ALL2.getSectionName());
-        event.setDestinationPlate(flowcell);
-
-        return event;
-    }
 }
