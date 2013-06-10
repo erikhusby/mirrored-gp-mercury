@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
-
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 
 import javax.enterprise.context.SessionScoped;
@@ -13,10 +12,8 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.STUBBY;
 
 public class BSPSampleSearchServiceProducer {
-
     @Inject
     private Deployment deployment;
-
 
     @Produces
     @Default
@@ -33,7 +30,6 @@ public class BSPSampleSearchServiceProducer {
     public static BSPSampleSearchService stubInstance() {
         return new BSPSampleSearchServiceStub();
     }
-
 
     /**
      * Creates a BSPSampleSearchService with plain old new operator for container-free testing,

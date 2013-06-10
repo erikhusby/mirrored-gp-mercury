@@ -7,23 +7,39 @@ import javax.annotation.Nonnull;
 import java.lang.reflect.InvocationTargetException;
 
 /**
- * Base class of concrete configurations.
+ * Base class of concrete configurations.  Be careful on usage when trying to @Inject since YAML needs to get a servlet
+ * or file protocol handler for {@link org.scannotation.AnnotationDB}.  Its possible to call this in an EJB or @Startup
+ * so that won't have the web application deployed, The annotation scanning will only have VFS and the Mercury war will
+ * fail to deploy with an error.
  */
 public abstract class AbstractConfig {
     protected AbstractConfig(@Nonnull Deployment mercuryDeployment) {
         if (mercuryDeployment != Deployment.STUBBY) {
             AbstractConfig source = produce(getClass(), mercuryDeployment);
-            // source can be null if this config is NOT_SUPPORTED.
-            if (source != null) {
+            if (AbstractConfig.isSupported(source)) {
                 try {
                     BeanUtils.copyProperties(this, source);
-                } catch (IllegalAccessException | InvocationTargetException e) {
+                } catch (IllegalAccessException | InvocationTargetException | IllegalArgumentException e) {
                     throw new RuntimeException(e);
                 }
             }
         }
 
         this.mercuryDeployment = mercuryDeployment;
+    }
+
+    /**
+     * Check to see if a particular service is supported (i.e.running) for this configuration.  If it is supported, then
+     * it will return true, otherwise false.
+     * <p/>
+     * TODO: Replace this with something more elegant like a NotSupported configuration object.
+     *
+     * @param config The configuration to see if its supported
+     *
+     * @return true if configuration is supported.
+     */
+    public static boolean isSupported(AbstractConfig config) {
+        return (config != null);
     }
 
     /**
@@ -36,8 +52,7 @@ public abstract class AbstractConfig {
      * Useful for debugging.
      */
     @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
-    private final Deployment mercuryDeployment;
-
+    private Deployment mercuryDeployment;
 
     public void setExternalDeployment(Deployment externalDeployment) {
         this.externalDeployment = externalDeployment;

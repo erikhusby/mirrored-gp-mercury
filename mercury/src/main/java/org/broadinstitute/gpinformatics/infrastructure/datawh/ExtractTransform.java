@@ -213,7 +213,7 @@ public class ExtractTransform implements Serializable {
             if (ZERO.equals(requestedStart)) {
                 startTimeSec = readLastEtlRun();
                 if (startTimeSec == 0L) {
-                    log.warn("Cannot determine time of last incremental ETL.  ETL will not be run.");
+                    log.warn("Cannot start ETL because the run time of the last incremental ETL can't be read");
                     return -1;
                 }
             } else {
@@ -242,7 +242,7 @@ public class ExtractTransform implements Serializable {
                 if (countAndDate.left > 0) {
                     writeIsReadyFile(countAndDate.right);
                     log.debug("Incremental ETL created " + countAndDate.left + " data records in " +
-                            minutesSince(incrementalRunStartTime) + " minutes.");
+                            minutesSince(incrementalRunStartTime) + " minutes");
                 }
 
                 return countAndDate.left;
@@ -264,11 +264,12 @@ public class ExtractTransform implements Serializable {
         if (!mutex.tryAcquire()) {
             int minutes = minutesSince(incrementalRunStartTime);
             if (minutes > 0) {
-                log.info("Skipping new ETL run since previous run is still busy after " + minutes + " minutes.");
+                log.info("Skipping new ETL run since previous run is still busy after " + minutes + " minutes");
             }
             return null;
         }
-        log.debug("Starting incremental ETL.");
+        
+        log.trace("Starting incremental ETL");
         final List<Integer> count = new ArrayList<Integer>(1);
         final List<String> date = new ArrayList<String>(1);
 
@@ -285,9 +286,9 @@ public class ExtractTransform implements Serializable {
 
                     if (revsAndDate.left.size() < revs.size()) {
                         log.debug("ETL run will only process " + revsAndDate.left.size() + " of the "
-                                + revs.size() + " changes.");
+                                + revs.size() + " changes");
                     } else {
-                        log.debug("Incremental ETL found " + revs.size() + " changes.");
+                        log.debug("Incremental ETL found " + revs.size() + " changes");
                     }
 
                     final String actualEtlDateStr = secTimestampFormat.format(
@@ -360,7 +361,7 @@ public class ExtractTransform implements Serializable {
     public Response.Status backfillEtl(String entityClassname, final long startId, long endId) {
         String dataDir = getDatafileDir();
         if (StringUtils.isBlank(dataDir)) {
-            log.info("ETL data file directory is not configured. Backfill ETL will not be run.");
+            log.info("ETL data file directory is not configured. Backfill ETL will not be run");
             return Response.Status.INTERNAL_SERVER_ERROR;
         } else if (!(new File(dataDir)).exists()) {
             log.error("ETL data file directory is missing: " + dataDir);
@@ -420,7 +421,7 @@ public class ExtractTransform implements Serializable {
                 writeIsReadyFile(etlDateStr);
             }
             log.info("Backfill ETL created " + recordCount +
-                    " data records in " + (int) ((System.currentTimeMillis() - backfillStartTime) / MSEC_IN_SEC) + " seconds.");
+                    " data records in " + (int) ((System.currentTimeMillis() - backfillStartTime) / MSEC_IN_SEC) + " seconds");
         }
         return Response.Status.NO_CONTENT;
 
@@ -533,12 +534,15 @@ public class ExtractTransform implements Serializable {
      * Gets relevant configuration from the .yaml file
      */
     void initConfig() {
-        if (null == etlConfig) {
+        if (etlConfig == null) {
             etlConfig = (EtlConfig) MercuryConfiguration.getInstance().getConfig(EtlConfig.class, deployment);
         }
 
-        if (null == datafileDir) {
-            setDatafileDir(etlConfig.getDatawhEtlDirRoot() + DATAFILE_SUBDIR);
+        if (datafileDir == null) {
+            datafileDir = etlConfig.getDatawhEtlDirRoot() + DATAFILE_SUBDIR;
+
+            // Data Warehouse requires a datafile directory.
+            log.info("The ETL Data Warehouse is" + (!StringUtils.isBlank(datafileDir) ? "" : " not") + " running");
         }
     }
 
