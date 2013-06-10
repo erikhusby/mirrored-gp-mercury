@@ -153,11 +153,14 @@ public class ProductOrderSample extends AbstractSample implements Serializable {
     }
 
     /**
-     * @return true if this sample has been billed.
+     * A sample is completely billed if its primary or replacement for the primary price item has been billed. If
+     * only an add-on has been billed, it's not yet completely billed.
+     *
+     * @return true if this sample has been completely billed.
      */
-    public boolean isBilled() {
+    public boolean isCompletelyBilled() {
         for (LedgerEntry entry : ledgerItems) {
-            if (entry.isBilled()) {
+            if (entry.isBilled() && entry.getPriceItemType() != LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM) {
                 return true;
             }
         }

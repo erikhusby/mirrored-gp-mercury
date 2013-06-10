@@ -37,11 +37,15 @@ import static org.hamcrest.Matchers.*;
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ProductOrderSampleTest {
 
-    public static ProductOrderSample createBilledSample(String name) {
+    public static ProductOrderSample createBilledSample(String name, LedgerEntry.PriceItemType priceItemType) {
         ProductOrderSample sample = new ProductOrderSample(name);
-        LedgerEntry billedEntry = LedgerEntryTest.createBilledLedgerEntry(sample);
+        LedgerEntry billedEntry = LedgerEntryTest.createBilledLedgerEntry(sample, priceItemType);
         sample.getLedgerItems().add(billedEntry);
         return sample;
+    }
+
+    public static ProductOrderSample createBilledSample(String name) {
+        return createBilledSample(name, LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
     }
 
     public static ProductOrderSample createUnbilledSampleWithLedger(String name) {
@@ -55,6 +59,7 @@ public class ProductOrderSampleTest {
     public Object[][] createIsBilledData() {
         return new Object[][]{
                 {createBilledSample("ABC"), true},
+                {createBilledSample("ABC", LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM), false},
                 {createUnbilledSampleWithLedger("ABC"), false},
                 {new ProductOrderSample("ABC"), false}
         };
@@ -62,7 +67,7 @@ public class ProductOrderSampleTest {
 
     @Test(dataProvider = "testIsBilled")
     public void testIsBilled(ProductOrderSample sample, boolean isBilled) {
-        Assert.assertEquals(sample.isBilled(), isBilled);
+        Assert.assertEquals(sample.isCompletelyBilled(), isBilled);
     }
 
     @DataProvider(name = "testIsInBspFormat")
