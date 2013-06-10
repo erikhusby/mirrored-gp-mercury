@@ -1,5 +1,6 @@
 source ~/.bashrc
 use Oracle-full-client
+umask 0111
 
 #
 # Cron job that runs on the Mercury app server machine as part of Mercury ETL to data warehouse.
@@ -119,7 +120,7 @@ trap 'rm ${LOCKFILE}' EXIT
 # Quits if there's no work to do
 #
 
-if [ -z "`find ${NEW_DIR}/ -name \*_is_ready`" ]; then
+if [ -z "`find ${NEW_DIR}/ -maxdepth 1 -name \*_is_ready`" ]; then
     exit 1
 fi
 
@@ -128,7 +129,7 @@ fi
 # Processes etl data file sets one at a time, ordered oldest timestamp to newest timestamp.
 #
 
-find ${NEW_DIR}/ -name \*_is_ready | sort | sed -e 's!.*/!!;s!_is_ready!!' | while read TIMESTAMP
+ls -1 ${NEW_DIR}/*_is_ready | sort -u | sed -e 's!.*/!!;s!_is_ready!!' | while read TIMESTAMP
 do
 
     # Deletes existing sqlplus output/log files in case this is a re-run of etl dat files.
@@ -161,13 +162,16 @@ do
 
     # Uses "sqlplus_prep.start" file to know if sqlplus actually ran because sqlplus return code is unreliable.
     if [ ! -e ${NEW_DIR}/${TIMESTAMP}_sqlplus_prep.start ]; then
-	echo "SqlPlus prep_import failed to run." | tee /dev/stderr
+	echo "SqlPlus prep_import failed to run.  Will retry in the next ETL run." | tee /dev/stderr
 	exit 1
     fi
     rm ${NEW_DIR}/${TIMESTAMP}_sqlplus_prep.start
 
     if [ -s ${ERROR_DIR}/${TIMESTAMP}_sqlplus_prep.log ]; then
-	    echo "There were problems running merge_prep.  See ${ERROR_DIR}/${TIMESTAMP}_sqlplus_prep.log" | tee /dev/stderr
+            echo "Encountered errors running prep_import stored procedure.  ETL processing stops.  Will retry in the next ETL run."
+            echo "${ERROR_DIR}/${TIMESTAMP}_sqlplus_prep.log contents:" | tee /dev/stderr
+            head -15 ${ERROR_DIR}/${TIMESTAMP}_sqlplus_prep.log | tee /dev/stderr
+            exit 1
     else
 	# removes the zero-length file
 	rm ${ERROR_DIR}/${TIMESTAMP}_sqlplus_prep.log
@@ -198,10 +202,19 @@ do
 	sqlldr silent="(HEADER)" control=${CTL_FILE} log=${LOG_FILE} bad=${BAD_FILE} data=${DAT_FILE} discard=${DSC_FILE} direct=true userid="${USERNAME}/${PASSWORD}@\"(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=${DB_SERVER})(PORT=${DB_PORT})))(CONNECT_DATA=(SERVER=DEDICATED)(SID=${DB_SID})))\""
 
 	case $? in
-        1|3) echo "SqlLoader had fatal error loading ${DAT_FILE}" | tee /dev/stderr
+        1|3) echo "** Manual intervention is needed **" | tee /dev/stderr
+             echo "SqlLoader had fatal error loading ${DAT_FILE}" | tee /dev/stderr
              exit 1
 	     ;;
-        2)   echo "SqlLoader could not load some records. See ${ERROR_DIR}/${BAD_FILE}" | tee /dev/stderr
+        2)   echo "** Manual intervention is needed **" | tee /dev/stderr
+             if [ -n "`hexdump -n 500 ${BAD_FILE} | cut -c 8- | grep -m 1 -q 0d && echo Y`" ]; then
+               echo "${BAD_FILE}  has DOS line termination.  Cannot process it." | tee /dev/stderr
+             else
+               echo "SqlLoader could not load records in ${BAD_FILE}:" | tee /dev/stderr
+               head -10 ${BAD_FILE} | tee /dev/stderr
+               echo "Check for mismatch with control file, and import table column definition (number of fields, "
+               echo "field datatype, field width, control names match import table column names)."
+             fi
 	     ;;
 	esac
 
@@ -209,14 +222,19 @@ do
 	mv -f ${DAT_FILE} ${DONE_DIR}
     done
 
-    # If there are any remaining unprocessed dat files having TIMESTAMP, assume
-    # there was a fatal error. Skips sqlplus and resets any done files back to new.
+    # If there are any remaining unprocessed dat files having TIMESTAMP there was probably some fatal error.
+    # Moves the files to DONE but abandons them.  Also abandons the import table data.
 
-    UNPROCESSED_FILE=`find ${NEW_DIR}/ -maxdepth 1 -name ${TIMESTAMP}\*.dat | head -1`
+    if [ -n "`find ${NEW_DIR}/ -maxdepth 1 -name ${TIMESTAMP}\*.dat`" ]; then
+	echo "Unprocessed files were found:" | tee /dev/stderr
+        ls -1 ${NEW_DIR}/${TIMESTAMP}*.dat | tee /dev/stderr
+	mv ${NEW_DIR}/${TIMESTAMP}_* ${DONE_DIR}
 
-    if [ -n "${UNPROCESSED_FILE}" ]; then
-	echo "Unprocessed files were found.  Resetting processed files back to new and quitting." | tee /dev/stderr
-	mv -f ${DONE_DIR}/${TIMESTAMP}*.dat ${NEW_DIR}
+        if [ -n "`find ${DONE_DIR}/ -maxdepth 1 -name ${TIMESTAMP}\*.dat`" ]; then
+           echo "** Manual intervention is needed **" | tee /dev/stderr
+	   echo "Data from these files will neither be in the warehouse nor get picked up by a later ETL:" | tee /dev/stderr
+           ls -1 ${DONE_DIR}/${TIMESTAMP}*.dat | tee /dev/stderr
+        fi
         exit 1
     fi
 
@@ -233,14 +251,17 @@ do
 !
 
     if [ ! -e ${NEW_DIR}/${TIMESTAMP}_sqlplus.start ]; then
-        echo "SqlPlus failed to run.  Resetting processed files back to new and quitting." | tee /dev/stderr
+        echo "SqlPlus failed to run, but will retry automatically in the next ETL run." | tee /dev/stderr
 	mv -f ${DONE_DIR}/${TIMESTAMP}*.dat ${NEW_DIR}
         exit 1
     fi
     rm ${NEW_DIR}/${TIMESTAMP}_sqlplus.start
 
     if [ -s ${ERROR_DIR}/${TIMESTAMP}_sqlplus.log ]; then
-	echo "There were data problems while merging new data.  See ${ERROR_DIR}/${TIMESTAMP}_sqlplus.log" | tee /dev/stderr
+        echo "** Manual intervention is needed **" | tee /dev/stderr
+	echo "There were data problems running the merge stored procedure." | tee /dev/stderr
+	echo "${ERROR_DIR}/${TIMESTAMP}_sqlplus.log shows these errors:" | tee /dev/stderr
+	~/dw_etl_parse_merge_errors.pl ${ERROR_DIR}/${TIMESTAMP}_sqlplus.log ${DONE_DIR}/ | tee /dev/stderr
     else
         # removes the zero-length file
         rm ${ERROR_DIR}/${TIMESTAMP}_sqlplus.log
