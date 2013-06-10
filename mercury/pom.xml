@@ -650,6 +650,20 @@
                 <athena.password>welcome1</athena.password>
             </properties>
             <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-war-plugin</artifactId>
+                        <version>2.2</version>
+                        <configuration>
+                            <webResources>
+                                <resource>
+                                    <directory>src/main/webapp-crsp</directory>
+                                </resource>
+                            </webResources>
+                        </configuration>
+                    </plugin>
+                </plugins>
                 <testResources>
                     <testResource>
                         <directory>src/test/resources-dev</directory>
@@ -665,7 +679,7 @@
         </profile>
 
         <profile>
-            <id>CRSP-PROD</id><!-- THis is for CRSP PRODUCTION ONLY -->
+            <id>CRSP-PROD</id><!-- This is for CRSP PRODUCTION ONLY -->
             <properties>
                 <!-- Oracle Dev -->
                 <database>oracle</database>
@@ -685,6 +699,10 @@
                         <version>2.2</version>
                         <configuration>
                             <webResources>
+                                <resource>
+                                    <directory>src/main/webapp-crsp</directory>
+                                </resource>
+
                                 <resource>
                                     <directory>src/main/webapp-crsp-prod</directory>
                                 </resource>
