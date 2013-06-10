@@ -39,8 +39,8 @@ public class WorkflowBucketDef extends WorkflowStepDef {
     public boolean meetsBucketCriteria(LabVessel labVessel) {
 
         // todo remove this code block when Bamboo works with MVEL
-        if (entryExpression != null && entryExpression.contains("getMaterialType() == \"DNA:DNA Genomic\"")) {
-            return labVessel.isGenomicDNA();
+        if (entryExpression != null && entryExpression.contains("getMaterialType() contains \"DNA:\"")) {
+            return labVessel.isDNA();
         }
 
         // Compile, even though we're using it only once, because MVEL sometimes has

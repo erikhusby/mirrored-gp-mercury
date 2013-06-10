@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -51,7 +52,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.SampleType.WITH_PDO;
+import static org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.SampleType.PREFER_PDO;
 
 /**
  * Encapsulates the business logic related to {@link RapSheet}s and rework. This includes the creation of a new batch
@@ -182,33 +183,50 @@ public class ReworkEjb {
         labVessels.addAll(labVesselDao.findBySampleKey(query));
 
         for (LabVessel vessel : labVessels) {
-            Set<SampleInstance> sampleInstances = vessel.getSampleInstances(WITH_PDO, null);
+            Set<SampleInstance> sampleInstances = vessel.getSampleInstances(PREFER_PDO, null);
 
-            if (sampleInstances.size() != 1) {
-                // per Zimmer, ignore tubes that are pools when querying by sample
-                // TODO: report a warning?
+//            if (sampleInstances.size() != 1) {
+//                // per Zimmer, ignore tubes that are pools when querying by sample
+//                // TODO: report a warning?
+//            } else {
+
+            /*
+             * By using PREFER_PDO, we are able to get all samples for a vessel, with the PDO association bubbling
+             * to the beginning of the returned
+             */
+            List<ProductOrderSample> productOrderSamples = null;
+
+            SampleInstance sampleInstance = sampleInstances.iterator().next();
+            String sampleKey = sampleInstance.getStartingSample().getSampleKey();
+            String productOrderKey = sampleInstance.getProductOrderKey();
+            List<String> sampleIds = new ArrayList<>(sampleInstances.size());
+
+            if (StringUtils.isNotBlank(productOrderKey)) {
+                sampleIds = Collections.singletonList(sampleKey);
             } else {
-                SampleInstance sampleInstance = sampleInstances.iterator().next();
-                String sampleKey = sampleInstance.getStartingSample().getSampleKey();
-                String productOrderKey = sampleInstance.getProductOrderKey();
 
+                for (SampleInstance currentInstance : sampleInstances) {
+                    sampleIds.add(currentInstance.getStartingSample().getSampleKey());
+                }
+
+            }
+            for (Map.Entry<String, List<ProductOrderSample>> entryMap : athenaClientService
+                    .findMapSampleNameToPoSample(sampleIds).entrySet()) {
                 // TODO: fetch for all vessels in a single call and make looping over labVessels a @DaoFree method
-                List<ProductOrderSample> productOrderSamples =
-                        athenaClientService.findMapSampleNameToPoSample(Collections.singletonList(sampleKey))
-                                .get(sampleKey);
-
+                productOrderSamples = entryMap.getValue();
                 // make sure we have a matching product order sample
                 for (ProductOrderSample sample : productOrderSamples) {
-                    if (sample.getProductOrder().getBusinessKey().equals(productOrderKey)) {
+                    if (StringUtils.isBlank(productOrderKey) ||
+                        sample.getProductOrder().getBusinessKey().equals(productOrderKey)) {
 
-                        ProductOrder productOrder = athenaClientService.retrieveProductOrderDetails(productOrderKey);
-                        ReworkCandidate candidate = new ReworkCandidate(sampleKey, productOrderKey, vessel.getLabel(),
-                                productOrder, vessel);
+                        ReworkCandidate candidate = new ReworkCandidate(entryMap.getKey(),
+                                sample.getProductOrder().getBusinessKey(), vessel.getLabel(),
+                                sample.getProductOrder(), vessel);
 
                         if (!ProductFamily.ProductFamilyName.EXOME.getFamilyName()
-                                .equals(productOrder.getProduct().getProductFamily().getName())) {
-                            candidate.addValidationMessage("The PDO " + productOrder.getBusinessKey() +
-                                                           " for Sample "  + sampleKey +
+                                .equals(sample.getProductOrder().getProduct().getProductFamily().getName())) {
+                            candidate.addValidationMessage("The PDO " + sample.getProductOrder().getBusinessKey() +
+                                                           " for Sample " + entryMap.getKey() +
                                                            " is not part of the Exome family");
                         }
 
@@ -216,6 +234,7 @@ public class ReworkEjb {
                     }
                 }
             }
+//            }
         }
 
         if (reworkCandidates.isEmpty()) {
@@ -231,8 +250,17 @@ public class ReworkEjb {
             for (ProductOrderSample sample : samples) {
                 String sampleKey = sample.getSampleName();
                 String tubeBarcode = bspResult.get(sampleKey).getBarcodeForLabVessel();
-                reworkCandidates.add(new ReworkCandidate(sampleKey, sample.getProductOrder().getBusinessKey(),
-                        tubeBarcode, sample.getProductOrder(), null));
+                final ReworkCandidate candidate =
+                        new ReworkCandidate(sampleKey, sample.getProductOrder().getBusinessKey(),
+                                tubeBarcode, sample.getProductOrder(), null);
+                if (!ProductFamily.ProductFamilyName.EXOME.getFamilyName()
+                        .equals(sample.getProductOrder().getProduct().getProductFamily().getName())) {
+                    candidate.addValidationMessage("The PDO " + sample.getProductOrder().getBusinessKey() +
+                                                   " for Sample " + sampleKey +
+                                                   " is not part of the Exome family");
+                }
+
+                reworkCandidates.add(candidate);
             }
         }
 

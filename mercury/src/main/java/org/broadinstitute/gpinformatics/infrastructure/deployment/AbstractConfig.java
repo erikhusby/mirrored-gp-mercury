@@ -55,4 +55,8 @@ public abstract class AbstractConfig {
         C config = (C) MercuryConfiguration.getInstance().getConfig(clazz, deployment);
         return config;
     }
+
+    public Deployment getMercuryDeployment() {
+        return mercuryDeployment;
+    }
 }
