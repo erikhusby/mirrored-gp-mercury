@@ -515,10 +515,7 @@ public class ReworkEjbTest extends Arquillian {
         for (ReworkEjb.ReworkCandidate candidate : candiates) {
             Assert.assertTrue(mapBarcodeToTube.keySet().contains(candidate.getTubeBarcode()));
         }
-
     }
-
-
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testSingleSampleTwoPDOs() throws Exception {
@@ -762,9 +759,6 @@ public class ReworkEjbTest extends Arquillian {
                 entry.setStatus(BucketEntry.Status.Archived);
             }
         }
-
-
-
     }
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
@@ -796,7 +790,6 @@ public class ReworkEjbTest extends Arquillian {
         Assert.assertEquals(entries.size(), existingReworks + hybridSelectionJaxbBuilder.getNormCatchBarcodes().size());
 
         validateBarcodeExistence(hybridSelectionJaxbBuilder, entries);
-
     }
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
@@ -819,7 +812,6 @@ public class ReworkEjbTest extends Arquillian {
         Assert.assertEquals(entries.size(), existingReworks + mapBarcodeToTube.size());
 
         Assert.assertTrue(entries.contains(mapBarcodeToTube.values().iterator().next()));
-
     }
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
@@ -891,7 +883,6 @@ public class ReworkEjbTest extends Arquillian {
         Assert.assertEquals(entries.size(), existingReworks + hybridSelectionJaxbBuilder.getNormCatchBarcodes().size());
 
         validateBarcodeExistence(hybridSelectionJaxbBuilder, entries);
-
     }
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
@@ -974,7 +965,6 @@ public class ReworkEjbTest extends Arquillian {
             Assert.assertTrue(candidate.isValid());
 //            Assert.assertTrue(mapBarcodeToTube.keySet().contains(candidate.getTubeBarcode()),"Did not find barcode " + candidate.getTubeBarcode() + "In the map of created tubes");
         }
-
     }
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
@@ -1018,7 +1008,6 @@ public class ReworkEjbTest extends Arquillian {
             Assert.assertTrue(candidate.isValid());
             Assert.assertEquals(candidate.getProductOrderKey(), duplicatePO.getBusinessKey());
         }
-
     }
 
     private void createInitialTubes(@Nonnull List<ProductOrderSample> pos,
@@ -1051,5 +1040,4 @@ public class ReworkEjbTest extends Arquillian {
                     + " Not found in the list of rework entry barcodes");
         }
     }
-
 }

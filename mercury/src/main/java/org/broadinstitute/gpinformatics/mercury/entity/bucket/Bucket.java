@@ -84,7 +84,7 @@ public class Bucket {
      * @return an instance of a Bucket entry which represents the lab vessel and the product order for that entry
      */
     public BucketEntry addEntry ( String productOrderKey, LabVessel vessel ) {
-        BucketEntry newEntry = new BucketEntry(vessel,productOrderKey, this );
+        BucketEntry newEntry = new BucketEntry(vessel,productOrderKey, this, BucketEntry.BucketEntryType.PDO_ENTRY);
         addEntry(newEntry);
         return newEntry;
     }

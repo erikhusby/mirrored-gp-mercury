@@ -35,8 +35,10 @@ public class BucketDBFreeTest {
         final String twoDBarcode3 = "SM-323";
         final String twoDBarcode4 = "SM-324";
 
-        BucketEntry testEntry1 = new BucketEntry(new TwoDBarcodedTube(twoDBarcode1), poBusinessKey1, bucket);
-        BucketEntry testEntry2 = new BucketEntry(new TwoDBarcodedTube(twoDBarcode2), poBusinessKey1, bucket);
+        BucketEntry testEntry1 = new BucketEntry(new TwoDBarcodedTube(twoDBarcode1), poBusinessKey1, bucket,
+                BucketEntry.BucketEntryType.PDO_ENTRY);
+        BucketEntry testEntry2 = new BucketEntry(new TwoDBarcodedTube(twoDBarcode2), poBusinessKey1, bucket,
+                BucketEntry.BucketEntryType.PDO_ENTRY);
 
         bucket.addEntry(testEntry1);
         Assert.assertNotNull(testEntry1.getBucket());

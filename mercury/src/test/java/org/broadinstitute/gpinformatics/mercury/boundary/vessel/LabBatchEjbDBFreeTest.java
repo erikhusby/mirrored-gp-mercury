@@ -65,7 +65,8 @@ public class LabBatchEjbDBFreeTest {
             String bspStock = sampleName;
             TwoDBarcodedTube bspAliquot = new TwoDBarcodedTube(barcode);
             bspAliquot.addSample(new MercurySample(bspStock));
-            bspAliquot.addBucketEntry(new BucketEntry(bspAliquot, STUB_TEST_PDO_KEY));
+            bspAliquot.addBucketEntry(new BucketEntry(bspAliquot, STUB_TEST_PDO_KEY,
+                    BucketEntry.BucketEntryType.PDO_ENTRY));
             mapBarcodeToTube.put(barcode, bspAliquot);
             sampleIndex++;
         }

@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.mercury.entity.bucket;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -102,22 +101,26 @@ public class BucketEntry  {
     @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     private LabBatch labBatch;
 
+    @Column(name = "ENTRY_TYPE", nullable = false)
+    private BucketEntryType entryType = BucketEntryType.PDO_ENTRY;
+
     protected BucketEntry () {
     }
 
-    public BucketEntry ( @Nonnull LabVessel labVesselIn, @Nonnull String poBusinessKey, @Nonnull Bucket bucket ) {
+    public BucketEntry(@Nonnull LabVessel labVesselIn, @Nonnull String poBusinessKey, @Nonnull Bucket bucket,
+                       BucketEntryType entryType) {
 
-        this(labVesselIn, poBusinessKey);
+        this(labVesselIn, poBusinessKey,entryType);
         this.bucket = bucket;
-
     }
 
-    public BucketEntry ( @Nonnull LabVessel labVesselIn, @Nonnull String poBusinessKey) {
-        labVessel = labVesselIn;
+    public BucketEntry(@Nonnull LabVessel labVesselIn, @Nonnull String poBusinessKey,
+                       BucketEntryType entryType) {
+        this.labVessel = labVesselIn;
         this.poBusinessKey = poBusinessKey;
+        this.entryType = entryType;
 
         createdDate = new Date();
-
     }
 
     /**
@@ -189,6 +192,14 @@ public class BucketEntry  {
         this.labBatch = labBatch;
     }
 
+    public BucketEntryType getEntryType() {
+        return entryType;
+    }
+
+    public void setEntryType(BucketEntryType entryType) {
+        this.entryType = entryType;
+    }
+
     @Override
     public boolean equals ( Object o ) {
         if ( this == o ) {
@@ -203,15 +214,13 @@ public class BucketEntry  {
         return new EqualsBuilder().append(getStatus(), that.getStatus())
                 .append(getLabVessel(), that.getLabVessel())
                 .append(getPoBusinessKey(), that.getPoBusinessKey())
+                .append(getEntryType(), that.getEntryType())
                 .isEquals();
     }
 
     @Override
     public int hashCode () {
-
-
         return new HashCodeBuilder().append(getStatus()).append(getLabVessel()).append(getPoBusinessKey()).toHashCode();
-
     }
 
     public int compareTo (BucketEntry other) {
@@ -219,7 +228,12 @@ public class BucketEntry  {
         builder.append(getStatus(), other.getStatus());
         builder.append(getLabVessel(), other.getLabVessel());
         builder.append(getPoBusinessKey(), other.getPoBusinessKey());
+        builder.append(getEntryType(), other.getEntryType());
 
         return builder.toComparison();
+    }
+
+    public enum BucketEntryType {
+        PDO_ENTRY, REWORK_ENTRY;
     }
 }

@@ -63,7 +63,7 @@ public class ReworkEjbDaoFreeTest extends BaseEventTest {
 
         BucketEntry bucketEntry =
                 new BucketEntry(mapBarcodeToTube.values().iterator().next(), productOrder.getBusinessKey(),
-                        new Bucket("Pico/Plating Bucket"));
+                        new Bucket("Pico/Plating Bucket"), BucketEntry.BucketEntryType.PDO_ENTRY);
         bucketEntry.setStatus(BucketEntry.Status.Archived);
         mapBarcodeToTube.values().iterator().next().addBucketEntry(
                 bucketEntry);
@@ -154,7 +154,7 @@ public class ReworkEjbDaoFreeTest extends BaseEventTest {
 
         mapBarcodeToTube.values().iterator().next().addBucketEntry(
                 new BucketEntry(mapBarcodeToTube.values().iterator().next(), productOrder.getBusinessKey(),
-                        new Bucket("Pico/Plating Bucket")));
+                        new Bucket("Pico/Plating Bucket"), BucketEntry.BucketEntryType.PDO_ENTRY));
 
         ReworkEjb reworkEjb = new ReworkEjb();
 

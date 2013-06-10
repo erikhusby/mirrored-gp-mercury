@@ -30,7 +30,7 @@ public class BucketEntryDBFreeTest {
 
         BucketEntry entry =
                 new BucketEntry(new TwoDBarcodedTube( twoDBarcode ),
-                                productOrder, bucket );
+                                productOrder, bucket, BucketEntry.BucketEntryType.PDO_ENTRY);
 
 
         Assert.assertNotNull(entry.getPoBusinessKey());
