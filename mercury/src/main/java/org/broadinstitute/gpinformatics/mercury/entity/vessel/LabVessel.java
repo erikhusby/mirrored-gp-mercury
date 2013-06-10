@@ -185,9 +185,9 @@ public abstract class LabVessel implements Serializable {
         return vesselNames;
     }
 
-    public boolean isGenomicDNA() {
+    public boolean isDNA() {
         for (SampleInstance si : this.getSampleInstances()) {
-            if (!si.getStartingSample().getBspSampleDTO().getMaterialType().equals("DNA:DNA Genomic")) {
+            if (!si.getStartingSample().getBspSampleDTO().getMaterialType().startsWith("DNA:")) {
                 return false;
             }
         }

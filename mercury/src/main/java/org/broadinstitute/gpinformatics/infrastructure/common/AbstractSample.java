@@ -1,8 +1,10 @@
 package org.broadinstitute.gpinformatics.infrastructure.common;
 
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 
 import javax.annotation.Nonnull;
 import javax.persistence.Transient;
@@ -45,7 +47,9 @@ public abstract class AbstractSample {
 
     public BSPSampleDTO getBspSampleDTO() {
         if (!hasBspDTOBeenInitialized) {
-            if (isInBspFormat()) {
+            if (isInBspFormat() ||
+                !Deployment.PROD.equals(ServiceAccessUtility.getBean(BSPConfig.class).getMercuryDeployment())) {
+
                 BSPSampleDataFetcher bspSampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
                 bspSampleDTO = bspSampleDataFetcher.fetchSingleSampleFromBSP(getSampleKey());
 

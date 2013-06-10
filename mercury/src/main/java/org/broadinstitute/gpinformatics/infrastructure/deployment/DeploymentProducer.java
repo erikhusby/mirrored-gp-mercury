@@ -20,8 +20,8 @@ import java.text.MessageFormat;
  * the archive that
  * will set MERCURY_DEPLOYMENT to the value of STUBBY in the JNDI environment.  This class is annotated as
  * {@link Startup} and {@link Singleton}, so it will do this JNDI lookup on artifact deployment.  Failure to resolve
- * MERCURY_DEPLOYMENT or have the value match one of DEV, TEST, QA, PROD, or STUBBY is a fatal error that will halt
- * deployment.
+ * MERCURY_DEPLOYMENT or have the value match one of Deployment instance values (DEV, PROD, etc.) is a fatal error that
+ * will halt deployment.
  */
 @Startup
 @Singleton

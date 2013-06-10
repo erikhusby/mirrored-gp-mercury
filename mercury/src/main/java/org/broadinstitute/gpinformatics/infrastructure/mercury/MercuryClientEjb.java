@@ -170,7 +170,14 @@ public class MercuryClientEjb {
         return picoBucket;
     }
 
-    private Collection<LabVessel> createInitialVessels(Collection<String>samplesWithoutVessel, String username) {
+    /**
+     * Creates LabVessels to mirror BSP receptacles based on the given BSP sample IDs.
+     *
+     * @param samplesWithoutVessel    BSP sample IDs that need LabVessels
+     * @param username                the user performing the operation leading to the LabVessels being created
+     * @return the created LabVessels
+     */
+    public Collection<LabVessel> createInitialVessels(Collection<String>samplesWithoutVessel, String username) {
         Collection<LabVessel> vessels = new ArrayList<LabVessel>();
         Map<String, BSPSampleDTO> bspDtoMap = bspSampleDataFetcher.fetchSamplesFromBSP(samplesWithoutVessel);
         for (String sampleName : samplesWithoutVessel) {

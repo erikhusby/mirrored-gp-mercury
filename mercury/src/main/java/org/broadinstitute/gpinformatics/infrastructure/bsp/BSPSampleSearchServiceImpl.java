@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientHandlerException;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
 
@@ -13,7 +14,6 @@ import java.util.*;
 
 @Impl
 public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService implements BSPSampleSearchService {
-
     private static final long serialVersionUID = 3432255750259397293L;
 
     public static final String SEARCH_RUN_SAMPLE_SEARCH = "search/runSampleSearch";
@@ -36,8 +36,8 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
     }
 
     @Override
-    public List<Map<BSPSampleSearchColumn, String>> runSampleSearch(Collection<String> sampleIDs, final BSPSampleSearchColumn... queryColumns) {
-
+    public List<Map<BSPSampleSearchColumn, String>> runSampleSearch(Collection<String> sampleIDs,
+                                                                    final BSPSampleSearchColumn... queryColumns) {
         if (queryColumns == null || queryColumns.length == 0) {
             throw new IllegalArgumentException("No query columns supplied!");
         }
@@ -45,16 +45,17 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
         if (sampleIDs == null) {
             return null;
         }
-        
-        if (sampleIDs.isEmpty()) {
+
+        // Check to see if BSP is supported before trying to get data.
+        if (sampleIDs.isEmpty() || !AbstractConfig.isSupported(bspConfig)) {
             return Collections.emptyList();
         }
 
-        final List<Map<BSPSampleSearchColumn, String>> ret = new ArrayList<Map<BSPSampleSearchColumn, String>>();
+        final List<Map<BSPSampleSearchColumn, String>> ret = new ArrayList<>();
 
         String urlString = bspConfig.getWSUrl(SEARCH_RUN_SAMPLE_SEARCH);
 
-        List<String> parameters = new ArrayList<String>();
+        List<String> parameters = new ArrayList<>();
 
         try {
             for (BSPSampleSearchColumn column : queryColumns) {
@@ -68,7 +69,7 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
             post(urlString, parameterString, ExtraTab.TRUE, new PostCallback() {
                 @Override
                 public void callback(String[] bspData) {
-                    Map<BSPSampleSearchColumn, String> newMap = new HashMap<BSPSampleSearchColumn, String>();
+                    Map<BSPSampleSearchColumn, String> newMap = new HashMap<>();
 
                     // It turns out that BSP truncates the rest of the columns, if there are no more values, which
                     // is consistent with what Excel does, so it probably comes from that. SO, need to make all

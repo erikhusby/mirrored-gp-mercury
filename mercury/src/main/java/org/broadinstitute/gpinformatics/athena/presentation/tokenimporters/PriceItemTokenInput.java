@@ -70,48 +70,31 @@ public class PriceItemTokenInput extends TokenInput<QuotePriceItem> {
         return super.createAutocomplete(quotePriceItem);
     }
 
-    public PriceItem getMercuryTokenObject() {
+    public PriceItem getTokenObject() {
         List<QuotePriceItem> quotePriceItems = getTokenObjects();
 
         if ((quotePriceItems == null) || (quotePriceItems.isEmpty())) {
             return null;
         }
 
-        if (quotePriceItems.size() > 1) {
-            throw new IllegalArgumentException("If you want to get more than one price item, use getMercuryTokenObjects.");
-        }
-
-        return getMercuryPriceItem(quotePriceItems.get(0));
+        return getPriceItem(quotePriceItems.get(0));
     }
 
-    public Collection<? extends PriceItem> getMercuryTokenObjects() {
-        List<PriceItem> mercuryTokenObjects = new ArrayList<PriceItem>();
-
-        for (QuotePriceItem quotePriceItem : getTokenObjects()) {
-            PriceItem mercuryPriceItem = getMercuryPriceItem(quotePriceItem);
-            if (mercuryPriceItem != null) {
-                mercuryTokenObjects.add(mercuryPriceItem);
-            }
-        }
-
-        return mercuryTokenObjects;
-    }
-
-    private PriceItem getMercuryPriceItem(QuotePriceItem quotePriceItem) {
+    private PriceItem getPriceItem(QuotePriceItem quotePriceItem) {
         // Find the existing Mercury price item.
         if (quotePriceItem == null) {
             return null;
         }
 
-        PriceItem mercuryPriceItem = priceItemDao.find(quotePriceItem.getPlatformName(),
+        PriceItem priceItem = priceItemDao.find(quotePriceItem.getPlatformName(),
                 quotePriceItem.getCategoryName(), quotePriceItem.getName());
 
-        if (mercuryPriceItem == null) {
-            mercuryPriceItem = new PriceItem(quotePriceItem.getId(), quotePriceItem.getPlatformName(),
+        if (priceItem == null) {
+            priceItem = new PriceItem(quotePriceItem.getId(), quotePriceItem.getPlatformName(),
                     quotePriceItem.getCategoryName(), quotePriceItem.getName());
-            priceItemDao.persist(mercuryPriceItem);
+            priceItemDao.persist(priceItem);
         }
 
-        return mercuryPriceItem;
+        return priceItem;
     }
 }

@@ -13,7 +13,6 @@ import java.io.Serializable;
 @SuppressWarnings("UnusedDeclaration")
 @ConfigKey("bsp")
 public class BSPConfig extends AbstractConfig implements LoginAndPassword, Serializable {
-
     private String login;
 
     private String password;
@@ -27,10 +26,12 @@ public class BSPConfig extends AbstractConfig implements LoginAndPassword, Seria
         super(deployment);
     }
 
+    @Override
     public String getLogin() {
         return login;
     }
 
+    @Override
     public String getPassword() {
         return password;
     }

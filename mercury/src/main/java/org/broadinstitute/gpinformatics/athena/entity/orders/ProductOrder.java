@@ -1187,7 +1187,8 @@ public class ProductOrder implements BusinessObject, Serializable {
         }
         OrderStatus newStatus = OrderStatus.Completed;
         for (ProductOrderSample sample : samples) {
-            if (sample.getDeliveryStatus() != ProductOrderSample.DeliveryStatus.ABANDONED && !sample.isBilled()) {
+            if (sample.getDeliveryStatus() != ProductOrderSample.DeliveryStatus.ABANDONED
+                && !sample.isCompletelyBilled()) {
                 // Found an incomplete item.
                 newStatus = OrderStatus.Submitted;
                 break;

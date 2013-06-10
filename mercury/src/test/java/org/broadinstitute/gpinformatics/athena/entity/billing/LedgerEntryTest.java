@@ -51,9 +51,11 @@ public class LedgerEntryTest {
                 new PriceItem("quoteServerId", "platform", "category", priceItemName), workCompleteDate, quantity);
     }
 
-    public static LedgerEntry createBilledLedgerEntry(ProductOrderSample sample) {
+    public static LedgerEntry createBilledLedgerEntry(ProductOrderSample sample,
+                                                      LedgerEntry.PriceItemType priceItemType) {
         LedgerEntry entry = new LedgerEntry(sample,
                 new PriceItem("quoteServerId", "platform", "category", "priceItem"), new Date(), 1);
+        entry.setPriceItemType(priceItemType);
         entry.setBillingMessage(BillingSession.SUCCESS);
         return entry;
     }
@@ -64,7 +66,8 @@ public class LedgerEntryTest {
         BillingSession session = new BillingSession(0L, Collections.singleton(billedEntry));
         session.setBilledDate(new Date());
         return new Object[][] {
-                {createBilledLedgerEntry(createSample("test")), true},
+                {createBilledLedgerEntry(createSample("test"), LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM), true},
+                {createBilledLedgerEntry(createSample("test"), LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM), true},
                 {billedEntry, true},
                 {createOneLedgerEntry("test", "price item", 1), false}
         };

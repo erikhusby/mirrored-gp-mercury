@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -51,7 +52,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.SampleType.WITH_PDO;
+import static org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.SampleType.PREFER_PDO;
 
 /**
  * Encapsulates the business logic related to {@link RapSheet}s and rework. This includes the creation of a new batch
@@ -182,33 +183,46 @@ public class ReworkEjb {
         labVessels.addAll(labVesselDao.findBySampleKey(query));
 
         for (LabVessel vessel : labVessels) {
-            Set<SampleInstance> sampleInstances = vessel.getSampleInstances(WITH_PDO, null);
+            Set<SampleInstance> sampleInstances = vessel.getSampleInstances(PREFER_PDO, null);
 
-            if (sampleInstances.size() != 1) {
-                // per Zimmer, ignore tubes that are pools when querying by sample
-                // TODO: report a warning?
+            /*
+             * By using PREFER_PDO, we are able to get all samples for a vessel.  If there are samples associated with
+             * PDOs, we will get Just the PDO associated Samples.  If there are samples that are NOT associated with
+             * PDOs, we will get those samples.
+             */
+            List<ProductOrderSample> productOrderSamples = null;
+
+            SampleInstance sampleInstance = sampleInstances.iterator().next();
+            String sampleKey = sampleInstance.getStartingSample().getSampleKey();
+            String productOrderKey = sampleInstance.getProductOrderKey();
+            List<String> sampleIds = new ArrayList<>(sampleInstances.size());
+
+            if (StringUtils.isNotBlank(productOrderKey)) {
+                sampleIds = Collections.singletonList(sampleKey);
             } else {
-                SampleInstance sampleInstance = sampleInstances.iterator().next();
-                String sampleKey = sampleInstance.getStartingSample().getSampleKey();
-                String productOrderKey = sampleInstance.getProductOrderKey();
 
+                for (SampleInstance currentInstance : sampleInstances) {
+                    sampleIds.add(currentInstance.getStartingSample().getSampleKey());
+                }
+
+            }
+            for (Map.Entry<String, List<ProductOrderSample>> entryMap : athenaClientService
+                    .findMapSampleNameToPoSample(sampleIds).entrySet()) {
                 // TODO: fetch for all vessels in a single call and make looping over labVessels a @DaoFree method
-                List<ProductOrderSample> productOrderSamples =
-                        athenaClientService.findMapSampleNameToPoSample(Collections.singletonList(sampleKey))
-                                .get(sampleKey);
-
+                productOrderSamples = entryMap.getValue();
                 // make sure we have a matching product order sample
                 for (ProductOrderSample sample : productOrderSamples) {
-                    if (sample.getProductOrder().getBusinessKey().equals(productOrderKey)) {
+                    if (StringUtils.isBlank(productOrderKey) ||
+                        sample.getProductOrder().getBusinessKey().equals(productOrderKey)) {
 
-                        ProductOrder productOrder = athenaClientService.retrieveProductOrderDetails(productOrderKey);
-                        ReworkCandidate candidate = new ReworkCandidate(sampleKey, productOrderKey, vessel.getLabel(),
-                                productOrder, vessel);
+                        ReworkCandidate candidate = new ReworkCandidate(entryMap.getKey(),
+                                sample.getProductOrder().getBusinessKey(), vessel.getLabel(),
+                                sample.getProductOrder(), vessel);
 
                         if (!ProductFamily.ProductFamilyName.EXOME.getFamilyName()
-                                .equals(productOrder.getProduct().getProductFamily().getName())) {
-                            candidate.addValidationMessage("The PDO " + productOrder.getBusinessKey() +
-                                                           " for Sample "  + sampleKey +
+                                .equals(sample.getProductOrder().getProduct().getProductFamily().getName())) {
+                            candidate.addValidationMessage("The PDO " + sample.getProductOrder().getBusinessKey() +
+                                                           " for Sample " + entryMap.getKey() +
                                                            " is not part of the Exome family");
                         }
 
@@ -231,8 +245,17 @@ public class ReworkEjb {
             for (ProductOrderSample sample : samples) {
                 String sampleKey = sample.getSampleName();
                 String tubeBarcode = bspResult.get(sampleKey).getBarcodeForLabVessel();
-                reworkCandidates.add(new ReworkCandidate(sampleKey, sample.getProductOrder().getBusinessKey(),
-                        tubeBarcode, sample.getProductOrder(), null));
+                final ReworkCandidate candidate =
+                        new ReworkCandidate(sampleKey, sample.getProductOrder().getBusinessKey(),
+                                tubeBarcode, sample.getProductOrder(), null);
+                if (!ProductFamily.ProductFamilyName.EXOME.getFamilyName()
+                        .equals(sample.getProductOrder().getProduct().getProductFamily().getName())) {
+                    candidate.addValidationMessage("The PDO " + sample.getProductOrder().getBusinessKey() +
+                                                   " for Sample " + sampleKey +
+                                                   " is not part of the Exome family");
+                }
+
+                reworkCandidates.add(candidate);
             }
         }
 
@@ -258,6 +281,10 @@ public class ReworkEjb {
             throws ValidationException {
 
         LabVessel reworkVessel = labVesselDao.findByIdentifier(labVesselBarcode);
+
+        if (reworkVessel == null) {
+            // TODO: call MercuryClientEjb.createInitialVessels
+        }
 
         List<MercurySample> reworks = new ArrayList<>(
                 getVesselRapSheet(reworkVessel, reworkReason, ReworkEntry.ReworkLevel.ONE_SAMPLE_RELEASE_REST_BATCH,
@@ -331,6 +358,7 @@ public class ReworkEjb {
         return validationMessages;
     }
 
+    // TODO: Only called from BatchToJiraTest. Can that be modified to use a method that is used by application code?
     public void addReworkToBatch(@Nonnull LabBatch batch, @Nonnull String labVesselBarcode,
                                  @Nonnull ReworkEntry.ReworkReason reworkReason,
                                  @Nonnull LabEventType reworkFromStep, @Nonnull String comment, String workflowName)
@@ -370,6 +398,12 @@ public class ReworkEjb {
         private LabVessel labVessel;
         private List<String> validationMessages = new ArrayList<>();
 
+        ReworkCandidate(@Nonnull String sampleKey, @Nonnull String productOrderKey, @Nonnull String tubeBarcode) {
+            this.sampleKey = sampleKey;
+            this.productOrderKey = productOrderKey;
+            this.tubeBarcode = tubeBarcode;
+        }
+
         public ReworkCandidate(@Nonnull String sampleKey, @Nonnull String productOrderKey, @Nonnull String tubeBarcode,
                                ProductOrder productOrder, LabVessel labVessel) {
             this.sampleKey = sampleKey;
@@ -405,6 +439,19 @@ public class ReworkEjb {
 
         public boolean isValid() {
             return validationMessages.isEmpty();
+        }
+
+        @Override
+        public String toString() {
+            return String.format("%s|%s|%s", tubeBarcode, sampleKey, productOrderKey);
+        }
+
+        public static ReworkCandidate fromString(String s) {
+            String[] parts = s.split("\\|");
+            String tubeBarcode = parts[0];
+            String sampleKey = parts[1];
+            String productOrderKey = parts[2];
+            return new ReworkCandidate(sampleKey, productOrderKey, tubeBarcode);
         }
     }
 }

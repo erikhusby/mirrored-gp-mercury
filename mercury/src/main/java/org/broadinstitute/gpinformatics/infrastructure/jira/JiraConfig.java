@@ -12,7 +12,6 @@ import java.io.Serializable;
 @SuppressWarnings("UnusedDeclaration")
 @ConfigKey("jira")
 public class JiraConfig extends AbstractConfig implements LoginAndPassword, Serializable {
-
     private String host;
 
     private int port;
@@ -37,10 +36,12 @@ public class JiraConfig extends AbstractConfig implements LoginAndPassword, Seri
         return port;
     }
 
+    @Override
     public String getLogin() {
         return login;
     }
 
+    @Override
     public String getPassword() {
         return password;
     }

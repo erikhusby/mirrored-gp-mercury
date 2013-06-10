@@ -239,7 +239,7 @@
                         </th>
                         <th>Name</th>
                         <th width="100">ID</th>
-                        <th>Product</th>
+                        <th style="min-width: 80px;">Product</th>
                         <th>Product Family</th>
                         <th width="80">Status</th>
                         <th width="150">Research Project</th>
