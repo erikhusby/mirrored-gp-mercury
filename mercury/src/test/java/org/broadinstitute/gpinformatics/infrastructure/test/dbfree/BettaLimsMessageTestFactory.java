@@ -37,7 +37,6 @@ public class BettaLimsMessageTestFactory {
     private long time = System.currentTimeMillis();
     /** True if the mode element in the messages should be set to Mercury. This causes all messages to bypass
      * routing logic and be processed by Mercury. */
-     */
     private final boolean mercuryMode;
 
     public BettaLimsMessageTestFactory(boolean mercuryMode) {
@@ -316,7 +315,8 @@ public class BettaLimsMessageTestFactory {
         }
         for (int i = 0, sourceTubeBarcodesSize = sourceTubeBarcodes.size(); i < sourceTubeBarcodesSize; i++) {
             List<String> sourceTubeBarcode = sourceTubeBarcodes.get(i);
-            plateCherryPickEvent.getSourcePositionMap().add(buildPositionMap(sourceRackBarcodes.get(i), sourceTubeBarcode));
+            plateCherryPickEvent.getSourcePositionMap().add(
+                    buildPositionMap(sourceRackBarcodes.get(i), sourceTubeBarcode));
         }
 
         PlateType targetRack = new PlateType();
