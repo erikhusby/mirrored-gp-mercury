@@ -814,7 +814,7 @@ public class ReworkEjbTest extends Arquillian {
 
         Collection<LabVessel> entries = reworkEjb.getVesselsForRework();
 
-        Assert.assertEquals(validationMessages.size(), 3);
+        Assert.assertEquals(validationMessages.size(), 2);
 
         Assert.assertEquals(entries.size(), existingReworks + mapBarcodeToTube.size());
 
@@ -846,7 +846,7 @@ public class ReworkEjbTest extends Arquillian {
 
         Collection<LabVessel> entries = reworkEjb.getVesselsForRework();
 
-        Assert.assertEquals(validationMessages.size(), 2);
+        Assert.assertEquals(validationMessages.size(), 1);
 
         Assert.assertEquals(entries.size(), existingReworks + hybridSelectionJaxbBuilder.getNormCatchBarcodes().size());
 
@@ -886,7 +886,7 @@ public class ReworkEjbTest extends Arquillian {
 
         Collection<LabVessel> entries = reworkEjb.getVesselsForRework();
 
-        Assert.assertEquals(validationMessages.size(), 1);
+        Assert.assertEquals(validationMessages.size(), 0);
 
         Assert.assertEquals(entries.size(), existingReworks + hybridSelectionJaxbBuilder.getNormCatchBarcodes().size());
 
@@ -929,7 +929,7 @@ public class ReworkEjbTest extends Arquillian {
 
         Collection<LabVessel> entries = reworkEjb.getVesselsForRework();
 
-        Assert.assertEquals(validationMessages.size(), 1);
+        Assert.assertEquals(validationMessages.size(), 0);
 
         Assert.assertEquals(entries.size(), existingReworks + hybridSelectionJaxbBuilder.getNormCatchBarcodes().size());
 
