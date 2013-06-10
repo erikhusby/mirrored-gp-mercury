@@ -40,7 +40,7 @@ public class LinkDenatureTubeToFlowcellActionBean extends LinkDenatureTubeCoreAc
 
         ReceptaclePlateTransferEvent transferEventType = vesselTransferBean.buildDenatureTubeToFlowcell(
                 LabEventType.DENATURE_TO_FLOWCELL_TRANSFER.getName(), denatureTubeBarcode, flowcellBarcode,
-                getUserBean().getLoginUserName());
+                getUserBean().getLoginUserName(), "UI");
 
         bettaLIMSMessage.getReceptaclePlateTransferEvent().add(transferEventType);
         bettalimsMessageResource.processMessage(bettaLIMSMessage);

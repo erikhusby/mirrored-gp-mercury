@@ -18,9 +18,6 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
-import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.RackOfTubesDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
@@ -34,7 +31,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import javax.annotation.Nullable;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import java.util.GregorianCalendar;
@@ -47,15 +43,6 @@ import java.util.Map;
 @Stateful
 @RequestScoped
 public class VesselTransferBean {
-    @Inject
-    LabEventFactory labEventFactory;
-    @Inject
-    LabEventDao labEventDao;
-    @Inject
-    RackOfTubesDao rackOfTubesDao;
-    @Inject
-    LabVesselDao labVesselDao;
-
     /**
      * Create a vessel transfer for denature to reagent kit.
      *
@@ -118,7 +105,8 @@ public class VesselTransferBean {
             transferEvent.getSourcePositionMap().add(positionMap);
 
             CherryPickSourceType cherryPickSource = new CherryPickSourceType();
-            cherryPickSource.setBarcode(denatureRackBarcode);
+            final String tubeBarcode = entry.getKey();
+            cherryPickSource.setBarcode(tubeBarcode);
             cherryPickSource.setWell(entry.getValue().toString());
             cherryPickSource.setDestinationBarcode(reagentKitBarcode);
             cherryPickSource.setDestinationWell(MiSeqReagentKit.LOADING_WELL.toString());
@@ -132,7 +120,8 @@ public class VesselTransferBean {
     }
 
     public ReceptaclePlateTransferEvent buildDenatureTubeToFlowcell(String eventType, String denatureTubeBarcode,
-                                                                    String flowcellBarcode, String username) {
+                                                                    String flowcellBarcode, String username,
+                                                                    String eventStationName) {
         ReceptaclePlateTransferEvent event = new ReceptaclePlateTransferEvent();
         event.setEventType(eventType);
         GregorianCalendar gregorianCalendar = new GregorianCalendar();
@@ -143,7 +132,7 @@ public class VesselTransferBean {
         }
         event.setDisambiguator(1L);
         event.setOperator(username);
-        event.setStation("UI");
+        event.setStation(eventStationName);
 
         ReceptacleType denatureTube = new ReceptacleType();
         denatureTube.setBarcode(denatureTubeBarcode);

@@ -15,15 +15,11 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMess
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MiSeqReagentKit;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
-import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
+import org.testng.Assert;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -35,7 +31,7 @@ public class MiSeqReagentKitEntityBuilder {
     private final TubeFormation denatureRack;
     private final String mySeqReagentKitBarcode;
     private MiSeqReagentKit miSeqReagentKit;
-    MiSeqReagentKitJaxbBuilder miSeqReagentKitTransferJaxb;
+    MiSeqReagentKitJaxbBuilder reagentKitTransferJaxb;
 
     public MiSeqReagentKitEntityBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
                                         LabEventFactory labEventFactory, LabEventHandler labEventHandler,
@@ -44,44 +40,31 @@ public class MiSeqReagentKitEntityBuilder {
         this.labEventFactory = labEventFactory;
         this.labEventHandler = labEventHandler;
         this.denatureRack = denatureRack;
+
         this.mySeqReagentKitBarcode = mySeqReagentKitBarcode;
     }
 
     public MiSeqReagentKitEntityBuilder invoke() {
-        Map<String, TubeFormation> mapBarcodeToSourceTubeFormation = new HashMap<>();
-        Map<String, RackOfTubes> mapBarcodeToSourceRackOfTubes = new HashMap<>();
-        Map<String, TwoDBarcodedTube> mapBarcodeToSourceTube = new HashMap<>();
-        Map<VesselPosition, TwoDBarcodedTube> mapPositionToTube = new HashMap<>();
         Map<String, VesselPosition> denatureRackMap = new HashMap<>();
-
-        mapBarcodeToSourceTubeFormation.put(denatureRack.getLabel(), denatureRack);
+        String denatureBarcode = null;
         for (VesselPosition vesselPosition : denatureRack.getVesselGeometry().getVesselPositions()) {
-            final TwoDBarcodedTube tube =
-                    denatureRack.getContainerRole().getVesselAtPosition(vesselPosition);
+            final TwoDBarcodedTube tube = denatureRack.getContainerRole().getVesselAtPosition(vesselPosition);
             if (tube != null) {
-                denatureRackMap.put(tube.getLabel(), vesselPosition);
-                mapPositionToTube.put(vesselPosition, tube);
-                mapBarcodeToSourceTube.put(tube.getLabel(), tube);
+                denatureBarcode = tube.getLabel();
+                denatureRackMap.put(denatureBarcode, vesselPosition);
             }
 
         }
 
-        miSeqReagentKitTransferJaxb = new MiSeqReagentKitJaxbBuilder(
-                bettaLimsMessageTestFactory, denatureRack.getLabel(), mapBarcodeToSourceRackOfTubes,mapBarcodeToSourceTube,
-                mySeqReagentKitBarcode, StaticPlate.PlateType.MiSeqReagentKit.getDisplayName()
-        ).invoke();
+        reagentKitTransferJaxb =
+                new MiSeqReagentKitJaxbBuilder(bettaLimsMessageTestFactory, denatureBarcode, denatureRackMap,
+                        mySeqReagentKitBarcode).invoke();
+        final PlateCherryPickEvent plateCherryPickEvent =
+                reagentKitTransferJaxb.getDenatureToReagentKitJaxb().getPlateCherryPickEvent().get(0);
+        Assert.assertNotNull(plateCherryPickEvent);
+        Assert.assertEquals(plateCherryPickEvent.getSource().get(0).getBarcode(),denatureBarcode);
 
-
-        final PlateCherryPickEvent denatureJaxb = miSeqReagentKitTransferJaxb.getDenatureJaxb();
-        LabEvent miSeqReagentKitTransferEntity = labEventFactory
-                        .buildCherryPickRackToReagentKitDbFree(denatureJaxb,mapBarcodeToSourceTubeFormation,mapBarcodeToSourceRackOfTubes,mapBarcodeToSourceTube);
-        labEventHandler.processEvent(miSeqReagentKitTransferEntity);
-        //asserts
-//        miSeqReagentKit =
-//                (MiSeqReagentKit) miSeqReagentKitTransferJaxb
-
-
-        LabEventTest.validateWorkflow(LabEventType.DENATURE_TO_REAGENT_KIT_TRANSFER.getName(), miSeqReagentKit);
+        Assert.assertEquals(plateCherryPickEvent.getPlate().getBarcode(),mySeqReagentKitBarcode);
 
         return this;
     }

@@ -350,8 +350,8 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
         for (Map.Entry<String, String> tubeEntry : barcodeByPositionMap.entrySet()) {
             TwoDBarcodedTube twoDBarcodedTube = mapBarcodeToTubes.get(tubeEntry.getValue());
             if (twoDBarcodedTube == null) {
-                twoDBarcodedTube = new TwoDBarcodedTube(tubeEntry.getValue());
-                mapBarcodeToTubes.put(tubeEntry.getValue(), twoDBarcodedTube);
+                twoDBarcodedTube = new TwoDBarcodedTube(tubeEntry.getKey());
+                mapBarcodeToTubes.put(tubeEntry.getKey(), twoDBarcodedTube);
             }
             mapPositionToTube.put(VesselPosition.getByName(tubeEntry.getValue()), twoDBarcodedTube);
         }

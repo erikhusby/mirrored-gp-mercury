@@ -46,16 +46,12 @@ public class ReagentKitTransferTest {
         bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
     }
 
-
     public void testDenatureToReagentKit() {
         final long time = new Date().getTime();
         String denatureRackBarcode = "denatureRack" + time;
         String miSeqReagentKitBarcode = "reagentKit" + time;
-        Map<String, TubeFormation> mapBarcodeToSourceTubeFormation = new HashMap<>();
         Map<String, RackOfTubes> mapBarcodeToSourceRackOfTubes = new HashMap<>();
         Map<String, TwoDBarcodedTube> mapBarcodeToSourceTube = new HashMap<>();
-        Map<VesselPosition, TwoDBarcodedTube> mapPositionToTube = new HashMap<>();
-        Map<String, VesselPosition> denatureRackMap = new HashMap<>();
 
         Map<String, VesselPosition> sourceBarcodes = new HashMap<>();
         RackOfTubes denatureRack = new RackOfTubes(denatureRackBarcode, RackOfTubes.RackType.Matrix96);
@@ -67,16 +63,13 @@ public class ReagentKitTransferTest {
             TwoDBarcodedTube tube = new TwoDBarcodedTube(tubeBarcode);
             Map<VesselPosition, TwoDBarcodedTube> positionMap = new HashMap<>();
             positionMap.put(VesselPosition.getByName(position), tube);
-            denatureRackMap.put(tubeBarcode, VesselPosition.getByName(position));
             TubeFormation tubeFormation = new TubeFormation(positionMap, RackOfTubes.RackType.Matrix96);
             mapBarcodeToSourceTube.put(tubeBarcode, tube);
-            mapBarcodeToSourceTubeFormation.put(tubeBarcode, tubeFormation);
             denatureRack.getTubeFormations().add(tubeFormation);
             mapBarcodeToSourceRackOfTubes.put(denatureRack.getLabel(), denatureRack);
-
         }
 
-        final List<String> sourceBarcodeList = new ArrayList(sourceBarcodes.keySet());
+        final List<String> sourceBarcodeList = new ArrayList<>(sourceBarcodes.keySet());
         PlateCherryPickEvent transferEventType = bettaLimsMessageTestFactory
                 .buildCherryPickToReagentKit(
                         LabEventType.DENATURE_TO_REAGENT_KIT_TRANSFER.getName(), mapBarcodeToSourceRackOfTubes,

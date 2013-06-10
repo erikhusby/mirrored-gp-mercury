@@ -13,10 +13,8 @@ package org.broadinstitute.gpinformatics.mercury.test.builders;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.boundary.labevent.VesselTransferBean;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,40 +23,32 @@ import java.util.Map;
 
 public class MiSeqReagentKitJaxbBuilder {
     private final BettaLimsMessageTestFactory bettaLimsMessageTestFactory;
-    private final String sourceRackBarcode;
-    private final Map<String, RackOfTubes> mapBarcodeToSourceRackOfTubes;
-    private final Map<String, TwoDBarcodedTube> mapBarcodeToSourceTube;
-    private final String targetPlateBarcode;
-    private final String plateType;
-    private PlateCherryPickEvent denatureJaxb;
+    private final String denatureTubeBarcode;
+    private final Map<String, VesselPosition> denatureBarcodeMap;
+    private final String mySeqReagentKitBarcode;
+
+    private BettaLIMSMessage denatureToReagentKitJaxb;
     private final List<BettaLIMSMessage> messageList = new ArrayList<BettaLIMSMessage>();
 
-    public MiSeqReagentKitJaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory, String sourceRackBarcode,
-                                      Map<String, RackOfTubes> mapBarcodeToSourceRackOfTubes,
-                                      Map<String, TwoDBarcodedTube> mapBarcodeToSourceTube,
-                                      String targetPlateBarcode, String plateType) {
+    public MiSeqReagentKitJaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
+                                      String denatureTubeBarcode, Map<String, VesselPosition> denatureBarcodeMap, String mySeqReagentKitBarcode) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
-        this.sourceRackBarcode = sourceRackBarcode;
-        this.mapBarcodeToSourceRackOfTubes = mapBarcodeToSourceRackOfTubes;
-        this.mapBarcodeToSourceTube = mapBarcodeToSourceTube;
-        this.targetPlateBarcode = targetPlateBarcode;
-        this.plateType = plateType;
+        this.denatureTubeBarcode = denatureTubeBarcode;
+        this.denatureBarcodeMap = denatureBarcodeMap;
+        this.mySeqReagentKitBarcode = mySeqReagentKitBarcode;
     }
 
     public MiSeqReagentKitJaxbBuilder invoke() {
-        denatureJaxb = bettaLimsMessageTestFactory
-                .buildCherryPickToReagentKit(LabEventType.DENATURE_TO_REAGENT_KIT_TRANSFER.getName(),
-                         mapBarcodeToSourceRackOfTubes, mapBarcodeToSourceTube,
-                        targetPlateBarcode);
+        VesselTransferBean vesselTransferBean = new VesselTransferBean();
+        denatureToReagentKitJaxb = vesselTransferBean
+                .denatureToReagentKitTransfer(null, denatureBarcodeMap, mySeqReagentKitBarcode, "pdunlea", "UI");
 
-        BettaLIMSMessage denatureMessage = bettaLimsMessageTestFactory.addMessage(messageList, denatureJaxb);
-
-
+        messageList.add(denatureToReagentKitJaxb);
         return this;
     }
 
-    public PlateCherryPickEvent getDenatureJaxb() {
-        return denatureJaxb;
+    public BettaLIMSMessage getDenatureToReagentKitJaxb() {
+        return denatureToReagentKitJaxb;
     }
 
     public List<BettaLIMSMessage> getMessageList() {
