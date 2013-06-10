@@ -113,8 +113,9 @@ public class BatchToJiraTest extends Arquillian {
         LabEvent event = new LabEvent(LabEventType.DENATURE_TO_FLOWCELL_TRANSFER, new Date(), "TEST-LAND", 0L, 101L);
         tube2.addInPlaceEvent(event);
         LabBatch batch = new LabBatch("Test batch 2", startingVessels, LabBatch.LabBatchType.WORKFLOW);
-        reworkEjb.addReworkToBatch(batch, tube2Label, ReworkEntry.ReworkReason.MACHINE_ERROR, LabEventType.PICO_PLATING_BUCKET,
-                "I am reworking this", WorkflowName.EXOME_EXPRESS.getWorkflowName());
+        reworkEjb.addReworkToBatch(batch, tube2Label, ReworkEntry.ReworkReason.MACHINE_ERROR,
+                LabEventType.PICO_PLATING_BUCKET, "I am reworking this", WorkflowName.EXOME_EXPRESS.getWorkflowName(),
+                "scottmat");
 
 
         batchEjb.batchToJira("andrew", null, batch);

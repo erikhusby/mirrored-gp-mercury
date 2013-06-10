@@ -9,23 +9,25 @@ import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
-@UrlBinding("/workflow/LinkDenatureTubeToFlowcell.action")
-public class LinkDenatureTubeToFlowcellActionBean extends LinkDenatureTubeCoreActionBean {
-    private static String VIEW_PAGE = "/workflow/link_dtube_to_fc.jsp";
+import java.util.HashMap;
+import java.util.Map;
+
+@UrlBinding("/workflow/LinkDenatureTubeToReagentBlock.action")
+public class LinkDenatureTubeToReagentBlockActionBean extends LinkDenatureTubeCoreActionBean {
+    private static String VIEW_PAGE = "/workflow/link_dtube_to_rb.jsp";
 
     @Validate(required = true, on = SAVE_ACTION)
-    private String flowcellBarcode;
+    private String reagentBlockBarcode;
 
-    public String getFlowcellBarcode() {
-        return flowcellBarcode;
+    public String getReagentBlockBarcode() {
+        return reagentBlockBarcode;
     }
 
-    public void setFlowcellBarcode(String flowcellBarcode) {
-        this.flowcellBarcode = flowcellBarcode;
+    public void setReagentBlockBarcode(String reagentBlockBarcode) {
+        this.reagentBlockBarcode = reagentBlockBarcode;
     }
 
     @DefaultHandler
@@ -36,16 +38,16 @@ public class LinkDenatureTubeToFlowcellActionBean extends LinkDenatureTubeCoreAc
 
     @HandlesEvent(SAVE_ACTION)
     public Resolution save() {
-        BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
+        Map<String, VesselPosition> denatureMap = new HashMap<>();
+        denatureMap.put(denatureTubeBarcode, VesselPosition.A01);
 
-        ReceptaclePlateTransferEvent transferEventType = vesselTransferBean.buildDenatureTubeToFlowcell(
-                LabEventType.DENATURE_TO_FLOWCELL_TRANSFER.getName(), denatureTubeBarcode, flowcellBarcode,
-                getUserBean().getLoginUserName(), "UI");
-
-        bettaLIMSMessage.getReceptaclePlateTransferEvent().add(transferEventType);
+        BettaLIMSMessage bettaLIMSMessage = vesselTransferBean
+                .denatureToReagentKitTransfer(null, denatureMap, reagentBlockBarcode,
+                        getUserBean().getLoginUserName(), "UI");
         bettalimsMessageResource.processMessage(bettaLIMSMessage);
 
-        addMessage("Denature Tube {0} associated with Flowcell {1}", denatureTubeBarcode, flowcellBarcode);
+        addMessage("Denature Tube {0} associated with Reagent Block {1}", denatureTubeBarcode,
+                reagentBlockBarcode);
         return new RedirectResolution(VIEW_PAGE);
     }
 

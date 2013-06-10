@@ -97,6 +97,11 @@
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BucketViewActionBean"
                                           event="view">Buckets</stripes:link>
                         </li>
+                        <li>
+                            <stripes:link
+                                    beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.LinkDenatureTubeToReagentBlockActionBean"
+                                    event="view">Link Denature Tube to Reagent Block</stripes:link>
+                        </li>
                         <security:authorizeBlock roles="<%= roles(Developer) %>">
                             <li>
                                 <stripes:link

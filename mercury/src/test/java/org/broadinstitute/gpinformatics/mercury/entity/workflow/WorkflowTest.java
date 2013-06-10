@@ -220,7 +220,7 @@ public class WorkflowTest {
         Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
             put(BSPSampleSearchColumn.PRIMARY_DISEASE, "Cancer");
             put(BSPSampleSearchColumn.LSID, "org.broad:SM-2345");
-            put(BSPSampleSearchColumn.MATERIAL_TYPE, new String("DNA:DNA WGA Cleaned"));  //need to avoid interning string
+            put(BSPSampleSearchColumn.MATERIAL_TYPE, new String("RNA:Total RNA"));  //need to avoid interning string
             put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, "5432");
             put(BSPSampleSearchColumn.SPECIES, "Homo Sapiens");
             put(BSPSampleSearchColumn.PARTICIPANT_ID, "PT-2345");

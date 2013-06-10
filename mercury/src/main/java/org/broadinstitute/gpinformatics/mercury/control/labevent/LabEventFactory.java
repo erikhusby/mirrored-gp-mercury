@@ -4,23 +4,63 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.*;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BasePlateEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.CherryPickSourceType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReagentType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.GenericReagentDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.*;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.RackOfTubesDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StripTubeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.*;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.MiSeqReagentKit;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StripTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainerEmbedder;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import java.io.Serializable;
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -55,6 +95,10 @@ public class LabEventFactory implements Serializable {
      * Physical type for an 8-lane flowcell
      */
     public static final String PHYS_TYPE_FLOWCELL = "Flowcell";
+    /**
+     * Physical type for a MiSeq reagent block.
+     */
+    public static final String PHYS_TYPE_REAGENT_BLOCK = "MiseqReagentKit";
     /**
      * Pattern that groups non-zero trailing digits
      */
@@ -147,6 +191,7 @@ public class LabEventFactory implements Serializable {
         }
     };
 
+
     /**
      * This class is used in a map, to detect duplicate events from a deck.
      */
@@ -221,6 +266,7 @@ public class LabEventFactory implements Serializable {
      * Builds one or more lab event entities from a JAXB message bean that contains one or more event beans
      *
      * @param bettaLIMSMessage JAXB bean
+     *
      * @return list of entities
      */
     public List<LabEvent> buildFromBettaLims(BettaLIMSMessage bettaLIMSMessage) {
@@ -283,6 +329,7 @@ public class LabEventFactory implements Serializable {
      * Builds a lab event entity from a JAXB cherry pick event bean
      *
      * @param plateCherryPickEvent JAXB event bean
+     *
      * @return entity
      */
     public LabEvent buildFromBettaLims(final PlateCherryPickEvent plateCherryPickEvent) {
@@ -295,7 +342,8 @@ public class LabEventFactory implements Serializable {
         }
         Map<String, RackOfTubes> mapBarcodeToSourceRackOfTubes = new HashMap<String, RackOfTubes>();
         for (PlateType sourcePlateType : plateCherryPickEvent.getSourcePlate()) {
-            mapBarcodeToSourceRackOfTubes.put(sourcePlateType.getBarcode(), rackOfTubesDao.findByBarcode(sourcePlateType.getBarcode()));
+            mapBarcodeToSourceRackOfTubes
+                    .put(sourcePlateType.getBarcode(), rackOfTubesDao.findByBarcode(sourcePlateType.getBarcode()));
         }
 
 
@@ -304,6 +352,10 @@ public class LabEventFactory implements Serializable {
             Map<String, StripTube> mapBarcodeToTargetStripTube = new HashMap<String, StripTube>();
             labEvent = buildCherryPickRackToStripTubeDbFree(plateCherryPickEvent, mapBarcodeToSourceTubeFormation,
                     mapBarcodeToSourceTube, null, mapBarcodeToTargetStripTube, mapBarcodeToSourceRackOfTubes);
+        } else if (plateCherryPickEvent.getPlate().getPhysType().equals(PHYS_TYPE_REAGENT_BLOCK)) {
+            labEvent = buildCherryPickRackToReagentKitDbFree(plateCherryPickEvent, mapBarcodeToSourceTubeFormation,
+                    mapBarcodeToSourceRackOfTubes, mapBarcodeToSourceTube);
+
         } else {
             Map<String, TubeFormation> mapBarcodeToTargetTubeFormation = buildMapBarcodeToTubeFormation(
                     new ArrayList<PositionMapType>() {{
@@ -323,6 +375,7 @@ public class LabEventFactory implements Serializable {
      * From a list of positionMaps, create a map from barcode to rack
      *
      * @param positionMap list of positionMaps
+     *
      * @return map from barcode to rack
      */
     private Map<String, TubeFormation> buildMapBarcodeToTubeFormation(List<PositionMapType> positionMap) {
@@ -338,6 +391,7 @@ public class LabEventFactory implements Serializable {
      * Fetch an existing tube formation from the database
      *
      * @param positionMapType tube barcodes and positions
+     *
      * @return database rack
      */
     private TubeFormation fetchTubeFormation(PositionMapType positionMapType) {
@@ -361,6 +415,7 @@ public class LabEventFactory implements Serializable {
      *                               entities
      * @param mapBarcodeToTargetTube entities
      * @param targetRackOfTubes      entity
+     *
      * @return entity
      */
     @DaoFree
@@ -372,12 +427,15 @@ public class LabEventFactory implements Serializable {
                                                     Map<String, TwoDBarcodedTube> mapBarcodeToTargetTube,
                                                     @Nullable RackOfTubes targetRackOfTubes) {
         LabEvent labEvent = constructReferenceData(plateCherryPickEvent, labEventRefDataFetcher);
-        addSourceTubeFormationsToMap(plateCherryPickEvent, mapBarcodeToSourceTubeFormation, mapBarcodeToSourceTube, mapBarcodeToSourceRackOfTubes);
+        addSourceTubeFormationsToMap(plateCherryPickEvent, mapBarcodeToSourceTubeFormation, mapBarcodeToSourceTube,
+                mapBarcodeToSourceRackOfTubes);
 
         for (Map.Entry<String, TubeFormation> stringVesselContainerEntry : mapBarcodeToTargetTubeFormation.entrySet()) {
             if (stringVesselContainerEntry.getValue() == null) {
-                TubeFormation targetRack = buildRackDaoFree(mapBarcodeToTargetTube, targetRackOfTubes, plateCherryPickEvent.getPlate(),
-                        plateCherryPickEvent.getPositionMap(), false, LabEventType.getByName(plateCherryPickEvent.getEventType()).isCreateSources());
+                TubeFormation targetRack =
+                        buildRackDaoFree(mapBarcodeToTargetTube, targetRackOfTubes, plateCherryPickEvent.getPlate(),
+                                plateCherryPickEvent.getPositionMap(), false,
+                                LabEventType.getByName(plateCherryPickEvent.getEventType()).isCreateSources());
                 stringVesselContainerEntry.setValue(targetRack);
             }
         }
@@ -409,6 +467,7 @@ public class LabEventFactory implements Serializable {
      *                                      unused
      * @param mapBarcodeToTargetStripTube   map from target strip tube barcode to StripTube entities; newly created StripTubes will NOT be added to this map
      * @param mapBarcodeToSourceRackOfTubes map from target rack barcode to RackOfTubes entities; newly created RackOfTubes will NOT be added to this map
+     *
      * @return a new LabEvent entity
      */
     @DaoFree
@@ -436,7 +495,7 @@ public class LabEventFactory implements Serializable {
         for (ReceptacleType receptacleType : plateCherryPickEvent.getPositionMap().getReceptacle()) {
             if (!receptacleType.getReceptacleType().equals(PHYS_TYPE_STRIP_TUBE)) {
                 throw new RuntimeException("Expected physType " + PHYS_TYPE_STRIP_TUBE + ", but received " +
-                        receptacleType.getReceptacleType());
+                                           receptacleType.getReceptacleType());
             }
             StripTube stripTube = mapBarcodeToTargetStripTube.get(receptacleType.getBarcode());
             if (stripTube == null) {
@@ -446,7 +505,8 @@ public class LabEventFactory implements Serializable {
         }
 
         for (CherryPickSourceType cherryPickSourceType : plateCherryPickEvent.getSource()) {
-            String position = LEADING_ZERO_PATTERN.matcher(cherryPickSourceType.getDestinationWell().substring(1)).replaceFirst("");
+            String position = LEADING_ZERO_PATTERN.matcher(cherryPickSourceType.getDestinationWell().substring(1))
+                    .replaceFirst("");
             labEvent.getCherryPickTransfers().add(new CherryPickTransfer(
                     mapBarcodeToSourceTubeFormation.get(cherryPickSourceType.getBarcode()).getContainerRole(),
                     VesselPosition.getByName(cherryPickSourceType.getWell()),
@@ -454,6 +514,71 @@ public class LabEventFactory implements Serializable {
                     VesselPosition.getByName("TUBE" + Integer.toString(
                             cherryPickSourceType.getDestinationWell().charAt(0) - 'A' + 1)),
                     labEvent));
+        }
+        return labEvent;
+    }
+
+
+    /**
+     * Create a PlateCherryPickEvent for transferring from a rack of tubes to a plate.
+     *
+     * @param plateCherryPickEvent          starting event for the transfer.
+     * @param plateCherryPickEvent PlateEventType for transfer.
+     * @param mapBarcodeToSourceTubeFormation map from source rack barcode to TubeFormation entities;
+     *                                        newly created TubeFormations will be added to this map
+     * @param mapBarcodeToSourceRackOfTubes map from target rack barcode to RackOfTubes entities;
+     *                                      newly created RackOfTubes will NOT be added to this map
+     * @param mapBarcodeToSourceTube        map from source tube barcode to TwoDBarcodedTube entities;
+     *                                      newly created TwoDBarcodedTubes will be added to this this map
+     *
+     * @return the LabEvent object
+     */
+    @DaoFree
+    public LabEvent buildCherryPickRackToReagentKitDbFree(PlateCherryPickEvent plateCherryPickEvent,
+                                                          Map<String, TubeFormation> mapBarcodeToSourceTubeFormation,
+                                                          Map<String, RackOfTubes> mapBarcodeToSourceRackOfTubes,
+                                                          Map<String, TwoDBarcodedTube> mapBarcodeToSourceTube
+    ) {
+        LabEvent labEvent = constructReferenceData(plateCherryPickEvent, labEventRefDataFetcher);
+        addSourceTubeFormationsToMap(plateCherryPickEvent, mapBarcodeToSourceTubeFormation, mapBarcodeToSourceTube,
+                mapBarcodeToSourceRackOfTubes);
+        MiSeqReagentKit reagentKit = null;
+
+        for (Map.Entry<String, RackOfTubes> rackOfTubesSet : mapBarcodeToSourceRackOfTubes.entrySet()) {
+            RackOfTubes rack=rackOfTubesSet.getValue();
+            for (Map.Entry<String, TubeFormation> stringVesselContainerEntry : mapBarcodeToSourceTubeFormation
+                    .entrySet()) {
+                if (stringVesselContainerEntry.getValue() == null) {
+                    PositionMapType positionMapType = new PositionMapType();
+
+                    TubeFormation targetRack =
+                            buildRackDaoFree(mapBarcodeToSourceTube, rack , plateCherryPickEvent.getPlate(),
+                                    plateCherryPickEvent.getPositionMap(), false,
+                                    LabEventType.getByName(plateCherryPickEvent.getEventType()).isCreateSources());
+                    stringVesselContainerEntry.setValue(targetRack);
+                }
+            }
+        }
+
+        addSourceTubeFormationsToMap(plateCherryPickEvent, mapBarcodeToSourceTubeFormation, mapBarcodeToSourceTube, mapBarcodeToSourceRackOfTubes);
+//        MiSeqReagentKit reagentKit=null;
+        for (CherryPickSourceType cherryPickSourceType : plateCherryPickEvent.getSource()) {
+            String reagentKitBarcode = cherryPickSourceType.getDestinationBarcode();
+            if (reagentKit == null) {
+                reagentKit = new MiSeqReagentKit(reagentKitBarcode);
+            } else {
+                if (reagentKitBarcode.equals(reagentKit.getLabel())) {
+                    throw new RuntimeException("Can only transfer to one ReagentKit ");
+                }
+            }
+
+            CherryPickTransfer cherryPickTransfer = new CherryPickTransfer(
+                    mapBarcodeToSourceTubeFormation.get(cherryPickSourceType.getBarcode()).getContainerRole(),
+                    VesselPosition.getByName(cherryPickSourceType.getWell()),
+                    reagentKit.getContainerRole(),
+                    MiSeqReagentKit.LOADING_WELL,
+                    labEvent);
+            labEvent.getCherryPickTransfers().add(cherryPickTransfer);
         }
         return labEvent;
     }
@@ -469,14 +594,16 @@ public class LabEventFactory implements Serializable {
      */
     private void addSourceTubeFormationsToMap(PlateCherryPickEvent plateCherryPickEvent,
                                               Map<String, TubeFormation> mapBarcodeToSourceTubeFormation,
-                                              Map<String, TwoDBarcodedTube> mapBarcodeToSourceTube, Map<String, RackOfTubes> mapBarcodeToRackOfTubes) {
+                                              Map<String, TwoDBarcodedTube> mapBarcodeToSourceTube,
+                                              Map<String, RackOfTubes> mapBarcodeToRackOfTubes) {
         for (PlateType sourceRackJaxb : plateCherryPickEvent.getSourcePlate()) {
             TubeFormation sourceTubeFormationEntity = mapBarcodeToSourceTubeFormation.get(sourceRackJaxb.getBarcode());
             if (sourceTubeFormationEntity == null) {
                 for (PositionMapType sourcePositionMap : plateCherryPickEvent.getSourcePositionMap()) {
                     if (sourcePositionMap.getBarcode().equals(sourceRackJaxb.getBarcode())) {
                         sourceTubeFormationEntity = buildRackDaoFree(mapBarcodeToSourceTube,
-                                mapBarcodeToRackOfTubes.get(sourceRackJaxb.getBarcode()), sourceRackJaxb, sourcePositionMap,
+                                mapBarcodeToRackOfTubes.get(sourceRackJaxb.getBarcode()), sourceRackJaxb,
+                                sourcePositionMap,
                                 true, LabEventType.getByName(plateCherryPickEvent.getEventType()).isCreateSources());
                         break;
                     }
