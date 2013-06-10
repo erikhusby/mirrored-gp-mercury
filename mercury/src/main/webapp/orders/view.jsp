@@ -693,9 +693,10 @@
                                     ${sample.samplePosition + 1}
                                 </td>
                                 <td id="sampleId-${sample.productOrderSampleId}" class="sampleName">
+                                    <c:set var="sampleLink" value="${actionBean.getSampleLink(sample)}"/>
                                     <c:choose>
-                                        <c:when test="${sample.inBspFormat}">
-                                            <stripes:link class="external" target="BSP_SAMPLE" title="BSP Sample" href="${actionBean.sampleSearchUrlForBspSample(sample)}">
+                                        <c:when test="${sampleLink.hasLink}">
+                                            <stripes:link class="external" target="${sampleLink.target}" title="${sampleLink.label}" href="${sampleLink.url}">
                                                 ${sample.sampleName}
                                             </stripes:link>
                                         </c:when>

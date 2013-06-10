@@ -132,4 +132,8 @@ public class SequencingRun {
     public String getRunDirectory() {
         return runDirectory;
     }
+
+    public long getSequencingRunId() {
+        return sequencingRunId;
+    }
 }

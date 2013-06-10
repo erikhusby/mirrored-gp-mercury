@@ -951,7 +951,7 @@
                                 <id>Mercury</id>
                                 <phase>process-resources</phase>
                                 <configuration>
-                                    <changeLogFile>src/main/db/mercurydb.changelog-1.0.xml</changeLogFile>
+                                    <changeLogFile>src/main/db/mercurydb.changelog-master.xml</changeLogFile>
                                     <driver>${database.driver}</driver>
                                     <url>${database.url}</url>
                                     <username>mercury</username>
@@ -967,7 +967,7 @@
                                 <id>Athena</id>
                                 <phase>process-resources</phase>
                                 <configuration>
-                                    <changeLogFile>src/main/db/athenadb.changelog-1.0.xml</changeLogFile>
+                                    <changeLogFile>src/main/db/athenadb.changelog-master.xml</changeLogFile>
                                     <driver>${database.driver}</driver>
                                     <url>${database.url}</url>
                                     <username>athena</username>
@@ -1391,9 +1391,7 @@
         <dependency>
             <groupId>lims</groupId>
             <artifactId>limsThrift</artifactId>
-<!--            <version>1.0-SNAPSHOT</version> -->
-<!-- Temporary while SquidThrift undergoes a release cycle. -->
-                <version>1.0-20130222.020813-36</version>
+            <version>1.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.apache.poi</groupId>

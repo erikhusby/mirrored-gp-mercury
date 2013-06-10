@@ -46,11 +46,9 @@ import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceDefin
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
-import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
-import org.broadinstitute.gpinformatics.athena.presentation.links.SampleSearchLink;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProductTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProjectTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
@@ -175,9 +173,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     private QuoteLink quoteLink;
 
     @Inject
-    private SampleSearchLink sampleSearchLink;
-
-    @Inject
     private ProductOrderEjb productOrderEjb;
 
     @Inject
@@ -242,9 +237,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     // This is used to determine whether a special warning message needs to be confirmed before normal abandon.
     private boolean abandonWarning;
-    /**
-     * Single {@link ProductOrderListEntry} for the view page, gives us billing session information.
-     */
+
+    // Single {@link ProductOrderListEntry} for the view page, gives us billing session information.
     private ProductOrderListEntry productOrderListEntry;
 
     private Long productFamilyId;
@@ -299,7 +293,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         // If this is not a draft, some fields are required.
         if (!editOrder.isDraft()) {
-            doValidation("save");
+            doValidation(SAVE_ACTION);
         } else {
             // Even in draft, created by must be set. This can't be checked using @Validate (yet),
             // since its value isn't set until updateTokenInputFields() has been called.
@@ -351,21 +345,12 @@ public class ProductOrderActionBean extends CoreActionBean {
         } catch (QuoteNotFoundException ex) {
             addGlobalValidationError("The quote id {2} was not found ", editOrder.getQuoteId());
         }
+    }
 
-        // Since we are only validating from view, we can persist without worry of saving something bad.
-        // We are doing on risk calculation only when everything passes, but informing the user no matter what.
-        if (!hasErrors()) {
-            String errorMessage;
-            try {
-                errorMessage = productOrderEjb.calculateRisk(getUserBean().getBspUser(), editOrder.getBusinessKey());
-            } catch (Exception e) {
-                errorMessage = "Error calculating risk";
-            }
-
-            if (!StringUtils.isBlank(errorMessage)) {
-                addGlobalValidationError(errorMessage);
-                return;
-            }
+    private void doOnRiskUpdate() {
+        try {
+            // Calculate risk here and get back any error message.
+            productOrderEjb.calculateRisk(editOrder.getBusinessKey());
 
             // refetch the order to get updated risk status on the order.
             editOrder = productOrderDao.findByBusinessKey(editOrder.getBusinessKey());
@@ -377,16 +362,22 @@ public class ProductOrderActionBean extends CoreActionBean {
                 addMessage("{0} {1} for this order {2} on risk",
                         numSamplesOnRisk, Noun.pluralOf("sample", numSamplesOnRisk), numSamplesOnRisk == 1 ? "is" : "are");
             }
-        } else {
-            addGlobalValidationError("On risk was not calculated.  Please fix the other errors first.");
-            // Initialize ProductOrderListEntry if we're implicitly going to redisplay the source page.
-            entryInit();
+        } catch (Exception e) {
+            addGlobalValidationError(e.getMessage());
         }
     }
 
     @ValidationMethod(on = PLACE_ORDER)
     public void validatePlacedOrder() {
-        doValidation("place order");
+        validatePlacedOrder(PLACE_ORDER);
+    }
+
+    public void validatePlacedOrder(String action) {
+        doValidation(action);
+
+        if (!hasErrors()) {
+            doOnRiskUpdate();
+        }
     }
 
     @ValidationMethod(on = {"startBilling", "downloadBillingTracker"})
@@ -691,8 +682,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent("validate")
     public Resolution validate() {
-        validatePlacedOrder();
-
+        validatePlacedOrder("validate");
         if (!hasErrors()) {
             addMessage("Draft Order is valid and ready to be placed");
         }
@@ -961,13 +951,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         int originalOnRiskCount = editOrder.countItemsOnRisk();
 
-        String errorMessage =
-            productOrderEjb.calculateRisk(
-                getUserBean().getBspUser(), editOrder.getBusinessKey(), selectedProductOrderSamples);
+        try {
+            productOrderEjb.calculateRisk(editOrder.getBusinessKey(), selectedProductOrderSamples);
 
-        if (!StringUtils.isBlank(errorMessage)) {
-            addGlobalValidationError(errorMessage);
-        } else {
             // refetch the order to get updated risk status on the order.
             editOrder = productOrderDao.findByBusinessKey(editOrder.getBusinessKey());
             int afterOnRiskCount = editOrder.countItemsOnRisk();
@@ -977,6 +963,8 @@ public class ProductOrderActionBean extends CoreActionBean {
                 afterOnRiskCount, originalOnRiskCount);
             JiraIssue issue = jiraService.getIssue(editOrder.getJiraTicketKey());
             issue.addComment(fullString);
+        } catch (Exception ex) {
+            addGlobalValidationError(ex.getMessage());
         }
 
         return createViewResolution();
@@ -1063,10 +1051,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public String getQuoteUrl() {
         return getQuoteUrl(editOrder.getQuoteId());
-    }
-
-    public String sampleSearchUrlForBspSample(ProductOrderSample sample) {
-        return sampleSearchLink.getUrl(sample);
     }
 
     public static Resolution getTrackerForOrders(

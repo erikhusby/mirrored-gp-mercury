@@ -67,8 +67,7 @@ public class PriceItemDao extends GenericDao {
         predicateList.add(cb.equal(priceItem.get(PriceItem_.platform), platform));
         if (categoryName == null) {
             predicateList.add(cb.isNull(priceItem.get(PriceItem_.category)));
-        }
-        else {
+        } else {
             predicateList.add(cb.equal(priceItem.get(PriceItem_.category), categoryName));
         }
         predicateList.add(cb.equal(priceItem.get(PriceItem_.name), priceItemName));

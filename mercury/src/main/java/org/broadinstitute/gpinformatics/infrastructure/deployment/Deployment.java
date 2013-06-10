@@ -13,7 +13,8 @@ public enum Deployment {
     PROD,
     STUBBY,
     /** Used when running tests on the automated build server. */
-    AUTO_BUILD;
+    AUTO_BUILD,
+    NOT_SUPPORTED;
 
     /**
      * True if we are in a CRSP build of Mercury. This is set manually when the deployment object is first constructed.

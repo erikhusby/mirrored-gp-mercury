@@ -278,7 +278,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         if (StringUtils.isBlank(billingError)) {
             // no value, so just empty a blank line.
             getWriter().nextCell();
-        } else if (billingError.equals(BillingSession.SUCCESS)) {
+        } else if (billingError.endsWith(BillingSession.SUCCESS)) {
             // Give the success message with no special style.
             getWriter().writeCell(billingError);
         } else {

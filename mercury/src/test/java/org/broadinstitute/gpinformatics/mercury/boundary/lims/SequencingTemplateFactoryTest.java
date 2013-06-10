@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTe
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateType;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
+import org.hamcrest.core.AnyOf;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
@@ -79,6 +80,7 @@ public class SequencingTemplateFactoryTest {
         assertThat(template.getBarcode(), equalTo("flowcell_barcode"));
         assertThat(template.getLanes().size(), is(2));
         Set<String> allLanes = new HashSet<String>();
+
         for (SequencingTemplateLaneType lane : template.getLanes()) {
             allLanes.add(lane.getLaneName());
             assertThat(lane.getLoadingVesselLabel(), equalTo("denature_tube_barcode"));
@@ -91,9 +93,11 @@ public class SequencingTemplateFactoryTest {
         Set<VesselAndPosition> vesselsAndPositions = factory.getLoadingVessels(flowcell);
         MatcherAssert.assertThat(vesselsAndPositions, not(Matchers.empty()));
         final List<VesselPosition> vesselPositions = Arrays.asList(VesselPosition.LANE1, VesselPosition.LANE2);
+
         for (VesselAndPosition vesselsAndPosition : vesselsAndPositions) {
+            assertThat(vesselsAndPosition.getPosition(),
+                                AnyOf.anyOf(equalTo(VesselPosition.LANE1), equalTo(VesselPosition.LANE2)));
             assertThat(denatureTube, equalTo(vesselsAndPosition.getVessel()));
-            assertThat(vesselPositions, hasItem(vesselsAndPosition.getPosition()));
         }
 
     }

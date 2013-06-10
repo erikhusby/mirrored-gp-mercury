@@ -18,7 +18,7 @@ import java.util.regex.Pattern;
  * A utility class for common BSP code.
  */
 public class BSPUtil {
-    public static final Pattern BSP_SAMPLE_NAME_PATTERN = Pattern.compile("SM-[A-Z1-9]{4,6}");
+    public static final Pattern BSP_SAMPLE_NAME_PATTERN = Pattern.compile("S[MP]-[A-Z1-9]{4,6}");
 
     /**
      * Tests if the sampleName is in a valid BSP format.
