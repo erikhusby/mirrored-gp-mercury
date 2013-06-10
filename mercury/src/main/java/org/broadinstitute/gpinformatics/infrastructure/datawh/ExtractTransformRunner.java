@@ -37,7 +37,7 @@ public class ExtractTransformRunner {
     /**
      * Interval in minutes for the timer to fire off.
      */
-    private int timerPeriod = 5;
+    private int timerPeriod = 2;
 
     private static Date previousNextTimeout = new Date(0);
 
@@ -56,11 +56,10 @@ public class ExtractTransformRunner {
 
     /**
      * This method does all the work -- it gets called at every interval defined by the timerPeriod.  The check for the
-     * isEnabled() is done here instead of the initialize() is simply because the YAML stuff needs to get a servlet or
-     * file protocol handler for the scannotations stuff.  Since this @Startup @Singleton will call the initialize()
-     * method before the web application is deployed, it will only have a VFS, the Mercury war will fail to deploy
-     * with an error if you try to move this check into the initialize() method.  It is less efficient to check every
-     * time, but it's a low-cost check without much overhead.
+     * isEnabled() is done here instead of the initialize() is simply because YAML needs to get a servlet or file
+     * protocol handler.
+     *
+     * @see {@link AbstractConfig}
      *
      * @param timer the defined {@Timer}
      */
@@ -86,11 +85,8 @@ public class ExtractTransformRunner {
      * @return true if it's an environment where ETL should be run
      */
     private boolean isEnabled() {
-        // Can't use @Inject for this object or we'll run into VFS protocol errors for scannotations (see scheduledEtl()
-        // Javadoc for more information.
-        AbstractConfig etlConfig =
-                (EtlConfig) MercuryConfiguration.getInstance().getConfig(EtlConfig.class, deployment);
-
-        return (etlConfig != null);
+        // Can't use @Inject for this object or we'll run into VFS protocol errors.
+        EtlConfig etlConfig = (EtlConfig) MercuryConfiguration.getInstance().getConfig(EtlConfig.class, deployment);
+        return AbstractConfig.isSupported(etlConfig);
     }
 }

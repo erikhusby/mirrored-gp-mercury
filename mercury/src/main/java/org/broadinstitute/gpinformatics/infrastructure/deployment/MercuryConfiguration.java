@@ -9,6 +9,7 @@ import org.scannotation.ClasspathUrlFinder;
 import org.scannotation.WarUrlFinder;
 import org.yaml.snakeyaml.Yaml;
 
+import javax.annotation.Nonnull;
 import javax.servlet.ServletContext;
 import java.io.IOException;
 import java.io.InputStream;
@@ -142,16 +143,17 @@ public class MercuryConfiguration {
 
             // Check if we have a ServletContext to determine if running inside the container.
             URL classPathUrl = (servletContext == null) ?
-                // Handle calls when running outside the container.
-                ClasspathUrlFinder.findClassBase(AbstractConfig.class) :
-                // Handle calls when running inside the container.
-                WarUrlFinder.findWebInfClassesPath(servletContext);
+                    // Handle calls when running outside the container.
+                    ClasspathUrlFinder.findClassBase(AbstractConfig.class) :
+                    // Handle calls when running inside the container.
+                    WarUrlFinder.findWebInfClassesPath(servletContext);
 
             AnnotationDB annotationDB = new AnnotationDB();
 
             try {
                 annotationDB.scanArchives(classPathUrl);
-                Set<String> annotatedClassNames = annotationDB.getAnnotationIndex().get(ConfigKey.class.getCanonicalName());
+                Set<String> annotatedClassNames =
+                        annotationDB.getAnnotationIndex().get(ConfigKey.class.getCanonicalName());
 
                 if (CollectionUtils.isEmpty(annotatedClassNames)) {
                     throw new RuntimeException("No @ConfigKey annotated class names found!");
@@ -159,7 +161,8 @@ public class MercuryConfiguration {
                 // Add any found config classes to our Map.
                 for (String annotatedClassName : annotatedClassNames) {
                     @SuppressWarnings("unchecked")
-                    Class<? extends AbstractConfig> annotatedClass = (Class<? extends AbstractConfig>) Class.forName(annotatedClassName);
+                    Class<? extends AbstractConfig> annotatedClass =
+                            (Class<? extends AbstractConfig>) Class.forName(annotatedClassName);
                     configKeyToClassMap.put(getConfigKey(annotatedClass), annotatedClass);
                 }
 
@@ -218,7 +221,9 @@ public class MercuryConfiguration {
                 // NOT_SUPPORTED is a sentinel value for use only in the 'mercury' stanza, there should not be
                 // any external system definitions for this deployment.
                 if (deployment == Deployment.NOT_SUPPORTED) {
-                    throw new RuntimeException("Unexpectedly saw NOT_SUPPORTED deployment section for system '" + deploymentEntry.getKey() + "'");
+                    throw new RuntimeException(
+                            "Unexpectedly saw NOT_SUPPORTED deployment section for system '" + deploymentEntry.getKey()
+                            + "'");
                 }
 
                 AbstractConfig config = externalSystems.getConfig(systemKey, deployment);
@@ -274,8 +279,8 @@ public class MercuryConfiguration {
             } catch (ParseException e) {
                 // Problem parsing the maven build date, use its default one.
                 if ((buildDate != null) && !buildDate.isEmpty()) {
-                   MERCURY_BUILD_INFO += " built on " + buildDate;    
-                }        
+                    MERCURY_BUILD_INFO += " built on " + buildDate;
+                }
             } finally {
                 IOUtils.closeQuietly(in);
             }
@@ -287,12 +292,11 @@ public class MercuryConfiguration {
     /**
      * Load the Mercury connections to external system deployments.
      *
-     * @param doc The top level YAML document.
+     * @param doc          The top level YAML document.
      * @param globalConfig Whether this invocation represents the parsing of the global configuration file
      *                     (mercury-config.yaml) or the local overrides file (mercury-config-local.yaml).
      */
     private void loadMercuryConnections(Map<String, Map<String, Map<String, String>>> doc, boolean globalConfig) {
-
         if (!doc.containsKey(MERCURY_STANZA)) {
             if (globalConfig) {
                 throw new RuntimeException("'" + MERCURY_STANZA + "' key not found in global configuration file!");
@@ -337,7 +341,8 @@ public class MercuryConfiguration {
                 // It is okay to see NOT_SUPPORTED and not find a configuration as this is a sentinel value for
                 // the absence of a configuration.
                 if (config == null && externalDeployment != Deployment.NOT_SUPPORTED) {
-                    throw new RuntimeException("Unrecognized external system in mercury connections: '" + systemKey + "'.");
+                    throw new RuntimeException(
+                            "Unrecognized external system in mercury connections: '" + systemKey + "'.");
                 }
 
                 mercuryConnections.set(systemKey, mercuryDeployment, externalDeployment);
@@ -389,7 +394,7 @@ public class MercuryConfiguration {
         return MERCURY_CONFIG_LOCAL;
     }
 
-     public AbstractConfig getConfig(Class<? extends AbstractConfig> clazz, Deployment deployment) {
+    public AbstractConfig getConfig(Class<? extends AbstractConfig> clazz, Deployment deployment) {
         InputStream is = null;
         try {
             if (!mercuryConnections.isInitialized()) {
@@ -440,7 +445,7 @@ public class MercuryConfiguration {
      * reflection-related checked exceptions.
      *
      * @param propertyMap Map of property keys to property values.
-     * @param config The configuration object that will receive the specified configuration property settings.
+     * @param config      The configuration object that will receive the specified configuration property settings.
      */
     private static void setPropertiesIntoConfig(Map<String, String> propertyMap, AbstractConfig config) {
         try {
@@ -454,7 +459,8 @@ public class MercuryConfiguration {
 
                 if (!properties.contains(property.getKey())) {
                     throw new RuntimeException(
-                            "Cannot set property '" + property.getKey() + "' into Config class '" + config.getClass() + "': no such property");
+                            "Cannot set property '" + property.getKey() + "' into Config class '" + config.getClass()
+                            + "': no such property");
                 }
 
                 BeanUtils.setProperty(config, property.getKey(), property.getValue());
@@ -470,6 +476,7 @@ public class MercuryConfiguration {
      * Utility method to create a new instance of the specified {@link AbstractConfig}-derived class.
      *
      * @param clazz The class extending {@link AbstractConfig} of which this method should create a new instance.
+     *
      * @return The new instance.
      */
     private static AbstractConfig newConfig(Class<? extends AbstractConfig> clazz) {

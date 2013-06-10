@@ -221,7 +221,7 @@ public class ExtractTransform implements Serializable {
             if (ZERO.equals(requestedStart)) {
                 startTimeSec = readLastEtlRun();
                 if (startTimeSec == 0L) {
-                    log.warn("Cannot determine time of last incremental ETL -- it will not run");
+                    log.warn("Cannot start ETL because the run time of the last incremental ETL can't be read");
                     return -1;
                 }
             } else {
@@ -538,14 +538,14 @@ public class ExtractTransform implements Serializable {
      * Gets relevant configuration from the .yaml file
      */
     void initConfig() {
-        if (null == etlConfig) {
+        if (etlConfig == null) {
             etlConfig = (EtlConfig) MercuryConfiguration.getInstance().getConfig(EtlConfig.class, deployment);
         }
 
-        if (null == datafileDir) {
-            setDatafileDir(etlConfig.getDatawhEtlDirRoot() + DATAFILE_SUBDIR);
+        if (datafileDir == null) {
+            datafileDir = etlConfig.getDatawhEtlDirRoot() + DATAFILE_SUBDIR;
 
-            // DW requires datafile directory.
+            // Data Warehouse requires a datafile directory.
             log.info("The ETL Data Warehouse is" + (!StringUtils.isBlank(datafileDir) ? "" : " not") + " running");
         }
     }

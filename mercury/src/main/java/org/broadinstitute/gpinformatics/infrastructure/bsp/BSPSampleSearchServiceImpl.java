@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientHandlerException;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
 
@@ -13,7 +14,6 @@ import java.util.*;
 
 @Impl
 public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService implements BSPSampleSearchService {
-
     private static final long serialVersionUID = 3432255750259397293L;
 
     public static final String SEARCH_RUN_SAMPLE_SEARCH = "search/runSampleSearch";
@@ -36,8 +36,8 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
     }
 
     @Override
-    public List<Map<BSPSampleSearchColumn, String>> runSampleSearch(Collection<String> sampleIDs, final BSPSampleSearchColumn... queryColumns) {
-
+    public List<Map<BSPSampleSearchColumn, String>> runSampleSearch(Collection<String> sampleIDs,
+                                                                    final BSPSampleSearchColumn... queryColumns) {
         if (queryColumns == null || queryColumns.length == 0) {
             throw new IllegalArgumentException("No query columns supplied!");
         }
@@ -45,8 +45,9 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
         if (sampleIDs == null) {
             return null;
         }
-        
-        if (sampleIDs.isEmpty()) {
+
+        // Check to see if BSP is supported before trying to get data.
+        if (sampleIDs.isEmpty() || AbstractConfig.isSupported(bspConfig)) {
             return Collections.emptyList();
         }
 

@@ -27,7 +27,6 @@ import static javax.ws.rs.core.Response.Status.ACCEPTED;
 import static javax.ws.rs.core.Response.Status.OK;
 
 public abstract class AbstractJerseyClientService implements Serializable {
-
     private transient Client jerseyClient;
 
     private static final Log logger = LogFactory.getLog(AbstractJerseyClientService.class);
@@ -54,7 +53,6 @@ public abstract class AbstractJerseyClientService implements Serializable {
         client.addFilter(new HTTPBasicAuthFilter(loginAndPassword.getLogin(), loginAndPassword.getPassword()));
     }
 
-
     /**
      * Subclasses can call this to force a MIME type on the response if needed (Quote service)
      *
@@ -63,7 +61,6 @@ public abstract class AbstractJerseyClientService implements Serializable {
      * @param mediaTypes
      */
     protected void forceResponseMimeTypes(Client client, final MediaType... mediaTypes) {
-
         client.addFilter(new ClientFilter() {
             @Override
             public ClientResponse handle(ClientRequest cr) throws ClientHandlerException {
@@ -81,7 +78,6 @@ public abstract class AbstractJerseyClientService implements Serializable {
         });
     }
 
-
     /**
      * Subclasses can call this to trust all server certificates (Quote service).
      *
@@ -94,10 +90,7 @@ public abstract class AbstractJerseyClientService implements Serializable {
      * @param config
      */
     protected void acceptAllServerCertificates(ClientConfig config) {
-
-
         try {
-
             // Create a trust manager that does not validate certificate chains
             TrustManager[] trustAllCerts = new TrustManager[] {
                     new X509TrustManager() {
@@ -131,19 +124,15 @@ public abstract class AbstractJerseyClientService implements Serializable {
         }
     }
 
-
     /**
      * Method for subclasses to retrieve the {@link Client} for making webservice calls.
      *
      * @return
      */
     protected Client getJerseyClient() {
-
         if (jerseyClient == null) {
-
             DefaultClientConfig clientConfig = new DefaultClientConfig();
             customizeConfig(clientConfig);
-
 
             jerseyClient = Client.create(clientConfig);
             customizeClient(jerseyClient);
@@ -187,7 +176,6 @@ public abstract class AbstractJerseyClientService implements Serializable {
         FALSE
     }
 
-
     /**
      * Post method.
      *
@@ -197,13 +185,11 @@ public abstract class AbstractJerseyClientService implements Serializable {
      * @param callback Callback method to feed data.
      */
     public void post(@Nonnull String urlString, @Nonnull String paramString, @Nonnull ExtraTab extraTab, @Nonnull PostCallback callback) {
-
         logger.debug(String.format("URL string is '%s'", urlString));
         WebResource webResource = getJerseyClient().resource(urlString);
 
         BufferedReader reader = null;
         try {
-
             ClientResponse clientResponse =
                     webResource.type(MediaType.APPLICATION_FORM_URLENCODED_TYPE).post(ClientResponse.class, paramString);
 
@@ -227,7 +213,6 @@ public abstract class AbstractJerseyClientService implements Serializable {
             String readLine = reader.readLine();
 
             while (readLine != null) {
-
                 String[] bspOutput = readLine.split("\t", -1);
 
                 String[] truncatedData;

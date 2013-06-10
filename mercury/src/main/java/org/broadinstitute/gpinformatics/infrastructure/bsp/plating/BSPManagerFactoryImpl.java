@@ -10,6 +10,7 @@ import org.broadinstitute.bsp.client.users.UserManager;
 import org.broadinstitute.bsp.client.workrequest.BspWorkRequestManager;
 import org.broadinstitute.bsp.client.workrequest.WorkRequestManager;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 
@@ -23,12 +24,12 @@ import java.util.List;
 public class BSPManagerFactoryImpl implements BSPManagerFactory {
 
     @Inject
-    private BSPConfig params;
+    private BSPConfig bspConfig;
 
     private Object create(Class<?> clazz) {
         try {
             Constructor<?> constructor = clazz.getConstructor(String.class, Integer.class, String.class, String.class);
-            return constructor.newInstance(params.getHost(), params.getPort(), params.getLogin(), params.getPassword());
+            return constructor.newInstance(bspConfig.getHost(), bspConfig.getPort(), bspConfig.getLogin(), bspConfig.getPassword());
         } catch (SecurityException e) {
             throw new RuntimeException(e);
         } catch (NoSuchMethodException e) {
@@ -47,8 +48,8 @@ public class BSPManagerFactoryImpl implements BSPManagerFactory {
     public BSPManagerFactoryImpl () {
     }
 
-    public BSPManagerFactoryImpl (BSPConfig params) {
-        this.params = params;
+    public BSPManagerFactoryImpl (BSPConfig bspConfig) {
+        this.bspConfig = bspConfig;
     }
 
     @Override
@@ -127,9 +128,12 @@ public class BSPManagerFactoryImpl implements BSPManagerFactory {
 
     @Override
     public UserManager createUserManager() {
+        // Check using isCRSP instead of AbstractConfig.isSupported(bspConfig) because there may be other user
+        // managers to support that have nothing to do with CRSP.
         if (Deployment.isCRSP) {
             return new CRSPUserManager();
         }
+
         return (UserManager) create(BspUserManager.class);
     }
 

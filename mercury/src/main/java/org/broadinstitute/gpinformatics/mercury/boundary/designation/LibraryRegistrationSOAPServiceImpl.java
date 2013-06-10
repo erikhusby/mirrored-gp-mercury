@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.designation;
 
+import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.DeploymentProducer;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
@@ -10,22 +11,16 @@ import org.broadinstitute.gpinformatics.mercury.boundary.squid.SequelLibrary;
 
 import javax.inject.Inject;
 
-
 /**
  * @author Scott Matthews
  *         Date: 6/20/12
  *         Time: 4:30 PM
  */
-
-
 @Impl
 public class LibraryRegistrationSOAPServiceImpl extends SquidWebServiceClient<LibraryRegistrationPortType>
         implements LibraryRegistrationSOAPService {
-
-
     @Inject
     private DeploymentProducer deploymentProducer;
-
 
     private SquidConfig squidConfig;
 
@@ -41,18 +36,12 @@ public class LibraryRegistrationSOAPServiceImpl extends SquidWebServiceClient<Li
      * @param deployment
      */
     public LibraryRegistrationSOAPServiceImpl(Deployment deployment) {
-
         squidConfig = SquidConfig.produce(deployment);
-
     }
-
 
     public LibraryRegistrationSOAPServiceImpl(SquidConfig squidConfig) {
-
         this.squidConfig = squidConfig;
     }
-
-
 
     @Override
     public void registerSequeLLibrary(SequelLibrary registrationContextIn) {
@@ -62,24 +51,21 @@ public class LibraryRegistrationSOAPServiceImpl extends SquidWebServiceClient<Li
     @Override
     public void registerForDesignation(String libraryName, /*PassBackedProjectPlan projectPlanIn,*/
                                        boolean needsControlLane) {
-
         int readLength = 0;
         int lanes = 0;
 
-//        lanes = projectPlanIn.getLaneCoverage();
-//        readLength = projectPlanIn.getReadLength();
+        // lanes = projectPlanIn.getLaneCoverage();
+        // readLength = projectPlanIn.getReadLength();
 
         squidCall().registerForDesignation(libraryName, lanes, readLength, needsControlLane);
     }
 
     @Override
     protected SquidConfig getSquidConfig() {
-        if ( squidConfig == null ) {
-
+        if ((squidConfig == null) && AbstractConfig.isSupported(squidConfig)) {
             final Deployment deployment = deploymentProducer.produce();
             squidConfig = SquidConfig.produce(deployment);
         }
-
 
         return squidConfig;
     }
