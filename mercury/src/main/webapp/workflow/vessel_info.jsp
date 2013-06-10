@@ -39,7 +39,7 @@
                     <c:forEach items="${actionBean.reworkCandidates}" var="candidate">
                         <tr>
                             <td>
-                                <stripes:radio name="reworkBarcode" value="${candidate.tubeBarcode}"/>
+                                <stripes:radio name="reworkCandidate" value="${candidate}"/>
                             </td>
                             <td>${candidate.tubeBarcode}</td>
                             <td>${candidate.sampleKey}</td>
