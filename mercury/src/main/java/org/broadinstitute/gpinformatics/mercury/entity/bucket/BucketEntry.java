@@ -102,6 +102,7 @@ public class BucketEntry  {
     private LabBatch labBatch;
 
     @Column(name = "ENTRY_TYPE", nullable = false)
+    @Enumerated(EnumType.STRING)
     private BucketEntryType entryType = BucketEntryType.PDO_ENTRY;
 
     protected BucketEntry () {
