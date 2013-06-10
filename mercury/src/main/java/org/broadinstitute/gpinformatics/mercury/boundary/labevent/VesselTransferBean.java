@@ -11,13 +11,18 @@
 
 package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.CherryPickSourceType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.RackOfTubesDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.MiSeqReagentKit;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
@@ -66,7 +71,6 @@ public class VesselTransferBean {
 
         final String eventType = LabEventType.DENATURE_TO_REAGENT_KIT_TRANSFER.getName();
 
-
         PlateCherryPickEvent transferEvent = new PlateCherryPickEvent();
         transferEvent.setEventType(eventType);
         GregorianCalendar gregorianCalendar = new GregorianCalendar();
@@ -91,15 +95,41 @@ public class VesselTransferBean {
             mapBarcodeToSourceTube.put(tubeBarcode, sourceTube);
         }
 
-        RackOfTubes denatureRack = null;
+        RackOfTubes denatureRack;
         if (denatureRackBarcode != null) {
             denatureRack = rackOfTubesDao.findByBarcode(denatureRackBarcode);
+            for (TubeFormation tubeFormation : denatureRack.getTubeFormations()) {
+                mapBarcodeToSourceTubeFormation.put(denatureRackBarcode, tubeFormation);
+
+            }
         } else {
-            denatureRackBarcode= "DenatureRack" + reagentKitBarcode;
+            denatureRackBarcode = "DenatureRack" + reagentKitBarcode;
+            denatureRack = new RackOfTubes(denatureRackBarcode, RackOfTubes.RackType.Matrix96);
+            TubeFormation tubeFormation = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
+            tubeFormation.addRackOfTubes(denatureRack);
+            mapBarcodeToSourceTubeFormation.put(denatureRackBarcode, tubeFormation);
         }
 
-        for (TubeFormation tubeFormation : denatureRack.getTubeFormations()) {
-            mapBarcodeToSourceTubeFormation.put(denatureRackBarcode, tubeFormation);
+        transferEvent.getSourcePlate().add(buildRack(denatureRackBarcode));
+
+        for (Map.Entry<String, VesselPosition> entry : denatureBarcodeMap.entrySet()) {
+
+            ReceptacleType receptacleType = new ReceptacleType();
+            receptacleType.setBarcode(entry.getKey());
+            receptacleType.setPosition(entry.getValue().toString());
+            receptacleType.setReceptacleType("tube");
+
+            PositionMapType positionMap = new PositionMapType();
+            positionMap.setBarcode(denatureRackBarcode);
+            positionMap.getReceptacle().add(receptacleType);
+            transferEvent.getSourcePositionMap().add(positionMap);
+
+            CherryPickSourceType cherryPickSource = new CherryPickSourceType();
+            cherryPickSource.setBarcode(denatureRackBarcode);
+            cherryPickSource.setWell(entry.getValue().toString());
+            cherryPickSource.setDestinationBarcode(reagentKitBarcode);
+            cherryPickSource.setDestinationWell(MiSeqReagentKit.LOADING_WELL.toString());
+            transferEvent.getSource().add(cherryPickSource);
         }
 
         mapBarcodeToSourceRackOfTubes.put(denatureRackBarcode, denatureRack);
@@ -109,5 +139,13 @@ public class VesselTransferBean {
                         mapBarcodeToSourceRackOfTubes, mapBarcodeToSourceTube);
         labEventDao.persist(labEvent);
         return labEvent;
+    }
+
+    private PlateType buildRack(String rackBarcode) {
+        PlateType rack = new PlateType();
+        rack.setBarcode(rackBarcode);
+        rack.setPhysType(LabEventFactory.PHYS_TYPE_TUBE_RACK);
+        rack.setSection(LabEventFactory.SECTION_ALL_96);
+        return rack;
     }
 }

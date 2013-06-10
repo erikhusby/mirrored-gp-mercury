@@ -2,7 +2,7 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 
 <stripes:useActionBean var="actionBean"
-                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.LinkDenatureTubeToFlowcellActionBean"/>
+                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.LinkDenatureTubeCoreActionBean"/>
 <c:choose>
     <c:when test="${actionBean.denatureTube == null}">
         Mercury does not recognize tube barcode ${actionBean.denatureTubeBarcode}.
