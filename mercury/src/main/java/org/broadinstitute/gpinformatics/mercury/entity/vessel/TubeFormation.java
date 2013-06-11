@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
@@ -26,7 +28,7 @@ public class TubeFormation extends LabVessel implements VesselContainerEmbedder<
     private RackOfTubes.RackType rackType;
 
     @Embedded
-    private VesselContainer<TwoDBarcodedTube> vesselContainer = new VesselContainer<TwoDBarcodedTube>(this);
+    private VesselContainer<TwoDBarcodedTube> vesselContainer = new VesselContainer<>(this);
 
     protected TubeFormation() {
     }
@@ -45,10 +47,10 @@ public class TubeFormation extends LabVessel implements VesselContainerEmbedder<
      * @return digest
      */
     private static String makeDigest(Map<VesselPosition, TwoDBarcodedTube> mapPositionToTube) {
-        List<Map.Entry<VesselPosition, String>> positionBarcodeList = new ArrayList<Map.Entry<VesselPosition, String>>();
+        List<Pair<VesselPosition, String>> positionBarcodeList = new ArrayList<>();
         for (Map.Entry<VesselPosition, TwoDBarcodedTube> vesselPositionTwoDBarcodedTubeEntry : mapPositionToTube.entrySet()) {
-            positionBarcodeList.add(new AbstractMap.SimpleEntry<VesselPosition, String>(
-                    vesselPositionTwoDBarcodedTubeEntry.getKey(), vesselPositionTwoDBarcodedTubeEntry.getValue().getLabel()));
+            positionBarcodeList.add(new ImmutablePair<>(vesselPositionTwoDBarcodedTubeEntry.getKey(),
+                    vesselPositionTwoDBarcodedTubeEntry.getValue().getLabel()));
         }
 
         return makeDigest(positionBarcodeList);
@@ -68,17 +70,17 @@ public class TubeFormation extends LabVessel implements VesselContainerEmbedder<
      * @param positionBarcodeList pairs of position / tube barcode
      * @return digest
      */
-    public static String makeDigest(List<Map.Entry<VesselPosition, String>> positionBarcodeList) {
-        Collections.sort(positionBarcodeList, new Comparator<Map.Entry<VesselPosition, String>>() {
+    public static String makeDigest(List<Pair<VesselPosition, String>> positionBarcodeList) {
+        Collections.sort(positionBarcodeList, new Comparator<Pair<VesselPosition, String>>() {
             @Override
-            public int compare(Map.Entry<VesselPosition, String> o1, Map.Entry<VesselPosition, String> o2) {
+            public int compare(Pair<VesselPosition, String> o1, Pair<VesselPosition, String> o2) {
                 return o1.getKey().compareTo(o2.getKey());
             }
         });
         StringBuilder stringBuilder = new StringBuilder();
-        for (Map.Entry<VesselPosition, String> positionBarcodeEntry : positionBarcodeList) {
-            stringBuilder.append(positionBarcodeEntry.getKey());
-            stringBuilder.append(positionBarcodeEntry.getValue());
+        for (Pair<VesselPosition, String> positionBarcodeEntry : positionBarcodeList) {
+            stringBuilder.append(positionBarcodeEntry.getLeft());
+            stringBuilder.append(positionBarcodeEntry.getRight());
         }
         return makeDigest(stringBuilder.toString());
     }

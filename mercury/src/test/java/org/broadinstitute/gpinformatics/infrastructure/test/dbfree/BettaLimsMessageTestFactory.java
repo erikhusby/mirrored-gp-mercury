@@ -25,6 +25,7 @@ import java.util.List;
 /**
  * This class is a factory for BettaLIMSMessage JAXB objects.  It is intended to facilitate building messages in test cases.
  */
+@SuppressWarnings("FeatureEnvy")
 public class BettaLimsMessageTestFactory {
     public static final int NUMBER_OF_RACK_COLUMNS = 12;
 
@@ -260,8 +261,8 @@ public class BettaLimsMessageTestFactory {
             plateCherryPickEvent.getSourcePositionMap().add(buildPositionMap(sourceRackBarcodes.get(i), sourceTubeBarcode));
         }
 
-        plateCherryPickEvent.setPlate(buildRack(targetRackBarcode));
-        plateCherryPickEvent.setPositionMap(buildPositionMap(targetRackBarcode, targetTubeBarcodes));
+        plateCherryPickEvent.getPlate().add(buildRack(targetRackBarcode));
+        plateCherryPickEvent.getPositionMap().add(buildPositionMap(targetRackBarcode, targetTubeBarcodes));
 
         for (CherryPick cherryPick : cherryPicks) {
             CherryPickSourceType cherryPickSource = new CherryPickSourceType();
@@ -293,7 +294,7 @@ public class BettaLimsMessageTestFactory {
         targetRack.setBarcode(targetRackBarcode);
         targetRack.setPhysType(LabEventFactory.PHYS_TYPE_STRIP_TUBE_RACK_OF_12);
         targetRack.setSection(LabEventFactory.SECTION_ALL_96);
-        plateCherryPickEvent.setPlate(targetRack);
+        plateCherryPickEvent.getPlate().add(targetRack);
 
         PositionMapType targetPositionMap = new PositionMapType();
         int rackPosition = 1;
@@ -305,7 +306,7 @@ public class BettaLimsMessageTestFactory {
             targetPositionMap.getReceptacle().add(receptacleType);
             rackPosition++;
         }
-        plateCherryPickEvent.setPositionMap(targetPositionMap);
+        plateCherryPickEvent.getPositionMap().add(targetPositionMap);
 
         for (CherryPick cherryPick : cherryPicks) {
             CherryPickSourceType cherryPickSource = new CherryPickSourceType();
