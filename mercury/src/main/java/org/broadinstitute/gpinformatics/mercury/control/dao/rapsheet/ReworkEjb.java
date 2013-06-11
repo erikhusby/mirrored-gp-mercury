@@ -418,8 +418,9 @@ public class ReworkEjb {
                                  String userName)
             throws ValidationException {
         LabVessel reworkVessel = getReworkLabVessel(new ReworkCandidate(labVesselBarcode), userName);
-        addRework(reworkVessel, "", new ReworkCandidate(labVesselBarcode), reworkReason, reworkFromStep,
-                "Pico/Plating Bucket", comment, workflowName, userName);
+        // I don't think this is needed anymore for the BatchToJiraTest case. -BPR
+//        addRework(reworkVessel, "", new ReworkCandidate(labVesselBarcode), reworkReason, reworkFromStep,
+//                "Pico/Plating Bucket", comment, workflowName, userName);
         batch.addReworks(Arrays.asList(reworkVessel));
     }
 

@@ -135,17 +135,11 @@ public class LabBatch {
 
 
     /**
-     * Adds the given rework vessels to the list of reworks for the batch
-     * and updates the RapSheet so the samples know they are rework.
+     * Adds the given rework vessels to the list of reworks for the batch.
      * @param newRework
      */
     public void addReworks(Collection<LabVessel> newRework) {
         reworks.addAll(newRework);
-        for (LabVessel vessel : newRework) {
-            for (MercurySample sample : vessel.getMercurySamples()) {
-                sample.getRapSheet().activateRework();
-            }
-        }
     }
 
     public void setReworks(Collection<LabVessel> reworks) {
