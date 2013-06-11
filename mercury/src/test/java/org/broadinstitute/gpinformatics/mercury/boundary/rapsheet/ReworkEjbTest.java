@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServic
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
@@ -200,7 +201,7 @@ public class ReworkEjbTest extends Arquillian {
 
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWarWithAlternatives(DEV, BSPSampleSearchServiceStub.class);
+        return DeploymentBuilder.buildMercuryWarWithAlternatives(DEV, BSPSampleSearchServiceStub.class, JiraServiceStub.class);
     }
 
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
@@ -432,7 +433,7 @@ public class ReworkEjbTest extends Arquillian {
             pBucket = new Bucket(bucketName);
         }
 
-        existingReworks = reworkEjb.getVesselsForRework().size();
+        existingReworks = reworkEjb.getVesselsForRework("Pico/Plating Bucket").size();
 
         bucketDao.persist(pBucket);
 
@@ -452,13 +453,16 @@ public class ReworkEjbTest extends Arquillian {
 
         createInitialTubes(bucketReadySamples1, String.valueOf((new Date()).getTime()) + "tst1");
 
-        for (String barcode : mapBarcodeToTube.keySet()) {
-            reworkEjb.addRework(new ReworkEjb.ReworkCandidate(barcode), ReworkEntry.ReworkReason.UNKNOWN_ERROR,
-                    LabEventType.PICO_PLATING_BUCKET, "test Rework", WorkflowName.EXOME_EXPRESS.getWorkflowName(),
-                    "scottmat");
+        for (Map.Entry<String, TwoDBarcodedTube> entry : mapBarcodeToTube.entrySet()) {
+            reworkEjb.addRework(entry.getValue(), exExProductOrder1.getBusinessKey(),
+                    new ReworkEjb.ReworkCandidate("", exExProductOrder1.getBusinessKey(), entry.getKey()),
+                    ReworkEntry.ReworkReason.UNKNOWN_ERROR, LabEventType.PICO_PLATING_BUCKET, "Pico/Plating Bucket",
+                    "test Rework", WorkflowName.EXOME_EXPRESS.getWorkflowName(), "scottmat");
         }
 
-        Collection<LabVessel> entries = reworkEjb.getVesselsForRework();
+        bucketDao.clear();
+
+        Collection<LabVessel> entries = reworkEjb.getVesselsForRework("Pico/Plating Bucket");
 
         Assert.assertEquals(entries.size(), existingReworks + mapBarcodeToTube.size());
 
@@ -471,7 +475,7 @@ public class ReworkEjbTest extends Arquillian {
 
         createInitialTubes(bucketReadySamples1, String.valueOf((new Date()).getTime()) + "tst2");
 
-        List<ReworkEjb.ReworkCandidate> candiates = new ArrayList<>();
+        List<ReworkEjb.ReworkCandidate> candidates = new ArrayList<>();
 
         for (String barcode : mapBarcodeToTube.keySet()) {
 
@@ -481,12 +485,12 @@ public class ReworkEjbTest extends Arquillian {
             newEntry.setStatus(BucketEntry.Status.Archived);
             bucketDao.persist(pBucket);
 
-            candiates.addAll(reworkEjb.findReworkCandidates(barcode));
+            candidates.addAll(reworkEjb.findReworkCandidates(barcode));
         }
 
-        Assert.assertEquals(candiates.size(), mapBarcodeToTube.size());
+        Assert.assertEquals(candidates.size(), mapBarcodeToTube.size());
 
-        for (ReworkEjb.ReworkCandidate candidate : candiates) {
+        for (ReworkEjb.ReworkCandidate candidate : candidates) {
             Assert.assertTrue(mapBarcodeToTube.keySet().contains(candidate.getTubeBarcode()));
         }
 
@@ -680,12 +684,16 @@ public class ReworkEjbTest extends Arquillian {
         List<String> validationMessages = new ArrayList<>();
 
         for (String barcode : mapBarcodeToTube.keySet()) {
-            validationMessages.addAll(reworkEjb.addAndValidateRework(new ReworkEjb.ReworkCandidate(barcode),
-                    ReworkEntry.ReworkReason.UNKNOWN_ERROR, LabEventType.PICO_PLATING_BUCKET, "test Rework",
-                    WorkflowName.EXOME_EXPRESS.getWorkflowName(), "jowalsh"));
+            validationMessages.addAll(reworkEjb
+                    .addAndValidateRework(new ReworkEjb.ReworkCandidate(barcode, exExProductOrder1.getBusinessKey()),
+                            ReworkEntry.ReworkReason.UNKNOWN_ERROR, LabEventType.PICO_PLATING_BUCKET,
+                            "Pico/Plating Bucket", "test Rework", WorkflowName.EXOME_EXPRESS.getWorkflowName(),
+                            "jowalsh"));
         }
 
-        Collection<LabVessel> entries = reworkEjb.getVesselsForRework();
+        bucketDao.clear();
+
+        Collection<LabVessel> entries = reworkEjb.getVesselsForRework("Pico/Plating Bucket");
 
         Assert.assertEquals(validationMessages.size(), 2);
 
@@ -710,12 +718,15 @@ public class ReworkEjbTest extends Arquillian {
             newEntry.setStatus(BucketEntry.Status.Archived);
             bucketDao.persist(pBucket);
 
-            validationMessages.addAll(reworkEjb.addAndValidateRework(new ReworkEjb.ReworkCandidate(currEntry.getKey()),
-                    ReworkEntry.ReworkReason.UNKNOWN_ERROR, LabEventType.PICO_PLATING_BUCKET, "",
+            validationMessages.addAll(reworkEjb.addAndValidateRework(
+                    new ReworkEjb.ReworkCandidate(currEntry.getKey(), exExProductOrder1.getBusinessKey()),
+                    ReworkEntry.ReworkReason.UNKNOWN_ERROR, LabEventType.PICO_PLATING_BUCKET, "Pico/Plating Bucket", "",
                     WorkflowName.EXOME_EXPRESS.getWorkflowName(), "scottmat"));
         }
 
-        Collection<LabVessel> entries = reworkEjb.getVesselsForRework();
+        bucketDao.clear();
+
+        Collection<LabVessel> entries = reworkEjb.getVesselsForRework("Pico/Plating Bucket");
 
         Assert.assertEquals(validationMessages.size(), 0);
 
@@ -744,10 +755,10 @@ public class ReworkEjbTest extends Arquillian {
                 bucketDao.persist(pBucket);
             }
             for (Map.Entry<String, TwoDBarcodedTube> currEntry : mapBarcodeToTube.entrySet()) {
-
-                reworkEjb.addAndValidateRework(new ReworkEjb.ReworkCandidate(currEntry.getKey()),
-                        ReworkEntry.ReworkReason.UNKNOWN_ERROR, LabEventType.PICO_PLATING_BUCKET, "",
-                        WorkflowName.EXOME_EXPRESS.getWorkflowName(), "scottmat");
+                reworkEjb.addAndValidateRework(
+                        new ReworkEjb.ReworkCandidate(currEntry.getKey(), exExProductOrder1.getBusinessKey()),
+                        ReworkEntry.ReworkReason.UNKNOWN_ERROR, LabEventType.PICO_PLATING_BUCKET, "Pico/Plating Bucket",
+                        "", WorkflowName.EXOME_EXPRESS.getWorkflowName(), "scottmat");
             }
             Assert.fail("With the tube in the bucket, Calling Rework should throw an Exception");
         } catch (ValidationException e) {
@@ -776,12 +787,15 @@ public class ReworkEjbTest extends Arquillian {
                         appConfig.getUrl(), 2);
 
         for (String barcode : hybridSelectionJaxbBuilder.getNormCatchBarcodes()) {
-            validationMessages.addAll(reworkEjb.addAndValidateRework(new ReworkEjb.ReworkCandidate(barcode),
-                    ReworkEntry.ReworkReason.UNKNOWN_ERROR, LabEventType.PICO_PLATING_BUCKET, "",
-                    WorkflowName.EXOME_EXPRESS.getWorkflowName(), "scottmat"));
+            validationMessages.addAll(reworkEjb
+                    .addAndValidateRework(new ReworkEjb.ReworkCandidate(barcode, exExProductOrder1.getBusinessKey()),
+                            ReworkEntry.ReworkReason.UNKNOWN_ERROR, LabEventType.PICO_PLATING_BUCKET,
+                            "Pico/Plating Bucket", "", WorkflowName.EXOME_EXPRESS.getWorkflowName(), "scottmat"));
         }
 
-        Collection<LabVessel> entries = reworkEjb.getVesselsForRework();
+        bucketDao.clear();
+
+        Collection<LabVessel> entries = reworkEjb.getVesselsForRework("Pico/Plating Bucket");
 
         Assert.assertEquals(validationMessages.size(), 1);
 
@@ -798,12 +812,15 @@ public class ReworkEjbTest extends Arquillian {
         createInitialTubes(bucketReadySamples2, String.valueOf((new Date()).getTime()) + "tst10");
 
         for (String barcode : mapBarcodeToTube.keySet()) {
-            validationMessages.addAll(reworkEjb.addAndValidateRework(new ReworkEjb.ReworkCandidate(barcode),
-                    ReworkEntry.ReworkReason.UNKNOWN_ERROR, LabEventType.PICO_PLATING_BUCKET, "",
-                    WorkflowName.EXOME_EXPRESS.getWorkflowName(), "scottmat"));
+            validationMessages.addAll(reworkEjb
+                    .addAndValidateRework(new ReworkEjb.ReworkCandidate(barcode, exExProductOrder2.getBusinessKey()),
+                            ReworkEntry.ReworkReason.UNKNOWN_ERROR, LabEventType.PICO_PLATING_BUCKET,
+                            "Pico/Plating Bucket", "", WorkflowName.EXOME_EXPRESS.getWorkflowName(), "scottmat"));
         }
 
-        Collection<LabVessel> entries = reworkEjb.getVesselsForRework();
+        bucketDao.clear();
+
+        Collection<LabVessel> entries = reworkEjb.getVesselsForRework("Pico/Plating Bucket");
 
         Assert.assertEquals(validationMessages.size(), 2);
 
@@ -829,12 +846,15 @@ public class ReworkEjbTest extends Arquillian {
                         appConfig.getUrl(), 2);
 
         for (String barcode : hybridSelectionJaxbBuilder.getNormCatchBarcodes()) {
-            validationMessages.addAll(reworkEjb.addAndValidateRework(new ReworkEjb.ReworkCandidate(barcode),
-                    ReworkEntry.ReworkReason.UNKNOWN_ERROR, LabEventType.PICO_PLATING_BUCKET, "",
-                    WorkflowName.EXOME_EXPRESS.getWorkflowName(), "scottmat"));
+            validationMessages.addAll(reworkEjb
+                    .addAndValidateRework(new ReworkEjb.ReworkCandidate(barcode, exExProductOrder2.getBusinessKey()),
+                            ReworkEntry.ReworkReason.UNKNOWN_ERROR, LabEventType.PICO_PLATING_BUCKET,
+                            "Pico/Plating Bucket", "", WorkflowName.EXOME_EXPRESS.getWorkflowName(), "scottmat"));
         }
 
-        Collection<LabVessel> entries = reworkEjb.getVesselsForRework();
+        bucketDao.clear();
+
+        Collection<LabVessel> entries = reworkEjb.getVesselsForRework("Pico/Plating Bucket");
 
         Assert.assertEquals(validationMessages.size(), 1);
 
@@ -869,12 +889,15 @@ public class ReworkEjbTest extends Arquillian {
                         appConfig.getUrl(), 2);
 
         for (String barcode : hybridSelectionJaxbBuilder.getNormCatchBarcodes()) {
-            validationMessages.addAll(reworkEjb.addAndValidateRework(new ReworkEjb.ReworkCandidate(barcode),
-                    ReworkEntry.ReworkReason.UNKNOWN_ERROR, LabEventType.PICO_PLATING_BUCKET, "",
-                    WorkflowName.EXOME_EXPRESS.getWorkflowName(), "scottmat"));
+            validationMessages.addAll(reworkEjb
+                    .addAndValidateRework(new ReworkEjb.ReworkCandidate(barcode, exExProductOrder2.getBusinessKey()),
+                            ReworkEntry.ReworkReason.UNKNOWN_ERROR, LabEventType.PICO_PLATING_BUCKET,
+                            "Pico/Plating Bucket", "", WorkflowName.EXOME_EXPRESS.getWorkflowName(), "scottmat"));
         }
 
-        Collection<LabVessel> entries = reworkEjb.getVesselsForRework();
+        bucketDao.clear();
+
+        Collection<LabVessel> entries = reworkEjb.getVesselsForRework("Pico/Plating Bucket");
 
         Assert.assertEquals(validationMessages.size(), 0);
 
@@ -910,12 +933,15 @@ public class ReworkEjbTest extends Arquillian {
         }
 
         for (String barcode : hybridSelectionJaxbBuilder.getNormCatchBarcodes()) {
-            validationMessages.addAll(reworkEjb.addAndValidateRework(new ReworkEjb.ReworkCandidate(barcode),
-                    ReworkEntry.ReworkReason.UNKNOWN_ERROR, LabEventType.PICO_PLATING_BUCKET, "",
-                    WorkflowName.EXOME_EXPRESS.getWorkflowName(), "scottmat"));
+            validationMessages.addAll(reworkEjb
+                    .addAndValidateRework(new ReworkEjb.ReworkCandidate(barcode, exExProductOrder2.getBusinessKey()),
+                            ReworkEntry.ReworkReason.UNKNOWN_ERROR, LabEventType.PICO_PLATING_BUCKET,
+                            "Pico/Plating Bucket", "", WorkflowName.EXOME_EXPRESS.getWorkflowName(), "scottmat"));
         }
 
-        Collection<LabVessel> entries = reworkEjb.getVesselsForRework();
+        bucketDao.clear();
+
+        Collection<LabVessel> entries = reworkEjb.getVesselsForRework("Pico/Plating Bucket");
 
         Assert.assertEquals(validationMessages.size(), 0);
 

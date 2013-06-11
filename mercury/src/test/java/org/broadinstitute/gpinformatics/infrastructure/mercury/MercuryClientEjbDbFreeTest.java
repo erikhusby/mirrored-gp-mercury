@@ -16,6 +16,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -176,7 +177,8 @@ public class MercuryClientEjbDbFreeTest {
         expect(bspSampleDataFetcher.fetchSamplesFromBSP((List<String>)anyObject())).andReturn(bspDtoMap);
         bucketDao.persist(bucket);
 
-        bucketBean.add((List<LabVessel>)anyObject(), eq(bucket), eq(pdoCreator), eq(EVENT_LOCATION), eq(EVENT_TYPE),
+        bucketBean.add((List<LabVessel>)anyObject(), eq(bucket),
+                eq(BucketEntry.BucketEntryType.PDO_ENTRY), eq(pdoCreator), eq(EVENT_LOCATION), eq(EVENT_TYPE),
                 eq(pdo.getBusinessKey()));
 
         replay(mocks);
