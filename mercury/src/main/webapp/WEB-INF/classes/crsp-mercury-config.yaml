@@ -28,7 +28,7 @@ app:
       workflowValidationEmail: smcdonou@broadinstitute.org
 
     RC:
-      host:     mercuryrc.broadinstitute.org
+      host:     crsp-rc-mercury.broadinstitute.org
       port:     8082
       jmsPort:  5447
       workflowValidationEmail: smcdonou@broadinstitute.org
@@ -84,16 +84,16 @@ jira:
     TEST:
       login:    squid
       password: squid
-      host:     labopsjiratest.broadinstitute.org
+      host:     crsptestjira.broadinstitute.org
       port:     8443
-      urlBase:      https://labopsjiratest.broadinstitute.org:8443
+      urlBase:      https://crsptestjira.broadinstitute.org:8443
 
     PROD:
       login:    squid
       password: squid
-      host:     labopsjira.broadinstitute.org
+      host:     crspjira.broadinstitute.org
 #      port:     8020
-      urlBase:      https://labopsjira.broadinstitute.org
+      urlBase:      https://crspjira.broadinstitute.org
 
 quote:
 
@@ -222,14 +222,14 @@ mercury:
     DEV:
 
       app:      DEV
-      bsp:      DEV
-      gap:      DEV
+      bsp:      NOT_SUPPORTED
+      gap:      NOT_SUPPORTED
       jira:     TEST
       quote:    QA
-      squid:    DEV
+      squid:    NOT_SUPPORTED
       thrift:   QA
       deckMsgs: DEV
-      datawhEtl: DEV
+      datawhEtl: NOT_SUPPORTED
       bettaLimsServer: DEV
       tableau:  NOT_SUPPORTED
       hipchat: DEV
@@ -238,14 +238,14 @@ mercury:
     AUTO_BUILD:
 
       app:      AUTO_BUILD
-      bsp:      DEV
-      gap:      DEV
+      bsp:      NOT_SUPPORTED
+      gap:      NOT_SUPPORTED
       jira:     TEST
       quote:    QA
-      squid:    DEV
+      squid:    NOT_SUPPORTED
       thrift:   QA
       deckMsgs: DEV
-      datawhEtl: DEV
+      datawhEtl: NOT_SUPPORTED
       bettaLimsServer: DEV
       tableau:  NOT_SUPPORTED
       hipchat: DEV
@@ -254,14 +254,14 @@ mercury:
     TEST:
 
       app:      TEST
-      bsp:      DEV
-      gap:      DEV
+      bsp:      NOT_SUPPORTED
+      gap:      NOT_SUPPORTED
       jira:     TEST
       quote:    DEV
-      squid:    TEST
+      squid:    NOT_SUPPORTED
       thrift:   TEST
       deckMsgs: DEV
-      datawhEtl: DEV
+      datawhEtl: NOT_SUPPORTED
       bettaLimsServer: TEST
       tableau:  NOT_SUPPORTED
       hipchat: DEV
@@ -270,14 +270,14 @@ mercury:
     QA:
 
       app:      QA
-      bsp:      QA
-      gap:      QA
+      bsp:      NOT_SUPPORTED
+      gap:      NOT_SUPPORTED
       jira:     TEST
       quote:    QA
-      squid:    QA
+      squid:    NOT_SUPPORTED
       thrift:   QA
       deckMsgs: QA
-      datawhEtl: QA
+      datawhEtl: NOT_SUPPORTED
       bettaLimsServer: QA
       tableau:  NOT_SUPPORTED
       hipchat: DEV
@@ -286,14 +286,14 @@ mercury:
     RC:
 
       app:      RC
-      bsp:      QA
-      gap:      QA
+      bsp:      NOT_SUPPORTED
+      gap:      NOT_SUPPORTED
       jira:     TEST
       quote:    QA
-      squid:    QA
+      squid:    NOT_SUPPORTED
       thrift:   QA
       deckMsgs: QA
-      datawhEtl: QA
+      datawhEtl: NOT_SUPPORTED
       bettaLimsServer: QA
       tableau:  NOT_SUPPORTED
       hipchat: DEV
@@ -302,14 +302,14 @@ mercury:
     PROD:
 
       app:      PROD
-      bsp:      PROD
-      gap:      PROD
+      bsp:      NOT_SUPPORTED
+      gap:      NOT_SUPPORTED
       jira:     PROD
       quote:    PROD
-      squid:    PROD
+      squid:    NOT_SUPPORTED
       thrift:   PROD
       deckMsgs: PROD
-      datawhEtl: PROD
+      datawhEtl: NOT_SUPPORTED
       bettaLimsServer: PROD
       tableau:  NOT_SUPPORTED
       hipchat: PROD
