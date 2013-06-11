@@ -9,6 +9,9 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 
+import java.util.GregorianCalendar;
+import java.util.List;
+
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
 /**
@@ -31,5 +34,15 @@ public class LabEventFixupText extends Arquillian {
             LabEvent labEvent = labEventDao.findById(LabEvent.class, id);
             labEventDao.remove(labEvent);
         }
+    }
+
+    @Test(enabled = true)
+    public void deleteBackfillDaughterPlateEvents() {
+        List<LabEvent> byDate = labEventDao.findByDate(new GregorianCalendar(2013, 4, 16, 0, 0).getTime(),
+                new GregorianCalendar(2013, 4, 16, 0, 30).getTime());
+        for (LabEvent labEvent : byDate) {
+            labEventDao.remove(labEvent);
+        }
+        // expecting 1417 events
     }
 }

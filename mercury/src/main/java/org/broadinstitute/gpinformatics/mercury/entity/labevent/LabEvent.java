@@ -95,37 +95,31 @@ public class LabEvent {
 
     private Long disambiguator = 0L;
 
-    @ManyToMany(cascade = CascadeType.PERSIST)
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     @JoinTable(schema = "mercury")
-    private Set<Reagent> reagents = new HashSet<Reagent>();
+    private Set<Reagent> reagents = new HashSet<>();
 
     // todo jmt a single transfer superclass that permits all section, position, vessel combinations
     /** for transfers using a tip box, e.g. Bravo */
-    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "labEvent")
-    private Set<SectionTransfer> sectionTransfers = new HashSet<SectionTransfer>();
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "labEvent")
+    private Set<SectionTransfer> sectionTransfers = new HashSet<>();
 
     /** for random access transfers, e.g. MultiProbe */
-    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "labEvent")
-    private Set<CherryPickTransfer> cherryPickTransfers = new HashSet<CherryPickTransfer>();
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "labEvent")
+    private Set<CherryPickTransfer> cherryPickTransfers = new HashSet<>();
 
     /** for transfers from a single vessel to an entire section, e.g. from a tube to a plate */
-    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "labEvent")
-    private Set<VesselToSectionTransfer> vesselToSectionTransfers = new HashSet<VesselToSectionTransfer>();
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "labEvent")
+    private Set<VesselToSectionTransfer> vesselToSectionTransfers = new HashSet<>();
 
     /** Typically for tube to tube transfers */
-    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "labEvent")
-    private Set<VesselToVesselTransfer> vesselToVesselTransfers = new HashSet<VesselToVesselTransfer>();
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "labEvent")
+    private Set<VesselToVesselTransfer> vesselToVesselTransfers = new HashSet<>();
 
     /** For plate / tube events, that don't involve a transfer e.g. anonymous reagent addition, loading onto an
      * instrument, entry into a bucket */
-    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, fetch = FetchType.LAZY)
     private LabVessel inPlaceLabVessel;
-
-    // todo jmt delete?
-    private String quoteServerBatchId;
-
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    private BasicProjectPlan projectPlanOverride;
 
     /**
      * Business Key of a product order to which this event is associated
@@ -136,7 +130,7 @@ public class LabEvent {
     @Enumerated(EnumType.STRING)
     private LabEventType labEventType;
 
-    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, fetch = FetchType.LAZY)
     private LabBatch labBatch;
 
     /** For JPA */
@@ -145,10 +139,10 @@ public class LabEvent {
 
     public LabEvent(LabEventType labEventType, Date eventDate, String eventLocation, Long disambiguator, Long operator) {
         this.labEventType = labEventType;
-        this.setEventDate(eventDate);
-        this.setEventLocation(eventLocation);
-        this.setDisambiguator(disambiguator);
-        this.setEventOperator(operator);
+        this.eventDate = eventDate;
+        this.eventLocation = eventLocation;
+        this.disambiguator = disambiguator;
+        this.eventOperator = operator;
     }
 
     /**
@@ -157,7 +151,7 @@ public class LabEvent {
      * @return set of LabVessels
      */
     public Set<LabVessel> getTargetLabVessels() {
-        Set<LabVessel> targetLabVessels = new HashSet<LabVessel>();
+        Set<LabVessel> targetLabVessels = new HashSet<>();
         for (SectionTransfer sectionTransfer : sectionTransfers) {
             targetLabVessels.add(sectionTransfer.getTargetVesselContainer().getEmbedder());
         }
@@ -180,8 +174,8 @@ public class LabEvent {
      * @return
      */
     public Set<LabVessel> getTargetVesselTubes() {
-        Set<LabVessel> eventVessels = new HashSet<LabVessel>();
-        for(LabVessel targetVessel: this.getTargetLabVessels()) {
+        Set<LabVessel> eventVessels = new HashSet<>();
+        for(LabVessel targetVessel: getTargetLabVessels()) {
             if(targetVessel.getContainerRole() != null &&
                targetVessel instanceof TubeFormation) {
                 eventVessels.addAll(targetVessel.getContainerRole().getContainedVessels());
@@ -193,8 +187,8 @@ public class LabEvent {
     }
 
     public Set<LabVessel> getSourceVesselTubes() {
-        Set<LabVessel> eventVessels = new HashSet<LabVessel>();
-        for(LabVessel sourceVessel: this.getSourceLabVessels()) {
+        Set<LabVessel> eventVessels = new HashSet<>();
+        for(LabVessel sourceVessel: getSourceLabVessels()) {
             if(sourceVessel.getContainerRole() != null &&
                sourceVessel instanceof TubeFormation) {
                 eventVessels.addAll(sourceVessel.getContainerRole().getContainedVessels());
@@ -212,7 +206,7 @@ public class LabEvent {
      * @return may return null
      */
     public Set<LabVessel> getSourceLabVessels() {
-        Set<LabVessel> sourceLabVessels = new HashSet<LabVessel>();
+        Set<LabVessel> sourceLabVessels = new HashSet<>();
         for (SectionTransfer sectionTransfer : sectionTransfers) {
             sourceLabVessels.add(sectionTransfer.getSourceVesselContainer().getEmbedder());
         }
@@ -230,7 +224,7 @@ public class LabEvent {
     }
 
     public void addReagent(Reagent reagent) {
-        this.reagents.add(reagent);
+        reagents.add(reagent);
     }
 
     /**
@@ -241,7 +235,7 @@ public class LabEvent {
      * @return
      */
     public Collection<LabVessel> getAllLabVessels() {
-        Set<LabVessel> allLabVessels = new HashSet<LabVessel>();
+        Set<LabVessel> allLabVessels = new HashSet<>();
         allLabVessels.addAll(getSourceLabVessels());
         allLabVessels.addAll(getTargetLabVessels());
         if (inPlaceLabVessel != null) {
@@ -256,31 +250,23 @@ public class LabEvent {
      * @return
      */
     public String getEventLocation() {
-        return this.eventLocation;
+        return eventLocation;
     }
 
     public Long getEventOperator () {
-        return this.eventOperator;
+        return eventOperator;
     }
 
     public Date getEventDate() {
-        return this.eventDate;
+        return eventDate;
     }
 
     public Collection<Reagent> getReagents() {
-        return this.reagents;
+        return reagents;
     }
 
     public Set<SectionTransfer> getSectionTransfers() {
-        return this.sectionTransfers;
-    }
-
-    public void setQuoteServerBatchId(String batchId) {
-        this.quoteServerBatchId = batchId;
-    }
-
-    public String getQuoteServerBatchId() {
-        return quoteServerBatchId;
+        return sectionTransfers;
     }
 
     public Set<CherryPickTransfer> getCherryPickTransfers() {
@@ -298,28 +284,6 @@ public class LabEvent {
     public Long getLabEventId() {
         return labEventId;
     }
-
-    /**
-     * An "override" of the {@link org.broadinstitute.gpinformatics.mercury.entity.project.BasicProjectPlan} effectively says "From
-     * this point forward in the transfer graph, consider all work
-     * related to the given projectPlan.  In this way, we're "overriding"
-     * the {@link org.broadinstitute.gpinformatics.mercury.entity.project.BasicProjectPlan} referenced by {@link org.broadinstitute.gpinformatics.mercury.entity.sample.StartingSample#getRootProjectPlan()}
-     * @param projectPlan
-     */
-//    public void setProjectPlanOverride(BasicProjectPlan projectPlan) {
-//        if (projectPlan == null) {
-//            throw new RuntimeException("projectPlan override cannot be null.");
-//        }
-//        this.projectPlanOverride = projectPlan;
-//    }
-
-    /**
-     * See setProjectPlanOverride(org.broadinstitute.gpinformatics.mercury.entity.project.BasicProjectPlan).
-     * @return
-     */
-//    public BasicProjectPlan getProjectPlanOverride() {
-//        return projectPlanOverride;
-//    }
 
     public void setEventLocation(String eventLocation) {
         this.eventLocation = eventLocation;
@@ -365,19 +329,6 @@ todo jmt adder methods
     }
 
     /**
-     * This bit can be used to help identify the single sample ancestor across different
-     * workflows over time.  Instead of having a complex single sample ancestor finder method
-     * that must understand all possible variations of workflows, instead we mark on the
-     * workflow BPMN diagram which transition results in the official single sample
-     * library.  When we need to find the single sample library for some downstream pool,
-     * which just search the history to find the event that has this bit turned on.
-     * @param isSingleSampleLibrary
-     */
-    public void setIsSingleSampleLibrary(boolean isSingleSampleLibrary) {
-
-    }
-
-    /**
      * When vessels are placed in a bucket, an association is made
      * between the vessel and the PO that is driving the work.  When
      * vessels are pulled out of a bucket, we record an event.  That
@@ -395,11 +346,11 @@ todo jmt adder methods
     }
 
     public void setProductOrderId( String productOrder) {
-        this.productOrderId = productOrder;
+        productOrderId = productOrder;
     }
 
     public LabEventType getLabEventType() {
-        return this.labEventType;
+        return labEventType;
     }
 
     public void setLabBatch(LabBatch labBatch) {
