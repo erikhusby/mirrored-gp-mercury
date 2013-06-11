@@ -35,7 +35,7 @@ public abstract class AbstractConfig {
      * <p/>
      * TODO: Replace this with something more elegant like a NotSupported configuration object.
      *
-     * @param config The configuration to see if its supported
+     * @param config The configuration to see if it's supported
      *
      * @return true if configuration is supported.
      */
