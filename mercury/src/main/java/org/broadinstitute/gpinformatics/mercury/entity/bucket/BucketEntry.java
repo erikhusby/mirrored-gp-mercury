@@ -4,8 +4,10 @@ import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.presentation.workflow.BucketViewActionBean;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
@@ -61,6 +63,10 @@ public class BucketEntry  {
             return result;
         }
     };
+
+    public ReworkEntry getReworkEntry() {
+        return null;
+    }
 
     public enum Status {
         Active, Archived

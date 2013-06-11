@@ -22,7 +22,6 @@ import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.RapSheet;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -78,7 +77,7 @@ public class BucketViewActionBean extends CoreActionBean {
     private String selectedBucket;
 
     private Collection<BucketEntry> bucketEntries;
-    private Collection<LabVessel> reworkEntries;
+    private Collection<BucketEntry> reworkEntries;
 
     private Map<String, ProductOrder> pdoByKeyMap = new HashMap<>();
 
@@ -152,11 +151,11 @@ public class BucketViewActionBean extends CoreActionBean {
         this.selectedReworks = selectedReworks;
     }
 
-    public Collection<LabVessel> getReworkEntries() {
+    public Collection<BucketEntry> getReworkEntries() {
         return reworkEntries;
     }
 
-    public void setReworkEntries(Collection<LabVessel> reworkEntries) {
+    public void setReworkEntries(Collection<BucketEntry> reworkEntries) {
         this.reworkEntries = reworkEntries;
     }
 
@@ -202,20 +201,30 @@ public class BucketViewActionBean extends CoreActionBean {
     }
 
     public Resolution viewBucket() {
-        reworkEntries = reworkEjb.getVesselsForRework();
 
         if (selectedBucket != null) {
             Bucket bucket = bucketDao.findByName(selectedBucket);
             if (bucket != null) {
                 bucketEntries = bucket.getBucketEntries();
+                reworkEntries = bucket.getReworkEntries();
             } else {
                 bucketEntries = new ArrayList<>();
             }
             if (!bucketEntries.isEmpty() || !reworkEntries.isEmpty()) {
                 jiraEnabled = true;
-                for (BucketEntry bucketEntry : bucketEntries) {
-                    pdoByKeyMap.put(bucketEntry.getPoBusinessKey(),
-                            athenaClientService.retrieveProductOrderDetails(bucketEntry.getPoBusinessKey()));
+
+                List<String> poKeys = new ArrayList<>();
+                List<BucketEntry> collectiveEntries = new ArrayList<>(bucketEntries);
+                collectiveEntries.addAll(reworkEntries);
+
+                for (BucketEntry entryForPO : collectiveEntries) {
+                    poKeys.add(entryForPO.getPoBusinessKey());
+                }
+
+                Collection<ProductOrder> foundOrders = athenaClientService.retrieveMultipleProductOrderDetails(poKeys);
+
+                for (ProductOrder orderEntry : foundOrders) {
+                    pdoByKeyMap.put(orderEntry.getBusinessKey(), orderEntry);
                 }
             }
         }
@@ -237,22 +246,21 @@ public class BucketViewActionBean extends CoreActionBean {
         return "Multiple PDOs";
     }
 
-    private RapSheet getRapSheet(LabVessel vessel) {
-        for (SampleInstance sampleInstance : vessel.getAllSamples()) {
-            return sampleInstance.getStartingSample().getRapSheet();
+    public String getReworkReason(BucketEntry vessel) {
+        String reason = "";
+
+        if (vessel.getReworkEntry() != null) {
+            reason = vessel.getReworkEntry().getReworkReason().name();
         }
-
-        return null;
+        return reason;
     }
 
-    public String getReworkReason(LabVessel vessel) {
-        return getRapSheet(vessel)
-                .getCurrentReworkEntry().getReworkReason().name();
-    }
-
-    public String getReworkComment(LabVessel vessel) {
-        return getRapSheet(vessel)
-                .getCurrentReworkEntry().getLabVesselComment().getComment();
+    public String getReworkComment(BucketEntry vessel) {
+        String reworkComment = "";
+        if (vessel.getReworkEntry() != null) {
+            reworkComment = vessel.getReworkEntry().getLabVesselComment().getComment();
+        }
+        return reworkComment;
     }
 
     public Set<String> getSampleNames(LabVessel vessel) {
@@ -264,8 +272,11 @@ public class BucketViewActionBean extends CoreActionBean {
         return sampleNames;
     }
 
-    public Long getReworkOperator(LabVessel vessel) {
-        LabEvent labEvent = getRapSheet(vessel).getCurrentReworkEntry().getLabVesselComment().getLabEvent();
+    public Long getReworkOperator(BucketEntry vessel) {
+        LabEvent labEvent = null;
+        if (vessel.getReworkEntry() != null) {
+            labEvent = vessel.getReworkEntry().getLabVesselComment().getLabEvent();
+        }
         if (labEvent == null) {
             return 0L;
         } else {
@@ -274,9 +285,12 @@ public class BucketViewActionBean extends CoreActionBean {
     }
 
 
-    public Date getReworkLogDate(LabVessel vessel) {
-        return getRapSheet(vessel)
-                .getCurrentReworkEntry().getLabVesselComment().getLogDate();
+    public Date getReworkLogDate(BucketEntry vessel) {
+        Date reworkLogDate = null;
+        if (vessel.getReworkEntry() != null) {
+            reworkLogDate = vessel.getReworkEntry().getLabVesselComment().getLogDate();
+        }
+        return reworkLogDate;
     }
 
     /**

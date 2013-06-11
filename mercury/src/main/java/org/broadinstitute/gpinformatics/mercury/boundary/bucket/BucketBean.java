@@ -78,7 +78,8 @@ public class BucketBean {
                          StringUtils.join(productOrderBusinessKeys, ", "));
         }
 
-        BucketEntry newEntry = bucket.addEntry(productOrderBusinessKeys.iterator().next(), vessel);
+        BucketEntry newEntry = bucket.addEntry(productOrderBusinessKeys.iterator().next(), vessel,
+                BucketEntry.BucketEntryType.PDO_ENTRY);
 
         labEventFactory.createFromBatchItems(productOrderBusinessKeys.iterator().next(), vessel, 1L, operator,
                 eventType, eventLocation);
@@ -141,7 +142,7 @@ public class BucketBean {
             } else {
                 pdoBusinessKey = singlePdoBusinessKey;
             }
-            listOfNewEntries.add(bucket.addEntry(pdoBusinessKey, currVessel));
+            listOfNewEntries.add(bucket.addEntry(pdoBusinessKey, currVessel, BucketEntry.BucketEntryType.PDO_ENTRY));
 
             if (!pdoKeyToVesselMap.containsKey(pdoBusinessKey)) {
                 pdoKeyToVesselMap.put(pdoBusinessKey, new LinkedList<LabVessel>());

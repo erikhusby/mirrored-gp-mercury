@@ -83,7 +83,8 @@ public class ReworkDbFreeTest extends BaseEventTest {
         assert(reworkRackMap.containsKey(reworkTubePrefix + reworkIdx));
         reworkRackMap.put(reworkTubePrefix + reworkIdx, reworkTube);
         for (TwoDBarcodedTube tube : reworkRackMap.values()) {
-            workingBucket.addEntry(productOrder.getBusinessKey(), tube);
+            workingBucket.addEntry(productOrder.getBusinessKey(), tube,
+                    org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry.BucketEntryType.PDO_ENTRY);
         }
 
         LabBatch reworkBatch = new LabBatch("reworkBatch", new HashSet<LabVessel>(reworkRackMap.values()),

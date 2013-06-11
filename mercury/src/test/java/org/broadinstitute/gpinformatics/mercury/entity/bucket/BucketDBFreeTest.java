@@ -48,11 +48,13 @@ public class BucketDBFreeTest {
         Assert.assertNotNull(testEntry2.getBucket());
         Assert.assertEquals(bucket, testEntry2.getBucket());
 
-        BucketEntry testEntry3 = bucket.addEntry(poBusinessKey2, new TwoDBarcodedTube(twoDBarcode3));
+        BucketEntry testEntry3 = bucket.addEntry(poBusinessKey2, new TwoDBarcodedTube(twoDBarcode3),
+                BucketEntry.BucketEntryType.PDO_ENTRY);
         Assert.assertNotNull(testEntry3.getBucket());
         Assert.assertEquals(bucket, testEntry3.getBucket());
 
-        BucketEntry testEntry4 = bucket.addEntry(poBusinessKey3, new TwoDBarcodedTube(twoDBarcode4));
+        BucketEntry testEntry4 = bucket.addEntry(poBusinessKey3, new TwoDBarcodedTube(twoDBarcode4),
+                BucketEntry.BucketEntryType.PDO_ENTRY);
         Assert.assertNotNull(testEntry3.getBucket());
         Assert.assertEquals(bucket, testEntry3.getBucket());
 

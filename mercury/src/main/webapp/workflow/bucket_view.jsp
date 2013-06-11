@@ -252,12 +252,12 @@
             </td>
             <td>
 
-                <a href="${ctxpath}/search/vessel.action?vesselSearch=&searchKey=${reworkVessel.label}">
-                        ${reworkVessel.label}
+                <a href="${ctxpath}/search/vessel.action?vesselSearch=&searchKey=${reworkVessel.labVessel.label}">
+                        ${reworkVessel.labVessel.label}
                 </a>
             </td>
             <td>
-                <c:forEach items="${actionBean.getSampleNames(reworkVessel)}" var="sampleName"
+                <c:forEach items="${actionBean.getSampleNames(reworkVessel.labVessel)}" var="sampleName"
                            varStatus="loopstatus">
 
                     <a href="${ctxpath}/search/sample.action?sampleSearch=&searchKey=${sampleName}"> ${sampleName} </a>
@@ -266,18 +266,18 @@
             </td>
             <td>
 
-                    ${actionBean.getSinglePDOBusinessKey(reworkVessel)}
+                    ${actionBean.getSinglePDOBusinessKey(reworkVessel.labVessel)}
             </td>
             <td>
-                <div class="tdfield">${actionBean.getPDODetails(actionBean.getSinglePDOBusinessKey(reworkVessel)).title}</div>
+                <div class="tdfield">${actionBean.getPDODetails(actionBean.getSinglePDOBusinessKey(reworkVessel.labVessel)).title}</div>
             </td>
             <td>
-                    ${actionBean.getUserFullName(actionBean.getPDODetails(actionBean.getSinglePDOBusinessKey(reworkVessel)).createdBy)}
+                    ${actionBean.getUserFullName(actionBean.getPDODetails(actionBean.getSinglePDOBusinessKey(reworkVessel.labVessel)).createdBy)}
             </td>
             <td>
-                <c:forEach items="${reworkVessel.nearestWorkflowLabBatches}" var="batch"
+                <c:forEach items="${reworkVessel.labVessel.nearestWorkflowLabBatches}" var="batch"
                            varStatus="stat">
-                    ${actionBean.getSinglePDOBusinessKey(reworkVessel)}
+                    ${actionBean.getSinglePDOBusinessKey(reworkVessel.labVessel)}
                     <c:if test="${!stat.last}">&nbsp;</c:if>
                 </c:forEach>
 

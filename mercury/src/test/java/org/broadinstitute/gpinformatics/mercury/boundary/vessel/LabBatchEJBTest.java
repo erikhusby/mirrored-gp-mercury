@@ -224,7 +224,8 @@ public class LabBatchEJBTest extends ContainerTest {
         bucket = bucketDao.findByName(BUCKET_NAME);
 
         for (LabVessel vessel : mapBarcodeToTube.values()) {
-            bucket.addEntry(STUB_TEST_PDO_KEY, vessel);
+            bucket.addEntry(STUB_TEST_PDO_KEY, vessel,
+                    org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry.BucketEntryType.PDO_ENTRY);
         }
 
         for (LabVessel vessel : mapBarcodeToTube.values()) {
