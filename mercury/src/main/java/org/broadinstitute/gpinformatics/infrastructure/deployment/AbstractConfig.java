@@ -17,7 +17,7 @@ public abstract class AbstractConfig {
         if (mercuryDeployment != Deployment.STUBBY) {
             AbstractConfig source = produce(getClass(), mercuryDeployment);
             // Only get the properties if the configuration is supported.
-            if (AbstractConfig.isSupported(source)) {
+            if (source != null) {
                 try {
                     BeanUtils.copyProperties(this, source);
                 } catch (IllegalAccessException | InvocationTargetException | IllegalArgumentException e) {

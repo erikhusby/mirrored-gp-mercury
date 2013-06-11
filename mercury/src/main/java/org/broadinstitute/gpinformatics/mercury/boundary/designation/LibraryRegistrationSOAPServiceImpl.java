@@ -62,7 +62,7 @@ public class LibraryRegistrationSOAPServiceImpl extends SquidWebServiceClient<Li
 
     @Override
     protected SquidConfig getSquidConfig() {
-        if ((squidConfig == null) && AbstractConfig.isSupported(squidConfig)) {
+        if (squidConfig == null) {
             final Deployment deployment = deploymentProducer.produce();
             squidConfig = SquidConfig.produce(deployment);
         }
