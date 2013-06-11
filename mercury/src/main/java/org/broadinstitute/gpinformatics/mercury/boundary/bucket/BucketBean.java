@@ -107,7 +107,7 @@ public class BucketBean {
     public void add(@Nonnull Collection<LabVessel> entriesToAdd, @Nonnull Bucket bucket,
                     @Nonnull String operator, @Nonnull String labEventLocation, LabEventType eventType) {
 
-        add(entriesToAdd, bucket, operator, labEventLocation, eventType, null);
+        add(entriesToAdd, bucket, BucketEntry.BucketEntryType.PDO_ENTRY, operator, labEventLocation, eventType, null);
     }
 
     /**
@@ -116,13 +116,15 @@ public class BucketBean {
      *
      * @param entriesToAdd         Collection of LabVessels to be added to a bucket
      * @param bucket               instance of a bucket entity associated with a workflow bucket step
+     * @param entryType            the type of bucket entry to add
      * @param operator             Represents the user that initiated adding the vessels to the bucket
      * @param labEventLocation     Machine location from which operator initiated this action
      * @param eventType            Type of the Lab Event that initiated this bucket add request
      * @param singlePdoBusinessKey Product order key for all vessels
      */
     public void add(@Nonnull Collection<LabVessel> entriesToAdd, @Nonnull Bucket bucket,
-                    @Nonnull String operator, @Nonnull String labEventLocation, LabEventType eventType,
+                    BucketEntry.BucketEntryType entryType, @Nonnull String operator, @Nonnull String labEventLocation,
+                    LabEventType eventType,
                     String singlePdoBusinessKey) {
 
         List<BucketEntry> listOfNewEntries = new LinkedList<BucketEntry>();
@@ -142,7 +144,7 @@ public class BucketBean {
             } else {
                 pdoBusinessKey = singlePdoBusinessKey;
             }
-            listOfNewEntries.add(bucket.addEntry(pdoBusinessKey, currVessel, BucketEntry.BucketEntryType.PDO_ENTRY));
+            listOfNewEntries.add(bucket.addEntry(pdoBusinessKey, currVessel, entryType));
 
             if (!pdoKeyToVesselMap.containsKey(pdoBusinessKey)) {
                 pdoKeyToVesselMap.put(pdoBusinessKey, new LinkedList<LabVessel>());

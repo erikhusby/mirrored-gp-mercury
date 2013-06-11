@@ -41,11 +41,11 @@ public class Bucket {
     private Long bucketId;
 
     @OneToMany(mappedBy = "bucket", cascade = CascadeType.PERSIST)
-    @Where(clause = "status='Active' and entryType='PDO_ENTRY'")
+    @Where(clause = "status='Active' and entry_type='PDO_ENTRY'")
     private Set<BucketEntry> bucketEntries = new HashSet<>();
 
     @OneToMany(mappedBy = "bucket", cascade = CascadeType.PERSIST)
-    @Where(clause = "status='Active' and entryType='REWORK_ENTRY'")
+    @Where(clause = "status='Active' and entry_type='REWORK_ENTRY'")
     private Set<BucketEntry> reworkEntries = new HashSet<>();
 
     @Column()
