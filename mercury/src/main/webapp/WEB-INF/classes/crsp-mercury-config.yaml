@@ -84,16 +84,16 @@ jira:
     TEST:
       login:    squid
       password: squid
-      host:     labopsjiratest.broadinstitute.org
+      host:     crsptestjira.broadinstitute.org
       port:     8443
-      urlBase:      https://labopsjiratest.broadinstitute.org:8443
+      urlBase:      https://crsptestjira.broadinstitute.org:8443
 
     PROD:
       login:    squid
       password: squid
-      host:     labopsjira.broadinstitute.org
+      host:     crspjira.broadinstitute.org
 #      port:     8020
-      urlBase:      https://labopsjira.broadinstitute.org
+      urlBase:      https://crspjira.broadinstitute.org
 
 quote:
 
