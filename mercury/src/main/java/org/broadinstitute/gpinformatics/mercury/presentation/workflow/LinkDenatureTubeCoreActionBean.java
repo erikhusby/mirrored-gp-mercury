@@ -27,7 +27,7 @@ public class LinkDenatureTubeCoreActionBean extends CoreActionBean {
     protected VesselTransferBean vesselTransferBean;
 
     @Validate(required = true, on = SAVE_ACTION)
-    protected String denatureTubeBarcode;
+    public String denatureTubeBarcode;
     private TwoDBarcodedTube denatureTube;
     protected String workflowName;
 
