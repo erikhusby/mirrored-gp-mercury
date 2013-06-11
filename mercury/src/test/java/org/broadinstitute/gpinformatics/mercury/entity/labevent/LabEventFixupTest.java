@@ -17,7 +17,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 /**
  * Fixups to LabEvent entities
  */
-public class LabEventFixupText extends Arquillian {
+public class LabEventFixupTest extends Arquillian {
 
     @Inject
     private LabEventDao labEventDao;
@@ -36,7 +36,7 @@ public class LabEventFixupText extends Arquillian {
         }
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void deleteBackfillDaughterPlateEvents() {
         List<LabEvent> byDate = labEventDao.findByDate(new GregorianCalendar(2013, 4, 16, 0, 0).getTime(),
                 new GregorianCalendar(2013, 4, 16, 0, 30).getTime());
