@@ -58,4 +58,22 @@
             <column name="ENTRY_TYPE" type="varchar(255)"></column>
         </addColumn>
     </changeSet>
+    <changeSet id="GPLIM-1377-6" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <columnExists columnName="ENTRY_TYPE" schemaName="mercury" tableName="BUCKET_ENTRY" />
+        </preConditions>
+        <update schemaName="mercury" tableName="BUCKET_ENTRY">
+            <column name="ENTRY_TYPE" value="PDO_ENTRY"></column>
+            <where>ENTRY_TYPE is null</where>
+        </update>
+    </changeSet>
+    <changeSet id="GPLIM-1377-7" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <columnExists columnName="ENTRY_TYPE" schemaName="mercury" tableName="BUCKET_ENTRY_AUD" />
+        </preConditions>
+        <update schemaName="mercury" tableName="BUCKET_ENTRY_AUD">
+            <column name="ENTRY_TYPE" value="PDO_ENTRY"></column>
+            <where>ENTRY_TYPE is null</where>
+        </update>
+    </changeSet>
 </databaseChangeLog>
