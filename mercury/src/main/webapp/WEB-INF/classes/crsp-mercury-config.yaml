@@ -39,45 +39,25 @@ app:
       workflowValidationEmail: gplims@broadinstitute.org
       #limsworkflowvalidation@broadinstitute.org
 
-
 bsp:
-
     DEV:
-      login:    xxxx
-      password: xxxx
-      host:     xxxx
-      port:     1
-
     QA:
-      login:    xxxx
-      password: xxxx
-      host:     xxxx
-      port:     1
-
     PROD:
-      login:    xxxx
-      password: xxxx
-      host:     xxxx
-      port:     1
-
 
 gap:
-
     DEV:
-      login:    xxxx
-      password: xxxx
-      url:      xxxx
-
     QA:
-      login:    xxxx
-      password: xxxx
-      url:      xxxx
-
     PROD:
-      login:    xxxx
-      password: xxxx
-      url:      xxxx
 
+squid:
+    DEV:
+    QA:
+    PROD:
+
+datawhEtl:
+    DEV:
+    QA:
+    PROD:
 
 jira:
 
@@ -111,24 +91,6 @@ quote:
       login:    rnordin@broadinstitute.org
       password: Squ1d_us3r
       url:      http://quoteprod:8080
-
-
-
-squid:
-
-    DEV:
-      url: http://localhost:8080/squid
-
-    TEST:
-      url: http://prodinfobuild.broadinstitute.org:8020/squid
-
-    QA:
-      url: http://vsquidrc.broadinstitute.org:8000/squid
-
-    PROD:
-      url: http://squid-ui.broadinstitute.org:8000/squid
-
-
 
 
 thrift:
@@ -190,18 +152,6 @@ bettaLimsServer:
         jmsPort: 61616
         jmsQueue: broad.queue.bettalims
 
-datawhEtl:
-
-    DEV:
-        datawhEtlDirRoot: /seq/lims/datawh/dev
-
-    QA:
-        datawhEtlDirRoot: /seq/lims/datawh/qa
-
-    PROD:
-        datawhEtlDirRoot: /seq/lims/datawh/prod
-
-
 hipchat:
     DEV:
         baseUrl: https://www.hipchat.com/v1/rooms/message
@@ -215,21 +165,19 @@ hipchat:
 
 # Mercury configuration, this describes how Mercury deployments are connected to external system deployments.
 
-
-
 mercury:
 
     DEV:
 
       app:      DEV
-      bsp:      DEV
-      gap:      DEV
+      bsp:      NOT_SUPPORTED
+      gap:      NOT_SUPPORTED
       jira:     TEST
       quote:    QA
-      squid:    DEV
+      squid:    NOT_SUPPORTED
       thrift:   QA
       deckMsgs: DEV
-      datawhEtl: DEV
+      datawhEtl: NOT_SUPPORTED
       bettaLimsServer: DEV
       tableau:  NOT_SUPPORTED
       hipchat: DEV
@@ -238,14 +186,14 @@ mercury:
     AUTO_BUILD:
 
       app:      AUTO_BUILD
-      bsp:      DEV
-      gap:      DEV
+      bsp:      NOT_SUPPORTED
+      gap:      NOT_SUPPORTED
       jira:     TEST
       quote:    QA
-      squid:    DEV
+      squid:    NOT_SUPPORTED
       thrift:   QA
       deckMsgs: DEV
-      datawhEtl: DEV
+      datawhEtl: NOT_SUPPORTED
       bettaLimsServer: DEV
       tableau:  NOT_SUPPORTED
       hipchat: DEV
@@ -254,14 +202,14 @@ mercury:
     TEST:
 
       app:      TEST
-      bsp:      DEV
-      gap:      DEV
+      bsp:      NOT_SUPPORTED
+      gap:      NOT_SUPPORTED
       jira:     TEST
       quote:    DEV
-      squid:    TEST
+      squid:    NOT_SUPPORTED
       thrift:   TEST
       deckMsgs: DEV
-      datawhEtl: DEV
+      datawhEtl: NOT_SUPPORTED
       bettaLimsServer: TEST
       tableau:  NOT_SUPPORTED
       hipchat: DEV
@@ -270,14 +218,14 @@ mercury:
     QA:
 
       app:      QA
-      bsp:      QA
-      gap:      QA
+      bsp:      NOT_SUPPORTED
+      gap:      NOT_SUPPORTED
       jira:     TEST
       quote:    QA
-      squid:    QA
+      squid:    NOT_SUPPORTED
       thrift:   QA
       deckMsgs: QA
-      datawhEtl: QA
+      datawhEtl: NOT_SUPPORTED
       bettaLimsServer: QA
       tableau:  NOT_SUPPORTED
       hipchat: DEV
@@ -290,10 +238,10 @@ mercury:
       gap:      QA
       jira:     TEST
       quote:    QA
-      squid:    QA
+      squid:    NOT_SUPPORTED
       thrift:   QA
       deckMsgs: QA
-      datawhEtl: QA
+      datawhEtl: NOT_SUPPORTED
       bettaLimsServer: QA
       tableau:  NOT_SUPPORTED
       hipchat: DEV
@@ -302,14 +250,14 @@ mercury:
     PROD:
 
       app:      PROD
-      bsp:      PROD
-      gap:      PROD
+      bsp:      NOT_SUPPORTED
+      gap:      NOT_SUPPORTED
       jira:     PROD
       quote:    PROD
-      squid:    PROD
+      squid:    NOT_SUPPORTED
       thrift:   PROD
       deckMsgs: PROD
-      datawhEtl: PROD
+      datawhEtl: NOT_SUPPORTED
       bettaLimsServer: PROD
       tableau:  NOT_SUPPORTED
       hipchat: PROD
