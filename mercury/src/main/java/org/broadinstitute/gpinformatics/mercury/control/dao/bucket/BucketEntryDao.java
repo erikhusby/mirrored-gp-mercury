@@ -15,6 +15,7 @@ import javax.persistence.NoResultException;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
+import java.util.List;
 
 /**
  * @author Scott Matthews
@@ -54,4 +55,14 @@ public class BucketEntryDao extends GenericDao {
         }
     }
 
+    public List<BucketEntry> findActiveReworks(Bucket bucket) {
+        CriteriaBuilder criteria = getEntityManager().getCriteriaBuilder();
+        CriteriaQuery<BucketEntry> query = criteria.createQuery(BucketEntry.class);
+        Root<BucketEntry> root = query.from(BucketEntry.class);
+        query.where(
+                criteria.and(criteria.equal(root.get(BucketEntry_.entryType), BucketEntry.BucketEntryType.REWORK_ENTRY),
+                        criteria.equal(root.get(BucketEntry_.status),
+                                BucketEntry.Status.Active)));
+        return getEntityManager().createQuery(query).getResultList();
+    }
 }
