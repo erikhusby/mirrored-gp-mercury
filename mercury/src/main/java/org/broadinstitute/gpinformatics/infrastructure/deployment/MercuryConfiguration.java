@@ -454,18 +454,17 @@ public class MercuryConfiguration {
             //noinspection unchecked
             Set<String> properties = BeanUtils.describe(config).keySet();
 
+            if (propertyMap != null) {
+                for (Map.Entry<String, String> property : propertyMap.entrySet()) {
+                    if (!properties.contains(property.getKey())) {
+                        throw new RuntimeException(
+                                "Cannot set property '" + property.getKey() + "' into Config class '" + config.getClass()
+                                + "': no such property");
+                    }
 
-            for (Map.Entry<String, String> property : propertyMap.entrySet()) {
-
-                if (!properties.contains(property.getKey())) {
-                    throw new RuntimeException(
-                            "Cannot set property '" + property.getKey() + "' into Config class '" + config.getClass()
-                            + "': no such property");
+                    BeanUtils.setProperty(config, property.getKey(), property.getValue());
                 }
-
-                BeanUtils.setProperty(config, property.getKey(), property.getValue());
             }
-
         } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
             throw new RuntimeException(e);
         }

@@ -39,45 +39,26 @@ app:
       workflowValidationEmail: gplims@broadinstitute.org
       #limsworkflowvalidation@broadinstitute.org
 
-
+# Stubbed out so that the MercuryConfiguration doesn't throw a big fat exception and halts the Mercury WAR deployment.
 bsp:
-
     DEV:
-      login:    xxxx
-      password: xxxx
-      host:     xxxx
-      port:     1
-
     QA:
-      login:    xxxx
-      password: xxxx
-      host:     xxxx
-      port:     1
-
     PROD:
-      login:    xxxx
-      password: xxxx
-      host:     xxxx
-      port:     1
-
 
 gap:
-
     DEV:
-      login:    xxxx
-      password: xxxx
-      url:      xxxx
-
     QA:
-      login:    xxxx
-      password: xxxx
-      url:      xxxx
-
     PROD:
-      login:    xxxx
-      password: xxxx
-      url:      xxxx
 
+squid:
+    DEV:
+    QA:
+    PROD:
+
+datawhEtl:
+    DEV:
+    QA:
+    PROD:
 
 jira:
 
@@ -111,24 +92,6 @@ quote:
       login:    rnordin@broadinstitute.org
       password: Squ1d_us3r
       url:      http://quoteprod:8080
-
-
-
-squid:
-
-    DEV:
-      url: http://localhost:8080/squid
-
-    TEST:
-      url: http://prodinfobuild.broadinstitute.org:8020/squid
-
-    QA:
-      url: http://vsquidrc.broadinstitute.org:8000/squid
-
-    PROD:
-      url: http://squid-ui.broadinstitute.org:8000/squid
-
-
 
 
 thrift:
@@ -190,18 +153,6 @@ bettaLimsServer:
         jmsPort: 61616
         jmsQueue: broad.queue.bettalims
 
-datawhEtl:
-
-    DEV:
-        datawhEtlDirRoot: /seq/lims/datawh/dev
-
-    QA:
-        datawhEtlDirRoot: /seq/lims/datawh/qa
-
-    PROD:
-        datawhEtlDirRoot: /seq/lims/datawh/prod
-
-
 hipchat:
     DEV:
         baseUrl: https://www.hipchat.com/v1/rooms/message
@@ -214,8 +165,6 @@ hipchat:
         authorizationToken: db3e86c451ef8ac0cddb94133e0455
 
 # Mercury configuration, this describes how Mercury deployments are connected to external system deployments.
-
-
 
 mercury:
 
@@ -231,7 +180,6 @@ mercury:
       deckMsgs: DEV
       datawhEtl: NOT_SUPPORTED
       bettaLimsServer: DEV
-      tableau:  NOT_SUPPORTED
       hipchat: DEV
 
 
@@ -247,7 +195,6 @@ mercury:
       deckMsgs: DEV
       datawhEtl: NOT_SUPPORTED
       bettaLimsServer: DEV
-      tableau:  NOT_SUPPORTED
       hipchat: DEV
 
 
@@ -263,7 +210,6 @@ mercury:
       deckMsgs: DEV
       datawhEtl: NOT_SUPPORTED
       bettaLimsServer: TEST
-      tableau:  NOT_SUPPORTED
       hipchat: DEV
 
 
@@ -279,7 +225,6 @@ mercury:
       deckMsgs: QA
       datawhEtl: NOT_SUPPORTED
       bettaLimsServer: QA
-      tableau:  NOT_SUPPORTED
       hipchat: DEV
 
 
@@ -295,7 +240,6 @@ mercury:
       deckMsgs: QA
       datawhEtl: NOT_SUPPORTED
       bettaLimsServer: QA
-      tableau:  NOT_SUPPORTED
       hipchat: DEV
 
 
@@ -311,5 +255,4 @@ mercury:
       deckMsgs: PROD
       datawhEtl: NOT_SUPPORTED
       bettaLimsServer: PROD
-      tableau:  NOT_SUPPORTED
       hipchat: PROD
