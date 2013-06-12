@@ -226,8 +226,21 @@ function fn_title_pre(a) {
     return matchingArray[2];
 }
 
+function fn_us_date_asc(a,b) {
+    var x = new Date(a), y = new Date(b);
+    return ((x < y) ? -1 : ((x > y) ?  1 : 0));
+}
+
 // Extend sorting for datatables to allow for title sorting.
 jQuery.extend( jQuery.fn.dataTableExt.oSort, {
+
+    "us-date-asc": function ( a, b ) {
+        return fn_us_date_asc(a, b);
+    },
+
+    "us-date-desc": function ( a, b ) {
+        return fn_us_date_asc(b, a);
+    },
 
     "title-string-pre": function ( a ) {
         return fn_title_pre(a).toLowerCase();

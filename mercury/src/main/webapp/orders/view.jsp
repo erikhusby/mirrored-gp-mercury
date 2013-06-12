@@ -192,6 +192,7 @@
                     $j('#concentration-' + sampleId).text(sampleData[x].concentration);
                     $j('#rin-' + sampleId).text(sampleData[x].rin);
                     $j('#total-' + sampleId).text(sampleData[x].total);
+                    $j('#picoDate-' + sampleId).text(sampleData[x].picoDate);
 
                     if (sampleData[x].hasFingerprint) {
                         $j('#fingerprint-' + sampleId).html('<img src="${ctxpath}/images/check.png" title="Yes"/>');
@@ -215,7 +216,7 @@
                         "oTableTools": ttExportDefines,
                         "aaSorting": [[1, 'asc']],
                         "aoColumns": [
-                            {"bSortable": false,},                          // Checkbox
+                            {"bSortable": false},                          // Checkbox
                             {"bSortable": true, "sType": "numeric"},        // Position
                             {"bSortable": true},                            // ID
                             {"bSortable": true},                            // Collaborator Sample ID
@@ -228,6 +229,7 @@
                             {"bSortable": true, "sType": "numeric"},        // RIN
                         </c:if>
 
+                            {"bSortable": true, "sType": "us-date"},        // Pico Run Date
                             {"bSortable": true, "sType": "numeric"},        // Yield Amount
                             {"bSortable": true, "sType" : "title-string"},  // FP Status
                             {"bSortable": true},                            // sample kit upload/rackscan mismatch
@@ -673,6 +675,7 @@
                                 <th width="40">RIN</th>
                             </c:if>
 
+                            <th width="70">Pico Run Date</th>
                             <th width="40">Yield Amount</th>
                             <th width="60">FP Status</th>
                             <th width="60"><abbr title="Sample Kit Upload/Rackscan Mismatch">Rackscan Mismatch</abbr></th>
@@ -715,6 +718,7 @@
                                     <td id="rin-${sample.productOrderSampleId}">&#160; </td>
                                 </c:if>
 
+                                <td id="picoDate-${sample.productOrderSampleId}">&#160; </td>
                                 <td id="total-${sample.productOrderSampleId}">&#160; </td>
                                 <td id="fingerprint-${sample.productOrderSampleId}" style="text-align: center">&#160; </td>
                                 <td id="sampleKitUploadRackscanMismatch-${sample.productOrderSampleId}"  style="text-align: center">&#160; </td>
