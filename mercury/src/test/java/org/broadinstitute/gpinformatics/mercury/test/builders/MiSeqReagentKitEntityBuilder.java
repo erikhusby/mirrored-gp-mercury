@@ -62,7 +62,7 @@ public class MiSeqReagentKitEntityBuilder {
         final PlateCherryPickEvent plateCherryPickEvent =
                 reagentKitTransferJaxb.getDenatureToReagentKitJaxb().getPlateCherryPickEvent().get(0);
         Assert.assertNotNull(plateCherryPickEvent);
-        Assert.assertEquals(plateCherryPickEvent.getSource().get(0).getBarcode(),denatureBarcode);
+        Assert.assertEquals(plateCherryPickEvent.getSource().get(0).getBarcode(),"DenatureRack"+mySeqReagentKitBarcode);
 
         Assert.assertEquals(plateCherryPickEvent.getPlate().getBarcode(),mySeqReagentKitBarcode);
 

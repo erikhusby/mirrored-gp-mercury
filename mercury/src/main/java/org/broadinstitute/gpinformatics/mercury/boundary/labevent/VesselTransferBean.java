@@ -105,8 +105,7 @@ public class VesselTransferBean {
             transferEvent.getSourcePositionMap().add(positionMap);
 
             CherryPickSourceType cherryPickSource = new CherryPickSourceType();
-            final String tubeBarcode = entry.getKey();
-            cherryPickSource.setBarcode(tubeBarcode);
+            cherryPickSource.setBarcode(denatureRackBarcode);
             cherryPickSource.setWell(entry.getValue().toString());
             cherryPickSource.setDestinationBarcode(reagentKitBarcode);
             cherryPickSource.setDestinationWell(MiSeqReagentKit.LOADING_WELL.toString());
