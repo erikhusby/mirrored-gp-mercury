@@ -80,6 +80,15 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
             throw new NullPointerException("sampleNames cannot be null.");
         }
 
+        // Remove non BSP samples.
+        Iterator<String> namesIterator = sampleNames.iterator();
+        while (namesIterator.hasNext()) {
+            String sampleName = namesIterator.next();
+            if (sampleName == null || !BSPUtil.isInBspFormat(sampleName)) {
+                namesIterator.remove();
+            }
+        }
+
         if (sampleNames.isEmpty()) {
             return Collections.emptyMap();
         }
