@@ -85,7 +85,8 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
         }
 
         // Remove non BSP samples.
-        Iterator<String> namesIterator = sampleNames.iterator();
+        List<String> filteredNames = new ArrayList<>(sampleNames);
+        Iterator<String> namesIterator = filteredNames.iterator();
         while (namesIterator.hasNext()) {
             String sampleName = namesIterator.next();
             if (sampleName == null || !BSPUtil.isInBspFormat(sampleName)) {
@@ -93,13 +94,13 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
             }
         }
 
-        if (sampleNames.isEmpty()) {
+        if (filteredNames.isEmpty()) {
             return Collections.emptyMap();
         }
 
         Map<String, BSPSampleDTO> sampleNameToDTO = new HashMap<String, BSPSampleDTO>();
         List<Map<BSPSampleSearchColumn, String>> results =
-                service.runSampleSearch(sampleNames, BSPSampleSearchColumn.PDO_SEARCH_COLUMNS);
+                service.runSampleSearch(filteredNames, BSPSampleSearchColumn.PDO_SEARCH_COLUMNS);
         for (Map<BSPSampleSearchColumn, String> result : results) {
             BSPSampleDTO bspDTO = new BSPSampleDTO(result);
             sampleNameToDTO.put(bspDTO.getSampleId(), bspDTO);
