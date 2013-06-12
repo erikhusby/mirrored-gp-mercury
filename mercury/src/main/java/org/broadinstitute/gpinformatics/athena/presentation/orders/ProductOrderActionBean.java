@@ -222,7 +222,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private String product;
 
-    private List<String> addOnKeys = new ArrayList<String>();
+    private List<String> addOnKeys = new ArrayList<>();
 
     @Validate(required = true, on = ADD_SAMPLES_ACTION)
     private String addSamplesText;
@@ -393,7 +393,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         if ((selectedProductOrderBusinessKeys == null) || selectedProductOrderBusinessKeys.isEmpty()) {
             addGlobalValidationError("You must select at least one product order to start a {2}", validatingFor);
         } else {
-            Set<Product> products = new HashSet<Product> ();
+            Set<Product> products = new HashSet<>();
             selectedProductOrders =
                 productOrderDao.findListByBusinessKeyList(
                     selectedProductOrderBusinessKeys,
@@ -419,7 +419,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             // way to do this without having to go through all the objects.
             Set<LedgerEntry> lockedOutOrders = ledgerEntryDao.findLockedOutByOrderList(selectedProductOrderBusinessKeys);
             if (!lockedOutOrders.isEmpty()) {
-                Set<String> lockedOutOrderStrings = new HashSet<String>(lockedOutOrders.size());
+                Set<String> lockedOutOrderStrings = new HashSet<>(lockedOutOrders.size());
                 for (LedgerEntry ledger : lockedOutOrders) {
                     lockedOutOrderStrings.add(ledger.getProductOrderSample().getProductOrder().getTitle());
                 }
@@ -467,7 +467,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     private void populateSearchDefaults() {
-        selectedStatuses = new ArrayList<ProductOrder.OrderStatus>();
+        selectedStatuses = new ArrayList<>();
         selectedStatuses.add(ProductOrder.OrderStatus.Draft);
         selectedStatuses.add(ProductOrder.OrderStatus.Submitted);
 
@@ -527,7 +527,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         definitionValue.put(PRODUCT, productTokenInput.getBusinessKeyList());
 
-        List<String> statusStrings = new ArrayList<String> ();
+        List<String> statusStrings = new ArrayList<>();
         for (ProductOrder.OrderStatus status : selectedStatuses) {
             statusStrings.add(status.name());
         }
@@ -775,13 +775,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         for (String businessKey : selectedProductOrderBusinessKeys) {
             try {
                 productOrderEjb.abandon(businessKey, businessKey + " abandoned by " + userBean.getLoginUserName());
-            } catch (JiraIssue.NoTransitionException e) {
-                throw new RuntimeException(e);
-            } catch (ProductOrderEjb.NoSuchPDOException e) {
-                throw new RuntimeException(e);
-            } catch (ProductOrderEjb.SampleDeliveryStatusChangeException e) {
-                throw new RuntimeException(e);
-            } catch (IOException e) {
+            } catch (JiraIssue.NoTransitionException | ProductOrderEjb.NoSuchPDOException |
+                    ProductOrderEjb.SampleDeliveryStatusChangeException | IOException e) {
                 throw new RuntimeException(e);
             }
         }
@@ -880,7 +875,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @ValidationMethod(on = {DELETE_SAMPLES_ACTION, ABANDON_SAMPLES_ACTION, SET_RISK}, priority = 0)
     public void validateSampleListOperation() {
         if (selectedProductOrderSampleIds != null) {
-            selectedProductOrderSamples = new ArrayList<ProductOrderSample>(selectedProductOrderSampleIds.size());
+            selectedProductOrderSamples = new ArrayList<>(selectedProductOrderSampleIds.size());
             for (ProductOrderSample sample : editOrder.getSamples()) {
                 if (selectedProductOrderSampleIds.contains(sample.getProductOrderSampleId())) {
                     selectedProductOrderSamples.add(sample);
@@ -939,7 +934,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public Resolution setRisk() throws Exception {
 
         productOrderEjb.setManualOnRisk(
-            getUserBean().getBspUser(), editOrder, selectedProductOrderSamples, riskStatus, riskComment);
+            getUserBean().getBspUser(), editOrder.getBusinessKey(), selectedProductOrderSamples, riskStatus, riskComment);
 
         addMessage("Set manual on risk to {1} for {0} samples.", selectedProductOrderSampleIds.size(), riskStatus);
         JiraIssue issue = jiraService.getIssue(editOrder.getJiraTicketKey());
@@ -1349,7 +1344,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             return "Draft order, work has not begun";
         }
         else {
-            List<String> progressPieces = new ArrayList<String>();
+            List<String> progressPieces = new ArrayList<>();
             if (getPercentAbandoned() != 0) {
                 progressPieces.add(getPercentAbandoned() + "% Abandoned");
             }

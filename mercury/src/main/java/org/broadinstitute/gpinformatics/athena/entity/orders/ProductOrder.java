@@ -184,7 +184,7 @@ public class ProductOrder implements BusinessObject, Serializable {
      * @return The number of samples calculated to be on risk.
      */
     public int calculateRisk(List<ProductOrderSample> selectedSamples) {
-        Set<String> uniqueSampleNamesOnRisk = new HashSet<String>();
+        Set<String> uniqueSampleNamesOnRisk = new HashSet<>();
 
         for (ProductOrderSample sample : selectedSamples) {
             if (sample.calculateRisk()) {
