@@ -92,6 +92,7 @@ public class BucketViewActionBean extends CoreActionBean {
     private Date dueDate;
     private String selectedProductWorkflowDef;
     private List<ProductWorkflowDef> allProductWorkflowDefs = new ArrayList<>();
+    private Map<LabVessel, Set<String>> vesselToPDOKeys = new HashMap<>();
 
     @Before(stages = LifecycleStage.BindingAndValidation)
     public void init() {
@@ -231,17 +232,22 @@ public class BucketViewActionBean extends CoreActionBean {
     }
 
     public String getSinglePDOBusinessKey(LabVessel vessel) {
-        if (vessel.getPdoKeys().size() == 1) {
-            return vessel.getPdoKeys().iterator().next();
+        Set<String> pdoKeys = vesselToPDOKeys.get(vessel);
+        if (pdoKeys == null) {
+            pdoKeys = vessel.getPdoKeys();
+            vesselToPDOKeys.put(vessel, pdoKeys);
+        }
+        if (pdoKeys.size() == 1) {
+            return pdoKeys.iterator().next();
         }
         return "Multiple PDOs";
     }
 
     private RapSheet getRapSheet(LabVessel vessel) {
-        for (SampleInstance sampleInstance : vessel.getAllSamples()) {
-            return sampleInstance.getStartingSample().getRapSheet();
+        Set<SampleInstance> allSamples = vessel.getAllSamples();
+        if (allSamples.size() > 0) {
+            return allSamples.iterator().next().getStartingSample().getRapSheet();
         }
-
         return null;
     }
 
