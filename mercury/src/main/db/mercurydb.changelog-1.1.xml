@@ -38,4 +38,44 @@
         <dropForeignKeyConstraint
                 constraintName="FK_LV_COMMENT_LAB_EVENT" baseTableName="lv_comment" baseTableSchemaName="mercury"/>
     </changeSet>
+    <changeSet id="GPLIM-1606-1" author="scottmat">
+        <preConditions>
+            <not>
+                <columnExists tableName="sequencing_run" columnName="actual_read_structure" schemaName="mercury" />
+            </not>
+        </preConditions>
+        <addColumn tableName="sequencing_run" schemaName="mercury">
+            <column name="actual_read_structure" type="varchar(255)"></column>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-1606-2" author="scottmat">
+        <preConditions>
+            <not>
+                <columnExists tableName="sequencing_run_aud" columnName="actual_read_structure" schemaName="mercury" />
+            </not>
+        </preConditions>
+        <addColumn tableName="sequencing_run_aud" schemaName="mercury">
+            <column name="actual_read_structure" type="varchar(255)"></column>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-1606-3" author="scottmat">
+        <preConditions>
+            <not>
+                <columnExists tableName="sequencing_run" columnName="setup_read_structure" schemaName="mercury" />
+            </not>
+        </preConditions>
+        <addColumn tableName="sequencing_run" schemaName="mercury">
+            <column name="setup_read_structure" type="varchar(255)"></column>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-1606-4" author="scottmat">
+        <preConditions>
+            <not>
+                <columnExists tableName="sequencing_run_aud" columnName="setup_read_structure" schemaName="mercury" />
+            </not>
+        </preConditions>
+        <addColumn tableName="sequencing_run_aud" schemaName="mercury">
+            <column name="setup_read_structure" type="varchar(255)"></column>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>
