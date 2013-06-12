@@ -1368,6 +1368,7 @@ public abstract class LabVessel implements Serializable {
      * This method gets a string concatenated representation of all the indexes for a given sample instance.
      *
      * @param sampleInstance Gets indexes for this sample instance, or if null, for all sample instances in the vessel.
+     *
      * @return A string containing information about all the indexes.
      */
     public String getIndexesString(SampleInstance sampleInstance) {
@@ -1417,21 +1418,18 @@ public abstract class LabVessel implements Serializable {
     }
 
     public Set<String> getPdoKeys() {
-        Set<String> pdoKeys = new HashSet<String>();
-        for (SampleInstance sample : getAllSamples()) {
+        Set<String> pdoKeys = new HashSet<>();
+        for (SampleInstance sample : getSampleInstances(SampleType.WITH_PDO, null)) {
             String productOrderKey = sample.getProductOrderKey();
             if (productOrderKey != null) {
                 pdoKeys.add(productOrderKey);
             }
         }
-
-        pdoKeys.remove(null);
         return pdoKeys;
     }
 
     public String getPdoKeysString() {
         Collection<String> keys = getPdoKeys();
-
         String[] batchArray = keys.toArray(new String[keys.size()]);
         return StringUtils.join(batchArray);
     }
@@ -1516,8 +1514,10 @@ public abstract class LabVessel implements Serializable {
 
     /**
      * Helper method to determine if a given vessel or any of its ancestors are currently in a bucket.
+     *
      * @param pdoKey
      * @param bucketName
+     *
      * @return
      */
     public boolean isAncestorInBucket(@Nonnull String pdoKey, @Nonnull String bucketName) {
@@ -1527,11 +1527,11 @@ public abstract class LabVessel implements Serializable {
         vesselHierarchy.add(this);
         vesselHierarchy.addAll(this.getAncestorVessels());
 
-        for(LabVessel currAncestor:vesselHierarchy){
-            for(BucketEntry currentEntry: currAncestor.getBucketEntries()) {
-                if(pdoKey.equals(currentEntry.getPoBusinessKey()) &&
-                   bucketName.equals(currentEntry.getBucket().getBucketDefinitionName()) &&
-                        BucketEntry.Status.Active == currentEntry.getStatus()) {
+        for (LabVessel currAncestor : vesselHierarchy) {
+            for (BucketEntry currentEntry : currAncestor.getBucketEntries()) {
+                if (pdoKey.equals(currentEntry.getPoBusinessKey()) &&
+                    bucketName.equals(currentEntry.getBucket().getBucketDefinitionName()) &&
+                    BucketEntry.Status.Active == currentEntry.getStatus()) {
                     return true;
                 }
             }
@@ -1542,18 +1542,20 @@ public abstract class LabVessel implements Serializable {
 
     /**
      * Helper method to determine if a given vessel is in a bucket.
-     * @param pdoKey PDO Key with which a vessel may be associated in a bucket
+     *
+     * @param pdoKey     PDO Key with which a vessel may be associated in a bucket
      * @param bucketName Name of the bucket to search for associations
      * @param active
+     *
      * @return
      */
     public boolean checkCurrentBucketStatus(@Nonnull String pdoKey, @Nonnull String bucketName,
                                             BucketEntry.Status active) {
 
-        for(BucketEntry currentEntry: getBucketEntries()) {
-            if(pdoKey.equals(currentEntry.getPoBusinessKey()) &&
-               bucketName.equals(currentEntry.getBucket().getBucketDefinitionName()) &&
-               active == currentEntry.getStatus()) {
+        for (BucketEntry currentEntry : getBucketEntries()) {
+            if (pdoKey.equals(currentEntry.getPoBusinessKey()) &&
+                bucketName.equals(currentEntry.getBucket().getBucketDefinitionName()) &&
+                active == currentEntry.getStatus()) {
                 return true;
             }
         }
@@ -1561,11 +1563,11 @@ public abstract class LabVessel implements Serializable {
     }
 
 
-
-
     /**
      * Helper method to determine if a given vessel or any of its ancestors have ever been in a bucket.
+     *
      * @param bucketName Name of the bucket to search for associations
+     *
      * @return
      */
     public boolean hasAncestorBeenInBucket(@Nonnull String bucketName) {
@@ -1575,9 +1577,9 @@ public abstract class LabVessel implements Serializable {
         vesselHeirarchy.add(this);
         vesselHeirarchy.addAll(this.getAncestorVessels());
 
-        for(LabVessel currAncestor:vesselHeirarchy){
-            for(BucketEntry currentEntry: currAncestor.getBucketEntries()) {
-                if(bucketName.equals(currentEntry.getBucket().getBucketDefinitionName())) {
+        for (LabVessel currAncestor : vesselHeirarchy) {
+            for (BucketEntry currentEntry : currAncestor.getBucketEntries()) {
+                if (bucketName.equals(currentEntry.getBucket().getBucketDefinitionName())) {
                     return true;
                 }
             }

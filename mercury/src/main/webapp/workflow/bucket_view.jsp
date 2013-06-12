@@ -257,15 +257,17 @@
                 </a>
             </td>
             <td>
-                <c:forEach items="${actionBean.getSampleNames(reworkVessel)}" var="sampleName"
-                           varStatus="loopstatus">
+                <c:forEach items="${reworkVessel.mercurySamples}"
+                           var="mercurySample"
+                           varStatus="stat">
+                    <a href="${ctxpath}/search/sample.action?sampleSearch=&searchKey=${mercurySample.sampleKey}">
+                            ${mercurySample.sampleKey}
+                    </a>
 
-                    <a href="${ctxpath}/search/sample.action?sampleSearch=&searchKey=${sampleName}"> ${sampleName} </a>
-                    <c:if test="${!loopstatus.last}">, </c:if>
+                    <c:if test="${!stat.last}">&nbsp;</c:if>
                 </c:forEach>
             </td>
             <td>
-
                     ${actionBean.getSinglePDOBusinessKey(reworkVessel)}
             </td>
             <td>
