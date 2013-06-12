@@ -89,7 +89,7 @@ public class ReworkEjb {
     private MercuryClientEjb mercuryClientEjb;
 
     /**
-     * Create rework for all samples in a LabVessel;
+     * Create rework for all samples in a LabVessel
      *
      * @param labVessel      the labVessel where the sample is located.
      * @param reworkReason   Why is the rework being done.
@@ -117,7 +117,7 @@ public class ReworkEjb {
         WorkflowBucketDef bucketDef = LabEventHandler.findBucketDef(workflowName, reworkFromStep);
 
         for (VesselPosition vesselPosition : vesselPositions) {
-            final Collection<SampleInstance> samplesAtPosition =
+            Collection<SampleInstance> samplesAtPosition =
                     labVessel.getSamplesAtPosition(vesselPosition.name());
             for (SampleInstance sampleInstance : samplesAtPosition) {
                 MercurySample mercurySample = sampleInstance.getStartingSample();
@@ -191,7 +191,7 @@ public class ReworkEjb {
 
             /*
              * By using PREFER_PDO, we are able to get all samples for a vessel.  If there are samples associated with
-             * PDOs, we will get Just the PDO associated Samples.  If there are samples that are NOT associated with
+             * PDOs, we will get just the PDO associated Samples.  If there are samples that are NOT associated with
              * PDOs, we will get those samples.
              */
             List<ProductOrderSample> productOrderSamples = null;
@@ -199,12 +199,13 @@ public class ReworkEjb {
             SampleInstance sampleInstance = sampleInstances.iterator().next();
             String sampleKey = sampleInstance.getStartingSample().getSampleKey();
             String productOrderKey = sampleInstance.getProductOrderKey();
-            List<String> sampleIds = new ArrayList<>(sampleInstances.size());
+            List<String> sampleIds;
 
             if (StringUtils.isNotBlank(productOrderKey)) {
                 sampleIds = Collections.singletonList(sampleKey);
             } else {
 
+                sampleIds = new ArrayList<>(sampleInstances.size());
                 for (SampleInstance currentInstance : sampleInstances) {
                     sampleIds.add(currentInstance.getStartingSample().getSampleKey());
                 }
@@ -360,7 +361,7 @@ public class ReworkEjb {
 
         if (!bucketDef.meetsBucketCriteria(reworkVessel)) {
             validationMessages.add("You have submitted a vessel to the bucket that contains at least one sample that " +
-                                   "is not Genomic DNA");
+                                   "is not DNA");
         }
 
         return validationMessages;
@@ -401,9 +402,10 @@ public class ReworkEjb {
      * TODO: remove redundant fields and object references once non-vessel sample case is implemented
      */
     public static class ReworkCandidate {
+
+        private final String tubeBarcode;
         private String sampleKey;
         private String productOrderKey;
-        private String tubeBarcode;
         private ProductOrder productOrder;
         private LabVessel labVessel;
         private List<String> validationMessages = new ArrayList<>();
@@ -419,16 +421,15 @@ public class ReworkEjb {
         }
 
         public ReworkCandidate(@Nonnull String sampleKey, @Nonnull String productOrderKey, @Nonnull String tubeBarcode) {
+
+            this(tubeBarcode);
             this.sampleKey = sampleKey;
             this.productOrderKey = productOrderKey;
-            this.tubeBarcode = tubeBarcode;
         }
 
         public ReworkCandidate(@Nonnull String sampleKey, @Nonnull String productOrderKey, @Nonnull String tubeBarcode,
                                ProductOrder productOrder, LabVessel labVessel) {
-            this.sampleKey = sampleKey;
-            this.productOrderKey = productOrderKey;
-            this.tubeBarcode = tubeBarcode;
+            this(sampleKey,productOrderKey,tubeBarcode);
             this.productOrder = productOrder;
             this.labVessel = labVessel;
         }
