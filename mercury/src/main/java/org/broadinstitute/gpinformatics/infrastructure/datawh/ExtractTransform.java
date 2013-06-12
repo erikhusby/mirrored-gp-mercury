@@ -7,6 +7,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.common.SessionContextUtility;
 import org.broadinstitute.gpinformatics.infrastructure.datawh.LabEventEtl.EventFactDto;
+import org.broadinstitute.gpinformatics.infrastructure.datawh.SequencingSampleFactEtl.SequencingRunDto;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfiguration;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
@@ -113,6 +114,10 @@ public class ExtractTransform implements Serializable {
     // A separate instance from one used by incremental etl.
     @Inject
     private LabEventEtl labEventEtlAnalysis;
+
+    // A separate instance from one used by incremental etl.
+    @Inject
+    SequencingSampleFactEtl sequencingSampleFactEtlAnalysis;
 
     public ExtractTransform() {
     }
@@ -528,6 +533,10 @@ public class ExtractTransform implements Serializable {
 
     public Collection<EventFactDto> analyzeEvent(long labEventId) {
         return labEventEtlAnalysis.makeEventFacts(labEventId);
+    }
+
+    public Collection<SequencingRunDto> analyzeSequencingRun(long sequencingRunId) {
+        return sequencingSampleFactEtlAnalysis.makeSequencingRunDtos(sequencingRunId);
     }
 
     /**
