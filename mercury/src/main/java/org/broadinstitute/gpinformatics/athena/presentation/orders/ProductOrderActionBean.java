@@ -1423,11 +1423,19 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     /**
+     * @return Show the create title if this is a developer or PDM.
+     */
+    @Override
+    public boolean isCreateAllowed() {
+        return getUserBean().isDeveloperUser() || getUserBean().isPMUser() || getUserBean().isPDMUser();
+    }
+
+    /**
      * @return Show the edit title if this is not a draft (Drafts use a button per Product Owner workflow request) and
      * the user is appropriate for editing.
      */
     @Override
     public boolean isEditAllowed() {
-        return !editOrder.isDraft() && (getUserBean().isDeveloperUser() || getUserBean().isPDMUser());
+        return !editOrder.isDraft() && isCreateAllowed();
     }
 }

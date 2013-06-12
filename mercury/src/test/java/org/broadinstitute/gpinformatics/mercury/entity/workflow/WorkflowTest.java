@@ -17,6 +17,7 @@ import javax.xml.bind.Marshaller;
 import javax.xml.namespace.QName;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -217,10 +218,10 @@ public class WorkflowTest {
     @Test
     public void testBucketEntryFail() {
 
-        Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
+        Map<BSPSampleSearchColumn, String> dataMap = new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class){{
             put(BSPSampleSearchColumn.PRIMARY_DISEASE, "Cancer");
             put(BSPSampleSearchColumn.LSID, "org.broad:SM-2345");
-            put(BSPSampleSearchColumn.MATERIAL_TYPE, new String("RNA:Total RNA"));  //need to avoid interning string
+            put(BSPSampleSearchColumn.MATERIAL_TYPE, "RNA:Total RNA");  //need to avoid interning string
             put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, "5432");
             put(BSPSampleSearchColumn.SPECIES, "Homo Sapiens");
             put(BSPSampleSearchColumn.PARTICIPANT_ID, "PT-2345");

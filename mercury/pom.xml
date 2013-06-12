@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>Mercury</groupId>
     <artifactId>Mercury</artifactId>
-    <version>1.25-SNAPSHOT</version>
+    <version>1.26-SNAPSHOT</version>
     <packaging>war</packaging>
     <inceptionYear>2012</inceptionYear>
 
@@ -639,6 +639,14 @@
 
 	    <profile>
             <id>CRSP-DEV</id>
+            <dependencies>
+                <dependency>
+                    <groupId>javax</groupId>
+                    <artifactId>javaee-api</artifactId>
+                    <version>6.0</version>
+                    <scope>provided</scope>
+                </dependency>
+            </dependencies>
             <properties>
                 <!--  Oracle Dev database -->
                 <database>oracle</database>
@@ -650,6 +658,19 @@
                 <athena.password>welcome1</athena.password>
             </properties>
             <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-war-plugin</artifactId>
+                        <configuration>
+                            <webResources>
+                                <resource>
+                                    <directory>src/main/webapp-crsp</directory>
+                                </resource>
+                            </webResources>
+                        </configuration>
+                    </plugin>
+                </plugins>
                 <testResources>
                     <testResource>
                         <directory>src/test/resources-dev</directory>
@@ -665,7 +686,7 @@
         </profile>
 
         <profile>
-            <id>CRSP-PROD</id><!-- THis is for CRSP PRODUCTION ONLY -->
+            <id>CRSP-PROD</id><!-- This is for CRSP PRODUCTION ONLY -->
             <properties>
                 <!-- Oracle Dev -->
                 <database>oracle</database>
@@ -682,9 +703,12 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-war-plugin</artifactId>
-                        <version>2.2</version>
                         <configuration>
                             <webResources>
+                                <resource>
+                                    <directory>src/main/webapp-crsp</directory>
+                                </resource>
+
                                 <resource>
                                     <directory>src/main/webapp-crsp-prod</directory>
                                 </resource>

@@ -25,8 +25,8 @@
                                 beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean"
                                 tabindex="=1" event="list">List</stripes:link>
                     </li>
-                    <%-- Only PMs (and Developers) can create Research Projects. --%>
-                    <security:authorizeBlock roles="<%= roles(Developer, PM) %>">
+                    <%-- PMs and sometimes PDMs (and Developers) can create Research Projects. --%>
+                    <security:authorizeBlock roles="<%= roles(Developer, PM, PDM) %>">
                         <li>
                             <stripes:link
                                     beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean"
@@ -44,7 +44,7 @@
                                 beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"
                                 tabindex="=1" event="list">List</stripes:link>
                     </li>
-                    <%-- PMs and PDMs (and Developers) can place Product Orders. --%>
+                    <%-- PMs and PDMs (and Developers) can create Product Orders. --%>
                     <security:authorizeBlock roles="<%= roles(Developer, PDM, PM) %>">
                         <li>
                             <stripes:link id="createProductOrder"
@@ -52,12 +52,15 @@
                                           tabindex="=1" event="create">Create</stripes:link>
                         </li>
                     </security:authorizeBlock>
-                    <li class="divider"></li>
-                    <li>
-                        <stripes:link
+
+                    <security:authorizeBlock roles="<%= roles(Developer, BillingManager, PDM) %>">
+                        <li class="divider"></li>
+                        <li>
+                            <stripes:link
                                 beanclass="org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean"
                                 tabindex="=1" event="list">Billing Sessions</stripes:link>
-                    </li>
+                        </li>
+                    </security:authorizeBlock>
                 </ul>
             </li>
             <li class="dropdown">
@@ -98,9 +101,9 @@
                                           event="view">Buckets</stripes:link>
                         </li>
                         <li>
-                            <stripes:link
-                                    beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.LinkDenatureTubeToReagentBlockActionBean"
-                                    event="view">Link Denature Tube to Reagent Block</stripes:link>
+                            <stripes:link id="linkDenatureToRB"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.LinkDenatureTubeToReagentBlockActionBean"
+                                          event="view">Link Denature Tube to Reagent Block</stripes:link>
                         </li>
                         <security:authorizeBlock roles="<%= roles(Developer) %>">
                             <li>

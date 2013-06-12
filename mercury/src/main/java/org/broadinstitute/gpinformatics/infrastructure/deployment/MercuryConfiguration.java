@@ -218,11 +218,11 @@ public class MercuryConfiguration {
                 }
 
                 Deployment deployment = Deployment.valueOf(deploymentString);
-                // NOT_SUPPORTED is a sentinel value for use only in the 'mercury' stanza, there should not be
+                // DISABLED is a sentinel value for use only in the 'mercury' stanza, there should not be
                 // any external system definitions for this deployment.
-                if (deployment == Deployment.NOT_SUPPORTED) {
+                if (deployment == Deployment.DISABLED) {
                     throw new RuntimeException(
-                            "Unexpectedly saw NOT_SUPPORTED deployment section for system '" + deploymentEntry.getKey()
+                            "Unexpectedly saw DISABLED deployment section for system '" + deploymentEntry.getKey()
                             + "'");
                 }
 
@@ -338,9 +338,9 @@ public class MercuryConfiguration {
 
                 AbstractConfig config = externalSystems.getConfig(systemKey, externalDeployment);
 
-                // It is okay to see NOT_SUPPORTED and not find a configuration as this is a sentinel value for
+                // It is okay to see DISABLED and not find a configuration as this is a sentinel value for
                 // the absence of a configuration.
-                if (config == null && externalDeployment != Deployment.NOT_SUPPORTED) {
+                if (config == null && externalDeployment != Deployment.DISABLED) {
                     throw new RuntimeException(
                             "Unrecognized external system in mercury connections: '" + systemKey + "'.");
                 }
@@ -454,18 +454,17 @@ public class MercuryConfiguration {
             //noinspection unchecked
             Set<String> properties = BeanUtils.describe(config).keySet();
 
+            if (propertyMap != null) {
+                for (Map.Entry<String, String> property : propertyMap.entrySet()) {
+                    if (!properties.contains(property.getKey())) {
+                        throw new RuntimeException(
+                                "Cannot set property '" + property.getKey() + "' into Config class '" + config.getClass()
+                                + "': no such property");
+                    }
 
-            for (Map.Entry<String, String> property : propertyMap.entrySet()) {
-
-                if (!properties.contains(property.getKey())) {
-                    throw new RuntimeException(
-                            "Cannot set property '" + property.getKey() + "' into Config class '" + config.getClass()
-                            + "': no such property");
+                    BeanUtils.setProperty(config, property.getKey(), property.getValue());
                 }
-
-                BeanUtils.setProperty(config, property.getKey(), property.getValue());
             }
-
         } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
             throw new RuntimeException(e);
         }

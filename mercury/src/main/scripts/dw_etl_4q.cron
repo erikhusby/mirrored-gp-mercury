@@ -1,0 +1,65 @@
+source ~/.bashrc
+umask 0111
+
+#
+# Cron job that runs on the Mercury app server machine as part of Mercury ETL to data warehouse.
+#
+# The script checks the time of the last Extract-Transform from Mercury application by looking at
+# the modified date of last_etl_run (not the contents, which might be set in the future).  Mercury
+# application will update the file even if no data was extracted.
+#
+# This script also checks the time of the last ETL Load, i.e. the successful run of dw_etl.cron.
+# This is indicated by the last-modified time of dw_etl.log file, which is updated even if no data
+# files were found.
+#
+# If ETL has not been run for a long time it outputs a message which cron sends as an error email.
+
+let hourThresholdForWarning=6
+
+#
+# Reads the required params and assigns derived params
+#
+DB_PARAMS_FILE="$1"
+
+if [ -z "${DB_PARAMS_FILE}" ]; then
+    echo "Missing db params filename parameter" | tee /dev/stderr
+    exit 1
+fi
+if [ ! -f ${DB_PARAMS_FILE} ]; then
+    echo "Cannot find ${DB_PARAMS_FILE}" | tee /dev/stderr
+    exit 1
+fi
+ROOT_DIR=`grep -Ei '^rootDir:' ${DB_PARAMS_FILE} | sed -e 's/^rootDir://' | tr -d ' '`
+
+NEW_DIR=${ROOT_DIR}/new
+LOCKFILE=${NEW_DIR}/.lockfile
+LAST_ETL_RUN_FILE=${NEW_DIR}/last_etl_run
+LAST_CRON_RUN_FILE=~/dw_etl.log
+
+if [ ! -e ${LAST_ETL_RUN_FILE} ]; then
+   echo "Cannot check time of last ExtractTransform.  File is missing: ${LAST_ETL_RUN_FILE}" | tee /dev/stderr
+   exit 1
+fi
+if [ ! -e ${LAST_CRON_RUN_FILE} ]; then
+   echo "Cannot check time of last ExtractTransform.  File is missing: ${LAST_CRON_RUN_FILE}" | tee /dev/stderr
+   exit 1
+fi
+
+# Time in seconds.
+tmp="`ls -l ${LAST_ETL_RUN_FILE} | cut -d ' ' -f 6,7,8`"
+let lastExtractTransform="`date -d ${tmp} +%s`"
+tmp="`ls -l ${LAST_CRON_RUN_FILE} | cut -d ' ' -f 6,7,8`"
+let lastCronRun="`date -d ${tmp} +%s`"
+let now=`date +%s`
+
+# Time in hours.
+let hourDiffExtractTransform=$(now-lastExtractTransform)/(60*60)
+let hourDiffCronRun=$(now-lastCronRun)/(60*60)
+
+if [[ ${hourDiffExtractTransform} > ${hourThresholdForWarning} ]]; then
+   echo "ETL (extract changes from Mercury application) has not run in ${hourDiffExtractTransform} hours."
+fi
+if [[ ${hourDiffCronRun} > ${hourThresholdForWarning} ]]; then
+   echo "ETL (load changes into database) has not run in ${hourDiffCronRun} hours."
+fi
+

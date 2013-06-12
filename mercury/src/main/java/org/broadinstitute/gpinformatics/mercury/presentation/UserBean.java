@@ -262,6 +262,10 @@ public class UserBean implements Serializable {
         return jiraStatus.isValid();
     }
 
+    public boolean isPMUser() {
+        return roles.contains(Role.PM);
+    }
+
     public boolean isPDMUser() {
         return roles.contains(Role.PDM);
     }
