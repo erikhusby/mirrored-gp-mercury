@@ -494,9 +494,9 @@ public class ReworkEjbTest extends Arquillian {
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testHappyPathFindCandidatesBySampleId() throws Exception {
 
-        createInitialTubes(bucketReadySamples1, String.valueOf((new Date()).getTime()) + "tst2");
+        createInitialTubes(bucketReadySamples1, String.valueOf(new Date().getTime()) + "tst2");
 
-        List<ReworkEjb.ReworkCandidate> candiates = new ArrayList<>();
+        List<ReworkEjb.ReworkCandidate> candidates = new ArrayList<>();
 
         for (String barcode : mapBarcodeToTube.keySet()) {
 
@@ -506,16 +506,14 @@ public class ReworkEjbTest extends Arquillian {
             newEntry.setStatus(BucketEntry.Status.Archived);
             bucketDao.persist(pBucket);
 
-
-            candiates.addAll(reworkEjb.findReworkCandidates(barcode));
+            candidates.addAll(reworkEjb.findReworkCandidates(barcode));
         }
 
-        Assert.assertEquals(candiates.size(), mapBarcodeToTube.size());
+        Assert.assertEquals(candidates.size(), mapBarcodeToTube.size());
 
-        for (ReworkEjb.ReworkCandidate candidate : candiates) {
+        for (ReworkEjb.ReworkCandidate candidate : candidates) {
             Assert.assertTrue(mapBarcodeToTube.keySet().contains(candidate.getTubeBarcode()));
         }
-
     }
 
 
@@ -756,13 +754,10 @@ public class ReworkEjbTest extends Arquillian {
         } catch (ValidationException e) {
 
         } finally {
-            for(BucketEntry entry:bucketCleanupItems) {
+            for (BucketEntry entry : bucketCleanupItems) {
                 entry.setStatus(BucketEntry.Status.Archived);
             }
         }
-
-
-
     }
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
@@ -932,7 +927,7 @@ public class ReworkEjbTest extends Arquillian {
 
         validateBarcodeExistence(hybridSelectionJaxbBuilder, entries);
 
-        for(BucketEntry entry:bucketCleanupItems) {
+        for (BucketEntry entry : bucketCleanupItems) {
             entry.setStatus(BucketEntry.Status.Archived);
         }
     }
