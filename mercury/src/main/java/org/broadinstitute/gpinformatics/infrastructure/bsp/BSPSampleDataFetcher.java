@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
 import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.config.ClientConfig;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -10,7 +9,12 @@ import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientServ
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Wrapper around {@link BSPSampleSearchService} that
@@ -103,12 +107,6 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
 
         return sampleNameToDTO;
     }
-
-    @Override
-    protected void customizeConfig(ClientConfig clientConfig) {
-        // noop
-    }
-
 
     @Override
     protected void customizeClient(Client client) {
