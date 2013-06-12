@@ -530,4 +530,20 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public Collection<DisplayableItem> getReferenceSequences() {
         return mercuryClientService.getReferenceSequences();
     }
+
+    /**
+     * @return Show the create title if this is a developer or PDM.
+     */
+    @Override
+    public boolean isCreateAllowed() {
+        return isEditAllowed();
+    }
+
+    /**
+     * @return Show the edit title if this is a developer or PDM.
+     */
+    @Override
+    public boolean isEditAllowed() {
+        return getUserBean().isDeveloperUser() || getUserBean().isPMUser() || getUserBean().isPDMUser();
+    }
 }
