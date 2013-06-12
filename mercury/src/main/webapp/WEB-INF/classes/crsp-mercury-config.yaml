@@ -171,14 +171,14 @@ mercury:
     DEV:
 
       app:      DEV
-      bsp:      NOT_SUPPORTED
-      gap:      NOT_SUPPORTED
+      bsp:      DISABLED
+      gap:      DISABLED
       jira:     TEST
       quote:    QA
-      squid:    NOT_SUPPORTED
+      squid:    DISABLED
       thrift:   QA
       deckMsgs: DEV
-      datawhEtl: NOT_SUPPORTED
+      datawhEtl: DISABLED
       bettaLimsServer: DEV
       hipchat: DEV
 
@@ -186,14 +186,14 @@ mercury:
     AUTO_BUILD:
 
       app:      AUTO_BUILD
-      bsp:      NOT_SUPPORTED
-      gap:      NOT_SUPPORTED
+      bsp:      DISABLED
+      gap:      DISABLED
       jira:     TEST
       quote:    QA
-      squid:    NOT_SUPPORTED
+      squid:    DISABLED
       thrift:   QA
       deckMsgs: DEV
-      datawhEtl: NOT_SUPPORTED
+      datawhEtl: DISABLED
       bettaLimsServer: DEV
       hipchat: DEV
 
@@ -201,14 +201,14 @@ mercury:
     TEST:
 
       app:      TEST
-      bsp:      NOT_SUPPORTED
-      gap:      NOT_SUPPORTED
+      bsp:      DISABLED
+      gap:      DISABLED
       jira:     TEST
       quote:    DEV
-      squid:    NOT_SUPPORTED
+      squid:    DISABLED
       thrift:   TEST
       deckMsgs: DEV
-      datawhEtl: NOT_SUPPORTED
+      datawhEtl: DISABLED
       bettaLimsServer: TEST
       hipchat: DEV
 
@@ -216,14 +216,14 @@ mercury:
     QA:
 
       app:      QA
-      bsp:      NOT_SUPPORTED
-      gap:      NOT_SUPPORTED
+      bsp:      DISABLED
+      gap:      DISABLED
       jira:     TEST
       quote:    QA
-      squid:    NOT_SUPPORTED
+      squid:    DISABLED
       thrift:   QA
       deckMsgs: QA
-      datawhEtl: NOT_SUPPORTED
+      datawhEtl: DISABLED
       bettaLimsServer: QA
       hipchat: DEV
 
@@ -231,14 +231,14 @@ mercury:
     RC:
 
       app:      RC
-      bsp:      NOT_SUPPORTED
-      gap:      NOT_SUPPORTED
+      bsp:      DISABLED
+      gap:      DISABLED
       jira:     TEST
       quote:    QA
-      squid:    NOT_SUPPORTED
+      squid:    DISABLED
       thrift:   QA
       deckMsgs: QA
-      datawhEtl: NOT_SUPPORTED
+      datawhEtl: DISABLED
       bettaLimsServer: QA
       hipchat: DEV
 
@@ -246,13 +246,13 @@ mercury:
     PROD:
 
       app:      PROD
-      bsp:      NOT_SUPPORTED
-      gap:      NOT_SUPPORTED
+      bsp:      DISABLED
+      gap:      DISABLED
       jira:     PROD
       quote:    PROD
-      squid:    NOT_SUPPORTED
+      squid:    DISABLED
       thrift:   PROD
       deckMsgs: PROD
-      datawhEtl: NOT_SUPPORTED
+      datawhEtl: DISABLED
       bettaLimsServer: PROD
       hipchat: PROD
