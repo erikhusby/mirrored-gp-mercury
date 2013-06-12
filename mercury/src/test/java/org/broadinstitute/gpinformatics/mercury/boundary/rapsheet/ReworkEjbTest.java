@@ -454,8 +454,10 @@ public class ReworkEjbTest extends Arquillian {
         createInitialTubes(bucketReadySamples1, String.valueOf((new Date()).getTime()) + "tst1");
 
         for (Map.Entry<String, TwoDBarcodedTube> entry : mapBarcodeToTube.entrySet()) {
-            reworkEjb.addRework(entry.getValue(), exExProductOrder1.getBusinessKey(),
-                    new ReworkEjb.ReworkCandidate("", exExProductOrder1.getBusinessKey(), entry.getKey()),
+            TwoDBarcodedTube vessel = entry.getValue();
+            String sampleKey = vessel.getMercurySamples().iterator().next().getSampleKey();
+            reworkEjb.addRework(vessel, exExProductOrder1.getBusinessKey(),
+                    new ReworkEjb.ReworkCandidate(entry.getKey(), sampleKey, exExProductOrder1.getBusinessKey()),
                     ReworkEntry.ReworkReason.UNKNOWN_ERROR, LabEventType.PICO_PLATING_BUCKET, "Pico/Plating Bucket",
                     "test Rework", WorkflowName.EXOME_EXPRESS.getWorkflowName(), "scottmat");
         }

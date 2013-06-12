@@ -7,7 +7,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.presentation.workflow.BucketViewActionBean;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
@@ -64,6 +63,10 @@ public class BucketEntry  {
         }
     };
 
+    /**
+     * @deprecated use {@link #getReworkDetail()} instead
+     */
+    @Deprecated
     public ReworkEntry getReworkEntry() {
         return null;
     }
@@ -110,6 +113,10 @@ public class BucketEntry  {
     @Column(name = "ENTRY_TYPE", nullable = false)
     @Enumerated(EnumType.STRING)
     private BucketEntryType entryType = BucketEntryType.PDO_ENTRY;
+
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "rework_detail_id")
+    private ReworkDetail reworkDetail;
 
     protected BucketEntry () {
     }
@@ -205,6 +212,14 @@ public class BucketEntry  {
 
     public void setEntryType(BucketEntryType entryType) {
         this.entryType = entryType;
+    }
+
+    public ReworkDetail getReworkDetail() {
+        return reworkDetail;
+    }
+
+    public void setReworkDetail(ReworkDetail reworkDetail) {
+        this.reworkDetail = reworkDetail;
     }
 
     @Override

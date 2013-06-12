@@ -76,4 +76,85 @@
             <where>ENTRY_TYPE is null</where>
         </update>
     </changeSet>
+
+    <changeSet id="GPLIM-1377-8" author="breilly">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="rework_detail" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <createTable tableName="rework_detail" schemaName="mercury">
+            <column name="rework_detail_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rework_level" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rework_reason" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rework_step" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="comment" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="rework_detail" schemaName="mercury" columnNames="rework_detail_id"/>
+        <createSequence sequenceName="SEQ_REWORK_DETAIL" schemaName="mercury" startValue="1" incrementBy="50"/>
+    </changeSet>
+    <changeSet id="GPLIM-1377-9" author="breilly">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="rework_detail_aud" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <createTable tableName="rework_detail_aud" schemaName="mercury">
+            <column name="rework_detail_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="revtype" type="number(3,0)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="rework_level" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="rework_reason" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="rework_step" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="comment" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="rework_detail_aud" schemaName="mercury" columnNames="rework_detail_id, rev"/>
+        <addForeignKeyConstraint baseTableName="rework_detail_aud" baseTableSchemaName="mercury" baseColumnNames="rev"
+                                 constraintName="fk_rework_detail_aud_rev_info"
+                                 referencedTableName="rev_info" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="rev_info_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-1377-10" author="breilly">
+        <addColumn tableName="bucket_entry" schemaName="mercury">
+            <column name="rework_detail_id" type="number(19,0)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+        <addForeignKeyConstraint baseTableName="bucket_entry" baseTableSchemaName="mercury"
+                                 baseColumnNames="rework_detail_id"
+                                 constraintName="fk_bucket_entry_rework_detail"
+                                 referencedTableName="rework_detail" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="rework_detail_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-1377-11" author="breilly">
+        <addColumn tableName="bucket_entry_aud" schemaName="mercury">
+            <column name="rework_detail_id" type="number(19,0)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>

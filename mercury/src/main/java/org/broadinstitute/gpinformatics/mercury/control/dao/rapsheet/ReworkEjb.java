@@ -472,7 +472,7 @@ public class ReworkEjb {
             this.tubeBarcode = tubeBarcode;
         }
 
-        public ReworkCandidate(@Nonnull String sampleKey, @Nonnull String productOrderKey, @Nonnull String tubeBarcode) {
+        public ReworkCandidate(@Nonnull String tubeBarcode, @Nonnull String sampleKey, @Nonnull String productOrderKey) {
             this.sampleKey = sampleKey;
             this.productOrderKey = productOrderKey;
             this.tubeBarcode = tubeBarcode;
@@ -525,7 +525,7 @@ public class ReworkEjb {
             String tubeBarcode = parts[0];
             String sampleKey = parts[1];
             String productOrderKey = parts[2];
-            return new ReworkCandidate(sampleKey, productOrderKey, tubeBarcode);
+            return new ReworkCandidate(tubeBarcode, sampleKey, productOrderKey);
         }
     }
 }
