@@ -54,6 +54,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+@SuppressWarnings("UnusedDeclaration")
 @Entity
 @Audited
 @Table(name = "PRODUCT_ORDER", schema = "athena")
@@ -121,13 +122,13 @@ public class ProductOrder implements BusinessObject, Serializable {
     @JoinColumn(name = "product_order", nullable = false)
     @OrderColumn(name = "SAMPLE_POSITION", nullable = false)
     @AuditJoinTable(name = "product_order_sample_join_aud")
-    private final List<ProductOrderSample> samples = new ArrayList<ProductOrderSample>();
+    private final List<ProductOrderSample> samples = new ArrayList<>();
 
     @Transient
     private final SampleCounts sampleCounts = new SampleCounts();
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "productOrder", orphanRemoval = true)
-    private final Set<ProductOrderAddOn> addOns = new HashSet<ProductOrderAddOn>();
+    private final Set<ProductOrderAddOn> addOns = new HashSet<>();
 
     // This is used for edit to keep track of changes to the object.
     @Transient
@@ -184,7 +185,7 @@ public class ProductOrder implements BusinessObject, Serializable {
      * @return The number of samples calculated to be on risk.
      */
     public int calculateRisk(List<ProductOrderSample> selectedSamples) {
-        Set<String> uniqueSampleNamesOnRisk = new HashSet<String>();
+        Set<String> uniqueSampleNamesOnRisk = new HashSet<>();
 
         for (ProductOrderSample sample : selectedSamples) {
             if (sample.calculateRisk()) {
@@ -220,17 +221,18 @@ public class ProductOrder implements BusinessObject, Serializable {
     }
 
     /**
-     * Count the number of unique samples on risk on the produt order. This is calculated on the summary page, but
+     * Count the number of unique samples on risk on the product order. This is calculated on the summary page, but
      * for this call, we only want to do the calculation without going to BSP.
      *
      * @return The count of items on risk.
      */
     public int countItemsOnRisk() {
         int count = 0;
-        Set<String> uniqueKeys = new HashSet<String> ();
+        Set<String> uniqueKeys = new HashSet<>();
 
         for (ProductOrderSample sample : samples) {
             if (sample.isOnRisk() && (!uniqueKeys.contains(sample.getSampleName()))) {
+                uniqueKeys.add(sample.getSampleName());
                 count++;
             }
         }
@@ -269,7 +271,7 @@ public class ProductOrder implements BusinessObject, Serializable {
     }
 
     private static class Counter implements Serializable {
-        private final Map<String, Integer> countMap = new HashMap<String, Integer>();
+        private final Map<String, Integer> countMap = new HashMap<>();
 
         private void clear() {
             countMap.clear();
@@ -345,8 +347,8 @@ public class ProductOrder implements BusinessObject, Serializable {
             // Initialize all counts.
             clearAllData();
 
-            Set<String> sampleSet = new HashSet<String>(samples.size());
-            Set<String> participantSet = new HashSet<String>();
+            Set<String> sampleSet = new HashSet<>(samples.size());
+            Set<String> participantSet = new HashSet<>();
 
             for (ProductOrderSample sample : samples) {
                 if (sampleSet.add(sample.getSampleName())) {
@@ -449,7 +451,7 @@ public class ProductOrder implements BusinessObject, Serializable {
         public List<String> sampleSummary() {
             generateCounts();
 
-            List<String> output = new ArrayList<String>();
+            List<String> output = new ArrayList<>();
             if (totalSampleCount == 0) {
                 output.add("Total: None");
             } else {
@@ -504,7 +506,7 @@ public class ProductOrder implements BusinessObject, Serializable {
          * - all BSP samples' stock is ACTIVE
          */
         public List<String> sampleValidation() {
-            List<String> output = new ArrayList<String>();
+            List<String> output = new ArrayList<>();
             checkCount(missingBspMetaDataCount, "No BSP Data: {0}", output);
             checkCount(bspSampleCount - activeSampleCount, "Not ACTIVE: {0}", output);
             checkCount(bspSampleCount - receivedSampleCount, "Not RECEIVED: {0}", output);
@@ -795,7 +797,7 @@ public class ProductOrder implements BusinessObject, Serializable {
      */
     public void loadBspData() {
         // Can't use SampleCounts here, it calls this recursively.
-        Set<String> uniqueNames = new HashSet<String>(samples.size());
+        Set<String> uniqueNames = new HashSet<>(samples.size());
         for (ProductOrderSample sample : samples) {
             if (sample.needsBspMetaData()) {
                 uniqueNames.add(sample.getSampleName());
@@ -817,7 +819,7 @@ public class ProductOrder implements BusinessObject, Serializable {
         Map<String, BSPSampleDTO> bspSampleMetaData = bspSampleDataFetcher.fetchSamplesFromBSP(names);
 
         // The non-null DTOs which we use to look up FFPE status.
-        List<BSPSampleDTO> nonNullDTOs = new ArrayList<BSPSampleDTO>();
+        List<BSPSampleDTO> nonNullDTOs = new ArrayList<>();
         for (ProductOrderSample sample : samples) {
             BSPSampleDTO bspSampleDTO = bspSampleMetaData.get(sample.getSampleName());
 
@@ -996,7 +998,7 @@ public class ProductOrder implements BusinessObject, Serializable {
         JiraService jiraService = ServiceAccessUtility.getBean(JiraService.class);
         Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
 
-        List<CustomField> listOfFields = new ArrayList<CustomField>();
+        List<CustomField> listOfFields = new ArrayList<>();
 
         listOfFields.add(new CustomField(submissionFields, JiraField.PRODUCT_FAMILY,
                 product.getProductFamily() == null ? "" : product.getProductFamily().getName()));
@@ -1028,10 +1030,6 @@ public class ProductOrder implements BusinessObject, Serializable {
 
         jiraTicketKey = issue.getKey();
         issue.addLink(researchProject.getJiraTicketKey());
-
-        // Due to the way we set createdBy, it's possible that these two values will be different.
-        issue.addWatcher(bspUserList.getById(createdBy).getUsername());
-        issue.addWatcher(bspUserList.getById(modifiedBy).getUsername());
 
         issue.addComment(StringUtils.join(getSampleSummaryComments(), "\n"));
         issue.addComment(StringUtils.join(getSampleValidationComments(), "\n"));
@@ -1135,7 +1133,7 @@ public class ProductOrder implements BusinessObject, Serializable {
                 return Collections.emptyList();
             }
 
-            List<OrderStatus> statuses = new ArrayList<OrderStatus>();
+            List<OrderStatus> statuses = new ArrayList<>();
             for (String statusString : statusStrings) {
                 statuses.add(OrderStatus.valueOf(statusString));
             }

@@ -77,7 +77,7 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
         }
 
         public static List<String> getNames() {
-            List<String> names = new ArrayList<String>();
+            List<String> names = new ArrayList<>();
             for (Status status : Status.values()) {
                 names.add(status.name());
             }
@@ -421,7 +421,7 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
      * @return list of associated people based on their role type
      */
     private Collection<ProjectPerson> findPeopleByType(RoleType role) {
-        List<ProjectPerson> foundPersonList = new ArrayList<ProjectPerson>(associatedPeople.size());
+        List<ProjectPerson> foundPersonList = new ArrayList<>(associatedPeople.size());
 
         for (ProjectPerson person : associatedPeople) {
             if (person.getRole() == role) {
@@ -433,7 +433,7 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
     }
 
     public Long[] getPeople(RoleType role) {
-        List<Long> people = new ArrayList<Long>();
+        List<Long> people = new ArrayList<>();
 
         for (ProjectPerson person : associatedPeople) {
             if (person.getRole() == role) {
@@ -526,7 +526,7 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
 
         Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
 
-        List<CustomField> listOfFields = new ArrayList<CustomField>();
+        List<CustomField> listOfFields = new ArrayList<>();
 
         if (!sampleCohorts.isEmpty()) {
             String[] cohortNames = new String[sampleCohorts.size()];
@@ -542,7 +542,7 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
         }
 
         if (!projectFunding.isEmpty()) {
-            List<String> fundingSources = new ArrayList<String>();
+            List<String> fundingSources = new ArrayList<>();
             for (ResearchProjectFunding fundingSrc : projectFunding) {
                 fundingSources.add(fundingSrc.getFundingId());
             }
@@ -585,8 +585,6 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
         JiraIssue issue = jiraService.createIssue(fetchJiraProject().getKeyPrefix(), username, fetchJiraIssueType(),
                                                   title, synopsis, listOfFields);
         jiraTicketKey = issue.getKey();
-
-        issue.addWatcher(username);
 
         // Update ticket with link back into Mercury
         AppConfig appConfig = ServiceAccessUtility.getBean(AppConfig.class);
@@ -683,7 +681,7 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
     }
 
     public Collection<ResearchProject> getAllChildren() {
-        Collection<ResearchProject> collectedProjects = new TreeSet<ResearchProject>();
+        Collection<ResearchProject> collectedProjects = new TreeSet<>();
         collectedProjects.addAll(getChildProjects());
 
         return collectChildResearchProjects(collectedProjects);

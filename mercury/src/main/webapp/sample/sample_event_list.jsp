@@ -4,7 +4,7 @@
 
 <%--@elvariable id="vessels" type="java.util.Collection<org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel>"--%>
 <%--@elvariable id="sample" type="org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample"--%>
-<%--@elvariable id="bean" type="org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean"--%>
+<%--@elvariable id="bean" type="org.broadinstitute.gpinformatics.mercury.presentation.search.SampleSearchActionBean"--%>
 <%--@elvariable id="index" type="java.lang.Integer"--%>
 
 <stripes:layout-definition>
@@ -63,23 +63,26 @@
                         </stripes:link>
                     </td>
                     <td>
-                        <c:forEach items="${vessel.getSampleInstancesForSample(sample, 'ANY')}" var="sampleInstance">
+                        <c:forEach items="${bean.getSampleInstancesForSample(vessel, sample, 'ANY')}"
+                                   var="sampleInstance">
                             <c:forEach items="${vessel.getLastKnownPositionsOfSample(sampleInstance)}" var="position">
                                 ${position}
                             </c:forEach>
                         </c:forEach>
                     </td>
                     <td>
-                        <c:forEach items="${vessel.getSampleInstancesForSample(sample, 'ANY')}" var="sampleInstance">
+                        <c:forEach items="${bean.getSampleInstancesForSample(vessel, sample, 'ANY')}"
+                                   var="sampleInstance">
                             <c:set var="sampleLink" value="${bean.getSampleLink(sampleInstance.startingSample)}"/>
                             <c:choose>
                                 <c:when test="${sampleLink.hasLink}">
-                                    <stripes:link class="external" target="${sampleLink.target}" title="${sampleLink.label}" href="${sampleLink.url}">
-                                        ${sample.sampleKey}
+                                    <stripes:link class="external" target="${sampleLink.target}"
+                                                  title="${sampleLink.label}" href="${sampleLink.url}">
+                                        ${sampleInstance.startingSample.sampleKey}
                                     </stripes:link>
                                 </c:when>
                                 <c:otherwise>
-                                    ${sample.sampleKey}
+                                    ${sampleInstance.startingSample.sampleKey}
                                 </c:otherwise>
                             </c:choose>
                         </c:forEach>
@@ -88,7 +91,7 @@
                             ${event.labEventType.name}
                     </td>
                     <td>
-                        <fmt:formatDate value="${event.eventDate}" pattern="${bean.preciseDateTimePattern}"/>
+                        <fmt:formatDate value="${event.eventDate}" pattern="${bean.dateTimePattern}"/>
                     </td>
                     <td>
                             ${event.eventLocation}
@@ -110,7 +113,7 @@
                         </table>
                     </td>
                     <td style="padding: 0;">
-                        <c:forEach items="${vessel.getSampleInstancesForSample(sample, 'WITH_PDO')}"
+                        <c:forEach items="${bean.getSampleInstancesForSample(vessel, sample, 'WITH_PDO')}"
                                    var="sampleInstance">
                             <c:forEach items="${sampleInstance.getLabBatchCompositionInVesselContext(vessel)}"
                                        var="batchComposition">

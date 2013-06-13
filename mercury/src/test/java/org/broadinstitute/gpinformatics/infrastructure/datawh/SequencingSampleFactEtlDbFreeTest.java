@@ -13,10 +13,13 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexing
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme.IndexPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
+import org.broadinstitute.gpinformatics.mercury.entity.run.RunChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.SampleType;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch.LabBatchType;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
@@ -31,18 +34,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.easymock.EasyMock.createMock;
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.replay;
-import static org.easymock.EasyMock.reset;
-import static org.easymock.EasyMock.verify;
+import static org.easymock.EasyMock.*;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 /**
  * dbfree unit test of entity etl.
  */
 
-@Test(groups = TestGroups.DATABASE_FREE)
+@Test(groups = TestGroups.DATABASE_FREE, enabled=true)
 public class SequencingSampleFactEtlDbFreeTest {
     private String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
     private long entityId = 9988776655L;
@@ -50,6 +50,7 @@ public class SequencingSampleFactEtlDbFreeTest {
     private Date runDate = new Date(1377000000000L);
     private String barcode = "22223333";
     private String flowcellBarcode = "44445555";
+    private int laneNumber = 1;
     private String machineName = "ABC-DEF";
     private String cartridgeName = "flowcell09u1234-8931";
     private long operator = 5678L;
@@ -72,8 +73,8 @@ public class SequencingSampleFactEtlDbFreeTest {
     private SampleInstance sampleInstance = createMock(SampleInstance.class);
     private SampleInstance sampleInstance2 = createMock(SampleInstance.class);
 
-    private Object[] mocks = new Object[]
-            {auditReader, dao, pdoDao, runCartridge, researchProject, pdo, sampleInstance, sampleInstance2};
+    private Object[] mocks = new Object[]{auditReader, dao, pdoDao, runCartridge, researchProject, pdo,
+            sampleInstance, sampleInstance2};
 
     @BeforeClass(groups = TestGroups.DATABASE_FREE)
     public void objSetUp() {
@@ -127,34 +128,38 @@ public class SequencingSampleFactEtlDbFreeTest {
 
         expect(dao.findById(SequencingRun.class, entityId)).andReturn(run).times(2);
         expect(runCartridge.getCartridgeName()).andReturn(cartridgeName).times(2);
-        expect(runCartridge.getCartridgeBarcode()).andReturn(flowcellBarcode).times(2);
-        expect(runCartridge.getSampleInstances(SampleType.WITH_PDO, LabBatchType.WORKFLOW))
-                .andReturn(sampleInstances).times(2);
+        expect(runCartridge.getVesselGeometry()).andReturn(VesselGeometry.FLOWCELL1x2).times(2);
+        expect(runCartridge.getSamplesAtPosition(anyObject(VesselPosition.class), anyObject(SampleType.class)))
+                .andReturn(sampleInstances).times(4);
         String pdoKey = "PDO-0123";
-        expect(sampleInstance.getProductOrderKey()).andReturn(pdoKey).times(2);
+        expect(sampleInstance.getProductOrderKey()).andReturn(pdoKey).times(4);
 
         // Only needs this set of expects once for the cache fill.
         long pdoId = 44332211L;
         expect(pdoDao.findByBusinessKey(pdoKey)).andReturn(pdo);
-        expect(pdo.getProductOrderId()).andReturn(pdoId);
+        expect(pdo.getProductOrderId()).andReturn(pdoId).times(1);
         expect(pdo.getResearchProject()).andReturn(researchProject).times(2);
-        expect(researchProject.getResearchProjectId()).andReturn(researchProjectId);
+        expect(researchProject.getResearchProjectId()).andReturn(researchProjectId).times(1);
 
         String sampleKey = "SM-0123";
         expect(sampleInstance.getStartingSample())
-                .andReturn(new MercurySample(sampleKey)).times(2);
-        expect(sampleInstance.getReagents()).andReturn(reagents).times(2);
+                .andReturn(new MercurySample(sampleKey)).times(4);
+        expect(sampleInstance.getReagents()).andReturn(reagents).times(4);
 
         replay(mocks);
 
         Collection<String> records = tst.dataRecords(etlDateStr, false, entityId);
-        assertEquals(records.size(), 1);
-        verifyRecord(records.iterator().next(), molecularIndexSchemeName[0], pdoId, sampleKey);
-
+        assertEquals(records.size(), 2);
+        for (String record : records) {
+            if (record.contains(",2,")) {
+                verifyRecord(record, molecularIndexSchemeName[0], pdoId, sampleKey, 2);
+            } else {
+                verifyRecord(record, molecularIndexSchemeName[0], pdoId, sampleKey, 1);
+            }
+        }
         // Tests the pdo cache.  Should just skip some of the expects.
         records = tst.dataRecords(etlDateStr, false, entityId);
-        assertEquals(records.size(), 1);
-        verifyRecord(records.iterator().next(), molecularIndexSchemeName[0], pdoId, sampleKey);
+        assertEquals(records.size(), 2);
 
         verify(mocks);
     }
@@ -170,10 +175,11 @@ public class SequencingSampleFactEtlDbFreeTest {
 
         expect(dao.findById(SequencingRun.class, entityId)).andReturn(run);
         expect(runCartridge.getCartridgeName()).andReturn(cartridgeName);
-        expect(runCartridge.getCartridgeBarcode()).andReturn(flowcellBarcode);
-        expect(runCartridge.getSampleInstances(SampleType.WITH_PDO, LabBatchType.WORKFLOW)).andReturn(sampleInstances);
+        expect(runCartridge.getVesselGeometry()).andReturn(VesselGeometry.FLOWCELL1x2);
+        expect(runCartridge.getSamplesAtPosition(anyObject(VesselPosition.class), anyObject(SampleType.class)))
+                .andReturn(sampleInstances).times(2);
         String pdoKey = "PDO-0012";
-        expect(sampleInstance.getProductOrderKey()).andReturn(pdoKey);
+        expect(sampleInstance.getProductOrderKey()).andReturn(pdoKey).times(2);
 
         long pdoId = 55443322L;
         expect(pdoDao.findByBusinessKey(pdoKey)).andReturn(pdo);
@@ -182,14 +188,20 @@ public class SequencingSampleFactEtlDbFreeTest {
         expect(researchProject.getResearchProjectId()).andReturn(researchProjectId);
 
         String sampleKey = "SM-1234";
-        expect(sampleInstance.getStartingSample()).andReturn(new MercurySample(sampleKey));
-        expect(sampleInstance.getReagents()).andReturn(reagents);
+        expect(sampleInstance.getStartingSample()).andReturn(new MercurySample(sampleKey)).times(2);
+        expect(sampleInstance.getReagents()).andReturn(reagents).times(2);
 
         replay(mocks);
 
         Collection<String> records = tst.dataRecords(etlDateStr, false, entityId);
-        assertEquals(records.size(), 1);
-        verifyRecord(records.iterator().next(), molecularIndexSchemeName[1], pdoId, sampleKey);
+        assertEquals(records.size(), 2);
+        for (String record : records) {
+            if (record.contains(",2,")) {
+                verifyRecord(record, molecularIndexSchemeName[1], pdoId, sampleKey, 2);
+            } else {
+                verifyRecord(record, molecularIndexSchemeName[1], pdoId, sampleKey, 1);
+            }
+        }
 
         verify(mocks);
     }
@@ -197,23 +209,24 @@ public class SequencingSampleFactEtlDbFreeTest {
     public void testMultiple2() throws Exception {
         // Adds two molecular barcodes in two reagents.
         Map<IndexPosition, MolecularIndex> positionIndexMap = new HashMap<>();
-        positionIndexMap.put(IndexPosition.ILLUMINA_P5, new MolecularIndex(molecularIndex[1]));
+        positionIndexMap.put(IndexPosition.ILLUMINA_P5, new MolecularIndex(molecularIndex[2]));
         MolecularIndexingScheme molecularIndexingScheme = new MolecularIndexingScheme(positionIndexMap);
-        molecularIndexingScheme.setName(molecularIndexSchemeName[1]);
+        molecularIndexingScheme.setName(molecularIndexSchemeName[2]);
         reagents.add(new MolecularIndexReagent(molecularIndexingScheme));
 
         positionIndexMap.clear();
-        positionIndexMap.put(IndexPosition.ILLUMINA_P7, new MolecularIndex(molecularIndex[2]));
+        positionIndexMap.put(IndexPosition.ILLUMINA_P7, new MolecularIndex(molecularIndex[0]));
         molecularIndexingScheme = new MolecularIndexingScheme(positionIndexMap);
-        molecularIndexingScheme.setName(molecularIndexSchemeName[2]);
+        molecularIndexingScheme.setName(molecularIndexSchemeName[0]);
         reagents.add(new MolecularIndexReagent(molecularIndexingScheme));
 
         expect(dao.findById(SequencingRun.class, entityId)).andReturn(run);
         expect(runCartridge.getCartridgeName()).andReturn(cartridgeName);
-        expect(runCartridge.getCartridgeBarcode()).andReturn(flowcellBarcode);
-        expect(runCartridge.getSampleInstances(SampleType.WITH_PDO, LabBatchType.WORKFLOW)).andReturn(sampleInstances);
+        expect(runCartridge.getVesselGeometry()).andReturn(VesselGeometry.FLOWCELL1x2);
+        expect(runCartridge.getSamplesAtPosition(anyObject(VesselPosition.class), anyObject(SampleType.class)))
+                .andReturn(sampleInstances).times(2);
         String pdoKey = "PDO-6543";
-        expect(sampleInstance.getProductOrderKey()).andReturn(pdoKey);
+        expect(sampleInstance.getProductOrderKey()).andReturn(pdoKey).times(2);
 
         long pdoId = 66554433L;
         expect(pdoDao.findByBusinessKey(pdoKey)).andReturn(pdo);
@@ -222,14 +235,20 @@ public class SequencingSampleFactEtlDbFreeTest {
         expect(researchProject.getResearchProjectId()).andReturn(researchProjectId);
 
         String sampleKey = "SM-2345";
-        expect(sampleInstance.getStartingSample()).andReturn(new MercurySample(sampleKey));
-        expect(sampleInstance.getReagents()).andReturn(reagents);
+        expect(sampleInstance.getStartingSample()).andReturn(new MercurySample(sampleKey)).times(2);
+        expect(sampleInstance.getReagents()).andReturn(reagents).times(2);
 
         replay(mocks);
-
+        String expectedMolecularIndexName = molecularIndexSchemeName[0] + " " + molecularIndexSchemeName[2];
         Collection<String> records = tst.dataRecords(etlDateStr, false, entityId);
-        assertEquals(records.size(), 1);
-        verifyRecord(records.iterator().next(), "MULTIPLE_0", pdoId, sampleKey);
+        assertEquals(records.size(), 2);
+        for (String record : records) {
+            if (record.contains(",2,")) {
+                verifyRecord(record, expectedMolecularIndexName, pdoId, sampleKey, 2);
+            } else {
+                verifyRecord(record, expectedMolecularIndexName, pdoId, sampleKey, 1);
+            }
+        }
 
         verify(mocks);
     }
@@ -241,10 +260,11 @@ public class SequencingSampleFactEtlDbFreeTest {
 
         expect(dao.findById(SequencingRun.class, entityId)).andReturn(run);
         expect(runCartridge.getCartridgeName()).andReturn(cartridgeName);
-        expect(runCartridge.getCartridgeBarcode()).andReturn(flowcellBarcode);
         // Adds a second sampleInstance
         sampleInstances.add(sampleInstance2);
-        expect(runCartridge.getSampleInstances(SampleType.WITH_PDO, LabBatchType.WORKFLOW)).andReturn(sampleInstances);
+        expect(runCartridge.getVesselGeometry()).andReturn(VesselGeometry.FLOWCELL1x1);
+        expect(runCartridge.getSamplesAtPosition(anyObject(VesselPosition.class), anyObject(SampleType.class)))
+                .andReturn(sampleInstances);
         String pdoKey = "PDO-7654";
         expect(sampleInstance.getProductOrderKey()).andReturn(pdoKey);
         expect(sampleInstance2.getProductOrderKey()).andReturn(pdoKey);
@@ -267,24 +287,35 @@ public class SequencingSampleFactEtlDbFreeTest {
 
         Collection<String> records = tst.dataRecords(etlDateStr, false, entityId);
         assertEquals(records.size(), 2);
-        // Skips testing sample key this time since record order is not guaranteed.
-        verifyRecord(records.iterator().next(), "NONE_0", pdoId, null);
-        verifyRecord(records.iterator().next(), "NONE_0", pdoId, null);
+        boolean found1 = false;
+        boolean found2 = false;
+        for (String record : records) {
+            if (record.contains(sampleKey)) {
+                found1 = true;
+            }
+            if (record.contains(sampleKey2)) {
+                found2 = true;
+            }
+            verifyRecord(record, "NONE", pdoId, null, 1);
+        }
+        assertTrue(found1 && found2);
 
         verify(mocks);
     }
 
-    private String[] verifyRecord(String record, String expectedName, long pdoId, String sampleKey) {
+    private String[] verifyRecord(String record, String expectedName, long pdoId, String sampleKey, int lane) {
         int i = 0;
         String[] parts = record.split(",");
         assertEquals(parts[i++], etlDateStr);
         assertEquals(parts[i++], "F");
         assertEquals(parts[i++], String.valueOf(entityId));
-        assertEquals(parts[i++], flowcellBarcode);
         assertEquals(parts[i++], cartridgeName);
+        assertEquals(parts[i++], String.valueOf(lane));
         assertEquals(parts[i++], expectedName);
         assertEquals(parts[i++], String.valueOf(pdoId));
-        assert(sampleKey == null || parts[i].equals(sampleKey));
+        if (sampleKey != null) {
+            assertEquals(parts[i], sampleKey);
+        }
         i++;
         assertEquals(parts[i++], String.valueOf(researchProjectId));
 
