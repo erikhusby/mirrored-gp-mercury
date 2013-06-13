@@ -24,7 +24,7 @@
                         {"bSortable":true, "sType":"html"}
                     ],
                     "bRetrieve":true,
-                    "sScrollY": 500
+                    "sScrollY":500
                 });
             });
         });
@@ -40,7 +40,7 @@
         </tr>
         </thead>
         <tbody>
-        <c:forEach items="${vessel.getSampleInstances('ANY', null)}" var="sample">
+        <c:forEach items="${vessel.getSampleInstances('WITH_PDO', null)}" var="sample">
             <tr>
                 <td>
                     <stripes:link
@@ -65,7 +65,7 @@
                 </td>
                 <td style="padding: 0;">
                     <table style="padding: 0">
-                        <c:forEach items="${vessel.getPositionsOfSample(sample, 'ANY')}" var="position">
+                        <c:forEach items="${vessel.getPositionsOfSample(sample, 'WITH_PDO')}" var="position">
                             <tr>
                                 <td style="border: none;">
                                         ${position}
@@ -75,28 +75,25 @@
                     </table>
                 </td>
                 <td style="padding: 0;">
-                    <c:forEach items="${vessel.getSampleInstancesForSample(sample.startingSample, 'WITH_PDO')}"
-                               var="sampleInstance">
-                        <c:forEach items="${sampleInstance.getLabBatchCompositionInVesselContext(vessel)}"
-                                   var="batchComposition">
-                            <c:if test="${not empty batchComposition.labBatch.businessKey}">
-                                <a target="JIRA" href="${batchComposition.labBatch.jiraTicket.browserUrl}"
-                                   class="external" target="JIRA">
-                                        ${batchComposition.labBatch.businessKey}
-                                    (${batchComposition.count}/${batchComposition.denominator})
-                                </a>
-                            </c:if>
+                    <c:forEach items="${sample.getLabBatchCompositionInVesselContext(vessel)}"
+                               var="batchComposition">
+                        <c:if test="${not empty batchComposition.labBatch.businessKey}">
+                            <a target="JIRA" href="${batchComposition.labBatch.jiraTicket.browserUrl}"
+                               class="external" target="JIRA">
+                                    ${batchComposition.labBatch.businessKey}
+                                (${batchComposition.count}/${batchComposition.denominator})
+                            </a>
+                        </c:if>
 
-                            <c:if test="${not empty sample.productOrderKey}">
-                                <stripes:link
-                                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"
-                                        event="view">
-                                    <stripes:param name="productOrder" value="${sampleInstance.productOrderKey}"/>
-                                    ${sampleInstance.productOrderKey}
-                                </stripes:link>
-                            </c:if>
-                            <br/>
-                        </c:forEach>
+                        <c:if test="${not empty sample.productOrderKey}">
+                            <stripes:link
+                                    beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"
+                                    event="view">
+                                <stripes:param name="productOrder" value="${sample.productOrderKey}"/>
+                                ${sample.productOrderKey}
+                            </stripes:link>
+                        </c:if>
+                        <br/>
                     </c:forEach>
                 </td>
             </tr>
