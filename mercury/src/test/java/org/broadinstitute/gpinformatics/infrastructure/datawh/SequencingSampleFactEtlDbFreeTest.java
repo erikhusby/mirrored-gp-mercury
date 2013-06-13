@@ -36,6 +36,7 @@ import java.util.Set;
 
 import static org.easymock.EasyMock.*;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 /**
  * dbfree unit test of entity etl.
@@ -286,13 +287,18 @@ public class SequencingSampleFactEtlDbFreeTest {
 
         Collection<String> records = tst.dataRecords(etlDateStr, false, entityId);
         assertEquals(records.size(), 2);
+        boolean found1 = false;
+        boolean found2 = false;
         for (String record : records) {
-            if (record.contains(",2,")) {
-                verifyRecord(record, "NONE", pdoId, sampleKey, 2);
-            } else {
-                verifyRecord(record, "NONE", pdoId, sampleKey, 1);
+            if (record.contains(sampleKey)) {
+                found1 = true;
             }
+            if (record.contains(sampleKey2)) {
+                found2 = true;
+            }
+            verifyRecord(record, "NONE", pdoId, null, 1);
         }
+        assertTrue(found1 && found2);
 
         verify(mocks);
     }
@@ -307,7 +313,9 @@ public class SequencingSampleFactEtlDbFreeTest {
         assertEquals(parts[i++], String.valueOf(lane));
         assertEquals(parts[i++], expectedName);
         assertEquals(parts[i++], String.valueOf(pdoId));
-        assert(sampleKey == null || parts[i].equals(sampleKey));
+        if (sampleKey != null) {
+            assertEquals(parts[i], sampleKey);
+        }
         i++;
         assertEquals(parts[i++], String.valueOf(researchProjectId));
 
