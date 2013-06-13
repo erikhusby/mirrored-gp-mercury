@@ -212,95 +212,97 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                 }
             }
         }
-        loggingDtos.addAll(dtos);
+        synchronized(loggingDtos) {
+            loggingDtos.clear();
+            loggingDtos.addAll(dtos);
+        }
         return dtos;
     }
 
     @Override
     public void postEtlLogging() {
+        synchronized(loggingDtos) {
+            // Aggregates errors by the appropriate record identifier, depending on what the missing value is.
+            Set<Long> errorIds = new HashSet<>();
+            Set<Long> otherIds = new HashSet<>();
 
-        // Aggregates errors by the appropriate record identifier, depending on what the missing value is.
-        Set<Long> errorIds = new HashSet<>();
-        Set<Long> otherIds = new HashSet<>();
+            // Keep track of reported errors so we log an entity once, showing the most basic flaw.
+            Set<EventFactDto> reportedErrors = new HashSet<>();
 
-        // Keep track of reported errors so we log an entity once, showing the most basic flaw.
-        Set<EventFactDto> reportedErrors = new HashSet<>();
-
-        // No vessel on event.
-        for (EventFactDto fact : loggingDtos) {
-            if (!fact.isComplete() && !reportedErrors.contains(fact) &&
-                    fact.getLabVessel() == null) {
-                reportedErrors.add(fact);
-                errorIds.add(fact.getLabEvent().getLabEventId());
+            // No vessel on event.
+            for (EventFactDto fact : loggingDtos) {
+                if (!fact.isComplete() && !reportedErrors.contains(fact) &&
+                        fact.getLabVessel() == null) {
+                    reportedErrors.add(fact);
+                    errorIds.add(fact.getLabEvent().getLabEventId());
+                }
             }
-        }
-        if (errorIds.size() > 0) {
-            logger.debug("Missing vessel for labEvents: " + StringUtils.join(errorIds, ", "));
-        }
-        errorIds.clear();
-        otherIds.clear();
-
-        // No sampleInstance on vessel.
-        for (EventFactDto fact : loggingDtos) {
-            if (!fact.isComplete() && !reportedErrors.contains(fact) &&
-                    fact.getProductOrder() == null && fact.getSampleInstanceIndexes() == null) {
-                reportedErrors.add(fact);
-                errorIds.add(fact.getLabEvent().getLabEventId());
-                otherIds.add(fact.getLabVessel().getLabVesselId());
+            if (errorIds.size() > 0) {
+                logger.debug("Missing vessel for labEvents: " + StringUtils.join(errorIds, ", "));
             }
-        }
-        if (errorIds.size() > 0) {
-            logger.debug("Missing sampleInstances in vessels: " + StringUtils.join(otherIds, ", ") +
-                    " in labEvents: " + StringUtils.join(errorIds, ", "));
-        }
-        errorIds.clear();
-        otherIds.clear();
+            errorIds.clear();
+            otherIds.clear();
 
-        // No pdo on sampleInstance, or no pdo entity for pdoKey.
-        for (EventFactDto fact : loggingDtos) {
-            if (!fact.isComplete() && !reportedErrors.contains(fact) &&
-                    fact.getProductOrder() == null) {
-                reportedErrors.add(fact);
-                errorIds.add(fact.getLabEvent().getLabEventId());
-                otherIds.add(fact.getLabVessel().getLabVesselId());
+            // No sampleInstance on vessel.
+            for (EventFactDto fact : loggingDtos) {
+                if (!fact.isComplete() && !reportedErrors.contains(fact) &&
+                        fact.getProductOrder() == null && fact.getSampleInstanceIndexes() == null) {
+                    reportedErrors.add(fact);
+                    errorIds.add(fact.getLabEvent().getLabEventId());
+                    otherIds.add(fact.getLabVessel().getLabVesselId());
+                }
             }
-        }
-        if (errorIds.size() > 0) {
-            logger.debug("Missing productOrder for sampleInstances in vessels: " + StringUtils.join(otherIds, ", ")
-                    + " in labEvents: " + StringUtils.join(errorIds, ", "));
-        }
-        errorIds.clear();
-        otherIds.clear();
-
-        // No starting sample on sampleInstance.
-        for (EventFactDto fact : loggingDtos) {
-            if (!fact.isComplete() && !reportedErrors.contains(fact) &&
-                    fact.getSample() == null) {
-                reportedErrors.add(fact);
-                errorIds.add(fact.getLabEvent().getLabEventId());
-                otherIds.add(fact.getLabVessel().getLabVesselId());
+            if (errorIds.size() > 0) {
+                logger.debug("Missing sampleInstances in vessels: " + StringUtils.join(otherIds, ", ") +
+                        " in labEvents: " + StringUtils.join(errorIds, ", "));
             }
-        }
-        if (errorIds.size() > 0) {
-            logger.debug("Missing starting sample for sampleInstances in vessels: " + StringUtils.join(otherIds, ", ")
-                    + " in labEvents: " + StringUtils.join(errorIds, ", "));
-        }
-        errorIds.clear();
-        otherIds.clear();
+            errorIds.clear();
+            otherIds.clear();
 
-        // No workflowConfig for (eventName, workflowName, eventDate).
-        for (EventFactDto fact : loggingDtos) {
-            if (!fact.isComplete() && fact.getWfDenorm() == null) {
-                errorIds.add(fact.getLabEvent().getLabEventId());
+            // No pdo on sampleInstance, or no pdo entity for pdoKey.
+            for (EventFactDto fact : loggingDtos) {
+                if (!fact.isComplete() && !reportedErrors.contains(fact) &&
+                        fact.getProductOrder() == null) {
+                    reportedErrors.add(fact);
+                    errorIds.add(fact.getLabEvent().getLabEventId());
+                    otherIds.add(fact.getLabVessel().getLabVesselId());
+                }
             }
-        }
-        if (errorIds.size() > 0) {
-            logger.debug("Missing workflowConfig for labEvents: " + StringUtils.join(errorIds, ", "));
-        }
-        errorIds.clear();
-        otherIds.clear();
+            if (errorIds.size() > 0) {
+                logger.debug("Missing productOrder for sampleInstances in vessels: " + StringUtils.join(otherIds, ", ")
+                        + " in labEvents: " + StringUtils.join(errorIds, ", "));
+            }
+            errorIds.clear();
+            otherIds.clear();
 
-        loggingDtos.clear();
+            // No starting sample on sampleInstance.
+            for (EventFactDto fact : loggingDtos) {
+                if (!fact.isComplete() && !reportedErrors.contains(fact) &&
+                        fact.getSample() == null) {
+                    reportedErrors.add(fact);
+                    errorIds.add(fact.getLabEvent().getLabEventId());
+                    otherIds.add(fact.getLabVessel().getLabVesselId());
+                }
+            }
+            if (errorIds.size() > 0) {
+                logger.debug("Missing starting sample for sampleInstances in vessels: "
+                        + StringUtils.join(otherIds, ", ") + " in labEvents: " + StringUtils.join(errorIds, ", "));
+            }
+            errorIds.clear();
+            otherIds.clear();
+
+            // No workflowConfig for (eventName, workflowName, eventDate).
+            for (EventFactDto fact : loggingDtos) {
+                if (!fact.isComplete() && fact.getWfDenorm() == null) {
+                    errorIds.add(fact.getLabEvent().getLabEventId());
+                }
+            }
+            if (errorIds.size() > 0) {
+                logger.debug("Missing workflowConfig for labEvents: " + StringUtils.join(errorIds, ", "));
+            }
+            errorIds.clear();
+            otherIds.clear();
+        }
     }
 
 }

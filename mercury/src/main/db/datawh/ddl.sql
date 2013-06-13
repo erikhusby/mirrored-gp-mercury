@@ -231,7 +231,7 @@ CREATE TABLE event_fact (
 CREATE TABLE sequencing_sample_fact (
   sequencing_sample_fact_id NUMERIC(19)   NOT NULL PRIMARY KEY,
   flowcell_barcode          VARCHAR2(255) NOT NULL,
-  lane_name                 VARCHAR2(255) NOT NULL,
+  lane                      VARCHAR2(40) NOT NULL,
   molecular_indexing_scheme VARCHAR2(255) NOT NULL,
   sequencing_run_id         NUMERIC(19)   NOT NULL,
   product_order_id          NUMERIC(19),
@@ -490,7 +490,7 @@ CREATE TABLE im_sequencing_sample_fact (
   is_delete                 CHAR(1)    NOT NULL,
   sequencing_sample_fact_id NUMERIC(19),
   flowcell_barcode          VARCHAR2(255),
-  lane_name                 VARCHAR2(255),
+  lane                      VARCHAR2(40),
   molecular_indexing_scheme VARCHAR2(255),
   sequencing_run_id         NUMERIC(19),
   product_order_id          NUMERIC(19),
@@ -597,7 +597,7 @@ CREATE INDEX event_fact_idx2 ON event_fact (product_order_id);
 CREATE INDEX event_fact_idx3 ON event_fact (lab_event_id);
 CREATE INDEX ix_parent_project ON research_project (parent_research_project_id);
 CREATE INDEX ix_root_project ON research_project (root_research_project_id);
-CREATE UNIQUE INDEX seq_sample_fact_idx1 ON sequencing_sample_fact (flowcell_barcode, lane_name, molecular_indexing_scheme);
+CREATE UNIQUE INDEX seq_sample_fact_idx1 ON sequencing_sample_fact (flowcell_barcode, lane, molecular_indexing_scheme);
 CREATE INDEX seq_sample_fact_idx2 ON sequencing_sample_fact (product_order_id, sample_name);
 CREATE INDEX seq_sample_fact_idx3 ON sequencing_sample_fact (sequencing_run_id);
 

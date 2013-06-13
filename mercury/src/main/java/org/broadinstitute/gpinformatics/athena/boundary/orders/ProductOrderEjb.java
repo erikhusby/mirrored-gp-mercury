@@ -299,13 +299,16 @@ public class ProductOrderEjb {
     }
 
     public void setManualOnRisk(
-        BspUser user, ProductOrder order,
+        BspUser user, String productOrderKey,
         List<ProductOrderSample> orderSamples, boolean riskStatus, String riskComment) {
+
+        ProductOrder editOrder = productOrderDao.findByBusinessKey(productOrderKey);
 
         // If we are creating a manual on risk, then need to set it up and persist it for reuse.
         RiskCriterion criterion = null;
         if (riskStatus) {
             criterion = RiskCriterion.createManual();
+            productOrderDao.persist(criterion);
         }
 
         for (ProductOrderSample sample : orderSamples) {
@@ -317,7 +320,7 @@ public class ProductOrderEjb {
         }
 
         // Set the create and modified information.
-        order.prepareToSave(user);
+        editOrder.prepareToSave(user);
     }
 
     /**

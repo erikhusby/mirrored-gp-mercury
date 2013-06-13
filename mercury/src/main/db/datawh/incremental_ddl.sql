@@ -8,11 +8,12 @@ alter table im_product_order_sample_risk add risk_messages VARCHAR2(500);
 alter table product_order_sample add risk_types VARCHAR2(255);
 alter table product_order_sample add risk_messages VARCHAR2(500);
 
+drop TABLE sequencing_sample_fact cascade constraints;
 
 CREATE TABLE sequencing_sample_fact (
   sequencing_sample_fact_id NUMERIC(19) NOT NULL PRIMARY KEY,
   flowcell_barcode VARCHAR2(255) NOT NULL,
-  lane_name VARCHAR2(255) NOT NULL,
+  lane VARCHAR2(40) NOT NULL,
   molecular_indexing_scheme VARCHAR2(255) NOT NULL,
   sequencing_run_id NUMERIC(19) NOT NULL,
   product_order_id NUMERIC(19),
@@ -30,13 +31,14 @@ CREATE TABLE sequencing_run (
   etl_date DATE NOT NULL
 );
 
+drop TABLE im_sequencing_sample_fact;
 CREATE TABLE im_sequencing_sample_fact (
   line_number NUMERIC(9) NOT NULL,
   etl_date DATE NOT NULL,
   is_delete CHAR(1) NOT NULL,
   sequencing_sample_fact_id NUMERIC(19),
   flowcell_barcode VARCHAR2(255),
-  lane_name VARCHAR2(255),
+  lane VARCHAR2(40),
   molecular_indexing_scheme VARCHAR2(255),
   sequencing_run_id NUMERIC(19),
   product_order_id NUMERIC(19),
@@ -66,7 +68,7 @@ ALTER TABLE sequencing_sample_fact ADD CONSTRAINT fk_seq_sample_pdo_id FOREIGN K
 ALTER TABLE sequencing_sample_fact ADD CONSTRAINT fk_seq_sample_rpid FOREIGN KEY (research_project_id)
   REFERENCES research_project(research_project_id) ON DELETE CASCADE;
  
-CREATE UNIQUE INDEX seq_sample_fact_idx1 ON sequencing_sample_fact(flowcell_barcode, lane_name, molecular_indexing_scheme);
+CREATE UNIQUE INDEX seq_sample_fact_idx1 ON sequencing_sample_fact(flowcell_barcode, lane, molecular_indexing_scheme);
 CREATE INDEX seq_sample_fact_idx2 ON sequencing_sample_fact(product_order_id, sample_name);
 CREATE INDEX seq_sample_fact_idx3 ON sequencing_sample_fact(sequencing_run_id);
 -- add this for efficient re-export of existing entity ids
