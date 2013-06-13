@@ -71,6 +71,7 @@
                     </td>
                     <td>
                         <c:forEach items="${vessel.getSampleInstancesForSample(sample, 'ANY')}" var="sampleInstance">
+                            <%--@elvariable id="sampleLink" type="org.broadinstitute.gpinformatics.infrastructure.presentation.SampleLink"--%>
                             <c:set var="sampleLink" value="${bean.getSampleLink(sampleInstance.startingSample)}"/>
                             <c:choose>
                                 <c:when test="${sampleLink.hasLink}">

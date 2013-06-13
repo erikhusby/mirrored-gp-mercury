@@ -9,8 +9,6 @@ import javax.inject.Inject;
 /**
  * This class is used to generate sample links for the UI.
  */
-// Suppress warnings because the IDE can't infer the correct type from a <c:set> variable.
-@SuppressWarnings("UnusedDeclaration")
 public class SampleLink {
     private static final String BSP_SEARCH_SAMPLE = "samplesearch/SampleSummary.action?sampleId=";
 
