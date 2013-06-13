@@ -9,7 +9,7 @@ TRAILING NULLCOLS
  is_delete,
  sequencing_run_id,
  flowcell_barcode,
- position,
+ lane,
  molecular_indexing_scheme,
  product_order_id,
  sample_name,
