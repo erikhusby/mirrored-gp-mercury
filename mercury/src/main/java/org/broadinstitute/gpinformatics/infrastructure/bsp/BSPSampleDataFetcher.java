@@ -85,14 +85,22 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
             throw new NullPointerException("sampleNames cannot be null.");
         }
 
-        // Remove non BSP samples.
-        List<String> filteredNames = new ArrayList<>(sampleNames);
-        Iterator<String> namesIterator = filteredNames.iterator();
-        while (namesIterator.hasNext()) {
-            String sampleName = namesIterator.next();
-            if (sampleName == null || !BSPUtil.isInBspFormat(sampleName)) {
-                namesIterator.remove();
+        Collection<String> filteredNames;
+        // Work around issue with test (stub) BSPSampleSearchService implementations, which allow lookups
+        // of non-BSP samples.
+        if (service instanceof BSPSampleSearchServiceImpl) {
+            filteredNames = new ArrayList<>(sampleNames);
+            // Remove non BSP samples.
+            Iterator<String> namesIterator = filteredNames.iterator();
+            while (namesIterator.hasNext()) {
+                String sampleName = namesIterator.next();
+                if (sampleName == null || !BSPUtil.isInBspFormat(sampleName)) {
+                    namesIterator.remove();
+                }
             }
+        } else {
+            // Using a stub service, don't filter out bogus samples.
+            filteredNames = sampleNames;
         }
 
         if (filteredNames.isEmpty()) {
