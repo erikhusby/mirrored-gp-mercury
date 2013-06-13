@@ -7,7 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettalimsMessageResource;
-import org.broadinstitute.gpinformatics.mercury.boundary.labevent.VesselTransferBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.labevent.VesselTransferEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -24,7 +24,7 @@ public class LinkDenatureTubeCoreActionBean extends CoreActionBean {
     @Inject
     protected BettalimsMessageResource bettalimsMessageResource;
     @Inject
-    protected VesselTransferBean vesselTransferBean;
+    protected VesselTransferEjb vesselTransferEjb;
 
     @Validate(required = true, on = SAVE_ACTION)
     public String denatureTubeBarcode;

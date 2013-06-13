@@ -561,7 +561,6 @@ public class LabEventFactory implements Serializable {
         }
 
         addSourceTubeFormationsToMap(plateCherryPickEvent, mapBarcodeToSourceTubeFormation, mapBarcodeToSourceTube, mapBarcodeToSourceRackOfTubes);
-//        MiSeqReagentKit reagentKit=null;
         for (CherryPickSourceType cherryPickSourceType : plateCherryPickEvent.getSource()) {
             String reagentKitBarcode = cherryPickSourceType.getDestinationBarcode();
             if (reagentKit == null) {
