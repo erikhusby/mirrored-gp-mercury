@@ -15,7 +15,7 @@ public class MiSeqReagentKit extends StaticPlate  {
         super(label, PlateType.MiSeqReagentKit);
     }
 
-    public MiSeqReagentKit() {
+    protected MiSeqReagentKit() {
     }
 
     @Override

@@ -13,7 +13,7 @@ package org.broadinstitute.gpinformatics.mercury.test.builders;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
-import org.broadinstitute.gpinformatics.mercury.boundary.labevent.VesselTransferBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.labevent.VesselTransferEjb;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
 import java.util.ArrayList;
@@ -39,8 +39,8 @@ public class MiSeqReagentKitJaxbBuilder {
     }
 
     public MiSeqReagentKitJaxbBuilder invoke() {
-        VesselTransferBean vesselTransferBean = new VesselTransferBean();
-        denatureToReagentKitJaxb = vesselTransferBean
+        VesselTransferEjb vesselTransferEjb = new VesselTransferEjb();
+        denatureToReagentKitJaxb = vesselTransferEjb
                 .denatureToReagentKitTransfer(null, denatureBarcodeMap, mySeqReagentKitBarcode, "pdunlea", "UI");
 
         messageList.add(denatureToReagentKitJaxb);
