@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>Mercury</groupId>
     <artifactId>Mercury</artifactId>
-    <version>1.25-RC</version>
+    <version>1.25</version>
     <packaging>war</packaging>
     <inceptionYear>2012</inceptionYear>
 
