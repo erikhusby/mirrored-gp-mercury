@@ -21,6 +21,7 @@ import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -87,8 +88,8 @@ public class SamplesBatchMessagingEndToEndTest extends ContainerTest {
 
         BettaLIMSMessage extractionEndMsg = new BettaLIMSMessage();
         PlateCherryPickEvent plateCherryPickEvent = bettaLimsMessageTestFactory.buildCherryPick(
-                "SamplesExtractionEndTransfer", sourceRackBarcodes, sourceTubeBarcodes,
-                extEndRackBarcode, extractionEndTubeBarcodes, cherryPicks);
+                "SamplesExtractionEndTransfer",  sourceRackBarcodes, sourceTubeBarcodes,
+                Collections.singletonList(extEndRackBarcode), Collections.singletonList(extractionEndTubeBarcodes), cherryPicks);
         plateCherryPickEvent.setBatchId(batchId);
         extractionEndMsg.getPlateCherryPickEvent().add(plateCherryPickEvent);
         SamplesPicoDbTest.sendMessages(baseUrl, client, Arrays.asList(extractionEndMsg));
