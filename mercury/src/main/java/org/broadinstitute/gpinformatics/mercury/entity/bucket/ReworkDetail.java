@@ -65,6 +65,14 @@ public class ReworkDetail {
         return bucketEntries;
     }
 
+    public void addBucketEntry(BucketEntry bucketEntry) {
+        bucketEntries.add(bucketEntry);
+    }
+
+    public void removeBucketEntry(BucketEntry bucketEntry) {
+        bucketEntries.remove(bucketEntry);
+    }
+
     public ReworkEntry.ReworkReason getReworkReason() {
         return reworkReason;
     }

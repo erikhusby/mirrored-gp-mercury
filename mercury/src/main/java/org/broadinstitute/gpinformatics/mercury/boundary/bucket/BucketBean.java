@@ -122,7 +122,7 @@ public class BucketBean {
      * @param eventType            Type of the Lab Event that initiated this bucket add request
      * @param singlePdoBusinessKey Product order key for all vessels
      */
-    public void add(@Nonnull Collection<LabVessel> entriesToAdd, @Nonnull Bucket bucket,
+    public Collection<BucketEntry> add(@Nonnull Collection<LabVessel> entriesToAdd, @Nonnull Bucket bucket,
                     BucketEntry.BucketEntryType entryType, @Nonnull String operator, @Nonnull String labEventLocation,
                     LabEventType eventType,
                     String singlePdoBusinessKey) {
@@ -169,6 +169,8 @@ public class BucketBean {
                              bucket.getBucketDefinitionName(), ioe);
             }
         }
+
+        return listOfNewEntries;
     }
 
     /**

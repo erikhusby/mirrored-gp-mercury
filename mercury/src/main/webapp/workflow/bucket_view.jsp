@@ -248,7 +248,7 @@
         <tr>
             <td>
                 <stripes:checkbox class="bucket-checkbox" name="selectedReworks"
-                                  value="${reworkVessel.label}"/>
+                                  value="${reworkVessel.labVessel.label}"/>
             </td>
             <td>
 
@@ -283,10 +283,12 @@
 
             </td>
             <td>
-                    ${actionBean.getReworkReason(reworkVessel)}
+                    ${actionBean.getReworkReason(reworkVessel)} :
+                ${reworkVessel.reworkDetail.reworkReason.value}
             </td>
             <td>
-                    ${actionBean.getReworkComment(reworkVessel)}
+                    ${actionBean.getReworkComment(reworkVessel)} :
+                ${reworkVessel.reworkDetail.comment}
             </td>
             <td>
                     ${actionBean.getUserFullName(actionBean.getReworkOperator(reworkVessel))}

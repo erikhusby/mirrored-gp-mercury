@@ -32,6 +32,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkDetail;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.LabVesselComment;
@@ -302,9 +303,16 @@ public class ReworkEjb {
             throws ValidationException {
 
         Bucket bucket = bucketDao.findByName(bucketName);
-        bucketBean.add(Collections.singleton(reworkVessel), bucket, BucketEntry.BucketEntryType.REWORK_ENTRY, userName,
-                LabEvent.UI_EVENT_LOCATION, reworkFromStep, productOrderKey);
+        Collection<BucketEntry> bucketEntries = bucketBean
+                .add(Collections.singleton(reworkVessel), bucket, BucketEntry.BucketEntryType.REWORK_ENTRY, userName,
+                        LabEvent.UI_EVENT_LOCATION, reworkFromStep, productOrderKey);
 
+        for (BucketEntry bucketEntry : bucketEntries) {
+            ReworkDetail reworkDetail =
+                    new ReworkDetail(reworkReason, ReworkEntry.ReworkLevel.ONE_SAMPLE_RELEASE_REST_BATCH,
+                            reworkFromStep, comment);
+            bucketEntry.setReworkDetail(reworkDetail);
+        }
 /*
         List<MercurySample> reworks = new ArrayList<>(
                 getVesselRapSheet(reworkVessel, reworkReason, ReworkEntry.ReworkLevel.ONE_SAMPLE_RELEASE_REST_BATCH,

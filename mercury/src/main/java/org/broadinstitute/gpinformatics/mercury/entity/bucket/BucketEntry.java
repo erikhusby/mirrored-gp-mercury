@@ -219,7 +219,11 @@ public class BucketEntry  {
     }
 
     public void setReworkDetail(ReworkDetail reworkDetail) {
+        if (this.reworkDetail != null) {
+            this.reworkDetail.removeBucketEntry(this);
+        }
         this.reworkDetail = reworkDetail;
+        reworkDetail.addBucketEntry(this);
     }
 
     @Override
