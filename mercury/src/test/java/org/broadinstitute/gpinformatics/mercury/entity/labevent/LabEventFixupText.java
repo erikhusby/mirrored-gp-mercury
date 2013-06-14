@@ -21,7 +21,7 @@ public class LabEventFixupText extends Arquillian {
 
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(DEV, "dev");
+        return DeploymentBuilder.buildMercuryWar(DEV, "prod");
     }
 
     @Test(enabled = false)
@@ -31,5 +31,11 @@ public class LabEventFixupText extends Arquillian {
             LabEvent labEvent = labEventDao.findById(LabEvent.class, id);
             labEventDao.remove(labEvent);
         }
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim1622() {
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 112964L);
+        labEventDao.remove(labEvent);
     }
 }
