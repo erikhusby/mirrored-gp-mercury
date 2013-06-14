@@ -290,6 +290,55 @@ IS
     END LOOP;
 
 
+    FOR new IN im_price_item_cur LOOP
+    BEGIN
+      UPDATE price_item
+      SET
+        platform = new.platform,
+        category = new.category,
+        price_item_name = new.price_item_name,
+        quote_server_id = new.quote_server_id,
+        price = new.price,
+        units = new.units,
+        etl_date = new.etl_date
+      WHERE price_item_id = new.price_item_id;
+
+      INSERT INTO price_item (
+        price_item_id,
+        platform,
+        category,
+        price_item_name,
+        quote_server_id,
+        price,
+        units,
+        etl_date
+      )
+        SELECT
+          new.price_item_id,
+          new.platform,
+          new.category,
+          new.price_item_name,
+          new.quote_server_id,
+          new.price,
+          new.units,
+          new.etl_date
+        FROM DUAL
+        WHERE NOT EXISTS(
+            SELECT
+              1
+            FROM price_item
+            WHERE price_item_id = new.price_item_id
+        );
+      EXCEPTION WHEN OTHERS THEN
+      errmsg := SQLERRM;
+      DBMS_OUTPUT.PUT_LINE(
+          TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_price_item.dat line ' || new.line_number || '  ' || errmsg);
+      CONTINUE;
+    END;
+
+    END LOOP;
+
+
     FOR new IN im_product_cur LOOP
     BEGIN
       UPDATE product
@@ -606,54 +655,6 @@ IS
       errmsg := SQLERRM;
       DBMS_OUTPUT.PUT_LINE(
           TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_product_order.dat line ' || new.line_number || '  ' || errmsg);
-      CONTINUE;
-    END;
-
-    END LOOP;
-
-    FOR new IN im_price_item_cur LOOP
-    BEGIN
-      UPDATE price_item
-      SET
-        platform = new.platform,
-        category = new.category,
-        price_item_name = new.price_item_name,
-        quote_server_id = new.quote_server_id,
-        price = new.price,
-        units = new.units,
-        etl_date = new.etl_date
-      WHERE price_item_id = new.price_item_id;
-
-      INSERT INTO price_item (
-        price_item_id,
-        platform,
-        category,
-        price_item_name,
-        quote_server_id,
-        price,
-        units,
-        etl_date
-      )
-        SELECT
-          new.price_item_id,
-          new.platform,
-          new.category,
-          new.price_item_name,
-          new.quote_server_id,
-          new.price,
-          new.units,
-          new.etl_date
-        FROM DUAL
-        WHERE NOT EXISTS(
-            SELECT
-              1
-            FROM price_item
-            WHERE price_item_id = new.price_item_id
-        );
-      EXCEPTION WHEN OTHERS THEN
-      errmsg := SQLERRM;
-      DBMS_OUTPUT.PUT_LINE(
-          TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_price_item.dat line ' || new.line_number || '  ' || errmsg);
       CONTINUE;
     END;
 

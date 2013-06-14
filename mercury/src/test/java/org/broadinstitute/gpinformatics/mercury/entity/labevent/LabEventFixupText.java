@@ -32,4 +32,10 @@ public class LabEventFixupText extends Arquillian {
             labEventDao.remove(labEvent);
         }
     }
+
+    @Test(enabled = false)
+    public void fixupGplim1622() {
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 112964L);
+        labEventDao.remove(labEvent);
+    }
 }
