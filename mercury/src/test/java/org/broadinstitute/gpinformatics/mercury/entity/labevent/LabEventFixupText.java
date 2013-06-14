@@ -21,7 +21,7 @@ public class LabEventFixupText extends Arquillian {
 
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(DEV, "prod");
+        return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
     @Test(enabled = false)
