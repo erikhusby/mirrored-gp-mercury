@@ -335,16 +335,6 @@ public class ProductOrder implements BusinessObject, Serializable {
         private int uniqueSampleCount;
         private int uniqueParticipantCount;
 
-        private Date oneYearAgo;
-
-        private Date getOneYearAgo() {
-            if (oneYearAgo == null) {
-                oneYearAgo = DateUtils.addYears(new Date(), -1);
-            }
-
-            return oneYearAgo;
-        }
-
         /**
          * Go through all the samples and tabulate statistics.
          */
@@ -421,7 +411,7 @@ public class ProductOrder implements BusinessObject, Serializable {
                 activeSampleCount++;
             }
 
-            if (bspDTO.getPicoRunDate().before(getOneYearAgo())) {
+            if (bspDTO.getPicoRunDate().before(bspDTO.getOneYearAgo())) {
                 lastPicoCount++;
             }
 
@@ -501,9 +491,8 @@ public class ProductOrder implements BusinessObject, Serializable {
                 formatSummaryNumber(output, "Fingerprint Data: {0}", hasFPCount, totalSampleCount);
             }
 
-            if (!getProduct().isSupportsRin()) {
-                formatSummaryNumber(output, "<span style=\"width:auto; float:left\">Last Pico > 1 Year: </span> " +
-                                            "<span class=\"label label-important\" style=\"width:auto; float:left\">{0}</span>",
+            if (getProduct().isSupportsPico()) {
+                formatSummaryNumber(output, "Last Pico over a year ago: {0}",
                         lastPicoCount);
             }
 

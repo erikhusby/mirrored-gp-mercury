@@ -1391,6 +1391,10 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.abandonWarning = abandonWarning;
     }
 
+    public boolean isSupportsPico() {
+        return (editOrder != null) && (editOrder.getProduct() != null) && editOrder.getProduct().isSupportsPico();
+    }
+
     public boolean isSupportsRin() {
         return (editOrder != null) && (editOrder.getProduct() != null) && editOrder.getProduct().isSupportsRin();
     }
