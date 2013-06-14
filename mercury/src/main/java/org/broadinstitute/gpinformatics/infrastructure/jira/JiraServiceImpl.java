@@ -39,6 +39,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
     private String baseUrl;
 
+    @SuppressWarnings("UnusedDeclaration")
     public JiraServiceImpl() {
     }
 
@@ -69,8 +70,13 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
     }
 
     // Temporary container class to get ticket ID (key) from the server.
+    @SuppressWarnings("UnusedDeclaration")
     private static class JiraIssueData {
         private String key;
+
+        private Long id;
+
+        private String self;
 
         public void setKey(String key) {
             this.key = key;
@@ -78,6 +84,22 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
         public String getKey() {
             return key;
+        }
+
+        private Long getId() {
+            return id;
+        }
+
+        private void setId(Long id) {
+            this.id = id;
+        }
+
+        private String getSelf() {
+            return self;
+        }
+
+        private void setSelf(String self) {
+            this.self = self;
         }
 
         JiraIssueData() {
