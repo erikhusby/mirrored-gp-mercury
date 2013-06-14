@@ -19,6 +19,8 @@ import java.io.Serializable;
 @Table(schema = "athena", uniqueConstraints = @UniqueConstraint(columnNames = "name"))
 public class ProductFamily implements Serializable, Comparable<ProductFamily> {
 
+    private static final long serialVersionUID = 234809472774666093L;
+
     @Id
     @SequenceGenerator(name = "SEQ_PRODUCT_FAMILY", schema = "athena", sequenceName = "SEQ_PRODUCT_FAMILY")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PRODUCT_FAMILY")
@@ -104,6 +106,10 @@ public class ProductFamily implements Serializable, Comparable<ProductFamily> {
     @Override
     public int hashCode() {
         return new HashCodeBuilder().append(name).toHashCode();
+    }
+
+    public boolean isSupportsPico() {
+        return !name.equals(RNA_FAMILY_NAME);
     }
 
     public boolean isSupportsRin() {
