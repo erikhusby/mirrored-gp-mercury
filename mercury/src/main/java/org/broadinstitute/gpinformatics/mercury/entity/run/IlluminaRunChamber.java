@@ -28,7 +28,7 @@ public class IlluminaRunChamber extends RunChamber {
     public String getChamberName() {
         return Integer.toString(this.laneNumber);
     }
-    
+
     public int getLaneNumber() {
         return this.laneNumber;
     }

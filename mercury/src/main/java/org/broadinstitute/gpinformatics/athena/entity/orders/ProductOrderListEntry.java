@@ -38,6 +38,8 @@ public class ProductOrderListEntry implements Serializable {
      * Version of the constructor called by the non-ledger aware first pass query.
      *
      */
+    @SuppressWarnings("UnusedDeclaration")
+    // This is called through reflection and only appears to be unused.
     public ProductOrderListEntry(Long orderId, String title, String jiraTicketKey, ProductOrder.OrderStatus orderStatus,
                                  String productName, String productFamilyName, String researchProjectTitle,
                                  Long ownerId, Date placedDate, String quoteId) {
@@ -54,10 +56,11 @@ public class ProductOrderListEntry implements Serializable {
     }
 
     /**
-     * Version of the constructor called by the ledger-aware second pass query.  These objects are merged
+     * Version of the constructor called by the ledger-aware second pass query, these objects are merged
      * into the objects from the first query.
-     *
      */
+    @SuppressWarnings("UnusedDeclaration")
+    // This is called through reflection and only appears to be unused.
     public ProductOrderListEntry(
         Long orderId, String jiraTicketKey, Long billingSessionId, Long unbilledLedgerEntryCount) {
 
@@ -147,10 +150,8 @@ public class ProductOrderListEntry implements Serializable {
 
         ProductOrderListEntry that = (ProductOrderListEntry) o;
 
-        if (jiraTicketKey != null ? !jiraTicketKey.equals(that.jiraTicketKey) : that.jiraTicketKey != null)
-            return false;
+        return !(jiraTicketKey != null ? !jiraTicketKey.equals(that.jiraTicketKey) : that.jiraTicketKey != null);
 
-        return true;
     }
 
     @Override

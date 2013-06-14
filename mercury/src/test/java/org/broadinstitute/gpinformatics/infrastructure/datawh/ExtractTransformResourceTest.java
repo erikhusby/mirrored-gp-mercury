@@ -13,6 +13,7 @@ import java.net.URL;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
+import static org.testng.Assert.assertTrue;
 
 public class ExtractTransformResourceTest extends RestServiceContainerTest {
 
@@ -28,10 +29,18 @@ public class ExtractTransformResourceTest extends RestServiceContainerTest {
 
     @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
+    public void testAnalyzeRun(@ArquillianResource URL baseUrl) {
+        WebResource resource = makeWebResource(baseUrl, "analyze/sequencingRun/1");
+        String result = resource.get(String.class);
+        assertTrue(result.length() > 50);
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
     public void testAnalyzeEvent(@ArquillianResource URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "analyze/event/1776");
         String result = resource.get(String.class);
-        assert(result.length() > 50);
+        assertTrue(result.length() > 50);
     }
 
     @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
@@ -48,5 +57,6 @@ public class ExtractTransformResourceTest extends RestServiceContainerTest {
                 "backfill/org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent/1/1");
         resource.put();
     }
+
 
 }
