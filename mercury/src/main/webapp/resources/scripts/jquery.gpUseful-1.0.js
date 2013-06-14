@@ -234,11 +234,15 @@ function fn_us_date_asc(a,b) {
 // Extend sorting for datatables to allow for title sorting.
 jQuery.extend( jQuery.fn.dataTableExt.oSort, {
 
-    "us-date-asc": function ( a, b ) {
+    "title-us-date-pre": function ( a ) {
+        return fn_title_pre(a).toLowerCase();
+    },
+
+    "title-us-date-asc": function ( a, b ) {
         return fn_us_date_asc(a, b);
     },
 
-    "us-date-desc": function ( a, b ) {
+    "title-us-date-desc": function ( a, b ) {
         return fn_us_date_asc(b, a);
     },
 
