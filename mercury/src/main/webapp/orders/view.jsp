@@ -264,9 +264,9 @@
                     var theDate = new Date(theDateString);
 
                     if (theDate != null) {
-                        if (theDate <= oneYearAgo) {
+                        if (theDate < oneYearAgo) {
                             $j(this).addClass("label label-important");
-                        } else if (theDate <= almostOneYearAgo) {
+                        } else if (theDate < almostOneYearAgo) {
                             $j(this).addClass("label label-warning");
                         }
                     }

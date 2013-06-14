@@ -5,6 +5,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.time.DateUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -320,6 +321,7 @@ public class ProductOrder implements BusinessObject, Serializable {
         private int totalSampleCount;
         private int onRiskCount;
         private int bspSampleCount;
+        private int lastPicoCount;
         private int receivedSampleCount;
         private int activeSampleCount;
         private int hasFPCount;
@@ -331,6 +333,16 @@ public class ProductOrder implements BusinessObject, Serializable {
         private final Counter sampleTypeCounter = new Counter();
         private int uniqueSampleCount;
         private int uniqueParticipantCount;
+
+        private Date oneYearAgo;
+
+        private Date getOneYearAgo() {
+            if (oneYearAgo == null) {
+                oneYearAgo = DateUtils.addYears(new Date(), -1);
+            }
+
+            return oneYearAgo;
+        }
 
         /**
          * Go through all the samples and tabulate statistics.
@@ -408,6 +420,10 @@ public class ProductOrder implements BusinessObject, Serializable {
                 activeSampleCount++;
             }
 
+            if (bspDTO.getPicoRunDate().before(getOneYearAgo())) {
+                lastPicoCount++;
+            }
+
             stockTypeCounter.increment(bspDTO.getStockType());
 
             String participantId = bspDTO.getPatientId();
@@ -482,6 +498,12 @@ public class ProductOrder implements BusinessObject, Serializable {
 
             if (hasFPCount != 0) {
                 formatSummaryNumber(output, "Fingerprint Data: {0}", hasFPCount, totalSampleCount);
+            }
+
+            if (!getProduct().isSupportsRin()) {
+                formatSummaryNumber(output, "<span style=\"width:auto; float:left\">Last Pico > 1 Year: </span> " +
+                                            "<span class=\"label label-important\" style=\"width:auto; float:left\">{0}</span>",
+                        lastPicoCount);
             }
 
             if (hasSampleKitUploadRackscanMismatch != 0) {
