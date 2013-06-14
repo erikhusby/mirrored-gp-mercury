@@ -32,14 +32,6 @@ public abstract class RunChamber extends LabVessel {
         super(label);
     }
 
-    /**
-     * Does this belong on the chamber or the run
-     * configuration?  Not sure it makes much differenct.
-     * Basically a pointer to the raw sequencer output.
-     * @return
-     */
-    public abstract Iterable<OutputDataLocation> getDataDirectories();
-
     public abstract String getChamberName();
 
 }

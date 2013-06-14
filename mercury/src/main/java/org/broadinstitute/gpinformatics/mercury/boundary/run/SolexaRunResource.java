@@ -1,7 +1,9 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.infrastructure.monitoring.HipChatMessageSender;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnector;
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
@@ -11,7 +13,9 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowc
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
+import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -31,7 +35,7 @@ import java.util.EnumSet;
 
 /**
  * A JAX-RS resource for Solexa sequencing runs
- *
+ * <p/>
  * There exists another resource {@link org.broadinstitute.gpinformatics.mercury.boundary.zims.IlluminaRunResource}
  * that also deals with Run information, but it is geared toward finding Run info.  Currently the two resources are
  * separate paths and files but it may be prudent in the future to join them to eliminate the confusion of what is
@@ -85,7 +89,7 @@ public class SolexaRunResource {
         IlluminaSequencingRun run = illuminaSequencingRunDao.findByRunName(runName);
         if (run != null) {
             throw new ResourceException("Attempting to create a run that is already registered in the system",
-                                               Response.Status.INTERNAL_SERVER_ERROR);
+                    Response.Status.INTERNAL_SERVER_ERROR);
         }
 
         IlluminaFlowcell flowcell = illuminaFlowcellDao.findByBarcode(solexaRunBean.getFlowcellBarcode());
@@ -116,8 +120,8 @@ public class SolexaRunResource {
             updated which routing should determine if a run should be registered in Mercury.  If BOTH is returned, we
              must cover Mercury as well as Squid
          */
-        if(EnumSet.of(MercuryOrSquidRouter.MercuryOrSquid.MERCURY,
-                      MercuryOrSquidRouter.MercuryOrSquid.BOTH).contains(route)) {
+        if (EnumSet.of(MercuryOrSquidRouter.MercuryOrSquid.MERCURY,
+                MercuryOrSquidRouter.MercuryOrSquid.BOTH).contains(route)) {
             try {
                 run = registerRun(solexaRunBean, flowcell);
                 URI createdUri = absolutePathBuilder.path(run.getRunName()).build();
@@ -139,6 +143,7 @@ public class SolexaRunResource {
         return callerResponse;
     }
 
+
     public IlluminaSequencingRun registerRun(SolexaRunBean solexaRunBean, IlluminaFlowcell illuminaFlowcell) {
         /*
          * Need logic to register MiSeq run based off of the ReagentBlockBarcode in SolexaRunBean.
@@ -149,5 +154,63 @@ public class SolexaRunResource {
 
         illuminaSequencingRunDao.persist(illuminaSequencingRun);
         return illuminaSequencingRun;
+    }
+
+    /**
+     * storeRunReadStructure is the implementation for a Rest service that allows the Pipeline to associate run read
+     * structures (both planned and actual) with a sequencing run
+     *
+     * @param readStructureRequest contains all information necessary to searching for and update a Sequencing run
+     *
+     * @return a new instance of a readStructureRequest populated with the values as they are found on the run itself
+     */
+    @POST
+    @Consumes({"application/json"})
+    @Produces({"application/json"})
+    @Path("/storeRunReadStructure")
+    public ReadStructureRequest storeRunReadStructure(ReadStructureRequest readStructureRequest) {
+
+        IlluminaSequencingRun run = illuminaSequencingRunDao.findByBarcode(readStructureRequest.getRunBarCode());
+
+        if (run == null) {
+            throw new ResourceException("Unable to find a run associated with " + readStructureRequest.getRunBarCode(),
+                    Response.Status.INTERNAL_SERVER_ERROR);
+        }
+
+        return storeReadsStructureDBFree(readStructureRequest, run);
+    }
+
+    /**
+     * storeReadStructureDBFree applies necessary read structure changes to a Sequencing Run based on given information
+     *
+     * @param readStructureRequest contains all information necessary to searching for and update a Sequencing run
+     * @param run                  Sequencing Run to apply read structure to.
+     *
+     * @return a new instance of a readStructureRequest populated with the values as they are found on the run itself
+     */
+    @DaoFree
+    private ReadStructureRequest storeReadsStructureDBFree(ReadStructureRequest readStructureRequest,
+                                                           SequencingRun run) {
+
+        if (StringUtils.isBlank(readStructureRequest.getActualReadStructure()) &&
+            StringUtils.isBlank(readStructureRequest.getSetupReadStructure())) {
+            throw new ResourceException("Neither the actual nor the setup read structures are set",
+                    Response.Status.BAD_REQUEST);
+        }
+
+        if (StringUtils.isNotBlank(readStructureRequest.getActualReadStructure())) {
+            run.setActualReadStructure(readStructureRequest.getActualReadStructure());
+        }
+
+        if (StringUtils.isNotBlank(readStructureRequest.getSetupReadStructure())) {
+            run.setSetupReadStructure(readStructureRequest.getSetupReadStructure());
+        }
+
+        ReadStructureRequest returnValue = new ReadStructureRequest();
+        returnValue.setRunBarCode(run.getRunBarcode());
+
+        returnValue.setActualReadStructure(run.getActualReadStructure());
+        returnValue.setSetupReadStructure(run.getSetupReadStructure());
+        return returnValue;
     }
 }

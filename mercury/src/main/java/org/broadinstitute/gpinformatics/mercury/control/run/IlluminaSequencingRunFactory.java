@@ -5,7 +5,6 @@ import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
-import org.broadinstitute.gpinformatics.mercury.entity.run.OutputDataLocation;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -28,9 +27,9 @@ public class IlluminaSequencingRunFactory implements Serializable {
     public IlluminaSequencingRun build(SolexaRunBean solexaRunBean, IlluminaFlowcell illuminaFlowcell) {
         IlluminaSequencingRun builtRun = buildDbFree(solexaRunBean, illuminaFlowcell);
         jiraCommentUtil.postUpdate(MessageFormat.format("Registered new Solexa run {0} located at {1}",
-                                                               builtRun.getRunName(),
-                                                               builtRun.getRunDirectory()),
-                                          illuminaFlowcell);
+                builtRun.getRunName(),
+                builtRun.getRunDirectory()),
+                illuminaFlowcell);
 
         return builtRun;
     }
@@ -46,9 +45,9 @@ public class IlluminaSequencingRunFactory implements Serializable {
         String runName = new File(solexaRunBean.getRunDirectory()).getName();
 
         return new IlluminaSequencingRun(illuminaFlowcell, runName, solexaRunBean.getRunBarcode(),
-                                                solexaRunBean.getMachineName(),
-                                                null
+                solexaRunBean.getMachineName(),
+                null
                                                 /* TODO SGM -- Operator information is always missing.  may revisit later*/,
-                                                false, solexaRunBean.getRunDate(), null, solexaRunBean.getRunDirectory());
+                false, solexaRunBean.getRunDate(), solexaRunBean.getRunDirectory());
     }
 }

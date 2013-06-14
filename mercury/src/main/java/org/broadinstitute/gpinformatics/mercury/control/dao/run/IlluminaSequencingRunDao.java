@@ -17,4 +17,8 @@ public class IlluminaSequencingRunDao extends GenericDao{
     public IlluminaSequencingRun findByRunName(String runName) {
         return findSingle(IlluminaSequencingRun.class, IlluminaSequencingRun_.runName, runName);
     }
+
+    public IlluminaSequencingRun findByBarcode(String runBarcode) {
+        return findSingle(IlluminaSequencingRun.class, IlluminaSequencingRun_.runBarcode, runBarcode);
+    }
 }

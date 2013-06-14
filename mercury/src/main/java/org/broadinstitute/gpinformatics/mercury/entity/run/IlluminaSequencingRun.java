@@ -17,7 +17,7 @@ public class IlluminaSequencingRun extends SequencingRun {
                                  String machineName,
                                  Long operator,
                                  boolean isTestRun,
-                                 Date runDate, OutputDataLocation dataLocation, String runDirectory) {
+                                 Date runDate, String runDirectory) {
         super(runName, runBarcode, machineName, operator, isTestRun, runDate, flowcell, runDirectory);
     }
 
