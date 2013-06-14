@@ -38,17 +38,6 @@ public class IlluminaRunChamber extends RunChamber {
         return ContainerType.ILLUMINA_RUN_CHAMBER;
     }
 
-    /**
-     * Web service call over to zamboni/picard
-     * @return
-     */
-    @Override
-    public Iterable<OutputDataLocation> getDataDirectories() {
-        //return ZamboniWebService.getDataDirectories(...);
-        throw new RuntimeException("Method not yet implemented.");
-    }
-
-
     @Override
     public VesselGeometry getVesselGeometry() {
         return VesselGeometry.RUN_CHAMBER;
