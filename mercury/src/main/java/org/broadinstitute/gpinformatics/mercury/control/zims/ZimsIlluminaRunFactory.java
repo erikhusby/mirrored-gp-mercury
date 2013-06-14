@@ -93,7 +93,7 @@ public class ZimsIlluminaRunFactory {
         // TODO: fill in sequencerModel and isPaired
         ZimsIlluminaRun run = new ZimsIlluminaRun(sequencingRun.getRunName(), sequencingRun.getRunBarcode(),
                 flowcell.getLabel(), sequencingRun.getMachineName(), null, dateFormat.format(illuminaRun.getRunDate()),
-                false, sequencingRun.getActualReadStructure(), 0.0);
+                false, sequencingRun.getActualReadStructure(), 0.0, sequencingRun.getSetupReadStructure());
 
         Iterator<String> positionNames = flowcell.getVesselGeometry().getPositionNames();
         short laneNum = 1;
