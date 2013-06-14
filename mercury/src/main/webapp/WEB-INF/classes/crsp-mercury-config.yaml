@@ -45,11 +45,6 @@ bsp:
     QA:
     PROD:
 
-gap:
-    DEV:
-    QA:
-    PROD:
-
 squid:
     DEV:
     QA:
@@ -172,7 +167,6 @@ mercury:
 
       app:      DEV
       bsp:      DISABLED
-      gap:      DISABLED
       jira:     TEST
       quote:    QA
       squid:    DISABLED
@@ -187,7 +181,6 @@ mercury:
 
       app:      AUTO_BUILD
       bsp:      DISABLED
-      gap:      DISABLED
       jira:     TEST
       quote:    QA
       squid:    DISABLED
@@ -202,7 +195,6 @@ mercury:
 
       app:      TEST
       bsp:      DISABLED
-      gap:      DISABLED
       jira:     TEST
       quote:    DEV
       squid:    DISABLED
@@ -217,7 +209,6 @@ mercury:
 
       app:      QA
       bsp:      DISABLED
-      gap:      DISABLED
       jira:     TEST
       quote:    QA
       squid:    DISABLED
@@ -232,7 +223,6 @@ mercury:
 
       app:      RC
       bsp:      DISABLED
-      gap:      DISABLED
       jira:     TEST
       quote:    QA
       squid:    DISABLED
@@ -247,7 +237,6 @@ mercury:
 
       app:      PROD
       bsp:      DISABLED
-      gap:      DISABLED
       jira:     PROD
       quote:    PROD
       squid:    DISABLED

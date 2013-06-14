@@ -111,6 +111,19 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
             this.isComplete = isComplete;
         }
 
+        private final static String NULLS_LAST = "zzzzzzzzzz";
+
+        public static Comparator sampleKeyComparator() {
+            return new Comparator<SequencingRunDto>() {
+                @Override
+                public int compare(SequencingRunDto o1, SequencingRunDto o2) {
+                    String s1 = o1.getSampleKey() == null ? NULLS_LAST : o1.getSampleKey();
+                    String s2 = o2.getSampleKey() == null ? NULLS_LAST : o2.getSampleKey();
+                    return s1.compareTo(s2);
+                }
+            };
+        }
+
         public String getFlowcellBarcode() {
             return flowcellBarcode;
         }
@@ -187,13 +200,13 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
     private static Map<String, String> pdoKeyToPdoId = new LRUMap<>(CACHE_SIZE);
     private static Map<String, String> pdoKeyToResearchProjectId = new LRUMap<>(CACHE_SIZE);
 
-    public Collection<SequencingRunDto> makeSequencingRunDtos(long sequencingRunId) {
+    public List<SequencingRunDto> makeSequencingRunDtos(long sequencingRunId) {
         SequencingRun sequencingRun = dao.findById(SequencingRun.class, sequencingRunId);
         return makeSequencingRunDtos(sequencingRun);
     }
 
-    public Collection<SequencingRunDto> makeSequencingRunDtos(SequencingRun entity) {
-        Collection<SequencingRunDto> dtos = new HashSet<>();
+    public List<SequencingRunDto> makeSequencingRunDtos(SequencingRun entity) {
+        List<SequencingRunDto> dtos = new ArrayList<>();
         if (entity != null) {
 
             RunCartridge cartridge = entity.getSampleCartridge();
@@ -251,6 +264,7 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
         } else {
             dtos.add(new SequencingRunDto(null, null, null, null, null, null, null, false));
         }
+        Collections.sort(dtos, SequencingRunDto.sampleKeyComparator());
 
         synchronized (loggingDtos) {
             loggingDtos.clear();
@@ -264,9 +278,8 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
         synchronized(loggingDtos) {
             // Aggregates errors by the appropriate record identifier, depending on what the missing value is.
             Set<Long> errorIds = new HashSet<>();
-            Set<Long> otherIds = new HashSet<>();
 
-            // Keep track of reported errors so we log an entity once, showing the most basic flaw.
+            // Keeps track of reported errors so we log an entity once, showing the most basic flaw.
             Set<SequencingRunDto> reportedErrors = new HashSet<>();
 
             // No event.
@@ -282,7 +295,6 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
                 logger.debug("Cannot ETL, missing SequencingRun entity in " + count + " records.");
             }
             errorIds.clear();
-            otherIds.clear();
 
             // No sampleInstance on vessel.
             for (SequencingRunDto dto : loggingDtos) {
@@ -297,7 +309,6 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
                         + StringUtils.join(errorIds, ", "));
             }
             errorIds.clear();
-            otherIds.clear();
 
             // No position.
             for (SequencingRunDto dto : loggingDtos) {
@@ -311,7 +322,6 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
                 logger.debug("No position for sample in SequencingRun entities " + StringUtils.join(errorIds, ", "));
             }
             errorIds.clear();
-            otherIds.clear();
 
             // No sample instances or molecular barcodes.
             for (SequencingRunDto dto : loggingDtos) {
@@ -326,7 +336,6 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
                         + StringUtils.join(errorIds, ", "));
             }
             errorIds.clear();
-            otherIds.clear();
 
             // No pdo on sampleInstance, or no pdo entity for pdoKey.
             for (SequencingRunDto dto : loggingDtos) {
@@ -341,7 +350,6 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
                         + StringUtils.join(errorIds, ", "));
             }
             errorIds.clear();
-            otherIds.clear();
 
             // No starting sample.
             for (SequencingRunDto dto : loggingDtos) {
@@ -356,7 +364,6 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
                         + StringUtils.join(errorIds, ", "));
             }
             errorIds.clear();
-            otherIds.clear();
         }
     }
 }

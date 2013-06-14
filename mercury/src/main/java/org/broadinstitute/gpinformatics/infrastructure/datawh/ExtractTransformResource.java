@@ -1,12 +1,14 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import com.sun.jersey.api.client.ClientResponse;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.datawh.LabEventEtl.EventFactDto;
 import org.broadinstitute.gpinformatics.infrastructure.datawh.SequencingSampleFactEtl.SequencingRunDto;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
+import java.util.*;
 
 /**
  * Web service resource used to invoke ETL methods.
@@ -15,6 +17,7 @@ import javax.ws.rs.core.Response;
 @Path("etl")
 public class ExtractTransformResource {
     private ExtractTransform extractTransform;
+    private final static String NULLS_LAST = "zzzzzzzzzz";
 
     public ExtractTransformResource() {
     }
@@ -73,7 +76,7 @@ public class ExtractTransformResource {
     public String analyzeSequencingRun(@PathParam("sequencingRunId") long sequencingRunId) {
         StringBuilder sb = new StringBuilder()
                 .append("<html><head/><body>")
-                .append("<p>SequencingRunId " + sequencingRunId + "</p>")
+                .append("<p>SequencingRunId ").append(sequencingRunId).append("</p>")
                 .append("<table cellpadding=\"3\">")
                 .append("<tr><th>canEtl")
                 .append("</th><th>flowcellBarcode")
@@ -84,7 +87,7 @@ public class ExtractTransformResource {
                 .append("</th><th>researchProjectId")
                 .append("</th></tr>");
 
-        for (SequencingRunDto dto : extractTransform.analyzeSequencingRun(sequencingRunId)) {
+        for (SequencingRunDto dto : extractTransform.analyzeSequencingRun (sequencingRunId)) {
             sb.append("<tr><td>")
                     .append(dto.isComplete())
                     .append("</td><td>")
@@ -115,13 +118,25 @@ public class ExtractTransformResource {
     @Produces("text/html")
     @GET
     public String analyzeEvent(@PathParam("labEventId") long labEventId) {
+        Long id = null;
+        String type = null;
+        // Supresses the column if no indexes are given.
+        boolean showMolecularBarcodes = false;
+        for (EventFactDto dto : extractTransform.analyzeEvent(labEventId)) {
+            id = (dto.getLabEvent() != null) ? dto.getLabEvent().getLabEventId() : null;
+            type = (dto.getLabEvent() != null ? dto.getLabEvent().getLabEventType().toString() : null);
+            if (!StringUtils.isBlank(dto.getSampleInstanceIndexes())) {
+                showMolecularBarcodes = true;
+            }
+        }
+
         StringBuilder sb = new StringBuilder();
-        sb.append("<html><head/><body><table cellpadding=\"3\">")
+        sb.append("<html><head/><body>")
+                .append("<p>LabEventId ").append(id).append(", EventName ").append(type).append("</p>")
+                .append("<table cellpadding=\"3\">")
                 .append("<tr><th>canEtl")
-                .append("</th><th>labEventId")
-                .append("</th><th>eventName")
                 .append("</th><th>labVessel")
-                .append("</th><th>molecularBarcodes")
+                .append(showMolecularBarcodes ? "</th><th>molecularIndex" : "")
                 .append("</th><th>labBatch")
                 .append("</th><th>labBatchId")
                 .append("</th><th>workflowName")
@@ -135,14 +150,9 @@ public class ExtractTransformResource {
         for (EventFactDto dto : extractTransform.analyzeEvent(labEventId)) {
             sb.append("<tr><td>").append(dto.isComplete())
                     .append("</td><td>")
-                    .append(dto.getLabEvent() != null ? dto.getLabEvent().getLabEventId() : null)
-                    .append("</td><td>")
-                    .append(dto.getLabEvent() != null ? dto.getLabEvent().getLabEventType().toString() : null)
-                    .append("</td><td>")
                     .append(dto.getLabVessel() != null ? dto.getLabVessel().getLabel() : null)
                     .append("</td><td>")
-                    .append(dto.getSampleInstanceIndexes())
-                    .append("</td><td>")
+                    .append(showMolecularBarcodes ? dto.getSampleInstanceIndexes() + "</td><td>" : "")
                     .append(dto.getLabBatch() != null ? dto.getLabBatch().getBusinessKey() : null)
                     .append("</td><td>")
                     .append(dto.getLabBatchId())

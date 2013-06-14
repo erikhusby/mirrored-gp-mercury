@@ -26,13 +26,13 @@ public interface JiraService extends Serializable {
      * Create an issue with a project prefix specified by projectPrefix; i.e. for this method projectPrefix would be 'TP' and not 'TP-5' for
      * the JIRA project TestProject having prefix TP.
      *
+     * @param projectPrefix The project type by prefix
+     * @param issueType The issue type within this project type
+     * @param summary The basic summary of the issue
+     * @param description The details description of the issue
+     * @param customFields All specific fields for the issue type
      *
-     * @param projectPrefix
-     * @param issueType
-     * @param summary
-     * @param description
-     * @param customFields
-     * @return
+     * @return The new jira issue created
      * @throws IOException
      */
     JiraIssue createIssue(String projectPrefix, String reporter,
@@ -56,19 +56,19 @@ public interface JiraService extends Serializable {
     /**
      * Add a publicly visible comment to the specified issue.
      * 
-     * @param key
-     * 
-     * @param body
+     * @param key The key value for the comment
+     * @param body The text of the comment
      */
     void addComment(String key, String body) throws IOException;
 
     /**
      * Add a comment to the specified issue whose visibility is restricted by the {@link Visibility} specifiers.
      *
-     * @param key
-     * @param body
-     * @param visibilityType
-     * @param visibilityValue
+     * @param key The comment key
+     * @param body The text of the comment
+     * @param visibilityType The type of visibility information
+     * @param visibilityValue The value for this type of visibility
+     *
      * @throws IOException
      */
     void addComment(String key, String body, Visibility.Type visibilityType, Visibility.Value visibilityValue) throws IOException;
@@ -76,8 +76,9 @@ public interface JiraService extends Serializable {
     /**
      * Finds all the custom fields for the submission request of the given project and issue type
      *
-     * @param project
-     * @param issueType
+     * @param project The project
+     * @param issueType The issue type
+     *
      * @return A {@link Map} of the custom fields found for the project/issuetype combination.  To make it easy to
      * reference, the field map is indexed by the field name.
      */
@@ -89,7 +90,8 @@ public interface JiraService extends Serializable {
      * in a  browser
      *
      * @param jiraTicketName A String that is a unique jira ticket Key
-     * @return
+     *
+     * @return The generated URL for the jira ticket
      */
     public String createTicketUrl(String jiraTicketName);
 

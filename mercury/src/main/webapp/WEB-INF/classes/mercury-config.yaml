@@ -60,24 +60,6 @@ bsp:
       port:     80
 
 
-gap:
-
-    DEV:
-      login:    pmbridge
-      password: bspbsp
-      url:      http://gapdevanalysis.broadinstitute.org:8080
-
-    QA:
-      login:    pmbridge
-      password: bspbsp
-      url:      http://gapqaanalysis.broadinstitute.org:8080
-
-    PROD:
-      login:    pmbridge
-      password: bspbsp
-      url:      http://gapanalysis.broadinstitute.org:8080
-
-
 jira:
 
     TEST:
@@ -220,7 +202,6 @@ mercury:
 
       app:      DEV
       bsp:      DEV
-      gap:      DEV
       jira:     TEST
       quote:    QA
       squid:    DEV
@@ -235,7 +216,6 @@ mercury:
 
       app:      AUTO_BUILD
       bsp:      DEV
-      gap:      DEV
       jira:     TEST
       quote:    QA
       squid:    DEV
@@ -250,7 +230,6 @@ mercury:
 
       app:      TEST
       bsp:      DEV
-      gap:      DEV
       jira:     TEST
       quote:    DEV
       squid:    TEST
@@ -265,7 +244,6 @@ mercury:
 
       app:      QA
       bsp:      QA
-      gap:      QA
       jira:     TEST
       quote:    QA
       squid:    QA
@@ -280,7 +258,6 @@ mercury:
 
       app:      RC
       bsp:      QA
-      gap:      QA
       jira:     TEST
       quote:    QA
       squid:    QA
@@ -295,7 +272,6 @@ mercury:
 
       app:      PROD
       bsp:      PROD
-      gap:      PROD
       jira:     PROD
       quote:    PROD
       squid:    PROD

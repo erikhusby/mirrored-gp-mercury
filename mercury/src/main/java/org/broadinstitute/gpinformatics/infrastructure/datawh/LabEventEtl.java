@@ -92,7 +92,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         boolean isComplete;
 
         EventFactDto(LabEvent labEvent, LabVessel labVessel, String sampleInstanceIndexes, LabBatch labBatch,
-                     MercurySample sample, ProductOrder productOrder, WorkflowConfigDenorm wfDenorm) {
+                     MercurySample sample, ProductOrder productOrder, WorkflowConfigDenorm wfDenorm, boolean isComplete) {
             this.labEvent = labEvent;
             this.labVessel = labVessel;
             this.sampleInstanceIndexes = sampleInstanceIndexes;
@@ -101,10 +101,22 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             this.sample = sample;
             this.productOrder = productOrder;
             this.wfDenorm = wfDenorm;
+            this.isComplete = isComplete;
+        }
 
-            // Check what's needed to do an ETL.
-            isComplete = sample != null && labVessel != null && wfDenorm != null &&
-                    (productOrder != null || !wfDenorm.isProductOrderNeeded());
+        private final static String NULLS_LAST = "zzzzzzzzzz";
+
+        public static Comparator sampleKeyComparator() {
+            return new Comparator<EventFactDto>() {
+                @Override
+                public int compare(EventFactDto o1, EventFactDto o2) {
+                    String s1 = o1.getSample() == null || o1.getSample().getSampleKey() == null ?
+                            NULLS_LAST : o1.getSample().getSampleKey();
+                    String s2 = o2.getSample() == null || o2.getSample().getSampleKey() == null ?
+                            NULLS_LAST : o2.getSample().getSampleKey();
+                    return s1.compareTo(s2);
+                }
+            };
         }
 
         public LabEvent getLabEvent() {
@@ -146,12 +158,12 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
     }
 
     /** Makes one or more DTOs representing Event Fact records.  DTOs may have missing values. */
-    public Collection<EventFactDto> makeEventFacts(long labEventId) {
+    public List<EventFactDto> makeEventFacts(long labEventId) {
         return makeEventFacts(dao.findById(LabEvent.class, labEventId));
     }
 
-    private Collection<EventFactDto> makeEventFacts(LabEvent entity) {
-        Collection<EventFactDto> dtos = new ArrayList<>();
+    private List<EventFactDto> makeEventFacts(LabEvent entity) {
+        List<EventFactDto> dtos = new ArrayList<>();
 
         if (entity != null && entity.getLabEventType() != null) {
             String eventName = entity.getLabEventType().getName();
@@ -162,7 +174,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             }
 
             if (vessels.isEmpty()) {
-                dtos.add(new EventFactDto(entity, null, null, null, null, null, null));
+                dtos.add(new EventFactDto(entity, null, null, null, null, null, null, false));
             }
 
             for (LabVessel vessel : vessels) {
@@ -191,20 +203,23 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                                         WorkflowConfigDenorm wfDenorm = workflowConfigLookup.lookupWorkflowConfig(
                                                 eventName, workflowName, entity.getEventDate());
 
+                                        boolean canExportToEtl =
+                                                wfDenorm != null && (pdo != null || !wfDenorm.isProductOrderNeeded());
+
                                         dtos.add(new EventFactDto(entity, vessel, null, labBatch, sample, pdo,
-                                                wfDenorm));
+                                                wfDenorm, canExportToEtl));
                                     }
                                 } else {
                                     dtos.add(new EventFactDto(entity, vessel, vessel.getIndexesString(si),
-                                            null, null, pdo, null));
+                                            null, null, pdo, null, false));
                                 }
                             } else {
                                 dtos.add(new EventFactDto(entity, vessel, vessel.getIndexesString(si),
-                                        null, null, null, null));
+                                        null, null, null, null, false));
                             }
                         }
                     } else {
-                        dtos.add(new EventFactDto(entity, vessel, null, null, null, null, null));
+                        dtos.add(new EventFactDto(entity, vessel, null, null, null, null, null, false));
                     }
                 } catch (RuntimeException e) {
                     logger.debug("Skipping ETL on labEvent " + entity.getLabEventId() +
@@ -212,6 +227,8 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                 }
             }
         }
+        Collections.sort(dtos, EventFactDto.sampleKeyComparator());
+
         synchronized(loggingDtos) {
             loggingDtos.clear();
             loggingDtos.addAll(dtos);

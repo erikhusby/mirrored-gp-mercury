@@ -17,6 +17,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.http.impl.cookie.DateUtils;
 import org.apache.poi.util.IOUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
@@ -840,6 +841,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 item.put("volume", bspSampleDTO.getVolume());
                 item.put("concentration", bspSampleDTO.getConcentration());
                 item.put("rin", bspSampleDTO.getRin());
+                item.put("picoDate", DateUtils.formatDate(bspSampleDTO.getPicoRunDate(), getDatePattern()));
                 item.put("total", bspSampleDTO.getTotal());
                 item.put("hasFingerprint", bspSampleDTO.getHasFingerprint());
                 item.put("hasSampleKitUploadRackscanMismatch", bspSampleDTO.getHasSampleKitUploadRackscanMismatch());
