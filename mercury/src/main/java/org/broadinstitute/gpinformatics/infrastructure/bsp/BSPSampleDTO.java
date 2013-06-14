@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.DateUtils;
 import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 
@@ -337,5 +338,14 @@ public class BSPSampleDTO {
         } else {
             return bspLabelBarcode;
         }
+    }
+
+    private Date oneYearAgo;
+    public Date getOneYearAgo() {
+        if (oneYearAgo == null) {
+            oneYearAgo = DateUtils.addYears(new Date(), -1);
+        }
+
+        return oneYearAgo;
     }
 }

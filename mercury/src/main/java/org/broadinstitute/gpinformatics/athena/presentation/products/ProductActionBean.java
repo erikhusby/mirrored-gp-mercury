@@ -212,6 +212,12 @@ public class ProductActionBean extends CoreActionBean {
                     editProduct.getDisplayName(), editProduct.getProductFamily().getName());
             }
 
+            // If requesting pico age but does not support it, error it out.
+            if ((type == RiskCriterion.RiskCriteriaType.PICO_AGE) && !editProduct.isSupportsPico()) {
+                addGlobalValidationError("Cannot add Pico age criterion for product: {2} of family {3}",
+                        editProduct.getDisplayName(), editProduct.getProductFamily().getName());
+            }
+
             // Only increment the matching value if it is not boolean or if this is old style boolean where all indexes match.
             if ((type.getOperatorType() != Operator.OperatorType.BOOLEAN) || allLengthsMatch()) {
                 matchingValueIndex++;

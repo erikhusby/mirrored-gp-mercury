@@ -230,7 +230,9 @@
                             {"bSortable": true, "sType": "numeric"},        // RIN
                         </c:if>
 
+                        <c:if test="${actionBean.supportsPico}">
                             {"bSortable": true, "sType": "title-us-date"},  // Pico Run Date
+                        </c:if>
                             {"bSortable": true, "sType": "numeric"},        // Yield Amount
                             {"bSortable": true, "sType": "title-string"},   // FP Status
                             {"bSortable": true},                            // sample kit upload/rackscan mismatch
@@ -247,7 +249,7 @@
                     oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
 
                     almostOneYearAgo = new Date(oneYearAgo);
-                    almostOneYearAgo.setMonth( oneYearAgo.getMonth( ) + 1 );
+                    almostOneYearAgo.setMonth(oneYearAgo.getMonth( ) + 1);
 
                     $j('.picoRunDate').each(getHighlightClass);
                 }
@@ -260,10 +262,10 @@
 
                 var theDateString = $j(this).text();
 
-                if ((theDateString != null) && (theDateString != '')) {
+                if (theDateString) {
                     var theDate = new Date(theDateString);
 
-                    if (theDate != null) {
+                    if (theDate) {
                         if (theDate < oneYearAgo) {
                             $j(this).addClass("label label-important");
                         } else if (theDate < almostOneYearAgo) {
@@ -704,7 +706,9 @@
                                 <th width="40">RIN</th>
                             </c:if>
 
-                            <th width="70">Last Pico Run Date</th>
+                            <c:if test="${actionBean.supportsPico}">
+                                <th width="70">Last Pico Run Date</th>
+                            </c:if>
                             <th width="40">Yield Amount</th>
                             <th width="60">FP Status</th>
                             <th width="60"><abbr title="Sample Kit Upload/Rackscan Mismatch">Rackscan Mismatch</abbr></th>
@@ -748,8 +752,7 @@
                                     <td id="rin-${sample.productOrderSampleId}">&#160; </td>
                                 </c:if>
 
-                                <!-- leverage that Rin is RNA and NOT RIN is DNA to only show pico. -->
-                                <c:if test="${not actionBean.supportsRin}">
+                                <c:if test="${actionBean.supportsPico}">
                                     <td>
                                         <div class="picoRunDate" id="picoDate-${sample.productOrderSampleId}" style="width:auto">&#160;</div>
                                     </td>
