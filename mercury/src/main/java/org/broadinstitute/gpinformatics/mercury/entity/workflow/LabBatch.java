@@ -244,8 +244,8 @@ public class LabBatch {
         return createdOn;
     }
 
-    public Boolean isValidationBatch() {
-        return isValidationBatch;
+    public boolean isValidationBatch() {
+        return isValidationBatch == null ? false : isValidationBatch;
     }
 
     public void setValidationBatch(Boolean validationBatch) {

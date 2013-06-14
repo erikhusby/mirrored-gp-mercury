@@ -17,16 +17,21 @@ my $doneDir = $ARGV[1];
 my @lines;
 my %errorStrings;
 my %fileMap;
-
+my $parsableError = 0;
 
 tie @lines, 'Tie::File', $mergeErrorFilename or die 'Cannot find file: ' . $mergeErrorFilename;
 
+# Only processes the errors that contain a .dat filename, an integer line number, and an ORA error.  Any other
+# error will output "unexpected error".
 foreach my $line (@lines) {
     my @tokens = split(/\s+/, $line, 4);
-    # Only keeps the errors that contain a filename and line number.
-    if ( defined $tokens[3] && $tokens[1] eq "line") {
+    if ( defined $tokens[3] && ($tokens[0] =~ /.*\.dat/) &&
+	 ($tokens[1] eq "line") && 
+	 ($tokens[2] =~ /^[+-]?\d+$/ ) &&
+	 ($tokens[3] =~ /^ORA.*/)) {
 	my $errMsg = ($tokens[3]);
 	$errorStrings{$errMsg} = '';
+	$parsableError = 1;
     }
 }
 
@@ -37,11 +42,16 @@ foreach my $errString (keys(%errorStrings)) {
     %fileMap = ();
     foreach my $line (@lines) {
 	my @tokens = split(/\s+/, $line, 4);
-	my $filename = $tokens[0];
-	my $lineno = $tokens[2];
-	my $errMsg = ($tokens[3]);
-	if ($errString eq $errMsg) {
-	    $fileMap{$filename} .= ' ' . $lineno;
+        if ( defined $tokens[3] && ($tokens[0] =~ /.*\.dat/) &&
+	     ($tokens[1] eq "line") && 
+	     ($tokens[2] =~ /^[+-]?\d+$/ ) &&
+	     ($tokens[3] =~ /^ORA.*/)) {
+	    my $filename = $tokens[0];
+	    my $lineno = $tokens[2];
+	    my $errMsg = ($tokens[3]);
+	    if ($errString eq $errMsg) {
+		$fileMap{$filename} .= ' ' . $lineno;
+	    }
 	}
     }
 
@@ -64,6 +74,10 @@ foreach my $errString (keys(%errorStrings)) {
 	}
 	untie @datLines;
     }
+
 }
 untie @lines;
+if ($parsableError == 0) {
+    print "\n    Unexpected sql error.\n";
+}
 print "\n";

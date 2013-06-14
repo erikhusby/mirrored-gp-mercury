@@ -80,7 +80,7 @@ public class ReworkDbFreeTest extends BaseEventTest {
 
         // Starts the rework with a new rack of tubes and includes the rework tube.
         Map<String, TwoDBarcodedTube> reworkRackMap = createInitialRack(productOrder, reworkTubePrefix);
-        assert(reworkRackMap.containsKey(reworkTubePrefix + reworkIdx));
+        assertTrue(reworkRackMap.containsKey(reworkTubePrefix + reworkIdx));
         reworkRackMap.put(reworkTubePrefix + reworkIdx, reworkTube);
         for (TwoDBarcodedTube tube : reworkRackMap.values()) {
             workingBucket.addEntry(productOrder.getBusinessKey(), tube);
@@ -140,8 +140,8 @@ public class ReworkDbFreeTest extends BaseEventTest {
         assertEquals(reworkTube.getAllLabBatches().size(), 2);
 
         // Checks the correct batch identifier for the rework tube, which depends on the end container.
-        assert(reworkTube.getPluralityLabBatch(origContainer).getBatchName().endsWith(origLcsetSuffix));
-        assert(reworkTube.getPluralityLabBatch(reworkContainer).getBatchName().endsWith(reworkLcsetSuffix));
+        assertTrue(reworkTube.getPluralityLabBatch(origContainer).getBatchName().endsWith(origLcsetSuffix));
+        assertTrue(reworkTube.getPluralityLabBatch(reworkContainer).getBatchName().endsWith(reworkLcsetSuffix));
     }
 
     // todo jmt enable this

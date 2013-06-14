@@ -5,6 +5,7 @@ import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.SampleMetadata;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.SampleType;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -525,18 +526,26 @@ public abstract class LabVessel implements Serializable {
      * @return
      */
     public Collection<SampleInstance> getSamplesAtPosition(@Nonnull VesselPosition vesselPosition) {
+        return getSamplesAtPosition(vesselPosition, SampleType.ANY);
+    }
+
+    /**
+     * Returns a Collection of SampleInstances at given position, traversing until sample type is reached.
+     */
+    public Set<SampleInstance> getSamplesAtPosition(VesselPosition position, SampleType sampleType) {
         Set<SampleInstance> sampleInstances;
         VesselContainer<?> vesselContainer = getContainerRole();
         if (vesselContainer != null) {
-            sampleInstances = vesselContainer.getSampleInstancesAtPosition(vesselPosition);
+            sampleInstances = vesselContainer.getSampleInstancesAtPosition(position, sampleType);
         } else {
-            sampleInstances = getSampleInstances();
+            sampleInstances = getSampleInstances(sampleType, null);
         }
         if (sampleInstances == null) {
             sampleInstances = Collections.emptySet();
         }
         return sampleInstances;
     }
+
 
     /**
      * This method gets all of the positions within this vessel that contain the sample instance passed in.
@@ -567,17 +576,17 @@ public abstract class LabVessel implements Serializable {
         return positionList;
     }
 
-    public List<VesselPosition> getPositionsOfSample(@Nonnull SampleInstance sampleInstance, SampleType sampleType) {
+    public Set<VesselPosition> getPositionsOfSample(@Nonnull SampleInstance sampleInstance, SampleType sampleType) {
         if (getContainerRole() == null) {
-            return Collections.emptyList();
+            return Collections.emptySet();
         }
 
         VesselPosition[] positions = getContainerRole().getEmbedder().getVesselGeometry().getVesselPositions();
         if (positions == null) {
-            return Collections.emptyList();
+            return Collections.emptySet();
         }
 
-        List<VesselPosition> positionList = new ArrayList<VesselPosition>();
+        Set<VesselPosition> positionList = new HashSet<>();
         for (VesselPosition position : positions) {
             for (SampleInstance curSampleInstance : getSamplesAtPosition(position, sampleType)) {
                 if (curSampleInstance.getStartingSample().equals(sampleInstance.getStartingSample())) {
@@ -616,20 +625,6 @@ public abstract class LabVessel implements Serializable {
             return positionList.get(positionList.keySet().iterator().next());
         }
         return getPositionsOfSample(sampleInstance);
-    }
-
-    private Set<SampleInstance> getSamplesAtPosition(VesselPosition position, SampleType sampleType) {
-        Set<SampleInstance> sampleInstances;
-        VesselContainer<?> vesselContainer = getContainerRole();
-        if (vesselContainer != null) {
-            sampleInstances = vesselContainer.getSampleInstancesAtPosition(position, sampleType);
-        } else {
-            sampleInstances = getSampleInstances(sampleType, null);
-        }
-        if (sampleInstances == null) {
-            sampleInstances = Collections.emptySet();
-        }
-        return sampleInstances;
     }
 
     /**
@@ -712,7 +707,7 @@ public abstract class LabVessel implements Serializable {
         TraversalResults traversalResults = traverseAncestors(sampleType, labBatchType);
         Set<SampleInstance> filteredSampleInstances;
         if (sampleType == SampleType.WITH_PDO) {
-            filteredSampleInstances = new HashSet<SampleInstance>();
+            filteredSampleInstances = new HashSet<>();
             for (SampleInstance sampleInstance : traversalResults.getSampleInstances()) {
                 if (sampleInstance.getProductOrderKey() != null) {
                     filteredSampleInstances.add(sampleInstance);
@@ -1465,28 +1460,6 @@ public abstract class LabVessel implements Serializable {
             allSamples.addAll(getContainerRole().getSampleInstances(sampleType, null));
         }
         return allSamples;
-    }
-
-    /**
-     * This method gets all of the sample instances in this vessel for the given mercury sample.
-     *
-     * @param sample The mercury sample to search for sample instances of within this vessel.
-     *
-     * @return A set of sample instances of the mercury sample passed in.
-     */
-    public Set<SampleInstance> getSampleInstancesForSample(MercurySample sample, SampleType sampleType) {
-        Set<SampleInstance> allSamples = new HashSet<SampleInstance>();
-        Set<SampleInstance> filteredSamples = new HashSet<SampleInstance>();
-        allSamples.addAll(getSampleInstances(sampleType, null));
-        for (SampleInstance sampleInstance : allSamples) {
-            //todo jac match on stock sample as well but really we need a way to grab every mercury sample for this instance and check them all (not just starting)
-            if (sampleInstance.getStartingSample() != null && sampleInstance.getStartingSample().equals(sample)
-                || (sample.getBspSampleDTO() != null && sampleInstance.getStartingSample().getSampleKey()
-                    .equals(sample.getBspSampleDTO().getStockSample()))) {
-                filteredSamples.add(sampleInstance);
-            }
-        }
-        return filteredSamples;
     }
 
     /**

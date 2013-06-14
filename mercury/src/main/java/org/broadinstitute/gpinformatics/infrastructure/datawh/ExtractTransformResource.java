@@ -2,8 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import com.sun.jersey.api.client.ClientResponse;
 import org.broadinstitute.gpinformatics.infrastructure.datawh.LabEventEtl.EventFactDto;
-import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.infrastructure.datawh.SequencingSampleFactEtl.SequencingRunDto;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -60,6 +59,50 @@ public class ExtractTransformResource {
         extractTransform.initConfig();
         extractTransform.incrementalEtl(startDateTime, endDateTime);
         return Response.status(ClientResponse.Status.ACCEPTED).build();
+    }
+
+    /**
+     * Returns an etl-type breakdown of a sequencing run.
+     *
+     * @param sequencingRunId the entity id of the sequencing run.
+     * @return htm table of what etl would put in the sequencing sample fact table.
+     */
+    @Path("analyze/sequencingRun/{sequencingRunId:[0-9]+}")
+    @Produces("text/html")
+    @GET
+    public String analyzeSequencingRun(@PathParam("sequencingRunId") long sequencingRunId) {
+        StringBuilder sb = new StringBuilder()
+                .append("<html><head/><body>")
+                .append("<p>SequencingRunId " + sequencingRunId + "</p>")
+                .append("<table cellpadding=\"3\">")
+                .append("<tr><th>canEtl")
+                .append("</th><th>flowcellBarcode")
+                .append("</th><th>position")
+                .append("</th><th>molecularIndexingSchemeName")
+                .append("</th><th>productOrderId")
+                .append("</th><th>sampleKey")
+                .append("</th><th>researchProjectId")
+                .append("</th></tr>");
+
+        for (SequencingRunDto dto : extractTransform.analyzeSequencingRun(sequencingRunId)) {
+            sb.append("<tr><td>")
+                    .append(dto.isComplete())
+                    .append("</td><td>")
+                    .append(dto.getFlowcellBarcode())
+                    .append("</td><td>")
+                    .append(dto.getPosition())
+                    .append("</td><td>")
+                    .append(dto.getMolecularIndexingSchemeName())
+                    .append("</td><td>")
+                    .append(dto.getProductOrderId())
+                    .append("</td><td>")
+                    .append(dto.getSampleKey())
+                    .append("</td><td>")
+                    .append(dto.getResearchProjectId())
+                    .append("</td><tr>");
+        }
+        sb.append("</table></body></html>");
+        return sb.toString();
     }
 
     /**

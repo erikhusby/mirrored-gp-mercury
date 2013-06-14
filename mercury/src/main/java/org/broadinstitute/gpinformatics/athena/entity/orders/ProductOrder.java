@@ -55,6 +55,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+@SuppressWarnings("UnusedDeclaration")
 @Entity
 @Audited
 @Table(name = "PRODUCT_ORDER", schema = "athena")
@@ -221,7 +222,7 @@ public class ProductOrder implements BusinessObject, Serializable {
     }
 
     /**
-     * Count the number of unique samples on risk on the produt order. This is calculated on the summary page, but
+     * Count the number of unique samples on risk on the product order. This is calculated on the summary page, but
      * for this call, we only want to do the calculation without going to BSP.
      *
      * @return The count of items on risk.

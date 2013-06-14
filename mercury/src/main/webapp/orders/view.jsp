@@ -725,6 +725,7 @@
                                     ${sample.samplePosition + 1}
                                 </td>
                                 <td id="sampleId-${sample.productOrderSampleId}" class="sampleName">
+                                    <%--@elvariable id="sampleLink" type="org.broadinstitute.gpinformatics.infrastructure.presentation.SampleLink"--%>
                                     <c:set var="sampleLink" value="${actionBean.getSampleLink(sample)}"/>
                                     <c:choose>
                                         <c:when test="${sampleLink.hasLink}">

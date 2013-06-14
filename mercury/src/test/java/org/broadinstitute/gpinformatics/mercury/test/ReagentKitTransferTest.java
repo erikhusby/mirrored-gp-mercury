@@ -32,6 +32,7 @@ import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -70,39 +71,41 @@ public class ReagentKitTransferTest {
         }
 
         final List<String> sourceBarcodeList = new ArrayList<>(sourceBarcodes.keySet());
-        PlateCherryPickEvent transferEventType = bettaLimsMessageTestFactory
+        Collection<PlateCherryPickEvent> transferEventTypes = bettaLimsMessageTestFactory
                 .buildCherryPickToReagentKit(
-                        LabEventType.DENATURE_TO_REAGENT_KIT_TRANSFER.getName(), mapBarcodeToSourceRackOfTubes,
-                        mapBarcodeToSourceTube, miSeqReagentKitBarcode);
+                        LabEventType.DENATURE_TO_REAGENT_KIT_TRANSFER.getName(), denatureRack,
+                        miSeqReagentKitBarcode);
 
-        // test the source denature tube
-        MatcherAssert.assertThat(transferEventType.getSourcePlate(), Matchers.hasSize(1));
-        final PlateType plateType = transferEventType.getSourcePlate().get(0);
-        MatcherAssert.assertThat(plateType.getBarcode(), Matchers.equalTo(denatureRackBarcode));
-        MatcherAssert.assertThat(plateType.getPhysType(), Matchers.equalTo("TubeRack"));
+        for (PlateCherryPickEvent transferEventType : transferEventTypes){
+            // test the source denature tube
+            MatcherAssert.assertThat(transferEventType.getSourcePlate(), Matchers.hasSize(1));
+            final PlateType plateType = transferEventType.getSourcePlate().get(0);
+            MatcherAssert.assertThat(plateType.getBarcode(), Matchers.equalTo(denatureRackBarcode));
+            MatcherAssert.assertThat(plateType.getPhysType(), Matchers.equalTo("TubeRack"));
 
-        // test the source denature tube map
-        MatcherAssert.assertThat(transferEventType.getSourcePositionMap(), Matchers.hasSize(1));
-        final PositionMapType sourceMap = transferEventType.getSourcePositionMap().get(0);
-        MatcherAssert.assertThat(sourceMap.getBarcode(), Matchers.equalTo(denatureRackBarcode));
-        MatcherAssert.assertThat(sourceMap.getReceptacle(), Matchers.hasSize(8));
-        for (ReceptacleType receptacle : transferEventType.getSourcePositionMap().get(0).getReceptacle()) {
-            MatcherAssert.assertThat(sourceBarcodeList, Matchers.hasItem(receptacle.getBarcode()));
+            // test the source denature tube map
+            MatcherAssert.assertThat(transferEventType.getSourcePositionMap(), Matchers.hasSize(1));
+            final PositionMapType sourceMap = transferEventType.getSourcePositionMap().get(0);
+            MatcherAssert.assertThat(sourceMap.getBarcode(), Matchers.equalTo(denatureRackBarcode));
+            MatcherAssert.assertThat(sourceMap.getReceptacle(), Matchers.hasSize(8));
+            for (ReceptacleType receptacle : transferEventType.getSourcePositionMap().get(0).getReceptacle()) {
+                MatcherAssert.assertThat(sourceBarcodeList, Matchers.hasItem(receptacle.getBarcode()));
+            }
+
+            // Test the created kit.
+            final PlateType reagentKit = transferEventType.getPlate();
+            MatcherAssert.assertThat(reagentKit.getBarcode(), Matchers.equalTo(miSeqReagentKitBarcode));
+            MatcherAssert.assertThat(reagentKit.getPhysType(), Matchers.equalTo("MiseqReagentKit"));
+            MatcherAssert.assertThat(reagentKit.getPhysType(),
+                    Matchers.equalTo(StaticPlate.PlateType.MiSeqReagentKit.getDisplayName()));
+
+            // test the kind of event returned
+            MatcherAssert.assertThat(transferEventType.getEventType(),
+                    Matchers.equalTo(LabEventType.DENATURE_TO_REAGENT_KIT_TRANSFER.getName()));
+            BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
+            bettaLIMSMessage.getPlateCherryPickEvent().add(transferEventType);
+            final String message = BettalimsMessageBeanTest.marshalMessage(bettaLIMSMessage);
+            Assert.assertFalse(message.isEmpty());
         }
-
-        // Test the created kit.
-        final PlateType reagentKit = transferEventType.getPlate();
-        MatcherAssert.assertThat(reagentKit.getBarcode(), Matchers.equalTo(miSeqReagentKitBarcode));
-        MatcherAssert.assertThat(reagentKit.getPhysType(), Matchers.equalTo("MiseqReagentKit"));
-        MatcherAssert.assertThat(reagentKit.getPhysType(),
-                Matchers.equalTo(StaticPlate.PlateType.MiSeqReagentKit.getDisplayName()));
-
-        // test the kind of event returned
-        MatcherAssert.assertThat(transferEventType.getEventType(),
-                Matchers.equalTo(LabEventType.DENATURE_TO_REAGENT_KIT_TRANSFER.getName()));
-        BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
-        bettaLIMSMessage.getPlateCherryPickEvent().add(transferEventType);
-        final String message = BettalimsMessageBeanTest.marshalMessage(bettaLIMSMessage);
-        Assert.assertFalse(message.isEmpty());
     }
 }

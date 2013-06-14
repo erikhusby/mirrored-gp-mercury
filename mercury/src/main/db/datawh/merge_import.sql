@@ -1142,7 +1142,7 @@ IS
       INSERT INTO sequencing_sample_fact (
         sequencing_sample_fact_id,
         flowcell_barcode,
-        lane_name,
+        lane,
         molecular_indexing_scheme,
         sequencing_run_id,
         product_order_id,
@@ -1153,7 +1153,7 @@ IS
         SELECT
           new.sequencing_sample_fact_id,
           new.flowcell_barcode,
-          new.lane_name,
+          new.lane,
           new.molecular_indexing_scheme,
           new.sequencing_run_id,
           new.product_order_id,

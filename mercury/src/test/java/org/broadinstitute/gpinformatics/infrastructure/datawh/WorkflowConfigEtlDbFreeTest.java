@@ -69,7 +69,7 @@ public class WorkflowConfigEtlDbFreeTest {
         } catch (RuntimeException e) {
             gotIt = true;
         }
-        assert(gotIt);
+        assertTrue(gotIt);
 
         verify(mocks);
     }
@@ -82,7 +82,7 @@ public class WorkflowConfigEtlDbFreeTest {
         } catch (RuntimeException e) {
             gotIt = true;
         }
-        assert(gotIt);
+        assertTrue(gotIt);
 
         gotIt = false;
         try {
@@ -90,7 +90,7 @@ public class WorkflowConfigEtlDbFreeTest {
         } catch (RuntimeException e) {
             gotIt = true;
         }
-        assert(gotIt);
+        assertTrue(gotIt);
 
         verify(mocks);
     }

@@ -32,7 +32,7 @@ public class ProductOrderAddOn {
     @ManyToOne(cascade = CascadeType.PERSIST, optional = false)
     private Product addOn;
 
-    ProductOrderAddOn() {
+    protected ProductOrderAddOn() {
     }
 
     public ProductOrderAddOn(@Nonnull Product addOn, @Nonnull ProductOrder productOrder) {
