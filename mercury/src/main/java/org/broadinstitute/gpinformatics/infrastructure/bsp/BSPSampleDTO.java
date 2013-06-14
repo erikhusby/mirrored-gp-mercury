@@ -119,8 +119,27 @@ public class BSPSampleDTO {
         return 0;
     }
 
+    private Date getDate(BSPSampleSearchColumn column) {
+        String dateString = getValue(column);
+
+        if (StringUtils.isNotBlank(dateString)){
+            try {
+                return BSP_DATE_FORMAT.parse(dateString);
+            } catch (Exception e) {
+                // Fall through to return.
+            }
+        }
+
+        return null;
+
+    }
+
     private boolean getBoolean(BSPSampleSearchColumn column) {
         return Boolean.parseBoolean(getValue(column));
+    }
+
+    public Date getPicoRunDate() {
+        return getDate(BSPSampleSearchColumn.PICO_RUN_DATE);
     }
 
     public double getRin() {
@@ -223,12 +242,7 @@ public class BSPSampleDTO {
     }
 
     public Date getReceiptDate() throws ParseException {
-        String receiptDateString = getValue(BSPSampleSearchColumn.RECEIPT_DATE);
-        Date receiptDate = null;
-        if(StringUtils.isNotBlank(receiptDateString)){
-            receiptDate = BSP_DATE_FORMAT.parse(receiptDateString);
-        }
-        return receiptDate;
+        return getDate(BSPSampleSearchColumn.RECEIPT_DATE);
     }
 
 
