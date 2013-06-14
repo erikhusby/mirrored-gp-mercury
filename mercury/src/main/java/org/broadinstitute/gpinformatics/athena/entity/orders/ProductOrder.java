@@ -335,16 +335,6 @@ public class ProductOrder implements BusinessObject, Serializable {
         private int uniqueSampleCount;
         private int uniqueParticipantCount;
 
-        private Date oneYearAgo;
-
-        private Date getOneYearAgo() {
-            if (oneYearAgo == null) {
-                oneYearAgo = DateUtils.addYears(new Date(), -1);
-            }
-
-            return oneYearAgo;
-        }
-
         /**
          * Go through all the samples and tabulate statistics.
          */
@@ -421,7 +411,7 @@ public class ProductOrder implements BusinessObject, Serializable {
                 activeSampleCount++;
             }
 
-            if (bspDTO.getPicoRunDate().before(getOneYearAgo())) {
+            if (bspDTO.getPicoRunDate().before(bspDTO.getOneYearAgo())) {
                 lastPicoCount++;
             }
 

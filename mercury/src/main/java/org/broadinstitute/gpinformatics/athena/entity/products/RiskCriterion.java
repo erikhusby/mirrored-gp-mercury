@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.products;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
@@ -196,8 +197,18 @@ public class RiskCriterion {
                 return String.valueOf(sample.getBspSampleDTO().getTotal());
             }
         }),
-        RIN("RIN", NUMERIC, new ValueProvider() {
+        PICO_AGE("Last Pico over a year ago", BOOLEAN, new ValueProvider() {
             private static final long serialVersionUID = 1601375635726290926L;
+
+            @Override
+            public String getValue(ProductOrderSample sample) {
+                BSPSampleDTO sampleDTO = sample.getBspSampleDTO();
+                return String.valueOf(sampleDTO.getPicoRunDate().before(sampleDTO.getOneYearAgo()));
+            }
+        }),
+        RIN("RIN", NUMERIC, new ValueProvider() {
+
+            private static final long serialVersionUID = -6022452431986609118L;
 
             @Override
             public String getValue(ProductOrderSample sample) {
