@@ -25,6 +25,8 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import javax.persistence.Query;
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -300,6 +302,19 @@ public class ProductOrderFixupTest extends Arquillian {
             if (productOrderEjb.updateOrderStatus(order.getBusinessKey())) {
                 log.info(String.format("Changed %s to status %s", order.getJiraTicketKey(), order.getOrderStatus()));
             }
+        }
+    }
+
+    @Test(enabled = false)
+    public void fixupUnplacedPDO() throws ParseException {
+        // Fix a case where a PDO was completed but then got changed to Draft. Using the stored values in the audit
+        // table to determine the correct values for the PDO. GPLIM-1617.
+        ProductOrder order = productOrderDao.findByBusinessKey("Draft-28112");
+        if (order != null) {
+            order.setJiraTicketKey("PDO-1486");
+            order.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+            order.setPlacedDate(DateFormat.getDateTimeInstance().parse("Jun 11, 2013 01:43:44 PM"));
+            productOrderDao.persist(order);
         }
     }
 
