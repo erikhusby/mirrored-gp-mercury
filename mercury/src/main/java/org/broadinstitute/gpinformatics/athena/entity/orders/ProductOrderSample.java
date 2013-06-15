@@ -335,12 +335,13 @@ public class ProductOrderSample extends AbstractSample implements Serializable {
             LedgerQuantities quantities = ledgerQuantitiesMap.get(priceItem);
             if (quantities == null) {
                 // No ledger item exists for this price item, create it using the current order's price item
-                addLedgerItem(completedDate, priceItem, quantity);
+                addAutoLedgerItem(completedDate, priceItem, quantity);
             } else {
                 // This price item already has a ledger entry.
                 // - If it's been billed, don't bill it again, but report this as an issue.
                 // - If it hasn't been billed check & see if the quantity is the same as the current.  If they differ,
-                // replace the existing quantity with the new quantity.
+                // replace the existing quantity with the new quantity. When replacing, also set the timestamp so
+                // the PDM can be warned about downloading the spreadsheet AFTER this change
                 if (quantities.getBilled() != 0) {
                     log.debug(MessageFormat.format(
                             "Trying to update an already billed sample, PDO: {0}, sample: {1}, price item: {2}",
@@ -353,6 +354,7 @@ public class ProductOrderSample extends AbstractSample implements Serializable {
                     for (LedgerEntry item : getLedgerItems()) {
                         if (item.getPriceItem().equals(priceItem)) {
                             item.setQuantity(quantity);
+                            item.setAutoLedgerTimestamp(new Date());
                             break;
                         }
                     }
@@ -412,8 +414,15 @@ public class ProductOrderSample extends AbstractSample implements Serializable {
         return sampleStatus;
     }
 
-    public void addLedgerItem(Date workCompleteDate, PriceItem priceItem, double delta) {
+    public void addAutoLedgerItem(Date workCompleteDate, PriceItem priceItem, double delta) {
+        addLedgerItem(workCompleteDate, priceItem, delta, new Date());
+    }
 
+    public void addLedgerItem(Date workCompleteDate, PriceItem priceItem, double delta) {
+        addLedgerItem(workCompleteDate, priceItem, delta, null);
+    }
+
+    public void addLedgerItem(Date workCompleteDate, PriceItem priceItem, double delta, Date timestamp) {
         LedgerEntry ledgerEntry = new LedgerEntry(this, priceItem, workCompleteDate, delta);
         ledgerItems.add(ledgerEntry);
         log.debug(MessageFormat.format(

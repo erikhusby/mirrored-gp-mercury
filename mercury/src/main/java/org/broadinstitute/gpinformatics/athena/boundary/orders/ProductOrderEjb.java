@@ -164,14 +164,17 @@ public class ProductOrderEjb {
     }
 
     /**
-     * Check and see if a given order is locked out, e.g. currently in a billing session.
+     * Check and see if a given order is locked out, e.g. currently in a billing session or waiting for a
+     * billing session because of the confirmation upload (and manual update) of the tracker spreadsheet.
      *
      * @param order the order to check
      *
      * @return true if the order is locked out.
      */
-    private boolean isLockedOut(ProductOrder order) {
-        return !ledgerEntryDao.findLockedOutByOrderList(new ProductOrder[]{order}).isEmpty();
+    private boolean isAutomatedBillingLockedOut(ProductOrder order) {
+        ProductOrder[] orders = new ProductOrder[]{order};
+        return !ledgerEntryDao.findUploadedUnbilledOrderList(orders).isEmpty() ||
+               !ledgerEntryDao.findLockedOutByOrderList(orders).isEmpty();
     }
 
     /**
@@ -219,16 +222,18 @@ public class ProductOrderEjb {
      * If the order's product supports automated billing, and it's not currently locked out,
      * generate a list of billing ledger items for the sample and add them to the billing ledger.
      *
+     *
      * @param orderKey      business key of order to bill for
      * @param aliquotId     the sample aliquot ID
      * @param completedDate the date completed to use when billing
      * @param data          used to check and see if billing can occur
+     * @param orderLockoutCache The cache by keys whether the order is locked out or not
      *
      * @return true if the auto-bill request was processed.  It will return false if PDO supports automated billing but
      *         is currently locked out of billing.
      */
     public boolean autoBillSample(String orderKey, String aliquotId, Date completedDate,
-                                  Map<String, MessageDataValue> data) throws Exception {
+                                  Map<String, MessageDataValue> data, Map<String, Boolean> orderLockoutCache) throws Exception {
 
         ProductOrder order = productOrderDao.findByBusinessKey(orderKey);
         if (order == null) {
@@ -237,26 +242,34 @@ public class ProductOrderEjb {
         }
 
         Product product = order.getProduct();
+        if (!product.isUseAutomatedBilling()) {
+            log.debug(MessageFormat.format("Product {0} does not support automated billing.", product.getProductName()));
+            return true;
+        }
 
-        if (isLockedOut(order)) {
-            log.error(MessageFormat.format("Can''t auto-bill order {0} because it''s currently locked out.",
+        // Get the auto bill status for the order from the map, or add query and add it here.
+        Boolean isAutoBillLockedOut = orderLockoutCache.get(order.getBusinessKey());
+        if (isAutoBillLockedOut == null) {
+            isAutoBillLockedOut = isAutomatedBillingLockedOut(order);
+            orderLockoutCache.put(order.getBusinessKey(), isAutoBillLockedOut);
+        }
+
+        // Now can use the lockout boolean to decide whether to ignore the order for auto ledger entry.
+        if (isAutoBillLockedOut) {
+            log.error(MessageFormat.format("Cannot auto-bill order {0} because it is currently locked out.",
                     order.getJiraTicketKey()));
-            // Return false to indicate we couldn't process the message.
+
+            // Return false to indicate we did not process the message.
             return false;
         }
 
-        if (product.isUseAutomatedBilling()) {
+        ProductOrderSample sample = mapAliquotIdToSample(order, aliquotId);
 
-            ProductOrderSample sample = mapAliquotIdToSample(order, aliquotId);
-
-            // Always bill if the sample is on risk, otherwise, check if the requirement is met for billing.
-            if (sample.isOnRisk() || product.getRequirement().canBill(data)) {
-                sample.autoBillSample(completedDate, 1);
-            }
-        } else {
-            log.debug(
-                MessageFormat.format("Product {0} doesn''t support automated billing.", product.getProductName()));
+        // Always bill if the sample is on risk, otherwise, check if the requirement is met for billing.
+        if (sample.isOnRisk() || product.getRequirement().canBill(data)) {
+            sample.autoBillSample(completedDate, 1);
         }
+
         return true;
     }
 

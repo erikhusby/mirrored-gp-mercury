@@ -33,6 +33,12 @@ public class LedgerEntry implements Serializable {
     @JoinColumn(name = "PRODUCT_ORDER_SAMPLE_ID")
     private ProductOrderSample productOrderSample;
 
+    // The auto ledger timestamp is set whenever the auto biller creates a ledger entry. This is used by the order
+    // list page to show PDMs that they have items to review and upload. When the upload happens, the timestamp
+    // is removed to indicate that auto billing cannot happen for this PDO any more.
+    @Column(name = "AUTO_LEDGER_TIMESTAMP")
+    private Date autoLedgerTimestamp;
+
     @Index(name = "ix_ledger_price_item")
     @ManyToOne
     @JoinColumn(name = "PRICE_ITEM_ID")
@@ -76,6 +82,14 @@ public class LedgerEntry implements Serializable {
 
     public ProductOrderSample getProductOrderSample() {
         return productOrderSample;
+    }
+
+    public Date getAutoLedgerTimestamp() {
+        return autoLedgerTimestamp;
+    }
+
+    public void setAutoLedgerTimestamp(Date autoLedgerTimestamp) {
+        this.autoLedgerTimestamp = autoLedgerTimestamp;
     }
 
     public PriceItem getPriceItem() {
