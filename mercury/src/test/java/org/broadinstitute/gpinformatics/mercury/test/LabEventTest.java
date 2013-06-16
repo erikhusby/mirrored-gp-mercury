@@ -693,7 +693,6 @@ public class LabEventTest extends BaseEventTest {
         private PlateTransferEventType fluidigmHarvestingToRackJaxb;
         private final List<BettaLIMSMessage> messageList = new ArrayList<>();
         private String harvestRackBarcode;
-        private final Map<String, TwoDBarcodedTube> mapBarcodeToHarvestTube = new HashMap<>();
 
         private FluidigmMessagesBuilder(String testPrefix, BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
                                         LabEventFactory labEventFactory, LabEventHandler labEventHandler,
@@ -742,17 +741,15 @@ public class LabEventTest extends BaseEventTest {
                 harvestTubeBarcodes.add("Harvest" + testPrefix + rackPosition);
             }
             fluidigmHarvestingToRackJaxb = bettaLimsMessageTestFactory.buildPlateToRack("FluidigmHarvestingToRack",
-                    chipBarcode,
-                    harvestRackBarcode,
-                    harvestTubeBarcodes);
+                    chipBarcode, harvestRackBarcode, harvestTubeBarcodes);
             fluidigmHarvestingToRackJaxb.getSourcePlate().setPhysType(
                     StaticPlate.PlateType.Fluidigm48_48AccessArrayIFC.getDisplayName());
             fluidigmHarvestingToRackJaxb.getSourcePlate().setSection(SBSSection.P384COLS4_6BYROW.getSectionName());
-            fluidigmHarvestingToRackJaxb.setPositionMap(buildFluidigmPositionMap(tubeBarcodes, fluidigmSampleInputJaxb
-                    .getSourcePlate().getBarcode()));
+
+            fluidigmHarvestingToRackJaxb.setPositionMap(buildFluidigmPositionMap(tubeBarcodes,
+                    fluidigmHarvestingToRackJaxb.getPlate().getBarcode()));
             fluidigmHarvestingToRackJaxb.getPlate().setSection(SBSSection.P96COLS1_6BYROW.getSectionName());
-            bettaLimsMessageTestFactory
-                    .addMessage(messageList, fluidigmHarvestingToRackJaxb);
+            bettaLimsMessageTestFactory.addMessage(messageList, fluidigmHarvestingToRackJaxb);
         }
 
         private PositionMapType buildFluidigmPositionMap(ArrayList<String> tubeBarcodes, String rackBarcode) {
@@ -773,21 +770,27 @@ public class LabEventTest extends BaseEventTest {
         }
 
         private void buildObjectGraph() {
-            LabEvent fluidigmSampleInputEntity =
-                    labEventFactory.buildFromBettaLimsRackToPlateDbFree(fluidigmSampleInputJaxb,
-                            mapBarcodeToTube, null, null);
+            Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
+            mapBarcodeToVessel.putAll(mapBarcodeToTube);
+            LabEvent fluidigmSampleInputEntity = labEventFactory.buildFromBettaLims(fluidigmSampleInputJaxb,
+                    mapBarcodeToVessel);
             labEventHandler.processEvent(fluidigmSampleInputEntity);
             // asserts
             StaticPlate chip = (StaticPlate) fluidigmSampleInputEntity.getTargetLabVessels().iterator().next();
             Assert.assertEquals(chip.getSampleInstances().size(), mapBarcodeToTube.size(),
                     "Wrong number of sample instances");
 
-            LabEvent fluidigmIndexedAdapterInputEntity = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(
-                    fluidigmIndexedAdapterInputJaxb, indexPlate, chip);
+            mapBarcodeToVessel.clear();
+            mapBarcodeToVessel.put(indexPlate.getLabel(), indexPlate);
+            mapBarcodeToVessel.put(chip.getLabel(), chip);
+            LabEvent fluidigmIndexedAdapterInputEntity = labEventFactory.buildFromBettaLims(
+                    fluidigmIndexedAdapterInputJaxb, mapBarcodeToVessel);
             labEventHandler.processEvent(fluidigmIndexedAdapterInputEntity);
 
-            LabEvent fluidigmHarvestingToRackEntity = labEventFactory.buildFromBettaLimsPlateToRackDbFree(
-                    fluidigmHarvestingToRackJaxb, chip, mapBarcodeToHarvestTube, null);
+            mapBarcodeToVessel.clear();
+            mapBarcodeToVessel.put(chip.getLabel(), chip);
+            LabEvent fluidigmHarvestingToRackEntity = labEventFactory.buildFromBettaLims(
+                    fluidigmHarvestingToRackJaxb, mapBarcodeToVessel);
             labEventHandler.processEvent(fluidigmHarvestingToRackEntity);
             // asserts
             TubeFormation harvestRack =

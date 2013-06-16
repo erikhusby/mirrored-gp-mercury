@@ -110,7 +110,13 @@ public class QtpEntityBuilder {
 
         // EcoTransfer
         LabEventTest.validateWorkflow("EcoTransfer", rearrayedPoolingRack);
-        LabEvent ecoTransferEventEntity = labEventFactory.buildFromBettaLimsRackToPlateDbFree(qtpJaxbBuilder.getEcoTransferJaxb(), rearrayedPoolingRack, null);
+        Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
+        mapBarcodeToVessel.put(rearrayedPoolingRack.getLabel(), rearrayedPoolingRack);
+        for (TwoDBarcodedTube twoDBarcodedTube : rearrayedPoolingRack.getContainerRole().getContainedVessels()) {
+            mapBarcodeToVessel.put(twoDBarcodedTube.getLabel(), twoDBarcodedTube);
+        }
+        LabEvent ecoTransferEventEntity = labEventFactory.buildFromBettaLims(qtpJaxbBuilder.getEcoTransferJaxb(),
+                mapBarcodeToVessel);
         labEventHandler.processEvent(ecoTransferEventEntity);
         // asserts
         StaticPlate ecoPlate = (StaticPlate) ecoTransferEventEntity.getTargetLabVessels().iterator().next();
@@ -119,7 +125,7 @@ public class QtpEntityBuilder {
 
         // Normalization
         LabEventTest.validateWorkflow("NormalizationTransfer", rearrayedPoolingRack);
-        Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
+        mapBarcodeToVessel.clear();
         mapBarcodeToVessel.put(rearrayedPoolingRack.getLabel(), rearrayedPoolingRack);
         for (TwoDBarcodedTube poolTube : poolTubes) {
             mapBarcodeToVessel.put(poolTube.getLabel(), poolTube);
