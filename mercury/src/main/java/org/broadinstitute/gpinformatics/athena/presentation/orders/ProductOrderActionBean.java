@@ -1272,13 +1272,12 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     /**
-     * Convenience method to determine if the current PDO for the view page is eligible for billing. Don't check if
-     * there is no order or if it is a draft.
+     * Convenience method to determine if the current PDO for the view page is eligible for billing.
      *
      * @return Boolean eligible for billing.
      */
     public boolean isEligibleForBilling() {
-        return (editOrder != null) && !editOrder.isDraft() && getProductOrderListEntry().isEligibleForBilling();
+        return (productOrderListEntry != null) && productOrderListEntry.isEligibleForBilling();
     }
 
     /**
