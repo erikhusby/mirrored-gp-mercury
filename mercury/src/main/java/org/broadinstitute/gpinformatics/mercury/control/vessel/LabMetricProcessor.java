@@ -21,12 +21,20 @@ public class LabMetricProcessor extends TableProcessor {
     private static final long serialVersionUID = 1837219036890134306L;
     private Set<LabMetric> metrics = new HashSet<>();
 
-    private LabMetric.MetricType metricType;
+    private final LabMetric.MetricType metricType;
 
     private List<String> headersNames;
 
     private final LabVesselDao vesselDao;
 
+    /**
+     * This constructor requires classes to pass in the injected values. We might want to make this injectable, but
+     * since it collects state over time (the metrics set) and holds the metric type, it seemed wrong to inject those
+     * things in.
+     *
+     * @param vesselDao The vessel DAO
+     * @param metricType The type of metric being pulled in from the spreadsheet.
+     */
     public LabMetricProcessor(LabVesselDao vesselDao, LabMetric.MetricType metricType) {
         this.vesselDao = vesselDao;
         this.metricType = metricType;

@@ -33,9 +33,6 @@ public class LabMetricParserTest extends ContainerTest {
     @Inject
     private LabVesselDao labVesselDao;
 
-    @Inject
-    private LabMetricProcessor parser;
-
  //   private Map<String, LabVessel> barcodeToTubeMap = new HashMap<>();
     private Map<String, Double> barcodeToQuant = new HashMap<>();
     private InputStream resourceFile;
@@ -43,8 +40,7 @@ public class LabMetricParserTest extends ContainerTest {
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void setUp() throws Exception {
         // Skip if no injections, meaning we're not running in container.
-        if (vesselDao == null ||
-            parser == null) {
+        if (vesselDao == null) {
             return;
         }
 
@@ -97,8 +93,7 @@ public class LabMetricParserTest extends ContainerTest {
     @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void tearDown() throws Exception {
         // Skip if no injections, meaning we're not running in container.
-        if (vesselDao == null ||
-            parser == null) {
+        if (vesselDao == null) {
             return;
         }
 
@@ -115,8 +110,7 @@ public class LabMetricParserTest extends ContainerTest {
     public void testQuantParser() throws InvalidFormatException, IOException, ValidationException {
 
         LabMetricProcessor processor = new LabMetricProcessor(labVesselDao, LabMetric.MetricType.ECO_QPCR);
-        Map<String, ? extends TableProcessor> processors = Collections.singletonMap("Lab Metrics", processor);
-        PoiSpreadsheetParser parser = new PoiSpreadsheetParser(processors);
+        PoiSpreadsheetParser parser = new PoiSpreadsheetParser(processor);
         parser.processUploadFile(resourceFile);
 
         Collection<LabMetric> createdMetrics = processor.getMetrics();

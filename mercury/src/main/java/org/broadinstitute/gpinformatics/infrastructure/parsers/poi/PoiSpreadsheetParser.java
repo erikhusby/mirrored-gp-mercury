@@ -11,6 +11,7 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.LabMetricProcessor;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,11 +38,18 @@ public final class PoiSpreadsheetParser implements Serializable {
 
     // This maps table processors by sheet name.
     private final Map<String, ? extends TableProcessor> processorMap;
+    private final LabMetricProcessor firstSheetOnlyProcessor;
 
     int numberOfSheets;
 
     public PoiSpreadsheetParser(Map<String, ? extends TableProcessor> processorMap) {
         this.processorMap = processorMap;
+        firstSheetOnlyProcessor = null;
+    }
+
+    public PoiSpreadsheetParser(LabMetricProcessor processor) {
+        processorMap = null;
+        firstSheetOnlyProcessor = processor;
     }
 
     /**
@@ -52,17 +60,51 @@ public final class PoiSpreadsheetParser implements Serializable {
      * @throws ValidationException
      */
     protected void processWorkSheet(String sheetName, TableProcessor processor) throws ValidationException {
-        Sheet workingSheet =  workbook.getSheet(sheetName);
 
-        Iterator<Row> rows = workingSheet.rowIterator();
+        Sheet workSheet;
+        if (sheetName == null) {
+            workSheet = workbook.getSheetAt(0);
+        } else {
+            workSheet = workbook.getSheet(sheetName);
+            if (workSheet == null) {
+                throw new ValidationException("No worksheet named " + sheetName + " found");
+            }
+        }
 
+        Iterator<Row> rows = workSheet.rowIterator();
+        processHeaders(processor, rows);
+        processData(processor, rows);
+    }
+
+    private void processData(TableProcessor processor, Iterator<Row> rows) {
+        // Process the data portion of the spreadsheet.
+        int dataRowIndex = 0;
+        while (rows.hasNext()) {
+            Row row = rows.next();
+
+            // Create a mapping of the headers to the cell values.
+            int columnIndex = 0;
+            Map<String, String> dataByHeader = new HashMap<>();
+            for (String headerName : processor.getHeaderNames()) {
+                dataByHeader.put(headerName, extractCellContent(row, headerName, columnIndex++));
+            }
+
+            // Take the map and turn it into objects and process the data appropriately.
+            processor.processRow(dataByHeader, dataRowIndex);
+
+            // Go on to the next row.
+            dataRowIndex++;
+        }
+    }
+
+    private void processHeaders(TableProcessor processor, Iterator<Row> rows) {
         // Process the headers
         int headerRowIndex = 0;
         int numHeaderRows = processor.getNumHeaderRows();
         while (rows.hasNext() && headerRowIndex < numHeaderRows) {
             Row headerRow = rows.next();
 
-            List<String> headers = new ArrayList<> ();
+            List<String> headers = new ArrayList<>();
             Iterator<Cell> cellIterator = headerRow.cellIterator();
             while (cellIterator.hasNext()) {
                 headers.add(getCellValues(cellIterator.next()));
@@ -79,25 +121,6 @@ public final class PoiSpreadsheetParser implements Serializable {
             // Go on to the next row.
             headerRowIndex++;
         }
-
-        // Process the data portion of the spreadsheet.
-        int dataRowIndex = 0;
-        while (rows.hasNext()) {
-            Row row = rows.next();
-
-            // Create a mapping of the headers to the cell values.
-            int columnIndex = 0;
-            Map<String, String> dataByHeader = new HashMap<> ();
-            for (String headerName : processor.getHeaderNames()) {
-                dataByHeader.put(headerName, extractCellContent(row, headerName, columnIndex++));
-            }
-
-            // Take the map and turn it into objects and process the data appropriately.
-            processor.processRow(dataByHeader, dataRowIndex);
-
-            // Go on to the next row.
-            dataRowIndex++;
-        }
     }
 
     /**
@@ -113,9 +136,13 @@ public final class PoiSpreadsheetParser implements Serializable {
         workbook = WorkbookFactory.create(fileStream);
         numberOfSheets = workbook.getNumberOfSheets();
 
-        // Go through each processor and process the sheet specified.
-        for (String sheetName : processorMap.keySet()) {
-            processWorkSheet(sheetName, processorMap.get(sheetName));
+        if (processorMap == null) {
+            processWorkSheet(null, firstSheetOnlyProcessor);
+        } else {
+            // Go through each processor and process the sheet specified.
+            for (String sheetName : processorMap.keySet()) {
+                processWorkSheet(sheetName, processorMap.get(sheetName));
+            }
         }
     }
 
