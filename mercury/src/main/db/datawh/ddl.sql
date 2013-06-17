@@ -548,7 +548,7 @@ CREATE INDEX pdo_sample_status_idx1 ON product_order_sample_status (product_orde
 CREATE INDEX pdo_add_on_idx1 ON product_order_add_on (product_order_id);
 CREATE INDEX pdo_add_on_idx2 ON product_order_add_on (product_id);
 CREATE INDEX event_fact_idx1 ON event_fact (event_date);
-CREATE INDEX event_fact_idx2 ON event_fact (product_order_id);
+CREATE INDEX event_fact_idx2 ON event_fact (product_order_id, sample_name);
 CREATE INDEX event_fact_idx3 ON event_fact (lab_event_id);
 CREATE INDEX ix_parent_project ON research_project (parent_research_project_id);
 CREATE INDEX ix_root_project ON research_project (root_research_project_id);

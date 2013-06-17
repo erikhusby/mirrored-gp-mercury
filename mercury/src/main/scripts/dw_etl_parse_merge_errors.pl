@@ -27,8 +27,7 @@ foreach my $line (@lines) {
     my @tokens = split(/\s+/, $line, 4);
     if ( defined $tokens[3] && ($tokens[0] =~ /.*\.dat/) &&
 	 ($tokens[1] eq "line") && 
-	 ($tokens[2] =~ /^[+-]?\d+$/ ) &&
-	 ($tokens[3] =~ /^ORA.*/)) {
+	 ($tokens[2] =~ /^[+-]?\d+$/ )) {
 	my $errMsg = ($tokens[3]);
 	$errorStrings{$errMsg} = '';
 	$parsableError = 1;
@@ -44,8 +43,7 @@ foreach my $errString (keys(%errorStrings)) {
 	my @tokens = split(/\s+/, $line, 4);
         if ( defined $tokens[3] && ($tokens[0] =~ /.*\.dat/) &&
 	     ($tokens[1] eq "line") && 
-	     ($tokens[2] =~ /^[+-]?\d+$/ ) &&
-	     ($tokens[3] =~ /^ORA.*/)) {
+	     ($tokens[2] =~ /^[+-]?\d+$/ )) {
 	    my $filename = $tokens[0];
 	    my $lineno = $tokens[2];
 	    my $errMsg = ($tokens[3]);
