@@ -2,10 +2,10 @@ package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
 import net.sourceforge.stripes.validation.SimpleError;
 import net.sourceforge.stripes.validation.ValidationErrors;
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.OrderBillSummaryStat;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
+import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
@@ -35,12 +35,14 @@ public class BillingTrackerProcessor extends TableProcessor {
     private static final long serialVersionUID = 2769150801705141335L;
 
     private final ProductOrderDao productOrderDao;
+    private final LedgerEntryDao ledgerEntryDao;
 
     private ProductOrder currentProductOrder = null;
     private Product currentProduct = null;
     private List<ProductOrderSample> currentSamples = null;
     private int sampleIndexInOrder = 0;
     private List<PriceItem> currentPriceItems = null;
+    private final List<ProductOrder> productOrders = new ArrayList<>();
 
     // The map of charges keyed by PDO name
     private final Map<String, Map<BillableRef, OrderBillSummaryStat>> chargesMapByPdo = new HashMap<>();
@@ -49,15 +51,19 @@ public class BillingTrackerProcessor extends TableProcessor {
 
     private ValidationErrors validationErrors;
 
+    private final boolean doPersist;
+
     public Map<String, Map<BillableRef, OrderBillSummaryStat>> getChargesMapByPdo() {
         return chargesMapByPdo;
     }
 
     public BillingTrackerProcessor(
-            String sheetName, ProductDao productDao, ProductOrderDao productOrderDao, PriceItemDao priceItemDao,
-            PriceListCache priceListCache, ValidationErrors validationErrors) {
+            String sheetName, LedgerEntryDao ledgerEntryDao, ProductDao productDao, ProductOrderDao productOrderDao,
+            PriceItemDao priceItemDao, PriceListCache priceListCache, ValidationErrors validationErrors,
+            boolean doPersist) {
 
         this.productOrderDao = productOrderDao;
+        this.ledgerEntryDao = ledgerEntryDao;
         this.validationErrors = validationErrors;
 
         // The current product is the one specified here by the sheet name (the product number).
@@ -65,6 +71,8 @@ public class BillingTrackerProcessor extends TableProcessor {
 
         // The price items for the product, in order that they appear in the spreadsheet.
         currentPriceItems = SampleLedgerExporter.getPriceItems(currentProduct, priceItemDao, priceListCache);
+
+        this.doPersist = doPersist;
     }
 
     @Override
@@ -97,6 +105,13 @@ public class BillingTrackerProcessor extends TableProcessor {
     }
 
     @Override
+    public void close() {
+        if (doPersist) {
+            productOrderDao.persistAll(productOrders);
+        }
+    }
+
+    @Override
     protected ColumnHeader[] getColumnHeaders() {
         return BillingTrackerHeader.values();
     }
@@ -107,30 +122,38 @@ public class BillingTrackerProcessor extends TableProcessor {
         String rowPdoIdStr = dataRow.get(BillingTrackerHeader.PRODUCT_ORDER_NAME.getText());
         String currentSampleName = dataRow.get(BillingTrackerHeader.SAMPLE_ID_HEADING.getText());
 
-        Map<BillableRef, OrderBillSummaryStat> pdoSummaryStatsMap =
-                getBillableRefOrderBillSummaryStatMap(dataRowIndex, rowPdoIdStr);
-        if (!validationErrors.isEmpty()) {
-            return;
+        // Get the stats for the current PDO id. If it does not exist, add the new summary to the map.
+        Map<BillableRef, OrderBillSummaryStat> pdoSummaryStatsMap = chargesMapByPdo.get(rowPdoIdStr);
+        if (pdoSummaryStatsMap == null) {
+            // Update the charges map.
+            addSummaryToChargesMap(dataRowIndex, rowPdoIdStr);
+            if (!validationErrors.isEmpty()) {
+                return;
+            }
+
+            // If we are doing the persist, the first step is that we need to clear out all the previously billed stuff.
+            // This assumes that validation has been done and that no changes will be done.
+            if (doPersist) {
+                ProductOrder[] productOrderArray = new ProductOrder[]{currentProductOrder};
+                ledgerEntryDao.removeLedgerItemsWithoutBillingSession(productOrderArray);
+                ledgerEntryDao.flush();
+            }
+
         }
 
-        // There must always be a sample and a product order, so go to the next line, if this does not get one.
-        if ((CollectionUtils.isEmpty(currentSamples)) || (currentProduct == null)) {
-            return;
-        }
-
+        // Verify the sample information.
         checkSample(dataRowIndex, rowPdoIdStr, currentSampleName,
                 dataRow.get(BillingTrackerHeader.AUTO_LEDGER_TIMESTAMP_HEADING.getText()));
         if (!validationErrors.isEmpty()) {
             return;
         }
 
-        String error = parseRowForSummaryMap(dataRow, pdoSummaryStatsMap);
+        // Now that everything else has been set up, parse and process it.
+        String error = parseRowForSummaryMap(dataRow, rowPdoIdStr);
         if (!StringUtils.isBlank(error)) {
             addError(error);
             return;
         }
-
-        chargesMapByPdo.put(rowPdoIdStr, pdoSummaryStatsMap);
 
         sampleIndexInOrder++;
     }
@@ -173,37 +196,36 @@ public class BillingTrackerProcessor extends TableProcessor {
         }
     }
 
-    private Map<BillableRef, OrderBillSummaryStat> getBillableRefOrderBillSummaryStatMap(
-            int dataRowIndex, String rowPdoIdStr) {
+    private void addSummaryToChargesMap(int dataRowIndex, String rowPdoIdStr) {
 
-        // Get the stats for the current PDO id.
-        Map<BillableRef, OrderBillSummaryStat> pdoSummaryStatsMap = chargesMapByPdo.get(rowPdoIdStr);
+        Map<BillableRef, OrderBillSummaryStat> pdoSummaryStatsMap = new HashMap<>();
+        chargesMapByPdo.put(rowPdoIdStr, pdoSummaryStatsMap);
 
-        // For a newly found PDO Id, create a new map for it and add it to the sheet summary map. This relies on the
-        // fae that each order will reqpeat until all samples are complete, so it is new series of samples whenever
-        // the map for the PDO is not found.
-        if (pdoSummaryStatsMap == null) {
-            pdoSummaryStatsMap = new HashMap<>();
-            chargesMapByPdo.put(rowPdoIdStr, pdoSummaryStatsMap);
+        // Find the order in the DB.
+        currentProductOrder = productOrderDao.findByBusinessKey(rowPdoIdStr);
+        if (currentProductOrder != null) {
 
-            // Find the order in the DB.
-            currentProductOrder = productOrderDao.findByBusinessKey(rowPdoIdStr);
-            if (currentProductOrder != null) {
-                currentSamples = currentProductOrder.getSamples();
+            // Add to the list of product orders that were processed.
+            productOrders.add(currentProductOrder);
+            currentSamples = currentProductOrder.getSamples();
 
-                for (PriceItem priceItem : currentPriceItems) {
-                    BillableRef billableRef = new BillableRef(currentProduct.getPartNumber(), priceItem.getName());
-                    chargesMapByPdo.get(rowPdoIdStr).put(billableRef, new OrderBillSummaryStat());
-                }
-
-                sampleIndexInOrder = 0;
-            } else {
+            if (currentSamples == null) {
                 addError("Product Order " + rowPdoIdStr + " on row " + (dataRowIndex + 1) +
-                           " of sheet " + currentProduct.getPartNumber() + " is not found in the database.");
+                         " of sheet " + currentProduct.getPartNumber() + " has no samples.");
+                return;
             }
-        }
 
-        return pdoSummaryStatsMap;
+            // Add values for each price item.
+            for (PriceItem priceItem : currentPriceItems) {
+                BillableRef billableRef = new BillableRef(currentProduct.getPartNumber(), priceItem.getName());
+                pdoSummaryStatsMap.put(billableRef, new OrderBillSummaryStat());
+            }
+
+            sampleIndexInOrder = 0;
+        } else {
+            addError("Product Order " + rowPdoIdStr + " on row " + (dataRowIndex + 1) +
+                       " of sheet " + currentProduct.getPartNumber() + " is not found in the database.");
+        }
     }
 
     private void addError(String error) {
@@ -214,44 +236,61 @@ public class BillingTrackerProcessor extends TableProcessor {
         }
     }
 
-    private String parseRowForSummaryMap(
-            Map<String,String> dataRow, Map<BillableRef,OrderBillSummaryStat> pdoSummaryStatsMap) {
+    private static final String BILLED_IS_SAME =
+            "Found a different billed quantity '%f' in the database for sample in %s in %s, price item '%s', in " +
+            "Product %s. The billed quantity in the spreadsheet is '%f', please download a recent copy of the " +
+            "BillingTracker spreadsheet.";
 
+    private static final String PREVIOUSLY_BILLED =
+            "No billed quantity found in the database for sample %s in %s, price item '%s', in Product %s. However " +
+            "the billed quantity in the spreadsheet is '%f', indicating the Billed column of this spreadsheet has " +
+            "accidentally been edited.";
+
+    private static final String SAMPLE_EMPTY_VALUE =
+            "Found empty %s value for updated sample %s in %s, price item '%s', in Product %s";
+
+    private static final String QUOTE_MISMATCH =
+            "Found quote ID ''{0}'' for updated sample ''{1}'' in ''{2}'' in Product" +
+            " ''{3}'', this differs from quote ''{4}'' currently associated with ''{2}''.";
+
+    private String parseRowForSummaryMap(Map<String, String> dataRow, String rowPdoIdStr) {
         ProductOrderSample productOrderSample = currentSamples.get(sampleIndexInOrder);
+
+        // Get the stats for the order.
+        Map<BillableRef, OrderBillSummaryStat> pdoSummaryStatsMap = chargesMapByPdo.get(rowPdoIdStr);
+
         Map<PriceItem, ProductOrderSample.LedgerQuantities> billCounts = productOrderSample.getLedgerQuantities();
 
         for (PriceItem priceItem : currentPriceItems) {
             double newQuantity;
-            double previouslyBilledQuantity = 0;
+            double trackerBilled = 0;
             BillableRef billableRef = new BillableRef(currentProduct.getPartNumber(), priceItem.getName());
 
             String billedKey = BillingTrackerHeader.getPriceItemHeader(priceItem, currentProduct) + " " +
                             BillingTrackerHeader.BILLED;
-            String billed = dataRow.get(billedKey);
 
             String priceItemName = billableRef.getPriceItemName();
-            if (!StringUtils.isBlank(billed)) {
-                previouslyBilledQuantity = Double.parseDouble(billed);
+            if (!StringUtils.isBlank(dataRow.get(billedKey))) {
+                trackerBilled = Double.parseDouble(dataRow.get(billedKey));
 
-                // Check billedQuantity parsed against that which is already billed for this sample and PriceItem, they
-                // should match.
-                ProductOrderSample.LedgerQuantities quantities = billCounts.get(priceItem);
-                if ((quantities != null) && !MathUtils.isSame(quantities.getBilled(), previouslyBilledQuantity)) {
-                    return String.format(
-                            "Found a different billed quantity '%f' in the database for sample in %s in %s, " +
-                            "price item '%s', in Product %s. The billed quantity in the spreadsheet is " +
-                            "'%f', please download a recent copy of the BillingTracker spreadsheet.",
-                            quantities.getBilled(), productOrderSample.getSampleKey(), currentProductOrder.getBusinessKey(),
-                            priceItemName, currentProduct.getPartNumber(), previouslyBilledQuantity);
+                double sampleBilled = 0;
+                ProductOrderSample.LedgerQuantities sampleQuantities = billCounts.get(priceItem);
+                if (sampleQuantities != null) {
+                    sampleBilled = sampleQuantities.getBilled();
+                } else {
+                    if (trackerBilled != 0) {
+                        return String.format(PREVIOUSLY_BILLED, productOrderSample.getSampleKey(),
+                                currentProductOrder.getBusinessKey(), priceItemName, currentProduct.getPartNumber(),
+                                trackerBilled );
+                    }
                 }
 
-                if (quantities == null && previouslyBilledQuantity != 0) {
-                    return String.format("No billed quantity found in the database for sample %s in %s, price item " +
-                                         "'%s', in Product %s. However the billed quantity in the spreadsheet " +
-                                         "is '%f', indicating the Billed column of this spreadsheet has accidentally " +
-                                         "been edited.",
-                            productOrderSample.getSampleKey(), currentProductOrder.getBusinessKey(), priceItemName,
-                            currentProduct.getPartNumber(), previouslyBilledQuantity );
+                // Check billedQuantity in spreadsheet against that which is already billed for this sample and
+                // price item, they should match.
+                if (!MathUtils.isSame(trackerBilled, sampleBilled)) {
+                    return String.format(BILLED_IS_SAME, sampleBilled, productOrderSample.getSampleKey(),
+                            currentProductOrder.getBusinessKey(), priceItemName, currentProduct.getPartNumber(),
+                            trackerBilled);
                 }
             }
 
@@ -267,22 +306,19 @@ public class BillingTrackerProcessor extends TableProcessor {
                             currentProduct.getPartNumber());
                 }
 
-                double delta = newQuantity - previouslyBilledQuantity;
+                double delta = newQuantity - trackerBilled;
 
                 if (delta != 0) {
                     String uploadedQuoteId = dataRow.get(BillingTrackerHeader.QUOTE_ID_HEADING.getText());
                     if (StringUtils.isBlank(uploadedQuoteId)) {
-                        return String.format("Found empty %s value for updated sample %s in %s, price item '%s', in Product %s",
-                                BillingTrackerHeader.QUOTE_ID_HEADING.getText(), productOrderSample.getSampleKey(),
-                                currentProductOrder.getBusinessKey(), priceItemName,
+                        return String.format(SAMPLE_EMPTY_VALUE, BillingTrackerHeader.QUOTE_ID_HEADING.getText(),
+                                productOrderSample.getSampleKey(), currentProductOrder.getBusinessKey(), priceItemName,
                                 currentProduct.getPartNumber());
                     }
 
                     if (!productOrderSample.getProductOrder().getQuoteId().equals(uploadedQuoteId)) {
                         return MessageFormat
-                                .format("Found quote ID ''{0}'' for updated sample ''{1}'' in ''{2}'' in Product" +
-                                        " ''{3}'', this differs from quote ''{4}'' currently associated with ''{2}''.",
-                                        uploadedQuoteId, productOrderSample.getSampleKey(),
+                                .format(QUOTE_MISMATCH, uploadedQuoteId, productOrderSample.getSampleKey(),
                                         currentProductOrder.getBusinessKey(), currentProduct.getPartNumber(),
                                         productOrderSample.getProductOrder().getQuoteId());
                     }
@@ -302,6 +338,19 @@ public class BillingTrackerProcessor extends TableProcessor {
                     }
 
                     orderBillSummaryStat.applyDelta(delta);
+
+                    try {
+                        if (doPersist) {
+                            Date workCompleteDate = DateUtils.parseDate(workCompleteDateString);
+                            productOrderSample.addLedgerItem(workCompleteDate, priceItem, delta);
+                        }
+                    } catch (ParseException e) {
+                        return MessageFormat
+                                .format("Could not persist ledger for updated sample ''{0}'' in PDO ''{1}'' in Product" +
+                                        " ''{3}'' because of error: {4}",
+                                        productOrderSample.getSampleKey(), currentProductOrder.getBusinessKey(),
+                                        currentProduct.getPartNumber(), e.getMessage());
+                    }
                 }
             }
         }
@@ -309,4 +358,7 @@ public class BillingTrackerProcessor extends TableProcessor {
         return "";
     }
 
+    public List<ProductOrder> getUpdatedProductOrders() {
+        return productOrders;
+    }
 }

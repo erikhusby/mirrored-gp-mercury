@@ -71,6 +71,10 @@ public class LabMetricProcessor extends TableProcessor {
     }
 
     @Override
+    public void close() {
+    }
+
+    @Override
     public List<String> getHeaderNames() {
         return headersNames;
     }

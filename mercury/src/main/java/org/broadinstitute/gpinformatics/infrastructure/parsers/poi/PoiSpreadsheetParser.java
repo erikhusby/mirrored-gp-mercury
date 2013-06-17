@@ -11,7 +11,6 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
-import org.broadinstitute.gpinformatics.mercury.control.vessel.LabMetricProcessor;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -145,6 +144,15 @@ public final class PoiSpreadsheetParser implements Serializable {
         return result;
     }
 
+    /**
+     * We leave all parsing and validating up to the caller by turning everything into a string. We might want to
+     * let POI turn things into real objects in the map in the future, but for now this was what callers were
+     * expecting.
+     *
+     * @param cell The cell data.
+     *
+     * @return A string representation of the cell.
+     */
     private String getCellValues(Cell cell) {
         String result = "";
 
@@ -167,38 +175,72 @@ public final class PoiSpreadsheetParser implements Serializable {
         return result;
     }
 
-    public static List<String> getWorksheetNames(FileBean trackerFile) {
+    /**
+     * Get the names of all the worksheets in the tracker file.
+     *
+     * @param trackerFile The file to open and grab the worksheet names.
+     *
+     * @return The names.
+     */
+    public static List<String> getWorksheetNames(FileBean trackerFile) throws IOException, InvalidFormatException {
 
-        List<String> sheetNames = new ArrayList<> ();
         InputStream inputStream = null;
 
         try {
             inputStream = trackerFile.getInputStream();
-
-            Workbook workbook = WorkbookFactory.create(inputStream);
-            int numberOfSheets = workbook.getNumberOfSheets();
-            for (int i = 0; i < numberOfSheets; i++) {
-
-                Sheet sheet = workbook.getSheetAt(i);
-                sheetNames.add(sheet.getSheetName());
-            }
-        } catch (Exception ex) {
-            // Do not need to worry about this, will just return the empty list of sheet names.
+            return getWorksheetNames(inputStream);
         } finally {
             IOUtils.closeQuietly(inputStream);
+        }
+    }
+
+    public static List<String> getWorksheetNames(InputStream inputStream) throws IOException, InvalidFormatException {
+
+        List<String> sheetNames = new ArrayList<> ();
+
+        Workbook workbook = WorkbookFactory.create(inputStream);
+        int numberOfSheets = workbook.getNumberOfSheets();
+        for (int i = 0; i < numberOfSheets; i++) {
+
+            Sheet sheet = workbook.getSheetAt(i);
+            sheetNames.add(sheet.getSheetName());
         }
 
         return sheetNames;
     }
 
+    public void close() {
+        for (TableProcessor processor : processorMap.values()) {
+            processor.close();
+        }
+    }
+
+    /**
+     * This is a convenience function for processing a single worksheet from a spreadsheet file.
+     *
+     * @param spreadsheet The spreadsheet stream of data.
+     * @param worksheetName The name of the worksheet to process.
+     * @param processor The table processor.
+     *
+     * @throws InvalidFormatException Formatting issues
+     * @throws IOException File issues
+     * @throws ValidationException Any problems with the data in the spreadsheet
+     */
     public static void processSingleWorksheet(
-            InputStream spreadsheet, String worksheetName, LabMetricProcessor labMetricProcessor)
+            InputStream spreadsheet, String worksheetName, TableProcessor processor)
             throws InvalidFormatException, IOException, ValidationException {
 
-        Map<String, ? extends TableProcessor> processorsByName =
-                Collections.singletonMap(worksheetName, labMetricProcessor);
-        PoiSpreadsheetParser parser = new PoiSpreadsheetParser(processorsByName);
-        parser.processUploadFile(spreadsheet);
+        PoiSpreadsheetParser parser = null;
 
+        try {
+            Map<String, ? extends TableProcessor> processorsByName =
+                    Collections.singletonMap(worksheetName, processor);
+            parser = new PoiSpreadsheetParser(processorsByName);
+            parser.processUploadFile(spreadsheet);
+        } finally {
+            if (parser != null) {
+                parser.close();
+            }
+        }
     }
 }

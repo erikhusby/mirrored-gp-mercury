@@ -240,28 +240,6 @@ public class CoreActionBean implements ActionBean {
     }
 
     /**
-     * Load file data from a form upload.
-     *
-     * @param inFile The file
-     * @return String from file contents.
-     * @throws java.io.IOException Any errors that occur
-     */
-    protected InputStream importFile(FileBean inFile) throws IOException {
-        InputStream istream = null;
-
-        try {
-            istream = inFile.getInputStream();
-        } catch (Exception e) {
-            addGlobalValidationError("Sorry, there was a problem reading the file you supplied");
-        } finally {
-            if (inFile != null) {
-                inFile.delete();
-            }
-        }
-        return istream;
-    }
-
-    /**
      * Create a 'safe' message for stripes message reporting. If no arguments are supplied, we format the entire
      * string as an argument to MessageFormat, to avoid issues with strings that inadvertently include format
      * patterns, such as {, }, or '.

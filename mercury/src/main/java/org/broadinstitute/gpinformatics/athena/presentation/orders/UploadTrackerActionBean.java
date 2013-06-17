@@ -12,9 +12,9 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillableRef;
-import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingTrackerManager;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingTrackerProcessor;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.OrderBillSummaryStat;
+import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
@@ -53,6 +53,9 @@ public class UploadTrackerActionBean extends CoreActionBean {
     private ProductDao productDao;
 
     @Inject
+    private LedgerEntryDao ledgerEntryDao;
+
+    @Inject
     private ProductOrderDao productOrderDao;
 
     @Inject
@@ -71,21 +74,19 @@ public class UploadTrackerActionBean extends CoreActionBean {
 
     private boolean isPreview = false;
 
-    @Inject
-    private BillingTrackerManager billingTrackerManager;
-
     public List<PreviewData> getPreviewData() {
         return previewData;
     }
 
     private void previewUploadedFile() {
         InputStream inputStream = null;
-
-        List<String> sheetNames = PoiSpreadsheetParser.getWorksheetNames(trackerFile);
-        Map<String, BillingTrackerProcessor> processors = getProcessors(sheetNames);
-        PoiSpreadsheetParser parser = new PoiSpreadsheetParser(processors);
+        PoiSpreadsheetParser parser = null;
 
         try {
+            List<String> sheetNames = PoiSpreadsheetParser.getWorksheetNames(trackerFile);
+            Map<String, BillingTrackerProcessor> processors = getProcessors(sheetNames, false);
+            parser = new PoiSpreadsheetParser(processors);
+
             parser.processUploadFile(trackerFile.getInputStream());
 
             // If there were parsing errors, just return.
@@ -117,6 +118,16 @@ public class UploadTrackerActionBean extends CoreActionBean {
             addGlobalValidationError("Error uploading tracker: " + e.getMessage());
         } finally {
             IOUtils.closeQuietly(inputStream);
+
+            if (parser != null) {
+                parser.close();
+            }
+
+            try {
+                trackerFile.delete();
+            } catch (IOException ex) {
+                // If cannot delete, oh well.
+            }
         }
     }
 
@@ -124,15 +135,17 @@ public class UploadTrackerActionBean extends CoreActionBean {
      * Take the sheet names and create a new processor for each one.
      *
      * @param sheetNames The names of the sheets (should be all part numbers of products.
+     * @param doPersist Preview mode does not persist, but saving does.
      *
      * @return The mapping of sheet names to processors.
      */
-    private Map<String, BillingTrackerProcessor> getProcessors(List<String> sheetNames) {
+    private Map<String, BillingTrackerProcessor> getProcessors(List<String> sheetNames, boolean doPersist) {
         Map<String, BillingTrackerProcessor> processors = new HashMap<> ();
 
         for (String sheetName : sheetNames) {
             BillingTrackerProcessor processor = new BillingTrackerProcessor(
-                    sheetName, productDao, productOrderDao, priceItemDao, priceListCache, getContext().getValidationErrors());
+                    sheetName, ledgerEntryDao, productDao, productOrderDao, priceItemDao, priceListCache,
+                    getContext().getValidationErrors(), doPersist);
             processors.put(sheetName, processor);
         }
 
@@ -188,24 +201,27 @@ public class UploadTrackerActionBean extends CoreActionBean {
 
     private void processBillingOnTempFile() {
         InputStream inputStream = null;
+        PoiSpreadsheetParser parser = null;
 
         try {
+            List<String> sheetNames = PoiSpreadsheetParser.getWorksheetNames(trackerFile);
+            Map<String, BillingTrackerProcessor> processors = getProcessors(sheetNames, true);
+            parser = new PoiSpreadsheetParser(processors);
+
             File previewFile = new File(previewFilePath);
             inputStream = new FileInputStream(previewFile);
-
-            Map<String, List<ProductOrder>> billedProductOrdersMapByPartNumber =
-                    billingTrackerManager.parseFileForBilling(inputStream);
-
+            parser.processUploadFile(inputStream);
             if (hasErrors()) {
                 return;
             }
 
-            int numberOfProducts = 0;
-            List<String> orderIdsUpdated = new ArrayList<>();
-            if (billedProductOrdersMapByPartNumber != null) {
-                numberOfProducts = billedProductOrdersMapByPartNumber.keySet().size();
-                orderIdsUpdated = extractOrderIdsFromMap(billedProductOrdersMapByPartNumber);
+            Map<String, List<ProductOrder>> updatedByPartNumber = new HashMap<>();
+            for (String partNumber : processors.keySet()) {
+                updatedByPartNumber.put(partNumber, processors.get(partNumber).getUpdatedProductOrders());
             }
+
+            int numberOfProducts = updatedByPartNumber.keySet().size();
+            List<String> orderIdsUpdated = extractOrderIdsFromMap(updatedByPartNumber);
 
             addMessage("Updated the billing ledger for " + orderIdsUpdated.size() + " product order(s) across " +
                             numberOfProducts + " primary product(s).");
@@ -218,6 +234,10 @@ public class UploadTrackerActionBean extends CoreActionBean {
         } finally {
             // No matter what, close the file but it will be ignored if everything was closed and deleted.
             IOUtils.closeQuietly(inputStream);
+
+            if (parser != null) {
+                parser.close();
+            }
         }
     }
 

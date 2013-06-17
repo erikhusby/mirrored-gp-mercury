@@ -88,6 +88,12 @@ public class UploadQuantsActionBean extends CoreActionBean {
             errors.add("quantSpreadsheet", new SimpleError(errorBuilder.toString()));
         } finally {
             IOUtils.closeQuietly(quantStream);
+
+            try {
+                quantSpreadsheet.delete();
+            } catch (IOException ex) {
+                // If cannot delete, oh well.
+            }
         }
     }
 }
