@@ -35,6 +35,7 @@ public class LabBatch {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_LAB_BATCH")
     private Long labBatchId;
 
+    /** All vessels in the batch, including reworks. */
     @ManyToMany(cascade = CascadeType.PERSIST)
     // have to specify name, generated aud name is too long for Oracle
     @JoinTable(schema = "mercury", name = "lb_starting_lab_vessels", joinColumns = @JoinColumn(name = "lab_batch"),
@@ -52,11 +53,8 @@ public class LabBatch {
     @OneToMany(mappedBy = "labBatch")
     private Set<LabEvent> labEvents = new LinkedHashSet<LabEvent>();
 
-    // on the lb_starting_lab_vessels join table
-    // fixme reworks need to be included in the startingVessels
-    // list because they are starting vessels...but just
-    // marked as rework
-    @OneToMany(cascade = CascadeType.ALL)
+    /** The subset of the vessels in the batch that were added as rework from a previous batch. */
+    @ManyToMany(cascade = CascadeType.ALL)
     private Collection<LabVessel> reworks = new HashSet<LabVessel>();
 
     private Date createdOn;
@@ -139,6 +137,7 @@ public class LabBatch {
      * @param newRework
      */
     public void addReworks(Collection<LabVessel> newRework) {
+        startingLabVessels.addAll(newRework);
         reworks.addAll(newRework);
     }
 

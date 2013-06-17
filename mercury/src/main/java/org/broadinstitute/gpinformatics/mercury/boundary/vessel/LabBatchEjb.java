@@ -191,10 +191,7 @@ public class LabBatchEjb {
                                                       @Nonnull String bucketName, @Nonnull String location) {
         Bucket bucket = bucketDao.findByName(bucketName);
         batch = createLabBatch(batch, operator);
-        //todo jac Hard coded labEventType for the one bucket.  This will need to change when we have multiple.
-        Set<LabVessel> vessels = new HashSet<>(batch.getStartingLabVessels());
-        vessels.addAll(batch.getReworks());
-        bucketBean.start(operator, vessels, bucket, location);
+        bucketBean.start(operator, batch.getStartingLabVessels(), bucket, location);
         return batch;
     }
 

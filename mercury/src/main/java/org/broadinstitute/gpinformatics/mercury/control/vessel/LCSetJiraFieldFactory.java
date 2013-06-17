@@ -90,7 +90,9 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
         StringBuilder samplesText = new StringBuilder();
         Set<String> newSamples = new HashSet<String>();
         Set<String> reworkSamples = new HashSet<String>();
-        for (LabVessel labVessel : labBatch.getStartingLabVessels()) {
+        Set<LabVessel> nonReworkVessels = new HashSet<>(labBatch.getStartingLabVessels());
+        nonReworkVessels.removeAll(labBatch.getReworks());
+        for (LabVessel labVessel : nonReworkVessels) {
             Collection<String> samplesNamesForVessel = labVessel.getSampleNames();
             if (samplesNamesForVessel.size() > 1) {
                 throw new RuntimeException("Cannot build samples list for " + labVessel.getLabel() + " because we're expecting only a single sample within the vessel.");
