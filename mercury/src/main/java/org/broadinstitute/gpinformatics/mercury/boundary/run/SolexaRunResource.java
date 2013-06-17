@@ -167,10 +167,10 @@ public class SolexaRunResource {
     @Path("/storeRunReadStructure")
     public ReadStructureRequest storeRunReadStructure(ReadStructureRequest readStructureRequest) {
 
-        IlluminaSequencingRun run = illuminaSequencingRunDao.findByBarcode(readStructureRequest.getRunBarCode());
+        IlluminaSequencingRun run = illuminaSequencingRunDao.findByBarcode(readStructureRequest.getRunBarcode());
 
         if (run == null) {
-            throw new ResourceException("Unable to find a run associated with " + readStructureRequest.getRunBarCode(),
+            throw new ResourceException("Unable to find a run associated with " + readStructureRequest.getRunBarcode(),
                     Response.Status.INTERNAL_SERVER_ERROR);
         }
 

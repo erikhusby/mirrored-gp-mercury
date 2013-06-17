@@ -46,7 +46,6 @@ import java.util.Date;
 import java.util.EnumMap;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.AUTO_BUILD;
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 
 /**
@@ -56,10 +55,10 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EX
 public class SolexaRunRestResourceTest extends Arquillian {
 
     @Inject
-    IlluminaSequencingRunDao runDao;
+    private IlluminaSequencingRunDao runDao;
 
     @Inject
-    IlluminaFlowcellDao flowcellDao;
+    private IlluminaFlowcellDao flowcellDao;
 
     @Inject
     private BSPUserList bspUserList;
@@ -77,7 +76,7 @@ public class SolexaRunRestResourceTest extends Arquillian {
     private ProductDao productDao;
 
     @Inject
-    AppConfig appConfig;
+    private AppConfig appConfig;
 
     private Date runDate;
     private String flowcellBarcode;
@@ -89,7 +88,7 @@ public class SolexaRunRestResourceTest extends Arquillian {
     private ProductOrder exexOrder;
     private ResearchProject researchProject;
     private Product exExProduct;
-    private ArrayList<ProductOrderSample> bucketReadySamples1;
+    private ArrayList<ProductOrderSample> bucketReadySamples;
     private String runName;
     private String pdo1JiraKey;
 
@@ -97,11 +96,9 @@ public class SolexaRunRestResourceTest extends Arquillian {
     public static WebArchive buildMercuryWar() {
 
         /**
-         * The default returned is Stubby Which does not suit the needs of this test case.  The lesser
-         * of evils is to force this to Test all the time.
-         *
-         * If running locally, Change this to Dev to test against your local instance.
-         *
+         * Since this implements a rest call Auto_Build will be used for the server used for the bamboo builds.  To
+         * test locally, the server definitions for AUTO_BUILD should be modified locally to point to the users
+         * local server
          *
          */
         return DeploymentBuilder
@@ -162,13 +159,13 @@ public class SolexaRunRestResourceTest extends Arquillian {
                 }});
 
 
-        bucketReadySamples1 = new ArrayList<>(2);
-        bucketReadySamples1.add(new ProductOrderSample(genomicSample1));
+        bucketReadySamples = new ArrayList<>(2);
+        bucketReadySamples.add(new ProductOrderSample(genomicSample1));
 
         exexOrder =
                 new ProductOrder(bspUserList.getByUsername("scottmat").getUserId(),
                         "Rework Integration TestOrder 1" + runDate.getTime(),
-                        bucketReadySamples1, "GSP-123", exExProduct, researchProject);
+                        bucketReadySamples, "GSP-123", exExProduct, researchProject);
         exexOrder.setProduct(exExProduct);
         exexOrder.prepareToSave(bspUserList.getByUsername("scottmat"));
         pdo1JiraKey = "PDO-" + testPrefix + runDate.getTime() + 1;
@@ -245,7 +242,7 @@ public class SolexaRunRestResourceTest extends Arquillian {
         clientConfig.getClasses().add(JacksonJsonProvider.class);
 
         ReadStructureRequest readStructure = new ReadStructureRequest();
-        readStructure.setRunBarCode(runBarcode);
+        readStructure.setRunBarcode(runBarcode);
         readStructure.setSetupReadStructure("71T8B8B101T");
 
         IlluminaSequencingRun run =
@@ -262,7 +259,7 @@ public class SolexaRunRestResourceTest extends Arquillian {
         runDao.clear();
         run = runDao.findByBarcode(runBarcode);
 
-        Assert.assertEquals(readstructureResult.getRunBarCode(), run.getRunBarcode());
+        Assert.assertEquals(readstructureResult.getRunBarcode(), run.getRunBarcode());
         Assert.assertNotNull(readstructureResult.getSetupReadStructure());
         Assert.assertEquals(readstructureResult.getSetupReadStructure(), run.getSetupReadStructure());
         Assert.assertNull(readstructureResult.getActualReadStructure());
@@ -277,7 +274,7 @@ public class SolexaRunRestResourceTest extends Arquillian {
         runDao.clear();
         run = runDao.findByBarcode(runBarcode);
 
-        Assert.assertEquals(readstructureResult.getRunBarCode(), run.getRunBarcode());
+        Assert.assertEquals(readstructureResult.getRunBarcode(), run.getRunBarcode());
         Assert.assertNotNull(readstructureResult.getSetupReadStructure());
         Assert.assertEquals(readstructureResult.getSetupReadStructure(), run.getSetupReadStructure());
         Assert.assertNotNull(readstructureResult.getActualReadStructure());

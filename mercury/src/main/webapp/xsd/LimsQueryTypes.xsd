@@ -116,7 +116,7 @@
 
     <xsd:complexType name="readStructureRequest">
         <xsd:sequence>
-            <xsd:element name="runBarCode" type="xsd:string" />
+            <xsd:element name="runBarcode" type="xsd:string" />
             <xsd:element name="setupReadStructure" type="xsd:string" />
             <xsd:element name="actualReadStructure" type="xsd:string" />
         </xsd:sequence>

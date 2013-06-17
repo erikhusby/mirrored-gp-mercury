@@ -266,7 +266,7 @@ public class LabEventTest extends BaseEventTest {
         }
 
         ReadStructureRequest readStructureRequest = new ReadStructureRequest();
-        readStructureRequest.setRunBarCode(illuminaSequencingRun.getRunBarcode());
+        readStructureRequest.setRunBarcode(illuminaSequencingRun.getRunBarcode());
         readStructureRequest.setSetupReadStructure("71T8B8B71T");
         readStructureRequest.setActualReadStructure("101T8B8B101T");
 
@@ -452,7 +452,7 @@ public class LabEventTest extends BaseEventTest {
                 runFactory.buildDbFree(runBean, hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell());
 
         ReadStructureRequest readStructureRequest = new ReadStructureRequest();
-        readStructureRequest.setRunBarCode(run.getRunBarcode());
+        readStructureRequest.setRunBarcode(run.getRunBarcode());
         readStructureRequest.setSetupReadStructure("71T8B8B71T");
         readStructureRequest.setActualReadStructure("101T8B8B101T");
 
