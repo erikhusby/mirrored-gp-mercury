@@ -33,8 +33,9 @@ public class AutomatedBiller {
 
     private final Log log = LogFactory.getLog(AutomatedBiller.class);
 
-    private static final int PROCESSING_START_HOUR = 21;
-    private static final int PROCESSING_END_HOUR = 4;
+    // Locked out from midnight through 5
+    private static final int PROCESSING_START_HOUR = 0;
+    private static final int PROCESSING_END_HOUR = 5;
 
     /**
      * Calculate whether the schedule is processing messages. This will be used to lock out tracker uploads.
@@ -44,7 +45,7 @@ public class AutomatedBiller {
     public boolean isProcessing() {
         GregorianCalendar calendar = new GregorianCalendar();
         return calendar.get(Calendar.HOUR_OF_DAY) >= PROCESSING_START_HOUR ||
-               calendar.get(Calendar.HOUR_OF_DAY) <= PROCESSING_END_HOUR;
+               calendar.get(Calendar.HOUR_OF_DAY) < PROCESSING_END_HOUR;
     }
 
     @Inject
@@ -63,9 +64,9 @@ public class AutomatedBiller {
     }
 
     /**
-     * The schedule is every 30 minutes from 9PM through 4:45. This annotation MUST BE IN SYNC WITH ABOVE CONSTANTS.
+     * The schedule is every 30 minutes from Midnight through 4:45. This annotation MUST BE IN SYNC WITH ABOVE CONSTANTS.
      */
-    @Schedule(minute = "*/30", hour = "0,1,2,3,4,21,22,23", persistent = false)
+    @Schedule(minute = "*/30", hour = "0,1,2,3,4", persistent = false)
     public void processMessages() {
         // Use SessionContextUtility here because ProductOrderEjb depends on session scoped beans.
         sessionContextUtility.executeInContext(new SessionContextUtility.Function() {
