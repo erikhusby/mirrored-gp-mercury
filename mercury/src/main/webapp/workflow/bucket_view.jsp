@@ -265,7 +265,6 @@
                 </c:forEach>
             </td>
             <td>
-
                     ${actionBean.getSinglePDOBusinessKey(reworkVessel.labVessel)}
             </td>
             <td>
@@ -277,17 +276,15 @@
             <td>
                 <c:forEach items="${reworkVessel.labVessel.nearestWorkflowLabBatches}" var="batch"
                            varStatus="stat">
-                    ${actionBean.getSinglePDOBusinessKey(reworkVessel.labVessel)}
+                    ${batch.businessKey}
                     <c:if test="${!stat.last}">&nbsp;</c:if>
                 </c:forEach>
 
             </td>
             <td>
-                    ${actionBean.getReworkReason(reworkVessel)} :
                 ${reworkVessel.reworkDetail.reworkReason.value}
             </td>
             <td>
-                    ${actionBean.getReworkComment(reworkVessel)} :
                 ${reworkVessel.reworkDetail.comment}
             </td>
             <td>
