@@ -1,53 +1,8 @@
---   Drops all existing sequences and tables (do not run this on the production db)
+----------------------------------------
+-- do not run this on the production db
+----------------------------------------
 
-DROP SEQUENCE event_fact_id_seq;
-DROP SEQUENCE sequencing_sample_id_seq;
-
-DROP TABLE product_order_add_on CASCADE CONSTRAINTS;
-DROP TABLE product_order_sample_status CASCADE CONSTRAINTS;
-DROP TABLE product_order_sample CASCADE CONSTRAINTS;
-DROP TABLE product_order_status CASCADE CONSTRAINTS;
-DROP TABLE product_order CASCADE CONSTRAINTS;
-DROP TABLE research_project_irb CASCADE CONSTRAINTS;
-DROP TABLE research_project_cohort CASCADE CONSTRAINTS;
-DROP TABLE research_project_funding CASCADE CONSTRAINTS;
-DROP TABLE research_project_person CASCADE CONSTRAINTS;
-DROP TABLE research_project_status CASCADE CONSTRAINTS;
-DROP TABLE research_project CASCADE CONSTRAINTS;
-DROP TABLE price_item CASCADE CONSTRAINTS;
-DROP TABLE product CASCADE CONSTRAINTS;
-DROP TABLE lab_batch CASCADE CONSTRAINTS;
-DROP TABLE lab_vessel CASCADE CONSTRAINTS;
-DROP TABLE event_fact CASCADE CONSTRAINTS;
-DROP TABLE workflow CASCADE CONSTRAINTS;
-DROP TABLE workflow_process CASCADE CONSTRAINTS;
-DROP TABLE sequencing_sample_fact CASCADE CONSTRAINTS;
-DROP TABLE sequencing_run CASCADE CONSTRAINTS;
-
-DROP TABLE im_product_order_add_on CASCADE CONSTRAINTS;
-DROP TABLE im_ledger_entry CASCADE CONSTRAINTS;
-DROP TABLE im_product_order_sample_bill CASCADE CONSTRAINTS;
-DROP TABLE im_product_order_sample_risk CASCADE CONSTRAINTS;
-DROP TABLE im_product_order_sample_stat CASCADE CONSTRAINTS;
-DROP TABLE im_product_order_sample CASCADE CONSTRAINTS;
-DROP TABLE im_product_order_status CASCADE CONSTRAINTS;
-DROP TABLE im_product_order CASCADE CONSTRAINTS;
-DROP TABLE im_research_project_irb CASCADE CONSTRAINTS;
-DROP TABLE im_research_project_cohort CASCADE CONSTRAINTS;
-DROP TABLE im_research_project_funding CASCADE CONSTRAINTS;
-DROP TABLE im_research_project_person CASCADE CONSTRAINTS;
-DROP TABLE im_research_project CASCADE CONSTRAINTS;
-DROP TABLE im_research_project_status CASCADE CONSTRAINTS;
-DROP TABLE im_price_item CASCADE CONSTRAINTS;
-DROP TABLE im_product CASCADE CONSTRAINTS;
-DROP TABLE im_lab_vessel CASCADE CONSTRAINTS;
-DROP TABLE im_lab_batch CASCADE CONSTRAINTS;
-DROP TABLE im_event_fact CASCADE CONSTRAINTS;
-DROP TABLE im_workflow CASCADE CONSTRAINTS;
-DROP TABLE im_workflow_process CASCADE CONSTRAINTS;
-DROP TABLE im_sequencing_sample_fact CASCADE CONSTRAINTS;
-DROP TABLE im_sequencing_run CASCADE CONSTRAINTS;
-
+EXEC drop_all_tables;
 
 --   Creates the user-visible tables
 
