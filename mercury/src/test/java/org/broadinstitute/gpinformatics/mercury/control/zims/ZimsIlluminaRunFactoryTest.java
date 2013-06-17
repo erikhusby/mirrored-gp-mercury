@@ -163,7 +163,7 @@ public class ZimsIlluminaRunFactoryTest {
         Date runDate = new Date(1358889107084L);
         String testRunDirectory = "TestRun";
         IlluminaSequencingRun sequencingRun = new IlluminaSequencingRun(flowcell, testRunDirectory, "Run-123",
-                "IlluminaRunServiceImplTest", 101L, true, runDate, null, "/root/path/to/run/" + testRunDirectory);
+                "IlluminaRunServiceImplTest", 101L, true, runDate, "/root/path/to/run/" + testRunDirectory);
         ZimsIlluminaRun zimsIlluminaRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(sequencingRun);
 
         assertThat(zimsIlluminaRun.getError(), nullValue());

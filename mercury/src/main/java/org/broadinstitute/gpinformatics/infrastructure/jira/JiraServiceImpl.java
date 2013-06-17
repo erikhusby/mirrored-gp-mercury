@@ -39,6 +39,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
     private String baseUrl;
 
+    @SuppressWarnings("UnusedDeclaration")
     public JiraServiceImpl() {
     }
 
@@ -78,6 +79,22 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
         public String getKey() {
             return key;
+        }
+
+        /**
+         * DO NOT DELETE, this is used by JAXB to marshal JSON data into the DTO.  We don't actually
+         * care about this data, but the setter needs to be here.
+         */
+        @SuppressWarnings("UnusedDeclaration")
+        private void setId(Long id) {
+        }
+
+        /**
+         * DO NOT DELETE, this is used by JAXB to marshal JSON data into the DTO.  We don't actually
+         * care about this data, but the setter needs to be here.
+         */
+        @SuppressWarnings("UnusedDeclaration")
+        private void setSelf(String self) {
         }
 
         JiraIssueData() {

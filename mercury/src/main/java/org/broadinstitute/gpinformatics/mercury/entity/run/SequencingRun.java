@@ -27,6 +27,10 @@ public class SequencingRun {
 
     private Date runDate;
 
+    private String setupReadStructure;
+
+    private String actualReadStructure;
+
     @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "run_cartridge")
     private RunCartridge runCartridge;
@@ -132,5 +136,21 @@ public class SequencingRun {
     /** For test purposes only. */
     public void setSequencingRunId(long runId) {
         sequencingRunId = runId;
+    }
+
+    public String getSetupReadStructure() {
+        return setupReadStructure;
+    }
+
+    public void setSetupReadStructure(String setupReadStructure) {
+        this.setupReadStructure = setupReadStructure;
+    }
+
+    public String getActualReadStructure() {
+        return actualReadStructure;
+    }
+
+    public void setActualReadStructure(String actualReadStructure) {
+        this.actualReadStructure = actualReadStructure;
     }
 }

@@ -249,7 +249,7 @@
                     oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
 
                     almostOneYearAgo = new Date(oneYearAgo);
-                    almostOneYearAgo.setMonth( oneYearAgo.getMonth( ) + 1 );
+                    almostOneYearAgo.setMonth(oneYearAgo.getMonth( ) + 1);
 
                     $j('.picoRunDate').each(getHighlightClass);
                 }
@@ -262,10 +262,10 @@
 
                 var theDateString = $j(this).text();
 
-                if ((theDateString != null) && (theDateString != '')) {
+                if (theDateString) {
                     var theDate = new Date(theDateString);
 
-                    if (theDate != null) {
+                    if (theDate) {
                         if (theDate < oneYearAgo) {
                             $j(this).addClass("label label-important");
                         } else if (theDate < almostOneYearAgo) {

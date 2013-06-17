@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRu
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -31,7 +32,7 @@ import java.util.EnumSet;
 
 /**
  * A JAX-RS resource for Solexa sequencing runs
- *
+ * <p/>
  * There exists another resource {@link org.broadinstitute.gpinformatics.mercury.boundary.zims.IlluminaRunResource}
  * that also deals with Run information, but it is geared toward finding Run info.  Currently the two resources are
  * separate paths and files but it may be prudent in the future to join them to eliminate the confusion of what is
@@ -85,7 +86,7 @@ public class SolexaRunResource {
         IlluminaSequencingRun run = illuminaSequencingRunDao.findByRunName(runName);
         if (run != null) {
             throw new ResourceException("Attempting to create a run that is already registered in the system",
-                                               Response.Status.INTERNAL_SERVER_ERROR);
+                    Response.Status.INTERNAL_SERVER_ERROR);
         }
 
         IlluminaFlowcell flowcell = illuminaFlowcellDao.findByBarcode(solexaRunBean.getFlowcellBarcode());
@@ -116,8 +117,8 @@ public class SolexaRunResource {
             updated which routing should determine if a run should be registered in Mercury.  If BOTH is returned, we
              must cover Mercury as well as Squid
          */
-        if(EnumSet.of(MercuryOrSquidRouter.MercuryOrSquid.MERCURY,
-                      MercuryOrSquidRouter.MercuryOrSquid.BOTH).contains(route)) {
+        if (EnumSet.of(MercuryOrSquidRouter.MercuryOrSquid.MERCURY,
+                MercuryOrSquidRouter.MercuryOrSquid.BOTH).contains(route)) {
             try {
                 run = registerRun(solexaRunBean, flowcell);
                 URI createdUri = absolutePathBuilder.path(run.getRunName()).build();
@@ -139,6 +140,7 @@ public class SolexaRunResource {
         return callerResponse;
     }
 
+
     public IlluminaSequencingRun registerRun(SolexaRunBean solexaRunBean, IlluminaFlowcell illuminaFlowcell) {
         /*
          * Need logic to register MiSeq run based off of the ReagentBlockBarcode in SolexaRunBean.
@@ -150,4 +152,29 @@ public class SolexaRunResource {
         illuminaSequencingRunDao.persist(illuminaSequencingRun);
         return illuminaSequencingRun;
     }
+
+    /**
+     * storeRunReadStructure is the implementation for a Rest service that allows the Pipeline to associate run read
+     * structures (both planned and actual) with a sequencing run
+     *
+     * @param readStructureRequest contains all information necessary to searching for and update a Sequencing run
+     *
+     * @return a new instance of a readStructureRequest populated with the values as they are found on the run itself
+     */
+    @POST
+    @Consumes({"application/json"})
+    @Produces({"application/json"})
+    @Path("/storeRunReadStructure")
+    public ReadStructureRequest storeRunReadStructure(ReadStructureRequest readStructureRequest) {
+
+        IlluminaSequencingRun run = illuminaSequencingRunDao.findByBarcode(readStructureRequest.getRunBarcode());
+
+        if (run == null) {
+            throw new ResourceException("Unable to find a run associated with " + readStructureRequest.getRunBarcode(),
+                    Response.Status.INTERNAL_SERVER_ERROR);
+        }
+
+        return illuminaSequencingRunFactory.storeReadsStructureDBFree(readStructureRequest, run);
+    }
+
 }

@@ -55,6 +55,7 @@ public class RapSheet {
 
     public RapSheet() {
     }
+
     public RapSheet(MercurySample sample) {
         setSample(sample);
     }

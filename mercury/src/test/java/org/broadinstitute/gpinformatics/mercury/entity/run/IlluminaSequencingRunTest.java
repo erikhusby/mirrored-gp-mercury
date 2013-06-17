@@ -22,7 +22,6 @@ public class IlluminaSequencingRunTest {
     private IlluminaFlowcell testFlowcell;
     private String runPath;
     private String fullRunPath;
-    private OutputDataLocation dataLocation;
     private String machineName;
     private IlluminaSequencingRun testRun;
 
@@ -57,6 +56,6 @@ public class IlluminaSequencingRunTest {
         fullRunPath = runPath + runName;
         machineName = "Superman";
         testRun = new IlluminaSequencingRun(testFlowcell, runName, runBarcode, machineName, null, false, runDate,
-                null, fullRunPath);
+                fullRunPath);
     }
 }

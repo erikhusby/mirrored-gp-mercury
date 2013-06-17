@@ -26,7 +26,6 @@ import org.broadinstitute.gpinformatics.infrastructure.mercury.MercuryClientEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.LabVesselComment;
@@ -38,6 +37,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 
 import javax.annotation.Nonnull;
@@ -114,7 +114,7 @@ public class ReworkEjb {
             vesselPositions = new VesselPosition[]{VesselPosition.TUBE1};
         }
 
-        WorkflowBucketDef bucketDef = LabEventHandler.findBucketDef(workflowName, reworkFromStep);
+        WorkflowBucketDef bucketDef = ProductWorkflowDefVersion.findBucketDef(workflowName, reworkFromStep);
 
         for (VesselPosition vesselPosition : vesselPositions) {
             Collection<SampleInstance> samplesAtPosition =
@@ -351,7 +351,7 @@ public class ReworkEjb {
                                                  @Nonnull String workflowName) {
         List<String> validationMessages = new ArrayList<>();
 
-        WorkflowBucketDef bucketDef = LabEventHandler.findBucketDef(workflowName, reworkStep);
+        WorkflowBucketDef bucketDef = ProductWorkflowDefVersion.findBucketDef(workflowName, reworkStep);
 
         if (!reworkVessel.hasAncestorBeenInBucket(bucketDef.getName())) {
             validationMessages.add("You have submitted a vessel to the bucket that may not be considered a rework.  " +
