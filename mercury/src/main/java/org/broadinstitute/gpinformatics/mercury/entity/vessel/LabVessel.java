@@ -5,7 +5,6 @@ import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.SampleMetadata;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.SampleType;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -1488,10 +1487,10 @@ public abstract class LabVessel implements Serializable {
     /**
      * Helper method to determine if a given vessel or any of its ancestors are currently in a bucket.
      *
-     * @param pdoKey
-     * @param bucketName
+     * @param pdoKey     Business key of a Product order associated with a bucket entry
+     * @param bucketName name of a bucket to search for a bucket entry
      *
-     * @return
+     * @return boolean indicating whether an ancestor of the current vessel has been in a bucket.
      */
     public boolean isAncestorInBucket(@Nonnull String pdoKey, @Nonnull String bucketName) {
 
@@ -1500,8 +1499,8 @@ public abstract class LabVessel implements Serializable {
         vesselHierarchy.add(this);
         vesselHierarchy.addAll(this.getAncestorVessels());
 
-        for (LabVessel currAncestor : vesselHierarchy) {
-            for (BucketEntry currentEntry : currAncestor.getBucketEntries()) {
+        for (LabVessel currentAncestor : vesselHierarchy) {
+            for (BucketEntry currentEntry : currentAncestor.getBucketEntries()) {
                 if (pdoKey.equals(currentEntry.getPoBusinessKey()) &&
                     bucketName.equals(currentEntry.getBucket().getBucketDefinitionName()) &&
                     BucketEntry.Status.Active == currentEntry.getStatus()) {
@@ -1545,13 +1544,13 @@ public abstract class LabVessel implements Serializable {
      */
     public boolean hasAncestorBeenInBucket(@Nonnull String bucketName) {
 
-        List<LabVessel> vesselHeirarchy = new ArrayList<LabVessel>();
+        List<LabVessel> vesselHierarchy = new ArrayList<LabVessel>();
 
-        vesselHeirarchy.add(this);
-        vesselHeirarchy.addAll(this.getAncestorVessels());
+        vesselHierarchy.add(this);
+        vesselHierarchy.addAll(this.getAncestorVessels());
 
-        for (LabVessel currAncestor : vesselHeirarchy) {
-            for (BucketEntry currentEntry : currAncestor.getBucketEntries()) {
+        for (LabVessel currentAncestor : vesselHierarchy) {
+            for (BucketEntry currentEntry : currentAncestor.getBucketEntries()) {
                 if (bucketName.equals(currentEntry.getBucket().getBucketDefinitionName())) {
                     return true;
                 }

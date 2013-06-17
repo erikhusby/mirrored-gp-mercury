@@ -66,6 +66,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
 import org.broadinstitute.gpinformatics.mercury.presentation.transfervis.TransferVisualizerFrame;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
@@ -263,6 +264,14 @@ public class LabEventTest extends BaseEventTest {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+
+        ReadStructureRequest readStructureRequest = new ReadStructureRequest();
+        readStructureRequest.setRunBarcode(illuminaSequencingRun.getRunBarcode());
+        readStructureRequest.setSetupReadStructure("71T8B8B71T");
+        readStructureRequest.setActualReadStructure("101T8B8B101T");
+
+        illuminaSequencingRunFactory.storeReadsStructureDBFree(readStructureRequest, illuminaSequencingRun);
+
         ZimsIlluminaRunFactory zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(
                 new BSPSampleDataFetcher() {
                     @Override
@@ -311,6 +320,8 @@ public class LabEventTest extends BaseEventTest {
         );
         ZimsIlluminaRun zimsIlluminaRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(illuminaSequencingRun);
         Assert.assertEquals(zimsIlluminaRun.getLanes().size(), 8, "Wrong number of lanes");
+        Assert.assertEquals(zimsIlluminaRun.getActualReadStructure(), readStructureRequest.getActualReadStructure());
+        Assert.assertEquals(zimsIlluminaRun.getSetupReadStructure(), readStructureRequest.getSetupReadStructure());
         ZimsIlluminaChamber zimsIlluminaChamber = zimsIlluminaRun.getLanes().iterator().next();
         Assert.assertEquals(zimsIlluminaChamber.getLibraries().size(), NUM_POSITIONS_IN_RACK,
                 "Wrong number of libraries");
@@ -384,7 +395,7 @@ public class LabEventTest extends BaseEventTest {
     public void testExomeExpress() throws Exception {
 //        Controller.startCPURecording(true);
         // Use Standard Exome product, to verify that workflow is taken from LCSet, not Product
-        ProductOrder productOrder = ProductOrderTestFactory.buildHybridSelectionProductOrder(96);
+        final ProductOrder productOrder = ProductOrderTestFactory.buildHybridSelectionProductOrder(96);
         AthenaClientServiceStub.addProductOrder(productOrder);
         final Date runDate = new Date();
         // todo jmt create bucket, then batch, rather than rack than batch then bucket
@@ -439,6 +450,64 @@ public class LabEventTest extends BaseEventTest {
                 new IlluminaSequencingRunFactory(EasyMock.createMock(JiraCommentUtil.class));
         IlluminaSequencingRun run =
                 runFactory.buildDbFree(runBean, hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell());
+
+        ReadStructureRequest readStructureRequest = new ReadStructureRequest();
+        readStructureRequest.setRunBarcode(run.getRunBarcode());
+        readStructureRequest.setSetupReadStructure("71T8B8B71T");
+        readStructureRequest.setActualReadStructure("101T8B8B101T");
+
+        runFactory.storeReadsStructureDBFree(readStructureRequest, run);
+
+        ZimsIlluminaRunFactory zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(
+                new BSPSampleDataFetcher() {
+                    @Override
+                    public Map<String, BSPSampleDTO> fetchSamplesFromBSP(@Nonnull Collection<String> sampleNames) {
+                        Map<String, BSPSampleDTO> mapSampleIdToDto = new HashMap<String, BSPSampleDTO>();
+                        Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>() {{
+                            put(BSPSampleSearchColumn.PRIMARY_DISEASE, "Cancer");
+                            put(BSPSampleSearchColumn.LSID, "org.broad:SM-1234");
+                            put(BSPSampleSearchColumn.MATERIAL_TYPE, "DNA:DNA Genomic");
+                            put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, "4321");
+                            put(BSPSampleSearchColumn.SPECIES, "Homo Sapiens");
+                            put(BSPSampleSearchColumn.PARTICIPANT_ID, "PT-1234");
+                        }};
+                        for (String sampleName : sampleNames) {
+                            mapSampleIdToDto.put(sampleName, new BSPSampleDTO(dataMap));
+                        }
+                        return mapSampleIdToDto;
+                    }
+                },
+                new AthenaClientService() {
+                    @Override
+                    public ProductOrder retrieveProductOrderDetails(@Nonnull String poBusinessKey) {
+                        return productOrder;
+                    }
+
+                    @Override
+                    public Map<String, List<ProductOrderSample>> findMapSampleNameToPoSample(List<String> sampleNames) {
+                        return null;
+                    }
+
+                    @Override
+                    public Collection<ProductOrder> retrieveMultipleProductOrderDetails(
+                            @Nonnull Collection<String> poBusinessKeys) {
+                        return null;
+                    }
+                },
+                new ControlDao() {
+                    @Override
+                    public List<Control> findAllActive() {
+                        List<Control> controlList = new ArrayList<>();
+                        controlList.add(new Control("NA12878", Control.ControlType.POSITIVE));
+                        controlList.add(new Control("WATER_CONTROL", Control.ControlType.NEGATIVE));
+                        return controlList;
+                    }
+                }
+        );
+        ZimsIlluminaRun zimsIlluminaRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(run);
+        Assert.assertEquals(zimsIlluminaRun.getLanes().size(), 2, "Wrong number of lanes");
+        Assert.assertEquals(zimsIlluminaRun.getActualReadStructure(), readStructureRequest.getActualReadStructure());
+        Assert.assertEquals(zimsIlluminaRun.getSetupReadStructure(), readStructureRequest.getSetupReadStructure());
 
         Map.Entry<String, TwoDBarcodedTube> stringTwoDBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
         ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();

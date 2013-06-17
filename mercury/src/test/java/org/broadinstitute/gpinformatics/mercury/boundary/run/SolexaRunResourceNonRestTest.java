@@ -48,7 +48,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 
 /**
- * TODO scottmat fill in javadoc!!!
+ * Tests the methods in the SolexaRunResource without any rest calls
  */
 public class SolexaRunResourceNonRestTest extends Arquillian {
 
@@ -208,13 +208,16 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         flowcellDao.persist(exexOrder);
     }
 
-
+    /**
+     * Calls the run resource methods that will apply the setup and actual read structures to a sequencing run.  This
+     * method will also create a run to associate the read structures.
+     */
     @Test(groups = EXTERNAL_INTEGRATION,
             dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     public void testSetReadStructure() {
 
         ReadStructureRequest readStructure = new ReadStructureRequest();
-        readStructure.setRunBarCode(runBarcode);
+        readStructure.setRunBarcode(runBarcode);
         readStructure.setSetupReadStructure("71T8B8B101T");
 
         IlluminaSequencingRun run =
@@ -230,7 +233,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
 
         run = runDao.findByBarcode(runBarcode);
 
-        Assert.assertEquals(readstructureResult.getRunBarCode(), run.getRunBarcode());
+        Assert.assertEquals(readstructureResult.getRunBarcode(), run.getRunBarcode());
         Assert.assertNotNull(readstructureResult.getSetupReadStructure());
         Assert.assertEquals(readstructureResult.getSetupReadStructure(), run.getSetupReadStructure());
         Assert.assertNull(readstructureResult.getActualReadStructure());
@@ -241,7 +244,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
 
         run = runDao.findByBarcode(runBarcode);
 
-        Assert.assertEquals(readstructureResult.getRunBarCode(), run.getRunBarcode());
+        Assert.assertEquals(readstructureResult.getRunBarcode(), run.getRunBarcode());
         Assert.assertNotNull(readstructureResult.getSetupReadStructure());
         Assert.assertEquals(readstructureResult.getSetupReadStructure(), run.getSetupReadStructure());
         Assert.assertNotNull(readstructureResult.getActualReadStructure());

@@ -13,7 +13,6 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.xml.bind.annotation.XmlElement;
@@ -84,7 +83,7 @@ public class ResearchProjectResourceForBass {
         }
 
         public ResearchProjects(Collection<ResearchProject> projects) {
-            this.projects = new ArrayList<ResearchProjectData>(projects.size());
+            this.projects = new ArrayList<>(projects.size());
             for (ResearchProject project : projects) {
                 this.projects.add(new ResearchProjectData(project));
             }
@@ -101,12 +100,12 @@ public class ResearchProjectResourceForBass {
     @GET
     @Path("rp/{researchProjectId}")
     @Produces(MediaType.APPLICATION_JSON)
-    public ResearchProjectData findById(@PathParam("researchProjectId") String researchProjectId) {
+    public Response findById(@PathParam("researchProjectId") String researchProjectId) {
         ResearchProject researchProject = researchProjectDao.findByJiraTicketKey(researchProjectId);
         if (researchProject == null) {
-            throw new WebApplicationException(Response.Status.NOT_FOUND);
+           return Response.status(Response.Status.NOT_FOUND).build();
         }
-        return new ResearchProjectData(researchProject);
+        return Response.ok(new ResearchProjectData(researchProject)).build();
     }
 
     @GET

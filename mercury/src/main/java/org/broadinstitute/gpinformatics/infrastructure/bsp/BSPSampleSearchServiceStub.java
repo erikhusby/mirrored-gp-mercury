@@ -4,11 +4,16 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Alternative;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Stub for BSP's sample search service.
- *
+ * <p/>
  * This class is @ApplicationScoped because it should only be used in integration tests (so threading shouldn't be an
  * issue) and because it more closely emulates the concept of an endpoint to a single remote system.
  */
@@ -90,7 +95,8 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
     public static final String SM_12FO4_COLLAB_PID = "CHTN_SEW";
     public static final String SM_12FO4_MAT_TYPE = "DNA:DNA Somatic";
     public static final String SM_12FO4_DNA = "3.765242738037109374";
-    public static final String SM_12FO4_FP = "AACTCCCCGGAAAGCTACAAAACG--AATTAGAGTTAATTCTCCAATTGTCTAG--GGACAGGGGGTTCTAAACCCAA--GTCTCCCGCTAGTTTTGGAGAGAGCCGGAGCCCTTTCCAGAGTTCTCTAGTTGGCTGGAGTTCCAAAACTTTCCAATTCTTTGTCGCCGGTTTTACCCCCGGAGAGCTCCCT";
+    public static final String SM_12FO4_FP =
+            "AACTCCCCGGAAAGCTACAAAACG--AATTAGAGTTAATTCTCCAATTGTCTAG--GGACAGGGGGTTCTAAACCCAA--GTCTCCCGCTAGTTTTGGAGAGAGCCGGAGCCCTTTCCAGAGTTCTCTAGTTGGCTGGAGTTCCAAAACTTTCCAATTCTTTGTCGCCGGTTTTACCCCCGGAGAGCTCCCT";
     public static final String SM_12FO4_DISEASE = "Carcinoid Tumor";
 
 
@@ -107,7 +113,8 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
     public static final String SM_12DW4_COLLAB_PID = "CHTN_SEW";
     public static final String SM_12DW4_MAT_TYPE = "DNA:DNA Somatic";
     public static final String SM_12DW4_DNA = "3.765242738037109374";
-    public static final String SM_12DW4_FP = "AACTCCCCGGAAAGCTACAAAACG--AATTAGAGTTAATTCTCCAATTGTCTAG--GGACAGGGGGTTCTAAACCCAA--GTCTCCCGCTAGTTTTGGAGAGAGCCGGAGCCCTTTCCAGAGTTCTCTAGTTGGCTGGAGTTCCAAAACTTTCCAATTCTTTGTCGCCGGTTTTACCCCCGGAGAGCTCCCT";
+    public static final String SM_12DW4_FP =
+            "AACTCCCCGGAAAGCTACAAAACG--AATTAGAGTTAATTCTCCAATTGTCTAG--GGACAGGGGGTTCTAAACCCAA--GTCTCCCGCTAGTTTTGGAGAGAGCCGGAGCCCTTTCCAGAGTTCTCTAGTTGGCTGGAGTTCCAAAACTTTCCAATTCTTTGTCGCCGGTTTTACCCCCGGAGAGCTCCCT";
     public static final String SM_12DW4_DISEASE = "Carcinoid Tumor";
 
 
@@ -124,7 +131,8 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
     public static final String SM_12MD2_COLLAB_PID = "CHTN_SEW";
     public static final String SM_12MD2_MAT_TYPE = "DNA:DNA Somatic";
     public static final String SM_12MD2_DNA = "3.765242738037109374";
-    public static final String SM_12MD2_FP = "AACTCCCCGGAAAGCTACAAAACG--AATTAGAGTTAATTCTCCAATTGTCTAG--GGACAGGGGGTTCTAAACCCAA--GTCTCCCGCTAGTTTTGGAGAGAGCCGGAGCCCTTTCCAGAGTTCTCTAGTTGGCTGGAGTTCCAAAACTTTCCAATTCTTTGTCGCCGGTTTTACCCCCGGAGAGCTCCCT";
+    public static final String SM_12MD2_FP =
+            "AACTCCCCGGAAAGCTACAAAACG--AATTAGAGTTAATTCTCCAATTGTCTAG--GGACAGGGGGTTCTAAACCCAA--GTCTCCCGCTAGTTTTGGAGAGAGCCGGAGCCCTTTCCAGAGTTCTCTAGTTGGCTGGAGTTCCAAAACTTTCCAATTCTTTGTCGCCGGTTTTACCCCCGGAGAGCTCCCT";
     public static final String SM_12MD2_DISEASE = "Carcinoid Tumor";
 
 
@@ -143,7 +151,7 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
     private final Map<String, Map<BSPSampleSearchColumn, String>> samples = new HashMap<>();
 
     public BSPSampleSearchServiceStub() {
-        addToMap( SM_12CO4, new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
+        addToMap(SM_12CO4, new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
             put(BSPSampleSearchColumn.PARTICIPANT_ID, SM_12CO4_PATIENT_ID);
             put(BSPSampleSearchColumn.ROOT_SAMPLE, SM_12CO4_ROOT_SAMP);
             put(BSPSampleSearchColumn.STOCK_SAMPLE, SM_12CO4_STOCK_SAMP);
@@ -163,9 +171,9 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
             put(BSPSampleSearchColumn.FINGERPRINT, SM_12CO4_FP);
             put(BSPSampleSearchColumn.CONTAINER_ID, SM_12CO4_CONTAINER_ID);
             put(BSPSampleSearchColumn.SAMPLE_ID, SM_12CO4);
-        }} );
+        }});
 
-        addToMap( SM_1P3WY, new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
+        addToMap(SM_1P3WY, new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
             put(BSPSampleSearchColumn.PARTICIPANT_ID, SM_1P3WY_PATIENT_ID);
             put(BSPSampleSearchColumn.ROOT_SAMPLE, SM_1P3WY_ROOT_SAMP);
             put(BSPSampleSearchColumn.STOCK_SAMPLE, SM_1P3WY_STOCK_SAMP);
@@ -185,9 +193,9 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
             put(BSPSampleSearchColumn.FINGERPRINT, SM_1P3WY_FP);
             put(BSPSampleSearchColumn.CONTAINER_ID, SM_1P3WY_CONTAINER_ID);
             put(BSPSampleSearchColumn.SAMPLE_ID, SM_1P3WY);
-        }} );
+        }});
 
-        addToMap( SM_1P3XN, new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
+        addToMap(SM_1P3XN, new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
             put(BSPSampleSearchColumn.PARTICIPANT_ID, SM_1P3XN_PATIENT_ID);
             put(BSPSampleSearchColumn.ROOT_SAMPLE, SM_1P3XN_ROOT_SAMP);
             put(BSPSampleSearchColumn.STOCK_SAMPLE, SM_1P3XN_STOCK_SAMP);
@@ -207,9 +215,9 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
             put(BSPSampleSearchColumn.FINGERPRINT, SM_1P3XN_FP);
             put(BSPSampleSearchColumn.CONTAINER_ID, SM_1P3XN_CONTAINER_ID);
             put(BSPSampleSearchColumn.SAMPLE_ID, SM_1P3XN);
-        }} );
+        }});
 
-        addToMap( SM_12FO4, new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
+        addToMap(SM_12FO4, new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
             put(BSPSampleSearchColumn.PARTICIPANT_ID, SM_12FO4_PATIENT_ID);
             put(BSPSampleSearchColumn.ROOT_SAMPLE, SM_12FO4_ROOT_SAMP);
             put(BSPSampleSearchColumn.STOCK_SAMPLE, SM_12FO4_STOCK_SAMP);
@@ -229,9 +237,9 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
             put(BSPSampleSearchColumn.FINGERPRINT, SM_12FO4_FP);
             put(BSPSampleSearchColumn.CONTAINER_ID, SM_12FO4_CONTAINER_ID);
             put(BSPSampleSearchColumn.SAMPLE_ID, SM_12FO4);
-        }} );
+        }});
 
-        addToMap( SM_12DW4, new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
+        addToMap(SM_12DW4, new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
             put(BSPSampleSearchColumn.PARTICIPANT_ID, SM_12DW4_PATIENT_ID);
             put(BSPSampleSearchColumn.ROOT_SAMPLE, SM_12DW4_ROOT_SAMP);
             put(BSPSampleSearchColumn.STOCK_SAMPLE, SM_12DW4_STOCK_SAMP);
@@ -251,9 +259,9 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
             put(BSPSampleSearchColumn.FINGERPRINT, SM_12DW4_FP);
             put(BSPSampleSearchColumn.CONTAINER_ID, SM_12DW4_CONTAINER_ID);
             put(BSPSampleSearchColumn.SAMPLE_ID, SM_12DW4);
-        }} );
+        }});
 
-        addToMap( SM_12MD2, new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
+        addToMap(SM_12MD2, new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
             put(BSPSampleSearchColumn.PARTICIPANT_ID, SM_12MD2_PATIENT_ID);
             put(BSPSampleSearchColumn.ROOT_SAMPLE, SM_12MD2_ROOT_SAMP);
             put(BSPSampleSearchColumn.STOCK_SAMPLE, SM_12MD2_STOCK_SAMP);
@@ -273,15 +281,15 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
             put(BSPSampleSearchColumn.FINGERPRINT, SM_12MD2_FP);
             put(BSPSampleSearchColumn.CONTAINER_ID, SM_12MD2_CONTAINER_ID);
             put(BSPSampleSearchColumn.SAMPLE_ID, SM_12MD2);
-        }} );
+        }});
 
     }
 
     /**
      * Configures a sample for this stub to be able to return.
      *
-     * @param sampleName    the sample name
-     * @param attributes    a map of attributes to return when the sample name is queried
+     * @param sampleName the sample name
+     * @param attributes a map of attributes to return when the sample name is queried
      *
      * @throws RuntimeException if the sampleName is already configured for this stub
      */
@@ -290,11 +298,12 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
             throw new RuntimeException("The mock BSP service already contains " + sampleName);
         }
 
-        samples.put(sampleName,attributes);
+        samples.put(sampleName, attributes);
     }
 
     @Override
-    public List<Map<BSPSampleSearchColumn, String>> runSampleSearch(Collection<String> sampleIDs, BSPSampleSearchColumn... resultColumns) {
+    public List<Map<BSPSampleSearchColumn, String>> runSampleSearch(Collection<String> sampleIDs,
+                                                                    BSPSampleSearchColumn... resultColumns) {
         List<Map<BSPSampleSearchColumn, String>> sampleAttributes = new ArrayList<Map<BSPSampleSearchColumn, String>>();
         for (String sampleID : sampleIDs) {
             if (samples.containsKey(sampleID)) {
