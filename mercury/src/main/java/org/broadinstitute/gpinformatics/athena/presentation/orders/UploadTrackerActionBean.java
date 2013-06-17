@@ -50,6 +50,8 @@ import java.util.Set;
 public class UploadTrackerActionBean extends CoreActionBean {
 
     private static final String TRACKER_PAGE = "/orders/uploadTracker.jsp";
+    public static final String UPLOAD = "upload";
+    public static final String PREVIEW = "preview";
 
     @Inject
     private Log logger;
@@ -69,10 +71,10 @@ public class UploadTrackerActionBean extends CoreActionBean {
     @Inject
     private PriceListCache priceListCache;
 
-    @Validate(required = true, on = "preview")
+    @Validate(required = true, on = PREVIEW)
     private FileBean trackerFile;
 
-    @Validate(required = true, on = "upload")
+    @Validate(required = true, on = UPLOAD)
     private String previewFilePath;
 
     private List<PreviewData> previewData;
@@ -86,7 +88,7 @@ public class UploadTrackerActionBean extends CoreActionBean {
     /**
      * Calculate whether the schedule is processing messages. This will be used to lock out tracker uploads.
      */
-    @Before(stages = LifecycleStage.EventHandling)
+    @Before(stages = LifecycleStage.EventHandling, on={ PREVIEW, UPLOAD })
     public void checkLockout() {
             GregorianCalendar calendar = new GregorianCalendar();
         if ((calendar.get(Calendar.HOUR_OF_DAY) >= AutomatedBiller.PROCESSING_START_HOUR) ||
@@ -288,14 +290,14 @@ public class UploadTrackerActionBean extends CoreActionBean {
         return new ForwardResolution(TRACKER_PAGE);
     }
 
-    @HandlesEvent("upload")
+    @HandlesEvent(UPLOAD)
     public Resolution upload() {
         isPreview = false;
         processBillingOnTempFile();
         return new ForwardResolution(TRACKER_PAGE);
     }
 
-    @HandlesEvent("preview")
+    @HandlesEvent(PREVIEW)
     public Resolution preview() {
         previewUploadedFile();
 

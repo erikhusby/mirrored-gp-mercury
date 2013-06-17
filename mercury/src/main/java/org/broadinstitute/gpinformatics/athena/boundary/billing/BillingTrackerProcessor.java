@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
+import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 
 import java.text.MessageFormat;
@@ -183,8 +184,20 @@ public class BillingTrackerProcessor extends TableProcessor {
 
         try {
             // Check the latest date on the sample and make sure it is not after the date on the data row.
-            Date autoLedgerTimestamp = DateUtils.parseDate(autoLedgerString);
-            if (autoLedgerTimestamp.after(productOrderSample.getLatestAutoLedgerTimestamp())) {
+            Date uploadedTimestamp = (!StringUtils.isBlank(autoLedgerString)) ? DateUtils.parseDate(autoLedgerString) : null;
+            Date currentSampleTimestamp = productOrderSample.getLatestAutoLedgerTimestamp();
+
+            // If either are null, both must be null.
+            boolean timestampsAreEqual;
+            if ((uploadedTimestamp == null) || (currentSampleTimestamp == null)) {
+                timestampsAreEqual = uploadedTimestamp == currentSampleTimestamp;
+            } else {
+                uploadedTimestamp = DateUtils.getStartOfDay(uploadedTimestamp);
+                currentSampleTimestamp = DateUtils.getStartOfDay(currentSampleTimestamp);
+                timestampsAreEqual = uploadedTimestamp.equals(currentSampleTimestamp);
+            }
+
+            if (!timestampsAreEqual) {
                 String error = "Sample " + currentSampleName + " on row " + (dataRowIndex + 1) +
                                " of spreadsheet " + currentProduct.getPartNumber() +
                                " was auto billed after this tracker was downloaded. Download the tracker again to " +
