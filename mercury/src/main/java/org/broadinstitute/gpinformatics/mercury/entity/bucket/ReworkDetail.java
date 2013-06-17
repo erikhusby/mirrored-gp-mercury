@@ -46,7 +46,7 @@ public class ReworkDetail {
     @Enumerated(EnumType.STRING)
     private LabEventType reworkStep;
 
-    @Column
+    @Column(name = "rework_comment")
     private String comment;
 
     /** For JPA. */

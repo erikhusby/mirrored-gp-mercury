@@ -96,7 +96,7 @@
             <column name="rework_step" type="varchar(255)">
                 <constraints nullable="false"/>
             </column>
-            <column name="comment" type="varchar(255)">
+            <column name="rework_comment" type="varchar(255)">
                 <constraints nullable="true"/>
             </column>
         </createTable>
@@ -128,7 +128,7 @@
             <column name="rework_step" type="varchar(255)">
                 <constraints nullable="true"/>
             </column>
-            <column name="comment" type="varchar(255)">
+            <column name="rework_comment" type="varchar(255)">
                 <constraints nullable="true"/>
             </column>
         </createTable>
