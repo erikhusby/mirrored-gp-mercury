@@ -11,5 +11,7 @@ TRAILING NULLCOLS
  run_name,
  barcode,
  registration_date DATE "YYYYMMDDHH24MISS",
- instrument
+ instrument.
+ setup_read_structure,
+ actual_read_structure
 )
