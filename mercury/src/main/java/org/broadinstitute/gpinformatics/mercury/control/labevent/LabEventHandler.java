@@ -170,6 +170,12 @@ public class LabEventHandler implements Serializable {
         return versionResult;
     }
 
+    /**
+     * getWorkflowVersionByWorkflow allows a caller to retrieve an instance of the latest workflow Version based on the
+     * name of the workflow
+     * @param workflowName Name of the workflow for which the user wishes to find a workflow version instance
+     * @return a representation of the latest workflow version as a java class
+     */
     public ProductWorkflowDefVersion getWorkflowVersionByWorkflow(String workflowName) {
         WorkflowConfig workflowConfig = workflowLoader.load();
 
@@ -288,29 +294,5 @@ public class LabEventHandler implements Serializable {
 //        }
 //        return bucketVessels;
 //    }
-
-    /**
-     * findBucketDef will utilize the WorkflowConfig to return an instance of a {@link WorkflowBucketDef} based
-     * on a given workflow definition and and step labEventType
-     * @param workflowName
-     * @param stepDef
-     * @return
-     */
-    public static WorkflowBucketDef findBucketDef(@Nonnull String workflowName, @Nonnull LabEventType stepDef) {
-
-        WorkflowConfig workflowConfig = (new WorkflowLoader()).load();
-        assert(workflowConfig != null && workflowConfig.getProductWorkflowDefs() != null &&
-               !workflowConfig.getProductWorkflowDefs().isEmpty());
-        ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(workflowName);
-        ProductWorkflowDefVersion versionResult = productWorkflowDef.getEffectiveVersion();
-
-        ProductWorkflowDefVersion.LabEventNode labEventNode =
-                versionResult.findStepByEventType(stepDef.getName());
-        if (labEventNode == null) {
-            return null;
-        } else {
-            return (WorkflowBucketDef) labEventNode.getStepDef();
-        }
-    }
 
 }

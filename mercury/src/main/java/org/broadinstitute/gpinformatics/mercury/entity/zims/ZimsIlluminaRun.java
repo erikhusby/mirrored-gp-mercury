@@ -56,9 +56,12 @@ public class ZimsIlluminaRun {
 
     @JsonProperty("actualReadStructure")
     private String actualReadStructure;
-    
+
     @JsonProperty("imagedAreaPerLaneMM2")
     private Double imagedAreaPerLaneMM2;
+
+    @JsonProperty("setupReadStructure")
+    private String setupReadStructure;
 
 
     public ZimsIlluminaRun() {
@@ -87,6 +90,13 @@ public class ZimsIlluminaRun {
         this.isPaired = isPaired;
         this.actualReadStructure = actualReadStructure;
         this.imagedAreaPerLaneMM2 = ThriftConversionUtil.zeroAsNull(imagedAreaPerLaneMM2);
+    }
+
+    public ZimsIlluminaRun(String runName, String runBarcode, String flowcellBarcode, String sequencer,
+                           String sequencerModel, String runDate, Boolean paired, String actualReadStructure,
+                           Double imagedAreaPerLaneMM2, String setupReadStructure) {
+        this(runName, runBarcode, flowcellBarcode, sequencer, sequencerModel, runDate, paired, actualReadStructure, imagedAreaPerLaneMM2);
+        this.setupReadStructure = setupReadStructure;
     }
 
     /**
@@ -180,5 +190,9 @@ public class ZimsIlluminaRun {
 
     public Double getImagedAreaPerLaneMM2() {
         return imagedAreaPerLaneMM2;
+    }
+
+    public String getSetupReadStructure() {
+        return setupReadStructure;
     }
 }

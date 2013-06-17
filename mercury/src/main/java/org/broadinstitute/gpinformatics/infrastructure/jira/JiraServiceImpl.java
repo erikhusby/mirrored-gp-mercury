@@ -70,13 +70,8 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
     }
 
     // Temporary container class to get ticket ID (key) from the server.
-    @SuppressWarnings("UnusedDeclaration")
     private static class JiraIssueData {
         private String key;
-
-        private Long id;
-
-        private String self;
 
         public void setKey(String key) {
             this.key = key;
@@ -86,20 +81,20 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
             return key;
         }
 
-        private Long getId() {
-            return id;
-        }
-
+        /**
+         * DO NOT DELETE, this is used by JAXB to marshal JSON data into the DTO.  We don't actually
+         * care about this data, but the setter needs to be here.
+         */
+        @SuppressWarnings("UnusedDeclaration")
         private void setId(Long id) {
-            this.id = id;
         }
 
-        private String getSelf() {
-            return self;
-        }
-
+        /**
+         * DO NOT DELETE, this is used by JAXB to marshal JSON data into the DTO.  We don't actually
+         * care about this data, but the setter needs to be here.
+         */
+        @SuppressWarnings("UnusedDeclaration")
         private void setSelf(String self) {
-            this.self = self;
         }
 
         JiraIssueData() {

@@ -32,7 +32,7 @@ import java.util.Set;
 
 @Stateful
 @RequestScoped
-public class BucketBean {
+public class BucketEjb {
 
     // todo jmt rename to BucketEjb?  Many unused parameters and an unused field.
 
@@ -42,13 +42,13 @@ public class BucketBean {
 
     private LabBatchEjb batchEjb;
 
-    private static final Log logger = LogFactory.getLog(BucketBean.class);
+    private static final Log logger = LogFactory.getLog(BucketEjb.class);
 
-    public BucketBean() {
+    public BucketEjb() {
     }
 
     @Inject
-    public BucketBean(LabEventFactory labEventFactory, JiraService jiraService, LabBatchEjb batchEjb) {
+    public BucketEjb(LabEventFactory labEventFactory, JiraService jiraService, LabBatchEjb batchEjb) {
         this.labEventFactory = labEventFactory;
         this.jiraService = jiraService;
         this.batchEjb = batchEjb;

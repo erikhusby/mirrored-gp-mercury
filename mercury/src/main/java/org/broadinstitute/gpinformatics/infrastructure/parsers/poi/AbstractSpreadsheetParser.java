@@ -18,7 +18,7 @@ import java.util.*;
  */
 public abstract class AbstractSpreadsheetParser implements Serializable {
 
-    protected List<String> validationMessages = new ArrayList<String>();
+    protected final List<String> validationMessages = new ArrayList<String>();
     private Workbook workbook;
     private final ColumnHeader[] matchHeaders;
 
@@ -43,7 +43,7 @@ public abstract class AbstractSpreadsheetParser implements Serializable {
         while (rows.hasNext()) {
             Row row = rows.next();
 
-            //TODO SGM:  Allow concrete parsers to determine the amount of rows that make up the header and how many
+            // TODO SGM:  Allow concrete parsers to determine the amount of rows that make up the header and how many
             // rows to skip to get to the first row of data.
             if (row.getRowNum() == 0) {
                 row = rows.next();

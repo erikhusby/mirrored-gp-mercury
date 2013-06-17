@@ -146,7 +146,8 @@ public class WorkflowTest {
         libraryConstructionProcessVersion.addStep(new WorkflowStepDef("ABaseCleanup").addLabEvent(
                 LabEventType.A_BASE_CLEANUP));
 
-        WorkflowProcessDef hybridSelectionProcess = new WorkflowProcessDef(WorkflowName.HYBRID_SELECTION.getWorkflowName());
+        WorkflowProcessDef hybridSelectionProcess =
+                new WorkflowProcessDef(WorkflowName.HYBRID_SELECTION.getWorkflowName());
         WorkflowProcessDefVersion hybridSelectionProcessVersion = new WorkflowProcessDefVersion("1.0", new Date());
         hybridSelectionProcess.addWorkflowProcessDefVersion(hybridSelectionProcessVersion);
         WorkflowStepDef capture = new WorkflowStepDef("Capture");
@@ -187,11 +188,11 @@ public class WorkflowTest {
             throw new RuntimeException(e);
         }
     }
-    
+
     @Test
     public void testEntryExpression() {
 
-        Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
+        Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>() {{
             put(BSPSampleSearchColumn.PRIMARY_DISEASE, "Cancer");
             put(BSPSampleSearchColumn.LSID, "org.broad:SM-1234");
             put(BSPSampleSearchColumn.MATERIAL_TYPE, new String("DNA:DNA Genomic"));  //need to avoid interning string
@@ -218,14 +219,15 @@ public class WorkflowTest {
     @Test
     public void testBucketEntryFail() {
 
-        Map<BSPSampleSearchColumn, String> dataMap = new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class){{
-            put(BSPSampleSearchColumn.PRIMARY_DISEASE, "Cancer");
-            put(BSPSampleSearchColumn.LSID, "org.broad:SM-2345");
-            put(BSPSampleSearchColumn.MATERIAL_TYPE, "RNA:Total RNA");  //need to avoid interning string
-            put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, "5432");
-            put(BSPSampleSearchColumn.SPECIES, "Homo Sapiens");
-            put(BSPSampleSearchColumn.PARTICIPANT_ID, "PT-2345");
-        }};
+        Map<BSPSampleSearchColumn, String> dataMap =
+                new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
+                    put(BSPSampleSearchColumn.PRIMARY_DISEASE, "Cancer");
+                    put(BSPSampleSearchColumn.LSID, "org.broad:SM-2345");
+                    put(BSPSampleSearchColumn.MATERIAL_TYPE, "RNA:Total RNA");  //need to avoid interning string
+                    put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, "5432");
+                    put(BSPSampleSearchColumn.SPECIES, "Homo Sapiens");
+                    put(BSPSampleSearchColumn.PARTICIPANT_ID, "PT-2345");
+                }};
 
         TwoDBarcodedTube twoDBarcodedTube = new TwoDBarcodedTube("00002345");
         twoDBarcodedTube.addSample(new MercurySample("SM-2345", new BSPSampleDTO(dataMap)));

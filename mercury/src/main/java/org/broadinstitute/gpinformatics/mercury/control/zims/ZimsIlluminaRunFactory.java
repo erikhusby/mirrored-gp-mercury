@@ -93,7 +93,7 @@ public class ZimsIlluminaRunFactory {
         // TODO: fill in sequencerModel and isPaired
         ZimsIlluminaRun run = new ZimsIlluminaRun(sequencingRun.getRunName(), sequencingRun.getRunBarcode(),
                 flowcell.getLabel(), sequencingRun.getMachineName(), null, dateFormat.format(illuminaRun.getRunDate()),
-                false, null, 0.0);
+                false, sequencingRun.getActualReadStructure(), 0.0, sequencingRun.getSetupReadStructure());
 
         Iterator<String> positionNames = flowcell.getVesselGeometry().getPositionNames();
         short laneNum = 1;
@@ -203,7 +203,7 @@ public class ZimsIlluminaRunFactory {
         TZDevExperimentData devExperimentData = null;
         Collection<String> gssrBarcodes = null;
         String gssrSampleType = null;
-        Boolean doAggregation = null;
+        Boolean doAggregation = Boolean.TRUE;
 
         if (bspSampleDTO != null) {
             Control control = mapNameToControl.get(bspSampleDTO.getCollaboratorsSampleName());
