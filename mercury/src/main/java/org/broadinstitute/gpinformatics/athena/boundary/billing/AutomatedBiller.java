@@ -12,9 +12,6 @@ import javax.ejb.Singleton;
 import javax.ejb.Startup;
 import javax.inject.Inject;
 import java.text.MessageFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,26 +24,15 @@ import java.util.Map;
 @Startup
 public class AutomatedBiller {
 
+    // Locked out from midnight through 5
+    public static final int PROCESSING_START_HOUR = 0;
+    public static final int PROCESSING_END_HOUR = 5;
+
     private final WorkCompleteMessageDao workCompleteMessageDao;
     private final ProductOrderEjb productOrderEjb;
     private final SessionContextUtility sessionContextUtility;
 
     private final Log log = LogFactory.getLog(AutomatedBiller.class);
-
-    // Locked out from midnight through 5
-    private static final int PROCESSING_START_HOUR = 0;
-    private static final int PROCESSING_END_HOUR = 5;
-
-    /**
-     * Calculate whether the schedule is processing messages. This will be used to lock out tracker uploads.
-     *
-     * @return the state of the schedule
-     */
-    public boolean isProcessing() {
-        GregorianCalendar calendar = new GregorianCalendar();
-        return calendar.get(Calendar.HOUR_OF_DAY) >= PROCESSING_START_HOUR ||
-               calendar.get(Calendar.HOUR_OF_DAY) < PROCESSING_END_HOUR;
-    }
 
     @Inject
     AutomatedBiller(WorkCompleteMessageDao workCompleteMessageDao,

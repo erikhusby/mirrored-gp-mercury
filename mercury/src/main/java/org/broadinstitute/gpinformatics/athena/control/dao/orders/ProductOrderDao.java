@@ -29,10 +29,12 @@ import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +43,21 @@ import java.util.Set;
 @Stateful
 @RequestScoped
 public class ProductOrderDao extends GenericDao {
+
+    // Locked out from midnight through 5
+    private static final int PROCESSING_START_HOUR = 0;
+    private static final int PROCESSING_END_HOUR = 5;
+
+    /**
+     * Calculate whether the schedule is processing messages. This will be used to lock out tracker uploads.
+     *
+     * @return the state of the schedule
+     */
+    public boolean isAutoProcessing() {
+        GregorianCalendar calendar = new GregorianCalendar();
+        return calendar.get(Calendar.HOUR_OF_DAY) >= PROCESSING_START_HOUR ||
+               calendar.get(Calendar.HOUR_OF_DAY) < PROCESSING_END_HOUR;
+    }
 
     public enum FetchSpec {
         Product,

@@ -1,16 +1,19 @@
 package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
+import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.FileBean;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
+import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
+import org.broadinstitute.gpinformatics.athena.boundary.billing.AutomatedBiller;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillableRef;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingTrackerProcessor;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.OrderBillSummaryStat;
@@ -31,7 +34,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -78,6 +83,19 @@ public class UploadTrackerActionBean extends CoreActionBean {
         return previewData;
     }
 
+    /**
+     * Calculate whether the schedule is processing messages. This will be used to lock out tracker uploads.
+     */
+    @Before(stages = LifecycleStage.EventHandling)
+    public void checkLockout() {
+            GregorianCalendar calendar = new GregorianCalendar();
+        if ((calendar.get(Calendar.HOUR_OF_DAY) >= AutomatedBiller.PROCESSING_START_HOUR) ||
+            (calendar.get(Calendar.HOUR_OF_DAY) < AutomatedBiller.PROCESSING_END_HOUR)) {
+            addGlobalValidationError("Cannot upload the billing tracker during automated processing hours: {0} to {1}",
+                    AutomatedBiller.PROCESSING_START_HOUR, AutomatedBiller.PROCESSING_END_HOUR);
+        }
+    }
+
     private void previewUploadedFile() {
         InputStream inputStream = null;
         PoiSpreadsheetParser parser = null;
@@ -87,9 +105,9 @@ public class UploadTrackerActionBean extends CoreActionBean {
             Map<String, BillingTrackerProcessor> processors = getProcessors(sheetNames, false);
             parser = new PoiSpreadsheetParser(processors);
 
-            parser.processUploadFile(trackerFile.getInputStream());
 
-            // If there were parsing errors, just return.
+            // process and if there were parsing errors, just return.
+            parser.processUploadFile(trackerFile.getInputStream());
             if (hasErrors()) {
                 return;
             }
@@ -99,7 +117,6 @@ public class UploadTrackerActionBean extends CoreActionBean {
             // Separate out the complex structure into charges and credits and make sure to get list of auto billed entries.
             Set<String> automatedPDOs = new HashSet<>();
             separateChargesAndCredits(sheetNames, processors, automatedPDOs);
-
             if (!automatedPDOs.isEmpty()) {
                 addGlobalValidationError("Cannot upload data for these product orders because they use " +
                         "automated billing: " + StringUtils.join(automatedPDOs, ", "));
