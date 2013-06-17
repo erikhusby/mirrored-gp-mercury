@@ -454,7 +454,6 @@ public class BucketBean {
                     .getLabCentricName() +
                         " and PDO " + currEntry.getPoBusinessKey() + " to be popped from bucket.");
             currEntry.getBucket().removeEntry(currEntry);
-            removeRework(currEntry.getLabVessel());
         }
         jiraRemovalUpdate(bucketEntries, "Extracted for Batch");
     }

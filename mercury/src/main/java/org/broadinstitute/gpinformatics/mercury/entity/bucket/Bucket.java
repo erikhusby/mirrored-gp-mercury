@@ -127,7 +127,16 @@ public class Bucket {
      *                      for that entry
      */
     public void removeEntry(BucketEntry entryToRemove) {
-        bucketEntries.remove(entryToRemove);
+        switch (entryToRemove.getEntryType()) {
+        case PDO_ENTRY:
+            bucketEntries.remove(entryToRemove);
+            break;
+        case REWORK_ENTRY:
+            reworkEntries.remove(entryToRemove);
+            break;
+        default:
+            throw new RuntimeException("Unexpected bucket entry type: " + entryToRemove.getEntryType());
+        }
         entryToRemove.setStatus(BucketEntry.Status.Archived);
     }
 
@@ -143,6 +152,12 @@ public class Bucket {
         for (BucketEntry currEntry : bucketEntries) {
             if (currEntry.getLabVessel().equals(entryVessel)) {
                 foundEntries.add(currEntry);
+            }
+        }
+
+        for (BucketEntry reworkEntry : reworkEntries) {
+            if (reworkEntry.getLabVessel().equals(entryVessel)) {
+                foundEntries.add(reworkEntry);
             }
         }
 

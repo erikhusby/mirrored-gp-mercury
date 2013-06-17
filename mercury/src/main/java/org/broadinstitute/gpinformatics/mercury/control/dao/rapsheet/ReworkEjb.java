@@ -313,16 +313,6 @@ public class ReworkEjb {
                             reworkFromStep, comment);
             bucketEntry.setReworkDetail(reworkDetail);
         }
-/*
-        List<MercurySample> reworks = new ArrayList<>(
-                getVesselRapSheet(reworkVessel, reworkReason, ReworkEntry.ReworkLevel.ONE_SAMPLE_RELEASE_REST_BATCH,
-                        reworkFromStep,
-                        comment, workflowName));
-
-        if (!reworks.isEmpty()) {
-            mercurySampleDao.persistAll(reworks);
-        }
-*/
 
         return reworkVessel;
     }
