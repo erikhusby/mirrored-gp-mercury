@@ -11,7 +11,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
@@ -37,7 +37,7 @@ public class MercuryClientEjb {
     private static final Log logger = LogFactory.getLog(MercuryClientEjb.class);
     private LabVesselDao labVesselDao;
     private BSPUserList userList;
-    private BucketBean bucketBean;
+    private BucketEjb bucketEjb;
     private WorkflowLoader workflowLoader;
     private BucketDao bucketDao;
     private BSPSampleDataFetcher bspSampleDataFetcher;
@@ -46,11 +46,11 @@ public class MercuryClientEjb {
     public MercuryClientEjb() {}
 
     @Inject
-    public MercuryClientEjb(BucketBean bucketBean, BucketDao bucketDao,
+    public MercuryClientEjb(BucketEjb bucketEjb, BucketDao bucketDao,
                             WorkflowLoader workflowLoader, BSPUserList userList,
                             LabVesselDao labVesselDao, BSPSampleDataFetcher bspSampleDataFetcher,
                             LabVesselFactory labVesselFactory) {
-        this.bucketBean = bucketBean;
+        this.bucketEjb = bucketEjb;
         this.bucketDao = bucketDao;
         this.workflowLoader = workflowLoader;
         this.userList = userList;
@@ -123,7 +123,7 @@ public class MercuryClientEjb {
         Collection<LabVessel> validVessels = applyPicoBucketCriteria(vessels, picoBucketDef);
 
         // FIXME TODO RE-VISIT HARD Coding.  Needs to have Workflow Step passed in to avoid hard coding!!!!!!
-        bucketBean.add(validVessels, picoBucket, username, LabEvent.UI_EVENT_LOCATION, LabEventType.PICO_PLATING_BUCKET,
+        bucketEjb.add(validVessels, picoBucket, username, LabEvent.UI_EVENT_LOCATION, LabEventType.PICO_PLATING_BUCKET,
                 pdo.getBusinessKey());
 
         if (picoBucket.getBucketId() == null) {
@@ -139,7 +139,7 @@ public class MercuryClientEjb {
         return samplesAdded;
     }
 
-    // todo jmt should this check be in bucketBean.add?
+    // todo jmt should this check be in bucketEjb.add?
     private Collection<LabVessel> applyPicoBucketCriteria(Collection<LabVessel> vessels, WorkflowBucketDef bucketDef) {
         Collection<LabVessel> validVessels = new HashSet<LabVessel>();
         for (LabVessel vessel : vessels) {

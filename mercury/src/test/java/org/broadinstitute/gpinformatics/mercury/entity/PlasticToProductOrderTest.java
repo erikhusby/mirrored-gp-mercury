@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
@@ -33,7 +33,7 @@ public class PlasticToProductOrderTest extends ContainerTest {
     private BucketEntryDao bucketEntryDao;
 
     @Inject
-    private BucketBean bucketResource;
+    private BucketEjb bucketResource;
 
     @Inject
     private TwoDBarcodedTubeDAO tubeDAO;
