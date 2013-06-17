@@ -84,7 +84,6 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -94,6 +93,7 @@ import java.util.Set;
 /**
  * This handles all the needed interface processing elements.
  */
+@SuppressWarnings("unused")
 @UrlBinding(ProductOrderActionBean.ACTIONBEAN_URL_BINDING)
 public class ProductOrderActionBean extends CoreActionBean {
     private static Log logger = LogFactory.getLog(ProductOrderActionBean.class);
@@ -270,8 +270,9 @@ public class ProductOrderActionBean extends CoreActionBean {
         productOrder = getContext().getRequest().getParameter(PRODUCT_ORDER_PARAMETER);
         if (!StringUtils.isBlank(productOrder)) {
             editOrder = productOrderDao.findByBusinessKey(productOrder);
-
-            progressFetcher.loadProgress(productOrderDao, Collections.singletonList(editOrder.getBusinessKey()));
+            if (editOrder != null) {
+                progressFetcher.loadProgress(productOrderDao, Collections.singletonList(productOrder));
+            }
         } else {
             // If this was a create with research project specified, find that.
             // This is only used for save, when creating a new product order.
@@ -1167,7 +1168,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     private static List<ProductOrderSample> stringToSampleList(String sampleListText) {
-        List<ProductOrderSample> samples = new ArrayList<ProductOrderSample>();
+        List<ProductOrderSample> samples = new ArrayList<>();
         for (String sampleName : SearchActionBean.cleanInputStringForSamples(sampleListText)) {
             samples.add(new ProductOrderSample(sampleName));
         }
@@ -1271,12 +1272,13 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     /**
-     * Convenience method to determine if the current PDO for the view page is eligible for billing.
+     * Convenience method to determine if the current PDO for the view page is eligible for billing. Don't check if
+     * there is no order or if it is a draft.
      *
      * @return Boolean eligible for billing.
      */
     public boolean isEligibleForBilling() {
-        return editOrder.getBusinessKey() != null && getProductOrderListEntry().isEligibleForBilling();
+        return (editOrder != null) && !editOrder.isDraft() && getProductOrderListEntry().isEligibleForBilling();
     }
 
     /**
