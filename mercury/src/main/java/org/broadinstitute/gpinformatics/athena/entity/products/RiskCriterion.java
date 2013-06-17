@@ -203,7 +203,10 @@ public class RiskCriterion {
             @Override
             public String getValue(ProductOrderSample sample) {
                 BSPSampleDTO sampleDTO = sample.getBspSampleDTO();
-                return String.valueOf(sampleDTO.getPicoRunDate().before(sampleDTO.getOneYearAgo()));
+
+                // If there is a pico run date and that run date is older than a year, this is on risk.
+                return String.valueOf(((sampleDTO.getPicoRunDate() != null) &&
+                        sampleDTO.getPicoRunDate().before(sampleDTO.getOneYearAgo())));
             }
         }),
         RIN("RIN", NUMERIC, new ValueProvider() {

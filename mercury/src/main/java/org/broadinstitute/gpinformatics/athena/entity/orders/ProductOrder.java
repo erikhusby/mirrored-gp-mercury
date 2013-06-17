@@ -5,7 +5,6 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.apache.commons.lang3.time.DateUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -272,6 +271,8 @@ public class ProductOrder implements BusinessObject, Serializable {
     }
 
     private static class Counter implements Serializable {
+        private static final long serialVersionUID = 4354572758557412220L;
+
         private final Map<String, Integer> countMap = new HashMap<>();
 
         private void clear() {
@@ -402,7 +403,7 @@ public class ProductOrder implements BusinessObject, Serializable {
          * @param participantSet The unique collection of participants by Id.
          * @param bspDTO The BSP DTO.
          */
-        private void updateDTOCounts(Set<String> participantSet, BSPSampleDTO bspDTO) {
+        private void updateDTOCounts(@Nonnull Set<String> participantSet, @Nonnull BSPSampleDTO bspDTO) {
             if (bspDTO.isSampleReceived()) {
                 receivedSampleCount++;
             }
@@ -411,7 +412,8 @@ public class ProductOrder implements BusinessObject, Serializable {
                 activeSampleCount++;
             }
 
-            if (bspDTO.getPicoRunDate().before(bspDTO.getOneYearAgo())) {
+            Date picoRunDate = bspDTO.getPicoRunDate();
+            if ((picoRunDate != null) && picoRunDate.before(bspDTO.getOneYearAgo())) {
                 lastPicoCount++;
             }
 
