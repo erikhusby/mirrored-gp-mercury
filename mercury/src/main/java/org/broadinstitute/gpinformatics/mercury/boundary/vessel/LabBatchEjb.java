@@ -10,7 +10,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
-import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -60,7 +60,7 @@ public class LabBatchEjb {
 
     private BucketDao bucketDao;
 
-    private BucketBean bucketBean;
+    private BucketEjb bucketEjb;
 
     /**
      * Alternate create lab batch method to allow a user to define the vessels for use by their barcode
@@ -173,7 +173,7 @@ public class LabBatchEjb {
                 new HashSet<LabVessel>(tubeDAO.findByListIdentifiers(vesselLabels));
         Bucket bucket = bucketDao.findByName(bucketName);
         LabBatch batch = createLabBatch(vessels, operator, jiraTicket);
-        bucketBean.start(operator, vessels, bucket, location);
+        bucketEjb.start(operator, vessels, bucket, location);
         return batch;
     }
 
@@ -192,8 +192,8 @@ public class LabBatchEjb {
         Bucket bucket = bucketDao.findByName(bucketName);
         batch = createLabBatch(batch, operator);
         //todo jac Hard coded labEventType for the one bucket.  This will need to change when we have multiple.
-        bucketBean.add(batch.getReworks(), bucket, operator, location, LabEventType.PICO_PLATING_BUCKET);
-        bucketBean.start(operator, batch.getStartingLabVessels(), bucket, location);
+        bucketEjb.add(batch.getReworks(), bucket, operator, location, LabEventType.PICO_PLATING_BUCKET);
+        bucketEjb.start(operator, batch.getStartingLabVessels(), bucket, location);
         return batch;
     }
 
@@ -343,7 +343,7 @@ public class LabBatchEjb {
     }
 
     @Inject
-    public void setBucketBean(BucketBean bucketBean) {
-        this.bucketBean = bucketBean;
+    public void setBucketEjb(BucketEjb bucketEjb) {
+        this.bucketEjb = bucketEjb;
     }
 }

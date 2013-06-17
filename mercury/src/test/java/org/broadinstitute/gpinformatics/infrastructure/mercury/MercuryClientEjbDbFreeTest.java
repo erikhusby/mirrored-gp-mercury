@@ -10,7 +10,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFac
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
-import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
@@ -61,13 +61,13 @@ public class MercuryClientEjbDbFreeTest {
     private String pdoCreator;
     private Map<String, BSPSampleDTO> bspDtoMap;
 
-    private BucketBean bucketBean = createMock(BucketBean.class);
+    private BucketEjb bucketEjb = createMock(BucketEjb.class);
     private BucketDao bucketDao = createMock(BucketDao.class);
     private LabVesselDao labVesselDao = createMock(LabVesselDao.class);
     private BSPSampleDataFetcher bspSampleDataFetcher = createMock(BSPSampleDataFetcher.class);
     private LabVesselFactory labVesselFactory = createMock(LabVesselFactory.class);
 
-    private Object[] mocks = new Object[]{bucketBean, bucketDao, labVesselDao, bspSampleDataFetcher, labVesselFactory};
+    private Object[] mocks = new Object[]{bucketEjb, bucketDao, labVesselDao, bspSampleDataFetcher, labVesselFactory};
 
     @BeforeMethod
     public void setUp() {
@@ -83,7 +83,7 @@ public class MercuryClientEjbDbFreeTest {
         pdo = ProductOrderTestFactory.buildExExProductOrder(SAMPLE_SIZE);
         pdo.setCreatedBy(BSPManagerFactoryStub.QA_DUDE_USER_ID);
 
-        service = new MercuryClientEjb(bucketBean, bucketDao, workflowLoader, bspUserList, labVesselDao,
+        service = new MercuryClientEjb(bucketEjb, bucketDao, workflowLoader, bspUserList, labVesselDao,
                 bspSampleDataFetcher, labVesselFactory);
     }
 
@@ -176,7 +176,7 @@ public class MercuryClientEjbDbFreeTest {
         expect(bspSampleDataFetcher.fetchSamplesFromBSP((List<String>)anyObject())).andReturn(bspDtoMap);
         bucketDao.persist(bucket);
 
-        bucketBean.add((List<LabVessel>)anyObject(), eq(bucket), eq(pdoCreator), eq(EVENT_LOCATION), eq(EVENT_TYPE),
+        bucketEjb.add((List<LabVessel>)anyObject(), eq(bucket), eq(pdoCreator), eq(EVENT_LOCATION), eq(EVENT_TYPE),
                 eq(pdo.getBusinessKey()));
 
         replay(mocks);
