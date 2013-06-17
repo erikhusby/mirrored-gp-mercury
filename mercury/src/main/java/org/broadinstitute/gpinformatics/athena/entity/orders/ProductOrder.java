@@ -411,7 +411,8 @@ public class ProductOrder implements BusinessObject, Serializable {
                 activeSampleCount++;
             }
 
-            if (bspDTO.getPicoRunDate().before(bspDTO.getOneYearAgo())) {
+            Date picoRunDate = bspDTO.getPicoRunDate();
+            if (picoRunDate == null || picoRunDate.before(bspDTO.getOneYearAgo())) {
                 lastPicoCount++;
             }
 
