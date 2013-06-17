@@ -177,9 +177,10 @@ public class MercuryClientEjbDbFreeTest {
         expect(bspSampleDataFetcher.fetchSamplesFromBSP((List<String>)anyObject())).andReturn(bspDtoMap);
         bucketDao.persist(bucket);
 
-        bucketBean.add((List<LabVessel>)anyObject(), eq(bucket),
+        // It's OK to return an empty collection because the returned bucket entries are only needed for rework cases.
+        expect(bucketBean.add((List<LabVessel>)anyObject(), eq(bucket),
                 eq(BucketEntry.BucketEntryType.PDO_ENTRY), eq(pdoCreator), eq(EVENT_LOCATION), eq(EVENT_TYPE),
-                eq(pdo.getBusinessKey()));
+                eq(pdo.getBusinessKey()))).andReturn(Collections.<BucketEntry>emptySet());
 
         replay(mocks);
 
