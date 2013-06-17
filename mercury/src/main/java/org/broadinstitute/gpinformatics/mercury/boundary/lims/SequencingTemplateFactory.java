@@ -15,11 +15,14 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.MiSeqReagentKitDao;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MiSeqReagentKit;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselAndPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.SequencingConfigDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateLaneType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateType;
 
@@ -81,21 +84,25 @@ public class SequencingTemplateFactory {
                                                           boolean isPoolTest) {
 
         Set<VesselAndPosition> loadedVesselsAndPositions;
-
+        SequencingTemplateType sequencingTemplate=null;
         switch (queryVesselType) {
         case FLOWCELL:
             IlluminaFlowcell illuminaFlowcell = illuminaFlowcellDao.findByBarcode(id);
             loadedVesselsAndPositions = getLoadingVessels(illuminaFlowcell);
-            return getSequencingTemplate(illuminaFlowcell, loadedVesselsAndPositions);
+            sequencingTemplate =
+                    getSequencingTemplate(illuminaFlowcell, loadedVesselsAndPositions, isPoolTest);
+            break;
         case MISEQ_REAGENT_KIT:
             MiSeqReagentKit miSeqReagentKit = miSeqReagentKitDao.findByBarcode(id);
-            return getSequencingTemplate(miSeqReagentKit);
+            sequencingTemplate = getSequencingTemplate(miSeqReagentKit, isPoolTest);
+            break;
             // Don't support the following for now, so fall through and throw exception.
         case TUBE:
         case STRIP_TUBE:
         default:
             throw new RuntimeException(String.format("Sequencing template unavailable for %s.", queryVesselType));
         }
+        return sequencingTemplate;
     }
 
     /**
@@ -126,8 +133,10 @@ public class SequencingTemplateFactory {
      */
     @DaoFree
     public SequencingTemplateType getSequencingTemplate(IlluminaFlowcell flowcell,
-                                                        Set<VesselAndPosition> loadedVesselsAndPositions) {
-        SequencingTemplateType sequencingTemplate = new SequencingTemplateType();
+                                                        Set<VesselAndPosition> loadedVesselsAndPositions,
+                                                        boolean isPoolTest) {
+        SequencingTemplateType sequencingTemplate = defaultTemplate(isPoolTest);
+
         List<SequencingTemplateLaneType> lanes = new ArrayList<SequencingTemplateLaneType>();
 
         for (VesselAndPosition vesselAndPosition : loadedVesselsAndPositions) {
@@ -153,7 +162,6 @@ public class SequencingTemplateFactory {
         if (flowcell != null) {
             sequencingTemplate.setBarcode(flowcell.getLabel());
         }
-
         return sequencingTemplate;
     }
     /**
@@ -164,8 +172,8 @@ public class SequencingTemplateFactory {
      * @return a populated Sequencing template
      */
     @DaoFree
-    public SequencingTemplateType getSequencingTemplate(MiSeqReagentKit miSeqReagentKit) {
-        SequencingTemplateType sequencingTemplate = new SequencingTemplateType();
+    public SequencingTemplateType getSequencingTemplate(MiSeqReagentKit miSeqReagentKit, boolean isPoolTest) {
+        SequencingTemplateType sequencingTemplate = defaultTemplate(isPoolTest);
         List<SequencingTemplateLaneType> lanes = new ArrayList<>();
 
         SequencingTemplateLaneType lane = new SequencingTemplateLaneType();
@@ -178,5 +186,27 @@ public class SequencingTemplateFactory {
         sequencingTemplate.getLanes().add(lane);
 
         return sequencingTemplate;
+    }
+
+    private SequencingTemplateType defaultTemplate(boolean isPoolTest){
+        SequencingTemplateType sequencingTemplate=new SequencingTemplateType();
+        WorkflowLoader workflowLoader = new WorkflowLoader();
+        WorkflowConfig workflowConfig = workflowLoader.load();
+        final SequencingConfigDef sequencingConfig;
+        if (isPoolTest) {
+            sequencingConfig = workflowConfig.getSequencingConfigByName("Resequencing-Pool-Default");
+        } else {
+            sequencingConfig = workflowConfig.getSequencingConfigByName("Resequencing-Production");
+        }
+        if (sequencingConfig.getChemistry() != null) {
+            sequencingTemplate.setOnRigChemistry(sequencingConfig.getChemistry().name());
+        }
+        if (sequencingConfig.getReadStructure() != null) {
+            sequencingTemplate.setReadStructure(sequencingConfig.getReadStructure().getValue());
+        }
+        if (sequencingConfig.getInstrumentWorkflow() != null) {
+            sequencingTemplate.setOnRigWorkflow(sequencingConfig.getInstrumentWorkflow().getValue());
+        }
+        return  sequencingTemplate;
     }
 }
