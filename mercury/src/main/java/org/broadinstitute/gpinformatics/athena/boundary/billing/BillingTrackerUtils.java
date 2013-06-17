@@ -18,34 +18,32 @@ public class BillingTrackerUtils {
 
     private static final Log logger = LogFactory.getLog(BillingTrackerUtils.class);
 
-    public static final String SAMPLE_ID_HEADING = "Sample ID";
-    public static final String ORDER_ID_HEADING = "Product Order ID";
-    public static final String SORT_COLUMN_HEADING = "Sort Column";
-    public static final String WORK_COMPLETE_DATE_HEADING = "Date Completed";
-    public static final String QUOTE_ID_HEADING = "Quote ID";
-
     public static final String[] FIXED_HEADERS = {
-            SAMPLE_ID_HEADING,
-            "Collaborator Sample ID",
-            "Material Type",
-            "On Risk",
-            "Status",
-            "Product Name",
-            ORDER_ID_HEADING,
-            "Product Order Name",
-            "Project Manager",
-            WORK_COMPLETE_DATE_HEADING,
-            QUOTE_ID_HEADING,
-            SORT_COLUMN_HEADING
+            BillingTrackerHeader.SAMPLE_ID_HEADING.getText(),
+            BillingTrackerHeader.COLLABORATOR_SAMPLE_ID.getText(),
+            BillingTrackerHeader.MATERIAL_TYPE.getText(),
+            BillingTrackerHeader.ON_RISK.getText(),
+            BillingTrackerHeader.STATUS.getText(),
+            BillingTrackerHeader.PRODUCT_NAME.getText(),
+            BillingTrackerHeader.ORDER_ID_HEADING.getText(),
+            BillingTrackerHeader.PRODUCT_ORDER_NAME.getText(),
+            BillingTrackerHeader.PROJECT_MANAGER.getText(),
+            BillingTrackerHeader.AUTO_LEDGER_TIMESTAMP_HEADING.getText(),
+            BillingTrackerHeader.WORK_COMPLETE_DATE_HEADING.getText(),
+            BillingTrackerHeader.QUOTE_ID_HEADING.getText(),
+            BillingTrackerHeader.SORT_COLUMN_HEADING.getText()
     };
 
-    public static final int SAMPLE_ID_COL_POS = ArrayUtils.indexOf(FIXED_HEADERS, SAMPLE_ID_HEADING);
-    public static final int PDO_ID_COL_POS = ArrayUtils.indexOf(FIXED_HEADERS, ORDER_ID_HEADING);
+    public static final int SAMPLE_ID_COL_POS = ArrayUtils.indexOf(FIXED_HEADERS,
+            BillingTrackerHeader.SAMPLE_ID_HEADING.getText());
+    public static final int PDO_ID_COL_POS = ArrayUtils.indexOf(FIXED_HEADERS,
+            BillingTrackerHeader.ORDER_ID_HEADING.getText());
     public static final int SORT_COLUMN_COL_POS = ArrayUtils.indexOf(FIXED_HEADERS,
-            SORT_COLUMN_HEADING);
+            BillingTrackerHeader.SORT_COLUMN_HEADING.getText());
     public static final int WORK_COMPLETE_DATE_COL_POS = ArrayUtils.indexOf(FIXED_HEADERS,
-            WORK_COMPLETE_DATE_HEADING);
-    public static final int QUOTE_ID_COL_POS = ArrayUtils.indexOf(FIXED_HEADERS, QUOTE_ID_HEADING);
+            BillingTrackerHeader.WORK_COMPLETE_DATE_HEADING);
+    public static final int QUOTE_ID_COL_POS = ArrayUtils.indexOf(FIXED_HEADERS,
+            BillingTrackerHeader.QUOTE_ID_HEADING);
     public static final int NUMBER_OF_HEADER_ROWS = 2;
 
     public static boolean isNonNullNumericCell(Cell cell) {

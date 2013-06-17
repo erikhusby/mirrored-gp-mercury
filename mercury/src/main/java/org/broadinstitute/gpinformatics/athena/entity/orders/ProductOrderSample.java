@@ -10,11 +10,8 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
 import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
-import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
@@ -46,7 +43,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 /**
  * Class to describe Athena's view of a Sample. A Sample is identified by a sample Id and
@@ -87,7 +83,7 @@ public class ProductOrderSample extends AbstractSample implements Serializable {
 
     @OneToMany(mappedBy = "productOrderSample", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
             orphanRemoval = true)
-    private final Set<LedgerEntry> ledgerItems = new HashSet<LedgerEntry>();
+    private final Set<LedgerEntry> ledgerItems = new HashSet<>();
 
     @Column(name = "SAMPLE_POSITION", updatable = false, insertable = false, nullable = false)
     private Integer samplePosition;
@@ -95,7 +91,7 @@ public class ProductOrderSample extends AbstractSample implements Serializable {
     @OneToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     @JoinColumn(name = "product_order_sample", nullable = false)
     @AuditJoinTable(name = "po_sample_risk_join_aud")
-    private final Set<RiskItem> riskItems = new HashSet<RiskItem>();
+    private final Set<RiskItem> riskItems = new HashSet<>();
 
     /**
      * Aliquot ID is used by the auto-bill code to track pipeline results.  It will only be set when a sample has
@@ -112,7 +108,7 @@ public class ProductOrderSample extends AbstractSample implements Serializable {
      * @return the names of the samples, in the same order as the input.
      */
     public static List<String> getSampleNames(Collection<ProductOrderSample> samples) {
-        List<String> names = new ArrayList<String>(samples.size());
+        List<String> names = new ArrayList<>(samples.size());
         for (ProductOrderSample productOrderSample : samples) {
             names.add(productOrderSample.getSampleName());
         }
@@ -258,7 +254,7 @@ public class ProductOrderSample extends AbstractSample implements Serializable {
     }
 
     public Set<LedgerEntry> getBillableLedgerItems() {
-        Set<LedgerEntry> billableLedgerItems = new HashSet<LedgerEntry>();
+        Set<LedgerEntry> billableLedgerItems = new HashSet<>();
 
         if (getLedgerItems() != null) {
             for (LedgerEntry ledgerEntry : getLedgerItems()) {
@@ -299,7 +295,7 @@ public class ProductOrderSample extends AbstractSample implements Serializable {
      * @return the list of required add-ons.
      */
     List<PriceItem> getBillablePriceItems() {
-        List<PriceItem> items = new ArrayList<PriceItem>();
+        List<PriceItem> items = new ArrayList<>();
         items.add(getProductOrder().getProduct().getPrimaryPriceItem());
         org.broadinstitute.bsp.client.sample.MaterialType materialTypeObject =
                 getBspSampleDTO().getMaterialTypeObject();
@@ -396,7 +392,7 @@ public class ProductOrderSample extends AbstractSample implements Serializable {
             return Collections.emptyMap();
         }
 
-        Map<PriceItem, LedgerQuantities> sampleStatus = new HashMap<PriceItem, LedgerQuantities>();
+        Map<PriceItem, LedgerQuantities> sampleStatus = new HashMap<>();
         for (LedgerEntry item : ledgerItems) {
             if (!sampleStatus.containsKey(item.getPriceItem())) {
                 sampleStatus.put(item.getPriceItem(), new LedgerQuantities());
@@ -414,16 +410,33 @@ public class ProductOrderSample extends AbstractSample implements Serializable {
         return sampleStatus;
     }
 
+    /**
+     * This adds an automatically uploaded ledger entry. The auto timestamp is set to right now to indicate that the
+     * upload happened and needs to be reviewed.
+     *
+     * @param workCompleteDate The date completed
+     * @param priceItem The price item to charge
+     * @param delta The plus or minus value to bill to the quote server
+     */
     public void addAutoLedgerItem(Date workCompleteDate, PriceItem priceItem, double delta) {
         addLedgerItem(workCompleteDate, priceItem, delta, new Date());
     }
 
+    /**
+     * This adds a manually uploaded ledger entry. The auto timestamp of NULL indicates that the upload happened, which
+     * will lock out auto billing and sets to Can Bill.
+     *
+     * @param workCompleteDate The date completed
+     * @param priceItem The price item to charge
+     * @param delta The plus or minus value to bill to the quote server
+     */
     public void addLedgerItem(Date workCompleteDate, PriceItem priceItem, double delta) {
         addLedgerItem(workCompleteDate, priceItem, delta, null);
     }
 
-    public void addLedgerItem(Date workCompleteDate, PriceItem priceItem, double delta, Date timestamp) {
+    public void addLedgerItem(Date workCompleteDate, PriceItem priceItem, double delta, Date autoLedgerTimestamp) {
         LedgerEntry ledgerEntry = new LedgerEntry(this, priceItem, workCompleteDate, delta);
+        ledgerEntry.setAutoLedgerTimestamp(autoLedgerTimestamp);
         ledgerItems.add(ledgerEntry);
         log.debug(MessageFormat.format(
                 "Added LedgerEntry item for sample {0} to PDO {1} for PriceItemName: {2} - Quantity:{3}",
@@ -504,5 +517,43 @@ public class ProductOrderSample extends AbstractSample implements Serializable {
 
     public void setAliquotId(String aliquotId) {
         this.aliquotId = aliquotId;
+    }
+
+    public Date getLatestAutoLedgerTimestamp() {
+        Set<LedgerEntry> ledgerEntries = getBillableLedgerItems();
+
+        if (ledgerEntries == null) {
+            return null;
+        }
+
+        // Use the latest auto ledger timestamp so we can error out if anything later is in the ledger.
+        Date latestAutoDate = null;
+        for (LedgerEntry ledgerEntry : ledgerEntries) {
+            if (ledgerEntry.getAutoLedgerTimestamp() != null) {
+                if ((latestAutoDate == null) || (ledgerEntry.getAutoLedgerTimestamp().after(latestAutoDate))) {
+                    latestAutoDate = ledgerEntry.getAutoLedgerTimestamp();
+                }
+            }
+        }
+
+        return latestAutoDate;
+    }
+
+    public Date getWorkCompleteDate() {
+        Set<LedgerEntry> ledgerEntries = getBillableLedgerItems();
+
+        if (ledgerEntries == null) {
+            return null;
+        }
+
+        // Very simple logic that for now rolls up all work complete dates and assumes they are the same across
+        // all price items on the PDO sample.
+        for (LedgerEntry ledgerEntry : ledgerEntries) {
+            if (!ledgerEntry.isBilled()) {
+                return ledgerEntry.getWorkCompleteDate();
+            }
+        }
+
+        return null;
     }
 }

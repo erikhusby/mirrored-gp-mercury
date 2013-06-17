@@ -51,12 +51,10 @@ public class BillingTrackerImporter {
     public Map<String, Map<String, Map<BillableRef, OrderBillSummaryStat>>> parseFileForSummaryMap(
             InputStream inputStream) throws IOException {
 
-        Map<String, Map<String, Map<BillableRef, OrderBillSummaryStat>>> trackerSummaryMap =
-                new HashMap<String, Map<String, Map<BillableRef, OrderBillSummaryStat>>>();
+        Map<String, Map<String, Map<BillableRef, OrderBillSummaryStat>>> trackerSummaryMap = new HashMap<>();
 
-        Workbook workbook;
         try {
-            workbook = WorkbookFactory.create(inputStream);
+            Workbook workbook = WorkbookFactory.create(inputStream);
 
             checkSampleOrdering(workbook);
             if (!validationErrors.isEmpty()) {
@@ -91,7 +89,7 @@ public class BillingTrackerImporter {
         return trackerSummaryMap;
     }
 
-    void checkSampleOrdering(Workbook workbook) {
+    private void checkSampleOrdering(Workbook workbook) {
         Cell sortCell = null;
 
         int numberOfSheets = workbook.getNumberOfSheets();
@@ -118,9 +116,9 @@ public class BillingTrackerImporter {
                 if (!BillingTrackerUtils.isNonNullNumericCell( sortCell)) {
                     String error =
                             "Row " + (row.getRowNum() + 1) + " of spreadsheet tab " + productPartNumberStr +
-                            " has a non-numeric value is the " + BillingTrackerUtils.SORT_COLUMN_HEADING +
+                            " has a non-numeric value is the " + BillingTrackerHeader.SORT_COLUMN_HEADING.getText() +
                             " cell. Please correct and ensure the spreadsheet is ordered by the " +
-                            BillingTrackerUtils.SORT_COLUMN_HEADING + " column heading.";
+                            BillingTrackerHeader.SORT_COLUMN_HEADING.getText() + " column heading.";
                     addError(error);
                     return;
                 }
@@ -132,7 +130,7 @@ public class BillingTrackerImporter {
                     String error = "Sample " + currentSampleName + " on row " + (row.getRowNum() + 1) +
                                    " of spreadsheet tab " + productPartNumberStr +
                                    " is not in the expected position. Please re-order the spreadsheet by the " +
-                                   BillingTrackerUtils.SORT_COLUMN_HEADING + " column heading.";
+                                   BillingTrackerHeader.SORT_COLUMN_HEADING.getText() + " column heading.";
                     addError(error);
                     return;
                 }
@@ -150,6 +148,7 @@ public class BillingTrackerImporter {
 
     private Map<String, Map<BillableRef, OrderBillSummaryStat>> parseSheetForSummaryMap(
             Sheet sheet, List<TrackerColumnInfo> trackerColumnInfos) {
+
         ProductOrder productOrder = null;
         Product product = null;
         List<ProductOrderSample> samples = null;
@@ -159,8 +158,7 @@ public class BillingTrackerImporter {
         String currentPdoId = "";
 
         // A map (by PDO) of maps ( by PPN) of OrderBillSummaryStat objects
-        Map<String, Map<BillableRef, OrderBillSummaryStat>> sheetSummaryMap =
-                new HashMap<String, Map<BillableRef, OrderBillSummaryStat>>();
+        Map<String, Map<BillableRef, OrderBillSummaryStat>> sheetSummaryMap = new HashMap<>();
 
         int sampleIndexInOrder = 0;
 
@@ -184,7 +182,7 @@ public class BillingTrackerImporter {
 
             // For a newly found PDO Id, create a new map for it and add it to the sheet summary map
             if (!currentPdoId.equalsIgnoreCase(rowPdoIdStr) && pdoSummaryStatsMap == null) {
-                pdoSummaryStatsMap = new HashMap<BillableRef, OrderBillSummaryStat>(maxNumberOfProductsInSheet);
+                pdoSummaryStatsMap = new HashMap<>(maxNumberOfProductsInSheet);
                 sheetSummaryMap.put(rowPdoIdStr, pdoSummaryStatsMap);
                 currentPdoId = rowPdoIdStr;
                 sampleIndexInOrder = 0;
@@ -317,7 +315,7 @@ public class BillingTrackerImporter {
                     Cell cell = row.getCell(BillingTrackerUtils.QUOTE_ID_COL_POS);
                     if (cell == null || cell.getStringCellValue() == null) {
                         return String.format("Found empty %s value for updated sample %s in %s, price item '%s', in Product %s",
-                                BillingTrackerUtils.QUOTE_ID_HEADING, sampleId, pdoId, priceItemName, partNumber);
+                                BillingTrackerHeader.QUOTE_ID_HEADING.getText(), sampleId, pdoId, priceItemName, partNumber);
                     }
 
                     String uploadedQuoteId = cell.getStringCellValue().trim();
@@ -333,7 +331,7 @@ public class BillingTrackerImporter {
                     cell = row.getCell(BillingTrackerUtils.WORK_COMPLETE_DATE_COL_POS);
                     if (cell == null || cell.getDateCellValue() == null) {
                         return String.format("Found empty %s value for updated sample %s in %s, price item '%s', in Product %s",
-                                BillingTrackerUtils.WORK_COMPLETE_DATE_HEADING, sampleId, pdoId,
+                                BillingTrackerHeader.WORK_COMPLETE_DATE_HEADING.getText(), sampleId, pdoId,
                                 priceItemName, partNumber);
                     }
 

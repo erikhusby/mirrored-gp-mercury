@@ -50,7 +50,7 @@ public class BillingTrackerManager {
 
     public Map<String, List<ProductOrder>> parseFileForBilling(InputStream fis) throws Exception {
 
-        Map<String, List<ProductOrder>> trackerBillingMap = new HashMap<String, List<ProductOrder>>();
+        Map<String, List<ProductOrder>> trackerBillingMap = new HashMap<>();
 
         Workbook workbook = WorkbookFactory.create(fis);
 
@@ -82,7 +82,7 @@ public class BillingTrackerManager {
     }
 
     private Map<String, List<String>> getUnlockedProductOrderIdsFromWorkbook(Workbook workbook) {
-        Map<String, List<String>> result = new HashMap<String, List<String>>();
+        Map<String, List<String>> result = new HashMap<>();
 
         int numberOfSheets = workbook.getNumberOfSheets();
         for (int i = 0; i < numberOfSheets; i++) {
@@ -114,7 +114,7 @@ public class BillingTrackerManager {
     }
 
     private List<String> extractOrderIdsFromSheet(Sheet sheet) {
-        List<String> result = new ArrayList<String>();
+        List<String> result = new ArrayList<>();
 
         for (Iterator<Row> rit = sheet.rowIterator(); rit.hasNext(); ) {
             Row row = rit.next();
@@ -146,7 +146,7 @@ public class BillingTrackerManager {
         String primaryProductPartNumber = sheet.getSheetName();
         String currentPdoId = "";
 
-        List<ProductOrder> sheetBillingMap = new ArrayList<ProductOrder>();
+        List<ProductOrder> sheetBillingMap = new ArrayList<>();
         int sampleIndexInOrder = 0;
 
         // Iterate over each row in this tab of the spreadsheet.
@@ -276,7 +276,7 @@ public class BillingTrackerManager {
                     if (cell == null || cell.getStringCellValue() == null) {
                         throw getRuntimeException(String.format(
                                 "Found empty %s value for updated sample %s in %s, price item '%s', in Product sheet %s",
-                                BillingTrackerUtils.QUOTE_ID_HEADING,
+                                BillingTrackerHeader.QUOTE_ID_HEADING.getText(),
                                 row.getCell(BillingTrackerUtils.SAMPLE_ID_COL_POS),
                                 row.getCell(BillingTrackerUtils.PDO_ID_COL_POS),
                                 billableRef.getPriceItemName(), product.getPartNumber()));
@@ -329,7 +329,7 @@ public class BillingTrackerManager {
 
     private void persistProductOrder(ProductOrder productOrder) {
 
-        Set<LedgerEntry> billableLedgerItems = new HashSet<LedgerEntry>();
+        Set<LedgerEntry> billableLedgerItems = new HashSet<>();
 
         try {
             for (ProductOrderSample productOrderSample : productOrder.getSamples()) {

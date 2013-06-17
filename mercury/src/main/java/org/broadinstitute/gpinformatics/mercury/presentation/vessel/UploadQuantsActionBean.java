@@ -5,6 +5,7 @@ import net.sourceforge.stripes.validation.SimpleError;
 import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidationErrors;
 import net.sourceforge.stripes.validation.ValidationMethod;
+import org.apache.commons.io.IOUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.QuantificationEJB;
@@ -13,6 +14,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Set;
 
@@ -64,8 +66,12 @@ public class UploadQuantsActionBean extends CoreActionBean {
 
     @ValidationMethod(on = UPLOAD_QUANT)
     public void validateNoExistingQuants(ValidationErrors errors) {
+
+        InputStream quantStream = null;
+
         try {
-            labMetrics = quantEJB.validateQuantsDontExist(quantSpreadsheet.getInputStream(), quantType);
+            quantStream = quantSpreadsheet.getInputStream();
+            labMetrics = quantEJB.validateQuantsDontExist(quantStream, quantType);
         } catch (IOException e) {
             errors.add("quantSpreadsheet", new SimpleError("IO exception while parsing upload. " + e.getMessage()));
         } catch (InvalidFormatException e) {
@@ -80,6 +86,8 @@ public class UploadQuantsActionBean extends CoreActionBean {
             }
             errorBuilder.append("</ul>");
             errors.add("quantSpreadsheet", new SimpleError(errorBuilder.toString()));
+        } finally {
+            IOUtils.closeQuietly(quantStream);
         }
     }
 }
