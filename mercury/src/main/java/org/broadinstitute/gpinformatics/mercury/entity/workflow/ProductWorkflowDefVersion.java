@@ -36,7 +36,9 @@ public class ProductWorkflowDefVersion implements Serializable {
     /** e.g. Library Construction */
     // When serializing, we want to refer to WorkflowConfig.workflowProcessDefs, not make copies of them
     @XmlIDREF
-    private final List<WorkflowProcessDef> workflowProcessDefs = new ArrayList<WorkflowProcessDef>();
+    private final List<WorkflowProcessDef> workflowProcessDefs = new ArrayList<>();
+    @XmlIDREF
+    private final List<SequencingConfigDef> sequencingConfigDefs = new ArrayList<>();
     private transient Map<String, WorkflowProcessDef> processDefsByName = new HashMap<String, WorkflowProcessDef>();
 
     private final List<String> entryPointsUsed = new ArrayList<String>();
@@ -48,6 +50,7 @@ public class ProductWorkflowDefVersion implements Serializable {
     @SuppressWarnings("UnusedDeclaration")
     ProductWorkflowDefVersion() {
     }
+
 
     public ProductWorkflowDefVersion(String version, Date effectiveDate) {
         this.version = version;
@@ -97,6 +100,10 @@ public class ProductWorkflowDefVersion implements Serializable {
 
     public List<String> getEntryPointsUsed() {
         return entryPointsUsed;
+    }
+
+    public List<SequencingConfigDef> getSequencingConfigDefs() {
+        return sequencingConfigDefs;
     }
 
     public void addWorkflowProcessDef(WorkflowProcessDef workflowProcessDef) {

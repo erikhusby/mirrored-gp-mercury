@@ -16,12 +16,15 @@ import java.util.Map;
 public class WorkflowConfig {
 
     /** List of processes, or lab teams */
-    private List<WorkflowProcessDef> workflowProcessDefs = new ArrayList<WorkflowProcessDef>();
+    private List<WorkflowProcessDef> workflowProcessDefs = new ArrayList<>();
 
     /** List of product workflows, each composed of process definitions */
-    private List<ProductWorkflowDef> productWorkflowDefs = new ArrayList<ProductWorkflowDef>();
-
+    private List<ProductWorkflowDef> productWorkflowDefs = new ArrayList<>();
     private transient Map<String, ProductWorkflowDef> mapNameToWorkflow;
+
+    /** List of sequencing configs,  */
+    private List<SequencingConfigDef> sequencingConfigDefs = new ArrayList<>();
+    private transient Map<String, SequencingConfigDef> mapNameToSequencingConfig;
 
     public List<WorkflowProcessDef> getWorkflowProcessDefs() {
         return workflowProcessDefs;
@@ -45,6 +48,20 @@ public class WorkflowConfig {
 
     void addProductWorkflowDef(ProductWorkflowDef productWorkflowDef) {
         this.productWorkflowDefs.add(productWorkflowDef);
+    }
+
+    public SequencingConfigDef getSequencingConfigByName(String sequencingConfigName) {
+        if (mapNameToSequencingConfig == null) {
+            mapNameToSequencingConfig = new HashMap<String, SequencingConfigDef>();
+            for (SequencingConfigDef sequencingConfigDef : sequencingConfigDefs) {
+                mapNameToSequencingConfig.put(sequencingConfigDef.getName(), sequencingConfigDef);
+            }
+        }
+        SequencingConfigDef sequencingConfigDef = mapNameToSequencingConfig.get(sequencingConfigName);
+        if(sequencingConfigDef == null) {
+            throw new WorkflowException("Failed to find sequencing config " + sequencingConfigName);
+        }
+        return sequencingConfigDef;
     }
 
     public ProductWorkflowDef getWorkflowByName(String workflowName) {

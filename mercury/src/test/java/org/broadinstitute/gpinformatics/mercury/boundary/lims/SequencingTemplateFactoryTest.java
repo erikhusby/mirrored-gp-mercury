@@ -31,6 +31,7 @@ import static org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection.
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsNot.not;
 
@@ -44,42 +45,88 @@ public class SequencingTemplateFactoryTest {
     private TwoDBarcodedTube denatureTube = null;
     private IlluminaFlowcell flowcell = null;
     private MiSeqReagentKit reagentKit = null;
-    @BeforeTest
+    private static final String PRODUCTION_CIGAR = "76T8B8B76T";
+    private static final String POOL_TEST_CIGAR = "8B8B";
+    private SequencingTemplateType template;
+
+    @BeforeTest(alwaysRun = true)
     public void setUp() {
         factory = new SequencingTemplateFactory();
         denatureTube = new TwoDBarcodedTube("denature_tube_barcode");
         denatureTube.addSample(new MercurySample("SM-1"));
-
+        template = null;
         flowcell = new IlluminaFlowcell(HiSeq2500Flowcell, "flowcell_barcode");
         LabEvent denatureToFlowcellEvent = new LabEvent(DENATURE_TO_FLOWCELL_TRANSFER, new Date(),
                 "SequencingTemplateFactoryTest#testGetSequencingTemplate", 1L, 1L);
         denatureToFlowcellEvent.getVesselToSectionTransfers()
-                .add(new VesselToSectionTransfer(denatureTube, ALL2, flowcell.getContainerRole(), denatureToFlowcellEvent));
+                .add(new VesselToSectionTransfer(denatureTube, ALL2, flowcell.getContainerRole(),
+                        denatureToFlowcellEvent));
 
         reagentKit = new MiSeqReagentKit("reagent_kit_barcode");
         LabEvent denatureToReagentKitEvent = new LabEvent(DENATURE_TO_REAGENT_KIT_TRANSFER, new Date(),
                 "ZLAB", 1L, 1L);
-        final  VesselToSectionTransfer sectionTransfer =
-                new VesselToSectionTransfer(denatureTube, SBSSection.getBySectionName(MiSeqReagentKit.LOADING_WELL.name()),
-                        reagentKit.getContainerRole(),denatureToReagentKitEvent);
+        final VesselToSectionTransfer sectionTransfer =
+                new VesselToSectionTransfer(denatureTube,
+                        SBSSection.getBySectionName(MiSeqReagentKit.LOADING_WELL.name()),
+                        reagentKit.getContainerRole(), denatureToReagentKitEvent);
         denatureToReagentKitEvent.getVesselToSectionTransfers().add(sectionTransfer);
     }
 
-    public void testGetSequencingTemplateFromReagentKit(){
-        SequencingTemplateType template = factory.getSequencingTemplate(reagentKit);
+    public void testGetSequencingTemplateFromReagentKitPoolTest() {
+        template = factory.getSequencingTemplate(reagentKit, true);
         assertThat(template.getBarcode(), Matchers.nullValue());
         assertThat(template.getLanes().size(), is(1));
+        assertThat(template.getOnRigChemistry(), is("Default"));
+        assertThat(template.getOnRigWorkflow(), is("Resequencing"));
+        assertThat(template.getReadStructure(), is(POOL_TEST_CIGAR));
+
         assertThat(template.getLanes().get(0).getLaneName(), is("D04"));
         assertThat(template.getLanes().get(0).getLoadingVesselLabel(), is("reagent_kit_barcode"));
     }
 
-    public void testGetSequencingTemplate() {
+    public void testGetSequencingTemplateFromReagentKitProduction() {
+        template = factory.getSequencingTemplate(reagentKit, false);
+        assertThat(template.getBarcode(), Matchers.nullValue());
+        assertThat(template.getLanes().size(), is(1));
+        assertThat(template.getOnRigChemistry(), is(nullValue()));
+        assertThat(template.getOnRigWorkflow(), is(nullValue()));
+        assertThat(template.getReadStructure(), is(PRODUCTION_CIGAR));
+
+        assertThat(template.getLanes().get(0).getLaneName(), is("D04"));
+        assertThat(template.getLanes().get(0).getLoadingVesselLabel(), is("reagent_kit_barcode"));
+    }
+
+    public void testGetSequencingTemplatePoolTest() {
         Set<VesselAndPosition> vesselsAndPositions = factory.getLoadingVessels(flowcell);
         MatcherAssert.assertThat(vesselsAndPositions, not(Matchers.empty()));
-        SequencingTemplateType template = factory.getSequencingTemplate(flowcell, vesselsAndPositions);
+        template = factory.getSequencingTemplate(flowcell, vesselsAndPositions, true);
+        assertThat(template.getOnRigChemistry(), is("Default"));
+        assertThat(template.getOnRigWorkflow(), is("Resequencing"));
+        assertThat(template.getReadStructure(), is(POOL_TEST_CIGAR));
         assertThat(template.getBarcode(), equalTo("flowcell_barcode"));
         assertThat(template.getLanes().size(), is(2));
-        Set<String> allLanes = new HashSet<String>();
+        Set<String> allLanes = new HashSet<>();
+
+        for (SequencingTemplateLaneType lane : template.getLanes()) {
+            allLanes.add(lane.getLaneName());
+            assertThat(lane.getLoadingVesselLabel(), equalTo("denature_tube_barcode"));
+        }
+        assertThat(allLanes, hasItem("LANE1"));
+        assertThat(allLanes, hasItem("LANE2"));
+    }
+
+    public void testGetSequencingTemplateProduction() {
+        Set<VesselAndPosition> vesselsAndPositions = factory.getLoadingVessels(flowcell);
+        MatcherAssert.assertThat(vesselsAndPositions, not(Matchers.empty()));
+        template = factory.getSequencingTemplate(flowcell, vesselsAndPositions, false);
+        assertThat(template.getOnRigChemistry(), is(nullValue()));
+        assertThat(template.getOnRigWorkflow(), is(nullValue()));
+
+        assertThat(template.getReadStructure(), is(PRODUCTION_CIGAR));
+
+        assertThat(template.getBarcode(), equalTo("flowcell_barcode"));
+        assertThat(template.getLanes().size(), is(2));
+        Set<String> allLanes = new HashSet<>();
 
         for (SequencingTemplateLaneType lane : template.getLanes()) {
             allLanes.add(lane.getLaneName());
@@ -96,7 +143,7 @@ public class SequencingTemplateFactoryTest {
 
         for (VesselAndPosition vesselsAndPosition : vesselsAndPositions) {
             assertThat(vesselsAndPosition.getPosition(),
-                                AnyOf.anyOf(equalTo(VesselPosition.LANE1), equalTo(VesselPosition.LANE2)));
+                    AnyOf.anyOf(equalTo(VesselPosition.LANE1), equalTo(VesselPosition.LANE2)));
             assertThat(denatureTube, equalTo(vesselsAndPosition.getVessel()));
         }
 
