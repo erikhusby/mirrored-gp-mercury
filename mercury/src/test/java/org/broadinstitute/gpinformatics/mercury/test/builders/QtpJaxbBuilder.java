@@ -7,7 +7,6 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransfe
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,7 +23,7 @@ public class QtpJaxbBuilder {
     private final List<String> normCatchRackBarcodes;
 
     private String poolRackBarcode;
-    private List<String> poolTubeBarcodes = new ArrayList<String>();
+    private List<String> poolTubeBarcodes = new ArrayList<>();
     private PlateCherryPickEvent   poolingTransferJaxb;
     private String denatureRackBarcode;
     private PlateCherryPickEvent denatureJaxb;
@@ -32,18 +31,18 @@ public class QtpJaxbBuilder {
     private PlateCherryPickEvent stripTubeTransferJaxb;
     private PlateTransferEventType flowcellTransferJaxb;
     private ReceptacleEventType    flowcellLoad;
-    private final List<BettaLIMSMessage> messageList = new ArrayList<BettaLIMSMessage>();
+    private final List<BettaLIMSMessage> messageList = new ArrayList<>();
     private String flowcellBarcode;
     private String stripTubeBarcode;
-    private final WorkflowName workflowName;
+    private final String workflowName;
     private String denatureTubeBarcode;
     private String ecoPlateBarcode;
     private PlateTransferEventType ecoTransferJaxb;
     private String normalizationTubeBarcode;
     private String normalizationRackBarcode;
     private PlateCherryPickEvent normalizationJaxb;
-    private final List<String> normalizationTubeBarcodes = new ArrayList<String>();
-    private List<String> denatureTubeBarcodes = new ArrayList<String>();
+    private final List<String> normalizationTubeBarcodes = new ArrayList<>();
+    private List<String> denatureTubeBarcodes = new ArrayList<>();
 
     private BettaLIMSMessage poolingTransferMessage;
     private BettaLIMSMessage ecoTransferMessage;
@@ -54,7 +53,7 @@ public class QtpJaxbBuilder {
 
     public QtpJaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageFactory, String testPrefix,
                           List<List<String>> listLcsetListNormCatchBarcodes, List<String> normCatchRackBarcodes,
-                          WorkflowName workflowName) {
+                          String workflowName) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageFactory;
         this.testPrefix = testPrefix;
         this.listLcsetListNormCatchBarcodes = listLcsetListNormCatchBarcodes;
@@ -140,7 +139,7 @@ public class QtpJaxbBuilder {
             // PoolingTransfer
             poolRackBarcode = "PoolRack" + testPrefix;
             List<BettaLimsMessageTestFactory.CherryPick> poolingCherryPicks =
-                    new ArrayList<BettaLimsMessageTestFactory.CherryPick>();
+                    new ArrayList<>();
             for (int rackPosition = 1; rackPosition <= normCatchBarcodes.size(); rackPosition++) {
                 poolingCherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(normCatchRackBarcodes.get(i),
                         bettaLimsMessageTestFactory.buildWellName(rackPosition,
@@ -164,7 +163,7 @@ public class QtpJaxbBuilder {
 
         // NormalizationTransfer
         normalizationRackBarcode = "NormalizationRack" + testPrefix;
-        List<BettaLimsMessageTestFactory.CherryPick> normaliztionCherryPicks = new ArrayList<BettaLimsMessageTestFactory.CherryPick>();
+        List<BettaLimsMessageTestFactory.CherryPick> normaliztionCherryPicks = new ArrayList<>();
         for (int j = 0; j < poolTubeBarcodes.size(); j++) {
             normaliztionCherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(
                     poolRackBarcode, bettaLimsMessageTestFactory.buildWellName(j + 1,
@@ -182,7 +181,7 @@ public class QtpJaxbBuilder {
 
         // DenatureTransfer
         denatureRackBarcode = "DenatureRack" + testPrefix;
-        List<BettaLimsMessageTestFactory.CherryPick> denatureCherryPicks = new ArrayList<BettaLimsMessageTestFactory.CherryPick>();
+        List<BettaLimsMessageTestFactory.CherryPick> denatureCherryPicks = new ArrayList<>();
 
         for (int j = 0; j < normalizationTubeBarcodes.size(); j++) {
             denatureCherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(
@@ -200,10 +199,10 @@ public class QtpJaxbBuilder {
                 denatureCherryPicks);
         denatureMessage = bettaLimsMessageTestFactory.addMessage(messageList, denatureJaxb);
 
-        if (workflowName != WorkflowName.EXOME_EXPRESS) {
+        if (!workflowName.equals("Exome Express")) {
             // StripTubeBTransfer
             stripTubeHolderBarcode = "StripTubeHolder" + testPrefix;
-            List<BettaLimsMessageTestFactory.CherryPick> stripTubeCherryPicks = new ArrayList<BettaLimsMessageTestFactory.CherryPick>();
+            List<BettaLimsMessageTestFactory.CherryPick> stripTubeCherryPicks = new ArrayList<>();
             int sourcePosition = 0;
             // Transfer column 1 to 8 rows, using non-empty source rows
             for (int destinationPosition = 0; destinationPosition < 8; destinationPosition++) {

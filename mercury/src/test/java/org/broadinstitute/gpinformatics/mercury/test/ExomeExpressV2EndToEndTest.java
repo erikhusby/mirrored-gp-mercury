@@ -280,7 +280,7 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
                 Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchRack()),
                 Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchRackBarcode()),
                 Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchBarcodes()),
-                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), WorkflowName.EXOME_EXPRESS, "testPrefix");
+                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), "Exome Express", "testPrefix");
         qtpEntityBuilder.invoke();
 
         String flowcellBarcode = "flowcell" + new Date().getTime();

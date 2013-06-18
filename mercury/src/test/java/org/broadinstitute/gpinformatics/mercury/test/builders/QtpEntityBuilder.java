@@ -29,7 +29,7 @@ public class QtpEntityBuilder {
     private final List<String> normCatchRackBarcodes;
     private final List<List<String>> listLcsetListNormCatchBarcodes;
     private final Map<String, TwoDBarcodedTube> mapBarcodeToNormCatchTubes;
-    private final WorkflowName workflowName;
+    private final String workflowName;
 
     private TubeFormation denatureRack;
     private IlluminaFlowcell illuminaFlowcell;
@@ -42,7 +42,7 @@ public class QtpEntityBuilder {
                             List<TubeFormation> normCatchRacks,
                             List<String> normCatchRackBarcodes, List<List<String>> listLcsetListNormCatchBarcodes,
                             Map<String, TwoDBarcodedTube> mapBarcodeToNormCatchTubes,
-                            WorkflowName workflowName, String testPrefix) {
+                            String workflowName, String testPrefix) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.labEventFactory = labEventFactory;
         this.labEventHandler = labEventHandler;
@@ -176,7 +176,7 @@ public class QtpEntityBuilder {
                 denatureRack.getContainerRole().getVesselAtPosition(VesselPosition.A01).getSampleInstances().size(),
                 catchSampleInstanceCount, "Wrong number of denatured samples");
         // StripTubeBTransfer
-        if (workflowName != WorkflowName.EXOME_EXPRESS) {
+        if (!workflowName.equals("Exome Express")) {
             LabEventTest.validateWorkflow("StripTubeBTransfer", denatureRack);
 
             Map<String, StripTube> mapBarcodeToStripTube = new HashMap<>();
