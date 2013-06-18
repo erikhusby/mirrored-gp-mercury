@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
@@ -89,7 +90,9 @@ import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -133,21 +136,21 @@ public class LabEventTest extends BaseEventTest {
      */
     public static class ListTransfersFromStart implements TransferTraverserCriteria {
         private int hopCount = -1;
-        private final List<String> labEventNames = new ArrayList<String>();
+        private final List<String> labEventNames = new ArrayList<>();
 
         private final SortedMap<Integer, SortedSet<LabEvent>> labEventNamesByHopCount =
                 LazySortedMap.decorate(new TreeMap<Integer, SortedSet<LabEvent>>(),
                         new Factory<SortedSet<LabEvent>>() {
                             @Override
                             public SortedSet<LabEvent> create() {
-                                return new TreeSet<LabEvent>(LabEvent.byEventDate);
+                                return new TreeSet<>(LabEvent.byEventDate);
                             }
                         });
 
         /**
          * Avoid infinite loops
          */
-        private Set<LabEvent> visitedLabEvents = new HashSet<LabEvent>();
+        private Set<LabEvent> visitedLabEvents = new HashSet<>();
 
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
@@ -182,7 +185,7 @@ public class LabEventTest extends BaseEventTest {
         }
 
         public List<String> getLastEventNamesPerHop() {
-            List<String> result = new ArrayList<String>();
+            List<String> result = new ArrayList<>();
             for (SortedSet<LabEvent> labEvents : labEventNamesByHopCount.values()) {
                 result.add(makeLabEventName(labEvents.last()));
             }
@@ -190,7 +193,7 @@ public class LabEventTest extends BaseEventTest {
         }
 
         public List<String> getAllEventNamesPerHop() {
-            List<String> result = new ArrayList<String>();
+            List<String> result = new ArrayList<>();
             for (SortedSet<LabEvent> labEvents : labEventNamesByHopCount.values()) {
                 for (LabEvent event : labEvents) {
                     result.add(makeLabEventName(event));
@@ -245,7 +248,7 @@ public class LabEventTest extends BaseEventTest {
                         libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), "1");
         QtpEntityBuilder qtpEntityBuilder = runQtpProcess(hybridSelectionEntityBuilder.getNormCatchRack(),
                 hybridSelectionEntityBuilder.getNormCatchBarcodes(),
-                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), WorkflowName.HYBRID_SELECTION, "1");
+                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), "Hybrid Selection", "1");
 
         IlluminaFlowcell illuminaFlowcell = qtpEntityBuilder.getIlluminaFlowcell();
         Set<SampleInstance> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
@@ -276,7 +279,7 @@ public class LabEventTest extends BaseEventTest {
                 new BSPSampleDataFetcher() {
                     @Override
                     public Map<String, BSPSampleDTO> fetchSamplesFromBSP(@Nonnull Collection<String> sampleNames) {
-                        Map<String, BSPSampleDTO> mapSampleIdToDto = new HashMap<String, BSPSampleDTO>();
+                        Map<String, BSPSampleDTO> mapSampleIdToDto = new HashMap<>();
                         Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>() {{
                             put(BSPSampleSearchColumn.PRIMARY_DISEASE, "Cancer");
                             put(BSPSampleSearchColumn.LSID, "org.broad:SM-1234");
@@ -397,7 +400,7 @@ public class LabEventTest extends BaseEventTest {
         // Use Standard Exome product, to verify that workflow is taken from LCSet, not Product
         final ProductOrder productOrder = ProductOrderTestFactory.buildHybridSelectionProductOrder(96);
         AthenaClientServiceStub.addProductOrder(productOrder);
-        final Date runDate = new Date();
+        Date runDate = new Date();
         // todo jmt create bucket, then batch, rather than rack than batch then bucket
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
@@ -420,7 +423,7 @@ public class LabEventTest extends BaseEventTest {
                         libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), "1");
         QtpEntityBuilder qtpEntityBuilder = runQtpProcess(hybridSelectionEntityBuilder.getNormCatchRack(),
                 hybridSelectionEntityBuilder.getNormCatchBarcodes(),
-                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), WorkflowName.EXOME_EXPRESS, "1");
+                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), "Exome Express", "1");
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
                 runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", "squidDesignationName");
 
@@ -434,11 +437,11 @@ public class LabEventTest extends BaseEventTest {
         Assert.assertEquals(lane2SampleInstances.iterator().next().getReagents().size(), 2,
                 "Wrong number of reagents");
 
-        final String machineName = "Superman";
+        String machineName = "Superman";
 
         SimpleDateFormat dateFormat = new SimpleDateFormat(IlluminaSequencingRun.RUN_FORMAT_PATTERN);
 
-        final File runPath = File.createTempFile("tempRun" + dateFormat.format(runDate), ".txt");
+        File runPath = File.createTempFile("tempRun" + dateFormat.format(runDate), ".txt");
         String flowcellBarcode = hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell().getCartridgeBarcode();
 
         SolexaRunBean runBean = new SolexaRunBean(flowcellBarcode,
@@ -564,7 +567,7 @@ public class LabEventTest extends BaseEventTest {
     public void testWholeGenomeShotgun() {
 //        Controller.startCPURecording(true);
 
-        final ProductOrder productOrder =
+        ProductOrder productOrder =
                 ProductOrderTestFactory.buildWholeGenomeProductOrder(NUM_POSITIONS_IN_RACK);
         AthenaClientServiceStub.addProductOrder(productOrder);
         productOrder.getResearchProject().setJiraTicketKey("RP-123");
@@ -593,7 +596,7 @@ public class LabEventTest extends BaseEventTest {
 
         QtpEntityBuilder qtpEntityBuilder =
                 runQtpProcess(sageEntityBuilder.getSageCleanupRack(), sageEntityBuilder.getSageCleanupTubeBarcodes(),
-                        sageEntityBuilder.getMapBarcodeToSageUnloadTubes(), WorkflowName.WHOLE_GENOME, "1");
+                        sageEntityBuilder.getMapBarcodeToSageUnloadTubes(), "Whole Genome", "1");
 
         IlluminaFlowcell illuminaFlowcell = qtpEntityBuilder.getIlluminaFlowcell();
         Set<SampleInstance> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
@@ -632,13 +635,53 @@ public class LabEventTest extends BaseEventTest {
 //        Controller.stopCPURecording();
     }
 
+    @Test(groups = DATABASE_FREE)
+    public void testPlateCherryPick() {
+        Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<>();
+        for (int rackPosition = 1; rackPosition <= SBSSection.P96COLS1_6BYROW.getWells().size(); rackPosition++) {
+            String barcode = "R" + rackPosition;
+
+            String bspStock = "SM-" + rackPosition;
+            TwoDBarcodedTube bspAliquot = new TwoDBarcodedTube(barcode);
+            bspAliquot.addSample(new MercurySample(bspStock));
+            mapBarcodeToTube.put(barcode, bspAliquot);
+        }
+
+        BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
+        LabEventFactory labEventFactory = new LabEventFactory();
+        labEventFactory.setLabEventRefDataFetcher(labEventRefDataFetcher);
+
+        Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
+        mapBarcodeToVessel.putAll(mapBarcodeToTube);
+        PlateCherryPickEvent rackToPlateCherryPickEvent = bettaLimsMessageTestFactory.buildCherryPick(
+                "PoolingTransfer", Collections.singletonList("SourceRack"),
+                Collections.<List<String>>singletonList(new ArrayList<>(mapBarcodeToTube.keySet())),
+                Collections.singletonList("SourcePlate"), Collections.singletonList(Arrays.asList("tube1", "tube2")),
+                Arrays.asList(new BettaLimsMessageTestFactory.CherryPick("SourceRack", "A01", "SourcePlate", "A01")));
+        rackToPlateCherryPickEvent.getPlate().get(0).setPhysType(LabEventFactory.PHYS_TYPE_EPPENDORF_96);
+        LabEvent rackToPlateEntity = labEventFactory.buildFromBettaLims(rackToPlateCherryPickEvent, mapBarcodeToVessel);
+        StaticPlate plate = (StaticPlate) rackToPlateEntity.getTargetLabVessels().iterator().next();
+
+        mapBarcodeToVessel.clear();
+        mapBarcodeToVessel.put(plate.getLabel(), plate);
+        PlateCherryPickEvent plateToRackCherryPickEvent = bettaLimsMessageTestFactory.buildCherryPick(
+                "PoolingTransfer", Collections.singletonList("SourcePlate"), Collections.<List<String>>emptyList(),
+                Collections.singletonList("TargetRack"), Collections.singletonList(Arrays.asList("tube1", "tube2")),
+                Arrays.asList(new BettaLimsMessageTestFactory.CherryPick("SourcePlate", "A01", "TargetRack", "A01")));
+        plateToRackCherryPickEvent.getSourcePlate().get(0).setPhysType(LabEventFactory.PHYS_TYPE_EPPENDORF_96);
+        LabEvent plateToRackEntity = labEventFactory.buildFromBettaLims(plateToRackCherryPickEvent, mapBarcodeToVessel);
+        LabVessel targetRack = plateToRackEntity.getTargetLabVessels().iterator().next();
+        Assert.assertEquals(targetRack.getContainerRole().getVesselAtPosition(VesselPosition.A01).getSampleInstances().size(),
+                1, "Wrong number of sample instances");
+    }
+
     /**
      * Build object graph for Fluidigm messages
      */
     @Test(groups = {DATABASE_FREE})
     public void testFluidigm() {
         // starting rack
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
+        Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<>();
         for (int rackPosition = 1; rackPosition <= SBSSection.P96COLS1_6BYROW.getWells().size(); rackPosition++) {
             String barcode = "R" + rackPosition;
 
@@ -717,9 +760,8 @@ public class LabEventTest extends BaseEventTest {
         private PlateTransferEventType fluidigmSampleInputJaxb;
         private PlateTransferEventType fluidigmIndexedAdapterInputJaxb;
         private PlateTransferEventType fluidigmHarvestingToRackJaxb;
-        private final List<BettaLIMSMessage> messageList = new ArrayList<BettaLIMSMessage>();
+        private final List<BettaLIMSMessage> messageList = new ArrayList<>();
         private String harvestRackBarcode;
-        private final Map<String, TwoDBarcodedTube> mapBarcodeToHarvestTube = new HashMap<String, TwoDBarcodedTube>();
 
         private FluidigmMessagesBuilder(String testPrefix, BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
                                         LabEventFactory labEventFactory, LabEventHandler labEventHandler,
@@ -734,7 +776,7 @@ public class LabEventTest extends BaseEventTest {
 
         private void buildJaxb() {
             // FluidigmSampleInput rack P96COLS1-6BYROW to chip P384COLS4-6BYROW
-            ArrayList<String> tubeBarcodes = new ArrayList<String>(mapBarcodeToTube.keySet());
+            ArrayList<String> tubeBarcodes = new ArrayList<>(mapBarcodeToTube.keySet());
             chipBarcode = "Fluidigm" + testPrefix;
             rackBarcode = "InputRack" + testPrefix;
             fluidigmSampleInputJaxb = bettaLimsMessageTestFactory.buildRackToPlate("FluidigmSampleInput", rackBarcode,
@@ -763,22 +805,20 @@ public class LabEventTest extends BaseEventTest {
 
             // FluidigmHarvestingToRack chip P384COLS4-6BYROW to rack P96COLS1-6BYROW
             harvestRackBarcode = "Harvest" + testPrefix;
-            List<String> harvestTubeBarcodes = new ArrayList<String>();
+            List<String> harvestTubeBarcodes = new ArrayList<>();
             for (int rackPosition = 1; rackPosition <= mapBarcodeToTube.size(); rackPosition++) {
                 harvestTubeBarcodes.add("Harvest" + testPrefix + rackPosition);
             }
             fluidigmHarvestingToRackJaxb = bettaLimsMessageTestFactory.buildPlateToRack("FluidigmHarvestingToRack",
-                    chipBarcode,
-                    harvestRackBarcode,
-                    harvestTubeBarcodes);
+                    chipBarcode, harvestRackBarcode, harvestTubeBarcodes);
             fluidigmHarvestingToRackJaxb.getSourcePlate().setPhysType(
                     StaticPlate.PlateType.Fluidigm48_48AccessArrayIFC.getDisplayName());
             fluidigmHarvestingToRackJaxb.getSourcePlate().setSection(SBSSection.P384COLS4_6BYROW.getSectionName());
-            fluidigmHarvestingToRackJaxb.setPositionMap(buildFluidigmPositionMap(tubeBarcodes, fluidigmSampleInputJaxb
-                    .getSourcePlate().getBarcode()));
+
+            fluidigmHarvestingToRackJaxb.setPositionMap(buildFluidigmPositionMap(tubeBarcodes,
+                    fluidigmHarvestingToRackJaxb.getPlate().getBarcode()));
             fluidigmHarvestingToRackJaxb.getPlate().setSection(SBSSection.P96COLS1_6BYROW.getSectionName());
-            bettaLimsMessageTestFactory
-                    .addMessage(messageList, fluidigmHarvestingToRackJaxb);
+            bettaLimsMessageTestFactory.addMessage(messageList, fluidigmHarvestingToRackJaxb);
         }
 
         private PositionMapType buildFluidigmPositionMap(ArrayList<String> tubeBarcodes, String rackBarcode) {
@@ -799,21 +839,27 @@ public class LabEventTest extends BaseEventTest {
         }
 
         private void buildObjectGraph() {
-            LabEvent fluidigmSampleInputEntity =
-                    labEventFactory.buildFromBettaLimsRackToPlateDbFree(fluidigmSampleInputJaxb,
-                            mapBarcodeToTube, null, null);
+            Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
+            mapBarcodeToVessel.putAll(mapBarcodeToTube);
+            LabEvent fluidigmSampleInputEntity = labEventFactory.buildFromBettaLims(fluidigmSampleInputJaxb,
+                    mapBarcodeToVessel);
             labEventHandler.processEvent(fluidigmSampleInputEntity);
             // asserts
             StaticPlate chip = (StaticPlate) fluidigmSampleInputEntity.getTargetLabVessels().iterator().next();
             Assert.assertEquals(chip.getSampleInstances().size(), mapBarcodeToTube.size(),
                     "Wrong number of sample instances");
 
-            LabEvent fluidigmIndexedAdapterInputEntity = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(
-                    fluidigmIndexedAdapterInputJaxb, indexPlate, chip);
+            mapBarcodeToVessel.clear();
+            mapBarcodeToVessel.put(indexPlate.getLabel(), indexPlate);
+            mapBarcodeToVessel.put(chip.getLabel(), chip);
+            LabEvent fluidigmIndexedAdapterInputEntity = labEventFactory.buildFromBettaLims(
+                    fluidigmIndexedAdapterInputJaxb, mapBarcodeToVessel);
             labEventHandler.processEvent(fluidigmIndexedAdapterInputEntity);
 
-            LabEvent fluidigmHarvestingToRackEntity = labEventFactory.buildFromBettaLimsPlateToRackDbFree(
-                    fluidigmHarvestingToRackJaxb, chip, mapBarcodeToHarvestTube, null);
+            mapBarcodeToVessel.clear();
+            mapBarcodeToVessel.put(chip.getLabel(), chip);
+            LabEvent fluidigmHarvestingToRackEntity = labEventFactory.buildFromBettaLims(
+                    fluidigmHarvestingToRackJaxb, mapBarcodeToVessel);
             labEventHandler.processEvent(fluidigmHarvestingToRackEntity);
             // asserts
             TubeFormation harvestRack =
@@ -824,12 +870,12 @@ public class LabEventTest extends BaseEventTest {
     }
 
     public static void validateWorkflow(String nextEventTypeName, Collection<? extends LabVessel> tubes) {
-        List<LabVessel> labVessels = new ArrayList<LabVessel>(tubes);
+        List<LabVessel> labVessels = new ArrayList<>(tubes);
         validateWorkflow(nextEventTypeName, labVessels);
     }
 
     public static void validateWorkflow(String nextEventTypeName, LabVessel labVessel) {
-        List<LabVessel> labVessels = new ArrayList<LabVessel>();
+        List<LabVessel> labVessels = new ArrayList<>();
         labVessels.add(labVessel);
         validateWorkflow(nextEventTypeName, labVessels);
     }
@@ -893,9 +939,6 @@ public class LabEventTest extends BaseEventTest {
                             }});
                     if (molecularIndexingSchemeDao != null) {
                         molecularIndexingSchemeDao.persist(testScheme);
-                        System.out.println(testScheme.getName() + ", " + testScheme
-                                .getIndex(MolecularIndexingScheme.IndexPosition.ILLUMINA_P7)
-                                .getSequence());
                         molecularIndexingSchemeDao.flush();
                         molecularIndexingSchemeDao.clear();
                     }

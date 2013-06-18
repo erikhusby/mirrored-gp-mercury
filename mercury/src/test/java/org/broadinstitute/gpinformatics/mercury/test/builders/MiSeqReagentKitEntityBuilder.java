@@ -24,6 +24,7 @@ import org.testng.Assert;
 import java.util.HashMap;
 import java.util.Map;
 
+// todo jmt this doesn't build entities
 public class MiSeqReagentKitEntityBuilder {
     private final BettaLimsMessageTestFactory bettaLimsMessageTestFactory;
     private final LabEventFactory labEventFactory;
@@ -64,7 +65,7 @@ public class MiSeqReagentKitEntityBuilder {
         Assert.assertNotNull(plateCherryPickEvent);
         Assert.assertEquals(plateCherryPickEvent.getSource().get(0).getBarcode(),"DenatureRack"+mySeqReagentKitBarcode);
 
-        Assert.assertEquals(plateCherryPickEvent.getPlate().getBarcode(),mySeqReagentKitBarcode);
+        Assert.assertEquals(plateCherryPickEvent.getPlate().get(0).getBarcode(),mySeqReagentKitBarcode);
 
         return this;
     }

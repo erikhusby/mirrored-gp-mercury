@@ -404,7 +404,7 @@ public class ExomeExpressEndToEndTest {
                     Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchRackBarcode()),
                     Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchBarcodes()),
                     hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(),
-                    WorkflowName.HYBRID_SELECTION, "testPrefix");
+                    "Hybrid Selection", "testPrefix");
             qtpEntityBuilder.invoke();
 
             TubeFormation poolingResult = qtpEntityBuilder.getDenatureRack();

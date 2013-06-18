@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.RackOfTubesDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -12,7 +13,9 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
@@ -26,10 +29,10 @@ public class LabVesselFixupTest extends Arquillian {
     private LabVesselDao labVesselDao;
 
     @Inject
-    TubeFormationDao tubeFormationDao;
+    private TubeFormationDao tubeFormationDao;
 
     @Inject
-    RackOfTubesDao rackOfTubesDao;
+    private RackOfTubesDao rackOfTubesDao;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -52,7 +55,7 @@ public class LabVesselFixupTest extends Arquillian {
 20130516_124745864.xml 1082012795 CO-6710369 -> CO-6728658
          */
 
-        List<String> tubeList = new ArrayList<String>();
+        List<String> tubeList = new ArrayList<>();
         tubeList.add("1074074993");
         tubeList.add("1072310155");
         tubeList.add("1072309963");
@@ -65,7 +68,7 @@ public class LabVesselFixupTest extends Arquillian {
         tubeList.add("1082013179");
         tubeList.add("1082012795");
 
-        List<String> rackList = new ArrayList<String>();
+        List<String> rackList = new ArrayList<>();
         rackList.add("CO-6710301");
         rackList.add("CO-6710357");
         rackList.add("CO-6710299");
@@ -125,5 +128,35 @@ public class LabVesselFixupTest extends Arquillian {
             tubeFormation.getRacksOfTubes().remove(deleteRack);
         }
         labVesselDao.flush();
+    }
+
+    /**
+     * Insert water control vessels, for backfill of BSP daughter plate transfers.
+     */
+    @Test(enabled = false)
+    public void insertWaterControls() {
+        Map<VesselPosition, TwoDBarcodedTube> mapPositionToTube = new EnumMap<>(VesselPosition.class);
+
+        TwoDBarcodedTube twoDBarcodedTube = new TwoDBarcodedTube("0114382737");
+        twoDBarcodedTube.addSample(new MercurySample("SM-2AY8L"));
+        mapPositionToTube.put(VesselPosition.A01, twoDBarcodedTube);
+
+        TwoDBarcodedTube twoDBarcodedTube1 = new TwoDBarcodedTube("SM-22GXJ");
+        twoDBarcodedTube.addSample(new MercurySample("SM-22GXJ"));
+        mapPositionToTube.put(VesselPosition.A02, twoDBarcodedTube1);
+
+        TubeFormation tubeFormation = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
+        tubeFormation.addRackOfTubes(new RackOfTubes("CO-5971666", RackOfTubes.RackType.Matrix96));
+
+        labVesselDao.persist(tubeFormation);
+
+        mapPositionToTube.clear();
+        TwoDBarcodedTube twoDBarcodedTube2 = new TwoDBarcodedTube("SM-29FPE");
+        twoDBarcodedTube2.addSample(new MercurySample("SM-29FPE"));
+        mapPositionToTube.put(VesselPosition.A01, twoDBarcodedTube2);
+
+        tubeFormation = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
+        tubeFormation.addRackOfTubes(new RackOfTubes("CO-3468604", RackOfTubes.RackType.Matrix96));
+        labVesselDao.persist(tubeFormation);
     }
 }

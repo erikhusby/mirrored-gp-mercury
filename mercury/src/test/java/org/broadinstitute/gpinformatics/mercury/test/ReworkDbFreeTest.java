@@ -81,7 +81,8 @@ public class ReworkDbFreeTest extends BaseEventTest {
         // Starts the rework with a new rack of tubes and includes the rework tube.
         Map<String, TwoDBarcodedTube> reworkRackMap = createInitialRack(productOrder, reworkTubePrefix);
         assertTrue(reworkRackMap.containsKey(reworkTubePrefix + reworkIdx));
-        reworkRackMap.put(reworkTubePrefix + reworkIdx, reworkTube);
+        reworkRackMap.remove(reworkTubePrefix + reworkIdx);
+        reworkRackMap.put(reworkTube.getLabel(), reworkTube);
         for (TwoDBarcodedTube tube : reworkRackMap.values()) {
             workingBucket.addEntry(productOrder.getBusinessKey(), tube);
         }
