@@ -10,11 +10,8 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
 import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
-import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
@@ -46,7 +43,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 /**
  * Class to describe Athena's view of a Sample. A Sample is identified by a sample Id and
@@ -211,8 +207,8 @@ public class ProductOrderSample extends AbstractSample implements Serializable {
      * Used for testing only.
      */
     public ProductOrderSample(@Nonnull String sampleName,
-                              @Nonnull BSPSampleDTO bspDTO) {
-        super(bspDTO);
+                              @Nonnull BSPSampleDTO bspSampleDTO) {
+        super(bspSampleDTO);
         this.sampleName = sampleName;
     }
 

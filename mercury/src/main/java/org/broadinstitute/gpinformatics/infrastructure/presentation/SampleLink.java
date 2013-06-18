@@ -10,7 +10,6 @@ import javax.inject.Inject;
  * This class is used to generate sample links for the UI.
  */
 public class SampleLink {
-    private static final String BSP_SEARCH_SAMPLE = "samplesearch/SampleSummary.action?sampleId=";
 
     private final BSPConfig bspConfig;
 
@@ -66,7 +65,7 @@ public class SampleLink {
     public String getUrl() {
         switch (format) {
         case BSP:
-           return bspConfig.getUrl(BSP_SEARCH_SAMPLE + sample.getBspSampleName());
+           return bspConfig.getUrl(BSPConfig.SEARCH_PATH + sample.getBspSampleName());
         case CRSP:
             return jiraLink.browseUrl(sample.getSampleKey());
         default:
