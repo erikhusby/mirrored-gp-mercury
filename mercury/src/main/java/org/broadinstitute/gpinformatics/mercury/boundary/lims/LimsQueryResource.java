@@ -10,12 +10,12 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
 import org.broadinstitute.gpinformatics.mercury.control.lims.LimsQueryResourceResponseFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.limsquery.SequencingTemplate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.FlowcellDesignationType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LibraryDataType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PlateTransferType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PoolGroupType;
-import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.WellAndSourceTubeType;
 
 import javax.inject.Inject;
@@ -341,7 +341,7 @@ public class LimsQueryResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchIlluminaSeqTemplate")
-    public SequencingTemplateType fetchIlluminaSeqTemplate(@QueryParam("id") String id,
+    public SequencingTemplate fetchIlluminaSeqTemplate(@QueryParam("id") String id,
                                                            @QueryParam("idType") SequencingTemplateFactory.QueryVesselType queryVesselType,
                                                            @QueryParam("isPoolTest") boolean isPoolTest) {
         return sequencingTemplateFactory.fetchSequencingTemplate(id, queryVesselType, isPoolTest);
