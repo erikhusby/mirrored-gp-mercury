@@ -93,7 +93,7 @@ public class ReagentKitTransferTest {
             }
 
             // Test the created kit.
-            final PlateType reagentKit = transferEventType.getPlate();
+            final PlateType reagentKit = transferEventType.getPlate().get(0);
             MatcherAssert.assertThat(reagentKit.getBarcode(), Matchers.equalTo(miSeqReagentKitBarcode));
             MatcherAssert.assertThat(reagentKit.getPhysType(), Matchers.equalTo("MiseqReagentKit"));
             MatcherAssert.assertThat(reagentKit.getPhysType(),

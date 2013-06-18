@@ -29,9 +29,11 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingJaxbBuilder;
@@ -340,7 +342,7 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
     private TubeFormation buildTubeFormation(Map<String, TwoDBarcodedTube> mapBarcodeToTubes, String barcode,
                                              Map<String, String> barcodeByPositionMap) {
 
-        Map<VesselPosition, TwoDBarcodedTube> mapPositionToTube = new HashMap<VesselPosition, TwoDBarcodedTube>();
+        Map<VesselPosition, TwoDBarcodedTube> mapPositionToTube = new HashMap<>();
 
         for (Map.Entry<String, String> tubeEntry : barcodeByPositionMap.entrySet()) {
             TwoDBarcodedTube twoDBarcodedTube = mapBarcodeToTubes.get(tubeEntry.getValue());
@@ -348,7 +350,7 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
                 twoDBarcodedTube = new TwoDBarcodedTube(tubeEntry.getValue());
                 mapBarcodeToTubes.put(tubeEntry.getValue(), twoDBarcodedTube);
             }
-            mapPositionToTube.put(VesselPosition.getByName(tubeEntry.getKey()), twoDBarcodedTube);
+            mapPositionToTube.put(VesselPosition.getByName(tubeEntry.getValue()), twoDBarcodedTube);
         }
         TubeFormation formation = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
 
