@@ -13,7 +13,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
-import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
@@ -61,7 +61,7 @@ public class BaseEventTest {
 
     private LabBatchEjb labBatchEJB;
 
-    private BucketBean bucketBeanEJB;
+    private BucketEjb bucketEjb;
 
     protected final LabEventFactory.LabEventRefDataFetcher labEventRefDataFetcher =
             new LabEventFactory.LabEventRefDataFetcher() {
@@ -92,7 +92,7 @@ public class BaseEventTest {
         JiraTicketDao mockJira = EasyMock.createNiceMock(JiraTicketDao.class);
         labBatchEJB.setJiraTicketDao(mockJira);
         labEventFactory.setLabEventRefDataFetcher(labEventRefDataFetcher);
-        bucketBeanEJB = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB);
+        bucketEjb = new BucketEjb(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB);
     }
 
     /**
