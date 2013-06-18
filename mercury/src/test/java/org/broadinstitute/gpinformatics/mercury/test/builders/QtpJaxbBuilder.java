@@ -150,7 +150,8 @@ public class QtpJaxbBuilder {
             poolTubeBarcodes.add("Pool" + testPrefix + i);
             poolingTransferJaxb = bettaLimsMessageTestFactory.buildCherryPick("PoolingTransfer",
                     Arrays.asList(normCatchRackBarcodes.get(i)), Collections.singletonList(normCatchBarcodes),
-                    poolRackBarcode, Collections.singletonList(poolTubeBarcodes.get(i)), poolingCherryPicks);
+                    Collections.singletonList(poolRackBarcode),
+                    Collections.singletonList(Collections.singletonList(poolTubeBarcodes.get(i))), poolingCherryPicks);
             poolingTransferMessage = bettaLimsMessageTestFactory.addMessage(messageList, poolingTransferJaxb);
             i++;
         }
@@ -175,7 +176,8 @@ public class QtpJaxbBuilder {
         }
         normalizationJaxb = bettaLimsMessageTestFactory.buildCherryPick("NormalizationTransfer",
                 Collections.singletonList(poolRackBarcode), Collections.singletonList(poolTubeBarcodes),
-                normalizationRackBarcode, normalizationTubeBarcodes, normaliztionCherryPicks);
+                Collections.singletonList(normalizationRackBarcode), Collections.singletonList(normalizationTubeBarcodes),
+                normaliztionCherryPicks);
         bettaLimsMessageTestFactory.addMessage(messageList, normalizationJaxb);
 
         // DenatureTransfer
@@ -192,9 +194,10 @@ public class QtpJaxbBuilder {
             denatureTubeBarcodes.add(denatureTubeBarcode);
         }
         denatureJaxb = bettaLimsMessageTestFactory.buildCherryPick("DenatureTransfer",
-                Collections.singletonList(normalizationRackBarcode), Collections.singletonList(
-                normalizationTubeBarcodes),
-                denatureRackBarcode, denatureTubeBarcodes, denatureCherryPicks);
+                Collections.singletonList(normalizationRackBarcode),
+                Collections.singletonList(normalizationTubeBarcodes),
+                Collections.singletonList(denatureRackBarcode), Collections.singletonList(denatureTubeBarcodes),
+                denatureCherryPicks);
         denatureMessage = bettaLimsMessageTestFactory.addMessage(messageList, denatureJaxb);
 
         if (workflowName != WorkflowName.EXOME_EXPRESS) {
