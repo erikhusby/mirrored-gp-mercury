@@ -203,7 +203,7 @@ public class ZimsIlluminaRunFactory {
         TZDevExperimentData devExperimentData = null;
         Collection<String> gssrBarcodes = null;
         String gssrSampleType = null;
-        Boolean doAggregation = null;
+        Boolean doAggregation = Boolean.TRUE;
 
         if (bspSampleDTO != null) {
             Control control = mapNameToControl.get(bspSampleDTO.getCollaboratorsSampleName());
