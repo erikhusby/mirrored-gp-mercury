@@ -419,7 +419,7 @@ public class LimsQueryResourceUnitTest {
         SequencingTemplateLaneType laneOne = result.getLanes().get(0);
         Assert.assertEquals(laneOne.getLoadingConcentration(), 33.333);
         Assert.assertEquals(laneOne.getLoadingVesselLabel(), "LOADING_VESSEL_1234");
-        Assert.assertEquals(laneOne.getLaneName(), "LANE_1324");
+        Assert.assertEquals(laneOne.getLaneName(), "LANE_1234");
         verifyAll();
     }
 
