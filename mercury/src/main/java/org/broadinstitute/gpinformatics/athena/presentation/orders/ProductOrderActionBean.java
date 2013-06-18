@@ -66,6 +66,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.jvnet.inflector.Noun;
 
@@ -84,6 +85,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -836,26 +838,57 @@ public class ProductOrderActionBean extends CoreActionBean {
 
             for (ProductOrderSample sample : samples) {
                 JSONObject item = new JSONObject();
-                BSPSampleDTO bspSampleDTO = sample.getBspSampleDTO();
 
-                item.put("sampleId", sample.getProductOrderSampleId());
-                item.put("collaboratorSampleId", bspSampleDTO.getCollaboratorsSampleName());
-                item.put("patientId", bspSampleDTO.getPatientId());
-                item.put("collaboratorParticipantId", bspSampleDTO.getCollaboratorParticipantId());
-                item.put("volume", bspSampleDTO.getVolume());
-                item.put("concentration", bspSampleDTO.getConcentration());
-                item.put("rin", bspSampleDTO.getRin());
-
-                item.put("picoDate", dateFormatter.format(bspSampleDTO.getPicoRunDate()));
-                item.put("total", bspSampleDTO.getTotal());
-                item.put("hasFingerprint", bspSampleDTO.getHasFingerprint());
-                item.put("hasSampleKitUploadRackscanMismatch", bspSampleDTO.getHasSampleKitUploadRackscanMismatch());
+                if (sample.isInBspFormat()) {
+                    setupSampleDTOItems(sample, item);
+                } else {
+                    setupEmptyItems(sample, item);
+                }
 
                 itemList.put(item);
             }
         }
 
         return createTextResolution(itemList.toString());
+    }
+
+    private void setupSampleDTOItems(ProductOrderSample sample, JSONObject item) throws JSONException {
+        BSPSampleDTO bspSampleDTO = sample.getBspSampleDTO();
+
+        item.put("sampleId", sample.getProductOrderSampleId());
+        item.put("collaboratorSampleId", bspSampleDTO.getCollaboratorsSampleName());
+        item.put("patientId", bspSampleDTO.getPatientId());
+        item.put("collaboratorParticipantId", bspSampleDTO.getCollaboratorParticipantId());
+        item.put("volume", bspSampleDTO.getVolume());
+        item.put("concentration", bspSampleDTO.getConcentration());
+        item.put("rin", bspSampleDTO.getRin());
+        item.put("picoDate", getBspPicoDate(bspSampleDTO));
+        item.put("total", bspSampleDTO.getTotal());
+        item.put("hasFingerprint", bspSampleDTO.getHasFingerprint());
+        item.put("hasSampleKitUploadRackscanMismatch", bspSampleDTO.getHasSampleKitUploadRackscanMismatch());
+    }
+
+    private String getBspPicoDate(BSPSampleDTO bspSampleDTO) {
+        Date picoRunDate = bspSampleDTO.getPicoRunDate();
+        if (picoRunDate == null) {
+            return "No Pico";
+        }
+
+        return dateFormatter.format(picoRunDate);
+    }
+
+    private void setupEmptyItems(ProductOrderSample sample, JSONObject item) throws JSONException {
+        item.put("sampleId", sample.getProductOrderSampleId());
+        item.put("collaboratorSampleId", "");
+        item.put("patientId", "");
+        item.put("collaboratorParticipantId", "");
+        item.put("volume", "");
+        item.put("concentration", "");
+        item.put("rin", "");
+        item.put("picoDate", "");
+        item.put("total", "");
+        item.put("hasFingerprint", "");
+        item.put("hasSampleKitUploadRackscanMismatch", "");
     }
 
     @HandlesEvent("getSupportsNumberOfLanes")
