@@ -527,6 +527,8 @@ public class BettalimsMessageResourceTest extends Arquillian {
 
         IlluminaSequencingRun illuminaSequencingRun =
                 registerIlluminaSequencingRun(testPrefix, qtpJaxbBuilder.getFlowcellBarcode());
+        Assert.assertEquals(illuminaSequencingRun.getSampleCartridge().getSampleInstances().size(),
+                BaseEventTest.NUM_POSITIONS_IN_RACK * 8, "Wrong number of sample instances");
         ZimsIlluminaRun zimsIlluminaRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(illuminaSequencingRun);
         Assert.assertEquals(zimsIlluminaRun.getLanes().size(), 8, "Wrong number of lanes");
     }
