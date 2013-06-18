@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
-import net.sourceforge.stripes.validation.SimpleError;
-import net.sourceforge.stripes.validation.ValidationErrors;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.OrderBillSummaryStat;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
@@ -17,7 +16,6 @@ import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
-import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 
 import java.text.MessageFormat;
@@ -40,7 +38,7 @@ public class BillingTrackerProcessor extends TableProcessor {
 
     private ProductOrder currentProductOrder = null;
     private Product currentProduct = null;
-    private List<ProductOrderSample> currentSamples = null;
+    private List<ProductOrderSample> currentSamples = new ArrayList<>();
     private int sampleIndexInOrder = 0;
     private List<PriceItem> currentPriceItems = null;
     private final List<ProductOrder> productOrders = new ArrayList<>();
@@ -50,8 +48,6 @@ public class BillingTrackerProcessor extends TableProcessor {
 
     private List<String> headerValues;
 
-    private ValidationErrors validationErrors;
-
     private final boolean doPersist;
 
     public Map<String, Map<BillableRef, OrderBillSummaryStat>> getChargesMapByPdo() {
@@ -60,12 +56,10 @@ public class BillingTrackerProcessor extends TableProcessor {
 
     public BillingTrackerProcessor(
             String sheetName, LedgerEntryDao ledgerEntryDao, ProductDao productDao, ProductOrderDao productOrderDao,
-            PriceItemDao priceItemDao, PriceListCache priceListCache, ValidationErrors validationErrors,
-            boolean doPersist) {
+            PriceItemDao priceItemDao, PriceListCache priceListCache, boolean doPersist) {
 
         this.productOrderDao = productOrderDao;
         this.ledgerEntryDao = ledgerEntryDao;
-        this.validationErrors = validationErrors;
 
         // The current product is the one specified here by the sheet name (the product number).
         currentProduct = productDao.findByPartNumber(sheetName);
@@ -120,15 +114,18 @@ public class BillingTrackerProcessor extends TableProcessor {
     @Override
     public void processRow(Map<String, String> dataRow, int dataRowIndex) {
 
-        String rowPdoIdStr = dataRow.get(BillingTrackerHeader.PRODUCT_ORDER_NAME.getText());
+        List<String> processingMessages = new ArrayList<>();
+
+        String rowPdoIdStr = dataRow.get(BillingTrackerHeader.ORDER_ID_HEADING.getText());
         String currentSampleName = dataRow.get(BillingTrackerHeader.SAMPLE_ID_HEADING.getText());
 
         // Get the stats for the current PDO id. If it does not exist, add the new summary to the map.
         Map<BillableRef, OrderBillSummaryStat> pdoSummaryStatsMap = chargesMapByPdo.get(rowPdoIdStr);
         if (pdoSummaryStatsMap == null) {
             // Update the charges map.
-            addSummaryToChargesMap(dataRowIndex, rowPdoIdStr);
-            if (!validationErrors.isEmpty()) {
+            addSummaryToChargesMap(processingMessages, dataRowIndex, rowPdoIdStr);
+            if (!processingMessages.isEmpty()) {
+                validationMessages.addAll(processingMessages);
                 return;
             }
 
@@ -142,24 +139,34 @@ public class BillingTrackerProcessor extends TableProcessor {
 
         }
 
+        // Must have a product order or product at this point. If not, it is an error.
+        if ((currentProductOrder == null) || (currentProduct == null)) {
+            validationMessages.add("Sample " + currentSampleName + " on row " +  (dataRowIndex + 1 ) +
+            " cannot find PDO: " + rowPdoIdStr);
+            return;
+        }
+
         // Verify the sample information.
-        checkSample(dataRowIndex, rowPdoIdStr, currentSampleName,
+        checkSample(processingMessages, dataRowIndex, rowPdoIdStr, currentSampleName,
                 dataRow.get(BillingTrackerHeader.AUTO_LEDGER_TIMESTAMP_HEADING.getText()));
-        if (!validationErrors.isEmpty()) {
+        if (!processingMessages.isEmpty()) {
+            validationMessages.addAll(processingMessages);
             return;
         }
 
         // Now that everything else has been set up, parse and process it.
-        String error = parseRowForSummaryMap(dataRow, rowPdoIdStr);
-        if (!StringUtils.isBlank(error)) {
-            addError(error);
+        parseRowForSummaryMap(processingMessages, dataRow, rowPdoIdStr);
+        if (!processingMessages.isEmpty()) {
+            validationMessages.addAll(processingMessages);
             return;
         }
 
         sampleIndexInOrder++;
     }
 
-    private void checkSample(int dataRowIndex, String rowPdoIdStr, String currentSampleName, String autoLedgerString){
+    private void checkSample(
+            List<String> processingMessages, int dataRowIndex, String rowPdoIdStr, String currentSampleName,
+            String autoLedgerString){
 
         // The order in the spreadsheet is the same as returned in the productOrder.
         if (sampleIndexInOrder >= currentSamples.size()) {
@@ -167,7 +174,7 @@ public class BillingTrackerProcessor extends TableProcessor {
                     " of spreadsheet "  + currentProduct.getPartNumber() +
                     " is not in the expected position. The Order <" + currentProductOrder.getTitle() +
                     " (Id: " + rowPdoIdStr + ")> has only " + currentSamples.size() + " samples.";
-            addError(error);
+            processingMessages.add(error);
             return;
         }
 
@@ -178,7 +185,7 @@ public class BillingTrackerProcessor extends TableProcessor {
                 " of spreadsheet " + currentProduct.getPartNumber() +
                 " is in different position than expected. Expected value from Order is "
                 + productOrderSample.getSampleName();
-            addError(error);
+            processingMessages.add(error);
             return;
         }
 
@@ -202,14 +209,14 @@ public class BillingTrackerProcessor extends TableProcessor {
                                " of spreadsheet " + currentProduct.getPartNumber() +
                                " was auto billed after this tracker was downloaded. Download the tracker again to " +
                                "validate " + productOrderSample.getSampleName();
-                addError(error);
+                processingMessages.add(error);
             }
         } catch (ParseException ex) {
-            addError(ex.getMessage());
+            processingMessages.add(ex.getMessage());
         }
     }
 
-    private void addSummaryToChargesMap(int dataRowIndex, String rowPdoIdStr) {
+    private void addSummaryToChargesMap(List<String> processingMessages, int dataRowIndex, String rowPdoIdStr) {
 
         Map<BillableRef, OrderBillSummaryStat> pdoSummaryStatsMap = new HashMap<>();
         chargesMapByPdo.put(rowPdoIdStr, pdoSummaryStatsMap);
@@ -223,8 +230,8 @@ public class BillingTrackerProcessor extends TableProcessor {
             currentSamples = currentProductOrder.getSamples();
 
             if (currentSamples == null) {
-                addError("Product Order " + rowPdoIdStr + " on row " + (dataRowIndex + 1) +
-                         " of sheet " + currentProduct.getPartNumber() + " has no samples.");
+                processingMessages.add("Product Order " + rowPdoIdStr + " on row " + (dataRowIndex + 1) +
+                                       " of sheet " + currentProduct.getPartNumber() + " has no samples.");
                 return;
             }
 
@@ -236,16 +243,8 @@ public class BillingTrackerProcessor extends TableProcessor {
 
             sampleIndexInOrder = 0;
         } else {
-            addError("Product Order " + rowPdoIdStr + " on row " + (dataRowIndex + 1) +
-                       " of sheet " + currentProduct.getPartNumber() + " is not found in the database.");
-        }
-    }
-
-    private void addError(String error) {
-        if (validationErrors == null) {
-            throw new RuntimeException(error);
-        } else {
-            validationErrors.addGlobalError(new SimpleError(error));
+            processingMessages.add("Product Order " + rowPdoIdStr + " on row " + (dataRowIndex + 1) +
+                                   " of sheet " + currentProduct.getPartNumber() + " is not found in the database.");
         }
     }
 
@@ -266,7 +265,8 @@ public class BillingTrackerProcessor extends TableProcessor {
             "Found quote ID ''{0}'' for updated sample ''{1}'' in ''{2}'' in Product" +
             " ''{3}'', this differs from quote ''{4}'' currently associated with ''{2}''.";
 
-    private String parseRowForSummaryMap(Map<String, String> dataRow, String rowPdoIdStr) {
+    private void parseRowForSummaryMap(List<String> processingMessages, Map<String, String> dataRow,
+                                         String rowPdoIdStr) {
         ProductOrderSample productOrderSample = currentSamples.get(sampleIndexInOrder);
 
         // Get the stats for the order.
@@ -292,18 +292,20 @@ public class BillingTrackerProcessor extends TableProcessor {
                     sampleBilled = sampleQuantities.getBilled();
                 } else {
                     if (trackerBilled != 0) {
-                        return String.format(PREVIOUSLY_BILLED, productOrderSample.getSampleKey(),
+                        processingMessages.add(String.format(PREVIOUSLY_BILLED, productOrderSample.getSampleKey(),
                                 currentProductOrder.getBusinessKey(), priceItemName, currentProduct.getPartNumber(),
-                                trackerBilled );
+                                trackerBilled));
+                        return;
                     }
                 }
 
                 // Check billedQuantity in spreadsheet against that which is already billed for this sample and
                 // price item, they should match.
                 if (!MathUtils.isSame(trackerBilled, sampleBilled)) {
-                    return String.format(BILLED_IS_SAME, sampleBilled, productOrderSample.getSampleKey(),
+                    processingMessages.add(String.format(BILLED_IS_SAME, sampleBilled, productOrderSample.getSampleKey(),
                             currentProductOrder.getBusinessKey(), priceItemName, currentProduct.getPartNumber(),
-                            trackerBilled);
+                            trackerBilled));
+                    return;
                 }
             }
 
@@ -314,9 +316,10 @@ public class BillingTrackerProcessor extends TableProcessor {
             if (!StringUtils.isBlank(updateTo)) {
                 newQuantity = Double.parseDouble(updateTo);
                 if (newQuantity < 0) {
-                    return String.format("Found negative new quantity '%f' for sample %s in %s, price item '%s', in Product %s",
+                    processingMessages.add(String.format("Found negative new quantity '%f' for sample %s in %s, price item '%s', in Product %s",
                             newQuantity, productOrderSample.getSampleKey(), currentProductOrder.getBusinessKey(), priceItemName,
-                            currentProduct.getPartNumber());
+                            currentProduct.getPartNumber()));
+                    return;
                 }
 
                 double delta = newQuantity - trackerBilled;
@@ -324,23 +327,26 @@ public class BillingTrackerProcessor extends TableProcessor {
                 if (delta != 0) {
                     String uploadedQuoteId = dataRow.get(BillingTrackerHeader.QUOTE_ID_HEADING.getText());
                     if (StringUtils.isBlank(uploadedQuoteId)) {
-                        return String.format(SAMPLE_EMPTY_VALUE, BillingTrackerHeader.QUOTE_ID_HEADING.getText(),
+                        processingMessages.add(String.format(SAMPLE_EMPTY_VALUE, BillingTrackerHeader.QUOTE_ID_HEADING.getText(),
                                 productOrderSample.getSampleKey(), currentProductOrder.getBusinessKey(), priceItemName,
-                                currentProduct.getPartNumber());
+                                currentProduct.getPartNumber()));
+                        return;
                     }
 
                     if (!productOrderSample.getProductOrder().getQuoteId().equals(uploadedQuoteId)) {
-                        return MessageFormat
+                        processingMessages.add(MessageFormat
                                 .format(QUOTE_MISMATCH, uploadedQuoteId, productOrderSample.getSampleKey(),
                                         currentProductOrder.getBusinessKey(), currentProduct.getPartNumber(),
-                                        productOrderSample.getProductOrder().getQuoteId());
+                                        productOrderSample.getProductOrder().getQuoteId()));
+                        return;
                     }
 
                     String workCompleteDateString = dataRow.get(BillingTrackerHeader.WORK_COMPLETE_DATE_HEADING.getText());
                     if (StringUtils.isBlank(workCompleteDateString)) {
-                        return String.format("Found empty %s value for updated sample %s in %s, price item '%s', in Product %s",
+                        processingMessages.add(String.format("Found empty %s value for updated sample %s in %s, price item '%s', in Product %s",
                                 BillingTrackerHeader.WORK_COMPLETE_DATE_HEADING.getText(), productOrderSample.getSampleKey(),
-                                currentProductOrder.getBusinessKey(), priceItemName, currentProduct.getPartNumber());
+                                currentProductOrder.getBusinessKey(), priceItemName, currentProduct.getPartNumber()));
+                        return;
                     }
 
                     OrderBillSummaryStat orderBillSummaryStat = pdoSummaryStatsMap.get(billableRef);
@@ -358,17 +364,16 @@ public class BillingTrackerProcessor extends TableProcessor {
                             productOrderSample.addLedgerItem(workCompleteDate, priceItem, delta);
                         }
                     } catch (ParseException e) {
-                        return MessageFormat
-                                .format("Could not persist ledger for updated sample ''{0}'' in PDO ''{1}'' in Product" +
+                        processingMessages.add(MessageFormat
+                                .format("Could not persist ledger for updated sample ''{0}'' in PDO ''{1}'' in Product"
+                                        +
                                         " ''{3}'' because of error: {4}",
                                         productOrderSample.getSampleKey(), currentProductOrder.getBusinessKey(),
-                                        currentProduct.getPartNumber(), e.getMessage());
+                                        currentProduct.getPartNumber(), e.getMessage()));
                     }
                 }
             }
         }
-
-        return "";
     }
 
     public List<ProductOrder> getUpdatedProductOrders() {

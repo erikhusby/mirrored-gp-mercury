@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
 import net.sourceforge.stripes.validation.ValidationErrors;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
@@ -78,20 +79,17 @@ public class BillingTrackerManagerContainerTest extends ContainerTest {
     /**
      * Take the sheet names and create a new processor for each one.
      *
-     * @param validationErrors Collect all errors.
      * @param sheetNames The names of the sheets (should be all part numbers of products.
      * @param doPersist Preview mode does not persist, but saving does.
      *
      * @return The mapping of sheet names to processors.
      */
-    private Map<String, BillingTrackerProcessor> getProcessors(
-            ValidationErrors validationErrors, List<String> sheetNames, boolean doPersist) {
+    private Map<String, BillingTrackerProcessor> getProcessors(List<String> sheetNames, boolean doPersist) {
         Map<String, BillingTrackerProcessor> processors = new HashMap<> ();
 
         for (String sheetName : sheetNames) {
             BillingTrackerProcessor processor = new BillingTrackerProcessor(
-                    sheetName, ledgerEntryDao, productDao, productOrderDao, priceItemDao, priceListCache,
-                    validationErrors, doPersist);
+                    sheetName, ledgerEntryDao, productDao, productOrderDao, priceItemDao, priceListCache, doPersist);
             processors.put(sheetName, processor);
         }
 
@@ -107,27 +105,28 @@ public class BillingTrackerManagerContainerTest extends ContainerTest {
 
         // Create a copy of the deployed test data file.
         try {
-            fis = (FileInputStream) Thread.currentThread().getContextClassLoader().getResourceAsStream(BILLING_TRACKER_TEST_FILENAME);
-
-            ValidationErrors validationErrors = new ValidationErrors();
-
             // Should only be one sheet.
+            fis = (FileInputStream) Thread.currentThread().getContextClassLoader().getResourceAsStream(BILLING_TRACKER_TEST_FILENAME);
             List<String> sheetNames = PoiSpreadsheetParser.getWorksheetNames(fis);
             Assert.assertEquals(sheetNames.size(), 1, "Wrong number of worksheets");
+            IOUtils.closeQuietly(fis);
 
             String rnaSheetName = "P-RNA-0004";
-            Assert.assertEquals(sheetNames.get(0), rnaSheetName, "Unexpected sheet name")
-            ;
-            Map<String, BillingTrackerProcessor> processors = getProcessors(validationErrors, sheetNames, false);
+            Assert.assertEquals(sheetNames.get(0), rnaSheetName, "Unexpected sheet name");
+
+            Map<String, BillingTrackerProcessor> processors = getProcessors(sheetNames, false);
             PoiSpreadsheetParser parser = new PoiSpreadsheetParser(processors);
 
-            IOUtils.closeQuietly(fis);
             fis = (FileInputStream) Thread.currentThread().getContextClassLoader().getResourceAsStream(BILLING_TRACKER_TEST_FILENAME);
-
             parser.processUploadFile(fis);
 
             // There should be one Order for the RNA product data.
             BillingTrackerProcessor processor = processors.get(rnaSheetName);
+            List<String> validationErrors = processor.getMessages();
+            if (!validationErrors.isEmpty()) {
+                Assert.fail("Processing the billing tracker spreadsheet got errors: " + validationErrors.toString());
+            }
+
             List<ProductOrder> productOrders = processor.getUpdatedProductOrders();
             Assert.assertEquals(productOrders.size(), 1, "Should only be one product order");
 

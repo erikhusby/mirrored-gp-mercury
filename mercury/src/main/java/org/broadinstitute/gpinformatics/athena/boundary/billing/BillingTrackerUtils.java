@@ -72,9 +72,9 @@ public class BillingTrackerUtils {
         Iterator<Cell> cells = row0.cellIterator();
         for (String fixedHeader : fixedHeaders) {
             Cell cell = cells.next();
-            if ((cell == null) ||
-                    StringUtils.isBlank(cell.getStringCellValue()) ||
-                    !cell.getStringCellValue().equals(fixedHeader)) {
+            if ((cell == null) ||  StringUtils.isBlank(cell.getStringCellValue()) ||
+                !cell.getStringCellValue().equals(fixedHeader)) {
+
                 String cellValFound = (cell == null) ? "" : cell.getStringCellValue();
                 throw getRuntimeException("Tracker Sheet Header mismatch.  Expected : " +
                         fixedHeader + " but found " + cellValFound);

@@ -163,8 +163,7 @@ public class UploadTrackerActionBean extends CoreActionBean {
 
         for (String sheetName : sheetNames) {
             BillingTrackerProcessor processor = new BillingTrackerProcessor(
-                    sheetName, ledgerEntryDao, productDao, productOrderDao, priceItemDao, priceListCache,
-                    getContext().getValidationErrors(), doPersist);
+                    sheetName, ledgerEntryDao, productDao, productOrderDao, priceItemDao, priceListCache, doPersist);
             processors.put(sheetName, processor);
         }
 

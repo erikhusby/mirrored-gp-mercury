@@ -27,23 +27,6 @@ public class BillingTrackerUtilsTest extends TestCase {
     public static final File BILLING_TRACKER_TEST_FILE = new File("src/test/resources/testdata/" + BILLING_TRACKER_TEST_FILENAME);
 
     @Test
-    public void testHeaderParsing() throws Exception {
-        FileInputStream fis=null;
-
-        try {
-            fis = new FileInputStream(BILLING_TRACKER_TEST_FILE);
-            Workbook workbook = WorkbookFactory.create(fis);
-            Sheet sheet = workbook.getSheetAt(0);
-            Row row0 = sheet.getRow(0);
-            List<TrackerColumnInfo> trackerHeaderList = BillingTrackerUtils.parseTrackerSheetHeader(row0, "P-RNA-0004");
-            Assert.assertNotNull(trackerHeaderList);
-            Assert.assertEquals(4, trackerHeaderList.size());
-        } finally {
-            IOUtils.closeQuietly(fis);
-        }
-    }
-
-    @Test
     public void testExtractPartNumberFromHeader() throws Exception {
 
         String headerTest = "DNA Extract from blood, fresh frozen tissue, cell pellet, stool, or saliva [P-ESH-0004]";

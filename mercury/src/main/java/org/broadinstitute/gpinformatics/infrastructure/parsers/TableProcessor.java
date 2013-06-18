@@ -97,4 +97,8 @@ public abstract class TableProcessor implements Serializable {
     protected abstract ColumnHeader[] getColumnHeaders();
 
     public abstract void close();
+
+    public List<String> getMessages() {
+        return validationMessages;
+    }
 }
