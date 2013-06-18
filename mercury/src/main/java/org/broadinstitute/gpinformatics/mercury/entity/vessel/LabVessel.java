@@ -92,6 +92,10 @@ public abstract class LabVessel implements Serializable {
     @BatchSize(size = 100)
     private Set<LabBatch> labBatches = new HashSet<LabBatch>();
 
+    @ManyToMany(cascade = CascadeType.PERSIST, mappedBy = "reworks")
+    @BatchSize(size = 100)
+    private Set<LabBatch> reworkLabBatches = new HashSet<LabBatch>();
+
     // todo jmt separate role for reagents?
     @ManyToMany(cascade = CascadeType.PERSIST)
     // have to specify name, generated aud name is too long for Oracle
@@ -1000,12 +1004,18 @@ public abstract class LabVessel implements Serializable {
         bucketEntries.add(bucketEntry);
     }
 
-    public void addLabBatch(LabBatch labBatch) {
+    public void addNonReworkLabBatch(LabBatch labBatch) {
         labBatches.add(labBatch);
     }
 
+    public void addReworkLabBatch(LabBatch reworkLabBatch) {
+        reworkLabBatches.add(reworkLabBatch);
+    }
+
     public Set<LabBatch> getLabBatches() {
-        return labBatches;
+        Set<LabBatch> allLabBatches = new HashSet<>(labBatches);
+        allLabBatches.addAll(reworkLabBatches);
+        return allLabBatches;
     }
 
     /**
@@ -1016,11 +1026,12 @@ public abstract class LabVessel implements Serializable {
      * @return filtered lab batches
      */
     public Set<LabBatch> getLabBatchesOfType(LabBatch.LabBatchType labBatchType) {
+        Set<LabBatch> allLabBatches = getLabBatches();
         if (labBatchType == null) {
-            return labBatches;
+            return allLabBatches;
         } else {
             Set<LabBatch> labBatchesOfType = new HashSet<LabBatch>();
-            for (LabBatch labBatch : labBatches) {
+            for (LabBatch labBatch : allLabBatches) {
                 if (labBatch.getLabBatchType() == labBatchType) {
                     labBatchesOfType.add(labBatch);
                 }

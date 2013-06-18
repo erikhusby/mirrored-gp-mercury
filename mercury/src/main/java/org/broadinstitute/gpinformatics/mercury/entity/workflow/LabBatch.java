@@ -6,7 +6,6 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.envers.Audited;
 
@@ -35,7 +34,7 @@ public class LabBatch {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_LAB_BATCH")
     private Long labBatchId;
 
-    /** All vessels in the batch, including reworks. */
+    /** Vessels in the batch that are not reworks. */
     @ManyToMany(cascade = CascadeType.PERSIST)
     // have to specify name, generated aud name is too long for Oracle
     @JoinTable(schema = "mercury", name = "lb_starting_lab_vessels", joinColumns = @JoinColumn(name = "lab_batch"),
@@ -53,8 +52,10 @@ public class LabBatch {
     @OneToMany(mappedBy = "labBatch")
     private Set<LabEvent> labEvents = new LinkedHashSet<LabEvent>();
 
-    /** The subset of the vessels in the batch that were added as rework from a previous batch. */
+    /** Vessels in the batch that were added as rework from a previous batch. */
     @ManyToMany(cascade = CascadeType.ALL)
+    @JoinTable(name = "lab_batch_reworks", joinColumns = @JoinColumn(name = "lab_batch"),
+            inverseJoinColumns = @JoinColumn(name = "reworks"))
     private Collection<LabVessel> reworks = new HashSet<LabVessel>();
 
     private Date createdOn;
@@ -137,12 +138,10 @@ public class LabBatch {
      * @param newRework
      */
     public void addReworks(Collection<LabVessel> newRework) {
-        startingLabVessels.addAll(newRework);
         reworks.addAll(newRework);
-    }
-
-    public void setReworks(Collection<LabVessel> reworks) {
-        this.reworks = reworks;
+        for (LabVessel rework : newRework) {
+            rework.addReworkLabBatch(this);
+        }
     }
 
     public Collection<LabVessel> getReworks() {
@@ -152,12 +151,23 @@ public class LabBatch {
     protected LabBatch() {
     }
 
+    /**
+     * Returns all starting vessels in the batch, including reworks.
+     *
+     * @return the vessels in the batch
+     */
     public Set<LabVessel> getStartingLabVessels() {
+        Set<LabVessel> allStartingLabVessels = new HashSet<>(startingLabVessels);
+        allStartingLabVessels.addAll(reworks);
+        return allStartingLabVessels;
+    }
+
+    public Set<LabVessel> getNonReworkStartingLabVessels() {
         return startingLabVessels;
     }
 
     public List<LabVessel> getStartingLabVesselsList() {
-        return new ArrayList<LabVessel>(startingLabVessels);
+        return new ArrayList<>(getStartingLabVessels());
     }
 
     public void addLabVessel(@Nonnull LabVessel labVessel) {
@@ -165,7 +175,7 @@ public class LabBatch {
             throw new NullPointerException("vessel cannot be null.");
         }
         startingLabVessels.add(labVessel);
-        labVessel.addLabBatch(this);
+        labVessel.addNonReworkLabBatch(this);
     }
 
     public void addLabVessels(@Nonnull Collection<LabVessel> vessels) {
