@@ -86,7 +86,7 @@ public class GenericDao {
      * @param entities  the entities to persist
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
-    public void persistAll(List<?> entities) {
+    public void persistAll(Collection<?> entities) {
         EntityManager entityManager = threadEntityManager.getEntityManager();
         for (Object entity : entities) {
             entityManager.persist(entity);

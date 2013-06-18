@@ -39,10 +39,10 @@ import static org.testng.Assert.assertTrue;
  *         Time: 2:10 PM
  */
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
-public class BucketBeanTest extends ContainerTest {
+public class BucketEjbTest extends ContainerTest {
 
     @Inject
-    BucketBean resource;
+    BucketEjb resource;
 
     @Inject
     BucketDao bucketDao;
@@ -53,7 +53,7 @@ public class BucketBeanTest extends ContainerTest {
     @Inject
     TwoDBarcodedTubeDAO twoDBarcodedTubeDAO;
 
-    private final static Log logger = LogFactory.getLog(BucketBeanTest.class);
+    private final static Log logger = LogFactory.getLog(BucketEjbTest.class);
 
     @Inject
     private UserTransaction utx;

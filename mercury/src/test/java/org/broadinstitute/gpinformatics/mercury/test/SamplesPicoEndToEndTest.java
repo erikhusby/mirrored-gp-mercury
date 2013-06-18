@@ -8,7 +8,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFac
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventResource;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabVesselBean;
@@ -175,7 +175,7 @@ public class SamplesPicoEndToEndTest {
 
             BucketDao mockBucketDao = EasyMock.createNiceMock(BucketDao.class);
             ReworkEjb reworkEjb = EasyMock.createNiceMock(ReworkEjb.class);
-            BucketBean bucketBeanEJB = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB
+            BucketEjb bucketEjb = new BucketEjb(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB
             );
             EasyMock.replay(mockBucketDao, tubeDao, mockJira, labBatchDAO);
 

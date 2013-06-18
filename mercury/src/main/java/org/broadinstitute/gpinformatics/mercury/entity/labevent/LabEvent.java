@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
@@ -183,7 +184,7 @@ public class LabEvent {
         Set<LabVessel> eventVessels = new HashSet<LabVessel>();
         for(LabVessel targetVessel: this.getTargetLabVessels()) {
             if(targetVessel.getContainerRole() != null &&
-               targetVessel instanceof TubeFormation) {
+               OrmUtil.proxySafeIsInstance(targetVessel , TubeFormation.class)) {
                 eventVessels.addAll(targetVessel.getContainerRole().getContainedVessels());
             } else {
                 eventVessels.add(targetVessel);
@@ -196,7 +197,7 @@ public class LabEvent {
         Set<LabVessel> eventVessels = new HashSet<LabVessel>();
         for(LabVessel sourceVessel: this.getSourceLabVessels()) {
             if(sourceVessel.getContainerRole() != null &&
-               sourceVessel instanceof TubeFormation) {
+               OrmUtil.proxySafeIsInstance(sourceVessel ,TubeFormation.class)) {
                 eventVessels.addAll(sourceVessel.getContainerRole().getContainedVessels());
             } else {
                 eventVessels.add(sourceVessel);
