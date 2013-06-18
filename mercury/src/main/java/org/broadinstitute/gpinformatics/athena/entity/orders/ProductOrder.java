@@ -411,7 +411,9 @@ public class ProductOrder implements BusinessObject, Serializable {
                 activeSampleCount++;
             }
 
-            if (bspDTO.getPicoRunDate().before(bspDTO.getOneYearAgo())) {
+            // If the pico has never been run then it is not warned in the last pico date highlighting.
+            Date picoRunDate = bspDTO.getPicoRunDate();
+            if ((picoRunDate == null) || picoRunDate.before(bspDTO.getOneYearAgo())) {
                 lastPicoCount++;
             }
 

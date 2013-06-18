@@ -20,6 +20,7 @@ import static org.broadinstitute.gpinformatics.athena.entity.products.Operator.O
  * what the user will compare, an operator, which defines the comparison performed and a value, which is what the
  * user value will be compared to.
  */
+@SuppressWarnings("unused")
 @Entity
 @Audited
 @Table(schema = "ATHENA", name = "RISK_CRITERIA")
@@ -69,8 +70,15 @@ public class RiskCriterion {
      * @return true if the sample is on risk
      */
     public boolean onRisk(ProductOrderSample sample) {
+
+        // If there is no sample or if the sample is not in bsp format, don't need to calculate because we call it
+        // not on risk since there is nothing to determine it.
+        if ((sample == null) || (!sample.isInBspFormat())) {
+            return false;
+        }
+
         boolean onRiskStatus = false;
-        if ((sample != null) && (sample.getBspSampleDTO() != null)) {
+        if (sample.getBspSampleDTO() != null) {
             onRiskStatus = type.getRiskStatus(sample, operator, value);
         }
 
@@ -203,7 +211,10 @@ public class RiskCriterion {
             @Override
             public String getValue(ProductOrderSample sample) {
                 BSPSampleDTO sampleDTO = sample.getBspSampleDTO();
-                return String.valueOf(sampleDTO.getPicoRunDate().before(sampleDTO.getOneYearAgo()));
+
+                // On risk if there is no pico date or if the run date is older than one year ago.
+                return String.valueOf(((sampleDTO.getPicoRunDate() == null) ||
+                        sampleDTO.getPicoRunDate().before(sampleDTO.getOneYearAgo())));
             }
         }),
         RIN("RIN", NUMERIC, new ValueProvider() {

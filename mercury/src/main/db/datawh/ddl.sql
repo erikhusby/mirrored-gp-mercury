@@ -196,12 +196,14 @@ CREATE TABLE sequencing_sample_fact (
 );
 
 CREATE TABLE sequencing_run (
-  sequencing_run_id NUMERIC(19) NOT NULL PRIMARY KEY,
-  run_name          VARCHAR2(255),
-  barcode           VARCHAR2(255),
-  registration_date DATE,
-  instrument        VARCHAR2(255),
-  etl_date          DATE        NOT NULL
+  sequencing_run_id     NUMERIC(19) NOT NULL PRIMARY KEY,
+  run_name              VARCHAR2(255),
+  barcode               VARCHAR2(255),
+  registration_date     DATE,
+  instrument            VARCHAR2(255),
+  etl_date              DATE        NOT NULL,
+  setup_read_structure  VARCHAR2(255),
+  actual_read_structure VARCHAR2(255)
 );
 
 
@@ -461,7 +463,9 @@ CREATE TABLE im_sequencing_run (
   run_name          VARCHAR2(255),
   barcode           VARCHAR2(255),
   registration_date DATE,
-  instrument        VARCHAR2(255)
+  instrument        VARCHAR2(255),
+  setup_read_structure  VARCHAR2(255),
+  actual_read_structure VARCHAR2(255)
 );
 
 CREATE SEQUENCE event_fact_id_seq START WITH 1;
@@ -548,7 +552,7 @@ CREATE INDEX pdo_sample_status_idx1 ON product_order_sample_status (product_orde
 CREATE INDEX pdo_add_on_idx1 ON product_order_add_on (product_order_id);
 CREATE INDEX pdo_add_on_idx2 ON product_order_add_on (product_id);
 CREATE INDEX event_fact_idx1 ON event_fact (event_date);
-CREATE INDEX event_fact_idx2 ON event_fact (product_order_id);
+CREATE INDEX event_fact_idx2 ON event_fact (product_order_id, sample_name);
 CREATE INDEX event_fact_idx3 ON event_fact (lab_event_id);
 CREATE INDEX ix_parent_project ON research_project (parent_research_project_id);
 CREATE INDEX ix_root_project ON research_project (root_research_project_id);

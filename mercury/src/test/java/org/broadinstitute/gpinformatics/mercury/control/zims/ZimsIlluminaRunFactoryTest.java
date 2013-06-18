@@ -246,5 +246,6 @@ public class ZimsIlluminaRunFactoryTest {
         assertThat(libraryBean.getIsGssrSample(), equalTo(false));
         assertThat(libraryBean.getPopulation(), equalTo("unknown"));
         assertThat(libraryBean.getRace(), equalTo("N/A"));
+        assertThat(libraryBean.doAggregation(), equalTo(true));  // in mercury, pipeline should always be told to aggregate
     }
 }

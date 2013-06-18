@@ -20,6 +20,7 @@ import static org.testng.Assert.assertEquals;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class SequencingRunEtlDbFreeTest {
+    private final String actualReadStructure = "101T8B8B101T";
     private String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
     private long entityId = 1122334455L;
     private String runName = "adfASDF0890821lkmxzcv-09zuvb";
@@ -35,12 +36,15 @@ public class SequencingRunEtlDbFreeTest {
     private IlluminaSequencingRunDao dao = createMock(IlluminaSequencingRunDao.class);
 
     private Object[] mocks = new Object[]{auditReader, dao};
+    private String setupReadStructure = "71T8B8B101T";
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void setUp() {
         reset(mocks);
         run = new SequencingRun(runName, barcode, machineName, operator, false, runDate, new IlluminaFlowcell(),
                 "/some/dirname");
+        run.setSetupReadStructure(setupReadStructure);
+        run.setActualReadStructure(actualReadStructure);
         run.setSequencingRunId(entityId);
         tst = new SequencingRunEtl(dao);
         tst.setAuditReaderDao(auditReader);
@@ -86,6 +90,8 @@ public class SequencingRunEtlDbFreeTest {
         assertEquals(parts[i++], barcode);
         assertEquals(parts[i++], ExtractTransform.secTimestampFormat.format(runDate));
         assertEquals(parts[i++], machineName);
+        assertEquals(parts[i++], setupReadStructure);
+        assertEquals(parts[i++], actualReadStructure);
         assertEquals(parts.length, i);
     }
 }

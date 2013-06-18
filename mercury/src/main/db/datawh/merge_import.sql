@@ -98,8 +98,9 @@ IS
                                    WHERE is_delete = 'F';
 
   errmsg        VARCHAR2(255);
-  dup_sample_id NUMERIC(19);
-
+  PDO_SAMPLE_NOT_IN_EVENT_FACT EXCEPTION;
+  v_tmp  NUMBER;
+  
   BEGIN
 
 ---------------------------------------------------------------------------
@@ -564,7 +565,9 @@ IS
         barcode = new.barcode,
         registration_date = new.registration_date,
         instrument = new.instrument,
-        etl_date = new.etl_date
+        etl_date = new.etl_date,
+        setup_read_structure = new.setup_read_structure,
+        actual_read_structure = new.actual_read_structure
       WHERE sequencing_run_id = new.sequencing_run_id;
 
       INSERT INTO sequencing_run (
@@ -573,7 +576,9 @@ IS
         barcode,
         registration_date,
         instrument,
-        etl_date
+        etl_date,
+        setup_read_structure,
+        actual_read_structure
       )
         SELECT
           new.sequencing_run_id,
@@ -581,7 +586,9 @@ IS
           new.barcode,
           new.registration_date,
           new.instrument,
-          new.etl_date
+          new.etl_date,
+          new.setup_read_structure,
+          new.actual_read_structure
         FROM DUAL
         WHERE NOT EXISTS(
             SELECT
@@ -1140,6 +1147,18 @@ IS
     BEGIN
 -- No update is possible due to lack of common unique key
 
+      BEGIN
+        -- Ensures that there is a join to event_fact on pdo and sample
+        SELECT 1 INTO v_tmp
+        FROM event_fact
+        WHERE product_order_id = new.product_order_id
+        AND sample_name = new.sample_name
+        AND ROWNUM = 1;
+
+        EXCEPTION WHEN NO_DATA_FOUND
+        THEN RAISE PDO_SAMPLE_NOT_IN_EVENT_FACT;
+      END;
+
       INSERT INTO sequencing_sample_fact (
         sequencing_sample_fact_id,
         flowcell_barcode,
@@ -1168,7 +1187,15 @@ IS
             FROM sequencing_sample_fact
             WHERE sequencing_sample_fact_id = new.sequencing_sample_fact_id
         );
-      EXCEPTION WHEN OTHERS THEN
+      EXCEPTION
+
+      WHEN PDO_SAMPLE_NOT_IN_EVENT_FACT THEN
+      DBMS_OUTPUT.PUT_LINE(
+          TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_sequencing_sample_fact.dat line ' || new.line_number || '  ' ||
+          'Sequencing Fact sample and product order not found in Event_Fact table');
+      CONTINUE;
+      
+      WHEN OTHERS THEN
       errmsg := SQLERRM;
       DBMS_OUTPUT.PUT_LINE(
           TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_sequencing_sample_fact.dat line ' || new.line_number || '  ' ||

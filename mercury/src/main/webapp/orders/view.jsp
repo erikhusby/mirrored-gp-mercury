@@ -266,7 +266,7 @@
                     var theDate = new Date(theDateString);
 
                     if (theDate) {
-                        if (theDate < oneYearAgo) {
+                        if ((theDate == 'No Pico') || (theDate < oneYearAgo)) {
                             $j(this).addClass("label label-important");
                         } else if (theDate < almostOneYearAgo) {
                             $j(this).addClass("label label-warning");

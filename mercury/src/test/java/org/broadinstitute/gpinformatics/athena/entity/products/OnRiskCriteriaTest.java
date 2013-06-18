@@ -23,13 +23,13 @@ public class OnRiskCriteriaTest {
     public void testConcentrationOnRisk() {
         Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
             put(BSPSampleSearchColumn.CONCENTRATION, LOW_NUMBER);
-            put(BSPSampleSearchColumn.SAMPLE_ID, "TST-1234");
+            put(BSPSampleSearchColumn.SAMPLE_ID, "SM-1234");
         }};
 
         BSPSampleDTO lowNumSample = new BSPSampleDTO(dataMap);
         dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
             put(BSPSampleSearchColumn.CONCENTRATION, HIGH_NUMBER);
-            put(BSPSampleSearchColumn.SAMPLE_ID, "TST-1234");
+            put(BSPSampleSearchColumn.SAMPLE_ID, "SM-1234");
         }};
         BSPSampleDTO highNumSample = new BSPSampleDTO(dataMap);
 
@@ -44,13 +44,13 @@ public class OnRiskCriteriaTest {
 
         Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
             put(BSPSampleSearchColumn.VOLUME, LOW_NUMBER);
-            put(BSPSampleSearchColumn.SAMPLE_ID, "TST-1234");
+            put(BSPSampleSearchColumn.SAMPLE_ID, "SM-1234");
         }};
         BSPSampleDTO lowNumSample = new BSPSampleDTO(dataMap);
 
         dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
             put(BSPSampleSearchColumn.VOLUME, HIGH_NUMBER);
-            put(BSPSampleSearchColumn.SAMPLE_ID, "TST-1235");
+            put(BSPSampleSearchColumn.SAMPLE_ID, "SM-1235");
         }};
 
         BSPSampleDTO highNumSample =  new BSPSampleDTO(dataMap);
@@ -64,13 +64,13 @@ public class OnRiskCriteriaTest {
     public void testRin() {
         Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
             put(BSPSampleSearchColumn.RIN, LOW_NUMBER);
-            put(BSPSampleSearchColumn.SAMPLE_ID, "TST-1234");
+            put(BSPSampleSearchColumn.SAMPLE_ID, "SM-1234");
         }};
         BSPSampleDTO lowNumSample = new BSPSampleDTO(dataMap);
 
         dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
             put(BSPSampleSearchColumn.RIN, HIGH_NUMBER);
-            put(BSPSampleSearchColumn.SAMPLE_ID, "TST-1235");
+            put(BSPSampleSearchColumn.SAMPLE_ID, "SM-1235");
         }};
         BSPSampleDTO highNumSample =  new BSPSampleDTO(dataMap);
 
@@ -84,13 +84,13 @@ public class OnRiskCriteriaTest {
     public void testTotalDnaOnRisk() {
         Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
             put(BSPSampleSearchColumn.TOTAL_DNA, LOW_NUMBER);
-            put(BSPSampleSearchColumn.SAMPLE_ID, "TST-1234");
+            put(BSPSampleSearchColumn.SAMPLE_ID, "SM-1234");
         }};
         BSPSampleDTO lowNumSample = new BSPSampleDTO(dataMap);
 
         dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
             put(BSPSampleSearchColumn.TOTAL_DNA, HIGH_NUMBER);
-            put(BSPSampleSearchColumn.SAMPLE_ID, "TST-1235");
+            put(BSPSampleSearchColumn.SAMPLE_ID, "SM-1235");
         }};
         BSPSampleDTO highNumSample =  new BSPSampleDTO(dataMap);
 
@@ -106,13 +106,13 @@ public class OnRiskCriteriaTest {
         // Create one sample with WGA for material and one with non-WGA for material
         Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
             put(BSPSampleSearchColumn.MATERIAL_TYPE, "DNA:DNA WGA Cleaned");
-            put(BSPSampleSearchColumn.SAMPLE_ID, "TST-1234");
+            put(BSPSampleSearchColumn.SAMPLE_ID, "SM-1234");
         }};
         BSPSampleDTO hasWgaDummy = new BSPSampleDTO(dataMap);
 
         dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
             put(BSPSampleSearchColumn.MATERIAL_TYPE, "DNA:DNA Genomic");
-            put(BSPSampleSearchColumn.SAMPLE_ID, "TST-1235");
+            put(BSPSampleSearchColumn.SAMPLE_ID, "SM-1235");
         }};
         BSPSampleDTO nonWgaDummy = new BSPSampleDTO(dataMap);
 
@@ -127,14 +127,14 @@ public class OnRiskCriteriaTest {
 
         Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
             put(BSPSampleSearchColumn.MATERIAL_TYPE, "DNA:DNA WGA Cleaned");
-            put(BSPSampleSearchColumn.SAMPLE_ID, "TST-1234");
+            put(BSPSampleSearchColumn.SAMPLE_ID, "SM-1234");
         }};
         BSPSampleDTO hasWgaDummy = new BSPSampleDTO(dataMap);
         hasWgaDummy.setFfpeStatus(true);
 
         dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
             put(BSPSampleSearchColumn.TOTAL_DNA, "DNA:DNA WGA Cleaned");
-            put(BSPSampleSearchColumn.SAMPLE_ID, "TST-1235");
+            put(BSPSampleSearchColumn.SAMPLE_ID, "SM-1235");
         }};
         BSPSampleDTO nonWgaDummy =  new BSPSampleDTO(dataMap);
         nonWgaDummy.setFfpeStatus(false);
