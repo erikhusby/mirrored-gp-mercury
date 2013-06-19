@@ -65,7 +65,7 @@ public class SampleLink {
     public String getUrl() {
         switch (format) {
         case BSP:
-           return bspConfig.getUrl(BSPConfig.SEARCH_PATH + sample.getBspSampleName());
+           return bspConfig.getUrl(BSPConfig.SEARCH_PATH + sample.getSampleKey());
         case CRSP:
             return jiraLink.browseUrl(sample.getSampleKey());
         default:
