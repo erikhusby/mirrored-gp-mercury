@@ -246,23 +246,6 @@ public class BucketViewActionBean extends CoreActionBean {
         return "Multiple PDOs";
     }
 
-    public String getReworkReason(BucketEntry vessel) {
-        String reason = "";
-
-        if (vessel.getReworkEntry() != null) {
-            reason = vessel.getReworkEntry().getReworkReason().name();
-        }
-        return reason;
-    }
-
-    public String getReworkComment(BucketEntry vessel) {
-        String reworkComment = "";
-        if (vessel.getReworkEntry() != null) {
-            reworkComment = vessel.getReworkEntry().getLabVesselComment().getComment();
-        }
-        return reworkComment;
-    }
-
     public Set<String> getSampleNames(LabVessel vessel) {
         Set<SampleInstance> allSamples = vessel.getAllSamples();
         Set<String> sampleNames = new HashSet<>();
@@ -270,27 +253,6 @@ public class BucketViewActionBean extends CoreActionBean {
             sampleNames.add(sampleInstance.getStartingSample().getSampleKey());
         }
         return sampleNames;
-    }
-
-    public Long getReworkOperator(BucketEntry vessel) {
-        LabEvent labEvent = null;
-        if (vessel.getReworkEntry() != null) {
-            labEvent = vessel.getReworkEntry().getLabVesselComment().getLabEvent();
-        }
-        if (labEvent == null) {
-            return 0L;
-        } else {
-            return labEvent.getEventOperator();
-        }
-    }
-
-
-    public Date getReworkLogDate(BucketEntry vessel) {
-        Date reworkLogDate = null;
-        if (vessel.getReworkEntry() != null) {
-            reworkLogDate = vessel.getReworkEntry().getLabVesselComment().getLogDate();
-        }
-        return reworkLogDate;
     }
 
     /**

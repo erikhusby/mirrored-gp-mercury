@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.bucket;
 
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
 import org.hibernate.envers.Audited;
@@ -11,6 +12,8 @@ import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
@@ -49,16 +52,20 @@ public class ReworkDetail {
     @Column(name = "rework_comment")
     private String comment;
 
+    @ManyToOne
+    @JoinColumn(name = "add_to_rework_bucket_event_id")
+    private LabEvent addToReworkBucketEvent;
+
     /** For JPA. */
     protected ReworkDetail() {}
 
-    public ReworkDetail(ReworkEntry.ReworkReason reworkReason,
-                        ReworkEntry.ReworkLevel reworkLevel,
-                        LabEventType reworkStep, String comment) {
+    public ReworkDetail(ReworkEntry.ReworkReason reworkReason, ReworkEntry.ReworkLevel reworkLevel,
+                        LabEventType reworkStep, String comment, LabEvent addToReworkBucketEvent) {
         this.reworkReason = reworkReason;
         this.reworkLevel = reworkLevel;
         this.reworkStep = reworkStep;
         this.comment = comment;
+        this.addToReworkBucketEvent = addToReworkBucketEvent;
     }
 
     public Set<BucketEntry> getBucketEntries() {
@@ -87,5 +94,9 @@ public class ReworkDetail {
 
     public String getComment() {
         return comment;
+    }
+
+    public LabEvent getAddToReworkBucketEvent() {
+        return addToReworkBucketEvent;
     }
 }

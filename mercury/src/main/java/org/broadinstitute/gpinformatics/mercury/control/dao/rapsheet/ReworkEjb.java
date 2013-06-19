@@ -286,13 +286,15 @@ public class ReworkEjb {
      *
      * @param reworkVessel
      * @param productOrderKey
-     *@param reworkCandidate  tube/sample/PDO that is to be reworked
+     * @param reworkCandidate  tube/sample/PDO that is to be reworked
      * @param reworkReason     Why is the rework being done.
      * @param reworkFromStep   Where should the rework be reworked from.
      * @param bucketName
      * @param comment          text describing why you are doing this.
      * @param workflowName     Name of the workflow in which this vessel is to be reworked
-     * @param userName         the user adding the rework, in case vessels/samples need to be created on-the-fly        @return The LabVessel instance related to the 2D Barcode given in the method call
+     * @param userName         the user adding the rework, in case vessels/samples need to be created on-the-fly
+     *
+     * @return The LabVessel instance related to the 2D Barcode given in the method call
      *
      * @throws ValidationException
      */
@@ -307,10 +309,11 @@ public class ReworkEjb {
                 .add(Collections.singleton(reworkVessel), bucket, BucketEntry.BucketEntryType.REWORK_ENTRY, userName,
                         LabEvent.UI_EVENT_LOCATION, reworkFromStep, productOrderKey);
 
+        // TODO: create the event in this scope instead of getting the "latest" event
         for (BucketEntry bucketEntry : bucketEntries) {
             ReworkDetail reworkDetail =
                     new ReworkDetail(reworkReason, ReworkEntry.ReworkLevel.ONE_SAMPLE_RELEASE_REST_BATCH,
-                            reworkFromStep, comment);
+                            reworkFromStep, comment, bucketEntry.getLabVessel().getLatestEvent());
             bucketEntry.setReworkDetail(reworkDetail);
         }
 
@@ -340,10 +343,10 @@ public class ReworkEjb {
      * @param reworkReason        predefined Text describing why the given vessel needs to be reworked
      * @param reworkFromStep      Step in the workflow at which rework is to begin
      * @param bucketName
-     *@param comment             Brief user comment to associate with this rework.
+     * @param comment             Brief user comment to associate with this rework.
      * @param workflowName        Name of the workflow in which this vessel is to be reworked
      * @param userName            the user adding the rework, in case vessels/samples need to be created on-the-fly
-*    @return Collection of validation messages
+     * @return Collection of validation messages
      *
      * @throws ValidationException Thrown in the case that some checked state of the Lab Vessel will not allow the
      *                             method to continue

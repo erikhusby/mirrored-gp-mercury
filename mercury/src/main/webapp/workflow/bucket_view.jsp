@@ -288,10 +288,10 @@
                 ${reworkVessel.reworkDetail.comment}
             </td>
             <td>
-                    ${actionBean.getUserFullName(actionBean.getReworkOperator(reworkVessel))}
+                ${actionBean.getUserFullName(reworkVessel.reworkDetail.addToReworkBucketEvent.eventOperator)}
             </td>
             <td>
-                <fmt:formatDate value="${actionBean.getReworkLogDate(reworkVessel)}" pattern="MM/dd/yyyy HH:mm:ss"/>
+                <fmt:formatDate value="${reworkVessel.reworkDetail.addToReworkBucketEvent.eventDate}" pattern="MM/dd/yyyy HH:mm:ss"/>
             </td>
         </tr>
     </c:forEach>

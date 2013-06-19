@@ -63,14 +63,6 @@ public class BucketEntry  {
         }
     };
 
-    /**
-     * @deprecated use {@link #getReworkDetail()} instead
-     */
-    @Deprecated
-    public ReworkEntry getReworkEntry() {
-        return null;
-    }
-
     public enum Status {
         Active, Archived
     }
