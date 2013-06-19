@@ -5,10 +5,10 @@ import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.SampleMetadata;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.SampleType;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
@@ -1280,6 +1280,46 @@ public abstract class LabVessel implements Serializable {
             evaluateCriteria(batchCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
             return batchCriteria.getNearestLabBatches();
         }
+    }
+
+    /**
+     * This method iterates over all of the ancestor and descendant vessels, adding them to a map of vessel -> event
+     * when the event matches the type given.
+     *
+     * @param type The type of event to filter the ancestors and descendants by.
+     *
+     * @return A map containing the vessels (key) and the event they were used at (value) given the event type.
+     */
+    public Map<LabVessel, LabEvent> findVesselsForLabEventType(LabEventType type) {
+        Map<LabVessel, LabEvent> foundVesselsToEvent = new HashMap<>();
+        for (LabVessel vessel : getAncestorAndDescendantVessels()) {
+            for (LabEvent event : vessel.getEvents()) {
+                if (type.equals(event.getLabEventType())) {
+                    for (LabVessel targetVessel : event.getTargetLabVessels()) {
+                        if (targetVessel.getContainerRole() != null
+                            && targetVessel.getContainerRole().getContainedVessels().contains(vessel)) {
+                            foundVesselsToEvent.put(vessel, event);
+                        } else if (targetVessel.equals(vessel)) {
+                            foundVesselsToEvent.put(vessel, event);
+                        }
+                    }
+                }
+            }
+        }
+        return foundVesselsToEvent;
+    }
+
+    /**
+     * This method walks the vessel transfers in both directions and returns all of the ancestor and descendant
+     * vessels.
+     *
+     * @return A collection contain all ancestor and descentdant vessels.
+     */
+    public Collection<LabVessel> getAncestorAndDescendantVessels() {
+        Collection<LabVessel> allVessels;
+        allVessels = getAncestorVessels();
+        allVessels.addAll(getDescendantVessels());
+        return allVessels;
     }
 
     public Collection<LabVessel> getDescendantVessels() {
