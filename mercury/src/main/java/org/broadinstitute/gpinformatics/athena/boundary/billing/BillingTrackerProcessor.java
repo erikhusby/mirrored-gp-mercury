@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.OrderBillSummaryStat;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
@@ -41,7 +40,8 @@ public class BillingTrackerProcessor extends TableProcessor {
     private Product currentProduct = null;
     private List<ProductOrderSample> currentSamples = new ArrayList<>();
     private int sampleIndexInOrder = 0;
-    private List<PriceItem> currentPriceItems = null;
+    private List<BillableRef> currentBillableRefs = null;
+    private final Map<String, PriceItem> currentPriceItemsByName;
     private final List<ProductOrder> productOrders = new ArrayList<>();
 
     // The map of charges keyed by PDO name
@@ -65,10 +65,28 @@ public class BillingTrackerProcessor extends TableProcessor {
         // The current product is the one specified here by the sheet name (the product number).
         currentProduct = productDao.findByPartNumber(sheetName);
 
-        // The price items for the product, in order that they appear in the spreadsheet.
-        currentPriceItems = SampleLedgerExporter.getAllPriceItems(currentProduct, priceItemDao, priceListCache);
+        // The price items for the product, in order that they appear in the spreadsheet. Populate the price item cache.
+        currentPriceItemsByName = new HashMap<>();
+        currentBillableRefs = getBillableRefList(currentProduct, priceItemDao, priceListCache, currentPriceItemsByName);
+        for (Product addOn : currentProduct.getAddOns()) {
+            currentBillableRefs.addAll(getBillableRefList(addOn, priceItemDao, priceListCache, currentPriceItemsByName));
+        }
 
         this.doPersist = doPersist;
+    }
+
+    private List<BillableRef> getBillableRefList(Product product, PriceItemDao priceItemDao,
+                                                 PriceListCache priceListCache,
+                                                 Map<String, PriceItem> currentPriceItemsByName) {
+
+        List<BillableRef> billableRefs = new ArrayList<>();
+        List<PriceItem> priceItems = SampleLedgerExporter.getPriceItems(product, priceItemDao, priceListCache);
+        for (PriceItem priceItem : priceItems) {
+            currentPriceItemsByName.put(priceItem.getName(), priceItem);
+            billableRefs.add(new BillableRef(product.getPartNumber(), priceItem.getName()));
+        }
+
+        return billableRefs;
     }
 
     @Override
@@ -258,8 +276,7 @@ public class BillingTrackerProcessor extends TableProcessor {
             }
 
             // Add values for each price item.
-            for (PriceItem priceItem : currentPriceItems) {
-                BillableRef billableRef = new BillableRef(currentProduct.getPartNumber(), priceItem.getName());
+            for (BillableRef billableRef : currentBillableRefs) {
                 pdoSummaryStatsMap.put(billableRef, new OrderBillSummaryStat());
             }
         } else {
@@ -294,13 +311,13 @@ public class BillingTrackerProcessor extends TableProcessor {
 
         Map<PriceItem, ProductOrderSample.LedgerQuantities> billCounts = productOrderSample.getLedgerQuantities();
 
-        for (PriceItem priceItem : currentPriceItems) {
+        for (BillableRef billableRef : currentBillableRefs) {
+            PriceItem priceItem = currentPriceItemsByName.get(billableRef.getPriceItemName());
+
             double newQuantity;
             double trackerBilled = 0;
-            BillableRef billableRef = new BillableRef(currentProduct.getPartNumber(), priceItem.getName());
 
-            String billedKey = BillingTrackerHeader.getPriceItemHeader(priceItem, currentProduct) + " " +
-                            BillingTrackerHeader.BILLED;
+            String billedKey = BillingTrackerHeader.getPriceItemHeader(billableRef) + " " + BillingTrackerHeader.BILLED;
 
             String priceItemName = billableRef.getPriceItemName();
             if (!StringUtils.isBlank(dataRow.get(billedKey))) {
@@ -329,7 +346,7 @@ public class BillingTrackerProcessor extends TableProcessor {
                 }
             }
 
-            String updateToKey = BillingTrackerHeader.getPriceItemHeader(priceItem, currentProduct) + " " +
+            String updateToKey = BillingTrackerHeader.getPriceItemHeader(billableRef) + " " +
                               BillingTrackerHeader.UPDATE;
             String updateTo = dataRow.get(updateToKey);
 

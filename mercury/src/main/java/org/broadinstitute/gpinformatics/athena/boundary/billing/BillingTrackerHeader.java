@@ -61,4 +61,8 @@ public enum BillingTrackerHeader implements ColumnHeader {
     public static String getPriceItemHeader(PriceItem priceItem, Product product) {
         return priceItem.getName() + " [" + product.getPartNumber() + "]";
     }
+
+    public static String getPriceItemHeader(BillableRef billableRef) {
+        return billableRef.getPriceItemName() + " [" + billableRef.getProductPartNumber() + "]";
+    }
 }

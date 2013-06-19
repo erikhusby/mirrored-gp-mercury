@@ -157,8 +157,8 @@ public class BillingTrackerImporterContainerTest extends Arquillian {
             // Primary Product data
             String rnaPriceItemName = "Strand Specific RNA-Seq (high coverage-50M paired reads)";
             OrderBillSummaryStat productStatData = getOrderBillSummaryStat(entries, rnaPriceItemName);
-            Assert.assertEquals(productStatData.getCharge(), 3.0, "Charge mismatch");
-            Assert.assertEquals(productStatData.getCredit(), 0.0, "Credit mismatch");
+            Assert.assertEquals(productStatData.getCharge(), 0.0, "Charge mismatch");
+            Assert.assertEquals(productStatData.getCredit(), 2.0, "Credit mismatch");
 
             // First AddOn data
             String rnaAddonPriceItemName = "DNA Extract from Blood, Fresh Frozen Tissue, cell pellet, stool, saliva";
@@ -169,8 +169,8 @@ public class BillingTrackerImporterContainerTest extends Arquillian {
             // Second AddOn data
             String rnaSecondAddonPriceItemName = "RNA Extract from FFPE";
             productStatData = getOrderBillSummaryStat(entries, rnaSecondAddonPriceItemName);
-            Assert.assertEquals(productStatData.getCharge(), 0.0, "Charge mismatch");
-            Assert.assertEquals(productStatData.getCredit(), -6.0, "Credit mismatch");
+            Assert.assertEquals(productStatData.getCharge(), 2.0, "Charge mismatch");
+            Assert.assertEquals(productStatData.getCredit(), 0.0, "Credit mismatch");
         } catch (Exception e) {
             e.printStackTrace();
             Assert.fail(e.getMessage());

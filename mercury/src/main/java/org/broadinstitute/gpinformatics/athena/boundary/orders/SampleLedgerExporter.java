@@ -81,25 +81,6 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
     }
 
     /**
-     * Get the primary price items (and replacements) along with all add-on product price items (and replacements).
-     *
-     * @param product The product.
-     * @param priceItemDao The DAO to use for saving any new price item.
-     * @param priceItemListCache The price list cache.
-     *
-     * @return The real price item objects.
-     */
-    public static List<PriceItem> getAllPriceItems(Product product, PriceItemDao priceItemDao, PriceListCache priceItemListCache) {
-        List<PriceItem> allPriceItems = getPriceItems(product, priceItemDao, priceItemListCache);
-
-        for (Product addOn : product.getAddOns()) {
-            allPriceItems.addAll(getAllPriceItems(addOn, priceItemDao, priceItemListCache));
-        }
-
-        return allPriceItems;
-    }
-
-    /**
      * This gets the product price item and then its list of optional price items. If the price items are not
      * yet stored in the PRICE_ITEM table, it will create it there.
      *
