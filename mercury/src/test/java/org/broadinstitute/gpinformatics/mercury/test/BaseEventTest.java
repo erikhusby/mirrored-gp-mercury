@@ -311,7 +311,7 @@ public class BaseEventTest {
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
     public QtpEntityBuilder runQtpProcess(TubeFormation rack, List<String> tubeBarcodes,
-                                          Map<String, TwoDBarcodedTube> mapBarcodeToTube, WorkflowName workflowName,
+                                          Map<String, TwoDBarcodedTube> mapBarcodeToTube, String workflowName,
                                           String barcodeSuffix) {
 
         return new QtpEntityBuilder(

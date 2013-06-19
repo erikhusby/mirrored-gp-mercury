@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
@@ -13,6 +14,7 @@ import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.testng.Assert;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -26,7 +28,6 @@ public class ShearingEntityBuilder {
     private final LabEventFactory               labEventFactory;
     private final LabEventHandler               labEventHandler;
     private final String rackBarcode;
-    private String shearPlateBarcode;
     private       StaticPlate                   shearingPlate;
     private String shearCleanPlateBarcode;
     private StaticPlate shearingCleanupPlate;
@@ -59,16 +60,19 @@ public class ShearingEntityBuilder {
 
     public ShearingEntityBuilder invoke() {
         ShearingJaxbBuilder shearingJaxbBuilder = new ShearingJaxbBuilder(bettaLimsMessageTestFactory,
-                new ArrayList<String>(
-                        mapBarcodeToTube.keySet()), testPrefix,
-                rackBarcode).invoke();
-        shearPlateBarcode = shearingJaxbBuilder.getShearPlateBarcode();
+                new ArrayList<>(mapBarcodeToTube.keySet()), testPrefix, rackBarcode).invoke();
         shearCleanPlateBarcode = shearingJaxbBuilder.getShearCleanPlateBarcode();
 
         // ShearingTransfer
         LabEventTest.validateWorkflow("ShearingTransfer", mapBarcodeToTube.values());
-        LabEvent shearingTransferEventEntity = labEventFactory.buildFromBettaLimsRackToPlateDbFree(
-                shearingJaxbBuilder.getShearingTransferEventJaxb(), preflightRack, null);
+        Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
+        mapBarcodeToVessel.put(preflightRack.getLabel(), preflightRack);
+        for (TwoDBarcodedTube twoDBarcodedTube : preflightRack.getContainerRole().getContainedVessels()) {
+            mapBarcodeToVessel.put(twoDBarcodedTube.getLabel(), twoDBarcodedTube);
+        }
+
+        LabEvent shearingTransferEventEntity = labEventFactory.buildFromBettaLims(
+                shearingJaxbBuilder.getShearingTransferEventJaxb(), mapBarcodeToVessel);
         labEventHandler.processEvent(shearingTransferEventEntity);
         // asserts
         shearingPlate = (StaticPlate) shearingTransferEventEntity.getTargetLabVessels().iterator().next();
@@ -77,8 +81,10 @@ public class ShearingEntityBuilder {
 
         // PostShearingTransferCleanup
         LabEventTest.validateWorkflow("PostShearingTransferCleanup", shearingPlate);
-        LabEvent postShearingTransferCleanupEntity = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(
-                shearingJaxbBuilder.getPostShearingTransferCleanupEventJaxb(), shearingPlate, null);
+        mapBarcodeToVessel.clear();
+        mapBarcodeToVessel.put(shearingPlate.getLabel(), shearingPlate);
+        LabEvent postShearingTransferCleanupEntity = labEventFactory.buildFromBettaLims(
+                shearingJaxbBuilder.getPostShearingTransferCleanupEventJaxb(), mapBarcodeToVessel);
         labEventHandler.processEvent(postShearingTransferCleanupEntity);
         // asserts
         shearingCleanupPlate =
@@ -94,8 +100,10 @@ public class ShearingEntityBuilder {
 
         // ShearingQC
         LabEventTest.validateWorkflow("ShearingQC", shearingCleanupPlate);
-        LabEvent shearingQcEntity = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(
-                shearingJaxbBuilder.getShearingQcEventJaxb(), shearingCleanupPlate, null);
+        mapBarcodeToVessel.clear();
+        mapBarcodeToVessel.put(shearingCleanupPlate.getLabel(), shearingCleanupPlate);
+        LabEvent shearingQcEntity = labEventFactory.buildFromBettaLims(shearingJaxbBuilder.getShearingQcEventJaxb(),
+                mapBarcodeToVessel);
         labEventHandler.processEvent(shearingQcEntity);
         return this;
     }

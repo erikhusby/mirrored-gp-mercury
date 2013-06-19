@@ -7,9 +7,9 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.testng.Assert;
@@ -97,8 +97,11 @@ public class LibraryConstructionEntityBuilder {
         LabEventTest.BuildIndexPlate buildIndexPlate = new LabEventTest.BuildIndexPlate(libraryConstructionJaxbBuilder.getIndexPlateBarcode())
                 .invoke(null);
         StaticPlate indexPlate = buildIndexPlate.getIndexPlate();
-        LabEvent indexedAdapterLigationEntity = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(
-                libraryConstructionJaxbBuilder.getIndexedAdapterLigationJaxb(), indexPlate, shearingCleanupPlate);
+        Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
+        mapBarcodeToVessel.put(indexPlate.getLabel(), indexPlate);
+        mapBarcodeToVessel.put(shearingCleanupPlate.getLabel(), shearingCleanupPlate);
+        LabEvent indexedAdapterLigationEntity = labEventFactory.buildFromBettaLims(
+                libraryConstructionJaxbBuilder.getIndexedAdapterLigationJaxb(), mapBarcodeToVessel);
         labEventHandler.processEvent(indexedAdapterLigationEntity);
         // asserts
         Set<SampleInstance> postIndexingSampleInstances =
@@ -111,8 +114,10 @@ public class LibraryConstructionEntityBuilder {
 
         // AdapterLigationCleanup
         LabEventTest.validateWorkflow("AdapterLigationCleanup", shearingCleanupPlate);
-        LabEvent ligationCleanupEntity = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(
-                libraryConstructionJaxbBuilder.getLigationCleanupJaxb(), shearingCleanupPlate, null);
+        mapBarcodeToVessel.clear();
+        mapBarcodeToVessel.put(shearingCleanupPlate.getLabel(), shearingCleanupPlate);
+        LabEvent ligationCleanupEntity = labEventFactory.buildFromBettaLims(
+                libraryConstructionJaxbBuilder.getLigationCleanupJaxb(), mapBarcodeToVessel);
         labEventHandler.processEvent(ligationCleanupEntity);
         StaticPlate ligationCleanupPlate =
                 (StaticPlate) ligationCleanupEntity.getTargetLabVessels().iterator().next();
@@ -130,16 +135,19 @@ public class LibraryConstructionEntityBuilder {
 
         // HybSelPondEnrichmentCleanup
         LabEventTest.validateWorkflow("HybSelPondEnrichmentCleanup", ligationCleanupPlate);
-        LabEvent pondCleanupEntity = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(
-                libraryConstructionJaxbBuilder.getPondCleanupJaxb(), ligationCleanupPlate, null);
+        mapBarcodeToVessel.clear();
+        mapBarcodeToVessel.put(ligationCleanupPlate.getLabel(), ligationCleanupPlate);
+        LabEvent pondCleanupEntity = labEventFactory.buildFromBettaLims(
+                libraryConstructionJaxbBuilder.getPondCleanupJaxb(), mapBarcodeToVessel);
         labEventHandler.processEvent(pondCleanupEntity);
         StaticPlate pondCleanupPlate = (StaticPlate) pondCleanupEntity.getTargetLabVessels().iterator().next();
 
         // PondRegistration
         LabEventTest.validateWorkflow("PondRegistration", pondCleanupPlate);
-        Map<String, TwoDBarcodedTube> mapBarcodeToPondRegTube = new HashMap<String, TwoDBarcodedTube>();
-        LabEvent pondRegistrationEntity = labEventFactory.buildFromBettaLimsPlateToRackDbFree(
-                libraryConstructionJaxbBuilder.getPondRegistrationJaxb(), pondCleanupPlate, mapBarcodeToPondRegTube, null);
+        mapBarcodeToVessel.clear();
+        mapBarcodeToVessel.put(pondCleanupPlate.getLabel(), pondCleanupPlate);
+        LabEvent pondRegistrationEntity = labEventFactory.buildFromBettaLims(
+                libraryConstructionJaxbBuilder.getPondRegistrationJaxb(), mapBarcodeToVessel);
         labEventHandler.processEvent(pondRegistrationEntity);
         // asserts
         pondRegRack = (TubeFormation) pondRegistrationEntity.getTargetLabVessels().iterator().next();

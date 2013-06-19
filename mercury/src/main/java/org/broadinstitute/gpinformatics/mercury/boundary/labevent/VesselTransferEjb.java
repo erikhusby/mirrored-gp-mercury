@@ -81,12 +81,8 @@ public class VesselTransferEjb {
             mapPositionToTube.put(vesselPosition, sourceTube);
         }
 
-        RackOfTubes denatureRack;
         if (denatureRackBarcode == null) {
             denatureRackBarcode = "DenatureRack" + reagentKitBarcode;
-            denatureRack = new RackOfTubes(denatureRackBarcode, RackOfTubes.RackType.Matrix96);
-            TubeFormation tubeFormation = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
-            tubeFormation.addRackOfTubes(denatureRack);
         }
 
         transferEvent.getSourcePlate().add(buildRackPlateType(denatureRackBarcode));
@@ -109,7 +105,7 @@ public class VesselTransferEjb {
             transferEvent.getSource().add(cherryPickSource);
         }
         transferEvent.getSourcePositionMap().add(positionMap);
-        transferEvent.setPlate(buildReagentKitPlateType(reagentKitBarcode));
+        transferEvent.getPlate().add(buildReagentKitPlateType(reagentKitBarcode));
         bettaLIMSMessage.getPlateCherryPickEvent().add(transferEvent);
         return bettaLIMSMessage;
     }

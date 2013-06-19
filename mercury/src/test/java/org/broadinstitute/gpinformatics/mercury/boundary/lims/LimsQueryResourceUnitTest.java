@@ -11,7 +11,6 @@ import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.control.lims.LimsQueryResourceResponseFactory;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.FlowcellDesignationType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PlateTransferType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateLaneType;
@@ -145,7 +144,8 @@ public class LimsQueryResourceUnitTest {
 
     @Test(groups = DATABASE_FREE)
     public void testDoesLimsRecognizeAllTubesFromSquid() {
-        expect(mockMercuryOrSquidRouter.getSystemOfRecordForVesselBarcodes(Arrays.asList("squid_barcode"))).andReturn(SQUID);
+        expect(mockMercuryOrSquidRouter.getSystemOfRecordForVesselBarcodes(Arrays.asList("squid_barcode")))
+                .andReturn(SQUID);
         expect(mockThriftService.doesSquidRecognizeAllLibraries(Arrays.asList("squid_barcode"))).andReturn(true);
         replayAll();
 
@@ -385,7 +385,8 @@ public class LimsQueryResourceUnitTest {
     @Test(groups = DATABASE_FREE)
     public void testFetchTransfersForPlateForSquid() {
         expect(mockMercuryOrSquidRouter.getSystemOfRecordForVessel("barcode")).andReturn(SQUID);
-        expect(mockThriftService.fetchTransfersForPlate("barcode", (short) 2)).andReturn(new ArrayList<PlateTransfer>());
+        expect(mockThriftService.fetchTransfersForPlate("barcode", (short) 2))
+                .andReturn(new ArrayList<PlateTransfer>());
         replayAll();
 
         resource.fetchTransfersForPlate("barcode", (short) 2);
@@ -395,25 +396,17 @@ public class LimsQueryResourceUnitTest {
 
     @Test(groups = DATABASE_FREE, enabled = true)
     public void testFetchIlluminaSeqTemplate() {
-        SequencingTemplateType template = new SequencingTemplateType();
-        template.setBarcode("BARCODE_1234");
-        template.setName("NAME_1234");
-        template.setOnRigWorkflow("Resequencing");
-        template.setOnRigChemistry("Default");
-        template.setReadStructure("76T8B76T");
-        template.setPairedRun(true);
-
-        SequencingTemplateLaneType laneType=new SequencingTemplateLaneType();
-        laneType.setLaneName("LANE_1324");
-        laneType.setLoadingConcentration(3.33);
-        laneType.setLoadingVesselLabel("LOADING_VESSEL_1234");
-
-        template.getLanes().add(laneType);
-
-        expect(resource.fetchIlluminaSeqTemplate("12345", SequencingTemplateFactory.QueryVesselType.FLOWCELL, true)).andReturn(
-                template);
+        SequencingTemplateLaneType laneType =
+                LimsQueryObjectFactory.createSequencingTemplateLaneType("LANE_1234", 33.333, "LOADING_VESSEL_1234");
+        SequencingTemplateType template =
+                LimsQueryObjectFactory
+                        .createSequencingTemplate("NAME_1234", "BARCODE_1234", true, "Resequencing", "Default",
+                                "76T8B76T", laneType);
+        expect(resource.fetchIlluminaSeqTemplate("12345", SequencingTemplateFactory.QueryVesselType.FLOWCELL, true))
+                .andReturn(template);
         replayAll();
-        SequencingTemplateType result = resource.fetchIlluminaSeqTemplate("12345", SequencingTemplateFactory.QueryVesselType.FLOWCELL, true);
+        SequencingTemplateType result = resource.fetchIlluminaSeqTemplate("12345",
+                SequencingTemplateFactory.QueryVesselType.FLOWCELL, true);
 
         assertThat(result, notNullValue());
         Assert.assertEquals(result.getBarcode(), "BARCODE_1234");
@@ -424,9 +417,9 @@ public class LimsQueryResourceUnitTest {
         Assert.assertTrue(result.isPairedRun());
         Assert.assertEquals(result.getLanes().size(), 1);
         SequencingTemplateLaneType laneOne = result.getLanes().get(0);
-        Assert.assertEquals(laneOne.getLoadingConcentration(), 3.33);
+        Assert.assertEquals(laneOne.getLoadingConcentration(), 33.333);
         Assert.assertEquals(laneOne.getLoadingVesselLabel(), "LOADING_VESSEL_1234");
-        Assert.assertEquals(laneOne.getLaneName(), "LANE_1324");
+        Assert.assertEquals(laneOne.getLaneName(), "LANE_1234");
         verifyAll();
     }
 

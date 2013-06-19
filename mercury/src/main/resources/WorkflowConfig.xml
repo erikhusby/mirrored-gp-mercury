@@ -581,6 +581,11 @@
             <workflowProcessDefs>Hybrid Selection</workflowProcessDefs>
             <workflowProcessDefs>QTP 2500</workflowProcessDefs>
             <workflowProcessDefs>HiSEQ 2500</workflowProcessDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Production</sequencingConfigDefs>
         </productWorkflowDefVersions>
         <routingRule>BOTH</routingRule>
         <inValidation>true</inValidation>
@@ -596,6 +601,11 @@
             <workflowProcessDefs>Hybrid Selection</workflowProcessDefs>
             <workflowProcessDefs>QTP</workflowProcessDefs>
             <workflowProcessDefs>HiSEQ</workflowProcessDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Production</sequencingConfigDefs>
         </productWorkflowDefVersions>
         <routingRule>SQUID</routingRule>
     </productWorkflowDefs>
@@ -610,7 +620,42 @@
             <workflowProcessDefs>SAGE</workflowProcessDefs>
             <workflowProcessDefs>QTP</workflowProcessDefs>
             <workflowProcessDefs>HiSEQ</workflowProcessDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Production</sequencingConfigDefs>        
         </productWorkflowDefVersions>
         <routingRule>SQUID</routingRule>
     </productWorkflowDefs>
+
+    <sequencingConfigDefs>
+        <name>Resequencing-Pool-Default</name>
+        <instrumentWorkflow>Resequencing</instrumentWorkflow>
+        <readStructure>POOL_TEST</readStructure>
+        <chemistry>Default</chemistry>
+    </sequencingConfigDefs>
+    <sequencingConfigDefs>
+        <name>Amplicon-Pool-Default</name>
+        <instrumentWorkflow>Amplicon</instrumentWorkflow>
+        <readStructure>POOL_TEST</readStructure>
+        <chemistry>Default</chemistry>
+    </sequencingConfigDefs>
+    <sequencingConfigDefs>
+        <name>Resequencing-Pool-Amplicon</name>
+        <instrumentWorkflow>Resequencing</instrumentWorkflow>
+        <readStructure>POOL_TEST</readStructure>
+        <chemistry>Amplicon</chemistry>
+    </sequencingConfigDefs>
+    <sequencingConfigDefs>
+        <name>Amplicon-Pool-Amplicon</name>
+        <instrumentWorkflow>Amplicon</instrumentWorkflow>
+        <readStructure>POOL_TEST</readStructure>
+        <chemistry>Amplicon</chemistry>
+    </sequencingConfigDefs>
+    <sequencingConfigDefs>
+        <name>Resequencing-Production</name>>
+        <readStructure>PRODUCTION</readStructure>
+    </sequencingConfigDefs>
+
 </workflowConfig>
