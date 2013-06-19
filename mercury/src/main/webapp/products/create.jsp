@@ -1,6 +1,5 @@
-<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.presentation.Role.*" %>
-<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.presentation.Role.roles" %>
-<%@ page import="org.broadinstitute.gpinformatics.infrastructure.presentation.Role" %>
+<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
+<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -366,7 +365,7 @@
                     </div>
                 </div>
 
-                <security:authorizeBlock roles="<%= Role.roles(Developer)%>">
+                <security:authorizeBlock roles="<%= roles(Developer)%>">
 
                     <div class="control-group">
                         <stripes:label for="useAutomatedBilling" class="control-label">

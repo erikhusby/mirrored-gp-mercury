@@ -329,6 +329,19 @@ public class MercuryOrSquidRouterTest {
      */
 
     @Test(groups = DATABASE_FREE, enabled = true)
+    public void testGetSystemOfRecordForControlOnly() {
+        // Override controlDao behavior from setUp so that the sample in MERCURY_TUBE_1 is a control sample.
+        when(mockControlDao.findAllActive())
+                .thenReturn(Arrays.asList(new Control("Sample1", Control.ControlType.POSITIVE)));
+        tube1.addSample(new MercurySample("SM-1"));
+
+        assertThat(mercuryOrSquidRouter.getSystemOfRecordForVessel(MERCURY_TUBE_1), is(SQUID));
+        verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>() {{
+            add(MERCURY_TUBE_1);
+        }});
+    }
+
+    @Test(groups = DATABASE_FREE, enabled = true)
     public void testGetSystemOfRecordForVesselInValidationLCSET() {
         ProductOrder order = placeOrderForTubeAndBucket(tube1, exomeExpress, picoBucket);
         tube1.getAllLabBatches().iterator().next().setValidationBatch(true);
@@ -355,7 +368,8 @@ public class MercuryOrSquidRouterTest {
         when(mockAthenaClientService.retrieveProductOrderDetails(jiraTicketKey)).thenReturn(order);
         tube.addSample(new MercurySample("SM-1"));
         if (bucket != null) {
-            bucket.addEntry(jiraTicketKey, tube);
+            bucket.addEntry(jiraTicketKey, tube,
+                    org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry.BucketEntryType.PDO_ENTRY);
         }
         LabBatch labBatch = new LabBatch("LCSET-" + productOrderSequence, Collections.<LabVessel>singleton(tube),
                 LabBatch.LabBatchType.WORKFLOW);

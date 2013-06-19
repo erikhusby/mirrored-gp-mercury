@@ -207,8 +207,8 @@ public class ProductOrderSample extends AbstractSample implements Serializable {
      * Used for testing only.
      */
     public ProductOrderSample(@Nonnull String sampleName,
-                              @Nonnull BSPSampleDTO bspDTO) {
-        super(bspDTO);
+                              @Nonnull BSPSampleDTO bspSampleDTO) {
+        super(bspSampleDTO);
         this.sampleName = sampleName;
     }
 

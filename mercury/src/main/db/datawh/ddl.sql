@@ -196,12 +196,14 @@ CREATE TABLE sequencing_sample_fact (
 );
 
 CREATE TABLE sequencing_run (
-  sequencing_run_id NUMERIC(19) NOT NULL PRIMARY KEY,
-  run_name          VARCHAR2(255),
-  barcode           VARCHAR2(255),
-  registration_date DATE,
-  instrument        VARCHAR2(255),
-  etl_date          DATE        NOT NULL
+  sequencing_run_id     NUMERIC(19) NOT NULL PRIMARY KEY,
+  run_name              VARCHAR2(255),
+  barcode               VARCHAR2(255),
+  registration_date     DATE,
+  instrument            VARCHAR2(255),
+  setup_read_structure  VARCHAR2(255),
+  actual_read_structure VARCHAR2(255),
+  etl_date              DATE        NOT NULL
 );
 
 
@@ -461,7 +463,9 @@ CREATE TABLE im_sequencing_run (
   run_name          VARCHAR2(255),
   barcode           VARCHAR2(255),
   registration_date DATE,
-  instrument        VARCHAR2(255)
+  instrument        VARCHAR2(255),
+  setup_read_structure  VARCHAR2(255),
+  actual_read_structure VARCHAR2(255)
 );
 
 CREATE SEQUENCE event_fact_id_seq START WITH 1;

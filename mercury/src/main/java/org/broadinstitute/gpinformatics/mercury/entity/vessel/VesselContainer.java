@@ -301,6 +301,13 @@ public class VesselContainer<T extends LabVessel> {
 
     @Transient
     public Set<SampleInstance> getSampleInstances(LabVessel.SampleType sampleType, LabBatch.LabBatchType labBatchType) {
+        Set<LabVessel> sourceVessels = new HashSet<>();
+        return getSampleInstances(sampleType, labBatchType, sourceVessels);
+    }
+
+    @Transient
+    private Set<SampleInstance> getSampleInstances(LabVessel.SampleType sampleType, LabBatch.LabBatchType labBatchType,
+                                                  Set<LabVessel> sourceVessels) {
         Set<SampleInstance> sampleInstances = new LinkedHashSet<SampleInstance>();
         for (VesselPosition position : mapPositionToVessel.keySet()) {
             sampleInstances.addAll(getSampleInstancesAtPosition(position, sampleType, labBatchType));
@@ -308,14 +315,18 @@ public class VesselContainer<T extends LabVessel> {
         if (sampleInstances.isEmpty()) {
             for (LabEvent labEvent : embedder.getTransfersTo()) {
                 for (LabVessel sourceLabVessel : labEvent.getSourceLabVessels()) {
-                    VesselContainer<?> vesselContainer = sourceLabVessel.getContainerRole();
-                    if (vesselContainer != null) {
-                        //noinspection unchecked
-                        sampleInstances.addAll(vesselContainer.getSampleInstances(sampleType, labBatchType));
-                        // todo arz fix this, probably by using LabBatch properly
+                    // Breaks cyclic vessel transfer by only visiting each source vessel once per traversal.
+                    if (sourceVessels.add(sourceLabVessel)) {
+                        VesselContainer<?> vesselContainer = sourceLabVessel.getContainerRole();
+                        if (vesselContainer != null) {
+                            //noinspection unchecked
+                            sampleInstances.addAll(
+                                    vesselContainer.getSampleInstances(sampleType, labBatchType, sourceVessels));
+                            // todo arz fix this, probably by using LabBatch properly
 //                        applyProjectPlanOverrideIfPresent(labEvent,sampleInstances);
-                    } else {
-                        sampleInstances.addAll(sourceLabVessel.getSampleInstances(sampleType, labBatchType));
+                        } else {
+                            sampleInstances.addAll(sourceLabVessel.getSampleInstances(sampleType, labBatchType));
+                        }
                     }
                 }
             }

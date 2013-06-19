@@ -168,12 +168,16 @@
     <xs:element name="plateCherryPickEvent">
         <xs:complexType>
             <xs:complexContent>
-                <xs:extension base="plateEventType">
+                <xs:extension base="stationEventType">
                     <xs:sequence>
+                        <xs:element name="plate" type="plateType" maxOccurs="unbounded"/>
+                        <xs:element name="positionMap" type="positionMapType" minOccurs="0" maxOccurs="unbounded"/>
                         <xs:element name="sourcePlate" type="plateType" minOccurs="0" maxOccurs="unbounded"/>
                         <xs:element name="sourcePositionMap" type="positionMapType" minOccurs="0" maxOccurs="unbounded"/>
                         <xs:element name="source" type="cherryPickSourceType" maxOccurs="unbounded"/>
+                        <xs:element name="reagent" type="reagentType" minOccurs="0" maxOccurs="unbounded"/>
                     </xs:sequence>
+                    <xs:attribute name="operation" type="xs:NMTOKEN"/>
                 </xs:extension>
             </xs:complexContent>
         </xs:complexType>

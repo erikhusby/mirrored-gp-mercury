@@ -1,6 +1,6 @@
 <%@ include file="/resources/layout/taglibs.jsp" %>
-<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.presentation.Role.*" %>
-<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.presentation.Role.roles" %>
+<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
+<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
 
 <stripes:layout-render name="/layout.jsp" pageTitle="Mercury">
     <stripes:layout-component name="content">

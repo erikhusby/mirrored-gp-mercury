@@ -15,6 +15,7 @@ import javax.persistence.NoResultException;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
+import java.util.List;
 
 /**
  * @author Scott Matthews
@@ -53,5 +54,4 @@ public class BucketEntryDao extends GenericDao {
             return null;
         }
     }
-
 }

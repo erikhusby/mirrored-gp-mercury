@@ -64,7 +64,7 @@ public class BucketEntryDaoTest extends ContainerTest {
         twoDBarcodeKey = "SM-1493";
         testPoBusinessKey = "PDO-33";
         BucketEntry testEntry = new BucketEntry(new TwoDBarcodedTube(twoDBarcodeKey), testPoBusinessKey,
-                newTestBucket);
+                newTestBucket, BucketEntry.BucketEntryType.PDO_ENTRY);
         bucketEntryDao.persist(testEntry);
         bucketEntryDao.flush();
         bucketEntryDao.clear();
@@ -120,7 +120,7 @@ public class BucketEntryDaoTest extends ContainerTest {
 
         TwoDBarcodedTube vesselToDupe = tubeDAO.findByBarcode(twoDBarcodeKey);
         BucketEntry testEntry = new BucketEntry(vesselToDupe, testPoBusinessKey + "dupe",
-                testBucket);
+                testBucket, BucketEntry.BucketEntryType.PDO_ENTRY);
 
         bucketEntryDao.persist(testEntry);
         bucketEntryDao.flush();

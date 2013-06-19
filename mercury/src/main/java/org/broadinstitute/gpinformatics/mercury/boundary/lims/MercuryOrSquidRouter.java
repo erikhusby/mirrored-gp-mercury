@@ -254,9 +254,10 @@ public class MercuryOrSquidRouter implements Serializable {
                                 routingOptions.add(SQUID);
                             } else {
                                 if (controlCollaboratorSampleIds.contains(sampleDTO.getCollaboratorsSampleName())) {
-                                    if (intent == Intent.SYSTEM_OF_RECORD) {
-                                        routingOptions.add(MERCURY);
-                                    } else {
+
+                                    // For system-of-record, controls defer to their travel partners.
+                                    // TODO: Figure out how to handle this for validation and production sets in Mercury
+                                    if (intent != Intent.SYSTEM_OF_RECORD) {
                                         routingOptions.add(BOTH);
                                     }
                                 } else {

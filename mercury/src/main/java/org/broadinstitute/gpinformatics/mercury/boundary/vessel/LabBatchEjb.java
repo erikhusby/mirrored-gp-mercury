@@ -191,8 +191,6 @@ public class LabBatchEjb {
                                                       @Nonnull String bucketName, @Nonnull String location) {
         Bucket bucket = bucketDao.findByName(bucketName);
         batch = createLabBatch(batch, operator);
-        //todo jac Hard coded labEventType for the one bucket.  This will need to change when we have multiple.
-        bucketEjb.add(batch.getReworks(), bucket, operator, location, LabEventType.PICO_PLATING_BUCKET);
         bucketEjb.start(operator, batch.getStartingLabVessels(), bucket, location);
         return batch;
     }

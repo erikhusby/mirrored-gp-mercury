@@ -13,6 +13,10 @@ import java.io.Serializable;
 @SuppressWarnings("UnusedDeclaration")
 @ConfigKey("bsp")
 public class BSPConfig extends AbstractConfig implements LoginAndPassword, Serializable {
+
+    /** Use this path to perform a search on a BSP barcode. */
+    public static final String SEARCH_PATH = "collection/find.action?barcode= ";
+
     private String login;
 
     private String password;

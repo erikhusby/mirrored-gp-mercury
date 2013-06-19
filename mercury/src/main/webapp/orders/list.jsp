@@ -1,5 +1,5 @@
-<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.presentation.Role.roles" %>
-<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.presentation.Role.*" %>
+<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
+<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 

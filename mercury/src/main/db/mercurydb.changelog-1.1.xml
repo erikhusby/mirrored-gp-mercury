@@ -78,4 +78,137 @@
             <column name="setup_read_structure" type="varchar(255)"></column>
         </addColumn>
     </changeSet>
+    
+    <changeSet id="GPLIM-1377-4" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists columnName="ENTRY_TYPE" schemaName="mercury" tableName="BUCKET_ENTRY" />
+            </not>
+        </preConditions>
+        <addColumn tableName="BUCKET_ENTRY" schemaName="mercury" >
+            <column name="ENTRY_TYPE" type="varchar(255)"></column>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-1377-5" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists columnName="ENTRY_TYPE" schemaName="mercury" tableName="BUCKET_ENTRY_AUD" />
+            </not>
+        </preConditions>
+        <addColumn tableName="BUCKET_ENTRY_AUD" schemaName="mercury" >
+            <column name="ENTRY_TYPE" type="varchar(255)"></column>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-1377-6" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <columnExists columnName="ENTRY_TYPE" schemaName="mercury" tableName="BUCKET_ENTRY" />
+        </preConditions>
+        <update schemaName="mercury" tableName="BUCKET_ENTRY">
+            <column name="ENTRY_TYPE" value="PDO_ENTRY"></column>
+            <where>ENTRY_TYPE is null</where>
+        </update>
+    </changeSet>
+    <changeSet id="GPLIM-1377-7" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <columnExists columnName="ENTRY_TYPE" schemaName="mercury" tableName="BUCKET_ENTRY_AUD" />
+        </preConditions>
+        <update schemaName="mercury" tableName="BUCKET_ENTRY_AUD">
+            <column name="ENTRY_TYPE" value="PDO_ENTRY"></column>
+            <where>ENTRY_TYPE is null</where>
+        </update>
+    </changeSet>
+
+    <changeSet id="GPLIM-1377-8" author="breilly">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="rework_detail" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <createTable tableName="rework_detail" schemaName="mercury">
+            <column name="rework_detail_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rework_level" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rework_reason" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rework_step" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rework_comment" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="rework_detail" schemaName="mercury" columnNames="rework_detail_id"/>
+        <createSequence sequenceName="SEQ_REWORK_DETAIL" schemaName="mercury" startValue="1" incrementBy="50"/>
+    </changeSet>
+    <changeSet id="GPLIM-1377-9" author="breilly">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="rework_detail_aud" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <createTable tableName="rework_detail_aud" schemaName="mercury">
+            <column name="rework_detail_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="revtype" type="number(3,0)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="rework_level" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="rework_reason" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="rework_step" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="rework_comment" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="rework_detail_aud" schemaName="mercury" columnNames="rework_detail_id, rev"/>
+        <addForeignKeyConstraint baseTableName="rework_detail_aud" baseTableSchemaName="mercury" baseColumnNames="rev"
+                                 constraintName="fk_rework_detail_aud_rev_info"
+                                 referencedTableName="rev_info" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="rev_info_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-1377-10" author="breilly">
+        <addColumn tableName="bucket_entry" schemaName="mercury">
+            <column name="rework_detail_id" type="number(19,0)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+        <addForeignKeyConstraint baseTableName="bucket_entry" baseTableSchemaName="mercury"
+                                 baseColumnNames="rework_detail_id"
+                                 constraintName="fk_bucket_entry_rework_detail"
+                                 referencedTableName="rework_detail" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="rework_detail_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-1377-11" author="breilly">
+        <addColumn tableName="bucket_entry_aud" schemaName="mercury">
+            <column name="rework_detail_id" type="number(19,0)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-1377-12" author="breilly">
+        <addColumn tableName="rework_detail">
+            <column name="add_to_rework_bucket_event_id" type="number(19,0)"/>
+        </addColumn>
+        <addColumn tableName="rework_detail_aud">
+            <column name="add_to_rework_bucket_event_id" type="number(19,0)"/>
+        </addColumn>
+        <addForeignKeyConstraint baseTableName="rework_detail" baseTableSchemaName="mercury"
+                                 baseColumnNames="add_to_rework_bucket_event_id"
+                                 constraintName="fk_rework_detail_lab_event"
+                                 referencedTableName="lab_event" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="lab_event_id"/>
+    </changeSet>
 </databaseChangeLog>

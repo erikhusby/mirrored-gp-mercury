@@ -1,11 +1,11 @@
-package org.broadinstitute.gpinformatics.infrastructure.presentation;
+package org.broadinstitute.gpinformatics.infrastructure.security;
 
 import javax.annotation.Nonnull;
 
 /**
  * Application roles as provided by HTTP authentication. Roles are defined in Active Directory and exported to
- * our server via Crowd.  These roles are used to determine which UI elements are visible to a user, which
- * features are available, and what the default view of some pages
+ * our server via Crowd.  These roles are used to determine many application behaviors, including which UI elements
+ * are visible to a user, which features are available and what the default view for a user is.
  */
 public enum Role {
     Developer("Mercury-Developers"),

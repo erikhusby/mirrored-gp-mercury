@@ -4,12 +4,6 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.AddReworkActionBean"/>
 
-<script type="text/javascript">
-//    $(document).ready(function () {
-//        $j('#reworkCandidates').dataTable();
-//    });
-</script>
-
 <stripes:form partial="true" beanclass="${actionBean.class}">
 <c:choose>
     <c:when test="${actionBean.reworkCandidates.isEmpty()}">

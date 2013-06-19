@@ -19,6 +19,7 @@ public abstract class AbstractSample {
     // FIXME: replace with real sample name pattern when CRSP jira is configured.
     public static final Pattern CRSP_SAMPLE_NAME_PATTERN = Pattern.compile("PDO-[A-Z1-9]{4,6}");
 
+    // TODO: replace BSP specific sample data support with a generic API that can support other platforms.
     @Transient
     private BSPSampleDTO bspSampleDTO = new BSPSampleDTO();
 
@@ -32,8 +33,14 @@ public abstract class AbstractSample {
         setBspSampleDTO(bspSampleDTO);
     }
 
+    /**
+     * @return the unique key for this sample, can be user visible
+     */
     public abstract String getSampleKey();
 
+    /**
+     * @return true if sample may have BSP data that hasn't been fetched yet
+     */
     public boolean needsBspMetaData() {
         return isInBspFormat() && !hasBspDTOBeenInitialized;
     }
@@ -45,10 +52,16 @@ public abstract class AbstractSample {
         return isInBspFormat() && hasBspDTOBeenInitialized && !bspSampleDTO.hasData();
     }
 
+    /**
+     * @return the BSP sample data for this sample
+     */
+    @Nonnull
     public BSPSampleDTO getBspSampleDTO() {
         if (!hasBspDTOBeenInitialized) {
+            // We allow non-BSP samples through for test cases only.
+            // FIXME: update tests to produce BSP sample names so this check is unnecessary.
             if (isInBspFormat() ||
-                !Deployment.PROD.equals(ServiceAccessUtility.getBean(BSPConfig.class).getMercuryDeployment())) {
+                ServiceAccessUtility.getBean(BSPConfig.class).getMercuryDeployment() != Deployment.PROD) {
 
                 BSPSampleDataFetcher bspSampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
                 bspSampleDTO = bspSampleDataFetcher.fetchSingleSampleFromBSP(getSampleKey());
@@ -65,6 +78,11 @@ public abstract class AbstractSample {
         return bspSampleDTO;
     }
 
+    /**
+     * Set the BSP sample data manually. This is used when loading the sample data for a group of samples at once.
+     *
+     * @param bspSampleDTO the data to set
+     */
     public void setBspSampleDTO(@Nonnull BSPSampleDTO bspSampleDTO) {
         //noinspection ConstantConditions
         if (bspSampleDTO == null) {
@@ -75,16 +93,25 @@ public abstract class AbstractSample {
         hasBspDTOBeenInitialized = true;
     }
 
+    /**
+     * @return true if the sample is a BSP sample
+     */
     public boolean isInBspFormat() {
         return BSPUtil.isInBspFormat(getSampleKey());
     }
 
+    /**
+     * @return true if the sample is a CRSP sample
+     */
     public boolean isInCrspFormat() {
         return CRSP_SAMPLE_NAME_PATTERN.matcher(getSampleKey()).matches();
     }
 
+    /**
+     * @return the 'BSP sample name' which is the barcode without the SM or SP prefix
+     */
     public String getBspSampleName() {
-        // skip the SM- part of the name.
+        // Skip the SM- part of the name.
         if ((getSampleKey().length() > 3) && isInBspFormat()) {
             return getSampleKey().substring(3);
         }
