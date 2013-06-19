@@ -8,8 +8,10 @@ package org.broadinstitute.gpinformatics.infrastructure.parsers;
  */
 public interface ColumnHeader {
 
-    public static final boolean REQUIRED = true;
-    public static final boolean OPTIONAL = false;
+    public static final boolean REQUIRED_HEADER = true;
+    public static final boolean OPTIONAL_HEADER = false;
+    public static final boolean REQUIRED_VALUE = true;
+    public static final boolean OPTIONAL_VALUE = false;
 
     /**
      * @return The text used to match the header in the input.  This should be unique in the list of headers

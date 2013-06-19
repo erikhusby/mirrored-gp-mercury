@@ -9,19 +9,19 @@ import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
  */
 public enum BillingTrackerHeader implements ColumnHeader {
 
-    SAMPLE_ID_HEADING("Sample ID", 0, ColumnHeader.REQUIRED, ColumnHeader.OPTIONAL),
-    COLLABORATOR_SAMPLE_ID("Collaborator Sample ID", 1, ColumnHeader.REQUIRED, ColumnHeader.REQUIRED),
-    MATERIAL_TYPE("Material Type", 2, ColumnHeader.REQUIRED, ColumnHeader.REQUIRED),
-    ON_RISK("On Risk", 3, ColumnHeader.REQUIRED, ColumnHeader.REQUIRED),
-    STATUS("Status", 4, ColumnHeader.REQUIRED, ColumnHeader.REQUIRED),
-    PRODUCT_NAME("Product Name", 5, ColumnHeader.REQUIRED, ColumnHeader.REQUIRED),
-    ORDER_ID_HEADING("Product Order ID", 6, ColumnHeader.REQUIRED, ColumnHeader.REQUIRED),
-    PRODUCT_ORDER_NAME("Product Order Name", 7, ColumnHeader.REQUIRED, ColumnHeader.REQUIRED),
-    PROJECT_MANAGER("Project Manager", 8, ColumnHeader.REQUIRED, ColumnHeader.REQUIRED),
-    WORK_COMPLETE_DATE_HEADING("Date Completed", 9, ColumnHeader.REQUIRED, ColumnHeader.REQUIRED),
-    QUOTE_ID_HEADING("Quote ID", 10, ColumnHeader.REQUIRED, ColumnHeader.REQUIRED),
-    AUTO_LEDGER_TIMESTAMP_HEADING("Auto Ledger Timestamp", 11, ColumnHeader.REQUIRED, ColumnHeader.REQUIRED),
-    SORT_COLUMN_HEADING("Sort Column", 12, ColumnHeader.REQUIRED, ColumnHeader.REQUIRED);
+    SAMPLE_ID_HEADING("Sample ID", 0, ColumnHeader.REQUIRED_HEADER, ColumnHeader.REQUIRED_VALUE),
+    COLLABORATOR_SAMPLE_ID("Collaborator Sample ID", 1, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_HEADER),
+    MATERIAL_TYPE("Material Type", 2, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_HEADER),
+    ON_RISK("On Risk", 3, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_HEADER),
+    STATUS("Status", 4, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_HEADER),
+    PRODUCT_NAME("Product Name", 5, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_HEADER),
+    ORDER_ID_HEADING("Product Order ID", 6, ColumnHeader.REQUIRED_HEADER, ColumnHeader.REQUIRED_VALUE),
+    PRODUCT_ORDER_NAME("Product Order Name", 7, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_HEADER),
+    PROJECT_MANAGER("Project Manager", 8, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_HEADER),
+    WORK_COMPLETE_DATE_HEADING("Date Completed", 9, ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_HEADER),
+    QUOTE_ID_HEADING("Quote ID", 10, ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_HEADER),
+    AUTO_LEDGER_TIMESTAMP_HEADING("Auto Ledger Timestamp", 11, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_HEADER),
+    SORT_COLUMN_HEADING("Sort Column", 12, ColumnHeader.REQUIRED_HEADER, ColumnHeader.REQUIRED_VALUE);
 
     public static final String BILLED = "Billed";
     public static final String UPDATE = "Update Quantity To";

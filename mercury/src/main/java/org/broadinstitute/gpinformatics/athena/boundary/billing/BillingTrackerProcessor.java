@@ -23,6 +23,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -65,7 +66,7 @@ public class BillingTrackerProcessor extends TableProcessor {
         currentProduct = productDao.findByPartNumber(sheetName);
 
         // The price items for the product, in order that they appear in the spreadsheet.
-        currentPriceItems = SampleLedgerExporter.getPriceItems(currentProduct, priceItemDao, priceListCache);
+        currentPriceItems = SampleLedgerExporter.getAllPriceItems(currentProduct, priceItemDao, priceListCache);
 
         this.doPersist = doPersist;
     }
@@ -89,10 +90,17 @@ public class BillingTrackerProcessor extends TableProcessor {
 
         // Only the product headers contain square brackets, so if those exist add two items for billed and updated.
         headerValues = new ArrayList<> ();
-        for (String originalHeader : originalHeaders) {
+
+        Iterator<String> headerIterator = originalHeaders.iterator();
+        while (headerIterator.hasNext()) {
+            String originalHeader = headerIterator.next();
             if (originalHeader.contains("[")) {
+                // The bracket is for price item columns, which are double spans.
                 headerValues.add(originalHeader + " " + BillingTrackerHeader.BILLED);
                 headerValues.add(originalHeader + " " + BillingTrackerHeader.UPDATE);
+
+                // Bump past the 'blank' column that the double span uses.
+                headerIterator.next();
             } else {
                 headerValues.add(originalHeader);
             }
@@ -113,6 +121,10 @@ public class BillingTrackerProcessor extends TableProcessor {
 
     @Override
     public void processRow(Map<String, String> dataRow, int dataRowIndex) {
+
+        // Increment to start because when there is a new row (and first) the addSummaryToChargesMap will set to 0.
+        // All error messages want the right row AND then return, so need this to be incremented.
+        sampleIndexInOrder++;
 
         List<String> processingMessages = new ArrayList<>();
 
@@ -141,7 +153,7 @@ public class BillingTrackerProcessor extends TableProcessor {
 
         // Must have a product order or product at this point. If not, it is an error.
         if ((currentProductOrder == null) || (currentProduct == null)) {
-            validationMessages.add("Sample " + currentSampleName + " on row " +  (dataRowIndex + 1 ) +
+            validationMessages.add("Sample " + currentSampleName + " on row " +  (dataRowIndex) +
             " cannot find PDO: " + rowPdoIdStr);
             return;
         }
@@ -158,22 +170,30 @@ public class BillingTrackerProcessor extends TableProcessor {
         parseRowForSummaryMap(processingMessages, dataRow, rowPdoIdStr);
         if (!processingMessages.isEmpty()) {
             validationMessages.addAll(processingMessages);
-            return;
         }
-
-        sampleIndexInOrder++;
     }
 
     private void checkSample(
             List<String> processingMessages, int dataRowIndex, String rowPdoIdStr, String currentSampleName,
             String autoLedgerString){
 
-        // The order in the spreadsheet is the same as returned in the productOrder.
+        // Make sure we do not have too many samples at this point.
         if (sampleIndexInOrder >= currentSamples.size()) {
-            String error = "Sample " + currentSampleName + " on row " +  (dataRowIndex + 1 ) +
-                    " of spreadsheet "  + currentProduct.getPartNumber() +
-                    " is not in the expected position. The Order <" + currentProductOrder.getTitle() +
-                    " (Id: " + rowPdoIdStr + ")> has only " + currentSamples.size() + " samples.";
+            String error = "Too many samples at: " + currentSampleName + " on row " +  (dataRowIndex) +
+                    " of spreadsheet "  + currentProduct.getPartNumber() + "The Order <" +
+                    currentProductOrder.getTitle() + " (Id: " + rowPdoIdStr + ")> has only " +
+                    currentSamples.size() + " samples.";
+            processingMessages.add(error);
+            return;
+        }
+
+        // The order in the spreadsheet is the same as returned in the productOrder.
+        if (!currentSamples.get(sampleIndexInOrder).getSampleName().equals(currentSampleName)) {
+            String error = "Sample " + currentSampleName + " on row " +  (dataRowIndex) +
+                           " of spreadsheet "  + currentProduct.getPartNumber() +
+                           " is not in the expected position. The Order <" + currentProductOrder.getTitle() +
+                           " (Id: " + rowPdoIdStr + ")> has sample name " +
+                           currentSamples.get(sampleIndexInOrder).getSampleName() + " at position: " + sampleIndexInOrder;
             processingMessages.add(error);
             return;
         }
@@ -181,7 +201,7 @@ public class BillingTrackerProcessor extends TableProcessor {
         // Make sure the product order sample name in the current position matches the sample list
         ProductOrderSample productOrderSample = currentSamples.get(sampleIndexInOrder);
         if (!productOrderSample.getSampleName().equals(currentSampleName)) {
-            String error = "Sample " + currentSampleName + " on row " + (dataRowIndex + 1) +
+            String error = "Sample " + currentSampleName + " on row " + (dataRowIndex) +
                 " of spreadsheet " + currentProduct.getPartNumber() +
                 " is in different position than expected. Expected value from Order is "
                 + productOrderSample.getSampleName();
@@ -205,7 +225,7 @@ public class BillingTrackerProcessor extends TableProcessor {
             }
 
             if (!timestampsAreEqual) {
-                String error = "Sample " + currentSampleName + " on row " + (dataRowIndex + 1) +
+                String error = "Sample " + currentSampleName + " on row " + (dataRowIndex) +
                                " of spreadsheet " + currentProduct.getPartNumber() +
                                " was auto billed after this tracker was downloaded. Download the tracker again to " +
                                "validate " + productOrderSample.getSampleName();
@@ -225,12 +245,14 @@ public class BillingTrackerProcessor extends TableProcessor {
         currentProductOrder = productOrderDao.findByBusinessKey(rowPdoIdStr);
         if (currentProductOrder != null) {
 
+            sampleIndexInOrder = 0; // Set to 0 at start here so row numbers will be correct.
+
             // Add to the list of product orders that were processed.
             productOrders.add(currentProductOrder);
             currentSamples = currentProductOrder.getSamples();
 
             if (currentSamples == null) {
-                processingMessages.add("Product Order " + rowPdoIdStr + " on row " + (dataRowIndex + 1) +
+                processingMessages.add("Product Order " + rowPdoIdStr + " on row " + (dataRowIndex) +
                                        " of sheet " + currentProduct.getPartNumber() + " has no samples.");
                 return;
             }
@@ -240,10 +262,8 @@ public class BillingTrackerProcessor extends TableProcessor {
                 BillableRef billableRef = new BillableRef(currentProduct.getPartNumber(), priceItem.getName());
                 pdoSummaryStatsMap.put(billableRef, new OrderBillSummaryStat());
             }
-
-            sampleIndexInOrder = 0;
         } else {
-            processingMessages.add("Product Order " + rowPdoIdStr + " on row " + (dataRowIndex + 1) +
+            processingMessages.add("Product Order " + rowPdoIdStr + " on row " + (dataRowIndex) +
                                    " of sheet " + currentProduct.getPartNumber() + " is not found in the database.");
         }
     }

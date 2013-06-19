@@ -106,9 +106,9 @@ public class LabMetricProcessor extends TableProcessor {
      * Definition of the headers defined in the Lab Metrics (Quant) upload file
      */
     private enum LabMetricHeaders implements ColumnHeader {
-        LOCATION("Location", 0, ColumnHeader.REQUIRED, ColumnHeader.OPTIONAL),
-        BARCODE("Barcode", 1, ColumnHeader.REQUIRED, ColumnHeader.REQUIRED),
-        METRIC("Quant", 2, ColumnHeader.REQUIRED, ColumnHeader.REQUIRED);
+        LOCATION("Location", 0, ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_VALUE),
+        BARCODE("Barcode", 1, ColumnHeader.REQUIRED_HEADER, ColumnHeader.REQUIRED_VALUE),
+        METRIC("Quant", 2, ColumnHeader.REQUIRED_HEADER, ColumnHeader.REQUIRED_VALUE);
 
         private final String text;
         private final int index;

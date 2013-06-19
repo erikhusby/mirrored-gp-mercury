@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.boundary.billing;
 import net.sourceforge.stripes.validation.ValidationErrors;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.OrderBillSummaryStat;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
@@ -134,7 +135,8 @@ public class BillingTrackerImporterContainerTest extends Arquillian {
             }
 
             if (!validationErrors.isEmpty()) {
-                Assert.fail("Processing the billing tracker spreadsheet got errors: " + validationErrors.toString());
+                Assert.fail("Processing the billing tracker spreadsheet got errors: \n" +
+                            StringUtils.join(validationErrors, "\n"));
             }
 
             // Check the RNA Data
@@ -147,12 +149,10 @@ public class BillingTrackerImporterContainerTest extends Arquillian {
             Assert.assertEquals(productOrders.size(), 1, "Should only be one product order");
 
             String rnaOrderId = "PDO-23";
-            processor = processors.get(rnaOrderId);
-            productOrders = processor.getUpdatedProductOrders();
-            Assert.assertTrue(CollectionUtils.isNotEmpty(productOrders), "Should have products");
+            Assert.assertEquals(productOrders.get(0).getBusinessKey(), rnaOrderId, "Should have products");
 
             Set<Map.Entry<BillableRef, OrderBillSummaryStat>> entries =
-                processors.get(rnaOrderId).getChargesMapByPdo().values().iterator().next().entrySet();
+                processor.getChargesMapByPdo().values().iterator().next().entrySet();
 
             // Primary Product data
             String rnaPriceItemName = "Strand Specific RNA-Seq (high coverage-50M paired reads)";

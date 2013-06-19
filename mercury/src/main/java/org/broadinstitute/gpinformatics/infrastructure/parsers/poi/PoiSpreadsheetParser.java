@@ -76,14 +76,21 @@ public final class PoiSpreadsheetParser implements Serializable {
         processData(processor, rows);
     }
 
+    /**
+     * Process the data portion of the spreadsheet.
+     *
+     * @param processor The processor being used.
+     * @param rows The iterator on the excel rows.
+     */
     private void processData(TableProcessor processor, Iterator<Row> rows) {
-        // Process the data portion of the spreadsheet.
-        int dataRowIndex = 0;
+        // the data row index starts at 1 in the excel spreadsheet and then we must skip the header rows.
+        int dataRowIndex = processor.getNumHeaderRows() + 1;
+
         while (rows.hasNext()) {
             Row row = rows.next();
 
             // Create a mapping of the headers to the cell values.
-            int columnIndex = 0;
+            int columnIndex = 0;  // The column index for grabbing cell data is 0 based.
             Map<String, String> dataByHeader = new HashMap<>();
             for (String headerName : processor.getHeaderNames()) {
                 dataByHeader.put(headerName, extractCellContent(row, headerName, columnIndex++));
