@@ -26,17 +26,17 @@ public class PicoPlatingJaxbBuilder {
     private PlateTransferEventType picoPlatingSetup2;
     private PlateTransferEventType picoPlatingSetup3;
     private PlateTransferEventType picoPlatingSetup4;
-    private PlateTransferEventType picoPlatingNormalizaion;
+    private PlateTransferEventType picoPlatingNormalization;
     private PlateTransferEventType picoPlatingPostNormSetup;
 
 
-    private final List<BettaLIMSMessage> messageList = new ArrayList<BettaLIMSMessage>();
+    private final List<BettaLIMSMessage> messageList = new ArrayList<>();
     private String picoPlatingQcBarcode;
     private String picoPlatingSetup1Barcode;
     private String picoPlatingSetup2Barcode;
     private String picoPlatingSetup3Barcode;
     private String picoPlatingSetup4Barcode;
-    private String picoPlatingNormalizaionBarcode;
+    private String picoPlatingNormalizationBarcode;
     private String picoPlatingPostNormSetupBarcode;
     private List<String> picoPlateNormBarcodes;
 
@@ -80,8 +80,8 @@ public class PicoPlatingJaxbBuilder {
         return picoPlatingSetup4;
     }
 
-    public PlateTransferEventType getPicoPlatingNormalizaion() {
-        return picoPlatingNormalizaion;
+    public PlateTransferEventType getPicoPlatingNormalization() {
+        return picoPlatingNormalization;
     }
 
     public PlateTransferEventType getPicoPlatingPostNormSetup() {
@@ -92,8 +92,8 @@ public class PicoPlatingJaxbBuilder {
         return messageList;
     }
 
-    public String getPicoPlatingNormalizaionBarcode() {
-        return picoPlatingNormalizaionBarcode;
+    public String getPicoPlatingNormalizationBarcode() {
+        return picoPlatingNormalizationBarcode;
     }
 
     public List<String> getPicoPlateNormBarcodes() {
@@ -136,20 +136,20 @@ public class PicoPlatingJaxbBuilder {
                 .getName(), picoPlatingSetup3Barcode, picoPlatingSetup4Barcode);
         bettaLimsMessageTestFactory.addMessage(messageList, picoPlatingSetup4);
 
-        picoPlateNormBarcodes = new ArrayList<String>();
-        for (int rackPosition = 1; rackPosition <= tubeBarcodes.size() / 2; rackPosition++) {
+        picoPlateNormBarcodes = new ArrayList<>();
+        for (int rackPosition = 1; rackPosition <= tubeBarcodes.size(); rackPosition++) {
             picoPlateNormBarcodes.add("PicoPlateNorm" + testPrefix + rackPosition);
         }
-        picoPlatingNormalizaionBarcode = LabEventType.SAMPLES_NORMALIZATION_TRANSFER.getName() + testPrefix;
-        picoPlatingNormalizaion = bettaLimsMessageTestFactory.buildRackToRack(LabEventType
+        picoPlatingNormalizationBarcode = LabEventType.SAMPLES_NORMALIZATION_TRANSFER.getName() + testPrefix;
+        picoPlatingNormalization = bettaLimsMessageTestFactory.buildRackToRack(LabEventType
                 .SAMPLES_NORMALIZATION_TRANSFER
-                .getName(), rackBarcode, tubeBarcodes, picoPlatingNormalizaionBarcode, picoPlateNormBarcodes);
-        bettaLimsMessageTestFactory.addMessage(messageList, picoPlatingNormalizaion);
+                .getName(), rackBarcode, tubeBarcodes, picoPlatingNormalizationBarcode, picoPlateNormBarcodes);
+        bettaLimsMessageTestFactory.addMessage(messageList, picoPlatingNormalization);
 
         picoPlatingPostNormSetupBarcode = LabEventType.PICO_PLATING_POST_NORM_PICO.getName() + testPrefix;
         picoPlatingPostNormSetup = bettaLimsMessageTestFactory
                 .buildRackToPlate(LabEventType.PICO_PLATING_POST_NORM_PICO
-                                              .getName(), picoPlatingNormalizaionBarcode, picoPlateNormBarcodes,
+                                              .getName(), picoPlatingNormalizationBarcode, picoPlateNormBarcodes,
                                          picoPlatingPostNormSetupBarcode);
         bettaLimsMessageTestFactory.addMessage(messageList, picoPlatingPostNormSetup);
 

@@ -11,11 +11,10 @@ import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.control.lims.LimsQueryResourceResponseFactory;
-import org.broadinstitute.gpinformatics.mercury.entity.limsquery.SequencingTemplate;
-import org.broadinstitute.gpinformatics.mercury.entity.limsquery.SequencingTemplateLane;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.FlowcellDesignationType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PlateTransferType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateLaneType;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateType;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -145,7 +144,8 @@ public class LimsQueryResourceUnitTest {
 
     @Test(groups = DATABASE_FREE)
     public void testDoesLimsRecognizeAllTubesFromSquid() {
-        expect(mockMercuryOrSquidRouter.getSystemOfRecordForVesselBarcodes(Arrays.asList("squid_barcode"))).andReturn(SQUID);
+        expect(mockMercuryOrSquidRouter.getSystemOfRecordForVesselBarcodes(Arrays.asList("squid_barcode")))
+                .andReturn(SQUID);
         expect(mockThriftService.doesSquidRecognizeAllLibraries(Arrays.asList("squid_barcode"))).andReturn(true);
         replayAll();
 
@@ -385,7 +385,8 @@ public class LimsQueryResourceUnitTest {
     @Test(groups = DATABASE_FREE)
     public void testFetchTransfersForPlateForSquid() {
         expect(mockMercuryOrSquidRouter.getSystemOfRecordForVessel("barcode")).andReturn(SQUID);
-        expect(mockThriftService.fetchTransfersForPlate("barcode", (short) 2)).andReturn(new ArrayList<PlateTransfer>());
+        expect(mockThriftService.fetchTransfersForPlate("barcode", (short) 2))
+                .andReturn(new ArrayList<PlateTransfer>());
         replayAll();
 
         resource.fetchTransfersForPlate("barcode", (short) 2);
@@ -395,15 +396,16 @@ public class LimsQueryResourceUnitTest {
 
     @Test(groups = DATABASE_FREE, enabled = true)
     public void testFetchIlluminaSeqTemplate() {
-        SequencingTemplateLane laneType =
-                new SequencingTemplateLane("LANE_1234", 33.333, "LOADING_VESSEL_1234");
-        SequencingTemplate template =
-new SequencingTemplate("NAME_1234", "BARCODE_1234", true, "Resequencing", "Default",
-                                "76T8B76T", Arrays.asList(laneType));
+        SequencingTemplateLaneType laneType =
+                LimsQueryObjectFactory.createSequencingTemplateLaneType("LANE_1234", 33.333, "LOADING_VESSEL_1234");
+        SequencingTemplateType template =
+                LimsQueryObjectFactory
+                        .createSequencingTemplate("NAME_1234", "BARCODE_1234", true, "Resequencing", "Default",
+                                "76T8B76T", laneType);
         expect(resource.fetchIlluminaSeqTemplate("12345", SequencingTemplateFactory.QueryVesselType.FLOWCELL, true))
                 .andReturn(template);
         replayAll();
-        SequencingTemplate result = resource.fetchIlluminaSeqTemplate("12345",
+        SequencingTemplateType result = resource.fetchIlluminaSeqTemplate("12345",
                 SequencingTemplateFactory.QueryVesselType.FLOWCELL, true);
 
         assertThat(result, notNullValue());
@@ -417,7 +419,7 @@ new SequencingTemplate("NAME_1234", "BARCODE_1234", true, "Resequencing", "Defau
         SequencingTemplateLaneType laneOne = result.getLanes().get(0);
         Assert.assertEquals(laneOne.getLoadingConcentration(), 33.333);
         Assert.assertEquals(laneOne.getLoadingVesselLabel(), "LOADING_VESSEL_1234");
-        Assert.assertEquals(laneOne.getLaneName(), "LANE_1324");
+        Assert.assertEquals(laneOne.getLaneName(), "LANE_1234");
         verifyAll();
     }
 

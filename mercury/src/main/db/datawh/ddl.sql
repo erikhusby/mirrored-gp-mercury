@@ -201,9 +201,9 @@ CREATE TABLE sequencing_run (
   barcode               VARCHAR2(255),
   registration_date     DATE,
   instrument            VARCHAR2(255),
-  etl_date              DATE        NOT NULL,
   setup_read_structure  VARCHAR2(255),
-  actual_read_structure VARCHAR2(255)
+  actual_read_structure VARCHAR2(255),
+  etl_date              DATE        NOT NULL
 );
 
 

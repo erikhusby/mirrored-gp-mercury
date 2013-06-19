@@ -100,7 +100,7 @@ public class ZimsIlluminaRunFactoryTest {
         when(mockAthenaClientService.retrieveProductOrderDetails("TestPDO-1")).thenReturn(testProductOrder);
 
         // Create an LCSET lab batch
-        final String sourceTubeBarcode = "testTube";
+        String sourceTubeBarcode = "testTube";
         testTube = new TwoDBarcodedTube(sourceTubeBarcode);
         testTube.addSample(new MercurySample("TestSM-1"));
         testTube.addBucketEntry(new BucketEntry(testTube, "TestPDO-1"));
@@ -119,16 +119,14 @@ public class ZimsIlluminaRunFactoryTest {
                 LabEventType.NORMALIZED_CATCH_REGISTRATION.getName(),
                 "SourceRack", Collections.singletonList(sourceTubeBarcode),
                 catchRackBarcode, Collections.singletonList(catchTubeBarcode));
-        LabEvent catchTransfer = labEventFactory.buildFromBettaLimsRackToRackDbFree(catchTransferJaxb,
-                new HashMap<String, TwoDBarcodedTube>() {{
-                    put(sourceTubeBarcode, testTube);
-                }},
-                null, new HashMap<String, TwoDBarcodedTube>(), null);
+        Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
+        mapBarcodeToVessel.put(sourceTubeBarcode, testTube);
+        LabEvent catchTransfer = labEventFactory.buildFromBettaLims(catchTransferJaxb, mapBarcodeToVessel);
         final TubeFormation catchTubeFormation = (TubeFormation) catchTransfer.getTargetLabVessels().iterator().next();
         TwoDBarcodedTube catchTube = catchTubeFormation. getContainerRole().getVesselAtPosition(VesselPosition.A01);
 
         // Strip tube B transfer
-        List<BettaLimsMessageTestFactory.CherryPick> cherryPicks = new ArrayList<BettaLimsMessageTestFactory.CherryPick>();
+        List<BettaLimsMessageTestFactory.CherryPick> cherryPicks = new ArrayList<>();
         String[] stripTubeWells = {"A01", "B01", "C01", "D01", "E01", "F01", "G01", "H01"};
         for (int i = 0; i < 8; i++) {
             cherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(catchRackBarcode, "A01", "testStripTubeHolder", stripTubeWells[i]));
@@ -137,7 +135,7 @@ public class ZimsIlluminaRunFactoryTest {
                 LabEventType.STRIP_TUBE_B_TRANSFER.getName(), Collections.singletonList(catchRackBarcode),
                 Collections.singletonList(Collections.singletonList(catchTubeBarcode)),
                 "testStripTubeHolder", Collections.singletonList("testStripTube"), cherryPicks);
-        Map<String, TwoDBarcodedTube> mapBarcodeToSourceTube = new HashMap<String, TwoDBarcodedTube>();
+        Map<String, TwoDBarcodedTube> mapBarcodeToSourceTube = new HashMap<>();
         mapBarcodeToSourceTube.put(catchTubeBarcode, catchTube);
         LabEvent stripTubeBTransfer = labEventFactory.buildCherryPickRackToStripTubeDbFree(stripTubeBTransferEvent,
                 new HashMap<String, TubeFormation>() {{
@@ -214,9 +212,9 @@ public class ZimsIlluminaRunFactoryTest {
 
         BSPSampleDTO sampleDTO = new BSPSampleDTO(dataMap);
 
-        Map<String, BSPSampleDTO> mapSampleIdToDto = new HashMap<String, BSPSampleDTO>();
+        Map<String, BSPSampleDTO> mapSampleIdToDto = new HashMap<>();
         mapSampleIdToDto.put("TestSM-1", sampleDTO);
-        Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<String, ProductOrder>();
+        Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<>();
         mapKeyToProductOrder.put("TestPDO-1", testProductOrder);
         Map<String, Control> mapNameToControl = new HashMap<>();
         LibraryBean libraryBean = zimsIlluminaRunFactory.makeLibraryBeans(testTube, mapSampleIdToDto,

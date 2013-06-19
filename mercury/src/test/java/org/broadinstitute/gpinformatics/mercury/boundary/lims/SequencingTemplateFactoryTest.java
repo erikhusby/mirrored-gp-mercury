@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
-import org.broadinstitute.gpinformatics.mercury.entity.limsquery.SequencingTemplate;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MiSeqReagentKit;
@@ -11,6 +10,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselAndPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateLaneType;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateType;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.hamcrest.core.AnyOf;
@@ -47,7 +47,7 @@ public class SequencingTemplateFactoryTest {
     private MiSeqReagentKit reagentKit = null;
     private static final String PRODUCTION_CIGAR = "76T8B8B76T";
     private static final String POOL_TEST_CIGAR = "8B8B";
-    private SequencingTemplate template;
+    private SequencingTemplateType template;
 
     @BeforeTest(alwaysRun = true)
     public void setUp() {
