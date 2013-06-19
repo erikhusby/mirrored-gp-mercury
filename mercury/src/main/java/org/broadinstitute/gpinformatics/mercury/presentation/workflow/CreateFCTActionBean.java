@@ -140,7 +140,7 @@ public class CreateFCTActionBean extends CoreActionBean {
     @ValidationMethod(on = SAVE_ACTION)
     public void validateOneDenatureTubeSelected() {
         if (selectedVesselLabels == null || selectedVesselLabels.size() != 1) {
-            addValidationError("tubeList", "You must selected a single denature tube.");
+            addValidationError("tubeList", "You must select a single denature tube.");
         }
     }
 }
