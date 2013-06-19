@@ -41,6 +41,8 @@ import java.util.*;
 @Stateful
 public class ProductOrderListEntryDao extends GenericDao implements Serializable {
 
+    private static final long serialVersionUID = -3433442117288051562L;
+
     /**
      * Universal first pass, ledger-unaware querying method used by both PDO view and PDO list queries.
      *
@@ -89,7 +91,7 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
                         productOrderRoot.get(ProductOrder_.placedDate),
                         productOrderRoot.get(ProductOrder_.quoteId)));
 
-        List<Predicate> listOfAndTerms = new ArrayList<Predicate>();
+        List<Predicate> listOfAndTerms = new ArrayList<>();
 
         // This is to support the PDO view use case, fetching the "Can Bill?" and "Billing Session" data.
         if (jiraTicketKey != null) {
@@ -139,7 +141,7 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
         }
 
         // create the and terms for the status and the dates
-        List<Predicate> listOfAndTerms = new ArrayList<Predicate>();
+        List<Predicate> listOfAndTerms = new ArrayList<>();
 
         // No matter what and the order statuses with the date rage
         listOfAndTerms.add(createOrTerms(cb, productOrderRoot.get(ProductOrder_.orderStatus), fixedOrderStatuses));
@@ -168,9 +170,14 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
 
         // Now add all the drafts by doing an OR query with just drafts
         return cb.or(
-            statusAndDate, cb.equal(productOrderRoot.get(ProductOrder_.orderStatus), ProductOrder.OrderStatus.Draft));
+                statusAndDate,
+                cb.equal(productOrderRoot.get(ProductOrder_.orderStatus), ProductOrder.OrderStatus.Draft));
     }
 
+    private void fetchUnbilledLedgerEntryCounts(List<ProductOrderListEntry> productOrderListEntries) {
+        fetchUnbilledLedgerEntryCounts(productOrderListEntries, ProductOrder.LedgerStatus.READY_FOR_REVIEW);
+        fetchUnbilledLedgerEntryCounts(productOrderListEntries, ProductOrder.LedgerStatus.READY_TO_BILL);
+    }
 
     /**
      * Second-pass, ledger aware query that merges its results into the first-pass objects passed as an argument.
@@ -181,7 +188,8 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
      *
      * @param productOrderListEntries The entries to fill with unbilled ledger entry counts.
      */
-    private void fetchUnbilledLedgerEntryCounts(List<ProductOrderListEntry> productOrderListEntries) {
+    private void fetchUnbilledLedgerEntryCounts(List<ProductOrderListEntry> productOrderListEntries,
+                                                final ProductOrder.LedgerStatus ledgerStatus) {
 
         if (CollectionUtils.isEmpty(productOrderListEntries)) {
             return;
@@ -211,6 +219,7 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
                 cb.construct(ProductOrderListEntry.class,
                         productOrderRoot.get(ProductOrder_.productOrderId),
                         productOrderRoot.get(ProductOrder_.jiraTicketKey),
+                        productOrderSampleLedgerEntrySetJoin.get(LedgerEntry_.autoLedgerTimestamp),
                         ledgerEntryBillingSessionJoin.get(BillingSession_.billingSessionId),
                         cb.count(productOrderRoot)));
 
@@ -220,7 +229,7 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
                 ledgerEntryBillingSessionJoin.get(BillingSession_.billingSessionId));
 
 
-        List<String> jiraTicketKeys = new ArrayList<String>();
+        List<String> jiraTicketKeys = new ArrayList<>();
         for (ProductOrderListEntry productOrderListEntry : productOrderListEntries) {
             if (productOrderListEntry.getJiraTicketKey() != null) {
                 jiraTicketKeys.add(productOrderListEntry.getJiraTicketKey());
@@ -233,9 +242,18 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
                 new CriteriaInClauseCreator<String>() {
                     @Override
                     public Query createCriteriaInQuery(Collection<String> parameterList) {
-                        CriteriaQuery<ProductOrderListEntry> query = cq.where(
-                                cb.isNull(ledgerEntryBillingSessionJoin.get(BillingSession_.billedDate)),
-                                productOrderRoot.get(ProductOrder_.jiraTicketKey).in(parameterList));
+                        CriteriaQuery<ProductOrderListEntry> query;
+                        if (ledgerStatus.equals(ProductOrder.LedgerStatus.READY_FOR_REVIEW)) {
+                             query = cq.where(
+                                    cb.isNull(ledgerEntryBillingSessionJoin.get(BillingSession_.billedDate)),
+                                    productOrderRoot.get(ProductOrder_.jiraTicketKey).in(parameterList));
+                        } else if (ledgerStatus.equals(ProductOrder.LedgerStatus.READY_TO_BILL)) {
+                            query = cq.where(
+                                    cb.isNull(ledgerEntryBillingSessionJoin.get(BillingSession_.billedDate)),
+                                    productOrderRoot.get(ProductOrder_.jiraTicketKey).in(parameterList));
+                        } else {
+                            throw new IllegalArgumentException("Can only fetch ready to bill or ready for review");
+                        }
 
                         return getEntityManager().createQuery(query);
                     }
@@ -244,7 +262,7 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
 
         // Build map of input productOrderListEntries jira key to DTO.
         Map<String, ProductOrderListEntry> jiraKeyToProductOrderListEntryMap =
-                new HashMap<String, ProductOrderListEntry>();
+                new HashMap<>();
         for (ProductOrderListEntry productOrderListEntry : productOrderListEntries) {
             jiraKeyToProductOrderListEntryMap.put(productOrderListEntry.getJiraTicketKey(), productOrderListEntry);
         }
@@ -257,11 +275,10 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
                 ProductOrderListEntry productOrderListEntry =
                         jiraKeyToProductOrderListEntryMap.get(result.getJiraTicketKey());
                 productOrderListEntry.setBillingSessionId(result.getBillingSessionId());
-                productOrderListEntry.setUnbilledLedgerEntryCount(result.getUnbilledLedgerEntryCount());
+                productOrderListEntry.setReadyForBillingCount(result.getReadyForBillingCount());
             }
         }
     }
-
 
     /**
      * Find the ProductOrderListEntries for the PDO list page, honoring any optionally supplied server-side filtering

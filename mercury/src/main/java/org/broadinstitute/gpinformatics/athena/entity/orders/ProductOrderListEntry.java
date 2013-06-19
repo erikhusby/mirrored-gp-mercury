@@ -32,7 +32,9 @@ public class ProductOrderListEntry implements Serializable {
 
     private Long billingSessionId;
 
-    private Long unbilledLedgerEntryCount = 0L;
+    private Long readyForReviewCount = 0L;
+
+    private Long readyForBillingCount = 0L;
 
     /**
      * Version of the constructor called by the non-ledger aware first pass query.
@@ -62,12 +64,17 @@ public class ProductOrderListEntry implements Serializable {
     @SuppressWarnings("UnusedDeclaration")
     // This is called through reflection and only appears to be unused.
     public ProductOrderListEntry(
-        Long orderId, String jiraTicketKey, Long billingSessionId, Long unbilledLedgerEntryCount) {
+        Long orderId, String jiraTicketKey, Long billingSessionId, Long count, ProductOrder.LedgerStatus ledgerStatus) {
 
         this.orderId = orderId;
         this.jiraTicketKey = jiraTicketKey;
         this.billingSessionId = billingSessionId;
-        this.unbilledLedgerEntryCount = unbilledLedgerEntryCount;
+
+        if (ledgerStatus.equals(ProductOrder.LedgerStatus.READY_FOR_REVIEW)) {
+            this.readyForReviewCount = count;
+        } else if (ledgerStatus.equals(ProductOrder.LedgerStatus.READY_FOR_REVIEW)) {
+            this.readyForBillingCount = count;
+        }
     }
 
     private ProductOrderListEntry() {}
@@ -131,16 +138,28 @@ public class ProductOrderListEntry implements Serializable {
         this.billingSessionId = billingSessionId;
     }
 
-    public Long getUnbilledLedgerEntryCount() {
-        return unbilledLedgerEntryCount;
+    public Long getReadyForBillingCount() {
+        return readyForBillingCount;
     }
 
-    public void setUnbilledLedgerEntryCount(Long unbilledLedgerEntryCount) {
-        this.unbilledLedgerEntryCount = unbilledLedgerEntryCount;
+    public void setReadyForBillingCount(Long readyForBillingCount) {
+        this.readyForBillingCount = readyForBillingCount;
     }
 
-    public boolean isEligibleForBilling() {
-        return getUnbilledLedgerEntryCount() > 0;
+    public Long getReadyForReviewCount() {
+        return readyForReviewCount;
+    }
+
+    public void setReadyForReviewCount(Long readyForReviewCount) {
+        this.readyForReviewCount = readyForReviewCount;
+    }
+
+    public boolean isReadyForBilling() {
+        return readyForBillingCount > 0;
+    }
+
+    public boolean isReadyForReview() {
+        return readyForReviewCount > 0;
     }
 
     @Override

@@ -249,7 +249,7 @@
                         <th width="25">Sample Count</th>
                         <th width="55">Quote</th>
                         <th width="35">Billing Session</th>
-                        <th width="25">Can Bill</th>
+                        <th width="35">Ledger Status</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -319,9 +319,16 @@
                                 </c:if>
                             </td>
                             <td>
-                                <c:if test="${order.eligibleForBilling}">
-                                    <stripes:image name="" title="Yes" src="/images/check.png"/>
-                                </c:if>
+                                <!-- Do ready for review first because if there is ANYTHING auto created, then it
+                                     cannot be billed until a review happens. -->
+                                <c:choose>
+                                    <c:when test="${order.readyForReview}">
+                                        <span class="icon-inbox" title="Ready for Review"></span>
+                                    </c:when>
+                                    <c:when test="${order.readyForBilling}">
+                                        <stripes:image name="" title="Ready to Bill" src="/images/check.png"/>
+                                    </c:when>
+                                </c:choose>
                             </td>
                         </tr>
                     </c:forEach>

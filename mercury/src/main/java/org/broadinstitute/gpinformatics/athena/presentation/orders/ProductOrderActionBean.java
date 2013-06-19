@@ -1310,7 +1310,7 @@ public class ProductOrderActionBean extends CoreActionBean {
      * @return Boolean eligible for billing.
      */
     public boolean isEligibleForBilling() {
-        return (productOrderListEntry != null) && productOrderListEntry.isEligibleForBilling();
+        return (productOrderListEntry != null) && productOrderListEntry.isReadyForBilling();
     }
 
     /**

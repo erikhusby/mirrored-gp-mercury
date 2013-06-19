@@ -153,7 +153,7 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
 
         ProductOrderListEntry productOrderListEntry = sanityCheckAndGetTestOrderListEntry();
 
-        Assert.assertEquals(productOrderListEntry.getUnbilledLedgerEntryCount(), Long.valueOf(0L));
+        Assert.assertEquals(productOrderListEntry.getReadyForBillingCount(), Long.valueOf(0L));
         Assert.assertNull(productOrderListEntry.getBillingSessionBusinessKey());
     }
 
@@ -169,7 +169,7 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
 
         ProductOrderListEntry productOrderListEntry = sanityCheckAndGetTestOrderListEntry();
 
-        Assert.assertEquals(productOrderListEntry.getUnbilledLedgerEntryCount(), Long.valueOf(1L));
+        Assert.assertEquals(productOrderListEntry.getReadyForBillingCount(), Long.valueOf(1L));
         Assert.assertNull(productOrderListEntry.getBillingSessionBusinessKey());
 
     }
@@ -187,7 +187,7 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
 
         ProductOrderListEntry productOrderListEntry = sanityCheckAndGetTestOrderListEntry();
 
-        Assert.assertEquals(productOrderListEntry.getUnbilledLedgerEntryCount(), Long.valueOf(1L));
+        Assert.assertEquals(productOrderListEntry.getReadyForBillingCount(), Long.valueOf(1L));
         Assert.assertEquals(productOrderListEntry.getBillingSessionBusinessKey(), billingSession.getBusinessKey());
 
     }
@@ -203,7 +203,7 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
     public void testSingle() {
         ProductOrderListEntry entry = productOrderListEntryDao.findSingle("PDO-41");
         Assert.assertNotNull(entry);
-        Assert.assertTrue(entry.isEligibleForBilling());
+        Assert.assertTrue(entry.isReadyForBilling());
     }
 
 }
