@@ -79,7 +79,7 @@ public class BucketDaoTest extends ContainerTest {
 
         Bucket retrievedBucket = bucketDao.findByName(EXTRACTION_BUCKET_NAME);
 
-        retrievedBucket.addEntry("PDO-1", new TwoDBarcodedTube("SM-1321"));
+        retrievedBucket.addEntry("PDO-1", new TwoDBarcodedTube("SM-1321"), BucketEntry.BucketEntryType.PDO_ENTRY);
 
         bucketDao.flush();
         bucketDao.clear();

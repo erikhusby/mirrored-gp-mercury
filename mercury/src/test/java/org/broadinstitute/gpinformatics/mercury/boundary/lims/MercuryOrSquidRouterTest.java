@@ -368,7 +368,8 @@ public class MercuryOrSquidRouterTest {
         when(mockAthenaClientService.retrieveProductOrderDetails(jiraTicketKey)).thenReturn(order);
         tube.addSample(new MercurySample("SM-1"));
         if (bucket != null) {
-            bucket.addEntry(jiraTicketKey, tube);
+            bucket.addEntry(jiraTicketKey, tube,
+                    org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry.BucketEntryType.PDO_ENTRY);
         }
         LabBatch labBatch = new LabBatch("LCSET-" + productOrderSequence, Collections.<LabVessel>singleton(tube),
                 LabBatch.LabBatchType.WORKFLOW);

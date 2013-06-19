@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -123,8 +124,8 @@ public class MercuryClientEjb {
         Collection<LabVessel> validVessels = applyPicoBucketCriteria(vessels, picoBucketDef);
 
         // FIXME TODO RE-VISIT HARD Coding.  Needs to have Workflow Step passed in to avoid hard coding!!!!!!
-        bucketEjb.add(validVessels, picoBucket, username, LabEvent.UI_EVENT_LOCATION, LabEventType.PICO_PLATING_BUCKET,
-                pdo.getBusinessKey());
+        bucketEjb.add(validVessels, picoBucket, BucketEntry.BucketEntryType.PDO_ENTRY, username,
+                LabEvent.UI_EVENT_LOCATION, LabEventType.PICO_PLATING_BUCKET, pdo.getBusinessKey());
 
         if (picoBucket.getBucketId() == null) {
             bucketDao.persist(picoBucket);

@@ -22,7 +22,6 @@ import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.RapSheet;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -78,7 +77,7 @@ public class BucketViewActionBean extends CoreActionBean {
     private String selectedBucket;
 
     private Collection<BucketEntry> bucketEntries;
-    private Collection<LabVessel> reworkEntries;
+    private Collection<BucketEntry> reworkEntries;
 
     private Map<String, ProductOrder> pdoByKeyMap = new HashMap<>();
 
@@ -153,11 +152,11 @@ public class BucketViewActionBean extends CoreActionBean {
         this.selectedReworks = selectedReworks;
     }
 
-    public Collection<LabVessel> getReworkEntries() {
+    public Collection<BucketEntry> getReworkEntries() {
         return reworkEntries;
     }
 
-    public void setReworkEntries(Collection<LabVessel> reworkEntries) {
+    public void setReworkEntries(Collection<BucketEntry> reworkEntries) {
         this.reworkEntries = reworkEntries;
     }
 
@@ -203,20 +202,30 @@ public class BucketViewActionBean extends CoreActionBean {
     }
 
     public Resolution viewBucket() {
-        reworkEntries = reworkEjb.getVesselsForRework();
 
         if (selectedBucket != null) {
             Bucket bucket = bucketDao.findByName(selectedBucket);
             if (bucket != null) {
                 bucketEntries = bucket.getBucketEntries();
+                reworkEntries = bucket.getReworkEntries();
             } else {
                 bucketEntries = new ArrayList<>();
             }
             if (!bucketEntries.isEmpty() || !reworkEntries.isEmpty()) {
                 jiraEnabled = true;
-                for (BucketEntry bucketEntry : bucketEntries) {
-                    pdoByKeyMap.put(bucketEntry.getPoBusinessKey(),
-                            athenaClientService.retrieveProductOrderDetails(bucketEntry.getPoBusinessKey()));
+
+                List<String> poKeys = new ArrayList<>();
+                List<BucketEntry> collectiveEntries = new ArrayList<>(bucketEntries);
+                collectiveEntries.addAll(reworkEntries);
+
+                for (BucketEntry entryForPO : collectiveEntries) {
+                    poKeys.add(entryForPO.getPoBusinessKey());
+                }
+
+                Collection<ProductOrder> foundOrders = athenaClientService.retrieveMultipleProductOrderDetails(poKeys);
+
+                for (ProductOrder orderEntry : foundOrders) {
+                    pdoByKeyMap.put(orderEntry.getBusinessKey(), orderEntry);
                 }
             }
         }
@@ -243,24 +252,6 @@ public class BucketViewActionBean extends CoreActionBean {
         return "Multiple PDOs";
     }
 
-    private RapSheet getRapSheet(LabVessel vessel) {
-        Set<SampleInstance> allSamples = vessel.getAllSamples();
-        if (allSamples.size() > 0) {
-            return allSamples.iterator().next().getStartingSample().getRapSheet();
-        }
-        return null;
-    }
-
-    public String getReworkReason(LabVessel vessel) {
-        return getRapSheet(vessel)
-                .getCurrentReworkEntry().getReworkReason().name();
-    }
-
-    public String getReworkComment(LabVessel vessel) {
-        return getRapSheet(vessel)
-                .getCurrentReworkEntry().getLabVesselComment().getComment();
-    }
-
     public Set<String> getSampleNames(LabVessel vessel) {
         Set<SampleInstance> allSamples = vessel.getAllSamples();
         Set<String> sampleNames = new HashSet<>();
@@ -268,21 +259,6 @@ public class BucketViewActionBean extends CoreActionBean {
             sampleNames.add(sampleInstance.getStartingSample().getSampleKey());
         }
         return sampleNames;
-    }
-
-    public Long getReworkOperator(LabVessel vessel) {
-        LabEvent labEvent = getRapSheet(vessel).getCurrentReworkEntry().getLabVesselComment().getLabEvent();
-        if (labEvent == null) {
-            return 0L;
-        } else {
-            return labEvent.getEventOperator();
-        }
-    }
-
-
-    public Date getReworkLogDate(LabVessel vessel) {
-        return getRapSheet(vessel)
-                .getCurrentReworkEntry().getLabVesselComment().getLogDate();
     }
 
     /**

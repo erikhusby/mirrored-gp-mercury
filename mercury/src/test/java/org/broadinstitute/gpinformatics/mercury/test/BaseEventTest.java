@@ -137,7 +137,7 @@ public class BaseEventTest {
         Bucket workingBucket = new Bucket(bucketName);
 
         for (TwoDBarcodedTube tube : mapBarcodeToTube.values()) {
-            workingBucket.addEntry(productOrder.getBusinessKey(), tube);
+            workingBucket.addEntry(productOrder.getBusinessKey(), tube, BucketEntry.BucketEntryType.PDO_ENTRY);
         }
         return workingBucket;
     }

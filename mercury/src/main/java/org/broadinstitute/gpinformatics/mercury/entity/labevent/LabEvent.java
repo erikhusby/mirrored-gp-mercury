@@ -356,6 +356,7 @@ todo jmt adder methods
 
     public void setLabBatch(LabBatch labBatch) {
         this.labBatch = labBatch;
+        labBatch.addLabEvent(this);
     }
 
     public LabBatch getLabBatch() {

@@ -78,7 +78,8 @@ public class BucketEjb {
                          StringUtils.join(productOrderBusinessKeys, ", "));
         }
 
-        BucketEntry newEntry = bucket.addEntry(productOrderBusinessKeys.iterator().next(), vessel);
+        BucketEntry newEntry = bucket.addEntry(productOrderBusinessKeys.iterator().next(), vessel,
+                BucketEntry.BucketEntryType.PDO_ENTRY);
 
         labEventFactory.createFromBatchItems(productOrderBusinessKeys.iterator().next(), vessel, 1L, operator,
                 eventType, eventLocation);
@@ -106,7 +107,7 @@ public class BucketEjb {
     public void add(@Nonnull Collection<LabVessel> entriesToAdd, @Nonnull Bucket bucket,
                     @Nonnull String operator, @Nonnull String labEventLocation, LabEventType eventType) {
 
-        add(entriesToAdd, bucket, operator, labEventLocation, eventType, null);
+        add(entriesToAdd, bucket, BucketEntry.BucketEntryType.PDO_ENTRY, operator, labEventLocation, eventType, null);
     }
 
     /**
@@ -115,13 +116,15 @@ public class BucketEjb {
      *
      * @param entriesToAdd         Collection of LabVessels to be added to a bucket
      * @param bucket               instance of a bucket entity associated with a workflow bucket step
+     * @param entryType            the type of bucket entry to add
      * @param operator             Represents the user that initiated adding the vessels to the bucket
      * @param labEventLocation     Machine location from which operator initiated this action
      * @param eventType            Type of the Lab Event that initiated this bucket add request
      * @param singlePdoBusinessKey Product order key for all vessels
      */
-    public void add(@Nonnull Collection<LabVessel> entriesToAdd, @Nonnull Bucket bucket,
-                    @Nonnull String operator, @Nonnull String labEventLocation, LabEventType eventType,
+    public Collection<BucketEntry> add(@Nonnull Collection<LabVessel> entriesToAdd, @Nonnull Bucket bucket,
+                    BucketEntry.BucketEntryType entryType, @Nonnull String operator, @Nonnull String labEventLocation,
+                    LabEventType eventType,
                     String singlePdoBusinessKey) {
 
         List<BucketEntry> listOfNewEntries = new LinkedList<BucketEntry>();
@@ -141,7 +144,7 @@ public class BucketEjb {
             } else {
                 pdoBusinessKey = singlePdoBusinessKey;
             }
-            listOfNewEntries.add(bucket.addEntry(pdoBusinessKey, currVessel));
+            listOfNewEntries.add(bucket.addEntry(pdoBusinessKey, currVessel, entryType));
 
             if (!pdoKeyToVesselMap.containsKey(pdoBusinessKey)) {
                 pdoKeyToVesselMap.put(pdoBusinessKey, new LinkedList<LabVessel>());
@@ -166,6 +169,8 @@ public class BucketEjb {
                              bucket.getBucketDefinitionName(), ioe);
             }
         }
+
+        return listOfNewEntries;
     }
 
     /**
@@ -449,7 +454,6 @@ public class BucketEjb {
                     .getLabCentricName() +
                         " and PDO " + currEntry.getPoBusinessKey() + " to be popped from bucket.");
             currEntry.getBucket().removeEntry(currEntry);
-            removeRework(currEntry.getLabVessel());
         }
         jiraRemovalUpdate(bucketEntries, "Extracted for Batch");
     }

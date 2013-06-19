@@ -248,16 +248,16 @@
         <tr>
             <td>
                 <stripes:checkbox class="bucket-checkbox" name="selectedReworks"
-                                  value="${reworkVessel.label}"/>
+                                  value="${reworkVessel.labVessel.label}"/>
             </td>
             <td>
 
-                <a href="${ctxpath}/search/vessel.action?vesselSearch=&searchKey=${reworkVessel.label}">
-                        ${reworkVessel.label}
+                <a href="${ctxpath}/search/vessel.action?vesselSearch=&searchKey=${reworkVessel.labVessel.label}">
+                        ${reworkVessel.labVessel.label}
                 </a>
             </td>
             <td>
-                <c:forEach items="${reworkVessel.mercurySamples}"
+                <c:forEach items="${reworkVessel.labVessel.mercurySamples}"
                            var="mercurySample"
                            varStatus="stat">
                     <a href="${ctxpath}/search/sample.action?sampleSearch=&searchKey=${mercurySample.sampleKey}">
@@ -268,33 +268,33 @@
                 </c:forEach>
             </td>
             <td>
-                    ${actionBean.getSinglePDOBusinessKey(reworkVessel)}
+                    ${actionBean.getSinglePDOBusinessKey(reworkVessel.labVessel)}
             </td>
             <td>
-                <div class="tdfield">${actionBean.getPDODetails(actionBean.getSinglePDOBusinessKey(reworkVessel)).title}</div>
+                <div class="tdfield">${actionBean.getPDODetails(actionBean.getSinglePDOBusinessKey(reworkVessel.labVessel)).title}</div>
             </td>
             <td>
-                    ${actionBean.getUserFullName(actionBean.getPDODetails(actionBean.getSinglePDOBusinessKey(reworkVessel)).createdBy)}
+                    ${actionBean.getUserFullName(actionBean.getPDODetails(actionBean.getSinglePDOBusinessKey(reworkVessel.labVessel)).createdBy)}
             </td>
             <td>
-                <c:forEach items="${reworkVessel.nearestWorkflowLabBatches}" var="batch"
+                <c:forEach items="${reworkVessel.labVessel.nearestWorkflowLabBatches}" var="batch"
                            varStatus="stat">
-                    ${actionBean.getSinglePDOBusinessKey(reworkVessel)}
+                    ${batch.businessKey}
                     <c:if test="${!stat.last}">&nbsp;</c:if>
                 </c:forEach>
 
             </td>
             <td>
-                    ${actionBean.getReworkReason(reworkVessel)}
+                ${reworkVessel.reworkDetail.reworkReason.value}
             </td>
             <td>
-                    ${actionBean.getReworkComment(reworkVessel)}
+                ${reworkVessel.reworkDetail.comment}
             </td>
             <td>
-                    ${actionBean.getUserFullName(actionBean.getReworkOperator(reworkVessel))}
+                ${actionBean.getUserFullName(reworkVessel.reworkDetail.addToReworkBucketEvent.eventOperator)}
             </td>
             <td>
-                <fmt:formatDate value="${actionBean.getReworkLogDate(reworkVessel)}" pattern="MM/dd/yyyy HH:mm:ss"/>
+                <fmt:formatDate value="${reworkVessel.reworkDetail.addToReworkBucketEvent.eventDate}" pattern="MM/dd/yyyy HH:mm:ss"/>
             </td>
         </tr>
     </c:forEach>

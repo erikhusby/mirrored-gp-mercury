@@ -980,7 +980,7 @@ public class LabEventTest extends BaseEventTest {
 
         @Override
         public BucketEntry findEntry(@Nonnull LabVessel entryVessel) {
-            addEntry(new BucketEntry(entryVessel, testProductOrder, this));
+            addEntry(new BucketEntry(entryVessel, testProductOrder, this, BucketEntry.BucketEntryType.PDO_ENTRY));
             return super.findEntry(entryVessel);
         }
     }
