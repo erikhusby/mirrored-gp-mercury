@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServic
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -219,6 +220,11 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
         }
 
         return summary.toString();
+    }
+
+    @Override
+    public CreateFields.ProjectType getProjectType() {
+        return CreateFields.ProjectType.LCSET_PROJECT;
     }
 
 }

@@ -68,10 +68,11 @@ public class LabBatchEjb {
      * @param reporter       The User that is attempting to create the batch
      * @param labVesselNames The plastic ware that the newly created lab batch will represent
      * @param jiraTicket     Optional parameter that represents an existing Jira Ticket that refers to this batch
+     *
      * @return
      */
     public LabBatch createLabBatch(@Nonnull String reporter, @Nonnull Set<String> labVesselNames,
-                                   String jiraTicket) {
+                                   String jiraTicket, LabBatch.LabBatchType labBatchType) {
 
         Set<LabVessel> vesselsForBatch = new HashSet<LabVessel>(labVesselNames.size());
 
@@ -79,7 +80,7 @@ public class LabBatchEjb {
             vesselsForBatch.add(tubeDAO.findByIdentifier(currVesselLabel));
         }
 
-        return createLabBatch(vesselsForBatch, reporter, jiraTicket);
+        return createLabBatch(vesselsForBatch, reporter, jiraTicket, labBatchType);
     }
 
     /**
@@ -90,9 +91,9 @@ public class LabBatchEjb {
      * @param jiraTicket Optional parameter that represents an existing Jira Ticket that refers to this batch
      */
     public LabBatch createLabBatch(@Nonnull Set<LabVessel> labVessels, @Nonnull String reporter,
-                                   @Nonnull String jiraTicket) {
+                                   @Nonnull String jiraTicket, LabBatch.LabBatchType labBatchType) {
 
-        LabBatch batchObject = new LabBatch(jiraTicket, labVessels, LabBatch.LabBatchType.WORKFLOW);
+        LabBatch batchObject = new LabBatch(jiraTicket, labVessels, labBatchType);
 
         labBatchDao.persist(batchObject);
 
@@ -110,10 +111,10 @@ public class LabBatchEjb {
      * createLabBatch will, given a group of lab plastic ware, create a batch entity and a new Jira Ticket for that
      * entity
      *
-     * @param batchObject A constructed, but not persisted, batch object containing all initial information necessary
-     *                    to persist a new batch
+     * @param batchObject   A constructed, but not persisted, batch object containing all initial information necessary
+     *                      to persist a new batch
      * @param reworkVessels Vessels to add as rework.
-     * @param reporter    The User that is attempting to create the batch
+     * @param reporter      The User that is attempting to create the batch
      */
     public LabBatch createLabBatch(LabBatch batchObject, Set<LabVessel> reworkVessels, String reporter) {
         Collection<String> pdoList = LabVessel.extractPdoKeyList(batchObject.getStartingLabVessels());
@@ -159,20 +160,22 @@ public class LabBatchEjb {
     /**
      * Creates a new lab batch, using an existing JIRA ticket for tracking, and adds the vessels to the named bucket.
      *
-     * @param vesselLabels    the vessel labels to add to the batch and the bucket
-     * @param operator        the person creating the batch
-     * @param jiraTicket      the existing JIRA ticket to use
-     * @param bucketName      the name of the bucket to add the vessels to
-     * @param location        the machine location of the operation for the bucket event
+     * @param vesselLabels the vessel labels to add to the batch and the bucket
+     * @param operator     the person creating the batch
+     * @param jiraTicket   the existing JIRA ticket to use
+     * @param bucketName   the name of the bucket to add the vessels to
+     * @param location     the machine location of the operation for the bucket event
+     *
      * @return the new lab batch
      */
     public LabBatch createLabBatchAndRemoveFromBucket(@Nonnull List<String> vesselLabels,
                                                       @Nonnull String operator, @Nonnull String jiraTicket,
-                                                      @Nonnull String bucketName, @Nonnull String location) {
+                                                      @Nonnull String bucketName, @Nonnull String location,
+                                                      @Nonnull LabBatch.LabBatchType labBatchType) {
         Set<LabVessel> vessels =
                 new HashSet<LabVessel>(tubeDAO.findByListIdentifiers(vesselLabels));
         Bucket bucket = bucketDao.findByName(bucketName);
-        LabBatch batch = createLabBatch(vessels, operator, jiraTicket);
+        LabBatch batch = createLabBatch(vessels, operator, jiraTicket, labBatchType);
         bucketBean.start(operator, vessels, bucket, location);
         return batch;
     }
@@ -180,11 +183,12 @@ public class LabBatchEjb {
     /**
      * Creates a new lab batch and adds the vessels to the named bucket.
      *
-     * @param batch         a constructed, but not persisted, batch object containing all initial information necessary
-     *                      to persist a new batch
-     * @param operator      the person creating the batch
-     * @param bucketName    the name of the bucket to add the vessels to
-     * @param location      the machine location of the operation for the bucket event
+     * @param batch      a constructed, but not persisted, batch object containing all initial information necessary
+     *                   to persist a new batch
+     * @param operator   the person creating the batch
+     * @param bucketName the name of the bucket to add the vessels to
+     * @param location   the machine location of the operation for the bucket event
+     *
      * @return the persisted lab batch
      */
     public LabBatch createLabBatchAndRemoveFromBucket(@Nonnull LabBatch batch, @Nonnull String operator,
@@ -234,23 +238,22 @@ public class LabBatchEjb {
         JiraTicket ticket = null;
         try {
             AbstractBatchJiraFieldFactory fieldBuilder = AbstractBatchJiraFieldFactory
-                    .getInstance(CreateFields.ProjectType.LCSET_PROJECT, newBatch, athenaClientService);
+                    .getInstance(newBatch, athenaClientService);
 
             if (StringUtils.isBlank(newBatch.getBatchDescription())) {
                 newBatch.setBatchDescription(fieldBuilder.generateDescription());
             } else {
-                newBatch.setBatchDescription(fieldBuilder.generateDescription() + "\n\n"+ newBatch.getBatchDescription());
+                newBatch.setBatchDescription(
+                        fieldBuilder.generateDescription() + "\n\n" + newBatch.getBatchDescription());
             }
 
             if (jiraTicket == null) {
-
                 Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
-
 
                 // TODO SGM Determine Project and Issue type better.  Use Workflow Configuration
                 JiraIssue jiraIssue = jiraService
-                        .createIssue(CreateFields.ProjectType.LCSET_PROJECT.getKeyPrefix(), reporter,
-                                CreateFields.IssueType.EXOME_EXPRESS, newBatch.getBatchName(),
+                        .createIssue(fieldBuilder.getProjectType().getKeyPrefix(), reporter,
+                                CreateFields.IssueType.EXOME_EXPRESS, fieldBuilder.getSummary(),
                                 newBatch.getBatchDescription(), fieldBuilder.getCustomFields(submissionFields));
 
                 ticket = new JiraTicket(jiraService, jiraIssue.getKey());
@@ -289,6 +292,7 @@ public class LabBatchEjb {
      * defined in a batch known to the Mercury System.
      *
      * @param batchVessels
+     *
      * @return
      */
     public boolean validatePriorBatch(Collection<LabVessel> batchVessels) {

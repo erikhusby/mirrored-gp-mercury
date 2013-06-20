@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import javax.annotation.Nonnull;
@@ -36,5 +37,10 @@ public class FCTJiraFieldFactory extends AbstractBatchJiraFieldFactory {
         summary.append("Denature Tube ");
         //get denature tube from batch summary.append(batch);
         return summary.toString();
+    }
+
+    @Override
+    public CreateFields.ProjectType getProjectType() {
+        return CreateFields.ProjectType.FCT_PROJECT;
     }
 }

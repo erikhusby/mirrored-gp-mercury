@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
-import org.testng.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
@@ -13,7 +12,10 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.*;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
+import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -56,9 +58,9 @@ public class LabBatchEJBTest extends ContainerTest {
     private BucketDao bucketDao;
 
     private LinkedHashMap<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
-    private String            workflowName;
+    private String workflowName;
     private ArrayList<String> pdoNames;
-    private String            scottmat;
+    private String scottmat;
     private Bucket bucket;
 
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
@@ -72,7 +74,7 @@ public class LabBatchEJBTest extends ContainerTest {
 
         bucket = bucketDao.findByName(BUCKET_NAME);
 
-        if(bucket == null) {
+        if (bucket == null) {
             bucket = new Bucket(new WorkflowBucketDef(BUCKET_NAME));
             bucketDao.persist(bucket);
             bucketDao.flush();
@@ -116,7 +118,8 @@ public class LabBatchEJBTest extends ContainerTest {
     public void testCreateLabBatch() throws Exception {
 
         LabBatch testBatch =
-                labBatchEJB.createLabBatch(new HashSet<LabVessel>(mapBarcodeToTube.values()), scottmat, "LCSET-123");
+                labBatchEJB.createLabBatch(new HashSet<LabVessel>(mapBarcodeToTube.values()), scottmat, "LCSET-123",
+                        LabBatch.LabBatchType.WORKFLOW);
 
         final String batchName = testBatch.getBatchName();
 
@@ -152,7 +155,7 @@ public class LabBatchEJBTest extends ContainerTest {
 
         String futureDate = dFormatter.format(future);
 
-        LabBatch batchInput =new LabBatch(batchName,new HashSet<LabVessel>(mapBarcodeToTube.values()),
+        LabBatch batchInput = new LabBatch(batchName, new HashSet<LabVessel>(mapBarcodeToTube.values()),
                 LabBatch.LabBatchType.WORKFLOW);
         batchInput.setBatchDescription(description);
         batchInput.setDueDate(future);
@@ -187,7 +190,8 @@ public class LabBatchEJBTest extends ContainerTest {
         labBatchDAO.clear();
         bucket = bucketDao.findByName(BUCKET_NAME);
 
-        String expectedTicketId = CreateFields.ProjectType.LCSET_PROJECT.getKeyPrefix() + JiraServiceStub.getCreatedIssueSuffix();
+        String expectedTicketId =
+                CreateFields.ProjectType.LCSET_PROJECT.getKeyPrefix() + JiraServiceStub.getCreatedIssueSuffix();
         Assert.assertEquals(expectedTicketId, savedBatch.getBatchName());
         savedBatch = labBatchDAO.findByName(expectedTicketId);
 
@@ -203,8 +207,9 @@ public class LabBatchEJBTest extends ContainerTest {
         putTubesInBucket();
 
         String expectedTicketId = "testCreateLabBatchAndRemoveFromBucketExistingTicket";
-        LabBatch savedBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(new ArrayList<String>(mapBarcodeToTube.keySet()), scottmat,
-                expectedTicketId, BUCKET_NAME, LabEvent.UI_EVENT_LOCATION);
+        LabBatch savedBatch = labBatchEJB
+                .createLabBatchAndRemoveFromBucket(new ArrayList<String>(mapBarcodeToTube.keySet()), scottmat,
+                        expectedTicketId, BUCKET_NAME, LabEvent.UI_EVENT_LOCATION, LabBatch.LabBatchType.WORKFLOW);
 
         labBatchDAO.flush();
         labBatchDAO.clear();

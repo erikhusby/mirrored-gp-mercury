@@ -63,6 +63,13 @@ public abstract class AbstractBatchJiraFieldFactory {
     public abstract String getSummary();
 
     /**
+     * This method returns the project type for the concrete jira field factories.
+     *
+     * @return A ProjectType enum value for the concrete jira field factory.
+     */
+    public abstract CreateFields.ProjectType getProjectType();
+
+    /**
      * Provides the user the ability to retrieve a concrete factory class specific to the given Project Type
      *
      * @param projectType         type of Jira Project for which the user needs to generate submission values.
@@ -79,16 +86,35 @@ public abstract class AbstractBatchJiraFieldFactory {
                                                             @Nonnull LabBatch batch,
                                                             AthenaClientService athenaClientService) {
 
-        AbstractBatchJiraFieldFactory builder = null;
+        AbstractBatchJiraFieldFactory builder;
 
         switch (projectType) {
         case LCSET_PROJECT:
             builder = new LCSetJiraFieldFactory(batch, athenaClientService);
+            break;
         case FCT_PROJECT:
             builder = new FCTJiraFieldFactory(batch);
+            break;
+        default:
+            builder = new LCSetJiraFieldFactory(batch, athenaClientService);
         }
 
         return builder;
     }
 
+    public static AbstractBatchJiraFieldFactory getInstance(LabBatch batch,
+                                                            AthenaClientService athenaClientService) {
+        AbstractBatchJiraFieldFactory builder;
+        switch (batch.getLabBatchType()) {
+        case WORKFLOW:
+            builder = new LCSetJiraFieldFactory(batch, athenaClientService);
+            break;
+        case FCT:
+            builder = new FCTJiraFieldFactory(batch);
+            break;
+        default:
+            builder = new LCSetJiraFieldFactory(batch, athenaClientService);
+        }
+        return builder;
+    }
 }

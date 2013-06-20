@@ -247,7 +247,7 @@ public class SearchActionBean extends CoreActionBean {
 
             batchObject =
                     labBatchEjb.createLabBatch(vesselSet, userBean.getBspUser().getUsername(),
-                            jiraTicketId.trim());
+                            jiraTicketId.trim(), LabBatch.LabBatchType.WORKFLOW);
         } else {
 
             /*
