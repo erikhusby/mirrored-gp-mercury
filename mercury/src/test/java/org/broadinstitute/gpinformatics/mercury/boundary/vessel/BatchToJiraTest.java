@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -32,7 +33,8 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
 
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class BatchToJiraTest extends Arquillian {
@@ -118,7 +120,7 @@ public class BatchToJiraTest extends Arquillian {
                 "scottmat");
 
 
-        batchEjb.batchToJira("andrew", null, batch);
+        batchEjb.batchToJira("andrew", null, batch, CreateFields.IssueType.EXOME_EXPRESS);
 
         JiraIssue ticket = jiraService.getIssue(batch.getJiraTicket().getTicketId());
 
@@ -129,7 +131,7 @@ public class BatchToJiraTest extends Arquillian {
 
         // now try it without a rework
         batch.getReworks().clear();
-        batchEjb.batchToJira("andrew", null, batch);
+        batchEjb.batchToJira("andrew", null, batch, CreateFields.IssueType.EXOME_EXPRESS);
 
         ticket = jiraService.getIssue(batch.getJiraTicket().getTicketId());
         gssrIdsText = getGssrFieldFromJiraTicket(ticket);

@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProduc
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -123,7 +124,7 @@ public class LabBatchEjbDBFreeTest {
         final String batchName = "Test create batch basic";
         LabBatch testBatch = labBatchEJB
                 .createLabBatch(new LabBatch(batchName, new HashSet<LabVessel>(mapBarcodeToTube.values()),
-                        LabBatch.LabBatchType.WORKFLOW), "scottmat");
+                        LabBatch.LabBatchType.WORKFLOW), "scottmat", CreateFields.IssueType.EXOME_EXPRESS);
 
         Assert.assertNotNull(testBatch);
         Assert.assertNotNull(testBatch.getJiraTicket());
@@ -144,7 +145,7 @@ public class LabBatchEjbDBFreeTest {
     void testCreateFCTBatch() throws Exception {
         LabBatch testBatch =
                 labBatchEJB.createLabBatch(new HashSet<>(mapBarcodeToTube.values()), "scottmat", testFCTKey,
-                        LabBatch.LabBatchType.FCT);
+                        LabBatch.LabBatchType.FCT, CreateFields.IssueType.FLOWCELL);
         EasyMock.verify(mockJira);
 
         Assert.assertNotNull(testBatch);
@@ -167,7 +168,8 @@ public class LabBatchEjbDBFreeTest {
     public void testCreateLabBatchWithVesselBarcodes() throws Exception {
 
         LabBatch testBatch =
-                labBatchEJB.createLabBatch("scottmat", vesselSampleList, testLCSetKey, LabBatch.LabBatchType.WORKFLOW);
+                labBatchEJB.createLabBatch("scottmat", vesselSampleList, testLCSetKey, LabBatch.LabBatchType.WORKFLOW,
+                        CreateFields.IssueType.EXOME_EXPRESS);
         EasyMock.verify(mockJira, tubeDao);
 
         Assert.assertNotNull(testBatch);
@@ -191,7 +193,7 @@ public class LabBatchEjbDBFreeTest {
 
         LabBatch testBatch =
                 labBatchEJB.createLabBatch(new HashSet<LabVessel>(mapBarcodeToTube.values()), "scottmat", testLCSetKey,
-                        LabBatch.LabBatchType.WORKFLOW);
+                        LabBatch.LabBatchType.WORKFLOW, CreateFields.IssueType.EXOME_EXPRESS);
         EasyMock.verify(mockJira);
 
         Assert.assertNotNull(testBatch);
@@ -215,7 +217,7 @@ public class LabBatchEjbDBFreeTest {
         final String batchName = "second Test batch name";
         LabBatch testBatch = labBatchEJB
                 .createLabBatch(new LabBatch(batchName, new HashSet<LabVessel>(mapBarcodeToTube.values()),
-                        LabBatch.LabBatchType.WORKFLOW), scottmat);
+                        LabBatch.LabBatchType.WORKFLOW), scottmat, CreateFields.IssueType.EXOME_EXPRESS);
 
         Assert.assertNotNull(testBatch);
         Assert.assertNotNull(testBatch.getJiraTicket());
@@ -243,8 +245,7 @@ public class LabBatchEjbDBFreeTest {
         batchInput.setBatchDescription(description);
 
         LabBatch testBatch = labBatchEJB
-                .createLabBatch(batchInput, scottmat
-                );
+                .createLabBatch(batchInput, scottmat, CreateFields.IssueType.EXOME_EXPRESS);
 
         Assert.assertNotNull(testBatch);
         Assert.assertNotNull(testBatch.getJiraTicket());

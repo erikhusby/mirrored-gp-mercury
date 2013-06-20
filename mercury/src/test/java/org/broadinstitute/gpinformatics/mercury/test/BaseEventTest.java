@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceStub;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
@@ -151,16 +152,15 @@ public class BaseEventTest {
     /**
      * This method runs the entities through the pico/plating process.
      *
-     *
-     * @param mapBarcodeToTube  A map of barcodes to tubes that will be run the starting point of the pico/plating process.
-     * @param productOrder      The product order to use for bucket entries.
-     * @param workflowBatch     The batch that will be used for this process.
-     * @param lcsetSuffix       Set this non-null to override the lcset id number.
-     * @param rackBarcodeSuffix rack barcode suffix.
-     * @param barcodeSuffix     Uniquifies the generated vessel barcodes. NOT date if test quickly invokes twice.
-     *
+     * @param mapBarcodeToTube     A map of barcodes to tubes that will be run the starting point of the pico/plating process.
+     * @param productOrder         The product order to use for bucket entries.
+     * @param workflowBatch        The batch that will be used for this process.
+     * @param lcsetSuffix          Set this non-null to override the lcset id number.
+     * @param rackBarcodeSuffix    rack barcode suffix.
+     * @param barcodeSuffix        Uniquifies the generated vessel barcodes. NOT date if test quickly invokes twice.
      * @param archiveBucketEntries allows a DBFree test case to force "ancestor" tubes to be currently in a bucket
      *                             for scenarios where that state is important to the test
+     *
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
     public PicoPlatingEntityBuilder runPicoPlatingProcess(Map<String, TwoDBarcodedTube> mapBarcodeToTube,
@@ -174,7 +174,7 @@ public class BaseEventTest {
         if (lcsetSuffix != null) {
             JiraServiceStub.setCreatedIssueSuffix(lcsetSuffix);
         }
-        labBatchEJB.createLabBatch(workflowBatch, "scottmat");
+        labBatchEJB.createLabBatch(workflowBatch, "scottmat", CreateFields.IssueType.EXOME_EXPRESS);
         JiraServiceStub.setCreatedIssueSuffix(defaultLcsetSuffix);
 
         Bucket workingBucket = createAndPopulateBucket(mapBarcodeToTube, productOrder, "Pico/Plating Bucket");
@@ -226,7 +226,7 @@ public class BaseEventTest {
     public PreFlightEntityBuilder runPreflightProcess(Map<String, TwoDBarcodedTube> mapBarcodeToTube,
                                                       ProductOrder productOrder,
                                                       LabBatch workflowBatch, String barcodeSuffix) {
-        labBatchEJB.createLabBatch(workflowBatch, "scotmatt");
+        labBatchEJB.createLabBatch(workflowBatch, "scotmatt", CreateFields.IssueType.EXOME_EXPRESS);
 
         Bucket workingBucket = createAndPopulateBucket(mapBarcodeToTube, productOrder, "Preflight Bucket");
 

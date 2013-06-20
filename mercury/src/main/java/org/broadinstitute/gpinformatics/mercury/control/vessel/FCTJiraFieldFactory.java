@@ -28,6 +28,7 @@ public class FCTJiraFieldFactory extends AbstractBatchJiraFieldFactory {
 
     @Override
     public String generateDescription() {
+        //create description with denature tube
         return null;
     }
 
@@ -35,7 +36,7 @@ public class FCTJiraFieldFactory extends AbstractBatchJiraFieldFactory {
     public String getSummary() {
         StringBuilder summary = new StringBuilder();
         summary.append("Denature Tube ");
-        //get denature tube from batch summary.append(batch);
+        //get denature tube from batch
         return summary.toString();
     }
 

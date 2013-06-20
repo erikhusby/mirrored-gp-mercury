@@ -14,6 +14,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
@@ -305,7 +306,12 @@ public class BucketViewActionBean extends CoreActionBean {
         batchObject.addReworks(reworks);
 
         labBatchEjb.createLabBatchAndRemoveFromBucket(batchObject, userBean.getBspUser().getUsername(), selectedBucket,
-                LabEvent.UI_EVENT_LOCATION);
+                LabEvent.UI_EVENT_LOCATION, CreateFields.IssueType.EXOME_EXPRESS);
+
+        //link the JIRA tickets for the batch created to the pdo batches.
+        for (String pdoKey : LabVessel.extractPdoKeyList(vesselSet)) {
+            labBatchEjb.linkJiraBatchToTicket(pdoKey, batchObject);
+        }
 
         addMessage(MessageFormat
                 .format("Lab batch ''{0}'' has been created.", batchObject.getJiraTicket().getTicketName()));

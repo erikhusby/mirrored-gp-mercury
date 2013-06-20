@@ -100,7 +100,9 @@ public class CreateFields extends UpdateFields {
         WHOLE_EXOME_HYBSEL("Whole Exome (HybSel)"),
         EXOME_EXPRESS(WorkflowName.EXOME_EXPRESS.getWorkflowName()),
         PRODUCT_ORDER("Product Order"),
-        RESEARCH_PROJECT("Research Project");
+        RESEARCH_PROJECT("Research Project"),
+        FLOWCELL("Flowcell"),
+        MISEQ("MiSeq");
 
         private final String jiraName;
 

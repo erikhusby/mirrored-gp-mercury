@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.mercury.MercuryClientEjb;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
@@ -143,7 +144,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
 
     private final SimpleDateFormat testPrefixDateFormat = new SimpleDateFormat("MMddHHmmss");
 
-    public static final Map<String, String> mapWorkflowToPartNum = new HashMap<String, String>(){{
+    public static final Map<String, String> mapWorkflowToPartNum = new HashMap<String, String>() {{
         put("Custom Amplicon", "P-VAL-0002");
         put("Whole Genome", "P-WG-0002");
         put("Exome Express", "P-EX-0002");
@@ -222,7 +223,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
         labBatch.addReworks(reworks);
         labBatch.setJiraTicket(new JiraTicket(JiraServiceProducer.stubInstance(), batchName));
         labBatchEjb.createLabBatchAndRemoveFromBucket(labBatch, "jowalsh", "Pico/Plating Bucket",
-                LabEvent.UI_EVENT_LOCATION);
+                LabEvent.UI_EVENT_LOCATION, CreateFields.IssueType.EXOME_EXPRESS);
         // message
         hybridSelectionJaxbBuilder = sendMessagesUptoCatch(testPrefix, mapBarcodeToTube2, bettaLimsMessageFactory,
                 WorkflowName.EXOME_EXPRESS, bettalimsMessageResource, indexedPlateFactory, staticPlateDAO,
@@ -320,9 +321,9 @@ public class BettalimsMessageResourceTest extends Arquillian {
      * @param twoDBarcodedTubeDAO
      * @param testMercuryUrl
      * @param numPositionsInRack
-     * @param testPrefix              make barcodes unique
-     * @param mapBarcodeToTube        map from tube barcode to sample tube
-     * @param bettaLimsMessageFactory to build messages
+     * @param testPrefix               make barcodes unique
+     * @param mapBarcodeToTube         map from tube barcode to sample tube
+     * @param bettaLimsMessageFactory  to build messages
      *
      * @return allows access to catch tubes
      */
@@ -489,7 +490,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
         LabBatch labBatch = new LabBatch(batchName, starters, LabBatch.LabBatchType.WORKFLOW);
         labBatch.setJiraTicket(new JiraTicket(JiraServiceProducer.stubInstance(), batchName));
         labBatchEjb.createLabBatchAndRemoveFromBucket(labBatch, "jowalsh", "Pico/Plating Bucket",
-                LabEvent.UI_EVENT_LOCATION);
+                LabEvent.UI_EVENT_LOCATION, CreateFields.IssueType.EXOME_EXPRESS);
     }
 
     /**
@@ -534,7 +535,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
     }
 
     public static void sendMessage(BettaLIMSMessage bettaLIMSMessage, BettalimsMessageResource bettalimsMessageResource,
-                             String testMercuryUrl) {
+                                   String testMercuryUrl) {
         if (true) {
             // In JVM
             bettalimsMessageResource.processMessage(bettaLIMSMessage);

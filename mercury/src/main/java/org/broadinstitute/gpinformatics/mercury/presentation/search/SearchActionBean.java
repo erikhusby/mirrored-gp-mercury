@@ -16,6 +16,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -247,7 +248,7 @@ public class SearchActionBean extends CoreActionBean {
 
             batchObject =
                     labBatchEjb.createLabBatch(vesselSet, userBean.getBspUser().getUsername(),
-                            jiraTicketId.trim(), LabBatch.LabBatchType.WORKFLOW);
+                            jiraTicketId.trim(), LabBatch.LabBatchType.WORKFLOW, CreateFields.IssueType.EXOME_EXPRESS);
         } else {
 
             /*
@@ -257,7 +258,13 @@ public class SearchActionBean extends CoreActionBean {
             batchObject = new LabBatch(summary.trim(), vesselSet, LabBatch.LabBatchType.WORKFLOW, description, dueDate,
                     important);
 
-            labBatchEjb.createLabBatch(batchObject, userBean.getBspUser().getUsername());
+            labBatchEjb.createLabBatch(batchObject, userBean.getBspUser().getUsername(),
+                    CreateFields.IssueType.EXOME_EXPRESS);
+        }
+
+        //link the JIRA tickets for the batch created to the pdo batches.
+        for (String pdoKey : LabVessel.extractPdoKeyList(selectedBatchVessels)) {
+            labBatchEjb.linkJiraBatchToTicket(pdoKey, batchObject);
         }
 
         addMessage(MessageFormat.format("Lab batch ''{0}'' has been ''{1}''.",

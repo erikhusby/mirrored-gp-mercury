@@ -9,6 +9,10 @@ import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidationMethod;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -17,25 +21,45 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @UrlBinding("/workflow/CreateFCT.action")
 public class CreateFCTActionBean extends CoreActionBean {
     private static String VIEW_PAGE = "/workflow/create_fct.jsp";
+
     public static final String LOAD_ACTION = "load";
+
+    @SuppressWarnings("CdiInjectionPointsInspection")
+    @Inject
+    private JiraService jiraService;
 
     @Inject
     private LabBatchDAO labBatchDAO;
+
+    @Inject
+    private LabBatchEjb labBatchEjb;
+
+    @Inject
+    private LabVesselDao labVesselDao;
+
     @Validate(required = true, on = LOAD_ACTION)
     private String lcsetName;
-    private LabBatch labBatch;
+
     @Validate(required = true, on = SAVE_ACTION, minvalue = 2)
     private int numberOfLanes;
+
     @Validate(required = true, on = SAVE_ACTION, expression = "this > 0")
     private float loadingConc;
+
+    private LabBatch labBatch;
+
     private Map<LabVessel, LabEvent> denatureTubeToEvent = new HashMap<>();
+
     private List<String> selectedVesselLabels;
 
     public String getLcsetName() {
@@ -129,8 +153,20 @@ public class CreateFCTActionBean extends CoreActionBean {
      */
     @HandlesEvent(SAVE_ACTION)
     public Resolution createFCTTicket() {
-        //create FCT tickets and lab batches here
+        labBatch = labBatchDAO.findByBusinessKey(lcsetName);
+        List<LabBatch> createdBatches = new ArrayList<>();
         for (String denatureTubeBarcode : selectedVesselLabels) {
+            Set<LabVessel> vesselSet = new HashSet<LabVessel>(labVesselDao.findByListIdentifiers(selectedVesselLabels));
+            //create a new FCT ticket for every two lanes requested.
+            for (int i = 0; i < numberOfLanes; i += 2) {
+                LabBatch batch =
+                        new LabBatch(denatureTubeBarcode + " FCT ticket", vesselSet, LabBatch.LabBatchType.FCT);
+                batch.setBatchDescription(batch.getBatchName());
+                labBatchEjb.createLabBatch(batch, userBean.getLoginUserName(), CreateFields.IssueType.FLOWCELL);
+                createdBatches.add(batch);
+                //link tickets
+                labBatchEjb.linkJiraBatches(labBatch, batch);
+            }
             addMessage("Created {0} FCT tickets with a loading concentration of {1} for denature tube {2}.",
                     numberOfLanes / 2, loadingConc, denatureTubeBarcode);
         }

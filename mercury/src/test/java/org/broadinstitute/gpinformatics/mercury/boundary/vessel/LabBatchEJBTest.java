@@ -119,7 +119,7 @@ public class LabBatchEJBTest extends ContainerTest {
 
         LabBatch testBatch =
                 labBatchEJB.createLabBatch(new HashSet<LabVessel>(mapBarcodeToTube.values()), scottmat, "LCSET-123",
-                        LabBatch.LabBatchType.WORKFLOW);
+                        LabBatch.LabBatchType.WORKFLOW, CreateFields.IssueType.EXOME_EXPRESS);
 
         final String batchName = testBatch.getBatchName();
 
@@ -160,7 +160,7 @@ public class LabBatchEJBTest extends ContainerTest {
         batchInput.setBatchDescription(description);
         batchInput.setDueDate(future);
 
-        labBatchEJB.createLabBatch(batchInput, scottmat);
+        labBatchEJB.createLabBatch(batchInput, scottmat, CreateFields.IssueType.EXOME_EXPRESS);
 
         batchName = batchInput.getBatchName();
 
@@ -181,10 +181,16 @@ public class LabBatchEJBTest extends ContainerTest {
     public void testCreateLabBatchAndRemoveFromBucket() {
         putTubesInBucket();
 
+        HashSet<LabVessel> starters = new HashSet<LabVessel>(mapBarcodeToTube.values());
         LabBatch batch = new LabBatch("LabBatchEJBTest.testCreateLabBatchAndRemoveFromBucket",
-                new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
+                starters, LabBatch.LabBatchType.WORKFLOW);
         LabBatch savedBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(batch, scottmat, BUCKET_NAME,
-                LabEvent.UI_EVENT_LOCATION);
+                LabEvent.UI_EVENT_LOCATION, CreateFields.IssueType.EXOME_EXPRESS);
+
+        //link the JIRA tickets for the batch created to the pdo batches.
+        for (String pdoKey : LabVessel.extractPdoKeyList(starters)) {
+            labBatchEJB.linkJiraBatchToTicket(pdoKey, savedBatch);
+        }
 
         labBatchDAO.flush();
         labBatchDAO.clear();
@@ -208,8 +214,9 @@ public class LabBatchEJBTest extends ContainerTest {
 
         String expectedTicketId = "testCreateLabBatchAndRemoveFromBucketExistingTicket";
         LabBatch savedBatch = labBatchEJB
-                .createLabBatchAndRemoveFromBucket(new ArrayList<String>(mapBarcodeToTube.keySet()), scottmat,
-                        expectedTicketId, BUCKET_NAME, LabEvent.UI_EVENT_LOCATION, LabBatch.LabBatchType.WORKFLOW);
+                .createLabBatchAndRemoveFromBucket(new ArrayList<>(mapBarcodeToTube.keySet()), scottmat,
+                        expectedTicketId, BUCKET_NAME, LabEvent.UI_EVENT_LOCATION, LabBatch.LabBatchType.WORKFLOW,
+                        CreateFields.IssueType.EXOME_EXPRESS);
 
         labBatchDAO.flush();
         labBatchDAO.clear();
