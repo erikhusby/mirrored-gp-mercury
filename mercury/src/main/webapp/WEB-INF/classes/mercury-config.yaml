@@ -50,7 +50,7 @@ bsp:
     QA:
       login:    seqsystem
       password: bspbsp
-      host:     gapqa.broadinstitute.org
+      host:     gaprc.broadinstitute.org
       port:     8080
 
     PROD:
