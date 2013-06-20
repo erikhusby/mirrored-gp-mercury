@@ -30,6 +30,7 @@ public class FCTJiraFieldFactory extends AbstractBatchJiraFieldFactory {
         return null;
     }
 
+    @Override
     public String getSummary() {
         StringBuilder summary = new StringBuilder();
         summary.append("Denature Tube ");

@@ -116,7 +116,7 @@ public class LabBatch {
          */
         SAMPLES_IMPORT,
         /**
-         * Flow Cell Tranfer batch (FCT)
+         * Flowcell Tracking batch (FCT)
          */
         FCT
     }

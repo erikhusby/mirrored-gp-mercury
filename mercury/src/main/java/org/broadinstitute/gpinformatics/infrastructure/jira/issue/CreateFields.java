@@ -72,6 +72,7 @@ public class CreateFields extends UpdateFields {
     public enum ProjectType {
 
         LCSET_PROJECT("Illumina Library Construction Tracking", "LCSET"),
+        FCT_PROJECT("Flowcell Tracking", "FCT"),
         PRODUCT_ORDERING("Product Ordering", "PDO"),
         Research_Projects("Research Projects", "RP");
 
