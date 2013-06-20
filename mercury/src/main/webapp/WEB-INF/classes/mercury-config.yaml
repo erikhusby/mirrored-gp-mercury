@@ -47,7 +47,7 @@ bsp:
       host:     gapdev.broadinstitute.org
       port:     8080
 
-    QA:
+    RC:
       login:    seqsystem
       password: bspbsp
       host:     gaprc.broadinstitute.org
@@ -243,7 +243,7 @@ mercury:
     QA:
 
       app:      QA
-      bsp:      QA
+      bsp:      RC
       jira:     TEST
       quote:    QA
       squid:    QA
@@ -257,7 +257,7 @@ mercury:
     RC:
 
       app:      RC
-      bsp:      QA
+      bsp:      RC
       jira:     TEST
       quote:    QA
       squid:    QA
