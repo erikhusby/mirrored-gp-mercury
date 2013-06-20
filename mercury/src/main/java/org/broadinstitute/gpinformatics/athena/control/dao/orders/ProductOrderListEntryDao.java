@@ -208,7 +208,7 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
         ListJoin<ProductOrder, ProductOrderSample> productOrderProductOrderSampleListJoin =
                 productOrderRoot.join(ProductOrder_.samples, JoinType.LEFT);
 
-        SetJoin<ProductOrderSample, LedgerEntry> productOrderSampleLedgerEntrySetJoin =
+        final SetJoin<ProductOrderSample, LedgerEntry> productOrderSampleLedgerEntrySetJoin =
                 productOrderProductOrderSampleListJoin.join(ProductOrderSample_.ledgerItems);
 
         // Even if there are ledger entries there may not be a billing session so left join.
@@ -219,7 +219,6 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
                 cb.construct(ProductOrderListEntry.class,
                         productOrderRoot.get(ProductOrder_.productOrderId),
                         productOrderRoot.get(ProductOrder_.jiraTicketKey),
-                        productOrderSampleLedgerEntrySetJoin.get(LedgerEntry_.autoLedgerTimestamp),
                         ledgerEntryBillingSessionJoin.get(BillingSession_.billingSessionId),
                         cb.count(productOrderRoot)));
 
@@ -246,10 +245,12 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
                         if (ledgerStatus.equals(ProductOrder.LedgerStatus.READY_FOR_REVIEW)) {
                              query = cq.where(
                                     cb.isNull(ledgerEntryBillingSessionJoin.get(BillingSession_.billedDate)),
+                                    cb.isNotNull(productOrderSampleLedgerEntrySetJoin.get(LedgerEntry_.autoLedgerTimestamp)),
                                     productOrderRoot.get(ProductOrder_.jiraTicketKey).in(parameterList));
                         } else if (ledgerStatus.equals(ProductOrder.LedgerStatus.READY_TO_BILL)) {
                             query = cq.where(
                                     cb.isNull(ledgerEntryBillingSessionJoin.get(BillingSession_.billedDate)),
+                                    cb.isNull(productOrderSampleLedgerEntrySetJoin.get(LedgerEntry_.autoLedgerTimestamp)),
                                     productOrderRoot.get(ProductOrder_.jiraTicketKey).in(parameterList));
                         } else {
                             throw new IllegalArgumentException("Can only fetch ready to bill or ready for review");
@@ -261,8 +262,7 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
         );
 
         // Build map of input productOrderListEntries jira key to DTO.
-        Map<String, ProductOrderListEntry> jiraKeyToProductOrderListEntryMap =
-                new HashMap<>();
+        Map<String, ProductOrderListEntry> jiraKeyToProductOrderListEntryMap = new HashMap<>();
         for (ProductOrderListEntry productOrderListEntry : productOrderListEntries) {
             jiraKeyToProductOrderListEntryMap.put(productOrderListEntry.getJiraTicketKey(), productOrderListEntry);
         }
@@ -275,7 +275,15 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
                 ProductOrderListEntry productOrderListEntry =
                         jiraKeyToProductOrderListEntryMap.get(result.getJiraTicketKey());
                 productOrderListEntry.setBillingSessionId(result.getBillingSessionId());
-                productOrderListEntry.setReadyForBillingCount(result.getReadyForBillingCount());
+
+                if (ledgerStatus.equals(ProductOrder.LedgerStatus.READY_FOR_REVIEW)) {
+                    productOrderListEntry.setReadyForReviewCount(result.getConstructedCount());
+                } else if (ledgerStatus.equals(ProductOrder.LedgerStatus.READY_TO_BILL)) {
+                    productOrderListEntry.setReadyForBillingCount(result.getConstructedCount());
+                } else {
+                    throw new IllegalArgumentException("Can only fetch ready to bill or ready for review");
+                }
+
             }
         }
     }

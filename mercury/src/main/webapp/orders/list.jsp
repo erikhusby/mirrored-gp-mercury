@@ -249,7 +249,7 @@
                         <th width="25">Sample Count</th>
                         <th width="55">Quote</th>
                         <th width="35">Billing Session</th>
-                        <th width="35">Ledger Status</th>
+                        <th width="35">Ledger Ready</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -323,10 +323,10 @@
                                      cannot be billed until a review happens. -->
                                 <c:choose>
                                     <c:when test="${order.readyForReview}">
-                                        <span class="icon-inbox" title="Ready for Review"></span>
+                                        <span class="badge badge-warning">For Review</span>
                                     </c:when>
                                     <c:when test="${order.readyForBilling}">
-                                        <stripes:image name="" title="Ready to Bill" src="/images/check.png"/>
+                                        <span class="badge badge-success">For Billing</span>
                                     </c:when>
                                 </c:choose>
                             </td>

@@ -32,6 +32,8 @@ public class ProductOrderListEntry implements Serializable {
 
     private Long billingSessionId;
 
+    private Long constructedCount;
+
     private Long readyForReviewCount = 0L;
 
     private Long readyForBillingCount = 0L;
@@ -64,17 +66,12 @@ public class ProductOrderListEntry implements Serializable {
     @SuppressWarnings("UnusedDeclaration")
     // This is called through reflection and only appears to be unused.
     public ProductOrderListEntry(
-        Long orderId, String jiraTicketKey, Long billingSessionId, Long count, ProductOrder.LedgerStatus ledgerStatus) {
+        Long orderId, String jiraTicketKey, Long billingSessionId, Long count) {
 
         this.orderId = orderId;
         this.jiraTicketKey = jiraTicketKey;
         this.billingSessionId = billingSessionId;
-
-        if (ledgerStatus.equals(ProductOrder.LedgerStatus.READY_FOR_REVIEW)) {
-            this.readyForReviewCount = count;
-        } else if (ledgerStatus.equals(ProductOrder.LedgerStatus.READY_FOR_REVIEW)) {
-            this.readyForBillingCount = count;
-        }
+        this.constructedCount = count;
     }
 
     private ProductOrderListEntry() {}
@@ -140,6 +137,14 @@ public class ProductOrderListEntry implements Serializable {
 
     public Long getReadyForBillingCount() {
         return readyForBillingCount;
+    }
+
+    public Long getConstructedCount() {
+        return constructedCount;
+    }
+
+    public void setConstructedCount(Long constructedCount) {
+        this.constructedCount = constructedCount;
     }
 
     public void setReadyForBillingCount(Long readyForBillingCount) {
