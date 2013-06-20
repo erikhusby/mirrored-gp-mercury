@@ -34,20 +34,20 @@
                     "oTableTools": ttExportDefines,
                     "aaSorting": [[8,'desc']],
                     "aoColumns": [
-                        {"bSortable": false},                    // checkbox
-                        {"bSortable": true, "sType": "html"},    // Name
-                        {"bSortable": true, "sType": "title-jira"},   // ID
-                        {"bSortable": true},                    // Product
-                        {"bSortable": true},                    // Product Family
-                        {"bSortable": true},                    // Status
-                        {"bSortable": true},                    // Research Project
-                        {"bSortable": true},                    // Owner
-                        {"bSortable": true, "sType": "date"},   // Placed
-                        {"bSortable": true, "sType": "title-numeric"},   // % Complete
-                        {"bSortable": true, "sType": "numeric"},         // Count
-                        {"bSortable": true, "sType": "html"},            // Quote
-                        {"bSortable": true},                             // Billing Session ID
-                        {"bSortable": true, "sType" : "title-string"}]   // eligible for billing
+                        {"bSortable": false},                           // checkbox
+                        {"bSortable": true, "sType": "html"},           // Name
+                        {"bSortable": true, "sType": "title-jira"},     // ID
+                        {"bSortable": true},                            // Product
+                        {"bSortable": true},                            // Product Family
+                        {"bSortable": true},                            // Status
+                        {"bSortable": true},                            // Research Project
+                        {"bSortable": true},                            // Owner
+                        {"bSortable": true, "sType": "date"},           // Placed
+                        {"bSortable": true, "sType": "title-numeric"},  // % Complete
+                        {"bSortable": true, "sType": "numeric"},        // Count
+                        {"bSortable": true, "sType": "html"},           // Quote
+                        {"bSortable": true},                            // Billing Session ID
+                        {"bSortable": true, "sType": "html"}]           // Ledger Ready (billing or review)
                 });
 
                 setupDialogs();
