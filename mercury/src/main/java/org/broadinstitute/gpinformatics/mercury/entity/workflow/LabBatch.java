@@ -11,8 +11,34 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
-import javax.persistence.*;
-import java.util.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+import javax.persistence.UniqueConstraint;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 /**
  * The batch of work, as tracked by a person
@@ -67,21 +93,32 @@ public class LabBatch {
 
     /**
      * needed for fix-up test
-     *
      */
     protected void setLabBatchType(LabBatchType labBatchType) {
         this.labBatchType = labBatchType;
     }
 
     public enum LabBatchType {
-        /** A batch created as part of workflow, e.g. an LCSET */
+        /**
+         * A batch created as part of workflow, e.g. an LCSET
+         */
         WORKFLOW,
-        /** A batch created in BSP, typically named BP-1234 */
+        /**
+         * A batch created in BSP, typically named BP-1234
+         */
         BSP,
-        /** Receipt of samples into BSP, from external collaborators, typically named SK-1234 for sample kit */
+        /**
+         * Receipt of samples into BSP, from external collaborators, typically named SK-1234 for sample kit
+         */
         SAMPLES_RECEIPT,
-        /** Import of BSP samples into Mercury */
-        SAMPLES_IMPORT
+        /**
+         * Import of BSP samples into Mercury
+         */
+        SAMPLES_IMPORT,
+        /**
+         * Flow Cell Tranfer batch (FCT)
+         */
+        FCT
     }
 
     @Enumerated(EnumType.STRING)
@@ -113,7 +150,7 @@ public class LabBatch {
         if (starters == null) {
             throw new NullPointerException("starters cannot be null");
         }
-        if(labBatchType == null) {
+        if (labBatchType == null) {
             throw new NullPointerException("labBatchType cannot be null");
         }
         this.batchName = batchName;
@@ -125,7 +162,7 @@ public class LabBatch {
     }
 
     public LabBatch(String batchName, Set<LabVessel> startingLabVessels, LabBatchType labBatchType,
-            String batchDescription, Date dueDate, String important) {
+                    String batchDescription, Date dueDate, String important) {
 
         this(batchName, startingLabVessels, labBatchType);
         this.batchDescription = batchDescription;
@@ -137,6 +174,7 @@ public class LabBatch {
     /**
      * Adds the given rework vessels to the list of reworks for the batch
      * and updates the RapSheet so the samples know they are rework.
+     *
      * @param newRework
      */
     public void addReworks(Collection<LabVessel> newRework) {
@@ -292,6 +330,7 @@ public class LabBatch {
      *
      * @param workflowName
      * @param pdoNames
+     *
      * @return
      */
     public static String generateBatchName(@Nonnull String workflowName, @Nonnull Collection<String> pdoNames) {
@@ -324,6 +363,7 @@ public class LabBatch {
     public LabBatchType getLabBatchType() {
         return labBatchType;
     }
+
     /**
      * RequiredSubmissionFields is an enum intended to assist in the creation of a Jira ticket
      * for Product orders
@@ -414,11 +454,12 @@ public class LabBatch {
 
     /**
      * Helper method to determine if a batch applies to a group of lab vessels
-     *
+     * <p/>
      * Typically called by looping through the nearest batches of one of the vessels in the vessel group
      *
      * @param targetBatch
      * @param batchSet
+     *
      * @return
      */
     public static boolean isCommonBatch(LabBatch targetBatch, Collection<LabVessel> batchSet) {
