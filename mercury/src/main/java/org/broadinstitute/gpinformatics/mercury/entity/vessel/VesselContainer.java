@@ -32,6 +32,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria.TraversalDirection.Ancestors;
+
 /**
  * A vessel that contains other vessels, e.g. a rack of tubes, a plate of wells, or a flowcell of lanes
  */
@@ -547,5 +549,19 @@ public class VesselContainer<T extends LabVessel> {
                 new TransferTraverserCriteria.NearestLabMetricOfTypeCriteria(quantType);
         applyCriteriaToAllPositions(metricTypeCriteria);
         return metricTypeCriteria.getNearestMetrics();
+    }
+
+    /**
+     * Returns a list of the most immediate tube ancestors for each well. The "distance" from this plate across upstream
+     * plate transfers is not relevant; all upstream branches are traversed until either a tube is found or the branch
+     * ends.
+     *
+     * @return all nearest tube ancestors
+     */
+    public List<VesselAndPosition> getNearestTubeAncestors() {
+        TransferTraverserCriteria.NearestTubeAncestorsCriteria
+                criteria = new TransferTraverserCriteria.NearestTubeAncestorsCriteria();
+        applyCriteriaToAllPositions(criteria);
+        return new ArrayList<>(criteria.getVesselAndPositions());
     }
 }

@@ -1168,6 +1168,8 @@ IS
         product_order_id,
         sample_name,
         research_project_id,
+        loaded_library_barcode,
+        loaded_library_create_date,
         etl_date
       )
         SELECT
@@ -1179,6 +1181,8 @@ IS
           new.product_order_id,
           new.sample_name,
           new.research_project_id,
+          loaded_library_barcode,
+          loaded_library_create_date,
           new.etl_date
         FROM DUAL
         WHERE NOT EXISTS(

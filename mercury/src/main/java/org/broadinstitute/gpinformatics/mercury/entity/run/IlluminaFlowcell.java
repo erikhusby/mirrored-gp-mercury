@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.run;
 
 
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselAndPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainerEmbedder;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
@@ -12,6 +13,7 @@ import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -172,5 +174,18 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
     public FlowcellType getFlowcellType() {
         return flowcellType;
     }
+
+    /**
+     * Returns a list of the most immediate tube ancestors for each well. The "distance" from this plate across upstream
+     * plate transfers is not relevant; all upstream branches are traversed until either a tube is found or the branch
+     * ends.
+     *
+     * @return all nearest tube ancestors
+     */
+    public List<VesselAndPosition> getNearestTubeAncestors() {
+        return vesselContainer.getNearestTubeAncestors();
+    }
+
+
 
 }
