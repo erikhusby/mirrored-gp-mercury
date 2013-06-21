@@ -1181,8 +1181,8 @@ IS
           new.product_order_id,
           new.sample_name,
           new.research_project_id,
-          loaded_library_barcode,
-          loaded_library_create_date,
+          new.loaded_library_barcode,
+          new.loaded_library_create_date,
           new.etl_date
         FROM DUAL
         WHERE NOT EXISTS(
