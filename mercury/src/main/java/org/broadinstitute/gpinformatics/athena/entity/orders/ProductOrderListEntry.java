@@ -120,6 +120,10 @@ public class ProductOrderListEntry implements Serializable {
         return quoteId;
     }
 
+    public boolean isBilling() {
+        return getBillingSessionBusinessKey() != null;
+    }
+
     public String getBillingSessionBusinessKey() {
         if (billingSessionId == null) {
             return null;
