@@ -47,7 +47,7 @@
                         {"bSortable": true, "sType": "numeric"},        // Count
                         {"bSortable": true, "sType": "html"},           // Quote
                         {"bSortable": true},                            // Billing Session ID
-                        {"bSortable": true, "sType": "html"}]           // Ledger Ready (billing or review)
+                        {"bSortable": true, "sType": "html"}]           // Ledger Status
                 });
 
                 setupDialogs();
@@ -249,7 +249,7 @@
                         <th width="25">Sample Count</th>
                         <th width="55">Quote</th>
                         <th width="35">Billing Session</th>
-                        <th width="35">Ledger Ready</th>
+                        <th width="35">Ledger Status</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -322,11 +322,14 @@
                                 <!-- Do ready for review first because if there is ANYTHING auto created, then it
                                      cannot be billed until a review happens. -->
                                 <c:choose>
+                                    <c:when test="${order.billing}">
+                                        <span class="badge badge-info">Billing</span>
+                                    </c:when>
                                     <c:when test="${order.readyForReview}">
-                                        <span class="badge badge-warning">For Review</span>
+                                        <span class="badge badge-warning">Review</span>
                                     </c:when>
                                     <c:when test="${order.readyForBilling}">
-                                        <span class="badge badge-success">For Billing</span>
+                                        <span class="badge badge-success">Ready to Bill</span>
                                     </c:when>
                                 </c:choose>
                             </td>
