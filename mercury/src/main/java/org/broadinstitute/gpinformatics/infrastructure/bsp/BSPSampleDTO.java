@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.time.DateUtils;
 import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 
@@ -110,12 +109,8 @@ public class BSPSampleDTO {
 
     private double getDouble(BSPSampleSearchColumn column) {
         String s = getValue(column);
-        if (!StringUtils.isBlank(s)) {
-            try {
-                return Double.parseDouble(s);
-            } catch (Exception e) {
-                // Fall through to return.
-            }
+        if (StringUtils.isNotBlank(s)) {
+            return Double.parseDouble(s);
         }
         return 0;
     }
@@ -126,13 +121,12 @@ public class BSPSampleDTO {
         if (StringUtils.isNotBlank(dateString)){
             try {
                 return BSP_DATE_FORMAT.parse(dateString);
-            } catch (Exception e) {
+            } catch (ParseException e) {
                 // Fall through to return.
             }
         }
 
         return null;
-
     }
 
     private boolean getBoolean(BSPSampleSearchColumn column) {
@@ -338,14 +332,5 @@ public class BSPSampleDTO {
         } else {
             return bspLabelBarcode;
         }
-    }
-
-    private Date oneYearAgo;
-    public Date getOneYearAgo() {
-        if (oneYearAgo == null) {
-            oneYearAgo = DateUtils.addYears(new Date(), -1);
-        }
-
-        return oneYearAgo;
     }
 }

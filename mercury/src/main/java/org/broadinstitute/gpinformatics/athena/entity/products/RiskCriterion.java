@@ -65,24 +65,14 @@ public class RiskCriterion {
 
     /**
      * Check to see if this risk criteria threshold has been crossed is satisfied with the data.
+     *
      * @param sample name
      *
      * @return true if the sample is on risk
      */
     public boolean onRisk(ProductOrderSample sample) {
-
-        // If there is no sample or if the sample is not in bsp format, don't need to calculate because we call it
-        // not on risk since there is nothing to determine it.
-        if ((sample == null) || (!sample.isInBspFormat())) {
-            return false;
-        }
-
-        boolean onRiskStatus = false;
-        if (sample.getBspSampleDTO() != null) {
-            onRiskStatus = type.getRiskStatus(sample, operator, value);
-        }
-
-        return onRiskStatus;
+        // The sample has to exist and be in bsp format for us to even check the risk status.
+        return (sample != null) && sample.isInBspFormat() && type.getRiskStatus(sample, operator, value);
     }
 
     public Operator getOperator() {
@@ -214,7 +204,7 @@ public class RiskCriterion {
 
                 // On risk if there is no pico date or if the run date is older than one year ago.
                 return String.valueOf(((sampleDTO.getPicoRunDate() == null) ||
-                        sampleDTO.getPicoRunDate().before(sampleDTO.getOneYearAgo())));
+                        sampleDTO.getPicoRunDate().before(sample.getProductOrder().getOneYearAgo())));
             }
         }),
         RIN("RIN", NUMERIC, new ValueProvider() {
