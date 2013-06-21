@@ -135,14 +135,15 @@ public class SequencingSampleFactEtlDbFreeTest {
         expect(dao.findById(SequencingRun.class, entityId)).andReturn(run).times(2);
 
         expect(runCartridge.getCartridgeName()).andReturn(cartridgeName).times(2);
-
+        expect(runCartridge.getSamplesAtPosition(anyObject(VesselPosition.class), anyObject(SampleType.class)))
+                .andReturn(sampleInstances).times(4);
         final List<VesselAndPosition> laneVesselsAndPositions = new ArrayList<>();
 
         LabVessel denatureSource = new TwoDBarcodedTube("Lane_1_vessel");
         laneVesselsAndPositions.add(new VesselAndPosition(denatureSource, VesselPosition.LANE1));
         laneVesselsAndPositions.add(new VesselAndPosition(denatureSource, VesselPosition.LANE2));
 
-//        expect(runCartridge.getNearestTubeAncestors()).andReturn(laneVesselsAndPositions);
+        expect(runCartridge.getNearestTubeAncestors()).andReturn(laneVesselsAndPositions).times(2);
         String pdoKey = "PDO-0123";
         expect(sampleInstance.getProductOrderKey()).andReturn(pdoKey).times(4);
 
@@ -292,7 +293,6 @@ public class SequencingSampleFactEtlDbFreeTest {
         expect(runCartridge.getCartridgeName()).andReturn(cartridgeName);
         // Adds a second sampleInstance
         sampleInstances.add(sampleInstance2);
-
         expect(runCartridge.getSamplesAtPosition(anyObject(VesselPosition.class), anyObject(SampleType.class)))
                 .andReturn(sampleInstances);
 
@@ -300,7 +300,6 @@ public class SequencingSampleFactEtlDbFreeTest {
 
         LabVessel denatureSource = new TwoDBarcodedTube("Lane_1_vessel");
         laneVesselsAndPositions.add(new VesselAndPosition(denatureSource, VesselPosition.LANE1));
-        laneVesselsAndPositions.add(new VesselAndPosition(denatureSource, VesselPosition.LANE2));
 
         expect(runCartridge.getNearestTubeAncestors()).andReturn(laneVesselsAndPositions);
         String pdoKey = "PDO-7654";
