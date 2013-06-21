@@ -86,10 +86,16 @@ public class SequencingTemplateFactory {
         switch (queryVesselType) {
         case FLOWCELL:
             IlluminaFlowcell illuminaFlowcell = illuminaFlowcellDao.findByBarcode(id);
+            if (illuminaFlowcell==null){
+                throw new RuntimeException(String.format("Flowcell '%s' was not found.", id));
+            }
             loadedVesselsAndPositions = getLoadingVessels(illuminaFlowcell);
             return getSequencingTemplate(illuminaFlowcell, loadedVesselsAndPositions, isPoolTest);
         case MISEQ_REAGENT_KIT:
             MiSeqReagentKit miSeqReagentKit = miSeqReagentKitDao.findByBarcode(id);
+            if (miSeqReagentKit==null){
+                throw new RuntimeException(String.format("MiSeq Reagent Kit '%s' was not found.", id));
+            }
             return getSequencingTemplate(miSeqReagentKit, isPoolTest);
             // Don't support the following for now, so fall through and throw exception.
         case TUBE:

@@ -135,10 +135,18 @@ public class ProductOrder implements BusinessObject, Serializable {
     @Transient
     private String originalTitle;
 
+    @Transient
+    private Date oneYearAgo = DateUtils.addYears(new Date(), -1);
+
     // Initialize our transient data after the object has been loaded from the database.
     @PostLoad
     private void initialize() {
         originalTitle = title;
+        readResolve();
+    }
+
+    public void readResolve() {
+        oneYearAgo = DateUtils.addYears(new Date(), -1);
     }
 
     /**
@@ -272,6 +280,8 @@ public class ProductOrder implements BusinessObject, Serializable {
     }
 
     private static class Counter implements Serializable {
+        private static final long serialVersionUID = 4354572758557412220L;
+
         private final Map<String, Integer> countMap = new HashMap<>();
 
         private void clear() {
@@ -413,7 +423,7 @@ public class ProductOrder implements BusinessObject, Serializable {
 
             // If the pico has never been run then it is not warned in the last pico date highlighting.
             Date picoRunDate = bspDTO.getPicoRunDate();
-            if ((picoRunDate == null) || picoRunDate.before(bspDTO.getOneYearAgo())) {
+            if ((picoRunDate == null) || picoRunDate.before(getOneYearAgo())) {
                 lastPicoCount++;
             }
 
@@ -535,6 +545,8 @@ public class ProductOrder implements BusinessObject, Serializable {
      * Default no-arg constructor, also used when creating a new ProductOrder.
      */
     public ProductOrder() {
+        // Do stuff that needs to happen after serialization and here.
+        readResolve();
     }
 
     /**
@@ -565,6 +577,9 @@ public class ProductOrder implements BusinessObject, Serializable {
         this.quoteId = quoteId;
         this.product = product;
         this.researchProject = researchProject;
+
+        // Do stuff that needs to happen after serialization and here.
+        readResolve();
     }
 
     /**
@@ -1211,5 +1226,9 @@ public class ProductOrder implements BusinessObject, Serializable {
             return true;
         }
         return false;
+    }
+
+    public Date getOneYearAgo() {
+        return oneYearAgo;
     }
 }
