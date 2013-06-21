@@ -297,14 +297,65 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
             @Nullable List<String> productKeys,
             @Nullable List<ProductOrder.OrderStatus> orderStatuses,
             @Nullable DateRangeSelector placedDate,
-            @Nullable List<Long> ownerIds) {
+            @Nullable List<Long> ownerIds, List<ProductOrder.LedgerStatus> selectedLedgerStatuses) {
 
         List<ProductOrderListEntry> productOrderListEntries =
                 findBaseProductOrderListEntries(null, productFamilyId, productKeys, orderStatuses, placedDate,
                         ownerIds);
         fetchUnbilledLedgerEntryCounts(productOrderListEntries);
 
-        return productOrderListEntries;
+        // Since the querying here is already multi-pass and a bit confusing, adding the ledger status as a post filter.
+        // Not ideal, but with the number of orders that we will typically have on these filters, it should not pose a
+        // problem for a long time. Before needing to make this work, we will probably want scrolling and paging.
+        if (CollectionUtils.isEmpty(selectedLedgerStatuses) ||
+            (selectedLedgerStatuses.size() == ProductOrder.LedgerStatus.values().length)) {
+            // If there is nothing selected or all statuses are selected, just return the full list.
+            return productOrderListEntries;
+        } else {
+            // Otherwise we will return the list, filtered by the user selection.
+            List<ProductOrderListEntry> filteredList = new ArrayList<>();
+            for (ProductOrderListEntry entry : productOrderListEntries) {
+                boolean add = false;
+                for (ProductOrder.LedgerStatus selectedStatus : selectedLedgerStatuses) {
+                    switch (selectedStatus) {
+
+                    case NOTHING_NEW:
+                        // Drafts are always new
+                        if ((entry.isDraft()) ||
+                            (!entry.isReadyForBilling() && !entry.isReadyForReview() && !entry.isBilling())) {
+                            add = true;
+                        }
+                        break;
+                    case READY_FOR_REVIEW:
+                        // ready for review is ALWAYS indicated when there are ledger entries. Billing locks out
+                        // automated ledger entry. For now, so does ready to bill, but that may change.
+                        if (entry.isReadyForReview()) {
+                            add = true;
+                        }
+                        break;
+                    case READY_TO_BILL:
+                        // Ready for review overrides ready for billing. May not come up for a while because of
+                        // lockouts, but this is the way the visual works, so using this.
+                        if (entry.isReadyForBilling() && !entry.isReadyForReview()) {
+                            add = true;
+                        }
+                        break;
+                    case BILLING:
+                        if (entry.isBilling()) {
+                            add = true;
+                        }
+                        break;
+                    }
+                }
+
+                if (add) {
+                    filteredList.add(entry);
+                }
+            }
+
+            return filteredList;
+        }
+
     }
 
     /**

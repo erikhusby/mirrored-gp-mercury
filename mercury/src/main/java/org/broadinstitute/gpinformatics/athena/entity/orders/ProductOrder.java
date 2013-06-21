@@ -423,7 +423,7 @@ public class ProductOrder implements BusinessObject, Serializable {
 
             // If the pico has never been run then it is not warned in the last pico date highlighting.
             Date picoRunDate = bspDTO.getPicoRunDate();
-            if ((picoRunDate == null) || picoRunDate.before(getOneYearAgo())) {
+            if ((picoRunDate == null) || picoRunDate.before(oneYearAgo)) {
                 lastPicoCount++;
             }
 
@@ -1156,7 +1156,7 @@ public class ProductOrder implements BusinessObject, Serializable {
          * @param statusStrings The desired list of statuses.
          * @return The statuses that are listed.
          */
-        public static List<OrderStatus> getFromName(@Nonnull List<String> statusStrings) {
+        public static List<OrderStatus> getFromNames(@Nonnull List<String> statusStrings) {
             if (CollectionUtils.isEmpty(statusStrings)) {
                 return Collections.emptyList();
             }
@@ -1167,6 +1167,19 @@ public class ProductOrder implements BusinessObject, Serializable {
             }
 
             return statuses;
+        }
+
+        public static List<String> getStrings(List<OrderStatus> selectedStatuses) {
+            if (CollectionUtils.isEmpty(selectedStatuses)) {
+                return Collections.emptyList();
+            }
+
+            List<String> statusStrings = new ArrayList<>();
+            for (ProductOrder.OrderStatus status : selectedStatuses) {
+                statusStrings.add(status.name());
+            }
+
+            return statusStrings;
         }
     }
 
@@ -1230,5 +1243,54 @@ public class ProductOrder implements BusinessObject, Serializable {
 
     public Date getOneYearAgo() {
         return oneYearAgo;
+    }
+
+    public enum LedgerStatus {
+        NOTHING_NEW("None"),
+        READY_FOR_REVIEW("Review"),
+        READY_TO_BILL("Ready to Bill"),
+        BILLING("Billing");
+
+        private String displayName;
+
+        private LedgerStatus(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
+
+        /**
+         * Get all status values using the name strings.
+         *
+         * @param statusStrings The desired list of statuses.
+         * @return The statuses that are listed.
+         */
+        public static List<LedgerStatus> getFromNames(@Nonnull List<String> statusStrings) {
+            if (CollectionUtils.isEmpty(statusStrings)) {
+                return Collections.emptyList();
+            }
+
+            List<LedgerStatus> statuses = new ArrayList<>();
+            for (String statusString : statusStrings) {
+                statuses.add(LedgerStatus.valueOf(statusString));
+            }
+
+            return statuses;
+        }
+
+        public static List<String> getStrings(List<LedgerStatus> selectedStatuses) {
+            if (CollectionUtils.isEmpty(selectedStatuses)) {
+                return Collections.emptyList();
+            }
+
+            List<String> statusStrings = new ArrayList<>();
+            for (ProductOrder.LedgerStatus status : selectedStatuses) {
+                statusStrings.add(status.name());
+            }
+
+            return statusStrings;
+        }
     }
 }

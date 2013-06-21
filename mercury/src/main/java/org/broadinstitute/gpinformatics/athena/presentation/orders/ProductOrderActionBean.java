@@ -121,6 +121,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private static final String FAMILY = "productFamily";
     private static final String PRODUCT = "product";
     private static final String STATUS = "status";
+    private static final String LEDGER_STATUS = "ledgerStatus";
     private static final String DATE = "date";
     private static final String OWNER = "owner";
 
@@ -251,6 +252,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     private Long productFamilyId;
 
     private List<ProductOrder.OrderStatus> selectedStatuses;
+
+    private List<ProductOrder.LedgerStatus> selectedLedgerStatuses;
 
     /*
      * The search query.
@@ -502,7 +505,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         // Set up all the simple fields from the values in the preference data.
         productTokenInput.setListOfKeys(preferenceData.get(PRODUCT));
-        selectedStatuses = ProductOrder.OrderStatus.getFromName(preferenceData.get(STATUS));
+        selectedStatuses = ProductOrder.OrderStatus.getFromNames(preferenceData.get(STATUS));
+        selectedLedgerStatuses = ProductOrder.LedgerStatus.getFromNames(preferenceData.get(LEDGER_STATUS));
         setDateRange(new DateRangeSelector(preferenceData.get(DATE)));
         owner.setListOfKeys(preferenceData.get(OWNER));
     }
@@ -513,7 +517,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         // Do the specified find and then add all the % complete info for the progress bars.
         displayedProductOrderListEntries =
             orderListEntryDao.findProductOrderListEntries(
-                productFamilyId, productTokenInput.getBusinessKeyList(), selectedStatuses, getDateRange(), owner.getOwnerIds());
+                productFamilyId, productTokenInput.getBusinessKeyList(), selectedStatuses, getDateRange(),
+                owner.getOwnerIds(), selectedLedgerStatuses);
         progressFetcher.loadProgress(productOrderDao);
 
         // Get the sorted family list.
@@ -534,11 +539,12 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         definitionValue.put(PRODUCT, productTokenInput.getBusinessKeyList());
 
-        List<String> statusStrings = new ArrayList<>();
-        for (ProductOrder.OrderStatus status : selectedStatuses) {
-            statusStrings.add(status.name());
-        }
+        List<String> statusStrings = ProductOrder.OrderStatus.getStrings(selectedStatuses);
+        List<String> ledgerStatusStrings = ProductOrder.LedgerStatus.getStrings(selectedLedgerStatuses);
+
         definitionValue.put(STATUS, statusStrings);
+
+        definitionValue.put(LEDGER_STATUS, ledgerStatusStrings);
 
         definitionValue.put(DATE, getDateRange().createDateStrings());
 
@@ -1459,6 +1465,14 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setSelectedStatuses(List<ProductOrder.OrderStatus> selectedStatuses) {
         this.selectedStatuses = selectedStatuses;
+    }
+
+    public List<ProductOrder.LedgerStatus> getSelectedLedgerStatuses() {
+        return selectedLedgerStatuses;
+    }
+
+    public void setSelectedLedgerStatuses(List<ProductOrder.LedgerStatus> selectedLedgerStatuses) {
+        this.selectedLedgerStatuses = selectedLedgerStatuses;
     }
 
     /**

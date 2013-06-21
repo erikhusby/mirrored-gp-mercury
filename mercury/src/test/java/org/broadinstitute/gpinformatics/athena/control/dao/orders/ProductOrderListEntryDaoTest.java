@@ -129,7 +129,7 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
 
     private ProductOrderListEntry sanityCheckAndGetTestOrderListEntry() {
         List<ProductOrderListEntry> productOrderListEntries =
-                productOrderListEntryDao.findProductOrderListEntries(null, null, null, null, null);
+                productOrderListEntryDao.findProductOrderListEntries(null, null, null, null, null, null);
 
         Assert.assertNotNull(productOrderListEntries);
 
