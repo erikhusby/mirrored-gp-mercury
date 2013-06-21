@@ -247,15 +247,15 @@ public class ProductOrderEjb {
             return true;
         }
 
-        // Get the auto bill status for the order from the map, or add query and add it here.
-        Boolean isAutoBillLockedOut = orderLockoutCache.get(order.getBusinessKey());
-        if (isAutoBillLockedOut == null) {
-            isAutoBillLockedOut = isAutomatedBillingLockedOut(order);
-            orderLockoutCache.put(order.getBusinessKey(), isAutoBillLockedOut);
+        // Get the order's lock out state from the cache, if not there, query it and put into the cache for later.
+        Boolean isOrderLockedOut = orderLockoutCache.get(order.getBusinessKey());
+        if (isOrderLockedOut == null) {
+            isOrderLockedOut = isAutomatedBillingLockedOut(order);
+            orderLockoutCache.put(order.getBusinessKey(), isOrderLockedOut);
         }
 
         // Now can use the lockout boolean to decide whether to ignore the order for auto ledger entry.
-        if (isAutoBillLockedOut) {
+        if (isOrderLockedOut) {
             log.error(MessageFormat.format("Cannot auto-bill order {0} because it is currently locked out.",
                     order.getJiraTicketKey()));
 

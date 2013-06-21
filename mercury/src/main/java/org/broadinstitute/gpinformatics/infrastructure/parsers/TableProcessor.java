@@ -59,7 +59,7 @@ public abstract class TableProcessor implements Serializable {
     }
 
     public final void processRow(Map<String, String> dataRow, int dataRowIndex) {
-        // validate the required fields.
+        // Validate the required fields.
         if (hasRequiredValues(dataRow, dataRowIndex)) {
             processRowDetails(dataRow, dataRowIndex);
         }

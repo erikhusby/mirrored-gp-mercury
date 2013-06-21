@@ -41,12 +41,12 @@ public class LabMetricProcessor extends TableProcessor {
 
     @Override
     public void processRowDetails(Map<String, String> dataRow, int dataRowIndex) {
-        // Get the barcode
+        // Get the barcode.
         String barcode = dataRow.get(LabMetricHeaders.BARCODE.getText());
 
         BigDecimal metric;
 
-        // Convert to a number
+        // Convert to a number.
         try {
             metric = new BigDecimal(dataRow.get(LabMetricHeaders.METRIC.getText()));
             LabMetric currentMetric = new LabMetric(metric, metricType, LabMetric.LabUnit.UG_PER_ML);
@@ -95,7 +95,7 @@ public class LabMetricProcessor extends TableProcessor {
     }
 
     /**
-     * Definition of the headers defined in the Lab Metrics (Quant) upload file
+     * Definition of the headers defined in the Lab Metrics (Quant) upload file.
      */
     private enum LabMetricHeaders implements ColumnHeader {
         LOCATION("Location", 0, ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_VALUE),

@@ -309,7 +309,7 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
                 findBaseProductOrderListEntries(null, productFamilyId, productKeys, orderStatuses, placedDate,
                         ownerIds);
 
-        // populate the ledger entry counts by doing queries.
+        // Populate the ledger entry counts by doing queries.
         fetchUnbilledLedgerEntryCounts(productOrderListEntries);
 
         // Since the querying here is already multi-pass and a bit confusing, adding the ledger status as a post filter.
@@ -328,14 +328,14 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
                     switch (selectedStatus) {
 
                     case NOTHING_NEW:
-                        // Drafts are always new
-                        if ((entry.isDraft()) ||
+                        // Drafts are always new.
+                        if (entry.isDraft() ||
                             (!entry.isReadyForBilling() && !entry.isReadyForReview() && !entry.isBilling())) {
                             add = true;
                         }
                         break;
                     case READY_FOR_REVIEW:
-                        // ready for review is ALWAYS indicated when there are ledger entries. Billing locks out
+                        // Ready for review is ALWAYS indicated when there are ledger entries. Billing locks out
                         // automated ledger entry. For now, so does ready to bill, but that may change.
                         if (entry.isReadyForReview()) {
                             add = true;

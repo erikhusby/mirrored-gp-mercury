@@ -24,11 +24,6 @@ import java.util.Map;
 @Startup
 public class AutomatedBiller {
 
-    // These constants define the automated billing period, which is from midnight through 5AM. This needs to be in sync
-    // with the schedule, which is happening from midnight to 4:45.
-    public static final int PROCESSING_START_HOUR = 0;
-    public static final int PROCESSING_END_HOUR = 5;
-
     private final WorkCompleteMessageDao workCompleteMessageDao;
     private final ProductOrderEjb productOrderEjb;
     private final SessionContextUtility sessionContextUtility;
@@ -51,7 +46,10 @@ public class AutomatedBiller {
     }
 
     /**
-     * The schedule is every 30 minutes from Midnight through 4:45. This annotation MUST BE IN SYNC WITH ABOVE CONSTANTS.
+     * The schedule is every 30 minutes from Midnight through 4:30 (before 5AM). This annotation MUST BE IN SYNC WITH THE
+     * TIME RANGE that is in ProductOrderEjb. I chose that ejb because it is used by this class and I don't
+     * want to have to construct on automated biller just to use the method AND because making a static
+     * method is a no-no for EJBs.
      */
     @Schedule(minute = "*/30", hour = "0,1,2,3,4", persistent = false)
     public void processMessages() {
