@@ -325,19 +325,23 @@ public class ProductOrderSample extends AbstractSample implements Serializable {
      * @param quantity      quantity for billing
      */
     public void autoBillSample(Date completedDate, double quantity) {
+        Date now = new Date();
+
         List<PriceItem> itemsToBill = getBillablePriceItems();
         Map<PriceItem, LedgerQuantities> ledgerQuantitiesMap = getLedgerQuantities();
+
+        Date currentDate = new Date();
         for (PriceItem priceItem : itemsToBill) {
             LedgerQuantities quantities = ledgerQuantitiesMap.get(priceItem);
             if (quantities == null) {
                 // No ledger item exists for this price item, create it using the current order's price item
-                addAutoLedgerItem(completedDate, priceItem, quantity);
+                addAutoLedgerItem(completedDate, priceItem, quantity, currentDate);
             } else {
                 // This price item already has a ledger entry.
                 // - If it's been billed, don't bill it again, but report this as an issue.
                 // - If it hasn't been billed check & see if the quantity is the same as the current.  If they differ,
                 // replace the existing quantity with the new quantity. When replacing, also set the timestamp so
-                // the PDM can be warned about downloading the spreadsheet AFTER this change
+                // the PDM can be warned about downloading the spreadsheet AFTER this change.
                 if (quantities.getBilled() != 0) {
                     log.debug(MessageFormat.format(
                             "Trying to update an already billed sample, PDO: {0}, sample: {1}, price item: {2}",
@@ -350,7 +354,7 @@ public class ProductOrderSample extends AbstractSample implements Serializable {
                     for (LedgerEntry item : getLedgerItems()) {
                         if (item.getPriceItem().equals(priceItem)) {
                             item.setQuantity(quantity);
-                            item.setAutoLedgerTimestamp(new Date());
+                            item.setAutoLedgerTimestamp(now);
                             break;
                         }
                     }
@@ -401,8 +405,7 @@ public class ProductOrderSample extends AbstractSample implements Serializable {
             if (item.isBilled()) {
                 sampleStatus.get(item.getPriceItem()).addToBilled(item.getQuantity());
             } else {
-                // The item is not part of a completed billed session or successfully billed item
-                // from an active session.
+                // The item is not part of a completed billed session or successfully billed item from an active session.
                 sampleStatus.get(item.getPriceItem()).addToUploaded(item.getQuantity());
             }
         }
@@ -414,21 +417,22 @@ public class ProductOrderSample extends AbstractSample implements Serializable {
      * This adds an automatically uploaded ledger entry. The auto timestamp is set to right now to indicate that the
      * upload happened and needs to be reviewed.
      *
-     * @param workCompleteDate The date completed
-     * @param priceItem The price item to charge
-     * @param delta The plus or minus value to bill to the quote server
+     * @param workCompleteDate The date completed.
+     * @param priceItem The price item to charge.
+     * @param delta The plus or minus value to bill to the quote server.
+     * @param currentDate The ledger entry needs a date to say when the auto entry was made.
      */
-    public void addAutoLedgerItem(Date workCompleteDate, PriceItem priceItem, double delta) {
-        addLedgerItem(workCompleteDate, priceItem, delta, new Date());
+    public void addAutoLedgerItem(Date workCompleteDate, PriceItem priceItem, double delta, Date currentDate) {
+        addLedgerItem(workCompleteDate, priceItem, delta, currentDate);
     }
 
     /**
      * This adds a manually uploaded ledger entry. The auto timestamp of NULL indicates that the upload happened, which
      * will lock out auto billing and sets to Can Bill.
      *
-     * @param workCompleteDate The date completed
-     * @param priceItem The price item to charge
-     * @param delta The plus or minus value to bill to the quote server
+     * @param workCompleteDate The date completed.
+     * @param priceItem The price item to charge.
+     * @param delta The plus or minus value to bill to the quote server.
      */
     public void addLedgerItem(Date workCompleteDate, PriceItem priceItem, double delta) {
         addLedgerItem(workCompleteDate, priceItem, delta, null);

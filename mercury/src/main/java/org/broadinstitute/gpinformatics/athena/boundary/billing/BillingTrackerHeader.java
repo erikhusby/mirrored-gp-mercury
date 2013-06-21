@@ -18,9 +18,9 @@ public enum BillingTrackerHeader implements ColumnHeader {
     ORDER_ID_HEADING("Product Order ID", 6, ColumnHeader.REQUIRED_HEADER, ColumnHeader.REQUIRED_VALUE),
     PRODUCT_ORDER_NAME("Product Order Name", 7, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_HEADER),
     PROJECT_MANAGER("Project Manager", 8, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_HEADER),
-    WORK_COMPLETE_DATE_HEADING("Date Completed", 9, ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_HEADER),
-    QUOTE_ID_HEADING("Quote ID", 10, ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_HEADER),
-    AUTO_LEDGER_TIMESTAMP_HEADING("Auto Ledger Timestamp", 11, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_HEADER),
+    AUTO_LEDGER_TIMESTAMP_HEADING("Auto Ledger Timestamp", 9, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_HEADER),
+    WORK_COMPLETE_DATE_HEADING("Date Completed", 10, ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_HEADER),
+    QUOTE_ID_HEADING("Quote ID", 11, ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_HEADER),
     SORT_COLUMN_HEADING("Sort Column", 12, ColumnHeader.REQUIRED_HEADER, ColumnHeader.REQUIRED_VALUE);
 
     public static final String BILLED = "Billed";

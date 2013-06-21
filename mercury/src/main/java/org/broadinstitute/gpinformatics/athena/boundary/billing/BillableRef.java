@@ -29,7 +29,7 @@ public class BillableRef {
     @Override
     public boolean equals(Object other) {
 
-        if ((this == other)) {
+        if (this == other) {
             return true;
         }
 

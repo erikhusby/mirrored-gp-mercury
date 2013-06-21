@@ -34,9 +34,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -90,9 +88,7 @@ public class UploadTrackerActionBean extends CoreActionBean {
      */
     @Before(stages = LifecycleStage.EventHandling, on={ PREVIEW, UPLOAD })
     public void checkLockout() {
-            GregorianCalendar calendar = new GregorianCalendar();
-        if ((calendar.get(Calendar.HOUR_OF_DAY) >= AutomatedBiller.PROCESSING_START_HOUR) ||
-            (calendar.get(Calendar.HOUR_OF_DAY) < AutomatedBiller.PROCESSING_END_HOUR)) {
+        if (!productOrderDao.isAutoProcessing()) {
             addGlobalValidationError("Cannot upload the billing tracker during automated processing hours: {0} to {1}",
                     AutomatedBiller.PROCESSING_START_HOUR, AutomatedBiller.PROCESSING_END_HOUR);
         }
@@ -125,10 +121,11 @@ public class UploadTrackerActionBean extends CoreActionBean {
                 return;
             }
 
-            // Close the file that was just read in so we can get ready to copy to our temp directory
+            // Close the file that was just read in so we can get ready to copy to our temp directory.
             IOUtils.closeQuietly(inputStream);
 
-            // Even if there is no preview data, we may want to clear out previously billed items, so do all this work either way.
+            // Even if there is no preview data, we may want to clear out previously billed items, so do all this
+            // work either way.
             inputStream = trackerFile.getInputStream();
             File tempFile = copyFromStreamToTempFile(inputStream);
             previewFilePath = tempFile.getAbsolutePath();

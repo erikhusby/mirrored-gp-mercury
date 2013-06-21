@@ -44,7 +44,7 @@ public class BillingTrackerProcessor extends TableProcessor {
     private final Map<String, PriceItem> currentPriceItemsByName;
     private final List<ProductOrder> productOrders = new ArrayList<>();
 
-    // The map of charges keyed by PDO name
+    // This holds the map of charges keyed by PDO name.
     private final Map<String, Map<BillableRef, OrderBillSummaryStat>> chargesMapByPdo = new HashMap<>();
 
     private List<String> headerValues;
@@ -138,7 +138,7 @@ public class BillingTrackerProcessor extends TableProcessor {
     }
 
     @Override
-    public void processRow(Map<String, String> dataRow, int dataRowIndex) {
+    public void processRowDetails(Map<String, String> dataRow, int dataRowIndex) {
 
         // Increment to start because when there is a new row (and first) the addSummaryToChargesMap will set to 0.
         // All error messages want the right row AND then return, so need this to be incremented.
@@ -216,7 +216,7 @@ public class BillingTrackerProcessor extends TableProcessor {
             return;
         }
 
-        // Make sure the product order sample name in the current position matches the sample list
+        // Make sure the product order sample name in the current position matches the sample list.
         ProductOrderSample productOrderSample = currentSamples.get(sampleIndexInOrder);
         if (!productOrderSample.getSampleName().equals(currentSampleName)) {
             String error = "Sample " + currentSampleName + " on row " + (dataRowIndex) +

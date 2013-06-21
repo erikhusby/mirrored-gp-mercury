@@ -1,12 +1,11 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
-import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
+import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
-import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.List;
@@ -19,57 +18,50 @@ import java.util.Set;
 public class LabMetricProcessor extends TableProcessor {
 
     private static final long serialVersionUID = 1837219036890134306L;
-    private Set<LabMetric> metrics = new HashSet<>();
+    private final Set<LabMetric> metrics = new HashSet<>();
 
     private final LabMetric.MetricType metricType;
 
-    private List<String> headersNames;
+    private List<String> headerNames;
 
-    private final LabVesselDao vesselDao;
+    private final LabVesselDao labVesselDao;
 
     /**
      * This constructor requires classes to pass in the injected values. We might want to make this injectable, but
      * since it collects state over time (the metrics set) and holds the metric type, it seemed wrong to inject those
      * things in.
      *
-     * @param vesselDao The vessel DAO
+     * @param labVesselDao The vessel DAO
      * @param metricType The type of metric being pulled in from the spreadsheet.
      */
-    public LabMetricProcessor(LabVesselDao vesselDao, LabMetric.MetricType metricType) {
-        this.vesselDao = vesselDao;
+    public LabMetricProcessor(LabVesselDao labVesselDao, LabMetric.MetricType metricType) {
+        this.labVesselDao = labVesselDao;
         this.metricType = metricType;
     }
 
     @Override
-    public void processRow(Map<String, String> dataRow, int dataRowIndex) {
-        boolean foundError = false;
+    public void processRowDetails(Map<String, String> dataRow, int dataRowIndex) {
+        // Get the barcode
+        String barcode = dataRow.get(LabMetricHeaders.BARCODE.getText());
 
-        if (hasRequiredValues(dataRow, dataRowIndex)) {
+        BigDecimal metric;
 
-            String barcode = dataRow.get(LabMetricHeaders.BARCODE.getText());
+        // Convert to a number
+        try {
+            metric = new BigDecimal(dataRow.get(LabMetricHeaders.METRIC.getText()));
+            LabMetric currentMetric = new LabMetric(metric, metricType, LabMetric.LabUnit.UG_PER_ML);
+            LabVessel metricVessel = labVesselDao.findByIdentifier(barcode);
+            if (metricVessel == null) {
+                validationMessages.add("Row #" + (dataRowIndex + 1) + " Vessel not found for " + barcode);
+            } else {
 
-            BigDecimal metric = null;
-
-            try {
-                metric = new BigDecimal(dataRow.get(LabMetricHeaders.METRIC.getText()));
-            } catch (NumberFormatException e) {
-                validationMessages.add("Row #" + dataRow + " value for Quant: " +
-                                       dataRow.get(LabMetricHeaders.METRIC.getText()) + " is invalid");
-                foundError = true;
+                currentMetric.setLabVessel(metricVessel);
             }
 
-            if (!foundError) {
-                LabMetric currentMetric = new LabMetric(metric, metricType, LabMetric.LabUnit.UG_PER_ML);
-                LabVessel metricVessel = vesselDao.findByIdentifier(barcode);
-                if (metricVessel == null) {
-                    validationMessages.add("Row #" + (dataRowIndex + 1) + " Vessel not found for " + barcode);
-                } else {
-
-                    currentMetric.setLabVessel(metricVessel);
-                }
-
-                metrics.add(currentMetric);
-            }
+            metrics.add(currentMetric);
+        } catch (NumberFormatException e) {
+            validationMessages.add("Row #" + dataRow + " value for Quant: " +
+                                   dataRow.get(LabMetricHeaders.METRIC.getText()) + " is invalid");
         }
     }
 
@@ -84,18 +76,18 @@ public class LabMetricProcessor extends TableProcessor {
 
     @Override
     public List<String> getHeaderNames() {
-        return headersNames;
+        return headerNames;
     }
 
     /**
      * Since there is only one row in this parser, just take the values and assign them.
      *
-     * @param headerValues The header strings that the parser found.
+     * @param headerNames The header strings that the parser found.
      * @param row The row Which row of header is this.
      */
     @Override
-    public void processHeader(List<String> headerValues, int row) {
-        headersNames = headerValues;
+    public void processHeader(List<String> headerNames, int row) {
+        this.headerNames = headerNames;
     }
 
     public Set<LabMetric> getMetrics() {

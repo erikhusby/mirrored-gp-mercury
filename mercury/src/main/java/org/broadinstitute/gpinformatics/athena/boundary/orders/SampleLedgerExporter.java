@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.athena.boundary.orders;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingTrackerHeader;
-import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingTrackerUtils;
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
@@ -157,8 +156,8 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
             // Write headers after placing an extra line
             getWriter().nextRow();
-            for (String header : BillingTrackerUtils.FIXED_HEADERS) {
-                getWriter().writeCell(header, getFixedHeaderStyle());
+            for (BillingTrackerHeader header : BillingTrackerHeader.values()) {
+                getWriter().writeCell(header.getText(), getFixedHeaderStyle());
                 getWriter().setColumnWidth(FIXED_HEADER_WIDTH);
             }
 
@@ -330,7 +329,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
     private void writeEmptyFixedHeaders() {
         // Write blank secondary header line for fixed columns, with default styling.
-        for (String header : BillingTrackerUtils.FIXED_HEADERS) {
+        for (BillingTrackerHeader ignored : BillingTrackerHeader.values()) {
             getWriter().writeCell(" ");
         }
     }

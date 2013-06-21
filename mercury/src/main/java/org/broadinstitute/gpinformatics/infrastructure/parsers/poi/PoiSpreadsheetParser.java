@@ -24,11 +24,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- *
- * Base class for all (hopefully) spreadsheet parsing duties.  Children of this class only need to define how to
- * map the data to ... whatever it maps to for that particular need.
- *
- *
+ * Handle the processing of a stream of table data using POI to parse an excel file.
  */
 public final class PoiSpreadsheetParser implements Serializable {
 
@@ -83,7 +79,7 @@ public final class PoiSpreadsheetParser implements Serializable {
      * @param rows The iterator on the excel rows.
      */
     private void processData(TableProcessor processor, Iterator<Row> rows) {
-        // the data row index starts at 1 in the excel spreadsheet and then we must skip the header rows.
+        // The data row index starts at 1 in the excel spreadsheet and then we must skip the header rows.
         int dataRowIndex = processor.getNumHeaderRows() + 1;
 
         while (rows.hasNext()) {
@@ -104,8 +100,13 @@ public final class PoiSpreadsheetParser implements Serializable {
         }
     }
 
+    /**
+     * Process the headers.
+     *
+     * @param processor The Table Processor that will be turning rows of data into objects based on headers.
+     * @param rows The row iterator.
+     */
     private void processHeaders(TableProcessor processor, Iterator<Row> rows) {
-        // Process the headers
         int headerRowIndex = 0;
         int numHeaderRows = processor.getNumHeaderRows();
         while (rows.hasNext() && headerRowIndex < numHeaderRows) {
@@ -133,7 +134,9 @@ public final class PoiSpreadsheetParser implements Serializable {
     /**
      * Initial point of contact for a parser (except if overwritten by a sub parser).  This method is responsible for
      * coordinating the reading and parsing of a given spreadsheet file.
+     *
      * @param fileStream input stream that represents the Spreadsheet that has been uploaded by the user.
+     *
      * @throws IOException
      * @throws InvalidFormatException
      * @throws ValidationException
@@ -157,7 +160,7 @@ public final class PoiSpreadsheetParser implements Serializable {
      * Helper method to pull data from individual cells taking into account the cell format.  The cell content is
      * converted to strings to allow for a more generic approach to representing the data.  This allows the abstract
      * parser to handle pulling out the data specific to the POI implementation, and allows the concrete parsers to
-     * parse the data not caring whether or not it came from a spreadsheet
+     * parse the data not caring whether or not it came from a spreadsheet.
      *
      * @param row Represents a row in the spreadsheet file to be parsed
      * @param headerName Represents the specific column of the given row to extract

@@ -1186,7 +1186,7 @@ public class ProductOrder implements BusinessObject, Serializable {
     @Override
     public boolean equals(Object other) {
 
-        if ((this == other)) {
+        if (this == other) {
             return true;
         }
 
@@ -1245,11 +1245,24 @@ public class ProductOrder implements BusinessObject, Serializable {
         return oneYearAgo;
     }
 
+    /**
+     * This enum defines the different states that the PDO is in based on the ledger status of all samples in the order.
+     * This status does not included 'Billed' because that is orthogonal to this status. Once something is billed, it
+     * is, essentially in NOTHING_NEW state again and new billing can happen at any time. When something is auto billed,
+     * the status becomes READY_FOR_REVIEW, which means more auto billing can happen, but there is some work to look
+     * at. The PDM can download the tracker at any time when there is no billing, but can only upload when auto billing
+     * is not happening (and billing is happening).
+     *
+     * Once the PDM or Billing Manager does an upload, the state is changed to READY_TO_BILL and the auto-biller will
+     * not process any more entries for this PDO until a billing session has been completed on it.
+     *
+     * These statuses are calculated on-demand based on the ledger entries.
+     */
     public enum LedgerStatus {
         NOTHING_NEW("None"),
         READY_FOR_REVIEW("Review"),
         READY_TO_BILL("Ready to Bill"),
-        BILLING("Billing");
+        BILLING("Billing Started");
 
         private String displayName;
 

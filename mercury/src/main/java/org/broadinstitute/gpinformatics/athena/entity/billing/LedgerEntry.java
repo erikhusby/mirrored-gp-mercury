@@ -37,6 +37,7 @@ public class LedgerEntry implements Serializable {
     // list page to show PDMs that they have items to review and upload. When the upload happens, the timestamp
     // is removed to indicate that auto billing cannot happen for this PDO any more.
     @Column(name = "AUTO_LEDGER_TIMESTAMP")
+    @Temporal(TemporalType.TIMESTAMP)
     private Date autoLedgerTimestamp;
 
     @Index(name = "ix_ledger_price_item")

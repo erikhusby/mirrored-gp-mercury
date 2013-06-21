@@ -174,6 +174,12 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
                 cb.equal(productOrderRoot.get(ProductOrder_.orderStatus), ProductOrder.OrderStatus.Draft));
     }
 
+    /**
+     * This fetches the count information in some subqueries and then populates the transient counts for the appropriate
+     * orders. The makes the ledger status field work in the view.
+     *
+     * @param productOrderListEntries The order entry list to fill up with data.
+     */
     private void fetchUnbilledLedgerEntryCounts(List<ProductOrderListEntry> productOrderListEntries) {
         fetchUnbilledLedgerEntryCounts(productOrderListEntries, ProductOrder.LedgerStatus.READY_FOR_REVIEW);
         fetchUnbilledLedgerEntryCounts(productOrderListEntries, ProductOrder.LedgerStatus.READY_TO_BILL);
@@ -243,7 +249,7 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
                     public Query createCriteriaInQuery(Collection<String> parameterList) {
                         CriteriaQuery<ProductOrderListEntry> query;
                         if (ledgerStatus.equals(ProductOrder.LedgerStatus.READY_FOR_REVIEW)) {
-                             query = cq.where(
+                            query = cq.where(
                                     cb.isNull(ledgerEntryBillingSessionJoin.get(BillingSession_.billedDate)),
                                     cb.isNotNull(productOrderSampleLedgerEntrySetJoin.get(LedgerEntry_.autoLedgerTimestamp)),
                                     productOrderRoot.get(ProductOrder_.jiraTicketKey).in(parameterList));
@@ -302,6 +308,8 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
         List<ProductOrderListEntry> productOrderListEntries =
                 findBaseProductOrderListEntries(null, productFamilyId, productKeys, orderStatuses, placedDate,
                         ownerIds);
+
+        // populate the ledger entry counts by doing queries.
         fetchUnbilledLedgerEntryCounts(productOrderListEntries);
 
         // Since the querying here is already multi-pass and a bit confusing, adding the ledger status as a post filter.

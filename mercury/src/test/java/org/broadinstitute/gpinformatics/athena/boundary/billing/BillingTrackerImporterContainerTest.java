@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
-import net.sourceforge.stripes.validation.ValidationErrors;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -19,13 +18,10 @@ import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -59,10 +55,6 @@ public class BillingTrackerImporterContainerTest extends Arquillian {
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
-    private UserTransaction utx;
-
-    @SuppressWarnings("CdiInjectionPointsInspection")
-    @Inject
     private Log logger;
 
     @Deployment
@@ -70,39 +62,19 @@ public class BillingTrackerImporterContainerTest extends Arquillian {
         return DeploymentBuilder.buildMercuryWar(DEV);
     }
 
-    @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
-    public void setUp() throws Exception {
-        // Skip if no injections, meaning we're not running in container.
-        if (utx == null) {
-            return;
-        }
-        utx.begin();
-    }
-
-
-    @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
-    public void tearDown() throws Exception {
-        // Skip if no injections, meaning we're not running in container.
-        if (utx == null) {
-            return;
-        }
-        utx.rollback();
-    }
-
     /**
      * Take the sheet names and create a new processor for each one.
      *
      * @param sheetNames The names of the sheets (should be all part numbers of products.
-     * @param doPersist Preview mode does not persist, but saving does.
      *
      * @return The mapping of sheet names to processors.
      */
-    private Map<String, BillingTrackerProcessor> getProcessors(List<String> sheetNames, boolean doPersist) {
+    private Map<String, BillingTrackerProcessor> getProcessors(List<String> sheetNames) {
         Map<String, BillingTrackerProcessor> processors = new HashMap<>();
 
         for (String sheetName : sheetNames) {
             BillingTrackerProcessor processor = new BillingTrackerProcessor(
-                    sheetName, ledgerEntryDao, productDao, productOrderDao, priceItemDao, priceListCache, doPersist);
+                    sheetName, ledgerEntryDao, productDao, productOrderDao, priceItemDao, priceListCache, false);
             processors.put(sheetName, processor);
         }
 
@@ -123,7 +95,7 @@ public class BillingTrackerImporterContainerTest extends Arquillian {
 
             IOUtils.closeQuietly(inputStream);
 
-            Map<String, BillingTrackerProcessor> processors = getProcessors(sheetNames, false);
+            Map<String, BillingTrackerProcessor> processors = getProcessors(sheetNames);
             PoiSpreadsheetParser parser = new PoiSpreadsheetParser(processors);
 
             inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(BILLING_TRACKER_TEST_FILENAME);
@@ -181,7 +153,7 @@ public class BillingTrackerImporterContainerTest extends Arquillian {
 
     private OrderBillSummaryStat getOrderBillSummaryStat(Set<Map.Entry<BillableRef, OrderBillSummaryStat>> entries,
                                                          String rnaPriceItemName) {
-        // Find the price item
+        // Find the price item.
         Map.Entry<BillableRef, OrderBillSummaryStat> entry = null;
         Iterator<Map.Entry<BillableRef, OrderBillSummaryStat>> entryIterator = entries.iterator();
         while ((entry == null) && entryIterator.hasNext()) {

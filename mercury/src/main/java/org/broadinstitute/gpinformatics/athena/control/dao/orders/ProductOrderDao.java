@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 
+import org.broadinstitute.gpinformatics.athena.boundary.billing.AutomatedBiller;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderCompletionStatus;
@@ -44,10 +45,6 @@ import java.util.Set;
 @RequestScoped
 public class ProductOrderDao extends GenericDao {
 
-    // Locked out from midnight through 5
-    private static final int PROCESSING_START_HOUR = 0;
-    private static final int PROCESSING_END_HOUR = 5;
-
     /**
      * Calculate whether the schedule is processing messages. This will be used to lock out tracker uploads.
      *
@@ -55,8 +52,8 @@ public class ProductOrderDao extends GenericDao {
      */
     public boolean isAutoProcessing() {
         GregorianCalendar calendar = new GregorianCalendar();
-        return calendar.get(Calendar.HOUR_OF_DAY) >= PROCESSING_START_HOUR ||
-               calendar.get(Calendar.HOUR_OF_DAY) < PROCESSING_END_HOUR;
+        return calendar.get(Calendar.HOUR_OF_DAY) >= AutomatedBiller.PROCESSING_START_HOUR &&
+               calendar.get(Calendar.HOUR_OF_DAY) < AutomatedBiller.PROCESSING_END_HOUR;
     }
 
     public enum FetchSpec {

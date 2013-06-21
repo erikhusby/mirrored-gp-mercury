@@ -10,6 +10,8 @@ import java.util.Date;
  */
 public class ProductOrderListEntry implements Serializable {
 
+    private static final long serialVersionUID = 6343514424527232374L;
+
     private Long orderId;
 
     private String title;
@@ -32,11 +34,11 @@ public class ProductOrderListEntry implements Serializable {
 
     private Long billingSessionId;
 
-    private Long constructedCount;
+    private final long constructedCount;
 
-    private Long readyForReviewCount = 0L;
+    private long readyForReviewCount = 0L;
 
-    private Long readyForBillingCount = 0L;
+    private long readyForBillingCount = 0L;
 
     /**
      * Version of the constructor called by the non-ledger aware first pass query.
@@ -57,6 +59,9 @@ public class ProductOrderListEntry implements Serializable {
         this.ownerId = ownerId;
         this.placedDate = placedDate;
         this.quoteId = quoteId;
+
+        // The query that generates this does not update counts, so this value is not used here.
+        this.constructedCount = 0L;
     }
 
     /**
@@ -66,15 +71,19 @@ public class ProductOrderListEntry implements Serializable {
     @SuppressWarnings("UnusedDeclaration")
     // This is called through reflection and only appears to be unused.
     public ProductOrderListEntry(
-        Long orderId, String jiraTicketKey, Long billingSessionId, Long count) {
+        Long orderId, String jiraTicketKey, Long billingSessionId, Long constructedCount) {
 
         this.orderId = orderId;
         this.jiraTicketKey = jiraTicketKey;
         this.billingSessionId = billingSessionId;
-        this.constructedCount = count;
+
+        // This count is used by the query that needs to populate one of the two other counts.
+        this.constructedCount = constructedCount;
     }
 
-    private ProductOrderListEntry() {}
+    private ProductOrderListEntry() {
+        constructedCount = 0L;
+    }
 
     public static ProductOrderListEntry createDummy() {
         return new ProductOrderListEntry();
@@ -139,34 +148,36 @@ public class ProductOrderListEntry implements Serializable {
         this.billingSessionId = billingSessionId;
     }
 
-    public Long getReadyForBillingCount() {
-        return readyForBillingCount;
-    }
-
     public Long getConstructedCount() {
         return constructedCount;
-    }
-
-    public void setConstructedCount(Long constructedCount) {
-        this.constructedCount = constructedCount;
     }
 
     public void setReadyForBillingCount(Long readyForBillingCount) {
         this.readyForBillingCount = readyForBillingCount;
     }
 
-    public Long getReadyForReviewCount() {
-        return readyForReviewCount;
-    }
-
     public void setReadyForReviewCount(Long readyForReviewCount) {
         this.readyForReviewCount = readyForReviewCount;
     }
 
+    /**
+     * If the transient readyForBillingCount is set (done by the order list entry dao), then this is ready for
+     * billing when there are entries ready for billing and nothing ready for review. Ready for review means there
+     * are items that have been auto-billed but not reviewed. Was relying on if test ordering, but the extra check
+     * seems worth doing here.
+     *
+     * @return Is this pdo entry ready for billing?
+     */
     public boolean isReadyForBilling() {
-        return readyForBillingCount > 0;
+        return !isReadyForReview() && (readyForBillingCount > 0);
     }
 
+    /**
+     * If there are any ledger entries on any sample that are ready for review, the readyForReviewCount will be the
+     * number in this state.
+     *
+     * @return Is this pdo entry ready for review?
+     */
     public boolean isReadyForReview() {
         return readyForReviewCount > 0;
     }
