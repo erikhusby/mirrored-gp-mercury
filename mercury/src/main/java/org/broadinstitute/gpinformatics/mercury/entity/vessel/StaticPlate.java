@@ -109,7 +109,7 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
 
 
     @Embedded
-    private VesselContainer<PlateWell> vesselContainer = new VesselContainer<PlateWell>(this);
+    private VesselContainer<PlateWell> vesselContainer = new VesselContainer<>(this);
 
     @Enumerated(EnumType.STRING)
     private PlateType plateType;
@@ -191,7 +191,7 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
      */
     public Map<VesselPosition, Boolean> getHasRackContentByWell() {
         HasRackContentByWellCriteria criteria = new HasRackContentByWellCriteria();
-        applyCriteriaToAllWells(criteria);
+        applyCriteriaToAllPositions(criteria);
         return criteria.getResult();
     }
 
@@ -237,7 +237,7 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
      * @return all nearest tube ancestors
      */
     public List<VesselAndPosition> getNearestTubeAncestors() {
-        final List<VesselAndPosition> vesselAndPositions = new ArrayList<VesselAndPosition>();
+        final List<VesselAndPosition> vesselAndPositions = new ArrayList<>();
         Iterator<String> positionNames = plateType.getVesselGeometry().getPositionNames();
 /*
         while (positionNames.hasNext()) {
@@ -253,8 +253,8 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
 */
         TransferTraverserCriteria.NearestTubeAncestorsCriteria
                 criteria = new TransferTraverserCriteria.NearestTubeAncestorsCriteria();
-        applyCriteriaToAllWells(criteria);
-        return new ArrayList<VesselAndPosition>(criteria.getVesselAndPositions());
+        applyCriteriaToAllPositions(criteria);
+        return new ArrayList<>(criteria.getVesselAndPositions());
     }
 
     /**
@@ -283,7 +283,7 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
         }
     }
 
-    private void applyCriteriaToAllWells(TransferTraverserCriteria criteria) {
+    private void applyCriteriaToAllPositions(TransferTraverserCriteria criteria) {
         Iterator<String> positionNames = plateType.getVesselGeometry().getPositionNames();
         while (positionNames.hasNext()) {
             String positionName = positionNames.next();

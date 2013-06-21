@@ -94,7 +94,7 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
     private String flowcellBarcode;
 
     @Embedded
-    VesselContainer<RunChamber> vesselContainer = new VesselContainer<RunChamber>(this);
+    VesselContainer<RunChamber> vesselContainer = new VesselContainer<>(this);
 
     protected IlluminaFlowcell(String label, FlowcellType flowcellType) {
         super(label);
