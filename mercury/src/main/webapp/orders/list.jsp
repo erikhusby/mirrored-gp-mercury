@@ -46,7 +46,6 @@
                         {"bSortable": true, "sType": "title-numeric"},  // % Complete
                         {"bSortable": true, "sType": "numeric"},        // Count
                         {"bSortable": true, "sType": "html"},           // Quote
-                        {"bSortable": true},                            // Billing Session ID
                         {"bSortable": true, "sType": "html"}]           // Ledger Status
                 });
 
@@ -308,15 +307,6 @@
                                 <a href="${actionBean.getQuoteUrl(order.quoteId)}" class="external" target="QUOTE">
                                         ${order.quoteId}
                                 </a>
-                            </td>
-                            <td>
-                                <c:if test="${order.billingSessionBusinessKey != null}">
-                                    <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean"
-                                                  event="view">
-                                        <stripes:param name="sessionKey" value="${order.billingSessionBusinessKey}"/>
-                                        ${order.billingSessionBusinessKey}
-                                    </stripes:link>
-                                </c:if>
                             </td>
                             <td>
                                 <!-- Do ready for review first because if there is ANYTHING auto created, then it
