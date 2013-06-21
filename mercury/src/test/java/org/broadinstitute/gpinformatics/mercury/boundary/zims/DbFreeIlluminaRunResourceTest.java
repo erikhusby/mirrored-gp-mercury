@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.zims;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniLane;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniLibrary;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
+import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.testng.Assert;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -49,10 +50,15 @@ public class DbFreeIlluminaRunResourceTest {
         EasyMock.expect(brokenThrift.fetchRun((String)EasyMock.anyObject())).andThrow(
                 new RuntimeException("something blew up remotely")
         );
-        EasyMock.replay(brokenThrift);
+
+        IlluminaSequencingRunDao illuminaSequencingRunDao = EasyMock.createMock(IlluminaSequencingRunDao.class);
+        EasyMock.expect(illuminaSequencingRunDao.findByRunName((String)EasyMock.anyObject())).andReturn(null);
+        EasyMock.replay(brokenThrift, illuminaSequencingRunDao);
+
         ZimsIlluminaRun runBean = new IlluminaRunResource(
                 brokenThrift,
-                new BSPSampleDataFetcher(new BSPSampleSearchServiceStub())
+                new BSPSampleDataFetcher(new BSPSampleSearchServiceStub()),
+                illuminaSequencingRunDao
         ).getRun("whatever");
 
         Assert.assertNotNull(runBean.getError());
@@ -68,11 +74,16 @@ public class DbFreeIlluminaRunResourceTest {
 
     @Test(groups = DATABASE_FREE)
     public void test_known_good_run() throws Exception {
+        IlluminaSequencingRunDao illuminaSequencingRunDao = EasyMock.createMock(IlluminaSequencingRunDao.class);
+        EasyMock.expect(illuminaSequencingRunDao.findByRunName((String)EasyMock.anyObject())).andReturn(null);
+        EasyMock.replay(illuminaSequencingRunDao);
+
         TZamboniRun thriftRun = ThriftFileAccessor.deserializeRun();
         System.out.println("----DBFree IRR test : " + thriftRun.getImagedAreaPerLaneMM2());
         ZimsIlluminaRun runBean = new IlluminaRunResource(
                 new MockThriftService(),
-                new BSPSampleDataFetcher(new BSPSampleSearchServiceStub())
+                new BSPSampleDataFetcher(new BSPSampleSearchServiceStub()),
+                illuminaSequencingRunDao
         ).getRun(thriftRun,new HashMap<String, BSPSampleDTO>(),new SquidThriftLibraryConverter(),getMockDao());
         IlluminaRunResourceTest.doAssertions(thriftRun,runBean,new HashMap<Long,ProductOrder>());
     }
@@ -86,14 +97,18 @@ public class DbFreeIlluminaRunResourceTest {
         Map <String, BSPSampleDTO> lsidToSampleDTO = new HashMap<String, BSPSampleDTO>();
         lsidToSampleDTO.put(sampleDTO.getSampleLsid(),sampleDTO);
 
+        IlluminaSequencingRunDao illuminaSequencingRunDao = EasyMock.createMock(IlluminaSequencingRunDao.class);
+        EasyMock.expect(illuminaSequencingRunDao.findByRunName((String)EasyMock.anyObject())).andReturn(null);
+        EasyMock.replay(illuminaSequencingRunDao);
 
         for (TZamboniLane lane : thriftRun.getLanes()) {
             for (TZamboniLibrary library : lane.getLibraries()) {
                 library.setLsid(sampleDTO.getSampleLsid());
             }
         }
-        IlluminaRunResource runResource = new IlluminaRunResource(new MockThriftService(),sampleDataFetcher);
-        ZimsIlluminaRun runBean = runResource.getRun(thriftRun, lsidToSampleDTO, new SquidThriftLibraryConverter(),getMockDao());
+        IlluminaRunResource runResource = new IlluminaRunResource(new MockThriftService(), sampleDataFetcher,
+                illuminaSequencingRunDao);
+        ZimsIlluminaRun runBean = runResource.getRun(thriftRun, lsidToSampleDTO, new SquidThriftLibraryConverter(), getMockDao());
 
         for (ZimsIlluminaChamber lane : runBean.getLanes()) {
             for (LibraryBean libraryBean : lane.getLibraries()) {
