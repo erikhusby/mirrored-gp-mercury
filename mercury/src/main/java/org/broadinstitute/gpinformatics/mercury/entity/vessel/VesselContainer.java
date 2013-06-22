@@ -488,7 +488,6 @@ public class VesselContainer<T extends LabVessel> {
             VesselPosition vesselPosition = VesselPosition.getByName(positionName);
             evaluateCriteria(vesselPosition, criteria, TransferTraverserCriteria.TraversalDirection.Ancestors, null, 0);
         }
-
     }
 
     public Collection<LabBatch> getAllLabBatches() {

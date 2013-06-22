@@ -528,4 +528,29 @@ public interface TransferTraverserCriteria {
             return vesselAndPositions;
         }
     }
+    class NearestTubeAncestorCriteria implements TransferTraverserCriteria {
+
+        private LabVessel tube;
+
+        @Override
+        public TraversalControl evaluateVesselPreOrder(Context context) {
+            if (OrmUtil.proxySafeIsInstance(context.getLabVessel(), TwoDBarcodedTube.class)) {
+                tube = context.getLabVessel();
+                return StopTraversing;
+            } else {
+                return ContinueTraversing;
+            }
+        }
+
+        @Override
+        public void evaluateVesselInOrder(Context context) {}
+
+        @Override
+        public void evaluateVesselPostOrder(Context context) {}
+
+        public LabVessel getTube() {
+            return tube;
+        }
+
+    }
 }

@@ -2,17 +2,21 @@ package org.broadinstitute.gpinformatics.mercury.entity.run;
 
 
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselAndPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainerEmbedder;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -183,9 +187,23 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
      * @return all nearest tube ancestors
      */
     public List<VesselAndPosition> getNearestTubeAncestors() {
-        return vesselContainer.getNearestTubeAncestors();
+
+        List<VesselAndPosition> vesselsWithPositions = new ArrayList<>();
+
+        Iterator<String> positionNames = getVesselGeometry().getPositionNames();
+        while (positionNames.hasNext()) {
+            String positionName = positionNames.next();
+            VesselPosition vesselPosition = VesselPosition.getByName(positionName);
+
+            TransferTraverserCriteria.NearestTubeAncestorCriteria
+                    criteria = new TransferTraverserCriteria.NearestTubeAncestorCriteria();
+
+            vesselContainer.evaluateCriteria(vesselPosition, criteria,
+                    TransferTraverserCriteria.TraversalDirection.Ancestors, null, 0);
+
+            vesselsWithPositions.add(new VesselAndPosition(criteria.getTube(),vesselPosition));
+        }
+
+        return vesselsWithPositions;
     }
-
-
-
 }

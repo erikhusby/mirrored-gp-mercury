@@ -1,17 +1,27 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
+import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
+import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
+import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme.IndexPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
 import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -20,12 +30,23 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.SampleType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselAndPosition;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
+import org.broadinstitute.gpinformatics.mercury.test.BaseEventTest;
+import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
+import org.easymock.EasyMock;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -34,6 +55,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.createMock;
@@ -49,7 +72,7 @@ import static org.testng.Assert.assertTrue;
  */
 
 @Test(groups = TestGroups.DATABASE_FREE, enabled = true)
-public class SequencingSampleFactEtlDbFreeTest {
+public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
     private String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
     private long entityId = 9988776655L;
     private String runName = "hiseqRun_name_dbfreetest";
@@ -82,6 +105,9 @@ public class SequencingSampleFactEtlDbFreeTest {
     private Object[] mocks = new Object[]{auditReader, dao, pdoDao, runCartridge, researchProject, pdo,
             sampleInstance, sampleInstance2};
 
+    private final TemplateEngine templateEngine = new TemplateEngine();
+
+
     @BeforeClass(groups = TestGroups.DATABASE_FREE)
     public void objSetUp() {
         // Fixes up name uniqueness by appending an mSec timestamp.
@@ -92,6 +118,8 @@ public class SequencingSampleFactEtlDbFreeTest {
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void setUp() {
+        templateEngine.postConstruct();
+        super.setUp();
         reset(mocks);
         reagents.clear();
         sampleInstances.clear();
@@ -166,10 +194,12 @@ public class SequencingSampleFactEtlDbFreeTest {
         for (String record : records) {
             if (record.contains(",2,")) {
                 verifyRecord(record, molecularIndexSchemeName[0], pdoId, sampleKey, 2, denatureSource.getLabel(),
-                        ExtractTransform.secTimestampFormat.format(denatureSource.getCreatedOn()));
+                        ExtractTransform.secTimestampFormat.format(denatureSource.getCreatedOn()), cartridgeName,
+                        researchProjectId);
             } else {
                 verifyRecord(record, molecularIndexSchemeName[0], pdoId, sampleKey, 1, denatureSource.getLabel(),
-                        ExtractTransform.secTimestampFormat.format(denatureSource.getCreatedOn()));
+                        ExtractTransform.secTimestampFormat.format(denatureSource.getCreatedOn()), cartridgeName,
+                        researchProjectId);
             }
         }
         // Tests the pdo cache.  Should just skip some of the expects.
@@ -219,10 +249,12 @@ public class SequencingSampleFactEtlDbFreeTest {
         for (String record : records) {
             if (record.contains(",2,")) {
                 verifyRecord(record, molecularIndexSchemeName[1], pdoId, sampleKey, 2, denatureSource.getLabel(),
-                        ExtractTransform.secTimestampFormat.format(denatureSource.getCreatedOn()));
+                        ExtractTransform.secTimestampFormat.format(denatureSource.getCreatedOn()), cartridgeName,
+                        researchProjectId);
             } else {
                 verifyRecord(record, molecularIndexSchemeName[1], pdoId, sampleKey, 1, denatureSource.getLabel(),
-                        ExtractTransform.secTimestampFormat.format(denatureSource.getCreatedOn()));
+                        ExtractTransform.secTimestampFormat.format(denatureSource.getCreatedOn()), cartridgeName,
+                        researchProjectId);
             }
         }
 
@@ -274,10 +306,12 @@ public class SequencingSampleFactEtlDbFreeTest {
         for (String record : records) {
             if (record.contains(",2,")) {
                 verifyRecord(record, expectedMolecularIndexName, pdoId, sampleKey, 2, denatureSource.getLabel(),
-                        ExtractTransform.secTimestampFormat.format(denatureSource.getCreatedOn()));
+                        ExtractTransform.secTimestampFormat.format(denatureSource.getCreatedOn()), cartridgeName,
+                        researchProjectId);
             } else {
                 verifyRecord(record, expectedMolecularIndexName, pdoId, sampleKey, 1, denatureSource.getLabel(),
-                        ExtractTransform.secTimestampFormat.format(denatureSource.getCreatedOn()));
+                        ExtractTransform.secTimestampFormat.format(denatureSource.getCreatedOn()), cartridgeName,
+                        researchProjectId);
             }
         }
 
@@ -334,21 +368,140 @@ public class SequencingSampleFactEtlDbFreeTest {
                 found2 = true;
             }
             verifyRecord(record, "NONE", pdoId, null, 1, denatureSource.getLabel(),
-                    ExtractTransform.secTimestampFormat.format(denatureSource.getCreatedOn()));
+                    ExtractTransform.secTimestampFormat.format(denatureSource.getCreatedOn()), cartridgeName,
+                    researchProjectId);
         }
         assertTrue(found1 && found2);
 
         verify(mocks);
     }
 
+    public void testWithEventHistory() throws Exception {
+        final ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
+        Long pdoId = 9202938094820L;
+        AthenaClientServiceStub.addProductOrder(productOrder);
+        Date runDate = new Date();
+        Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
+        LabBatch workflowBatch = new LabBatch("Exome Express Batch",
+                new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
+        workflowBatch.setWorkflowName("Exome Express");
+
+        //Build Event History
+        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube, productOrder,
+                workflowBatch, null, String.valueOf(runDate.getTime()), "1", true);
+        ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder =
+                runExomeExpressShearingProcess(productOrder, picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
+                        picoPlatingEntityBuilder.getNormTubeFormation(),
+                        picoPlatingEntityBuilder.getNormalizationBarcode(), "1");
+        LibraryConstructionEntityBuilder libraryConstructionEntityBuilder =
+                runLibraryConstructionProcess(exomeExpressShearingEntityBuilder.getShearingCleanupPlate(),
+                        exomeExpressShearingEntityBuilder.getShearCleanPlateBarcode(),
+                        exomeExpressShearingEntityBuilder.getShearingPlate(), "1");
+        HybridSelectionEntityBuilder hybridSelectionEntityBuilder =
+                runHybridSelectionProcess(libraryConstructionEntityBuilder.getPondRegRack(),
+                        libraryConstructionEntityBuilder.getPondRegRackBarcode(),
+                        libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), "1");
+        QtpEntityBuilder qtpEntityBuilder = runQtpProcess(hybridSelectionEntityBuilder.getNormCatchRack(),
+                hybridSelectionEntityBuilder.getNormCatchBarcodes(),
+                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), "Exome Express", "1");
+        LabVessel denatureSource =
+                qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
+        HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
+                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", "squidDesignationName");
+
+        IlluminaFlowcell illuminaFlowcell = hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell();
+
+
+        String machineName = "Superman";
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat(IlluminaSequencingRun.RUN_FORMAT_PATTERN);
+
+        File runPath = File.createTempFile("tempRun" + dateFormat.format(runDate), ".txt");
+        String flowcellBarcode = illuminaFlowcell.getCartridgeBarcode();
+
+        SolexaRunBean runBean = new SolexaRunBean(flowcellBarcode, flowcellBarcode + dateFormat.format(runDate),
+                runDate, machineName, runPath.getAbsolutePath(), null);
+
+        IlluminaSequencingRunFactory runFactory =
+                new IlluminaSequencingRunFactory(EasyMock.createMock(JiraCommentUtil.class));
+        IlluminaSequencingRun run = runFactory.buildDbFree(runBean, illuminaFlowcell);
+
+        run.setSequencingRunId(entityId);
+
+        ReadStructureRequest readStructureRequest = new ReadStructureRequest();
+        readStructureRequest.setRunBarcode(run.getRunBarcode());
+        readStructureRequest.setSetupReadStructure("71T8B8B71T");
+        readStructureRequest.setActualReadStructure("101T8B8B101T");
+
+        runFactory.storeReadsStructureDBFree(readStructureRequest, run);
+
+        expect(dao.findById(SequencingRun.class, entityId)).andReturn(run);
+        expect(pdoDao.findByBusinessKey(anyObject(String.class))).andReturn(pdo);
+        expect(pdo.getProductOrderId()).andReturn(pdoId);
+        expect(pdo.getResearchProject()).andReturn(researchProject).times(192);
+        expect(researchProject.getResearchProjectId()).andReturn(researchProjectId).times(192);
+//        expect(pdo.getResearchProject()).andReturn(productOrder.getResearchProject()).times(2);
+        expect(pdo.getBusinessKey()).andReturn(productOrder.getBusinessKey());
+
+        replay(mocks);
+        String expectedMolecularIndexName = molecularIndexSchemeName[0] + " " + molecularIndexSchemeName[2];
+        Collection<String> records = tst.dataRecords(etlDateStr, false, entityId);
+
+        assertEquals(records.size(), 192);
+
+        Map<String, List<String>> mapSampleToRecord = new HashMap<>();
+
+        for (String record : records) {
+            String[] recordParts = record.split(",");
+
+            String recordSampleKey = recordParts[7];
+            if (StringUtils.isNotBlank(recordSampleKey)) {
+                if (!mapSampleToRecord.containsKey(recordSampleKey)) {
+                    mapSampleToRecord.put(recordSampleKey, new ArrayList<String>(2));
+                }
+                mapSampleToRecord.get(recordSampleKey).add(record);
+            }
+        }
+
+
+        for (SampleInstance testInstance : denatureSource.getSampleInstances()) {
+
+            SortedSet<String> names = new TreeSet<>();
+
+            for (Reagent reagent : testInstance.getReagents()) {
+                if (OrmUtil.proxySafeIsInstance(reagent, MolecularIndexReagent.class)) {
+                    names.add(((MolecularIndexReagent) reagent).getMolecularIndexingScheme().getName());
+                }
+            }
+            String molecularIndexingSchemeName = (names.size() == 0 ? "NONE" : StringUtils.join(names, " "));
+
+            for (String record : mapSampleToRecord.get(testInstance.getStartingSample().getSampleKey())) {
+                if (record.contains(",2,")) {
+                    verifyRecord(record, molecularIndexingSchemeName, pdoId,
+                            testInstance.getStartingSample().getSampleKey(), 2, denatureSource.getLabel(),
+                            ExtractTransform.secTimestampFormat.format(denatureSource.getCreatedOn()),
+                            illuminaFlowcell.getLabel(), pdo.getResearchProject().getResearchProjectId());
+                } else {
+                    verifyRecord(record, molecularIndexingSchemeName, pdoId,
+                            testInstance.getStartingSample().getSampleKey(), 1, denatureSource.getLabel(),
+                            ExtractTransform.secTimestampFormat.format(denatureSource.getCreatedOn()),
+                            illuminaFlowcell.getLabel(), pdo.getResearchProject().getResearchProjectId());
+                }
+            }
+        }
+
+        verify(mocks);
+    }
+
     private String[] verifyRecord(String record, String expectedName, long pdoId, String sampleKey, int lane,
-                                  String tubeBarcode, String createdDateStr) {
+                                  String tubeBarcode, String createdDateStr, String cartridgeName1,
+                                  long researchProjectId1) {
         int i = 0;
         String[] parts = record.split(",");
         assertEquals(parts[i++], etlDateStr);
         assertEquals(parts[i++], "F");
         assertEquals(parts[i++], String.valueOf(entityId));
-        assertEquals(parts[i++], cartridgeName);
+        assertEquals(parts[i++], cartridgeName1);
         assertEquals(parts[i++], String.valueOf(lane));
         assertEquals(parts[i++], expectedName);
         assertEquals(parts[i++], String.valueOf(pdoId));
@@ -356,7 +509,7 @@ public class SequencingSampleFactEtlDbFreeTest {
             assertEquals(parts[i], sampleKey);
         }
         i++;
-        assertEquals(parts[i++], String.valueOf(researchProjectId));
+        assertEquals(parts[i++], String.valueOf(researchProjectId1));
         assertEquals(parts[i++], tubeBarcode);
         assertEquals(parts[i++], createdDateStr);
 
