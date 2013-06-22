@@ -35,6 +35,7 @@ public class LabMetricProcessor extends TableProcessor {
      * @param metricType The type of metric being pulled in from the spreadsheet.
      */
     public LabMetricProcessor(LabVesselDao labVesselDao, LabMetric.MetricType metricType) {
+        super(null);
         this.labVesselDao = labVesselDao;
         this.metricType = metricType;
     }
@@ -52,7 +53,7 @@ public class LabMetricProcessor extends TableProcessor {
             LabMetric currentMetric = new LabMetric(metric, metricType, LabMetric.LabUnit.UG_PER_ML);
             LabVessel metricVessel = labVesselDao.findByIdentifier(barcode);
             if (metricVessel == null) {
-                validationMessages.add("Row #" + (dataRowIndex + 1) + " Vessel not found for " + barcode);
+                addDataMessage("Vessel not found for " + barcode, dataRowIndex);
             } else {
 
                 currentMetric.setLabVessel(metricVessel);
@@ -60,8 +61,7 @@ public class LabMetricProcessor extends TableProcessor {
 
             metrics.add(currentMetric);
         } catch (NumberFormatException e) {
-            validationMessages.add("Row #" + dataRow + " value for Quant: " +
-                                   dataRow.get(LabMetricHeaders.METRIC.getText()) + " is invalid");
+            addDataMessage("Value for quant: " + dataRow.get(LabMetricHeaders.METRIC.getText()) + " is invalid", dataRowIndex);
         }
     }
 

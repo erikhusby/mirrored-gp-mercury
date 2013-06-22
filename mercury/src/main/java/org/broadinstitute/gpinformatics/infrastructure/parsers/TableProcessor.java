@@ -17,9 +17,12 @@ public abstract class TableProcessor implements Serializable {
 
     private static final long serialVersionUID = 8122298462727182883L;
 
-    protected List<String> validationMessages = new ArrayList<>();
+    private List<String> validationMessages = new ArrayList<>();
 
-    protected TableProcessor() {
+    private final String sheetName;
+
+    protected TableProcessor(String sheetName) {
+        this.sheetName = sheetName;
     }
 
     /**
@@ -102,7 +105,7 @@ public abstract class TableProcessor implements Serializable {
         for (ColumnHeader header : getColumnHeaders()) {
             if (header.isRequiredValue() &&
                 (!dataRow.containsKey(header.getText()) || StringUtils.isBlank(dataRow.get(header.getText())))) {
-                validationMessages.add("Row #" + dataRowIndex + " value for " + header.getText() + " is missing");
+                addDataMessage("Required value for " + header.getText() + " is missing", dataRowIndex);
                 hasValue = false;
             }
         }
@@ -116,5 +119,11 @@ public abstract class TableProcessor implements Serializable {
 
     public List<String> getMessages() {
         return validationMessages;
+    }
+
+    protected void addDataMessage(String message, int dataRowIndex) {
+        String prefix = (sheetName == null) ? "" : "Sheet " + sheetName + ", ";
+
+        validationMessages.add(prefix + "Row #" + (dataRowIndex + getNumHeaderRows()) + " " + message);
     }
 }

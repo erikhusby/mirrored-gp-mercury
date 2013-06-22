@@ -55,9 +55,11 @@ public class QuantificationEJB {
                     validationErrors.add("Could not find lab vessel for metric.");
                 }
             }
-            if(validationErrors.size() > 0){
+
+            if (validationErrors.size() > 0) {
                throw new ValidationException("Error during upload validation : ", validationErrors);
             }
+
             return labMetrics;
         } catch (IllegalArgumentException e) {
             throw new ValidationException(e);

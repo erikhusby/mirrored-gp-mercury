@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -106,7 +107,7 @@ public class UploadTrackerActionBean extends CoreActionBean {
 
             // process and if there were parsing errors, just return.
             parser.processUploadFile(trackerFile.getInputStream());
-            if (hasErrors()) {
+            if (hasErrors(processors.values())) {
                 return;
             }
 
@@ -145,6 +146,16 @@ public class UploadTrackerActionBean extends CoreActionBean {
                 // If cannot delete, oh well.
             }
         }
+    }
+
+    private boolean hasErrors(Collection<BillingTrackerProcessor> processors) {
+        for (BillingTrackerProcessor processor : processors) {
+            for (String messages : processor.getMessages()) {
+                addGlobalValidationError(messages);
+            }
+        }
+
+        return hasErrors();
     }
 
     /**
