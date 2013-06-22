@@ -24,6 +24,11 @@ import java.util.Map;
 @Startup
 public class AutomatedBiller {
 
+    // These constants define the automated billing period, which is from midnight through 5AM. This needs to be in sync
+    // with the schedule, which is happening from midnight to 4:45.
+    public static final int PROCESSING_START_HOUR = 0;
+    public static final int PROCESSING_END_HOUR = 5;
+
     private final WorkCompleteMessageDao workCompleteMessageDao;
     private final ProductOrderEjb productOrderEjb;
     private final SessionContextUtility sessionContextUtility;

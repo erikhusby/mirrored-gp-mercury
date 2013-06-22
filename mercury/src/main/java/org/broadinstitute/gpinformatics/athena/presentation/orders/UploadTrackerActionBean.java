@@ -88,8 +88,8 @@ public class UploadTrackerActionBean extends CoreActionBean {
      */
     @Before(stages = LifecycleStage.EventHandling, on={ PREVIEW, UPLOAD })
     public void checkLockout() {
-        if (!productOrderDao.isAutoProcessing()) {
-            addGlobalValidationError("Cannot upload the billing tracker during automated processing hours: {0} to {1}",
+        if (productOrderDao.isAutoProcessing()) {
+            addGlobalValidationError("Cannot upload the billing tracker during automated processing hours",
                     AutomatedBiller.PROCESSING_START_HOUR, AutomatedBiller.PROCESSING_END_HOUR);
         }
     }
