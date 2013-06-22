@@ -48,5 +48,5 @@ public abstract class RunCartridge extends LabVessel {
         this.sequencingRuns.add(sequencingRun);
     }
 
-    public abstract List<VesselAndPosition> getNearestTubeAncestors();
+    public abstract List<VesselAndPosition> getNearestTubeAncestorsForLanes();
 }

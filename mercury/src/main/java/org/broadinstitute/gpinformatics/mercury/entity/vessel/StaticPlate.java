@@ -195,6 +195,11 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
         return criteria.getResult();
     }
 
+    /**
+     * This code does not appear to be used.  Seems to have been replaced by
+     * {@link TransferTraverserCriteria.NearestTubeAncestorsCriteria}
+     */
+    @Deprecated
     public static class NearestTubeAncestorsCriteria implements TransferTraverserCriteria {
 
         private Set<LabVessel> tubes = new HashSet<LabVessel>();
@@ -237,6 +242,11 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
      * @return all nearest tube ancestors
      */
     public List<VesselAndPosition> getNearestTubeAncestors() {
+
+        /**
+         * to share the implementation with other potential container embedders, this code has been moved to Vessel
+         * Container
+         */
         return vesselContainer.getNearestTubeAncestors();
     }
 

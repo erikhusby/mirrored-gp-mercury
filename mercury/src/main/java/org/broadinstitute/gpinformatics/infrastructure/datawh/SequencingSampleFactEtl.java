@@ -222,7 +222,7 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
             RunCartridge cartridge = entity.getSampleCartridge();
             String flowcellBarcode = cartridge.getCartridgeName();
 
-            List<VesselAndPosition> vesselsWithPositions = cartridge.getNearestTubeAncestors();
+            List<VesselAndPosition> vesselsWithPositions = cartridge.getNearestTubeAncestorsForLanes();
             for (VesselAndPosition position : vesselsWithPositions ) {
                 Collection<SampleInstance> sampleInstances =
                         cartridge.getSamplesAtPosition(position.getPosition(), SampleType.WITH_PDO);

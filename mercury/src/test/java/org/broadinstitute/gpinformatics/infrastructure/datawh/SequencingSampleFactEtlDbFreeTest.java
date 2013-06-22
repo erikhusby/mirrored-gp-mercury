@@ -171,7 +171,7 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         laneVesselsAndPositions.add(new VesselAndPosition(denatureSource, VesselPosition.LANE1));
         laneVesselsAndPositions.add(new VesselAndPosition(denatureSource, VesselPosition.LANE2));
 
-        expect(runCartridge.getNearestTubeAncestors()).andReturn(laneVesselsAndPositions).times(2);
+        expect(runCartridge.getNearestTubeAncestorsForLanes()).andReturn(laneVesselsAndPositions).times(2);
         String pdoKey = "PDO-0123";
         expect(sampleInstance.getProductOrderKey()).andReturn(pdoKey).times(4);
 
@@ -228,7 +228,7 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         laneVesselsAndPositions.add(new VesselAndPosition(denatureSource, VesselPosition.LANE1));
         laneVesselsAndPositions.add(new VesselAndPosition(denatureSource, VesselPosition.LANE2));
 
-        expect(runCartridge.getNearestTubeAncestors()).andReturn(laneVesselsAndPositions);
+        expect(runCartridge.getNearestTubeAncestorsForLanes()).andReturn(laneVesselsAndPositions);
         String pdoKey = "PDO-0012";
         expect(sampleInstance.getProductOrderKey()).andReturn(pdoKey).times(2);
 
@@ -285,7 +285,7 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         laneVesselsAndPositions.add(new VesselAndPosition(denatureSource, VesselPosition.LANE1));
         laneVesselsAndPositions.add(new VesselAndPosition(denatureSource, VesselPosition.LANE2));
 
-        expect(runCartridge.getNearestTubeAncestors()).andReturn(laneVesselsAndPositions);
+        expect(runCartridge.getNearestTubeAncestorsForLanes()).andReturn(laneVesselsAndPositions);
         String pdoKey = "PDO-6543";
         expect(sampleInstance.getProductOrderKey()).andReturn(pdoKey).times(2);
 
@@ -335,7 +335,7 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         LabVessel denatureSource = new TwoDBarcodedTube("Lane_1_vessel");
         laneVesselsAndPositions.add(new VesselAndPosition(denatureSource, VesselPosition.LANE1));
 
-        expect(runCartridge.getNearestTubeAncestors()).andReturn(laneVesselsAndPositions);
+        expect(runCartridge.getNearestTubeAncestorsForLanes()).andReturn(laneVesselsAndPositions);
         String pdoKey = "PDO-7654";
         expect(sampleInstance.getProductOrderKey()).andReturn(pdoKey);
         expect(sampleInstance2.getProductOrderKey()).andReturn(pdoKey);
@@ -438,13 +438,11 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         expect(dao.findById(SequencingRun.class, entityId)).andReturn(run);
         expect(pdoDao.findByBusinessKey(anyObject(String.class))).andReturn(pdo);
         expect(pdo.getProductOrderId()).andReturn(pdoId);
-        expect(pdo.getResearchProject()).andReturn(researchProject).times(192);
-        expect(researchProject.getResearchProjectId()).andReturn(researchProjectId).times(192);
-//        expect(pdo.getResearchProject()).andReturn(productOrder.getResearchProject()).times(2);
-        expect(pdo.getBusinessKey()).andReturn(productOrder.getBusinessKey());
+        expect(pdo.getResearchProject()).andReturn(researchProject).times(2);
+        expect(researchProject.getResearchProjectId()).andReturn(researchProjectId);
+//        expect(pdo.getBusinessKey()).andReturn(productOrder.getBusinessKey());
 
         replay(mocks);
-        String expectedMolecularIndexName = molecularIndexSchemeName[0] + " " + molecularIndexSchemeName[2];
         Collection<String> records = tst.dataRecords(etlDateStr, false, entityId);
 
         assertEquals(records.size(), 192);
@@ -480,12 +478,12 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
                     verifyRecord(record, molecularIndexingSchemeName, pdoId,
                             testInstance.getStartingSample().getSampleKey(), 2, denatureSource.getLabel(),
                             ExtractTransform.secTimestampFormat.format(denatureSource.getCreatedOn()),
-                            illuminaFlowcell.getLabel(), pdo.getResearchProject().getResearchProjectId());
+                            illuminaFlowcell.getLabel(), researchProjectId);
                 } else {
                     verifyRecord(record, molecularIndexingSchemeName, pdoId,
                             testInstance.getStartingSample().getSampleKey(), 1, denatureSource.getLabel(),
                             ExtractTransform.secTimestampFormat.format(denatureSource.getCreatedOn()),
-                            illuminaFlowcell.getLabel(), pdo.getResearchProject().getResearchProjectId());
+                            illuminaFlowcell.getLabel(), researchProjectId);
                 }
             }
         }

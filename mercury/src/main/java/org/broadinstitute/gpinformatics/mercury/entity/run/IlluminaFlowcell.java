@@ -180,13 +180,13 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
     }
 
     /**
-     * Returns a list of the most immediate tube ancestors for each well. The "distance" from this plate across upstream
-     * plate transfers is not relevant; all upstream branches are traversed until either a tube is found or the branch
-     * ends.
+     * Returns a list of the most immediate tube ancestors for each Flowcell Lane. The "distance" from this flowcell
+     * across upstream transfers is not relevant; all upstream branches are traversed until either a tube is found or
+     * the branch ends.
      *
-     * @return all nearest tube ancestors
+     * @return all nearest tube ancestors and the lane to which they are ancestors.
      */
-    public List<VesselAndPosition> getNearestTubeAncestors() {
+    public List<VesselAndPosition> getNearestTubeAncestorsForLanes() {
 
         List<VesselAndPosition> vesselsWithPositions = new ArrayList<>();
 
