@@ -24,4 +24,5 @@ public interface ColumnHeader {
     boolean isRequredHeader();
     boolean isRequiredValue();
 
+    boolean isDateColumn();
 }

@@ -18,8 +18,8 @@ public enum BillingTrackerHeader implements ColumnHeader {
     ORDER_ID_HEADING("Product Order ID", 6, ColumnHeader.REQUIRED_HEADER, ColumnHeader.REQUIRED_VALUE),
     PRODUCT_ORDER_NAME("Product Order Name", 7, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_HEADER),
     PROJECT_MANAGER("Project Manager", 8, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_HEADER),
-    AUTO_LEDGER_TIMESTAMP_HEADING("Auto Ledger Timestamp", 9, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_HEADER),
-    WORK_COMPLETE_DATE_HEADING("Date Completed", 10, ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_HEADER),
+    AUTO_LEDGER_TIMESTAMP_HEADING("Auto Ledger Timestamp", 9, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_HEADER, true),
+    WORK_COMPLETE_DATE_HEADING("Date Completed", 10, ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_HEADER, true),
     QUOTE_ID_HEADING("Quote ID", 11, ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_HEADER),
     SORT_COLUMN_HEADING("Sort Column", 12, ColumnHeader.REQUIRED_HEADER, ColumnHeader.REQUIRED_VALUE);
 
@@ -30,12 +30,18 @@ public enum BillingTrackerHeader implements ColumnHeader {
     private final int index;
     private final boolean requredHeader;
     private final boolean requiredValue;
+    private final boolean isDate;
 
     private BillingTrackerHeader(String text, int index, boolean requiredHeader, boolean requiredValue) {
+        this(text, index, requiredHeader, requiredValue, false);
+    }
+
+    private BillingTrackerHeader(String text, int index, boolean requiredHeader, boolean requiredValue, boolean isDate) {
         this.text = text;
         this.index = index;
         this.requredHeader = requiredHeader;
         this.requiredValue = requiredValue;
+        this.isDate = isDate;
     }
 
     @Override
@@ -64,5 +70,10 @@ public enum BillingTrackerHeader implements ColumnHeader {
 
     public static String getPriceItemHeader(BillableRef billableRef) {
         return billableRef.getPriceItemName() + " [" + billableRef.getProductPartNumber() + "]";
+    }
+
+    @Override
+    public boolean isDateColumn() {
+        return isDate;
     }
 }

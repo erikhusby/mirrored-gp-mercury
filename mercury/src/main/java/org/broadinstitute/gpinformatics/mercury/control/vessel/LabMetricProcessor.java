@@ -133,5 +133,10 @@ public class LabMetricProcessor extends TableProcessor {
         public boolean isRequiredValue() {
             return requiredValue;
         }
+
+        @Override
+        public boolean isDateColumn() {
+            return false;
+        }
     }
 }

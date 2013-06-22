@@ -124,6 +124,12 @@ public abstract class TableProcessor implements Serializable {
     protected void addDataMessage(String message, int dataRowIndex) {
         String prefix = (sheetName == null) ? "" : "Sheet " + sheetName + ", ";
 
-        validationMessages.add(prefix + "Row #" + (dataRowIndex + getNumHeaderRows()) + " " + message);
+        validationMessages.add(prefix + "Row #" + (dataRowIndex) + " " + message);
+    }
+
+    public boolean isDateColumn(int columnIndex) {
+        // Do not support columns dates for columns that are not set up as column headers.
+        return (columnIndex < getColumnHeaders().length) && getColumnHeaders()[columnIndex].isDateColumn();
+
     }
 }

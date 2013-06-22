@@ -16,6 +16,7 @@ import org.broadinstitute.gpinformatics.mercury.control.vessel.LabMetricProcesso
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -27,6 +28,10 @@ import java.util.Map;
  * Handle the processing of a stream of table data using POI to parse an excel file.
  */
 public final class PoiSpreadsheetParser implements Serializable {
+
+    private static final String DATE_PATTERN = "MM/dd/yyyy";
+
+    private final SimpleDateFormat dateFormatter = new SimpleDateFormat(DATE_PATTERN);
 
     private static final long serialVersionUID = 1294878041185823009L;
     protected List<String> validationMessages = new ArrayList<>();
@@ -85,11 +90,15 @@ public final class PoiSpreadsheetParser implements Serializable {
         while (rows.hasNext()) {
             Row row = rows.next();
 
-            // Create a mapping of the headers to the cell values.
-            int columnIndex = 0;  // The column index for grabbing cell data is 0 based.
+            // The column index for grabbing cell data is 0 based.
+            int columnIndex = 0;
+
+            // Create a mapping of the headers to the cell values. There are never date values for the header.
             Map<String, String> dataByHeader = new HashMap<>();
             for (String headerName : processor.getHeaderNames()) {
-                dataByHeader.put(headerName, extractCellContent(row, headerName, columnIndex++));
+                dataByHeader.put(headerName,
+                        extractCellContent(row, headerName, columnIndex, processor.isDateColumn(columnIndex)));
+                columnIndex++;
             }
 
             // Take the map and turn it into objects and process the data appropriately.
@@ -115,7 +124,7 @@ public final class PoiSpreadsheetParser implements Serializable {
             List<String> headers = new ArrayList<>();
             Iterator<Cell> cellIterator = headerRow.cellIterator();
             while (cellIterator.hasNext()) {
-                headers.add(getCellValues(cellIterator.next()));
+                headers.add(getCellValues(cellIterator.next(), false));
             }
 
             // The primary header row is the one that needs to be generally validated.
@@ -168,11 +177,11 @@ public final class PoiSpreadsheetParser implements Serializable {
      *
      * @return A string representation of the data in the cell indicated by the given row/column (header) combination
      */
-    protected String extractCellContent(Row row, String headerName, int columnIndex) {
+    protected String extractCellContent(Row row, String headerName, int columnIndex, boolean isDate) {
 
         Cell cell = row.getCell(columnIndex);
 
-        String result = getCellValues(cell);
+        String result = getCellValues(cell, isDate);
         if (StringUtils.isBlank(result)) {
             validationMessages.add(
                     "Row # " + row.getRowNum() + ": Unable to determine cell type for " + headerName);
@@ -190,7 +199,7 @@ public final class PoiSpreadsheetParser implements Serializable {
      *
      * @return A string representation of the cell.
      */
-    private String getCellValues(Cell cell) {
+    private String getCellValues(Cell cell, boolean isDate) {
         String result = "";
 
         if (cell != null) {
@@ -199,7 +208,11 @@ public final class PoiSpreadsheetParser implements Serializable {
                 result = String.valueOf(cell.getBooleanCellValue());
                 break;
             case Cell.CELL_TYPE_NUMERIC:
-                result = String.valueOf(cell.getNumericCellValue());
+                if (isDate) {
+                    result = dateFormatter.format(cell.getDateCellValue());
+                } else {
+                    result = String.valueOf(cell.getNumericCellValue());
+                }
                 break;
             case Cell.CELL_TYPE_STRING:
                 result = cell.getStringCellValue();

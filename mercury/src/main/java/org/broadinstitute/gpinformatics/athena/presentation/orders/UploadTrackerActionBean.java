@@ -9,6 +9,7 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
+import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -87,7 +88,7 @@ public class UploadTrackerActionBean extends CoreActionBean {
     /**
      * Calculate whether the schedule is processing messages. This will be used to lock out tracker uploads.
      */
-    @Before(stages = LifecycleStage.EventHandling, on={ PREVIEW, UPLOAD })
+    @ValidationMethod(on = { UPLOAD, PREVIEW })
     public void checkLockout() {
         if (productOrderDao.isAutoProcessing()) {
             addGlobalValidationError("Cannot upload the billing tracker during automated processing hours",
@@ -131,7 +132,7 @@ public class UploadTrackerActionBean extends CoreActionBean {
             File tempFile = copyFromStreamToTempFile(inputStream);
             previewFilePath = tempFile.getAbsolutePath();
         } catch (Exception e) {
-            logger.error(e);
+            e.printStackTrace();
             addGlobalValidationError("Error uploading tracker: " + e.getMessage());
         } finally {
             IOUtils.closeQuietly(inputStream);
