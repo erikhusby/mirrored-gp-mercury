@@ -423,7 +423,7 @@ public class ProductOrder implements BusinessObject, Serializable {
 
             // If the pico has never been run then it is not warned in the last pico date highlighting.
             Date picoRunDate = bspDTO.getPicoRunDate();
-            if ((picoRunDate == null) || picoRunDate.before(getOneYearAgo())) {
+            if ((picoRunDate == null) || picoRunDate.before(oneYearAgo)) {
                 lastPicoCount++;
             }
 
@@ -1156,7 +1156,7 @@ public class ProductOrder implements BusinessObject, Serializable {
          * @param statusStrings The desired list of statuses.
          * @return The statuses that are listed.
          */
-        public static List<OrderStatus> getFromName(@Nonnull List<String> statusStrings) {
+        public static List<OrderStatus> getFromNames(@Nonnull List<String> statusStrings) {
             if (CollectionUtils.isEmpty(statusStrings)) {
                 return Collections.emptyList();
             }
@@ -1168,12 +1168,25 @@ public class ProductOrder implements BusinessObject, Serializable {
 
             return statuses;
         }
+
+        public static List<String> getStrings(List<OrderStatus> selectedStatuses) {
+            if (CollectionUtils.isEmpty(selectedStatuses)) {
+                return Collections.emptyList();
+            }
+
+            List<String> statusStrings = new ArrayList<>();
+            for (ProductOrder.OrderStatus status : selectedStatuses) {
+                statusStrings.add(status.name());
+            }
+
+            return statusStrings;
+        }
     }
 
     @Override
     public boolean equals(Object other) {
 
-        if ((this == other)) {
+        if (this == other) {
             return true;
         }
 
@@ -1230,5 +1243,67 @@ public class ProductOrder implements BusinessObject, Serializable {
 
     public Date getOneYearAgo() {
         return oneYearAgo;
+    }
+
+    /**
+     * This enum defines the different states that the PDO is in based on the ledger status of all samples in the order.
+     * This status does not included 'Billed' because that is orthogonal to this status. Once something is billed, it
+     * is, essentially in NOTHING_NEW state again and new billing can happen at any time. When something is auto billed,
+     * the status becomes READY_FOR_REVIEW, which means more auto billing can happen, but there is some work to look
+     * at. The PDM can download the tracker at any time when there is no billing, but can only upload when auto billing
+     * is not happening (and billing is happening).
+     *
+     * Once the PDM or Billing Manager does an upload, the state is changed to READY_TO_BILL and the auto-biller will
+     * not process any more entries for this PDO until a billing session has been completed on it.
+     *
+     * These statuses are calculated on-demand based on the ledger entries.
+     */
+    public enum LedgerStatus {
+        NOTHING_NEW("None"),
+        READY_FOR_REVIEW("Review"),
+        READY_TO_BILL("Ready to Bill"),
+        BILLING("Billing Started");
+
+        private String displayName;
+
+        private LedgerStatus(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
+
+        /**
+         * Get all status values using the name strings.
+         *
+         * @param statusStrings The desired list of statuses.
+         * @return The statuses that are listed.
+         */
+        public static List<LedgerStatus> getFromNames(@Nonnull List<String> statusStrings) {
+            if (CollectionUtils.isEmpty(statusStrings)) {
+                return Collections.emptyList();
+            }
+
+            List<LedgerStatus> statuses = new ArrayList<>();
+            for (String statusString : statusStrings) {
+                statuses.add(LedgerStatus.valueOf(statusString));
+            }
+
+            return statuses;
+        }
+
+        public static List<String> getStrings(List<LedgerStatus> selectedStatuses) {
+            if (CollectionUtils.isEmpty(selectedStatuses)) {
+                return Collections.emptyList();
+            }
+
+            List<String> statusStrings = new ArrayList<>();
+            for (ProductOrder.LedgerStatus status : selectedStatuses) {
+                statusStrings.add(status.name());
+            }
+
+            return statusStrings;
+        }
     }
 }

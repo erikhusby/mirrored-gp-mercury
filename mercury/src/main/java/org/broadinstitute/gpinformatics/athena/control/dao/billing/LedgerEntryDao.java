@@ -26,7 +26,7 @@ import java.util.Set;
 @RequestScoped
 public class LedgerEntryDao extends GenericDao {
 
-    private enum BillingSessionInclusion { ALL, NO_SESSION_STARTED, SESSION_STARTED, SESSION_BILLED }
+    private enum BillingSessionInclusion { ALL, NO_SESSION_STARTED, SESSION_STARTED, SESSION_BILLED, CONFIRMATION_UPLOAD }
 
     public List<LedgerEntry> findAll() {
         return findAll(LedgerEntry.class);
@@ -80,6 +80,11 @@ public class LedgerEntryDao extends GenericDao {
             // If the session is null, then this is uploaded and no session has started
             Predicate noSession = ledgerRoot.get(LedgerEntry_.billingSession).isNull();
             fullPredicate = criteriaBuilder.and(orderInPredicate, noSession);
+        } else if (inclusion == BillingSessionInclusion.CONFIRMATION_UPLOAD) {
+            // If there is no session AND the auto timestamp is null, an upload had to have been performed.
+            Predicate noSession = ledgerRoot.get(LedgerEntry_.billingSession).isNull();
+            Predicate noAutoBill = ledgerRoot.get(LedgerEntry_.autoLedgerTimestamp).isNull();
+            fullPredicate = criteriaBuilder.and(orderInPredicate, noSession, noAutoBill);
         } else if (inclusion == BillingSessionInclusion.SESSION_STARTED) {
             // If there is no billed date, the session is not closed. If there is no session, then it is only uploaded, not started.
             Predicate hasSession = ledgerRoot.get(LedgerEntry_.billingSession).isNotNull();
@@ -99,7 +104,7 @@ public class LedgerEntryDao extends GenericDao {
 
         try {
             List<LedgerEntry> ledgerEntryList = getEntityManager().createQuery(criteriaQuery).getResultList();
-                return new HashSet<LedgerEntry>(ledgerEntryList);
+                return new HashSet<>(ledgerEntryList);
         } catch (NoResultException ignored) {
             return Collections.emptySet();
         }
@@ -124,6 +129,10 @@ public class LedgerEntryDao extends GenericDao {
 
     public Set<LedgerEntry> findWithoutBillingSessionByOrderList(@Nonnull List<String> productOrderBusinessKeys) {
         return findByOrderList(productOrderBusinessKeys, BillingSessionInclusion.NO_SESSION_STARTED);
+    }
+
+    public Set<LedgerEntry> findUploadedUnbilledOrderList(ProductOrder[] orders) {
+        return findByOrderList(orders, BillingSessionInclusion.CONFIRMATION_UPLOAD);
     }
 
     public Set<LedgerEntry> findLockedOutByOrderList(ProductOrder[] orders) {

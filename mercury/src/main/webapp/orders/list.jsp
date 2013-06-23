@@ -34,20 +34,19 @@
                     "oTableTools": ttExportDefines,
                     "aaSorting": [[8,'desc']],
                     "aoColumns": [
-                        {"bSortable": false},                    // checkbox
-                        {"bSortable": true, "sType": "html"},    // Name
-                        {"bSortable": true, "sType": "title-jira"},   // ID
-                        {"bSortable": true},                    // Product
-                        {"bSortable": true},                    // Product Family
-                        {"bSortable": true},                    // Status
-                        {"bSortable": true},                    // Research Project
-                        {"bSortable": true},                    // Owner
-                        {"bSortable": true, "sType": "date"},   // Placed
-                        {"bSortable": true, "sType": "title-numeric"},   // % Complete
-                        {"bSortable": true, "sType": "numeric"},         // Count
-                        {"bSortable": true, "sType": "html"},            // Quote
-                        {"bSortable": true},                             // Billing Session ID
-                        {"bSortable": true, "sType" : "title-string"}]   // eligible for billing
+                        {"bSortable": false},                           // checkbox
+                        {"bSortable": true, "sType": "html"},           // Name
+                        {"bSortable": true, "sType": "title-jira"},     // ID
+                        {"bSortable": true},                            // Product
+                        {"bSortable": true},                            // Product Family
+                        {"bSortable": true},                            // Status
+                        {"bSortable": true},                            // Research Project
+                        {"bSortable": true},                            // Owner
+                        {"bSortable": true, "sType": "date"},           // Placed
+                        {"bSortable": true, "sType": "title-numeric"},  // % Complete
+                        {"bSortable": true, "sType": "numeric"},        // Count
+                        {"bSortable": true, "sType": "html"},           // Quote
+                        {"bSortable": true, "sType": "html"}]           // Ledger Status
                 });
 
                 setupDialogs();
@@ -156,7 +155,23 @@
 
                 <div class="control-group">
                     <stripes:label for="statusGroup" class="control-label">
-                        Status
+                        Ledger Status
+                    </stripes:label>
+                    <div class="controls">
+                        <c:forEach items="<%=ProductOrder.LedgerStatus.values()%>" var="ledgerStatus">
+                            <div style="margin-top: 5px; margin-right: 15px; float: left; width: auto;">
+                                <stripes:checkbox class="search-checkbox selectedStatuses" name="selectedLedgerStatuses" value="${ledgerStatus}" id="${ledgerStatus}-id"/>
+                                <stripes:label class="search-checkbox-label" for="${ledgerStatus}-id">
+                                    ${ledgerStatus.displayName}
+                                </stripes:label>
+                            </div>
+                        </c:forEach>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <stripes:label for="statusGroup" class="control-label">
+                        Order Status
                     </stripes:label>
                     <div class="controls">
                         <c:forEach items="<%=ProductOrder.OrderStatus.values()%>" var="orderStatus">
@@ -247,9 +262,8 @@
                         <th width="70">Placed</th>
                         <th width="80">%&nbsp;Complete</th>
                         <th width="25">Sample Count</th>
-                        <th width="55">Quote</th>
-                        <th width="35">Billing Session</th>
-                        <th width="25">Can Bill</th>
+                        <th width="75">Quote</th>
+                        <th width="35">Ledger Status</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -310,18 +324,25 @@
                                 </a>
                             </td>
                             <td>
-                                <c:if test="${order.billingSessionBusinessKey != null}">
-                                    <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean"
-                                                  event="view">
-                                        <stripes:param name="sessionKey" value="${order.billingSessionBusinessKey}"/>
-                                        ${order.billingSessionBusinessKey}
-                                    </stripes:link>
-                                </c:if>
-                            </td>
-                            <td>
-                                <c:if test="${order.eligibleForBilling}">
-                                    <stripes:image name="" title="Yes" src="/images/check.png"/>
-                                </c:if>
+                                <!-- Do ready for review first because if there is ANYTHING auto created, then it
+                                     cannot be billed until a review happens. -->
+                                <c:choose>
+                                    <c:when test="${order.readyForReview}">
+                                        <span class="badge badge-warning">
+                                            <%=ProductOrder.LedgerStatus.READY_FOR_REVIEW.getDisplayName()%>
+                                        </span>
+                                    </c:when>
+                                    <c:when test="${order.billing}">
+                                        <span class="badge badge-info">
+                                            <%=ProductOrder.LedgerStatus.BILLING.getDisplayName()%>
+                                        </span>
+                                    </c:when>
+                                    <c:when test="${order.readyForBilling}">
+                                        <span class="badge badge-success">
+                                            <%=ProductOrder.LedgerStatus.READY_TO_BILL.getDisplayName()%>
+                                        </span>
+                                    </c:when>
+                                </c:choose>
                             </td>
                         </tr>
                     </c:forEach>

@@ -2,8 +2,10 @@ package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
+import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.control.vessel.LabMetricParser;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.LabMetricProcessor;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
@@ -13,22 +15,33 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Stateful
 @RequestScoped
 public class QuantificationEJB {
+
+    public static final String SHEET_NAME = "Lab Metrics";
+
     @Inject
     private LabVesselDao labVesselDao;
-    @Inject
-    private LabMetricParser labMetricParser = new LabMetricParser(labVesselDao);
 
-    public Set<LabMetric> validateQuantsDontExist(InputStream quantSpreadsheet, LabMetric.MetricType metricType) throws ValidationException,
-            IOException, InvalidFormatException {
+    public Set<LabMetric> validateQuantsDontExist(
+            InputStream quantSpreadsheet,
+            LabMetric.MetricType metricType) throws ValidationException, IOException, InvalidFormatException {
         try {
-            List<String> validationErrors = new ArrayList<String>();
-            Set<LabMetric> labMetrics = labMetricParser.processUploadFile(quantSpreadsheet, metricType);
+            List<String> validationErrors = new ArrayList<>();
+
+            // Create a POI backed excel spreadsheet parser to handle this upload.
+            LabMetricProcessor labMetricProcessor = new LabMetricProcessor(labVesselDao, metricType);
+            PoiSpreadsheetParser.processSingleWorksheet(quantSpreadsheet, SHEET_NAME, labMetricProcessor);
+
+            // Get the metrics that were read in from the spreadsheet.
+            Set<LabMetric> labMetrics = labMetricProcessor.getMetrics();
+
             for (LabMetric metric : labMetrics) {
                 LabVessel labVessel = metric.getLabVessel();
                 if (labVessel != null) {
@@ -42,9 +55,11 @@ public class QuantificationEJB {
                     validationErrors.add("Could not find lab vessel for metric.");
                 }
             }
-            if(validationErrors.size() > 0){
+
+            if (validationErrors.size() > 0) {
                throw new ValidationException("Error during upload validation : ", validationErrors);
             }
+
             return labMetrics;
         } catch (IllegalArgumentException e) {
             throw new ValidationException(e);
