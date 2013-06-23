@@ -101,10 +101,9 @@ public class UploadTrackerActionBean extends CoreActionBean {
         PoiSpreadsheetParser parser = null;
 
         try {
-            List<String> sheetNames = PoiSpreadsheetParser.getWorksheetNames(trackerFile);
+            List<String> sheetNames = PoiSpreadsheetParser.getWorksheetNames(trackerFile.getInputStream());
             Map<String, BillingTrackerProcessor> processors = getProcessors(sheetNames, false);
             parser = new PoiSpreadsheetParser(processors);
-
 
             // process and if there were parsing errors, just return.
             parser.processUploadFile(trackerFile.getInputStream());
@@ -231,14 +230,15 @@ public class UploadTrackerActionBean extends CoreActionBean {
         PoiSpreadsheetParser parser = null;
 
         try {
-            List<String> sheetNames = PoiSpreadsheetParser.getWorksheetNames(trackerFile);
+            File previewFile = new File(previewFilePath);
+
+            List<String> sheetNames = PoiSpreadsheetParser.getWorksheetNames(previewFile);
             Map<String, BillingTrackerProcessor> processors = getProcessors(sheetNames, true);
             parser = new PoiSpreadsheetParser(processors);
 
-            File previewFile = new File(previewFilePath);
             inputStream = new FileInputStream(previewFile);
             parser.processUploadFile(inputStream);
-            if (hasErrors()) {
+            if (hasErrors(processors.values())) {
                 return;
             }
 
@@ -256,9 +256,9 @@ public class UploadTrackerActionBean extends CoreActionBean {
             // Since everything worked, delete the file.
             FileUtils.deleteQuietly(previewFile);
         } catch (Exception e) {
-            logger.error(e);
-            addGlobalValidationError(e.getMessage());
-        } finally {
+            e.printStackTrace();
+            addGlobalValidationError("Error uploading tracker: " + e.getMessage());
+           } finally {
             // No matter what, close the file but it will be ignored if everything was closed and deleted.
             IOUtils.closeQuietly(inputStream);
 

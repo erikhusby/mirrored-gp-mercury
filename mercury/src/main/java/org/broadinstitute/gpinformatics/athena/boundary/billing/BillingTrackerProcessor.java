@@ -222,11 +222,16 @@ public class BillingTrackerProcessor extends TableProcessor {
             Date uploadedTimestamp = (!StringUtils.isBlank(autoLedgerString)) ? DateUtils.parseDate(autoLedgerString) : null;
             Date currentSampleTimestamp = productOrderSample.getLatestAutoLedgerTimestamp();
 
-            // If either are null, both must be null.
             boolean timestampsAreEqual;
-            if ((uploadedTimestamp == null) || (currentSampleTimestamp == null)) {
+            if (doPersist) {
+                // If persisting, then we have cleared out the ledger entries, so there will be no timestamp to compare
+                // and validation has already been done, so the timestamp can be considered equal.
+                timestampsAreEqual = true;
+            } else if ((uploadedTimestamp == null) || (currentSampleTimestamp == null)) {
+                // If either are null, both must be null.
                 timestampsAreEqual = uploadedTimestamp == currentSampleTimestamp;
             } else {
+                // The start of day values of the timestamps must be equal.
                 uploadedTimestamp = DateUtils.getStartOfDay(uploadedTimestamp);
                 currentSampleTimestamp = DateUtils.getStartOfDay(currentSampleTimestamp);
                 timestampsAreEqual = uploadedTimestamp.equals(currentSampleTimestamp);

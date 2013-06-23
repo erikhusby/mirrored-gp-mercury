@@ -13,6 +13,8 @@ import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabMetricProcessor;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
@@ -232,12 +234,12 @@ public final class PoiSpreadsheetParser implements Serializable {
      *
      * @return The names.
      */
-    public static List<String> getWorksheetNames(FileBean trackerFile) throws IOException, InvalidFormatException {
+    public static List<String> getWorksheetNames(File trackerFile) throws IOException, InvalidFormatException {
 
         InputStream inputStream = null;
 
         try {
-            inputStream = trackerFile.getInputStream();
+            inputStream = new FileInputStream(trackerFile);
             return getWorksheetNames(inputStream);
         } finally {
             IOUtils.closeQuietly(inputStream);
