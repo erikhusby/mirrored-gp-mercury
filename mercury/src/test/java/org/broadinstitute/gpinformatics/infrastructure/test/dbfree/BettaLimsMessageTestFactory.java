@@ -316,6 +316,7 @@ public class BettaLimsMessageTestFactory {
         plateCherryPickEvent.getPlate().add(targetRack);
 
         PositionMapType targetPositionMap = new PositionMapType();
+        targetPositionMap.setBarcode(targetRack.getBarcode());
         int rackPosition = 1;
         for (String barcode : targetStripTubeBarcodes) {
             ReceptacleType receptacleType = new ReceptacleType();
