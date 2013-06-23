@@ -165,7 +165,6 @@ public class BillingTrackerProcessor extends TableProcessor {
                 ledgerEntryDao.removeLedgerItemsWithoutBillingSession(productOrderArray);
                 ledgerEntryDao.flush();
             }
-
         }
 
         // Must have a product order or product at this point. If not, it is an error.
