@@ -147,7 +147,7 @@ public class ReworkDbFreeTest extends BaseEventTest {
     }
 
     // todo jmt enable this
-    @Test(enabled = false)
+    @Test(enabled = true)
     public void testMultiplePdos() {
         ProductOrder productOrder1 = ProductOrderTestFactory.createDummyProductOrder(4, "PDO-1",
                 WorkflowName.EXOME_EXPRESS, 1L, "Test 1", "Test 1", false, "ExEx-001");
@@ -170,9 +170,9 @@ public class ReworkDbFreeTest extends BaseEventTest {
         workflowBatch2.setWorkflowName("Exome Express");
 
         PicoPlatingEntityBuilder picoPlatingEntityBuilder1 = runPicoPlatingProcess(mapBarcodeToTube1, productOrder1,
-                workflowBatch1, null, String.valueOf(runDate.getTime()), "1", true);
+                workflowBatch1, "1", String.valueOf(runDate.getTime()), "1", true);
         PicoPlatingEntityBuilder picoPlatingEntityBuilder2 = runPicoPlatingProcess(mapBarcodeToTube2, productOrder2,
-                workflowBatch2, null, String.valueOf(runDate.getTime()), "2", true);
+                workflowBatch2, "2", String.valueOf(runDate.getTime()), "2", true);
 
         ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder1 = runExomeExpressShearingProcess(
                 productOrder1, picoPlatingEntityBuilder1.getNormBarcodeToTubeMap(),

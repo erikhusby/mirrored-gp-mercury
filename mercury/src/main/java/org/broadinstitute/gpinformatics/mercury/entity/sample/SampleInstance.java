@@ -199,6 +199,7 @@ public class SampleInstance {
         this.productOrderKey = productOrderKey;
     }
 
+    // todo jmt should this look at bucket entries, rather than lab batches?
     /**
      * Gets the name of the sample's workflow, based on LCSETs.
      * @return workflow name

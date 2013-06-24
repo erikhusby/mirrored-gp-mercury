@@ -167,11 +167,13 @@ public class VesselContainer<T extends LabVessel> {
                     traversalResults.add(ancestor.getVesselContainer().traverseAncestors(ancestor.getPosition(),
                             sampleType, labBatchType));
                 } else {
-                    traversalResults.add(labVessel.traverseAncestors(sampleType, labBatchType));
+                    traversalResults.add(labVessel.traverseAncestors(sampleType, labBatchType,
+                            Collections.<LabVessel>emptyList()));
                 }
             }
         } else {
-            traversalResults.add(vesselAtPosition.traverseAncestors(sampleType, labBatchType));
+            traversalResults.add(vesselAtPosition.traverseAncestors(sampleType, labBatchType,
+                    Collections.<LabVessel>emptyList()));
         }
         traversalResults.completeLevel();
         return traversalResults;

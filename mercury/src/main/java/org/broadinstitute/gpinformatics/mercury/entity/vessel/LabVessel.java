@@ -703,11 +703,15 @@ public abstract class LabVessel implements Serializable {
      * @return sample instances
      */
     public Set<SampleInstance> getSampleInstances(SampleType sampleType, @Nullable LabBatch.LabBatchType labBatchType) {
+        return getSampleInstances(sampleType, labBatchType, Collections.<LabVessel>emptyList());
+    }
 
+    public Set<SampleInstance> getSampleInstances(SampleType sampleType, LabBatch.LabBatchType labBatchType,
+            Collection<LabVessel> siblingLabVessels) {
         if (getContainerRole() != null) {
             return getContainerRole().getSampleInstances(sampleType, labBatchType);
         }
-        TraversalResults traversalResults = traverseAncestors(sampleType, labBatchType);
+        TraversalResults traversalResults = traverseAncestors(sampleType, labBatchType, siblingLabVessels);
         Set<SampleInstance> filteredSampleInstances;
         if (sampleType == SampleType.WITH_PDO) {
             filteredSampleInstances = new HashSet<>();
@@ -790,12 +794,15 @@ public abstract class LabVessel implements Serializable {
     /**
      * Traverse all ancestors of this vessel, accumulating SampleInstances
      *
+     *
      * @param sampleType
      * @param labBatchType
      *
+     * @param siblingLabVessels
      * @return accumulated sampleInstances
      */
-    TraversalResults traverseAncestors(SampleType sampleType, LabBatch.LabBatchType labBatchType) {
+    TraversalResults traverseAncestors(SampleType sampleType, LabBatch.LabBatchType labBatchType,
+            Collection<LabVessel> siblingLabVessels) {
         TraversalResults traversalResults = new TraversalResults();
 
         boolean continueTraversing = true;
@@ -821,7 +828,7 @@ public abstract class LabVessel implements Serializable {
                     traversalResults.add(vesselEvent.getVesselContainer().traverseAncestors(vesselEvent.getPosition(),
                             sampleType, labBatchType));
                 } else {
-                    traversalResults.add(labVessel.traverseAncestors(sampleType, labBatchType));
+                    traversalResults.add(labVessel.traverseAncestors(sampleType, labBatchType, siblingLabVessels));
                 }
             }
         }
@@ -834,15 +841,54 @@ public abstract class LabVessel implements Serializable {
         for (SampleInstance sampleInstance : traversalResults.getSampleInstances()) {
             sampleInstance.addLabBatches(getLabBatchesOfType(labBatchType));
         }
+        // todo assigning LCSET (and PDO and workflow) need to move to getSampleInstance, because they should be based
+        // on the LCSET closest to the starting point, rather than the LCSET closest to the MercurySample.
         if (bucketEntries.size() > 1) {
-            Set<String> productOrderKeys = new HashSet<String>();
-            for (BucketEntry bucketEntry : bucketEntries) {
-                productOrderKeys.add(bucketEntry.getPoBusinessKey());
+            // find bucket entry that has same lab batch as siblings
+            Map<LabBatch, Integer> mapLabBatchToCount = new HashMap<>();
+            for (LabVessel siblingLabVessel : siblingLabVessels) {
+//                for (LabBatch labBatch : siblingLabVessel.getLabBatchesOfType(LabBatch.LabBatchType.WORKFLOW)) {
+                for (BucketEntry bucketEntry : siblingLabVessel.getBucketEntries()) {
+                    if (bucketEntry.getLabBatch() != null) {
+                        LabBatch labBatch = bucketEntry.getLabBatch();
+                        if (labBatch.getLabBatchType() == LabBatch.LabBatchType.WORKFLOW) {
+                            Integer count = mapLabBatchToCount.get(labBatch);
+                            if (count == null) {
+                                count = 1;
+                            } else {
+                                count = count + 1;
+                            }
+                            mapLabBatchToCount.put(labBatch, count);
+                        }
+                    }
+                }
             }
-            if (productOrderKeys.size() > 1) {
-                throw new RuntimeException("Unexpected multiple product orders in bucket entries");
+
+            LabBatch matchingLabBatch = null;
+            for (Map.Entry<LabBatch, Integer> labBatchIntegerEntry : mapLabBatchToCount.entrySet()) {
+                if (labBatchIntegerEntry.getValue() == siblingLabVessels.size()) {
+                    matchingLabBatch = labBatchIntegerEntry.getKey();
+                    break;
+                }
             }
-            traversalResults.setProductOrderKey(productOrderKeys.iterator().next());
+
+            if (matchingLabBatch == null) {
+                throw new RuntimeException("Failed to find lab batch");
+            } else {
+                for (BucketEntry bucketEntry : bucketEntries) {
+                    if (bucketEntry.getLabBatch().equals(matchingLabBatch)) {
+                        traversalResults.setProductOrderKey(bucketEntry.getPoBusinessKey());
+                    }
+                }
+            }
+//            Set<String> productOrderKeys = new HashSet<String>();
+//            for (BucketEntry bucketEntry : bucketEntries) {
+//                productOrderKeys.add(bucketEntry.getPoBusinessKey());
+//            }
+//            if (productOrderKeys.size() > 1) {
+//                throw new RuntimeException("Unexpected multiple product orders in bucket entries");
+//            }
+//            traversalResults.setProductOrderKey(productOrderKeys.iterator().next());
 /* todo jmt handle multiple product orders
             for (BucketEntry bucketEntry : bucketEntries) {
                 for (LabVessel container : containers) {
