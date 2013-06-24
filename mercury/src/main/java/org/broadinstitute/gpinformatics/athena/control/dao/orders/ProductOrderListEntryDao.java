@@ -183,6 +183,7 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
     private void fetchUnbilledLedgerEntryCounts(List<ProductOrderListEntry> productOrderListEntries) {
         fetchUnbilledLedgerEntryCounts(productOrderListEntries, ProductOrder.LedgerStatus.READY_FOR_REVIEW);
         fetchUnbilledLedgerEntryCounts(productOrderListEntries, ProductOrder.LedgerStatus.READY_TO_BILL);
+        fetchUnbilledLedgerEntryCounts(productOrderListEntries, ProductOrder.LedgerStatus.BILLING);
     }
 
     /**
@@ -249,13 +250,22 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
                     public Query createCriteriaInQuery(Collection<String> parameterList) {
                         CriteriaQuery<ProductOrderListEntry> query;
                         if (ledgerStatus.equals(ProductOrder.LedgerStatus.READY_FOR_REVIEW)) {
+                            // The billing session is null but the auto bill timestamp is NOT null.
                             query = cq.where(
-                                    cb.isNull(ledgerEntryBillingSessionJoin.get(BillingSession_.billedDate)),
+                                    cb.isNull(productOrderSampleLedgerEntrySetJoin.get(LedgerEntry_.billingSession)),
                                     cb.isNotNull(productOrderSampleLedgerEntrySetJoin.get(LedgerEntry_.autoLedgerTimestamp)),
                                     productOrderRoot.get(ProductOrder_.jiraTicketKey).in(parameterList));
                         } else if (ledgerStatus.equals(ProductOrder.LedgerStatus.READY_TO_BILL)) {
+                            // The billing session is null but the auto bill timestamp is null.
+                            query = cq.where(
+                                    cb.isNull(productOrderSampleLedgerEntrySetJoin.get(LedgerEntry_.billingSession)),
+                                    cb.isNull(productOrderSampleLedgerEntrySetJoin.get(LedgerEntry_.autoLedgerTimestamp)),
+                                    productOrderRoot.get(ProductOrder_.jiraTicketKey).in(parameterList));
+                        } else if (ledgerStatus.equals(ProductOrder.LedgerStatus.BILLING)) {
+                            // The session is NOT null, but the session's billed date IS null.
                             query = cq.where(
                                     cb.isNull(ledgerEntryBillingSessionJoin.get(BillingSession_.billedDate)),
+                                    cb.isNotNull(productOrderSampleLedgerEntrySetJoin.get(LedgerEntry_.billingSession)),
                                     cb.isNull(productOrderSampleLedgerEntrySetJoin.get(LedgerEntry_.autoLedgerTimestamp)),
                                     productOrderRoot.get(ProductOrder_.jiraTicketKey).in(parameterList));
                         } else {
@@ -286,6 +296,8 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
                     productOrderListEntry.setReadyForReviewCount(result.getConstructedCount());
                 } else if (ledgerStatus.equals(ProductOrder.LedgerStatus.READY_TO_BILL)) {
                     productOrderListEntry.setReadyForBillingCount(result.getConstructedCount());
+                } else if (ledgerStatus.equals(ProductOrder.LedgerStatus.BILLING)) {
+                    // The constructor handles setting this, just want to make sure we don't error out in this case.
                 } else {
                     throw new IllegalArgumentException("Can only fetch ready to bill or ready for review");
                 }
