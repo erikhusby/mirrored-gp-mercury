@@ -24,8 +24,6 @@ import java.util.Set;
 @RequestScoped
 public class QuantificationEJB {
 
-    public static final String SHEET_NAME = "Lab Metrics";
-
     @Inject
     private LabVesselDao labVesselDao;
 
@@ -37,7 +35,7 @@ public class QuantificationEJB {
 
             // Create a POI backed excel spreadsheet parser to handle this upload.
             LabMetricProcessor labMetricProcessor = new LabMetricProcessor(labVesselDao, metricType);
-            PoiSpreadsheetParser.processSingleWorksheet(quantSpreadsheet, SHEET_NAME, labMetricProcessor);
+            PoiSpreadsheetParser.processSingleWorksheet(quantSpreadsheet, null, labMetricProcessor);
 
             // Get the metrics that were read in from the spreadsheet.
             Set<LabMetric> labMetrics = labMetricProcessor.getMetrics();
@@ -52,7 +50,7 @@ public class QuantificationEJB {
                         }
                     }
                 } else {
-                    validationErrors.add("Could not find lab vessel for metric.");
+                    validationErrors.add("Could not find lab vessel for metric: " + metric.getName().getDisplayName());
                 }
             }
 
