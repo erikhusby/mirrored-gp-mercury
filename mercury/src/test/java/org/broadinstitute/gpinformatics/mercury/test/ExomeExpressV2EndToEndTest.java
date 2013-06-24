@@ -40,7 +40,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressSheari
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.MiSeqReagentKitEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.MiSeqReagentKitJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
 import org.easymock.EasyMock;
@@ -291,7 +291,7 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
                         qtpEntityBuilder.getDenatureRack(),
                         flowcellBarcode, "testPrefix", "designationName").invoke();
         // MiSeq reagent block transfer message
-        String mySeqReagentKitBarcode="MiSeqReagentKit"+new Date().getTime();
+        String miSeqReagentKitBarcode="MiSeqReagentKit"+new Date().getTime();
 
         Map<String,TwoDBarcodedTube> tubeMap = new HashMap<>();
         final String denatureBarcode = qtpEntityBuilder.getDenatureRack().getLabel();
@@ -300,12 +300,20 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
         tubePositionMap.put(denatureBarcode, "A01");
         TubeFormation denatureRack = buildTubeFormation(tubeMap,denatureBarcode,tubePositionMap);
 
-        MiSeqReagentKitEntityBuilder miSeqReagentKitEntityBuilder =
-                new MiSeqReagentKitEntityBuilder(bettaLimsMessageTestFactory, labEventFactory,
-                        leHandler,
-                        denatureRack,
-                        mySeqReagentKitBarcode
-                ).invoke();
+        Map<String, VesselPosition> denatureRackMap = new HashMap<>();
+        for (VesselPosition vesselPosition : denatureRack.getVesselGeometry().getVesselPositions()) {
+            TwoDBarcodedTube tube = denatureRack.getContainerRole().getVesselAtPosition(vesselPosition);
+            if (tube != null) {
+                denatureRackMap.put(denatureBarcode, vesselPosition);
+            }
+        }
+        Assert.assertNotNull(denatureRackMap.get(denatureBarcode));
+        Assert.assertEquals(denatureRackMap.values().size(),1);
+
+        String miSeqFlowcellBarcode = "MiSeq" + flowcellBarcode;
+                MiSeqReagentKitJaxbBuilder miSeqReagentKitJaxbBuilder =
+                new MiSeqReagentKitJaxbBuilder(denatureRackMap, miSeqReagentKitBarcode, miSeqFlowcellBarcode);
+        miSeqReagentKitJaxbBuilder.invoke();
 
         // Register run
         IlluminaSequencingRunFactory illuminaSequencingRunFactory =
@@ -313,7 +321,7 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
         try {
             IlluminaSequencingRun illuminaSequencingRun = illuminaSequencingRunFactory.buildDbFree(new SolexaRunBean(
                     hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell().getCartridgeBarcode(), "Run1", new Date(),
-                    "SL-HAL", File.createTempFile("RunDir", ".txt").getAbsolutePath(), null),
+                    "SL-HAL", File.createTempFile("RunDir", ".txt").getAbsolutePath(), miSeqReagentKitBarcode),
                     hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell());
         } catch (IOException e) {
             throw new RuntimeException(e);
