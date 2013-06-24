@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.parsers.poi;
 
-import net.sourceforge.stripes.action.FileBean;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
