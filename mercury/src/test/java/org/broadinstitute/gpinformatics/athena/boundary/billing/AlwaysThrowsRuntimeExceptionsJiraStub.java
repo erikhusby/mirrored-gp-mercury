@@ -34,7 +34,7 @@ class AlwaysThrowsRuntimeExceptionsJiraStub implements JiraService {
 
     @Override
     public JiraIssue createIssue(String projectPrefix, String reporter, CreateFields.IssueType issueType,
-                                 String summary, String description, Collection<CustomField> customFields)
+                                 String summary, Collection<CustomField> customFields)
             throws IOException {
         invocationCount++;
         throw new NotImplementedException();

@@ -18,7 +18,10 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.enterprise.inject.Alternative;
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Dummy implementation that writes calls
@@ -30,14 +33,16 @@ import java.util.*;
 @Alternative
 public class JiraServiceStub implements JiraService {
 
-    /** Controls the suffix of the new batch name e.g. "LCSET-123" */
+    /**
+     * Controls the suffix of the new batch name e.g. "LCSET-123"
+     */
     private static String createdIssueSuffix = "-123";
 
     private Log logger = LogFactory.getLog(JiraServiceStub.class);
 
     @Override
     public JiraIssue createIssue(String projectPrefix, String reporter, CreateFields.IssueType issueType,
-                                 String summary, String description, Collection<CustomField> customFields) throws
+                                 String summary, Collection<CustomField> customFields) throws
             IOException {
         return new JiraIssue(projectPrefix + createdIssueSuffix, this);
     }
@@ -126,7 +131,7 @@ public class JiraServiceStub implements JiraService {
 
     @Override
     public IssueTransitionListResponse findAvailableTransitions(String jiraIssueKey) {
-        Transition[] transitions = new Transition[] {
+        Transition[] transitions = new Transition[]{
                 new Transition("1", "Open", new NextTransition("", "In Progress", "In Progress", "", "2")),
                 new Transition("3", "Complete", new NextTransition("", "Closed", "Closed", "", "4")),
                 new Transition("5", "Cancel", new NextTransition("", "Closed", "Closed", "", "6")),
@@ -160,7 +165,8 @@ public class JiraServiceStub implements JiraService {
     }
 
     @Override
-    public void postNewTransition(String jiraIssueKey, Transition transition, @Nullable String comment) throws IOException {
+    public void postNewTransition(String jiraIssueKey, Transition transition, @Nullable String comment)
+            throws IOException {
 
     }
 

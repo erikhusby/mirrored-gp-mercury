@@ -5,7 +5,6 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.apache.commons.lang3.time.DateUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -84,7 +83,9 @@ public class ProductOrder implements BusinessObject, Serializable {
     @Column(name = "MODIFIED_BY", nullable = false)
     private long modifiedBy;
 
-    /** Unique title for the order */
+    /**
+     * Unique title for the order
+     */
     @Column(name = "TITLE", unique = true)
     private String title = "";
 
@@ -97,21 +98,27 @@ public class ProductOrder implements BusinessObject, Serializable {
     @Enumerated(EnumType.STRING)
     private OrderStatus orderStatus = OrderStatus.Draft;
 
-    /** Alphanumeric Id */
+    /**
+     * Alphanumeric Id
+     */
     @Column(name = "QUOTE_ID")
     private String quoteId = "";
 
-    /** Additional comments on the order. */
+    /**
+     * Additional comments on the order.
+     */
     @Column(length = 2000)
     private String comments;
 
-    @Column(name="FUNDING_DEADLINE")
+    @Column(name = "FUNDING_DEADLINE")
     private Date fundingDeadline;
 
-    @Column(name="PUBLICATION_DEADLINE")
+    @Column(name = "PUBLICATION_DEADLINE")
     private Date publicationDeadline;
 
-    /** Reference to the Jira Ticket created when the order is placed. Null means that the order is a draft. */
+    /**
+     * Reference to the Jira Ticket created when the order is placed. Null means that the order is a draft.
+     */
     @Column(name = "JIRA_TICKET_KEY", nullable = true)
     private String jiraTicketKey;
 
@@ -151,7 +158,7 @@ public class ProductOrder implements BusinessObject, Serializable {
 
     /**
      * @return The business key is the jira ticket key when this is not a draft, otherwise it is the DRAFT_KEY plus the
-     * internal database id.
+     *         internal database id.
      */
     @Override
     @Nonnull
@@ -181,7 +188,8 @@ public class ProductOrder implements BusinessObject, Serializable {
         this.laneCount = laneCount;
     }
 
-    public void updateData(ResearchProject researchProject, Product product, List<Product> addOnProducts, List<ProductOrderSample> samples) {
+    public void updateData(ResearchProject researchProject, Product product, List<Product> addOnProducts,
+                           List<ProductOrderSample> samples) {
         updateAddOnProducts(addOnProducts);
         this.product = product;
         this.researchProject = researchProject;
@@ -218,7 +226,8 @@ public class ProductOrder implements BusinessObject, Serializable {
      * Utility method to create a PDO business key given an order ID and a JIRA ticket.
      *
      * @param productOrderId the order ID
-     * @param jiraTicketKey the JIRA ticket, can be null
+     * @param jiraTicketKey  the JIRA ticket, can be null
+     *
      * @return the business key for the PDO
      */
     public static String createBusinessKey(Long productOrderId, @Nullable String jiraTicketKey) {
@@ -262,7 +271,9 @@ public class ProductOrder implements BusinessObject, Serializable {
 
     /**
      * Use This method to convert from a business key to either a JIRA ID or a product order ID.
+     *
      * @param businessKey the key to convert
+     *
      * @return either a JIRA ID or a product order ID.
      */
     public static JiraOrId convertBusinessKeyToJiraOrId(@Nonnull String businessKey) {
@@ -306,7 +317,7 @@ public class ProductOrder implements BusinessObject, Serializable {
         private void output(List<String> output, @Nonnull String label, int compareCount) {
             for (Map.Entry<String, Integer> entry : countMap.entrySet()) {
                 output.add(MessageFormat.format(
-                    "{0} ''{1}'': {2}", label, entry.getKey(), formatCountTotal(entry.getValue(), compareCount)));
+                        "{0} ''{1}'': {2}", label, entry.getKey(), formatCountTotal(entry.getValue(), compareCount)));
             }
         }
     }
@@ -410,7 +421,7 @@ public class ProductOrder implements BusinessObject, Serializable {
          * Update all the counts related to BSP information.
          *
          * @param participantSet The unique collection of participants by Id.
-         * @param bspDTO The BSP DTO.
+         * @param bspDTO         The BSP DTO.
          */
         private void updateDTOCounts(Set<String> participantSet, BSPSampleDTO bspDTO) {
             if (bspDTO.isSampleReceived()) {
@@ -459,7 +470,7 @@ public class ProductOrder implements BusinessObject, Serializable {
         /**
          * Format the number to say None if the value is zero, or All if it matches the comparison number.
          *
-         * @param count The number to format
+         * @param count        The number to format
          * @param compareCount The number to compare to
          */
         private void formatSummaryNumber(List<String> output, String message, int count, int compareCount) {
@@ -584,6 +595,7 @@ public class ProductOrder implements BusinessObject, Serializable {
 
     /**
      * Call this method before saving changes to the database.  It updates the modified date and modified user.
+     *
      * @param user the user doing the save operation.
      */
     public void prepareToSave(BspUser user) {
@@ -593,7 +605,8 @@ public class ProductOrder implements BusinessObject, Serializable {
     /**
      * Call this method before saving changes to the database.  It updates the modified date and modified user,
      * and sets the create date and create user if these haven't been set yet.
-     * @param user the user doing the save operation.
+     *
+     * @param user       the user doing the save operation.
      * @param isCreating true if creating a new PDO
      */
     public void prepareToSave(BspUser user, boolean isCreating) {
@@ -814,6 +827,7 @@ public class ProductOrder implements BusinessObject, Serializable {
     /**
      * This should only be called from tests or for database backpopulation.  The placed date is normally set internally
      * when an order is placed.
+     *
      * @param placedDate the date to set
      */
     public void setPlacedDate(Date placedDate) {
@@ -888,7 +902,7 @@ public class ProductOrder implements BusinessObject, Serializable {
 
     /**
      * @return the list of sample names for this order, including duplicates. in the same sequence that
-     * they were entered.
+     *         they were entered.
      */
     public String getSampleString() {
         return StringUtils.join(ProductOrderSample.getSampleNames(samples), '\n');
@@ -1049,12 +1063,15 @@ public class ProductOrder implements BusinessObject, Serializable {
             listOfFields.add(new CustomField(submissionFields, JiraField.FUNDING_DEADLINE,
                     JiraService.JIRA_DATE_FORMAT.format(getFundingDeadline())));
         }
+        if (comments != null) {
+            listOfFields.add(new CustomField(submissionFields, JiraField.DESCRIPTION, comments));
+        }
 
         BSPUserList bspUserList = ServiceAccessUtility.getBean(BSPUserList.class);
 
         JiraIssue issue = jiraService.createIssue(
                 fetchJiraProject().getKeyPrefix(), bspUserList.getById(createdBy).getUsername(),
-                fetchJiraIssueType(), title, comments == null ? "" : comments, listOfFields);
+                fetchJiraIssueType(), title, listOfFields);
 
         jiraTicketKey = issue.getKey();
         issue.addLink(researchProject.getJiraTicketKey());
@@ -1077,7 +1094,7 @@ public class ProductOrder implements BusinessObject, Serializable {
 
     /**
      * @return true if all samples are of BSP Format. Note:
-     * will return false if there are no samples on the sheet.
+     *         will return false if there are no samples on the sheet.
      */
     public boolean areAllSampleBSPFormat() {
         updateSampleCounts();
@@ -1125,6 +1142,7 @@ public class ProductOrder implements BusinessObject, Serializable {
         REPORTER("Reporter"),
         FUNDING_DEADLINE("Funding Deadline"),
         PUBLICATION_DEADLINE("Publication Deadline"),
+        DESCRIPTION("Description"),
         STATUS("Status");
 
         private final String fieldName;
@@ -1133,7 +1151,8 @@ public class ProductOrder implements BusinessObject, Serializable {
             fieldName = fieldNameIn;
         }
 
-        @Nonnull @Override
+        @Nonnull
+        @Override
         public String getFieldName() {
             return fieldName;
         }
@@ -1154,6 +1173,7 @@ public class ProductOrder implements BusinessObject, Serializable {
          * Get all status values using the name strings.
          *
          * @param statusStrings The desired list of statuses.
+         *
          * @return The statuses that are listed.
          */
         public static List<OrderStatus> getFromNames(@Nonnull List<String> statusStrings) {
