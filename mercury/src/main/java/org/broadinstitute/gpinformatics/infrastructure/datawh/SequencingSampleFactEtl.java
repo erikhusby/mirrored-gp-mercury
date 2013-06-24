@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.SampleType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselAndPosition;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
 import javax.ejb.Stateful;
 import javax.inject.Inject;
@@ -77,8 +78,8 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
                         format(dto.getProductOrderId()),
                         format(dto.getSampleKey()),
                         format(dto.getResearchProjectId()),
-                        format(dto.getLoadingVessel().getLabel()),
-                        format(ExtractTransform.secTimestampFormat.format(dto.getLoadingVessel().getCreatedOn()))
+                        (dto.getLoadingVessel()!=null)?format(dto.getLoadingVessel().getLabel()):null,
+                        (dto.getLoadingVessel()!=null)?format(ExtractTransform.secTimestampFormat.format(dto.getLoadingVessel().getCreatedOn())):null
 
                 ));
             }
@@ -222,10 +223,11 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
             RunCartridge cartridge = entity.getSampleCartridge();
             String flowcellBarcode = cartridge.getCartridgeName();
 
-            List<VesselAndPosition> vesselsWithPositions = cartridge.getNearestTubeAncestorsForLanes();
-            for (VesselAndPosition position : vesselsWithPositions ) {
+            Map<VesselPosition, LabVessel> vesselsWithPositions = cartridge.getNearestTubeAncestorsForLanes();
+            VesselPosition[] vesselPositions = cartridge.getVesselGeometry().getVesselPositions();
+            for (VesselPosition position : vesselPositions) {
                 Collection<SampleInstance> sampleInstances =
-                        cartridge.getSamplesAtPosition(position.getPosition(), SampleType.WITH_PDO);
+                        cartridge.getSamplesAtPosition(position, SampleType.WITH_PDO);
                 for (SampleInstance si : sampleInstances) {
                     String productOrderId = null;
                     String researchProjectId = null;
@@ -265,13 +267,13 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
                             && !StringUtils.isBlank(productOrderId)
                             && !StringUtils.isBlank(researchProjectId);
 
-                    dtos.add(new SequencingRunDto(entity, flowcellBarcode, position.getPosition().name(),
+                    dtos.add(new SequencingRunDto(entity, flowcellBarcode, position.name(),
                             molecularIndexingSchemeName, productOrderId, sampleKey, researchProjectId, isComplete,
-                            position.getVessel()));
+                            vesselsWithPositions.get(position)));
                 }
                 if (sampleInstances.size() == 0) {
                     dtos.add(new SequencingRunDto(entity, flowcellBarcode, null, null, null, null, null, false,
-                            position.getVessel()));
+                            vesselsWithPositions.get(position)));
                 }
             }
         } else {
@@ -376,6 +378,19 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
                 logger.debug("Missing starting sample in SequencingRun entities "
                         + StringUtils.join(errorIds, ", "));
             }
+            errorIds.clear();
+
+            for(SequencingRunDto dto : loggingDtos) {
+                if(dto.getLoadingVessel() == null) {
+                    errorIds.add(dto.getSequencingRun().getSequencingRunId());
+                }
+            }
+
+            if(errorIds.size() > 0) {
+                logger.debug("missing loading library in SequencingRun Entities"
+                             + StringUtils.join(errorIds, ", "));
+            }
+
             errorIds.clear();
         }
     }

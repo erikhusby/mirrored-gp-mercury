@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.run;
 
 
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselAndPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
@@ -14,10 +15,8 @@ import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -186,9 +185,9 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
      *
      * @return all nearest tube ancestors and the lane to which they are ancestors.
      */
-    public List<VesselAndPosition> getNearestTubeAncestorsForLanes() {
+    public Map<VesselPosition, LabVessel> getNearestTubeAncestorsForLanes() {
 
-        List<VesselAndPosition> vesselsWithPositions = new ArrayList<>();
+        Map<VesselPosition, LabVessel> vesselsWithPositions = new HashMap<>();
 
         Iterator<String> positionNames = getVesselGeometry().getPositionNames();
         while (positionNames.hasNext()) {
@@ -201,7 +200,7 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
             vesselContainer.evaluateCriteria(vesselPosition, criteria,
                     TransferTraverserCriteria.TraversalDirection.Ancestors, null, 0);
 
-            vesselsWithPositions.add(new VesselAndPosition(criteria.getTube(),vesselPosition));
+            vesselsWithPositions.put(vesselPosition,criteria.getTube());
         }
 
         return vesselsWithPositions;

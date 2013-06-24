@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.run;
 
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselAndPosition;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
@@ -11,6 +12,7 @@ import javax.persistence.JoinTable;
 import javax.persistence.OneToMany;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -48,5 +50,5 @@ public abstract class RunCartridge extends LabVessel {
         this.sequencingRuns.add(sequencingRun);
     }
 
-    public abstract List<VesselAndPosition> getNearestTubeAncestorsForLanes();
+    public abstract Map<VesselPosition, LabVessel> getNearestTubeAncestorsForLanes();
 }

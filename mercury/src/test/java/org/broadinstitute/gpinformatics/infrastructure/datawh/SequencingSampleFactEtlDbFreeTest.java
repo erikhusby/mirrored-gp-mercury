@@ -165,11 +165,11 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         expect(runCartridge.getCartridgeName()).andReturn(cartridgeName).times(2);
         expect(runCartridge.getSamplesAtPosition(anyObject(VesselPosition.class), anyObject(SampleType.class)))
                 .andReturn(sampleInstances).times(4);
-        final List<VesselAndPosition> laneVesselsAndPositions = new ArrayList<>();
+        final Map<VesselPosition, LabVessel> laneVesselsAndPositions = new HashMap<>();
 
         LabVessel denatureSource = new TwoDBarcodedTube("Lane_1_vessel");
-        laneVesselsAndPositions.add(new VesselAndPosition(denatureSource, VesselPosition.LANE1));
-        laneVesselsAndPositions.add(new VesselAndPosition(denatureSource, VesselPosition.LANE2));
+        laneVesselsAndPositions.put(VesselPosition.LANE1,denatureSource );
+        laneVesselsAndPositions.put(VesselPosition.LANE2,denatureSource);
 
         expect(runCartridge.getNearestTubeAncestorsForLanes()).andReturn(laneVesselsAndPositions).times(2);
         String pdoKey = "PDO-0123";
@@ -222,11 +222,11 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         expect(runCartridge.getCartridgeName()).andReturn(cartridgeName);
         expect(runCartridge.getSamplesAtPosition(anyObject(VesselPosition.class), anyObject(SampleType.class)))
                 .andReturn(sampleInstances).times(2);
-        final List<VesselAndPosition> laneVesselsAndPositions = new ArrayList<>();
+        final Map<VesselPosition, LabVessel> laneVesselsAndPositions = new HashMap<>();
 
         LabVessel denatureSource = new TwoDBarcodedTube("Lane_1_vessel");
-        laneVesselsAndPositions.add(new VesselAndPosition(denatureSource, VesselPosition.LANE1));
-        laneVesselsAndPositions.add(new VesselAndPosition(denatureSource, VesselPosition.LANE2));
+        laneVesselsAndPositions.put(VesselPosition.LANE1,denatureSource );
+        laneVesselsAndPositions.put(VesselPosition.LANE2,denatureSource);
 
         expect(runCartridge.getNearestTubeAncestorsForLanes()).andReturn(laneVesselsAndPositions);
         String pdoKey = "PDO-0012";
@@ -279,11 +279,11 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         expect(runCartridge.getCartridgeName()).andReturn(cartridgeName);
         expect(runCartridge.getSamplesAtPosition(anyObject(VesselPosition.class), anyObject(SampleType.class)))
                 .andReturn(sampleInstances).times(2);
-        final List<VesselAndPosition> laneVesselsAndPositions = new ArrayList<>();
+        final Map<VesselPosition, LabVessel> laneVesselsAndPositions = new HashMap<>();
 
         LabVessel denatureSource = new TwoDBarcodedTube("Lane_1_vessel");
-        laneVesselsAndPositions.add(new VesselAndPosition(denatureSource, VesselPosition.LANE1));
-        laneVesselsAndPositions.add(new VesselAndPosition(denatureSource, VesselPosition.LANE2));
+        laneVesselsAndPositions.put(VesselPosition.LANE1,denatureSource );
+        laneVesselsAndPositions.put(VesselPosition.LANE2,denatureSource);
 
         expect(runCartridge.getNearestTubeAncestorsForLanes()).andReturn(laneVesselsAndPositions);
         String pdoKey = "PDO-6543";
@@ -330,10 +330,11 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         expect(runCartridge.getSamplesAtPosition(anyObject(VesselPosition.class), anyObject(SampleType.class)))
                 .andReturn(sampleInstances);
 
-        final List<VesselAndPosition> laneVesselsAndPositions = new ArrayList<>();
+        final Map<VesselPosition, LabVessel> laneVesselsAndPositions = new HashMap<>();
 
         LabVessel denatureSource = new TwoDBarcodedTube("Lane_1_vessel");
-        laneVesselsAndPositions.add(new VesselAndPosition(denatureSource, VesselPosition.LANE1));
+        laneVesselsAndPositions.put(VesselPosition.LANE1,denatureSource );
+        laneVesselsAndPositions.put(VesselPosition.LANE2,denatureSource);
 
         expect(runCartridge.getNearestTubeAncestorsForLanes()).andReturn(laneVesselsAndPositions);
         String pdoKey = "PDO-7654";

@@ -192,8 +192,8 @@ CREATE TABLE sequencing_sample_fact (
   product_order_id            NUMERIC(19),
   sample_name                 VARCHAR2(40),
   research_project_id         NUMERIC(19),
-  loaded_library_barcode      VARCHAR2(255) NOT NULL,
-  loaded_library_create_date  DATE          NOT NULL,
+  loaded_library_barcode      VARCHAR2(255),
+  loaded_library_create_date  DATE ,
   etl_date                    DATE          NOT NULL
 );
 
@@ -455,8 +455,8 @@ CREATE TABLE im_sequencing_sample_fact (
   product_order_id            NUMERIC(19),
   sample_name                 VARCHAR2(40),
   research_project_id         NUMERIC(19),
-  loaded_library_barcode      VARCHAR2(255) NOT NULL,
-  loaded_library_create_date  DATE          NOT NULL
+  loaded_library_barcode      VARCHAR2(255),
+  loaded_library_create_date  DATE
 );
 
 CREATE TABLE im_sequencing_run (
