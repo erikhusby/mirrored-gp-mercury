@@ -5,6 +5,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.time.DateUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -1272,10 +1273,10 @@ public class ProductOrder implements BusinessObject, Serializable {
      * the status becomes READY_FOR_REVIEW, which means more auto billing can happen, but there is some work to look
      * at. The PDM can download the tracker at any time when there is no billing, but can only upload when auto billing
      * is not happening (and billing is happening).
-     *
+     * <p/>
      * Once the PDM or Billing Manager does an upload, the state is changed to READY_TO_BILL and the auto-biller will
      * not process any more entries for this PDO until a billing session has been completed on it.
-     *
+     * <p/>
      * These statuses are calculated on-demand based on the ledger entries.
      */
     public enum LedgerStatus {
@@ -1298,6 +1299,7 @@ public class ProductOrder implements BusinessObject, Serializable {
          * Get all status values using the name strings.
          *
          * @param statusStrings The desired list of statuses.
+         *
          * @return The statuses that are listed.
          */
         public static List<LedgerStatus> getFromNames(@Nonnull List<String> statusStrings) {

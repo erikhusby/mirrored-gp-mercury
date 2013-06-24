@@ -17,7 +17,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.AbstractBatchJiraFieldFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -157,7 +156,7 @@ public class LabBatchEjb {
         Set<LabVessel> vessels =
                 new HashSet<>(tubeDAO.findByListIdentifiers(vesselLabels));
         Bucket bucket = bucketDao.findByName(bucketName);
-        LabBatch batch = createLabBatch(vessels, operator, jiraTicket);
+        LabBatch batch = createLabBatch(vessels, operator, batchName, labBatchType, issueType);
         bucketEjb.start(operator, vessels, bucket, location);
         return batch;
     }
@@ -178,7 +177,7 @@ public class LabBatchEjb {
                                                       @Nonnull String bucketName, @Nonnull String location,
                                                       @Nonnull CreateFields.IssueType issueType) {
         Bucket bucket = bucketDao.findByName(bucketName);
-        batch = createLabBatch(batch, operator);
+        batch = createLabBatch(batch, operator, issueType);
         bucketEjb.start(operator, batch.getStartingLabVessels(), bucket, location);
         return batch;
     }

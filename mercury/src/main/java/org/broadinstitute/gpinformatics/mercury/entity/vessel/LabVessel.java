@@ -1000,7 +1000,8 @@ public abstract class LabVessel implements Serializable {
     }
 
     public void addNonReworkLabBatch(LabBatch labBatch) {
-        labBatches.add(labBatch);
+        LabBatchStartingVessel startingVessel = new LabBatchStartingVessel(this, labBatch);
+        labBatches.add(startingVessel);
     }
 
     public void addReworkLabBatch(LabBatch reworkLabBatch) {
@@ -1008,7 +1009,10 @@ public abstract class LabVessel implements Serializable {
     }
 
     public Set<LabBatch> getLabBatches() {
-        Set<LabBatch> allLabBatches = new HashSet<>(labBatches);
+        Set<LabBatch> allLabBatches = new HashSet<>();
+        for (LabBatchStartingVessel batchStartingVessel : labBatches) {
+            allLabBatches.add(batchStartingVessel.getLabBatch());
+        }
         allLabBatches.addAll(reworkLabBatches);
         return allLabBatches;
     }

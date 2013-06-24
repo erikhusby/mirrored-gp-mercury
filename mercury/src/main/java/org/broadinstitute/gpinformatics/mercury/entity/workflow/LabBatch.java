@@ -20,6 +20,7 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
@@ -80,7 +81,9 @@ public class LabBatch {
     @OneToMany(mappedBy = "labBatch")
     private Set<LabEvent> labEvents = new LinkedHashSet<LabEvent>();
 
-    /** Vessels in the batch that were added as rework from a previous batch. */
+    /**
+     * Vessels in the batch that were added as rework from a previous batch.
+     */
     @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(name = "lab_batch_reworks", joinColumns = @JoinColumn(name = "lab_batch"),
             inverseJoinColumns = @JoinColumn(name = "reworks"))
@@ -165,6 +168,7 @@ public class LabBatch {
 
     /**
      * Adds the given rework vessels to the list of reworks for the batch.
+     *
      * @param newRework
      */
     public void addReworks(Collection<LabVessel> newRework) {
@@ -187,24 +191,27 @@ public class LabBatch {
      * @return the vessels in the batch
      */
     public Set<LabVessel> getStartingLabVessels() {
-        Set<LabVessel> allStartingLabVessels = new HashSet<>(startingLabVessels);
+        Set<LabVessel> allStartingLabVessels = new HashSet<>();
+        allStartingLabVessels.addAll(getNonReworkStartingLabVessels());
         allStartingLabVessels.addAll(reworks);
         return allStartingLabVessels;
     }
 
     public Set<LabVessel> getNonReworkStartingLabVessels() {
-        return startingLabVessels;
-    }
-
-    public List<LabVessel> getStartingLabVesselsList() {
-        return new ArrayList<>(getStartingLabVessels());
+        Set<LabVessel> staringBatchVessels = new HashSet<>();
+        for (LabBatchStartingVessel batchStartingVessel : startingLabVessels) {
+            staringBatchVessels.add(batchStartingVessel.getLabVessel());
+        }
+        return staringBatchVessels;
     }
 
     public void addLabVessel(@Nonnull LabVessel labVessel) {
-        if (labVessel == null) {
-            throw new NullPointerException("vessel cannot be null.");
-        }
-        startingLabVessels.add(labVessel);
+        addLabVessel(labVessel, null);
+    }
+
+    public void addLabVessel(@Nonnull LabVessel labVessel, @Nullable Float concentration) {
+        LabBatchStartingVessel labBatchStartingVessel = new LabBatchStartingVessel(labVessel, this, concentration);
+        startingLabVessels.add(labBatchStartingVessel);
         labVessel.addNonReworkLabBatch(this);
     }
 

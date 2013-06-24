@@ -130,7 +130,7 @@ public class BatchToJiraTest extends Arquillian {
         reworkEjb.addReworkToBatch(batch, tube2Label, ReworkEntry.ReworkReason.MACHINE_ERROR,
                 LabEventType.PICO_PLATING_BUCKET, "I am reworking this", WorkflowName.EXOME_EXPRESS.getWorkflowName(),
                 "scottmat");
-        batchEjb.batchToJira("andrew", null, batch);
+        batchEjb.batchToJira("andrew", null, batch, CreateFields.IssueType.EXOME_EXPRESS);
 
         ticket = jiraService.getIssue(batch.getJiraTicket().getTicketId());
         gssrIdsText = getGssrFieldFromJiraTicket(ticket);
