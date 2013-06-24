@@ -282,4 +282,30 @@ public class IlluminaRunResource implements Serializable {
 
         return runBean;
     }
+
+    /**
+     * Returns a ZIMS DTO, based on chain of custody in Squid
+     * @param runName registered run
+     * @return DTO based on Squid chain of custody
+     */
+    @GET
+    @Path("/querySquid")
+    @Produces({MediaType.APPLICATION_JSON})
+    public ZimsIlluminaRun getRunSquid(
+            @QueryParam("runName") String runName) {
+        ZimsIlluminaRun runBean = new ZimsIlluminaRun();
+        if (runName == null) {
+            runBean.setError("runName cannot be null");
+        } else {
+            try {
+                runBean = getRun(thriftService, runName);
+            } catch (Throwable t) {
+                String message = "Failed while running pipeline query for run " + runName;
+                LOG.error(message, t);
+                runBean.setError(message + ": " + t.getMessage());
+            }
+        }
+
+        return runBean;
+    }
 }
