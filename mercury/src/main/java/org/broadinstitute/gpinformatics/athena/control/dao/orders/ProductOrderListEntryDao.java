@@ -41,6 +41,8 @@ import java.util.*;
 @Stateful
 public class ProductOrderListEntryDao extends GenericDao implements Serializable {
 
+    private static final long serialVersionUID = -3433442117288051562L;
+
     /**
      * Universal first pass, ledger-unaware querying method used by both PDO view and PDO list queries.
      *
@@ -89,7 +91,7 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
                         productOrderRoot.get(ProductOrder_.placedDate),
                         productOrderRoot.get(ProductOrder_.quoteId)));
 
-        List<Predicate> listOfAndTerms = new ArrayList<Predicate>();
+        List<Predicate> listOfAndTerms = new ArrayList<>();
 
         // This is to support the PDO view use case, fetching the "Can Bill?" and "Billing Session" data.
         if (jiraTicketKey != null) {
@@ -139,7 +141,7 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
         }
 
         // create the and terms for the status and the dates
-        List<Predicate> listOfAndTerms = new ArrayList<Predicate>();
+        List<Predicate> listOfAndTerms = new ArrayList<>();
 
         // No matter what and the order statuses with the date rage
         listOfAndTerms.add(createOrTerms(cb, productOrderRoot.get(ProductOrder_.orderStatus), fixedOrderStatuses));
@@ -168,9 +170,20 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
 
         // Now add all the drafts by doing an OR query with just drafts
         return cb.or(
-            statusAndDate, cb.equal(productOrderRoot.get(ProductOrder_.orderStatus), ProductOrder.OrderStatus.Draft));
+                statusAndDate,
+                cb.equal(productOrderRoot.get(ProductOrder_.orderStatus), ProductOrder.OrderStatus.Draft));
     }
 
+    /**
+     * This fetches the count information in some subqueries and then populates the transient counts for the appropriate
+     * orders. The makes the ledger status field work in the view.
+     *
+     * @param productOrderListEntries The order entry list to fill up with data.
+     */
+    private void fetchUnbilledLedgerEntryCounts(List<ProductOrderListEntry> productOrderListEntries) {
+        fetchUnbilledLedgerEntryCounts(productOrderListEntries, ProductOrder.LedgerStatus.READY_FOR_REVIEW);
+        fetchUnbilledLedgerEntryCounts(productOrderListEntries, ProductOrder.LedgerStatus.READY_TO_BILL);
+    }
 
     /**
      * Second-pass, ledger aware query that merges its results into the first-pass objects passed as an argument.
@@ -181,7 +194,8 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
      *
      * @param productOrderListEntries The entries to fill with unbilled ledger entry counts.
      */
-    private void fetchUnbilledLedgerEntryCounts(List<ProductOrderListEntry> productOrderListEntries) {
+    private void fetchUnbilledLedgerEntryCounts(List<ProductOrderListEntry> productOrderListEntries,
+                                                final ProductOrder.LedgerStatus ledgerStatus) {
 
         if (CollectionUtils.isEmpty(productOrderListEntries)) {
             return;
@@ -200,7 +214,7 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
         ListJoin<ProductOrder, ProductOrderSample> productOrderProductOrderSampleListJoin =
                 productOrderRoot.join(ProductOrder_.samples, JoinType.LEFT);
 
-        SetJoin<ProductOrderSample, LedgerEntry> productOrderSampleLedgerEntrySetJoin =
+        final SetJoin<ProductOrderSample, LedgerEntry> productOrderSampleLedgerEntrySetJoin =
                 productOrderProductOrderSampleListJoin.join(ProductOrderSample_.ledgerItems);
 
         // Even if there are ledger entries there may not be a billing session so left join.
@@ -220,7 +234,7 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
                 ledgerEntryBillingSessionJoin.get(BillingSession_.billingSessionId));
 
 
-        List<String> jiraTicketKeys = new ArrayList<String>();
+        List<String> jiraTicketKeys = new ArrayList<>();
         for (ProductOrderListEntry productOrderListEntry : productOrderListEntries) {
             if (productOrderListEntry.getJiraTicketKey() != null) {
                 jiraTicketKeys.add(productOrderListEntry.getJiraTicketKey());
@@ -233,9 +247,20 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
                 new CriteriaInClauseCreator<String>() {
                     @Override
                     public Query createCriteriaInQuery(Collection<String> parameterList) {
-                        CriteriaQuery<ProductOrderListEntry> query = cq.where(
-                                cb.isNull(ledgerEntryBillingSessionJoin.get(BillingSession_.billedDate)),
-                                productOrderRoot.get(ProductOrder_.jiraTicketKey).in(parameterList));
+                        CriteriaQuery<ProductOrderListEntry> query;
+                        if (ledgerStatus.equals(ProductOrder.LedgerStatus.READY_FOR_REVIEW)) {
+                            query = cq.where(
+                                    cb.isNull(ledgerEntryBillingSessionJoin.get(BillingSession_.billedDate)),
+                                    cb.isNotNull(productOrderSampleLedgerEntrySetJoin.get(LedgerEntry_.autoLedgerTimestamp)),
+                                    productOrderRoot.get(ProductOrder_.jiraTicketKey).in(parameterList));
+                        } else if (ledgerStatus.equals(ProductOrder.LedgerStatus.READY_TO_BILL)) {
+                            query = cq.where(
+                                    cb.isNull(ledgerEntryBillingSessionJoin.get(BillingSession_.billedDate)),
+                                    cb.isNull(productOrderSampleLedgerEntrySetJoin.get(LedgerEntry_.autoLedgerTimestamp)),
+                                    productOrderRoot.get(ProductOrder_.jiraTicketKey).in(parameterList));
+                        } else {
+                            throw new IllegalArgumentException("Can only fetch ready to bill or ready for review");
+                        }
 
                         return getEntityManager().createQuery(query);
                     }
@@ -243,8 +268,7 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
         );
 
         // Build map of input productOrderListEntries jira key to DTO.
-        Map<String, ProductOrderListEntry> jiraKeyToProductOrderListEntryMap =
-                new HashMap<String, ProductOrderListEntry>();
+        Map<String, ProductOrderListEntry> jiraKeyToProductOrderListEntryMap = new HashMap<>();
         for (ProductOrderListEntry productOrderListEntry : productOrderListEntries) {
             jiraKeyToProductOrderListEntryMap.put(productOrderListEntry.getJiraTicketKey(), productOrderListEntry);
         }
@@ -257,11 +281,18 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
                 ProductOrderListEntry productOrderListEntry =
                         jiraKeyToProductOrderListEntryMap.get(result.getJiraTicketKey());
                 productOrderListEntry.setBillingSessionId(result.getBillingSessionId());
-                productOrderListEntry.setUnbilledLedgerEntryCount(result.getUnbilledLedgerEntryCount());
+
+                if (ledgerStatus.equals(ProductOrder.LedgerStatus.READY_FOR_REVIEW)) {
+                    productOrderListEntry.setReadyForReviewCount(result.getConstructedCount());
+                } else if (ledgerStatus.equals(ProductOrder.LedgerStatus.READY_TO_BILL)) {
+                    productOrderListEntry.setReadyForBillingCount(result.getConstructedCount());
+                } else {
+                    throw new IllegalArgumentException("Can only fetch ready to bill or ready for review");
+                }
+
             }
         }
     }
-
 
     /**
      * Find the ProductOrderListEntries for the PDO list page, honoring any optionally supplied server-side filtering
@@ -272,14 +303,67 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
             @Nullable List<String> productKeys,
             @Nullable List<ProductOrder.OrderStatus> orderStatuses,
             @Nullable DateRangeSelector placedDate,
-            @Nullable List<Long> ownerIds) {
+            @Nullable List<Long> ownerIds, List<ProductOrder.LedgerStatus> selectedLedgerStatuses) {
 
         List<ProductOrderListEntry> productOrderListEntries =
                 findBaseProductOrderListEntries(null, productFamilyId, productKeys, orderStatuses, placedDate,
                         ownerIds);
+
+        // Populate the ledger entry counts by doing queries.
         fetchUnbilledLedgerEntryCounts(productOrderListEntries);
 
-        return productOrderListEntries;
+        // Since the querying here is already multi-pass and a bit confusing, adding the ledger status as a post filter.
+        // Not ideal, but with the number of orders that we will typically have on these filters, it should not pose a
+        // problem for a long time. Before needing to make this work, we will probably want scrolling and paging.
+        if (CollectionUtils.isEmpty(selectedLedgerStatuses) ||
+            (selectedLedgerStatuses.size() == ProductOrder.LedgerStatus.values().length)) {
+            // If there is nothing selected or all statuses are selected, just return the full list.
+            return productOrderListEntries;
+        } else {
+            // Otherwise we will return the list, filtered by the user selection.
+            List<ProductOrderListEntry> filteredList = new ArrayList<>();
+            for (ProductOrderListEntry entry : productOrderListEntries) {
+                boolean add = false;
+                for (ProductOrder.LedgerStatus selectedStatus : selectedLedgerStatuses) {
+                    switch (selectedStatus) {
+
+                    case NOTHING_NEW:
+                        // Drafts are always new.
+                        if (entry.isDraft() ||
+                            (!entry.isReadyForBilling() && !entry.isReadyForReview() && !entry.isBilling())) {
+                            add = true;
+                        }
+                        break;
+                    case READY_FOR_REVIEW:
+                        // Ready for review is ALWAYS indicated when there are ledger entries. Billing locks out
+                        // automated ledger entry. For now, so does ready to bill, but that may change.
+                        if (entry.isReadyForReview()) {
+                            add = true;
+                        }
+                        break;
+                    case READY_TO_BILL:
+                        // Ready for review overrides ready for billing. May not come up for a while because of
+                        // lockouts, but this is the way the visual works, so using this.
+                        if (entry.isReadyForBilling() && !entry.isReadyForReview()) {
+                            add = true;
+                        }
+                        break;
+                    case BILLING:
+                        if (entry.isBilling()) {
+                            add = true;
+                        }
+                        break;
+                    }
+                }
+
+                if (add) {
+                    filteredList.add(entry);
+                }
+            }
+
+            return filteredList;
+        }
+
     }
 
     /**

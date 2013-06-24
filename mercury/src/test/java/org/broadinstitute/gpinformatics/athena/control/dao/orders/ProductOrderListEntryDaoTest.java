@@ -49,20 +49,14 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
     @Inject
     private BillingSessionDao billingSessionDao;
 
-    @SuppressWarnings("CdiInjectionPointsInspection")
-    @Inject
-    private UserTransaction utx;
-
     private ProductOrder order;
 
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void setUp() throws Exception {
         // Skip if no injections, meaning we're not running in container
-        if (utx == null) {
+        if (ledgerEntryDao == null) {
             return;
         }
-
-        utx.begin();
 
         order = ProductOrderDBTestFactory.createTestProductOrder(researchProjectDao, productDao);
 
@@ -80,16 +74,6 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
         productOrderDao.flush();
         productOrderDao.clear();
 
-    }
-
-    @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
-    public void tearDown() throws Exception {
-        // Skip if no injections, meaning we're not running in container.
-        if (utx == null) {
-            return;
-        }
-
-        utx.rollback();
     }
 
     /**
@@ -129,7 +113,7 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
 
     private ProductOrderListEntry sanityCheckAndGetTestOrderListEntry() {
         List<ProductOrderListEntry> productOrderListEntries =
-                productOrderListEntryDao.findProductOrderListEntries(null, null, null, null, null);
+                productOrderListEntryDao.findProductOrderListEntries(null, null, null, null, null, null);
 
         Assert.assertNotNull(productOrderListEntries);
 
@@ -153,7 +137,7 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
 
         ProductOrderListEntry productOrderListEntry = sanityCheckAndGetTestOrderListEntry();
 
-        Assert.assertEquals(productOrderListEntry.getUnbilledLedgerEntryCount(), Long.valueOf(0L));
+        Assert.assertFalse(productOrderListEntry.isReadyForBilling());
         Assert.assertNull(productOrderListEntry.getBillingSessionBusinessKey());
     }
 
@@ -169,7 +153,7 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
 
         ProductOrderListEntry productOrderListEntry = sanityCheckAndGetTestOrderListEntry();
 
-        Assert.assertEquals(productOrderListEntry.getUnbilledLedgerEntryCount(), Long.valueOf(1L));
+        Assert.assertTrue(productOrderListEntry.isReadyForBilling());
         Assert.assertNull(productOrderListEntry.getBillingSessionBusinessKey());
 
     }
@@ -187,7 +171,7 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
 
         ProductOrderListEntry productOrderListEntry = sanityCheckAndGetTestOrderListEntry();
 
-        Assert.assertEquals(productOrderListEntry.getUnbilledLedgerEntryCount(), Long.valueOf(1L));
+        Assert.assertTrue(productOrderListEntry.isReadyForBilling());
         Assert.assertEquals(productOrderListEntry.getBillingSessionBusinessKey(), billingSession.getBusinessKey());
 
     }
@@ -203,7 +187,7 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
     public void testSingle() {
         ProductOrderListEntry entry = productOrderListEntryDao.findSingle("PDO-41");
         Assert.assertNotNull(entry);
-        Assert.assertTrue(entry.isEligibleForBilling());
+        Assert.assertTrue(entry.isReadyForBilling());
     }
 
 }

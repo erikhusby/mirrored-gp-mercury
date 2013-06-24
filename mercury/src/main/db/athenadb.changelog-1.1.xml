@@ -9,4 +9,36 @@
      Keep changeSets small, it's harder to recover from an error in a large changeSet.
       -->
 
+    <changeSet id="GPLIM-1516-1" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="billing_ledger" columnName="auto_ledger_timestamp" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="billing_ledger">
+            <column name="auto_ledger_timestamp" type="timestamp"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-1516-2" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="billing_ledger_aud" columnName="auto_ledger_timestamp" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="billing_ledger_aud">
+            <column name="auto_ledger_timestamp" type="timestamp"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-1516-3" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists tableName="billing_ledger" indexName="ix_auto_ledger" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createIndex tableName="billing_ledger" indexName="ix_auto_ledger" schemaName="athena">
+            <column name="auto_ledger_timestamp"/>
+        </createIndex>
+    </changeSet>
 </databaseChangeLog>
