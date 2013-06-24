@@ -71,7 +71,10 @@ public class SampleSearchActionBean extends SearchActionBean {
                 sampleDTOMap.putAll(bspSampleDataFetcher.fetchSamplesFromBSP(sampleNames));
                 for (MercurySample sample : samples) {
                     mercurySampleToVessels.put(sample, allVessels);
-                    sample.setBspSampleDTO(sampleDTOMap.get(sample.getSampleKey()));
+                    BSPSampleDTO bspSampleDTO = sampleDTOMap.get(sample.getSampleKey());
+                    if (bspSampleDTO != null) {
+                        sample.setBspSampleDTO(bspSampleDTO);
+                    }
                 }
             }
         }
