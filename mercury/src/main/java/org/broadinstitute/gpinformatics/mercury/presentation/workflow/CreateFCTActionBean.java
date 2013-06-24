@@ -167,11 +167,12 @@ public class CreateFCTActionBean extends CoreActionBean {
         labBatch = labBatchDAO.findByBusinessKey(lcsetName);
         createdBatches = new ArrayList<>();
         for (String denatureTubeBarcode : selectedVesselLabels) {
-            Set<LabVessel> vesselSet = new HashSet<LabVessel>(labVesselDao.findByListIdentifiers(selectedVesselLabels));
+            Set<LabVessel> vesselSet = new HashSet<>(labVesselDao.findByListIdentifiers(selectedVesselLabels));
             //create a new FCT ticket for every two lanes requested.
             for (int i = 0; i < numberOfLanes; i += 2) {
                 LabBatch batch =
-                        new LabBatch(denatureTubeBarcode + " FCT ticket", vesselSet, LabBatch.LabBatchType.FCT);
+                        new LabBatch(denatureTubeBarcode + " FCT ticket", vesselSet, LabBatch.LabBatchType.FCT,
+                                loadingConc);
                 batch.setBatchDescription(batch.getBatchName());
                 labBatchEjb.createLabBatch(batch, userBean.getLoginUserName(), CreateFields.IssueType.FLOWCELL);
                 createdBatches.add(batch);

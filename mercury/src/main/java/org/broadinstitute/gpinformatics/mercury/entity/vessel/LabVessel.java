@@ -21,6 +21,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Formula;
 import org.hibernate.envers.Audited;
@@ -89,9 +90,8 @@ public abstract class LabVessel implements Serializable {
     @JoinTable(schema = "mercury")
     private final Set<JiraTicket> ticketsCreated = new HashSet<JiraTicket>();
 
-    @ManyToMany(cascade = CascadeType.PERSIST, mappedBy = "startingLabVessels")
-    @BatchSize(size = 100)
-    private Set<LabBatch> labBatches = new HashSet<LabBatch>();
+    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "labVessel")
+    private Set<LabBatchStartingVessel> labBatches = new HashSet<>();
 
     // todo jmt separate role for reagents?
     @ManyToMany(cascade = CascadeType.PERSIST)
@@ -996,11 +996,16 @@ public abstract class LabVessel implements Serializable {
     }
 
     public void addLabBatch(LabBatch labBatch) {
-        labBatches.add(labBatch);
+        LabBatchStartingVessel startingVessel = new LabBatchStartingVessel(this, labBatch);
+        labBatches.add(startingVessel);
     }
 
     public Set<LabBatch> getLabBatches() {
-        return labBatches;
+        Set<LabBatch> labBatchSet = new HashSet<>();
+        for (LabBatchStartingVessel batchStartingVessel : labBatches) {
+            labBatchSet.add(batchStartingVessel.getLabBatch());
+        }
+        return labBatchSet;
     }
 
     /**
@@ -1012,12 +1017,12 @@ public abstract class LabVessel implements Serializable {
      */
     public Set<LabBatch> getLabBatchesOfType(LabBatch.LabBatchType labBatchType) {
         if (labBatchType == null) {
-            return labBatches;
+            return getLabBatches();
         } else {
             Set<LabBatch> labBatchesOfType = new HashSet<LabBatch>();
-            for (LabBatch labBatch : labBatches) {
-                if (labBatch.getLabBatchType() == labBatchType) {
-                    labBatchesOfType.add(labBatch);
+            for (LabBatchStartingVessel startingBatchVessel : labBatches) {
+                if (startingBatchVessel.getLabBatch().getLabBatchType() == labBatchType) {
+                    labBatchesOfType.add(startingBatchVessel.getLabBatch());
                 }
             }
             return labBatchesOfType;

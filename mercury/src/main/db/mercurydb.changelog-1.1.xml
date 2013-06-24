@@ -23,13 +23,13 @@
         <preConditions onFail="MARK_RAN">
             <columnExists schemaName="mercury" tableName="lv_comment" columnName="lab_event"/>
         </preConditions>
-        <dropNotNullConstraint columnName="lab_event" schemaName="mercury" tableName="lv_comment" />
+        <dropNotNullConstraint columnName="lab_event" schemaName="mercury" tableName="lv_comment"/>
     </changeSet>
     <changeSet id="GPLIM-1377-2" author="scottmat">
         <preConditions onFail="MARK_RAN">
             <columnExists schemaName="mercury" tableName="lv_comment_aud" columnName="lab_event"/>
         </preConditions>
-        <dropNotNullConstraint columnName="lab_event" schemaName="mercury" tableName="lv_comment_aud" />
+        <dropNotNullConstraint columnName="lab_event" schemaName="mercury" tableName="lv_comment_aud"/>
     </changeSet>
     <changeSet id="GPLIM-1377-3" author="scottmat">
         <preConditions onFail="MARK_RAN">
@@ -38,10 +38,61 @@
         <dropForeignKeyConstraint
                 constraintName="FK_LV_COMMENT_LAB_EVENT" baseTableName="lv_comment" baseTableSchemaName="mercury"/>
     </changeSet>
+
+    <changeSet id="GPLIM-1434-1" author="jcarey">
+        <createTable tableName="batch_starting_vessels" schemaName="mercury">
+            <column name="batch_starting_vessel_id" type="number(19,0)">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="lab_vessel" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="lab_batch" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="concentration" type="number(5,5)"/>
+        </createTable>
+
+        <createIndex tableName="batch_starting_vessels" indexName="ix_lab_vessel_key">
+            <column name="lab_vessel"/>
+        </createIndex>
+
+        <createIndex tableName="batch_starting_vessels" indexName="ix_lab_batch_key">
+            <column name="lab_batch"/>
+        </createIndex>
+
+        <createSequence sequenceName="SEQ_BATCH_STARTING_VESSEL" schemaName="mercury" startValue="1"
+                        incrementBy="50"/>
+    </changeSet>
+    <changeSet id="GPLIM-1434-2" author="jcarey">
+
+        <createTable tableName="batch_starting_vessels_aud" schemaName="mercury">
+            <column name="batch_starting_vessel_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="lab_vessel" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="lab_batch" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="concentration" type="number(5,5)"/>
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="number(3,0)">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+
+        <addPrimaryKey tableName="batch_starting_vessels_aud" schemaName="mercury"
+                       columnNames="batch_starting_vessel_id, rev"/>
+
+    </changeSet>
     <changeSet id="GPLIM-1606-1" author="scottmat">
         <preConditions>
             <not>
-                <columnExists tableName="sequencing_run" columnName="actual_read_structure" schemaName="mercury" />
+                <columnExists tableName="sequencing_run" columnName="actual_read_structure" schemaName="mercury"/>
             </not>
         </preConditions>
         <addColumn tableName="sequencing_run" schemaName="mercury">
@@ -51,7 +102,7 @@
     <changeSet id="GPLIM-1606-2" author="scottmat">
         <preConditions>
             <not>
-                <columnExists tableName="sequencing_run_aud" columnName="actual_read_structure" schemaName="mercury" />
+                <columnExists tableName="sequencing_run_aud" columnName="actual_read_structure" schemaName="mercury"/>
             </not>
         </preConditions>
         <addColumn tableName="sequencing_run_aud" schemaName="mercury">
@@ -61,7 +112,7 @@
     <changeSet id="GPLIM-1606-3" author="scottmat">
         <preConditions>
             <not>
-                <columnExists tableName="sequencing_run" columnName="setup_read_structure" schemaName="mercury" />
+                <columnExists tableName="sequencing_run" columnName="setup_read_structure" schemaName="mercury"/>
             </not>
         </preConditions>
         <addColumn tableName="sequencing_run" schemaName="mercury">
@@ -71,11 +122,12 @@
     <changeSet id="GPLIM-1606-4" author="scottmat">
         <preConditions>
             <not>
-                <columnExists tableName="sequencing_run_aud" columnName="setup_read_structure" schemaName="mercury" />
+                <columnExists tableName="sequencing_run_aud" columnName="setup_read_structure" schemaName="mercury"/>
             </not>
         </preConditions>
         <addColumn tableName="sequencing_run_aud" schemaName="mercury">
             <column name="setup_read_structure" type="varchar(255)"></column>
         </addColumn>
     </changeSet>
+
 </databaseChangeLog>
