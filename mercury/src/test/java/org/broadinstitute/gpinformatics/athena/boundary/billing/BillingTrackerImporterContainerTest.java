@@ -21,7 +21,6 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import javax.transaction.UserTransaction;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
