@@ -16,7 +16,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -109,10 +108,17 @@ public class JiraServiceTest {
     }
 
     public void testUpdateTicket() throws IOException {
+        Map<String, CustomFieldDefinition> requiredFields =
+                service.getRequiredFields(
+                        new CreateFields.Project(CreateFields.ProjectType.PRODUCT_ORDERING.getKeyPrefix()),
+                        CreateFields.IssueType.PRODUCT_ORDER);
+        Collection<CustomField> customFieldList = new LinkedList<CustomField>();
+        customFieldList.add(new CustomField(requiredFields.get("Description"),
+                "Athena Test Case:  Test description setting"));
         JiraIssue issue = service.createIssue(
                 CreateFields.ProjectType.Research_Projects.getKeyPrefix(), "breilly",
                 CreateFields.IssueType.RESEARCH_PROJECT,
-                "JiraServiceTest.testUpdateTicket", new ArrayList<CustomField>());
+                "JiraServiceTest.testUpdateTicket", customFieldList);
 
         Map<String, CustomFieldDefinition> allCustomFields = service.getCustomFields();
 
