@@ -2,11 +2,10 @@ package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
-import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingTrackerUtils;
+import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingTrackerHeader;
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
-import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
@@ -21,7 +20,6 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +36,7 @@ import java.util.Set;
 public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
     // Each worksheet is a different product, so distribute the list of orders by product.
-    private final Map<Product, List<ProductOrder>> orderMap = new HashMap<Product, List<ProductOrder>>();
+    private final Map<Product, List<ProductOrder>> orderMap = new HashMap<>();
 
     private static final int FIXED_HEADER_WIDTH = 259 * 15;
     private static final int VALUE_WIDTH = 259 * 25;
@@ -81,22 +79,6 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         return user.getFullName();
     }
 
-    private static Date getWorkCompleteDate(Set<LedgerEntry> ledgerEntries, ProductOrderSample productOrderSample) {
-        if (ledgerEntries == null) {
-            return null;
-        }
-
-        // Very simple logic that for now rolls up all work complete dates and assumes they are the same across
-        // all price items on the PDO sample.
-        for (LedgerEntry ledgerEntry : ledgerEntries) {
-            if (!ledgerEntry.isBilled() && ledgerEntry.getProductOrderSample().equals(productOrderSample)) {
-                return ledgerEntry.getWorkCompleteDate();
-            }
-        }
-
-        return null;
-    }
-
     /**
      * This gets the product price item and then its list of optional price items. If the price items are not
      * yet stored in the PRICE_ITEM table, it will create it there.
@@ -109,7 +91,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
      */
     public static List<PriceItem> getPriceItems(Product product, PriceItemDao priceItemDao, PriceListCache priceItemListCache) {
 
-        List<PriceItem> allPriceItems = new ArrayList<PriceItem>();
+        List<PriceItem> allPriceItems = new ArrayList<>();
 
         // First add the primary price item
         allPriceItems.add(product.getPrimaryPriceItem());
@@ -139,13 +121,14 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
     }
 
     private void writePriceItemProductHeader(PriceItem priceItem, Product product) {
-        getWriter().writeCell(priceItem.getName() + " [" + product.getPartNumber() + "]", 2, getPriceItemProductHeaderStyle());
+        getWriter().writeCell(
+                BillingTrackerHeader.getPriceItemHeader(priceItem, product), 2, getPriceItemProductHeaderStyle());
     }
 
     private void writeBillAndNewHeaders() {
-        getWriter().writeCell("Billed", getBilledAmountsHeaderStyle());
+        getWriter().writeCell(BillingTrackerHeader.BILLED, getBilledAmountsHeaderStyle());
         getWriter().setColumnWidth(VALUE_WIDTH);
-        getWriter().writeCell("Update Quantity To", getBilledAmountsHeaderStyle());
+        getWriter().writeCell(BillingTrackerHeader.UPDATE, getBilledAmountsHeaderStyle());
         getWriter().setColumnWidth(VALUE_WIDTH);
     }
 
@@ -159,7 +142,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
         // Order Products by part number so the tabs will have a predictable order.  The orderMap HashMap could have
         // been made a TreeMap to achieve the same effect.
-        List<Product> productsSortedByPartNumber = new ArrayList<Product>(orderMap.keySet());
+        List<Product> productsSortedByPartNumber = new ArrayList<>(orderMap.keySet());
         Collections.sort(productsSortedByPartNumber);
 
         // Go through each product
@@ -173,8 +156,8 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
             // Write headers after placing an extra line
             getWriter().nextRow();
-            for (String header : BillingTrackerUtils.FIXED_HEADERS) {
-                getWriter().writeCell(header, getFixedHeaderStyle());
+            for (BillingTrackerHeader header : BillingTrackerHeader.values()) {
+                getWriter().writeCell(header.getText(), getFixedHeaderStyle());
                 getWriter().setColumnWidth(FIXED_HEADER_WIDTH);
             }
 
@@ -182,7 +165,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             List<PriceItem> sortedPriceItems = getPriceItems(currentProduct, priceItemDao, priceListCache);
 
             // add on products.
-            List<Product> sortedAddOns = new ArrayList<Product>(currentProduct.getAddOns());
+            List<Product> sortedAddOns = new ArrayList<>(currentProduct.getAddOns());
             Collections.sort(sortedAddOns);
 
             writeHeaders(currentProduct, sortedPriceItems, sortedAddOns);
@@ -236,8 +219,11 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         // Project Manager - need to turn this into a user name.
         getWriter().writeCell(getBspFullName(sample.getProductOrder().getCreatedBy()));
 
+        // auto bill date is the date of any ledger items were auto billed by external messages.
+        getWriter().writeCell(sample.getLatestAutoLedgerTimestamp(), getDateStyle());
+
         // work complete date is the date of any ledger items that are ready to be billed.
-        getWriter().writeCell(getWorkCompleteDate(sample.getBillableLedgerItems(), sample), getDateStyle());
+        getWriter().writeCell(sample.getWorkCompleteDate(), getDateStyle());
 
         // Quote ID.
         getWriter().writeCell(sample.getProductOrder().getQuoteId());
@@ -343,7 +329,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
     private void writeEmptyFixedHeaders() {
         // Write blank secondary header line for fixed columns, with default styling.
-        for (String header : BillingTrackerUtils.FIXED_HEADERS) {
+        for (BillingTrackerHeader ignored : BillingTrackerHeader.values()) {
             getWriter().writeCell(" ");
         }
     }

@@ -727,7 +727,7 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
 
     @Override
     public boolean equals(Object other) {
-        if ((this == other)) {
+        if (this == other) {
             return true;
         }
 

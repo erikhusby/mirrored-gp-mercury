@@ -2,11 +2,13 @@ package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
+import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -18,29 +20,27 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class LabMetricParserTest extends ContainerTest {
 
-    private String GOOD_QUANT_UPLOAD_FILE = "quant_upload_good.xlsx";
-
     @Inject
     private TwoDBarcodedTubeDAO vesselDao;
 
     @Inject
-    private LabMetricParser parser;
+    private LabVesselDao labVesselDao;
 
-    private Map<String, LabVessel> barcodeToTubeMap = new HashMap<>();
+ //   private Map<String, LabVessel> barcodeToTubeMap = new HashMap<>();
     private Map<String, Double> barcodeToQuant = new HashMap<>();
     private InputStream resourceFile;
 
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void setUp() throws Exception {
         // Skip if no injections, meaning we're not running in container.
-        if (vesselDao == null ||
-            parser == null) {
+        if (vesselDao == null) {
             return;
         }
 
@@ -85,16 +85,15 @@ public class LabMetricParserTest extends ContainerTest {
         vesselDao.flush();
         vesselDao.clear();
 
+        String GOOD_QUANT_UPLOAD_FILE = "quant_upload_good.xlsx";
         resourceFile = Thread.currentThread().getContextClassLoader().getResourceAsStream(GOOD_QUANT_UPLOAD_FILE);
 
     }
 
-
     @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void tearDown() throws Exception {
         // Skip if no injections, meaning we're not running in container.
-        if (vesselDao == null ||
-            parser == null) {
+        if (vesselDao == null) {
             return;
         }
 
@@ -110,12 +109,14 @@ public class LabMetricParserTest extends ContainerTest {
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testQuantParser() throws InvalidFormatException, IOException, ValidationException {
 
-        Collection<LabMetric> createdMetrics = parser.processUploadFile(resourceFile, LabMetric.MetricType.ECO_QPCR);
+        LabMetricProcessor processor = new LabMetricProcessor(labVesselDao, LabMetric.MetricType.ECO_QPCR);
+        PoiSpreadsheetParser parser = new PoiSpreadsheetParser(processor);
+        parser.processUploadFile(resourceFile);
 
+        Collection<LabMetric> createdMetrics = processor.getMetrics();
         Assert.assertEquals(createdMetrics.size(), barcodeToQuant.size());
 
         for(LabMetric testMetric:createdMetrics) {
-
             Assert.assertEquals(testMetric.getValue(),
                     BigDecimal.valueOf(barcodeToQuant.get(testMetric.getLabVessel().getLabel())));
         }

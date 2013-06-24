@@ -1,10 +1,12 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
 /**
- * Created by IntelliJ IDEA.
- * User: mccrory
- * Date: 11/26/12
- * Time: 4:00 PM
+ * This class holds a particular billable item, which is a product (part number) and the price item name. Price
+ * item names are unique per all products, replacement items and add ons. There are validation errors in place to
+ * make sure this stays the case in the future.
  */
 public class BillableRef {
 
@@ -25,23 +27,26 @@ public class BillableRef {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof BillableRef)) return false;
+    public boolean equals(Object other) {
 
-        final BillableRef that = (BillableRef) o;
+        if (this == other) {
+            return true;
+        }
 
-        if (!priceItemName.equals(that.priceItemName)) return false;
-        if (!productPartNumber.equals(that.productPartNumber)) return false;
+        if (!(other instanceof BillableRef)) {
+            return false;
+        }
 
-        return true;
+        BillableRef castOther = (BillableRef) other;
+        return new EqualsBuilder()
+                .append(productPartNumber, castOther.getProductPartNumber())
+                .append(priceItemName, castOther.getPriceItemName()).isEquals();
     }
 
     @Override
     public int hashCode() {
-        int result = productPartNumber.hashCode();
-        result = 31 * result + priceItemName.hashCode();
-        return result;
+        return new HashCodeBuilder().append(productPartNumber).append(priceItemName).toHashCode();
     }
+
 }
 
