@@ -17,7 +17,15 @@ import javax.ejb.Stateful;
 import javax.inject.Inject;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Stateful
 public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
@@ -92,7 +100,8 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         boolean isComplete;
 
         EventFactDto(LabEvent labEvent, LabVessel labVessel, String sampleInstanceIndexes, LabBatch labBatch,
-                     MercurySample sample, ProductOrder productOrder, WorkflowConfigDenorm wfDenorm, boolean isComplete) {
+                     MercurySample sample, ProductOrder productOrder, WorkflowConfigDenorm wfDenorm,
+                     boolean isComplete) {
             this.labEvent = labEvent;
             this.labVessel = labVessel;
             this.sampleInstanceIndexes = sampleInstanceIndexes;
@@ -157,7 +166,9 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
 
     }
 
-    /** Makes one or more DTOs representing Event Fact records.  DTOs may have missing values. */
+    /**
+     * Makes one or more DTOs representing Event Fact records.  DTOs may have missing values.
+     */
     public List<EventFactDto> makeEventFacts(long labEventId) {
         return makeEventFacts(dao.findById(LabEvent.class, labEventId));
     }
@@ -200,6 +211,9 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                                 if (sample != null) {
                                     for (LabBatch labBatch : si.getAllWorkflowLabBatches()) {
                                         String workflowName = labBatch.getWorkflowName();
+                                        if (StringUtils.isBlank(workflowName)) {
+                                            workflowName = pdo.getProduct().getWorkflowName();
+                                        }
                                         WorkflowConfigDenorm wfDenorm = workflowConfigLookup.lookupWorkflowConfig(
                                                 eventName, workflowName, entity.getEventDate());
 
@@ -223,13 +237,13 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                     }
                 } catch (RuntimeException e) {
                     logger.debug("Skipping ETL on labEvent " + entity.getLabEventId() +
-                            " on vessel " + vessel.getLabel(), e);
+                                 " on vessel " + vessel.getLabel(), e);
                 }
             }
         }
         Collections.sort(dtos, EventFactDto.sampleKeyComparator());
 
-        synchronized(loggingDtos) {
+        synchronized (loggingDtos) {
             loggingDtos.clear();
             loggingDtos.addAll(dtos);
         }
@@ -238,7 +252,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
 
     @Override
     public void postEtlLogging() {
-        synchronized(loggingDtos) {
+        synchronized (loggingDtos) {
             // Aggregates errors by the appropriate record identifier, depending on what the missing value is.
             Set<Long> errorIds = new HashSet<>();
             Set<Long> otherIds = new HashSet<>();
@@ -249,7 +263,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             // No vessel on event.
             for (EventFactDto fact : loggingDtos) {
                 if (!fact.isComplete() && !reportedErrors.contains(fact) &&
-                        fact.getLabVessel() == null) {
+                    fact.getLabVessel() == null) {
                     reportedErrors.add(fact);
                     errorIds.add(fact.getLabEvent().getLabEventId());
                 }
@@ -263,7 +277,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             // No sampleInstance on vessel.
             for (EventFactDto fact : loggingDtos) {
                 if (!fact.isComplete() && !reportedErrors.contains(fact) &&
-                        fact.getProductOrder() == null && fact.getSampleInstanceIndexes() == null) {
+                    fact.getProductOrder() == null && fact.getSampleInstanceIndexes() == null) {
                     reportedErrors.add(fact);
                     errorIds.add(fact.getLabEvent().getLabEventId());
                     otherIds.add(fact.getLabVessel().getLabVesselId());
@@ -271,7 +285,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             }
             if (errorIds.size() > 0) {
                 logger.debug("Missing sampleInstances in vessels: " + StringUtils.join(otherIds, ", ") +
-                        " in labEvents: " + StringUtils.join(errorIds, ", "));
+                             " in labEvents: " + StringUtils.join(errorIds, ", "));
             }
             errorIds.clear();
             otherIds.clear();
@@ -279,7 +293,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             // No pdo on sampleInstance, or no pdo entity for pdoKey.
             for (EventFactDto fact : loggingDtos) {
                 if (!fact.isComplete() && !reportedErrors.contains(fact) &&
-                        fact.getProductOrder() == null) {
+                    fact.getProductOrder() == null) {
                     reportedErrors.add(fact);
                     errorIds.add(fact.getLabEvent().getLabEventId());
                     otherIds.add(fact.getLabVessel().getLabVesselId());
@@ -287,7 +301,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             }
             if (errorIds.size() > 0) {
                 logger.debug("Missing productOrder for sampleInstances in vessels: " + StringUtils.join(otherIds, ", ")
-                        + " in labEvents: " + StringUtils.join(errorIds, ", "));
+                             + " in labEvents: " + StringUtils.join(errorIds, ", "));
             }
             errorIds.clear();
             otherIds.clear();
@@ -295,7 +309,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             // No starting sample on sampleInstance.
             for (EventFactDto fact : loggingDtos) {
                 if (!fact.isComplete() && !reportedErrors.contains(fact) &&
-                        fact.getSample() == null) {
+                    fact.getSample() == null) {
                     reportedErrors.add(fact);
                     errorIds.add(fact.getLabEvent().getLabEventId());
                     otherIds.add(fact.getLabVessel().getLabVesselId());
@@ -303,7 +317,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             }
             if (errorIds.size() > 0) {
                 logger.debug("Missing starting sample for sampleInstances in vessels: "
-                        + StringUtils.join(otherIds, ", ") + " in labEvents: " + StringUtils.join(errorIds, ", "));
+                             + StringUtils.join(otherIds, ", ") + " in labEvents: " + StringUtils.join(errorIds, ", "));
             }
             errorIds.clear();
             otherIds.clear();
