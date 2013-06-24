@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
-import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabMetricProcessor;
@@ -15,9 +14,7 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @Stateful
@@ -65,7 +62,7 @@ public class QuantificationEJB {
     }
 
     public void storeQuants(Set<LabMetric> labMetrics) {
-        List<LabVessel> vessels = new ArrayList<LabVessel>();
+        List<LabVessel> vessels = new ArrayList<>();
         for(LabMetric labMetric : labMetrics){
             labMetric.getLabVessel().addMetric(labMetric);
             vessels.add(labMetric.getLabVessel());
