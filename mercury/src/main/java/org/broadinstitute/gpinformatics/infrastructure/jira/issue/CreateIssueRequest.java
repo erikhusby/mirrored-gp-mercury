@@ -6,7 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import java.util.Collection;
 
 
-public class CreateIssueRequest  {
+public class CreateIssueRequest {
 
     private CreateFields fields;
 
@@ -38,11 +38,10 @@ public class CreateIssueRequest  {
                                             String reporter,
                                             CreateFields.IssueType issueType,
                                             String summary,
-                                            String description,
                                             Collection<CustomField> customFields) {
-        
+
         CreateIssueRequest ret = new CreateIssueRequest(customFields);
-        
+
         CreateFields fields = ret.getFields();
 
         fields.getProject().setKey(key);
@@ -55,7 +54,6 @@ public class CreateIssueRequest  {
 
         fields.setIssueType(issueType);
         fields.setSummary(summary);
-        fields.setDescription(description);
 
         return ret;
     }

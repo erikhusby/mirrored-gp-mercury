@@ -239,9 +239,8 @@ public class LabBatchEjb {
                 Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
 
                 JiraIssue jiraIssue = jiraService
-                        .createIssue(fieldBuilder.getProjectType().getKeyPrefix(), reporter,
-                                issueType, fieldBuilder.getSummary(),
-                                newBatch.getBatchDescription(), fieldBuilder.getCustomFields(submissionFields));
+                        .createIssue(fieldBuilder.getProjectType().getKeyPrefix(), null,
+                                issueType, fieldBuilder.getSummary(), fieldBuilder.getCustomFields(submissionFields));
 
                 ticket = new JiraTicket(jiraService, jiraIssue.getKey());
 

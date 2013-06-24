@@ -379,7 +379,7 @@ public class LabBatch {
 
         //User comments at batch creation (Post Dec 1 addition)
         IMPORTANT("Important", true),
-
+        DESCRIPTION("Description", true),
         // ??
         NUMBER_OF_CONTROLS("Number of Controls", true),
         NUMBER_OF_SAMPLES("Number of Samples", true),
@@ -394,6 +394,7 @@ public class LabBatch {
         GSSR_IDS("GSSR ID(s)", true),
 
         LIMS_ACTIVITY_STREAM("LIMS Activity Stream", true);
+
 
         private final String fieldName;
         private final boolean customField;

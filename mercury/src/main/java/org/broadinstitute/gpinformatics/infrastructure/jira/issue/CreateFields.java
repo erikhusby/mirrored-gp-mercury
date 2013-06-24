@@ -120,8 +120,6 @@ public class CreateFields extends UpdateFields {
 
     private String summary;
 
-    private String description;
-
     private IssueType issueType;
 
     private Reporter reporter;
@@ -144,14 +142,6 @@ public class CreateFields extends UpdateFields {
 
     public String getSummary() {
         return summary;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
     }
 
     public IssueType getIssueType() {

@@ -4,6 +4,7 @@ import net.sourceforge.stripes.action.After;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
+import net.sourceforge.stripes.action.RedirectResolution;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
@@ -61,6 +62,16 @@ public class CreateFCTActionBean extends CoreActionBean {
     private Map<LabVessel, LabEvent> denatureTubeToEvent = new HashMap<>();
 
     private List<String> selectedVesselLabels;
+
+    private List<LabBatch> createdBatches;
+
+    public List<LabBatch> getCreatedBatches() {
+        return createdBatches;
+    }
+
+    public void setCreatedBatches(List<LabBatch> createdBatches) {
+        this.createdBatches = createdBatches;
+    }
 
     public String getLcsetName() {
         return lcsetName;
@@ -154,7 +165,7 @@ public class CreateFCTActionBean extends CoreActionBean {
     @HandlesEvent(SAVE_ACTION)
     public Resolution createFCTTicket() {
         labBatch = labBatchDAO.findByBusinessKey(lcsetName);
-        List<LabBatch> createdBatches = new ArrayList<>();
+        createdBatches = new ArrayList<>();
         for (String denatureTubeBarcode : selectedVesselLabels) {
             Set<LabVessel> vesselSet = new HashSet<LabVessel>(labVesselDao.findByListIdentifiers(selectedVesselLabels));
             //create a new FCT ticket for every two lanes requested.
@@ -167,10 +178,19 @@ public class CreateFCTActionBean extends CoreActionBean {
                 //link tickets
                 labBatchEjb.linkJiraBatches(labBatch, batch);
             }
-            addMessage("Created {0} FCT tickets with a loading concentration of {1} for denature tube {2}.",
-                    numberOfLanes / 2, loadingConc, denatureTubeBarcode);
+            StringBuilder createdBatchLinks = new StringBuilder("<ol>");
+            for (LabBatch batch : createdBatches) {
+                createdBatchLinks.append("<li><a target=\"JIRA\" href=\"");
+                createdBatchLinks.append(batch.getJiraTicket().getBrowserUrl());
+                createdBatchLinks.append("\" class=\"external\" target=\"JIRA\">");
+                createdBatchLinks.append(batch.getBusinessKey());
+                createdBatchLinks.append("</a></li>");
+            }
+            createdBatchLinks.append("</ol>");
+            addMessage("Created {0} FCT tickets with a loading concentration of {1} for denature tube {2}. {3}",
+                    numberOfLanes / 2, loadingConc, denatureTubeBarcode, createdBatchLinks.toString());
         }
-        return new ForwardResolution(VIEW_PAGE);
+        return new RedirectResolution(VIEW_PAGE);
     }
 
     @ValidationMethod(on = SAVE_ACTION)
