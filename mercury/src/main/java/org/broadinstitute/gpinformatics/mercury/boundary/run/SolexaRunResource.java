@@ -171,7 +171,7 @@ public class SolexaRunResource {
 
         if (run == null) {
             throw new ResourceException("Unable to find a run associated with " + readStructureRequest.getRunBarcode(),
-                    Response.Status.INTERNAL_SERVER_ERROR);
+                    Response.Status.NOT_FOUND);
         }
 
         return illuminaSequencingRunFactory.storeReadsStructureDBFree(readStructureRequest, run);

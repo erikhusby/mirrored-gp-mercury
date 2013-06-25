@@ -31,7 +31,7 @@ public class WorkCompleteMessage {
         this.aliquotId = aliquotId;
         this.completedDate = completedDate;
 
-        data = new HashMap<String, MessageDataValue>();
+        data = new HashMap<>();
         for (Map.Entry<String, Object> entry : dataMap.entrySet()) {
             data.put(entry.getKey(), new MessageDataValue(entry.getKey(), entry.getValue().toString()));
         }
@@ -85,6 +85,7 @@ public class WorkCompleteMessage {
         return data;
     }
 
+    @SuppressWarnings("unused")
     public Date getProcessDate() {
         return processDate;
     }

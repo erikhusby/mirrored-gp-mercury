@@ -267,8 +267,13 @@ public class VesselContainer<T extends LabVessel> {
             if (sectionTransfer.getSourceVesselContainer().equals(this)) {
                 VesselContainer<?> targetVesselContainer = sectionTransfer.getTargetVesselContainer();
                 // todo jmt replace indexOf with map lookup
+                int sourceWellIndex = sectionTransfer.getSourceSection().getWells().indexOf(position);
+                if (sourceWellIndex < 0) {
+                    // the position parameter isn't in the section, so skip the transfer
+                    continue;
+                }
                 VesselPosition targetPosition = sectionTransfer.getTargetSection().getWells().get(
-                        sectionTransfer.getSourceSection().getWells().indexOf(position));
+                        sourceWellIndex);
                 targetVesselContainer.evaluateCriteria(targetPosition, transferTraverserCriteria, traversalDirection,
                         sectionTransfer.getLabEvent(), hopCount + 1);
             }

@@ -76,7 +76,7 @@ public class PlasticHistoryViewActionBean extends CoreActionBean {
         } else if (batchKey != null) {
             LabBatch batch = labBatchDAO.findByBusinessKey(batchKey);
             if (batch != null) {
-                Set<LabVessel> vessels = batch.getStartingLabVessels();
+                Set<LabVessel> vessels = batch.getStartingBatchLabVessels();
                 addVesselsToItemList(targetItems, vessels);
             }
         }
