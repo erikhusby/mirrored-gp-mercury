@@ -12,10 +12,15 @@ import java.io.FileReader;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-import static org.easymock.EasyMock.*;
+import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.reset;
+import static org.easymock.EasyMock.verify;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
@@ -104,7 +109,7 @@ public class WorkflowConfigEtlDbFreeTest {
         assertFalse(workflowDatafile.exists());
         assertFalse(processDatafile.exists());
 
-        assertEquals(tst.doEtl(null, etlDateStr), EXPECTED_RECORD_COUNT);
+        assertEquals(tst.doEtl(Collections.<Long>emptyList(), etlDateStr), EXPECTED_RECORD_COUNT);
 
         verifyWorkflowFile(workflowDatafile);
         verifyProcessFile(processDatafile);
