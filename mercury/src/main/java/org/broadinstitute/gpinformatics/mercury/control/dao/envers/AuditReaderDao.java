@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.envers;
 
 import com.sun.xml.ws.developer.Stateful;
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.datawh.ExtractTransform;
@@ -10,6 +9,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.envers.RevInfo;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.RevInfo_;
 import org.hibernate.envers.AuditReader;
 import org.hibernate.envers.AuditReaderFactory;
+import org.hibernate.envers.RevisionType;
 import org.hibernate.envers.exception.AuditException;
 import org.hibernate.envers.query.AuditEntity;
 import org.hibernate.envers.query.AuditQuery;
@@ -25,6 +25,7 @@ import javax.persistence.criteria.Root;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.SortedMap;
@@ -42,6 +43,15 @@ public class AuditReaderDao extends GenericDao {
     private AuditReader getAuditReader() {
         return AuditReaderFactory.get(getEntityManager());
     }
+
+    // An "Envers triple" is an Object array having elements {entity, RevInfo, RevisionType}.
+    // Since it's defined by a 3rd party there's not much we can do about beautifying or generifying it.
+    /** Indicates the entity. */
+    public static final int AUDIT_READER_ENTITY_IDX = 0;
+    /** Indicates the revInfo. */
+    public static final int AUDIT_READER_REV_INFO_IDX = 1;
+    /** Indicates the change type. */
+    public static final int AUDIT_READER_TYPE_IDX = 2;
 
     /**
      * Finds the audit info ids for data changes that happened in the given interval.
@@ -91,14 +101,15 @@ public class AuditReaderDao extends GenericDao {
      *
      * @param revIds      audit revision ids
      * @param entityClass the class of entity to process
+     * @return list of Object[3].  Array elements are {entity, RevInfo, RevisionType}.
      */
-    public <T> List<T[]> fetchDataChanges(Collection<Long> revIds, Class<?> entityClass) {
+    public List<Object[]> fetchDataChanges(Collection<Long> revIds, Class<?> entityClass) {
         return fetchDataChanges(revIds, entityClass, true);
     }
 
     // Allows "unrolling" the batch to handle AuditReader failures on individual records.
-    public <T> List<T[]> fetchDataChanges(Collection<Long> revIds, Class<?> entityClass, boolean doChunks) {
-        List<T[]> dataChanges = new ArrayList<>();
+    private List<Object[]> fetchDataChanges(Collection<Long> revIds, Class<?> entityClass, boolean doChunks) {
+        List<Object[]> dataChanges = new ArrayList<Object[]>();
 
         if (revIds == null || revIds.size() == 0) {
             return dataChanges;
@@ -106,7 +117,7 @@ public class AuditReaderDao extends GenericDao {
 
         // Chunks revIds as necessary to limit sql "in" clause to 1000 elements, or 1 element if not chunking.
         final int IN_CLAUSE_LIMIT = doChunks ? 1000 : 1;
-        Collection<Long> sublist = new ArrayList<Long>();
+        Collection<Long> sublist = new ArrayList<>();
         for (Long id : revIds) {
             sublist.add(id);
             if (sublist.size() == IN_CLAUSE_LIMIT || sublist.size() == revIds.size()) {
@@ -120,7 +131,7 @@ public class AuditReaderDao extends GenericDao {
                 } catch (AuditException e) {
                     if (doChunks) {
                         // Retries sublist one rev at a time in order to skip the one causing problems.
-                        List<T[]> objects = fetchDataChanges(sublist, entityClass, false);
+                        List<Object[]> objects = fetchDataChanges(sublist, entityClass, false);
                         dataChanges.addAll(objects);
                     } else {
                         // Log and ignore single rev id problem.

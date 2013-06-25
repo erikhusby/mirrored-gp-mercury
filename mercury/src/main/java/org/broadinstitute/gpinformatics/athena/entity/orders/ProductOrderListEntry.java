@@ -3,7 +3,10 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Non-entity used for optimizing the performance of the PDO list page.
@@ -202,4 +205,12 @@ public class ProductOrderListEntry implements Serializable {
         return ProductOrder.OrderStatus.Draft == orderStatus;
     }
 
+    public static Collection<String> getBusinessKeyList(List<ProductOrderListEntry> productOrderListEntries) {
+        Collection<String> pdoKeys = new ArrayList<> (productOrderListEntries.size());
+        for (ProductOrderListEntry entry : productOrderListEntries){
+            pdoKeys.add(entry.getBusinessKey());
+        }
+
+        return pdoKeys;
+    }
 }
