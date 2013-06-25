@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.monitoring.HipChatMessageSender;
@@ -152,10 +153,12 @@ public class SolexaRunResource {
 
         illuminaSequencingRunDao.persist(illuminaSequencingRun);
 
-                // Link the denature tube to flowcell;
-        vesselTransferEjb.reagentKitToFlowcell(solexaRunBean.getReagentBlockBarcode(),
-                       solexaRunBean.getFlowcellBarcode(), "pipeline",
-                       solexaRunBean.getMachineName());
+        // Link the reagentKit to flowcell if you have a reagentBlockBarcode. Only MiSeq uses reagentKits.;
+        if (!StringUtils.isEmpty(solexaRunBean.getReagentBlockBarcode())) {
+            vesselTransferEjb
+                    .reagentKitToFlowcell(solexaRunBean.getReagentBlockBarcode(), solexaRunBean.getFlowcellBarcode(),
+                            "pipeline", solexaRunBean.getMachineName());
+        }
 
         return illuminaSequencingRun;
     }
