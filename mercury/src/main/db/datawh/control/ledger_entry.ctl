@@ -9,5 +9,11 @@ TRAILING NULLCOLS
  is_delete,
  ledger_id,
  product_order_sample_id,
- quote_id
+ quote_id,
+ price_item_id,
+ price_item_type,
+ quantity,
+ billing_session_id,
+ billing_message,
+ work_complete_date DATE "YYYYMMDDHH24MISS"
 )

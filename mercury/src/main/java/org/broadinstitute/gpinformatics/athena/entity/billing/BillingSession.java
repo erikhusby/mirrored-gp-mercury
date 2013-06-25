@@ -110,6 +110,10 @@ public class BillingSession implements Serializable {
         return ID_PREFIX + billingSessionId;
     }
 
+    public Long getBillingSessionId() {
+        return billingSessionId;
+    }
+
     /**
      * @return A list of only the unbilled quote items for this session.
      */

@@ -438,7 +438,13 @@ CREATE TABLE im_ledger_entry (
   is_delete               CHAR(1)     NOT NULL,
   ledger_id               NUMERIC(19) NOT NULL,
   product_order_sample_id NUMERIC(19),
-  quote_id                VARCHAR2(255)
+  quote_id                VARCHAR2(255),
+  price_item_id           NUMERIC(19),
+  price_item_type         VARCHAR2(50),
+  quantity                NUMBER(15,4),
+  billing_session_id      NUMERIC(19),
+  billing_message         VARCHAR2(500),
+  work_complete_date      DATE
 );
 
 CREATE TABLE im_sequencing_sample_fact (
