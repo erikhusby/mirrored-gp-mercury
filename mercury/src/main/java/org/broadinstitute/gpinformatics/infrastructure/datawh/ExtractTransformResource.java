@@ -30,12 +30,12 @@ public class ExtractTransformResource {
     }
 
     /**
-        * Runs ETL on one entity class for the given range of entity ids (possibly all).
-        *
-        * @param entityClassname The fully qualified classname of the Mercury class to ETL.
-        * @param startId First entity id of a range of ids to backfill.  Set to 0 for minimum.
-        * @param endId Last entity id of a range of ids to backfill.  Set to -1 for maximum.
-        */
+     * Runs ETL on one entity class for the given range of entity ids (possibly all).
+     *
+     * @param entityClassname The fully qualified classname of the Mercury class to ETL.
+     * @param startId         First entity id of a range of ids to backfill.  Set to 0 for minimum.
+     * @param endId           Last entity id of a range of ids to backfill.  Set to -1 for maximum.
+     */
     @Path("backfill/{entityClassname}/{startId}/{endId}")
     @PUT
     public Response entityIdRangeEtl(@PathParam("entityClassname") String entityClassname,
@@ -53,8 +53,8 @@ public class ExtractTransformResource {
      *
      * @param startDateTime start of interval of audited changes, in yyyyMMddHHmmss format,
      *                      or "0" to use previous end time.
-     * @param endDateTime end of interval of audited changes, in yyyyMMddHHmmss format, or "0" for now.
-     *                    Excludes endpoint.  "0" will withhold updating the lastEtlRun file.
+     * @param endDateTime   end of interval of audited changes, in yyyyMMddHHmmss format, or "0" for now.
+     *                      Excludes endpoint.  "0" will withhold updating the lastEtlRun file.
      */
     @Path("incremental/{startDateTime}/{endDateTime}")
     @PUT
@@ -70,6 +70,7 @@ public class ExtractTransformResource {
      * Returns an etl-type breakdown of a sequencing run.
      *
      * @param sequencingRunId the entity id of the sequencing run.
+     *
      * @return htm table of what etl would put in the sequencing sample fact table.
      */
     @Path("analyze/sequencingRun/{sequencingRunId:[0-9]+}")
@@ -87,9 +88,11 @@ public class ExtractTransformResource {
                 .append("</th><th>productOrderId")
                 .append("</th><th>sampleKey")
                 .append("</th><th>researchProjectId")
+                .append("</th><th>loadedLibraryBarcode")
+                .append("</th><th>loadedLibraryCreationDate")
                 .append("</th></tr>");
 
-        for (SequencingRunDto dto : extractTransform.analyzeSequencingRun (sequencingRunId)) {
+        for (SequencingRunDto dto : extractTransform.analyzeSequencingRun(sequencingRunId)) {
             sb.append("<tr><td>")
                     .append(dto.isComplete())
                     .append("</td><td>")
@@ -104,7 +107,10 @@ public class ExtractTransformResource {
                     .append(dto.getSampleKey())
                     .append("</td><td>")
                     .append(dto.getResearchProjectId())
-                    .append("</td><tr>");
+                    .append("</td><tr>")
+                    .append(dto.getLoadingVessel() != null ? dto.getLoadingVessel().getLabel() : null)
+                    .append("</td><tr>")
+                    .append(dto.getLoadingVessel() != null ? ExtractTransform.secTimestampFormat.format(dto.getLoadingVessel().getCreatedOn()) : null);
         }
         sb.append("</table></body></html>");
         return sb.toString();
@@ -114,6 +120,7 @@ public class ExtractTransformResource {
      * Returns an etl-type breakdown of a lab event.
      *
      * @param labEventId the entity id of the lab event
+     *
      * @return htm table of what etl would put in the event fact table
      */
     @Path("analyze/event/{labEventId:[0-9]+}")
