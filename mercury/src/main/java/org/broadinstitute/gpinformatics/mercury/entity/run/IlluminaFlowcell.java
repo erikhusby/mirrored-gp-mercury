@@ -2,9 +2,13 @@ package org.broadinstitute.gpinformatics.mercury.entity.run;
 
 
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselAndPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainerEmbedder;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Embedded;
@@ -12,6 +16,7 @@ import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -94,7 +99,7 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
     private String flowcellBarcode;
 
     @Embedded
-    VesselContainer<RunChamber> vesselContainer = new VesselContainer<RunChamber>(this);
+    VesselContainer<RunChamber> vesselContainer = new VesselContainer<>(this);
 
     protected IlluminaFlowcell(String label, FlowcellType flowcellType) {
         super(label);
@@ -173,4 +178,31 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
         return flowcellType;
     }
 
+    /**
+     * Returns a list of the most immediate tube ancestors for each Flowcell Lane. The "distance" from this flowcell
+     * across upstream transfers is not relevant; all upstream branches are traversed until either a tube is found or
+     * the branch ends.
+     *
+     * @return all nearest tube ancestors and the lane to which they are ancestors.
+     */
+    public Map<VesselPosition, LabVessel> getNearestTubeAncestorsForLanes() {
+
+        Map<VesselPosition, LabVessel> vesselsWithPositions = new HashMap<>();
+
+        Iterator<String> positionNames = getVesselGeometry().getPositionNames();
+        while (positionNames.hasNext()) {
+            String positionName = positionNames.next();
+            VesselPosition vesselPosition = VesselPosition.getByName(positionName);
+
+            TransferTraverserCriteria.NearestTubeAncestorCriteria
+                    criteria = new TransferTraverserCriteria.NearestTubeAncestorCriteria();
+
+            vesselContainer.evaluateCriteria(vesselPosition, criteria,
+                    TransferTraverserCriteria.TraversalDirection.Ancestors, null, 0);
+
+            vesselsWithPositions.put(vesselPosition,criteria.getTube());
+        }
+
+        return vesselsWithPositions;
+    }
 }

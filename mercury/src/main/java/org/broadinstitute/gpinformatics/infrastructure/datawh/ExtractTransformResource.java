@@ -6,9 +6,12 @@ import org.broadinstitute.gpinformatics.infrastructure.datawh.LabEventEtl.EventF
 import org.broadinstitute.gpinformatics.infrastructure.datawh.SequencingSampleFactEtl.SequencingRunDto;
 
 import javax.inject.Inject;
-import javax.ws.rs.*;
+import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
-import java.util.*;
 
 /**
  * Web service resource used to invoke ETL methods.
@@ -17,7 +20,6 @@ import java.util.*;
 @Path("etl")
 public class ExtractTransformResource {
     private ExtractTransform extractTransform;
-    private final static String NULLS_LAST = "zzzzzzzzzz";
 
     public ExtractTransformResource() {
     }

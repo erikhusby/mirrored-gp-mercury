@@ -10,8 +10,35 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
-import javax.persistence.*;
-import java.util.*;
+import javax.annotation.Nullable;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+import javax.persistence.UniqueConstraint;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 /**
  * The batch of work, as tracked by a person
@@ -34,12 +61,14 @@ public class LabBatch {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_LAB_BATCH")
     private Long labBatchId;
 
-    /** Vessels in the batch that are not reworks. */
+    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "labBatch")
+    private Set<LabBatchStartingVessel> startingBatchLabVessels = new HashSet<>();
+
+    @Deprecated
     @ManyToMany(cascade = CascadeType.PERSIST)
     // have to specify name, generated aud name is too long for Oracle
-    @JoinTable(schema = "mercury", name = "lb_starting_lab_vessels", joinColumns = @JoinColumn(name = "lab_batch"),
-            inverseJoinColumns = @JoinColumn(name = "starting_lab_vessels"))
-    private Set<LabVessel> startingLabVessels = new HashSet<LabVessel>();
+    @JoinTable(schema = "mercury", name = "lb_starting_lab_vessels")
+    private Set<LabVessel> startingLabVessels = new HashSet<>();
 
     private boolean isActive = true;
 
@@ -52,7 +81,9 @@ public class LabBatch {
     @OneToMany(mappedBy = "labBatch")
     private Set<LabEvent> labEvents = new LinkedHashSet<LabEvent>();
 
-    /** Vessels in the batch that were added as rework from a previous batch. */
+    /**
+     * Vessels in the batch that were added as rework from a previous batch.
+     */
     @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(name = "lab_batch_reworks", joinColumns = @JoinColumn(name = "lab_batch"),
             inverseJoinColumns = @JoinColumn(name = "reworks"))
@@ -64,23 +95,35 @@ public class LabBatch {
 
     private String workflowName;
 
+
     /**
      * needed for fix-up test
-     *
      */
     protected void setLabBatchType(LabBatchType labBatchType) {
         this.labBatchType = labBatchType;
     }
 
     public enum LabBatchType {
-        /** A batch created as part of workflow, e.g. an LCSET */
+        /**
+         * A batch created as part of workflow, e.g. an LCSET
+         */
         WORKFLOW,
-        /** A batch created in BSP, typically named BP-1234 */
+        /**
+         * A batch created in BSP, typically named BP-1234
+         */
         BSP,
-        /** Receipt of samples into BSP, from external collaborators, typically named SK-1234 for sample kit */
+        /**
+         * Receipt of samples into BSP, from external collaborators, typically named SK-1234 for sample kit
+         */
         SAMPLES_RECEIPT,
-        /** Import of BSP samples into Mercury */
-        SAMPLES_IMPORT
+        /**
+         * Import of BSP samples into Mercury
+         */
+        SAMPLES_IMPORT,
+        /**
+         * Flowcell Tracking batch (FCT)
+         */
+        FCT
     }
 
     @Enumerated(EnumType.STRING)
@@ -99,34 +142,24 @@ public class LabBatch {
     @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "labBatch")
     private Set<BucketEntry> bucketEntries = new HashSet<BucketEntry>();
 
-    /**
-     * Create a new batch with the given name
-     * and set of @link Starter starting materials
-     *
-     * @param starters
-     */
-    public LabBatch(String batchName, Set<LabVessel> starters, LabBatchType labBatchType) {
-        if (batchName == null) {
-            throw new NullPointerException("BatchName cannot be null");
-        }
-        if (starters == null) {
-            throw new NullPointerException("starters cannot be null");
-        }
-        if(labBatchType == null) {
-            throw new NullPointerException("labBatchType cannot be null");
-        }
+    public LabBatch(String batchName, Set<LabVessel> starterVessels, LabBatchType labBatchType) {
+        this(batchName, starterVessels, labBatchType, null);
+    }
+
+    public LabBatch(@Nonnull String batchName, @Nonnull Set<LabVessel> starterVessels,
+                    @Nonnull LabBatchType labBatchType, @Nullable Float concentration) {
         this.batchName = batchName;
         this.labBatchType = labBatchType;
-        for (LabVessel starter : starters) {
-            addLabVessel(starter);
+        for (LabVessel starter : starterVessels) {
+            addLabVessel(starter, concentration);
         }
         createdOn = new Date();
     }
 
-    public LabBatch(String batchName, Set<LabVessel> startingLabVessels, LabBatchType labBatchType,
-            String batchDescription, Date dueDate, String important) {
+    public LabBatch(String batchName, Set<LabVessel> startingBatchLabVessels, LabBatchType labBatchType,
+                    String batchDescription, Date dueDate, String important) {
 
-        this(batchName, startingLabVessels, labBatchType);
+        this(batchName, startingBatchLabVessels, labBatchType);
         this.batchDescription = batchDescription;
         this.dueDate = dueDate;
         this.important = important;
@@ -135,6 +168,7 @@ public class LabBatch {
 
     /**
      * Adds the given rework vessels to the list of reworks for the batch.
+     *
      * @param newRework
      */
     public void addReworks(Collection<LabVessel> newRework) {
@@ -156,26 +190,29 @@ public class LabBatch {
      *
      * @return the vessels in the batch
      */
-    public Set<LabVessel> getStartingLabVessels() {
-        Set<LabVessel> allStartingLabVessels = new HashSet<>(startingLabVessels);
+    public Set<LabVessel> getStartingBatchLabVessels() {
+        Set<LabVessel> allStartingLabVessels = new HashSet<>();
+        allStartingLabVessels.addAll(getNonReworkStartingLabVessels());
         allStartingLabVessels.addAll(reworks);
         return allStartingLabVessels;
     }
 
     public Set<LabVessel> getNonReworkStartingLabVessels() {
-        return startingLabVessels;
-    }
-
-    public List<LabVessel> getStartingLabVesselsList() {
-        return new ArrayList<>(getStartingLabVessels());
+        Set<LabVessel> staringBatchVessels = new HashSet<>();
+        for (LabBatchStartingVessel batchStartingVessel : startingBatchLabVessels) {
+            staringBatchVessels.add(batchStartingVessel.getLabVessel());
+        }
+        return staringBatchVessels;
     }
 
     public void addLabVessel(@Nonnull LabVessel labVessel) {
-        if (labVessel == null) {
-            throw new NullPointerException("vessel cannot be null.");
-        }
-        startingLabVessels.add(labVessel);
-        labVessel.addNonReworkLabBatch(this);
+        addLabVessel(labVessel, null);
+    }
+
+    public void addLabVessel(@Nonnull LabVessel labVessel, @Nullable Float concentration) {
+        LabBatchStartingVessel labBatchStartingVessel = new LabBatchStartingVessel(labVessel, this, concentration);
+        startingBatchLabVessels.add(labBatchStartingVessel);
+        labVessel.addNonReworkLabBatchStartingVessel(labBatchStartingVessel);
     }
 
     public void addLabVessels(@Nonnull Collection<LabVessel> vessels) {
@@ -203,6 +240,13 @@ public class LabBatch {
         batchName = this.jiraTicket.getTicketName();
     }
 
+    public Set<LabVessel> getStartingLabVessels() {
+        return startingLabVessels;
+    }
+
+    public void setStartingLabVessels(Set<LabVessel> oldStartingLabVessels) {
+        this.startingLabVessels = oldStartingLabVessels;
+    }
 
     public JiraTicket getJiraTicket() {
         return jiraTicket;
@@ -295,6 +339,7 @@ public class LabBatch {
      *
      * @param workflowName
      * @param pdoNames
+     *
      * @return
      */
     public static String generateBatchName(@Nonnull String workflowName, @Nonnull Collection<String> pdoNames) {
@@ -327,6 +372,7 @@ public class LabBatch {
     public LabBatchType getLabBatchType() {
         return labBatchType;
     }
+
     /**
      * RequiredSubmissionFields is an enum intended to assist in the creation of a Jira ticket
      * for Product orders
@@ -342,7 +388,7 @@ public class LabBatch {
 
         //User comments at batch creation (Post Dec 1 addition)
         IMPORTANT("Important", true),
-
+        DESCRIPTION("Description", true),
         // ??
         NUMBER_OF_CONTROLS("Number of Controls", true),
         NUMBER_OF_SAMPLES("Number of Samples", true),
@@ -357,6 +403,7 @@ public class LabBatch {
         GSSR_IDS("GSSR ID(s)", true),
 
         LIMS_ACTIVITY_STREAM("LIMS Activity Stream", true);
+
 
         private final String fieldName;
         private final boolean customField;
@@ -374,7 +421,7 @@ public class LabBatch {
     }
 
     public LabVessel[] getStartingVesselsArray() {
-        return startingLabVessels.toArray(new LabVessel[startingLabVessels.size()]);
+        return startingBatchLabVessels.toArray(new LabVessel[startingBatchLabVessels.size()]);
     }
 
     public Set<BucketEntry> getBucketEntries() {
@@ -417,18 +464,19 @@ public class LabBatch {
 
     /**
      * Helper method to determine if a batch applies to a group of lab vessels
-     *
+     * <p/>
      * Typically called by looping through the nearest batches of one of the vessels in the vessel group
      *
      * @param targetBatch
      * @param batchSet
+     *
      * @return
      */
     public static boolean isCommonBatch(LabBatch targetBatch, Collection<LabVessel> batchSet) {
 
         boolean result = false;
 
-        if (targetBatch.getStartingLabVessels().containsAll(batchSet)) {
+        if (targetBatch.getStartingBatchLabVessels().containsAll(batchSet)) {
             result = true;
         }
 

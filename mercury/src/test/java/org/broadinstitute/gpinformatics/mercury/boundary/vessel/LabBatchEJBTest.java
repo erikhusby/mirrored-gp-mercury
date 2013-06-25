@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
-import org.testng.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
@@ -13,7 +12,10 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.*;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
+import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -56,9 +58,9 @@ public class LabBatchEJBTest extends ContainerTest {
     private BucketDao bucketDao;
 
     private LinkedHashMap<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
-    private String            workflowName;
+    private String workflowName;
     private ArrayList<String> pdoNames;
-    private String            scottmat;
+    private String scottmat;
     private Bucket bucket;
 
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
@@ -72,7 +74,7 @@ public class LabBatchEJBTest extends ContainerTest {
 
         bucket = bucketDao.findByName(BUCKET_NAME);
 
-        if(bucket == null) {
+        if (bucket == null) {
             bucket = new Bucket(new WorkflowBucketDef(BUCKET_NAME));
             bucketDao.persist(bucket);
             bucketDao.flush();
@@ -116,7 +118,8 @@ public class LabBatchEJBTest extends ContainerTest {
     public void testCreateLabBatch() throws Exception {
 
         LabBatch testBatch =
-                labBatchEJB.createLabBatch(new HashSet<LabVessel>(mapBarcodeToTube.values()), scottmat, "LCSET-123");
+                labBatchEJB.createLabBatch(new HashSet<LabVessel>(mapBarcodeToTube.values()), scottmat, "LCSET-123",
+                        LabBatch.LabBatchType.WORKFLOW, CreateFields.IssueType.EXOME_EXPRESS);
 
         final String batchName = testBatch.getBatchName();
 
@@ -128,8 +131,8 @@ public class LabBatchEJBTest extends ContainerTest {
         Assert.assertNotNull(testFind);
         Assert.assertNotNull(testFind.getJiraTicket());
         Assert.assertNotNull(testFind.getJiraTicket().getTicketName());
-        Assert.assertNotNull(testFind.getStartingLabVessels());
-        Assert.assertEquals(6, testFind.getStartingLabVessels().size());
+        Assert.assertNotNull(testFind.getStartingBatchLabVessels());
+        Assert.assertEquals(6, testFind.getStartingBatchLabVessels().size());
         Assert.assertEquals(testFind.getBatchName(), testFind.getJiraTicket().getTicketName());
     }
 
@@ -152,12 +155,12 @@ public class LabBatchEJBTest extends ContainerTest {
 
         String futureDate = dFormatter.format(future);
 
-        LabBatch batchInput =new LabBatch(batchName,new HashSet<LabVessel>(mapBarcodeToTube.values()),
+        LabBatch batchInput = new LabBatch(batchName, new HashSet<LabVessel>(mapBarcodeToTube.values()),
                 LabBatch.LabBatchType.WORKFLOW);
         batchInput.setBatchDescription(description);
         batchInput.setDueDate(future);
 
-        labBatchEJB.createLabBatch(batchInput, scottmat);
+        labBatchEJB.createLabBatch(batchInput, scottmat, CreateFields.IssueType.EXOME_EXPRESS);
 
         batchName = batchInput.getBatchName();
 
@@ -169,8 +172,8 @@ public class LabBatchEJBTest extends ContainerTest {
         Assert.assertNotNull(testFind);
         Assert.assertNotNull(testFind.getJiraTicket());
         Assert.assertNotNull(testFind.getJiraTicket().getTicketName());
-        Assert.assertNotNull(testFind.getStartingLabVessels());
-        Assert.assertEquals(6, testFind.getStartingLabVessels().size());
+        Assert.assertNotNull(testFind.getStartingBatchLabVessels());
+        Assert.assertEquals(6, testFind.getStartingBatchLabVessels().size());
         Assert.assertEquals(testFind.getBatchName(), testFind.getJiraTicket().getTicketName());
     }
 
@@ -178,21 +181,28 @@ public class LabBatchEJBTest extends ContainerTest {
     public void testCreateLabBatchAndRemoveFromBucket() {
         putTubesInBucket();
 
+        HashSet<LabVessel> starters = new HashSet<LabVessel>(mapBarcodeToTube.values());
         LabBatch batch = new LabBatch("LabBatchEJBTest.testCreateLabBatchAndRemoveFromBucket",
-                new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
+                starters, LabBatch.LabBatchType.WORKFLOW);
         LabBatch savedBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(batch, scottmat, BUCKET_NAME,
-                LabEvent.UI_EVENT_LOCATION);
+                LabEvent.UI_EVENT_LOCATION, CreateFields.IssueType.EXOME_EXPRESS);
+
+        //link the JIRA tickets for the batch created to the pdo batches.
+        for (String pdoKey : LabVessel.extractPdoKeyList(starters)) {
+            labBatchEJB.linkJiraBatchToTicket(pdoKey, savedBatch);
+        }
 
         labBatchDAO.flush();
         labBatchDAO.clear();
         bucket = bucketDao.findByName(BUCKET_NAME);
 
-        String expectedTicketId = CreateFields.ProjectType.LCSET_PROJECT.getKeyPrefix() + JiraServiceStub.getCreatedIssueSuffix();
+        String expectedTicketId =
+                CreateFields.ProjectType.LCSET_PROJECT.getKeyPrefix() + JiraServiceStub.getCreatedIssueSuffix();
         Assert.assertEquals(expectedTicketId, savedBatch.getBatchName());
         savedBatch = labBatchDAO.findByName(expectedTicketId);
 
         Assert.assertEquals(expectedTicketId, savedBatch.getJiraTicket().getTicketName());
-        Assert.assertEquals(6, savedBatch.getStartingLabVessels().size());
+        Assert.assertEquals(6, savedBatch.getStartingBatchLabVessels().size());
         for (TwoDBarcodedTube tube : mapBarcodeToTube.values()) {
             Assert.assertTrue(bucket.findEntry(tube) == null);
         }
@@ -203,8 +213,10 @@ public class LabBatchEJBTest extends ContainerTest {
         putTubesInBucket();
 
         String expectedTicketId = "testCreateLabBatchAndRemoveFromBucketExistingTicket";
-        LabBatch savedBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(new ArrayList<String>(mapBarcodeToTube.keySet()), scottmat,
-                expectedTicketId, BUCKET_NAME, LabEvent.UI_EVENT_LOCATION);
+        LabBatch savedBatch = labBatchEJB
+                .createLabBatchAndRemoveFromBucket(new ArrayList<>(mapBarcodeToTube.keySet()), scottmat,
+                        expectedTicketId, BUCKET_NAME, LabEvent.UI_EVENT_LOCATION, LabBatch.LabBatchType.WORKFLOW,
+                        CreateFields.IssueType.EXOME_EXPRESS);
 
         labBatchDAO.flush();
         labBatchDAO.clear();
@@ -214,7 +226,7 @@ public class LabBatchEJBTest extends ContainerTest {
         savedBatch = labBatchDAO.findByName(expectedTicketId);
 
         Assert.assertEquals(expectedTicketId, savedBatch.getJiraTicket().getTicketName());
-        Assert.assertEquals(6, savedBatch.getStartingLabVessels().size());
+        Assert.assertEquals(6, savedBatch.getStartingBatchLabVessels().size());
         for (TwoDBarcodedTube tube : mapBarcodeToTube.values()) {
             Assert.assertTrue(bucket.findEntry(tube) == null);
         }

@@ -1,10 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
@@ -15,7 +15,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EX
 /**
  * Validate that the traverser finds events correctly
  */
-public class TransferTraverserTest extends ContainerTest{
+public class TransferTraverserTest extends ContainerTest {
     @Inject
     private JiraTicketDao jiraTicketDao;
 
@@ -47,7 +47,7 @@ public class TransferTraverserTest extends ContainerTest{
 
     private void printJiraTicket(JiraTicket jiraTicket) {
         LabBatch labBatch = jiraTicket.getLabBatch();
-        LabVessel labVessel = labBatch.getStartingLabVessels().iterator().next();
+        LabVessel labVessel = labBatch.getStartingBatchLabVessels().iterator().next();
 
         // either the starter is a bsp sample, in which case we need to get the aliquot
 //        if (OrmUtil.proxySafeIsInstance(starter,Starter.class)) {

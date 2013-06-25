@@ -171,7 +171,7 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
 
         ProductOrderListEntry productOrderListEntry = sanityCheckAndGetTestOrderListEntry();
 
-        Assert.assertTrue(productOrderListEntry.isReadyForBilling());
+        Assert.assertFalse(productOrderListEntry.isReadyForBilling());
         Assert.assertEquals(productOrderListEntry.getBillingSessionBusinessKey(), billingSession.getBusinessKey());
 
     }

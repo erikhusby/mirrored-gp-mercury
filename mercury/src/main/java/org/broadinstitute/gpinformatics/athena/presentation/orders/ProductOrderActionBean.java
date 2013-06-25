@@ -519,7 +519,10 @@ public class ProductOrderActionBean extends CoreActionBean {
             orderListEntryDao.findProductOrderListEntries(
                 productFamilyId, productTokenInput.getBusinessKeyList(), selectedStatuses, getDateRange(),
                 owner.getOwnerIds(), selectedLedgerStatuses);
-        progressFetcher.loadProgress(productOrderDao);
+
+
+        progressFetcher.loadProgress(
+                productOrderDao, ProductOrderListEntry.getBusinessKeyList(displayedProductOrderListEntries));
 
         // Get the sorted family list.
         productFamilies = productFamilyDao.findAll();

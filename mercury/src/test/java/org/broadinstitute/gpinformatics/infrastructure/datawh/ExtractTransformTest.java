@@ -12,7 +12,6 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.RevInfo;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.hibernate.SQLQuery;
@@ -20,6 +19,7 @@ import org.hibernate.type.LongType;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -36,10 +36,6 @@ import java.util.Date;
 import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
 
 /**
  * Container test of ExtractTransform.
@@ -89,75 +85,63 @@ public class ExtractTransformTest extends Arquillian {
         final String datFileEnding = "_lab_vessel.dat";
 
         // Writes and commits an entity to the db.  Envers requires the transaction to commit.
-        long startSec = System.currentTimeMillis() / MSEC_IN_SEC;
-        assertNotNull(utx);
+        final long startSec = System.currentTimeMillis() / MSEC_IN_SEC;
+        final long startMSec = startSec * MSEC_IN_SEC;
+        final String startEtl = ExtractTransform.secTimestampFormat.format(new Date(startMSec));
+        Assert.assertNotNull(utx);
         utx.begin();
         labVesselDao.persist(labVessel);
         labVesselDao.flush();
         utx.commit();
 
-        // Incremental etl won't pick up entities in the current second.
+        // Wait since incremental etl won't pick up entities in the current second.
         Thread.sleep(MSEC_IN_SEC);
 
         ExtractTransform.writeLastEtlRun(startSec);
+        // Runs incremental etl from last_etl_run (i.e. startSec) to now.
         int recordCount = extractTransform.incrementalEtl("0", "0");
-        long endEtlSec = ExtractTransform.readLastEtlRun();
-        assertTrue(recordCount > 0);
+        final long endEtlMSec = ExtractTransform.readLastEtlRun() * MSEC_IN_SEC;
+        Assert.assertTrue(recordCount > 0);
 
         // Gets the entity.
         LabVessel entity = labVesselDao.findByIdentifier(barcode);
-        assertNotNull(entity);
-        long entityId = entity.getLabVesselId();
+        Assert.assertNotNull(entity);
+        final long entityId = entity.getLabVesselId();
 
         // Finds the entity in a data file (may be more than one data file if another commit
         // hit in the small time window between startMsec and the incrementalEtl start).
-        boolean found = searchEtlFile(startSec * MSEC_IN_SEC, endEtlSec * MSEC_IN_SEC, datFileEnding, "F", entityId);
-        assertTrue(found);
-
-        // Deletes the etl files.
+        boolean found = searchEtlFile(datafileDir, datFileEnding, "F", entityId);
+        Assert.assertTrue(found);
         EtlTestUtilities.deleteEtlFiles(datafileDir);
 
-        // Runs a limited time span incremental etl that covers the entity created above.
-        String startEtl = ExtractTransform.secTimestampFormat.format(new Date(startSec * MSEC_IN_SEC));
-        String endEtl = ExtractTransform.secTimestampFormat.format(new Date(endEtlSec  * MSEC_IN_SEC));
-        recordCount = extractTransform.incrementalEtl(startEtl, endEtl);
-        assertTrue(recordCount > 0);
-        found = searchEtlFile(startSec * MSEC_IN_SEC, endEtlSec * MSEC_IN_SEC, datFileEnding, "F", entityId);
-        assertTrue(found);
-        // Deletes the etl files.
+        // Runs an incremental etl that starts after the entity was created.
+        // Entity create should not be in the etl file, if any was created.
+        String endEtl = ExtractTransform.secTimestampFormat.format(new Date(endEtlMSec));
+        extractTransform.incrementalEtl(endEtl, "0");
+        Assert.assertFalse(searchEtlFile(datafileDir, datFileEnding, "F", entityId));
         EtlTestUtilities.deleteEtlFiles(datafileDir);
 
         // Runs backfill ETL on a range of entity ids that includes the known entity id.
-        long startMsec = System.currentTimeMillis();
-        Response.Status status = extractTransform.backfillEtl(LabVessel.class.getName(), entityId, entityId);
-        assertEquals(status, Response.Status.NO_CONTENT);
-        long endMsec = System.currentTimeMillis();
-
         // Checks that the new data file contains the known entity id.
-        found = searchEtlFile(startMsec, endMsec, datFileEnding, "F", entityId);
-        assertTrue(found);
 
-        // Deletes the etl files.
+        Response.Status status = extractTransform.backfillEtl(LabVessel.class.getName(), entityId, entityId);
+        Assert.assertEquals(status, Response.Status.NO_CONTENT);
+        Assert.assertTrue(searchEtlFile(datafileDir, datFileEnding, "F", entityId));
         EtlTestUtilities.deleteEtlFiles(datafileDir);
 
         // Deletes the entity.
-        startSec = System.currentTimeMillis() / MSEC_IN_SEC;
         utx.begin();
         labVesselDao.remove(entity);
         labVesselDao.flush();
         utx.commit();
         Thread.sleep(MSEC_IN_SEC);
 
-        ExtractTransform.writeLastEtlRun(startSec);
-        recordCount = extractTransform.incrementalEtl("0", "0");
-        endEtlSec = ExtractTransform.readLastEtlRun();
-        assertTrue(recordCount > 0);
-
-        // Finds the deletion entity in a data file (may be more than one data file if another commit
-        // hit in the small time window between startMsec and the incrementalEtl start).
-        found = searchEtlFile(startSec * MSEC_IN_SEC, endEtlSec * MSEC_IN_SEC, datFileEnding, "T", entityId);
-        assertTrue(found);
-
+        // Incremental etl should pick up the delete and not the earlier create.
+        recordCount = extractTransform.incrementalEtl(startEtl, "0");
+        Assert.assertTrue(recordCount > 0);
+        Assert.assertFalse(searchEtlFile(datafileDir, datFileEnding, "F", entityId));
+        Assert.assertTrue(searchEtlFile(datafileDir, datFileEnding, "T", entityId));
+        EtlTestUtilities.deleteEtlFiles(datafileDir);
     }
 
     // Returns existing riskItemId and its productOrderSampleId.  Set deleted=true for a deleted risk item.
@@ -198,8 +182,7 @@ public class ExtractTransformTest extends Arquillian {
                 .addScalar("id2", LongType.INSTANCE)
                 .addScalar("rev", LongType.INSTANCE);
         Object[] obj = (Object[])query.getSingleResult();
-        Long[] ids = new Long[]{(Long)obj[0], (Long)obj[1], (Long)obj[2]};
-        return ids;
+        return new Long[]{(Long)obj[0], (Long)obj[1], (Long)obj[2]};
     }
 
     @Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION)
@@ -211,31 +194,27 @@ public class ExtractTransformTest extends Arquillian {
         }
 
         // Tests backfill etl.
-        long startMsec = System.currentTimeMillis();
         long entityId = ids[0];
         long pdoSampleId = ids[1];
         Response.Status status = extractTransform.backfillEtl(RiskItem.class.getName(), entityId, entityId);
-        assertEquals(status, Response.Status.NO_CONTENT);
-        long endMsec = System.currentTimeMillis();
+        Assert.assertEquals(status, Response.Status.NO_CONTENT);
 
         final String datFileEnding = "_product_order_sample_risk.dat";
-        assertTrue(searchEtlFile(startMsec, endMsec, datFileEnding, "F", pdoSampleId));
-
+        Assert.assertTrue(searchEtlFile(datafileDir, datFileEnding, "F", pdoSampleId));
         EtlTestUtilities.deleteEtlFiles(datafileDir);
-        assertFalse(searchEtlFile(startMsec, endMsec, datFileEnding, "F", pdoSampleId));
 
         // Test incremental etl.
         long rev = ids[2];
         RevInfo revInfo = auditReaderDao.findById(RevInfo.class, rev);
         // Brackets the change with interval on whole second boundaries.
         String startEtl = ExtractTransform.secTimestampFormat.format(revInfo.getRevDate());
-        startMsec = ExtractTransform.secTimestampFormat.parse(startEtl).getTime();
-        endMsec = startMsec + MSEC_IN_SEC;
+        long startMsec = ExtractTransform.secTimestampFormat.parse(startEtl).getTime();
+        long endMsec = startMsec + MSEC_IN_SEC;
         String endEtl = ExtractTransform.secTimestampFormat.format(new Date(endMsec));
         int recordCount = extractTransform.incrementalEtl(startEtl, endEtl);
-        assertTrue(recordCount > 0);
+        Assert.assertTrue(recordCount > 0);
         // Filename is "back dated".
-        assertTrue(searchEtlFile(startMsec, endMsec, datFileEnding, "F", pdoSampleId));
+        Assert.assertTrue(searchEtlFile(datafileDir, datFileEnding, "F", pdoSampleId));
     }
 
     @Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION)
@@ -245,7 +224,7 @@ public class ExtractTransformTest extends Arquillian {
             logger.info("Skipping test, cannot find deleted product order risk");
             return;
         }
-        long entityId = ids[0];
+        // entityId = ids[0];
         long pdoSampleId = ids[1];
         long rev = ids[2];
         RevInfo revInfo = auditReaderDao.findById(RevInfo.class, rev);
@@ -255,10 +234,10 @@ public class ExtractTransformTest extends Arquillian {
         long endMsec = startMsec + MSEC_IN_SEC;
         String endEtl = ExtractTransform.secTimestampFormat.format(new Date(endMsec));
         int recordCount = extractTransform.incrementalEtl(startEtl, endEtl);
-        assertTrue(recordCount > 0);
+        Assert.assertTrue(recordCount > 0);
 
         final String datFileEnding = "_product_order_sample_risk.dat";
-        assertTrue(searchEtlFile(startMsec, endMsec, datFileEnding, "T", pdoSampleId));
+        Assert.assertTrue(searchEtlFile(datafileDir, datFileEnding, "T", pdoSampleId));
     }
 
 
@@ -271,31 +250,29 @@ public class ExtractTransformTest extends Arquillian {
         }
 
         // Tests backfill etl.
-        long startMsec = System.currentTimeMillis();
         long entityId = ids[0];
         long pdoSampleId = ids[1];
         Response.Status status = extractTransform.backfillEtl(LedgerEntry.class.getName(), entityId, entityId);
-        assertEquals(status, Response.Status.NO_CONTENT);
-        long endMsec = System.currentTimeMillis();
+        Assert.assertEquals(status, Response.Status.NO_CONTENT);
 
         final String datFileEnding = "product_order_sample_bill.dat";
-        assertTrue(searchEtlFile(startMsec, endMsec, datFileEnding, "F", pdoSampleId));
+        Assert.assertTrue(searchEtlFile(datafileDir, datFileEnding, "F", pdoSampleId));
 
         EtlTestUtilities.deleteEtlFiles(datafileDir);
-        assertFalse(searchEtlFile(startMsec, endMsec, datFileEnding, "F", pdoSampleId));
+        Assert.assertFalse(searchEtlFile(datafileDir, datFileEnding, "F", pdoSampleId));
 
         // Test incremental etl.
         long rev = ids[2];
         RevInfo revInfo = auditReaderDao.findById(RevInfo.class, rev);
         // Brackets the change with interval on whole second boundaries.
         String startEtl = ExtractTransform.secTimestampFormat.format(revInfo.getRevDate());
-        startMsec = ExtractTransform.secTimestampFormat.parse(startEtl).getTime();
-        endMsec = startMsec + MSEC_IN_SEC;
+        long startMsec = ExtractTransform.secTimestampFormat.parse(startEtl).getTime();
+        long endMsec = startMsec + MSEC_IN_SEC;
         String endEtl = ExtractTransform.secTimestampFormat.format(new Date(endMsec));
         int recordCount = extractTransform.incrementalEtl(startEtl, endEtl);
-        assertTrue(recordCount > 0);
+        Assert.assertTrue(recordCount > 0);
         // Filename is "back dated".
-        assertTrue(searchEtlFile(startMsec, endMsec, datFileEnding, "F", pdoSampleId));
+        Assert.assertTrue(searchEtlFile(datafileDir, datFileEnding, "F", pdoSampleId));
     }
 
     @Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION)
@@ -305,7 +282,7 @@ public class ExtractTransformTest extends Arquillian {
             logger.info("Skipping test, cannot find deleted product order ledger entry");
             return;
         }
-        long entityId = ids[0];
+        // entityId = ids[0];
         long pdoSampleId = ids[1];
         long rev = ids[2];
         RevInfo revInfo = auditReaderDao.findById(RevInfo.class, rev);
@@ -315,10 +292,10 @@ public class ExtractTransformTest extends Arquillian {
         long endMsec = startMsec + MSEC_IN_SEC;
         String endEtl = ExtractTransform.secTimestampFormat.format(new Date(endMsec));
         int recordCount = extractTransform.incrementalEtl(startEtl, endEtl);
-        assertTrue(recordCount > 0);
+        Assert.assertTrue(recordCount > 0);
 
         final String datFileEnding = "_product_order_sample_bill.dat";
-        assertTrue(searchEtlFile(startMsec, endMsec, datFileEnding, "T", pdoSampleId));
+        Assert.assertTrue(searchEtlFile(datafileDir, datFileEnding, "T", pdoSampleId));
     }
 
 
@@ -326,10 +303,10 @@ public class ExtractTransformTest extends Arquillian {
      * Looks for etl files having name timestamps in the given range, then searches them for a record having
      * the given isDelete and entityId values.
      */
-    private boolean searchEtlFile(long startMsec, long endMsec, String datFileEnding, String isDelete, long entityId)
+    public static boolean searchEtlFile(String datafileDir, String datFileEnding, String isDelete, long entityId)
             throws IOException {
 
-        for (File file : EtlTestUtilities.getDirFiles(datafileDir, startMsec, endMsec)) {
+        for (File file : EtlTestUtilities.getEtlFiles(datafileDir)) {
             if (file.getName().endsWith(datFileEnding)) {
                 Reader reader = new FileReader(file);
                 List<String> lines = IOUtils.readLines(reader);

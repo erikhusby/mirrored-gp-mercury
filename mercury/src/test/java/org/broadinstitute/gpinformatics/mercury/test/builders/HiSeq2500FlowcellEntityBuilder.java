@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.presentation.transfervis.TransferVisualizerFrame;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.testng.Assert;
 
@@ -94,6 +95,16 @@ public class HiSeq2500FlowcellEntityBuilder {
         LabEvent flowcellLoadEntity = labEventFactory
                 .buildReceptacleEventDbFree(flowcellLoadJaxb, illuminaFlowcell);
         labEventHandler.processEvent(flowcellLoadEntity);
+
+        if (false) {
+            TransferVisualizerFrame transferVisualizerFrame = new TransferVisualizerFrame();
+            transferVisualizerFrame.renderVessel(denatureRack.getContainerRole().getVesselAtPosition(VesselPosition.A01));
+            try {
+                Thread.sleep(500000L);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
 
         return this;
     }

@@ -14,14 +14,19 @@ package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.transaction.UserTransaction;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -32,6 +37,29 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 public class LabBatchFixUpTest extends Arquillian {
     @Inject
     private LabBatchDAO labBatchDAO;
+    @Inject
+    private UserTransaction utx;
+
+    @BeforeMethod
+    public void setUp() throws Exception {
+        // Skip if no injections, meaning we're not running in container
+        if (utx == null) {
+            return;
+        }
+
+        utx.setTransactionTimeout(3000);
+        utx.begin();
+    }
+
+    @AfterMethod
+    public void tearDown() throws Exception {
+        // Skip if no injections, meaning we're not running in container
+        if (utx == null) {
+            return;
+        }
+
+        utx.commit();
+    }
 
     // Use (RC, "rc"), (PROD, "prod") to push the backfill to RC and production respectively.
     @Deployment
@@ -68,5 +96,21 @@ public class LabBatchFixUpTest extends Arquillian {
             labBatchDAO.persistAll(fixedBatches);
         }
 
+    }
+
+    @Test(enabled = false)
+    public void updateStartingLabBatches() {
+        List<LabBatch> allBatches = labBatchDAO.findAll(LabBatch.class);
+        List<LabBatch> fixedBatches = new ArrayList<>(allBatches.size());
+        for (LabBatch batch : allBatches) {
+            Set<LabVessel> oldVessels = batch.getStartingLabVessels();
+            for (LabVessel vessel : oldVessels) {
+                batch.addLabVessel(vessel);
+            }
+            fixedBatches.add(batch);
+        }
+        if (!fixedBatches.isEmpty()) {
+            labBatchDAO.persistAll(fixedBatches);
+        }
     }
 }

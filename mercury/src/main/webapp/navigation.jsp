@@ -57,8 +57,8 @@
                         <li class="divider"></li>
                         <li>
                             <stripes:link
-                                beanclass="org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean"
-                                tabindex="=1" event="list">Billing Sessions</stripes:link>
+                                    beanclass="org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean"
+                                    tabindex="=1" event="list">Billing Sessions</stripes:link>
                         </li>
                     </security:authorizeBlock>
                 </ul>
@@ -104,6 +104,11 @@
                             <stripes:link id="linkDenatureToRB"
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.LinkDenatureTubeToReagentBlockActionBean"
                                           event="view">Link Denature Tube to Reagent Block</stripes:link>
+                        </li>
+                        <li>
+                            <stripes:link id="createFCT"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.CreateFCTActionBean"
+                                          event="view">Create FCT Ticket</stripes:link>
                         </li>
                         <security:authorizeBlock roles="<%= roles(Developer) %>">
                             <li>

@@ -109,7 +109,7 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
 
 
     @Embedded
-    private VesselContainer<PlateWell> vesselContainer = new VesselContainer<PlateWell>(this);
+    private VesselContainer<PlateWell> vesselContainer = new VesselContainer<>(this);
 
     @Enumerated(EnumType.STRING)
     private PlateType plateType;
@@ -191,10 +191,15 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
      */
     public Map<VesselPosition, Boolean> getHasRackContentByWell() {
         HasRackContentByWellCriteria criteria = new HasRackContentByWellCriteria();
-        applyCriteriaToAllWells(criteria);
+        vesselContainer.applyCriteriaToAllPositions(criteria);
         return criteria.getResult();
     }
 
+    /**
+     * This code does not appear to be used.  Seems to have been replaced by
+     * {@link TransferTraverserCriteria.NearestTubeAncestorsCriteria}
+     */
+    @Deprecated
     public static class NearestTubeAncestorsCriteria implements TransferTraverserCriteria {
 
         private Set<LabVessel> tubes = new HashSet<LabVessel>();
@@ -237,24 +242,12 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
      * @return all nearest tube ancestors
      */
     public List<VesselAndPosition> getNearestTubeAncestors() {
-        final List<VesselAndPosition> vesselAndPositions = new ArrayList<VesselAndPosition>();
-        Iterator<String> positionNames = plateType.getVesselGeometry().getPositionNames();
-/*
-        while (positionNames.hasNext()) {
-            String positionName = positionNames.next();
-            VesselPosition vesselPosition = VesselPosition.getByName(positionName);
-            NearestTubeAncestorsCriteria criteria = new NearestTubeAncestorsCriteria();
-            vesselContainer.evaluateCriteria(vesselPosition, criteria, Ancestors, null, 0);
-            for (LabVessel tube : criteria.getTubes()) {
-                vesselAndPositions.add(new VesselAndPosition(tube, vesselPosition));
-            }
-        }
-        return vesselAndPositions;
-*/
-        TransferTraverserCriteria.NearestTubeAncestorsCriteria
-                criteria = new TransferTraverserCriteria.NearestTubeAncestorsCriteria();
-        applyCriteriaToAllWells(criteria);
-        return new ArrayList<VesselAndPosition>(criteria.getVesselAndPositions());
+
+        /**
+         * to share the implementation with other potential container embedders, this code has been moved to Vessel
+         * Container
+         */
+        return vesselContainer.getNearestTubeAncestors();
     }
 
     /**
@@ -269,7 +262,7 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
     public List<SectionTransfer> getUpstreamPlateTransfers(int depth) {
         Set<SectionTransfer> sectionTransfers = new LinkedHashSet<SectionTransfer>();
         collectPlateTransfers(sectionTransfers, vesselContainer, depth, 1);
-        return new ArrayList<SectionTransfer>(sectionTransfers);
+        return new ArrayList<>(sectionTransfers);
     }
 
     private void collectPlateTransfers(Set<SectionTransfer> transfers, VesselContainer vesselContainer, int depth,
@@ -280,15 +273,6 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
             if (currentDepth < depth) {
                 collectPlateTransfers(transfers, sectionTransfer.getSourceVesselContainer(), depth, currentDepth + 1);
             }
-        }
-    }
-
-    private void applyCriteriaToAllWells(TransferTraverserCriteria criteria) {
-        Iterator<String> positionNames = plateType.getVesselGeometry().getPositionNames();
-        while (positionNames.hasNext()) {
-            String positionName = positionNames.next();
-            VesselPosition vesselPosition = VesselPosition.getByName(positionName);
-            vesselContainer.evaluateCriteria(vesselPosition, criteria, Ancestors, null, 0);
         }
     }
 
