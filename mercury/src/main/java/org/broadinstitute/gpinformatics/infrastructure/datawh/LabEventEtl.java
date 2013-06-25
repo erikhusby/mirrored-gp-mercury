@@ -177,7 +177,8 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         boolean isComplete;
 
         EventFactDto(LabEvent labEvent, LabVessel labVessel, String sampleInstanceIndexes, LabBatch labBatch,
-                     MercurySample sample, ProductOrder productOrder, WorkflowConfigDenorm wfDenorm, boolean isComplete) {
+                     MercurySample sample, ProductOrder productOrder, WorkflowConfigDenorm wfDenorm,
+                     boolean isComplete) {
             this.labEvent = labEvent;
             this.labVessel = labVessel;
             this.sampleInstanceIndexes = sampleInstanceIndexes;
@@ -242,7 +243,9 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
 
     }
 
-    /** Makes one or more DTOs representing Event Fact records.  DTOs may have missing values. */
+    /**
+     * Makes one or more DTOs representing Event Fact records.  DTOs may have missing values.
+     */
     public List<EventFactDto> makeEventFacts(long labEventId) {
         return makeEventFacts(dao.findById(LabEvent.class, labEventId));
     }
@@ -285,6 +288,9 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                                 if (sample != null) {
                                     for (LabBatch labBatch : si.getAllWorkflowLabBatches()) {
                                         String workflowName = labBatch.getWorkflowName();
+                                        if (StringUtils.isBlank(workflowName)) {
+                                            workflowName = pdo.getProduct().getWorkflowName();
+                                        }
                                         WorkflowConfigDenorm wfDenorm = workflowConfigLookup.lookupWorkflowConfig(
                                                 eventName, workflowName, entity.getEventDate());
 
@@ -308,13 +314,13 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                     }
                 } catch (RuntimeException e) {
                     logger.debug("Skipping ETL on labEvent " + entity.getLabEventId() +
-                            " on vessel " + vessel.getLabel(), e);
+                                 " on vessel " + vessel.getLabel(), e);
                 }
             }
         }
         Collections.sort(dtos, EventFactDto.sampleKeyComparator());
 
-        synchronized(loggingDtos) {
+        synchronized (loggingDtos) {
             loggingDtos.clear();
             loggingDtos.addAll(dtos);
         }

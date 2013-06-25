@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
-import com.sun.jersey.api.client.Client;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
@@ -18,6 +17,7 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.monitoring.HipChatMessageSender;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettalimsMessageResourceTest;
+import org.broadinstitute.gpinformatics.mercury.boundary.labevent.VesselTransferEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.rapsheet.ReworkEjbTest;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
@@ -37,7 +37,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import javax.ws.rs.core.MediaType;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -82,6 +81,9 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
 
     @Inject
     private HipChatMessageSender messageSender;
+
+    @Inject
+    private VesselTransferEjb vesselTransferEjb;
 
 
     @Inject
@@ -227,7 +229,8 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         runDao.persist(run);
 
         SolexaRunResource runResource =
-                new SolexaRunResource(runDao, illuminaSequencingRunFactory, flowcellDao, router, null, messageSender);
+                new SolexaRunResource(runDao, illuminaSequencingRunFactory, flowcellDao, vesselTransferEjb, router,
+                        null, messageSender);
 
         ReadStructureRequest readstructureResult = runResource.storeRunReadStructure(readStructure);
 

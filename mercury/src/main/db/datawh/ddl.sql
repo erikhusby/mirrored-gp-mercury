@@ -184,15 +184,17 @@ CREATE TABLE event_fact (
 );
 
 CREATE TABLE sequencing_sample_fact (
-  sequencing_sample_fact_id NUMERIC(19)   NOT NULL PRIMARY KEY,
-  flowcell_barcode          VARCHAR2(255) NOT NULL,
-  lane                      VARCHAR2(40) NOT NULL,
-  molecular_indexing_scheme VARCHAR2(255) NOT NULL,
-  sequencing_run_id         NUMERIC(19)   NOT NULL,
-  product_order_id          NUMERIC(19),
-  sample_name               VARCHAR2(40),
-  research_project_id       NUMERIC(19),
-  etl_date                  DATE          NOT NULL
+  sequencing_sample_fact_id   NUMERIC(19)   NOT NULL PRIMARY KEY,
+  flowcell_barcode            VARCHAR2(255) NOT NULL,
+  lane                        VARCHAR2(40) NOT NULL,
+  molecular_indexing_scheme   VARCHAR2(255) NOT NULL,
+  sequencing_run_id           NUMERIC(19)   NOT NULL,
+  product_order_id            NUMERIC(19),
+  sample_name                 VARCHAR2(40),
+  research_project_id         NUMERIC(19),
+  loaded_library_barcode      VARCHAR2(255),
+  loaded_library_create_date  DATE ,
+  etl_date                    DATE          NOT NULL
 );
 
 CREATE TABLE sequencing_run (
@@ -442,17 +444,19 @@ CREATE TABLE im_ledger_entry (
 );
 
 CREATE TABLE im_sequencing_sample_fact (
-  line_number               NUMERIC(9) NOT NULL,
-  etl_date                  DATE       NOT NULL,
-  is_delete                 CHAR(1)    NOT NULL,
-  sequencing_sample_fact_id NUMERIC(19),
-  flowcell_barcode          VARCHAR2(255),
-  lane                      VARCHAR2(40),
-  molecular_indexing_scheme VARCHAR2(255),
-  sequencing_run_id         NUMERIC(19),
-  product_order_id          NUMERIC(19),
-  sample_name               VARCHAR2(40),
-  research_project_id       NUMERIC(19)
+  line_number                 NUMERIC(9) NOT NULL,
+  etl_date                    DATE       NOT NULL,
+  is_delete                   CHAR(1)    NOT NULL,
+  sequencing_sample_fact_id   NUMERIC(19),
+  flowcell_barcode            VARCHAR2(255),
+  lane                        VARCHAR2(40),
+  molecular_indexing_scheme   VARCHAR2(255),
+  sequencing_run_id           NUMERIC(19),
+  product_order_id            NUMERIC(19),
+  sample_name                 VARCHAR2(40),
+  research_project_id         NUMERIC(19),
+  loaded_library_barcode      VARCHAR2(255),
+  loaded_library_create_date  DATE
 );
 
 CREATE TABLE im_sequencing_run (

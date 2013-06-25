@@ -13,5 +13,7 @@ TRAILING NULLCOLS
  molecular_indexing_scheme,
  product_order_id,
  sample_name,
- research_project_id
+ research_project_id,
+ loaded_library_barcode,
+ loaded_library_create_date DATE "YYYYMMDDHH24MISS"
 )

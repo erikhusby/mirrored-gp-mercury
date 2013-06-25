@@ -565,9 +565,9 @@ IS
         barcode = new.barcode,
         registration_date = new.registration_date,
         instrument = new.instrument,
-        etl_date = new.etl_date,
         setup_read_structure = new.setup_read_structure,
-        actual_read_structure = new.actual_read_structure
+        actual_read_structure = new.actual_read_structure,
+        etl_date = new.etl_date
       WHERE sequencing_run_id = new.sequencing_run_id;
 
       INSERT INTO sequencing_run (
@@ -576,9 +576,9 @@ IS
         barcode,
         registration_date,
         instrument,
-        etl_date,
         setup_read_structure,
-        actual_read_structure
+        actual_read_structure,
+        etl_date
       )
         SELECT
           new.sequencing_run_id,
@@ -586,9 +586,9 @@ IS
           new.barcode,
           new.registration_date,
           new.instrument,
-          new.etl_date,
           new.setup_read_structure,
-          new.actual_read_structure
+          new.actual_read_structure,
+          new.etl_date
         FROM DUAL
         WHERE NOT EXISTS(
             SELECT
@@ -1168,6 +1168,8 @@ IS
         product_order_id,
         sample_name,
         research_project_id,
+        loaded_library_barcode,
+        loaded_library_create_date,
         etl_date
       )
         SELECT
@@ -1179,6 +1181,8 @@ IS
           new.product_order_id,
           new.sample_name,
           new.research_project_id,
+          new.loaded_library_barcode,
+          new.loaded_library_create_date,
           new.etl_date
         FROM DUAL
         WHERE NOT EXISTS(

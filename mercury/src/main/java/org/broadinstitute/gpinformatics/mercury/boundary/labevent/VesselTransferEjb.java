@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 
+import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.CherryPickSourceType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
@@ -139,8 +140,27 @@ public class VesselTransferEjb {
      * @param flowcellBarcode   flowcell barcode
      * @param username          user performing action.
      * @param stationName       where the transfer occurred (UI, robot, etc)
+     * @return fully persisted labEvent
      */
     public LabEvent reagentKitToFlowcell(@Nonnull String reagentKitBarcode, @Nonnull String flowcellBarcode,
+                                         @Nonnull String username, @Nonnull String stationName) {
+        LabEvent labEvent = reagentKitToFlowcellDbFree(reagentKitBarcode, flowcellBarcode,
+                username, stationName);
+        labEventHandler.processEvent(labEvent);
+        labEventDao.persist(labEvent);
+        return labEvent;
+    }
+
+    /**
+     * Transfer contents of MiSeq Reagent Kit to a MiSeq Flowcell
+     *
+     * @param reagentKitBarcode barcode of the reagent kit
+     * @param flowcellBarcode   flowcell barcode
+     * @param username          user performing action.
+     * @param stationName       where the transfer occurred (UI, robot, etc)
+     */
+    @DaoFree
+    public LabEvent reagentKitToFlowcellDbFree(@Nonnull String reagentKitBarcode, @Nonnull String flowcellBarcode,
                                          @Nonnull String username, @Nonnull String stationName) {
         PlateCherryPickEvent transferEvent = new PlateCherryPickEvent();
         transferEvent.setEventType(LabEventType.FLOWCELL_TRANSFER.getName());
@@ -169,10 +189,7 @@ public class VesselTransferEjb {
             transferEvent.getSource().add(cherryPickSource);
         }
 
-        LabEvent event = labEventFactory.buildFromBettaLims(transferEvent);
-        labEventHandler.processEvent(event);
-        labEventDao.persist(event);
-        return event;
+        return labEventFactory.buildFromBettaLims(transferEvent);
     }
 
     public ReceptaclePlateTransferEvent buildDenatureTubeToFlowcell(String eventType, String denatureTubeBarcode,
