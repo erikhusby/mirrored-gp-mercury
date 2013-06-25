@@ -26,7 +26,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXBException;
-import java.io.StringReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -69,11 +68,11 @@ public class SampleReceiptResource {
     @Produces({MediaType.APPLICATION_XML})
     public SampleReceiptBean getByBatchName(@PathParam("batchName") String batchName) {
         LabBatch labBatch = labBatchDAO.findByName(batchName);
-        if(labBatch == null) {
+        if (labBatch == null) {
             return null;
         }
         List<ParentVesselBean> parentVesselBeans = new ArrayList<ParentVesselBean>();
-        Set<LabVessel> startingLabVessels = labBatch.getStartingLabVessels();
+        Set<LabVessel> startingLabVessels = labBatch.getStartingBatchLabVessels();
         for (LabVessel startingLabVessel : startingLabVessels) {
             parentVesselBeans.add(new ParentVesselBean(
                     startingLabVessel.getLabel(),
@@ -104,7 +103,7 @@ public class SampleReceiptResource {
         wsMessageStore.store(WsMessageStore.SAMPLE_RECEIPT_RESOURCE_TYPE, sampleReceiptBeanXml, now);
         try {
             SampleReceiptBean sampleReceiptBean =
-                marshaller.unmarshal(sampleReceiptBeanXml);
+                    marshaller.unmarshal(sampleReceiptBeanXml);
 
             return notifyOfReceipt(sampleReceiptBean);
         } catch (Exception e) {
@@ -116,19 +115,23 @@ public class SampleReceiptResource {
 
     /**
      * For samples received by BSP: find or create plastic; find or create MercurySamples; create receipt LabBatch.
+     *
      * @param sampleReceiptBean from BSP
+     *
      * @return string indicating success
      */
     public String notifyOfReceipt(SampleReceiptBean sampleReceiptBean) {
         List<ParentVesselBean> parentVesselBeans = sampleReceiptBean.getParentVesselBeans();
 
-        List<LabVessel> labVessels = labVesselFactory.buildLabVessels(parentVesselBeans, sampleReceiptBean.getReceivingUserName(),
-                sampleReceiptBean.getReceiptDate(), LabEventType.SAMPLE_RECEIPT);
+        List<LabVessel> labVessels =
+                labVesselFactory.buildLabVessels(parentVesselBeans, sampleReceiptBean.getReceivingUserName(),
+                        sampleReceiptBean.getReceiptDate(), LabEventType.SAMPLE_RECEIPT);
 
         // If the kit has already been partially registered, append a timestamp to make a unique batch name
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyyMMddHHmmssSSSS");
         LabBatch labBatch = labBatchDAO.findByName(sampleReceiptBean.getKitId());
-        String batchName = sampleReceiptBean.getKitId() + (labBatch == null ? "" : "-" + simpleDateFormat.format(new Date()));
+        String batchName =
+                sampleReceiptBean.getKitId() + (labBatch == null ? "" : "-" + simpleDateFormat.format(new Date()));
         labBatchDAO.persist(new LabBatch(batchName, new HashSet<LabVessel>(labVessels),
                 LabBatch.LabBatchType.SAMPLES_RECEIPT));
         return "Samples received: " + batchName;

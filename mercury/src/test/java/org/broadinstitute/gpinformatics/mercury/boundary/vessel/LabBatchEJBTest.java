@@ -131,8 +131,8 @@ public class LabBatchEJBTest extends ContainerTest {
         Assert.assertNotNull(testFind);
         Assert.assertNotNull(testFind.getJiraTicket());
         Assert.assertNotNull(testFind.getJiraTicket().getTicketName());
-        Assert.assertNotNull(testFind.getStartingLabVessels());
-        Assert.assertEquals(6, testFind.getStartingLabVessels().size());
+        Assert.assertNotNull(testFind.getStartingBatchLabVessels());
+        Assert.assertEquals(6, testFind.getStartingBatchLabVessels().size());
         Assert.assertEquals(testFind.getBatchName(), testFind.getJiraTicket().getTicketName());
     }
 
@@ -172,8 +172,8 @@ public class LabBatchEJBTest extends ContainerTest {
         Assert.assertNotNull(testFind);
         Assert.assertNotNull(testFind.getJiraTicket());
         Assert.assertNotNull(testFind.getJiraTicket().getTicketName());
-        Assert.assertNotNull(testFind.getStartingLabVessels());
-        Assert.assertEquals(6, testFind.getStartingLabVessels().size());
+        Assert.assertNotNull(testFind.getStartingBatchLabVessels());
+        Assert.assertEquals(6, testFind.getStartingBatchLabVessels().size());
         Assert.assertEquals(testFind.getBatchName(), testFind.getJiraTicket().getTicketName());
     }
 
@@ -202,7 +202,7 @@ public class LabBatchEJBTest extends ContainerTest {
         savedBatch = labBatchDAO.findByName(expectedTicketId);
 
         Assert.assertEquals(expectedTicketId, savedBatch.getJiraTicket().getTicketName());
-        Assert.assertEquals(6, savedBatch.getStartingLabVessels().size());
+        Assert.assertEquals(6, savedBatch.getStartingBatchLabVessels().size());
         for (TwoDBarcodedTube tube : mapBarcodeToTube.values()) {
             Assert.assertTrue(bucket.findEntry(tube) == null);
         }
@@ -226,7 +226,7 @@ public class LabBatchEJBTest extends ContainerTest {
         savedBatch = labBatchDAO.findByName(expectedTicketId);
 
         Assert.assertEquals(expectedTicketId, savedBatch.getJiraTicket().getTicketName());
-        Assert.assertEquals(6, savedBatch.getStartingLabVessels().size());
+        Assert.assertEquals(6, savedBatch.getStartingBatchLabVessels().size());
         for (TwoDBarcodedTube tube : mapBarcodeToTube.values()) {
             Assert.assertTrue(bucket.findEntry(tube) == null);
         }

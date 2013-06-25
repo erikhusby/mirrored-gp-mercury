@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
-import org.testng.Assert;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -12,12 +11,20 @@ import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Scott Matthews
@@ -49,8 +56,9 @@ public class LabBatchTest {
         List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>();
         ProductOrder productOrder = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123", new Product(
                 "Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000, 20000, 100,
-                40, null, null, true, workflowName, false, "agg type"), new ResearchProject(101L, "Test RP", "Test synopsis",
-                false));
+                40, null, null, true, workflowName, false, "agg type"),
+                new ResearchProject(101L, "Test RP", "Test synopsis",
+                        false));
         productOrder.setJiraTicketKey(pdoBusinessName);
         productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
         mapKeyToProductOrder.put(pdoBusinessName, productOrder);
@@ -83,8 +91,8 @@ public class LabBatchTest {
 
         Assert.assertNull(testBatch.getBatchName());
 
-        Assert.assertNotNull(testBatch.getStartingLabVessels());
-        Assert.assertTrue(testBatch.getStartingLabVessels().isEmpty());
+        Assert.assertNotNull(testBatch.getStartingBatchLabVessels());
+        Assert.assertTrue(testBatch.getStartingBatchLabVessels().isEmpty());
 
         Assert.assertNotNull(testBatch.getLabEvents());
         Assert.assertTrue(testBatch.getLabEvents().isEmpty());
@@ -107,8 +115,8 @@ public class LabBatchTest {
         Assert.assertNotNull(testBatch.getBatchName());
         Assert.assertEquals(workflowName + ": " + pdoBusinessName, testBatch.getBatchName());
 
-        Assert.assertNotNull(testBatch.getStartingLabVessels());
-        Assert.assertEquals(6, testBatch.getStartingLabVessels().size());
+        Assert.assertNotNull(testBatch.getStartingBatchLabVessels());
+        Assert.assertEquals(6, testBatch.getStartingBatchLabVessels().size());
 
         Assert.assertNotNull(testBatch.getLabEvents());
         Assert.assertTrue(testBatch.getLabEvents().isEmpty());

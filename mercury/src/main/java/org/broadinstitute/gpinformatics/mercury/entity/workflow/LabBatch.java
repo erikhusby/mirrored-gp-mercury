@@ -62,13 +62,13 @@ public class LabBatch {
     private Long labBatchId;
 
     @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "labBatch")
-    private Set<LabBatchStartingVessel> startingLabVessels = new HashSet<>();
+    private Set<LabBatchStartingVessel> startingBatchLabVessels = new HashSet<>();
 
     @Deprecated
     @ManyToMany(cascade = CascadeType.PERSIST)
     // have to specify name, generated aud name is too long for Oracle
     @JoinTable(schema = "mercury", name = "lb_starting_lab_vessels")
-    private Set<LabVessel> oldStartingLabVessels = new HashSet<>();
+    private Set<LabVessel> startingLabVessels = new HashSet<>();
 
     private boolean isActive = true;
 
@@ -156,10 +156,10 @@ public class LabBatch {
         createdOn = new Date();
     }
 
-    public LabBatch(String batchName, Set<LabVessel> startingLabVessels, LabBatchType labBatchType,
+    public LabBatch(String batchName, Set<LabVessel> startingBatchLabVessels, LabBatchType labBatchType,
                     String batchDescription, Date dueDate, String important) {
 
-        this(batchName, startingLabVessels, labBatchType);
+        this(batchName, startingBatchLabVessels, labBatchType);
         this.batchDescription = batchDescription;
         this.dueDate = dueDate;
         this.important = important;
@@ -190,7 +190,7 @@ public class LabBatch {
      *
      * @return the vessels in the batch
      */
-    public Set<LabVessel> getStartingLabVessels() {
+    public Set<LabVessel> getStartingBatchLabVessels() {
         Set<LabVessel> allStartingLabVessels = new HashSet<>();
         allStartingLabVessels.addAll(getNonReworkStartingLabVessels());
         allStartingLabVessels.addAll(reworks);
@@ -199,7 +199,7 @@ public class LabBatch {
 
     public Set<LabVessel> getNonReworkStartingLabVessels() {
         Set<LabVessel> staringBatchVessels = new HashSet<>();
-        for (LabBatchStartingVessel batchStartingVessel : startingLabVessels) {
+        for (LabBatchStartingVessel batchStartingVessel : startingBatchLabVessels) {
             staringBatchVessels.add(batchStartingVessel.getLabVessel());
         }
         return staringBatchVessels;
@@ -211,8 +211,8 @@ public class LabBatch {
 
     public void addLabVessel(@Nonnull LabVessel labVessel, @Nullable Float concentration) {
         LabBatchStartingVessel labBatchStartingVessel = new LabBatchStartingVessel(labVessel, this, concentration);
-        startingLabVessels.add(labBatchStartingVessel);
-        labVessel.addNonReworkLabBatch(this);
+        startingBatchLabVessels.add(labBatchStartingVessel);
+        labVessel.addNonReworkLabBatchStartingVessel(labBatchStartingVessel);
     }
 
     public void addLabVessels(@Nonnull Collection<LabVessel> vessels) {
@@ -240,12 +240,12 @@ public class LabBatch {
         batchName = this.jiraTicket.getTicketName();
     }
 
-    public Set<LabVessel> getOldStartingLabVessels() {
-        return oldStartingLabVessels;
+    public Set<LabVessel> getStartingLabVessels() {
+        return startingLabVessels;
     }
 
-    public void setOldStartingLabVessels(Set<LabVessel> oldStartingLabVessels) {
-        this.oldStartingLabVessels = oldStartingLabVessels;
+    public void setStartingLabVessels(Set<LabVessel> oldStartingLabVessels) {
+        this.startingLabVessels = oldStartingLabVessels;
     }
 
     public JiraTicket getJiraTicket() {
@@ -421,7 +421,7 @@ public class LabBatch {
     }
 
     public LabVessel[] getStartingVesselsArray() {
-        return startingLabVessels.toArray(new LabVessel[startingLabVessels.size()]);
+        return startingBatchLabVessels.toArray(new LabVessel[startingBatchLabVessels.size()]);
     }
 
     public Set<BucketEntry> getBucketEntries() {
@@ -476,7 +476,7 @@ public class LabBatch {
 
         boolean result = false;
 
-        if (targetBatch.getStartingLabVessels().containsAll(batchSet)) {
+        if (targetBatch.getStartingBatchLabVessels().containsAll(batchSet)) {
             result = true;
         }
 

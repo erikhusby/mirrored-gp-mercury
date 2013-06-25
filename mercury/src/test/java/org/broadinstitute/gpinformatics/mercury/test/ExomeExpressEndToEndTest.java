@@ -203,7 +203,7 @@ public class ExomeExpressEndToEndTest {
 
             LabBatch testLabBatch = labBatches.iterator().next();
             int STARTER_COUNT =
-                    testLabBatch.getStartingLabVessels().size(); //This probably will be labBatch size eventually
+                    testLabBatch.getStartingBatchLabVessels().size(); //This probably will be labBatch size eventually
 
             // create the jira ticket for each batch.
             JiraTicket jiraTicket = null;
@@ -218,7 +218,7 @@ public class ExomeExpressEndToEndTest {
                     JiraCustomFieldsUtil.WORK_REQUEST_IDS), "Work Request One Billion!");
             // kludge: expect stock samples to have a different field name (like "BSP STOCKS") when this goes live.  until then, we'll call it GSSR.
             StringBuilder stockSamplesBuilder = new StringBuilder();
-            for (LabVessel starter : testLabBatch.getStartingLabVessels()) {
+            for (LabVessel starter : testLabBatch.getStartingBatchLabVessels()) {
                 stockSamplesBuilder.append(" ").append(starter.getLabel());
             }
             CustomField stockSamplesCustomField = new CustomField(requiredFieldsMap.get(

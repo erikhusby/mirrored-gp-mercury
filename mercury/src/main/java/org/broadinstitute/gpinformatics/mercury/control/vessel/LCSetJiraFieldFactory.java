@@ -64,7 +64,7 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
         WorkflowLoader wfLoader = new WorkflowLoader();
         WorkflowConfig wfConfig = wfLoader.load();
 
-        pdoToVesselMap = LabVessel.extractPdoLabVesselMap(batch.getStartingLabVessels());
+        pdoToVesselMap = LabVessel.extractPdoLabVesselMap(batch.getStartingBatchLabVessels());
 
 
         for (String currPdo : pdoToVesselMap.keySet()) {
@@ -144,7 +144,7 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
                 submissionFields.get(LabBatch.RequiredSubmissionFields.LIBRARY_QC_SEQUENCING_REQUIRED.getFieldName()),
                 new CustomField.SelectOption(LIB_QC_SEQ_REQUIRED_DEFAULT)));
 
-        int sampleCount = batch.getReworks().size() + batch.getStartingLabVessels().size();
+        int sampleCount = batch.getReworks().size() + batch.getStartingBatchLabVessels().size();
 
         customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.GSSR_IDS,
                 buildSamplesListString(batch)));

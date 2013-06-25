@@ -485,6 +485,10 @@ public abstract class LabVessel implements Serializable {
         }
     }
 
+    public void addNonReworkLabBatchStartingVessel(LabBatchStartingVessel labBatchStartingVessel) {
+        labBatches.add(labBatchStartingVessel);
+    }
+
     public enum ContainerType {
         STATIC_PLATE("Plate"),
         PLATE_WELL("Plate Well"),

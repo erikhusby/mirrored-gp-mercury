@@ -148,7 +148,7 @@ public class CreateFCTActionBean extends CoreActionBean {
     public Resolution loadLCSet() {
         labBatch = labBatchDAO.findByBusinessKey(lcsetName);
         if (labBatch != null) {
-            for (LabVessel vessel : labBatch.getStartingLabVessels()) {
+            for (LabVessel vessel : labBatch.getStartingBatchLabVessels()) {
                 denatureTubeToEvent.putAll(vessel.findVesselsForLabEventType(LabEventType.DENATURE_TRANSFER));
             }
         } else {

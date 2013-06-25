@@ -35,7 +35,7 @@ public class FCTJiraFieldFactory extends AbstractBatchJiraFieldFactory {
     @Override
     public String getSummary() {
         StringBuilder summary = new StringBuilder();
-        for (LabVessel vessel : batch.getStartingLabVessels()) {
+        for (LabVessel vessel : batch.getStartingBatchLabVessels()) {
             summary.append(vessel.getLabel());
         }
         return summary.toString();

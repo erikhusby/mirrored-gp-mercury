@@ -178,7 +178,7 @@ public class LabBatchEjb {
                                                       @Nonnull CreateFields.IssueType issueType) {
         Bucket bucket = bucketDao.findByName(bucketName);
         batch = createLabBatch(batch, operator, issueType);
-        bucketEjb.start(operator, batch.getStartingLabVessels(), bucket, location);
+        bucketEjb.start(operator, batch.getStartingBatchLabVessels(), bucket, location);
         return batch;
     }
 
@@ -306,7 +306,7 @@ public class LabBatchEjb {
         LabVessel firstVessel = vesselIterator.next();
 
         for (LabBatch testBatch : firstVessel.getNearestLabBatches()) {
-            if (testBatch.getStartingLabVessels().containsAll(batchVessels)) {
+            if (testBatch.getStartingBatchLabVessels().containsAll(batchVessels)) {
                 result = true;
                 break;
             }
