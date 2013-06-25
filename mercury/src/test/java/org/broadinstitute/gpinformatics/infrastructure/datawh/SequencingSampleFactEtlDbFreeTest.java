@@ -30,6 +30,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.SampleType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselAndPosition;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
@@ -163,6 +164,7 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         expect(dao.findById(SequencingRun.class, entityId)).andReturn(run).times(2);
 
         expect(runCartridge.getCartridgeName()).andReturn(cartridgeName).times(2);
+        expect(runCartridge.getVesselGeometry()).andReturn(VesselGeometry.FLOWCELL1x2).times(2);
         expect(runCartridge.getSamplesAtPosition(anyObject(VesselPosition.class), anyObject(SampleType.class)))
                 .andReturn(sampleInstances).times(4);
         final Map<VesselPosition, LabVessel> laneVesselsAndPositions = new HashMap<>();
@@ -227,6 +229,7 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         LabVessel denatureSource = new TwoDBarcodedTube("Lane_1_vessel");
         laneVesselsAndPositions.put(VesselPosition.LANE1,denatureSource );
         laneVesselsAndPositions.put(VesselPosition.LANE2,denatureSource);
+        expect(runCartridge.getVesselGeometry()).andReturn(VesselGeometry.FLOWCELL1x2);
 
         expect(runCartridge.getNearestTubeAncestorsForLanes()).andReturn(laneVesselsAndPositions);
         String pdoKey = "PDO-0012";
@@ -276,6 +279,8 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         reagents.add(new MolecularIndexReagent(molecularIndexingScheme));
 
         expect(dao.findById(SequencingRun.class, entityId)).andReturn(run);
+        expect(runCartridge.getVesselGeometry()).andReturn(VesselGeometry.FLOWCELL1x2);
+
         expect(runCartridge.getCartridgeName()).andReturn(cartridgeName);
         expect(runCartridge.getSamplesAtPosition(anyObject(VesselPosition.class), anyObject(SampleType.class)))
                 .andReturn(sampleInstances).times(2);
@@ -327,6 +332,7 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         expect(runCartridge.getCartridgeName()).andReturn(cartridgeName);
         // Adds a second sampleInstance
         sampleInstances.add(sampleInstance2);
+        expect(runCartridge.getVesselGeometry()).andReturn(VesselGeometry.FLOWCELL1x1);
         expect(runCartridge.getSamplesAtPosition(anyObject(VesselPosition.class), anyObject(SampleType.class)))
                 .andReturn(sampleInstances);
 
