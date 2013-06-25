@@ -50,7 +50,7 @@
             <column name="lab_batch" type="number(19,0)">
                 <constraints nullable="false"/>
             </column>
-            <column name="concentration" type="number(5,5)"/>
+            <column name="concentration" type="number(19,2)"/>
         </createTable>
 
         <createIndex tableName="batch_starting_vessels" indexName="ix_lab_vessel_key">
@@ -67,22 +67,12 @@
     <changeSet id="GPLIM-1434-2" author="jcarey">
 
         <createTable tableName="batch_starting_vessels_aud" schemaName="mercury">
-            <column name="batch_starting_vessel_id" type="number(19,0)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="lab_vessel" type="number(19,0)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="lab_batch" type="number(19,0)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="concentration" type="number(5,5)"/>
-            <column name="rev" type="number(19,0)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="revtype" type="number(3,0)">
-                <constraints nullable="true"/>
-            </column>
+            <column name="batch_starting_vessel_id" type="number(19,0)" />
+            <column name="lab_vessel" type="number(19,0)" />
+            <column name="lab_batch" type="number(19,0)" />
+            <column name="concentration" type="number(19,2)"/>
+            <column name="rev" type="number(19,0)" />
+            <column name="revtype" type="number(3,0)" />
         </createTable>
 
         <addPrimaryKey tableName="batch_starting_vessels_aud" schemaName="mercury"
@@ -129,30 +119,30 @@
             <column name="setup_read_structure" type="varchar(255)"></column>
         </addColumn>
     </changeSet>
-    
+
     <changeSet id="GPLIM-1377-4" author="scottmat">
         <preConditions onFail="MARK_RAN">
             <not>
-                <columnExists columnName="ENTRY_TYPE" schemaName="mercury" tableName="BUCKET_ENTRY" />
+                <columnExists columnName="ENTRY_TYPE" schemaName="mercury" tableName="BUCKET_ENTRY"/>
             </not>
         </preConditions>
-        <addColumn tableName="BUCKET_ENTRY" schemaName="mercury" >
+        <addColumn tableName="BUCKET_ENTRY" schemaName="mercury">
             <column name="ENTRY_TYPE" type="varchar(255)"></column>
         </addColumn>
     </changeSet>
     <changeSet id="GPLIM-1377-5" author="scottmat">
         <preConditions onFail="MARK_RAN">
             <not>
-                <columnExists columnName="ENTRY_TYPE" schemaName="mercury" tableName="BUCKET_ENTRY_AUD" />
+                <columnExists columnName="ENTRY_TYPE" schemaName="mercury" tableName="BUCKET_ENTRY_AUD"/>
             </not>
         </preConditions>
-        <addColumn tableName="BUCKET_ENTRY_AUD" schemaName="mercury" >
+        <addColumn tableName="BUCKET_ENTRY_AUD" schemaName="mercury">
             <column name="ENTRY_TYPE" type="varchar(255)"></column>
         </addColumn>
     </changeSet>
     <changeSet id="GPLIM-1377-6" author="scottmat">
         <preConditions onFail="MARK_RAN">
-            <columnExists columnName="ENTRY_TYPE" schemaName="mercury" tableName="BUCKET_ENTRY" />
+            <columnExists columnName="ENTRY_TYPE" schemaName="mercury" tableName="BUCKET_ENTRY"/>
         </preConditions>
         <update schemaName="mercury" tableName="BUCKET_ENTRY">
             <column name="ENTRY_TYPE" value="PDO_ENTRY"></column>
@@ -161,7 +151,7 @@
     </changeSet>
     <changeSet id="GPLIM-1377-7" author="scottmat">
         <preConditions onFail="MARK_RAN">
-            <columnExists columnName="ENTRY_TYPE" schemaName="mercury" tableName="BUCKET_ENTRY_AUD" />
+            <columnExists columnName="ENTRY_TYPE" schemaName="mercury" tableName="BUCKET_ENTRY_AUD"/>
         </preConditions>
         <update schemaName="mercury" tableName="BUCKET_ENTRY_AUD">
             <column name="ENTRY_TYPE" value="PDO_ENTRY"></column>
