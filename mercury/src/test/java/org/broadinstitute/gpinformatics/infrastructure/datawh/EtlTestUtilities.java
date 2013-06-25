@@ -40,6 +40,22 @@ public class EtlTestUtilities {
     }
 
     /**
+     * Returns all etl-related files in the given directory.
+     */
+    public static File[] getEtlFiles(String dir) {
+        FilenameFilter filter = new FilenameFilter() {
+            @Override
+            public boolean accept(File dirname, String filename) {
+                return (filename.endsWith(".dat")
+                        || filename.endsWith(ExtractTransform.READY_FILE_SUFFIX))
+                       || filename.equals(ExtractTransform.LAST_ETL_FILE)
+                       || filename.equals(ExtractTransform.LAST_WF_CONFIG_HASH_FILE);
+            }
+        };
+        return new File(dir).listFiles(filter);
+    }
+
+    /**
      * Returns all files in the given directory, having filename timestamp in the given range.
      */
     public static File[] getDirFiles(String directoryName, long msecStart, long msecEnd) {

@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServic
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -16,7 +17,11 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowD
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
 import javax.annotation.Nonnull;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Concrete factory implementation specific to creating the custom and required fields for creating an LCSET ticket
@@ -36,10 +41,9 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
     public static final String LIB_QC_SEQ_REQUIRED_MISEQ = "Yes - MiSeq";
 
 
-
     private final Map<String, ResearchProject> foundResearchProjectList = new HashMap<String, ResearchProject>();
     private Map<String, Set<LabVessel>> pdoToVesselMap = new HashMap<String, Set<LabVessel>>();
-    private final Map<String,ProductWorkflowDef> workflowDefs = new HashMap<String,ProductWorkflowDef>();
+    private final Map<String, ProductWorkflowDef> workflowDefs = new HashMap<String, ProductWorkflowDef>();
 //    private final Collection<String> pdos;
 
     private static final Log logger = LogFactory.getLog(LCSetJiraFieldFactory.class);
@@ -60,10 +64,10 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
         WorkflowLoader wfLoader = new WorkflowLoader();
         WorkflowConfig wfConfig = wfLoader.load();
 
-        pdoToVesselMap = LabVessel.extractPdoLabVesselMap(batch.getStartingLabVessels());
+        pdoToVesselMap = LabVessel.extractPdoLabVesselMap(batch.getStartingBatchLabVessels());
 
 
-        for (String currPdo : pdoToVesselMap .keySet()) {
+        for (String currPdo : pdoToVesselMap.keySet()) {
             ProductOrder pdo = athenaClientService.retrieveProductOrderDetails(currPdo);
 
             if (pdo != null) {
@@ -83,7 +87,9 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
      * Takes the initial samples and the rework samples
      * from the batch and builds a string to display
      * on the batch ticket
+     *
      * @param labBatch contains samples
+     *
      * @return sample list
      */
     public static String buildSamplesListString(LabBatch labBatch) {
@@ -93,7 +99,8 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
         for (LabVessel labVessel : labBatch.getNonReworkStartingLabVessels()) {
             Collection<String> samplesNamesForVessel = labVessel.getSampleNames();
             if (samplesNamesForVessel.size() > 1) {
-                throw new RuntimeException("Cannot build samples list for " + labVessel.getLabel() + " because we're expecting only a single sample within the vessel.");
+                throw new RuntimeException("Cannot build samples list for " + labVessel.getLabel()
+                                           + " because we're expecting only a single sample within the vessel.");
             }
             newSamples.addAll(labVessel.getSampleNames());
         }
@@ -102,7 +109,8 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
             for (LabVessel reworkVessel : labBatch.getReworks()) {
                 Collection<String> samplesNamesForVessel = reworkVessel.getSampleNames();
                 if (samplesNamesForVessel.size() > 1) {
-                    throw new RuntimeException("Cannot build samples list for " + reworkVessel.getLabel() + " because we're expecting only a single sample within the vessel.");
+                    throw new RuntimeException("Cannot build samples list for " + reworkVessel.getLabel()
+                                               + " because we're expecting only a single sample within the vessel.");
                 }
                 reworkSamples.addAll(samplesNamesForVessel);
             }
@@ -136,11 +144,13 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
                 submissionFields.get(LabBatch.RequiredSubmissionFields.LIBRARY_QC_SEQUENCING_REQUIRED.getFieldName()),
                 new CustomField.SelectOption(LIB_QC_SEQ_REQUIRED_DEFAULT)));
 
-        int sampleCount = batch.getReworks().size() + batch.getStartingLabVessels().size();
+        int sampleCount = batch.getReworks().size() + batch.getStartingBatchLabVessels().size();
 
-        customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.GSSR_IDS,buildSamplesListString(batch)));
+        customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.GSSR_IDS,
+                buildSamplesListString(batch)));
 
-        customFields.add(new CustomField(submissionFields.get(LabBatch.RequiredSubmissionFields.NUMBER_OF_SAMPLES.getFieldName()), sampleCount ));
+        customFields.add(new CustomField(
+                submissionFields.get(LabBatch.RequiredSubmissionFields.NUMBER_OF_SAMPLES.getFieldName()), sampleCount));
 
         if (batch.getDueDate() != null) {
 
@@ -177,20 +187,44 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
 
         StringBuilder ticketDescription = new StringBuilder();
 
-        for (Map.Entry<String, Set<LabVessel>> pdoKey:pdoToVesselMap.entrySet()) {
+        for (Map.Entry<String, Set<LabVessel>> pdoKey : pdoToVesselMap.entrySet()) {
 
             int sampleCount = 0;
 
-            for(LabVessel currVessel: pdoKey.getValue()) {
+            for (LabVessel currVessel : pdoKey.getValue()) {
                 sampleCount += currVessel.getSampleInstanceCount(LabVessel.SampleType.WITH_PDO, null);
             }
 
             ticketDescription.append(sampleCount).append(" samples ");
-            if(foundResearchProjectList.containsKey(pdoKey.getKey()) ) {
-                ticketDescription.append("from ").append(foundResearchProjectList.get(pdoKey.getKey()).getTitle()).append(" ");
+            if (foundResearchProjectList.containsKey(pdoKey.getKey())) {
+                ticketDescription.append("from ").append(foundResearchProjectList.get(pdoKey.getKey()).getTitle())
+                        .append(" ");
             }
             ticketDescription.append(pdoKey.getKey()).append("\n");
         }
         return ticketDescription.toString();
     }
+
+    @Override
+    public String getSummary() {
+
+        StringBuilder summary = new StringBuilder();
+        if (clover.org.apache.commons.lang.StringUtils.isBlank(batch.getBatchName())) {
+
+            for (ResearchProject currProj : foundResearchProjectList.values()) {
+                summary.append(currProj.getTitle()).append("; ");
+            }
+
+        } else {
+            summary.append(batch.getBatchName());
+        }
+
+        return summary.toString();
+    }
+
+    @Override
+    public CreateFields.ProjectType getProjectType() {
+        return CreateFields.ProjectType.LCSET_PROJECT;
+    }
+
 }

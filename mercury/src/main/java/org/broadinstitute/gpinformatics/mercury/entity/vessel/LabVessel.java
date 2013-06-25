@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.infrastructure.SampleMetadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
@@ -20,6 +21,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Formula;
 import org.hibernate.envers.Audited;
@@ -88,9 +90,8 @@ public abstract class LabVessel implements Serializable {
     @JoinTable(schema = "mercury")
     private final Set<JiraTicket> ticketsCreated = new HashSet<JiraTicket>();
 
-    @ManyToMany(cascade = CascadeType.PERSIST, mappedBy = "startingLabVessels")
-    @BatchSize(size = 100)
-    private Set<LabBatch> labBatches = new HashSet<LabBatch>();
+    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "labVessel")
+    private Set<LabBatchStartingVessel> labBatches = new HashSet<>();
 
     @ManyToMany(cascade = CascadeType.PERSIST, mappedBy = "reworks")
     @BatchSize(size = 100)
@@ -482,6 +483,10 @@ public abstract class LabVessel implements Serializable {
             evaluateCriteria(metricOfTypeCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
             return metricOfTypeCriteria.getNearestMetrics();
         }
+    }
+
+    public void addNonReworkLabBatchStartingVessel(LabBatchStartingVessel labBatchStartingVessel) {
+        labBatches.add(labBatchStartingVessel);
     }
 
     public enum ContainerType {
@@ -999,7 +1004,8 @@ public abstract class LabVessel implements Serializable {
     }
 
     public void addNonReworkLabBatch(LabBatch labBatch) {
-        labBatches.add(labBatch);
+        LabBatchStartingVessel startingVessel = new LabBatchStartingVessel(this, labBatch);
+        labBatches.add(startingVessel);
     }
 
     public void addReworkLabBatch(LabBatch reworkLabBatch) {
@@ -1007,7 +1013,10 @@ public abstract class LabVessel implements Serializable {
     }
 
     public Set<LabBatch> getLabBatches() {
-        Set<LabBatch> allLabBatches = new HashSet<>(labBatches);
+        Set<LabBatch> allLabBatches = new HashSet<>();
+        for (LabBatchStartingVessel batchStartingVessel : labBatches) {
+            allLabBatches.add(batchStartingVessel.getLabBatch());
+        }
         allLabBatches.addAll(reworkLabBatches);
         return allLabBatches;
     }
@@ -1290,6 +1299,46 @@ public abstract class LabVessel implements Serializable {
             evaluateCriteria(batchCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
             return batchCriteria.getNearestLabBatches();
         }
+    }
+
+    /**
+     * This method iterates over all of the ancestor and descendant vessels, adding them to a map of vessel -> event
+     * when the event matches the type given.
+     *
+     * @param type The type of event to filter the ancestors and descendants by.
+     *
+     * @return A map containing the vessels (key) and the event they were used at (value) given the event type.
+     */
+    public Map<LabVessel, LabEvent> findVesselsForLabEventType(LabEventType type) {
+        Map<LabVessel, LabEvent> foundVesselsToEvent = new HashMap<>();
+        for (LabVessel vessel : getAncestorAndDescendantVessels()) {
+            for (LabEvent event : vessel.getEvents()) {
+                if (type.equals(event.getLabEventType())) {
+                    for (LabVessel targetVessel : event.getTargetLabVessels()) {
+                        if (targetVessel.getContainerRole() != null
+                            && targetVessel.getContainerRole().getContainedVessels().contains(vessel)) {
+                            foundVesselsToEvent.put(vessel, event);
+                        } else if (targetVessel.equals(vessel)) {
+                            foundVesselsToEvent.put(vessel, event);
+                        }
+                    }
+                }
+            }
+        }
+        return foundVesselsToEvent;
+    }
+
+    /**
+     * This method walks the vessel transfers in both directions and returns all of the ancestor and descendant
+     * vessels.
+     *
+     * @return A collection contain all ancestor and descentdant vessels.
+     */
+    public Collection<LabVessel> getAncestorAndDescendantVessels() {
+        Collection<LabVessel> allVessels;
+        allVessels = getAncestorVessels();
+        allVessels.addAll(getDescendantVessels());
+        return allVessels;
     }
 
     public Collection<LabVessel> getDescendantVessels() {

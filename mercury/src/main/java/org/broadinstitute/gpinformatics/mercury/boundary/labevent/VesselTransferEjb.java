@@ -132,6 +132,7 @@ public class VesselTransferEjb {
         return bettaLIMSMessage;
     }
 
+
     /**
      * Transfer contents of MiSeq Reagent Kit to a MiSeq Flowcell
      *
@@ -139,6 +140,7 @@ public class VesselTransferEjb {
      * @param flowcellBarcode   flowcell barcode
      * @param username          user performing action.
      * @param stationName       where the transfer occurred (UI, robot, etc)
+     * @return fully persisted labEvent
      */
     public LabEvent reagentKitToFlowcell(@Nonnull String reagentKitBarcode, @Nonnull String flowcellBarcode,
                                          @Nonnull String username, @Nonnull String stationName) {
@@ -169,10 +171,10 @@ public class VesselTransferEjb {
             transferEvent.getSource().add(cherryPickSource);
         }
 
-        LabEvent event = labEventFactory.buildFromBettaLims(transferEvent);
-        labEventHandler.processEvent(event);
-        labEventDao.persist(event);
-        return event;
+        LabEvent labEvent = labEventFactory.buildFromBettaLims(transferEvent);
+        labEventHandler.processEvent(labEvent);
+        labEventDao.persist(labEvent);
+        return labEvent;
     }
 
     public ReceptaclePlateTransferEvent buildDenatureTubeToFlowcell(String eventType, String denatureTubeBarcode,

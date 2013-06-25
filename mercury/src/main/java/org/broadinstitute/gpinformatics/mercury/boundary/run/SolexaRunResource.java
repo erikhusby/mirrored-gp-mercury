@@ -1,10 +1,12 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.monitoring.HipChatMessageSender;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnector;
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
+import org.broadinstitute.gpinformatics.mercury.boundary.labevent.VesselTransferEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
@@ -51,6 +53,8 @@ public class SolexaRunResource {
 
     private IlluminaFlowcellDao illuminaFlowcellDao;
 
+    private VesselTransferEjb vesselTransferEjb;
+
     private MercuryOrSquidRouter router;
 
     private SquidConnector connector;
@@ -60,11 +64,13 @@ public class SolexaRunResource {
     @Inject
     public SolexaRunResource(IlluminaSequencingRunDao illuminaSequencingRunDao,
                              IlluminaSequencingRunFactory illuminaSequencingRunFactory,
-                             IlluminaFlowcellDao illuminaFlowcellDao, MercuryOrSquidRouter router,
-                             SquidConnector connector, HipChatMessageSender messageSender) {
+                             IlluminaFlowcellDao illuminaFlowcellDao, VesselTransferEjb vesselTransferEjb,
+                             MercuryOrSquidRouter router, SquidConnector connector,
+                             HipChatMessageSender messageSender) {
         this.illuminaSequencingRunDao = illuminaSequencingRunDao;
         this.illuminaSequencingRunFactory = illuminaSequencingRunFactory;
         this.illuminaFlowcellDao = illuminaFlowcellDao;
+        this.vesselTransferEjb = vesselTransferEjb;
         this.router = router;
         this.connector = connector;
         this.messageSender = messageSender;
@@ -142,14 +148,18 @@ public class SolexaRunResource {
 
 
     public IlluminaSequencingRun registerRun(SolexaRunBean solexaRunBean, IlluminaFlowcell illuminaFlowcell) {
-        /*
-         * Need logic to register MiSeq run based off of the ReagentBlockBarcode in SolexaRunBean.
-         * Will be another story.
-         */
-        IlluminaSequencingRun illuminaSequencingRun =
+         IlluminaSequencingRun illuminaSequencingRun =
                 illuminaSequencingRunFactory.build(solexaRunBean, illuminaFlowcell);
 
         illuminaSequencingRunDao.persist(illuminaSequencingRun);
+
+        // Link the reagentKit to flowcell if you have a reagentBlockBarcode. Only MiSeq uses reagentKits.;
+        if (!StringUtils.isEmpty(solexaRunBean.getReagentBlockBarcode())) {
+            vesselTransferEjb
+                    .reagentKitToFlowcell(solexaRunBean.getReagentBlockBarcode(), solexaRunBean.getFlowcellBarcode(),
+                            "pipeline", solexaRunBean.getMachineName());
+        }
+
         return illuminaSequencingRun;
     }
 

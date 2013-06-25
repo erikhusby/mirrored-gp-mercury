@@ -1,12 +1,14 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.RevInfo;
-import org.hibernate.envers.RevisionType;
 
 import java.io.IOException;
 import java.text.ParseException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
 
 /**
  * Base class for etl'ing entities that also have status etl.
@@ -19,13 +21,16 @@ import java.util.*;
 public abstract class GenericEntityAndStatusEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLASS>
         extends GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLASS> {
 
-    /** The entity-related name of the data file, and must sync with the ETL cron script and control file. */
+    /**
+     * The entity-related name of the data file, and must sync with the ETL cron script and control file.
+     */
     public String baseStatusFilename;
 
     protected GenericEntityAndStatusEtl() {
     }
 
-    protected GenericEntityAndStatusEtl(Class entityClass, String baseFilename, String baseStatusFilename, GenericDao dao) {
+    protected GenericEntityAndStatusEtl(Class entityClass, String baseFilename, String baseStatusFilename,
+                                        GenericDao dao) {
         super(entityClass, baseFilename, dao);
         this.baseStatusFilename = baseStatusFilename;
     }
@@ -37,6 +42,7 @@ public abstract class GenericEntityAndStatusEtl<AUDITED_ENTITY_CLASS, ETL_DATA_S
      * @param isDelete   indicates deleted entity
      * @param entity     the Envers versioned entity
      * @param revDate    Envers revision date
+     *
      * @return delimited SqlLoader record, or null if none
      */
     abstract String statusRecord(String etlDateStr, boolean isDelete, ETL_DATA_SOURCE_CLASS entity, Date revDate);
@@ -46,40 +52,22 @@ public abstract class GenericEntityAndStatusEtl<AUDITED_ENTITY_CLASS, ETL_DATA_S
      * Default is pass-through; override for cross-etl behavior.
      */
     protected ETL_DATA_SOURCE_CLASS convertTtoC(AUDITED_ENTITY_CLASS entities) {
-        return (ETL_DATA_SOURCE_CLASS)entities;
-    }
-
-
-    @Override
-    protected AuditLists fetchAuditIds(Collection<AUDITED_ENTITY_CLASS[]> auditEntities) {
-        Set<Long> deletedEntityIds = new HashSet<Long>();
-        Set<Long> changedEntityIds = new HashSet<Long>();
-        List<RevInfoPair> revInfoPairs = new ArrayList<RevInfoPair>();
-
-        for (AUDITED_ENTITY_CLASS[] dataChange : auditEntities) {
-            RevisionType revType = (RevisionType) dataChange[AUDIT_READER_TYPE_IDX];
-            boolean isDelete = revType == RevisionType.DEL;
-
-            AUDITED_ENTITY_CLASS entity = dataChange[AUDIT_READER_ENTITY_IDX];
-            Long entityId = entityId(entity);
-
-            if (isDelete) {
-                deletedEntityIds.add(entityId);
-            } else {
-                changedEntityIds.add(entityId);
-
-                RevInfo revInfo = (RevInfo) dataChange[AUDIT_READER_REV_INFO_IDX];
-                revInfoPairs.add(new RevInfoPair(entity, revInfo.getRevDate()));
-            }
-        }
-        changedEntityIds.removeAll(deletedEntityIds);
-
-        return new AuditLists(deletedEntityIds, changedEntityIds, revInfoPairs);
+        return (ETL_DATA_SOURCE_CLASS) entities;
     }
 
     @Override
-    protected int writeRecords(Collection<Long> deletedEntityIds, Collection<Long> changedEntityIds,
-                               Collection<RevInfoPair> revInfoPairs, String etlDateStr) {
+    protected void addRevInfoPairs(Collection<RevInfoPair<AUDITED_ENTITY_CLASS>> revInfoPairs, Object[] enversTriple,
+                                   AUDITED_ENTITY_CLASS entity) {
+        RevInfo revInfo = (RevInfo) enversTriple[AuditReaderDao.AUDIT_READER_REV_INFO_IDX];
+        revInfoPairs.add(new RevInfoPair(entity, revInfo.getRevDate()));
+    }
+
+    @Override
+    protected int writeRecords(Collection<Long> deletedEntityIds,
+                               Collection<Long> modifiedEntityIds,
+                               Collection<Long> addedEntityIds,
+                               Collection<RevInfoPair<AUDITED_ENTITY_CLASS>> revInfoPairs,
+                               String etlDateStr) {
 
         // Creates the wrapped Writer to the sqlLoader data file.
         DataFile dataFile = new DataFile(dataFilename(etlDateStr, baseFilename));
@@ -93,7 +81,11 @@ public abstract class GenericEntityAndStatusEtl<AUDITED_ENTITY_CLASS, ETL_DATA_S
                 statusFile.write(record);
             }
 
-            for (Long entityId : changedEntityIds) {
+            Collection<Long> nonDeletedIds = new ArrayList<>();
+            nonDeletedIds.addAll(modifiedEntityIds);
+            nonDeletedIds.addAll(addedEntityIds);
+
+            for (Long entityId : nonDeletedIds) {
                 Collection<String> records = dataRecords(etlDateStr, false, entityId);
                 if (records.size() == 0) {
                     deletedEntityIds.add(entityId);
@@ -103,14 +95,14 @@ public abstract class GenericEntityAndStatusEtl<AUDITED_ENTITY_CLASS, ETL_DATA_S
                 }
             }
             // Removes ids of no longer existent entities.
-            changedEntityIds.removeAll(deletedEntityIds);
+            modifiedEntityIds.removeAll(deletedEntityIds);
 
             // Records every audited status change.
-            for (RevInfoPair pair : revInfoPairs) {
+            for (RevInfoPair<AUDITED_ENTITY_CLASS> pair : revInfoPairs) {
                 Long entityId = entityId(pair.revEntity);
 
                 // Db referential integrity errors happen on status for non-existent entities.
-                if (changedEntityIds.contains(entityId)) {
+                if (modifiedEntityIds.contains(entityId)) {
                     Date revDate = pair.revDate;
                     ETL_DATA_SOURCE_CLASS entity = convertTtoC(pair.revEntity);
                     String record = statusRecord(etlDateStr, false, entity, revDate);
@@ -128,7 +120,7 @@ public abstract class GenericEntityAndStatusEtl<AUDITED_ENTITY_CLASS, ETL_DATA_S
             statusFile.close();
         }
 
-     }
+    }
 
     @Override
     protected int writeRecords(Collection<ETL_DATA_SOURCE_CLASS> entities, String etlDateStr) {

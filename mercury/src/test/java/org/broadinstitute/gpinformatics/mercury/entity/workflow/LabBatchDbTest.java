@@ -136,7 +136,7 @@ public class LabBatchDbTest extends ContainerTest {
 
         for (String lcSet : lcSets) {
             LabBatch labBatch = labBatchDAO.findByBusinessKey(lcSet);
-            Set<LabVessel> startingLabVessels = labBatch.getStartingLabVessels();
+            Set<LabVessel> startingLabVessels = labBatch.getStartingBatchLabVessels();
             // For now, assume all vessels have the same events
             LabVessel labVessel = startingLabVessels.iterator().next();
             AccumulateLabEvents accumulateLabEvents = new AccumulateLabEvents();
@@ -175,7 +175,7 @@ public class LabBatchDbTest extends ContainerTest {
                     }
                     if (!found) {
                         System.out.println("#Failed to find file for " + labBatch.getBatchName() + " " +
-                                labEvent.getLabEventType().getName() + " " + labEvent.getEventDate());
+                                           labEvent.getLabEventType().getName() + " " + labEvent.getEventDate());
                     }
                 }
             } catch (IOException e) {

@@ -44,7 +44,9 @@ public class SampleImportResource {
 
     /**
      * Get an imported batch, currently used only for testing
+     *
      * @param batchName EX-1234
+     *
      * @return JAX-RS DTO
      */
     @SuppressWarnings("FeatureEnvy")
@@ -53,11 +55,11 @@ public class SampleImportResource {
     @Produces({MediaType.APPLICATION_XML})
     public SampleImportBean getByBatchName(@PathParam("batchName") String batchName) {
         LabBatch labBatch = labBatchDAO.findByName(batchName);
-        if(labBatch == null) {
+        if (labBatch == null) {
             return null;
         }
 
-        Set<LabVessel> startingLabVessels = labBatch.getStartingLabVessels();
+        Set<LabVessel> startingLabVessels = labBatch.getStartingBatchLabVessels();
         LabVessel firstLabVessel = startingLabVessels.iterator().next();
         LabEvent labEvent = firstLabVessel.getInPlaceEvents().iterator().next();
 
@@ -86,7 +88,9 @@ public class SampleImportResource {
 
     /**
      * Register samples from BSP, usually a rack of tubes
+     *
      * @param sampleImportBean JAX-RS DTO
+     *
      * @return "Samples imported: " + batchName
      */
     @SuppressWarnings("FeatureEnvy")
@@ -100,7 +104,8 @@ public class SampleImportResource {
 
         LabBatch labBatch = labBatchDAO.findByName(sampleImportBean.getSourceSystemExportId());
         if (labBatch != null) {
-            throw new RuntimeException("Export has already been received " + sampleImportBean.getSourceSystemExportId());
+            throw new RuntimeException(
+                    "Export has already been received " + sampleImportBean.getSourceSystemExportId());
         }
         String batchName = sampleImportBean.getSourceSystemExportId();
         labBatchDAO.persist(new LabBatch(batchName, new HashSet<LabVessel>(labVessels),

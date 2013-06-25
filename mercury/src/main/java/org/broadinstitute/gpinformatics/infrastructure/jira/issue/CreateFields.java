@@ -72,6 +72,7 @@ public class CreateFields extends UpdateFields {
     public enum ProjectType {
 
         LCSET_PROJECT("Illumina Library Construction Tracking", "LCSET"),
+        FCT_PROJECT("Flowcell Tracking", "FCT"),
         PRODUCT_ORDERING("Product Ordering", "PDO"),
         Research_Projects("Research Projects", "RP");
 
@@ -99,7 +100,9 @@ public class CreateFields extends UpdateFields {
         WHOLE_EXOME_HYBSEL("Whole Exome (HybSel)"),
         EXOME_EXPRESS(WorkflowName.EXOME_EXPRESS.getWorkflowName()),
         PRODUCT_ORDER("Product Order"),
-        RESEARCH_PROJECT("Research Project");
+        RESEARCH_PROJECT("Research Project"),
+        FLOWCELL("Flowcell"),
+        MISEQ("MiSeq");
 
         private final String jiraName;
 
@@ -116,8 +119,6 @@ public class CreateFields extends UpdateFields {
     private Project project;
 
     private String summary;
-
-    private String description;
 
     private IssueType issueType;
 
@@ -141,14 +142,6 @@ public class CreateFields extends UpdateFields {
 
     public String getSummary() {
         return summary;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
     }
 
     public IssueType getIssueType() {

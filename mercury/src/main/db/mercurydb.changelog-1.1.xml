@@ -23,13 +23,13 @@
         <preConditions onFail="MARK_RAN">
             <columnExists schemaName="mercury" tableName="lv_comment" columnName="lab_event"/>
         </preConditions>
-        <dropNotNullConstraint columnName="lab_event" schemaName="mercury" tableName="lv_comment" />
+        <dropNotNullConstraint columnName="lab_event" schemaName="mercury" tableName="lv_comment"/>
     </changeSet>
     <changeSet id="GPLIM-1377-2" author="scottmat">
         <preConditions onFail="MARK_RAN">
             <columnExists schemaName="mercury" tableName="lv_comment_aud" columnName="lab_event"/>
         </preConditions>
-        <dropNotNullConstraint columnName="lab_event" schemaName="mercury" tableName="lv_comment_aud" />
+        <dropNotNullConstraint columnName="lab_event" schemaName="mercury" tableName="lv_comment_aud"/>
     </changeSet>
     <changeSet id="GPLIM-1377-3" author="scottmat">
         <preConditions onFail="MARK_RAN">
@@ -38,10 +38,51 @@
         <dropForeignKeyConstraint
                 constraintName="FK_LV_COMMENT_LAB_EVENT" baseTableName="lv_comment" baseTableSchemaName="mercury"/>
     </changeSet>
+
+    <changeSet id="GPLIM-1434-1" author="jcarey">
+        <createTable tableName="batch_starting_vessels" schemaName="mercury">
+            <column name="batch_starting_vessel_id" type="number(19,0)">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="lab_vessel" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="lab_batch" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="concentration" type="number(19,2)"/>
+        </createTable>
+
+        <createIndex tableName="batch_starting_vessels" indexName="ix_lab_vessel_key">
+            <column name="lab_vessel"/>
+        </createIndex>
+
+        <createIndex tableName="batch_starting_vessels" indexName="ix_lab_batch_key">
+            <column name="lab_batch"/>
+        </createIndex>
+
+        <createSequence sequenceName="SEQ_BATCH_STARTING_VESSEL" schemaName="mercury" startValue="1"
+                        incrementBy="50"/>
+    </changeSet>
+    <changeSet id="GPLIM-1434-2" author="jcarey">
+
+        <createTable tableName="batch_starting_vessels_aud" schemaName="mercury">
+            <column name="batch_starting_vessel_id" type="number(19,0)" />
+            <column name="lab_vessel" type="number(19,0)" />
+            <column name="lab_batch" type="number(19,0)" />
+            <column name="concentration" type="number(19,2)"/>
+            <column name="rev" type="number(19,0)" />
+            <column name="revtype" type="number(3,0)" />
+        </createTable>
+
+        <addPrimaryKey tableName="batch_starting_vessels_aud" schemaName="mercury"
+                       columnNames="batch_starting_vessel_id, rev"/>
+
+    </changeSet>
     <changeSet id="GPLIM-1606-1" author="scottmat">
         <preConditions>
             <not>
-                <columnExists tableName="sequencing_run" columnName="actual_read_structure" schemaName="mercury" />
+                <columnExists tableName="sequencing_run" columnName="actual_read_structure" schemaName="mercury"/>
             </not>
         </preConditions>
         <addColumn tableName="sequencing_run" schemaName="mercury">
@@ -51,7 +92,7 @@
     <changeSet id="GPLIM-1606-2" author="scottmat">
         <preConditions>
             <not>
-                <columnExists tableName="sequencing_run_aud" columnName="actual_read_structure" schemaName="mercury" />
+                <columnExists tableName="sequencing_run_aud" columnName="actual_read_structure" schemaName="mercury"/>
             </not>
         </preConditions>
         <addColumn tableName="sequencing_run_aud" schemaName="mercury">
@@ -61,7 +102,7 @@
     <changeSet id="GPLIM-1606-3" author="scottmat">
         <preConditions>
             <not>
-                <columnExists tableName="sequencing_run" columnName="setup_read_structure" schemaName="mercury" />
+                <columnExists tableName="sequencing_run" columnName="setup_read_structure" schemaName="mercury"/>
             </not>
         </preConditions>
         <addColumn tableName="sequencing_run" schemaName="mercury">
@@ -71,37 +112,37 @@
     <changeSet id="GPLIM-1606-4" author="scottmat">
         <preConditions>
             <not>
-                <columnExists tableName="sequencing_run_aud" columnName="setup_read_structure" schemaName="mercury" />
+                <columnExists tableName="sequencing_run_aud" columnName="setup_read_structure" schemaName="mercury"/>
             </not>
         </preConditions>
         <addColumn tableName="sequencing_run_aud" schemaName="mercury">
             <column name="setup_read_structure" type="varchar(255)"></column>
         </addColumn>
     </changeSet>
-    
+
     <changeSet id="GPLIM-1377-4" author="scottmat">
         <preConditions onFail="MARK_RAN">
             <not>
-                <columnExists columnName="ENTRY_TYPE" schemaName="mercury" tableName="BUCKET_ENTRY" />
+                <columnExists columnName="ENTRY_TYPE" schemaName="mercury" tableName="BUCKET_ENTRY"/>
             </not>
         </preConditions>
-        <addColumn tableName="BUCKET_ENTRY" schemaName="mercury" >
+        <addColumn tableName="BUCKET_ENTRY" schemaName="mercury">
             <column name="ENTRY_TYPE" type="varchar(255)"></column>
         </addColumn>
     </changeSet>
     <changeSet id="GPLIM-1377-5" author="scottmat">
         <preConditions onFail="MARK_RAN">
             <not>
-                <columnExists columnName="ENTRY_TYPE" schemaName="mercury" tableName="BUCKET_ENTRY_AUD" />
+                <columnExists columnName="ENTRY_TYPE" schemaName="mercury" tableName="BUCKET_ENTRY_AUD"/>
             </not>
         </preConditions>
-        <addColumn tableName="BUCKET_ENTRY_AUD" schemaName="mercury" >
+        <addColumn tableName="BUCKET_ENTRY_AUD" schemaName="mercury">
             <column name="ENTRY_TYPE" type="varchar(255)"></column>
         </addColumn>
     </changeSet>
     <changeSet id="GPLIM-1377-6" author="scottmat">
         <preConditions onFail="MARK_RAN">
-            <columnExists columnName="ENTRY_TYPE" schemaName="mercury" tableName="BUCKET_ENTRY" />
+            <columnExists columnName="ENTRY_TYPE" schemaName="mercury" tableName="BUCKET_ENTRY"/>
         </preConditions>
         <update schemaName="mercury" tableName="BUCKET_ENTRY">
             <column name="ENTRY_TYPE" value="PDO_ENTRY"></column>
@@ -110,7 +151,7 @@
     </changeSet>
     <changeSet id="GPLIM-1377-7" author="scottmat">
         <preConditions onFail="MARK_RAN">
-            <columnExists columnName="ENTRY_TYPE" schemaName="mercury" tableName="BUCKET_ENTRY_AUD" />
+            <columnExists columnName="ENTRY_TYPE" schemaName="mercury" tableName="BUCKET_ENTRY_AUD"/>
         </preConditions>
         <update schemaName="mercury" tableName="BUCKET_ENTRY_AUD">
             <column name="ENTRY_TYPE" value="PDO_ENTRY"></column>
