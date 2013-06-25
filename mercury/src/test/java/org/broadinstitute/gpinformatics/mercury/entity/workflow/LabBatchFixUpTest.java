@@ -98,7 +98,7 @@ public class LabBatchFixUpTest extends Arquillian {
 
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void updateStartingLabBatches() {
         List<LabBatch> allBatches = labBatchDAO.findAll(LabBatch.class);
         List<LabBatch> fixedBatches = new ArrayList<>(allBatches.size());
