@@ -122,7 +122,7 @@ public class LabBatchEjb {
      *
      * @return The lab batch that was created.
      */
-    public LabBatch createLabBatch(@Nonnull LabBatch batchObject, @Nonnull String reporter,
+    public LabBatch createLabBatch(@Nonnull LabBatch batchObject, String reporter,
                                    @Nonnull CreateFields.IssueType issueType) {
         if (StringUtils.isBlank(batchObject.getBatchName())) {
             throw new InformaticsServiceException("The Name for the batch Object cannot be null");
@@ -236,7 +236,7 @@ public class LabBatchEjb {
                 Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
 
                 JiraIssue jiraIssue = jiraService
-                        .createIssue(fieldBuilder.getProjectType().getKeyPrefix(), null,
+                        .createIssue(fieldBuilder.getProjectType().getKeyPrefix(), reporter,
                                 issueType, fieldBuilder.getSummary(), fieldBuilder.getCustomFields(submissionFields));
 
                 ticket = new JiraTicket(jiraService, jiraIssue.getKey());
