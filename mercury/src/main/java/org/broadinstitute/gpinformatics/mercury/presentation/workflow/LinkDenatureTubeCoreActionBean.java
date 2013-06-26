@@ -46,6 +46,14 @@ public class LinkDenatureTubeCoreActionBean extends CoreActionBean {
         return workflowName;
     }
 
+    public String getDenatureTubeBarcode() {
+        return denatureTubeBarcode;
+    }
+
+    public void setDenatureTubeBarcode(String denatureTubeBarcode) {
+        this.denatureTubeBarcode = denatureTubeBarcode;
+    }
+
     @HandlesEvent("denatureInfo")
     public ForwardResolution denatureTubeInfo() {
         loadDenatureTubeAndWorkflow();
