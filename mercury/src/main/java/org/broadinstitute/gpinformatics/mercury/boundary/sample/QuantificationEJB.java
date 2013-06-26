@@ -43,16 +43,19 @@ public class QuantificationEJB {
                     for (LabMetric persistedMetric : labVessel.getMetrics()) {
                         if (persistedMetric.getName().equals(metricType)) {
                             validationErrors.add("Lab metric " + metric.getName().getDisplayName()
-                                    + " already exists for lab vessel " + metric.getLabVessel().getLabel());
+                                                 + " already exists for lab vessel " + metric.getLabVessel()
+                                    .getLabel());
                         }
                     }
                 } else {
                     validationErrors.add("Could not find lab vessel for metric: " + metric.getName().getDisplayName());
                 }
             }
-
+            for (String message : labMetricProcessor.getMessages()) {
+                validationErrors.add(message);
+            }
             if (validationErrors.size() > 0) {
-               throw new ValidationException("Error during upload validation : ", validationErrors);
+                throw new ValidationException("Error during upload validation : ", validationErrors);
             }
 
             return labMetrics;
@@ -63,7 +66,7 @@ public class QuantificationEJB {
 
     public void storeQuants(Set<LabMetric> labMetrics) {
         List<LabVessel> vessels = new ArrayList<>();
-        for(LabMetric labMetric : labMetrics){
+        for (LabMetric labMetric : labMetrics) {
             labMetric.getLabVessel().addMetric(labMetric);
             vessels.add(labMetric.getLabVessel());
         }
