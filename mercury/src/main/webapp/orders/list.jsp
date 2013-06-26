@@ -47,7 +47,7 @@
                         {"bSortable": true, "sType": "numeric"},        // Count
                         {"bSortable": true, "sType": "html"},           // Quote
                         {"bSortable": true, "sType": "html"}]           // Ledger Status
-                });
+                }).fnSetFilteringDelay(300);
 
                 setupDialogs();
 

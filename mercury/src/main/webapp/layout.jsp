@@ -25,47 +25,42 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
         <meta http-equiv="Content-Language" content="en"/>
 
-        <script type="text/javascript" src="${ctxpath}/resources/scripts/jquery-1.8.3.min.js"></script>
+        <script src="${ctxpath}/resources/scripts/jquery-1.8.3.min.js"></script>
         <script type="text/javascript"> var $j = jQuery.noConflict(); </script>
 
-        <script type="text/javascript" src="${ctxpath}/resources/scripts/jquery-ui-1.9.2.custom.min.js"></script>
+        <script src="${ctxpath}/resources/scripts/jquery-ui-1.9.2.custom.min.js"></script>
 
-        <script type="text/javascript" src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-dropdown.js"></script>
-        <script type="text/javascript" src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-tooltip.js"></script>
-        <script type="text/javascript" src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-popover.js"></script>
-        <script type="text/javascript" src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-alert.js"></script>
+        <script src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-dropdown.js"></script>
+        <script src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-tooltip.js"></script>
+        <script src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-popover.js"></script>
+        <script src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-alert.js"></script>
 
-        <script type="text/javascript" src="${ctxpath}/resources/scripts/jquery.dateRangeSelector.js"></script>
-        <script type="text/javascript"
-                src="${ctxpath}/resources/scripts/DataTables-1.9.4/media/js/jquery.dataTables.min.js"></script>
-        <script type="text/javascript"
-                src="${ctxpath}/resources/scripts/DataTables-1.9.4/extras/TableTools/media/js/TableTools.min.js"></script>
-        <script type="text/javascript" src="${ctxpath}/resources/scripts/bootstrap-dt.js"></script>
-        <script type="text/javascript" src="${ctxpath}/resources/scripts/json.js"></script>
+        <script src="${ctxpath}/resources/scripts/jquery.dateRangeSelector.js"></script>
+        <script src="${ctxpath}/resources/scripts/DataTables-1.9.4/media/js/jquery.dataTables.min.js"></script>
+        <script src="${ctxpath}/resources/scripts/DataTables-1.9.4/extras/TableTools/media/js/TableTools.min.js"></script>
+        <script src="${ctxpath}/resources/scripts/DataTables-1.9.4/extras/dataTables.fnSetFilteringDelay.js"></script>
+        <script src="${ctxpath}/resources/scripts/bootstrap-dt.js"></script>
+        <script src="${ctxpath}/resources/scripts/json.js"></script>
 
-        <script type="text/javascript" src="${ctxpath}/resources/scripts/jquery.tokeninput-1.6.0.js"></script>
-        <script type="text/javascript" src="${ctxpath}/resources/scripts/jquery.autosize-min.js"></script>
-
+        <script src="${ctxpath}/resources/scripts/jquery.tokeninput-1.6.0.js"></script>
+        <script src="${ctxpath}/resources/scripts/jquery.autosize-min.js"></script>
 
         <link rel="Shortcut Icon" type="image/x-icon" href="${ctxpath}/favicon.ico"/>
 
-        <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Carrois+Gothic+SC"/>
-        <link rel="stylesheet" type="text/css" href="${ctxpath}/resources/css/bootstrap.css"/>
-        <link rel="stylesheet" type="text/css"
-              href="${ctxpath}/resources/scripts/DataTables-1.9.4/media/css/jquery.dataTables.css"/>
-        <link rel="stylesheet" type="text/css"
-              href="${ctxpath}/resources/scripts/DataTables-1.9.4/extras/TableTools/media/css/TableTools.css"/>
-        <link rel="stylesheet" type="text/css" href="${ctxpath}/resources/css/token-input.css"/>
-        <link rel="stylesheet" type="text/css" href="${ctxpath}/resources/css/jquery-ui-1.9.2.custom.min.css"/>
-        <link rel="stylesheet" type="text/css" href="${ctxpath}/resources/css/mercury.css"/>
+        <link rel="stylesheet"  href="http://fonts.googleapis.com/css?family=Carrois+Gothic+SC"/>
+        <link rel="stylesheet"  href="${ctxpath}/resources/css/bootstrap.css"/>
+        <link rel="stylesheet"  href="${ctxpath}/resources/scripts/DataTables-1.9.4/media/css/jquery.dataTables.css"/>
+        <link rel="stylesheet"  href="${ctxpath}/resources/scripts/DataTables-1.9.4/extras/TableTools/media/css/TableTools.css"/>
+        <link rel="stylesheet"  href="${ctxpath}/resources/css/token-input.css"/>
+        <link rel="stylesheet"  href="${ctxpath}/resources/css/jquery-ui-1.9.2.custom.min.css"/>
+        <link rel="stylesheet"  href="${ctxpath}/resources/css/mercury.css"/>
 
-        <script type="text/javascript" src="${ctxpath}/resources/scripts/jquery.gpUseful-1.0.js"></script>
-        <script type="text/javascript" src="${ctxpath}/resources/scripts/jquery.heatcolor.0.0.1.js"></script>
-        <script type="text/javascript" src="${ctxpath}/resources/scripts/jquery.sparkline.js"></script>
+        <script src="${ctxpath}/resources/scripts/jquery.gpUseful-1.0.js"></script>
+        <script src="${ctxpath}/resources/scripts/jquery.heatcolor.0.0.1.js"></script>
+        <script src="${ctxpath}/resources/scripts/jquery.sparkline.js"></script>
 
-        <script type="text/javascript"
-                src="https://gpinfojira.broadinstitute.org:8443/jira/s/en_US-vrke9z/733/4/1.2.5/_/download/batch/com.atlassian.jira.collector.plugin.jira-issue-collector-plugin:issuecollector/com.atlassian.jira.collector.plugin.jira-issue-collector-plugin:issuecollector.js?collectorId=ad2bd4e3"></script>
-        <script type="text/javascript">window.ATL_JQ_PAGE_PROPS = {
+        <script src="https://gpinfojira.broadinstitute.org:8443/jira/s/en_US-vrke9z/733/4/1.2.5/_/download/batch/com.atlassian.jira.collector.plugin.jira-issue-collector-plugin:issuecollector/com.atlassian.jira.collector.plugin.jira-issue-collector-plugin:issuecollector.js?collectorId=ad2bd4e3"></script>
+        <script>window.ATL_JQ_PAGE_PROPS = {
             "triggerFunction":function (showCollectorDialog) {
                 jQuery("#jiraProblem").click(function (e) {
                     e.preventDefault();
