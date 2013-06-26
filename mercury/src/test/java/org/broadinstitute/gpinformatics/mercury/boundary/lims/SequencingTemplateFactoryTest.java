@@ -80,7 +80,7 @@ public class SequencingTemplateFactoryTest {
         assertThat(template.getOnRigWorkflow(), is("Resequencing"));
         assertThat(template.getReadStructure(), is(POOL_TEST_CIGAR));
 
-        assertThat(template.getLanes().get(0).getLaneName(), is("D04"));
+        assertThat(template.getLanes().get(0).getLaneName(), is("LANE1"));
         assertThat(template.getLanes().get(0).getLoadingVesselLabel(), is("reagent_kit_barcode"));
     }
 
@@ -92,7 +92,7 @@ public class SequencingTemplateFactoryTest {
         assertThat(template.getOnRigWorkflow(), is(nullValue()));
         assertThat(template.getReadStructure(), is(PRODUCTION_CIGAR));
 
-        assertThat(template.getLanes().get(0).getLaneName(), is("D04"));
+        assertThat(template.getLanes().get(0).getLaneName(), is("LANE1"));
         assertThat(template.getLanes().get(0).getLoadingVesselLabel(), is("reagent_kit_barcode"));
     }
 

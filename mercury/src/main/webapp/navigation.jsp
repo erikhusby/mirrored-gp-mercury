@@ -110,7 +110,7 @@
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.CreateFCTActionBean"
                                           event="view">Create FCT Ticket</stripes:link>
                         </li>
-                        <security:authorizeBlock roles="<%= roles(Developer) %>">
+                        <security:authorizeBlock roles="<%= roles(LabUser, LabManager, PDM, PM, Developer) %>">
                             <li>
                                 <stripes:link
                                         beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.CollaboratorControlsActionBean"
