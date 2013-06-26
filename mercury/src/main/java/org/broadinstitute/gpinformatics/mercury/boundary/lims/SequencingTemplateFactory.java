@@ -177,12 +177,15 @@ public class SequencingTemplateFactory {
         if (miSeqReagentKit.getConcentration()!=null) {
             concentration = miSeqReagentKit.getConcentration().doubleValue();
         }
-        SequencingTemplateLaneType lane =
-                LimsQueryObjectFactory.createSequencingTemplateLaneType(MiSeqReagentKit.LOADING_WELL.name(),
-                        concentration, miSeqReagentKit.getLabel());
+        List<SequencingTemplateLaneType> lanes=new ArrayList<>();
+        for (String laneName : IlluminaFlowcell.FlowcellType.MiSeqFlowcell.getVesselGeometry().getColumnNames()) {
+            lanes.add(LimsQueryObjectFactory.createSequencingTemplateLaneType(
+                    laneName, concentration, miSeqReagentKit.getLabel()));
+        }
         return LimsQueryObjectFactory.createSequencingTemplate(null, null, isPoolTest,
                 sequencingConfig.getInstrumentWorkflow().getValue(), sequencingConfig.getChemistry().getValue(),
-                sequencingConfig.getReadStructure().getValue(), lane);
+                sequencingConfig.getReadStructure().getValue(),
+                lanes.toArray(new SequencingTemplateLaneType[lanes.size()]));
     }
 
     private SequencingConfigDef getSequencingConfig(boolean isPoolTest){
