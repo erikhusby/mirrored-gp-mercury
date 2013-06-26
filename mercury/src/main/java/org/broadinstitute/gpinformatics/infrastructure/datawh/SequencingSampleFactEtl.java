@@ -17,14 +17,22 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.SampleType;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselAndPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
 import javax.ejb.Stateful;
 import javax.inject.Inject;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 @Stateful
 public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, SequencingRun> {
@@ -78,8 +86,9 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
                         format(dto.getProductOrderId()),
                         format(dto.getSampleKey()),
                         format(dto.getResearchProjectId()),
-                        (dto.getLoadingVessel()!=null)?format(dto.getLoadingVessel().getLabel()):null,
-                        (dto.getLoadingVessel()!=null)?format(ExtractTransform.secTimestampFormat.format(dto.getLoadingVessel().getCreatedOn())):null
+                        (dto.getLoadingVessel() != null) ? format(dto.getLoadingVessel().getLabel()) : null,
+                        (dto.getLoadingVessel() != null) ? format(ExtractTransform.secTimestampFormat
+                                .format(dto.getLoadingVessel().getCreatedOn())) : null
 
                 ));
             }
@@ -172,8 +181,12 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || !OrmUtil.proxySafeIsInstance(o, SequencingRunDto.class)) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || !OrmUtil.proxySafeIsInstance(o, SequencingRunDto.class)) {
+                return false;
+            }
 
             SequencingRunDto that = OrmUtil.proxySafeCast(o, SequencingRunDto.class);
 
@@ -181,7 +194,7 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
                     .append(getFlowcellBarcode(), that.getFlowcellBarcode())
                     .append(getMolecularIndexingSchemeName(), that.getMolecularIndexingSchemeName())
                     .append(getPosition(), that.getPosition())
-                    .append(getProductOrderId(),that.getProductOrderId())
+                    .append(getProductOrderId(), that.getProductOrderId())
                     .append(getResearchProjectId(), that.getResearchProjectId())
                     .append(getSampleKey(), that.getSampleKey())
                     .append(getSequencingRun(), that.getSequencingRun())
@@ -264,8 +277,8 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
                     String molecularIndexingSchemeName = (names.size() == 0 ? "NONE" : StringUtils.join(names, " "));
 
                     boolean isComplete = !StringUtils.isBlank(flowcellBarcode)
-                            && !StringUtils.isBlank(productOrderId)
-                            && !StringUtils.isBlank(researchProjectId);
+                                         && !StringUtils.isBlank(productOrderId)
+                                         && !StringUtils.isBlank(researchProjectId);
 
                     dtos.add(new SequencingRunDto(entity, flowcellBarcode, position.name(),
                             molecularIndexingSchemeName, productOrderId, sampleKey, researchProjectId, isComplete,
@@ -290,7 +303,7 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
 
     @Override
     public void postEtlLogging() {
-        synchronized(loggingDtos) {
+        synchronized (loggingDtos) {
             // Aggregates errors by the appropriate record identifier, depending on what the missing value is.
             Set<Long> errorIds = new HashSet<>();
 
@@ -301,7 +314,7 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
             int count = 0;
             for (SequencingRunDto dto : loggingDtos) {
                 if (!dto.isComplete() && !reportedErrors.contains(dto) &&
-                        dto.getSequencingRun() == null) {
+                    dto.getSequencingRun() == null) {
                     reportedErrors.add(dto);
                     ++count;
                 }
@@ -314,21 +327,21 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
             // No sampleInstance on vessel.
             for (SequencingRunDto dto : loggingDtos) {
                 if (!dto.isComplete() && !reportedErrors.contains(dto) &&
-                        StringUtils.isBlank(dto.getFlowcellBarcode())) {
+                    StringUtils.isBlank(dto.getFlowcellBarcode())) {
                     reportedErrors.add(dto);
                     errorIds.add(dto.getSequencingRun().getSequencingRunId());
                 }
             }
             if (errorIds.size() > 0) {
                 logger.debug("Missing flowcell barcode in SequencingRun entities "
-                        + StringUtils.join(errorIds, ", "));
+                             + StringUtils.join(errorIds, ", "));
             }
             errorIds.clear();
 
             // No position.
             for (SequencingRunDto dto : loggingDtos) {
                 if (!dto.isComplete() && !reportedErrors.contains(dto) &&
-                        StringUtils.isBlank(dto.getPosition())) {
+                    StringUtils.isBlank(dto.getPosition())) {
                     reportedErrors.add(dto);
                     errorIds.add(dto.getSequencingRun().getSequencingRunId());
                 }
@@ -341,52 +354,52 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
             // No sample instances or molecular barcodes.
             for (SequencingRunDto dto : loggingDtos) {
                 if (!dto.isComplete() && !reportedErrors.contains(dto) &&
-                        StringUtils.isBlank(dto.getMolecularIndexingSchemeName())) {
+                    StringUtils.isBlank(dto.getMolecularIndexingSchemeName())) {
                     reportedErrors.add(dto);
                     errorIds.add(dto.getSequencingRun().getSequencingRunId());
                 }
             }
             if (errorIds.size() > 0) {
                 logger.debug("Missing sample instance or molecular barcode in SequencingRun entities "
-                        + StringUtils.join(errorIds, ", "));
+                             + StringUtils.join(errorIds, ", "));
             }
             errorIds.clear();
 
             // No pdo on sampleInstance, or no pdo entity for pdoKey.
             for (SequencingRunDto dto : loggingDtos) {
                 if (!dto.isComplete() && !reportedErrors.contains(dto) &&
-                        StringUtils.isBlank(dto.getProductOrderId())) {
+                    StringUtils.isBlank(dto.getProductOrderId())) {
                     reportedErrors.add(dto);
                     errorIds.add(dto.getSequencingRun().getSequencingRunId());
                 }
             }
             if (errorIds.size() > 0) {
                 logger.debug("Missing product order in SequencingRun entities "
-                        + StringUtils.join(errorIds, ", "));
+                             + StringUtils.join(errorIds, ", "));
             }
             errorIds.clear();
 
             // No starting sample.
             for (SequencingRunDto dto : loggingDtos) {
                 if (!dto.isComplete() && !reportedErrors.contains(dto) &&
-                        StringUtils.isBlank(dto.getSampleKey())) {
+                    StringUtils.isBlank(dto.getSampleKey())) {
                     reportedErrors.add(dto);
                     errorIds.add(dto.getSequencingRun().getSequencingRunId());
                 }
             }
             if (errorIds.size() > 0) {
                 logger.debug("Missing starting sample in SequencingRun entities "
-                        + StringUtils.join(errorIds, ", "));
+                             + StringUtils.join(errorIds, ", "));
             }
             errorIds.clear();
 
-            for(SequencingRunDto dto : loggingDtos) {
-                if(dto.getLoadingVessel() == null) {
+            for (SequencingRunDto dto : loggingDtos) {
+                if (dto.getLoadingVessel() == null) {
                     errorIds.add(dto.getSequencingRun().getSequencingRunId());
                 }
             }
 
-            if(errorIds.size() > 0) {
+            if (errorIds.size() > 0) {
                 logger.debug("missing loading library in SequencingRun Entities"
                              + StringUtils.join(errorIds, ", "));
             }

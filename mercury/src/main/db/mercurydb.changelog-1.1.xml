@@ -67,22 +67,12 @@
     <changeSet id="GPLIM-1434-2" author="jcarey">
 
         <createTable tableName="batch_starting_vessels_aud" schemaName="mercury">
-            <column name="batch_starting_vessel_id" type="number(19,0)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="lab_vessel" type="number(19,0)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="lab_batch" type="number(19,0)">
-                <constraints nullable="false"/>
-            </column>
+            <column name="batch_starting_vessel_id" type="number(19,0)" />
+            <column name="lab_vessel" type="number(19,0)" />
+            <column name="lab_batch" type="number(19,0)" />
             <column name="concentration" type="number(19,2)"/>
-            <column name="rev" type="number(19,0)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="revtype" type="number(3,0)">
-                <constraints nullable="true"/>
-            </column>
+            <column name="rev" type="number(19,0)" />
+            <column name="revtype" type="number(3,0)" />
         </createTable>
 
         <addPrimaryKey tableName="batch_starting_vessels_aud" schemaName="mercury"

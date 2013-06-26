@@ -32,8 +32,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria.TraversalDirection.Ancestors;
-
 /**
  * A vessel that contains other vessels, e.g. a rack of tubes, a plate of wells, or a flowcell of lanes
  */
@@ -314,7 +312,7 @@ public class VesselContainer<T extends LabVessel> {
 
     @Transient
     private Set<SampleInstance> getSampleInstances(LabVessel.SampleType sampleType, LabBatch.LabBatchType labBatchType,
-                                                  Set<LabVessel> sourceVessels) {
+                                                   Set<LabVessel> sourceVessels) {
         Set<SampleInstance> sampleInstances = new LinkedHashSet<SampleInstance>();
         for (VesselPosition position : mapPositionToVessel.keySet()) {
             sampleInstances.addAll(getSampleInstancesAtPosition(position, sampleType, labBatchType));

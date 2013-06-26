@@ -286,19 +286,27 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
 
                                 MercurySample sample = si.getStartingSample();
                                 if (sample != null) {
-                                    for (LabBatch labBatch : si.getAllWorkflowLabBatches()) {
-                                        String workflowName = labBatch.getWorkflowName();
-                                        if (StringUtils.isBlank(workflowName)) {
-                                            workflowName = pdo.getProduct().getWorkflowName();
+
+                                    Collection<LabBatch> labBatches = si.getAllWorkflowLabBatches();
+                                    if (labBatches != null && labBatches.size() > 0) {
+                                        for (LabBatch labBatch : labBatches) {
+                                            String workflowName = labBatch.getWorkflowName();
+                                            if (StringUtils.isBlank(workflowName)) {
+                                                workflowName = pdo.getProduct().getWorkflowName();
+                                            }
+                                            WorkflowConfigDenorm wfDenorm = workflowConfigLookup.lookupWorkflowConfig(
+                                                    eventName, workflowName, entity.getEventDate());
+
+                                            boolean canExportToEtl =
+                                                    wfDenorm != null &&
+                                                    (pdo != null || !wfDenorm.isProductOrderNeeded());
+
+                                            dtos.add(new EventFactDto(entity, vessel, null, labBatch, sample, pdo,
+                                                    wfDenorm, canExportToEtl));
                                         }
-                                        WorkflowConfigDenorm wfDenorm = workflowConfigLookup.lookupWorkflowConfig(
-                                                eventName, workflowName, entity.getEventDate());
-
-                                        boolean canExportToEtl =
-                                                wfDenorm != null && (pdo != null || !wfDenorm.isProductOrderNeeded());
-
-                                        dtos.add(new EventFactDto(entity, vessel, null, labBatch, sample, pdo,
-                                                wfDenorm, canExportToEtl));
+                                    } else {
+                                        dtos.add(new EventFactDto(entity, vessel, vessel.getIndexesString(si),
+                                                null, sample, pdo, null, false));
                                     }
                                 } else {
                                     dtos.add(new EventFactDto(entity, vessel, vessel.getIndexesString(si),
