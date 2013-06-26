@@ -239,6 +239,13 @@
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
             <workflowStepDefs>
+                <name>Indexed Adaptor Ligation</name>
+                <labEventTypes>INDEX_P5_POND_ENRICHMENT</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
                 <name>Pond Enrichment</name>
                 <labEventTypes>POND_ENRICHMENT</labEventTypes>
                 <optional>false</optional>
@@ -262,6 +269,13 @@
                     <project>LCSET</project>
                     <statusTransition>In Hyb Sel</statusTransition>
                 </jiraTransition>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Pond Pico</name>
+                <labEventTypes>POND_PICO</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
@@ -572,7 +586,7 @@
     <productWorkflowDefs>
         <name>Exome Express</name>
         <productWorkflowDefVersions>
-            <version>1.0</version>
+            <version>3.0</version>
             <effectiveDate>2012-09-30T22:04:23.932-04:00</effectiveDate>
             <!--<workflowProcessDefs>Extraction</workflowProcessDefs>-->
             <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
