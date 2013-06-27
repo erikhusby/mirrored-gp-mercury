@@ -179,7 +179,7 @@
                     </stripes:label>
                     <div class="controls">
                         <stripes:text readonly="${!actionBean.editOrder.draft}" id="orderName" name="editOrder.title" class="defaultText input-xlarge"
-                            title="Enter the name of the new order"/>
+                            maxlength="255" title="Enter the name of the new order"/>
                     </div>
                 </div>
 
