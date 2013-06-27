@@ -308,7 +308,7 @@
                 var numChecked = $("input.shiftCheckbox:checked").size();
                 if (numChecked) {
                     $j("#dialogAction").attr("name", "recalculateRisk");
-                    $j("#selectedCountId").text(numChecked);
+                    $j("#recalculateRiskSelectedCountId").text(numChecked);
                     $j("#recalculateRiskDialog").dialog("open").dialog("option", "width", 600);
                 } else {
                     $j("#noneSelectedDialogMessage").text("Recalculate Risk");
@@ -320,7 +320,7 @@
                 var numChecked = $("input.shiftCheckbox:checked").size();
                 if (numChecked) {
                     $j("#dialogAction").attr("name", "setRisk");
-                    $j("#selectedCountId").text(numChecked);
+                    $j("#manualRiskSelectedCountId").text(numChecked);
                     $j("#riskDialog").dialog("open").dialog("option", "width", 600);
                 } else {
                     $j("#noneSelectedDialogMessage").text("Update Risk");
@@ -368,7 +368,7 @@
         </div>
 
         <div id="riskDialog" style="width:600px;display:none;">
-            <p>Manually Update Risk (<span id="selectedCountId"> </span> selected)</p>
+            <p>Manually Update Risk (<span id="manualRiskSelectedCountId"> </span> selected)</p>
             <p><span style="float:left; width:185px;">Update status to:</span>
                 <input type="radio" id="onRiskDialogId" name="riskRadio" value="true" checked="checked" style="float:left;margin-right:5px;">
                 <label style="float:left;width:60px;" for="onRiskDialogId">On Risk</label>
@@ -382,7 +382,7 @@
         </div>
 
         <div id="recalculateRiskDialog" style="width:600px;display:none;">
-            <p>Recalculate Risk (<span id="selectedCountId"> </span> selected)</p>
+            <p>Recalculate Risk (<span id="recalculateRiskSelectedCountId"> </span> selected)</p>
             <p><span style="float:left;">Recalculate On Risk status for selected samples. This will clear out all previous statuses.</span>
         </div>
 
