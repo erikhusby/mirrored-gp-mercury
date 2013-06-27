@@ -46,6 +46,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.DesignedReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
@@ -105,8 +106,6 @@ import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
-import static org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign.ReagentType;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.startsWith;
 
@@ -217,7 +216,7 @@ public class LabEventTest extends BaseEventTest {
     /**
      * Build object graph for Hybrid Selection messages, verify chain of events.
      */
-    @Test(groups = {DATABASE_FREE})
+    @Test(groups = {TestGroups.DATABASE_FREE})
     public void testHybridSelection() {
         // Controller.startCPURecording(true);
 
@@ -385,7 +384,7 @@ public class LabEventTest extends BaseEventTest {
         transferEntityGrapher.setMaxNumVesselsPerRequest(1000);
         Graph graph = new Graph();
         transferEntityGrapher.startWithTube(startingTube, graph, new ArrayList<TransferVisualizer.AlternativeId>());
-        Assert.assertEquals(graph.getMapIdToVertex().size(), 1307, "Wrong number of vertices");
+        Assert.assertEquals(graph.getMapIdToVertex().size(), 1308, "Wrong number of vertices");
 //        Controller.stopCPURecording();
     }
 
@@ -393,7 +392,7 @@ public class LabEventTest extends BaseEventTest {
     /**
      * Build object graph for Hybrid Selection messages, verify chain of events.
      */
-    @Test(groups = {DATABASE_FREE})
+    @Test(groups = {TestGroups.DATABASE_FREE})
     public void testExomeExpress() throws Exception {
 //        Controller.startCPURecording(true);
         // Use Standard Exome product, to verify that workflow is taken from LCSet, not Product
@@ -562,7 +561,7 @@ public class LabEventTest extends BaseEventTest {
     /**
      * Build object graph for Whole Genome Shotgun messages, verify chain of events.
      */
-    @Test(groups = {DATABASE_FREE})
+    @Test(groups = {TestGroups.DATABASE_FREE})
     public void testWholeGenomeShotgun() {
 //        Controller.startCPURecording(true);
 
@@ -634,7 +633,7 @@ public class LabEventTest extends BaseEventTest {
 //        Controller.stopCPURecording();
     }
 
-    @Test(groups = DATABASE_FREE)
+    @Test(groups = TestGroups.DATABASE_FREE)
     public void testPlateCherryPick() {
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<>();
         for (int rackPosition = 1; rackPosition <= SBSSection.P96COLS1_6BYROW.getWells().size(); rackPosition++) {
@@ -677,7 +676,7 @@ public class LabEventTest extends BaseEventTest {
     /**
      * Build object graph for Fluidigm messages
      */
-    @Test(groups = {DATABASE_FREE})
+    @Test(groups = {TestGroups.DATABASE_FREE})
     public void testFluidigm() {
         // starting rack
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<>();
@@ -712,11 +711,11 @@ public class LabEventTest extends BaseEventTest {
         EasyMock.replay(mockBucketDao, tubeDao, mockJira, labBatchDAO);
 
         LabEventHandler labEventHandler = getLabEventHandler();
-        BuildIndexPlate buildIndexPlate = new BuildIndexPlate("IndexPlate").invoke(null);
+        StaticPlate indexPlate = buildIndexPlate(null,
+                Collections.singletonList(MolecularIndexingScheme.IndexPosition.ILLUMINA_P7),
+                Collections.singletonList("IndexPlate")).get(0);
         FluidigmMessagesBuilder fluidigmMessagesBuilder = new FluidigmMessagesBuilder("", bettaLimsMessageTestFactory,
-                labEventFactory, labEventHandler,
-                mapBarcodeToTube,
-                buildIndexPlate.getIndexPlate());
+                labEventFactory, labEventHandler, mapBarcodeToTube, indexPlate);
         fluidigmMessagesBuilder.buildJaxb();
         fluidigmMessagesBuilder.buildObjectGraph();
     }
@@ -894,25 +893,22 @@ public class LabEventTest extends BaseEventTest {
     }
 
     /**
-     * Builds a plate of molecular indexes
+     * Builds plates of molecular indexes for the given index positions.  If there are multiple plates, e.g. P5 and P7,
+     * a merged P5/P7 scheme is also created, so {@link SampleInstance#addReagent(Reagent)} can find it.
+     * @param molecularIndexingSchemeDao DAO, nullable if in database free test
+     * @param indexPositions list of positions, e.g. P5, P7
+     * @param indexPlateBarcodes list of barcodes for plates to create
      */
-    public static class BuildIndexPlate {
-        private final String indexPlateBarcode;
-        private StaticPlate indexPlate;
-//        private MolecularIndexReagent index301;
+    public static List<StaticPlate> buildIndexPlate(@Nullable MolecularIndexingSchemeDao molecularIndexingSchemeDao,
+            List<MolecularIndexingScheme.IndexPosition> indexPositions, List<String> indexPlateBarcodes) {
 
-        public BuildIndexPlate(String indexPlateBarcode) {
-            this.indexPlateBarcode = indexPlateBarcode;
-        }
+        char[] bases = {'A', 'C', 'T', 'G'};
 
-        public StaticPlate getIndexPlate() {
-            return indexPlate;
-        }
-
-        public BuildIndexPlate invoke(@Nullable MolecularIndexingSchemeDao molecularIndexingSchemeDao) {
-            char[] bases = {'A', 'C', 'T', 'G'};
-
-            indexPlate = new StaticPlate(indexPlateBarcode, StaticPlate.PlateType.IndexedAdapterPlate96);
+        List<StaticPlate> indexPlates = new ArrayList<>();
+        int arrayIndex = 0;
+        for (final MolecularIndexingScheme.IndexPosition indexPosition : indexPositions) {
+            String indexPlateBarcode = indexPlateBarcodes.get(arrayIndex);
+            StaticPlate indexPlate = new StaticPlate(indexPlateBarcode, StaticPlate.PlateType.IndexedAdapterPlate96);
             for (VesselPosition vesselPosition : SBSSection.ALL96.getWells()) {
                 PlateWell plateWell = new PlateWell(indexPlate, vesselPosition);
                 StringBuilder stringBuilder = new StringBuilder();
@@ -928,13 +924,13 @@ public class LabEventTest extends BaseEventTest {
                 MolecularIndexingScheme testScheme = null;
                 if (molecularIndexingSchemeDao != null) {
                     testScheme = molecularIndexingSchemeDao
-                            .findSingleIndexScheme(MolecularIndexingScheme.IndexPosition.ILLUMINA_P7, sequence);
+                            .findSingleIndexScheme(indexPosition, sequence);
                 }
                 if (testScheme == null) {
                     testScheme = new MolecularIndexingScheme(
                             new EnumMap<MolecularIndexingScheme.IndexPosition, MolecularIndex>(
                                     MolecularIndexingScheme.IndexPosition.class) {{
-                                put(MolecularIndexingScheme.IndexPosition.ILLUMINA_P7, new MolecularIndex(sequence));
+                                put(indexPosition, new MolecularIndex(sequence));
                             }});
                     if (molecularIndexingSchemeDao != null) {
                         molecularIndexingSchemeDao.persist(testScheme);
@@ -947,15 +943,31 @@ public class LabEventTest extends BaseEventTest {
                 plateWell.addReagent(molecularIndexReagent);
                 indexPlate.getContainerRole().addContainedVessel(plateWell, vesselPosition);
             }
-            return this;
+            indexPlates.add(indexPlate);
+            arrayIndex++;
         }
+
+        if (indexPlates.size() > 1) {
+            for (VesselPosition vesselPosition : indexPlates.get(0).getVesselGeometry().getVesselPositions()) {
+                Map<MolecularIndexingScheme.IndexPosition, MolecularIndex> mapPositionToIndex =
+                        new EnumMap<>(MolecularIndexingScheme.IndexPosition.class);
+                for (StaticPlate indexPlate : indexPlates) {
+                    PlateWell well = indexPlate.getContainerRole().getVesselAtPosition(vesselPosition);
+                    MolecularIndexingScheme molecularIndexingScheme = ((MolecularIndexReagent) well.
+                            getReagentContents().iterator().next()).getMolecularIndexingScheme();
+                    mapPositionToIndex.putAll(molecularIndexingScheme.getIndexes());
+                }
+                new MolecularIndexingScheme(mapPositionToIndex);
+            }
+        }
+        return indexPlates;
     }
 
     public static TwoDBarcodedTube buildBaitTube(String tubeBarcode, ReagentDesign reagent) {
         TwoDBarcodedTube baitTube = new TwoDBarcodedTube(tubeBarcode);
         if (reagent == null) {
             reagent = new ReagentDesign("cancer_2000gene_shift170_undercovered",
-                    ReagentType.BAIT);
+                    ReagentDesign.ReagentType.BAIT);
             reagent.setTargetSetName("Cancer_2K");
             reagent.setManufacturersName("1234abc");
         }
