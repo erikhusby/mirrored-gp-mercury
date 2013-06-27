@@ -51,6 +51,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructio
 import org.broadinstitute.gpinformatics.mercury.test.builders.PreFlightJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingJaxbBuilder;
+import org.broadinstitute.gpinformatics.mocks.EverythingYouAskForYouGetAndItsHuman;
 import org.easymock.EasyMock;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
@@ -153,7 +154,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
 
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(DEV);
+        return DeploymentBuilder.buildMercuryWarWithAlternatives(DEV, EverythingYouAskForYouGetAndItsHuman.class);
     }
 
     /**
@@ -248,7 +249,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
     /**
      * Message one LCSET, and register run.
      */
-    @Test(enabled = false, groups = EXTERNAL_INTEGRATION)
+    @Test(enabled = true, groups = EXTERNAL_INTEGRATION)
     public void testProcessMessage() {
         String testPrefix = testPrefixDateFormat.format(new Date());
 //        Controller.startCPURecording(true);
