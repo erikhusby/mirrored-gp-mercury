@@ -5,7 +5,28 @@ import org.hibernate.annotations.Sort;
 import org.hibernate.annotations.SortType;
 import org.hibernate.envers.Audited;
 
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
+import javax.persistence.MapKeyColumn;
+import javax.persistence.MapKeyEnumerated;
+import javax.persistence.MapKeyJoinColumn;
+import javax.persistence.NamedNativeQueries;
+import javax.persistence.NamedNativeQuery;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+import javax.persistence.UniqueConstraint;
 import java.util.Collections;
 import java.util.Map;
 import java.util.SortedMap;
@@ -141,7 +162,7 @@ public class MolecularIndexingScheme {
         private boolean isDefault;
         private String position;
 
-        private IndexPosition(String technology, boolean aDefault, String position) {
+        IndexPosition(String technology, boolean aDefault, String position) {
             this.technology = technology;
             isDefault = aDefault;
             this.position = position;
@@ -175,6 +196,7 @@ public class MolecularIndexingScheme {
         }
     }
 
+    @SuppressWarnings("UnusedDeclaration")
     @Id
     @SequenceGenerator(name="seq_molecular_indexing_scheme", schema = "mercury", sequenceName="seq_molecular_indexing_scheme")
     @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_molecular_indexing_scheme")
@@ -197,14 +219,14 @@ public class MolecularIndexingScheme {
 //    @MapKeyColumn(name="POSITION_HINT")
     @MapKeyColumn(name="mapkey")
     @Sort(type= SortType.NATURAL)
-    private SortedMap<IndexPosition, MolecularIndex> indexes = new TreeMap<IndexPosition, MolecularIndex>();
+    private SortedMap<IndexPosition, MolecularIndex> indexes = new TreeMap<>();
 
     /**
      * Returns the PositionHint that should be associated with an index when there
      * is only one index in the MolecularIndexingScheme. Guaranteed to never be
      * null.
      */
-    public static IndexPosition getDefaultPositionHint(final String technology) {
+    public static IndexPosition getDefaultPositionHint(String technology) {
         if (technology == null) {
             throw new NullPointerException("The technology specified cannot be null.");
         }
@@ -213,7 +235,7 @@ public class MolecularIndexingScheme {
             throw new IllegalArgumentException("Cannot specify an empty technology string.");
         }
 
-        for (final IndexPosition internalPosition : IndexPosition.values()) {
+        for (IndexPosition internalPosition : IndexPosition.values()) {
 //            final PositionHint externalPosition = internalPosition.getPositionHint();
             if (internalPosition.getTechnology().equals(technology) && internalPosition.isDefault()) {
                 return internalPosition;
@@ -239,7 +261,7 @@ public class MolecularIndexingScheme {
      * constructors in this class.
      */
     // todo jmt switch this back to package visible
-    public MolecularIndexingScheme(final Map<IndexPosition, MolecularIndex> positionIndexMap) {
+    public MolecularIndexingScheme(Map<IndexPosition, MolecularIndex> positionIndexMap) {
         if (positionIndexMap == null) {
             throw new NullPointerException("The list of index pairs can't be null.");
         }
@@ -248,11 +270,14 @@ public class MolecularIndexingScheme {
             throw new IllegalArgumentException("The list of index pairs didn't contain any elements");
         }
 
-        for (final IndexPosition position : positionIndexMap.keySet()) {
-            this.addIndexPosition(position, positionIndexMap.get(position));
+        for (Map.Entry<IndexPosition, MolecularIndex> indexPositionMolecularIndexEntry : positionIndexMap.entrySet()) {
+            addIndexPosition(indexPositionMolecularIndexEntry.getKey(), indexPositionMolecularIndexEntry.getValue());
         }
 
-        this.setName(this.generateName());
+        setName(generateName());
+        for (MolecularIndex molecularIndex : positionIndexMap.values()) {
+            molecularIndex.getMolecularIndexingSchemes().add(this);
+        }
     }
 
     /**
@@ -264,10 +289,10 @@ public class MolecularIndexingScheme {
      * non-empty.
      */
     public String getName() {
-        return this.name;
+        return name;
     }
 
-    public void setName(final String name) {
+    public void setName(String name) {
         this.name = name;
     }
 
@@ -278,10 +303,12 @@ public class MolecularIndexingScheme {
       * of the MolecularIndexingScheme. If you need a scheme with additional
       * component indexes, use the factory to get or create one.
       */
-    void addIndexPosition(final IndexPosition position, final MolecularIndex index) {
-        if (index == null) throw new NullPointerException("The given MolecularIndex cannot be null.");
+    void addIndexPosition(IndexPosition position, MolecularIndex index) {
+        if (index == null) {
+            throw new NullPointerException("The given MolecularIndex cannot be null.");
+        }
 
-        for (final IndexPosition existingHint : this.getIndexes().keySet()) {
+        for (IndexPosition existingHint : getIndexes().keySet()) {
             if ( ! existingHint.getClass().equals(position.getClass())) {
                 throw new IllegalArgumentException(
                         "Cannot add positions from two different " +
@@ -293,13 +320,13 @@ public class MolecularIndexingScheme {
         // throws a ClassCastException. Also, apparently Hibernate
         // calls setters while persisting, which means that just
         // testing that the position is occupied will always throw
-        if (this.indexes.containsKey(position) && ! this.indexes.get(position).equals(index)) {
+        if (indexes.containsKey(position) && !indexes.get(position).equals(index)) {
             throw new IllegalArgumentException(
                     "The scheme already contains a position " + position.toString() +
-                            " with a different index " + this.indexes.get(position).getSequence());
+                            " with a different index " + indexes.get(position).getSequence());
         }
 
-        this.indexes.put(position, index);
+        indexes.put(position, index);
     }
 
     /**
@@ -308,7 +335,7 @@ public class MolecularIndexingScheme {
      * Neither the returned map nor any values within it will be null.
      */
     public SortedMap<IndexPosition, MolecularIndex> getIndexes() {
-        return Collections.unmodifiableSortedMap(this.indexes);
+        return Collections.unmodifiableSortedMap(indexes);
     }
 
     /**
@@ -316,8 +343,8 @@ public class MolecularIndexingScheme {
      * with the given position exists.
      */
     @Transient
-    public MolecularIndex getIndex(final IndexPosition position) {
-        return this.getIndexes().get(position);
+    public MolecularIndex getIndex(IndexPosition position) {
+        return getIndexes().get(position);
     }
 
     /**
@@ -326,7 +353,7 @@ public class MolecularIndexingScheme {
      */
     @Transient
     public int getIndexCount() {
-        return this.getIndexes().size();
+        return getIndexes().size();
 	}
 
     /**
@@ -335,18 +362,22 @@ public class MolecularIndexingScheme {
      * and so should suffice for .equals().
      */
     @Override
-    public boolean equals(final Object other) {
-        if (other == this) return true;
-        if ( ! (other instanceof MolecularIndexingScheme)) return false;
+    public boolean equals(Object other) {
+        if (other == this) {
+            return true;
+        }
+        if ( ! (other instanceof MolecularIndexingScheme)) {
+            return false;
+        }
 
-        final MolecularIndexingScheme otherScheme = (MolecularIndexingScheme) other;
+        MolecularIndexingScheme otherScheme = (MolecularIndexingScheme) other;
 
-        return this.getName().equals(otherScheme.getName());
+        return getName().equals(otherScheme.getName());
     }
 
     @Override
     public int hashCode() {
-        return this.getName().hashCode();
+        return getName().hashCode();
     }
 
     /*
@@ -366,9 +397,9 @@ public class MolecularIndexingScheme {
       * all 454_INTRA.
       */
     private String generateName() {
-        final StringBuilder builder = new StringBuilder();
-        builder.append(this.getIndexes().firstKey().getTechnology());
-        for (final Map.Entry<IndexPosition, MolecularIndex> entry : this.getIndexes().entrySet()) {
+        StringBuilder builder = new StringBuilder();
+        builder.append(getIndexes().firstKey().getTechnology());
+        for (Map.Entry<IndexPosition, MolecularIndex> entry : getIndexes().entrySet()) {
             builder.append('_')
                     .append(entry.getKey().getPosition())
                     .append("-")
