@@ -500,7 +500,7 @@ public interface TransferTraverserCriteria {
 
     /**
      * NearestTubeAncestorsCriteria is a Traverser Criteria object intended to capture the closest (in number of hops)
-     * TwoDBarcodedTube(s) that can be found in a target vessels event history.  When found, not only will the the tube
+     * TwoDBarcodedTube(s) that can be found in a target vessel's event history.  When found, not only will the the tube
      * be saved for access, but also an object that relates the tube to its position at its found location will be
      * returned.
      * <p/>

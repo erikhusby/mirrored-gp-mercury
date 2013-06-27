@@ -6,7 +6,7 @@
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.products.ProductActionBean"/>
 
 <stripes:layout-render name="/layout.jsp" pageTitle="View Product: #{actionBean.editProduct.partNumber}"
-                       sectionTitle="View Product Order: #{actionBean.editProduct.partNumber}"
+                       sectionTitle="View Product: #{actionBean.editProduct.partNumber}"
                        businessKeyValue="${actionBean.editProduct.businessKey}">
 
     <stripes:layout-component name="content">

@@ -921,7 +921,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
-    @ValidationMethod(on = {DELETE_SAMPLES_ACTION, ABANDON_SAMPLES_ACTION, SET_RISK}, priority = 0)
+    @ValidationMethod(on = {DELETE_SAMPLES_ACTION, ABANDON_SAMPLES_ACTION, SET_RISK, RECALCULATE_RISK}, priority = 0)
     public void validateSampleListOperation() {
         if (selectedProductOrderSampleIds != null) {
             selectedProductOrderSamples = new ArrayList<>(selectedProductOrderSampleIds.size());
