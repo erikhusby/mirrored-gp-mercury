@@ -15,7 +15,7 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.reagent.ReagentDesignActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="List of Designed Reagents" sectionTitle="Reagent Designs" showCreate="true">
+<stripes:layout-render name="/layout.jsp" pageTitle="List Reagent Designs" sectionTitle="List Reagent Designs" showCreate="true">
 
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">

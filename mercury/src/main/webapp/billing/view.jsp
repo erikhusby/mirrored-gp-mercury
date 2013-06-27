@@ -5,7 +5,8 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="View Billing Session" sectionTitle="View Billing Session: ${actionBean.editSession.businessKey}">
+<stripes:layout-render name="/layout.jsp" pageTitle="View Billing Session: ${actionBean.editSession.businessKey}"
+                       sectionTitle="View Billing Session: ${actionBean.editSession.businessKey}">
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
             $j(document).ready(function() {
