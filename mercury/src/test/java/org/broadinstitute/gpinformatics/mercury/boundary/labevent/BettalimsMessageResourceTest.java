@@ -369,8 +369,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
 
         LibraryConstructionJaxbBuilder libraryConstructionJaxbBuilder = new LibraryConstructionJaxbBuilder(
                 bettaLimsMessageFactory, testPrefix, shearingJaxbBuilder.getShearCleanPlateBarcode(),
-                indexPlate.getLabel(),
-                numPositionsInRack).invoke();
+                indexPlate.getLabel(), null, numPositionsInRack).invoke();
 
         for (BettaLIMSMessage bettaLIMSMessage : libraryConstructionJaxbBuilder.getMessageList()) {
             sendMessage(bettaLIMSMessage, bettalimsMessageResource, testMercuryUrl);

@@ -239,10 +239,10 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
         leHandler.processEvent(shearingQcEntity);
 
         LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = new LibraryConstructionEntityBuilder(
-                bettaLimsMessageTestFactory, labEventFactory, leHandler,
-                shearingCleanupPlate,
+                bettaLimsMessageTestFactory, labEventFactory, leHandler, shearingCleanupPlate,
                 postShearingTransferCleanupEntity.getTargetLabVessels().iterator().next().getLabel(),
-                shearPlate, LabEventTest.NUM_POSITIONS_IN_RACK, "testPrefix").invoke();
+                shearPlate, LabEventTest.NUM_POSITIONS_IN_RACK, "testPrefix",
+                LibraryConstructionEntityBuilder.Indexing.DUAL).invoke();
 
         //        // todo plates vs tubes?
         //        // - Deck calls web service to verify source barcodes?
