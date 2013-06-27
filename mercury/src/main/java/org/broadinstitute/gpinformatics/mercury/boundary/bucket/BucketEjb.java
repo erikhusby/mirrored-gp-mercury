@@ -251,13 +251,18 @@ public class BucketEjb {
 
             BucketEntry foundEntry = workingBucket.findEntry(workingVessel);
             if (foundEntry != null) {
-                logger.info("Adding entry " + foundEntry.getBucketEntryId() + " for vessel " + foundEntry.getLabVessel()
-                        .getLabCentricName() +
+                if (logger.isDebugEnabled()) {
+                    logger.debug(
+                            "Adding entry " + foundEntry.getBucketEntryId() + " for vessel " + foundEntry.getLabVessel()
+                                    .getLabCentricName() +
                             " and PDO " + foundEntry.getPoBusinessKey() + " to be popped from bucket.");
+                }
                 bucketEntrySet.add(foundEntry);
             } else {
-                logger.info("Attempting to pull a vessel, " + workingVessel.getLabel() + ", from a bucket, " +
-                            workingBucket.getBucketDefinitionName() + ", when it does not exist in that bucket");
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Attempting to pull a vessel, " + workingVessel.getLabel() + ", from a bucket, " +
+                                 workingBucket.getBucketDefinitionName() + ", when it does not exist in that bucket");
+                }
             }
         }
         return bucketEntrySet;
