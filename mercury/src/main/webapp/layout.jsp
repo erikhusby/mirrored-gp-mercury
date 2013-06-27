@@ -169,7 +169,7 @@
                     <h3 style="display:inline;">${sectionTitle}</h3>
                     <c:if test="${showCreate && actionBean.createAllowed}">
                         <stripes:link beanclass="${actionBean.class.name}" event="${actionBean.createAction}" title="Click to ${actionBean.createTitle}" class="pull-right">
-                            <i class="icon-plus"></i>
+                            <span class="icon-plus"></span>
                             ${actionBean.createTitle}
                         </stripes:link>
                     </c:if>
@@ -177,7 +177,7 @@
                     <c:if test="${not empty businessKeyValue && actionBean.editAllowed}">
                         <stripes:link beanclass="${actionBean.class.name}" event="${actionBean.editAction}" title="Click to ${actionBean.editTitle}" class="pull-right">
                             <stripes:param name="${actionBean.editBusinessKeyName}" value="${businessKeyValue}"/>
-                            <i class="icon-pencil"></i>
+                            <span class="icon-pencil"></span>
                             ${actionBean.editTitle}
                         </stripes:link>
                     </c:if>

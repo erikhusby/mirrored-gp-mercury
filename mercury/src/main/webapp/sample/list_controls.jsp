@@ -41,7 +41,7 @@
         <p>
             <stripes:link title="<%=CollaboratorControlsActionBean.CREATE_CONTROL%>"
                           beanclass="${actionBean.class.name}" event="create" class="pull-right">
-                <span class="icon-shopping-cart"></span> <%=CollaboratorControlsActionBean.CREATE_CONTROL%>
+                <span class="icon-plus"></span> <%=CollaboratorControlsActionBean.CREATE_CONTROL%>
             </stripes:link>
         </p>
 

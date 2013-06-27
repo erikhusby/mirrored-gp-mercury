@@ -164,6 +164,14 @@
 
         </ul>
         <ul class="nav pull-right global-search navbar-search">
+            <li style="white-space:nowrap;">
+                <stripes:form action="${ctxpath}/search/all.action?quickSearch=" name="quickSearch">
+                    <input type="search" data-type="search" name="searchKey" placeholder="Search for a RP, PDO or P"
+                           class="search-query ui-input-text ui-body-null" autosave="unique" results="10"
+                           style="margin-top: 5px;vertical-align: top;height:14px;"/>
+                    <s:hidden name="event" value="quickSearch"/>
+                </stripes:form>
+            </li>
             <li class="dropdown">
                 <a id="searchNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span
                         class="icon-search"></span> Search <b class="caret"></b></a>
