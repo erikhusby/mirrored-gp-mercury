@@ -186,5 +186,6 @@
                     </security:authorizeBlock>
                 </ul>
             </li>
+        </ul>
     </div>
 </header>
