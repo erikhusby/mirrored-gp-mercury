@@ -305,12 +305,12 @@ public abstract class LabVessel implements Serializable {
         String vesselContentName;
 
         try {
-
             vesselContentName = Long.toString(Long.parseLong(label), 36);
-
         } catch (NumberFormatException nfe) {
             vesselContentName = label;
-            logger.warn("Could not return Base 36 version of label.  Returning original label instead");
+            if (logger.isDebugEnabled()) {
+                logger.debug("Could not return Base 36 version of label. Returning original label instead");
+            }
         }
 
         return vesselContentName;

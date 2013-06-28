@@ -185,6 +185,7 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
      *
      * @return all nearest tube ancestors and the lane to which they are ancestors.
      */
+    @Override
     public Map<VesselPosition, LabVessel> getNearestTubeAncestorsForLanes() {
 
         Map<VesselPosition, LabVessel> vesselsWithPositions = new HashMap<>();

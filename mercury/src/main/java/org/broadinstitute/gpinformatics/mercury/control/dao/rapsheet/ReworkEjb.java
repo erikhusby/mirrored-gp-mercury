@@ -239,8 +239,7 @@ public class ReworkEjb {
                                 sample.getProductOrder().getBusinessKey(), vessel.getLabel(),
                                 sample.getProductOrder(), vessel);
 
-                        if (!ProductFamily.ProductFamilyName.EXOME.getFamilyName()
-                                .equals(sample.getProductOrder().getProduct().getProductFamily().getName())) {
+                        if (!sample.getProductOrder().getProduct().isSameProductFamily(ProductFamily.ProductFamilyName.EXOME)) {
                             candidate.addValidationMessage("The PDO " + sample.getProductOrder().getBusinessKey() +
                                                            " for Sample " + entryMap.getKey() +
                                                            " is not part of the Exome family");
@@ -268,8 +267,7 @@ public class ReworkEjb {
                 final ReworkCandidate candidate =
                         new ReworkCandidate(sampleKey, sample.getProductOrder().getBusinessKey(),
                                 tubeBarcode, sample.getProductOrder(), null);
-                if (!ProductFamily.ProductFamilyName.EXOME.getFamilyName()
-                        .equals(sample.getProductOrder().getProduct().getProductFamily().getName())) {
+                if (!sample.getProductOrder().getProduct().isSameProductFamily(ProductFamily.ProductFamilyName.EXOME)) {
                     candidate.addValidationMessage("The PDO " + sample.getProductOrder().getBusinessKey() +
                                                    " for Sample " + sampleKey +
                                                    " is not part of the Exome family");

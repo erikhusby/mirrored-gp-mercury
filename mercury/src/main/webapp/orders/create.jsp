@@ -4,7 +4,8 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="${actionBean.submitString}" sectionTitle="${actionBean.submitString} ${actionBean.editOrder.title}">
+<stripes:layout-render name="/layout.jsp" pageTitle="${actionBean.submitString}: ${actionBean.editOrder.title}"
+                       sectionTitle="${actionBean.submitString}: ${actionBean.editOrder.title}">
 
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
@@ -179,7 +180,7 @@
                     </stripes:label>
                     <div class="controls">
                         <stripes:text readonly="${!actionBean.editOrder.draft}" id="orderName" name="editOrder.title" class="defaultText input-xlarge"
-                            title="Enter the name of the new order"/>
+                            maxlength="255" title="Enter the name of the new order"/>
                     </div>
                 </div>
 

@@ -30,6 +30,7 @@ import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class SequencingTemplateFactory {
@@ -115,10 +116,9 @@ public class SequencingTemplateFactory {
     @DaoFree
     public Set<VesselAndPosition> getLoadingVessels(IlluminaFlowcell flowcell) {
         Set<VesselAndPosition> loadedVesselsAndPositions = new HashSet<>();
-        for (VesselPosition vesselPosition : flowcell.getVesselGeometry().getVesselPositions()) {
-            for (LabVessel.VesselEvent vesselEvent : flowcell.getContainerRole().getAncestors(vesselPosition)) {
-                loadedVesselsAndPositions.add(new VesselAndPosition(vesselEvent.getLabVessel(), vesselPosition));
-            }
+        for (Map.Entry<VesselPosition, LabVessel> vesselPositionEntry : flowcell.getNearestTubeAncestorsForLanes().entrySet()) {
+            loadedVesselsAndPositions.add(new VesselAndPosition(vesselPositionEntry.getValue(),
+                    vesselPositionEntry.getKey()));
         }
         return loadedVesselsAndPositions;
     }
@@ -177,12 +177,15 @@ public class SequencingTemplateFactory {
         if (miSeqReagentKit.getConcentration()!=null) {
             concentration = miSeqReagentKit.getConcentration().doubleValue();
         }
-        SequencingTemplateLaneType lane =
-                LimsQueryObjectFactory.createSequencingTemplateLaneType(MiSeqReagentKit.LOADING_WELL.name(),
-                        concentration, miSeqReagentKit.getLabel());
+        List<SequencingTemplateLaneType> lanes=new ArrayList<>();
+        for (String laneName : IlluminaFlowcell.FlowcellType.MiSeqFlowcell.getVesselGeometry().getRowNames()) {
+            lanes.add(LimsQueryObjectFactory.createSequencingTemplateLaneType(
+                    laneName, concentration, miSeqReagentKit.getLabel()));
+        }
         return LimsQueryObjectFactory.createSequencingTemplate(null, null, isPoolTest,
                 sequencingConfig.getInstrumentWorkflow().getValue(), sequencingConfig.getChemistry().getValue(),
-                sequencingConfig.getReadStructure().getValue(), lane);
+                sequencingConfig.getReadStructure().getValue(),
+                lanes.toArray(new SequencingTemplateLaneType[lanes.size()]));
     }
 
     private SequencingConfigDef getSequencingConfig(boolean isPoolTest){
