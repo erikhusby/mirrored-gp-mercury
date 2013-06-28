@@ -27,11 +27,13 @@
 
                 var sampleNameFields = $j(".sampleName");
 
+                var CHUNK_SIZE = 100;
+
                 // If there are no samples, set up the filter, otherwise kick off some javascript
                 if (sampleNameFields.length > 0) {
-                    var i,j,tempArray,chunk = 50;
-                    for (i=0,j=sampleNameFields.length; i<j; i+=chunk) {
-                        tempArray = sampleNameFields.slice(i,i+chunk);
+                    var i, j, tempArray;
+                    for (i=0, j = sampleNameFields.length; i < j; i += CHUNK_SIZE) {
+                        tempArray = sampleNameFields.slice(i, i + CHUNK_SIZE);
 
                         updateBspInformation(tempArray);
                     }
