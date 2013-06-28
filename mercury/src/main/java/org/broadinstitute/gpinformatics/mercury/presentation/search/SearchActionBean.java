@@ -17,11 +17,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean;
-import org.broadinstitute.gpinformatics.athena.presentation.products.ProductActionBean;
-import org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
@@ -45,7 +41,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
- * This handles all the needed interface processing elements
+ * This handles all the needed interface processing elements.
  */
 @UrlBinding(SearchActionBean.ACTIONBEAN_URL_BINDING)
 public class SearchActionBean extends CoreActionBean {
@@ -118,8 +114,6 @@ public class SearchActionBean extends CoreActionBean {
     private Set<LabVessel> foundVessels = new HashSet<LabVessel>();
     private List<MercurySample> foundSamples;
     private List<ProductOrder> foundPDOs;
-    private List<Product> foundPs;
-    private List<ResearchProject> foundRPs;
     private List<LabBatch> foundBatches;
 
     private boolean resultsAvailable = false;
@@ -207,93 +201,6 @@ public class SearchActionBean extends CoreActionBean {
         multipleResultTypes = count > 1;
         resultsAvailable = totalResults > 0;
         isSearchDone = true;
-    }
-
-    /**
-     * Perform a search to identify a singular result for a quick search to lookup a particular item.  This is not
-     * designed to handle returning multiple things of various types but will keep looking though different types
-     * of objects until it finds something.
-     */
-    private SearchType doSearch() {
-        List<String> searchList = cleanInputString(searchKey);
-        SearchType searchType = null;
-
-        for (SearchType searchForItem : SearchType.values()) {
-            switch (searchForItem) {
-            case PDO_BY_KEY:
-                foundPDOs = productOrderDao.findListByBusinessKeyList(searchList);
-                if (!foundPDOs.isEmpty()) {
-                    searchType = SearchType.PDO_BY_KEY;
-                }
-                break;
-            case P_BY_KEY:
-                foundPs = productDao.findByPartNumbers(searchList);
-                if (!foundPs.isEmpty()) {
-                    searchType = SearchType.P_BY_KEY;
-                }
-                break;
-            case RP_BY_KEY:
-                foundRPs = researchProjectDao.findByBusinessKeyList(searchList);
-                if (!foundRPs.isEmpty()) {
-                    searchType = SearchType.RP_BY_KEY;
-                }
-                break;
-            }
-
-            if (searchType != null) {
-                break;
-            }
-        }
-
-        return searchType;
-    }
-
-    @HandlesEvent(QUICK_SEARCH_ACTION)
-    public Resolution quickSearch() throws Exception {
-        SearchType searchType = doSearch();
-
-        if (searchType == null) {
-            // Did not find anything matching the search string so it could have been a bad prefix, bad business key or
-            // whatever.  This happens when we've looked through all search types and nothing has been found.  Allowing
-            // this to be null ensures we don't have to encode any prefix string in order determine what kind of search
-            // it is, but keeps things generic.
-            addGlobalValidationError("There were no matching items for your quick search.");
-        } else {
-            String nonUniqueResultFound = "The quick search did not find a unique result, it found ";
-
-            switch (searchType) {
-            case PDO_BY_KEY:
-                if (foundPDOs.size() == 1) {
-                    return new ForwardResolution(ProductOrderActionBean.class, "view")
-                            .addParameter(ProductOrderActionBean.PRODUCT_ORDER_PARAMETER,
-                                    foundPDOs.get(0).getBusinessKey());
-                }
-
-                addGlobalValidationError(nonUniqueResultFound + foundPDOs + " matching Product Orders");
-                break;
-            case P_BY_KEY:
-                if (foundPs.size() == 1) {
-                    return new ForwardResolution(ProductActionBean.class, "view")
-                            .addParameter(ProductActionBean.PRODUCT_PARAMETER, foundPs.get(0).getBusinessKey());
-                }
-
-                addGlobalValidationError(nonUniqueResultFound + foundPs + " matching Orders");
-                break;
-
-            case RP_BY_KEY:
-                if ((foundRPs.size() == 1)) {
-                    return new ForwardResolution(ResearchProjectActionBean.class, "view")
-                            .addParameter(ResearchProjectActionBean.RESEARCH_PROJECT_PARAMETER,
-                                    foundRPs.get(0).getBusinessKey());
-                }
-
-                addGlobalValidationError(nonUniqueResultFound + foundRPs.size() + " matching Research Projects.");
-                break;
-            }
-        }
-
-        // Stay where you are and report back the error.
-        return getSourcePageResolution();
     }
 
     @HandlesEvent(SEARCH_ACTION)

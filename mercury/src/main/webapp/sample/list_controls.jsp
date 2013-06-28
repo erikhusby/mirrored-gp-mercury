@@ -1,6 +1,5 @@
 <%@ page import="org.broadinstitute.gpinformatics.mercury.presentation.sample.CollaboratorControlsActionBean" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
-<%@ taglib prefix='fn' uri='http://java.sun.com/jsp/jstl/functions' %>
 
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.CollaboratorControlsActionBean"/>
