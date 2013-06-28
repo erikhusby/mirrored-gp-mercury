@@ -1184,7 +1184,7 @@ IS
     BEGIN
       UPDATE ledger_entry
       SET
-        ledger_entry_id = new.ledger_entry_id,
+        ledger_id = new.ledger_id,
         price_item_id = new.price_item_id,
         price_item_type = new.price_item_type,
         quantity = new.quantity,
@@ -1192,10 +1192,10 @@ IS
         billing_message = new.billing_message,
         work_complete_date = new.work_complete_date,
         etl_date = new.etl_date
-      WHERE ledger_entry_id = new.ledger_entry_id;
+      WHERE ledger_id = new.ledger_id;
 
       INSERT INTO ledger_entry (
-        ledger_entry_id,
+        ledger_id,
         price_item_id,
         price_item_type,
         quantity,
@@ -1205,7 +1205,7 @@ IS
         etl_date
       )
       SELECT
-        new.ledger_entry_id,
+        new.ledger_id,
         new.price_item_id,
         new.price_item_type,
         new.quantity,
@@ -1218,7 +1218,7 @@ IS
             SELECT
               1
             FROM ledger_entry
-            WHERE ledger_entry_id = new.ledger_entry_id
+            WHERE ledger_id = new.ledger_id
         );
       EXCEPTION WHEN OTHERS THEN
       errmsg := SQLERRM;
