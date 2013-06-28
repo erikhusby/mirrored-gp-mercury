@@ -155,9 +155,9 @@ public class ExtractTransform implements Serializable {
             LedgerEntryCrossEtl ledgerEntryCrossEtl,
             LedgerEntryEtl ledgerEntryEtl,
             SequencingRunEtl sequencingRunEtl,
-            SequencingSampleFactEtl sequencingSampleFactEtl
+            SequencingSampleFactEtl sequencingSampleFactEtl,
+            BillingSessionEtl billingSessionEtl
     ) {
-
         etlInstances.add(labEventEtl);
         etlInstances.add(labBatchEtl);
         etlInstances.add(labVesselEtl);
@@ -177,6 +177,7 @@ public class ExtractTransform implements Serializable {
         etlInstances.add(ledgerEntryEtl);
         etlInstances.add(sequencingRunEtl);
         etlInstances.add(sequencingSampleFactEtl);
+        etlInstances.add(billingSessionEtl);
     }
 
     /**
@@ -200,7 +201,7 @@ public class ExtractTransform implements Serializable {
      * @return count of records created, or -1 if could not run
      */
     public int incrementalEtl(String requestedStart, String requestedEnd) {
-        final String ZERO = "0";
+        String ZERO = "0";
 
         // Bails if target directory is not defined, is missing or cannot read it.
         String dataDir = getDatafileDir();
@@ -210,7 +211,8 @@ public class ExtractTransform implements Serializable {
                 loggedConfigError = true;
             }
             return -1;
-        } else if (!(new File(dataDir)).exists()) {
+        }
+        if (!(new File(dataDir)).exists()) {
             if (!loggedConfigError) {
                 log.error("ETL data file directory is missing: " + dataDir);
                 loggedConfigError = true;
@@ -288,8 +290,8 @@ public class ExtractTransform implements Serializable {
         }
         
         log.trace("Starting incremental ETL");
-        final List<Integer> count = new ArrayList<Integer>(1);
-        final List<String> date = new ArrayList<String>(1);
+        final List<Integer> count = new ArrayList<>(1);
+        final List<String> date = new ArrayList<>(1);
 
         try {
             incrementalRunStartTime = System.currentTimeMillis();
@@ -309,7 +311,7 @@ public class ExtractTransform implements Serializable {
                         log.debug("Incremental ETL found " + revs.size() + " changes");
                     }
 
-                    final String actualEtlDateStr = secTimestampFormat.format(
+                    String actualEtlDateStr = secTimestampFormat.format(
                             new Date(revsAndDate.right * MSEC_IN_SEC));
 
                     int recordCount = 0;

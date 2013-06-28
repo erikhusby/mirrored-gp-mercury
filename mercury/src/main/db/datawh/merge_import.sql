@@ -96,6 +96,10 @@ IS
                                      *
                                    FROM im_sequencing_sample_fact
                                    WHERE is_delete = 'F';
+  CURSOR im_billing_session_cur IS SELECT
+                                     *
+                                   FROM im_billing_session
+                                   WHERE is_delete = 'F';
 
   errmsg        VARCHAR2(255);
   PDO_SAMPLE_NOT_IN_EVENT_FACT EXCEPTION;
@@ -1121,6 +1125,44 @@ IS
 
     END LOOP;
 
+    FOR new IN im_billing_session_cur LOOP
+    BEGIN
+      UPDATE billing_session
+      SET
+        billing_session_id = new.billing_session_id,
+        billed_date = new.billed_date,
+        billing_session_type = new.billing_session_type,
+        etl_date = new.etl_date
+      WHERE billing_session_id = new.billing_session_id;
+
+      INSERT INTO billing_session (
+        billing_session_id,
+        billed_date,
+        billing_session_type,
+        etl_date
+      )
+      SELECT
+        new.billing_session_id,
+        new.billed_date,
+        new.billing_session_type,
+        new.etl_date
+      FROM DUAL
+      WHERE NOT EXISTS(
+            SELECT
+              1
+            FROM billing_session
+            WHERE billing_session = new.billing_session
+        );
+      EXCEPTION WHEN OTHERS THEN
+      errmsg := SQLERRM;
+      DBMS_OUTPUT.PUT_LINE(
+          TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_billing_session.dat line ' || new.line_number ||
+          '  ' || errmsg);
+      CONTINUE;
+    END;
+    END LOOP;
+
+    -- Loop for cross entity ETL.
     FOR new IN im_ledger_entry_cur LOOP
     BEGIN
 
@@ -1136,6 +1178,55 @@ IS
       CONTINUE;
     END;
 
+    END LOOP;
+
+    FOR new IN im_ledger_entry_cur LOOP
+    BEGIN
+      UPDATE ledger_entry
+      SET
+        ledger_entry_id = new.ledger_entry_id,
+        price_item_id = new.price_item_id,
+        price_item_type = new.price_item_type,
+        quantity = new.quantity,
+        billing_session_id = new.billing_session_id,
+        billing_message = new.billing_message,
+        work_complete_date = new.work_complete_date,
+        etl_date = new.etl_date
+      WHERE ledger_entry_id = new.ledger_entry_id;
+
+      INSERT INTO ledger_entry (
+        ledger_entry_id,
+        price_item_id,
+        price_item_type,
+        quantity,
+        billing_session_id,
+        billing_message,
+        work_complete_date,
+        etl_date
+      )
+      SELECT
+        new.ledger_entry_id,
+        new.price_item_id,
+        new.price_item_type,
+        new.quantity,
+        new.billing_session_id,
+        new.billing_message,
+        new.work_complete_date,
+        new.etl_date
+      FROM DUAL
+      WHERE NOT EXISTS(
+            SELECT
+              1
+            FROM ledger_entry
+            WHERE ledger_entry_id = new.ledger_entry_id
+        );
+      EXCEPTION WHEN OTHERS THEN
+      errmsg := SQLERRM;
+      DBMS_OUTPUT.PUT_LINE(
+          TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_ledger_entry.dat line ' || new.line_number ||
+          '  ' || errmsg);
+      CONTINUE;
+    END;
     END LOOP;
 
 -- Only sets PK when it is null, so we can do an idempotent repeatable merge.
