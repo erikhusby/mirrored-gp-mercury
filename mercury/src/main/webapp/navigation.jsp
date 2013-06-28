@@ -155,7 +155,7 @@
         </ul>
         <ul class="nav pull-right global-search navbar-search">
             <li style="white-space:nowrap;">
-                <stripes:form class="org.broadinstitute.gpinformatics.athena.presentation.search.SearchActionBean" name="quickSearch">
+                <stripes:form beanclass="org.broadinstitute.gpinformatics.athena.presentation.search.SearchActionBean" name="quickSearch">
                     <input type="search" data-type="search" name="searchKey" placeholder="Search for a RP, PDO or P"
                            class="search-query ui-input-text ui-body-null" autosave="unique" results="10"
                            style="margin-top: 5px;vertical-align: top;height:14px;"/>
