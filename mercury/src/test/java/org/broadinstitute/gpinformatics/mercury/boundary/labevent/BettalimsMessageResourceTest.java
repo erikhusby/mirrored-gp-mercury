@@ -39,7 +39,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
@@ -173,7 +172,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
         BettaLimsMessageTestFactory bettaLimsMessageFactory = new BettaLimsMessageTestFactory(true);
         HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = sendMessagesUptoCatch(testPrefix,
                 mapBarcodeToTube, bettaLimsMessageFactory, WorkflowName.EXOME_EXPRESS, bettalimsMessageResource,
-                indexedPlateFactory, staticPlateDAO, reagentDesignDao, twoDBarcodedTubeDAO,
+                reagentDesignDao, twoDBarcodedTubeDAO,
                 ImportFromSquidTest.TEST_MERCURY_URL, BaseEventTest.NUM_POSITIONS_IN_RACK);
 
         QtpJaxbBuilder qtpJaxbBuilder = new QtpJaxbBuilder(bettaLimsMessageFactory, testPrefix,
@@ -226,7 +225,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
                 LabEvent.UI_EVENT_LOCATION, CreateFields.IssueType.EXOME_EXPRESS);
         // message
         hybridSelectionJaxbBuilder = sendMessagesUptoCatch(testPrefix, mapBarcodeToTube2, bettaLimsMessageFactory,
-                WorkflowName.EXOME_EXPRESS, bettalimsMessageResource, indexedPlateFactory, staticPlateDAO,
+                WorkflowName.EXOME_EXPRESS, bettalimsMessageResource,
                 reagentDesignDao, twoDBarcodedTubeDAO, ImportFromSquidTest.TEST_MERCURY_URL,
                 BaseEventTest.NUM_POSITIONS_IN_RACK);
 
@@ -261,7 +260,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
 
         HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = sendMessagesUptoCatch(testPrefix,
                 mapBarcodeToTube, bettaLimsMessageFactory, WorkflowName.EXOME_EXPRESS, bettalimsMessageResource,
-                indexedPlateFactory, staticPlateDAO, reagentDesignDao, twoDBarcodedTubeDAO,
+                reagentDesignDao, twoDBarcodedTubeDAO,
                 ImportFromSquidTest.TEST_MERCURY_URL, BaseEventTest.NUM_POSITIONS_IN_RACK);
 
         QtpJaxbBuilder qtpJaxbBuilder = new QtpJaxbBuilder(bettaLimsMessageFactory, testPrefix,
@@ -344,15 +343,13 @@ public class BettalimsMessageResourceTest extends Arquillian {
      * @return allows access to catch tubes
      */
     public static HybridSelectionJaxbBuilder sendMessagesUptoCatch(String testPrefix,
-                                                                   Map<String, TwoDBarcodedTube> mapBarcodeToTube,
-                                                                   BettaLimsMessageTestFactory bettaLimsMessageFactory,
-                                                                   WorkflowName workflowName,
-                                                                   BettalimsMessageResource bettalimsMessageResource,
-                                                                   IndexedPlateFactory indexedPlateFactory,
-                                                                   StaticPlateDAO staticPlateDAO,
-                                                                   ReagentDesignDao reagentDesignDao,
-                                                                   TwoDBarcodedTubeDAO twoDBarcodedTubeDAO,
-                                                                   String testMercuryUrl, int numPositionsInRack) {
+            Map<String, TwoDBarcodedTube> mapBarcodeToTube,
+            BettaLimsMessageTestFactory bettaLimsMessageFactory,
+            WorkflowName workflowName,
+            BettalimsMessageResource bettalimsMessageResource,
+            ReagentDesignDao reagentDesignDao,
+            TwoDBarcodedTubeDAO twoDBarcodedTubeDAO,
+            String testMercuryUrl, int numPositionsInRack) {
 
         String shearingRackBarcode;
         if (workflowName == WorkflowName.EXOME_EXPRESS) {
@@ -371,17 +368,10 @@ public class BettalimsMessageResourceTest extends Arquillian {
             sendMessage(bettaLIMSMessage, bettalimsMessageResource, testMercuryUrl);
         }
 
-        Map<String, StaticPlate> mapBarcodeToPlate = indexedPlateFactory.parseStream(
-                Thread.currentThread().getContextClassLoader().getResourceAsStream("DuplexCOAforBroad.xlsx"),
-                IndexedPlateFactory.TechnologiesAndParsers.ILLUMINA_SINGLE);
-        StaticPlate indexPlate = mapBarcodeToPlate.values().iterator().next();
-        if (staticPlateDAO.findByBarcode(indexPlate.getLabel()) == null) {
-            staticPlateDAO.persist(indexPlate);
-        }
-
         LibraryConstructionJaxbBuilder libraryConstructionJaxbBuilder = new LibraryConstructionJaxbBuilder(
                 bettaLimsMessageFactory, testPrefix, shearingJaxbBuilder.getShearCleanPlateBarcode(),
-                indexPlate.getLabel(), null, numPositionsInRack).invoke();
+                LibraryConstructionJaxbBuilder.P_7_INDEX_PLATE_BARCODE,
+                LibraryConstructionJaxbBuilder.P_5_INDEX_PLATE_BARCODE, numPositionsInRack).invoke();
 
         for (BettaLIMSMessage bettaLIMSMessage : libraryConstructionJaxbBuilder.getMessageList()) {
             sendMessage(bettaLIMSMessage, bettalimsMessageResource, testMercuryUrl);
@@ -528,8 +518,8 @@ public class BettalimsMessageResourceTest extends Arquillian {
                     BaseEventTest.NUM_POSITIONS_IN_RACK, WorkflowName.HYBRID_SELECTION);
             HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder =
                     sendMessagesUptoCatch(testPrefix, mapBarcodeToTube, bettaLimsMessageFactory,
-                            WorkflowName.HYBRID_SELECTION, bettalimsMessageResource, indexedPlateFactory,
-                            staticPlateDAO, reagentDesignDao, twoDBarcodedTubeDAO, ImportFromSquidTest.TEST_MERCURY_URL,
+                            WorkflowName.HYBRID_SELECTION, bettalimsMessageResource,
+                            reagentDesignDao, twoDBarcodedTubeDAO, ImportFromSquidTest.TEST_MERCURY_URL,
                             BaseEventTest.NUM_POSITIONS_IN_RACK);
             listLcsetListNormCatchBarcodes.add(hybridSelectionJaxbBuilder.getNormCatchBarcodes());
             normCatchRackBarcodes.add(hybridSelectionJaxbBuilder.getNormCatchRackBarcode());

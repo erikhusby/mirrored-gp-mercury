@@ -13,6 +13,8 @@ import java.util.List;
  * Builds JAXB objects for library construction messages
  */
 public class LibraryConstructionJaxbBuilder {
+    public static final String P_7_INDEX_PLATE_BARCODE = "000002715223";
+    public static final String P_5_INDEX_PLATE_BARCODE = "000002655323";
     private final BettaLimsMessageTestFactory bettaLimsMessageTestFactory;
     private final String testPrefix;
     private final String shearCleanPlateBarcode;
