@@ -838,6 +838,13 @@ public abstract class LabVessel implements Serializable {
         }
         for (SampleInstance sampleInstance : traversalResults.getSampleInstances()) {
             sampleInstance.addLabBatches(getLabBatchesOfType(labBatchType));
+            // If this vessel is a BSP export, sets the aliquot sample.
+            // Expects one sample per vessel in the BSP export.
+            if (getLabBatchesOfType(LabBatch.LabBatchType.SAMPLES_IMPORT).size() > 0) {
+                for (MercurySample mercurySample : mercurySamples) {
+                    sampleInstance.setBspExportSample(mercurySample);
+                }
+            }
         }
         if (bucketEntries.size() > 1) {
             Set<String> productOrderKeys = new HashSet<String>();
