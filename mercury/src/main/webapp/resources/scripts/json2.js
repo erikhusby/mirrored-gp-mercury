@@ -1,6 +1,6 @@
 /*
  json2.js
- 2012-10-08
+ 2013-05-26
 
  Public Domain.
 
@@ -173,7 +173,7 @@ if (typeof JSON !== 'object') {
 
     if (typeof Date.prototype.toJSON !== 'function') {
 
-        Date.prototype.toJSON = function (key) {
+        Date.prototype.toJSON = function () {
 
             return isFinite(this.valueOf())
                 ? this.getUTCFullYear()     + '-' +
@@ -187,7 +187,7 @@ if (typeof JSON !== 'object') {
 
         String.prototype.toJSON      =
             Number.prototype.toJSON  =
-                Boolean.prototype.toJSON = function (key) {
+                Boolean.prototype.toJSON = function () {
                     return this.valueOf();
                 };
     }
@@ -460,8 +460,8 @@ if (typeof JSON !== 'object') {
 
             if (/^[\],:{}\s]*$/
                 .test(text.replace(/\\(?:["\\\/bfnrt]|u[0-9a-fA-F]{4})/g, '@')
-                .replace(/"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g, ']')
-                .replace(/(?:^|:|,)(?:\s*\[)+/g, ''))) {
+                    .replace(/"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g, ']')
+                    .replace(/(?:^|:|,)(?:\s*\[)+/g, ''))) {
 
 // In the third stage we use the eval function to compile the text into a
 // JavaScript structure. The '{' operator is subject to a syntactic ambiguity
