@@ -932,7 +932,9 @@
             </properties>
         </profile>
         <profile>
-            <id>PROD</id><!-- THis is for PRODUCTION ONLY -->
+            <id>PROD</id> <!-- This is for PRODUCTION ONLY.  If you need to debug against production, use one of the
+             other profiles and the -prod-ds.xml files.  This profile pulls from production JMS queues, so using
+              it for a debug server may cause message loss. -->
             <properties>
                 <!-- Oracle Dev -->
                 <database>oracle</database>
