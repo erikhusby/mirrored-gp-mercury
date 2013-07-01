@@ -27,9 +27,6 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
     BSPSampleSearchService service;
 
     @Inject
-    private BSPSampleDetailService bspSampleDetailService;
-
-    @Inject
     BSPConfig bspConfig;
 
     private final static Log logger = LogFactory.getLog(BSPSampleDataFetcher.class);
@@ -87,32 +84,13 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
         if (sampleNames == null) {
             throw new NullPointerException("sampleNames cannot be null.");
         }
-
-        Collection<String> filteredNames;
-        // Work around issue with test (stub) BSPSampleSearchService implementations, which allow lookups
-        // of non-BSP samples.
-        if (service instanceof BSPSampleSearchServiceImpl) {
-            filteredNames = new ArrayList<>(sampleNames);
-            // Remove non BSP samples.
-            Iterator<String> namesIterator = filteredNames.iterator();
-            while (namesIterator.hasNext()) {
-                String sampleName = namesIterator.next();
-                if (sampleName == null || !BSPUtil.isInBspFormat(sampleName)) {
-                    namesIterator.remove();
-                }
-            }
-        } else {
-            // Using a stub service, don't filter out bogus samples.
-            filteredNames = sampleNames;
-        }
-
-        if (filteredNames.isEmpty()) {
+        if (sampleNames.isEmpty()) {
             return Collections.emptyMap();
         }
 
         Map<String, BSPSampleDTO> sampleNameToDTO = new HashMap<String, BSPSampleDTO>();
         List<Map<BSPSampleSearchColumn, String>> results =
-                service.runSampleSearch(filteredNames, BSPSampleSearchColumn.PDO_SEARCH_COLUMNS);
+                service.runSampleSearch(sampleNames, BSPSampleSearchColumn.PDO_SEARCH_COLUMNS);
         for (Map<BSPSampleSearchColumn, String> result : results) {
             BSPSampleDTO bspDTO = new BSPSampleDTO(result);
             sampleNameToDTO.put(bspDTO.getSampleId(), bspDTO);
@@ -164,7 +142,30 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
     }
 
     public void fetchSamplePlastic(@Nonnull Collection<BSPSampleDTO> bspSampleDTOs) {
-        bspSampleDetailService.fetchSamplePlastic(bspSampleDTOs);
+        if (bspSampleDTOs.isEmpty()) {
+            return;
+        }
+
+        final Map<String, BSPSampleDTO> lsidToDTOMap = new HashMap<String, BSPSampleDTO>();
+        for (BSPSampleDTO bspSampleDTO : bspSampleDTOs) {
+            lsidToDTOMap.put(bspSampleDTO.getSampleLsid(), bspSampleDTO);
+        }
+
+        String urlString = bspConfig.getWSUrl(WS_SAMPLE_DETAILS);
+        String queryString = "sample_lsid=" + StringUtils.join(lsidToDTOMap.keySet(), "&sample_lsid=");
+        final int LSID = 1;
+        final int PLASTIC_BARCODE = 16;
+        post(urlString, queryString, ExtraTab.FALSE, new PostCallback() {
+            @Override
+            public void callback(String[] bspOutput) {
+                BSPSampleDTO bspSampleDTO = lsidToDTOMap.get(bspOutput[LSID]);
+                if (bspSampleDTO == null) {
+                    throw new RuntimeException("Unrecognized return lsid: " + bspOutput[LSID]);
+                }
+                bspSampleDTO.addPlastic(bspOutput[PLASTIC_BARCODE]);
+            }
+        });
+
     }
 
     /**
