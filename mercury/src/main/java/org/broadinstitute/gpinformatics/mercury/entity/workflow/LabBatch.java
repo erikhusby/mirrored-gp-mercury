@@ -205,6 +205,10 @@ public class LabBatch {
         return staringBatchVessels;
     }
 
+    public Set<LabBatchStartingVessel> getLabBatchStartingVessels() {
+        return startingBatchLabVessels;
+    }
+
     public void addLabVessel(@Nonnull LabVessel labVessel) {
         addLabVessel(labVessel, null);
     }
