@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
 import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.config.ClientConfig;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -10,7 +9,13 @@ import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientServ
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Wrapper around {@link BSPSampleSearchService} that
@@ -20,6 +25,9 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
 
     @Inject
     BSPSampleSearchService service;
+
+    @Inject
+    private BSPSampleDetailService bspSampleDetailService;
 
     @Inject
     BSPConfig bspConfig;
@@ -80,23 +88,13 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
             throw new NullPointerException("sampleNames cannot be null.");
         }
 
-        // Remove non BSP samples.
-        List<String> filteredNames = new ArrayList<>(sampleNames);
-        Iterator<String> namesIterator = filteredNames.iterator();
-        while (namesIterator.hasNext()) {
-            String sampleName = namesIterator.next();
-            if (sampleName == null || !BSPUtil.isInBspFormat(sampleName)) {
-                namesIterator.remove();
-            }
-        }
-
-        if (filteredNames.isEmpty()) {
+        if (sampleNames.isEmpty()) {
             return Collections.emptyMap();
         }
 
         Map<String, BSPSampleDTO> sampleNameToDTO = new HashMap<String, BSPSampleDTO>();
         List<Map<BSPSampleSearchColumn, String>> results =
-                service.runSampleSearch(filteredNames, BSPSampleSearchColumn.PDO_SEARCH_COLUMNS);
+                service.runSampleSearch(sampleNames, BSPSampleSearchColumn.PDO_SEARCH_COLUMNS);
         for (Map<BSPSampleSearchColumn, String> result : results) {
             BSPSampleDTO bspDTO = new BSPSampleDTO(result);
             sampleNameToDTO.put(bspDTO.getSampleId(), bspDTO);
@@ -104,12 +102,6 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
 
         return sampleNameToDTO;
     }
-
-    @Override
-    protected void customizeConfig(ClientConfig clientConfig) {
-        // noop
-    }
-
 
     @Override
     protected void customizeClient(Client client) {
@@ -154,30 +146,7 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
     }
 
     public void fetchSamplePlastic(@Nonnull Collection<BSPSampleDTO> bspSampleDTOs) {
-        if (bspSampleDTOs.isEmpty()) {
-            return;
-        }
-
-        final Map<String, BSPSampleDTO> lsidToDTOMap = new HashMap<String, BSPSampleDTO>();
-        for (BSPSampleDTO bspSampleDTO : bspSampleDTOs) {
-            lsidToDTOMap.put(bspSampleDTO.getSampleLsid(), bspSampleDTO);
-        }
-
-        String urlString = bspConfig.getWSUrl(WS_SAMPLE_DETAILS);
-        String queryString = "sample_lsid=" + StringUtils.join(lsidToDTOMap.keySet(), "&sample_lsid=");
-        final int LSID = 1;
-        final int PLASTIC_BARCODE = 16;
-        post(urlString, queryString, ExtraTab.FALSE, new PostCallback() {
-            @Override
-            public void callback(String[] bspOutput) {
-                BSPSampleDTO bspSampleDTO = lsidToDTOMap.get(bspOutput[LSID]);
-                if (bspSampleDTO == null) {
-                    throw new RuntimeException("Unrecognized return lsid: " + bspOutput[LSID]);
-                }
-                bspSampleDTO.addPlastic(bspOutput[PLASTIC_BARCODE]);
-            }
-        });
-
+        bspSampleDetailService.fetchSamplePlastic(bspSampleDTOs);
     }
 
     /**
