@@ -49,13 +49,7 @@ public class MolecularIndex implements Serializable {
     @Column(name = "molecular_index_id")
     private Long molecularIndexId;
 
-    @ManyToMany(cascade = {CascadeType.PERSIST}, fetch= FetchType.LAZY)
-    @JoinTable(
-            schema = "mercury",
-            name="MOLECULAR_INDEX_POSITION",
-            joinColumns=@JoinColumn(name="index_id", referencedColumnName = "molecular_index_id"),
-            inverseJoinColumns=@JoinColumn(name="scheme_id", referencedColumnName = "molecular_indexing_scheme_id")
-    )
+    @ManyToMany(cascade = {CascadeType.PERSIST}, fetch= FetchType.LAZY, mappedBy = "indexes")
     private Set<MolecularIndexingScheme> molecularIndexingSchemes = new HashSet<>();
 
     private String sequence;
