@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.presentation.search;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
+import net.sourceforge.stripes.action.RedirectResolution;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.validation.Validate;
@@ -18,6 +19,7 @@ import org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchPro
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.security.SecurityActionBean;
 
 import javax.inject.Inject;
 
@@ -72,10 +74,13 @@ public final class SearchActionBean extends CoreActionBean {
     @DefaultHandler
     @HandlesEvent(QUICK_SEARCH_ACTION)
     public Resolution quickSearch() throws Exception {
+        // All business key prefixes use uppercase
+        searchKey = searchKey.toUpperCase();
+
         SearchResult searchResult = doSearch();
 
         if (searchResult != null) {
-            return new ForwardResolution(searchResult.actionBeanClass, "view")
+            return new RedirectResolution(searchResult.actionBeanClass, "view")
                     .addParameter(searchResult.parameter, searchResult.businessObject.getBusinessKey());
         }
 
@@ -83,10 +88,12 @@ public final class SearchActionBean extends CoreActionBean {
         // whatever.  This happens when we've looked through all search types and nothing has been found.  Allowing
         // this to be null ensures we don't have to encode any prefix string in order determine what kind of search
         // it is, but keeps things generic.
-        addGlobalValidationError("There were no matching items for your quick search.");
+        addGlobalValidationError("There were no matching items for your quick search '" + searchKey + "'.");
 
-        // Stay where you are and report back the error.
-        return getSourcePageResolution();
+        // Can't just stay where you are and report back the error because page could have been submitting data and
+        // reloading it can cause side effects (or not, it is unknown).  Add any known parameters back on.
+        return new RedirectResolution(SecurityActionBean.HOME_PAGE)
+                .addParameters(getContext().getRequest().getParameterMap()).flash(this);
     }
 
 
