@@ -411,7 +411,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 "tracker download";
 
         if (!getUserBean().isValidBspUser()) {
-            addGlobalValidationError("A valid bsp user is needed to start a {2}", validatingFor);
+            addGlobalValidationError("A valid BSP user is needed to start a {2}", validatingFor);
         }
 
         if ((selectedProductOrderBusinessKeys == null) || selectedProductOrderBusinessKeys.isEmpty()) {
