@@ -2,11 +2,13 @@ package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
+import javax.annotation.Nonnull;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -34,7 +36,9 @@ public class ProductWorkflowDefVersion implements Serializable {
     /** e.g. Library Construction */
     // When serializing, we want to refer to WorkflowConfig.workflowProcessDefs, not make copies of them
     @XmlIDREF
-    private final List<WorkflowProcessDef> workflowProcessDefs = new ArrayList<WorkflowProcessDef>();
+    private final List<WorkflowProcessDef> workflowProcessDefs = new ArrayList<>();
+    @XmlIDREF
+    private final List<SequencingConfigDef> sequencingConfigDefs = new ArrayList<>();
     private transient Map<String, WorkflowProcessDef> processDefsByName = new HashMap<String, WorkflowProcessDef>();
 
     private final List<String> entryPointsUsed = new ArrayList<String>();
@@ -47,9 +51,35 @@ public class ProductWorkflowDefVersion implements Serializable {
     ProductWorkflowDefVersion() {
     }
 
+
     public ProductWorkflowDefVersion(String version, Date effectiveDate) {
         this.version = version;
         this.effectiveDate = effectiveDate;
+    }
+
+    /**
+     * findBucketDef will utilize the WorkflowConfig to return an instance of a {@link org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef} based
+     * on a given workflow definition and and step labEventType
+     * @param workflowName
+     * @param stepDef
+     * @return
+     */
+    public static WorkflowBucketDef findBucketDef(@Nonnull String workflowName, @Nonnull LabEventType stepDef) {
+
+        WorkflowConfig workflowConfig = (new WorkflowLoader()).load();
+        assert(workflowConfig != null && workflowConfig.getProductWorkflowDefs() != null &&
+               !workflowConfig.getProductWorkflowDefs().isEmpty());
+        ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(workflowName);
+        ProductWorkflowDefVersion versionResult = productWorkflowDef.getEffectiveVersion();
+
+        LabEventNode labEventNode =
+                versionResult.findStepByEventType(stepDef.getName());
+
+        WorkflowBucketDef bucketDef = null;
+        if (labEventNode != null) {
+            bucketDef = (WorkflowBucketDef) labEventNode.getStepDef();
+        }
+        return bucketDef;
     }
 
     public String getVersion() {
@@ -70,6 +100,10 @@ public class ProductWorkflowDefVersion implements Serializable {
 
     public List<String> getEntryPointsUsed() {
         return entryPointsUsed;
+    }
+
+    public List<SequencingConfigDef> getSequencingConfigDefs() {
+        return sequencingConfigDefs;
     }
 
     public void addWorkflowProcessDef(WorkflowProcessDef workflowProcessDef) {

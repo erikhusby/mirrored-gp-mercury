@@ -37,7 +37,7 @@ public class BSPSampleDTO {
     private final Map<BSPSampleSearchColumn, String> columnToValue;
 
     //This is the BSP sample receipt date formatter. (ex. 11/18/2010)
-    public static final SimpleDateFormat BSP_DATE_FORMAT = new SimpleDateFormat("MM/DD/yyyy");
+    public static final SimpleDateFormat BSP_DATE_FORMAT = new SimpleDateFormat("MM/dd/yyyy");
 
     public boolean hasData() {
         return !columnToValue.isEmpty();
@@ -109,18 +109,32 @@ public class BSPSampleDTO {
 
     private double getDouble(BSPSampleSearchColumn column) {
         String s = getValue(column);
-        if (!StringUtils.isBlank(s)) {
-            try {
-                return Double.parseDouble(s);
-            } catch (Exception e) {
-                // Fall through to return.
-            }
+        if (StringUtils.isNotBlank(s)) {
+            return Double.parseDouble(s);
         }
         return 0;
     }
 
+    private Date getDate(BSPSampleSearchColumn column) {
+        String dateString = getValue(column);
+
+        if (StringUtils.isNotBlank(dateString)){
+            try {
+                return BSP_DATE_FORMAT.parse(dateString);
+            } catch (ParseException e) {
+                // Fall through to return.
+            }
+        }
+
+        return null;
+    }
+
     private boolean getBoolean(BSPSampleSearchColumn column) {
         return Boolean.parseBoolean(getValue(column));
+    }
+
+    public Date getPicoRunDate() {
+        return getDate(BSPSampleSearchColumn.PICO_RUN_DATE);
     }
 
     public double getRin() {
@@ -223,12 +237,7 @@ public class BSPSampleDTO {
     }
 
     public Date getReceiptDate() throws ParseException {
-        String receiptDateString = getValue(BSPSampleSearchColumn.RECEIPT_DATE);
-        Date receiptDate = null;
-        if(StringUtils.isNotBlank(receiptDateString)){
-            receiptDate = BSP_DATE_FORMAT.parse(receiptDateString);
-        }
-        return receiptDate;
+        return getDate(BSPSampleSearchColumn.RECEIPT_DATE);
     }
 
 

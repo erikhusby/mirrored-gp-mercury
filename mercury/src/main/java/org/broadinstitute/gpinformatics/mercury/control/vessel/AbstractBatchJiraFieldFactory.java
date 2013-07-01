@@ -1,14 +1,12 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import javax.annotation.Nonnull;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 
@@ -17,7 +15,7 @@ import java.util.Map;
  * to {@link LabBatch} entities.  The system will potentially have many different ticket types related to a batch.
  * This factory setup will give callers the ability to retrieve the type of factory based simply on the {@link
  * org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields.ProjectType type} of Jira project.
- *
+ * <p/>
  * This setup will give us the Flexibility to extend this functionality to provide different custom field factories
  * based on the combination of {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields.ProjectType}
  * and {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields.IssueType} in the future
@@ -53,9 +51,23 @@ public abstract class AbstractBatchJiraFieldFactory {
      * Descriptions for Jira tickets can be generated from a number of different values dynamically (the Product order
      * and product to name a few).  This method assists in generating those dynamic descriptions
      *
-     * @return
+     * @return A string representing the description for this batch.
      */
     public abstract String generateDescription();
+
+    /**
+     * This method returns the batch specific summary field for JIRA.
+     *
+     * @return A string representing the summary for this lab batch.
+     */
+    public abstract String getSummary();
+
+    /**
+     * This method returns the project type for the concrete jira field factories.
+     *
+     * @return A ProjectType enum value for the concrete jira field factory.
+     */
+    public abstract CreateFields.ProjectType getProjectType();
 
     /**
      * Provides the user the ability to retrieve a concrete factory class specific to the given Project Type
@@ -68,20 +80,41 @@ public abstract class AbstractBatchJiraFieldFactory {
      *                            "Athena" side of the Mercury system
      *                            (e.g. {@link org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder}s)
      *
-     * @return
+     * @return The instance of the JIRA field factory for the given project type.
      */
     public static AbstractBatchJiraFieldFactory getInstance(@Nonnull CreateFields.ProjectType projectType,
                                                             @Nonnull LabBatch batch,
                                                             AthenaClientService athenaClientService) {
 
-        AbstractBatchJiraFieldFactory builder = null;
+        AbstractBatchJiraFieldFactory builder;
 
         switch (projectType) {
-            case LCSET_PROJECT:
-                builder = new LCSetJiraFieldFactory(batch, athenaClientService);
+        case LCSET_PROJECT:
+            builder = new LCSetJiraFieldFactory(batch, athenaClientService);
+            break;
+        case FCT_PROJECT:
+            builder = new FCTJiraFieldFactory(batch);
+            break;
+        default:
+            builder = new LCSetJiraFieldFactory(batch, athenaClientService);
         }
 
         return builder;
     }
 
+    public static AbstractBatchJiraFieldFactory getInstance(LabBatch batch,
+                                                            AthenaClientService athenaClientService) {
+        AbstractBatchJiraFieldFactory builder;
+        switch (batch.getLabBatchType()) {
+        case WORKFLOW:
+            builder = new LCSetJiraFieldFactory(batch, athenaClientService);
+            break;
+        case FCT:
+            builder = new FCTJiraFieldFactory(batch);
+            break;
+        default:
+            builder = new LCSetJiraFieldFactory(batch, athenaClientService);
+        }
+        return builder;
+    }
 }

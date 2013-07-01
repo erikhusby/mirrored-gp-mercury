@@ -28,6 +28,7 @@ public enum BSPSampleSearchColumn {
     ETHNICITY("Ethnicity"),
     RACKSCAN_MISMATCH("Sample Kit Data Upload/Rackscan Mismatch"),
     RIN("RIN Number"),
+    PICO_RUN_DATE("Pico Run Date"),
     RECEIPT_DATE("Receipt Date");
 
     private final String columnName;
@@ -62,6 +63,7 @@ public enum BSPSampleSearchColumn {
         BSPSampleSearchColumn.RACE,
         BSPSampleSearchColumn.RACKSCAN_MISMATCH,
         BSPSampleSearchColumn.RIN,
-        BSPSampleSearchColumn.RECEIPT_DATE,
+        BSPSampleSearchColumn.PICO_RUN_DATE,
+        BSPSampleSearchColumn.RECEIPT_DATE
     };
 }

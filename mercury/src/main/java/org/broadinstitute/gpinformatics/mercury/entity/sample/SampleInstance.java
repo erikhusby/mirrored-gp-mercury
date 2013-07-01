@@ -75,6 +75,9 @@ public class SampleInstance {
 
     private String productOrderKey;
 
+    // This gets set if the sample instance traverses a SAMPLE_IMPORT lab batch.
+    private MercurySample bspExportSample;
+
     public SampleInstance(MercurySample sample,
                           MolecularState molecularState) {
         this.sample = sample;
@@ -219,5 +222,13 @@ public class SampleInstance {
             }
         }
         return workflowName;
+    }
+
+    public MercurySample getBspExportSample() {
+        return bspExportSample;
+    }
+
+    public void setBspExportSample(MercurySample bspExportSample) {
+        this.bspExportSample = bspExportSample;
     }
 }

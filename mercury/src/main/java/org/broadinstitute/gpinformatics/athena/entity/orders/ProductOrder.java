@@ -5,6 +5,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.time.DateUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -54,6 +55,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+@SuppressWarnings("UnusedDeclaration")
 @Entity
 @Audited
 @Table(name = "PRODUCT_ORDER", schema = "athena")
@@ -82,7 +84,9 @@ public class ProductOrder implements BusinessObject, Serializable {
     @Column(name = "MODIFIED_BY", nullable = false)
     private long modifiedBy;
 
-    /** Unique title for the order */
+    /**
+     * Unique title for the order
+     */
     @Column(name = "TITLE", unique = true)
     private String title = "";
 
@@ -95,21 +99,27 @@ public class ProductOrder implements BusinessObject, Serializable {
     @Enumerated(EnumType.STRING)
     private OrderStatus orderStatus = OrderStatus.Draft;
 
-    /** Alphanumeric Id */
+    /**
+     * Alphanumeric Id
+     */
     @Column(name = "QUOTE_ID")
     private String quoteId = "";
 
-    /** Additional comments on the order. */
+    /**
+     * Additional comments on the order.
+     */
     @Column(length = 2000)
     private String comments;
 
-    @Column(name="FUNDING_DEADLINE")
+    @Column(name = "FUNDING_DEADLINE")
     private Date fundingDeadline;
 
-    @Column(name="PUBLICATION_DEADLINE")
+    @Column(name = "PUBLICATION_DEADLINE")
     private Date publicationDeadline;
 
-    /** Reference to the Jira Ticket created when the order is placed. Null means that the order is a draft. */
+    /**
+     * Reference to the Jira Ticket created when the order is placed. Null means that the order is a draft.
+     */
     @Column(name = "JIRA_TICKET_KEY", nullable = true)
     private String jiraTicketKey;
 
@@ -121,27 +131,35 @@ public class ProductOrder implements BusinessObject, Serializable {
     @JoinColumn(name = "product_order", nullable = false)
     @OrderColumn(name = "SAMPLE_POSITION", nullable = false)
     @AuditJoinTable(name = "product_order_sample_join_aud")
-    private final List<ProductOrderSample> samples = new ArrayList<ProductOrderSample>();
+    private final List<ProductOrderSample> samples = new ArrayList<>();
 
     @Transient
     private final SampleCounts sampleCounts = new SampleCounts();
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "productOrder", orphanRemoval = true)
-    private final Set<ProductOrderAddOn> addOns = new HashSet<ProductOrderAddOn>();
+    private final Set<ProductOrderAddOn> addOns = new HashSet<>();
 
     // This is used for edit to keep track of changes to the object.
     @Transient
     private String originalTitle;
 
+    @Transient
+    private Date oneYearAgo = DateUtils.addYears(new Date(), -1);
+
     // Initialize our transient data after the object has been loaded from the database.
     @PostLoad
     private void initialize() {
         originalTitle = title;
+        readResolve();
+    }
+
+    public void readResolve() {
+        oneYearAgo = DateUtils.addYears(new Date(), -1);
     }
 
     /**
      * @return The business key is the jira ticket key when this is not a draft, otherwise it is the DRAFT_KEY plus the
-     * internal database id.
+     *         internal database id.
      */
     @Override
     @Nonnull
@@ -171,7 +189,8 @@ public class ProductOrder implements BusinessObject, Serializable {
         this.laneCount = laneCount;
     }
 
-    public void updateData(ResearchProject researchProject, Product product, List<Product> addOnProducts, List<ProductOrderSample> samples) {
+    public void updateData(ResearchProject researchProject, Product product, List<Product> addOnProducts,
+                           List<ProductOrderSample> samples) {
         updateAddOnProducts(addOnProducts);
         this.product = product;
         this.researchProject = researchProject;
@@ -208,7 +227,8 @@ public class ProductOrder implements BusinessObject, Serializable {
      * Utility method to create a PDO business key given an order ID and a JIRA ticket.
      *
      * @param productOrderId the order ID
-     * @param jiraTicketKey the JIRA ticket, can be null
+     * @param jiraTicketKey  the JIRA ticket, can be null
+     *
      * @return the business key for the PDO
      */
     public static String createBusinessKey(Long productOrderId, @Nullable String jiraTicketKey) {
@@ -220,17 +240,18 @@ public class ProductOrder implements BusinessObject, Serializable {
     }
 
     /**
-     * Count the number of unique samples on risk on the produt order. This is calculated on the summary page, but
+     * Count the number of unique samples on risk on the product order. This is calculated on the summary page, but
      * for this call, we only want to do the calculation without going to BSP.
      *
      * @return The count of items on risk.
      */
     public int countItemsOnRisk() {
         int count = 0;
-        Set<String> uniqueKeys = new HashSet<String> ();
+        Set<String> uniqueKeys = new HashSet<>();
 
         for (ProductOrderSample sample : samples) {
             if (sample.isOnRisk() && (!uniqueKeys.contains(sample.getSampleName()))) {
+                uniqueKeys.add(sample.getSampleName());
                 count++;
             }
         }
@@ -251,7 +272,9 @@ public class ProductOrder implements BusinessObject, Serializable {
 
     /**
      * Use This method to convert from a business key to either a JIRA ID or a product order ID.
+     *
      * @param businessKey the key to convert
+     *
      * @return either a JIRA ID or a product order ID.
      */
     public static JiraOrId convertBusinessKeyToJiraOrId(@Nonnull String businessKey) {
@@ -269,7 +292,9 @@ public class ProductOrder implements BusinessObject, Serializable {
     }
 
     private static class Counter implements Serializable {
-        private final Map<String, Integer> countMap = new HashMap<String, Integer>();
+        private static final long serialVersionUID = 4354572758557412220L;
+
+        private final Map<String, Integer> countMap = new HashMap<>();
 
         private void clear() {
             countMap.clear();
@@ -293,7 +318,7 @@ public class ProductOrder implements BusinessObject, Serializable {
         private void output(List<String> output, @Nonnull String label, int compareCount) {
             for (Map.Entry<String, Integer> entry : countMap.entrySet()) {
                 output.add(MessageFormat.format(
-                    "{0} ''{1}'': {2}", label, entry.getKey(), formatCountTotal(entry.getValue(), compareCount)));
+                        "{0} ''{1}'': {2}", label, entry.getKey(), formatCountTotal(entry.getValue(), compareCount)));
             }
         }
     }
@@ -319,6 +344,7 @@ public class ProductOrder implements BusinessObject, Serializable {
         private int totalSampleCount;
         private int onRiskCount;
         private int bspSampleCount;
+        private int lastPicoCount;
         private int receivedSampleCount;
         private int activeSampleCount;
         private int hasFPCount;
@@ -345,8 +371,8 @@ public class ProductOrder implements BusinessObject, Serializable {
             // Initialize all counts.
             clearAllData();
 
-            Set<String> sampleSet = new HashSet<String>(samples.size());
-            Set<String> participantSet = new HashSet<String>();
+            Set<String> sampleSet = new HashSet<>(samples.size());
+            Set<String> participantSet = new HashSet<>();
 
             for (ProductOrderSample sample : samples) {
                 if (sampleSet.add(sample.getSampleName())) {
@@ -396,7 +422,7 @@ public class ProductOrder implements BusinessObject, Serializable {
          * Update all the counts related to BSP information.
          *
          * @param participantSet The unique collection of participants by Id.
-         * @param bspDTO The BSP DTO.
+         * @param bspDTO         The BSP DTO.
          */
         private void updateDTOCounts(Set<String> participantSet, BSPSampleDTO bspDTO) {
             if (bspDTO.isSampleReceived()) {
@@ -405,6 +431,12 @@ public class ProductOrder implements BusinessObject, Serializable {
 
             if (bspDTO.isActiveStock()) {
                 activeSampleCount++;
+            }
+
+            // If the pico has never been run then it is not warned in the last pico date highlighting.
+            Date picoRunDate = bspDTO.getPicoRunDate();
+            if ((picoRunDate == null) || picoRunDate.before(oneYearAgo)) {
+                lastPicoCount++;
             }
 
             stockTypeCounter.increment(bspDTO.getStockType());
@@ -439,7 +471,7 @@ public class ProductOrder implements BusinessObject, Serializable {
         /**
          * Format the number to say None if the value is zero, or All if it matches the comparison number.
          *
-         * @param count The number to format
+         * @param count        The number to format
          * @param compareCount The number to compare to
          */
         private void formatSummaryNumber(List<String> output, String message, int count, int compareCount) {
@@ -449,7 +481,7 @@ public class ProductOrder implements BusinessObject, Serializable {
         public List<String> sampleSummary() {
             generateCounts();
 
-            List<String> output = new ArrayList<String>();
+            List<String> output = new ArrayList<>();
             if (totalSampleCount == 0) {
                 output.add("Total: None");
             } else {
@@ -483,6 +515,11 @@ public class ProductOrder implements BusinessObject, Serializable {
                 formatSummaryNumber(output, "Fingerprint Data: {0}", hasFPCount, totalSampleCount);
             }
 
+            if (getProduct().isSupportsPico()) {
+                formatSummaryNumber(output, "Last Pico over a year ago: {0}",
+                        lastPicoCount);
+            }
+
             if (hasSampleKitUploadRackscanMismatch != 0) {
                 formatSummaryNumber(output, "<div class=\"text-error\">Rackscan Mismatch: {0}</div>",
                         hasSampleKitUploadRackscanMismatch, totalSampleCount);
@@ -504,7 +541,7 @@ public class ProductOrder implements BusinessObject, Serializable {
          * - all BSP samples' stock is ACTIVE
          */
         public List<String> sampleValidation() {
-            List<String> output = new ArrayList<String>();
+            List<String> output = new ArrayList<>();
             checkCount(missingBspMetaDataCount, "No BSP Data: {0}", output);
             checkCount(bspSampleCount - activeSampleCount, "Not ACTIVE: {0}", output);
             checkCount(bspSampleCount - receivedSampleCount, "Not RECEIVED: {0}", output);
@@ -520,6 +557,8 @@ public class ProductOrder implements BusinessObject, Serializable {
      * Default no-arg constructor, also used when creating a new ProductOrder.
      */
     public ProductOrder() {
+        // Do stuff that needs to happen after serialization and here.
+        readResolve();
     }
 
     /**
@@ -550,10 +589,14 @@ public class ProductOrder implements BusinessObject, Serializable {
         this.quoteId = quoteId;
         this.product = product;
         this.researchProject = researchProject;
+
+        // Do stuff that needs to happen after serialization and here.
+        readResolve();
     }
 
     /**
      * Call this method before saving changes to the database.  It updates the modified date and modified user.
+     *
      * @param user the user doing the save operation.
      */
     public void prepareToSave(BspUser user) {
@@ -563,7 +606,8 @@ public class ProductOrder implements BusinessObject, Serializable {
     /**
      * Call this method before saving changes to the database.  It updates the modified date and modified user,
      * and sets the create date and create user if these haven't been set yet.
-     * @param user the user doing the save operation.
+     *
+     * @param user       the user doing the save operation.
      * @param isCreating true if creating a new PDO
      */
     public void prepareToSave(BspUser user, boolean isCreating) {
@@ -784,6 +828,7 @@ public class ProductOrder implements BusinessObject, Serializable {
     /**
      * This should only be called from tests or for database backpopulation.  The placed date is normally set internally
      * when an order is placed.
+     *
      * @param placedDate the date to set
      */
     public void setPlacedDate(Date placedDate) {
@@ -795,7 +840,7 @@ public class ProductOrder implements BusinessObject, Serializable {
      */
     public void loadBspData() {
         // Can't use SampleCounts here, it calls this recursively.
-        Set<String> uniqueNames = new HashSet<String>(samples.size());
+        Set<String> uniqueNames = new HashSet<>(samples.size());
         for (ProductOrderSample sample : samples) {
             if (sample.needsBspMetaData()) {
                 uniqueNames.add(sample.getSampleName());
@@ -817,7 +862,7 @@ public class ProductOrder implements BusinessObject, Serializable {
         Map<String, BSPSampleDTO> bspSampleMetaData = bspSampleDataFetcher.fetchSamplesFromBSP(names);
 
         // The non-null DTOs which we use to look up FFPE status.
-        List<BSPSampleDTO> nonNullDTOs = new ArrayList<BSPSampleDTO>();
+        List<BSPSampleDTO> nonNullDTOs = new ArrayList<>();
         for (ProductOrderSample sample : samples) {
             BSPSampleDTO bspSampleDTO = bspSampleMetaData.get(sample.getSampleName());
 
@@ -858,7 +903,7 @@ public class ProductOrder implements BusinessObject, Serializable {
 
     /**
      * @return the list of sample names for this order, including duplicates. in the same sequence that
-     * they were entered.
+     *         they were entered.
      */
     public String getSampleString() {
         return StringUtils.join(ProductOrderSample.getSampleNames(samples), '\n');
@@ -996,7 +1041,7 @@ public class ProductOrder implements BusinessObject, Serializable {
         JiraService jiraService = ServiceAccessUtility.getBean(JiraService.class);
         Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
 
-        List<CustomField> listOfFields = new ArrayList<CustomField>();
+        List<CustomField> listOfFields = new ArrayList<>();
 
         listOfFields.add(new CustomField(submissionFields, JiraField.PRODUCT_FAMILY,
                 product.getProductFamily() == null ? "" : product.getProductFamily().getName()));
@@ -1019,19 +1064,18 @@ public class ProductOrder implements BusinessObject, Serializable {
             listOfFields.add(new CustomField(submissionFields, JiraField.FUNDING_DEADLINE,
                     JiraService.JIRA_DATE_FORMAT.format(getFundingDeadline())));
         }
+        if (comments != null) {
+            listOfFields.add(new CustomField(submissionFields, JiraField.DESCRIPTION, comments));
+        }
 
         BSPUserList bspUserList = ServiceAccessUtility.getBean(BSPUserList.class);
 
         JiraIssue issue = jiraService.createIssue(
                 fetchJiraProject().getKeyPrefix(), bspUserList.getById(createdBy).getUsername(),
-                fetchJiraIssueType(), title, comments == null ? "" : comments, listOfFields);
+                fetchJiraIssueType(), title, listOfFields);
 
         jiraTicketKey = issue.getKey();
         issue.addLink(researchProject.getJiraTicketKey());
-
-        // Due to the way we set createdBy, it's possible that these two values will be different.
-        issue.addWatcher(bspUserList.getById(createdBy).getUsername());
-        issue.addWatcher(bspUserList.getById(modifiedBy).getUsername());
 
         issue.addComment(StringUtils.join(getSampleSummaryComments(), "\n"));
         issue.addComment(StringUtils.join(getSampleValidationComments(), "\n"));
@@ -1051,7 +1095,7 @@ public class ProductOrder implements BusinessObject, Serializable {
 
     /**
      * @return true if all samples are of BSP Format. Note:
-     * will return false if there are no samples on the sheet.
+     *         will return false if there are no samples on the sheet.
      */
     public boolean areAllSampleBSPFormat() {
         updateSampleCounts();
@@ -1099,6 +1143,7 @@ public class ProductOrder implements BusinessObject, Serializable {
         REPORTER("Reporter"),
         FUNDING_DEADLINE("Funding Deadline"),
         PUBLICATION_DEADLINE("Publication Deadline"),
+        DESCRIPTION("Description"),
         STATUS("Status");
 
         private final String fieldName;
@@ -1107,7 +1152,8 @@ public class ProductOrder implements BusinessObject, Serializable {
             fieldName = fieldNameIn;
         }
 
-        @Nonnull @Override
+        @Nonnull
+        @Override
         public String getFieldName() {
             return fieldName;
         }
@@ -1128,26 +1174,40 @@ public class ProductOrder implements BusinessObject, Serializable {
          * Get all status values using the name strings.
          *
          * @param statusStrings The desired list of statuses.
+         *
          * @return The statuses that are listed.
          */
-        public static List<OrderStatus> getFromName(@Nonnull List<String> statusStrings) {
+        public static List<OrderStatus> getFromNames(@Nonnull List<String> statusStrings) {
             if (CollectionUtils.isEmpty(statusStrings)) {
                 return Collections.emptyList();
             }
 
-            List<OrderStatus> statuses = new ArrayList<OrderStatus>();
+            List<OrderStatus> statuses = new ArrayList<>();
             for (String statusString : statusStrings) {
                 statuses.add(OrderStatus.valueOf(statusString));
             }
 
             return statuses;
         }
+
+        public static List<String> getStrings(List<OrderStatus> selectedStatuses) {
+            if (CollectionUtils.isEmpty(selectedStatuses)) {
+                return Collections.emptyList();
+            }
+
+            List<String> statusStrings = new ArrayList<>();
+            for (ProductOrder.OrderStatus status : selectedStatuses) {
+                statusStrings.add(status.name());
+            }
+
+            return statusStrings;
+        }
     }
 
     @Override
     public boolean equals(Object other) {
 
-        if ((this == other)) {
+        if (this == other) {
             return true;
         }
 
@@ -1200,5 +1260,72 @@ public class ProductOrder implements BusinessObject, Serializable {
             return true;
         }
         return false;
+    }
+
+    public Date getOneYearAgo() {
+        return oneYearAgo;
+    }
+
+    /**
+     * This enum defines the different states that the PDO is in based on the ledger status of all samples in the order.
+     * This status does not included 'Billed' because that is orthogonal to this status. Once something is billed, it
+     * is, essentially in NOTHING_NEW state again and new billing can happen at any time. When something is auto billed,
+     * the status becomes READY_FOR_REVIEW, which means more auto billing can happen, but there is some work to look
+     * at. The PDM can download the tracker at any time when there is no billing, but can only upload when auto billing
+     * is not happening (and billing is happening).
+     * <p/>
+     * Once the PDM or Billing Manager does an upload, the state is changed to READY_TO_BILL and the auto-biller will
+     * not process any more entries for this PDO until a billing session has been completed on it.
+     * <p/>
+     * These statuses are calculated on-demand based on the ledger entries.
+     */
+    public enum LedgerStatus {
+        NOTHING_NEW("None"),
+        READY_FOR_REVIEW("Review"),
+        READY_TO_BILL("Ready to Bill"),
+        BILLING("Billing Started");
+
+        private String displayName;
+
+        private LedgerStatus(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
+
+        /**
+         * Get all status values using the name strings.
+         *
+         * @param statusStrings The desired list of statuses.
+         *
+         * @return The statuses that are listed.
+         */
+        public static List<LedgerStatus> getFromNames(@Nonnull List<String> statusStrings) {
+            if (CollectionUtils.isEmpty(statusStrings)) {
+                return Collections.emptyList();
+            }
+
+            List<LedgerStatus> statuses = new ArrayList<>();
+            for (String statusString : statusStrings) {
+                statuses.add(LedgerStatus.valueOf(statusString));
+            }
+
+            return statuses;
+        }
+
+        public static List<String> getStrings(List<LedgerStatus> selectedStatuses) {
+            if (CollectionUtils.isEmpty(selectedStatuses)) {
+                return Collections.emptyList();
+            }
+
+            List<String> statusStrings = new ArrayList<>();
+            for (ProductOrder.LedgerStatus status : selectedStatuses) {
+                statusStrings.add(status.name());
+            }
+
+            return statusStrings;
+        }
     }
 }

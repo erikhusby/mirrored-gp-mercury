@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMess
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
@@ -11,6 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.testng.Assert;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -46,8 +48,10 @@ public class PreFlightEntityBuilder {
 
         // PreflightPicoSetup 1
         LabEventTest.validateWorkflow("PreflightPicoSetup", mapBarcodeToTube.values());
-        LabEvent preflightPicoSetup1Entity = labEventFactory.buildFromBettaLimsRackToPlateDbFree(
-                preFlightJaxbBuilder.getPreflightPicoSetup1(), mapBarcodeToTube, null, null);
+        Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
+        mapBarcodeToVessel.putAll(mapBarcodeToTube);
+        LabEvent preflightPicoSetup1Entity = labEventFactory.buildFromBettaLims(
+                preFlightJaxbBuilder.getPreflightPicoSetup1(), mapBarcodeToVessel);
         labEventHandler.processEvent(preflightPicoSetup1Entity);
         // asserts
         tubeFormation = (TubeFormation) preflightPicoSetup1Entity.getSourceLabVessels().iterator().next();
@@ -57,8 +61,13 @@ public class PreFlightEntityBuilder {
 
         // PreflightPicoSetup 2
         LabEventTest.validateWorkflow("PreflightPicoSetup", mapBarcodeToTube.values());
-        LabEvent preflightPicoSetup2Entity = labEventFactory.buildFromBettaLimsRackToPlateDbFree(
-                preFlightJaxbBuilder.getPreflightPicoSetup2(), tubeFormation, null);
+        mapBarcodeToVessel.clear();
+        mapBarcodeToVessel.put(tubeFormation.getLabel(), tubeFormation);
+        for (TwoDBarcodedTube twoDBarcodedTube : tubeFormation.getContainerRole().getContainedVessels()) {
+            mapBarcodeToVessel.put(twoDBarcodedTube.getLabel(), twoDBarcodedTube);
+        }
+        LabEvent preflightPicoSetup2Entity = labEventFactory.buildFromBettaLims(
+                preFlightJaxbBuilder.getPreflightPicoSetup2(), mapBarcodeToVessel);
         labEventHandler.processEvent(preflightPicoSetup2Entity);
         // asserts
         StaticPlate preflightPicoSetup2Plate =
@@ -77,8 +86,14 @@ public class PreFlightEntityBuilder {
 
         // PreflightPostNormPicoSetup 1
         LabEventTest.validateWorkflow("PreflightPostNormPicoSetup", mapBarcodeToTube.values());
-        LabEvent preflightPostNormPicoSetup1Entity = labEventFactory.buildFromBettaLimsRackToPlateDbFree(
-                preFlightJaxbBuilder.getPreflightPostNormPicoSetup1(), tubeFormation, null);
+        mapBarcodeToVessel.clear();
+        mapBarcodeToVessel.put(tubeFormation.getLabel(), tubeFormation);
+        for (TwoDBarcodedTube twoDBarcodedTube : tubeFormation.getContainerRole().getContainedVessels()) {
+            mapBarcodeToVessel.put(twoDBarcodedTube.getLabel(), twoDBarcodedTube);
+        }
+
+        LabEvent preflightPostNormPicoSetup1Entity = labEventFactory.buildFromBettaLims(
+                preFlightJaxbBuilder.getPreflightPostNormPicoSetup1(), mapBarcodeToVessel);
         labEventHandler.processEvent(preflightPostNormPicoSetup1Entity);
         // asserts
         StaticPlate preflightPostNormPicoSetup1Plate =
@@ -88,8 +103,14 @@ public class PreFlightEntityBuilder {
 
         // PreflightPostNormPicoSetup 2
         LabEventTest.validateWorkflow("PreflightPostNormPicoSetup", mapBarcodeToTube.values());
-        LabEvent preflightPostNormPicoSetup2Entity = labEventFactory.buildFromBettaLimsRackToPlateDbFree(
-                preFlightJaxbBuilder.getPreflightPostNormPicoSetup2(), tubeFormation, null);
+        mapBarcodeToVessel.clear();
+        mapBarcodeToVessel.put(tubeFormation.getLabel(), tubeFormation);
+        for (TwoDBarcodedTube twoDBarcodedTube : tubeFormation.getContainerRole().getContainedVessels()) {
+            mapBarcodeToVessel.put(twoDBarcodedTube.getLabel(), twoDBarcodedTube);
+        }
+
+        LabEvent preflightPostNormPicoSetup2Entity = labEventFactory.buildFromBettaLims(
+                preFlightJaxbBuilder.getPreflightPostNormPicoSetup2(), mapBarcodeToVessel);
         labEventHandler.processEvent(preflightPostNormPicoSetup2Entity);
         // asserts
         StaticPlate preflightPostNormPicoSetup2Plate =

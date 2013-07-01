@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.control.run;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
@@ -26,6 +25,7 @@ public class IlluminaSequencingRunFactoryDBFreeTest {
 
     IlluminaSequencingRunFactory runFactory;
     private String flowcellTestBarcode;
+    private String reagentKitTestBarcode;
     private String testRunName;
     private String runFileDirectory;
     private String testMachine;
@@ -35,11 +35,11 @@ public class IlluminaSequencingRunFactoryDBFreeTest {
 
     @BeforeMethod
     public void setUp() {
-
-
         testMachine = "Superman";
 
-        flowcellTestBarcode = "flowTestBcode123";
+        String testBarcodeSuffix = "Bcode123";
+        flowcellTestBarcode = "flowTest" + testBarcodeSuffix;
+        reagentKitTestBarcode = "reagentKitTest" + testBarcodeSuffix;
         runDate = new Date();
         SimpleDateFormat format = new SimpleDateFormat(IlluminaSequencingRun.RUN_FORMAT_PATTERN);
 
@@ -65,7 +65,7 @@ public class IlluminaSequencingRunFactoryDBFreeTest {
     public void testIlluminaFactoryBuild() {
 
         SolexaRunBean testRunBean =
-                new SolexaRunBean(flowcellTestBarcode, runBarcode, runDate, testMachine, runFileDirectory, null);
+                new SolexaRunBean(flowcellTestBarcode, runBarcode, runDate, testMachine, runFileDirectory, reagentKitTestBarcode);
 
         IlluminaSequencingRun testRun = runFactory.build(testRunBean, testFlowcell);
 

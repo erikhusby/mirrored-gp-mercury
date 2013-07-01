@@ -3,12 +3,17 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Non-entity used for optimizing the performance of the PDO list page.
  */
 public class ProductOrderListEntry implements Serializable {
+
+    private static final long serialVersionUID = 6343514424527232374L;
 
     private Long orderId;
 
@@ -32,12 +37,18 @@ public class ProductOrderListEntry implements Serializable {
 
     private Long billingSessionId;
 
-    private Long unbilledLedgerEntryCount = 0L;
+    private final long constructedCount;
+
+    private long readyForReviewCount = 0L;
+
+    private long readyForBillingCount = 0L;
 
     /**
      * Version of the constructor called by the non-ledger aware first pass query.
      *
      */
+    @SuppressWarnings("UnusedDeclaration")
+    // This is called through reflection and only appears to be unused.
     public ProductOrderListEntry(Long orderId, String title, String jiraTicketKey, ProductOrder.OrderStatus orderStatus,
                                  String productName, String productFamilyName, String researchProjectTitle,
                                  Long ownerId, Date placedDate, String quoteId) {
@@ -51,23 +62,31 @@ public class ProductOrderListEntry implements Serializable {
         this.ownerId = ownerId;
         this.placedDate = placedDate;
         this.quoteId = quoteId;
+
+        // The query that generates this does not update counts, so this value is not used here.
+        this.constructedCount = 0L;
     }
 
     /**
-     * Version of the constructor called by the ledger-aware second pass query.  These objects are merged
+     * Version of the constructor called by the ledger-aware second pass query, these objects are merged
      * into the objects from the first query.
-     *
      */
+    @SuppressWarnings("UnusedDeclaration")
+    // This is called through reflection and only appears to be unused.
     public ProductOrderListEntry(
-        Long orderId, String jiraTicketKey, Long billingSessionId, Long unbilledLedgerEntryCount) {
+        Long orderId, String jiraTicketKey, Long billingSessionId, Long constructedCount) {
 
         this.orderId = orderId;
         this.jiraTicketKey = jiraTicketKey;
         this.billingSessionId = billingSessionId;
-        this.unbilledLedgerEntryCount = unbilledLedgerEntryCount;
+
+        // This count is used by the query that needs to populate one of the two other counts.
+        this.constructedCount = constructedCount;
     }
 
-    private ProductOrderListEntry() {}
+    private ProductOrderListEntry() {
+        constructedCount = 0L;
+    }
 
     public static ProductOrderListEntry createDummy() {
         return new ProductOrderListEntry();
@@ -113,6 +132,10 @@ public class ProductOrderListEntry implements Serializable {
         return quoteId;
     }
 
+    public boolean isBilling() {
+        return getBillingSessionBusinessKey() != null;
+    }
+
     public String getBillingSessionBusinessKey() {
         if (billingSessionId == null) {
             return null;
@@ -128,16 +151,38 @@ public class ProductOrderListEntry implements Serializable {
         this.billingSessionId = billingSessionId;
     }
 
-    public Long getUnbilledLedgerEntryCount() {
-        return unbilledLedgerEntryCount;
+    public Long getConstructedCount() {
+        return constructedCount;
     }
 
-    public void setUnbilledLedgerEntryCount(Long unbilledLedgerEntryCount) {
-        this.unbilledLedgerEntryCount = unbilledLedgerEntryCount;
+    public void setReadyForBillingCount(Long readyForBillingCount) {
+        this.readyForBillingCount = readyForBillingCount;
     }
 
-    public boolean isEligibleForBilling() {
-        return getUnbilledLedgerEntryCount() > 0;
+    public void setReadyForReviewCount(Long readyForReviewCount) {
+        this.readyForReviewCount = readyForReviewCount;
+    }
+
+    /**
+     * If the transient readyForBillingCount is set (done by the order list entry dao), then this is ready for
+     * billing when there are entries ready for billing and nothing ready for review. Ready for review means there
+     * are items that have been auto-billed but not reviewed. Was relying on if test ordering, but the extra check
+     * seems worth doing here.
+     *
+     * @return Is this pdo entry ready for billing?
+     */
+    public boolean isReadyForBilling() {
+        return !isReadyForReview() && (readyForBillingCount > 0);
+    }
+
+    /**
+     * If there are any ledger entries on any sample that are ready for review, the readyForReviewCount will be the
+     * number in this state.
+     *
+     * @return Is this pdo entry ready for review?
+     */
+    public boolean isReadyForReview() {
+        return readyForReviewCount > 0;
     }
 
     @Override
@@ -147,10 +192,8 @@ public class ProductOrderListEntry implements Serializable {
 
         ProductOrderListEntry that = (ProductOrderListEntry) o;
 
-        if (jiraTicketKey != null ? !jiraTicketKey.equals(that.jiraTicketKey) : that.jiraTicketKey != null)
-            return false;
+        return !(jiraTicketKey != null ? !jiraTicketKey.equals(that.jiraTicketKey) : that.jiraTicketKey != null);
 
-        return true;
     }
 
     @Override
@@ -162,4 +205,12 @@ public class ProductOrderListEntry implements Serializable {
         return ProductOrder.OrderStatus.Draft == orderStatus;
     }
 
+    public static Collection<String> getBusinessKeyList(List<ProductOrderListEntry> productOrderListEntries) {
+        Collection<String> pdoKeys = new ArrayList<> (productOrderListEntries.size());
+        for (ProductOrderListEntry entry : productOrderListEntries){
+            pdoKeys.add(entry.getBusinessKey());
+        }
+
+        return pdoKeys;
+    }
 }

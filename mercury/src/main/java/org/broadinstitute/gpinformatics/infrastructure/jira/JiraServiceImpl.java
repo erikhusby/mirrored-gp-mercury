@@ -11,7 +11,13 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldJsonParser;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.*;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.IssueFieldsResponse;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.IssueResolutionResponse;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.UpdateIssueRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.Visibility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.comment.AddCommentRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.comment.AddCommentResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
@@ -27,7 +33,16 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Impl
 public class JiraServiceImpl extends AbstractJsonJerseyClientService implements JiraService {
@@ -39,13 +54,14 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
     private String baseUrl;
 
+    @SuppressWarnings("UnusedDeclaration")
     public JiraServiceImpl() {
     }
 
     /**
      * Non-CDI constructor
      *
-     * @param jiraConfig
+     * @param jiraConfig The jira configuration object
      */
     public JiraServiceImpl(JiraConfig jiraConfig) {
         this.jiraConfig = jiraConfig;
@@ -72,18 +88,28 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
     private static class JiraIssueData {
         private String key;
 
-        public void setId(String id) {
-        }
-
         public void setKey(String key) {
             this.key = key;
         }
 
-        public void setSelf(String self) {
-        }
-
         public String getKey() {
             return key;
+        }
+
+        /**
+         * DO NOT DELETE, this is used by JAXB to marshal JSON data into the DTO.  We don't actually
+         * care about this data, but the setter needs to be here.
+         */
+        @SuppressWarnings("UnusedDeclaration")
+        private void setId(Long id) {
+        }
+
+        /**
+         * DO NOT DELETE, this is used by JAXB to marshal JSON data into the DTO.  We don't actually
+         * care about this data, but the setter needs to be here.
+         */
+        @SuppressWarnings("UnusedDeclaration")
+        private void setSelf(String self) {
         }
 
         JiraIssueData() {
@@ -91,11 +117,9 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
     }
 
     private static class JiraSearchIssueData extends JiraIssueData {
-
-        private String expand;
         private String summary;
         private String description;
-        private Map<String, Object> extraFields = new HashMap<String, Object>();
+        private Map<String, Object> extraFields = new HashMap<>();
 
         private Date dueDate;
 
@@ -105,11 +129,10 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
     @Override
     public JiraIssue createIssue(String projectPrefix, String reporter, CreateFields.IssueType issueType,
-                                 String summary, String description,
-                                 Collection<CustomField> customFields) throws IOException {
+                                 String summary, Collection<CustomField> customFields) throws IOException {
 
         CreateIssueRequest issueRequest = CreateIssueRequest
-                .create(projectPrefix, reporter, issueType, summary, description, customFields);
+                .create(projectPrefix, reporter, issueType, summary, customFields);
 
         String urlString = getBaseUrl() + "/issue/";
         log.debug("createIssue URL is " + urlString);
@@ -124,7 +147,8 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
         WebResource webResource = getJerseyClient().resource(urlString);
 
-        JiraIssueData data = post(webResource, issueRequest, new GenericType<JiraIssueData>() { });
+        JiraIssueData data = post(webResource, issueRequest, new GenericType<JiraIssueData>() {
+        });
         return new JiraIssue(data.key, this);
     }
 
@@ -271,15 +295,9 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
     }
 
     @Override
-    public Map<String, CustomFieldDefinition> getRequiredFields(@Nonnull CreateFields.Project project,
-                                                                @Nonnull CreateFields.IssueType issueType) throws
-            IOException {
-        if (project == null) {
-            throw new NullPointerException("jira project cannot be null");
-        }
-        if (issueType == null) {
-            throw new NullPointerException("issueType cannot be null");
-        }
+    public Map<String, CustomFieldDefinition> getRequiredFields(
+            @Nonnull CreateFields.Project project,
+            @Nonnull CreateFields.IssueType issueType) throws IOException {
 
         String urlString = getBaseUrl() + "/issue/createmeta";
 
@@ -304,8 +322,8 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
             return customFieldDefinitionMap;
         }
 
-        Set<String> fieldNamesSet = new HashSet<String>(Arrays.asList(fieldNames));
-        Map<String, CustomFieldDefinition> filteredMap = new HashMap<String, CustomFieldDefinition>();
+        Set<String> fieldNamesSet = new HashSet<>(Arrays.asList(fieldNames));
+        Map<String, CustomFieldDefinition> filteredMap = new HashMap<>();
         for (Map.Entry<String, CustomFieldDefinition> entry : customFieldDefinitionMap.entrySet()) {
             if (fieldNamesSet.contains(entry.getKey())) {
                 filteredMap.put(entry.getKey(), entry.getValue());
@@ -348,7 +366,8 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
     }
 
     @Override
-    public void postNewTransition(String jiraIssueKey, Transition transition, @Nullable String comment) throws IOException {
+    public void postNewTransition(String jiraIssueKey, Transition transition, @Nullable String comment)
+            throws IOException {
         postNewTransition(jiraIssueKey, transition, Collections.<CustomField>emptyList(), comment);
     }
 
@@ -393,7 +412,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
     public IssueFieldsResponse getIssueFields(String jiraIssueKey,
                                               Collection<CustomFieldDefinition> customFieldDefinitions) throws
             IOException {
-        List<String> fieldIds = new ArrayList<String>();
+        List<String> fieldIds = new ArrayList<>();
 
         for (CustomFieldDefinition customFieldDefinition : customFieldDefinitions) {
             fieldIds.add(customFieldDefinition.getJiraCustomFieldId());

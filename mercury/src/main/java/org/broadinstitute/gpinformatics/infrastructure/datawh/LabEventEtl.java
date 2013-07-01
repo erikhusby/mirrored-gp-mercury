@@ -4,8 +4,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
+import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
+import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -17,23 +20,38 @@ import javax.ejb.Stateful;
 import javax.inject.Inject;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 @Stateful
 public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
     private ProductOrderDao pdoDao;
     private WorkflowConfigLookup workflowConfigLookup;
-    private Map<String, ProductOrder> cachedPdo = new HashMap<>();
-    private Collection<EventFactDto> loggingDtos = new ArrayList<>();
+    private final Map<String, ProductOrder> cachedPdo = new HashMap<>();
+    private final Collection<EventFactDto> loggingDtos = new ArrayList<>();
+    private final Set<Long> loggingDeletedEventIds = new HashSet<>();
+    private SequencingSampleFactEtl sequencingSampleFactEtl;
 
     public LabEventEtl() {
     }
 
     @Inject
-    public LabEventEtl(WorkflowConfigLookup workflowConfigLookup, LabEventDao dao, ProductOrderDao pdoDao) {
+    public LabEventEtl(WorkflowConfigLookup workflowConfigLookup, LabEventDao dao, ProductOrderDao pdoDao,
+                       SequencingSampleFactEtl sequencingSampleFactEtl) {
         super(LabEvent.class, "event_fact", dao);
         this.workflowConfigLookup = workflowConfigLookup;
         this.pdoDao = pdoDao;
+        this.sequencingSampleFactEtl = sequencingSampleFactEtl;
     }
 
     @Override
@@ -80,6 +98,76 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         return records;
     }
 
+    /**
+     * Modifies the id lists and possibly also invokes sequencingSampleFact ETL, in order to fixup the downstream
+     * event facts and sequencing facts when there are lab event deletions and modifications, which are due to a
+     * manual fixup.
+     *
+     * @param deletedEntityIds the deleted event ids.
+     * @param modifiedEntityIds the modified event ids, and the downstream event ids get added to this list.
+     * @param etlDateStr the etl date.
+     */
+    @Override
+    protected void processFixups(Collection<Long> deletedEntityIds,
+                                 Collection<Long> modifiedEntityIds,
+                                 String etlDateStr) {
+
+
+        Set<Long> fixupEventIds = new HashSet<>(deletedEntityIds);
+        fixupEventIds.addAll(modifiedEntityIds);
+
+        // Gets the downstream events from first level vessels and their descendant vessels.
+        Set<LabVessel> firstLevelVessels = new HashSet<>();
+        for (Long entityId : fixupEventIds) {
+            LabEvent entity = dao.findById(LabEvent.class, entityId);
+            if (entity != null) {
+                firstLevelVessels.addAll(entity.getTargetLabVessels());
+                firstLevelVessels.add(entity.getInPlaceLabVessel());
+            } else {
+                loggingDeletedEventIds.add(entityId);
+            }
+        }
+
+        Set<LabVessel> directAndDescendantVessels = new HashSet<>(firstLevelVessels);
+        for (LabVessel vessel : firstLevelVessels) {
+            directAndDescendantVessels.addAll(vessel.getDescendantVessels());
+        }
+
+        Set<Long> descendantEventIds = new HashSet<>();
+        Set<Long> descendantSequencingRunIds = new HashSet<>();
+
+        for (LabVessel vessel : directAndDescendantVessels) {
+            for (LabEvent event : vessel.getEvents()) {
+                descendantEventIds.add(event.getLabEventId());
+            }
+
+            // Collects sequencing run ids from flowcell descendent vessels.
+            if (vessel.getType().equals(LabVessel.ContainerType.FLOWCELL)) {
+                if (OrmUtil.proxySafeIsInstance(vessel, RunCartridge.class)) {
+                    RunCartridge runCartridge = (RunCartridge) vessel;
+                    for (SequencingRun seqRun : runCartridge.getSequencingRuns()) {
+                        descendantSequencingRunIds.add(seqRun.getSequencingRunId());
+                    }
+                }
+            }
+        }
+        // Adds all except the deleted events to the modified list.
+        modifiedEntityIds.addAll(descendantEventIds);
+        modifiedEntityIds.removeAll(deletedEntityIds);
+
+        if (descendantSequencingRunIds.size() > 0) {
+            // Creates a sequencingSampleFact .dat file that contains the possibly modified sequencing runs.
+            sequencingSampleFactEtl.writeEtlDataFile(
+                    Collections.<Long>emptyList(),
+                    descendantSequencingRunIds,
+                    Collections.<Long>emptyList(),
+                    Collections.<GenericEntityEtl<SequencingRun, SequencingRun>.RevInfoPair<SequencingRun>>emptyList(),
+                    etlDateStr);
+        }
+    }
+
+
+
     public static class EventFactDto {
         private LabEvent labEvent;
         private LabVessel labVessel;
@@ -92,7 +180,8 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         boolean isComplete;
 
         EventFactDto(LabEvent labEvent, LabVessel labVessel, String sampleInstanceIndexes, LabBatch labBatch,
-                     MercurySample sample, ProductOrder productOrder, WorkflowConfigDenorm wfDenorm) {
+                     MercurySample sample, ProductOrder productOrder, WorkflowConfigDenorm wfDenorm,
+                     boolean isComplete) {
             this.labEvent = labEvent;
             this.labVessel = labVessel;
             this.sampleInstanceIndexes = sampleInstanceIndexes;
@@ -101,10 +190,22 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             this.sample = sample;
             this.productOrder = productOrder;
             this.wfDenorm = wfDenorm;
+            this.isComplete = isComplete;
+        }
 
-            // Check what's needed to do an ETL.
-            isComplete = sample != null && labVessel != null && wfDenorm != null &&
-                    (productOrder != null || !wfDenorm.isProductOrderNeeded());
+        private final static String NULLS_LAST = "zzzzzzzzzz";
+
+        public static Comparator<LabEventEtl.EventFactDto> sampleKeyComparator() {
+            return new Comparator<EventFactDto>() {
+                @Override
+                public int compare(EventFactDto o1, EventFactDto o2) {
+                    String s1 = o1.getSample() == null || o1.getSample().getSampleKey() == null ?
+                            NULLS_LAST : o1.getSample().getSampleKey();
+                    String s2 = o2.getSample() == null || o2.getSample().getSampleKey() == null ?
+                            NULLS_LAST : o2.getSample().getSampleKey();
+                    return s1.compareTo(s2);
+                }
+            };
         }
 
         public LabEvent getLabEvent() {
@@ -145,13 +246,15 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
 
     }
 
-    /** Makes one or more DTOs representing Event Fact records.  DTOs may have missing values. */
-    public Collection<EventFactDto> makeEventFacts(long labEventId) {
+    /**
+     * Makes one or more DTOs representing Event Fact records.  DTOs may have missing values.
+     */
+    public List<EventFactDto> makeEventFacts(long labEventId) {
         return makeEventFacts(dao.findById(LabEvent.class, labEventId));
     }
 
-    private Collection<EventFactDto> makeEventFacts(LabEvent entity) {
-        Collection<EventFactDto> dtos = new ArrayList<>();
+    private List<EventFactDto> makeEventFacts(LabEvent entity) {
+        List<EventFactDto> dtos = new ArrayList<>();
 
         if (entity != null && entity.getLabEventType() != null) {
             String eventName = entity.getLabEventType().getName();
@@ -162,7 +265,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             }
 
             if (vessels.isEmpty()) {
-                dtos.add(new EventFactDto(entity, null, null, null, null, null, null));
+                dtos.add(new EventFactDto(entity, null, null, null, null, null, null, false));
             }
 
             for (LabVessel vessel : vessels) {
@@ -175,7 +278,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
 
                             String pdoKey = si.getProductOrderKey();
                             if (pdoKey != null) {
-                                ProductOrder pdo = null;
+                                ProductOrder pdo;
 
                                 if (cachedPdo.containsKey(pdoKey)) {
                                     pdo = cachedPdo.get(pdoKey);
@@ -186,34 +289,49 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
 
                                 MercurySample sample = si.getStartingSample();
                                 if (sample != null) {
-                                    for (LabBatch labBatch : si.getAllWorkflowLabBatches()) {
-                                        String workflowName = labBatch.getWorkflowName();
-                                        WorkflowConfigDenorm wfDenorm = workflowConfigLookup.lookupWorkflowConfig(
-                                                eventName, workflowName, entity.getEventDate());
 
-                                        dtos.add(new EventFactDto(entity, vessel, null, labBatch, sample, pdo,
-                                                wfDenorm));
+                                    Collection<LabBatch> labBatches = si.getAllWorkflowLabBatches();
+                                    if (labBatches != null && labBatches.size() > 0) {
+                                        for (LabBatch labBatch : labBatches) {
+                                            String workflowName = labBatch.getWorkflowName();
+                                            if (StringUtils.isBlank(workflowName)) {
+                                                workflowName = pdo.getProduct().getWorkflowName();
+                                            }
+                                            WorkflowConfigDenorm wfDenorm = workflowConfigLookup.lookupWorkflowConfig(
+                                                    eventName, workflowName, entity.getEventDate());
+
+                                            boolean canExportToEtl =
+                                                    wfDenorm != null &&
+                                                    (pdo != null || !wfDenorm.isProductOrderNeeded());
+
+                                            dtos.add(new EventFactDto(entity, vessel, null, labBatch, sample, pdo,
+                                                    wfDenorm, canExportToEtl));
+                                        }
+                                    } else {
+                                        dtos.add(new EventFactDto(entity, vessel, vessel.getIndexesString(si),
+                                                null, sample, pdo, null, false));
                                     }
                                 } else {
                                     dtos.add(new EventFactDto(entity, vessel, vessel.getIndexesString(si),
-                                            null, null, pdo, null));
+                                            null, null, pdo, null, false));
                                 }
                             } else {
                                 dtos.add(new EventFactDto(entity, vessel, vessel.getIndexesString(si),
-                                        null, null, null, null));
+                                        null, null, null, null, false));
                             }
                         }
                     } else {
-                        dtos.add(new EventFactDto(entity, vessel, null, null, null, null, null));
+                        dtos.add(new EventFactDto(entity, vessel, null, null, null, null, null, false));
                     }
                 } catch (RuntimeException e) {
                     logger.debug("Skipping ETL on labEvent " + entity.getLabEventId() +
-                            " on vessel " + vessel.getLabel(), e);
+                                 " on vessel " + vessel.getLabel(), e);
                 }
             }
         }
-        synchronized(loggingDtos) {
-            loggingDtos.clear();
+        Collections.sort(dtos, EventFactDto.sampleKeyComparator());
+
+        synchronized (loggingDtos) {
             loggingDtos.addAll(dtos);
         }
         return dtos;
@@ -221,87 +339,122 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
 
     @Override
     public void postEtlLogging() {
-        synchronized(loggingDtos) {
-            // Aggregates errors by the appropriate record identifier, depending on what the missing value is.
-            Set<Long> errorIds = new HashSet<>();
-            Set<Long> otherIds = new HashSet<>();
+        List<EventFactDto> dtos = new ArrayList<>();
+        synchronized (loggingDtos) {
+            dtos.addAll(loggingDtos);
+            loggingDtos.clear();
+        }
+        // Aggregates errors by the appropriate record identifier, depending on what the missing value is.
+        SortedSet<Long> errorIds = new TreeSet<>();
+        SortedSet<Long> otherIds = new TreeSet<>();
 
-            // Keep track of reported errors so we log an entity once, showing the most basic flaw.
-            Set<EventFactDto> reportedErrors = new HashSet<>();
+        //  Only logs dtos that did not get exported.  Only logs each dto once.  Attempts to show the most basic flaw.
+        for (Iterator<EventFactDto> iter = dtos.iterator(); iter.hasNext(); ) {
+            EventFactDto fact = iter.next();
+            if (fact.isComplete()) {
+                iter.remove();
+            }
+        }
 
-            // No vessel on event.
-            for (EventFactDto fact : loggingDtos) {
-                if (!fact.isComplete() && !reportedErrors.contains(fact) &&
-                        fact.getLabVessel() == null) {
-                    reportedErrors.add(fact);
-                    errorIds.add(fact.getLabEvent().getLabEventId());
-                }
+        // No vessel on event.
+        for (Iterator<EventFactDto> iter = dtos.iterator(); iter.hasNext(); ) {
+            EventFactDto fact = iter.next();
+            if (fact.getLabVessel() == null) {
+                errorIds.add(fact.getLabEvent().getLabEventId());
+                iter.remove();
             }
-            if (errorIds.size() > 0) {
-                logger.debug("Missing vessel for labEvents: " + StringUtils.join(errorIds, ", "));
-            }
-            errorIds.clear();
-            otherIds.clear();
+        }
+        if (errorIds.size() > 0) {
+            logger.debug("Missing vessel for labEvents: " + StringUtils.join(errorIds, ", "));
+        }
+        errorIds.clear();
+        otherIds.clear();
 
-            // No sampleInstance on vessel.
-            for (EventFactDto fact : loggingDtos) {
-                if (!fact.isComplete() && !reportedErrors.contains(fact) &&
-                        fact.getProductOrder() == null && fact.getSampleInstanceIndexes() == null) {
-                    reportedErrors.add(fact);
-                    errorIds.add(fact.getLabEvent().getLabEventId());
-                    otherIds.add(fact.getLabVessel().getLabVesselId());
-                }
+        // No sampleInstance on vessel.
+        for (Iterator<EventFactDto> iter = dtos.iterator(); iter.hasNext(); ) {
+            EventFactDto fact = iter.next();
+            if (fact.getProductOrder() == null && fact.getSampleInstanceIndexes() == null) {
+                errorIds.add(fact.getLabEvent().getLabEventId());
+                otherIds.add(fact.getLabVessel().getLabVesselId());
+                iter.remove();
             }
-            if (errorIds.size() > 0) {
-                logger.debug("Missing sampleInstances in vessels: " + StringUtils.join(otherIds, ", ") +
-                        " in labEvents: " + StringUtils.join(errorIds, ", "));
-            }
-            errorIds.clear();
-            otherIds.clear();
+        }
+        if (errorIds.size() > 0) {
+            logger.debug("Missing sampleInstances in vessels: " + StringUtils.join(otherIds, ", ") +
+                         " in labEvents: " + StringUtils.join(errorIds, ", "));
+        }
+        errorIds.clear();
+        otherIds.clear();
 
-            // No pdo on sampleInstance, or no pdo entity for pdoKey.
-            for (EventFactDto fact : loggingDtos) {
-                if (!fact.isComplete() && !reportedErrors.contains(fact) &&
-                        fact.getProductOrder() == null) {
-                    reportedErrors.add(fact);
-                    errorIds.add(fact.getLabEvent().getLabEventId());
-                    otherIds.add(fact.getLabVessel().getLabVesselId());
-                }
+        // No pdo on sampleInstance, or no pdo entity for pdoKey.
+        for (Iterator<EventFactDto> iter = dtos.iterator(); iter.hasNext(); ) {
+            EventFactDto fact = iter.next();
+            if (fact.getProductOrder() == null) {
+                errorIds.add(fact.getLabEvent().getLabEventId());
+                otherIds.add(fact.getLabVessel().getLabVesselId());
+                iter.remove();
             }
-            if (errorIds.size() > 0) {
-                logger.debug("Missing productOrder for sampleInstances in vessels: " + StringUtils.join(otherIds, ", ")
-                        + " in labEvents: " + StringUtils.join(errorIds, ", "));
-            }
-            errorIds.clear();
-            otherIds.clear();
+        }
+        if (errorIds.size() > 0) {
+            logger.debug("Missing productOrder for sampleInstances in vessels: " + StringUtils.join(otherIds, ", ")
+                         + " in labEvents: " + StringUtils.join(errorIds, ", "));
+        }
+        errorIds.clear();
+        otherIds.clear();
 
-            // No starting sample on sampleInstance.
-            for (EventFactDto fact : loggingDtos) {
-                if (!fact.isComplete() && !reportedErrors.contains(fact) &&
-                        fact.getSample() == null) {
-                    reportedErrors.add(fact);
-                    errorIds.add(fact.getLabEvent().getLabEventId());
-                    otherIds.add(fact.getLabVessel().getLabVesselId());
-                }
+        // No starting sample on sampleInstance.
+        for (Iterator<EventFactDto> iter = dtos.iterator(); iter.hasNext(); ) {
+            EventFactDto fact = iter.next();
+            if (fact.getSample() == null) {
+                errorIds.add(fact.getLabEvent().getLabEventId());
+                otherIds.add(fact.getLabVessel().getLabVesselId());
+                iter.remove();
             }
-            if (errorIds.size() > 0) {
-                logger.debug("Missing starting sample for sampleInstances in vessels: "
-                        + StringUtils.join(otherIds, ", ") + " in labEvents: " + StringUtils.join(errorIds, ", "));
-            }
-            errorIds.clear();
-            otherIds.clear();
+        }
+        if (errorIds.size() > 0) {
+            logger.debug("Missing starting sample for sampleInstances in vessels: "
+                         + StringUtils.join(otherIds, ", ") + " in labEvents: " + StringUtils.join(errorIds, ", "));
+        }
+        errorIds.clear();
+        otherIds.clear();
 
-            // No workflowConfig for (eventName, workflowName, eventDate).
-            for (EventFactDto fact : loggingDtos) {
-                if (!fact.isComplete() && fact.getWfDenorm() == null) {
-                    errorIds.add(fact.getLabEvent().getLabEventId());
-                }
+        // No lab batch.
+        for (Iterator<EventFactDto> iter = dtos.iterator(); iter.hasNext(); ) {
+            EventFactDto fact = iter.next();
+            if (fact.getLabBatch() == null) {
+                errorIds.add(fact.getLabEvent().getLabEventId());
+                iter.remove();
             }
-            if (errorIds.size() > 0) {
-                logger.debug("Missing workflowConfig for labEvents: " + StringUtils.join(errorIds, ", "));
+        }
+        if (errorIds.size() > 0) {
+            logger.debug("Missing labBatch for labEvents: " + StringUtils.join(errorIds, ", "));
+        }
+        errorIds.clear();
+        otherIds.clear();
+
+        // No workflowConfig for (eventName, workflowName, eventDate).
+        for (Iterator<EventFactDto> iter = dtos.iterator(); iter.hasNext(); ) {
+            EventFactDto fact = iter.next();
+            if (fact.getWfDenorm() == null) {
+                errorIds.add(fact.getLabEvent().getLabEventId());
+                iter.remove();
             }
-            errorIds.clear();
-            otherIds.clear();
+        }
+        if (errorIds.size() > 0) {
+            logger.debug("Missing workflowConfig for labEvents: " + StringUtils.join(errorIds, ", "));
+        }
+        errorIds.clear();
+        otherIds.clear();
+
+        // Logs any deleted events that currently require delete and re-etl of all later events.
+        SortedSet<Long> deletedIds = new TreeSet<>();
+        synchronized (loggingDeletedEventIds) {
+            deletedIds.addAll(loggingDeletedEventIds);
+            loggingDeletedEventIds.clear();
+        }
+        if (deletedIds.size() > 0) {
+            logger.error("Manual etl required to fixup lab events downstream of deleted lab events " +
+                         StringUtils.join(deletedIds, ", "));
         }
     }
 

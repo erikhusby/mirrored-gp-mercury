@@ -56,7 +56,7 @@
                 </div>
             </c:if>
         </div>
-        <stripes:layout-render name="/vessel/vessel_list.jsp" vessels="${actionBean.batch.startingLabVesselsList}"
+        <stripes:layout-render name="/vessel/vessel_list.jsp" vessels="${actionBean.batch.startingBatchLabVessels}"
                                bean="${actionBean}" showCheckboxes="false"/>
     </stripes:layout-component>
 </stripes:layout-render>

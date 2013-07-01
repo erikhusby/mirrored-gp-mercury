@@ -4,7 +4,8 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="${actionBean.submitString}" sectionTitle="${actionBean.submitString} ${actionBean.editResearchProject.title}">
+<stripes:layout-render name="/layout.jsp" pageTitle="${actionBean.submitString}: ${actionBean.editResearchProject.title}"
+                       sectionTitle="${actionBean.submitString}: ${actionBean.editResearchProject.title}">
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
             $j(document).ready(

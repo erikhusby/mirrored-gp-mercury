@@ -5,7 +5,6 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
-import org.broadinstitute.gpinformatics.mercury.entity.run.OutputDataLocation;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -42,7 +41,6 @@ public class IlluminaSequencingRunDaoTest extends ContainerTest {
     private IlluminaFlowcell testFlowcell;
     private String runPath;
     private String fullRunPath;
-    private OutputDataLocation dataLocation;
     private String machineName;
     private IlluminaSequencingRun testRun;
 
@@ -77,8 +75,9 @@ public class IlluminaSequencingRunDaoTest extends ContainerTest {
         runPath = baseDirectory + "/start/of/run/";
         fullRunPath = runPath + runName;
         machineName = "Superman";
-        IlluminaSequencingRun initialRun = new IlluminaSequencingRun(testFlowcell, runName, runBarcode, machineName, null, false, runDate,
-                null, fullRunPath);
+        IlluminaSequencingRun initialRun =
+                new IlluminaSequencingRun(testFlowcell, runName, runBarcode, machineName, null, false, runDate,
+                        fullRunPath);
 
         runDao.persist(initialRun);
         runDao.flush();

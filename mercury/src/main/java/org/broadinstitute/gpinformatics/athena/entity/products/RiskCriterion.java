@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.products;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
@@ -19,6 +20,7 @@ import static org.broadinstitute.gpinformatics.athena.entity.products.Operator.O
  * what the user will compare, an operator, which defines the comparison performed and a value, which is what the
  * user value will be compared to.
  */
+@SuppressWarnings("unused")
 @Entity
 @Audited
 @Table(schema = "ATHENA", name = "RISK_CRITERIA")
@@ -63,17 +65,14 @@ public class RiskCriterion {
 
     /**
      * Check to see if this risk criteria threshold has been crossed is satisfied with the data.
+     *
      * @param sample name
      *
      * @return true if the sample is on risk
      */
     public boolean onRisk(ProductOrderSample sample) {
-        boolean onRiskStatus = false;
-        if ((sample != null) && (sample.getBspSampleDTO() != null)) {
-            onRiskStatus = type.getRiskStatus(sample, operator, value);
-        }
-
-        return onRiskStatus;
+        // The sample has to exist and be in bsp format for us to even check the risk status.
+        return (sample != null) && sample.isInBspFormat() && type.getRiskStatus(sample, operator, value);
     }
 
     public Operator getOperator() {
@@ -196,8 +195,21 @@ public class RiskCriterion {
                 return String.valueOf(sample.getBspSampleDTO().getTotal());
             }
         }),
-        RIN("RIN", NUMERIC, new ValueProvider() {
+        PICO_AGE("Last Pico over a year ago", BOOLEAN, new ValueProvider() {
             private static final long serialVersionUID = 1601375635726290926L;
+
+            @Override
+            public String getValue(ProductOrderSample sample) {
+                BSPSampleDTO sampleDTO = sample.getBspSampleDTO();
+
+                // On risk if there is no pico date or if the run date is older than one year ago.
+                return String.valueOf(((sampleDTO.getPicoRunDate() == null) ||
+                        sampleDTO.getPicoRunDate().before(sample.getProductOrder().getOneYearAgo())));
+            }
+        }),
+        RIN("RIN", NUMERIC, new ValueProvider() {
+
+            private static final long serialVersionUID = -6022452431986609118L;
 
             @Override
             public String getValue(ProductOrderSample sample) {

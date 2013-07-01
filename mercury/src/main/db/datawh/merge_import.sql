@@ -98,8 +98,9 @@ IS
                                    WHERE is_delete = 'F';
 
   errmsg        VARCHAR2(255);
-  dup_sample_id NUMERIC(19);
-
+  PDO_SAMPLE_NOT_IN_EVENT_FACT EXCEPTION;
+  v_tmp  NUMBER;
+  
   BEGIN
 
 ---------------------------------------------------------------------------
@@ -284,6 +285,55 @@ IS
       DBMS_OUTPUT.PUT_LINE(
           TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_research_project.dat line ' || new.line_number || '  ' ||
           errmsg);
+      CONTINUE;
+    END;
+
+    END LOOP;
+
+
+    FOR new IN im_price_item_cur LOOP
+    BEGIN
+      UPDATE price_item
+      SET
+        platform = new.platform,
+        category = new.category,
+        price_item_name = new.price_item_name,
+        quote_server_id = new.quote_server_id,
+        price = new.price,
+        units = new.units,
+        etl_date = new.etl_date
+      WHERE price_item_id = new.price_item_id;
+
+      INSERT INTO price_item (
+        price_item_id,
+        platform,
+        category,
+        price_item_name,
+        quote_server_id,
+        price,
+        units,
+        etl_date
+      )
+        SELECT
+          new.price_item_id,
+          new.platform,
+          new.category,
+          new.price_item_name,
+          new.quote_server_id,
+          new.price,
+          new.units,
+          new.etl_date
+        FROM DUAL
+        WHERE NOT EXISTS(
+            SELECT
+              1
+            FROM price_item
+            WHERE price_item_id = new.price_item_id
+        );
+      EXCEPTION WHEN OTHERS THEN
+      errmsg := SQLERRM;
+      DBMS_OUTPUT.PUT_LINE(
+          TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_price_item.dat line ' || new.line_number || '  ' || errmsg);
       CONTINUE;
     END;
 
@@ -515,6 +565,8 @@ IS
         barcode = new.barcode,
         registration_date = new.registration_date,
         instrument = new.instrument,
+        setup_read_structure = new.setup_read_structure,
+        actual_read_structure = new.actual_read_structure,
         etl_date = new.etl_date
       WHERE sequencing_run_id = new.sequencing_run_id;
 
@@ -524,6 +576,8 @@ IS
         barcode,
         registration_date,
         instrument,
+        setup_read_structure,
+        actual_read_structure,
         etl_date
       )
         SELECT
@@ -532,6 +586,8 @@ IS
           new.barcode,
           new.registration_date,
           new.instrument,
+          new.setup_read_structure,
+          new.actual_read_structure,
           new.etl_date
         FROM DUAL
         WHERE NOT EXISTS(
@@ -606,54 +662,6 @@ IS
       errmsg := SQLERRM;
       DBMS_OUTPUT.PUT_LINE(
           TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_product_order.dat line ' || new.line_number || '  ' || errmsg);
-      CONTINUE;
-    END;
-
-    END LOOP;
-
-    FOR new IN im_price_item_cur LOOP
-    BEGIN
-      UPDATE price_item
-      SET
-        platform = new.platform,
-        category = new.category,
-        price_item_name = new.price_item_name,
-        quote_server_id = new.quote_server_id,
-        price = new.price,
-        units = new.units,
-        etl_date = new.etl_date
-      WHERE price_item_id = new.price_item_id;
-
-      INSERT INTO price_item (
-        price_item_id,
-        platform,
-        category,
-        price_item_name,
-        quote_server_id,
-        price,
-        units,
-        etl_date
-      )
-        SELECT
-          new.price_item_id,
-          new.platform,
-          new.category,
-          new.price_item_name,
-          new.quote_server_id,
-          new.price,
-          new.units,
-          new.etl_date
-        FROM DUAL
-        WHERE NOT EXISTS(
-            SELECT
-              1
-            FROM price_item
-            WHERE price_item_id = new.price_item_id
-        );
-      EXCEPTION WHEN OTHERS THEN
-      errmsg := SQLERRM;
-      DBMS_OUTPUT.PUT_LINE(
-          TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_price_item.dat line ' || new.line_number || '  ' || errmsg);
       CONTINUE;
     END;
 
@@ -1139,26 +1147,42 @@ IS
     BEGIN
 -- No update is possible due to lack of common unique key
 
+      BEGIN
+        -- Ensures that there is a join to event_fact on pdo and sample
+        SELECT 1 INTO v_tmp
+        FROM event_fact
+        WHERE product_order_id = new.product_order_id
+        AND sample_name = new.sample_name
+        AND ROWNUM = 1;
+
+        EXCEPTION WHEN NO_DATA_FOUND
+        THEN RAISE PDO_SAMPLE_NOT_IN_EVENT_FACT;
+      END;
+
       INSERT INTO sequencing_sample_fact (
         sequencing_sample_fact_id,
         flowcell_barcode,
-        lane_name,
+        lane,
         molecular_indexing_scheme,
         sequencing_run_id,
         product_order_id,
         sample_name,
         research_project_id,
+        loaded_library_barcode,
+        loaded_library_create_date,
         etl_date
       )
         SELECT
           new.sequencing_sample_fact_id,
           new.flowcell_barcode,
-          new.lane_name,
+          new.lane,
           new.molecular_indexing_scheme,
           new.sequencing_run_id,
           new.product_order_id,
           new.sample_name,
           new.research_project_id,
+          new.loaded_library_barcode,
+          new.loaded_library_create_date,
           new.etl_date
         FROM DUAL
         WHERE NOT EXISTS(
@@ -1167,7 +1191,15 @@ IS
             FROM sequencing_sample_fact
             WHERE sequencing_sample_fact_id = new.sequencing_sample_fact_id
         );
-      EXCEPTION WHEN OTHERS THEN
+      EXCEPTION
+
+      WHEN PDO_SAMPLE_NOT_IN_EVENT_FACT THEN
+      DBMS_OUTPUT.PUT_LINE(
+          TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_sequencing_sample_fact.dat line ' || new.line_number || '  ' ||
+          'Sequencing Fact sample and product order not found in Event_Fact table');
+      CONTINUE;
+      
+      WHEN OTHERS THEN
       errmsg := SQLERRM;
       DBMS_OUTPUT.PUT_LINE(
           TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_sequencing_sample_fact.dat line ' || new.line_number || '  ' ||

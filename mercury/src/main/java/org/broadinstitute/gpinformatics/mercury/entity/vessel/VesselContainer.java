@@ -265,8 +265,13 @@ public class VesselContainer<T extends LabVessel> {
             if (sectionTransfer.getSourceVesselContainer().equals(this)) {
                 VesselContainer<?> targetVesselContainer = sectionTransfer.getTargetVesselContainer();
                 // todo jmt replace indexOf with map lookup
+                int sourceWellIndex = sectionTransfer.getSourceSection().getWells().indexOf(position);
+                if (sourceWellIndex < 0) {
+                    // the position parameter isn't in the section, so skip the transfer
+                    continue;
+                }
                 VesselPosition targetPosition = sectionTransfer.getTargetSection().getWells().get(
-                        sectionTransfer.getSourceSection().getWells().indexOf(position));
+                        sourceWellIndex);
                 targetVesselContainer.evaluateCriteria(targetPosition, transferTraverserCriteria, traversalDirection,
                         sectionTransfer.getLabEvent(), hopCount + 1);
             }
@@ -301,6 +306,13 @@ public class VesselContainer<T extends LabVessel> {
 
     @Transient
     public Set<SampleInstance> getSampleInstances(LabVessel.SampleType sampleType, LabBatch.LabBatchType labBatchType) {
+        Set<LabVessel> sourceVessels = new HashSet<>();
+        return getSampleInstances(sampleType, labBatchType, sourceVessels);
+    }
+
+    @Transient
+    private Set<SampleInstance> getSampleInstances(LabVessel.SampleType sampleType, LabBatch.LabBatchType labBatchType,
+                                                   Set<LabVessel> sourceVessels) {
         Set<SampleInstance> sampleInstances = new LinkedHashSet<SampleInstance>();
         for (VesselPosition position : mapPositionToVessel.keySet()) {
             sampleInstances.addAll(getSampleInstancesAtPosition(position, sampleType, labBatchType));
@@ -308,14 +320,18 @@ public class VesselContainer<T extends LabVessel> {
         if (sampleInstances.isEmpty()) {
             for (LabEvent labEvent : embedder.getTransfersTo()) {
                 for (LabVessel sourceLabVessel : labEvent.getSourceLabVessels()) {
-                    VesselContainer<?> vesselContainer = sourceLabVessel.getContainerRole();
-                    if (vesselContainer != null) {
-                        //noinspection unchecked
-                        sampleInstances.addAll(vesselContainer.getSampleInstances(sampleType, labBatchType));
-                        // todo arz fix this, probably by using LabBatch properly
+                    // Breaks cyclic vessel transfer by only visiting each source vessel once per traversal.
+                    if (sourceVessels.add(sourceLabVessel)) {
+                        VesselContainer<?> vesselContainer = sourceLabVessel.getContainerRole();
+                        if (vesselContainer != null) {
+                            //noinspection unchecked
+                            sampleInstances.addAll(
+                                    vesselContainer.getSampleInstances(sampleType, labBatchType, sourceVessels));
+                            // todo arz fix this, probably by using LabBatch properly
 //                        applyProjectPlanOverrideIfPresent(labEvent,sampleInstances);
-                    } else {
-                        sampleInstances.addAll(sourceLabVessel.getSampleInstances(sampleType, labBatchType));
+                        } else {
+                            sampleInstances.addAll(sourceLabVessel.getSampleInstances(sampleType, labBatchType));
+                        }
                     }
                 }
             }
@@ -475,7 +491,6 @@ public class VesselContainer<T extends LabVessel> {
             VesselPosition vesselPosition = VesselPosition.getByName(positionName);
             evaluateCriteria(vesselPosition, criteria, TransferTraverserCriteria.TraversalDirection.Ancestors, null, 0);
         }
-
     }
 
     public Collection<LabBatch> getAllLabBatches() {
@@ -536,5 +551,19 @@ public class VesselContainer<T extends LabVessel> {
                 new TransferTraverserCriteria.NearestLabMetricOfTypeCriteria(quantType);
         applyCriteriaToAllPositions(metricTypeCriteria);
         return metricTypeCriteria.getNearestMetrics();
+    }
+
+    /**
+     * Returns a list of the most immediate tube ancestors for each well. The "distance" from this plate across upstream
+     * plate transfers is not relevant; all upstream branches are traversed until either a tube is found or the branch
+     * ends.
+     *
+     * @return all nearest tube ancestors
+     */
+    public List<VesselAndPosition> getNearestTubeAncestors() {
+        TransferTraverserCriteria.NearestTubeAncestorsCriteria
+                criteria = new TransferTraverserCriteria.NearestTubeAncestorsCriteria();
+        applyCriteriaToAllPositions(criteria);
+        return new ArrayList<>(criteria.getVesselAndPositions());
     }
 }

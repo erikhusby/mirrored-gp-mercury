@@ -26,20 +26,35 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.*;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.MolecularState;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StripTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
+import org.mockito.Mockito;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.*;
 
 /**
  * @author breilly
@@ -55,14 +70,17 @@ public class ZimsIlluminaRunFactoryTest {
     private ControlDao mockControlDao;
     private ProductOrder testProductOrder;
 
+    private final String labBatchName = "LCSET-1";
+    private LabBatch lcSetBatch;
+
     @BeforeMethod(groups = DATABASE_FREE)
     public void setUp() {
-        mockBSPSampleDataFetcher = mock(BSPSampleDataFetcher.class);
-        mockAthenaClientService = mock(AthenaClientServiceImpl.class);
-        mockControlDao = mock(ControlDao.class);
+        mockBSPSampleDataFetcher = Mockito.mock(BSPSampleDataFetcher.class);
+        mockAthenaClientService = Mockito.mock(AthenaClientServiceImpl.class);
+        mockControlDao = Mockito.mock(ControlDao.class);
 
-        JiraService mockJiraService = mock(JiraService.class);
-        when(mockJiraService.createTicketUrl(anyString())).thenReturn("jira://LCSET-1");
+        JiraService mockJiraService = Mockito.mock(JiraService.class);
+        Mockito.when(mockJiraService.createTicketUrl(Mockito.anyString())).thenReturn("jira://" + labBatchName);
 
         // Create a test product
         Product testProduct = new Product("Test Product", new ProductFamily("Test Product Family"), "Test product",
@@ -97,15 +115,15 @@ public class ZimsIlluminaRunFactoryTest {
         testProductOrder = new ProductOrder(101L, "Test Order", Collections.singletonList(
                 new ProductOrderSample("TestSM-1")), "Quote-1", testProduct, testResearchProject);
         testProductOrder.setJiraTicketKey("TestPDO-1");
-        when(mockAthenaClientService.retrieveProductOrderDetails("TestPDO-1")).thenReturn(testProductOrder);
+        Mockito.when(mockAthenaClientService.retrieveProductOrderDetails("TestPDO-1")).thenReturn(testProductOrder);
 
         // Create an LCSET lab batch
-        final String sourceTubeBarcode = "testTube";
+        String sourceTubeBarcode = "testTube";
         testTube = new TwoDBarcodedTube(sourceTubeBarcode);
         testTube.addSample(new MercurySample("TestSM-1"));
-        testTube.addBucketEntry(new BucketEntry(testTube, "TestPDO-1"));
-        JiraTicket lcSetTicket = new JiraTicket(mockJiraService, "LCSET-1");
-        LabBatch lcSetBatch = new LabBatch("LCSET-1 batch", Collections.<LabVessel>singleton(testTube),
+        testTube.addBucketEntry(new BucketEntry(testTube, "TestPDO-1", BucketEntry.BucketEntryType.PDO_ENTRY));
+        JiraTicket lcSetTicket = new JiraTicket(mockJiraService, labBatchName);
+        lcSetBatch = new LabBatch(labBatchName, Collections.<LabVessel>singleton(testTube),
                 LabBatch.LabBatchType.WORKFLOW);
         lcSetBatch.setJiraTicket(lcSetTicket);
 
@@ -119,16 +137,14 @@ public class ZimsIlluminaRunFactoryTest {
                 LabEventType.NORMALIZED_CATCH_REGISTRATION.getName(),
                 "SourceRack", Collections.singletonList(sourceTubeBarcode),
                 catchRackBarcode, Collections.singletonList(catchTubeBarcode));
-        LabEvent catchTransfer = labEventFactory.buildFromBettaLimsRackToRackDbFree(catchTransferJaxb,
-                new HashMap<String, TwoDBarcodedTube>() {{
-                    put(sourceTubeBarcode, testTube);
-                }},
-                null, new HashMap<String, TwoDBarcodedTube>(), null);
+        Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
+        mapBarcodeToVessel.put(sourceTubeBarcode, testTube);
+        LabEvent catchTransfer = labEventFactory.buildFromBettaLims(catchTransferJaxb, mapBarcodeToVessel);
         final TubeFormation catchTubeFormation = (TubeFormation) catchTransfer.getTargetLabVessels().iterator().next();
         TwoDBarcodedTube catchTube = catchTubeFormation. getContainerRole().getVesselAtPosition(VesselPosition.A01);
 
         // Strip tube B transfer
-        List<BettaLimsMessageTestFactory.CherryPick> cherryPicks = new ArrayList<BettaLimsMessageTestFactory.CherryPick>();
+        List<BettaLimsMessageTestFactory.CherryPick> cherryPicks = new ArrayList<>();
         String[] stripTubeWells = {"A01", "B01", "C01", "D01", "E01", "F01", "G01", "H01"};
         for (int i = 0; i < 8; i++) {
             cherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(catchRackBarcode, "A01", "testStripTubeHolder", stripTubeWells[i]));
@@ -137,7 +153,7 @@ public class ZimsIlluminaRunFactoryTest {
                 LabEventType.STRIP_TUBE_B_TRANSFER.getName(), Collections.singletonList(catchRackBarcode),
                 Collections.singletonList(Collections.singletonList(catchTubeBarcode)),
                 "testStripTubeHolder", Collections.singletonList("testStripTube"), cherryPicks);
-        Map<String, TwoDBarcodedTube> mapBarcodeToSourceTube = new HashMap<String, TwoDBarcodedTube>();
+        Map<String, TwoDBarcodedTube> mapBarcodeToSourceTube = new HashMap<>();
         mapBarcodeToSourceTube.put(catchTubeBarcode, catchTube);
         LabEvent stripTubeBTransfer = labEventFactory.buildCherryPickRackToStripTubeDbFree(stripTubeBTransferEvent,
                 new HashMap<String, TubeFormation>() {{
@@ -163,7 +179,7 @@ public class ZimsIlluminaRunFactoryTest {
         Date runDate = new Date(1358889107084L);
         String testRunDirectory = "TestRun";
         IlluminaSequencingRun sequencingRun = new IlluminaSequencingRun(flowcell, testRunDirectory, "Run-123",
-                "IlluminaRunServiceImplTest", 101L, true, runDate, null, "/root/path/to/run/" + testRunDirectory);
+                "IlluminaRunServiceImplTest", 101L, true, runDate, "/root/path/to/run/" + testRunDirectory);
         ZimsIlluminaRun zimsIlluminaRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(sequencingRun);
 
         assertThat(zimsIlluminaRun.getError(), nullValue());
@@ -183,12 +199,12 @@ public class ZimsIlluminaRunFactoryTest {
 
     @Test(groups = DATABASE_FREE)
     public void testMakeLibraryBean() {
-
+        final String sampleId = "TestSM-1";
         Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
             put(BSPSampleSearchColumn.CONTAINER_ID, "BspContainer");
             put(BSPSampleSearchColumn.STOCK_SAMPLE, "Stock1");
             put(BSPSampleSearchColumn.ROOT_SAMPLE, "RootSample");
-            put(BSPSampleSearchColumn.SAMPLE_ID, "Aliquot1");
+            put(BSPSampleSearchColumn.SAMPLE_ID, sampleId);
             put(BSPSampleSearchColumn.PARTICIPANT_ID, "Spencer");
             put(BSPSampleSearchColumn.SPECIES, "Hamster");
             put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, "first_sample");
@@ -204,7 +220,7 @@ public class ZimsIlluminaRunFactoryTest {
             put(BSPSampleSearchColumn.GENDER, "M");
             put(BSPSampleSearchColumn.STOCK_TYPE, "Stock Type");
             put(BSPSampleSearchColumn.FINGERPRINT, "fingerprint");
-            put(BSPSampleSearchColumn.SAMPLE_ID, "sample1");
+            put(BSPSampleSearchColumn.SAMPLE_ID, sampleId);
             put(BSPSampleSearchColumn.SAMPLE_TYPE, "ZimsIlluminaRunFactoryTest");
             put(BSPSampleSearchColumn.RACE, "N/A");
             put(BSPSampleSearchColumn.ETHNICITY, "unknown");
@@ -214,20 +230,35 @@ public class ZimsIlluminaRunFactoryTest {
 
         BSPSampleDTO sampleDTO = new BSPSampleDTO(dataMap);
 
-        Map<String, BSPSampleDTO> mapSampleIdToDto = new HashMap<String, BSPSampleDTO>();
-        mapSampleIdToDto.put("TestSM-1", sampleDTO);
-        Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<String, ProductOrder>();
-        mapKeyToProductOrder.put("TestPDO-1", testProductOrder);
+        List<ZimsIlluminaRunFactory.SampleInstanceDto> sampleInstanceDtos = new ArrayList<>();
+        short laneNumber = 1;
+        MercurySample sample = new MercurySample(sampleId);
+        MolecularState molecularState = new MolecularState(null, null);
+        SampleInstance sampleInstance = new SampleInstance(sample,  molecularState);
+        Collection<LabBatch> labBatches = new ArrayList<>();
+        LabBatch sampleImportBatch = new LabBatch("BSP-123", Collections.<LabVessel>singleton(testTube),
+                LabBatch.LabBatchType.SAMPLES_IMPORT);
+        labBatches.add(sampleImportBatch);
+        labBatches.add(lcSetBatch);
+        sampleInstance.addLabBatches(labBatches);
+
+        String productOrderKey = "TestPDO-1";
+        sampleInstanceDtos.add(new ZimsIlluminaRunFactory.SampleInstanceDto(laneNumber, testTube, sampleInstance,
+                sampleId, productOrderKey));
+
+        Map<String, BSPSampleDTO> mapSampleIdToDto = new HashMap<>();
+        mapSampleIdToDto.put(sampleId, sampleDTO);
+        Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<>();
+        mapKeyToProductOrder.put(productOrderKey, testProductOrder);
         Map<String, Control> mapNameToControl = new HashMap<>();
-        LibraryBean libraryBean = zimsIlluminaRunFactory.makeLibraryBeans(testTube, mapSampleIdToDto,
-                mapKeyToProductOrder, mapNameToControl).get(0);
+        LibraryBean libraryBean = zimsIlluminaRunFactory.makeLibraryBeans(sampleInstanceDtos, mapSampleIdToDto, mapKeyToProductOrder, mapNameToControl).get(0);
         assertThat(libraryBean.getLibrary(), equalTo("testTube")); // TODO: expand with full definition of generated library name
         assertThat(libraryBean.getProject(), equalTo("TestRP-1"));
 //        assertThat(libraryBean.getMolecularIndexingScheme(), equalTo("???")); // TODO
         assertThat(libraryBean.getSpecies(), equalTo("Hamster"));
         assertThat(libraryBean.getLsid(), equalTo("ZimsIlluminaRunFactoryTest.testMakeLibraryBean.sampleDTO"));
         assertThat(libraryBean.getParticipantId(), equalTo("Spencer"));
-        assertThat(libraryBean.getLcSet(), equalTo("LCSET-1")); // TODO
+        assertThat(libraryBean.getLcSet(), equalTo(labBatchName));
         assertThat(libraryBean.getProductOrderTitle(), equalTo("Test Order"));
         assertThat(libraryBean.getProductOrderKey(), equalTo("TestPDO-1"));
         assertThat(libraryBean.getResearchProjectName(), equalTo("Test Project"));
@@ -236,7 +267,7 @@ public class ZimsIlluminaRunFactoryTest {
         assertThat(libraryBean.getDataType(), equalTo("agg type"));
         assertThat(libraryBean.getProductFamily(), equalTo("Test Product Family"));
         assertThat(libraryBean.getRootSample(), equalTo("RootSample"));
-        assertThat(libraryBean.getSampleId(), equalTo("sample1"));
+        assertThat(libraryBean.getSampleId(), equalTo(sampleId));
         assertThat(libraryBean.getGender(), equalTo("M"));
         assertThat(libraryBean.getCollection(), equalTo("collection1"));
         assertThat(libraryBean.getPrimaryDisease(), equalTo("Test failure"));
@@ -246,5 +277,6 @@ public class ZimsIlluminaRunFactoryTest {
         assertThat(libraryBean.getIsGssrSample(), equalTo(false));
         assertThat(libraryBean.getPopulation(), equalTo("unknown"));
         assertThat(libraryBean.getRace(), equalTo("N/A"));
+        assertThat(libraryBean.doAggregation(), equalTo(true));  // in mercury, pipeline should always be told to aggregate
     }
 }

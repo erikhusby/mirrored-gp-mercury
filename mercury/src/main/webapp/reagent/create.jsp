@@ -15,7 +15,7 @@
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.reagent.ReagentDesignActionBean"/>
 
 <stripes:layout-render name="/layout.jsp"
-                       pageTitle="${actionBean.submitString}"
+                       pageTitle="${actionBean.submitString}: ${actionBean.editReagentDesign.designName}"
                        sectionTitle="${actionBean.submitString}: ${actionBean.editReagentDesign.designName}">
 
     <stripes:layout-component name="extraHead"></stripes:layout-component>

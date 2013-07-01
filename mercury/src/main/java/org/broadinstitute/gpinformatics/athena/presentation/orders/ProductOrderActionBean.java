@@ -66,6 +66,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.jvnet.inflector.Noun;
 
@@ -79,10 +80,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.text.MessageFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -92,6 +95,7 @@ import java.util.Set;
 /**
  * This handles all the needed interface processing elements.
  */
+@SuppressWarnings("unused")
 @UrlBinding(ProductOrderActionBean.ACTIONBEAN_URL_BINDING)
 public class ProductOrderActionBean extends CoreActionBean {
     private static Log logger = LogFactory.getLog(ProductOrderActionBean.class);
@@ -117,6 +121,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private static final String FAMILY = "productFamily";
     private static final String PRODUCT = "product";
     private static final String STATUS = "status";
+    private static final String LEDGER_STATUS = "ledgerStatus";
     private static final String DATE = "date";
     private static final String OWNER = "owner";
 
@@ -201,6 +206,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private final CompletionStatusFetcher progressFetcher = new CompletionStatusFetcher();
 
+    private final SimpleDateFormat dateFormatter = new SimpleDateFormat(getDatePattern());
+
     @ValidateNestedProperties({
         @Validate(field="comments", maxlength=2000, on={SAVE_ACTION}),
         @Validate(field="title", required = true, maxlength=255, on={SAVE_ACTION}, label = "Name"),
@@ -246,6 +253,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private List<ProductOrder.OrderStatus> selectedStatuses;
 
+    private List<ProductOrder.LedgerStatus> selectedLedgerStatuses;
+
     /*
      * The search query.
      */
@@ -261,17 +270,32 @@ public class ProductOrderActionBean extends CoreActionBean {
     /**
      * Initialize the product with the passed in key for display in the form or create it, if not specified.
      */
-    @Before(stages = LifecycleStage.BindingAndValidation, on = {"!" + LIST_ACTION, "!getQuoteFunding"})
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {"!" + LIST_ACTION, "!getQuoteFunding", "!" + VIEW_ACTION})
     public void init() {
         productOrder = getContext().getRequest().getParameter(PRODUCT_ORDER_PARAMETER);
         if (!StringUtils.isBlank(productOrder)) {
             editOrder = productOrderDao.findByBusinessKey(productOrder);
-
-            progressFetcher.loadProgress(productOrderDao, Collections.singletonList(editOrder.getBusinessKey()));
+            if (editOrder != null) {
+                progressFetcher.loadProgress(productOrderDao, Collections.singletonList(productOrder));
+            }
         } else {
             // If this was a create with research project specified, find that.
             // This is only used for save, when creating a new product order.
             editOrder = new ProductOrder();
+        }
+    }
+
+    /**
+     * Initialize the product with the passed in key for display in the form or create it, if not specified.
+     */
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION})
+    public void editInit() {
+        productOrder = getContext().getRequest().getParameter(PRODUCT_ORDER_PARAMETER);
+
+        // Since just getting the one item, get all the lazy data.
+        editOrder = productOrderDao.findByBusinessKey(productOrder, ProductOrderDao.FetchSpec.RiskItems);
+        if (editOrder != null) {
+            progressFetcher.loadProgress(productOrderDao, Collections.singletonList(productOrder));
         }
     }
 
@@ -495,7 +519,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         // Set up all the simple fields from the values in the preference data.
         productTokenInput.setListOfKeys(preferenceData.get(PRODUCT));
-        selectedStatuses = ProductOrder.OrderStatus.getFromName(preferenceData.get(STATUS));
+        selectedStatuses = ProductOrder.OrderStatus.getFromNames(preferenceData.get(STATUS));
+        selectedLedgerStatuses = ProductOrder.LedgerStatus.getFromNames(preferenceData.get(LEDGER_STATUS));
         setDateRange(new DateRangeSelector(preferenceData.get(DATE)));
         owner.setListOfKeys(preferenceData.get(OWNER));
     }
@@ -506,8 +531,12 @@ public class ProductOrderActionBean extends CoreActionBean {
         // Do the specified find and then add all the % complete info for the progress bars.
         displayedProductOrderListEntries =
             orderListEntryDao.findProductOrderListEntries(
-                productFamilyId, productTokenInput.getBusinessKeyList(), selectedStatuses, getDateRange(), owner.getOwnerIds());
-        progressFetcher.loadProgress(productOrderDao);
+                productFamilyId, productTokenInput.getBusinessKeyList(), selectedStatuses, getDateRange(),
+                owner.getOwnerIds(), selectedLedgerStatuses);
+
+
+        progressFetcher.loadProgress(
+                productOrderDao, ProductOrderListEntry.getBusinessKeyList(displayedProductOrderListEntries));
 
         // Get the sorted family list.
         productFamilies = productFamilyDao.findAll();
@@ -527,11 +556,12 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         definitionValue.put(PRODUCT, productTokenInput.getBusinessKeyList());
 
-        List<String> statusStrings = new ArrayList<>();
-        for (ProductOrder.OrderStatus status : selectedStatuses) {
-            statusStrings.add(status.name());
-        }
+        List<String> statusStrings = ProductOrder.OrderStatus.getStrings(selectedStatuses);
+        List<String> ledgerStatusStrings = ProductOrder.LedgerStatus.getStrings(selectedLedgerStatuses);
+
         definitionValue.put(STATUS, statusStrings);
+
+        definitionValue.put(LEDGER_STATUS, ledgerStatusStrings);
 
         definitionValue.put(DATE, getDateRange().createDateStrings());
 
@@ -831,24 +861,57 @@ public class ProductOrderActionBean extends CoreActionBean {
 
             for (ProductOrderSample sample : samples) {
                 JSONObject item = new JSONObject();
-                BSPSampleDTO bspSampleDTO = sample.getBspSampleDTO();
 
-                item.put("sampleId", sample.getProductOrderSampleId());
-                item.put("collaboratorSampleId", bspSampleDTO.getCollaboratorsSampleName());
-                item.put("patientId", bspSampleDTO.getPatientId());
-                item.put("collaboratorParticipantId", bspSampleDTO.getCollaboratorParticipantId());
-                item.put("volume", bspSampleDTO.getVolume());
-                item.put("concentration", bspSampleDTO.getConcentration());
-                item.put("rin", bspSampleDTO.getRin());
-                item.put("total", bspSampleDTO.getTotal());
-                item.put("hasFingerprint", bspSampleDTO.getHasFingerprint());
-                item.put("hasSampleKitUploadRackscanMismatch", bspSampleDTO.getHasSampleKitUploadRackscanMismatch());
+                if (sample.isInBspFormat()) {
+                    setupSampleDTOItems(sample, item);
+                } else {
+                    setupEmptyItems(sample, item);
+                }
 
                 itemList.put(item);
             }
         }
 
         return createTextResolution(itemList.toString());
+    }
+
+    private void setupSampleDTOItems(ProductOrderSample sample, JSONObject item) throws JSONException {
+        BSPSampleDTO bspSampleDTO = sample.getBspSampleDTO();
+
+        item.put("sampleId", sample.getProductOrderSampleId());
+        item.put("collaboratorSampleId", bspSampleDTO.getCollaboratorsSampleName());
+        item.put("patientId", bspSampleDTO.getPatientId());
+        item.put("collaboratorParticipantId", bspSampleDTO.getCollaboratorParticipantId());
+        item.put("volume", bspSampleDTO.getVolume());
+        item.put("concentration", bspSampleDTO.getConcentration());
+        item.put("rin", bspSampleDTO.getRin());
+        item.put("picoDate", getBspPicoDate(bspSampleDTO));
+        item.put("total", bspSampleDTO.getTotal());
+        item.put("hasFingerprint", bspSampleDTO.getHasFingerprint());
+        item.put("hasSampleKitUploadRackscanMismatch", bspSampleDTO.getHasSampleKitUploadRackscanMismatch());
+    }
+
+    private String getBspPicoDate(BSPSampleDTO bspSampleDTO) {
+        Date picoRunDate = bspSampleDTO.getPicoRunDate();
+        if (picoRunDate == null) {
+            return "No Pico";
+        }
+
+        return dateFormatter.format(picoRunDate);
+    }
+
+    private void setupEmptyItems(ProductOrderSample sample, JSONObject item) throws JSONException {
+        item.put("sampleId", sample.getProductOrderSampleId());
+        item.put("collaboratorSampleId", "");
+        item.put("patientId", "");
+        item.put("collaboratorParticipantId", "");
+        item.put("volume", "");
+        item.put("concentration", "");
+        item.put("rin", "");
+        item.put("picoDate", "");
+        item.put("total", "");
+        item.put("hasFingerprint", "");
+        item.put("hasSampleKitUploadRackscanMismatch", "");
     }
 
     @HandlesEvent("getSupportsNumberOfLanes")
@@ -872,7 +935,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
-    @ValidationMethod(on = {DELETE_SAMPLES_ACTION, ABANDON_SAMPLES_ACTION, SET_RISK}, priority = 0)
+    @ValidationMethod(on = {DELETE_SAMPLES_ACTION, ABANDON_SAMPLES_ACTION, SET_RISK, RECALCULATE_RISK}, priority = 0)
     public void validateSampleListOperation() {
         if (selectedProductOrderSampleIds != null) {
             selectedProductOrderSamples = new ArrayList<>(selectedProductOrderSampleIds.size());
@@ -1161,7 +1224,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     private static List<ProductOrderSample> stringToSampleList(String sampleListText) {
-        List<ProductOrderSample> samples = new ArrayList<ProductOrderSample>();
+        List<ProductOrderSample> samples = new ArrayList<>();
         for (String sampleName : SearchActionBean.cleanInputStringForSamples(sampleListText)) {
             samples.add(new ProductOrderSample(sampleName));
         }
@@ -1270,7 +1333,7 @@ public class ProductOrderActionBean extends CoreActionBean {
      * @return Boolean eligible for billing.
      */
     public boolean isEligibleForBilling() {
-        return editOrder.getBusinessKey() != null && getProductOrderListEntry().isEligibleForBilling();
+        return (productOrderListEntry != null) && productOrderListEntry.isReadyForBilling();
     }
 
     /**
@@ -1389,6 +1452,10 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.abandonWarning = abandonWarning;
     }
 
+    public boolean isSupportsPico() {
+        return (editOrder != null) && (editOrder.getProduct() != null) && editOrder.getProduct().isSupportsPico();
+    }
+
     public boolean isSupportsRin() {
         return (editOrder != null) && (editOrder.getProduct() != null) && editOrder.getProduct().isSupportsRin();
     }
@@ -1417,12 +1484,28 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.selectedStatuses = selectedStatuses;
     }
 
+    public List<ProductOrder.LedgerStatus> getSelectedLedgerStatuses() {
+        return selectedLedgerStatuses;
+    }
+
+    public void setSelectedLedgerStatuses(List<ProductOrder.LedgerStatus> selectedLedgerStatuses) {
+        this.selectedLedgerStatuses = selectedLedgerStatuses;
+    }
+
+    /**
+     * @return Show the create title if this is a developer or PDM.
+     */
+    @Override
+    public boolean isCreateAllowed() {
+        return getUserBean().isDeveloperUser() || getUserBean().isPMUser() || getUserBean().isPDMUser();
+    }
+
     /**
      * @return Show the edit title if this is not a draft (Drafts use a button per Product Owner workflow request) and
      * the user is appropriate for editing.
      */
     @Override
     public boolean isEditAllowed() {
-        return !editOrder.isDraft() && (getUserBean().isDeveloperUser() || getUserBean().isPDMUser());
+        return !editOrder.isDraft() && isCreateAllowed();
     }
 }

@@ -203,10 +203,10 @@ public class IlluminaRunResource implements Serializable {
      * @return map lsid to DTO
      */
     private Map<String, BSPSampleDTO> fetchAllBSPDataAtOnce(TZamboniRun run) {
-        Set<String> sampleLsids = new HashSet<String>();
-        Set<String> sampleNames = new HashSet<String>();
-        Map<String, BSPSampleDTO> lsidToBspDto = new HashMap<String, BSPSampleDTO>();
-        Map<String, BSPSampleDTO> sampleToBspDto = new HashMap<String, BSPSampleDTO>();
+        Set<String> sampleLsids = new HashSet<>();
+        Set<String> sampleNames = new HashSet<>();
+        Map<String, BSPSampleDTO> lsidToBspDto = new HashMap<>();
+        Map<String, BSPSampleDTO> sampleToBspDto = new HashMap<>();
         for (TZamboniLane zamboniLane : run.getLanes()) {
             for (TZamboniLibrary zamboniLibrary : zamboniLane.getLibraries()) {
                 if (isBspSample(zamboniLibrary)) {

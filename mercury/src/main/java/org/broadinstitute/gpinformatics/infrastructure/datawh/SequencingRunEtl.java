@@ -52,7 +52,9 @@ public class SequencingRunEtl extends GenericEntityEtl<SequencingRun, Sequencing
                     format(entity.getRunName()),
                     format(entity.getRunBarcode()),
                     format(entity.getRunDate()),
-                    format(entity.getMachineName())
+                    format(entity.getMachineName()),
+                    format(entity.getSetupReadStructure()),
+                    format(entity.getActualReadStructure())
             ));
         }
 

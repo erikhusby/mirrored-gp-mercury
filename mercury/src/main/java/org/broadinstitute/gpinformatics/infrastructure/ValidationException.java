@@ -6,7 +6,7 @@ import java.util.List;
 
 public class ValidationException extends Exception {
 
-    List<String> validationMessages = new ArrayList<String>();
+    private final List<String> validationMessages = new ArrayList<String>();
 
     public ValidationException(String s) {
         super(s);
@@ -14,7 +14,7 @@ public class ValidationException extends Exception {
 
     public ValidationException(String message, List<String> validationMessages) {
         super(message);
-        this.validationMessages = validationMessages;
+        this.validationMessages.addAll(validationMessages);
     }
 
     public ValidationException(String s, Throwable throwable) {

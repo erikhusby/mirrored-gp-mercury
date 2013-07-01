@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
@@ -13,6 +14,7 @@ import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.testng.Assert;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -26,7 +28,6 @@ public class ExomeExpressShearingEntityBuilder {
     private final LabEventFactory               labEventFactory;
     private final LabEventHandler               labEventHandler;
     private final String rackBarcode;
-    private String shearPlateBarcode;
     private       StaticPlate                   shearingPlate;
     private String shearCleanPlateBarcode;
     private StaticPlate shearingCleanupPlate;
@@ -59,13 +60,10 @@ public class ExomeExpressShearingEntityBuilder {
     }
 
     public ExomeExpressShearingEntityBuilder invoke() {
-        ExomeExpressShearingJaxbBuilder
-                exomeExpressShearingJaxbBuilder = new ExomeExpressShearingJaxbBuilder(
-                bettaLimsMessageTestFactory, new ArrayList<String>(mapBarcodeToTube.keySet()), testPrefix, rackBarcode)
+        ExomeExpressShearingJaxbBuilder exomeExpressShearingJaxbBuilder = new ExomeExpressShearingJaxbBuilder(
+                bettaLimsMessageTestFactory, new ArrayList<>(mapBarcodeToTube.keySet()), testPrefix, rackBarcode)
                 .invoke();
 
-
-        shearPlateBarcode = exomeExpressShearingJaxbBuilder.getShearPlateBarcode();
         shearCleanPlateBarcode = exomeExpressShearingJaxbBuilder.getShearCleanPlateBarcode();
 
 //            validateWorkflow(LabEventType.SHEARING_BUCKET.getName(), mapBarcodeToTube.values());
@@ -75,8 +73,14 @@ public class ExomeExpressShearingEntityBuilder {
 //            labEventHandler.processEvent(shearingBucketEntity);
 
         LabEventTest.validateWorkflow("ShearingTransfer", mapBarcodeToTube.values());
-        LabEvent shearingTransferEventEntity = labEventFactory.buildFromBettaLimsRackToPlateDbFree(
-                      exomeExpressShearingJaxbBuilder.getShearTransferEventJaxb(), preflightRack, null);
+        Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
+        mapBarcodeToVessel.put(preflightRack.getLabel(), preflightRack);
+        for (TwoDBarcodedTube twoDBarcodedTube : preflightRack.getContainerRole().getContainedVessels()) {
+            mapBarcodeToVessel.put(twoDBarcodedTube.getLabel(), twoDBarcodedTube);
+        }
+
+        LabEvent shearingTransferEventEntity = labEventFactory.buildFromBettaLims(
+                exomeExpressShearingJaxbBuilder.getShearTransferEventJaxb(), mapBarcodeToVessel);
         labEventHandler.processEvent(shearingTransferEventEntity);
         // asserts
         shearingPlate = (StaticPlate) shearingTransferEventEntity.getTargetLabVessels().iterator().next();
@@ -96,11 +100,12 @@ public class ExomeExpressShearingEntityBuilder {
                 shearingPlate.getContainerRole().getSampleInstancesAtPosition(VesselPosition.A01);
         Assert.assertEquals(sampleInstancesInWell.size(), 1, "Wrong number of sample instances in well");
 
-
         // PostShearingTransferCleanup
         LabEventTest.validateWorkflow("PostShearingTransferCleanup", shearingPlate);
-        LabEvent postShearingTransferCleanupEntity = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(
-                exomeExpressShearingJaxbBuilder.getPostShearingTransferCleanupEventJaxb(), shearingPlate, null);
+        mapBarcodeToVessel.clear();
+        mapBarcodeToVessel.put(shearingPlate.getLabel(), shearingPlate);
+        LabEvent postShearingTransferCleanupEntity = labEventFactory.buildFromBettaLims(
+                exomeExpressShearingJaxbBuilder.getPostShearingTransferCleanupEventJaxb(), mapBarcodeToVessel);
         labEventHandler.processEvent(postShearingTransferCleanupEntity);
         // asserts
         shearingCleanupPlate =
@@ -113,8 +118,10 @@ public class ExomeExpressShearingEntityBuilder {
 
         // ShearingQC
         LabEventTest.validateWorkflow("ShearingQC", shearingCleanupPlate);
-        LabEvent shearingQcEntity = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(
-                exomeExpressShearingJaxbBuilder.getShearingQcEventJaxb(), shearingCleanupPlate, null);
+        mapBarcodeToVessel.clear();
+        mapBarcodeToVessel.put(shearingCleanupPlate.getLabel(), shearingCleanupPlate);
+        LabEvent shearingQcEntity = labEventFactory.buildFromBettaLims(
+                exomeExpressShearingJaxbBuilder.getShearingQcEventJaxb(), mapBarcodeToVessel);
         labEventHandler.processEvent(shearingQcEntity);
         return this;
     }

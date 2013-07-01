@@ -1,10 +1,11 @@
 package org.broadinstitute.gpinformatics.mercury.control.labevent;
 
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BasePlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.CherryPickSourceType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
@@ -27,6 +28,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StripTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -51,9 +53,9 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import java.io.Serializable;
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -154,7 +156,7 @@ public class LabEventFactory implements Serializable {
 
     //TODO SGM Make inject constructor.  Replace test cases with this and a BSPUserList initialized with test people.
     public LabEventFactory(BSPUserList userList) {
-        this.bspUserList = userList;
+        bspUserList = userList;
     }
 
     public interface LabEventRefDataFetcher {
@@ -270,8 +272,8 @@ public class LabEventFactory implements Serializable {
      * @return list of entities
      */
     public List<LabEvent> buildFromBettaLims(BettaLIMSMessage bettaLIMSMessage) {
-        List<LabEvent> labEvents = new ArrayList<LabEvent>();
-        Set<UniqueEvent> uniqueEvents = new HashSet<UniqueEvent>();
+        List<LabEvent> labEvents = new ArrayList<>();
+        Set<UniqueEvent> uniqueEvents = new HashSet<>();
 
         // Have to persist and flush inside each loop, because the first event may create
         // vessels that are referenced by the second event, e.g. PreSelectionPool
@@ -310,14 +312,14 @@ public class LabEventFactory implements Serializable {
      *
      * @param uniqueEvents    events in a message
      * @param labEvent        event to be persisted
-     * @param persistEntities
+     * @param persistEntities true if this method should persist and flush the entities
      */
     private void persistLabEvent(Set<UniqueEvent> uniqueEvents, LabEvent labEvent, boolean persistEntities) {
         // The deck-side scripts don't always set the disambiguator correctly, so modify it, to make it unique
         // within this message, if necessary
         while (!uniqueEvents.add(new UniqueEvent(labEvent.getEventLocation(), labEvent.getEventDate(),
                 labEvent.getDisambiguator()))) {
-            labEvent.setDisambiguator(labEvent.getDisambiguator() + 1);
+            labEvent.setDisambiguator(labEvent.getDisambiguator() + 1L);
         }
         if (persistEntities) {
             labEventDao.persist(labEvent);
@@ -332,43 +334,210 @@ public class LabEventFactory implements Serializable {
      *
      * @return entity
      */
-    public LabEvent buildFromBettaLims(final PlateCherryPickEvent plateCherryPickEvent) {
-        Map<String, TubeFormation> mapBarcodeToSourceTubeFormation = buildMapBarcodeToTubeFormation(
-                plateCherryPickEvent.getSourcePositionMap());
-
-        Map<String, TwoDBarcodedTube> mapBarcodeToSourceTube = new HashMap<String, TwoDBarcodedTube>();
-        for (PositionMapType positionMapType : plateCherryPickEvent.getSourcePositionMap()) {
-            mapBarcodeToSourceTube.putAll(findTubesByBarcodes(positionMapType));
-        }
-        Map<String, RackOfTubes> mapBarcodeToSourceRackOfTubes = new HashMap<String, RackOfTubes>();
-        for (PlateType sourcePlateType : plateCherryPickEvent.getSourcePlate()) {
-            mapBarcodeToSourceRackOfTubes
-                    .put(sourcePlateType.getBarcode(), rackOfTubesDao.findByBarcode(sourcePlateType.getBarcode()));
-        }
-
+    public LabEvent buildFromBettaLims(PlateCherryPickEvent plateCherryPickEvent) {
 
         LabEvent labEvent;
-        if (plateCherryPickEvent.getPlate().getPhysType().equals(PHYS_TYPE_STRIP_TUBE_RACK_OF_12)) {
-            Map<String, StripTube> mapBarcodeToTargetStripTube = new HashMap<String, StripTube>();
+        if (plateCherryPickEvent.getPlate().get(0).getPhysType().equals(PHYS_TYPE_STRIP_TUBE_RACK_OF_12)) {
+            Map<String, TubeFormation> mapBarcodeToSourceTubeFormation = buildMapBarcodeToTubeFormation(
+                    plateCherryPickEvent.getSourcePositionMap());
+            Map<String, TwoDBarcodedTube> mapBarcodeToSourceTube = new HashMap<>();
+            for (PositionMapType positionMapType : plateCherryPickEvent.getSourcePositionMap()) {
+                mapBarcodeToSourceTube.putAll(findTubesByBarcodes(positionMapType));
+            }
+            Map<String, RackOfTubes> mapBarcodeToSourceRackOfTubes = new HashMap<>();
+            for (PlateType sourcePlateType : plateCherryPickEvent.getSourcePlate()) {
+                mapBarcodeToSourceRackOfTubes.put(sourcePlateType.getBarcode(), rackOfTubesDao.findByBarcode(sourcePlateType.getBarcode()));
+            }
+
+            Map<String, StripTube> mapBarcodeToTargetStripTube = new HashMap<>();
             labEvent = buildCherryPickRackToStripTubeDbFree(plateCherryPickEvent, mapBarcodeToSourceTubeFormation,
                     mapBarcodeToSourceTube, null, mapBarcodeToTargetStripTube, mapBarcodeToSourceRackOfTubes);
-        } else if (plateCherryPickEvent.getPlate().getPhysType().equals(PHYS_TYPE_REAGENT_BLOCK)) {
+        } else if (plateCherryPickEvent.getPlate().get(0).getPhysType().equals(PHYS_TYPE_REAGENT_BLOCK)) {
+            // todo jmt fix copy/paste
+            Map<String, TubeFormation> mapBarcodeToSourceTubeFormation = buildMapBarcodeToTubeFormation(
+                    plateCherryPickEvent.getSourcePositionMap());
+            Map<String, TwoDBarcodedTube> mapBarcodeToSourceTube = new HashMap<>();
+            for (PositionMapType positionMapType : plateCherryPickEvent.getSourcePositionMap()) {
+                mapBarcodeToSourceTube.putAll(findTubesByBarcodes(positionMapType));
+            }
+            Map<String, RackOfTubes> mapBarcodeToSourceRackOfTubes = new HashMap<>();
+            for (PlateType sourcePlateType : plateCherryPickEvent.getSourcePlate()) {
+                mapBarcodeToSourceRackOfTubes.put(sourcePlateType.getBarcode(), rackOfTubesDao.findByBarcode(sourcePlateType.getBarcode()));
+            }
+
             labEvent = buildCherryPickRackToReagentKitDbFree(plateCherryPickEvent, mapBarcodeToSourceTubeFormation,
                     mapBarcodeToSourceRackOfTubes, mapBarcodeToSourceTube);
-
         } else {
-            Map<String, TubeFormation> mapBarcodeToTargetTubeFormation = buildMapBarcodeToTubeFormation(
-                    new ArrayList<PositionMapType>() {{
-                        add(plateCherryPickEvent.getPositionMap());
-                    }});
+            List<String> barcodes = new ArrayList<>();
+            for (PlateType plateType : plateCherryPickEvent.getSourcePlate()) {
+                barcodes.add(plateType.getBarcode());
+            }
+            extractBarcodes(barcodes, plateCherryPickEvent.getSourcePositionMap());
 
-            labEvent = buildCherryPickRackToRackDbFree(plateCherryPickEvent, mapBarcodeToSourceTubeFormation,
-                    mapBarcodeToSourceRackOfTubes, mapBarcodeToSourceTube, mapBarcodeToTargetTubeFormation,
-                    findTubesByBarcodes(plateCherryPickEvent.getPositionMap()),
-                    rackOfTubesDao.findByBarcode(plateCherryPickEvent.getPlate().getBarcode()));
+            for (PlateType plateType : plateCherryPickEvent.getPlate()) {
+                barcodes.add(plateType.getBarcode());
+            }
+            extractBarcodes(barcodes, plateCherryPickEvent.getPositionMap());
+
+            Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
+            labEvent = buildFromBettaLims(plateCherryPickEvent, mapBarcodeToVessel);
         }
-        addReagents(labEvent, plateCherryPickEvent);
+        addReagents(labEvent, plateCherryPickEvent.getReagent());
         return labEvent;
+    }
+
+    /**
+     * Extract the barcodes from position maps, in order to make a DAO call
+     * @param barcodes array to which to add extracted barcodes
+     * @param positionMapTypes from liquid handling deck
+     */
+    private void extractBarcodes(List<String> barcodes, List<PositionMapType> positionMapTypes) {
+        for (PositionMapType positionMapType : positionMapTypes) {
+            List<Pair<VesselPosition, String>> positionBarcodeList = new ArrayList<>();
+            for (ReceptacleType receptacleType : positionMapType.getReceptacle()) {
+                barcodes.add(receptacleType.getBarcode());
+                VesselPosition vesselPosition = VesselPosition.getByName(receptacleType.getPosition());
+                if (vesselPosition == null) {
+                    throw new RuntimeException("Failed to find position " + receptacleType.getPosition());
+                }
+                positionBarcodeList.add(new ImmutablePair<>(vesselPosition, receptacleType.getBarcode()));
+            }
+            barcodes.add(TubeFormation.makeDigest(positionBarcodeList));
+        }
+    }
+
+
+    /**
+     * DAO-free building of entities from JAXB cherry pick event
+     * @param plateCherryPickEvent    from liquid handling deck
+     * @param mapBarcodeToVessel existing entities fetched from database
+     * @return entity representing transfer
+     */
+    @DaoFree
+    public LabEvent buildFromBettaLims(PlateCherryPickEvent plateCherryPickEvent,
+            Map<String, LabVessel> mapBarcodeToVessel) {
+        LabEvent labEvent = constructReferenceData(plateCherryPickEvent, labEventRefDataFetcher);
+        boolean createSourcesForEvent = LabEventType.getByName(plateCherryPickEvent.getEventType()).isCreateSources();
+
+        Map<String, TubeFormation> mapBarcodeToTubeFormation =
+                buildPlates(mapBarcodeToVessel, plateCherryPickEvent.getSourcePlate(),
+                        plateCherryPickEvent.getSourcePositionMap(), createSourcesForEvent, true);
+
+        mapBarcodeToTubeFormation.putAll(buildPlates(mapBarcodeToVessel, plateCherryPickEvent.getPlate(),
+                plateCherryPickEvent.getPositionMap(), createSourcesForEvent, false));
+
+        for (CherryPickSourceType cherryPickSourceType : plateCherryPickEvent.getSource()) {
+            String destinationRackBarcode = cherryPickSourceType.getDestinationBarcode();
+            // If the message doesn't include the destination rack barcode, assume it's the first one
+            if (destinationRackBarcode == null) {
+                destinationRackBarcode = plateCherryPickEvent.getPlate().get(0).getBarcode();
+            }
+
+            LabVessel sourceContainer = mapBarcodeToTubeFormation.get(cherryPickSourceType.getBarcode());
+            if (sourceContainer == null) {
+                sourceContainer = mapBarcodeToVessel.get(cherryPickSourceType.getBarcode());
+                if (sourceContainer == null) {
+                    throw new RuntimeException("Failed to find source " + cherryPickSourceType.getBarcode());
+                }
+            }
+            LabVessel destinationContainer = mapBarcodeToTubeFormation.get(destinationRackBarcode);
+            if (destinationContainer == null) {
+                destinationContainer = mapBarcodeToVessel.get(destinationRackBarcode);
+                if (destinationContainer == null) {
+                    throw new RuntimeException("Failed to find destination " + destinationRackBarcode);
+                }
+            }
+            labEvent.getCherryPickTransfers().add(new CherryPickTransfer(
+                    sourceContainer.getContainerRole(),
+                    VesselPosition.getByName(cherryPickSourceType.getWell()),
+                    destinationContainer.getContainerRole(),
+                    VesselPosition.getByName(cherryPickSourceType.getDestinationWell()),
+                    labEvent));
+        }
+        return labEvent;
+    }
+
+    /**
+     * Wrapper around {@link #buildPlates(java.util.Map, java.util.List, java.util.List, boolean, boolean)}, for
+     * single plates and position maps
+     */
+    @DaoFree
+    private Map<String, TubeFormation> buildPlate(Map<String, LabVessel> mapBarcodeToVessel,
+            PlateType plateJaxb, PositionMapType positionMap, boolean createSourcesForEvent, boolean source) {
+        List<PlateType> plateTypeList = new ArrayList<>();
+        if (plateJaxb != null) {
+            plateTypeList.add(plateJaxb);
+        }
+        List<PositionMapType> positionMapTypeList = new ArrayList<>();
+        if (positionMap != null) {
+            positionMapTypeList.add(positionMap);
+        }
+        return buildPlates(mapBarcodeToVessel, plateTypeList,
+                positionMapTypeList, createSourcesForEvent, source);
+    }
+
+    /**
+     * Builds plate / rack entities from JAXB fields.
+     * @param mapBarcodeToVessel    Existing entities fetched from the database.  New entities are added to this map.
+     * @param plateJaxb list of plates / racks
+     * @param positionMap list of tubes / positions
+     * @param create true if this method should create entities not found in mapBarcodeToVessel
+     * @param source true if the plate is a source in an event
+     * @return map from rack barcode to tube formation (in mapBarcodeToVessel, tube formations are mapped by their digest)
+     */
+    @DaoFree
+    private Map<String, TubeFormation> buildPlates(Map<String, LabVessel> mapBarcodeToVessel,
+            List<PlateType> plateJaxb, List<PositionMapType> positionMap, boolean create, boolean source) {
+        Map<String, TubeFormation> mapBarcodeToTubeFormation = new HashMap<>();
+        for (PlateType plateType : plateJaxb) {
+            if (plateType.getPhysType().equals(PHYS_TYPE_TUBE_RACK)) {
+                List<Pair<VesselPosition, String>> positionBarcodeList = new ArrayList<>();
+                boolean found = false;
+                for (PositionMapType positionMapType : positionMap) {
+                    if (positionMapType.getBarcode().equals(plateType.getBarcode())) {
+                        found = true;
+                        for (ReceptacleType receptacleType : positionMapType.getReceptacle()) {
+                            positionBarcodeList.add(new ImmutablePair<>(
+                                    VesselPosition.getByName(receptacleType.getPosition()), receptacleType.getBarcode()));
+                        }
+                        String digest = TubeFormation.makeDigest(positionBarcodeList);
+                        TubeFormation tubeFormation = OrmUtil.proxySafeCast(mapBarcodeToVessel.get(digest),
+                                TubeFormation.class);
+                        if (tubeFormation == null) {
+                            Map<String, TwoDBarcodedTube> mapBarcodeToTube = new HashMap<>();
+                            for (ReceptacleType receptacleType : positionMapType.getReceptacle()) {
+                                mapBarcodeToTube.put(receptacleType.getBarcode(),
+                                        OrmUtil.proxySafeCast(mapBarcodeToVessel.get(receptacleType.getBarcode()),
+                                                TwoDBarcodedTube.class));
+                            }
+
+                            RackOfTubes rackOfTubes = OrmUtil.proxySafeCast(
+                                    mapBarcodeToVessel.get(plateType.getBarcode()), RackOfTubes.class);
+                            boolean rackOfTubesWasNull = rackOfTubes == null;
+                            tubeFormation = buildRackDaoFree(mapBarcodeToTube, rackOfTubes, plateType,
+                                    positionMapType, source, create);
+                            mapBarcodeToVessel.put(tubeFormation.getLabel(), tubeFormation);
+                            if (rackOfTubesWasNull) {
+                                rackOfTubes = tubeFormation.getRacksOfTubes().iterator().next();
+                                mapBarcodeToVessel.put(rackOfTubes.getLabel(), rackOfTubes);
+                            }
+                        }
+                        mapBarcodeToTubeFormation.put(plateType.getBarcode(), tubeFormation);
+                        break;
+                    }
+                }
+                if (!found) {
+                    throw new RuntimeException("Failed to find positionMap for " + plateType.getBarcode());
+                }
+            } else {
+                LabVessel labVessel = mapBarcodeToVessel.get(plateType.getBarcode());
+                if (labVessel == null) {
+                    mapBarcodeToVessel.put(plateType.getBarcode(), new StaticPlate(plateType.getBarcode(),
+                            StaticPlate.PlateType.getByDisplayName(plateType.getPhysType())));
+                }
+            }
+        }
+        return mapBarcodeToTubeFormation;
     }
 
     /**
@@ -379,7 +548,7 @@ public class LabEventFactory implements Serializable {
      * @return map from barcode to rack
      */
     private Map<String, TubeFormation> buildMapBarcodeToTubeFormation(List<PositionMapType> positionMap) {
-        Map<String, TubeFormation> mapBarcodeToSourceTubeFormation = new HashMap<String, TubeFormation>();
+        Map<String, TubeFormation> mapBarcodeToSourceTubeFormation = new HashMap<>();
         for (PositionMapType positionMapType : positionMap) {
             TubeFormation tubeFormation = fetchTubeFormation(positionMapType);
             mapBarcodeToSourceTubeFormation.put(positionMapType.getBarcode(), tubeFormation);
@@ -395,64 +564,12 @@ public class LabEventFactory implements Serializable {
      * @return database rack
      */
     private TubeFormation fetchTubeFormation(PositionMapType positionMapType) {
-        List<Map.Entry<VesselPosition, String>> positionBarcodeList =
-                new ArrayList<Map.Entry<VesselPosition, String>>();
+        List<Pair<VesselPosition, String>> positionBarcodeList = new ArrayList<>();
         for (ReceptacleType receptacleType : positionMapType.getReceptacle()) {
-            positionBarcodeList.add(new AbstractMap.SimpleEntry<VesselPosition, String>(VesselPosition.getByName(
+            positionBarcodeList.add(new ImmutablePair<>(VesselPosition.getByName(
                     receptacleType.getPosition()), receptacleType.getBarcode()));
         }
         return tubeFormationDao.findByDigest(TubeFormation.makeDigest(positionBarcodeList));
-    }
-
-    /**
-     * Build an entity to represent a cherry pick (random access) transfer from one or more source racks to a target rack
-     *
-     * @param plateCherryPickEvent   JAXB
-     * @param mapBarcodeToSourceTubeFormation
-     *                               entities
-     * @param mapBarcodeToSourceTube entities
-     * @param mapBarcodeToTargetTubeFormation
-     *                               entities
-     * @param mapBarcodeToTargetTube entities
-     * @param targetRackOfTubes      entity
-     *
-     * @return entity
-     */
-    @DaoFree
-    public LabEvent buildCherryPickRackToRackDbFree(PlateCherryPickEvent plateCherryPickEvent,
-                                                    Map<String, TubeFormation> mapBarcodeToSourceTubeFormation,
-                                                    Map<String, RackOfTubes> mapBarcodeToSourceRackOfTubes,
-                                                    Map<String, TwoDBarcodedTube> mapBarcodeToSourceTube,
-                                                    Map<String, TubeFormation> mapBarcodeToTargetTubeFormation,
-                                                    Map<String, TwoDBarcodedTube> mapBarcodeToTargetTube,
-                                                    @Nullable RackOfTubes targetRackOfTubes) {
-        LabEvent labEvent = constructReferenceData(plateCherryPickEvent, labEventRefDataFetcher);
-        addSourceTubeFormationsToMap(plateCherryPickEvent, mapBarcodeToSourceTubeFormation, mapBarcodeToSourceTube,
-                mapBarcodeToSourceRackOfTubes);
-
-        for (Map.Entry<String, TubeFormation> stringVesselContainerEntry : mapBarcodeToTargetTubeFormation.entrySet()) {
-            if (stringVesselContainerEntry.getValue() == null) {
-                TubeFormation targetRack =
-                        buildRackDaoFree(mapBarcodeToTargetTube, targetRackOfTubes, plateCherryPickEvent.getPlate(),
-                                plateCherryPickEvent.getPositionMap(), false,
-                                LabEventType.getByName(plateCherryPickEvent.getEventType()).isCreateSources());
-                stringVesselContainerEntry.setValue(targetRack);
-            }
-        }
-
-        for (CherryPickSourceType cherryPickSourceType : plateCherryPickEvent.getSource()) {
-            String destinationRackBarcode = cherryPickSourceType.getDestinationBarcode();
-            if (destinationRackBarcode == null) {
-                destinationRackBarcode = plateCherryPickEvent.getPlate().getBarcode();
-            }
-            labEvent.getCherryPickTransfers().add(new CherryPickTransfer(
-                    mapBarcodeToSourceTubeFormation.get(cherryPickSourceType.getBarcode()).getContainerRole(),
-                    VesselPosition.getByName(cherryPickSourceType.getWell()),
-                    mapBarcodeToTargetTubeFormation.get(destinationRackBarcode).getContainerRole(),
-                    VesselPosition.getByName(cherryPickSourceType.getDestinationWell()),
-                    labEvent));
-        }
-        return labEvent;
     }
 
     /**
@@ -491,8 +608,8 @@ public class LabEventFactory implements Serializable {
         }
 */
 
-        Map<String, StripTube> mapPositionToStripTube = new HashMap<String, StripTube>();
-        for (ReceptacleType receptacleType : plateCherryPickEvent.getPositionMap().getReceptacle()) {
+        Map<String, StripTube> mapPositionToStripTube = new HashMap<>();
+        for (ReceptacleType receptacleType : plateCherryPickEvent.getPositionMap().get(0).getReceptacle()) {
             if (!receptacleType.getReceptacleType().equals(PHYS_TYPE_STRIP_TUBE)) {
                 throw new RuntimeException("Expected physType " + PHYS_TYPE_STRIP_TUBE + ", but received " +
                                            receptacleType.getReceptacleType());
@@ -523,7 +640,6 @@ public class LabEventFactory implements Serializable {
      * Create a PlateCherryPickEvent for transferring from a rack of tubes to a plate.
      *
      * @param plateCherryPickEvent          starting event for the transfer.
-     * @param plateCherryPickEvent PlateEventType for transfer.
      * @param mapBarcodeToSourceTubeFormation map from source rack barcode to TubeFormation entities;
      *                                        newly created TubeFormations will be added to this map
      * @param mapBarcodeToSourceRackOfTubes map from target rack barcode to RackOfTubes entities;
@@ -542,18 +658,15 @@ public class LabEventFactory implements Serializable {
         LabEvent labEvent = constructReferenceData(plateCherryPickEvent, labEventRefDataFetcher);
         addSourceTubeFormationsToMap(plateCherryPickEvent, mapBarcodeToSourceTubeFormation, mapBarcodeToSourceTube,
                 mapBarcodeToSourceRackOfTubes);
-        MiSeqReagentKit reagentKit = null;
 
         for (Map.Entry<String, RackOfTubes> rackOfTubesSet : mapBarcodeToSourceRackOfTubes.entrySet()) {
             RackOfTubes rack=rackOfTubesSet.getValue();
             for (Map.Entry<String, TubeFormation> stringVesselContainerEntry : mapBarcodeToSourceTubeFormation
                     .entrySet()) {
                 if (stringVesselContainerEntry.getValue() == null) {
-                    PositionMapType positionMapType = new PositionMapType();
-
                     TubeFormation targetRack =
-                            buildRackDaoFree(mapBarcodeToSourceTube, rack , plateCherryPickEvent.getPlate(),
-                                    plateCherryPickEvent.getPositionMap(), false,
+                            buildRackDaoFree(mapBarcodeToSourceTube, rack , plateCherryPickEvent.getPlate().get(0),
+                                    plateCherryPickEvent.getPositionMap().get(0), false,
                                     LabEventType.getByName(plateCherryPickEvent.getEventType()).isCreateSources());
                     stringVesselContainerEntry.setValue(targetRack);
                 }
@@ -561,7 +674,7 @@ public class LabEventFactory implements Serializable {
         }
 
         addSourceTubeFormationsToMap(plateCherryPickEvent, mapBarcodeToSourceTubeFormation, mapBarcodeToSourceTube, mapBarcodeToSourceRackOfTubes);
-//        MiSeqReagentKit reagentKit=null;
+        MiSeqReagentKit reagentKit = null;
         for (CherryPickSourceType cherryPickSourceType : plateCherryPickEvent.getSource()) {
             String reagentKitBarcode = cherryPickSourceType.getDestinationBarcode();
             if (reagentKit == null) {
@@ -638,7 +751,7 @@ public class LabEventFactory implements Serializable {
             labEvent = buildFromBettaLimsRackEventDbFree(plateEventType, tubeFormation, findTubesByBarcodes(
                     plateEventType.getPositionMap()), rackOfTubesDao.findByBarcode(plateEventType.getPlate().getBarcode()));
         }
-        addReagents(labEvent, plateEventType);
+        addReagents(labEvent, plateEventType.getReagent());
         return labEvent;
     }
 
@@ -646,152 +759,73 @@ public class LabEventFactory implements Serializable {
      * Builds a lab event entity from a JAXB plate transfer event bean, (plate|rack) -> (plate|rack) or
      * strip tube -> flowcell
      *
-     * @param plateTransferEvent JAXB event bean
+     * @param plateTransferEvent JAXB from liquid handling deck
      * @return entity
      */
     public LabEvent buildFromBettaLims(PlateTransferEventType plateTransferEvent) {
-        Map<String, TwoDBarcodedTube> mapBarcodeToSourceTubes = null;
-        StaticPlate sourcePlate = null;
-        TubeFormation sourceTubeFormation = null;
-        RackOfTubes sourceRackOfTubes = null;
-        if (plateTransferEvent.getSourcePositionMap() == null) {
-            if (plateTransferEvent.getSourcePlate().getPhysType().equals(
-                    PHYS_TYPE_STRIP_TUBE) && plateTransferEvent.getPlate().getPhysType().equals(
-                    PHYS_TYPE_FLOWCELL)) {
-                // todo jmt create if null
-                StripTube stripTube = stripTubeDao.findByBarcode(plateTransferEvent.getSourcePlate().getBarcode());
-                IlluminaFlowcell illuminaFlowcell = illuminaFlowcellDao.findByBarcode(
-                        plateTransferEvent.getPlate().getBarcode());
-                LabEvent labEvent = buildFromBettaLimsPlateToPlateDbFree(plateTransferEvent, stripTube, illuminaFlowcell);
-                addReagents(labEvent, plateTransferEvent);
-                return labEvent;
-            }
-            sourcePlate = staticPlateDAO.findByBarcode(plateTransferEvent.getSourcePlate().getBarcode());
-            if (sourcePlate == null) {
-                if (LabEventType.getByName(plateTransferEvent.getEventType()).isCreateSources() || CREATE_SOURCES) {
-                    sourcePlate = new StaticPlate(plateTransferEvent.getSourcePlate().getBarcode(),
-                            StaticPlate.PlateType.getByDisplayName(
-                                    plateTransferEvent.getSourcePlate().getPhysType()));
-                } else {
-                    throw new RuntimeException("Failed to find source plate " + plateTransferEvent.getSourcePlate().getBarcode());
-                }
-            }
-        } else {
-            sourceTubeFormation = fetchTubeFormation(plateTransferEvent.getSourcePositionMap());
-            mapBarcodeToSourceTubes = findTubesByBarcodes(plateTransferEvent.getSourcePositionMap());
-            sourceRackOfTubes = rackOfTubesDao.findByBarcode(plateTransferEvent.getSourcePlate().getBarcode());
-            if (sourceTubeFormation == null) {
-                sourceTubeFormation = buildRackDaoFree(mapBarcodeToSourceTubes, sourceRackOfTubes, plateTransferEvent.getSourcePlate(),
-                        plateTransferEvent.getSourcePositionMap(), true, LabEventType.getByName(plateTransferEvent.getEventType()).isCreateSources());
-            } else {
-                if (sourceRackOfTubes == null) {
-                    sourceRackOfTubes = new RackOfTubes(plateTransferEvent.getSourcePlate().getBarcode(), RackOfTubes.RackType.Matrix96);
-                }
-                sourceTubeFormation.addRackOfTubes(sourceRackOfTubes);
-
-            }
+        if (plateTransferEvent.getSourcePlate().getPhysType().equals(PHYS_TYPE_STRIP_TUBE) &&
+            plateTransferEvent.getPlate().getPhysType().equals(PHYS_TYPE_FLOWCELL)) {
+            // todo jmt create if null
+            StripTube stripTube = stripTubeDao.findByBarcode(plateTransferEvent.getSourcePlate().getBarcode());
+            IlluminaFlowcell illuminaFlowcell = illuminaFlowcellDao.findByBarcode(
+                    plateTransferEvent.getPlate().getBarcode());
+            LabEvent labEvent = buildFromBettaLimsPlateToPlateDbFree(plateTransferEvent, stripTube, illuminaFlowcell);
+            addReagents(labEvent, plateTransferEvent.getReagent());
+            return labEvent;
         }
-
-        Map<String, TwoDBarcodedTube> mapBarcodeToTargetTubes = null;
-        StaticPlate targetPlate = null;
-        TubeFormation targetTubeFormation = null;
-        RackOfTubes targetRackOfTubes = null;
-        if (plateTransferEvent.getPositionMap() == null) {
-            targetPlate = staticPlateDAO.findByBarcode(plateTransferEvent.getPlate().getBarcode());
-        } else {
-            targetTubeFormation = fetchTubeFormation(plateTransferEvent.getPositionMap());
-            mapBarcodeToTargetTubes = findTubesByBarcodes(plateTransferEvent.getPositionMap());
-            targetRackOfTubes = rackOfTubesDao.findByBarcode(plateTransferEvent.getPlate().getBarcode());
+        List<String> barcodes = new ArrayList<>();
+        barcodes.add(plateTransferEvent.getSourcePlate().getBarcode());
+        if (plateTransferEvent.getSourcePositionMap() != null) {
+            extractBarcodes(barcodes, Collections.singletonList(plateTransferEvent.getSourcePositionMap()));
         }
-
-        LabEvent labEvent;
-        if (plateTransferEvent.getSourcePositionMap() == null) {
-            // plate to ...
-            if (plateTransferEvent.getPositionMap() == null) {
-                // plate
-                labEvent = buildFromBettaLimsPlateToPlateDbFree(plateTransferEvent, sourcePlate, targetPlate);
-            } else {
-                // rack
-                labEvent = buildFromBettaLimsPlateToRackDbFree(plateTransferEvent, sourcePlate, mapBarcodeToTargetTubes, targetRackOfTubes);
-            }
-        } else {
-            // rack to ...
-            if (plateTransferEvent.getPositionMap() == null) {
-                // plate
-                if (sourceTubeFormation == null) {
-                    labEvent = buildFromBettaLimsRackToPlateDbFree(plateTransferEvent, mapBarcodeToSourceTubes, sourceRackOfTubes,
-                            targetPlate);
-                } else {
-                    labEvent = buildFromBettaLimsRackToPlateDbFree(plateTransferEvent, sourceTubeFormation, targetPlate);
-                }
-            } else {
-                // rack
-                if (targetTubeFormation == null) {
-                    labEvent = buildFromBettaLimsRackToRackDbFree(plateTransferEvent, sourceTubeFormation,
-                            mapBarcodeToTargetTubes, targetRackOfTubes);
-                } else {
-                    labEvent = buildFromBettaLimsRackToRackDbFree(plateTransferEvent, sourceTubeFormation,
-                            targetTubeFormation);
-                }
-            }
+        barcodes.add(plateTransferEvent.getPlate().getBarcode());
+        if (plateTransferEvent.getPositionMap() != null) {
+            extractBarcodes(barcodes, Collections.singletonList(plateTransferEvent.getPositionMap()));
         }
-        addReagents(labEvent, plateTransferEvent);
-        return labEvent;
-    }
-
-    // todo jmt combine following two methods?
-
-    /**
-     * Database free (i.e. entities have already been fetched from the database, or constructed in tests) building of
-     * lab event entity for transfer from rack to plate
-     *
-     * @param plateTransferEvent      JAXB plate transfer event
-     * @param mapBarcodeToSourceTubes existing source tubes (in new rack)
-     * @param targetPlate             existing plate, or null for new plate
-     * @return entity
-     */
-    @DaoFree
-    public LabEvent buildFromBettaLimsRackToPlateDbFree(PlateTransferEventType plateTransferEvent,
-                                                        Map<String, TwoDBarcodedTube> mapBarcodeToSourceTubes,
-                                                        @Nullable RackOfTubes sourceRackOfTubes,
-                                                        @Nullable StaticPlate targetPlate) {
-        LabEvent labEvent = constructReferenceData(plateTransferEvent, labEventRefDataFetcher);
-        TubeFormation tubeFormation = buildRackDaoFree(mapBarcodeToSourceTubes, sourceRackOfTubes, plateTransferEvent.getSourcePlate(),
-                plateTransferEvent.getSourcePositionMap(), true, LabEventType.getByName(plateTransferEvent.getEventType()).isCreateSources());
-        if (targetPlate == null) {
-            targetPlate = new StaticPlate(plateTransferEvent.getPlate().getBarcode(),
-                    StaticPlate.PlateType.getByDisplayName(
-                            plateTransferEvent.getPlate().getPhysType()));
-        }
-
-        labEvent.getSectionTransfers().add(new SectionTransfer(
-                tubeFormation.getContainerRole(), SBSSection.getBySectionName(plateTransferEvent.getSourcePlate().getSection()),
-                targetPlate.getContainerRole(), SBSSection.getBySectionName(plateTransferEvent.getPlate().getSection()), labEvent));
+        Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
+        LabEvent labEvent = buildFromBettaLims(plateTransferEvent, mapBarcodeToVessel);
+        addReagents(labEvent, plateTransferEvent.getReagent());
         return labEvent;
     }
 
     /**
-     * Database free (i.e. entities have already been fetched from the database, or constructed in tests) building of
-     * lab event entity for transfer from rack to plate
-     *
-     * @param plateTransferEvent JAXB plate transfer event
-     * @param tubeFormation      existing source rack
-     * @param targetPlate        existing plate, or null for new plate
+     * Dao-free method to build a lab event entity from a rack or plate transfer to a rack or plate
+     * @param plateTransferEvent from liquid handling deck
+     * @param mapBarcodeToVessel entities fetched from database
      * @return entity
      */
     @DaoFree
-    public LabEvent buildFromBettaLimsRackToPlateDbFree(PlateTransferEventType plateTransferEvent,
-                                                        TubeFormation tubeFormation, @Nullable StaticPlate targetPlate) {
+    public LabEvent buildFromBettaLims(PlateTransferEventType plateTransferEvent,
+            Map<String,LabVessel> mapBarcodeToVessel) {
         LabEvent labEvent = constructReferenceData(plateTransferEvent, labEventRefDataFetcher);
-        if (targetPlate == null) {
-            targetPlate = new StaticPlate(plateTransferEvent.getPlate().getBarcode(),
-                    StaticPlate.PlateType.getByDisplayName(
-                            plateTransferEvent.getPlate().getPhysType()));
-        }
+        boolean createSourcesForEvent = LabEventType.getByName(plateTransferEvent.getEventType()).isCreateSources();
 
+        Map<String, TubeFormation> mapBarcodeToTubeFormation = buildPlate(mapBarcodeToVessel,
+                plateTransferEvent.getSourcePlate(), plateTransferEvent.getSourcePositionMap(), createSourcesForEvent,
+                true);
+
+        mapBarcodeToTubeFormation.putAll(buildPlate(mapBarcodeToVessel, plateTransferEvent.getPlate(),
+                plateTransferEvent.getPositionMap(), createSourcesForEvent, false));
+
+        LabVessel sourceContainer = mapBarcodeToTubeFormation.get(plateTransferEvent.getSourcePlate().getBarcode());
+        if (sourceContainer == null) {
+            sourceContainer = mapBarcodeToVessel.get(plateTransferEvent.getSourcePlate().getBarcode());
+            if (sourceContainer == null) {
+                throw new RuntimeException("Failed to find source " + plateTransferEvent.getSourcePlate().getBarcode());
+            }
+        }
+        LabVessel destinationContainer = mapBarcodeToTubeFormation.get(plateTransferEvent.getPlate().getBarcode());
+        if (destinationContainer == null) {
+            destinationContainer = mapBarcodeToVessel.get(plateTransferEvent.getPlate().getBarcode());
+            if (destinationContainer == null) {
+                throw new RuntimeException("Failed to find destination " + plateTransferEvent.getPlate().getBarcode());
+            }
+        }
         labEvent.getSectionTransfers().add(new SectionTransfer(
-                tubeFormation.getContainerRole(), SBSSection.getBySectionName(plateTransferEvent.getSourcePlate().getSection()),
-                targetPlate.getContainerRole(), SBSSection.getBySectionName(plateTransferEvent.getPlate().getSection()), labEvent));
+                sourceContainer.getContainerRole(),
+                SBSSection.getBySectionName(plateTransferEvent.getSourcePlate().getSection()),
+                destinationContainer.getContainerRole(),
+                SBSSection.getBySectionName(plateTransferEvent.getPlate().getSection()), labEvent));
         return labEvent;
     }
 
@@ -805,7 +839,7 @@ public class LabEventFactory implements Serializable {
      */
     private TubeFormation buildRackDaoFree(Map<String, TwoDBarcodedTube> mapBarcodeToTubes, RackOfTubes rackOfTubes,
                                            PlateType plate, PositionMapType positionMap, boolean source, boolean createSources) {
-        Map<VesselPosition, TwoDBarcodedTube> mapPositionToTube = new HashMap<VesselPosition, TwoDBarcodedTube>();
+        Map<VesselPosition, TwoDBarcodedTube> mapPositionToTube = new HashMap<>();
         for (ReceptacleType receptacleType : positionMap.getReceptacle()) {
             TwoDBarcodedTube twoDBarcodedTube = mapBarcodeToTubes.get(receptacleType.getBarcode());
             if (twoDBarcodedTube == null) {
@@ -825,123 +859,6 @@ public class LabEventFactory implements Serializable {
         return tubeFormation;
     }
 
-    /**
-     * Database free (i.e. entities have already been fetched from the database, or constructed in tests) building of
-     * lab event entity for transfer from rack to rack
-     *
-     * @param plateTransferEvent      JAXB
-     * @param sourceTubeFormation     from database
-     * @param mapBarcodeToTargetTubes each entry may be null, if it isn't in the database
-     * @param targetRackOfTubes
-     * @return entity
-     */
-    // todo jmt combine following four methods?
-    @DaoFree
-    public LabEvent buildFromBettaLimsRackToRackDbFree(PlateTransferEventType plateTransferEvent,
-                                                       TubeFormation sourceTubeFormation,
-                                                       Map<String, TwoDBarcodedTube> mapBarcodeToTargetTubes, RackOfTubes targetRackOfTubes) {
-        LabEvent labEvent = constructReferenceData(plateTransferEvent, labEventRefDataFetcher);
-
-        TubeFormation targetTubeFormation = buildRackDaoFree(mapBarcodeToTargetTubes, targetRackOfTubes, plateTransferEvent.getPlate(),
-                plateTransferEvent.getPositionMap(), false, LabEventType.getByName(plateTransferEvent.getEventType()).isCreateSources());
-
-        labEvent.getSectionTransfers().add(new SectionTransfer(
-                sourceTubeFormation.getContainerRole(), SBSSection.getBySectionName(plateTransferEvent.getSourcePlate().getSection()),
-                targetTubeFormation.getContainerRole(), SBSSection.getBySectionName(plateTransferEvent.getPlate().getSection()), labEvent));
-        return labEvent;
-    }
-
-    /**
-     * Database free (i.e. entities have already been fetched from the database, or constructed in tests) building of
-     * lab event entity for transfer from rack to rack
-     *
-     * @param plateTransferEvent      JAXB
-     * @param mapBarcodeToSourceTubes each entry may be null, if it isn't in the database
-     * @param mapBarcodeToTargetTubes each entry may be null, if it isn't in the database
-     * @return entity
-     */
-    // todo jmt revisit uses of this
-    @DaoFree
-    public LabEvent buildFromBettaLimsRackToRackDbFree(PlateTransferEventType plateTransferEvent,
-                                                       Map<String, TwoDBarcodedTube> mapBarcodeToSourceTubes,
-                                                       @Nullable RackOfTubes sourceRackOfTubes,
-                                                       Map<String, TwoDBarcodedTube> mapBarcodeToTargetTubes,
-                                                       @Nullable RackOfTubes targetRackOfTubes) {
-        LabEvent labEvent = constructReferenceData(plateTransferEvent, labEventRefDataFetcher);
-        TubeFormation sourceTubeFormation = buildRackDaoFree(mapBarcodeToSourceTubes, sourceRackOfTubes,
-                plateTransferEvent.getSourcePlate(), plateTransferEvent.getSourcePositionMap(), true,
-                LabEventType.getByName(plateTransferEvent.getEventType()).isCreateSources());
-
-        TubeFormation targetTubeFormation = buildRackDaoFree(mapBarcodeToTargetTubes, targetRackOfTubes,
-                plateTransferEvent.getPlate(), plateTransferEvent.getPositionMap(), false,
-                LabEventType.getByName(plateTransferEvent.getEventType()).isCreateSources());
-
-        labEvent.getSectionTransfers().add(new SectionTransfer(
-                sourceTubeFormation.getContainerRole(), SBSSection.getBySectionName(plateTransferEvent.getSourcePlate().getSection()),
-                targetTubeFormation.getContainerRole(), SBSSection.getBySectionName(plateTransferEvent.getPlate().getSection()), labEvent));
-        return labEvent;
-    }
-
-    /**
-     * Database free (i.e. entities have already been fetched from the database, or constructed in tests) building of
-     * lab event entity for transfer from rack to rack
-     *
-     * @param plateTransferEvent      JAXB
-     * @param mapBarcodeToSourceTubes each entry may be null, if it isn't in the database
-     * @param targetTubeFormation     from database
-     * @return entity
-     */
-    // todo jmt revisit uses of this
-    @DaoFree
-    public LabEvent buildFromBettaLimsRackToRackDbFree(PlateTransferEventType plateTransferEvent,
-                                                       Map<String, TwoDBarcodedTube> mapBarcodeToSourceTubes,
-                                                       @Nullable RackOfTubes rackOfTubes,
-                                                       TubeFormation targetTubeFormation) {
-        LabEvent labEvent = constructReferenceData(plateTransferEvent, labEventRefDataFetcher);
-        TubeFormation sourceTubeFormation = buildRackDaoFree(mapBarcodeToSourceTubes, rackOfTubes,
-                plateTransferEvent.getSourcePlate(), plateTransferEvent.getSourcePositionMap(), true,
-                LabEventType.getByName(plateTransferEvent.getEventType()).isCreateSources());
-
-        labEvent.getSectionTransfers().add(new SectionTransfer(
-                sourceTubeFormation.getContainerRole(), SBSSection.getBySectionName(plateTransferEvent.getSourcePlate().getSection()),
-                targetTubeFormation.getContainerRole(), SBSSection.getBySectionName(plateTransferEvent.getPlate().getSection()), labEvent));
-        return labEvent;
-    }
-
-    /**
-     * Database free (i.e. entities have already been fetched from the database, or constructed in tests) building of
-     * lab event entity for transfer from rack to rack
-     *
-     * @param plateTransferEvent  JAXB
-     * @param sourceTubeFormation from database
-     * @param targetTubeFormation from database
-     * @return entity
-     */
-    @DaoFree
-    public LabEvent buildFromBettaLimsRackToRackDbFree(
-            PlateTransferEventType plateTransferEvent,
-            TubeFormation sourceTubeFormation,
-            TubeFormation targetTubeFormation) {
-        LabEvent labEvent = constructReferenceData(plateTransferEvent, labEventRefDataFetcher);
-        labEvent.getSectionTransfers().add(new SectionTransfer(
-                sourceTubeFormation.getContainerRole(), SBSSection.getBySectionName(plateTransferEvent.getSourcePlate().getSection()),
-                targetTubeFormation.getContainerRole(), SBSSection.getBySectionName(plateTransferEvent.getPlate().getSection()), labEvent));
-        return labEvent;
-    }
-
-    @DaoFree
-    public LabEvent buildFromBettaLimsPlateToRackDbFree(PlateTransferEventType plateTransferEvent,
-                                                        StaticPlate sourcePlate,
-                                                        Map<String, TwoDBarcodedTube> mapBarcodeToTargetTubes, @Nullable RackOfTubes targetRackOfTubes) {
-        LabEvent labEvent = constructReferenceData(plateTransferEvent, labEventRefDataFetcher);
-        TubeFormation tubeFormation = buildRackDaoFree(mapBarcodeToTargetTubes, targetRackOfTubes, plateTransferEvent.getPlate(),
-                plateTransferEvent.getPositionMap(), false, LabEventType.getByName(plateTransferEvent.getEventType()).isCreateSources());
-
-        labEvent.getSectionTransfers().add(new SectionTransfer(
-                sourcePlate.getContainerRole(), SBSSection.getBySectionName(plateTransferEvent.getSourcePlate().getSection()),
-                tubeFormation.getContainerRole(), SBSSection.getBySectionName(plateTransferEvent.getPlate().getSection()), labEvent));
-        return labEvent;
-    }
 
     @DaoFree
     public LabEvent buildFromBettaLimsPlateEventDbFree(PlateEventType plateEvent, StaticPlate plate) {
@@ -960,8 +877,8 @@ public class LabEventFactory implements Serializable {
     }
 
     // todo jmt make this database free?
-    private void addReagents(LabEvent labEvent, BasePlateEventType basePlateEventType) {
-        for (ReagentType reagentType : basePlateEventType.getReagent()) {
+    private void addReagents(LabEvent labEvent, List<ReagentType> reagentTypes) {
+        for (ReagentType reagentType : reagentTypes) {
             GenericReagent genericReagent = genericReagentDao.findByReagentNameAndLot(
                     reagentType.getKitType(), reagentType.getBarcode());
             if (genericReagent == null) {
@@ -981,22 +898,6 @@ public class LabEventFactory implements Serializable {
         }
 
         tubeFormation.addInPlaceEvent(labEvent);
-        return labEvent;
-    }
-
-    @DaoFree
-    public LabEvent buildFromBettaLimsPlateToPlateDbFree(PlateTransferEventType plateTransferEvent,
-                                                         StaticPlate sourcePlate, @Nullable StaticPlate targetPlate) {
-        LabEvent labEvent = constructReferenceData(plateTransferEvent, labEventRefDataFetcher);
-        if (targetPlate == null) {
-            targetPlate = new StaticPlate(plateTransferEvent.getPlate().getBarcode(),
-                    StaticPlate.PlateType.getByDisplayName(
-                            plateTransferEvent.getPlate().getPhysType()));
-        }
-
-        labEvent.getSectionTransfers().add(new SectionTransfer(
-                sourcePlate.getContainerRole(), SBSSection.getBySectionName(plateTransferEvent.getSourcePlate().getSection()),
-                targetPlate.getContainerRole(), SBSSection.getBySectionName(plateTransferEvent.getPlate().getSection()), labEvent));
         return labEvent;
     }
 
@@ -1053,11 +954,11 @@ public class LabEventFactory implements Serializable {
     }
 
     private Map<String, TwoDBarcodedTube> findTubesByBarcodes(PositionMapType positionMap) {
-        List<String> barcodes = new ArrayList<String>();
+        List<String> barcodes = new ArrayList<>();
         for (ReceptacleType receptacleType : positionMap.getReceptacle()) {
             barcodes.add(receptacleType.getBarcode());
         }
-        return this.twoDBarcodedTubeDao.findByBarcodes(barcodes);
+        return twoDBarcodedTubeDao.findByBarcodes(barcodes);
     }
 
     /**
@@ -1151,12 +1052,12 @@ public class LabEventFactory implements Serializable {
 
         long workCounter = 1L;
 
-        List<LabEvent> fullEventList = new LinkedList<LabEvent>();
+        List<LabEvent> fullEventList = new LinkedList<>();
 
-        Set<UniqueEvent> uniqueEvents = new HashSet<UniqueEvent>();
+        Set<UniqueEvent> uniqueEvents = new HashSet<>();
 
         for (BucketEntry mapEntry : entryCollection) {
-            List<LabEvent> events = new LinkedList<LabEvent>();
+            List<LabEvent> events = new LinkedList<>();
             LabEvent currEvent = createFromBatchItems(mapEntry.getPoBusinessKey(), mapEntry.getLabVessel(),
                     workCounter++, operator, eventType, eventLocation);
             if (null != batchIn) {

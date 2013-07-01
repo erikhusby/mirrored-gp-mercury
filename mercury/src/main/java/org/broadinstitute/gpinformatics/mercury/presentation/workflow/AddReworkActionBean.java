@@ -90,7 +90,8 @@ public class AddReworkActionBean extends CoreActionBean {
 
         try {
             Collection<String> validationMessages =
-                    reworkEjb.addAndValidateRework(candidate, reworkReason, reworkStep, commentText,
+                    reworkEjb.addAndValidateRework(candidate, reworkReason, reworkStep, "Pico/Plating Bucket",
+                            commentText,
                             WorkflowName.EXOME_EXPRESS.getWorkflowName(), getUserBean().getLoginUserName());
             addMessage("Vessel {0} has been added to the {1} bucket.", candidate.getTubeBarcode(), bucketName);
 

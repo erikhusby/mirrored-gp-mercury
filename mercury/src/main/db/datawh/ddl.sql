@@ -1,53 +1,8 @@
---   Drops all existing sequences and tables (do not run this on the production db)
+----------------------------------------
+-- do not run this on the production db
+----------------------------------------
 
-DROP SEQUENCE event_fact_id_seq;
-DROP SEQUENCE sequencing_sample_id_seq;
-
-DROP TABLE product_order_add_on CASCADE CONSTRAINTS;
-DROP TABLE product_order_sample_status CASCADE CONSTRAINTS;
-DROP TABLE product_order_sample CASCADE CONSTRAINTS;
-DROP TABLE product_order_status CASCADE CONSTRAINTS;
-DROP TABLE product_order CASCADE CONSTRAINTS;
-DROP TABLE research_project_irb CASCADE CONSTRAINTS;
-DROP TABLE research_project_cohort CASCADE CONSTRAINTS;
-DROP TABLE research_project_funding CASCADE CONSTRAINTS;
-DROP TABLE research_project_person CASCADE CONSTRAINTS;
-DROP TABLE research_project_status CASCADE CONSTRAINTS;
-DROP TABLE research_project CASCADE CONSTRAINTS;
-DROP TABLE price_item CASCADE CONSTRAINTS;
-DROP TABLE product CASCADE CONSTRAINTS;
-DROP TABLE lab_batch CASCADE CONSTRAINTS;
-DROP TABLE lab_vessel CASCADE CONSTRAINTS;
-DROP TABLE event_fact CASCADE CONSTRAINTS;
-DROP TABLE workflow CASCADE CONSTRAINTS;
-DROP TABLE workflow_process CASCADE CONSTRAINTS;
-DROP TABLE sequencing_sample_fact CASCADE CONSTRAINTS;
-DROP TABLE sequencing_run CASCADE CONSTRAINTS;
-
-DROP TABLE im_product_order_add_on CASCADE CONSTRAINTS;
-DROP TABLE im_ledger_entry CASCADE CONSTRAINTS;
-DROP TABLE im_product_order_sample_bill CASCADE CONSTRAINTS;
-DROP TABLE im_product_order_sample_risk CASCADE CONSTRAINTS;
-DROP TABLE im_product_order_sample_stat CASCADE CONSTRAINTS;
-DROP TABLE im_product_order_sample CASCADE CONSTRAINTS;
-DROP TABLE im_product_order_status CASCADE CONSTRAINTS;
-DROP TABLE im_product_order CASCADE CONSTRAINTS;
-DROP TABLE im_research_project_irb CASCADE CONSTRAINTS;
-DROP TABLE im_research_project_cohort CASCADE CONSTRAINTS;
-DROP TABLE im_research_project_funding CASCADE CONSTRAINTS;
-DROP TABLE im_research_project_person CASCADE CONSTRAINTS;
-DROP TABLE im_research_project CASCADE CONSTRAINTS;
-DROP TABLE im_research_project_status CASCADE CONSTRAINTS;
-DROP TABLE im_price_item CASCADE CONSTRAINTS;
-DROP TABLE im_product CASCADE CONSTRAINTS;
-DROP TABLE im_lab_vessel CASCADE CONSTRAINTS;
-DROP TABLE im_lab_batch CASCADE CONSTRAINTS;
-DROP TABLE im_event_fact CASCADE CONSTRAINTS;
-DROP TABLE im_workflow CASCADE CONSTRAINTS;
-DROP TABLE im_workflow_process CASCADE CONSTRAINTS;
-DROP TABLE im_sequencing_sample_fact CASCADE CONSTRAINTS;
-DROP TABLE im_sequencing_run CASCADE CONSTRAINTS;
-
+EXEC drop_all_tables;
 
 --   Creates the user-visible tables
 
@@ -229,24 +184,28 @@ CREATE TABLE event_fact (
 );
 
 CREATE TABLE sequencing_sample_fact (
-  sequencing_sample_fact_id NUMERIC(19)   NOT NULL PRIMARY KEY,
-  flowcell_barcode          VARCHAR2(255) NOT NULL,
-  lane_name                 VARCHAR2(255) NOT NULL,
-  molecular_indexing_scheme VARCHAR2(255) NOT NULL,
-  sequencing_run_id         NUMERIC(19)   NOT NULL,
-  product_order_id          NUMERIC(19),
-  sample_name               VARCHAR2(40),
-  research_project_id       NUMERIC(19),
-  etl_date                  DATE          NOT NULL
+  sequencing_sample_fact_id   NUMERIC(19)   NOT NULL PRIMARY KEY,
+  flowcell_barcode            VARCHAR2(255) NOT NULL,
+  lane                        VARCHAR2(40) NOT NULL,
+  molecular_indexing_scheme   VARCHAR2(255) NOT NULL,
+  sequencing_run_id           NUMERIC(19)   NOT NULL,
+  product_order_id            NUMERIC(19),
+  sample_name                 VARCHAR2(40),
+  research_project_id         NUMERIC(19),
+  loaded_library_barcode      VARCHAR2(255),
+  loaded_library_create_date  DATE ,
+  etl_date                    DATE          NOT NULL
 );
 
 CREATE TABLE sequencing_run (
-  sequencing_run_id NUMERIC(19) NOT NULL PRIMARY KEY,
-  run_name          VARCHAR2(255),
-  barcode           VARCHAR2(255),
-  registration_date DATE,
-  instrument        VARCHAR2(255),
-  etl_date          DATE        NOT NULL
+  sequencing_run_id     NUMERIC(19) NOT NULL PRIMARY KEY,
+  run_name              VARCHAR2(255),
+  barcode               VARCHAR2(255),
+  registration_date     DATE,
+  instrument            VARCHAR2(255),
+  setup_read_structure  VARCHAR2(255),
+  actual_read_structure VARCHAR2(255),
+  etl_date              DATE        NOT NULL
 );
 
 
@@ -485,17 +444,19 @@ CREATE TABLE im_ledger_entry (
 );
 
 CREATE TABLE im_sequencing_sample_fact (
-  line_number               NUMERIC(9) NOT NULL,
-  etl_date                  DATE       NOT NULL,
-  is_delete                 CHAR(1)    NOT NULL,
-  sequencing_sample_fact_id NUMERIC(19),
-  flowcell_barcode          VARCHAR2(255),
-  lane_name                 VARCHAR2(255),
-  molecular_indexing_scheme VARCHAR2(255),
-  sequencing_run_id         NUMERIC(19),
-  product_order_id          NUMERIC(19),
-  sample_name               VARCHAR2(40),
-  research_project_id       NUMERIC(19)
+  line_number                 NUMERIC(9) NOT NULL,
+  etl_date                    DATE       NOT NULL,
+  is_delete                   CHAR(1)    NOT NULL,
+  sequencing_sample_fact_id   NUMERIC(19),
+  flowcell_barcode            VARCHAR2(255),
+  lane                        VARCHAR2(40),
+  molecular_indexing_scheme   VARCHAR2(255),
+  sequencing_run_id           NUMERIC(19),
+  product_order_id            NUMERIC(19),
+  sample_name                 VARCHAR2(40),
+  research_project_id         NUMERIC(19),
+  loaded_library_barcode      VARCHAR2(255),
+  loaded_library_create_date  DATE
 );
 
 CREATE TABLE im_sequencing_run (
@@ -506,7 +467,9 @@ CREATE TABLE im_sequencing_run (
   run_name          VARCHAR2(255),
   barcode           VARCHAR2(255),
   registration_date DATE,
-  instrument        VARCHAR2(255)
+  instrument        VARCHAR2(255),
+  setup_read_structure  VARCHAR2(255),
+  actual_read_structure VARCHAR2(255)
 );
 
 CREATE SEQUENCE event_fact_id_seq START WITH 1;
@@ -593,11 +556,11 @@ CREATE INDEX pdo_sample_status_idx1 ON product_order_sample_status (product_orde
 CREATE INDEX pdo_add_on_idx1 ON product_order_add_on (product_order_id);
 CREATE INDEX pdo_add_on_idx2 ON product_order_add_on (product_id);
 CREATE INDEX event_fact_idx1 ON event_fact (event_date);
-CREATE INDEX event_fact_idx2 ON event_fact (product_order_id);
+CREATE INDEX event_fact_idx2 ON event_fact (product_order_id, sample_name);
 CREATE INDEX event_fact_idx3 ON event_fact (lab_event_id);
 CREATE INDEX ix_parent_project ON research_project (parent_research_project_id);
 CREATE INDEX ix_root_project ON research_project (root_research_project_id);
-CREATE UNIQUE INDEX seq_sample_fact_idx1 ON sequencing_sample_fact (flowcell_barcode, lane_name, molecular_indexing_scheme);
+CREATE UNIQUE INDEX seq_sample_fact_idx1 ON sequencing_sample_fact (flowcell_barcode, lane, molecular_indexing_scheme);
 CREATE INDEX seq_sample_fact_idx2 ON sequencing_sample_fact (product_order_id, sample_name);
 CREATE INDEX seq_sample_fact_idx3 ON sequencing_sample_fact (sequencing_run_id);
 

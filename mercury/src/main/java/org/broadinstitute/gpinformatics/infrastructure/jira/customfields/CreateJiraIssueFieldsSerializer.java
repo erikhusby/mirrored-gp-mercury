@@ -16,15 +16,15 @@ import java.io.IOException;
 public class CreateJiraIssueFieldsSerializer extends JsonSerializer<CreateFields> {
 
     @Override
-    public void serialize(CreateFields fields, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
+    public void serialize(CreateFields fields, JsonGenerator jsonGenerator, SerializerProvider serializerProvider)
+            throws IOException {
         jsonGenerator.writeStartObject();
         jsonGenerator.writeObjectField("project", fields.getProject());
         jsonGenerator.writeObjectField("issuetype", fields.getIssueType());
         jsonGenerator.writeObjectField("summary", fields.getSummary());
-        jsonGenerator.writeObjectField("description", fields.getDescription());
 
         if (fields.getReporter() != null) {
-            jsonGenerator.writeObjectField("reporter",fields.getReporter());
+            jsonGenerator.writeObjectField("reporter", fields.getReporter());
         }
 
         UpdateJiraIssueUpdateSerializer.writeCustomFields(fields.getCustomFields(), jsonGenerator);

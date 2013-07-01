@@ -21,6 +21,11 @@ import java.util.List;
 public class RiskItemEtl extends GenericEntityEtl<RiskItem, ProductOrderSample> {
     private ProductOrderSampleDao pdoSampleDao;
 
+    /**
+     * The maximum message length allowed.
+     */
+    private final static int MAX_MSG_LENGTH = 500;
+
     public RiskItemEtl() {
     }
 
@@ -67,11 +72,11 @@ public class RiskItemEtl extends GenericEntityEtl<RiskItem, ProductOrderSample> 
 
     @Override
     String dataRecord(String etlDateStr, boolean isDelete, ProductOrderSample entity) {
-
         String riskString = entity.getRiskString();
-        if (riskString.length() > 500) {
-            riskString = riskString.substring(0, 500);
+        if (riskString.length() >= MAX_MSG_LENGTH) {
+            riskString = riskString.substring(0, MAX_MSG_LENGTH);
         }
+
         return genericRecord(etlDateStr, isDelete,
                 entity.getProductOrderSampleId(),
                 format(entity.isOnRisk()),

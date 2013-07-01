@@ -11,9 +11,10 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEv
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
+import org.broadinstitute.gpinformatics.mercury.boundary.labevent.VesselTransferEjb;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.MiSeqReagentKit;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
@@ -23,14 +24,16 @@ import javax.xml.bind.Marshaller;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import java.io.StringWriter;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.GregorianCalendar;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
  * This class is a factory for BettaLIMSMessage JAXB objects.  It is intended to facilitate building messages in test cases.
  */
+@SuppressWarnings("FeatureEnvy")
 public class BettaLimsMessageTestFactory {
     public static final int NUMBER_OF_RACK_COLUMNS = 12;
 
@@ -103,10 +106,11 @@ public class BettaLimsMessageTestFactory {
     }
 
     public enum WellNameType {
+        /** long form of well name, e.g. A01 */
         LONG, /**
          * long form of well name, e.g. A01
          */
-        SHORT /** short form of well name, e.g. A1 */
+        SHORT 
     }
 
     public String buildWellName(int positionNumber, WellNameType wellNameType) {
@@ -229,52 +233,34 @@ public class BettaLimsMessageTestFactory {
      * Create a PlateCherryPickEvent for transferring from a rack of tubes to a ReagentKit.
      *
      * @param eventType                     Event type of transfer
-     * @param mapBarcodeToSourceRackOfTubes map from target rack barcode to RackOfTubes entities;
+     * @param rackOfTubes                   List of RackOfTubes entities in the rack;
      *                                      newly created RackOfTubes will NOT be added to this map
-     * @param mapBarcodeToSourceTube        map from source tube barcode to TwoDBarcodedTube entities;
-     *                                      newly created TwoDBarcodedTubes will be added to this this map
+     * @param reagentKitBarcode             barcode of the reagentKit.
      *
      * @return the LabEvent object
      */
-    public PlateCherryPickEvent buildCherryPickToReagentKit(java.lang.String eventType,
-                                                            Map<String, RackOfTubes> mapBarcodeToSourceRackOfTubes,
-                                                            Map<String, TwoDBarcodedTube> mapBarcodeToSourceTube,
+    public Collection<PlateCherryPickEvent> buildCherryPickToReagentKit(String eventType,
+                                                            RackOfTubes rackOfTubes,
                                                             String reagentKitBarcode) {
         PlateCherryPickEvent stationEvent = new PlateCherryPickEvent();
 
-
         setStationEventData(eventType, stationEvent);
+        Map<String, VesselPosition> denatureBarcodeMap=new HashMap<>();
+        VesselTransferEjb transferBean = new VesselTransferEjb();
 
-        List<String> sourceRackBarcodes = new ArrayList<>(mapBarcodeToSourceRackOfTubes.keySet());
-        List<String> sourceTubeBarcodes = new ArrayList<>(mapBarcodeToSourceTube.keySet());
-        for (String sourceRackBarcode : sourceRackBarcodes) {
-            stationEvent.getSourcePlate().add(buildRack(sourceRackBarcode));
-            stationEvent.getSourcePositionMap()
-                    .add(buildPositionMap(sourceRackBarcode, sourceTubeBarcodes));
-            PositionMapType positionMap = new PositionMapType();
-            for (String sourceBarcode : sourceTubeBarcodes) {
-                ReceptacleType receptacleType = new ReceptacleType();
-                receptacleType.setBarcode(sourceBarcode);
-                receptacleType.setPosition(VesselPosition.A01.name());
-                receptacleType.setReceptacleType("tube");
-                positionMap.getReceptacle().add(receptacleType);
-                stationEvent.setPositionMap(positionMap);
+        for (TubeFormation tubeFormation : rackOfTubes.getTubeFormations()) {
+            for (Map.Entry<VesselPosition, TwoDBarcodedTube> vesselPosition : tubeFormation.getContainerRole().getMapPositionToVessel().entrySet()) {
+                denatureBarcodeMap.put(vesselPosition.getValue().getLabel(), vesselPosition.getKey());
             }
         }
 
-        PlateType kit = new PlateType();
-        kit.setBarcode(reagentKitBarcode);
-        kit.setPhysType(MiSeqReagentKit.PlateType.MiSeqReagentKit.getDisplayName());
-        kit.setSection(MiSeqReagentKit.LOADING_WELL.name());
-        stationEvent.setPlate(kit);
-
-        return stationEvent;
+        return transferBean.denatureToReagentKitTransfer(rackOfTubes.getLabel(), denatureBarcodeMap, reagentKitBarcode,
+                stationEvent.getOperation(), stationEvent.getStation()).getPlateCherryPickEvent();
     }
 
     public PlateCherryPickEvent buildCherryPick(String eventType, List<String> sourceRackBarcodes,
-                                                List<List<String>> sourceTubeBarcodes, String targetRackBarcode,
-                                                List<String> targetTubeBarcodes,
-                                                List<CherryPick> cherryPicks) {
+            List<List<String>> sourceTubeBarcodes, List<String> targetRackBarcodes, List<List<String>> targetTubeBarcodes,
+            List<CherryPick> cherryPicks) {
         PlateCherryPickEvent plateCherryPickEvent = new PlateCherryPickEvent();
         setStationEventData(eventType, plateCherryPickEvent);
 
@@ -287,8 +273,14 @@ public class BettaLimsMessageTestFactory {
                     .add(buildPositionMap(sourceRackBarcodes.get(i), sourceTubeBarcode));
         }
 
-        plateCherryPickEvent.setPlate(buildRack(targetRackBarcode));
-        plateCherryPickEvent.setPositionMap(buildPositionMap(targetRackBarcode, targetTubeBarcodes));
+        for (String targetRackBarcode : targetRackBarcodes) {
+            plateCherryPickEvent.getPlate().add(buildRack(targetRackBarcode));
+        }
+
+        for (int i = 0, targetTubeBarcodesSize = targetTubeBarcodes.size(); i < targetTubeBarcodesSize; i++) {
+            List<String> targetTubeBarcode = targetTubeBarcodes.get(i);
+            plateCherryPickEvent.getPositionMap().add(buildPositionMap(targetRackBarcodes.get(i), targetTubeBarcode));
+        }
 
         for (CherryPick cherryPick : cherryPicks) {
             CherryPickSourceType cherryPickSource = new CherryPickSourceType();
@@ -321,9 +313,10 @@ public class BettaLimsMessageTestFactory {
         targetRack.setBarcode(targetRackBarcode);
         targetRack.setPhysType(LabEventFactory.PHYS_TYPE_STRIP_TUBE_RACK_OF_12);
         targetRack.setSection(LabEventFactory.SECTION_ALL_96);
-        plateCherryPickEvent.setPlate(targetRack);
+        plateCherryPickEvent.getPlate().add(targetRack);
 
         PositionMapType targetPositionMap = new PositionMapType();
+        targetPositionMap.setBarcode(targetRack.getBarcode());
         int rackPosition = 1;
         for (String barcode : targetStripTubeBarcodes) {
             ReceptacleType receptacleType = new ReceptacleType();
@@ -333,7 +326,7 @@ public class BettaLimsMessageTestFactory {
             targetPositionMap.getReceptacle().add(receptacleType);
             rackPosition++;
         }
-        plateCherryPickEvent.setPositionMap(targetPositionMap);
+        plateCherryPickEvent.getPositionMap().add(targetPositionMap);
 
         for (CherryPick cherryPick : cherryPicks) {
             CherryPickSourceType cherryPickSource = new CherryPickSourceType();

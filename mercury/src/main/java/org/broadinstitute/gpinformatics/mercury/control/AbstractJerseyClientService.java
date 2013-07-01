@@ -141,12 +141,11 @@ public abstract class AbstractJerseyClientService implements Serializable {
     }
 
     /**
-     * The default for this is to do nothing, but it can be overriden for custom set up
+     * The default for this is to do nothing, but it can be overridden for custom set up.
      *
      * @param clientConfig The config object
      */
     protected void customizeConfig(ClientConfig clientConfig) {
-        // noop
     }
 
     /**

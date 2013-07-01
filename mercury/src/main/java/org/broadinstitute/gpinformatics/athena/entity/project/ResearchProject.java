@@ -77,7 +77,7 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
         }
 
         public static List<String> getNames() {
-            List<String> names = new ArrayList<String>();
+            List<String> names = new ArrayList<>();
             for (Status status : Status.values()) {
                 names.add(status.name());
             }
@@ -88,7 +88,7 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
 
     @Id
     @SequenceGenerator(name = "seq_research_project_index", schema = "athena",
-                       sequenceName = "seq_research_project_index")
+            sequenceName = "seq_research_project_index")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_research_project_index")
     private Long researchProjectId;
 
@@ -119,7 +119,7 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
     @Column(name = "IRB_NOT_ENGAGED", nullable = false)
     private boolean irbNotEngaged = IRB_ENGAGED;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE,CascadeType.PERSIST})
+    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE, CascadeType.PERSIST})
     @JoinColumn(name = "PARENT_RESEARCH_PROJECT", nullable = true, insertable = true, updatable = true)
     @Index(name = "ix_parent_research_project")
     private ResearchProject parentResearchProject;
@@ -133,42 +133,46 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
     /**
      * Set of ResearchProjects that belong under this one.
      */
-    @OneToMany(fetch = FetchType.LAZY, mappedBy="parentResearchProject")
-    private Set<ResearchProject> childProjects = new HashSet<ResearchProject>();
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "parentResearchProject")
+    private Set<ResearchProject> childProjects = new HashSet<>();
 
     // People related to the project
     @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
-               orphanRemoval = true)
-    private final Set<ProjectPerson> associatedPeople = new HashSet<ProjectPerson>();
+            orphanRemoval = true)
+    private final Set<ProjectPerson> associatedPeople = new HashSet<>();
 
     // Information about externally managed items
     @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
-               orphanRemoval = true)
-    private final Set<ResearchProjectCohort> sampleCohorts = new HashSet<ResearchProjectCohort>();
+            orphanRemoval = true)
+    private final Set<ResearchProjectCohort> sampleCohorts = new HashSet<>();
 
     @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
-               orphanRemoval = true)
-    private final Set<ResearchProjectFunding> projectFunding = new HashSet<ResearchProjectFunding>();
+            orphanRemoval = true)
+    private final Set<ResearchProjectFunding> projectFunding = new HashSet<>();
 
     @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
-               orphanRemoval = true)
-    private final Set<ResearchProjectIRB> irbNumbers = new HashSet<ResearchProjectIRB>();
+            orphanRemoval = true)
+    private final Set<ResearchProjectIRB> irbNumbers = new HashSet<>();
 
     private String irbNotes;
 
     @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
-    private List<ProductOrder> productOrders = new ArrayList<ProductOrder>();
+    private List<ProductOrder> productOrders = new ArrayList<>();
 
-    /** True if access to this Project's data should be restricted based on user. */
+    /**
+     * True if access to this Project's data should be restricted based on user.
+     */
     @Column(name = "ACCESS_CONTROL_ENABLED")
     private boolean accessControlEnabled;
 
+    // Reference to the Jira Ticket associated to this Research Project.
     @Index(name = "ix_rp_jira")
     @Column(name = "JIRA_TICKET_KEY", nullable = false)
-    private String jiraTicketKey;               // Reference to the Jira Ticket associated to this Research Project
+    private String jiraTicketKey;
 
+    // This is used for edit to keep track of changes to the object.
     @Transient
-    private String originalTitle;   // This is used for edit to keep track of changes to the object.
+    private String originalTitle;
 
     // Initialize our transient data after the object has been loaded from the database.
     @PostLoad
@@ -195,9 +199,9 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
     /**
      * The full constructor for fields that are not settable.
      *
-     * @param createdBy The user creating the project
-     * @param title The title (name) of the project
-     * @param synopsis A description of the project
+     * @param createdBy     The user creating the project
+     * @param title         The title (name) of the project
+     * @param synopsis      A description of the project
      * @param irbNotEngaged Is this project set up for NO IRB?
      */
     public ResearchProject(Long createdBy, String title, String synopsis, boolean irbNotEngaged) {
@@ -215,7 +219,6 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
         }
     }
 
-    // Getters
     public String getTitle() {
         return title;
     }
@@ -272,8 +275,6 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
     public String getReferenceSequenceKey() {
         return referenceSequenceKey;
     }
-
-    // Setters
 
     public void setCreatedBy(Long createdBy) {
         this.createdBy = createdBy;
@@ -355,7 +356,6 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
     }
 
     /**
-     *
      * @return Get the cohortIds. Since the cohort list is defaulted to empty, we know that the cohorts will exist
      */
     public String[] getCohortIds() {
@@ -418,10 +418,11 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
 
     /**
      * @param role role type to filter on
+     *
      * @return list of associated people based on their role type
      */
     private Collection<ProjectPerson> findPeopleByType(RoleType role) {
-        List<ProjectPerson> foundPersonList = new ArrayList<ProjectPerson>(associatedPeople.size());
+        List<ProjectPerson> foundPersonList = new ArrayList<>(associatedPeople.size());
 
         for (ProjectPerson person : associatedPeople) {
             if (person.getRole() == role) {
@@ -433,7 +434,7 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
     }
 
     public Long[] getPeople(RoleType role) {
-        List<Long> people = new ArrayList<Long>();
+        List<Long> people = new ArrayList<>();
 
         for (ProjectPerson person : associatedPeople) {
             if (person.getRole() == role) {
@@ -526,7 +527,7 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
 
         Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
 
-        List<CustomField> listOfFields = new ArrayList<CustomField>();
+        List<CustomField> listOfFields = new ArrayList<>();
 
         if (!sampleCohorts.isEmpty()) {
             String[] cohortNames = new String[sampleCohorts.size()];
@@ -538,26 +539,26 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
 
             BSPCohortList cohortList = ServiceAccessUtility.getBean(BSPCohortList.class);
             listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.COHORTS,
-                                             cohortList.getCohortListString(cohortNames)));
+                    cohortList.getCohortListString(cohortNames)));
         }
 
         if (!projectFunding.isEmpty()) {
-            List<String> fundingSources = new ArrayList<String>();
+            List<String> fundingSources = new ArrayList<>();
             for (ResearchProjectFunding fundingSrc : projectFunding) {
                 fundingSources.add(fundingSrc.getFundingId());
             }
 
             listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.FUNDING_SOURCE,
-                                             StringUtils.join(fundingSources, ',')));
+                    StringUtils.join(fundingSources, ',')));
         }
 
         if (!irbNumbers.isEmpty()) {
             listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.IRB_IACUC_NUMBER,
-                                             StringUtils.join(getIrbNumbers(), ',')));
+                    StringUtils.join(getIrbNumbers(), ',')));
         }
 
         listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.IRB_NOT_ENGAGED_FIELD,
-                                         irbNotEngaged));
+                irbNotEngaged));
 
         listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.MERCURY_URL, ""));
 
@@ -577,24 +578,25 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
         if (!piList.toString().isEmpty()) {
             listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.BROAD_PIS, piList.toString()));
         }
+        if (synopsis != null) {
+            listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.DESCRIPTION, synopsis));
+        }
 
         String username = bspUserList.getById(createdBy).getUsername();
 
         // Create the jira ticket and then assign the key right away because whatever else happens, this jira ticket
         // IS created. If callers want to respond to errors, they can check for the key and decide what to do.
         JiraIssue issue = jiraService.createIssue(fetchJiraProject().getKeyPrefix(), username, fetchJiraIssueType(),
-                                                  title, synopsis, listOfFields);
+                title, listOfFields);
         jiraTicketKey = issue.getKey();
-
-        issue.addWatcher(username);
 
         // Update ticket with link back into Mercury
         AppConfig appConfig = ServiceAccessUtility.getBean(AppConfig.class);
         CustomField mercuryUrlField = new CustomField(
                 submissionFields, RequiredSubmissionFields.MERCURY_URL,
                 appConfig.getUrl() + ResearchProjectActionBean.ACTIONBEAN_URL_BINDING + "?" +
-                        ResearchProjectActionBean.VIEW_ACTION + "&" +
-                        ResearchProjectActionBean.RESEARCH_PROJECT_PARAMETER + "=" + jiraTicketKey);
+                ResearchProjectActionBean.VIEW_ACTION + "&" +
+                ResearchProjectActionBean.RESEARCH_PROJECT_PARAMETER + "=" + jiraTicketKey);
 
         issue.updateIssue(Collections.singleton(mercuryUrlField));
     }
@@ -611,7 +613,7 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
      * Traverse through all the potential parent projects until we get to the root parent.  If the parent research
      * project is null, then it returns itself as the root node.
      */
-     public ResearchProject getRootResearchProject() {
+    public ResearchProject getRootResearchProject() {
         if (parentResearchProject == null) {
             return this;
         }
@@ -668,6 +670,7 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
         IRB_IACUC_NUMBER("IRB/IACUCs"),
         IRB_NOT_ENGAGED_FIELD("IRB Not Engaged?"),
         MERCURY_URL("Mercury URL"),
+        DESCRIPTION("Description"),
         BROAD_PIS("Broad PI(s)"),;
 
         private final String fieldName;
@@ -676,14 +679,15 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
             fieldName = fieldNameIn;
         }
 
-        @Nonnull @Override
+        @Nonnull
+        @Override
         public String getFieldName() {
             return fieldName;
         }
     }
 
     public Collection<ResearchProject> getAllChildren() {
-        Collection<ResearchProject> collectedProjects = new TreeSet<ResearchProject>();
+        Collection<ResearchProject> collectedProjects = new TreeSet<>();
         collectedProjects.addAll(getChildProjects());
 
         return collectChildResearchProjects(collectedProjects);
@@ -693,6 +697,7 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
      * Recursive function to traverse through the full research project hierarchy tree to get all the projects.
      *
      * @param collectedProjects the list of collected child research projects
+     *
      * @return collection of research projects
      */
     private Collection<ResearchProject> collectChildResearchProjects(Collection<ResearchProject> collectedProjects) {
@@ -730,7 +735,7 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
 
     @Override
     public boolean equals(Object other) {
-        if ((this == other)) {
+        if (this == other) {
             return true;
         }
 
@@ -753,11 +758,13 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
         builder.append(title, that.getTitle());
         return builder.build();
     }
+
     /**
      * Return true if a user has permission to access this project's output.  This is true if the user is associated
      * with the project in any way.
      *
      * @param userId the user to check
+     *
      * @return true if use has permission
      */
     private boolean userHasProjectAccess(long userId) {
@@ -785,7 +792,7 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
     /**
      * Given a project and a user, collect all projects and sub-projects accessible by this user.
      *
-     * @param userId the user to find
+     * @param userId             the user to find
      * @param accessibleProjects the set to put the projects visible to the user in
      */
     public void collectAccessibleByUser(long userId, Set<ResearchProject> accessibleProjects) {

@@ -226,42 +226,59 @@ function fn_title_pre(a) {
     return matchingArray[2];
 }
 
+function fn_us_date_asc(a,b) {
+    var x = new Date(a), y = new Date(b);
+    return ((x < y) ? -1 : ((x > y) ?  1 : 0));
+}
+
 // Extend sorting for datatables to allow for title sorting.
 jQuery.extend( jQuery.fn.dataTableExt.oSort, {
 
-    "title-string-pre": function ( a ) {
+    "title-us-date-pre": function (a) {
         return fn_title_pre(a).toLowerCase();
     },
 
-    "title-string-asc": function ( a, b ) {
+    "title-us-date-asc": function (a, b) {
+        return fn_us_date_asc(a, b);
+    },
+
+    "title-us-date-desc": function (a, b) {
+        return fn_us_date_asc(b, a);
+    },
+
+    "title-string-pre": function (a) {
+        return fn_title_pre(a).toLowerCase();
+    },
+
+    "title-string-asc": function (a, b) {
         return fn_title_string_asc(a, b);
     },
 
-    "title-string-desc": function ( a, b ) {
+    "title-string-desc": function (a, b) {
         return fn_title_string_asc(b, a);
     },
 
-    "title-numeric-pre": function ( a ) {
+    "title-numeric-pre": function (a) {
         return fn_title_pre(a).toLowerCase();
     },
 
-    "title-numeric-asc": function ( a, b ) {
+    "title-numeric-asc": function (a, b) {
         return fn_title_numeric_asc(a, b);
     },
 
-    "title-numeric-desc": function ( a, b ) {
+    "title-numeric-desc": function (a, b) {
         return fn_title_numeric_asc(b, a);
     },
 
-    "title-jira-pre": function ( a ) {
+    "title-jira-pre": function (a) {
         return fn_title_pre(a).toUpperCase();
     },
 
-    "title-jira-asc": function ( a, b ) {
+    "title-jira-asc": function (a, b) {
         return fn_title_jira_asc(a, b);
     },
 
-    "title-jira-desc": function ( a, b ) {
+    "title-jira-desc": function (a, b) {
         return fn_title_jira_asc(b, a);
     }
 });

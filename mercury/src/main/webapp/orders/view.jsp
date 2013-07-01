@@ -1,7 +1,7 @@
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
-<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.presentation.Role.*" %>
-<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.presentation.Role.roles" %>
+<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
+<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -27,11 +27,13 @@
 
                 var sampleNameFields = $j(".sampleName");
 
+                var CHUNK_SIZE = 100;
+
                 // If there are no samples, set up the filter, otherwise kick off some javascript
                 if (sampleNameFields.length > 0) {
-                    var i,j,tempArray,chunk = 50;
-                    for (i=0,j=sampleNameFields.length; i<j; i+=chunk) {
-                        tempArray = sampleNameFields.slice(i,i+chunk);
+                    var i, j, tempArray;
+                    for (i=0, j = sampleNameFields.length; i < j; i += CHUNK_SIZE) {
+                        tempArray = sampleNameFields.slice(i, i + CHUNK_SIZE);
 
                         updateBspInformation(tempArray);
                     }
@@ -192,6 +194,8 @@
                     $j('#concentration-' + sampleId).text(sampleData[x].concentration);
                     $j('#rin-' + sampleId).text(sampleData[x].rin);
                     $j('#total-' + sampleId).text(sampleData[x].total);
+                    $j('#picoDate-' + sampleId).text(sampleData[x].picoDate);
+                    $j('#picoDate-' + sampleId).attr("title", sampleData[x].picoDate);
 
                     if (sampleData[x].hasFingerprint) {
                         $j('#fingerprint-' + sampleId).html('<img src="${ctxpath}/images/check.png" title="Yes"/>');
@@ -215,7 +219,7 @@
                         "oTableTools": ttExportDefines,
                         "aaSorting": [[1, 'asc']],
                         "aoColumns": [
-                            {"bSortable": false,},                          // Checkbox
+                            {"bSortable": false},                          // Checkbox
                             {"bSortable": true, "sType": "numeric"},        // Position
                             {"bSortable": true},                            // ID
                             {"bSortable": true},                            // Collaborator Sample ID
@@ -228,8 +232,11 @@
                             {"bSortable": true, "sType": "numeric"},        // RIN
                         </c:if>
 
+                        <c:if test="${actionBean.supportsPico}">
+                            {"bSortable": true, "sType": "title-us-date"},  // Pico Run Date
+                        </c:if>
                             {"bSortable": true, "sType": "numeric"},        // Yield Amount
-                            {"bSortable": true, "sType" : "title-string"},  // FP Status
+                            {"bSortable": true, "sType": "title-string"},   // FP Status
                             {"bSortable": true},                            // sample kit upload/rackscan mismatch
                             {"bSortable": true},                            // On Risk
                             {"bSortable": true},                            // Status
@@ -239,6 +246,34 @@
 
                     includeAdvancedFilter(oTable, "#sampleData");
                     $j('.dataTables_filter input').clearable();
+
+                    oneYearAgo = new Date();
+                    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+
+                    almostOneYearAgo = new Date(oneYearAgo);
+                    almostOneYearAgo.setMonth(oneYearAgo.getMonth( ) + 1);
+
+                    $j('.picoRunDate').each(getHighlightClass);
+                }
+            }
+
+            var oneYearAgo;
+            var almostOneYearAgo;
+
+            function getHighlightClass() {
+
+                var theDateString = $j(this).text();
+
+                if (theDateString) {
+                    var theDate = new Date(theDateString);
+
+                    if (theDate) {
+                        if ((theDate == 'No Pico') || (theDate < oneYearAgo)) {
+                            $j(this).addClass("label label-important");
+                        } else if (theDate < almostOneYearAgo) {
+                            $j(this).addClass("label label-warning");
+                        }
+                    }
                 }
             }
 
@@ -275,7 +310,7 @@
                 var numChecked = $("input.shiftCheckbox:checked").size();
                 if (numChecked) {
                     $j("#dialogAction").attr("name", "recalculateRisk");
-                    $j("#selectedCountId").text(numChecked);
+                    $j("#recalculateRiskSelectedCountId").text(numChecked);
                     $j("#recalculateRiskDialog").dialog("open").dialog("option", "width", 600);
                 } else {
                     $j("#noneSelectedDialogMessage").text("Recalculate Risk");
@@ -287,7 +322,7 @@
                 var numChecked = $("input.shiftCheckbox:checked").size();
                 if (numChecked) {
                     $j("#dialogAction").attr("name", "setRisk");
-                    $j("#selectedCountId").text(numChecked);
+                    $j("#manualRiskSelectedCountId").text(numChecked);
                     $j("#riskDialog").dialog("open").dialog("option", "width", 600);
                 } else {
                     $j("#noneSelectedDialogMessage").text("Update Risk");
@@ -335,7 +370,7 @@
         </div>
 
         <div id="riskDialog" style="width:600px;display:none;">
-            <p>Manually Update Risk (<span id="selectedCountId"> </span> selected)</p>
+            <p>Manually Update Risk (<span id="manualRiskSelectedCountId"> </span> selected)</p>
             <p><span style="float:left; width:185px;">Update status to:</span>
                 <input type="radio" id="onRiskDialogId" name="riskRadio" value="true" checked="checked" style="float:left;margin-right:5px;">
                 <label style="float:left;width:60px;" for="onRiskDialogId">On Risk</label>
@@ -349,7 +384,7 @@
         </div>
 
         <div id="recalculateRiskDialog" style="width:600px;display:none;">
-            <p>Recalculate Risk (<span id="selectedCountId"> </span> selected)</p>
+            <p>Recalculate Risk (<span id="recalculateRiskSelectedCountId"> </span> selected)</p>
             <p><span style="float:left;">Recalculate On Risk status for selected samples. This will clear out all previous statuses.</span>
         </div>
 
@@ -376,7 +411,6 @@
                         <%--'Validate' is also under that same security tag since that has the power to alter 'On-Riskedness' --%>
                         <%-- for PDO samples. --%>
                         <security:authorizeBlock roles="<%= roles(Developer, PDM, PM) %>">
-
                             <stripes:submit name="placeOrder" value="Validate and Place Order"
                                             disabled="${!actionBean.canPlaceOrder}" class="btn"/>
                             <stripes:submit name="validate" value="Validate" style="margin-left: 3px;" class="btn"/>
@@ -415,6 +449,16 @@
                         </security:authorizeBlock>
                     </c:otherwise>
                 </c:choose>
+
+                <security:authorizeBlock roles="<%= roles(Developer, PDM, BillingManager) %>">
+                    <stripes:submit name="downloadBillingTracker" value="Download Billing Tracker" class="btn" style="margin-right:5px;"/>
+                </security:authorizeBlock>
+
+                <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
+                    <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.UploadTrackerActionBean" event="view">
+                        Upload Billing Tracker
+                    </stripes:link>
+                </security:authorizeBlock>
             </div>
         </stripes:form>
 
@@ -673,6 +717,9 @@
                                 <th width="40">RIN</th>
                             </c:if>
 
+                            <c:if test="${actionBean.supportsPico}">
+                                <th width="70">Last Pico Run Date</th>
+                            </c:if>
                             <th width="40">Yield Amount</th>
                             <th width="60">FP Status</th>
                             <th width="60"><abbr title="Sample Kit Upload/Rackscan Mismatch">Rackscan Mismatch</abbr></th>
@@ -693,6 +740,7 @@
                                     ${sample.samplePosition + 1}
                                 </td>
                                 <td id="sampleId-${sample.productOrderSampleId}" class="sampleName">
+                                    <%--@elvariable id="sampleLink" type="org.broadinstitute.gpinformatics.infrastructure.presentation.SampleLink"--%>
                                     <c:set var="sampleLink" value="${actionBean.getSampleLink(sample)}"/>
                                     <c:choose>
                                         <c:when test="${sampleLink.hasLink}">
@@ -715,9 +763,15 @@
                                     <td id="rin-${sample.productOrderSampleId}">&#160; </td>
                                 </c:if>
 
+                                <c:if test="${actionBean.supportsPico}">
+                                    <td>
+                                        <div class="picoRunDate" id="picoDate-${sample.productOrderSampleId}" style="width:auto">&#160;</div>
+                                    </td>
+                                </c:if>
+
                                 <td id="total-${sample.productOrderSampleId}">&#160; </td>
                                 <td id="fingerprint-${sample.productOrderSampleId}" style="text-align: center">&#160; </td>
-                                <td id="sampleKitUploadRackscanMismatch-${sample.productOrderSampleId}"  style="text-align: center">&#160; </td>
+                                <td id="sampleKitUploadRackscanMismatch-${sample.productOrderSampleId}" style="text-align: center">&#160; </td>
                                 <td>${sample.riskString}</td>
                                 <td>${sample.deliveryStatus.displayName}</td>
                                 <td>${sample.sampleComment}</td>

@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnectorProdu
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
+import org.broadinstitute.gpinformatics.mercury.boundary.labevent.VesselTransferEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
@@ -21,10 +22,13 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.broadinstitute.gpinformatics.mercury.test.BaseEventTest;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
-import org.broadinstitute.gpinformatics.mercury.test.builders.*;
+import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.PreFlightEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.SageEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingEntityBuilder;
 import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
@@ -52,6 +56,7 @@ public class SolexaRunRoutingTest extends BaseEventTest{
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat(IlluminaSequencingRun.RUN_FORMAT_PATTERN);
 
+    @Override
     @BeforeMethod
     public void setUp() {
         super.setUp();
@@ -92,7 +97,7 @@ public class SolexaRunRoutingTest extends BaseEventTest{
         Assert.assertEquals(sageEntityBuilder.getSageCleanupRack().getSampleInstances().size(), NUM_POSITIONS_IN_RACK, "Wrong number of sage cleanup samples");
 
         QtpEntityBuilder qtpEntityBuilder = runQtpProcess(sageEntityBuilder.getSageCleanupRack(), sageEntityBuilder.getSageCleanupTubeBarcodes(),
-                sageEntityBuilder.getMapBarcodeToSageUnloadTubes(), WorkflowName.WHOLE_GENOME, "1");
+                sageEntityBuilder.getMapBarcodeToSageUnloadTubes(), "Whole Genome", "1");
 
         Map.Entry<String, TwoDBarcodedTube> stringTwoDBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
         LabEventTest.ListTransfersFromStart transferTraverserCriteria = new LabEventTest.ListTransfersFromStart();
@@ -121,15 +126,16 @@ public class SolexaRunRoutingTest extends BaseEventTest{
         EasyMock.expect(flowcellDao.findByBarcode(EasyMock.anyObject(String.class))).andReturn(flowcell);
 
         LabVesselDao vesselDao = EasyMock.createNiceMock(LabVesselDao.class);
+        VesselTransferEjb vesselTransferEjb = EasyMock.createMock(VesselTransferEjb.class);
 
         MercuryOrSquidRouter router = new MercuryOrSquidRouter(vesselDao, EasyMock.createNiceMock(ControlDao.class),
                 new WorkflowLoader(),
                 EasyMock.createNiceMock(BSPSampleDataFetcher.class));
         HipChatMessageSender hipChatMsgSender = EasyMock.createNiceMock(HipChatMessageSender.class);
 
-        SolexaRunResource runResource = new SolexaRunResource(runDao, runFactory, flowcellDao, router,
-                                                                     SquidConnectorProducer.stubInstance(),
-                                                                     hipChatMsgSender);
+        SolexaRunResource runResource =
+                new SolexaRunResource(runDao, runFactory, flowcellDao, vesselTransferEjb, router,
+                        SquidConnectorProducer.stubInstance(), hipChatMsgSender);
 
         UriInfo uriInfoMock = EasyMock.createNiceMock(UriInfo.class);
         EasyMock.expect(uriInfoMock.getAbsolutePathBuilder()).andReturn(UriBuilder.fromPath(""));
@@ -167,10 +173,10 @@ public class SolexaRunRoutingTest extends BaseEventTest{
                 EasyMock.createNiceMock(BSPSampleDataFetcher.class));
 
         HipChatMessageSender hipChatMsgSender = EasyMock.createNiceMock(HipChatMessageSender.class);
+        VesselTransferEjb vesselTransferEjb = EasyMock.createMock(VesselTransferEjb.class);
 
-        SolexaRunResource runResource = new SolexaRunResource(runDao, runFactory, flowcellDao, router,
-                SquidConnectorProducer.stubInstance(),
-                hipChatMsgSender);
+        SolexaRunResource runResource = new SolexaRunResource(runDao, runFactory, flowcellDao, vesselTransferEjb,
+                router, SquidConnectorProducer.stubInstance(), hipChatMsgSender);
 
         UriInfo uriInfoMock = EasyMock.createNiceMock(UriInfo.class);
         EasyMock.expect(uriInfoMock.getAbsolutePathBuilder()).andReturn(UriBuilder.fromPath(""));

@@ -614,7 +614,15 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         return null;
     }
 
+    public boolean isSupportsPico() {
+        return getProductFamily().isSupportsPico();
+    }
+
     public boolean isSupportsRin() {
         return getProductFamily().isSupportsRin();
+    }
+
+    public boolean isSameProductFamily(ProductFamily.ProductFamilyName productFamilyName) {
+        return productFamilyName.getFamilyName().equals(this.productFamily.getName());
     }
 }

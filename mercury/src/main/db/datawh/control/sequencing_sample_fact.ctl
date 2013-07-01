@@ -9,9 +9,11 @@ TRAILING NULLCOLS
  is_delete,
  sequencing_run_id,
  flowcell_barcode,
- lane_name,
+ lane,
  molecular_indexing_scheme,
  product_order_id,
  sample_name,
- research_project_id
+ research_project_id,
+ loaded_library_barcode,
+ loaded_library_create_date DATE "YYYYMMDDHH24MISS"
 )

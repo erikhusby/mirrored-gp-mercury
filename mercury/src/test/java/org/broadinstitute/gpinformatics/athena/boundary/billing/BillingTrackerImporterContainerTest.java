@@ -1,10 +1,16 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.OrderBillSummaryStat;
+import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -12,14 +18,16 @@ import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import javax.transaction.UserTransaction;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -28,6 +36,12 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 public class BillingTrackerImporterContainerTest extends Arquillian {
 
     public static final String BILLING_TRACKER_TEST_FILENAME = "BillingTracker-ContainerTest.xlsx";
+
+    @Inject
+    private ProductDao productDao;
+
+    @Inject
+    private LedgerEntryDao ledgerEntryDao;
 
     @Inject
     private ProductOrderDao productOrderDao;
@@ -40,10 +54,6 @@ public class BillingTrackerImporterContainerTest extends Arquillian {
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
-    private UserTransaction utx;
-
-    @SuppressWarnings("CdiInjectionPointsInspection")
-    @Inject
     private Log logger;
 
     @Deployment
@@ -51,81 +61,108 @@ public class BillingTrackerImporterContainerTest extends Arquillian {
         return DeploymentBuilder.buildMercuryWar(DEV);
     }
 
-    @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
-    public void setUp() throws Exception {
-        // Skip if no injections, meaning we're not running in container.
-        if (utx == null) {
-            return;
+    /**
+     * Take the sheet names and create a new processor for each one.
+     *
+     * @param sheetNames The names of the sheets (should be all part numbers of products.
+     *
+     * @return The mapping of sheet names to processors.
+     */
+    private Map<String, BillingTrackerProcessor> getProcessors(List<String> sheetNames) {
+        Map<String, BillingTrackerProcessor> processors = new HashMap<>();
+
+        for (String sheetName : sheetNames) {
+            BillingTrackerProcessor processor = new BillingTrackerProcessor(
+                    sheetName, ledgerEntryDao, productDao, productOrderDao, priceItemDao, priceListCache, false);
+            processors.put(sheetName, processor);
         }
-        utx.begin();
+
+        return processors;
     }
-
-
-    @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
-    public void tearDown() throws Exception {
-        // Skip if no injections, meaning we're not running in container.
-        if (utx == null) {
-            return;
-        }
-        utx.rollback();
-    }
-
 
     @Test
     public void testImport() throws Exception {
 
         InputStream inputStream = null;
-        BillingTrackerImporter billingTrackerImporter = new BillingTrackerImporter(productOrderDao, priceItemDao, priceListCache);
 
         try {
             inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(BILLING_TRACKER_TEST_FILENAME);
 
-            Map<String, Map<String, Map<BillableRef, OrderBillSummaryStat>>> billingDataSummaryMapByPartNumber = billingTrackerImporter.parseFileForSummaryMap(inputStream);
-            Assert.assertNotNull(billingDataSummaryMapByPartNumber);
-            // Should only be one sheet
-            Assert.assertEquals(1, billingDataSummaryMapByPartNumber.size());
+            // Should only be one sheet.
+            List<String> sheetNames = PoiSpreadsheetParser.getWorksheetNames(inputStream);
+            Assert.assertEquals(sheetNames.size(), 1, "Wrong number of worksheets");
+
+            IOUtils.closeQuietly(inputStream);
+
+            Map<String, BillingTrackerProcessor> processors = getProcessors(sheetNames);
+            PoiSpreadsheetParser parser = new PoiSpreadsheetParser(processors);
+
+            inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(BILLING_TRACKER_TEST_FILENAME);
+            parser.processUploadFile(inputStream);
+
+            List<String> validationErrors = new ArrayList<> ();
+            for (BillingTrackerProcessor processor : processors.values()) {
+                validationErrors.addAll(processor.getMessages());
+            }
+
+            if (!validationErrors.isEmpty()) {
+                Assert.fail("Processing the billing tracker spreadsheet got errors: \n" +
+                            StringUtils.join(validationErrors, "\n"));
+            }
 
             // Check the RNA Data
             String rnaSheetName = "P-RNA-0004";
-            Map<String, Map<BillableRef, OrderBillSummaryStat>> rnaBillingDataByOrderId = billingDataSummaryMapByPartNumber.get(rnaSheetName);
-            Assert.assertNotNull(rnaBillingDataByOrderId);
+            BillingTrackerProcessor processor = processors.get(rnaSheetName);
+            List<ProductOrder> productOrders = processor.getUpdatedProductOrders();
+            Assert.assertTrue(CollectionUtils.isNotEmpty(productOrders), "Should have products");
 
             // There should be one Order for the RNA product data
-            Assert.assertEquals(1, rnaBillingDataByOrderId.size());
+            Assert.assertEquals(productOrders.size(), 1, "Should only be one product order");
+
             String rnaOrderId = "PDO-23";
-            Map<BillableRef, OrderBillSummaryStat> rnaBillingOrderDataByBillableRef = rnaBillingDataByOrderId.get(rnaOrderId);
-            Assert.assertNotNull(rnaBillingOrderDataByBillableRef);
-            // There should be three billable items for this order
-            Assert.assertFalse(rnaBillingOrderDataByBillableRef.isEmpty());
+            Assert.assertEquals(productOrders.get(0).getBusinessKey(), rnaOrderId, "Should have products");
+
+            Set<Map.Entry<BillableRef, OrderBillSummaryStat>> entries =
+                processor.getChargesMapByPdo().values().iterator().next().entrySet();
 
             // Primary Product data
             String rnaPriceItemName = "Strand Specific RNA-Seq (high coverage-50M paired reads)";
-            BillableRef rnaBillableRef = new BillableRef(rnaSheetName, rnaPriceItemName);
-            OrderBillSummaryStat rnaPrimaryProductStatData = rnaBillingOrderDataByBillableRef.get(rnaBillableRef);
-            Assert.assertEquals(3.0, rnaPrimaryProductStatData.getCharge());
-            Assert.assertEquals(0.0, rnaPrimaryProductStatData.getCredit());
+            OrderBillSummaryStat productStatData = getOrderBillSummaryStat(entries, rnaPriceItemName);
+            Assert.assertEquals(productStatData.getCharge(), 0.0, "Charge mismatch");
+            Assert.assertEquals(productStatData.getCredit(), 2.0, "Credit mismatch");
 
             // First AddOn data
-            String rnaAddonName = "P-ESH-0004";
             String rnaAddonPriceItemName = "DNA Extract from Blood, Fresh Frozen Tissue, cell pellet, stool, saliva";
-            BillableRef rnaAddonBillableRef = new BillableRef(rnaAddonName, rnaAddonPriceItemName);
-            OrderBillSummaryStat rnaAddonStatData = rnaBillingOrderDataByBillableRef.get(rnaAddonBillableRef);
-            Assert.assertEquals(4.0, rnaAddonStatData.getCharge());
-            Assert.assertEquals(0.0, rnaAddonStatData.getCredit());
+            productStatData = getOrderBillSummaryStat(entries, rnaAddonPriceItemName);
+            Assert.assertEquals(productStatData.getCharge(), 4.0, "Charge mismatch");
+            Assert.assertEquals(productStatData.getCredit(), 0.0, "Credit mismatch");
 
             // Second AddOn data
-            String rnaSecondAddonName = "P-ESH-0008";
             String rnaSecondAddonPriceItemName = "RNA Extract from FFPE";
-            BillableRef rnaSecondAddonBillableRef = new BillableRef(rnaSecondAddonName, rnaSecondAddonPriceItemName);
-            OrderBillSummaryStat rnaSecondAddonStatData = rnaBillingOrderDataByBillableRef.get(rnaSecondAddonBillableRef);
-            Assert.assertEquals(0.0, rnaSecondAddonStatData.getCharge());
-            Assert.assertEquals(-6.0, rnaSecondAddonStatData.getCredit());
-
+            productStatData = getOrderBillSummaryStat(entries, rnaSecondAddonPriceItemName);
+            Assert.assertEquals(productStatData.getCharge(), 2.0, "Charge mismatch");
+            Assert.assertEquals(productStatData.getCredit(), 0.0, "Credit mismatch");
         } catch (Exception e) {
             e.printStackTrace();
+            Assert.fail(e.getMessage());
         } finally {
             IOUtils.closeQuietly(inputStream);
         }
+    }
+
+    private OrderBillSummaryStat getOrderBillSummaryStat(Set<Map.Entry<BillableRef, OrderBillSummaryStat>> entries,
+                                                         String rnaPriceItemName) {
+        // Find the price item.
+        Map.Entry<BillableRef, OrderBillSummaryStat> entry = null;
+        Iterator<Map.Entry<BillableRef, OrderBillSummaryStat>> entryIterator = entries.iterator();
+        while ((entry == null) && entryIterator.hasNext()) {
+            entry = entryIterator.next();
+            if (!entry.getKey().getPriceItemName().equals(rnaPriceItemName)) {
+                entry = null;
+            }
+        }
+        Assert.assertNotNull(entry, "Could not find the matching price item");
+        return entry.getValue();
     }
 
 }

@@ -1,11 +1,16 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import com.sun.jersey.api.client.ClientResponse;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.datawh.LabEventEtl.EventFactDto;
 import org.broadinstitute.gpinformatics.infrastructure.datawh.SequencingSampleFactEtl.SequencingRunDto;
 
 import javax.inject.Inject;
-import javax.ws.rs.*;
+import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
 /**
@@ -25,12 +30,12 @@ public class ExtractTransformResource {
     }
 
     /**
-        * Runs ETL on one entity class for the given range of entity ids (possibly all).
-        *
-        * @param entityClassname The fully qualified classname of the Mercury class to ETL.
-        * @param startId First entity id of a range of ids to backfill.  Set to 0 for minimum.
-        * @param endId Last entity id of a range of ids to backfill.  Set to -1 for maximum.
-        */
+     * Runs ETL on one entity class for the given range of entity ids (possibly all).
+     *
+     * @param entityClassname The fully qualified classname of the Mercury class to ETL.
+     * @param startId         First entity id of a range of ids to backfill.  Set to 0 for minimum.
+     * @param endId           Last entity id of a range of ids to backfill.  Set to -1 for maximum.
+     */
     @Path("backfill/{entityClassname}/{startId}/{endId}")
     @PUT
     public Response entityIdRangeEtl(@PathParam("entityClassname") String entityClassname,
@@ -48,8 +53,8 @@ public class ExtractTransformResource {
      *
      * @param startDateTime start of interval of audited changes, in yyyyMMddHHmmss format,
      *                      or "0" to use previous end time.
-     * @param endDateTime end of interval of audited changes, in yyyyMMddHHmmss format, or "0" for now.
-     *                    Excludes endpoint.  "0" will withhold updating the lastEtlRun file.
+     * @param endDateTime   end of interval of audited changes, in yyyyMMddHHmmss format, or "0" for now.
+     *                      Excludes endpoint.  "0" will withhold updating the lastEtlRun file.
      */
     @Path("incremental/{startDateTime}/{endDateTime}")
     @PUT
@@ -65,6 +70,7 @@ public class ExtractTransformResource {
      * Returns an etl-type breakdown of a sequencing run.
      *
      * @param sequencingRunId the entity id of the sequencing run.
+     *
      * @return htm table of what etl would put in the sequencing sample fact table.
      */
     @Path("analyze/sequencingRun/{sequencingRunId:[0-9]+}")
@@ -73,7 +79,7 @@ public class ExtractTransformResource {
     public String analyzeSequencingRun(@PathParam("sequencingRunId") long sequencingRunId) {
         StringBuilder sb = new StringBuilder()
                 .append("<html><head/><body>")
-                .append("<p>SequencingRunId " + sequencingRunId + "</p>")
+                .append("<p>SequencingRunId ").append(sequencingRunId).append("</p>")
                 .append("<table cellpadding=\"3\">")
                 .append("<tr><th>canEtl")
                 .append("</th><th>flowcellBarcode")
@@ -82,6 +88,8 @@ public class ExtractTransformResource {
                 .append("</th><th>productOrderId")
                 .append("</th><th>sampleKey")
                 .append("</th><th>researchProjectId")
+                .append("</th><th>loadedLibraryBarcode")
+                .append("</th><th>loadedLibraryCreationDate")
                 .append("</th></tr>");
 
         for (SequencingRunDto dto : extractTransform.analyzeSequencingRun(sequencingRunId)) {
@@ -99,7 +107,10 @@ public class ExtractTransformResource {
                     .append(dto.getSampleKey())
                     .append("</td><td>")
                     .append(dto.getResearchProjectId())
-                    .append("</td><tr>");
+                    .append("</td><tr>")
+                    .append(dto.getLoadingVessel() != null ? dto.getLoadingVessel().getLabel() : null)
+                    .append("</td><tr>")
+                    .append(dto.getLoadingVessel() != null ? ExtractTransform.secTimestampFormat.format(dto.getLoadingVessel().getCreatedOn()) : null);
         }
         sb.append("</table></body></html>");
         return sb.toString();
@@ -109,19 +120,32 @@ public class ExtractTransformResource {
      * Returns an etl-type breakdown of a lab event.
      *
      * @param labEventId the entity id of the lab event
+     *
      * @return htm table of what etl would put in the event fact table
      */
     @Path("analyze/event/{labEventId:[0-9]+}")
     @Produces("text/html")
     @GET
     public String analyzeEvent(@PathParam("labEventId") long labEventId) {
+        Long id = null;
+        String type = null;
+        // Supresses the column if no indexes are given.
+        boolean showMolecularBarcodes = false;
+        for (EventFactDto dto : extractTransform.analyzeEvent(labEventId)) {
+            id = (dto.getLabEvent() != null) ? dto.getLabEvent().getLabEventId() : null;
+            type = (dto.getLabEvent() != null ? dto.getLabEvent().getLabEventType().toString() : null);
+            if (!StringUtils.isBlank(dto.getSampleInstanceIndexes())) {
+                showMolecularBarcodes = true;
+            }
+        }
+
         StringBuilder sb = new StringBuilder();
-        sb.append("<html><head/><body><table cellpadding=\"3\">")
+        sb.append("<html><head/><body>")
+                .append("<p>LabEventId ").append(id).append(", EventName ").append(type).append("</p>")
+                .append("<table cellpadding=\"3\">")
                 .append("<tr><th>canEtl")
-                .append("</th><th>labEventId")
-                .append("</th><th>eventName")
                 .append("</th><th>labVessel")
-                .append("</th><th>molecularBarcodes")
+                .append(showMolecularBarcodes ? "</th><th>molecularIndex" : "")
                 .append("</th><th>labBatch")
                 .append("</th><th>labBatchId")
                 .append("</th><th>workflowName")
@@ -135,14 +159,9 @@ public class ExtractTransformResource {
         for (EventFactDto dto : extractTransform.analyzeEvent(labEventId)) {
             sb.append("<tr><td>").append(dto.isComplete())
                     .append("</td><td>")
-                    .append(dto.getLabEvent() != null ? dto.getLabEvent().getLabEventId() : null)
-                    .append("</td><td>")
-                    .append(dto.getLabEvent() != null ? dto.getLabEvent().getLabEventType().toString() : null)
-                    .append("</td><td>")
                     .append(dto.getLabVessel() != null ? dto.getLabVessel().getLabel() : null)
                     .append("</td><td>")
-                    .append(dto.getSampleInstanceIndexes())
-                    .append("</td><td>")
+                    .append(showMolecularBarcodes ? dto.getSampleInstanceIndexes() + "</td><td>" : "")
                     .append(dto.getLabBatch() != null ? dto.getLabBatch().getBusinessKey() : null)
                     .append("</td><td>")
                     .append(dto.getLabBatchId())

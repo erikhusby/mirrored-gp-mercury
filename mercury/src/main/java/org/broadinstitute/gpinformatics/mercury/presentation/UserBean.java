@@ -7,7 +7,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
-import org.broadinstitute.gpinformatics.infrastructure.presentation.Role;
+import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 
 import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
@@ -260,6 +260,10 @@ public class UserBean implements Serializable {
 
     public boolean isValidJiraUser() {
         return jiraStatus.isValid();
+    }
+
+    public boolean isPMUser() {
+        return roles.contains(Role.PM);
     }
 
     public boolean isPDMUser() {

@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>Mercury</groupId>
     <artifactId>Mercury</artifactId>
-    <version>1.25</version>
+    <version>1.27-SNAPSHOT</version>
     <packaging>war</packaging>
     <inceptionYear>2012</inceptionYear>
 
@@ -190,7 +190,7 @@
         <!-- Note - For the RC builds, the mercury.rc.ip must contain an @ otherwise the mercury-rc-ds.xml will not be syntactically correct. The @ is a meta character to the maven filtering such that the combination of
         @${mercury.rc.ip} does not get subsituted at all. Hence mercury-rc-ds.xml only contains ${mercury.rc.ip} -->
 
-        <mercury.rc.ip>@192.168.195.31</mercury.rc.ip>
+        <mercury.rc.ip>must be specified.</mercury.rc.ip>
 
         <umlgraph.path>must be specified</umlgraph.path>
 
@@ -639,6 +639,14 @@
 
 	    <profile>
             <id>CRSP-DEV</id>
+            <dependencies>
+                <dependency>
+                    <groupId>javax</groupId>
+                    <artifactId>javaee-api</artifactId>
+                    <version>6.0</version>
+                    <scope>provided</scope>
+                </dependency>
+            </dependencies>
             <properties>
                 <!--  Oracle Dev database -->
                 <database>oracle</database>
@@ -650,6 +658,19 @@
                 <athena.password>welcome1</athena.password>
             </properties>
             <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-war-plugin</artifactId>
+                        <configuration>
+                            <webResources>
+                                <resource>
+                                    <directory>src/main/webapp-crsp</directory>
+                                </resource>
+                            </webResources>
+                        </configuration>
+                    </plugin>
+                </plugins>
                 <testResources>
                     <testResource>
                         <directory>src/test/resources-dev</directory>
@@ -665,7 +686,7 @@
         </profile>
 
         <profile>
-            <id>CRSP-PROD</id><!-- THis is for CRSP PRODUCTION ONLY -->
+            <id>CRSP-PROD</id><!-- This is for CRSP PRODUCTION ONLY -->
             <properties>
                 <!-- Oracle Dev -->
                 <database>oracle</database>
@@ -682,9 +703,12 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-war-plugin</artifactId>
-                        <version>2.2</version>
                         <configuration>
                             <webResources>
+                                <resource>
+                                    <directory>src/main/webapp-crsp</directory>
+                                </resource>
+
                                 <resource>
                                     <directory>src/main/webapp-crsp-prod</directory>
                                 </resource>
@@ -795,7 +819,7 @@
                 <database.delimiterType>row</database.delimiterType>
 
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
-                <database.url>jdbc:oracle:thin:@192.168.195.30:1521:gpinfprd</database.url>
+                <database.url>jdbc:oracle:thin:@192.168.195.63:1521:gpinfprd</database.url>
                 <mercury.password>guest</mercury.password>
                 <athena.password>guest</athena.password>
             </properties>

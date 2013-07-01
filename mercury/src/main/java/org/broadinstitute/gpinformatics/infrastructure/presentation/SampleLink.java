@@ -9,10 +9,7 @@ import javax.inject.Inject;
 /**
  * This class is used to generate sample links for the UI.
  */
-// Suppress warnings because the IDE can't infer the correct type from a <c:set> variable.
-@SuppressWarnings("UnusedDeclaration")
 public class SampleLink {
-    private static final String BSP_SEARCH_SAMPLE = "samplesearch/SampleSummary.action?sampleId=";
 
     private final BSPConfig bspConfig;
 
@@ -68,7 +65,7 @@ public class SampleLink {
     public String getUrl() {
         switch (format) {
         case BSP:
-           return bspConfig.getUrl(BSP_SEARCH_SAMPLE + sample.getBspSampleName());
+           return bspConfig.getUrl(BSPConfig.SEARCH_PATH + sample.getSampleKey());
         case CRSP:
             return jiraLink.browseUrl(sample.getSampleKey());
         default:

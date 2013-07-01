@@ -35,8 +35,10 @@ public class BucketDBFreeTest {
         final String twoDBarcode3 = "SM-323";
         final String twoDBarcode4 = "SM-324";
 
-        BucketEntry testEntry1 = new BucketEntry(new TwoDBarcodedTube(twoDBarcode1), poBusinessKey1, bucket);
-        BucketEntry testEntry2 = new BucketEntry(new TwoDBarcodedTube(twoDBarcode2), poBusinessKey1, bucket);
+        BucketEntry testEntry1 = new BucketEntry(new TwoDBarcodedTube(twoDBarcode1), poBusinessKey1, bucket,
+                BucketEntry.BucketEntryType.PDO_ENTRY);
+        BucketEntry testEntry2 = new BucketEntry(new TwoDBarcodedTube(twoDBarcode2), poBusinessKey1, bucket,
+                BucketEntry.BucketEntryType.PDO_ENTRY);
 
         bucket.addEntry(testEntry1);
         Assert.assertNotNull(testEntry1.getBucket());
@@ -46,11 +48,13 @@ public class BucketDBFreeTest {
         Assert.assertNotNull(testEntry2.getBucket());
         Assert.assertEquals(bucket, testEntry2.getBucket());
 
-        BucketEntry testEntry3 = bucket.addEntry(poBusinessKey2, new TwoDBarcodedTube(twoDBarcode3));
+        BucketEntry testEntry3 = bucket.addEntry(poBusinessKey2, new TwoDBarcodedTube(twoDBarcode3),
+                BucketEntry.BucketEntryType.PDO_ENTRY);
         Assert.assertNotNull(testEntry3.getBucket());
         Assert.assertEquals(bucket, testEntry3.getBucket());
 
-        BucketEntry testEntry4 = bucket.addEntry(poBusinessKey3, new TwoDBarcodedTube(twoDBarcode4));
+        BucketEntry testEntry4 = bucket.addEntry(poBusinessKey3, new TwoDBarcodedTube(twoDBarcode4),
+                BucketEntry.BucketEntryType.PDO_ENTRY);
         Assert.assertNotNull(testEntry3.getBucket());
         Assert.assertEquals(bucket, testEntry3.getBucket());
 

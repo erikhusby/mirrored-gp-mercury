@@ -39,45 +39,21 @@ app:
       workflowValidationEmail: gplims@broadinstitute.org
       #limsworkflowvalidation@broadinstitute.org
 
-
+# Stubbed out so that the MercuryConfiguration doesn't throw a big fat exception and halts the Mercury WAR deployment.
 bsp:
-
     DEV:
-      login:    xxxx
-      password: xxxx
-      host:     xxxx
-      port:     1
-
     QA:
-      login:    xxxx
-      password: xxxx
-      host:     xxxx
-      port:     1
-
     PROD:
-      login:    xxxx
-      password: xxxx
-      host:     xxxx
-      port:     1
 
-
-gap:
-
+squid:
     DEV:
-      login:    xxxx
-      password: xxxx
-      url:      xxxx
-
     QA:
-      login:    xxxx
-      password: xxxx
-      url:      xxxx
-
     PROD:
-      login:    xxxx
-      password: xxxx
-      url:      xxxx
 
+datawhEtl:
+    DEV:
+    QA:
+    PROD:
 
 jira:
 
@@ -111,24 +87,6 @@ quote:
       login:    rnordin@broadinstitute.org
       password: Squ1d_us3r
       url:      http://quoteprod:8080
-
-
-
-squid:
-
-    DEV:
-      url: http://localhost:8080/squid
-
-    TEST:
-      url: http://prodinfobuild.broadinstitute.org:8020/squid
-
-    QA:
-      url: http://vsquidrc.broadinstitute.org:8000/squid
-
-    PROD:
-      url: http://squid-ui.broadinstitute.org:8000/squid
-
-
 
 
 thrift:
@@ -190,18 +148,6 @@ bettaLimsServer:
         jmsPort: 61616
         jmsQueue: broad.queue.bettalims
 
-datawhEtl:
-
-    DEV:
-        datawhEtlDirRoot: /seq/lims/datawh/dev
-
-    QA:
-        datawhEtlDirRoot: /seq/lims/datawh/qa
-
-    PROD:
-        datawhEtlDirRoot: /seq/lims/datawh/prod
-
-
 hipchat:
     DEV:
         baseUrl: https://www.hipchat.com/v1/rooms/message
@@ -215,101 +161,87 @@ hipchat:
 
 # Mercury configuration, this describes how Mercury deployments are connected to external system deployments.
 
-
-
 mercury:
 
     DEV:
 
       app:      DEV
-      bsp:      NOT_SUPPORTED
-      gap:      NOT_SUPPORTED
+      bsp:      DISABLED
       jira:     TEST
       quote:    QA
-      squid:    NOT_SUPPORTED
+      squid:    DISABLED
       thrift:   QA
       deckMsgs: DEV
-      datawhEtl: NOT_SUPPORTED
+      datawhEtl: DISABLED
       bettaLimsServer: DEV
-      tableau:  NOT_SUPPORTED
       hipchat: DEV
 
 
     AUTO_BUILD:
 
       app:      AUTO_BUILD
-      bsp:      NOT_SUPPORTED
-      gap:      NOT_SUPPORTED
+      bsp:      DISABLED
       jira:     TEST
       quote:    QA
-      squid:    NOT_SUPPORTED
+      squid:    DISABLED
       thrift:   QA
       deckMsgs: DEV
-      datawhEtl: NOT_SUPPORTED
+      datawhEtl: DISABLED
       bettaLimsServer: DEV
-      tableau:  NOT_SUPPORTED
       hipchat: DEV
 
 
     TEST:
 
       app:      TEST
-      bsp:      NOT_SUPPORTED
-      gap:      NOT_SUPPORTED
+      bsp:      DISABLED
       jira:     TEST
       quote:    DEV
-      squid:    NOT_SUPPORTED
+      squid:    DISABLED
       thrift:   TEST
       deckMsgs: DEV
-      datawhEtl: NOT_SUPPORTED
+      datawhEtl: DISABLED
       bettaLimsServer: TEST
-      tableau:  NOT_SUPPORTED
       hipchat: DEV
 
 
     QA:
 
       app:      QA
-      bsp:      NOT_SUPPORTED
-      gap:      NOT_SUPPORTED
+      bsp:      DISABLED
       jira:     TEST
       quote:    QA
-      squid:    NOT_SUPPORTED
+      squid:    DISABLED
       thrift:   QA
       deckMsgs: QA
-      datawhEtl: NOT_SUPPORTED
+      datawhEtl: DISABLED
       bettaLimsServer: QA
-      tableau:  NOT_SUPPORTED
       hipchat: DEV
 
 
     RC:
 
       app:      RC
-      bsp:      NOT_SUPPORTED
-      gap:      NOT_SUPPORTED
+      bsp:      DISABLED
       jira:     TEST
       quote:    QA
-      squid:    NOT_SUPPORTED
+      squid:    DISABLED
       thrift:   QA
       deckMsgs: QA
-      datawhEtl: NOT_SUPPORTED
+      datawhEtl: DISABLED
       bettaLimsServer: QA
-      tableau:  NOT_SUPPORTED
       hipchat: DEV
 
 
     PROD:
 
       app:      PROD
-      bsp:      NOT_SUPPORTED
-      gap:      NOT_SUPPORTED
+      bsp:      DISABLED
       jira:     PROD
       quote:    PROD
-      squid:    NOT_SUPPORTED
+      squid:    DISABLED
       thrift:   PROD
       deckMsgs: PROD
-      datawhEtl: NOT_SUPPORTED
+      datawhEtl: DISABLED
       bettaLimsServer: PROD
-      tableau:  NOT_SUPPORTED
       hipchat: PROD

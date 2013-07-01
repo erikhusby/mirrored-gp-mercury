@@ -41,7 +41,7 @@ public class LinkDenatureTubeToReagentBlockActionBean extends LinkDenatureTubeCo
         Map<String, VesselPosition> denatureMap = new HashMap<>();
         denatureMap.put(denatureTubeBarcode, VesselPosition.A01);
 
-        BettaLIMSMessage bettaLIMSMessage = vesselTransferBean
+        BettaLIMSMessage bettaLIMSMessage = vesselTransferEjb
                 .denatureToReagentKitTransfer(null, denatureMap, reagentBlockBarcode,
                         getUserBean().getLoginUserName(), "UI");
         bettalimsMessageResource.processMessage(bettaLIMSMessage);

@@ -34,7 +34,7 @@ import java.util.TreeSet;
 
 /**
  * Queries for the research project.
- *
+ * <p/>
  * Transaction is SUPPORTS so as to apply to all find methods to let them see any currently active transaction but not
  * begin, and therefore commit (along with any changes queued up in the persistence context), their own transaction.
  */
@@ -54,20 +54,22 @@ public class ResearchProjectDao extends GenericDao {
      * Return a collection of all research projects that are accessible by a user.
      * A project is accessible by a user if:
      * <ul>
-     *     <li>the project's accessControlEnabled flag is false</li>
-     *     <li>the user is a person associated with this project in any role</li>
-     *     <li>the user is a person associated with any of this project's parent projects</li>
+     * <li>the project's accessControlEnabled flag is false</li>
+     * <li>the user is a person associated with this project in any role</li>
+     * <li>the user is a person associated with any of this project's parent projects</li>
      * </ul>
      * To determine person/project association, we traverse the tree of projects in code.  Using a database query
      * would work but would be more complicated, and we have too few RPs in Mercury for this to be a performance
      * issue.
      *
      * @param userId user to search for
+     *
      * @return a collection of all accessible projects for this user
      */
     public Set<ResearchProject> findAllAccessibleByUser(long userId) {
         Set<ResearchProject> foundProjects = new HashSet<ResearchProject>();
-        List<ResearchProject> allRootProjects = findList(ResearchProject.class, ResearchProject_.parentResearchProject, null);
+        List<ResearchProject> allRootProjects =
+                findList(ResearchProject.class, ResearchProject_.parentResearchProject, null);
 
         for (ResearchProject project : allRootProjects) {
             project.collectAccessibleByUser(userId, foundProjects);
@@ -92,14 +94,14 @@ public class ResearchProjectDao extends GenericDao {
         cq.distinct(true);
 
         Root<ResearchProject> root = cq.from(ResearchProject.class);
-        SetJoin<ResearchProject,ProjectPerson> projectPersonSetJoin = root.join(ResearchProject_.associatedPeople);
+        SetJoin<ResearchProject, ProjectPerson> projectPersonSetJoin = root.join(ResearchProject_.associatedPeople);
 
         cq.where(
-            // The role predicate below is written as an in expression for extensibility.  There was a concept of a
-            // "PM in charge" that has a corresponding enum instance but is not currently being used.  If we want to
-            // have this method accept users in additional roles, just add those roles to the in expression.
-            projectPersonSetJoin.get(ProjectPerson_.role).in(RoleType.PM),
-            projectPersonSetJoin.get(ProjectPerson_.personId).in((Object []) ids));
+                // The role predicate below is written as an in expression for extensibility.  There was a concept of a
+                // "PM in charge" that has a corresponding enum instance but is not currently being used.  If we want to
+                // have this method accept users in additional roles, just add those roles to the in expression.
+                projectPersonSetJoin.get(ProjectPerson_.role).in(RoleType.PM),
+                projectPersonSetJoin.get(ProjectPerson_.personId).in((Object[]) ids));
 
         return getEntityManager().createQuery(cq).getResultList();
     }
@@ -133,12 +135,15 @@ public class ResearchProjectDao extends GenericDao {
         return findSingle(ResearchProject.class, ResearchProject_.jiraTicketKey, jiraTicketKey);
     }
 
+    public List<ResearchProject> findByBusinessKeyList(List<String> businessKeys) {
+        return findByJiraTicketKeys(businessKeys);
+    }
+
     public List<ResearchProject> findByJiraTicketKeys(List<String> jiraTicketKeys) {
         return findListByList(ResearchProject.class, ResearchProject_.jiraTicketKey, jiraTicketKeys);
     }
 
     public Map<String, Long> getProjectOrderCounts() {
-
         CriteriaBuilder cb = getCriteriaBuilder();
         CriteriaQuery<Object> criteriaQuery = cb.createQuery();
         Root<ResearchProject> researchProjectRoot = criteriaQuery.from(ResearchProject.class);
@@ -184,6 +189,7 @@ public class ResearchProjectDao extends GenericDao {
 
     /**
      * @param accessControlEnabled the access control setting to match
+     *
      * @return all Research Projects with the access control setting provided
      */
     public Collection<ResearchProject> findAllWithAccess(boolean accessControlEnabled) {

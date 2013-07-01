@@ -1,18 +1,20 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.search;
 
-import net.sourceforge.stripes.action.*;
+import net.sourceforge.stripes.action.Before;
+import net.sourceforge.stripes.action.DefaultHandler;
+import net.sourceforge.stripes.action.ForwardResolution;
+import net.sourceforge.stripes.action.HandlesEvent;
+import net.sourceforge.stripes.action.RedirectResolution;
+import net.sourceforge.stripes.action.Resolution;
+import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
-import net.sourceforge.stripes.validation.SimpleError;
 import net.sourceforge.stripes.validation.Validate;
-import net.sourceforge.stripes.validation.ValidationErrors;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
-import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
-import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -111,19 +113,19 @@ public class CreateBatchActionBean extends CoreActionBean {
     public void createBatchValidation() {
 
         if (!getUserBean().isValidJiraUser()) {
-            addValidationError("jiraTicketId","You must be A valid Jira user to create an LCSet");
+            addValidationError("jiraTicketId", "You must be A valid Jira user to create an LCSet");
         }
 
-        if(selectedVesselLabels == null || selectedVesselLabels.isEmpty()) {
+        if (selectedVesselLabels == null || selectedVesselLabels.isEmpty()) {
             addValidationError("selectedVesselLabels", "At least one vessel must be selected to create a batch");
         }
 
-        if(jiraInputType.equals(EXISTING_TICKET)) {
-            if(StringUtils.isBlank(jiraTicketId)) {
-                addValidationError("jiraTicketId","An existing Jira ticket key is required");
+        if (jiraInputType.equals(EXISTING_TICKET)) {
+            if (StringUtils.isBlank(jiraTicketId)) {
+                addValidationError("jiraTicketId", "An existing Jira ticket key is required");
             }
         } else {
-            if(StringUtils.isBlank(summary)) {
+            if (StringUtils.isBlank(summary)) {
                 addValidationError("summary", "You must provide at least a summary to create a Jira Ticket");
             }
         }
@@ -143,13 +145,9 @@ public class CreateBatchActionBean extends CoreActionBean {
                If the user is associating the batch with an existing ticket, just the ticket ID and the set of vessels
                are needed to create the batch
             */
-
-//            batchObject =
-//                    labBatchEjb.createLabBatch(vesselSet, userBean.getBspUser().getUsername(),
-//                            jiraTicketId.trim());
             batchObject = labBatchEjb.createLabBatchAndRemoveFromBucket(selectedVesselLabels,
                     userBean.getBspUser().getUsername(), jiraTicketId.trim(), selectedBucket,
-                    LabEvent.UI_EVENT_LOCATION);
+                    LabEvent.UI_EVENT_LOCATION, LabBatch.LabBatchType.WORKFLOW, CreateFields.IssueType.EXOME_EXPRESS);
         } else {
 
             Set<LabVessel> vesselSet =
@@ -161,14 +159,16 @@ public class CreateBatchActionBean extends CoreActionBean {
             */
             batchObject = new LabBatch(summary.trim(), vesselSet, LabBatch.LabBatchType.WORKFLOW, description, dueDate,
                     important);
-
-//            labBatchEjb.createLabBatch(batchObject, userBean.getBspUser().getUsername());
             labBatchEjb.createLabBatchAndRemoveFromBucket(batchObject, userBean.getBspUser().getUsername(),
-                    selectedBucket, LabEvent.UI_EVENT_LOCATION);
+                    selectedBucket, LabEvent.UI_EVENT_LOCATION, CreateFields.IssueType.EXOME_EXPRESS);
+        }
+        //link the JIRA tickets for the batch created to the pdo batches.
+        for (String pdoKey : LabVessel.extractPdoKeyList(selectedBatchVessels)) {
+            labBatchEjb.linkJiraBatchToTicket(pdoKey, batchObject);
         }
 
         addMessage(MessageFormat.format("Lab batch ''{0}'' has been ''{1}''.",
-                batchObject.getJiraTicket().getTicketName(), isUseExistingTicket()?"assigned":"created"));
+                batchObject.getJiraTicket().getTicketName(), isUseExistingTicket() ? "assigned" : "created"));
 
         //Forward
         return new RedirectResolution(CreateBatchActionBean.class, CONFIRM_ACTION)

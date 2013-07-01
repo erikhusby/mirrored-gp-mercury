@@ -5,7 +5,7 @@ import net.sourceforge.stripes.validation.Validate;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean;
-import org.broadinstitute.gpinformatics.infrastructure.presentation.Role;
+import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
@@ -23,6 +23,8 @@ public class SecurityActionBean extends CoreActionBean {
     private static final Log logger = LogFactory.getLog(SecurityActionBean.class);
 
     public static final String LOGIN_ACTION = "/security/security.action";
+
+    public static final String HOME_PAGE = "/index.jsp";
 
     public static final String LOGIN_PAGE = "/security/login.jsp";
 
@@ -64,7 +66,7 @@ public class SecurityActionBean extends CoreActionBean {
             return new RedirectResolution(LOGIN_PAGE);
         }
 
-        return new ForwardResolution(UserRole.INDEX);
+        return new ForwardResolution(HOME_PAGE);
     }
 
     /**
@@ -134,7 +136,6 @@ public class SecurityActionBean extends CoreActionBean {
         PM(ResearchProjectActionBean.PROJECT_LIST_PAGE, Role.PM),
         OTHER("/index.jsp", null);
 
-        private static final String INDEX = "/index.jsp";
         private static final String APP_CONTEXT = "/Mercury"; // getContext().getRequest().getContextPath();
 
         public static UserRole fromUserBean(UserBean userBean) {
@@ -162,8 +163,8 @@ public class SecurityActionBean extends CoreActionBean {
                         newUrlBuilder.deleteCharAt(targetPage.lastIndexOf("/"));
                     }
                     newUrlBuilder.append(landingPage).append(".jsp");
-                } else if (targetPage.endsWith(INDEX) || targetPage.endsWith(INDEX + ".jsp")) {
-                    newUrlBuilder = new StringBuilder(targetPage.replace(INDEX, landingPage));
+                } else if (targetPage.endsWith(HOME_PAGE)) {
+                    newUrlBuilder = new StringBuilder(targetPage.replace(HOME_PAGE, landingPage));
                 }
             }
             return newUrlBuilder.toString();

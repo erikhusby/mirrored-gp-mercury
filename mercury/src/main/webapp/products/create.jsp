@@ -1,12 +1,12 @@
-<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.presentation.Role.*" %>
-<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.presentation.Role.roles" %>
-<%@ page import="org.broadinstitute.gpinformatics.infrastructure.presentation.Role" %>
+<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
+<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.products.ProductActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="${actionBean.submitString}" sectionTitle="${actionBean.submitString} ${actionBean.editProduct.productName}">
+<stripes:layout-render name="/layout.jsp" pageTitle="${actionBean.submitString}: ${actionBean.editProduct.productName}"
+                       sectionTitle="${actionBean.submitString}: ${actionBean.editProduct.productName}">
 
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
@@ -366,7 +366,7 @@
                     </div>
                 </div>
 
-                <security:authorizeBlock roles="<%= Role.roles(Developer)%>">
+                <security:authorizeBlock roles="<%= roles(Developer)%>">
 
                     <div class="control-group">
                         <stripes:label for="useAutomatedBilling" class="control-label">

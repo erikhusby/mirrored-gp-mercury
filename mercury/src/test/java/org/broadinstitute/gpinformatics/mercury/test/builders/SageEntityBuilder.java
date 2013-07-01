@@ -56,13 +56,12 @@ public class SageEntityBuilder {
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
     public SageEntityBuilder invoke() {
-        List<String> sageUnloadTubeBarcodes = new ArrayList<String>();
+        List<String> sageUnloadTubeBarcodes = new ArrayList<>();
         for (int i = 1; i <= NUM_POSITIONS_IN_RACK; i++) {
             sageUnloadTubeBarcodes.add("SageUnload" + i);
         }
+        mapBarcodeToSageUnloadTubes = new HashMap<>();
         String sageUnloadBarcode = "SageUnload";
-        mapBarcodeToSageUnloadTubes = new HashMap<String, TwoDBarcodedTube>();
-        RackOfTubes targetRackOfTubes = null;
         for (int i = 0; i < NUM_POSITIONS_IN_RACK / 4; i++) {
             // SageLoading
             String sageCassetteBarcode = "SageCassette" + i;
@@ -71,8 +70,13 @@ public class SageEntityBuilder {
                     pondRegTubeBarcodes.subList(i * 4, i * 4 + 4),
                     sageCassetteBarcode);
             // todo jmt SAGE section
-            LabEvent sageLoadingEntity = labEventFactory.buildFromBettaLimsRackToPlateDbFree(sageLoadingJaxb,
-                    pondRegRack, null);
+            Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
+            mapBarcodeToVessel.put(pondRegRack.getLabel(), pondRegRack);
+            for (TwoDBarcodedTube twoDBarcodedTube : pondRegRack.getContainerRole().getContainedVessels()) {
+                mapBarcodeToVessel.put(twoDBarcodedTube.getLabel(), twoDBarcodedTube);
+            }
+
+            LabEvent sageLoadingEntity = labEventFactory.buildFromBettaLims(sageLoadingJaxb, mapBarcodeToVessel);
             labEventHandler.processEvent(sageLoadingEntity);
             StaticPlate sageCassette = (StaticPlate) sageLoadingEntity.getTargetLabVessels().iterator().next();
 
@@ -85,22 +89,28 @@ public class SageEntityBuilder {
             // SageUnloading
             PlateTransferEventType sageUnloadingJaxb = bettaLimsMessageTestFactory.buildPlateToRack("SageUnloading",
                     sageCassetteBarcode, sageUnloadBarcode, sageUnloadTubeBarcodes.subList(i * 4, i * 4 + 4));
-            LabEvent sageUnloadEntity = labEventFactory.buildFromBettaLimsPlateToRackDbFree(sageUnloadingJaxb,
-                    sageCassette, mapBarcodeToSageUnloadTubes, targetRackOfTubes);
+            mapBarcodeToVessel.clear();
+            mapBarcodeToVessel.put(sageCassette.getLabel(), sageCassette);
+            LabEvent sageUnloadEntity = labEventFactory.buildFromBettaLims(sageUnloadingJaxb, mapBarcodeToVessel);
             labEventHandler.processEvent(sageUnloadEntity);
-            sageUnloadEntity.getTargetLabVessels().iterator().next();
+            TubeFormation unloadTubeFormation =
+                    (TubeFormation) sageUnloadEntity.getTargetLabVessels().iterator().next();
+            for (TwoDBarcodedTube twoDBarcodedTube : unloadTubeFormation.getContainerRole().getContainedVessels()) {
+                mapBarcodeToSageUnloadTubes.put(twoDBarcodedTube.getLabel(), twoDBarcodedTube);
+            }
+
         }
 
         // SageCleanup
-        sageCleanupTubeBarcodes = new ArrayList<String>();
+        sageCleanupTubeBarcodes = new ArrayList<>();
         for (int i = 1; i <= NUM_POSITIONS_IN_RACK; i++) {
             sageCleanupTubeBarcodes.add("SageCleanup" + i);
         }
         sageCleanupBarcode = "SageCleanup";
         PlateTransferEventType sageCleanupJaxb = bettaLimsMessageTestFactory.buildRackToRack("SageCleanup", sageUnloadBarcode,
                 sageUnloadTubeBarcodes, sageCleanupBarcode, sageCleanupTubeBarcodes);
-        Map<VesselPosition, TwoDBarcodedTube> mapPositionToTube = new HashMap<VesselPosition, TwoDBarcodedTube>();
-        List<TwoDBarcodedTube> sageUnloadTubes = new ArrayList<TwoDBarcodedTube>(mapBarcodeToSageUnloadTubes.values());
+        Map<VesselPosition, TwoDBarcodedTube> mapPositionToTube = new HashMap<>();
+        List<TwoDBarcodedTube> sageUnloadTubes = new ArrayList<>(mapBarcodeToSageUnloadTubes.values());
         for (int i = 0; i < NUM_POSITIONS_IN_RACK; i++) {
             mapPositionToTube.put(VesselPosition.getByName(bettaLimsMessageTestFactory.buildWellName(i + 1,
                     BettaLimsMessageTestFactory.WellNameType.SHORT)),
@@ -108,8 +118,12 @@ public class SageEntityBuilder {
         }
         TubeFormation sageUnloadRackRearrayed = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
         sageUnloadRackRearrayed.addRackOfTubes(new RackOfTubes("sageUnloadRearray", RackOfTubes.RackType.Matrix96));
-        LabEvent sageCleanupEntity = labEventFactory.buildFromBettaLimsRackToRackDbFree(sageCleanupJaxb,
-                sageUnloadRackRearrayed, new HashMap<String, TwoDBarcodedTube>(), targetRackOfTubes);
+        Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
+        mapBarcodeToVessel.put(sageUnloadRackRearrayed.getLabel(), sageUnloadRackRearrayed);
+        for (TwoDBarcodedTube twoDBarcodedTube : sageUnloadRackRearrayed.getContainerRole().getContainedVessels()) {
+            mapBarcodeToVessel.put(twoDBarcodedTube.getLabel(), twoDBarcodedTube);
+        }
+        LabEvent sageCleanupEntity = labEventFactory.buildFromBettaLims(sageCleanupJaxb, mapBarcodeToVessel);
         labEventHandler.processEvent(sageCleanupEntity);
         sageCleanupRack = (TubeFormation) sageCleanupEntity.getTargetLabVessels().iterator().next();
 
@@ -118,10 +132,6 @@ public class SageEntityBuilder {
 
     public TubeFormation getSageCleanupRack() {
         return sageCleanupRack;
-    }
-
-    public String getSageCleanupBarcode() {
-        return sageCleanupBarcode;
     }
 
     public List<String> getSageCleanupTubeBarcodes() {

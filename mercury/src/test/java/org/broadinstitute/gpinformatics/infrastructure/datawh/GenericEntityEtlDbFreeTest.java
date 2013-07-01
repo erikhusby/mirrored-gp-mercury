@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
-import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
@@ -116,6 +115,36 @@ public class GenericEntityEtlDbFreeTest {
         File datafile = new File(datafileDir, dataFilename);
         Assert.assertTrue(datafile.exists());
 
+        verify(mocks);
+    }
+
+    public void testWriteDatFile() throws Exception {
+        Collection<Long> deletes = new ArrayList<>();
+        Collection<Long> mods = new ArrayList<>();
+        Collection<Long> adds = new ArrayList<>();
+        Collection<LabBatchEtl.RevInfoPair<LabBatch>> revInfoPairs = new ArrayList<>();
+
+        deletes.add(entityId);
+        adds.add(entityId);
+        mods.add(entityId);
+
+        expect(dao.findById(LabBatch.class, entityId)).andReturn(obj).times(2);
+        expect(obj.getLabBatchId()).andReturn(entityId).times(2);
+        expect(obj.getBatchName()).andReturn(batchName).times(2);
+        replay(mocks);
+
+        tst.setAuditReaderDao(auditReader);
+
+        int recordCount = tst.writeEtlDataFile(deletes, mods, adds, revInfoPairs, etlDateStr);
+        assertEquals(recordCount, 3);
+
+        String datFileEnding = tst.baseFilename + ".dat";
+        String dataFilename = etlDateStr + "_" + datFileEnding;
+        File datafile = new File(datafileDir, dataFilename);
+        Assert.assertTrue(datafile.exists());
+
+        Assert.assertTrue(ExtractTransformTest.searchEtlFile(datafileDir, datFileEnding, "T", entityId));
+        Assert.assertTrue(ExtractTransformTest.searchEtlFile(datafileDir, datFileEnding, "F", entityId));
         verify(mocks);
     }
 

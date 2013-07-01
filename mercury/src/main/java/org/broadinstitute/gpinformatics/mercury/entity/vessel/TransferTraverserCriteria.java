@@ -498,10 +498,19 @@ public interface TransferTraverserCriteria {
         }
     }
 
+    /**
+     * NearestTubeAncestorsCriteria is a Traverser Criteria object intended to capture the closest (in number of hops)
+     * TwoDBarcodedTube(s) that can be found in a target vessel's event history.  When found, not only will the the tube
+     * be saved for access, but also an object that relates the tube to its position at its found location will be
+     * returned.
+     * <p/>
+     * TODO SGM/BR/JMT:  A similar object {@link StaticPlate.NearestTubeAncestorsCriteria} (created before this one)
+     * has an extra safety if check on it. Consider merging into here
+     */
     class NearestTubeAncestorsCriteria implements TransferTraverserCriteria {
 
-        private Set<LabVessel> tubes = new HashSet<LabVessel>();
-        private Set<VesselAndPosition> vesselAndPositions = new LinkedHashSet<VesselAndPosition>();
+        private Set<LabVessel> tubes = new HashSet<>();
+        private Set<VesselAndPosition> vesselAndPositions = new LinkedHashSet<>();
 
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
@@ -515,10 +524,12 @@ public interface TransferTraverserCriteria {
         }
 
         @Override
-        public void evaluateVesselInOrder(Context context) {}
+        public void evaluateVesselInOrder(Context context) {
+        }
 
         @Override
-        public void evaluateVesselPostOrder(Context context) {}
+        public void evaluateVesselPostOrder(Context context) {
+        }
 
         public Set<LabVessel> getTubes() {
             return tubes;
@@ -527,5 +538,40 @@ public interface TransferTraverserCriteria {
         public Set<VesselAndPosition> getVesselAndPositions() {
             return vesselAndPositions;
         }
+    }
+
+    /**
+     * Similar to NearestTubeAncestorsCriteria, this criteria object is intended to capture the closest (in number of
+     * hops) TwoDBarcodedTube(s) that can be found in a target vessels history.  The user of this method has no need
+     * of the tubes position in the container that it is found, and sometimes creating the VesselAndPosition object
+     * breaks so this is being used in its place.
+     */
+    class NearestTubeAncestorCriteria implements TransferTraverserCriteria {
+
+        private LabVessel tube;
+
+        @Override
+        public TraversalControl evaluateVesselPreOrder(Context context) {
+            if (OrmUtil.proxySafeIsInstance(context.getLabVessel(), TwoDBarcodedTube.class)) {
+                if (tube == null) {
+                    tube = context.getLabVessel();
+                }
+                return StopTraversing;
+            }
+            return ContinueTraversing;
+        }
+
+        @Override
+        public void evaluateVesselInOrder(Context context) {
+        }
+
+        @Override
+        public void evaluateVesselPostOrder(Context context) {
+        }
+
+        public LabVessel getTube() {
+            return tube;
+        }
+
     }
 }

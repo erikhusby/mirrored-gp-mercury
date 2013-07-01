@@ -1,17 +1,7 @@
 <%@ include file="/resources/layout/taglibs.jsp" %>
 <%@ taglib uri="http://mercury.broadinstitute.org/Mercury/security" prefix="security" %>
-<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.presentation.Role.*" %>
-<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.presentation.Role.roles" %>
-<%--
-  ~ The Broad Institute
-  ~ SOFTWARE COPYRIGHT NOTICE AGREEMENT
-  ~ This software and its documentation are copyright 2013 by the
-  ~ Broad Institute/Massachusetts Institute of Technology. All rights are reserved.
-  ~
-  ~ This software is supplied without any warranty or guaranteed support
-  ~ whatsoever. Neither the Broad Institute nor MIT can be responsible for its
-  ~ use, misuse, or functionality.
-  --%>
+<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
+<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
 
 <header class="navbar">
     <div class="navbar-inner">
@@ -25,8 +15,8 @@
                                 beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean"
                                 tabindex="=1" event="list">List</stripes:link>
                     </li>
-                    <%-- Only PMs (and Developers) can create Research Projects. --%>
-                    <security:authorizeBlock roles="<%= roles(Developer, PM) %>">
+                    <%-- PMs and sometimes PDMs (and Developers) can create Research Projects. --%>
+                    <security:authorizeBlock roles="<%= roles(Developer, PM, PDM) %>">
                         <li>
                             <stripes:link
                                     beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean"
@@ -44,7 +34,7 @@
                                 beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"
                                 tabindex="=1" event="list">List</stripes:link>
                     </li>
-                    <%-- PMs and PDMs (and Developers) can place Product Orders. --%>
+                    <%-- PMs and PDMs (and Developers) can create Product Orders. --%>
                     <security:authorizeBlock roles="<%= roles(Developer, PDM, PM) %>">
                         <li>
                             <stripes:link id="createProductOrder"
@@ -52,12 +42,15 @@
                                           tabindex="=1" event="create">Create</stripes:link>
                         </li>
                     </security:authorizeBlock>
-                    <li class="divider"></li>
-                    <li>
-                        <stripes:link
-                                beanclass="org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean"
-                                tabindex="=1" event="list">Billing Sessions</stripes:link>
-                    </li>
+
+                    <security:authorizeBlock roles="<%= roles(Developer, BillingManager, PDM) %>">
+                        <li class="divider"></li>
+                        <li>
+                            <stripes:link
+                                    beanclass="org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean"
+                                    tabindex="=1" event="list">Billing Sessions</stripes:link>
+                        </li>
+                    </security:authorizeBlock>
                 </ul>
             </li>
             <li class="dropdown">
@@ -98,11 +91,16 @@
                                           event="view">Buckets</stripes:link>
                         </li>
                         <li>
-                            <stripes:link
-                                    beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.LinkDenatureTubeToReagentBlockActionBean"
-                                    event="view">Link Denature Tube to Reagent Block</stripes:link>
+                            <stripes:link id="linkDenatureToRB"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.LinkDenatureTubeToReagentBlockActionBean"
+                                          event="view">Link Denature Tube to Reagent Block</stripes:link>
                         </li>
-                        <security:authorizeBlock roles="<%= roles(Developer) %>">
+                        <li>
+                            <stripes:link id="createFCT"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.CreateFCTActionBean"
+                                          event="view">Create FCT Ticket</stripes:link>
+                        </li>
+                        <security:authorizeBlock roles="<%= roles(LabUser, LabManager, PDM, PM, Developer) %>">
                             <li>
                                 <stripes:link
                                         beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.CollaboratorControlsActionBean"
@@ -156,6 +154,13 @@
 
         </ul>
         <ul class="nav pull-right global-search navbar-search">
+            <li style="white-space:nowrap;">
+                <stripes:form beanclass="org.broadinstitute.gpinformatics.athena.presentation.search.SearchActionBean" name="quickSearch" method="GET">
+                    <input type="search" data-type="search" name="searchKey" placeholder="Search for a RP, PDO or P"
+                           class="search-query ui-input-text ui-body-null" autosave="unique" results="10"
+                           style="margin-top: 5px;vertical-align: top;height:14px;"/>
+                </stripes:form>
+            </li>
             <li class="dropdown">
                 <a id="searchNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span
                         class="icon-search"></span> Search <b class="caret"></b></a>
@@ -181,5 +186,6 @@
                     </security:authorizeBlock>
                 </ul>
             </li>
+        </ul>
     </div>
 </header>

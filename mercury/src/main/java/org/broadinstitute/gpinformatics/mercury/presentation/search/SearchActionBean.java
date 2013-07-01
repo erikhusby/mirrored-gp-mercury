@@ -14,8 +14,11 @@ import net.sourceforge.stripes.validation.ValidationErrors;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -38,14 +41,15 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
- * This handles all the needed interface processing elements
+ * This handles all the needed interface processing elements.
  */
 @UrlBinding(SearchActionBean.ACTIONBEAN_URL_BINDING)
 public class SearchActionBean extends CoreActionBean {
     public static final String ACTIONBEAN_URL_BINDING = "/search/all.action";
 
     protected enum SearchType {
-        VESSELS_BY_BARCODE, VESSELS_BY_PDO, VESSELS_BY_SAMPLE_KEY, PDO_BY_KEY, SAMPLES_BY_NAME, BATCH_BY_KEY
+        PDO_BY_KEY, RP_BY_KEY, P_BY_KEY, VESSELS_BY_BARCODE, VESSELS_BY_PDO, VESSELS_BY_SAMPLE_KEY, SAMPLES_BY_NAME,
+        BATCH_BY_KEY
     }
 
     private static final String SEPARATOR = ",";
@@ -56,7 +60,7 @@ public class SearchActionBean extends CoreActionBean {
      */
     private static final Pattern UPPERCASE_PATTERN = Pattern.compile("[sS][mMpP]-.*");
 
-    private static final String SESSION_LIST_PAGE = "/search/search.jsp";
+    private static final String SEARCH_LIST_PAGE = "/search/search.jsp";
     private static final String BATCH_CREATE_PAGE = "/search/create_batch.jsp";
     private static final String BATCH_CONFIRM_PAGE = "/search/batch_confirm.jsp";
 
@@ -68,24 +72,40 @@ public class SearchActionBean extends CoreActionBean {
     public static final String SEARCH_PLASTIC_ACTION = "searchPlastic";
     public static final String SEARCH_BATCH_CANDIDATES_ACTION = "searchBatchCandidates";
 
+    /**
+     * Action for handling when user enters search text in navigation form search textfield.
+     */
+    public static final String QUICK_SEARCH_ACTION = "quickSearch";
+
     public static final String EXISTING_TICKET = "existingTicket";
     public static final String NEW_TICKET = "newTicket";
 
     @Inject
     private LabBatchEjb labBatchEjb;
+
     @Inject
     private UserBean userBean;
 
     @Inject
     private LabVesselDao labVesselDao;
+
     @Inject
     private MercurySampleDao mercurySampleDao;
+
     @Inject
     private ProductOrderDao productOrderDao;
-    @Inject
-    private LabBatchDAO labBatchDAO;
 
-    @Validate(required = true, on = {SEARCH_ACTION, SEARCH_BATCH_CANDIDATES_ACTION, SEARCH_PLASTIC_ACTION})
+    @Inject
+    private LabBatchDAO labBatchDao;
+
+    @Inject
+    private ResearchProjectDao researchProjectDao;
+
+    @Inject
+    private ProductDao productDao;
+
+    @Validate(required = true,
+            on = {SEARCH_ACTION, SEARCH_BATCH_CANDIDATES_ACTION, SEARCH_PLASTIC_ACTION, QUICK_SEARCH_ACTION})
     private String searchKey;
 
     private String batchLabel;
@@ -119,36 +139,37 @@ public class SearchActionBean extends CoreActionBean {
     private int numSearchTerms;
 
     /**
-     * Initialize the product with the passed in key for display in the form
+     * Initialize the product with the passed in key for display in the form.
      */
     @Before(stages = LifecycleStage.BindingAndValidation, on = {CONFIRM_ACTION})
     public void init() {
         batchLabel = getContext().getRequest().getParameter("batchLabel");
         if (StringUtils.isNotBlank(batchLabel)) {
-            batch = labBatchDAO.findByBusinessKey(batchLabel);
+            batch = labBatchDao.findByBusinessKey(batchLabel);
         }
     }
-
 
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
     public Resolution view() {
-        return new ForwardResolution(SESSION_LIST_PAGE);
+        return new ForwardResolution(SEARCH_LIST_PAGE);
     }
 
     protected void doSearch(SearchType... searchForItems) {
         if (searchForItems.length == 0) {
             searchForItems = SearchType.values();
         }
+
         List<String> searchList = cleanInputString(searchKey);
         numSearchTerms = searchList.size();
         int count = 0;
         long totalResults = 0l;
+
         for (SearchType searchForItem : searchForItems) {
             switch (searchForItem) {
             case VESSELS_BY_BARCODE:
                 foundVessels.addAll(labVesselDao.findByListIdentifiers(searchList));
-                if (foundVessels.size() > 0) {
+                if (!foundVessels.isEmpty()) {
                     count++;
                     totalResults += foundVessels.size();
                 }
@@ -162,27 +183,21 @@ public class SearchActionBean extends CoreActionBean {
                 break;
             case SAMPLES_BY_NAME:
                 foundSamples = mercurySampleDao.findBySampleKeys(searchList);
-                if (foundSamples.size() > 0) {
+                if (!foundSamples.isEmpty()) {
                     count++;
                     totalResults += foundSamples.size();
                 }
                 break;
-            case PDO_BY_KEY:
-                foundPDOs = productOrderDao.findListByBusinessKeyList(searchList);
-                if (foundPDOs.size() > 0) {
-                    count++;
-                    totalResults += foundPDOs.size();
-                }
-                break;
             case BATCH_BY_KEY:
-                foundBatches = labBatchDAO.findByListIdentifier(searchList);
-                if (foundBatches.size() > 0) {
+                foundBatches = labBatchDao.findByListIdentifier(searchList);
+                if (!foundBatches.isEmpty()) {
                     count++;
                     totalResults += foundBatches.size();
                 }
                 break;
             }
         }
+
         multipleResultTypes = count > 1;
         resultsAvailable = totalResults > 0;
         isSearchDone = true;
@@ -191,12 +206,11 @@ public class SearchActionBean extends CoreActionBean {
     @HandlesEvent(SEARCH_ACTION)
     public Resolution search() throws Exception {
         doSearch();
-        return new ForwardResolution(SESSION_LIST_PAGE);
+        return new ForwardResolution(SEARCH_LIST_PAGE);
     }
 
     @ValidationMethod(on = CREATE_BATCH_ACTION)
     public void createBatchValidation(ValidationErrors errors) {
-
         if (selectedVesselLabels == null || selectedVesselLabels.isEmpty()) {
             doSearch(SearchType.VESSELS_BY_SAMPLE_KEY, SearchType.VESSELS_BY_PDO, SearchType.VESSELS_BY_BARCODE);
             errors.add("selectedVesselLabels",
@@ -228,9 +242,9 @@ public class SearchActionBean extends CoreActionBean {
     }
 
     /**
-     * Supports the submission for the page.  Will forward to confirmation page on success
+     * Supports the submission for the page.  Will forward to confirmation page on success.
      *
-     * @return The resolution
+     * @return the resolution
      */
     @HandlesEvent(CREATE_BATCH_ACTION)
     public Resolution createBatch() throws Exception {
@@ -240,30 +254,30 @@ public class SearchActionBean extends CoreActionBean {
                 new HashSet<LabVessel>(labVesselDao.findByListIdentifiers(selectedVesselLabels));
 
         if (isUseExistingTicket()) {
-            /*
-               If the user is associating the batch with an existing ticket, just the ticket ID and the set of vessels
-               are needed to create the batch
-            */
-
+            // If the user is associating the batch with an existing ticket, just the ticket ID and the set of vessels
+            // are needed to create the batch.
             batchObject =
                     labBatchEjb.createLabBatch(vesselSet, userBean.getBspUser().getUsername(),
-                            jiraTicketId.trim());
+                            jiraTicketId.trim(), LabBatch.LabBatchType.WORKFLOW, CreateFields.IssueType.EXOME_EXPRESS);
         } else {
 
-            /*
-               If a new ticket is to be created, pass the description, summary, due date and important info in a batch
-               object acting as a DTO
-            */
+            // If a new ticket is to be created, pass the description, summary, due date and important info in a batch
+            // object acting as a DTO.
             batchObject = new LabBatch(summary.trim(), vesselSet, LabBatch.LabBatchType.WORKFLOW, description, dueDate,
                     important);
 
-            labBatchEjb.createLabBatch(batchObject, userBean.getBspUser().getUsername());
+            labBatchEjb.createLabBatch(batchObject, userBean.getBspUser().getUsername(),
+                    CreateFields.IssueType.EXOME_EXPRESS);
+        }
+
+        // Link the JIRA tickets for the batch created to the pdo batches.
+        for (String pdoKey : LabVessel.extractPdoKeyList(selectedBatchVessels)) {
+            labBatchEjb.linkJiraBatchToTicket(pdoKey, batchObject);
         }
 
         addMessage(MessageFormat.format("Lab batch ''{0}'' has been ''{1}''.",
                 batchObject.getJiraTicket().getTicketName(), isUseExistingTicket() ? "assigned" : "created"));
 
-        //Forward
         return new RedirectResolution(CreateBatchActionBean.class, CONFIRM_ACTION)
                 .addParameter("batchLabel", batchObject.getBatchName());
     }
@@ -338,7 +352,7 @@ public class SearchActionBean extends CoreActionBean {
      * This method takes a list of search keys turns newlines into commas and splits the individual search keys into
      * a list.
      *
-     * @return A list of all the keys from the searchKey string.
+     * @return {@link List<String>} of all the keys from the searchKey string
      */
     private static List<String> cleanInputString(String searchKey, boolean includeSampleFixup) {
         if (searchKey == null) {
