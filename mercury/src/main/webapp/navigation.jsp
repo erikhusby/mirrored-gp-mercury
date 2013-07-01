@@ -2,16 +2,6 @@
 <%@ taglib uri="http://mercury.broadinstitute.org/Mercury/security" prefix="security" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
-<%--
-  ~ The Broad Institute
-  ~ SOFTWARE COPYRIGHT NOTICE AGREEMENT
-  ~ This software and its documentation are copyright 2013 by the
-  ~ Broad Institute/Massachusetts Institute of Technology. All rights are reserved.
-  ~
-  ~ This software is supplied without any warranty or guaranteed support
-  ~ whatsoever. Neither the Broad Institute nor MIT can be responsible for its
-  ~ use, misuse, or functionality.
-  --%>
 
 <header class="navbar">
     <div class="navbar-inner">
@@ -164,6 +154,13 @@
 
         </ul>
         <ul class="nav pull-right global-search navbar-search">
+            <li style="white-space:nowrap;">
+                <stripes:form beanclass="org.broadinstitute.gpinformatics.athena.presentation.search.SearchActionBean" name="quickSearch" method="GET">
+                    <input type="search" data-type="search" name="searchKey" placeholder="Search for a RP, PDO or P"
+                           class="search-query ui-input-text ui-body-null" autosave="unique" results="10"
+                           style="margin-top: 5px;vertical-align: top;height:14px;"/>
+                </stripes:form>
+            </li>
             <li class="dropdown">
                 <a id="searchNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span
                         class="icon-search"></span> Search <b class="caret"></b></a>
@@ -189,5 +186,6 @@
                     </security:authorizeBlock>
                 </ul>
             </li>
+        </ul>
     </div>
 </header>

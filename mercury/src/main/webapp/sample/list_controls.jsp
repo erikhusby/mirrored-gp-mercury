@@ -1,6 +1,5 @@
 <%@ page import="org.broadinstitute.gpinformatics.mercury.presentation.sample.CollaboratorControlsActionBean" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
-<%@ taglib prefix='fn' uri='http://java.sun.com/jsp/jstl/functions' %>
 
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.CollaboratorControlsActionBean"/>
@@ -41,7 +40,7 @@
         <p>
             <stripes:link title="<%=CollaboratorControlsActionBean.CREATE_CONTROL%>"
                           beanclass="${actionBean.class.name}" event="create" class="pull-right">
-                <span class="icon-shopping-cart"></span> <%=CollaboratorControlsActionBean.CREATE_CONTROL%>
+                <span class="icon-plus"></span> <%=CollaboratorControlsActionBean.CREATE_CONTROL%>
             </stripes:link>
         </p>
 

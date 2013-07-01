@@ -66,25 +66,47 @@ public class ZimsIlluminaRunFactory {
         IlluminaSequencingRun illuminaRun = OrmUtil.proxySafeCast(sequencingRun, IlluminaSequencingRun.class);
         RunCartridge flowcell = illuminaRun.getSampleCartridge();
 
-        // Fetch samples and product orders
-        Set<SampleInstance> sampleInstances = flowcell.getSampleInstances(LabVessel.SampleType.PREFER_PDO,
-                LabBatch.LabBatchType.WORKFLOW);
-        Set<String> sampleIds = new HashSet<String>();
-        Set<String> productOrderKeys = new HashSet<String>();
-        for (SampleInstance sampleInstance : sampleInstances) {
-            sampleIds.add(sampleInstance.getStartingSample().getSampleKey());
-            if (sampleInstance.getProductOrderKey() != null) {
-                productOrderKeys.add(sampleInstance.getProductOrderKey());
+        List<List<SampleInstanceDto>> perLaneSampleInstanceDtos = new ArrayList<>();
+        Set<String> sampleIds = new HashSet<>();
+        Set<String> productOrderKeys = new HashSet<>();
+
+        // Makes DTOs for aliquot samples and product orders, per lane.
+        Iterator<String> positionNames = flowcell.getVesselGeometry().getPositionNames();
+        short laneNum = 0;
+        while (positionNames.hasNext()) {
+            ++laneNum;
+            List<SampleInstanceDto> sampleInstanceDtos = new ArrayList<>();
+            perLaneSampleInstanceDtos.add(sampleInstanceDtos);
+            String positionName = positionNames.next();
+            VesselPosition vesselPosition = VesselPosition.getByName(positionName);
+            PipelineTransformationCriteria criteria = new PipelineTransformationCriteria();
+            flowcell.getContainerRole().evaluateCriteria(vesselPosition, criteria, Ancestors, null, 0);
+            for (LabVessel labVessel : criteria.getNearestLabVessels()) {
+                Set<SampleInstance> sampleInstances =
+                        labVessel.getSampleInstances(LabVessel.SampleType.PREFER_PDO, LabBatch.LabBatchType.WORKFLOW);
+                for (SampleInstance sampleInstance : sampleInstances) {
+                    String productOrderKey = sampleInstance.getProductOrderKey();
+                    if (productOrderKey != null) {
+                        productOrderKeys.add(productOrderKey);
+                    }
+                    String sampleId = (sampleInstance.getBspExportSample() != null) ?
+                            sampleInstance.getBspExportSample().getSampleKey() :
+                            sampleInstance.getStartingSample().getSampleKey();
+                    sampleIds.add(sampleId);
+                    sampleInstanceDtos
+                            .add(new SampleInstanceDto(laneNum, labVessel, sampleInstance, sampleId, productOrderKey));
+                }
             }
         }
+
         Map<String, BSPSampleDTO> mapSampleIdToDto = bspSampleDataFetcher.fetchSamplesFromBSP(sampleIds);
-        Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<String, ProductOrder>();
+        Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<>();
         for (String productOrderKey : productOrderKeys) {
             mapKeyToProductOrder.put(productOrderKey, athenaClientService.retrieveProductOrderDetails(productOrderKey));
         }
 
         List<Control> activeControls = controlDao.findAllActive();
-        Map<String, Control> mapNameToControl = new HashMap<String, Control>();
+        Map<String, Control> mapNameToControl = new HashMap<>();
         for (Control activeControl : activeControls) {
             mapNameToControl.put(activeControl.getCollaboratorSampleId(), activeControl);
         }
@@ -95,42 +117,39 @@ public class ZimsIlluminaRunFactory {
                 flowcell.getLabel(), sequencingRun.getMachineName(), null, dateFormat.format(illuminaRun.getRunDate()),
                 false, sequencingRun.getActualReadStructure(), 0.0, sequencingRun.getSetupReadStructure());
 
-        Iterator<String> positionNames = flowcell.getVesselGeometry().getPositionNames();
-        short laneNum = 1;
-        while (positionNames.hasNext()) {
-            String positionName = positionNames.next();
-            VesselPosition vesselPosition = VesselPosition.getByName(positionName);
-            PipelineTransformationCriteria criteria = new PipelineTransformationCriteria();
-            flowcell.getContainerRole().evaluateCriteria(vesselPosition, criteria, Ancestors, null, 0);
-            ArrayList<LibraryBean> libraryBeans = new ArrayList<LibraryBean>();
-            for (LabVessel labVessel : criteria.getNearestLabVessels()) {
-                libraryBeans.addAll(makeLibraryBeans(labVessel, mapSampleIdToDto, mapKeyToProductOrder, mapNameToControl));
+        for (List<SampleInstanceDto> sampleInstanceDtos : perLaneSampleInstanceDtos) {
+            if (sampleInstanceDtos != null && sampleInstanceDtos.size() > 0) {
+                ArrayList<LibraryBean> libraryBeans = new ArrayList<>();
+                short laneNumber = sampleInstanceDtos.get(0).getLaneNumber();
+                libraryBeans.addAll(
+                        makeLibraryBeans(sampleInstanceDtos, mapSampleIdToDto, mapKeyToProductOrder, mapNameToControl));
+                ZimsIlluminaChamber lane = new ZimsIlluminaChamber(laneNumber, libraryBeans, null, null);
+                run.addLane(lane);
             }
-            ZimsIlluminaChamber lane = new ZimsIlluminaChamber(laneNum, libraryBeans, null, null);
-            run.addLane(lane);
-            laneNum++;
         }
 
         return run;
     }
 
     @DaoFree
-    public List<LibraryBean> makeLibraryBeans(LabVessel labVessel, Map<String, BSPSampleDTO> mapSampleIdToDto,
-            Map<String, ProductOrder> mapKeyToProductOrder, Map<String, Control> mapNameToControl) {
-        List<LibraryBean> libraryBeans = new ArrayList<LibraryBean>();
-        // todo jmt reuse the sampleInstances fetched in makeZimsIlluminaRun? Would save a few milliseconds.
-        Set<SampleInstance> sampleInstances = labVessel.getSampleInstances(LabVessel.SampleType.PREFER_PDO,
-                LabBatch.LabBatchType.WORKFLOW);
-        for (SampleInstance sampleInstance : sampleInstances) {
-            ProductOrder productOrder = null;
-            if (sampleInstance.getProductOrderKey() != null) {
-                productOrder = mapKeyToProductOrder.get(sampleInstance.getProductOrderKey());
-            }
+    public List<LibraryBean> makeLibraryBeans(List<SampleInstanceDto> sampleInstanceDtos,
+                                              Map<String, BSPSampleDTO> mapSampleIdToDto,
+                                              Map<String, ProductOrder> mapKeyToProductOrder,
+                                              Map<String, Control> mapNameToControl) {
+        List<LibraryBean> libraryBeans = new ArrayList<>();
+        for (SampleInstanceDto sampleInstanceDto : sampleInstanceDtos) {
+            SampleInstance sampleInstance = sampleInstanceDto.getSampleInstance();
+            ProductOrder productOrder = (sampleInstanceDto.getProductOrderKey() != null) ?
+                    mapKeyToProductOrder.get(sampleInstanceDto.getProductOrderKey()) : null;
 
-            LabBatch labBatch = sampleInstance.getLabBatch();
+            // LcSet is null unless there is exactly one workflow lab batch.
             String lcSet = null;
-            if (labBatch != null && labBatch.getJiraTicket() != null) {
-                lcSet = labBatch.getJiraTicket().getTicketId();
+            Collection<LabBatch> workflowLabBatches = sampleInstance.getAllWorkflowLabBatches();
+            if (workflowLabBatches.size() == 1) {
+                LabBatch labBatch = workflowLabBatches.iterator().next();
+                if (labBatch.getJiraTicket() != null) {
+                    lcSet = labBatch.getJiraTicket().getTicketId();
+                }
             }
 
             // This loop goes through all the reagents and takes the last bait name (under the assumption that
@@ -170,10 +189,10 @@ public class ZimsIlluminaRunFactory {
                         indexingSchemeEntity.getName(), positionSequenceMap);
             }
 
-            BSPSampleDTO bspSampleDTO = mapSampleIdToDto.get(sampleInstance.getStartingSample().getSampleKey());
+            BSPSampleDTO bspSampleDTO = mapSampleIdToDto.get(sampleInstanceDto.getSampleId());
 
             libraryBeans.add(
-                createLibraryBean(labVessel, productOrder, bspSampleDTO, lcSet, baitName,
+                createLibraryBean(sampleInstanceDto.getLabVessel(), productOrder, bspSampleDTO, lcSet, baitName,
                                   indexingSchemeEntity, catNames, indexingSchemeDto, mapNameToControl));
         }
 
@@ -303,4 +322,84 @@ public class ZimsIlluminaRunFactory {
         @Override
         public void evaluateVesselPostOrder(Context context) {}
     }
+
+    static class SampleInstanceDto {
+        private short laneNumber;
+        private LabVessel labVessel;
+        private SampleInstance sampleInstance;
+        private String sampleId;
+        private String productOrderKey;
+
+        public SampleInstanceDto(short laneNumber, LabVessel labVessel, SampleInstance sampleInstance, String sampleId,
+                                  String productOrderKey) {
+            this.laneNumber = laneNumber;
+            this.labVessel = labVessel;
+            this.sampleInstance = sampleInstance;
+            this.sampleId = sampleId;
+            this.productOrderKey = productOrderKey;
+        }
+
+        public short getLaneNumber() {
+            return laneNumber;
+        }
+
+        public LabVessel getLabVessel() {
+            return labVessel;
+        }
+
+        public SampleInstance getSampleInstance() {
+            return sampleInstance;
+        }
+
+        public String getSampleId() {
+            return sampleId;
+        }
+
+        public String getProductOrderKey() {
+            return productOrderKey;
+        }
+
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof SampleInstanceDto)) {
+                return false;
+            }
+
+            SampleInstanceDto that = (SampleInstanceDto) o;
+
+            if (laneNumber != that.laneNumber) {
+                return false;
+            }
+            if (labVessel != null ? !labVessel.equals(that.labVessel) : that.labVessel != null) {
+                return false;
+            }
+            if (productOrderKey != null ? !productOrderKey.equals(that.productOrderKey) :
+                    that.productOrderKey != null) {
+                return false;
+            }
+            if (sampleId != null ? !sampleId.equals(that.sampleId) : that.sampleId != null) {
+                return false;
+            }
+            if (sampleInstance != null ? !sampleInstance.equals(that.sampleInstance) : that.sampleInstance != null) {
+                return false;
+            }
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = laneNumber;
+            result = 31 * result + (labVessel != null ? labVessel.hashCode() : 0);
+            result = 31 * result + (sampleInstance != null ? sampleInstance.hashCode() : 0);
+            result = 31 * result + (sampleId != null ? sampleId.hashCode() : 0);
+            result = 31 * result + (productOrderKey != null ? productOrderKey.hashCode() : 0);
+            return result;
+        }
+    }
+
 }

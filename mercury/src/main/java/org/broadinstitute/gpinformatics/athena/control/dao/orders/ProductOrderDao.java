@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 
-import org.broadinstitute.gpinformatics.athena.boundary.billing.AutomatedBiller;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderCompletionStatus;
@@ -23,6 +22,7 @@ import javax.persistence.NoResultException;
 import javax.persistence.Query;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Fetch;
 import javax.persistence.criteria.Join;
 import javax.persistence.criteria.JoinType;
 import javax.persistence.criteria.ListJoin;
@@ -67,7 +67,8 @@ public class ProductOrderDao extends GenericDao {
         Product,
         ProductFamily,
         ResearchProject,
-        Samples
+        Samples,
+        RiskItems
     }
 
     private static class ProductOrderDaoCallback implements GenericDaoCallback<ProductOrder> {
@@ -84,10 +85,16 @@ public class ProductOrderDao extends GenericDao {
 
         @Override
         public void callback(CriteriaQuery<ProductOrder> criteriaQuery, Root<ProductOrder> productOrder) {
-            if (fetchSpecs.contains(FetchSpec.Samples)) {
+            // Risk Item fetching requires sample fetching so don't require the user to know that.
+            if (fetchSpecs.contains(FetchSpec.Samples) || fetchSpecs.contains(FetchSpec.RiskItems)) {
                 // This is one to many so set it to be distinct.
                 criteriaQuery.distinct(true);
-                productOrder.fetch(ProductOrder_.samples, JoinType.LEFT);
+                Fetch<ProductOrder, ProductOrderSample> pdoSampleFetch =
+                        productOrder.fetch (ProductOrder_.samples, JoinType.LEFT);
+
+                if (fetchSpecs.contains(FetchSpec.RiskItems)) {
+                    pdoSampleFetch.fetch(ProductOrderSample_.riskItems, JoinType.LEFT);
+                }
             }
 
             if (fetchSpecs.contains(FetchSpec.Product) || fetchSpecs.contains(FetchSpec.ProductFamily)) {
@@ -145,6 +152,24 @@ public class ProductOrderDao extends GenericDao {
                 new ProductOrderDaoCallback(fs));
     }
 
+    /**
+     * Return the {@link ProductOrder}s specified by the {@link List} of business keys, applying optional fetches.
+     *
+     * @param businessKey Business key to look up.
+     * @param fs Varargs array of Fetch Specs.
+     *
+     * @return List of ProductOrders.
+     */
+    public ProductOrder findByBusinessKey(String businessKey, FetchSpec... fs) {
+        List<ProductOrder> orders = findListByBusinessKeyList(Collections.singletonList(businessKey), fs);
+
+        if (orders.size() < 1) {
+            return null;
+        }
+
+        return orders.get(0);
+    }
+
     public List<ProductOrder> findByWorkflowName(@Nonnull String workflowName) {
 
         EntityManager entityManager = getEntityManager();
@@ -152,7 +177,7 @@ public class ProductOrderDao extends GenericDao {
 
         CriteriaQuery<ProductOrder> criteriaQuery = criteriaBuilder.createQuery(ProductOrder.class);
 
-        List<Predicate> predicates = new ArrayList<Predicate>();
+        List<Predicate> predicates = new ArrayList<>();
 
         Root<ProductOrder> productOrderRoot = criteriaQuery.from(ProductOrder.class);
         Join<ProductOrder, Product> productJoin = productOrderRoot.join(ProductOrder_.product);
@@ -266,7 +291,7 @@ public class ProductOrderDao extends GenericDao {
         }
 
         Map<String, ProductOrderCompletionStatus> progressCounterMap =
-                new HashMap<String, ProductOrderCompletionStatus>(results.size());
+                new HashMap<>(results.size());
         for (Object resultObject : results) {
             Object[] result = (Object[]) resultObject;
             String businessKey = ProductOrder.createBusinessKey((Long) result[1], (String) result[0]);
