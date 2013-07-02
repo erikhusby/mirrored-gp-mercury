@@ -90,7 +90,7 @@ public class ProductOrderDao extends GenericDao {
                 // This is one to many so set it to be distinct.
                 criteriaQuery.distinct(true);
                 Fetch<ProductOrder, ProductOrderSample> pdoSampleFetch =
-                        productOrder.fetch (ProductOrder_.samples, JoinType.LEFT);
+                        productOrder.fetch(ProductOrder_.samples, JoinType.LEFT);
 
                 if (fetchSpecs.contains(FetchSpec.RiskItems)) {
                     pdoSampleFetch.fetch(ProductOrderSample_.riskItems, JoinType.LEFT);
@@ -113,19 +113,32 @@ public class ProductOrderDao extends GenericDao {
     }
 
     /**
-     * Find the order using the business key (the jira ticket number).
+     * Find the order using the business key.
      *
-     * @param key The business key to look up
+     * @param key The business key to look up, this should have the form of PDO-XYZ for placed orders or
+     *            Draft-ABC for draft orders.
      *
      * @return The matching order
      */
-    public ProductOrder findByBusinessKey(@Nonnull String key) {
-        ProductOrder.JiraOrId jiraOrId = ProductOrder.convertBusinessKeyToJiraOrId(key);
-        if (jiraOrId.jiraTicketKey != null) {
-            return findSingle(ProductOrder.class, ProductOrder_.jiraTicketKey, jiraOrId.jiraTicketKey);
-        }
+    public ProductOrder findByBusinessKey(@Nonnull final String key, FetchSpec... fetchSpecs) {
 
-        return findSingle(ProductOrder.class, ProductOrder_.productOrderId, jiraOrId.productOrderId);
+        return findSingle(ProductOrder.class, new ProductOrderDaoCallback(fetchSpecs) {
+            @Override
+            public void callback(CriteriaQuery<ProductOrder> criteriaQuery, Root<ProductOrder> productOrder) {
+
+                super.callback(criteriaQuery, productOrder);
+
+                ProductOrder.JiraOrId jiraOrId = ProductOrder.convertBusinessKeyToJiraOrId(key);
+
+                CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
+
+                Predicate predicate = (jiraOrId.jiraTicketKey == null) ?
+                        criteriaBuilder.equal(productOrder.get(ProductOrder_.productOrderId), jiraOrId.productOrderId) :
+                        criteriaBuilder.equal(productOrder.get(ProductOrder_.jiraTicketKey), jiraOrId.jiraTicketKey);
+
+                criteriaQuery.where(predicate);
+            }
+        });
     }
 
     /**
@@ -152,23 +165,6 @@ public class ProductOrderDao extends GenericDao {
                 new ProductOrderDaoCallback(fs));
     }
 
-    /**
-     * Return the {@link ProductOrder}s specified by the {@link List} of business keys, applying optional fetches.
-     *
-     * @param businessKey Business key to look up.
-     * @param fs Varargs array of Fetch Specs.
-     *
-     * @return List of ProductOrders.
-     */
-    public ProductOrder findByBusinessKey(String businessKey, FetchSpec... fs) {
-        List<ProductOrder> orders = findListByBusinessKeyList(Collections.singletonList(businessKey), fs);
-
-        if (orders.size() < 1) {
-            return null;
-        }
-
-        return orders.get(0);
-    }
 
     public List<ProductOrder> findByWorkflowName(@Nonnull String workflowName) {
 
