@@ -65,6 +65,7 @@ public class SampleInstance {
 
     private final MercurySample sample;
 
+    // todo jmt remove this?
     private MolecularState molecularState;
 
     private final List<Reagent> reagents = new ArrayList<>();
