@@ -14,14 +14,6 @@ import java.util.Collection;
  * @author epolk
  */
 public interface MercuryClientService extends Serializable {
-
-    /**
-     * Attempts to add all product order's samples to the pico bucket.
-     * @param pdo with samples to be added
-     * @return ProductOrderSamples that were successfully added to pico bucket.
-     */
-    Collection<ProductOrderSample> addSampleToPicoBucket(@Nonnull ProductOrder pdo);
-
     /**
      * Adds the specified product order samples to the pico bucket.
      *
