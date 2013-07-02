@@ -479,21 +479,21 @@ public class LabEventFactory implements Serializable {
     /**
      * Builds plate / rack entities from JAXB fields.
      * @param mapBarcodeToVessel    Existing entities fetched from the database.  New entities are added to this map.
-     * @param plateJaxb list of plates / racks
-     * @param positionMap list of tubes / positions
+     * @param platesJaxb list of plates / racks
+     * @param positionMaps list of tubes / positions
      * @param create true if this method should create entities not found in mapBarcodeToVessel
      * @param source true if the plate is a source in an event
      * @return map from rack barcode to tube formation (in mapBarcodeToVessel, tube formations are mapped by their digest)
      */
     @DaoFree
     private Map<String, TubeFormation> buildPlates(Map<String, LabVessel> mapBarcodeToVessel,
-            List<PlateType> plateJaxb, List<PositionMapType> positionMap, boolean create, boolean source) {
+            List<PlateType> platesJaxb, List<PositionMapType> positionMaps, boolean create, boolean source) {
         Map<String, TubeFormation> mapBarcodeToTubeFormation = new HashMap<>();
-        for (PlateType plateType : plateJaxb) {
+        for (PlateType plateType : platesJaxb) {
             if (plateType.getPhysType().equals(PHYS_TYPE_TUBE_RACK)) {
                 List<Pair<VesselPosition, String>> positionBarcodeList = new ArrayList<>();
                 boolean found = false;
-                for (PositionMapType positionMapType : positionMap) {
+                for (PositionMapType positionMapType : positionMaps) {
                     if (positionMapType.getBarcode().equals(plateType.getBarcode())) {
                         found = true;
                         for (ReceptacleType receptacleType : positionMapType.getReceptacle()) {
@@ -531,6 +531,11 @@ public class LabEventFactory implements Serializable {
                 }
             } else {
                 LabVessel labVessel = mapBarcodeToVessel.get(plateType.getBarcode());
+                for (PositionMapType positionMapType : positionMaps) {
+                    if (positionMapType.getBarcode().equals(plateType.getBarcode())) {
+                        throw new RuntimeException("Unexpected positionMap for plate " + plateType.getBarcode());
+                    }
+                }
                 if (labVessel == null) {
                     mapBarcodeToVessel.put(plateType.getBarcode(), new StaticPlate(plateType.getBarcode(),
                             StaticPlate.PlateType.getByDisplayName(plateType.getPhysType())));
@@ -673,14 +678,17 @@ public class LabEventFactory implements Serializable {
             }
         }
 
+        // todo jmt why is this done twice?
         addSourceTubeFormationsToMap(plateCherryPickEvent, mapBarcodeToSourceTubeFormation, mapBarcodeToSourceTube, mapBarcodeToSourceRackOfTubes);
         MiSeqReagentKit reagentKit = null;
         for (CherryPickSourceType cherryPickSourceType : plateCherryPickEvent.getSource()) {
+            // todo jmt take barcode from plate element, not source element
             String reagentKitBarcode = cherryPickSourceType.getDestinationBarcode();
             if (reagentKit == null) {
                 reagentKit = new MiSeqReagentKit(reagentKitBarcode);
             } else {
                 if (reagentKitBarcode.equals(reagentKit.getLabel())) {
+                    // todo jmt why limit this?
                     throw new RuntimeException("Can only transfer to one ReagentKit ");
                 }
             }

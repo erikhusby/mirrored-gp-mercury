@@ -3,7 +3,9 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabBatchComposition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -65,7 +67,7 @@ public class SampleInstance {
 
     private MolecularState molecularState;
 
-    private final List<Reagent> reagents = new ArrayList<Reagent>();
+    private final List<Reagent> reagents = new ArrayList<>();
 
     // todo use this when the definitive batch is known
     private LabBatch labBatch;
@@ -113,8 +115,45 @@ public class SampleInstance {
         this.molecularState = molecularState;
     }
 
-    public void addReagent(Reagent reagent) {
-        reagents.add(reagent);
+    public void addReagent(Reagent newReagent) {
+        // If we're adding a molecular index
+        if (OrmUtil.proxySafeIsInstance(newReagent, MolecularIndexReagent.class)) {
+            MolecularIndexReagent newMolecularIndexReagent =
+                    OrmUtil.proxySafeCast(newReagent, MolecularIndexReagent.class);
+            boolean foundExistingIndex = false;
+            boolean foundMergedScheme = false;
+            // The new index has to be merged with the index in the field, if any
+            // E.g. If the field index is Illumina_P7-M, and the new index is Illumina_P5-M, we need a merged index
+            // called Illumina_P5-M_P7-M.
+            for (int i = 0; i < reagents.size(); i++) {
+                Reagent fieldReagent = reagents.get(i);
+                if (OrmUtil.proxySafeIsInstance(fieldReagent, MolecularIndexReagent.class)) {
+                    foundExistingIndex = true;
+                    MolecularIndexReagent fieldMolecularIndexReagent =
+                            OrmUtil.proxySafeCast(fieldReagent, MolecularIndexReagent.class);
+                    for (MolecularIndex molecularIndex : fieldMolecularIndexReagent.getMolecularIndexingScheme()
+                            .getIndexes().values()) {
+                        for (MolecularIndexingScheme molecularIndexingScheme :
+                                molecularIndex.getMolecularIndexingSchemes()) {
+                            if (molecularIndexingScheme.getIndexes().values().containsAll(
+                                    newMolecularIndexReagent.getMolecularIndexingScheme().getIndexes().values())) {
+                                foundMergedScheme = true;
+                                reagents.remove(i);
+                                reagents.add(new MolecularIndexReagent(molecularIndexingScheme));
+                            }
+                        }
+                    }
+                    break;
+                }
+            }
+            if (!foundExistingIndex) {
+                reagents.add(newReagent);
+            } else if (!foundMergedScheme) {
+                throw new RuntimeException("Failed to find merged molecular index scheme");
+            }
+        } else {
+            reagents.add(newReagent);
+        }
     }
 
     public List<Reagent> getReagents() {
@@ -127,7 +166,7 @@ public class SampleInstance {
      * @return A list of indexes associated with this sample instance.
      */
     public List<MolecularIndexReagent> getIndexes() {
-        List<MolecularIndexReagent> indexes = new ArrayList<MolecularIndexReagent>();
+        List<MolecularIndexReagent> indexes = new ArrayList<>();
         for (Reagent reagent : reagents) {
             if (OrmUtil.proxySafeIsInstance(reagent, MolecularIndexReagent.class)) {
                 indexes.add((MolecularIndexReagent) reagent);
@@ -151,7 +190,7 @@ public class SampleInstance {
 
     public void addLabBatches(Collection<LabBatch> batches){
         if(allLabBatches == null){
-            allLabBatches = new HashSet<LabBatch>();
+            allLabBatches = new HashSet<>();
         }
         allLabBatches.addAll(batches);
         // todo jmt improve this logic
@@ -161,7 +200,7 @@ public class SampleInstance {
     }
 
     public Collection<LabBatch> getAllWorkflowLabBatches() {
-        Set<LabBatch> workflowBatches = new HashSet<LabBatch>();
+        Set<LabBatch> workflowBatches = new HashSet<>();
         for (LabBatch batch : allLabBatches) {
             if (batch.getLabBatchType() == LabBatch.LabBatchType.WORKFLOW) {
                 workflowBatches.add(batch);
@@ -180,10 +219,10 @@ public class SampleInstance {
      */
     public List<LabBatchComposition> getLabBatchCompositionInVesselContext(LabVessel vessel) {
         List<LabBatchComposition> allLabBatchCompositions = vessel.getWorkflowLabBatchCompositions();
-        List<LabBatchComposition> filteredBatchCompositions = new ArrayList<LabBatchComposition>();
-        for (LabBatch labBatch : getAllWorkflowLabBatches()) {
+        List<LabBatchComposition> filteredBatchCompositions = new ArrayList<>();
+        for (LabBatch localLabBatch : getAllWorkflowLabBatches()) {
             for (LabBatchComposition composition : allLabBatchCompositions) {
-                if (composition.getLabBatch().equals(labBatch)) {
+                if (composition.getLabBatch().equals(localLabBatch)) {
                     filteredBatchCompositions.add(composition);
                 }
             }

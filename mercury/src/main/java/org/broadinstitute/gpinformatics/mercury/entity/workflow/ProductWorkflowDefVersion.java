@@ -39,9 +39,9 @@ public class ProductWorkflowDefVersion implements Serializable {
     private final List<WorkflowProcessDef> workflowProcessDefs = new ArrayList<>();
     @XmlIDREF
     private final List<SequencingConfigDef> sequencingConfigDefs = new ArrayList<>();
-    private transient Map<String, WorkflowProcessDef> processDefsByName = new HashMap<String, WorkflowProcessDef>();
+    private transient Map<String, WorkflowProcessDef> processDefsByName = new HashMap<>();
 
-    private final List<String> entryPointsUsed = new ArrayList<String>();
+    private final List<String> entryPointsUsed = new ArrayList<>();
     private transient Map<String, LabEventNode> mapNameToLabEvent;
     private transient LabEventNode rootLabEventNode;
     private transient ProductWorkflowDef productWorkflowDef;
@@ -60,9 +60,6 @@ public class ProductWorkflowDefVersion implements Serializable {
     /**
      * findBucketDef will utilize the WorkflowConfig to return an instance of a {@link org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef} based
      * on a given workflow definition and and step labEventType
-     * @param workflowName
-     * @param stepDef
-     * @return
      */
     public static WorkflowBucketDef findBucketDef(@Nonnull String workflowName, @Nonnull LabEventType stepDef) {
 
@@ -125,7 +122,7 @@ public class ProductWorkflowDefVersion implements Serializable {
     }
 
     public List<WorkflowBucketDef> getBuckets() {
-        List<WorkflowBucketDef> workflowBucketDefs = new ArrayList<WorkflowBucketDef>();
+        List<WorkflowBucketDef> workflowBucketDefs = new ArrayList<>();
         for (WorkflowProcessDef workflowProcessDef : workflowProcessDefs) {
             workflowBucketDefs.addAll(workflowProcessDef.getEffectiveVersion().getBuckets());
         }
@@ -134,8 +131,8 @@ public class ProductWorkflowDefVersion implements Serializable {
 
     public static class LabEventNode {
         private final LabEventType labEventType;
-        private final List<LabEventNode> predecessors = new ArrayList<LabEventNode>();
-        private final List<LabEventNode> successors = new ArrayList<LabEventNode>();
+        private final List<LabEventNode> predecessors = new ArrayList<>();
+        private final List<LabEventNode> successors = new ArrayList<>();
 
         private final WorkflowStepDef stepDef;
 
@@ -204,11 +201,11 @@ public class ProductWorkflowDefVersion implements Serializable {
     /**
      * This method will find the workflow step that is associated with the given Event type
      * @param eventTypeName name of an event to use as an index to the cataloged workflow steps
-     * @return
+     * @return found node
      */
     public LabEventNode findStepByEventType(String eventTypeName) {
         if (mapNameToLabEvent == null) {
-            mapNameToLabEvent = new HashMap<String, LabEventNode>();
+            mapNameToLabEvent = new HashMap<>();
             buildLabEventGraph();
         }
         return mapNameToLabEvent.get(eventTypeName);
@@ -243,8 +240,6 @@ public class ProductWorkflowDefVersion implements Serializable {
     /**
      * Similar to {@link #isNextStepBucket(String)}, This method uses the ability to navigates the workflow forward to
      * determine if the next workflow step, that is not found on a "Branch", is bucket step
-     * @param eventTypeName
-     * @return
      */
     public boolean isNextNonDeadBranchStepBucket(String eventTypeName) {
          WorkflowStepDef nextStep = getNextNonDeadBranchStep(eventTypeName);
@@ -256,8 +251,6 @@ public class ProductWorkflowDefVersion implements Serializable {
      * This convenience method performs both a search of a workflow step based on an event and checks if that step
      * is defined as being on a workflow branch that dead ends
      *
-     * @param eventTypeName
-     * @return
      */
     public boolean isStepDeadBranch(String eventTypeName) {
 
@@ -276,8 +269,6 @@ public class ProductWorkflowDefVersion implements Serializable {
      * Similar to {@link #isNextNonDeadBranchStepBucket(String)} this method navigates forward in the Workflow to find
      * the next step that is not located on a branch of the workflow that dead ends.
      *
-     * @param eventTypeName
-     * @return
      */
     public WorkflowStepDef getNextNonDeadBranchStep(String eventTypeName) {
         WorkflowStepDef nextStep = getNextStep(eventTypeName);
@@ -360,27 +351,17 @@ public class ProductWorkflowDefVersion implements Serializable {
      * @return list of errors, empty if event is valid
      */
     public List<ValidationError> validate(LabVessel labVessel, String nextEventTypeName) {
-        List<ValidationError> errors = new ArrayList<ValidationError>();
+        List<ValidationError> errors = new ArrayList<>();
 
         LabEventNode labEventNode = findStepByEventType(nextEventTypeName);
         if (labEventNode == null) {
             errors.add(new ValidationError("Failed to find " + nextEventTypeName + " in " +
                     productWorkflowDef.getName() + " version " + getVersion()));
         } else {
-            Set<String> actualEventNames = new HashSet<String>();
+            Set<String> actualEventNames = new HashSet<>();
 
-            boolean start = labEventNode.getPredecessors().isEmpty();
-            Set<String> validPredecessorEventNames = new HashSet<String>();
-            for (LabEventNode predecessorNode : labEventNode.getPredecessors()) {
-                validPredecessorEventNames.add(predecessorNode.getLabEventType().getName());
-                // todo jmt recurse
-                if (predecessorNode.getStepDef().isOptional()) {
-                    start = predecessorNode.getPredecessors().isEmpty();
-                    for (LabEventNode predPredEventNode : predecessorNode.getPredecessors()) {
-                        validPredecessorEventNames.add(predPredEventNode.getLabEventType().getName());
-                    }
-                }
-            }
+            Set<String> validPredecessorEventNames = new HashSet<>();
+            boolean start = recurseToNonOptional(validPredecessorEventNames, labEventNode);
 
             boolean found = false;
             found = validateTransfers(nextEventTypeName, errors, validPredecessorEventNames, actualEventNames,
@@ -399,6 +380,24 @@ public class ProductWorkflowDefVersion implements Serializable {
             }
         }
         return errors;
+    }
+
+    /**
+     * Add predecessors to list of valid events, and if they're optional, keep adding predecessors until find one
+     * that is not optional.
+     * @param validPredecessorEventNames this method adds predecessors to this collection
+     * @param labEventNode node for which to evaluate predecessors
+     * @return true if reached start of workflow
+     */
+    private boolean recurseToNonOptional(Set<String> validPredecessorEventNames, LabEventNode labEventNode) {
+        boolean start = labEventNode.getPredecessors().isEmpty();
+        for (LabEventNode predecessorNode : labEventNode.getPredecessors()) {
+            validPredecessorEventNames.add(predecessorNode.getLabEventType().getName());
+            if (predecessorNode.getStepDef().isOptional()) {
+                start = recurseToNonOptional(validPredecessorEventNames, predecessorNode);
+            }
+        }
+        return start;
     }
 
     private static boolean validateTransfers(String nextEventTypeName, List<ValidationError> errors,
@@ -442,7 +441,8 @@ public class ProductWorkflowDefVersion implements Serializable {
 
         ProductWorkflowDefVersion that = (ProductWorkflowDefVersion) o;
 
-        return new EqualsBuilder().append(effectiveDate, that.effectiveDate).append(version, that.version).isEquals();
+        return new EqualsBuilder().append(effectiveDate, that.getEffectiveDate()).append(version, that.getVersion()).
+                isEquals();
     }
 
     @Override

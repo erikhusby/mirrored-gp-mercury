@@ -2,18 +2,25 @@ package org.broadinstitute.gpinformatics.mercury.entity.reagent;
 
 import org.hibernate.envers.Audited;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A sequence of nucleotides that serves to add a chemical identifier to a target sequence.
@@ -24,9 +31,9 @@ import java.util.Map;
 @Audited
 @Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(name = "uk_mi_sequence", columnNames = {"sequence"}))
 public class MolecularIndex implements Serializable {
-    public static final long serialVersionUID = 2011122101l;
+    private static final long serialVersionUID = 2011122101L;
 
-    private static final Map<Character, Integer> BASE_INDEXES = new HashMap<Character, Integer>(4);
+    private static final Map<Character, Integer> BASE_INDEXES = new HashMap<>(4);
     static {
         BASE_INDEXES.put('A', 0);
         BASE_INDEXES.put('C', 1);
@@ -36,7 +43,14 @@ public class MolecularIndex implements Serializable {
     }
     private static final int EMPTY_INDEX = 4;
 
+    @Id
+    @SequenceGenerator(name="seq_molecular_index", schema = "mercury", sequenceName="seq_molecular_index")
+    @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_molecular_index")
+    @Column(name = "molecular_index_id")
     private Long molecularIndexId;
+
+    @ManyToMany(cascade = {CascadeType.PERSIST}, fetch= FetchType.LAZY, mappedBy = "indexes")
+    private Set<MolecularIndexingScheme> molecularIndexingSchemes = new HashSet<>();
 
     private String sequence;
 
@@ -49,23 +63,31 @@ public class MolecularIndex implements Serializable {
      * right after initial release of the code, so it's likely that this constructor
      * should not be called.
      */
-    public MolecularIndex(final String sequence) {
-        this.setSequence(sequence);
+    public MolecularIndex(String sequence) {
+        setSequence(sequence);
     }
 
-    @Id
-    @SequenceGenerator(name="seq_molecular_index", schema = "mercury", sequenceName="seq_molecular_index")
-    @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_molecular_index")
-    @Column(name = "molecular_index_id")
     @SuppressWarnings("unused")
     private Long getMolecularIndexId() {
         return molecularIndexId;
     }
 
     @SuppressWarnings("unused")
-    private void setMolecularIndexId(final Long molecularIndexId) {
+    private void setMolecularIndexId(Long molecularIndexId) {
         this.molecularIndexId = molecularIndexId;
     }
+
+    private static final String[] MAJOR_GROUP = {
+            "b", "c", "d", "f", "g",
+            "h", "j", "k", "l", "m",
+            "n", "p", "r", "t", "v",
+            "w", "x", "y", "z", "u"
+    };
+
+    // Only four here because we'll never encode an empty base
+    private static final String[] MINOR_GROUP = {
+            "a", "e", "i", "o"
+    };
 
     /**
      * Generates and returns a name unique to a nucleotide sequence. Throws
@@ -96,41 +118,32 @@ public class MolecularIndex implements Serializable {
         //
         // -jrose, 12/21/11
 
-        final String[] MAJOR_GROUP = new String[] {
-                "b", "c", "d", "f", "g",
-                "h", "j", "k", "l", "m",
-                "n", "p", "r", "t", "v",
-                "w", "x", "y", "z", "u"
-        };
 
-        // Only four here because we'll never encode an empty base
-        final String[] MINOR_GROUP = new String[] {
-                "a", "e", "i", "o"
-        };
-
-        final StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < this.getSequence().length() ; ) {
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < getSequence().length() ; ) {
             // NB that incrementing i happens three times within this loop
-            final Integer majorGroupMultiplier = BASE_INDEXES.get(this.getSequence().charAt(i++));
-            final Integer majorGroupAdder = (i < this.getSequence().length()) ? BASE_INDEXES.get(this.sequence.charAt(i++)) : EMPTY_INDEX;
+            Integer majorGroupMultiplier = BASE_INDEXES.get(getSequence().charAt(i++));
+            Integer majorGroupAdder = (i < getSequence().length()) ? BASE_INDEXES.get(sequence.charAt(i++)) : EMPTY_INDEX;
             if (majorGroupMultiplier == null || majorGroupAdder == null) {
-                throw new IllegalArgumentException("The sequence " + this.getSequence() + " contains an illegal base (major group).");
+                throw new IllegalArgumentException("The sequence " + getSequence() + " contains an illegal base (major group).");
             }
             builder.append(MAJOR_GROUP[majorGroupMultiplier * 5 + majorGroupAdder]);
 
-            if (this.getSequence().length() > i) {
-                final Integer minorGroupIndex = BASE_INDEXES.get(this.sequence.charAt(i++));
+            if (getSequence().length() > i) {
+                Integer minorGroupIndex = BASE_INDEXES.get(sequence.charAt(i++));
                 if (minorGroupIndex == null) {
-                    throw new IllegalArgumentException("The sequence " + this.getSequence() + " contains an illegal base (minor group).");
+                    throw new IllegalArgumentException("The sequence " + getSequence() + " contains an illegal base (minor group).");
                 }
                 builder.append(MINOR_GROUP[minorGroupIndex]);
             }
         }
 
-        if (this.sequence.contains("U")) builder.append("s");
+        if (sequence.contains("U")) {
+            builder.append("s");
+        }
 
         // Turn this into a proper noun by capitalizing the first letter
-        final String name = builder.toString();
+        String name = builder.toString();
         return name.substring(0, 1).toUpperCase() + name.substring(1);
     }
 
@@ -140,7 +153,7 @@ public class MolecularIndex implements Serializable {
      */
 //    @Column(name = "sequence", nullable = false)
     public String getSequence() {
-        return this.sequence;
+        return sequence;
     }
 
     /*
@@ -150,17 +163,21 @@ public class MolecularIndex implements Serializable {
       * Ts and Us.
       */
     @SuppressWarnings("unused")
-    private void setSequence(final String sequence) {
-        if (sequence ==  null) throw new NullPointerException("A non-null sequence is required.");
-        if (sequence.isEmpty()) throw new IllegalArgumentException("The sequence must have a length greater than zero.");
+    private void setSequence(String sequence) {
+        if (sequence ==  null) {
+            throw new NullPointerException("A non-null sequence is required.");
+        }
+        if (sequence.isEmpty()) {
+            throw new IllegalArgumentException("The sequence must have a length greater than zero.");
+        }
 
-        final String upperSequence = sequence.trim().toUpperCase();
+        String upperSequence = sequence.trim().toUpperCase();
 
         if (upperSequence.contains("U") && upperSequence.contains("T")) {
             throw new IllegalArgumentException("Cannot have both T and U in the same sequence.");
         }
 
-        for (final char base : upperSequence.toCharArray()) {
+        for (char base : upperSequence.toCharArray()) {
             if ( ! BASE_INDEXES.containsKey(base)) {
                 throw new IllegalArgumentException("The sequence must only have the letters A, C, T, G, or U, not " + base);
             }
@@ -174,15 +191,23 @@ public class MolecularIndex implements Serializable {
      * to another.
      */
     @Override
-    public boolean equals(final Object other) {
-        if (this == other) return true;
-        if ( ! (other instanceof MolecularIndex)) return false;
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        }
+        if ( ! (other instanceof MolecularIndex)) {
+            return false;
+        }
 
-        return ((MolecularIndex) other).getSequence().equals(this.getSequence());
+        return ((MolecularIndex) other).getSequence().equals(getSequence());
     }
 
     @Override
     public int hashCode() {
-        return this.getSequence().hashCode();
+        return getSequence().hashCode();
+    }
+
+    public Set<MolecularIndexingScheme> getMolecularIndexingSchemes() {
+        return molecularIndexingSchemes;
     }
 }

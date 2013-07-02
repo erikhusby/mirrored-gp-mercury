@@ -260,7 +260,7 @@
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name>Indexed Adaptor Ligation</name>
+                <name>Index P5 Pond Enrichment</name>
                 <labEventTypes>INDEX_P5_POND_ENRICHMENT</labEventTypes>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>

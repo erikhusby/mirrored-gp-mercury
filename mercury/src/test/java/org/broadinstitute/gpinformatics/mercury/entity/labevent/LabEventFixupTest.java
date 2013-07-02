@@ -51,4 +51,71 @@ public class LabEventFixupTest extends Arquillian {
         LabEvent labEvent = labEventDao.findById(LabEvent.class, 112964L);
         labEventDao.remove(labEvent);
     }
+
+    @Test(enabled = false)
+    public void fixupBsp581() {
+        /*
+        SELECT
+            le.lab_event_id
+        FROM
+            lab_vessel lv
+            INNER JOIN vessel_transfer vt
+                ON   vt.source_vessel = lv.lab_vessel_id
+            INNER JOIN lab_event le
+                ON   le.lab_event_id = vt.lab_event
+        WHERE
+            lv."LABEL" IN ('CO-6584145', 'CO-6940995', 'CO-6940991', 'CO-6661848',
+                          'CO-6940992', 'CO-6656416', 'CO-6641388', 'CO-6630669',
+                          'CO-6629602', 'CO-6665938', 'CO-6660878', 'CO-6661363',
+                          'CO-4405034', 'CO-4301567');
+         */
+        long[] ids = {
+                154585L,
+                154586L,
+                154587L,
+                152104L,
+                152105L,
+                152106L,
+                152597L,
+                152598L,
+                152599L,
+                153755L,
+                153756L,
+                153757L,
+                154044L,
+                154045L,
+                154046L,
+                154582L,
+                154583L,
+                154584L,
+                151957L,
+                151958L,
+                151959L,
+                146192L,
+                146193L,
+                146194L,
+                146204L,
+                146205L,
+                146206L,
+                152109L,
+                152110L,
+                152111L,
+                152112L,
+                152113L,
+                152114L,
+                146195L,
+                146196L,
+                146197L,
+                146198L,
+                146199L,
+                146200L,
+                146201L,
+                146202L,
+                146203L};
+        for (long id : ids) {
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, id);
+            labEvent.getReagents().clear();
+            labEventDao.remove(labEvent);
+        }
+    }
 }

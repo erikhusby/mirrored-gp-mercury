@@ -6,6 +6,8 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
@@ -14,6 +16,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.testng.Assert;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +27,11 @@ import java.util.Set;
  * Builds entity graph for Library Construction events
  */
 public class LibraryConstructionEntityBuilder {
+    public enum Indexing {
+        SINGLE,
+        DUAL
+    }
+
     private final BettaLimsMessageTestFactory bettaLimsMessageTestFactory;
     private final LabEventFactory             labEventFactory;
     private final LabEventHandler             labEventHandler;
@@ -34,11 +43,12 @@ public class LibraryConstructionEntityBuilder {
     private       TubeFormation               pondRegRack;
     private int numSamples;
     private String testPrefix;
+    private Indexing indexing;
 
     public LibraryConstructionEntityBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
-                                            LabEventFactory labEventFactory, LabEventHandler labEventHandler,
-                                            StaticPlate shearingCleanupPlate, String shearCleanPlateBarcode,
-                                            StaticPlate shearingPlate, int numSamples, String testPrefix) {
+            LabEventFactory labEventFactory, LabEventHandler labEventHandler, StaticPlate shearingCleanupPlate,
+            String shearCleanPlateBarcode, StaticPlate shearingPlate, int numSamples, String testPrefix,
+            Indexing indexing) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.labEventFactory = labEventFactory;
         this.labEventHandler = labEventHandler;
@@ -47,6 +57,7 @@ public class LibraryConstructionEntityBuilder {
         this.shearingPlate = shearingPlate;
         this.numSamples = numSamples;
         this.testPrefix = testPrefix;
+        this.indexing = indexing;
     }
 
     public List<String> getPondRegTubeBarcodes() {
@@ -62,9 +73,9 @@ public class LibraryConstructionEntityBuilder {
     }
 
     public LibraryConstructionEntityBuilder invoke() {
-        LibraryConstructionJaxbBuilder
-                libraryConstructionJaxbBuilder = new LibraryConstructionJaxbBuilder(
-                bettaLimsMessageTestFactory, testPrefix, shearCleanPlateBarcode, "IndexPlate", numSamples).invoke();
+        final LibraryConstructionJaxbBuilder libraryConstructionJaxbBuilder = new LibraryConstructionJaxbBuilder(
+                bettaLimsMessageTestFactory, testPrefix, shearCleanPlateBarcode, "IndexPlateP7", "IndexPlateP5",
+                numSamples).invoke();
         pondRegRackBarcode = libraryConstructionJaxbBuilder.getPondRegRackBarcode();
         pondRegTubeBarcodes = libraryConstructionJaxbBuilder.getPondRegTubeBarcodes();
 
@@ -94,11 +105,28 @@ public class LibraryConstructionEntityBuilder {
 
         // IndexedAdapterLigation
         LabEventTest.validateWorkflow("IndexedAdapterLigation", shearingCleanupPlate);
-        LabEventTest.BuildIndexPlate buildIndexPlate = new LabEventTest.BuildIndexPlate(libraryConstructionJaxbBuilder.getIndexPlateBarcode())
-                .invoke(null);
-        StaticPlate indexPlate = buildIndexPlate.getIndexPlate();
+        StaticPlate indexPlateP7;
+        StaticPlate indexPlateP5 = null;
+        if (indexing == Indexing.DUAL) {
+            List<StaticPlate> indexPlates = LabEventTest.buildIndexPlate(null,
+                    new ArrayList<MolecularIndexingScheme.IndexPosition>() {{
+                        add(MolecularIndexingScheme.IndexPosition.ILLUMINA_P7);
+                        add(MolecularIndexingScheme.IndexPosition.ILLUMINA_P5);
+                    }},
+                    new ArrayList<String>() {{
+                        add(libraryConstructionJaxbBuilder.getP7IndexPlateBarcode());
+                        add(libraryConstructionJaxbBuilder.getP5IndexPlateBarcode());
+                    }}
+            );
+            indexPlateP7 = indexPlates.get(0);
+            indexPlateP5 = indexPlates.get(1);
+        } else {
+            indexPlateP7 = LabEventTest.buildIndexPlate(null,
+                    Collections.singletonList(MolecularIndexingScheme.IndexPosition.ILLUMINA_P7),
+                    Collections.singletonList(libraryConstructionJaxbBuilder.getP7IndexPlateBarcode())).get(0);
+        }
         Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
-        mapBarcodeToVessel.put(indexPlate.getLabel(), indexPlate);
+        mapBarcodeToVessel.put(indexPlateP7.getLabel(), indexPlateP7);
         mapBarcodeToVessel.put(shearingCleanupPlate.getLabel(), shearingCleanupPlate);
         LabEvent indexedAdapterLigationEntity = labEventFactory.buildFromBettaLims(
                 libraryConstructionJaxbBuilder.getIndexedAdapterLigationJaxb(), mapBarcodeToVessel);
@@ -107,8 +135,9 @@ public class LibraryConstructionEntityBuilder {
         Set<SampleInstance> postIndexingSampleInstances =
                 shearingCleanupPlate.getContainerRole().getSampleInstancesAtPosition(VesselPosition.A01);
         SampleInstance sampleInstance = postIndexingSampleInstances.iterator().next();
-        MolecularIndexReagent molecularIndexReagent =
-                (MolecularIndexReagent) sampleInstance.getReagents().iterator().next();
+        List<Reagent> reagents = sampleInstance.getReagents();
+        Assert.assertEquals(reagents.size(), 1, "Wrong number of reagents");
+        MolecularIndexReagent molecularIndexReagent = (MolecularIndexReagent) reagents.iterator().next();
         Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(), "Illumina_P7-M",
                                    "Wrong index");
 
@@ -127,11 +156,24 @@ public class LibraryConstructionEntityBuilder {
         Assert.assertEquals(plateParents.size(), 1, "Wrong number of plate parents");
         Assert.assertEquals(plateParents.get(0), shearingCleanupPlate.getLabel(), "Wrong parent barcode");
 
-        // PondEnrichment
-        LabEventTest.validateWorkflow("PondEnrichment", ligationCleanupPlate);
-        LabEvent pondEnrichmentEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
-                libraryConstructionJaxbBuilder.getPondEnrichmentJaxb(), ligationCleanupPlate);
-        labEventHandler.processEvent(pondEnrichmentEntity);
+        if (libraryConstructionJaxbBuilder.getPondEnrichmentJaxb() != null) {
+            // PondEnrichment
+            LabEventTest.validateWorkflow("PondEnrichment", ligationCleanupPlate);
+            LabEvent pondEnrichmentEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
+                    libraryConstructionJaxbBuilder.getPondEnrichmentJaxb(), ligationCleanupPlate);
+            labEventHandler.processEvent(pondEnrichmentEntity);
+        }
+
+        if (indexing == Indexing.DUAL) {
+            // IndexP5PondEnrichment
+            LabEventTest.validateWorkflow("IndexP5PondEnrichment", ligationCleanupPlate);
+            mapBarcodeToVessel.clear();
+            mapBarcodeToVessel.put(indexPlateP5.getLabel(), indexPlateP5);
+            mapBarcodeToVessel.put(ligationCleanupPlate.getLabel(), ligationCleanupPlate);
+            LabEvent indexP5PondEnrichmentEntity = labEventFactory.buildFromBettaLims(
+                    libraryConstructionJaxbBuilder.getIndexP5PondEnrichmentJaxb(), mapBarcodeToVessel);
+            labEventHandler.processEvent(indexP5PondEnrichmentEntity);
+        }
 
         // HybSelPondEnrichmentCleanup
         LabEventTest.validateWorkflow("HybSelPondEnrichmentCleanup", ligationCleanupPlate);
@@ -155,9 +197,15 @@ public class LibraryConstructionEntityBuilder {
                 shearingPlate.getSampleInstances().size(), "Wrong number of sample instances");
         Set<SampleInstance> sampleInstancesInPondRegWell = pondRegRack.getContainerRole().getSampleInstancesAtPosition(VesselPosition.A01);
         Assert.assertEquals(sampleInstancesInPondRegWell.size(), 1, "Wrong number of sample instances in position");
-        Assert.assertEquals(sampleInstancesInPondRegWell.iterator().next().getStartingSample().getSampleKey(),
+        SampleInstance pondRegSampleInstance = sampleInstancesInPondRegWell.iterator().next();
+        Assert.assertEquals(pondRegSampleInstance.getStartingSample().getSampleKey(),
                 shearingPlate.getContainerRole().getSampleInstancesAtPosition(VesselPosition.A01).iterator().next().getStartingSample().getSampleKey(),
                 "Wrong sample");
+        reagents = pondRegSampleInstance.getReagents();
+        Assert.assertEquals(reagents.size(), 1, "Wrong number of reagents");
+        molecularIndexReagent = (MolecularIndexReagent) reagents.iterator().next();
+        Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(), "Illumina_P5-M_P7-M",
+                "Wrong index");
         return this;
     }
 }

@@ -451,6 +451,7 @@
                 </c:choose>
 
                 <security:authorizeBlock roles="<%= roles(Developer, PDM, BillingManager) %>">
+                    <stripes:param name="selectedProductOrderBusinessKeys" value="${actionBean.editOrder.businessKey}"/>
                     <stripes:submit name="downloadBillingTracker" value="Download Billing Tracker" class="btn" style="margin-right:5px;"/>
                 </security:authorizeBlock>
 

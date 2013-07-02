@@ -13,11 +13,14 @@ import java.util.List;
  * Builds JAXB objects for library construction messages
  */
 public class LibraryConstructionJaxbBuilder {
+    public static final String P_7_INDEX_PLATE_BARCODE = "000002715223";
+    public static final String P_5_INDEX_PLATE_BARCODE = "000002655323";
     private final BettaLimsMessageTestFactory bettaLimsMessageTestFactory;
     private final String testPrefix;
     private final String shearCleanPlateBarcode;
 
-    private final String indexPlateBarcode;
+    private final String p7IndexPlateBarcode;
+    private final String p5IndexPlateBarcode;
     private String pondRegRackBarcode;
     private List<String> pondRegTubeBarcodes;
 
@@ -28,17 +31,19 @@ public class LibraryConstructionJaxbBuilder {
     private PlateTransferEventType indexedAdapterLigationJaxb;
     private PlateTransferEventType ligationCleanupJaxb;
     private PlateEventType pondEnrichmentJaxb;
+    private PlateTransferEventType indexP5PondEnrichmentJaxb;
     private PlateTransferEventType pondCleanupJaxb;
     private PlateTransferEventType pondRegistrationJaxb;
     private final List<BettaLIMSMessage> messageList = new ArrayList<BettaLIMSMessage>();
     private int numSamples;
 
     public LibraryConstructionJaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory, String testPrefix,
-                                          String shearCleanPlateBarcode, String indexPlateBarcode, int numSamples) {
+            String shearCleanPlateBarcode, String p7IndexPlateBarcode, String p5IndexPlateBarcode, int numSamples) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.testPrefix = testPrefix;
         this.shearCleanPlateBarcode = shearCleanPlateBarcode;
-        this.indexPlateBarcode = indexPlateBarcode;
+        this.p7IndexPlateBarcode = p7IndexPlateBarcode;
+        this.p5IndexPlateBarcode = p5IndexPlateBarcode;
         this.numSamples = numSamples;
     }
 
@@ -58,8 +63,12 @@ public class LibraryConstructionJaxbBuilder {
         return aBaseCleanupJaxb;
     }
 
-    public String getIndexPlateBarcode() {
-        return indexPlateBarcode;
+    public String getP7IndexPlateBarcode() {
+        return p7IndexPlateBarcode;
+    }
+
+    public String getP5IndexPlateBarcode() {
+        return p5IndexPlateBarcode;
     }
 
     public PlateTransferEventType getIndexedAdapterLigationJaxb() {
@@ -72,6 +81,10 @@ public class LibraryConstructionJaxbBuilder {
 
     public PlateEventType getPondEnrichmentJaxb() {
         return pondEnrichmentJaxb;
+    }
+
+    public PlateTransferEventType getIndexP5PondEnrichmentJaxb() {
+        return indexP5PondEnrichmentJaxb;
     }
 
     public PlateTransferEventType getPondCleanupJaxb() {
@@ -109,7 +122,7 @@ public class LibraryConstructionJaxbBuilder {
 
 //            indexPlateBarcode = "IndexPlate" + testPrefix;
         indexedAdapterLigationJaxb = bettaLimsMessageTestFactory.buildPlateToPlate("IndexedAdapterLigation",
-                indexPlateBarcode,
+                p7IndexPlateBarcode,
                 shearCleanPlateBarcode);
         bettaLimsMessageTestFactory.addMessage(messageList, indexedAdapterLigationJaxb);
 
@@ -119,8 +132,14 @@ public class LibraryConstructionJaxbBuilder {
                 ligationCleanupBarcode);
         bettaLimsMessageTestFactory.addMessage(messageList, ligationCleanupJaxb);
 
-        pondEnrichmentJaxb = bettaLimsMessageTestFactory.buildPlateEvent("PondEnrichment", ligationCleanupBarcode);
-        bettaLimsMessageTestFactory.addMessage(messageList, pondEnrichmentJaxb);
+        if (p5IndexPlateBarcode == null) {
+            pondEnrichmentJaxb = bettaLimsMessageTestFactory.buildPlateEvent("PondEnrichment", ligationCleanupBarcode);
+            bettaLimsMessageTestFactory.addMessage(messageList, pondEnrichmentJaxb);
+        } else {
+            indexP5PondEnrichmentJaxb = bettaLimsMessageTestFactory.buildPlateToPlate("IndexP5PondEnrichment",
+                    p5IndexPlateBarcode, ligationCleanupBarcode);
+            bettaLimsMessageTestFactory.addMessage(messageList, indexP5PondEnrichmentJaxb);
+        }
 
         String pondCleanupBarcode = "pondCleanupPlate" + testPrefix;
         pondCleanupJaxb = bettaLimsMessageTestFactory.buildPlateToPlate("HybSelPondEnrichmentCleanup",
