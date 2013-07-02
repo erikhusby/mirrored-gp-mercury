@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * A Test to import molecular indexes and LCSETs from Squid.  This prepares an empty database to accept messages.  This must
+ * A Test to import reagents from Squid.  This prepares an empty database to accept messages.  This must
  * be in the same package as MolecularIndexingScheme, because it uses package visible methods on that class.
  *
  * Use the following VM options in the test: -Xmx1G -XX:MaxPermSize=128M
