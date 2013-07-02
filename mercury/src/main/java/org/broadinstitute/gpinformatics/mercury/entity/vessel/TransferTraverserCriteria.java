@@ -576,15 +576,18 @@ public interface TransferTraverserCriteria {
 
     }
 
-    @SuppressWarnings("unchecked")
     public class VesselTypeDescendantCriteria<T extends LabVessel> implements TransferTraverserCriteria {
         private Collection<T> descendantsOfVesselType = new HashSet<>();
+        private final Class<T> typeParameterClass;
+
+        public VesselTypeDescendantCriteria(Class<T> typeParameterClass) {
+            this.typeParameterClass = typeParameterClass;
+        }
 
         @Override
-        public TraversalControl evaluateVesselPreOrder(
-                Context context) {
-            if (OrmUtil.proxySafeIsInstance(context.getLabVessel(), getClass().getGenericSuperclass().getClass())) {
-                descendantsOfVesselType.add((T) context.getLabVessel());
+        public TraversalControl evaluateVesselPreOrder(Context context) {
+            if (OrmUtil.proxySafeIsInstance(context.getLabVessel(), typeParameterClass)) {
+                descendantsOfVesselType.add(typeParameterClass.cast(context.getLabVessel()));
             }
             return ContinueTraversing;
         }
@@ -614,11 +617,16 @@ public interface TransferTraverserCriteria {
         public TraversalControl evaluateVesselPreOrder(
                 Context context) {
             LabVessel vessel = context.getLabVessel();
-            for (LabEvent event : vessel.getEvents()) {
-                if (type.equals(event.getLabEventType())) {
-                    for (LabVessel targetVessel : event.getTargetLabVessels()) {
-                        if (targetVessel.equals(vessel)) {
-                            vesselsForLabEventType.put(vessel, event);
+            if (vessel != null) {
+                for (LabEvent event : vessel.getEvents()) {
+                    if (type.equals(event.getLabEventType())) {
+                        for (LabVessel targetVessel : event.getTargetLabVessels()) {
+                            if (targetVessel.getContainerRole() != null
+                                && targetVessel.getContainerRole().getContainedVessels().contains(vessel)) {
+                                vesselsForLabEventType.put(vessel, event);
+                            } else if (targetVessel.equals(vessel)) {
+                                vesselsForLabEventType.put(vessel, event);
+                            }
                         }
                     }
                 }

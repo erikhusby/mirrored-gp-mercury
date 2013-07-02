@@ -1317,6 +1317,7 @@ public abstract class LabVessel implements Serializable {
     public Map<LabVessel, LabEvent> findVesselsForLabEventType(LabEventType type) {
         TransferTraverserCriteria.VesselForEventTypeCriteria vesselForEventTypeCriteria =
                 new TransferTraverserCriteria.VesselForEventTypeCriteria(type);
+        evaluateCriteria(vesselForEventTypeCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
         evaluateCriteria(vesselForEventTypeCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
         return vesselForEventTypeCriteria.getVesselsForLabEventType();
     }
@@ -1350,7 +1351,7 @@ public abstract class LabVessel implements Serializable {
 
     public Collection<IlluminaFlowcell> getDescendantFlowcells() {
         TransferTraverserCriteria.VesselTypeDescendantCriteria<IlluminaFlowcell> flowcellDescendantCriteria =
-                new TransferTraverserCriteria.VesselTypeDescendantCriteria<>();
+                new TransferTraverserCriteria.VesselTypeDescendantCriteria<>(IlluminaFlowcell.class);
         evaluateCriteria(flowcellDescendantCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
         return flowcellDescendantCriteria.getDescendantsOfVesselType();
     }
@@ -1358,7 +1359,7 @@ public abstract class LabVessel implements Serializable {
     /**
      * This method get index information for all samples in this vessel.
      *
-     * @return a set of strings representing all indexes in tQhis vessel.
+     * @return a set of strings representing all indexes in this vessel.
      */
     public List<MolecularIndexReagent> getIndexes() {
         List<MolecularIndexReagent> indexes = new ArrayList<MolecularIndexReagent>();
