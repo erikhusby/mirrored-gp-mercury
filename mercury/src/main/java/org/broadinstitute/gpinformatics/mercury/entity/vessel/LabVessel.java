@@ -1627,7 +1627,8 @@ public abstract class LabVessel implements Serializable {
         // Need a recursive method, because won't have SampleInstance in all branches.
         // Need a data structure to accumulate stuff - TraversalResults.
         // TravsersalResults currently contains SampleInstance, but perhaps SampleInstance should be created only at
-        // the end.  Might be possible to unify TraversalResults and TransferCriteria.
+        // the end; hard to do this, because of pooling.
+        // Might be possible to unify TraversalResults and TransferCriteria.
         List<VesselEvent> vesselEvents = getAncestors();
         for (VesselEvent vesselEvent : vesselEvents) {
 //            vesselEvent.getLabEvent().getComputedLcSet();
