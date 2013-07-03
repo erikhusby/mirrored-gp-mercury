@@ -207,7 +207,6 @@ public class IlluminaRunResource implements Serializable {
         Set<String> sampleLsids = new HashSet<>();
         Set<String> sampleNames = new HashSet<>();
         Map<String, BSPSampleDTO> lsidToBspDto = new HashMap<>();
-        Map<String, BSPSampleDTO> sampleToBspDto = new HashMap<>();
         for (TZamboniLane zamboniLane : run.getLanes()) {
             for (TZamboniLibrary zamboniLibrary : zamboniLane.getLibraries()) {
                 if (isBspSample(zamboniLibrary)) {
@@ -216,17 +215,14 @@ public class IlluminaRunResource implements Serializable {
             }
         }
 
-        Map<String, String> lsIdToBareIds = BSPLSIDUtil.lsidsToBareIds(sampleLsids);
-        for (Map.Entry<String, String> lsIdToBareId :lsIdToBareIds.entrySet()) {
+        for (Map.Entry<String, String> lsIdToBareId :BSPLSIDUtil.lsidsToBareIds(sampleLsids).entrySet()) {
             if (lsIdToBareId.getValue() == null) {
                 throw new RuntimeException("Could not map lsid " + lsIdToBareId.getKey() + " to a bsp id.");
             } else {
                 sampleNames.add(lsIdToBareId.getValue());
             }
         }
-        if (!sampleNames.isEmpty()) {
-            sampleToBspDto = bspSampleDataFetcher.fetchSamplesFromBSP(sampleNames);
-        }
+        Map<String, BSPSampleDTO> sampleToBspDto = bspSampleDataFetcher.fetchSamplesFromBSP(sampleNames);
 
         for (Map.Entry<String, BSPSampleDTO> bspSampleDTOEntry : sampleToBspDto.entrySet()) {
             BSPSampleDTO bspDto = bspSampleDTOEntry.getValue();
