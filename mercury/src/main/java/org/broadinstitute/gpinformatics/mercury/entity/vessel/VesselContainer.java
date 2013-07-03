@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -551,6 +552,13 @@ public class VesselContainer<T extends LabVessel> {
                 new TransferTraverserCriteria.NearestLabMetricOfTypeCriteria(quantType);
         applyCriteriaToAllPositions(metricTypeCriteria);
         return metricTypeCriteria.getNearestMetrics();
+    }
+
+    public Map<LabVessel, LabEvent> getVesselsForLabEventType(LabEventType eventType) {
+        TransferTraverserCriteria.VesselForEventTypeCriteria vesselForEventTypeCriteria =
+                new TransferTraverserCriteria.VesselForEventTypeCriteria(eventType);
+        applyCriteriaToAllPositions(vesselForEventTypeCriteria);
+        return vesselForEventTypeCriteria.getVesselsForLabEventType();
     }
 
     /**

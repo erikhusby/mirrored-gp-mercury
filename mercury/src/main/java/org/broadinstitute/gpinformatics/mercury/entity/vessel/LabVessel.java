@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -1028,6 +1029,10 @@ public abstract class LabVessel implements Serializable {
         return allLabBatches;
     }
 
+    public Set<LabBatchStartingVessel> getLabBatchStartingVessels() {
+        return labBatches;
+    }
+
     /**
      * Get lab batches of the specified type
      *
@@ -1317,22 +1322,11 @@ public abstract class LabVessel implements Serializable {
      * @return A map containing the vessels (key) and the event they were used at (value) given the event type.
      */
     public Map<LabVessel, LabEvent> findVesselsForLabEventType(LabEventType type) {
-        Map<LabVessel, LabEvent> foundVesselsToEvent = new HashMap<>();
-        for (LabVessel vessel : getAncestorAndDescendantVessels()) {
-            for (LabEvent event : vessel.getEvents()) {
-                if (type.equals(event.getLabEventType())) {
-                    for (LabVessel targetVessel : event.getTargetLabVessels()) {
-                        if (targetVessel.getContainerRole() != null
-                            && targetVessel.getContainerRole().getContainedVessels().contains(vessel)) {
-                            foundVesselsToEvent.put(vessel, event);
-                        } else if (targetVessel.equals(vessel)) {
-                            foundVesselsToEvent.put(vessel, event);
-                        }
-                    }
-                }
-            }
-        }
-        return foundVesselsToEvent;
+        TransferTraverserCriteria.VesselForEventTypeCriteria vesselForEventTypeCriteria =
+                new TransferTraverserCriteria.VesselForEventTypeCriteria(type);
+        evaluateCriteria(vesselForEventTypeCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+        evaluateCriteria(vesselForEventTypeCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+        return vesselForEventTypeCriteria.getVesselsForLabEventType();
     }
 
     /**
@@ -1362,10 +1356,17 @@ public abstract class LabVessel implements Serializable {
         return ancestorCritera.getLabVesselAncestors();
     }
 
+    public Collection<IlluminaFlowcell> getDescendantFlowcells() {
+        TransferTraverserCriteria.VesselTypeDescendantCriteria<IlluminaFlowcell> flowcellDescendantCriteria =
+                new TransferTraverserCriteria.VesselTypeDescendantCriteria<>(IlluminaFlowcell.class);
+        evaluateCriteria(flowcellDescendantCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+        return flowcellDescendantCriteria.getDescendantsOfVesselType();
+    }
+
     /**
      * This method get index information for all samples in this vessel.
      *
-     * @return a set of strings representing all indexes in tQhis vessel.
+     * @return a set of strings representing all indexes in this vessel.
      */
     public List<MolecularIndexReagent> getIndexes() {
         List<MolecularIndexReagent> indexes = new ArrayList<MolecularIndexReagent>();
