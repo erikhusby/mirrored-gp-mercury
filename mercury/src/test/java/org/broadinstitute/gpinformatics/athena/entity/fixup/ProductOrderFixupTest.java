@@ -6,15 +6,18 @@ import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.RiskItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -66,6 +69,9 @@ public class ProductOrderFixupTest extends Arquillian {
 
     @Inject
     private BSPUserList bspUserList;
+
+    @Inject
+    private ResearchProjectDao projectDao;
 
     // When you run this on prod, change to PROD and prod
     @Deployment
@@ -316,6 +322,30 @@ public class ProductOrderFixupTest extends Arquillian {
             order.setPlacedDate(DateFormat.getDateTimeInstance().parse("Jun 11, 2013 01:43:44 PM"));
             productOrderDao.persist(order);
         }
+    }
+
+    public void changeProjectForPdo(String pdoKey,String newProjectKey) throws IOException {
+        ProductOrder pdo = productOrderDao.findByBusinessKey(pdoKey);
+        if (pdo == null) {
+            Assert.fail("Could not find " + pdoKey);
+        }
+        ResearchProject oldProject = pdo.getResearchProject();
+        ResearchProject newProject = projectDao.findByBusinessKey(newProjectKey);
+
+        pdo.setResearchProject(newProject);
+
+        System.out.println("Updating " + pdo.getBusinessKey() + "/" + pdo.getName() + " from project " + oldProject.getBusinessKey() + " to " + pdo.getResearchProject().getBusinessKey() + "/" + pdo.getResearchProject().getName());
+
+        jiraService.addLink(AddIssueLinkRequest.LinkType.Related,pdoKey,pdo.getResearchProject().getBusinessKey());
+        // note that this adds the link...BUT YOU MUST DELETE THE PREVIOUS RP LINK MANUALLY!
+
+        productOrderDao.persist(pdo);
+
+    }
+
+    @Test(enabled = false)
+    public void changeProjectForPdo() throws Exception {
+        changeProjectForPdo("PDO-1621","RP-317");
     }
 
     private void changeJiraKey(String oldKey, String newKey) {
