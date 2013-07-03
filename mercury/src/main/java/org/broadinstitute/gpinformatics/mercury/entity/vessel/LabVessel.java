@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.infrastructure.SampleMetadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
@@ -166,6 +167,9 @@ public abstract class LabVessel implements Serializable {
 
     @Transient
     private Integer sampleInstanceCount = null;
+
+    @Transient
+    private Set<LabBatch> computedLcSets;
 
     protected LabVessel(String label) {
         createdOn = new Date();
@@ -711,7 +715,7 @@ public abstract class LabVessel implements Serializable {
         if (getContainerRole() != null) {
             return getContainerRole().getSampleInstances(sampleType, labBatchType);
         }
-        TraversalResults traversalResults = traverseAncestors(sampleType, labBatchType, siblingLabVessels);
+        TraversalResults traversalResults = traverseAncestors(sampleType, labBatchType);
         Set<SampleInstance> filteredSampleInstances;
         if (sampleType == SampleType.WITH_PDO) {
             filteredSampleInstances = new HashSet<>();
@@ -745,7 +749,6 @@ public abstract class LabVessel implements Serializable {
 
         private final Set<SampleInstance> sampleInstances = new HashSet<>();
         private final Set<Reagent> reagents = new HashSet<>();
-        private BucketEntry bucketEntry;
 
         void add(TraversalResults traversalResults) {
             sampleInstances.addAll(traversalResults.getSampleInstances());
@@ -798,11 +801,9 @@ public abstract class LabVessel implements Serializable {
      * @param sampleType
      * @param labBatchType
      *
-     * @param siblingLabVessels
      * @return accumulated sampleInstances
      */
-    TraversalResults traverseAncestors(SampleType sampleType, LabBatch.LabBatchType labBatchType,
-            Collection<LabVessel> siblingLabVessels) {
+    TraversalResults traverseAncestors(SampleType sampleType, LabBatch.LabBatchType labBatchType) {
         TraversalResults traversalResults = new TraversalResults();
 
         boolean continueTraversing = true;
@@ -828,7 +829,7 @@ public abstract class LabVessel implements Serializable {
                     traversalResults.add(vesselEvent.getVesselContainer().traverseAncestors(vesselEvent.getPosition(),
                             sampleType, labBatchType));
                 } else {
-                    traversalResults.add(labVessel.traverseAncestors(sampleType, labBatchType, siblingLabVessels));
+                    traversalResults.add(labVessel.traverseAncestors(sampleType, labBatchType));
                 }
             }
         }
@@ -843,67 +844,67 @@ public abstract class LabVessel implements Serializable {
         }
         // todo assigning LCSET (and PDO and workflow) need to move to getSampleInstance, because they should be based
         // on the LCSET closest to the starting point, rather than the LCSET closest to the MercurySample.
-        if (bucketEntries.size() > 1) {
-            // find bucket entry that has same lab batch as siblings
-            Map<LabBatch, Integer> mapLabBatchToCount = new HashMap<>();
-            for (LabVessel siblingLabVessel : siblingLabVessels) {
-//                for (LabBatch labBatch : siblingLabVessel.getLabBatchesOfType(LabBatch.LabBatchType.WORKFLOW)) {
-                for (BucketEntry bucketEntry : siblingLabVessel.getBucketEntries()) {
-                    if (bucketEntry.getLabBatch() != null) {
-                        LabBatch labBatch = bucketEntry.getLabBatch();
-                        if (labBatch.getLabBatchType() == LabBatch.LabBatchType.WORKFLOW) {
-                            Integer count = mapLabBatchToCount.get(labBatch);
-                            if (count == null) {
-                                count = 1;
-                            } else {
-                                count = count + 1;
-                            }
-                            mapLabBatchToCount.put(labBatch, count);
-                        }
-                    }
-                }
-            }
-
-            LabBatch matchingLabBatch = null;
-            for (Map.Entry<LabBatch, Integer> labBatchIntegerEntry : mapLabBatchToCount.entrySet()) {
-                if (labBatchIntegerEntry.getValue() == siblingLabVessels.size()) {
-                    matchingLabBatch = labBatchIntegerEntry.getKey();
-                    break;
-                }
-            }
-
-            if (matchingLabBatch == null) {
-                throw new RuntimeException("Failed to find lab batch");
-            } else {
-                for (BucketEntry bucketEntry : bucketEntries) {
-                    if (bucketEntry.getLabBatch().equals(matchingLabBatch)) {
-                        traversalResults.setProductOrderKey(bucketEntry.getPoBusinessKey());
-                    }
-                }
-            }
-//            Set<String> productOrderKeys = new HashSet<String>();
+//        if (bucketEntries.size() > 1) {
+//            // find bucket entry that has same lab batch as siblings
+//            Map<LabBatch, Integer> mapLabBatchToCount = new HashMap<>();
+//            for (LabVessel siblingLabVessel : siblingLabVessels) {
+////                for (LabBatch labBatch : siblingLabVessel.getLabBatchesOfType(LabBatch.LabBatchType.WORKFLOW)) {
+//                for (BucketEntry bucketEntry : siblingLabVessel.getBucketEntries()) {
+//                    if (bucketEntry.getLabBatch() != null) {
+//                        LabBatch labBatch = bucketEntry.getLabBatch();
+//                        if (labBatch.getLabBatchType() == LabBatch.LabBatchType.WORKFLOW) {
+//                            Integer count = mapLabBatchToCount.get(labBatch);
+//                            if (count == null) {
+//                                count = 1;
+//                            } else {
+//                                count = count + 1;
+//                            }
+//                            mapLabBatchToCount.put(labBatch, count);
+//                        }
+//                    }
+//                }
+//            }
+//
+//            LabBatch matchingLabBatch = null;
+//            for (Map.Entry<LabBatch, Integer> labBatchIntegerEntry : mapLabBatchToCount.entrySet()) {
+//                if (labBatchIntegerEntry.getValue() == siblingLabVessels.size()) {
+//                    matchingLabBatch = labBatchIntegerEntry.getKey();
+//                    break;
+//                }
+//            }
+//
+//            if (matchingLabBatch == null) {
+//                throw new RuntimeException("Failed to find lab batch");
+//            } else {
+//                for (BucketEntry bucketEntry : bucketEntries) {
+//                    if (bucketEntry.getLabBatch().equals(matchingLabBatch)) {
+//                        traversalResults.setProductOrderKey(bucketEntry.getPoBusinessKey());
+//                    }
+//                }
+//            }
+////            Set<String> productOrderKeys = new HashSet<String>();
+////            for (BucketEntry bucketEntry : bucketEntries) {
+////                productOrderKeys.add(bucketEntry.getPoBusinessKey());
+////            }
+////            if (productOrderKeys.size() > 1) {
+////                throw new RuntimeException("Unexpected multiple product orders in bucket entries");
+////            }
+////            traversalResults.setProductOrderKey(productOrderKeys.iterator().next());
+///* todo jmt handle multiple product orders
 //            for (BucketEntry bucketEntry : bucketEntries) {
-//                productOrderKeys.add(bucketEntry.getPoBusinessKey());
+//                for (LabVessel container : containers) {
+//                    if (bucketEntry.getLabBatch() != null) {
+//                        if (bucketEntry.getLabBatch().getStartingLabVessels().equals(container.getContainerRole().getContainedVessels())) {
+//                            traversalResults.setBucketEntry(bucketEntry);
+//                            break;
+//                        }
+//                    }
+//                }
 //            }
-//            if (productOrderKeys.size() > 1) {
-//                throw new RuntimeException("Unexpected multiple product orders in bucket entries");
-//            }
-//            traversalResults.setProductOrderKey(productOrderKeys.iterator().next());
-/* todo jmt handle multiple product orders
-            for (BucketEntry bucketEntry : bucketEntries) {
-                for (LabVessel container : containers) {
-                    if (bucketEntry.getLabBatch() != null) {
-                        if (bucketEntry.getLabBatch().getStartingLabVessels().equals(container.getContainerRole().getContainedVessels())) {
-                            traversalResults.setBucketEntry(bucketEntry);
-                            break;
-                        }
-                    }
-                }
-            }
-*/
-        } else if (bucketEntries.size() == 1) {
-            traversalResults.setProductOrderKey(bucketEntries.iterator().next().getPoBusinessKey());
-        }
+//*/
+//        } else if (bucketEntries.size() == 1) {
+//            traversalResults.setProductOrderKey(bucketEntries.iterator().next().getPoBusinessKey());
+//        }
 
         for (Reagent reagent : getReagentContents()) {
             traversalResults.add(reagent);
@@ -1617,34 +1618,13 @@ public abstract class LabVessel implements Serializable {
         return false;
     }
 
-    public Set<SampleInstance> getSampleInstances2() {
-        Set<SampleInstance> sampleInstances = new HashSet<>();
-        recurseSampleInstances();
-        return sampleInstances;
-    }
-
-    public void recurseSampleInstances() {
-        // Need a recursive method, because won't have SampleInstance in all branches.
-        // Need a data structure to accumulate stuff - TraversalResults.
-        // TravsersalResults currently contains SampleInstance, but perhaps SampleInstance should be created only at
-        // the end; hard to do this, because of pooling.
-        // Might be possible to unify TraversalResults and TransferCriteria.
-        List<VesselEvent> vesselEvents = getAncestors();
-        for (VesselEvent vesselEvent : vesselEvents) {
-//            vesselEvent.getLabEvent().getComputedLcSet();
+    public Set<LabBatch> getComputedLcSets() {
+        if (computedLcSets == null) {
+            computedLcSets = new HashSet<>();
+            for (SectionTransfer sectionTransfer : getContainerRole().getSectionTransfersTo()) {
+                computedLcSets.addAll(sectionTransfer.getLabEvent().getComputedLcSets());
+            }
         }
-
-        for (MercurySample mercurySample : mercurySamples) {
-
-        }
-
-        for (BucketEntry bucketEntry : bucketEntries) {
-
-        }
-
-        for (Reagent reagentContent : reagentContents) {
-
-        }
-
+        return computedLcSets;
     }
 }

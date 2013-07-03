@@ -1,11 +1,11 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.hibernate.annotations.Parent;
@@ -33,7 +33,12 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * A vessel that contains other vessels, e.g. a rack of tubes, a plate of wells, or a flowcell of lanes
+ * This class represents A role of a vessel that contains other vessels, e.g. a rack of tubes, a plate of wells, or a
+ * flowcell of lanes.
+ * This class does not stand alone, it is embedded in a LabVessel.  This is re-use through delegation, rather than
+ * through inheritance.  Delegation is preferable, because a LabVessel could have multiple roles, but multiple
+ * inheritance is not supported.  As an example of multiple roles, A Cryo straw is held in a visotube, which is held
+ * in a goblet; a visotube is both a container and a containee.
  */
 @Embeddable
 public class VesselContainer<T extends LabVessel> {
@@ -54,25 +59,25 @@ public class VesselContainer<T extends LabVessel> {
     @MapKeyColumn(name = "mapkey")
     // todo jmt get Hibernate to sort this
     // the map value has to be LabVessel, not T, because JPAMetaModelEntityProcessor can't handle type parameters
-    private final Map<VesselPosition, LabVessel> mapPositionToVessel = new LinkedHashMap<VesselPosition, LabVessel>();
+    private final Map<VesselPosition, LabVessel> mapPositionToVessel = new LinkedHashMap<>();
 
     @Transient
-    private Map<LabVessel, VesselPosition> vesselToMapPosition = null;
+    private Map<LabVessel, VesselPosition> vesselToMapPosition;
 
     @OneToMany(mappedBy = "sourceVessel")
-    private Set<SectionTransfer> sectionTransfersFrom = new HashSet<SectionTransfer>();
+    private Set<SectionTransfer> sectionTransfersFrom = new HashSet<>();
 
     @OneToMany(mappedBy = "targetVessel")
-    private Set<SectionTransfer> sectionTransfersTo = new HashSet<SectionTransfer>();
+    private Set<SectionTransfer> sectionTransfersTo = new HashSet<>();
 
     @OneToMany(mappedBy = "sourceVessel")
-    private Set<CherryPickTransfer> cherryPickTransfersFrom = new HashSet<CherryPickTransfer>();
+    private Set<CherryPickTransfer> cherryPickTransfersFrom = new HashSet<>();
 
     @OneToMany(mappedBy = "targetVessel")
-    private Set<CherryPickTransfer> cherryPickTransfersTo = new HashSet<CherryPickTransfer>();
+    private Set<CherryPickTransfer> cherryPickTransfersTo = new HashSet<>();
 
     @OneToMany(mappedBy = "targetVessel")
-    private Set<VesselToSectionTransfer> vesselToSectionTransfersTo = new HashSet<VesselToSectionTransfer>();
+    private Set<VesselToSectionTransfer> vesselToSectionTransfersTo = new HashSet<>();
 
     @SuppressWarnings("InstanceVariableMayNotBeInitialized")
     @Parent
@@ -91,7 +96,7 @@ public class VesselContainer<T extends LabVessel> {
     }
 
     public Set<LabEvent> getTransfersFrom() {
-        Set<LabEvent> transfersFrom = new HashSet<LabEvent>();
+        Set<LabEvent> transfersFrom = new HashSet<>();
         for (SectionTransfer sectionTransfer : sectionTransfersFrom) {
             transfersFrom.add(sectionTransfer.getLabEvent());
         }
@@ -102,7 +107,7 @@ public class VesselContainer<T extends LabVessel> {
     }
 
     public Set<LabEvent> getTransfersTo() {
-        Set<LabEvent> transfersTo = new HashSet<LabEvent>();
+        Set<LabEvent> transfersTo = new HashSet<>();
         for (SectionTransfer sectionTransfer : sectionTransfersTo) {
             transfersTo.add(sectionTransfer.getLabEvent());
         }
@@ -120,23 +125,6 @@ public class VesselContainer<T extends LabVessel> {
                 new TransferTraverserCriteria.NearestLabBatchFinder(type);
         evaluateCriteria(position, batchCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors, null, 0);
         return batchCriteria.getNearestLabBatches();
-    }
-
-    /**
-     * Traverses transfer history to find the single sample libraries, as defined
-     * by the WorkflowAnnotation for the WorkflowDescription
-     *
-     * @param position
-     *
-     * @return
-     */
-    public Map<MercurySample, Collection<LabVessel>> getSingleSampleAncestors(VesselPosition position) {
-        TransferTraverserCriteria.SingleSampleLibraryCriteria singleSampleLibraryCriteria =
-                new TransferTraverserCriteria.SingleSampleLibraryCriteria();
-
-        evaluateCriteria(position, singleSampleLibraryCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors,
-                null, 0);
-        return singleSampleLibraryCriteria.getSingleSampleLibraries();
     }
 
     public Set<SampleInstance> getSampleInstancesAtPosition(VesselPosition position, LabVessel.SampleType sampleType,
@@ -167,13 +155,11 @@ public class VesselContainer<T extends LabVessel> {
                     traversalResults.add(ancestor.getVesselContainer().traverseAncestors(ancestor.getPosition(),
                             sampleType, labBatchType));
                 } else {
-                    traversalResults.add(labVessel.traverseAncestors(sampleType, labBatchType,
-                            Collections.<LabVessel>emptyList()));
+                    traversalResults.add(labVessel.traverseAncestors(sampleType, labBatchType));
                 }
             }
         } else {
-            traversalResults.add(vesselAtPosition.traverseAncestors(sampleType, labBatchType,
-                    Collections.<LabVessel>emptyList()));
+            traversalResults.add(vesselAtPosition.traverseAncestors(sampleType, labBatchType));
         }
         traversalResults.completeLevel();
         return traversalResults;
@@ -293,7 +279,7 @@ public class VesselContainer<T extends LabVessel> {
     public VesselPosition getPositionOfVessel(LabVessel vesselAtPosition) {
         //construct the reverse lookup map if it doesn't exist
         if (vesselToMapPosition == null) {
-            vesselToMapPosition = new HashMap<LabVessel, VesselPosition>();
+            vesselToMapPosition = new HashMap<>();
             for (Map.Entry<VesselPosition, LabVessel> stringTEntry : mapPositionToVessel.entrySet()) {
                 vesselToMapPosition.put(stringTEntry.getValue(), stringTEntry.getKey());
             }
@@ -310,7 +296,7 @@ public class VesselContainer<T extends LabVessel> {
     @Transient
     private Set<SampleInstance> getSampleInstances(LabVessel.SampleType sampleType, LabBatch.LabBatchType labBatchType,
                                                   Set<LabVessel> sourceVessels) {
-        Set<SampleInstance> sampleInstances = new LinkedHashSet<SampleInstance>();
+        Set<SampleInstance> sampleInstances = new LinkedHashSet<>();
         for (VesselPosition position : mapPositionToVessel.keySet()) {
             sampleInstances.addAll(getSampleInstancesAtPosition(position, sampleType, labBatchType));
         }
@@ -349,7 +335,7 @@ public class VesselContainer<T extends LabVessel> {
     public Set<T> getContainedVessels() {
         // Wrap in HashSet so equals works against other Sets
         //noinspection unchecked
-        return new HashSet<T>((Collection<? extends T>) mapPositionToVessel.values());
+        return new HashSet<>((Collection<? extends T>) mapPositionToVessel.values());
     }
 
     public void addContainedVessel(T child, VesselPosition position) {
@@ -397,7 +383,7 @@ public class VesselContainer<T extends LabVessel> {
     }
 
     public List<LabVessel.VesselEvent> getAncestors(VesselPosition position) {
-        List<LabVessel.VesselEvent> vesselEvents = new ArrayList<LabVessel.VesselEvent>();
+        List<LabVessel.VesselEvent> vesselEvents = new ArrayList<>();
         for (SectionTransfer sectionTransfer : sectionTransfersTo) {
             // todo jmt replace indexOf with map lookup
             int targetWellIndex = sectionTransfer.getTargetSection().getWells().indexOf(position);
@@ -439,7 +425,7 @@ public class VesselContainer<T extends LabVessel> {
     }
 
     public List<LabVessel.VesselEvent> getDescendants(VesselPosition position) {
-        List<LabVessel.VesselEvent> vesselEvents = new ArrayList<LabVessel.VesselEvent>();
+        List<LabVessel.VesselEvent> vesselEvents = new ArrayList<>();
         for (SectionTransfer sectionTransfer : sectionTransfersFrom) {
             // todo jmt replace indexOf with map lookup
             int targetWellIndex = sectionTransfer.getSourceSection().getWells().indexOf(position);
@@ -521,12 +507,12 @@ public class VesselContainer<T extends LabVessel> {
     }
 
     public List<LabBatchComposition> getLabBatchCompositions() {
-        List<SampleInstance> sampleInstances = new ArrayList<SampleInstance>();
+        List<SampleInstance> sampleInstances = new ArrayList<>();
         for (VesselPosition position : getEmbedder().getVesselGeometry().getVesselPositions()) {
             sampleInstances.addAll(getSampleInstancesAtPosition(position));
         }
 
-        Map<LabBatch, LabBatchComposition> batchMap = new HashMap<LabBatch, LabBatchComposition>();
+        Map<LabBatch, LabBatchComposition> batchMap = new HashMap<>();
         for (SampleInstance sampleInstance : sampleInstances) {
             for (LabBatch labBatch : sampleInstance.getAllLabBatches()) {
                 LabBatchComposition batchComposition = batchMap.get(labBatch);
@@ -538,7 +524,7 @@ public class VesselContainer<T extends LabVessel> {
             }
         }
 
-        List<LabBatchComposition> batchList = new ArrayList<LabBatchComposition>(batchMap.values());
+        List<LabBatchComposition> batchList = new ArrayList<>(batchMap.values());
         Collections.sort(batchList, LabBatchComposition.HIGHEST_COUNT_FIRST);
 
         return batchList;
@@ -549,5 +535,55 @@ public class VesselContainer<T extends LabVessel> {
                 new TransferTraverserCriteria.NearestLabMetricOfTypeCriteria(quantType);
         applyCriteriaToAllPositions(metricTypeCriteria);
         return metricTypeCriteria.getNearestMetrics();
+    }
+
+    public Set<LabBatch> getComputedLcSetsForSection(SBSSection section) {
+        Set<LabBatch> computedLcSets = new HashSet<>();
+        // find lab batch that is used by every vessel in section
+        Map<LabBatch, Integer> mapLabBatchToCount = new HashMap<>();
+        int numVesselsWithBucketEntries = 0;
+        // todo jmt how to handle re-arrays?
+        for (VesselPosition vesselPosition : section.getWells()) {
+            T vesselAtPosition = getVesselAtPosition(vesselPosition);
+            if (vesselAtPosition != null) {
+                Set<BucketEntry> bucketEntries = vesselAtPosition.getBucketEntries();
+                if (!bucketEntries.isEmpty()) {
+                    numVesselsWithBucketEntries++;
+                }
+                for (BucketEntry bucketEntry : bucketEntries) {
+                    if (bucketEntry.getLabBatch() != null) {
+                        LabBatch labBatch = bucketEntry.getLabBatch();
+                        if (labBatch.getLabBatchType() == LabBatch.LabBatchType.WORKFLOW) {
+                            Integer count = mapLabBatchToCount.get(labBatch);
+                            if (count == null) {
+                                count = 1;
+                            } else {
+                                count = count + 1;
+                            }
+                            mapLabBatchToCount.put(labBatch, count);
+                        }
+                    }
+                }
+                for (VesselContainer<?> vesselContainer : vesselAtPosition.getContainers()) {
+                    if (!vesselContainer.equals(this)) {
+                        computedLcSets.addAll(vesselContainer.getEmbedder().getComputedLcSets());
+                    }
+                }
+            }
+        }
+        if (mapLabBatchToCount.isEmpty()) {
+            for (SectionTransfer sectionTransfer : sectionTransfersTo) {
+                // todo jmt what if the event has multiple section transfers?
+                computedLcSets.addAll(sectionTransfer.getLabEvent().getComputedLcSets());
+            }
+        } else {
+            for (Map.Entry<LabBatch, Integer> labBatchIntegerEntry : mapLabBatchToCount.entrySet()) {
+                if (labBatchIntegerEntry.getValue() == numVesselsWithBucketEntries) {
+                    computedLcSets.add(labBatchIntegerEntry.getKey());
+                }
+            }
+        }
+
+        return computedLcSets;
     }
 }

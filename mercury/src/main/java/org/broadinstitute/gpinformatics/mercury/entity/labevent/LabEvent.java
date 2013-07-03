@@ -21,6 +21,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 import java.util.Collection;
 import java.util.Comparator;
@@ -122,17 +123,20 @@ public class LabEvent {
     @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, fetch = FetchType.LAZY)
     private LabVessel inPlaceLabVessel;
 
+    // todo jmt delete productOrderId?
     /**
      * Business Key of a product order to which this event is associated
      */
     private String productOrderId;
-
 
     @Enumerated(EnumType.STRING)
     private LabEventType labEventType;
 
     @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, fetch = FetchType.LAZY)
     private LabBatch labBatch;
+
+    @Transient
+    private Set<LabBatch> computedLcSets;
 
     /** For JPA */
     protected LabEvent() {
@@ -363,4 +367,14 @@ todo jmt adder methods
         return labBatch;
     }
 
+    public Set<LabBatch> getComputedLcSets() {
+        if (computedLcSets == null) {
+            computedLcSets = new HashSet<>();
+            for (SectionTransfer sectionTransfer : sectionTransfers) {
+                computedLcSets.addAll(sectionTransfer.getSourceVesselContainer().getComputedLcSetsForSection(
+                        sectionTransfer.getSourceSection()));
+            }
+        }
+        return computedLcSets;
+    }
 }
