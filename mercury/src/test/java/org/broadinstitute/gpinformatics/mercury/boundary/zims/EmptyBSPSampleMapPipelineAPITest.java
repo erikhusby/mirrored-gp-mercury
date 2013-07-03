@@ -15,6 +15,7 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
 
 public class EmptyBSPSampleMapPipelineAPITest extends Arquillian {
 
@@ -23,7 +24,7 @@ public class EmptyBSPSampleMapPipelineAPITest extends Arquillian {
 
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWarWithAlternatives(org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST,
+        return DeploymentBuilder.buildMercuryWarWithAlternatives(TEST,
                 MockThriftService.class,
                 EmptyMapBSPSampleSearchService.class
         ).addAsResource(ThriftFileAccessor.RUN_FILE);

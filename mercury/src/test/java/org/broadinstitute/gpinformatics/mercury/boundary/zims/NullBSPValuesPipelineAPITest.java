@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.zims;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.MockThriftService;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftFileAccessor;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
@@ -13,7 +14,8 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 
-import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
 
 public class NullBSPValuesPipelineAPITest extends Arquillian {
 
@@ -22,13 +24,13 @@ public class NullBSPValuesPipelineAPITest extends Arquillian {
 
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWarWithAlternatives(org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST,
+        return DeploymentBuilder.buildMercuryWarWithAlternatives(TEST,
                 MockThriftService.class,
                 NullValuesBSPSampleSearchService.class
         ).addAsResource(ThriftFileAccessor.RUN_FILE);
     }
 
-    @Test(groups = EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testNullBspDtos() throws Exception {
         ZimsIlluminaRun run = runLaneResource.getRun(IlluminaRunResourceTest.RUN_NAME);
         Assert.assertNotNull(run.getError());
