@@ -18,9 +18,9 @@ import java.util.regex.Pattern;
  * A utility class for common BSP code.
  */
 public class BSPUtil {
-    public static final Pattern BSP_SAMPLE_NAME_PATTERN = Pattern.compile("^S[MP]-[A-Z1-9]{4,6}$");
+    public static final Pattern  BSP_SAMPLE_SHORT_BARCODE_PATTERN = Pattern.compile("^S[MP]-[A-Z1-9]{4,6}$");
 
-    public static final Pattern NO_SM_NAME_PATTERN = Pattern.compile("^[A-Z1-9]{4,6}$");
+    public static final Pattern BSP_SAMPLE_ID_PATTERN = Pattern.compile("^[A-Z1-9]{4,6}$");
 
     /**
      * Tests if the sampleName is in a valid BSP format.
@@ -29,7 +29,7 @@ public class BSPUtil {
      * @return true if the sample name is a valid BSP Sample name.
      */
     public static boolean isInBspFormat(@Nonnull String sampleName) {
-        // SM-4FHTK and 4FHTK are equally valid sample ids
-        return BSP_SAMPLE_NAME_PATTERN.matcher(sampleName).matches() || NO_SM_NAME_PATTERN.matcher(sampleName).matches();
+        // SM-4FHTK (short barcode) and 4FHTK (id) are both valid references to a BSP sample
+        return  BSP_SAMPLE_SHORT_BARCODE_PATTERN.matcher(sampleName).matches() || BSP_SAMPLE_ID_PATTERN.matcher(sampleName).matches();
     }
 }

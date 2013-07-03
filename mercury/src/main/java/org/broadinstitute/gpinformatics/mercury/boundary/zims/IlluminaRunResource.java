@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.zims;
 
 
+import clover.org.apache.commons.lang.StringUtils;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniLane;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniLibrary;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniRead;
@@ -234,10 +235,10 @@ public class IlluminaRunResource implements Serializable {
             if (bspDto == null) {
                 throw new BSPLookupException("BSP returned no data for " + bspSampleDTOEntry.getKey());
             }
-            if (bspDto.getSampleLsid() == null || bspDto.getSampleId().trim().isEmpty()) {
+            if (bspDto.getSampleLsid() == null || StringUtils.isBlank(bspDto.getSampleLsid())) {
                 throw new BSPLookupException("BSP returned no LSID.");
             }
-            if (bspDto.getSampleId() == null || bspDto.getSampleId().trim().isEmpty()) {
+            if (bspDto.getSampleId() == null || StringUtils.isBlank(bspDto.getSampleId())) {
                 throw new BSPLookupException("BSP returned no sample id.");
             }
             lsidToBspDto.put(bspDto.getSampleLsid(), bspDto);

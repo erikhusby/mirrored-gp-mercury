@@ -15,8 +15,8 @@ public class NullValuesBSPSampleSearchService implements BSPSampleSearchService 
 
     @Override
     public List<Map<BSPSampleSearchColumn, String>> runSampleSearch(Collection<String> sampleIDs, BSPSampleSearchColumn... resultColumns) {
-        List<Map<BSPSampleSearchColumn,String>> emptyResults = new ArrayList<Map<BSPSampleSearchColumn, String>>();
-        Map<BSPSampleSearchColumn,String> emptyColumnMap = new HashMap<BSPSampleSearchColumn,String>();
+        List<Map<BSPSampleSearchColumn,String>> emptyResults = new ArrayList<>();
+        Map<BSPSampleSearchColumn,String> emptyColumnMap = new HashMap<>();
 
         for (BSPSampleSearchColumn searchColumn : BSPSampleSearchColumn.PDO_SEARCH_COLUMNS) {
             emptyColumnMap.put(searchColumn, null);
