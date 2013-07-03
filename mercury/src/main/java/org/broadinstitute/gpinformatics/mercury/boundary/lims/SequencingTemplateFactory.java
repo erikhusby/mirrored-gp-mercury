@@ -103,7 +103,6 @@ public class SequencingTemplateFactory {
                 throw new RuntimeException(String.format("MiSeq Reagent Kit '%s' was not found.", id));
             }
             return getSequencingTemplate(miSeqReagentKit, isPoolTest);
-
         case TUBE:
             LabVessel denatureTube = labVesselDao.findByIdentifier(id);
             if (denatureTube == null) {
@@ -135,7 +134,14 @@ public class SequencingTemplateFactory {
         return loadedVesselsAndPositions;
     }
 
-
+    /**
+     * This method gets the sequencing template given a denature tube.
+     *
+     * @param denatureTube The denature tube to create the sequencing template for.
+     * @param isPoolTest   A boolean to determine if this is a MiSeq pool test run or not.
+     *
+     * @return Returns a populated sequencing template.
+     */
     public SequencingTemplateType getSequencingTemplate(LabVessel denatureTube, boolean isPoolTest) {
         SequencingConfigDef sequencingConfig = getSequencingConfig(isPoolTest);
         Set<LabBatch> labBatches = denatureTube.getLabBatchesOfType(LabBatch.LabBatchType.FCT);
