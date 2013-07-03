@@ -135,6 +135,9 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
 
         Set<CustomField> customFields = new HashSet<CustomField>();
 
+        customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.DESCRIPTION,
+                batch.getBatchDescription()));
+
         customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.WORK_REQUEST_IDS, "N/A"));
 
         customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.PROGRESS_STATUS,

@@ -83,15 +83,7 @@ public class BucketEjb {
 
         labEventFactory.createFromBatchItems(productOrderBusinessKeys.iterator().next(), vessel, 1L, operator,
                 eventType, eventLocation);
-        try {
-            jiraService.addComment(productOrderBusinessKeys.iterator().next(), vessel.getLabCentricName() +
-                                                                               " added to bucket " + bucket
-                    .getBucketDefinitionName());
-        } catch (IOException ioe) {
-            logger.error("error attempting to add a jira comment for adding " +
-                         productOrderBusinessKeys.iterator().next() + ":" + vessel.getLabCentricName() +
-                         " to bucket " + bucket.getBucketDefinitionName(), ioe);
-        }
+
         return newEntry;
     }
 
@@ -123,9 +115,10 @@ public class BucketEjb {
      * @param singlePdoBusinessKey Product order key for all vessels
      */
     public Collection<BucketEntry> add(@Nonnull Collection<LabVessel> entriesToAdd, @Nonnull Bucket bucket,
-                    BucketEntry.BucketEntryType entryType, @Nonnull String operator, @Nonnull String labEventLocation,
-                    LabEventType eventType,
-                    String singlePdoBusinessKey) {
+                                       BucketEntry.BucketEntryType entryType, @Nonnull String operator,
+                                       @Nonnull String labEventLocation,
+                                       LabEventType eventType,
+                                       String singlePdoBusinessKey) {
 
         List<BucketEntry> listOfNewEntries = new LinkedList<BucketEntry>();
         Map<String, Collection<LabVessel>> pdoKeyToVesselMap = new HashMap<String, Collection<LabVessel>>();
@@ -157,18 +150,6 @@ public class BucketEjb {
         //TODO SGM: Pass in Latest Batch?
         eventList.addAll(labEventFactory.buildFromBatchRequests(listOfNewEntries, operator, null, labEventLocation,
                 eventType));
-
-        for (String pdo : pdoKeyToVesselMap.keySet()) {
-            try {
-                jiraService.addComment(pdo, "Vessels: " +
-                                            StringUtils.join(pdoKeyToVesselMap.get(pdo), ',') +
-                                            " added to bucket " + bucket.getBucketDefinitionName());
-            } catch (IOException ioe) {
-                logger.error("error attempting to add a jira comment for adding " +
-                             pdo + ":" + StringUtils.join(pdoKeyToVesselMap.get(pdo), ',') + " to bucket " +
-                             bucket.getBucketDefinitionName(), ioe);
-            }
-        }
 
         return listOfNewEntries;
     }
