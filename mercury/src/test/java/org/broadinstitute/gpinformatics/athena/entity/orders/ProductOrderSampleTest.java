@@ -78,6 +78,8 @@ public class ProductOrderSampleTest {
                 {"SM-2ACG6", inBspFormat()},
                 {"Blahblahblah", not(inBspFormat())},
                 {"12345", not(inBspFormat())},
+                {"12345.0", not(inBspFormat())}, // that's a GSSR id, not a BSP id
+                {"4FHTK", not(inBspFormat())}, // "bare ids" are not considered valid BSP barcodes
                 {"SM-ABC0", not(inBspFormat())},
                 {"SM-ABCO", inBspFormat()}
         };

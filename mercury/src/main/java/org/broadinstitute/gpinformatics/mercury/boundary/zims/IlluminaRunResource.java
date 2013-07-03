@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.zims;
 
 
+import clover.org.apache.commons.lang.StringUtils;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniLane;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniLibrary;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniRead;
@@ -206,7 +207,6 @@ public class IlluminaRunResource implements Serializable {
         Set<String> sampleLsids = new HashSet<>();
         Set<String> sampleNames = new HashSet<>();
         Map<String, BSPSampleDTO> lsidToBspDto = new HashMap<>();
-        Map<String, BSPSampleDTO> sampleToBspDto = new HashMap<>();
         for (TZamboniLane zamboniLane : run.getLanes()) {
             for (TZamboniLibrary zamboniLibrary : zamboniLane.getLibraries()) {
                 if (isBspSample(zamboniLibrary)) {
@@ -214,20 +214,34 @@ public class IlluminaRunResource implements Serializable {
                 }
             }
         }
-        for (Map.Entry<String, String> lsIdToBareId : BSPLSIDUtil.lsidsToBareIds(sampleLsids).entrySet()) {
+
+        for (Map.Entry<String, String> lsIdToBareId :BSPLSIDUtil.lsidsToBareIds(sampleLsids).entrySet()) {
             if (lsIdToBareId.getValue() == null) {
                 throw new RuntimeException("Could not map lsid " + lsIdToBareId.getKey() + " to a bsp id.");
             } else {
                 sampleNames.add(lsIdToBareId.getValue());
             }
         }
-        if (!sampleNames.isEmpty()) {
-            sampleToBspDto = bspSampleDataFetcher.fetchSamplesFromBSP(sampleNames);
-        }
-        for (BSPSampleDTO bspSampleDTO : sampleToBspDto.values()) {
-            if (bspSampleDTO.getSampleLsid() != null) {
-                lsidToBspDto.put(bspSampleDTO.getSampleLsid(), bspSampleDTO);
+        Map<String, BSPSampleDTO> sampleToBspDto = bspSampleDataFetcher.fetchSamplesFromBSP(sampleNames);
+
+        for (Map.Entry<String, BSPSampleDTO> bspSampleDTOEntry : sampleToBspDto.entrySet()) {
+            BSPSampleDTO bspDto = bspSampleDTOEntry.getValue();
+            // make sure we get something out of BSP.  If we don't, consider it a
+            // catastrophe, especially for the pipeline
+            if (bspDto == null) {
+                throw new BSPLookupException("BSP returned no data for " + bspSampleDTOEntry.getKey());
             }
+            if (bspDto.getSampleLsid() == null || StringUtils.isBlank(bspDto.getSampleLsid())) {
+                throw new BSPLookupException("BSP returned no LSID.");
+            }
+            if (bspDto.getSampleId() == null || StringUtils.isBlank(bspDto.getSampleId())) {
+                throw new BSPLookupException("BSP returned no sample id.");
+            }
+            lsidToBspDto.put(bspDto.getSampleLsid(), bspDto);
+        }
+
+        if (sampleNames.size() != sampleToBspDto.size()) {
+            throw new BSPLookupException("BSP search for " + sampleNames.size() + " samples returned " + sampleToBspDto.size() + " results!");
         }
 
         return lsidToBspDto;

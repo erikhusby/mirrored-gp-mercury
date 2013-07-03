@@ -76,7 +76,8 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
     /**
      * Fetch the data from bsp for multiple samples.
      *
-     * @param sampleNames The sample names
+     * @param sampleNames The sample names, which can be short barcodes such as SM-4FHTK,
+     *                    or bare ids such as 4FHTK.
      *
      * @return Mapping of sample id to its bsp data
      */
@@ -84,32 +85,13 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
         if (sampleNames == null) {
             throw new NullPointerException("sampleNames cannot be null.");
         }
-
-        Collection<String> filteredNames;
-        // Work around issue with test (stub) BSPSampleSearchService implementations, which allow lookups
-        // of non-BSP samples.
-        if (service instanceof BSPSampleSearchServiceImpl) {
-            filteredNames = new ArrayList<>(sampleNames);
-            // Remove non BSP samples.
-            Iterator<String> namesIterator = filteredNames.iterator();
-            while (namesIterator.hasNext()) {
-                String sampleName = namesIterator.next();
-                if (sampleName == null || !BSPUtil.isInBspFormat(sampleName)) {
-                    namesIterator.remove();
-                }
-            }
-        } else {
-            // Using a stub service, don't filter out bogus samples.
-            filteredNames = sampleNames;
-        }
-
-        if (filteredNames.isEmpty()) {
+        if (sampleNames.isEmpty()) {
             return Collections.emptyMap();
         }
 
         Map<String, BSPSampleDTO> sampleNameToDTO = new HashMap<String, BSPSampleDTO>();
         List<Map<BSPSampleSearchColumn, String>> results =
-                service.runSampleSearch(filteredNames, BSPSampleSearchColumn.PDO_SEARCH_COLUMNS);
+                service.runSampleSearch(sampleNames, BSPSampleSearchColumn.PDO_SEARCH_COLUMNS);
         for (Map<BSPSampleSearchColumn, String> result : results) {
             BSPSampleDTO bspDTO = new BSPSampleDTO(result);
             sampleNameToDTO.put(bspDTO.getSampleId(), bspDTO);

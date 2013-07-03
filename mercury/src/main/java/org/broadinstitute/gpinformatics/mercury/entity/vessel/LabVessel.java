@@ -5,6 +5,7 @@ import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.SampleMetadata;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.SampleType;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
