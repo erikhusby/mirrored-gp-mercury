@@ -20,9 +20,6 @@ import java.util.Collection;
 
 public class LibraryBean {
 
-    // todo add bspEthnicity and bspRace
-
-    // todo: 1 delete unneeded fields, 2. merge bsp and gssr, 3. provide getInformaticsSource() = BSP/GSSR
 
     @JsonProperty("library")
     private String library;

@@ -119,7 +119,7 @@ public class LabEvent {
 
     /** For plate / tube events, that don't involve a transfer e.g. anonymous reagent addition, loading onto an
      * instrument, entry into a bucket */
-    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, fetch = FetchType.LAZY)
+    @ManyToOne(cascade = {CascadeType.PERSIST}, fetch = FetchType.LAZY)
     private LabVessel inPlaceLabVessel;
 
     /**
@@ -131,7 +131,7 @@ public class LabEvent {
     @Enumerated(EnumType.STRING)
     private LabEventType labEventType;
 
-    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, fetch = FetchType.LAZY)
+    @ManyToOne(cascade = {CascadeType.PERSIST}, fetch = FetchType.LAZY)
     private LabBatch labBatch;
 
     /** For JPA */

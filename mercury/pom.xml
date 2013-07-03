@@ -819,7 +819,7 @@
                 <database.delimiterType>row</database.delimiterType>
 
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
-                <database.url>jdbc:oracle:thin:@192.168.195.30:1521:gpinfprd</database.url>
+                <database.url>jdbc:oracle:thin:@192.168.195.63:1521:gpinfprd</database.url>
                 <mercury.password>guest</mercury.password>
                 <athena.password>guest</athena.password>
             </properties>
@@ -932,7 +932,9 @@
             </properties>
         </profile>
         <profile>
-            <id>PROD</id><!-- THis is for PRODUCTION ONLY -->
+            <id>PROD</id> <!-- This is for PRODUCTION ONLY.  If you need to debug against production, use one of the
+             other profiles and the -prod-ds.xml files.  This profile pulls from production JMS queues, so using
+              it for a debug server may cause message loss. -->
             <properties>
                 <!-- Oracle Dev -->
                 <database>oracle</database>

@@ -270,7 +270,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     /**
      * Initialize the product with the passed in key for display in the form or create it, if not specified.
      */
-    @Before(stages = LifecycleStage.BindingAndValidation, on = {"!" + LIST_ACTION, "!getQuoteFunding"})
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {"!" + LIST_ACTION, "!getQuoteFunding", "!" + VIEW_ACTION})
     public void init() {
         productOrder = getContext().getRequest().getParameter(PRODUCT_ORDER_PARAMETER);
         if (!StringUtils.isBlank(productOrder)) {
@@ -282,6 +282,20 @@ public class ProductOrderActionBean extends CoreActionBean {
             // If this was a create with research project specified, find that.
             // This is only used for save, when creating a new product order.
             editOrder = new ProductOrder();
+        }
+    }
+
+    /**
+     * Initialize the product with the passed in key for display in the form or create it, if not specified.
+     */
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION})
+    public void editInit() {
+        productOrder = getContext().getRequest().getParameter(PRODUCT_ORDER_PARAMETER);
+
+        // Since just getting the one item, get all the lazy data.
+        editOrder = productOrderDao.findByBusinessKey(productOrder, ProductOrderDao.FetchSpec.RiskItems);
+        if (editOrder != null) {
+            progressFetcher.loadProgress(productOrderDao, Collections.singletonList(productOrder));
         }
     }
 
@@ -397,7 +411,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 "tracker download";
 
         if (!getUserBean().isValidBspUser()) {
-            addGlobalValidationError("A valid bsp user is needed to start a {2}", validatingFor);
+            addGlobalValidationError("A valid BSP user is needed to start a {2}", validatingFor);
         }
 
         if ((selectedProductOrderBusinessKeys == null) || selectedProductOrderBusinessKeys.isEmpty()) {

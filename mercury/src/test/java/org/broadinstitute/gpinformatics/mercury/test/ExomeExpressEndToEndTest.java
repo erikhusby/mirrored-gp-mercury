@@ -369,12 +369,11 @@ public class ExomeExpressEndToEndTest {
                     labEventHandler, preFlightEntityBuilder.getRackBarcode(), "testPrefix").invoke();
 
             LibraryConstructionEntityBuilder libraryConstructionEntityBuilder =
-                    new LibraryConstructionEntityBuilder(bettaLimsMessageTestFactory, labEventFactory,
-                            labEventHandler,
+                    new LibraryConstructionEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, labEventHandler,
                             shearingEntityBuilder.getShearingCleanupPlate(),
                             shearingEntityBuilder.getShearCleanPlateBarcode(),
-                            shearingEntityBuilder.getShearingPlate(),
-                            mapBarcodeToTube.size(), "testPrefix").invoke();
+                            shearingEntityBuilder.getShearingPlate(), mapBarcodeToTube.size(), "testPrefix",
+                            LibraryConstructionEntityBuilder.Indexing.DUAL).invoke();
 
             HybridSelectionEntityBuilder hybridSelectionEntityBuilder =
                     new HybridSelectionEntityBuilder(bettaLimsMessageTestFactory, labEventFactory,

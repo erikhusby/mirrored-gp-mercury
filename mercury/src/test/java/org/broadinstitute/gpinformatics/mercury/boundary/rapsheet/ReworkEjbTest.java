@@ -120,10 +120,10 @@ public class ReworkEjbTest extends Arquillian {
     public static final String SM_SGM_Test_Genomic_2_DISEASE = "Carcinoid Tumor";
 
     @Inject
-    ReworkEjb reworkEjb;
+    private ReworkEjb reworkEjb;
 
     @Inject
-    ProductOrderDao productOrderDao;
+    private ProductOrderDao productOrderDao;
 
     @Inject
     private ProductDao productDao;
@@ -165,10 +165,10 @@ public class ReworkEjbTest extends Arquillian {
     private BucketEntryDao bucketEntryDao;
 
     @Inject
-    MercurySampleDao mercurySampleDao;
+    private MercurySampleDao mercurySampleDao;
 
     @Inject
-    AppConfig appConfig;
+    private AppConfig appConfig;
 
     @Inject
     private BSPSampleSearchService bspSampleSearchService;
@@ -576,7 +576,7 @@ public class ReworkEjbTest extends Arquillian {
                 .sendMessagesUptoCatch("SGM_RWIT4" + currDate.getTime(), mapBarcodeToTube, bettaLimsMessageFactory,
                         WorkflowName.EXOME_EXPRESS,
                         bettalimsMessageResource,
-                        indexedPlateFactory, staticPlateDAO, reagentDesignDao, twoDBarcodedTubeDAO,
+                        reagentDesignDao, twoDBarcodedTubeDAO,
                         appConfig.getUrl(), 2);
 
         for (String barcode : hybridSelectionJaxbBuilder.getNormCatchBarcodes()) {
@@ -654,7 +654,7 @@ public class ReworkEjbTest extends Arquillian {
                 .sendMessagesUptoCatch("SGM_RWIT4" + currDate.getTime(), mapBarcodeToTube, bettaLimsMessageFactory,
                         WorkflowName.EXOME_EXPRESS,
                         bettalimsMessageResource,
-                        indexedPlateFactory, staticPlateDAO, reagentDesignDao, twoDBarcodedTubeDAO,
+                        reagentDesignDao, twoDBarcodedTubeDAO,
                         appConfig.getUrl(), 2);
 
         for (String barcode : hybridSelectionJaxbBuilder.getNormCatchBarcodes()) {
@@ -747,7 +747,7 @@ public class ReworkEjbTest extends Arquillian {
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testHappyPathWithValidationCurrentlyInBucket() throws Exception {
 
-        List<String> validationMessages = new ArrayList<String>();
+        List<String> validationMessages = new ArrayList<>();
 
         createInitialTubes(bucketReadySamples1, String.valueOf((new Date()).getTime()) + "tst8");
 
@@ -783,7 +783,7 @@ public class ReworkEjbTest extends Arquillian {
 
         createInitialTubes(bucketReadySamples1, String.valueOf((new Date()).getTime()) + "tst9");
 
-        List<String> validationMessages = new ArrayList<String>();
+        List<String> validationMessages = new ArrayList<>();
 
         BettaLimsMessageTestFactory bettaLimsMessageFactory = new BettaLimsMessageTestFactory(true);
 
@@ -791,7 +791,7 @@ public class ReworkEjbTest extends Arquillian {
                 .sendMessagesUptoCatch("SGM_RWIT1" + currDate.getTime(), mapBarcodeToTube, bettaLimsMessageFactory,
                         WorkflowName.EXOME_EXPRESS,
                         bettalimsMessageResource,
-                        indexedPlateFactory, staticPlateDAO, reagentDesignDao, twoDBarcodedTubeDAO,
+                        reagentDesignDao, twoDBarcodedTubeDAO,
                         appConfig.getUrl(), 2);
 
         for (String barcode : hybridSelectionJaxbBuilder.getNormCatchBarcodes()) {
@@ -815,7 +815,7 @@ public class ReworkEjbTest extends Arquillian {
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testMixedDNAWithValidation() throws Exception {
 
-        List<String> validationMessages = new ArrayList<String>();
+        List<String> validationMessages = new ArrayList<>();
 
         createInitialTubes(bucketReadySamples2, String.valueOf((new Date()).getTime()) + "tst10");
 
@@ -840,7 +840,7 @@ public class ReworkEjbTest extends Arquillian {
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testMixedDNAWithValidationAndAncestors() throws Exception {
 
-        List<String> validationMessages = new ArrayList<String>();
+        List<String> validationMessages = new ArrayList<>();
 
         createInitialTubes(bucketReadySamples2, String.valueOf((new Date()).getTime()) + "tst11");
 
@@ -850,7 +850,7 @@ public class ReworkEjbTest extends Arquillian {
                 .sendMessagesUptoCatch("SGM_RWIT2" + currDate.getTime(), mapBarcodeToTube, bettaLimsMessageFactory,
                         WorkflowName.EXOME_EXPRESS,
                         bettalimsMessageResource,
-                        indexedPlateFactory, staticPlateDAO, reagentDesignDao, twoDBarcodedTubeDAO,
+                        reagentDesignDao, twoDBarcodedTubeDAO,
                         appConfig.getUrl(), 2);
 
         for (String barcode : hybridSelectionJaxbBuilder.getNormCatchBarcodes()) {
@@ -874,7 +874,7 @@ public class ReworkEjbTest extends Arquillian {
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testMixedDNAWithValidationAndAncestorsPreviouslyInBucket() throws Exception {
 
-        List<String> validationMessages = new ArrayList<String>();
+        List<String> validationMessages = new ArrayList<>();
 
         createInitialTubes(bucketReadySamples2, String.valueOf((new Date()).getTime()) + "tst12");
 
@@ -893,7 +893,7 @@ public class ReworkEjbTest extends Arquillian {
                 .sendMessagesUptoCatch("SGM_RWIT4" + currDate.getTime(), mapBarcodeToTube, bettaLimsMessageFactory,
                         WorkflowName.EXOME_EXPRESS,
                         bettalimsMessageResource,
-                        indexedPlateFactory, staticPlateDAO, reagentDesignDao, twoDBarcodedTubeDAO,
+                        reagentDesignDao, twoDBarcodedTubeDAO,
                         appConfig.getUrl(), 2);
 
         for (String barcode : hybridSelectionJaxbBuilder.getNormCatchBarcodes()) {
@@ -917,7 +917,7 @@ public class ReworkEjbTest extends Arquillian {
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testMixedDNAWithValidationAndAncestorsCurrentlyInBucket() throws Exception {
 
-        List<String> validationMessages = new ArrayList<String>();
+        List<String> validationMessages = new ArrayList<>();
 
         createInitialTubes(bucketReadySamples2, String.valueOf((new Date()).getTime()) + "tst13");
 
@@ -927,7 +927,7 @@ public class ReworkEjbTest extends Arquillian {
                 .sendMessagesUptoCatch("SGM_RWIT3" + currDate.getTime(), mapBarcodeToTube, bettaLimsMessageFactory,
                         WorkflowName.EXOME_EXPRESS,
                         bettalimsMessageResource,
-                        indexedPlateFactory, staticPlateDAO, reagentDesignDao, twoDBarcodedTubeDAO,
+                        reagentDesignDao, twoDBarcodedTubeDAO,
                         appConfig.getUrl(), 2);
 
         List<BucketEntry> bucketCleanupItems = new ArrayList<>();

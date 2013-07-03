@@ -107,6 +107,7 @@ public class LCSetJiraFieldFactoryTest {
         LabBatch testBatch = new LabBatch(LabBatch.generateBatchName(workflowName, pdoNames),
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
         testBatch.setWorkflowName("Exome Express");
+        testBatch.setBatchDescription("Batch Test Description");
 
         Set<LabVessel> reworks = new HashSet<LabVessel>();
         reworks.add(new TwoDBarcodedTube("Rework1"));
@@ -122,7 +123,7 @@ public class LCSetJiraFieldFactoryTest {
 
         Collection<CustomField> generatedFields = testBuilder.getCustomFields(jiraFieldDefs);
 
-        Assert.assertEquals(6, generatedFields.size());
+        Assert.assertEquals(7, generatedFields.size());
 
         for (CustomField currField : generatedFields) {
             if (currField.getFieldDefinition().getName()

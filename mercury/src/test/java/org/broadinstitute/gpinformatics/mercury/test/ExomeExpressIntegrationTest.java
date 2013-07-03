@@ -89,7 +89,7 @@ public class ExomeExpressIntegrationTest {
             }
             LibraryConstructionJaxbBuilder libraryConstructionJaxbBuilder = new LibraryConstructionJaxbBuilder(
                     bettaLimsMessageTestFactory, testSuffix, shearingJaxbBuilder.getShearCleanPlateBarcode(),
-                    "000002453323",
+                    "000002453323", null,
                     sampleBarcodeMap.size()).invoke();
 
             for (BettaLIMSMessage bettaLIMSMessage : libraryConstructionJaxbBuilder.getMessageList()) {

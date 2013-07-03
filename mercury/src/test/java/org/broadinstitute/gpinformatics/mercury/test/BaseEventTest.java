@@ -276,8 +276,8 @@ public class BaseEventTest {
 
         return new LibraryConstructionEntityBuilder(
                 bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
-                shearingCleanupPlate, shearCleanPlateBarcode,
-                shearingPlate, NUM_POSITIONS_IN_RACK, barcodeSuffix).invoke();
+                shearingCleanupPlate, shearCleanPlateBarcode, shearingPlate, NUM_POSITIONS_IN_RACK, barcodeSuffix,
+                LibraryConstructionEntityBuilder.Indexing.DUAL).invoke();
     }
 
     /**

@@ -16,6 +16,8 @@ section { margin-left: 2%; margin-right: 2% }
 /* Override Bootstrap's opinion that links should not be underlined. */
 a { text-decoration: underline; color: #0088CC; font-size: medium; }
 a.external {background-image:url("/Mercury/images/external-link.gif");background-position:right center;background-repeat:no-repeat;display:inline;padding:0 20px 0 0;}
+.navbar .nav > li > a { padding: 7px 15px; }
+.navbar-inner { min-height: 30px; }
 
 .control-group a, table a { font-size: 12px; }
 

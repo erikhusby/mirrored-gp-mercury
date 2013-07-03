@@ -204,6 +204,13 @@
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
             <workflowStepDefs>
+                <name>PostEndRepairThermoCyclerLoaded</name>
+                <labEventTypes>POST_END_REPAIR_THERMO_CYCLER_LOADED</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
                 <name>EndRepairCleanup</name>
                 <labEventTypes>END_REPAIR_CLEANUP</labEventTypes>
                 <optional>false</optional>
@@ -214,6 +221,13 @@
                 <name>ABase</name>
                 <labEventTypes>A_BASE</labEventTypes>
                 <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>PostABaseThermoCyclerLoaded</name>
+                <labEventTypes>POST_ABASE_THERMO_CYCLER_LOADED</labEventTypes>
+                <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
@@ -232,6 +246,13 @@
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
             <workflowStepDefs>
+                <name>PostIndexedAdapterLigationThermoCyclerLoaded</name>
+                <labEventTypes>POST_INDEXED_ADAPTER_LIGATION_THERMO_CYCLER_LOADED</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
                 <name>Adaptor Ligation Cleanup</name>
                 <labEventTypes>ADAPTER_LIGATION_CLEANUP</labEventTypes>
                 <optional>false</optional>
@@ -239,7 +260,7 @@
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name>Indexed Adaptor Ligation</name>
+                <name>Index P5 Pond Enrichment</name>
                 <labEventTypes>INDEX_P5_POND_ENRICHMENT</labEventTypes>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
@@ -248,7 +269,14 @@
             <workflowStepDefs>
                 <name>Pond Enrichment</name>
                 <labEventTypes>POND_ENRICHMENT</labEventTypes>
-                <optional>false</optional>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>PostPondEnrichmentThermoCyclerLoaded</name>
+                <labEventTypes>POST_POND_ENRICHMENT_THERMO_CYCLER_LOADED</labEventTypes>
+                <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
@@ -298,6 +326,13 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
+            <workflowStepDefs>
+                <name>PostHybridizationThermoCyclerLoaded</name>
+                <labEventTypes>POST_HYBRIDIZATION_THERMO_CYCLER_LOADED</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
             <!--
                     <workflowStepDefs>
                         <name>BaitSetup</name>
@@ -336,6 +371,13 @@
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
             <workflowStepDefs>
+                <name>PostCatchEnrichmentSetupThermoCyclerLoaded</name>
+                <labEventTypes>POST_CATCH_ENRICHMENT_SETUP_THERMO_CYCLER_LOADED</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
                 <name>Catch Enrichment Cleanup</name>
                 <labEventTypes>CATCH_ENRICHMENT_CLEANUP</labEventTypes>
                 <optional>false</optional>
@@ -352,6 +394,13 @@
                     <project>LCSET</project>
                     <statusTransition>In QTP</statusTransition>
                 </jiraTransition>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Catch Pico</name>
+                <labEventTypes>CATCH_PICO</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
