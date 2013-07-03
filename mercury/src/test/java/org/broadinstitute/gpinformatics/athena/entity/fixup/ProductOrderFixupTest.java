@@ -324,35 +324,34 @@ public class ProductOrderFixupTest extends Arquillian {
         }
     }
 
-    public void changeProjectForPdo(String pdoKey,String newProjectKey) throws IOException {
-        ProductOrder pdo = productOrderDao.findByBusinessKey(pdoKey);
-        if (pdo == null) {
-            Assert.fail("Could not find " + pdoKey);
-        }
-        ResearchProject oldProject = pdo.getResearchProject();
+    public void changeProjectForPdo(String pdoKey, String newProjectKey) throws IOException {
+        ProductOrder order = productOrderDao.findByBusinessKey(pdoKey);
+        Assert.assertNotNull(order, "Could not find " + pdoKey);
+
+        ResearchProject oldProject = order.getResearchProject();
         ResearchProject newProject = projectDao.findByBusinessKey(newProjectKey);
 
-        pdo.setResearchProject(newProject);
+        order.setResearchProject(newProject);
 
-        System.out.println("Updating " + pdo.getBusinessKey() + "/" + pdo.getName() + " from project " + oldProject.getBusinessKey() + " to " + pdo.getResearchProject().getBusinessKey() + "/" + pdo.getResearchProject().getName());
+        log.info("Updating " + order.getBusinessKey() + "/" + order.getName() + " from project " +
+                 oldProject.getBusinessKey() + " to " + newProject.getBusinessKey() + "/" + newProject.getName());
 
-        jiraService.addLink(AddIssueLinkRequest.LinkType.Related,pdoKey,pdo.getResearchProject().getBusinessKey());
-        // note that this adds the link...BUT YOU MUST DELETE THE PREVIOUS RP LINK MANUALLY!
+        JiraIssue issue = jiraService.getIssue(pdoKey);
 
-        productOrderDao.persist(pdo);
+        // Note that this adds the link...BUT YOU MUST DELETE THE PREVIOUS RP LINK MANUALLY!
+        issue.addLink(AddIssueLinkRequest.LinkType.Related, newProject.getBusinessKey());
 
+        productOrderDao.persist(order);
     }
 
     @Test(enabled = false)
     public void changeProjectForPdo() throws Exception {
-        changeProjectForPdo("PDO-1621","RP-317");
+        changeProjectForPdo("PDO-1621", "RP-317");
     }
 
     private void changeJiraKey(String oldKey, String newKey) {
         ProductOrder order = productOrderDao.findByBusinessKey(newKey);
-        if (order != null) {
-             Assert.fail("Should be no " + newKey + " in the database!");
-        }
+        Assert.assertNull(order, "Should be no " + newKey + " in the database!");
         order = productOrderDao.findByBusinessKey(oldKey);
         order.setJiraTicketKey(newKey);
         productOrderDao.persist(order);
