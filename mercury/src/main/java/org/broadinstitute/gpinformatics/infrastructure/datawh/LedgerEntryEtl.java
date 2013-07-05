@@ -43,19 +43,19 @@ public class LedgerEntryEtl extends GenericEntityEtl<LedgerEntry, LedgerEntry> {
     String dataRecord(String etlDateStr, boolean isDelete, LedgerEntry entity) {
         ProductOrderSample pdoSample = entity.getProductOrderSample();
         PriceItem priceItem = entity.getPriceItem();
-        BillingSession billingSession = entity.getBillingSession();
-        LedgerEntry.PriceItemType priceItemType = entity.getPriceItemType();
-        if (pdoSample == null || priceItem == null || billingSession == null || priceItemType == null) {
+        if (pdoSample == null || priceItem == null) {
             return null;
         }
+        BillingSession billingSession = entity.getBillingSession();
+        LedgerEntry.PriceItemType priceItemType = entity.getPriceItemType();
         return genericRecord(etlDateStr, isDelete,
                 entity.getLedgerId(),
                 format(pdoSample.getProductOrderSampleId()),
                 format(entity.getQuoteId()),
                 format(priceItem.getPriceItemId()),
-                format(priceItemType.toString()),
+                format(priceItemType != null ? priceItemType.toString() : null),
                 format(entity.getQuantity()),
-                format(billingSession.getBillingSessionId()),
+                format(billingSession != null ? billingSession.getBillingSessionId() : null),
                 format(entity.getBillingMessage()),
                 format(entity.getWorkCompleteDate())
                 );
