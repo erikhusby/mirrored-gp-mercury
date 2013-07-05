@@ -168,6 +168,9 @@ public abstract class LabVessel implements Serializable {
     @Transient
     private Integer sampleInstanceCount = null;
 
+    @Transient
+    private Map<String, LabMetric> metricMap = null;
+
     protected LabVessel(String label) {
         createdOn = new Date();
         if (label == null || label.equals("0")) {
@@ -233,6 +236,14 @@ public abstract class LabVessel implements Serializable {
 
     public Set<LabMetric> getMetrics() {
         return labMetrics;
+    }
+
+    public Map<String, LabMetric> getMetricMap() {
+        return metricMap;
+    }
+
+    public void setMetricMap(Map<String, LabMetric> metricMap) {
+        this.metricMap = metricMap;
     }
 
     /**
@@ -1625,5 +1636,23 @@ public abstract class LabVessel implements Serializable {
         }
 
         return false;
+    }
+
+    public Map<String, LabMetric> getMetricsForVesselandDescendants() {
+        Set<LabMetric> allMetrics = new HashSet<>();
+        if (metricMap == null) {
+            metricMap = new HashMap<>();
+            allMetrics.addAll(getMetrics());
+
+            for (LabVessel curVessel : getAncestorAndDescendantVessels()) {
+                allMetrics.addAll(curVessel.getMetrics());
+            }
+
+            for (LabMetric metric : allMetrics) {
+                metricMap.put(metric.getName().getDisplayName(), metric);
+            }
+
+        }
+        return metricMap;
     }
 }
