@@ -7,7 +7,6 @@ TRAILING NULLCOLS
  line_number,
  etl_date DATE "YYYYMMDDHH24MISS",
  is_delete,
- ledger_id,
  billing_session_id,
  billed_date DATE "YYYYMMDDHH24MISS",
  billing_session_type

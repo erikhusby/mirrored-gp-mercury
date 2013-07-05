@@ -506,17 +506,6 @@ CREATE TABLE im_sequencing_run (
   actual_read_structure VARCHAR2(255)
 );
 
-
-CREATE TABLE im_billing_session (
-  line_number            NUMERIC(9)  NOT NULL,
-  etl_date               DATE        NOT NULL,
-  is_delete              CHAR(1)     NOT NULL,
-  billing_session_id     NUMERIC(19) NOT NULL,
-  billed_date            DATE,
-  billing_session_type   VARCHAR2(50)
-);
-
-
 CREATE SEQUENCE event_fact_id_seq START WITH 1;
 CREATE SEQUENCE sequencing_sample_id_seq START WITH 1;
 
