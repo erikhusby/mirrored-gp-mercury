@@ -1185,6 +1185,8 @@ IS
       UPDATE ledger_entry
       SET
         ledger_id = new.ledger_id,
+        product_order_sample_id = new.product_order_sample_id,
+        quote_id = new.quote_id,
         price_item_id = new.price_item_id,
         price_item_type = new.price_item_type,
         quantity = new.quantity,
@@ -1196,6 +1198,8 @@ IS
 
       INSERT INTO ledger_entry (
         ledger_id,
+        product_order_sample_id,
+        quote_id,
         price_item_id,
         price_item_type,
         quantity,
@@ -1206,6 +1210,8 @@ IS
       )
       SELECT
         new.ledger_id,
+        new.product_order_sample_id,
+        new.QUOTE_ID,
         new.price_item_id,
         new.price_item_type,
         new.quantity,
