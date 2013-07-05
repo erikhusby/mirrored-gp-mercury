@@ -1151,7 +1151,7 @@ IS
             SELECT
               1
             FROM billing_session
-            WHERE billing_session = new.billing_session
+            WHERE billing_session_id = new.billing_session_id
         );
       EXCEPTION WHEN OTHERS THEN
       errmsg := SQLERRM;
