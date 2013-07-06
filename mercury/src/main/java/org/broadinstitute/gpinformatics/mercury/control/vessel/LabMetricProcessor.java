@@ -61,7 +61,9 @@ public class LabMetricProcessor extends TableProcessor {
 
             metrics.add(currentMetric);
         } catch (NumberFormatException e) {
-            addDataMessage("Value for quant: " + dataRow.get(LabMetricHeaders.METRIC.getText()) + " is invalid", dataRowIndex);
+            addDataMessage(
+                    "Value for quant: " + dataRow.get(LabMetricHeaders.METRIC.getText()) + " is invalid.",
+                    dataRowIndex);
         }
     }
 
@@ -125,7 +127,7 @@ public class LabMetricProcessor extends TableProcessor {
         }
 
         @Override
-        public boolean isRequredHeader() {
+        public boolean isRequiredHeader() {
             return requredHeader;
         }
 

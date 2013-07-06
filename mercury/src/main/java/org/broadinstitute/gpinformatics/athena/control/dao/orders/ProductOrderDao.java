@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 
+import org.broadinstitute.gpinformatics.athena.boundary.billing.AutomatedBiller;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderCompletionStatus;
@@ -35,7 +36,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
-import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,22 +45,18 @@ import java.util.Set;
 @RequestScoped
 public class ProductOrderDao extends GenericDao {
 
-    // Auto processing is happening on orders from midnight up until 5AM, so 5AM is NOT auto processing. This needs to
-    // be in sync with the AutomatedBiller class' scheduler, so if that changes, this should change.
-    private boolean isAutoProcessing[] = new boolean[] {
-        //  mid    1AM   2AM   3AM   4AM    5AM    6AM    7AM    8AM    9AM    10AM   11AM   NOON   1PM    2PM
-            true, true, true, true, true, false, false, false, false, false, false, false, false, false, false,
-        //   3PM    4PM    5PM    6PM    7PM    8PM    9PM    10PM   11PM
-            false, false, false, false, false, false, false, false, false};
-
     /**
      * Calculate whether the schedule is processing messages. This will be used to lock out tracker uploads.
      *
      * @return the state of the schedule
      */
     public boolean isAutoProcessing() {
-        Calendar calendar = new GregorianCalendar();
-        return isAutoProcessing[calendar.get(Calendar.HOUR_OF_DAY)];
+        int hourOfDay = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
+        if (AutomatedBiller.PROCESSING_START_HOUR < AutomatedBiller.PROCESSING_END_HOUR) {
+            return hourOfDay >= AutomatedBiller.PROCESSING_START_HOUR && hourOfDay < AutomatedBiller.PROCESSING_END_HOUR;
+        }
+
+        return hourOfDay >= AutomatedBiller.PROCESSING_START_HOUR || hourOfDay < AutomatedBiller.PROCESSING_END_HOUR;
     }
 
     public enum FetchSpec {

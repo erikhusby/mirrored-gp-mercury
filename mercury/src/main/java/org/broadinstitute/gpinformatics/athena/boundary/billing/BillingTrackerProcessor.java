@@ -146,8 +146,8 @@ public class BillingTrackerProcessor extends TableProcessor {
         // All error messages want the right row AND then return, so need this to be incremented.
         sampleIndexInOrder++;
 
-        String rowPdoIdStr = dataRow.get(BillingTrackerHeader.ORDER_ID_HEADING.getText());
-        String currentSampleName = dataRow.get(BillingTrackerHeader.SAMPLE_ID_HEADING.getText());
+        String rowPdoIdStr = dataRow.get(BillingTrackerHeader.ORDER_ID.getText());
+        String currentSampleName = dataRow.get(BillingTrackerHeader.SAMPLE_ID.getText());
 
         // Get the stats for the current PDO id. If it does not exist, add the new summary to the map.
         Map<BillableRef, OrderBillSummaryStat> pdoSummaryStatsMap = chargesMapByPdo.get(rowPdoIdStr);
@@ -175,7 +175,7 @@ public class BillingTrackerProcessor extends TableProcessor {
 
         // Verify the sample information.
         checkSample(dataRowIndex, rowPdoIdStr, currentSampleName,
-                dataRow.get(BillingTrackerHeader.AUTO_LEDGER_TIMESTAMP_HEADING.getText()));
+                dataRow.get(BillingTrackerHeader.AUTO_LEDGER_TIMESTAMP.getText()));
         if (getMessages().size() > 0) {
             return;
         }
@@ -371,10 +371,10 @@ public class BillingTrackerProcessor extends TableProcessor {
             double delta = newQuantity - trackerBilled;
 
             if (delta != 0) {
-                String uploadedQuoteId = dataRow.get(BillingTrackerHeader.QUOTE_ID_HEADING.getText());
+                String uploadedQuoteId = dataRow.get(BillingTrackerHeader.QUOTE_ID.getText());
                 if (StringUtils.isBlank(uploadedQuoteId)) {
                     addDataMessage(
-                            String.format(SAMPLE_EMPTY_VALUE, BillingTrackerHeader.QUOTE_ID_HEADING.getText(),
+                            String.format(SAMPLE_EMPTY_VALUE, BillingTrackerHeader.QUOTE_ID.getText(),
                                     productOrderSample.getSampleKey(), currentProductOrder.getBusinessKey(),
                                     priceItemName), dataRowIndex);
                 }
@@ -386,10 +386,10 @@ public class BillingTrackerProcessor extends TableProcessor {
                             dataRowIndex);
                 }
 
-                String workCompleteDateString = dataRow.get(BillingTrackerHeader.WORK_COMPLETE_DATE_HEADING.getText());
+                String workCompleteDateString = dataRow.get(BillingTrackerHeader.WORK_COMPLETE_DATE.getText());
                 if (StringUtils.isBlank(workCompleteDateString)) {
                     addDataMessage(String.format(BAD_UPDATE_FILE,
-                            BillingTrackerHeader.WORK_COMPLETE_DATE_HEADING.getText(),
+                            BillingTrackerHeader.WORK_COMPLETE_DATE.getText(),
                             productOrderSample.getSampleKey(), currentProductOrder.getBusinessKey(), priceItemName),
                             dataRowIndex);
                 }

@@ -80,7 +80,7 @@ public abstract class TableProcessor implements Serializable {
     public final boolean validateHeaders(List<String> headers) {
         // If any of the required headers are NOT in the header list, then return false.
         for (ColumnHeader header : getColumnHeaders()) {
-            if (header.isRequredHeader() && !headers.contains(header.getText())) {
+            if (header.isRequiredHeader() && !headers.contains(header.getText())) {
                 validationMessages.add("Required header: " + header.getText() + " is missing");
                 return false;
             }

@@ -1190,13 +1190,20 @@ public class ProductOrder implements BusinessObject, Serializable {
             return statuses;
         }
 
-        public static List<String> getStrings(List<OrderStatus> selectedStatuses) {
-            if (CollectionUtils.isEmpty(selectedStatuses)) {
+        /**
+         * This is a utility function to pull out the names of the statuses so that items can be used in queries.
+         *
+         * @param statuses The status enums that were selected.
+         *
+         * @return The string list.
+         */
+        public static List<String> getStrings(List<OrderStatus> statuses) {
+            if (CollectionUtils.isEmpty(statuses)) {
                 return Collections.emptyList();
             }
 
-            List<String> statusStrings = new ArrayList<>();
-            for (ProductOrder.OrderStatus status : selectedStatuses) {
+            List<String> statusStrings = new ArrayList<>(statuses.size());
+            for (ProductOrder.OrderStatus status : statuses) {
                 statusStrings.add(status.name());
             }
 
@@ -1315,17 +1322,66 @@ public class ProductOrder implements BusinessObject, Serializable {
             return statuses;
         }
 
-        public static List<String> getStrings(List<LedgerStatus> selectedStatuses) {
-            if (CollectionUtils.isEmpty(selectedStatuses)) {
+        /**
+         * Get the status item names from the ledger statuses.
+         *
+         * @param statuses The statuses
+         *
+         * @return The list of strings
+         */
+        public static List<String> getStrings(List<LedgerStatus> statuses) {
+            if (CollectionUtils.isEmpty(statuses)) {
                 return Collections.emptyList();
             }
 
             List<String> statusStrings = new ArrayList<>();
-            for (ProductOrder.LedgerStatus status : selectedStatuses) {
+            for (ProductOrder.LedgerStatus status : statuses) {
                 statusStrings.add(status.name());
             }
 
             return statusStrings;
+        }
+
+        public static void addEntryBasedOnStatus(
+                List<ProductOrder.LedgerStatus> ledgerStatuses,
+                List<ProductOrderListEntry> filteredList,
+                ProductOrderListEntry entry) {
+
+            for (ProductOrder.LedgerStatus selectedStatus : ledgerStatuses) {
+                switch (selectedStatus) {
+
+                case NOTHING_NEW:
+                    // Drafts are always new.
+                    if (entry.isDraft() ||
+                        (!entry.isReadyForBilling() && !entry.isReadyForReview() && !entry.isBilling())) {
+                        filteredList.add(entry);
+                        return;
+                    }
+                    break;
+                case READY_FOR_REVIEW:
+                    // Ready for review is ALWAYS indicated when there are ledger entries. Billing locks out
+                    // automated ledger entry. For now, so does ready to bill, but that may change.
+                    if (entry.isReadyForReview()) {
+                        filteredList.add(entry);
+                        return;
+                    }
+                    break;
+                case READY_TO_BILL:
+                    // Ready for review overrides ready for billing. May not come up for a while because of
+                    // lockouts, but this is the way the visual works, so using this.
+                    if (entry.isReadyForBilling() && !entry.isReadyForReview()) {
+                        filteredList.add(entry);
+                        return;
+                    }
+                    break;
+                case BILLING:
+                    if (entry.isBilling()) {
+                        filteredList.add(entry);
+                        return;
+                    }
+                    break;
+                }
+            }
         }
     }
 }

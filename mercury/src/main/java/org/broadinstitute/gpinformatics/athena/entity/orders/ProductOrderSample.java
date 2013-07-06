@@ -330,12 +330,11 @@ public class ProductOrderSample extends AbstractSample implements Serializable {
         List<PriceItem> itemsToBill = getBillablePriceItems();
         Map<PriceItem, LedgerQuantities> ledgerQuantitiesMap = getLedgerQuantities();
 
-        Date currentDate = new Date();
         for (PriceItem priceItem : itemsToBill) {
             LedgerQuantities quantities = ledgerQuantitiesMap.get(priceItem);
             if (quantities == null) {
                 // No ledger item exists for this price item, create it using the current order's price item
-                addAutoLedgerItem(completedDate, priceItem, quantity, currentDate);
+                addAutoLedgerItem(completedDate, priceItem, quantity, now);
             } else {
                 // This price item already has a ledger entry.
                 // - If it's been billed, don't bill it again, but report this as an issue.

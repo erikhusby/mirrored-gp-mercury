@@ -21,7 +21,7 @@ public interface ColumnHeader {
 
     int getIndex();
 
-    boolean isRequredHeader();
+    boolean isRequiredHeader();
     boolean isRequiredValue();
 
     boolean isDateColumn();

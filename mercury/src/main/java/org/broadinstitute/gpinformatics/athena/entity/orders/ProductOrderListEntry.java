@@ -39,9 +39,9 @@ public class ProductOrderListEntry implements Serializable {
 
     private final long constructedCount;
 
-    private long readyForReviewCount = 0L;
+    private long readyForReviewCount = 0;
 
-    private long readyForBillingCount = 0L;
+    private long readyForBillingCount = 0;
 
     /**
      * Version of the constructor called by the non-ledger aware first pass query.
@@ -52,9 +52,11 @@ public class ProductOrderListEntry implements Serializable {
     public ProductOrderListEntry(Long orderId, String title, String jiraTicketKey, ProductOrder.OrderStatus orderStatus,
                                  String productName, String productFamilyName, String researchProjectTitle,
                                  Long ownerId, Date placedDate, String quoteId) {
-        this.orderId = orderId;
+
+        // No billing session and a the constructed count is set to 0 because it is not used for this constructor.
+        this(orderId, jiraTicketKey, null, 0);
+
         this.title = title;
-        this.jiraTicketKey = jiraTicketKey;
         this.orderStatus = orderStatus;
         this.productName = productName;
         this.productFamilyName = productFamilyName;
@@ -62,9 +64,6 @@ public class ProductOrderListEntry implements Serializable {
         this.ownerId = ownerId;
         this.placedDate = placedDate;
         this.quoteId = quoteId;
-
-        // The query that generates this does not update counts, so this value is not used here.
-        this.constructedCount = 0L;
     }
 
     /**
@@ -74,7 +73,7 @@ public class ProductOrderListEntry implements Serializable {
     @SuppressWarnings("UnusedDeclaration")
     // This is called through reflection and only appears to be unused.
     public ProductOrderListEntry(
-        Long orderId, String jiraTicketKey, Long billingSessionId, Long constructedCount) {
+        Long orderId, String jiraTicketKey, Long billingSessionId, long constructedCount) {
 
         this.orderId = orderId;
         this.jiraTicketKey = jiraTicketKey;
@@ -85,7 +84,7 @@ public class ProductOrderListEntry implements Serializable {
     }
 
     private ProductOrderListEntry() {
-        constructedCount = 0L;
+        constructedCount = 0;
     }
 
     public static ProductOrderListEntry createDummy() {

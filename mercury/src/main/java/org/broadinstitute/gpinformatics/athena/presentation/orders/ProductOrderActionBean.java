@@ -1508,4 +1508,12 @@ public class ProductOrderActionBean extends CoreActionBean {
     public boolean isEditAllowed() {
         return !editOrder.isDraft() && isCreateAllowed();
     }
+
+    public ProductOrder.LedgerStatus[] getLedgerStatuses() {
+        return ProductOrder.LedgerStatus.values();
+    }
+
+    public ProductOrder.OrderStatus[] getOrderStatuses() {
+        return ProductOrder.OrderStatus.values();
+    }
 }
