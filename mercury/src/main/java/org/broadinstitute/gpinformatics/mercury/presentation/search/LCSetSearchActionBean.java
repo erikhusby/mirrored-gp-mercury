@@ -7,11 +7,13 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -23,6 +25,7 @@ public class LCSetSearchActionBean extends SearchActionBean {
     public static final String ACTIONBEAN_URL_BINDING = "/search/lcset.action";
     public static final String LCSET_SEARCH = "lcsetSearch";
     private static final String SESSION_LIST_PAGE = "/search/lcset_search.jsp";
+    private Map<LabVessel, LabEvent> latestEventForVessel = new HashMap<>();
 
     @Inject
     private BSPSampleDataFetcher sampleDataFetcher;
@@ -74,5 +77,15 @@ public class LCSetSearchActionBean extends SearchActionBean {
         setFoundBatches(filteredBatches);
     }
 
-
+    public LabEvent getLatestEventForVessel(LabVessel vessel) {
+        Collection<LabVessel> descendants = vessel.getDescendantVessels();
+        LabVessel[] events = descendants.toArray(new LabVessel[descendants.size()]);
+        LabVessel lastVessel = events[descendants.size() - 1];
+        LabEvent latestEvent = latestEventForVessel.get(lastVessel);
+        if (latestEvent == null) {
+            latestEvent = lastVessel.getLatestEvent();
+            latestEventForVessel.put(lastVessel, latestEvent);
+        }
+        return latestEvent;
+    }
 }

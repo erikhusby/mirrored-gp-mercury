@@ -21,7 +21,13 @@
                         {"bSortable":true, sWidth:'100px', sType:'html'},
                         { "bSortable":true, sType:'numeric'},
                         { "bSortable":true, sType:'numeric'},
-                        { "bSortable":true, sType:'numeric'}
+                        { "bSortable":true, sType:'numeric'},
+                        { "bSortable":true, sType:'numeric'},
+                        { "bSortable":true},
+                        { "bSortable":true},
+                        { "bSortable":true},
+                        {"bSortable":true, sType:'date'}
+
                     ],
                     "bRetrieve":true,
                     "sScrollY":500
@@ -38,6 +44,11 @@
             <th>Catch Pico</th>
             <th>Pond Pico</th>
             <th>ECO QPCR</th>
+            <th>Latest Event</th>
+            <th>Event Operator</th>
+            <th>Event Location</th>
+            <th>Event Date</th>
+
         </tr>
         </thead>
         <tbody>
@@ -64,6 +75,20 @@
                     <td>
                             ${vessel.metricsForVesselandDescendants.get("ECO QPCR").value}
                     </td>
+                    <td>
+                            ${bean.getLatestEventForVessel(vessel).labEventType.name}
+                    </td>
+                    <td>
+                            ${bean.getUserFullName(bean.getLatestEventForVessel(vessel).eventOperator)}
+                    </td>
+                    <td>
+                            ${bean.getLatestEventForVessel(vessel).eventLocation}
+                    </td>
+                    <td>
+                        <fmt:formatDate value="${bean.getLatestEventForVessel(vessel).eventDate}"
+                                        pattern="${bean.dateTimePattern}"/>
+                    </td>
+
                 </tr>
             </c:forEach>
         </c:forEach>
