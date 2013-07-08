@@ -211,7 +211,7 @@ public class WorkflowValidator {
 
         for (LabVessel labVessel : labVessels) { // todo jmt can this be null?
             Set<SampleInstance> sampleInstances = labVessel.getSampleInstances(LabVessel.SampleType.WITH_PDO,
-                    LabBatch.LabBatchType.WORKFLOW, labVessels);
+                    LabBatch.LabBatchType.WORKFLOW);
             for (SampleInstance sampleInstance : sampleInstances) {
                 String workflowName = sampleInstance.getWorkflowName();
                 if (workflowName != null) {

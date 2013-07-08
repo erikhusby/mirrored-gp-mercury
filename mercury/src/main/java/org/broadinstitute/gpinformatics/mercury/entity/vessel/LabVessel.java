@@ -8,7 +8,6 @@ import org.broadinstitute.gpinformatics.infrastructure.SampleMetadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
@@ -55,7 +54,7 @@ import java.util.Set;
 import java.util.TreeMap;
 
 /**
- * A piece of plastic or glass that holds sample, reagent or other plastic.
+ * A piece of plastic or glass that holds sample, reagent or (if it embeds a VesselContainer) other plastic.
  * In-place lab events can apply to any LabVessel, whereas SectionTransfers and CherryPickTransfers apply to
  * LabVessels with a VesselContainer role (racks and plates), and VesselToVessel and VesselToSection transfers
  * apply to containees (tubes and wells).
@@ -80,7 +79,6 @@ public abstract class LabVessel implements Serializable {
 
     private Date createdOn;
 
-    // todo jmt liquid vs solid?  Not a class level role?  Large tubes can hold both.
     private Float volume;
 
     private Float concentration;
@@ -167,9 +165,6 @@ public abstract class LabVessel implements Serializable {
 
     @Transient
     private Integer sampleInstanceCount = null;
-
-    @Transient
-    private Set<LabBatch> computedLcSets;
 
     protected LabVessel(String label) {
         createdOn = new Date();
@@ -707,11 +702,6 @@ public abstract class LabVessel implements Serializable {
      * @return sample instances
      */
     public Set<SampleInstance> getSampleInstances(SampleType sampleType, @Nullable LabBatch.LabBatchType labBatchType) {
-        return getSampleInstances(sampleType, labBatchType, Collections.<LabVessel>emptyList());
-    }
-
-    public Set<SampleInstance> getSampleInstances(SampleType sampleType, LabBatch.LabBatchType labBatchType,
-            Collection<LabVessel> siblingLabVessels) {
         if (getContainerRole() != null) {
             return getContainerRole().getSampleInstances(sampleType, labBatchType);
         }
@@ -743,7 +733,8 @@ public abstract class LabVessel implements Serializable {
     }
 
     /**
-     * The results of traversing (ancestor) vessels
+     * The results of traversing (ancestor) vessels.  The main branch in the graph is likely to have (multiple)
+     * SampleInstances, while side branches add reagents.
      */
     static class TraversalResults {
 
@@ -792,14 +783,33 @@ public abstract class LabVessel implements Serializable {
                 reagents.clear();
             }
         }
+
+        /**
+         * Called after an event has been traversed, sets lab batch and product order key.
+         * @param labEvent event that was traverses
+         * @param labVessel plastic involved in the event
+         */
+        public void applyEvent(@Nonnull LabEvent labEvent, @Nonnull LabVessel labVessel) {
+            Set<LabBatch> computedLcSets1 = labEvent.getComputedLcSets();
+            if (computedLcSets1.size() == 1) {
+                for (SampleInstance sampleInstance : getSampleInstances()) {
+                    LabBatch labBatch = computedLcSets1.iterator().next();
+                    sampleInstance.setLabBatch(labBatch);
+                    for (BucketEntry bucketEntry : labVessel.getBucketEntries()) {
+                        if (bucketEntry.getLabBatch() != null && bucketEntry.getLabBatch().equals(labBatch)) {
+                            sampleInstance.setProductOrderKey(bucketEntry.getPoBusinessKey());
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /**
-     * Traverse all ancestors of this vessel, accumulating SampleInstances
+     * Traverse all ancestors of this vessel, accumulating SampleInstances.
      *
-     *
-     * @param sampleType
-     * @param labBatchType
+     * @param sampleType where to stop recursion
+     * @param labBatchType which batches to accumulate
      *
      * @return accumulated sampleInstances
      */
@@ -831,8 +841,10 @@ public abstract class LabVessel implements Serializable {
                 } else {
                     traversalResults.add(labVessel.traverseAncestors(sampleType, labBatchType));
                 }
+                traversalResults.applyEvent(vesselEvent.getLabEvent(), this);
             }
         }
+
         if (traversalResults.getSampleInstances().isEmpty() && !mercurySamples.isEmpty()) {
             for (MercurySample mercurySample : mercurySamples) {
                 SampleInstance sampleInstance = new SampleInstance(mercurySample, null);
@@ -842,69 +854,9 @@ public abstract class LabVessel implements Serializable {
         for (SampleInstance sampleInstance : traversalResults.getSampleInstances()) {
             sampleInstance.addLabBatches(getLabBatchesOfType(labBatchType));
         }
-        // todo assigning LCSET (and PDO and workflow) need to move to getSampleInstance, because they should be based
-        // on the LCSET closest to the starting point, rather than the LCSET closest to the MercurySample.
-//        if (bucketEntries.size() > 1) {
-//            // find bucket entry that has same lab batch as siblings
-//            Map<LabBatch, Integer> mapLabBatchToCount = new HashMap<>();
-//            for (LabVessel siblingLabVessel : siblingLabVessels) {
-////                for (LabBatch labBatch : siblingLabVessel.getLabBatchesOfType(LabBatch.LabBatchType.WORKFLOW)) {
-//                for (BucketEntry bucketEntry : siblingLabVessel.getBucketEntries()) {
-//                    if (bucketEntry.getLabBatch() != null) {
-//                        LabBatch labBatch = bucketEntry.getLabBatch();
-//                        if (labBatch.getLabBatchType() == LabBatch.LabBatchType.WORKFLOW) {
-//                            Integer count = mapLabBatchToCount.get(labBatch);
-//                            if (count == null) {
-//                                count = 1;
-//                            } else {
-//                                count = count + 1;
-//                            }
-//                            mapLabBatchToCount.put(labBatch, count);
-//                        }
-//                    }
-//                }
-//            }
-//
-//            LabBatch matchingLabBatch = null;
-//            for (Map.Entry<LabBatch, Integer> labBatchIntegerEntry : mapLabBatchToCount.entrySet()) {
-//                if (labBatchIntegerEntry.getValue() == siblingLabVessels.size()) {
-//                    matchingLabBatch = labBatchIntegerEntry.getKey();
-//                    break;
-//                }
-//            }
-//
-//            if (matchingLabBatch == null) {
-//                throw new RuntimeException("Failed to find lab batch");
-//            } else {
-//                for (BucketEntry bucketEntry : bucketEntries) {
-//                    if (bucketEntry.getLabBatch().equals(matchingLabBatch)) {
-//                        traversalResults.setProductOrderKey(bucketEntry.getPoBusinessKey());
-//                    }
-//                }
-//            }
-////            Set<String> productOrderKeys = new HashSet<String>();
-////            for (BucketEntry bucketEntry : bucketEntries) {
-////                productOrderKeys.add(bucketEntry.getPoBusinessKey());
-////            }
-////            if (productOrderKeys.size() > 1) {
-////                throw new RuntimeException("Unexpected multiple product orders in bucket entries");
-////            }
-////            traversalResults.setProductOrderKey(productOrderKeys.iterator().next());
-///* todo jmt handle multiple product orders
-//            for (BucketEntry bucketEntry : bucketEntries) {
-//                for (LabVessel container : containers) {
-//                    if (bucketEntry.getLabBatch() != null) {
-//                        if (bucketEntry.getLabBatch().getStartingLabVessels().equals(container.getContainerRole().getContainedVessels())) {
-//                            traversalResults.setBucketEntry(bucketEntry);
-//                            break;
-//                        }
-//                    }
-//                }
-//            }
-//*/
-//        } else if (bucketEntries.size() == 1) {
-//            traversalResults.setProductOrderKey(bucketEntries.iterator().next().getPoBusinessKey());
-//        }
+        if (bucketEntries.size() == 1) {
+            traversalResults.setProductOrderKey(bucketEntries.iterator().next().getPoBusinessKey());
+        }
 
         for (Reagent reagent : getReagentContents()) {
             traversalResults.add(reagent);
@@ -958,46 +910,6 @@ public abstract class LabVessel implements Serializable {
             vesselEvents.addAll(container.getContainerRole().getDescendants(this));
         }
         return vesselEvents;
-    }
-
-    /**
-     * Metrics are captured on vessels, but when we
-     * look up the values, we most often want to
-     * see them related to a sample aliquot instance.
-     * <p/>
-     * The search mode tells you "how" to walk the
-     * transfer graph to find the given metric.
-     */
-    public enum MetricSearchMode {
-        /**
-         * Only look for metrics captured
-         * on this vessel directly.
-         */
-        THIS_VESSEL_ONLY,
-        /**
-         * look anywhere in the transfer graph,
-         * the first matching metric you find
-         * will be used.
-         */
-        ANY,
-        /**
-         * Look for the metric associated with
-         * nearest ancestor (including this
-         * vessel)
-         */
-        NEAREST_ANCESTOR,
-        /**
-         * Look for the metric associated
-         * with the nearest descendant (including
-         * this vessel)
-         */
-        NEAREST_DESCENDANT,
-        /**
-         * Find the metric on the nearest
-         * vessel, irrespective of
-         * ancestor or descendant.
-         */
-        NEAREST
     }
 
     /**
@@ -1080,8 +992,6 @@ public abstract class LabVessel implements Serializable {
             return labBatchesOfType;
         }
     }
-
-    // todo jmt can the next three methods be deleted?
 
     /**
      * What {@link SampleMetadata samples} are contained in
@@ -1618,13 +1528,4 @@ public abstract class LabVessel implements Serializable {
         return false;
     }
 
-    public Set<LabBatch> getComputedLcSets() {
-        if (computedLcSets == null) {
-            computedLcSets = new HashSet<>();
-            for (SectionTransfer sectionTransfer : getContainerRole().getSectionTransfersTo()) {
-                computedLcSets.addAll(sectionTransfer.getLabEvent().getComputedLcSets());
-            }
-        }
-        return computedLcSets;
-    }
 }

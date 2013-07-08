@@ -191,12 +191,10 @@ public class ReworkDbFreeTest extends BaseEventTest {
                 throw new RuntimeException(e);
             }
         }
-        SampleInstance sampleInstance =
-                exomeExpressShearingEntityBuilder2.getShearingCleanupPlate().getSampleInstances().iterator().next();
-        Assert.assertEquals(sampleInstance.getLabBatch(), workflowBatch2);
-        Assert.assertEquals(exomeExpressShearingEntityBuilder2.getShearingCleanupPlate().getComputedLcSets().size(), 1);
-        Assert.assertEquals(exomeExpressShearingEntityBuilder2.getShearingCleanupPlate().getComputedLcSets().iterator().next(),
-                workflowBatch2);
+        for (SampleInstance sampleInstance : exomeExpressShearingEntityBuilder2.getShearingCleanupPlate()
+                .getSampleInstances()) {
+            Assert.assertEquals(sampleInstance.getLabBatch(), workflowBatch2);
+        }
     }
 
     private void validateLabBatchComposition(List<LabBatchComposition> composition, int denominator, int[] counts, String[] lcsetSuffixes) {

@@ -227,8 +227,12 @@ public class LabEventTest extends BaseEventTest {
 
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
 
+        // Create the batch with two less tubes, controls don't go in the batch
+        ArrayList<TwoDBarcodedTube> tubesWithoutControls = new ArrayList<>(mapBarcodeToTube.values());
+        tubesWithoutControls.remove(tubesWithoutControls.size() - 1);
+        tubesWithoutControls.remove(tubesWithoutControls.size() - 1);
         LabBatch workflowBatch = new LabBatch("Hybrid Selection Batch",
-                new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
+                new HashSet<LabVessel>(tubesWithoutControls), LabBatch.LabBatchType.WORKFLOW);
         workflowBatch.setWorkflowName("Hybrid Selection");
 
         PreFlightEntityBuilder preFlightEntityBuilder =
@@ -331,6 +335,11 @@ public class LabEventTest extends BaseEventTest {
         Assert.assertNotNull(libraryBean.getMolecularIndexingScheme().getName(), "No molecular index");
         Assert.assertEquals(libraryBean.getBaitSetName(), HybridSelectionEntityBuilder.BAIT_DESIGN_NAME, "Wrong bait");
 
+        for (LibraryBean bean : zimsIlluminaChamber.getLibraries()) {
+            // Every library should have an LCSET, even controls.
+            Assert.assertEquals(bean.getLcSet(), workflowBatch.getBatchName());
+        }
+
         ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
         TwoDBarcodedTube startingTube = mapBarcodeToTube.entrySet().iterator().next().getValue();
         startingTube.evaluateCriteria(transferTraverserCriteria,
@@ -366,9 +375,6 @@ public class LabEventTest extends BaseEventTest {
         // pick a sample and mark it for rework
         Map.Entry<String, TwoDBarcodedTube> twoDBarcodedTubeForRework = mapBarcodeToTube.entrySet().iterator().next();
         int lastEventIndex = transferTraverserCriteria.getVisitedLabEvents().size();
-        LabEvent catchEvent =
-                transferTraverserCriteria.getVisitedLabEvents().toArray(new LabEvent[lastEventIndex])[lastEventIndex
-                                                                                                      - 1];
 
         if (false) {
             TransferVisualizerFrame transferVisualizerFrame = new TransferVisualizerFrame();
@@ -399,7 +405,7 @@ public class LabEventTest extends BaseEventTest {
         final ProductOrder productOrder = ProductOrderTestFactory.buildHybridSelectionProductOrder(96);
         AthenaClientServiceStub.addProductOrder(productOrder);
         Date runDate = new Date();
-        // todo jmt create bucket, then batch, rather than rack than batch then bucket
+        // todo jmt create bucket, then batch, rather than rack then batch then bucket
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);

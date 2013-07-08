@@ -227,6 +227,9 @@ public class BaseEventTest {
         labBatchEJB.createLabBatch(workflowBatch, "scotmatt");
 
         Bucket workingBucket = createAndPopulateBucket(mapBarcodeToTube, productOrder, "Preflight Bucket");
+        for (BucketEntry bucketEntry : workingBucket.getBucketEntries()) {
+            bucketEntry.setLabBatch(workflowBatch);
+        }
 
         BucketDao mockBucketDao = EasyMock.createNiceMock(BucketDao.class);
         EasyMock.expect(mockBucketDao.findByName("Preflight Bucket")).andReturn(workingBucket);

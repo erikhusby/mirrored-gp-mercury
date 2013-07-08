@@ -57,7 +57,6 @@ public class VesselContainer<T extends LabVessel> {
     @MapKeyEnumerated(EnumType.STRING)
     // hbm2ddl always uses mapkey
     @MapKeyColumn(name = "mapkey")
-    // todo jmt get Hibernate to sort this
     // the map value has to be LabVessel, not T, because JPAMetaModelEntityProcessor can't handle type parameters
     private final Map<VesselPosition, LabVessel> mapPositionToVessel = new LinkedHashMap<>();
 
@@ -120,13 +119,6 @@ public class VesselContainer<T extends LabVessel> {
         return transfersTo;
     }
 
-    public Collection<LabBatch> getNearestLabBatches(VesselPosition position, @Nullable LabBatch.LabBatchType type) {
-        TransferTraverserCriteria.NearestLabBatchFinder batchCriteria =
-                new TransferTraverserCriteria.NearestLabBatchFinder(type);
-        evaluateCriteria(position, batchCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors, null, 0);
-        return batchCriteria.getNearestLabBatches();
-    }
-
     public Set<SampleInstance> getSampleInstancesAtPosition(VesselPosition position, LabVessel.SampleType sampleType,
                                                             @Nullable LabBatch.LabBatchType batchType) {
         LabVessel.TraversalResults traversalResults = traverseAncestors(position, sampleType, batchType);
@@ -156,6 +148,7 @@ public class VesselContainer<T extends LabVessel> {
                             sampleType, labBatchType));
                 } else {
                     traversalResults.add(labVessel.traverseAncestors(sampleType, labBatchType));
+                    traversalResults.applyEvent(ancestor.getLabEvent(), labVessel);
                 }
             }
         } else {
@@ -310,8 +303,6 @@ public class VesselContainer<T extends LabVessel> {
                             //noinspection unchecked
                             sampleInstances.addAll(
                                     vesselContainer.getSampleInstances(sampleType, labBatchType, sourceVessels));
-                            // todo arz fix this, probably by using LabBatch properly
-//                        applyProjectPlanOverrideIfPresent(labEvent,sampleInstances);
                         } else {
                             sampleInstances.addAll(sourceLabVessel.getSampleInstances(sampleType, labBatchType));
                         }
@@ -542,7 +533,6 @@ public class VesselContainer<T extends LabVessel> {
         // find lab batch that is used by every vessel in section
         Map<LabBatch, Integer> mapLabBatchToCount = new HashMap<>();
         int numVesselsWithBucketEntries = 0;
-        // todo jmt how to handle re-arrays?
         for (VesselPosition vesselPosition : section.getWells()) {
             T vesselAtPosition = getVesselAtPosition(vesselPosition);
             if (vesselAtPosition != null) {
@@ -564,26 +554,13 @@ public class VesselContainer<T extends LabVessel> {
                         }
                     }
                 }
-                for (VesselContainer<?> vesselContainer : vesselAtPosition.getContainers()) {
-                    if (!vesselContainer.equals(this)) {
-                        computedLcSets.addAll(vesselContainer.getEmbedder().getComputedLcSets());
-                    }
-                }
             }
         }
-        if (mapLabBatchToCount.isEmpty()) {
-            for (SectionTransfer sectionTransfer : sectionTransfersTo) {
-                // todo jmt what if the event has multiple section transfers?
-                computedLcSets.addAll(sectionTransfer.getLabEvent().getComputedLcSets());
-            }
-        } else {
-            for (Map.Entry<LabBatch, Integer> labBatchIntegerEntry : mapLabBatchToCount.entrySet()) {
-                if (labBatchIntegerEntry.getValue() == numVesselsWithBucketEntries) {
-                    computedLcSets.add(labBatchIntegerEntry.getKey());
-                }
+        for (Map.Entry<LabBatch, Integer> labBatchIntegerEntry : mapLabBatchToCount.entrySet()) {
+            if (labBatchIntegerEntry.getValue() == numVesselsWithBucketEntries) {
+                computedLcSets.add(labBatchIntegerEntry.getKey());
             }
         }
-
         return computedLcSets;
     }
 }

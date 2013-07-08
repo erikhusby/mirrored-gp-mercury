@@ -101,7 +101,6 @@ public class LabEvent {
     @JoinTable(schema = "mercury")
     private Set<Reagent> reagents = new HashSet<>();
 
-    // todo jmt a single transfer superclass that permits all section, position, vessel combinations
     /** for transfers using a tip box, e.g. Bravo */
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "labEvent")
     private Set<SectionTransfer> sectionTransfers = new HashSet<>();
@@ -135,8 +134,16 @@ public class LabEvent {
     @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, fetch = FetchType.LAZY)
     private LabBatch labBatch;
 
+    /** Set by transfer traversal, based on ancestor lab batches and transfers. */
     @Transient
     private Set<LabBatch> computedLcSets;
+
+    /**
+     * Can be set by a user to indicate the LCSET, in the absence of any distinguishing context, e.g. a set of samples
+     * processed in multiple technologies.
+     */
+    @Transient
+    private Set<LabBatch> manualOverrideLcSet;
 
     /** For JPA */
     protected LabEvent() {
@@ -365,6 +372,14 @@ todo jmt adder methods
 
     public LabBatch getLabBatch() {
         return labBatch;
+    }
+
+    public Set<LabBatch> getManualOverrideLcSet() {
+        return manualOverrideLcSet;
+    }
+
+    public void setManualOverrideLcSet(Set<LabBatch> manualOverrideLcSet) {
+        this.manualOverrideLcSet = manualOverrideLcSet;
     }
 
     public Set<LabBatch> getComputedLcSets() {

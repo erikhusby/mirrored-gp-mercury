@@ -109,10 +109,6 @@ public class SampleInstance {
         return molecularState;
     }
 
-    public void setMolecularState(MolecularState molecularState) {
-        this.molecularState = molecularState;
-    }
-
     public void addReagent(Reagent newReagent) {
         // If we're adding a molecular index
         if (OrmUtil.proxySafeIsInstance(newReagent, MolecularIndexReagent.class)) {
@@ -182,6 +178,10 @@ public class SampleInstance {
         return labBatch;
     }
 
+    public void setLabBatch(LabBatch labBatch) {
+        this.labBatch = labBatch;
+    }
+
     public Collection<LabBatch> getAllLabBatches() {
         return allLabBatches;
     }
@@ -239,13 +239,15 @@ public class SampleInstance {
         this.productOrderKey = productOrderKey;
     }
 
-    // todo jmt should this look at bucket entries, rather than lab batches?
     /**
      * Gets the name of the sample's workflow, based on LCSETs.
      * @return workflow name
      */
     @Nullable
     public String getWorkflowName() {
+        if (labBatch != null) {
+            return labBatch.getWorkflowName();
+        }
         String workflowName = null;
         for (LabBatch localLabBatch : allLabBatches) {
             if (localLabBatch.getWorkflowName() != null) {
@@ -253,8 +255,8 @@ public class SampleInstance {
                     workflowName = localLabBatch.getWorkflowName();
                 } else {
                     if(!workflowName.equals(localLabBatch.getWorkflowName())) {
-                        throw new RuntimeException("Conflicting workflows: " + workflowName + ", " +
-                                                   localLabBatch.getWorkflowName());
+                        throw new RuntimeException("Conflicting workflows for sample " + sample.getSampleKey() + ": " +
+                                workflowName + ", " + localLabBatch.getWorkflowName());
                     }
                 }
             }
