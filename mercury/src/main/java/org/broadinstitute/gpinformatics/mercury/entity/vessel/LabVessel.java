@@ -1638,20 +1638,23 @@ public abstract class LabVessel implements Serializable {
         return false;
     }
 
+    /**
+     * This method gets a map of all of the metrics from this vessel and all ancestor/descendant vessels.
+     * TODO jac should this be a traversal criteria?
+     *
+     * @return Returns a map of lab metrics keyed by the metric display name.
+     */
     public Map<String, LabMetric> getMetricsForVesselandDescendants() {
         Set<LabMetric> allMetrics = new HashSet<>();
         if (metricMap == null) {
             metricMap = new HashMap<>();
             allMetrics.addAll(getMetrics());
-
             for (LabVessel curVessel : getAncestorAndDescendantVessels()) {
                 allMetrics.addAll(curVessel.getMetrics());
             }
-
             for (LabMetric metric : allMetrics) {
                 metricMap.put(metric.getName().getDisplayName(), metric);
             }
-
         }
         return metricMap;
     }
