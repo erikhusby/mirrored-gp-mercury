@@ -62,7 +62,7 @@
                 No Results Found
             </c:if>
             <c:if test="${not empty actionBean.foundBatches}">
-                <div id="resultSummary">Searched for ${actionBean.numSearchTerms} vessel(s),
+                <div id="resultSummary">Searched for ${actionBean.numSearchTerms} LCSET(s),
                     found ${fn:length(actionBean.foundBatches)}.
                 </div>
 

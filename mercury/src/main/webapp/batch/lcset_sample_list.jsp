@@ -35,7 +35,10 @@
             });
         });
     </script>
-
+    <div>
+        JIRA Link <a target="JIRA" href="${batch.jiraTicket.browserUrl}" class="external"
+                     target="JIRA"> ${batch.businessKey} </a>
+    </div>
     <table id="batchSampleListView${index - 1}" class="table simple" style="margin: 0 0; width: 100%;">
         <thead>
         <tr>
@@ -48,47 +51,27 @@
             <th>Event Operator</th>
             <th>Event Location</th>
             <th>Event Date</th>
-
         </tr>
         </thead>
         <tbody>
         <c:forEach items="${batch.startingBatchLabVessels}" var="vessel">
             <c:forEach items="${vessel.getSampleInstances('WITH_PDO', null)}" var="sample">
                 <tr>
-                    <td>
-                        <stripes:link
-                                beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.SampleSearchActionBean"
-                                event="sampleSearch">
-                            <stripes:param name="searchKey" value="${sample.startingSample.sampleKey}"/>
-                            ${sample.startingSample.sampleKey}
-                        </stripes:link>
-                    </td>
-                    <td>
-                            ${bean.sampleToBspPicoValueMap.get(sample.startingSample.sampleKey).concentration}
-                    </td>
-                    <td>
-                            ${vessel.metricsForVesselandDescendants.get("Catch Pico").value}
-                    </td>
-                    <td>
-                            ${vessel.metricsForVesselandDescendants.get("Pond Pico").value}
-                    </td>
-                    <td>
-                            ${vessel.metricsForVesselandDescendants.get("ECO QPCR").value}
-                    </td>
-                    <td>
-                            ${bean.getLatestEventForVessel(vessel).labEventType.name}
-                    </td>
-                    <td>
-                            ${bean.getUserFullName(bean.getLatestEventForVessel(vessel).eventOperator)}
-                    </td>
-                    <td>
-                            ${bean.getLatestEventForVessel(vessel).eventLocation}
-                    </td>
-                    <td>
-                        <fmt:formatDate value="${bean.getLatestEventForVessel(vessel).eventDate}"
-                                        pattern="${bean.dateTimePattern}"/>
-                    </td>
-
+                    <td><stripes:link
+                            beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.SampleSearchActionBean"
+                            event="sampleSearch">
+                        <stripes:param name="searchKey" value="${sample.startingSample.sampleKey}"/>
+                        ${sample.startingSample.sampleKey}
+                    </stripes:link></td>
+                    <td> ${bean.sampleToBspPicoValueMap.get(sample.startingSample.sampleKey).concentration} </td>
+                    <td> ${vessel.metricsForVesselandDescendants.get("Catch Pico").value} </td>
+                    <td> ${vessel.metricsForVesselandDescendants.get("Pond Pico").value} </td>
+                    <td> ${vessel.metricsForVesselandDescendants.get("ECO QPCR").value} </td>
+                    <td> ${bean.getLatestEventForVessel(vessel).labEventType.name} </td>
+                    <td> ${bean.getUserFullName(bean.getLatestEventForVessel(vessel).eventOperator)} </td>
+                    <td> ${bean.getLatestEventForVessel(vessel).eventLocation} </td>
+                    <td><fmt:formatDate value="${bean.getLatestEventForVessel(vessel).eventDate}"
+                                        pattern="${bean.dateTimePattern}"/></td>
                 </tr>
             </c:forEach>
         </c:forEach>
