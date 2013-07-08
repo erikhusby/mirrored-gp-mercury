@@ -152,9 +152,9 @@ public class ReworkDbFreeTest extends BaseEventTest {
     @Test(enabled = true)
     public void testMultiplePdos() {
         ProductOrder productOrder1 = ProductOrderTestFactory.createDummyProductOrder(4, "PDO-1",
-                WorkflowName.EXOME_EXPRESS, 1L, "Test 1", "Test 1", false, "ExEx-001");
+                WorkflowName.EXOME_EXPRESS, 1L, "Test 1", "Test 1", false, "ExEx-001", "A");
         ProductOrder productOrder2 = ProductOrderTestFactory.createDummyProductOrder(3, "PDO-2",
-                WorkflowName.EXOME_EXPRESS, 1L, "Test 2", "Test 2", false, "ExEx-001");
+                WorkflowName.EXOME_EXPRESS, 1L, "Test 2", "Test 2", false, "ExEx-001", "B");
         AthenaClientServiceStub.addProductOrder(productOrder1);
         AthenaClientServiceStub.addProductOrder(productOrder2);
         final Date runDate = new Date();
