@@ -290,6 +290,7 @@ public class LabEventTest extends BaseEventTest {
         for (LibraryBean bean : zimsIlluminaChamber.getLibraries()) {
             // Every library should have an LCSET, even controls.
             Assert.assertEquals(bean.getLcSet(), workflowBatch.getBatchName());
+            Assert.assertEquals(bean.getProductOrderKey(), productOrder.getBusinessKey());
         }
 
         ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
@@ -550,6 +551,7 @@ public class LabEventTest extends BaseEventTest {
             ZimsIlluminaChamber zimsIlluminaChamber1 = zimsIlluminaRun1.getLanes().iterator().next();
             for (LibraryBean libraryBean : zimsIlluminaChamber1.getLibraries()) {
                  Assert.assertEquals(libraryBean.getLcSet(), workflowBatch1.getBatchName());
+                 Assert.assertEquals(libraryBean.getProductOrderKey(), productOrder1.getBusinessKey());
             }
 
             SolexaRunBean runBean2 = new SolexaRunBean(flowcellBarcode, flowcellBarcode + dateFormat.format(runDate),
@@ -564,6 +566,7 @@ public class LabEventTest extends BaseEventTest {
             ZimsIlluminaChamber zimsIlluminaChamber2 = zimsIlluminaRun2.getLanes().iterator().next();
             for (LibraryBean libraryBean : zimsIlluminaChamber2.getLibraries()) {
                  Assert.assertEquals(libraryBean.getLcSet(), workflowBatch2.getBatchName());
+                 Assert.assertEquals(libraryBean.getProductOrderKey(), productOrder2.getBusinessKey());
             }
 
             if (false) {

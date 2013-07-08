@@ -54,7 +54,8 @@ import java.util.Set;
 import java.util.TreeMap;
 
 /**
- * A piece of plastic or glass that holds sample, reagent or (if it embeds a VesselContainer) other plastic.
+ * This entity represents a piece of plastic or glass that holds sample, reagent or (if it embeds a
+ * {@link VesselContainer) other plastic.
  * In-place lab events can apply to any LabVessel, whereas SectionTransfers and CherryPickTransfers apply to
  * LabVessels with a VesselContainer role (racks and plates), and VesselToVessel and VesselToSection transfers
  * apply to containees (tubes and wells).
@@ -834,20 +835,19 @@ public abstract class LabVessel implements Serializable {
             List<VesselEvent> vesselEvents = getAncestors();
             for (VesselEvent vesselEvent : vesselEvents) {
                 LabVessel labVessel = vesselEvent.getLabVessel();
-                // todo jmt put this logic in VesselEvent?
                 if (labVessel == null) {
                     traversalResults.add(vesselEvent.getVesselContainer().traverseAncestors(vesselEvent.getPosition(),
                             sampleType, labBatchType));
                 } else {
                     traversalResults.add(labVessel.traverseAncestors(sampleType, labBatchType));
+                    traversalResults.applyEvent(vesselEvent.getLabEvent(), labVessel);
                 }
-                traversalResults.applyEvent(vesselEvent.getLabEvent(), this);
             }
         }
 
         if (traversalResults.getSampleInstances().isEmpty() && !mercurySamples.isEmpty()) {
             for (MercurySample mercurySample : mercurySamples) {
-                SampleInstance sampleInstance = new SampleInstance(mercurySample, null);
+                SampleInstance sampleInstance = new SampleInstance(mercurySample);
                 traversalResults.add(sampleInstance);
             }
         }
