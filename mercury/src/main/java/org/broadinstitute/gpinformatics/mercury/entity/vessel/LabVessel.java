@@ -853,7 +853,7 @@ public abstract class LabVessel implements Serializable {
             sampleInstance.addLabBatches(getLabBatchesOfType(labBatchType));
             // If this vessel is a BSP export, sets the aliquot sample.
             // Expects one sample per vessel in the BSP export.
-            if (getLabBatchesOfType(LabBatch.LabBatchType.SAMPLES_IMPORT).size() > 0) {
+            if (!getLabBatchesOfType(LabBatch.LabBatchType.SAMPLES_IMPORT).isEmpty()) {
                 for (MercurySample mercurySample : mercurySamples) {
                     sampleInstance.setBspExportSample(mercurySample);
                 }

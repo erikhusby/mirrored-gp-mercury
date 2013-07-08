@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -130,18 +131,16 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
             this.loadingVessel = loadingVessel;
         }
 
-        private final static String NULLS_LAST = "zzzzzzzzzz";
-
-        public static Comparator sampleKeyComparator() {
-            return new Comparator<SequencingRunDto>() {
-                @Override
-                public int compare(SequencingRunDto o1, SequencingRunDto o2) {
-                    String s1 = o1.getSampleKey() == null ? NULLS_LAST : o1.getSampleKey();
-                    String s2 = o2.getSampleKey() == null ? NULLS_LAST : o2.getSampleKey();
+        public static final Comparator<SequencingRunDto> BY_SAMPLE_KEY = new Comparator<SequencingRunDto>() {
+            // Sorting a null sample key will put it after non-null sample keys.
+            private final static String NULLS_LAST = "zzzzzzzzzz";
+            @Override
+            public int compare(SequencingRunDto lhs, SequencingRunDto rhs) {
+                    String s1 = lhs.getSampleKey() == null ? NULLS_LAST : lhs.getSampleKey();
+                    String s2 = rhs.getSampleKey() == null ? NULLS_LAST : rhs.getSampleKey();
                     return s1.compareTo(s2);
-                }
-            };
-        }
+            }
+        };
 
         public String getFlowcellBarcode() {
             return flowcellBarcode;
@@ -221,8 +220,8 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
 
     // Cache lookups for efficiency.
     private static final int CACHE_SIZE = 16;
-    private static final Map<String, String> pdoKeyToPdoId = new LRUMap<>(CACHE_SIZE);
-    private static final Map<String, String> pdoKeyToResearchProjectId = new LRUMap<>(CACHE_SIZE);
+    private static final Map<String, String> pdoKeyToPdoId = new LRUMap<String, String>(CACHE_SIZE);
+    private static final Map<String, String> pdoKeyToResearchProjectId = new LRUMap<String, String>(CACHE_SIZE);
 
     public List<SequencingRunDto> makeSequencingRunDtos(long sequencingRunId) {
         SequencingRun sequencingRun = dao.findById(SequencingRun.class, sequencingRunId);
@@ -248,18 +247,20 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
                     String pdoKey = si.getProductOrderKey();
                     if (pdoKey != null) {
                         // Does cache lookup and fills cache as needed.
-                        if (pdoKeyToPdoId.containsKey(pdoKey)) {
-                            productOrderId = pdoKeyToPdoId.get(pdoKey);
-                            researchProjectId = pdoKeyToResearchProjectId.get(pdoKey);
-                        } else {
-                            ProductOrder pdo = pdoDao.findByBusinessKey(pdoKey);
-                            if (pdo != null) {
-                                productOrderId = String.valueOf(pdo.getProductOrderId());
-                                researchProjectId = (pdo.getResearchProject() != null) ?
-                                        String.valueOf(pdo.getResearchProject().getResearchProjectId()) : null;
+                        synchronized(pdoKeyToPdoId) {
+                            if (pdoKeyToPdoId.containsKey(pdoKey)) {
+                                productOrderId = pdoKeyToPdoId.get(pdoKey);
+                                researchProjectId = pdoKeyToResearchProjectId.get(pdoKey);
+                            } else {
+                                ProductOrder pdo = pdoDao.findByBusinessKey(pdoKey);
+                                if (pdo != null) {
+                                    productOrderId = String.valueOf(pdo.getProductOrderId());
+                                    researchProjectId = (pdo.getResearchProject() != null) ?
+                                            String.valueOf(pdo.getResearchProject().getResearchProjectId()) : null;
+                                }
+                                pdoKeyToPdoId.put(pdoKey, productOrderId);
+                                pdoKeyToResearchProjectId.put(pdoKey, researchProjectId);
                             }
-                            pdoKeyToPdoId.put(pdoKey, productOrderId);
-                            pdoKeyToResearchProjectId.put(pdoKey, researchProjectId);
                         }
                     }
 
@@ -292,7 +293,7 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
         } else {
             dtos.add(new SequencingRunDto(null, null, null, null, null, null, null, false, null));
         }
-        Collections.sort(dtos, SequencingRunDto.sampleKeyComparator());
+        Collections.sort(dtos, SequencingRunDto.BY_SAMPLE_KEY);
 
         synchronized (loggingDtos) {
             loggingDtos.clear();
