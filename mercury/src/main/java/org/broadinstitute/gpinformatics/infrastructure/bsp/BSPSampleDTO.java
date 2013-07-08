@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 
@@ -25,6 +27,8 @@ import java.util.Map;
  * </ul>
  */
 public class BSPSampleDTO {
+
+    private static final Log logger = LogFactory.getLog(BSPSampleDTO.class);
 
     public static final String TUMOR_IND = "Tumor";
     public static final String NORMAL_IND = "Normal";
@@ -121,8 +125,11 @@ public class BSPSampleDTO {
         if (StringUtils.isNotBlank(dateString)){
             try {
                 return BSP_DATE_FORMAT.parse(dateString);
-            } catch (ParseException e) {
+            } catch (Exception e) {
                 // Fall through to return.
+                logger.warn(
+                        "column: " + column.columnName() + " for sample: " + getSampleId() +
+                        " had a bad value of " + dateString, e);
             }
         }
 
@@ -230,8 +237,10 @@ public class BSPSampleDTO {
     public boolean isSampleReceived() {
         try {
             return !getRootSample().equals(getSampleId()) || getReceiptDate() != null;
-        } catch (ParseException e) {
-            //In the case of a parsing exception we assume there is a date, however the date can not be parsed which isn't important for this logic.
+        } catch (Exception e) {
+            //In the case of a parsing exception we assume there is a date, however the date can not be parsed which
+            // isn't important for this logic.
+            logger.warn("Receipt Date for sample: " + getSampleId() + " was bad", e);
             return true;
         }
     }
