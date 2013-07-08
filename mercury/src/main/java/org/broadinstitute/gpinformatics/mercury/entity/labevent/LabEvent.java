@@ -138,6 +138,7 @@ public class LabEvent {
     @Transient
     private Set<LabBatch> computedLcSets;
 
+    // todo jmt persist this
     /**
      * Can be set by a user to indicate the LCSET, in the absence of any distinguishing context, e.g. a set of samples
      * processed in multiple technologies.
