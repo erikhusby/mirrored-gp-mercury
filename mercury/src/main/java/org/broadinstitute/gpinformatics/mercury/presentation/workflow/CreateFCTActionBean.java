@@ -34,6 +34,8 @@ public class CreateFCTActionBean extends CoreActionBean {
     private static String VIEW_PAGE = "/workflow/create_fct.jsp";
 
     public static final String LOAD_ACTION = "load";
+    public static final CreateFields.IssueType[] SUPPORTED_TYPES =
+            new CreateFields.IssueType[]{CreateFields.IssueType.FLOWCELL, CreateFields.IssueType.MISEQ};
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -51,10 +53,8 @@ public class CreateFCTActionBean extends CoreActionBean {
     @Validate(required = true, on = LOAD_ACTION)
     private String lcsetName;
 
-    @Validate(required = true, on = SAVE_ACTION, minvalue = 2)
     private int numberOfLanes;
 
-    @Validate(required = true, on = SAVE_ACTION, expression = "this > 0")
     private float loadingConc;
 
     private LabBatch labBatch;
@@ -64,6 +64,16 @@ public class CreateFCTActionBean extends CoreActionBean {
     private List<String> selectedVesselLabels;
 
     private List<LabBatch> createdBatches;
+
+    private CreateFields.IssueType selectedType;
+
+    public CreateFields.IssueType getSelectedType() {
+        return selectedType;
+    }
+
+    public void setSelectedType(CreateFields.IssueType selectedType) {
+        this.selectedType = selectedType;
+    }
 
     public List<LabBatch> getCreatedBatches() {
         return createdBatches;
@@ -169,12 +179,22 @@ public class CreateFCTActionBean extends CoreActionBean {
         for (String denatureTubeBarcode : selectedVesselLabels) {
             Set<LabVessel> vesselSet = new HashSet<>(labVesselDao.findByListIdentifiers(selectedVesselLabels));
             //create a new FCT ticket for every two lanes requested.
-            for (int i = 0; i < numberOfLanes; i += 2) {
+            int lanesPerFlowcell = 1;
+            LabBatch.LabBatchType batchType = LabBatch.LabBatchType.FCT;
+            if (selectedType.equals(CreateFields.IssueType.FLOWCELL)) {
+                lanesPerFlowcell = 2;
+                batchType = LabBatch.LabBatchType.FCT;
+            }
+            if (selectedType.equals(CreateFields.IssueType.MISEQ)) {
+                lanesPerFlowcell = 1;
+                batchType = LabBatch.LabBatchType.MISEQ;
+            }
+            for (int i = 0; i < numberOfLanes; i += lanesPerFlowcell) {
                 LabBatch batch =
-                        new LabBatch(denatureTubeBarcode + " FCT ticket", vesselSet, LabBatch.LabBatchType.FCT,
+                        new LabBatch(denatureTubeBarcode + " FCT ticket", vesselSet, batchType,
                                 loadingConc);
                 batch.setBatchDescription(batch.getBatchName());
-                labBatchEjb.createLabBatch(batch, userBean.getLoginUserName(), CreateFields.IssueType.FLOWCELL);
+                labBatchEjb.createLabBatch(batch, userBean.getLoginUserName(), selectedType);
                 createdBatches.add(batch);
                 //link tickets
                 labBatchEjb.linkJiraBatches(labBatch, batch);
@@ -189,7 +209,7 @@ public class CreateFCTActionBean extends CoreActionBean {
             }
             createdBatchLinks.append("</ol>");
             addMessage("Created {0} FCT tickets with a loading concentration of {1} for denature tube {2}. {3}",
-                    numberOfLanes / 2, loadingConc, denatureTubeBarcode, createdBatchLinks.toString());
+                    numberOfLanes / lanesPerFlowcell, loadingConc, denatureTubeBarcode, createdBatchLinks.toString());
         }
         return new RedirectResolution(VIEW_PAGE);
     }
@@ -199,5 +219,9 @@ public class CreateFCTActionBean extends CoreActionBean {
         if (selectedVesselLabels == null || selectedVesselLabels.size() != 1) {
             addValidationError("tubeList", "You must select a single denature tube.");
         }
+    }
+
+    public CreateFields.IssueType[] getSupportedTypes() {
+        return SUPPORTED_TYPES;
     }
 }

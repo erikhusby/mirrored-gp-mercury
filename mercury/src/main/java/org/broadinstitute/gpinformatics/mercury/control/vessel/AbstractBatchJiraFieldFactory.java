@@ -109,6 +109,7 @@ public abstract class AbstractBatchJiraFieldFactory {
         case WORKFLOW:
             builder = new LCSetJiraFieldFactory(batch, athenaClientService);
             break;
+        case MISEQ:
         case FCT:
             builder = new FCTJiraFieldFactory(batch);
             break;

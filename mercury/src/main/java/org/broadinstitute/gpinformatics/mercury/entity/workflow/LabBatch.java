@@ -123,7 +123,11 @@ public class LabBatch {
         /**
          * Flowcell Tracking batch (FCT)
          */
-        FCT
+        FCT,
+        /**
+         * MISEQ FCT Batch
+         */
+        MISEQ
     }
 
     @Enumerated(EnumType.STRING)
