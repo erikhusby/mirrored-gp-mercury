@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Responsible for parsing Quant values entered into the system by way of an uploaded spreadsheet.
+ * Responsible for processing the Quant values entered into the system by way of an uploaded spreadsheet.
  */
 public class LabMetricProcessor extends TableProcessor {
 
