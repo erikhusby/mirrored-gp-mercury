@@ -107,9 +107,9 @@ public class ExtractTransformResource {
                     .append(dto.getSampleKey())
                     .append("</td><td>")
                     .append(dto.getResearchProjectId())
-                    .append("</td><tr>")
+                    .append("</td><td>")
                     .append(dto.getLoadingVessel() != null ? dto.getLoadingVessel().getLabel() : null)
-                    .append("</td><tr>")
+                    .append("</td><td>")
                     .append(dto.getLoadingVessel() != null ? ExtractTransform.secTimestampFormat.format(dto.getLoadingVessel().getCreatedOn()) : null);
         }
         sb.append("</table></body></html>");

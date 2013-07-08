@@ -193,20 +193,19 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             this.isComplete = isComplete;
         }
 
-        private final static String NULLS_LAST = "zzzzzzzzzz";
 
-        public static Comparator<LabEventEtl.EventFactDto> sampleKeyComparator() {
-            return new Comparator<EventFactDto>() {
-                @Override
-                public int compare(EventFactDto o1, EventFactDto o2) {
-                    String s1 = o1.getSample() == null || o1.getSample().getSampleKey() == null ?
-                            NULLS_LAST : o1.getSample().getSampleKey();
-                    String s2 = o2.getSample() == null || o2.getSample().getSampleKey() == null ?
-                            NULLS_LAST : o2.getSample().getSampleKey();
+        public static final Comparator<EventFactDto> BY_SAMPLE_KEY = new Comparator<EventFactDto>() {
+            // Sorting a null sample key will put it after non-null sample keys.
+            private final static String NULLS_LAST = "zzzzzzzzzz";
+            @Override
+            public int compare(EventFactDto lhs, EventFactDto rhs) {
+                String s1 = lhs.getSample() == null || lhs.getSample().getSampleKey() == null ?
+                            NULLS_LAST : lhs.getSample().getSampleKey();
+                    String s2 = rhs.getSample() == null || rhs.getSample().getSampleKey() == null ?
+                            NULLS_LAST : rhs.getSample().getSampleKey();
                     return s1.compareTo(s2);
-                }
-            };
-        }
+            }
+        };
 
         public LabEvent getLabEvent() {
             return labEvent;
@@ -279,12 +278,13 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                             String pdoKey = si.getProductOrderKey();
                             if (pdoKey != null) {
                                 ProductOrder pdo;
-
-                                if (cachedPdo.containsKey(pdoKey)) {
-                                    pdo = cachedPdo.get(pdoKey);
-                                } else {
-                                    pdo = pdoDao.findByBusinessKey(pdoKey);
-                                    cachedPdo.put(pdoKey, pdo);
+                                synchronized(cachedPdo) {
+                                    if (cachedPdo.containsKey(pdoKey)) {
+                                        pdo = cachedPdo.get(pdoKey);
+                                    } else {
+                                        pdo = pdoDao.findByBusinessKey(pdoKey);
+                                        cachedPdo.put(pdoKey, pdo);
+                                    }
                                 }
 
                                 MercurySample sample = si.getStartingSample();
@@ -329,7 +329,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                 }
             }
         }
-        Collections.sort(dtos, EventFactDto.sampleKeyComparator());
+        Collections.sort(dtos, EventFactDto.BY_SAMPLE_KEY);
 
         synchronized (loggingDtos) {
             loggingDtos.addAll(dtos);
