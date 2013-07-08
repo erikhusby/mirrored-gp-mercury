@@ -35,7 +35,7 @@ import java.util.Set;
 /**
  * This class represents A role of a vessel that contains other vessels, e.g. a rack of tubes, a plate of wells, or a
  * flowcell of lanes.
- * This class does not stand alone, it is embedded in a LabVessel.  This is re-use through delegation, rather than
+ * This class does not stand alone, it is embedded in a {@link LabVessel}.  This is re-use through delegation, rather than
  * through inheritance.  Delegation is preferable, because a LabVessel could have multiple roles, but multiple
  * inheritance is not supported.  As an example of multiple roles, A Cryo straw is held in a visotube, which is held
  * in a goblet; a visotube is both a container and a containee.
