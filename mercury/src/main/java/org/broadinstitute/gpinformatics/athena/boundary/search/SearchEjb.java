@@ -19,8 +19,6 @@ import javax.inject.Inject;
 
 /**
  * This class is for handling searches for various items like products, orders, research projects.
- *
- * @author <a href="mailto:dinsmore@broadinstitute.org">Michael Dinsmore</a>
  */
 
 @Stateful
@@ -42,8 +40,8 @@ public class SearchEjb {
 
     /**
      * Perform a search to identify a singular result for a quick search to lookup a particular item.  This is not
-     * designed to handle returning multiple things of various types but will keep looking though different types
-     * of objects until it finds something and return the first thing it finds.
+     * designed to handle returning multiple things of various types but will keep looking through different types
+     * of objects until it finds something and returns the first thing it finds.
      *
      * @param searchKey the search string
      *
