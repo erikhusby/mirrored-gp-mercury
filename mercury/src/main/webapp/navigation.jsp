@@ -155,7 +155,8 @@
         </ul>
         <ul class="nav pull-right global-search navbar-search">
             <li style="white-space:nowrap;">
-                <stripes:form beanclass="org.broadinstitute.gpinformatics.athena.presentation.search.SearchActionBean" name="quickSearch" method="GET">
+                <stripes:form beanclass="org.broadinstitute.gpinformatics.athena.presentation.search.SearchActionBean"
+                              name="quickSearch" method="GET">
                     <input type="search" data-type="search" name="searchKey" placeholder="Search for a RP, PDO or P"
                            class="search-query ui-input-text ui-body-null" autosave="unique" results="10"
                            style="margin-top: 5px;vertical-align: top;height:14px;"/>
@@ -174,6 +175,11 @@
                         <stripes:link
                                 beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.SampleSearchActionBean"
                                 event="view">Samples</stripes:link>
+                    </li>
+                    <li>
+                        <stripes:link
+                                beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.LCSetSearchActionBean"
+                                event="view">LCSets</stripes:link>
                     </li>
 
                     <security:authorizeBlock roles="<%= roles(Developer) %>">
