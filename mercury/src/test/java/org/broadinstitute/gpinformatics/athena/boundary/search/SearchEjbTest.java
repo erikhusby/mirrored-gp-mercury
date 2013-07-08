@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.boundary.search;
 
 import junit.framework.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.jboss.arquillian.testng.Arquillian;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -14,7 +15,7 @@ import java.util.Vector;
  * @author <a href="mailto:dinsmore@broadinstitute.org">Michael Dinsmore</a>
  */
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
-public class SearchEjbTest {
+public class SearchEjbTest extends Arquillian {
     @Inject
     SearchEjb searchEjb;
 
