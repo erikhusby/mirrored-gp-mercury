@@ -144,8 +144,13 @@ public class SequencingTemplateFactory {
      */
     public SequencingTemplateType getSequencingTemplate(LabVessel denatureTube, boolean isPoolTest) {
         SequencingConfigDef sequencingConfig = getSequencingConfig(isPoolTest);
-        Set<LabBatch> labBatches = denatureTube.getLabBatchesOfType(LabBatch.LabBatchType.FCT);
-        if (labBatches.size() > 1) {
+        Set<LabBatch> labBatches;
+        if (isPoolTest) {
+            labBatches = denatureTube.getLabBatchesOfType(LabBatch.LabBatchType.MISEQ);
+        } else {
+            labBatches = denatureTube.getLabBatchesOfType(LabBatch.LabBatchType.FCT);
+        }
+        if (labBatches.size() > 1 && !isPoolTest) {
             throw new InformaticsServiceException("Found more than one FCT batch for denature tube.");
         }
         if (!labBatches.isEmpty()) {

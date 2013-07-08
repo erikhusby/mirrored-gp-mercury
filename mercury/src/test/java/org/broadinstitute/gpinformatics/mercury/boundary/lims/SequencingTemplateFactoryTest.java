@@ -74,7 +74,11 @@ public class SequencingTemplateFactoryTest {
         denatureToReagentKitEvent.getVesselToSectionTransfers().add(sectionTransfer);
         Set<LabVessel> starterVessels = new HashSet<>();
         starterVessels.add(denatureTube);
-        LabBatch fctBatch = new LabBatch("FCT-1", starterVessels, LabBatch.LabBatchType.FCT, 12.33f);
+        //create a couple Miseq batches then one FCT (2500) batch
+        LabBatch miseqBatch1 = new LabBatch("FCT-1", starterVessels, LabBatch.LabBatchType.MISEQ, 7f);
+        LabBatch miseqBatch2 = new LabBatch("FCT-2", starterVessels, LabBatch.LabBatchType.MISEQ, 7f);
+        LabBatch fctBatch = new LabBatch("FCT-3", starterVessels, LabBatch.LabBatchType.FCT, 12.33f);
+
     }
 
     public void testGetSequencingTemplateFromReagentKitPoolTest() {
@@ -164,6 +168,7 @@ public class SequencingTemplateFactoryTest {
 
         assertThat(template.getLanes().get(0).getLaneName(), is("LANE1"));
         assertThat(template.getLanes().get(0).getLoadingVesselLabel(), is("denature_tube_barcode"));
+        assertThat(template.getLanes().get(0).getLoadingConcentration(), is(7.0));
     }
 
     public void testGetSequencingTemplateFromDenatureTubeProduction() {
@@ -178,6 +183,7 @@ public class SequencingTemplateFactoryTest {
         for (SequencingTemplateLaneType lane : template.getLanes()) {
             allLanes.add(lane.getLaneName());
             assertThat(lane.getLoadingVesselLabel(), equalTo("denature_tube_barcode"));
+            assertThat(lane.getLoadingConcentration().floatValue(), is(12.33f));
         }
         assertThat(allLanes, hasItem("LANE1"));
         assertThat(allLanes, hasItem("LANE2"));

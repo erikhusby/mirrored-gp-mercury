@@ -7,6 +7,23 @@
 <stripes:layout-render name="/layout.jsp" pageTitle="Create FCT Ticket" sectionTitle="Create FCT Ticket">
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
+            function typeChanged() {
+                var numLanesInput = $j('#numLanesText');
+                var loadingConcInput = $j('#loadingConcText');
+                if ($j('#typeSelect').val() == 'MISEQ') {
+                    numLanesInput.prop('readonly', true);
+                    numLanesInput.val(1);
+                    loadingConcInput.prop('readonly', true);
+                    loadingConcInput.val('7');
+                }
+                else {
+                    numLanesInput.prop('readonly', false);
+                    numLanesInput.val(0);
+                    loadingConcInput.prop('readonly', false);
+                    loadingConcInput.val('0');
+                }
+            }
+
             $(document).ready(function () {
                 $j('#tubeList').dataTable({
                     "oTableTools":ttExportDefines,
@@ -44,6 +61,13 @@
                 <div class="control-group">
                     <h5 style="margin-left: 50px;">FCT Ticket Info</h5>
                     <hr style="margin: 0; margin-left: 50px"/>
+                </div>
+                <div class="control-group" style="margin-left: 50px">
+                    <div class="controls">
+                        <stripes:select id="typeSelect" name="selectedType" onchange="typeChanged()">
+                            <stripes:options-collection collection="${actionBean.supportedTypes}"/>
+                        </stripes:select>
+                    </div>
                 </div>
                 <div class="control-group" style="margin-left: 50px">
                     <stripes:label for="numLanesText" name="Number of Lanes" class="control-label"/>
