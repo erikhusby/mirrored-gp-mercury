@@ -20,7 +20,6 @@ import javax.inject.Inject;
 /**
  * This class is for handling searches for various items like products, orders, research projects.
  */
-
 @Stateful
 @RequestScoped
 public class SearchEjb {

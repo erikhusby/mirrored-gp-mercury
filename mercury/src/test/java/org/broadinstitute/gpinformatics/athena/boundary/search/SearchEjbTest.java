@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.boundary.search;
 
+import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.jboss.arquillian.testng.Arquillian;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -12,7 +12,7 @@ import javax.inject.Inject;
  * This class is for testing the {@link SearchEjb} class.
  */
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
-public class SearchEjbTest extends Arquillian {
+public class SearchEjbTest extends ContainerTest {
     @Inject
     SearchEjb searchEjb;
 
