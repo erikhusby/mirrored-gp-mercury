@@ -1,33 +1,31 @@
 package org.broadinstitute.gpinformatics.athena.boundary.search;
 
-import junit.framework.Assert;
+import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import java.util.Vector;
 
 /**
  * This class is for testing the {@link SearchEjb} class.
- *
- * @author <a href="mailto:dinsmore@broadinstitute.org">Michael Dinsmore</a>
  */
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
-public class SearchEjbTest {
+public class SearchEjbTest extends ContainerTest {
     @Inject
     SearchEjb searchEjb;
 
     @Test(dataProvider = "Success-Provider")
     public void testSuccessSearch(String searchText) throws Exception {
         SearchEjb.SearchResult searchResult = searchEjb.search(searchText);
-        Assert.assertNotNull("Should have returned something for " + searchText, searchResult);
+        Assert.assertNotNull(searchResult, "Should have returned something for " + searchText);
     }
 
     @Test(dataProvider = "Failure-Provider")
     public void testFailureSearch(String searchText) throws Exception {
         SearchEjb.SearchResult searchResult = searchEjb.search(searchText);
-        Assert.assertNull("Should not have returned something for " + searchText, searchResult);
+        Assert.assertNull(searchResult, "Should not have returned something for " + searchText);
     }
 
     /**
@@ -37,7 +35,7 @@ public class SearchEjbTest {
      */
     @DataProvider(name="Success-Provider")
     public Object[][] successfulSearchItemsTestProvider(){
-        return new Object[][]{{"RP-173"},{"PDO-1535"},{"P-EX-0001"}, {"rp-173"},{"pdo-1535"},{"p-ex-0001"}};
+        return new Object[][]{{"RP-173"},{"PDO-325"},{"P-EX-0001"}, {"rp-173"},{"pdo-325"},{"p-ex-0001"}};
     }
 
     /**

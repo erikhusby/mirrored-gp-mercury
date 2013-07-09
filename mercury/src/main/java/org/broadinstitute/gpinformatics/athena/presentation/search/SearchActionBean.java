@@ -33,9 +33,6 @@ public final class SearchActionBean extends CoreActionBean {
     @DefaultHandler
     @HandlesEvent(QUICK_SEARCH_ACTION)
     public Resolution quickSearch() throws Exception {
-        // All business key prefixes use uppercase so ensure they are capitalized.
-        searchKey = searchKey.toUpperCase();
-
         SearchEjb.SearchResult searchResult = searchEjb.search(searchKey);
 
         if (searchResult != null) {

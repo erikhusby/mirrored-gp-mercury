@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * This class takes columns from a table parser and pulls out the billing tracker information.
+ * This class takes columns from a table of data and pulls out the billing tracker information.
  */
 public class BillingTrackerProcessor extends TableProcessor {
 
@@ -403,17 +403,23 @@ public class BillingTrackerProcessor extends TableProcessor {
 
                 orderBillSummaryStat.applyDelta(delta);
 
+                // Get the work complete date so that we see the error even on preview, if the date does not parse.
+                Date workCompleteDate = null;
                 try {
-                    // If there are no messages AND we are persisting, the do the persist.
-                    if (CollectionUtils.isEmpty(getMessages()) && doPersist) {
-                        Date workCompleteDate = DateUtils.parseDate(workCompleteDateString);
-                        productOrderSample.addLedgerItem(workCompleteDate, priceItem, delta);
-                    }
+                    workCompleteDate = DateUtils.parseDate(workCompleteDateString);
                 } catch (ParseException e) {
-                    addDataMessage(MessageFormat.format(
-                            "Could not persist ledger for updated sample ''{0}'' in PDO ''{1}'' because of " +
-                            "error: {4}", productOrderSample.getSampleKey(), currentProductOrder.getBusinessKey(),
-                            currentProduct.getPartNumber(), e.getMessage()), dataRowIndex);
+                    addDataMessage(
+                            MessageFormat.format(
+                                    "Invalid work complete date: {0} for sample ''{1}'' " +
+                                    "in PDO ''{2}'' ", workCompleteDateString, productOrderSample.getSampleKey(),
+                                    currentProductOrder.getBusinessKey()),
+                            dataRowIndex);
+                }
+
+                // If there are no messages AND we are persisting, then update the ledger Item, which will
+                // persist the change..
+                if (CollectionUtils.isEmpty(getMessages()) && doPersist) {
+                    productOrderSample.addLedgerItem(workCompleteDate, priceItem, delta);
                 }
             }
         }
