@@ -47,7 +47,8 @@ public class SearchEjb {
      * @return the {@link SearchResult} match from the search or null if nothing found
      */
     public SearchResult search(String searchKey) {
-        searchKey = searchKey.trim();
+        // All business key prefixes use uppercase so ensure they are capitalized  and trimmed.
+        searchKey = searchKey.trim().toUpperCase();
 
         for (SearchType searchForItem : SearchType.values()) {
             switch (searchForItem) {
