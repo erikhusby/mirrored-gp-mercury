@@ -108,7 +108,8 @@
                 </div>
                 <div class="control-group" style="margin-left: 50px">
                     <div class="controls actionButtons">
-                        <stripes:submit name="save" value="Create FCT Tickets" class="btn btn-primary"/>
+                        <stripes:submit id="createFctBtn" name="save" value="Create FCT Tickets"
+                                        class="btn btn-primary"/>
                     </div>
                 </div>
             </c:if>
