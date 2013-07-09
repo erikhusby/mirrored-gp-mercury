@@ -100,6 +100,7 @@ public class BSPSampleDTO {
      * the clients of this API expect.
      *
      * @param column column to look up
+     *
      * @return value at column, or empty string if missing
      */
     @Nonnull
@@ -114,7 +115,12 @@ public class BSPSampleDTO {
     private double getDouble(BSPSampleSearchColumn column) {
         String s = getValue(column);
         if (StringUtils.isNotBlank(s)) {
-            return Double.parseDouble(s);
+            try {
+                return Double.parseDouble(s);
+            } catch (NumberFormatException e) {
+                logger.error("Bad format for double: " + s);
+                return 0;
+            }
         }
         return 0;
     }
@@ -122,7 +128,7 @@ public class BSPSampleDTO {
     private Date getDate(BSPSampleSearchColumn column) {
         String dateString = getValue(column);
 
-        if (StringUtils.isNotBlank(dateString)){
+        if (StringUtils.isNotBlank(dateString)) {
             try {
                 return BSP_DATE_FORMAT.parse(dateString);
             } catch (Exception e) {
