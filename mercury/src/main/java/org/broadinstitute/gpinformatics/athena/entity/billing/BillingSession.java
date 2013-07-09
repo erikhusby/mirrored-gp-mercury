@@ -60,7 +60,7 @@ public class BillingSession implements Serializable {
             ledgerItem.setBillingSession(this);
         }
 
-        ledgerEntryItems = new ArrayList<LedgerEntry>(ledgerItems);
+        ledgerEntryItems = new ArrayList<>(ledgerItems);
 
         // Anything new is a daily rollup.
         billingSessionType = BillingSessionType.ROLLUP_DAILY;
@@ -142,7 +142,7 @@ public class BillingSession implements Serializable {
     }
 
     public boolean cancelSession() {
-        List<LedgerEntry> toRemove = new ArrayList<LedgerEntry>();
+        List<LedgerEntry> toRemove = new ArrayList<>();
 
         for (LedgerEntry ledgerItem : ledgerEntryItems) {
             if (!ledgerItem.isBilled()) {
@@ -187,12 +187,12 @@ public class BillingSession implements Serializable {
 
     public List<String> getProductOrderBusinessKeys() {
         // Get all unique product Orders across all ledger items.
-        Set<ProductOrder> productOrders = new HashSet<ProductOrder>();
+        Set<ProductOrder> productOrders = new HashSet<>();
         for (LedgerEntry ledgerEntry : ledgerEntryItems) {
             productOrders.add(ledgerEntry.getProductOrderSample().getProductOrder());
         }
 
-        List<String> ret = new ArrayList<String>(productOrders.size());
+        List<String> ret = new ArrayList<>(productOrders.size());
         for (ProductOrder productOrder : productOrders) {
             ret.add(productOrder.getBusinessKey());
         }
