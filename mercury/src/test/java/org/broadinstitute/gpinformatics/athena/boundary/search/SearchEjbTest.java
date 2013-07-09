@@ -35,7 +35,7 @@ public class SearchEjbTest extends ContainerTest {
      */
     @DataProvider(name="Success-Provider")
     public Object[][] successfulSearchItemsTestProvider(){
-        return new Object[][]{{"RP-173"},{"PDO-1535"},{"P-EX-0001"}, {"rp-173"},{"pdo-1535"},{"p-ex-0001"}};
+        return new Object[][]{{"RP-173"},{"PDO-325"},{"P-EX-0001"}, {"rp-173"},{"pdo-325"},{"p-ex-0001"}};
     }
 
     /**
