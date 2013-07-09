@@ -763,9 +763,9 @@ public abstract class LabVessel implements Serializable {
             reagents.add(reagent);
         }
 
-        void setProductOrderKey(String productOrderKey) {
+        void setBucketEntry(BucketEntry bucketEntry) {
             for (SampleInstance sampleInstance : sampleInstances) {
-                sampleInstance.setProductOrderKey(productOrderKey);
+                sampleInstance.setBucketEntry(bucketEntry);
             }
         }
 
@@ -795,11 +795,15 @@ public abstract class LabVessel implements Serializable {
             if (computedLcSets1.size() == 1) {
                 for (SampleInstance sampleInstance : getSampleInstances()) {
                     LabBatch labBatch = computedLcSets1.iterator().next();
-                    sampleInstance.setLabBatch(labBatch);
+                    int foundBucketEntries = 0;
                     for (BucketEntry bucketEntry : labVessel.getBucketEntries()) {
                         if (bucketEntry.getLabBatch() != null && bucketEntry.getLabBatch().equals(labBatch)) {
-                            sampleInstance.setProductOrderKey(bucketEntry.getPoBusinessKey());
+                            sampleInstance.setBucketEntry(bucketEntry);
+                            foundBucketEntries++;
                         }
+                    }
+                    if (foundBucketEntries != 1) {
+                        throw new RuntimeException("Expected 1 bucket entry, found " + foundBucketEntries);
                     }
                 }
             }
@@ -855,7 +859,7 @@ public abstract class LabVessel implements Serializable {
             sampleInstance.addLabBatches(getLabBatchesOfType(labBatchType));
         }
         if (bucketEntries.size() == 1) {
-            traversalResults.setProductOrderKey(bucketEntries.iterator().next().getPoBusinessKey());
+            traversalResults.setBucketEntry(bucketEntries.iterator().next());
         }
 
         for (Reagent reagent : getReagentContents()) {

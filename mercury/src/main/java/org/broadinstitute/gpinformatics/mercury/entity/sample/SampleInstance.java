@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
@@ -35,17 +36,13 @@ public class SampleInstance {
     /** Reagents added, e.g. molecular indexes, baits. */
     private final List<Reagent> reagents = new ArrayList<>();
 
-    // todo jmt replace this with bucketEntry, so can get product order too?
     /** The single LCSET associated with the plastic on which getSampleInstances was called.  This is not set if
      * traversal logic encounters multiple LCSETs, and can't pick a single one.
      */
-    private LabBatch labBatch;
+    private BucketEntry bucketEntry;
 
     /** All lab batches found during the traversal */
     private Collection<LabBatch> allLabBatches;
-
-    /** The product order associated with the bucket entry in {@link #labBatch} */
-    private String productOrderKey;
 
     public SampleInstance(MercurySample sample) {
         this.sample = sample;
@@ -136,12 +133,18 @@ public class SampleInstance {
      */
     @Nullable
     public LabBatch getLabBatch() {
-        return labBatch;
+        return bucketEntry.getLabBatch();
     }
 
+    public void setBucketEntry(BucketEntry bucketEntry) {
+        this.bucketEntry = bucketEntry;
+    }
+
+/*
     public void setLabBatch(LabBatch labBatch) {
         this.labBatch = labBatch;
     }
+*/
 
     public Collection<LabBatch> getAllLabBatches() {
         return allLabBatches;
@@ -152,10 +155,6 @@ public class SampleInstance {
             allLabBatches = new HashSet<>();
         }
         allLabBatches.addAll(batches);
-        // todo jmt improve this logic
-        if (allLabBatches.size() == 1) {
-            labBatch = allLabBatches.iterator().next();
-        }
     }
 
     public Collection<LabBatch> getAllWorkflowLabBatches() {
@@ -193,12 +192,17 @@ public class SampleInstance {
 
     @Nullable
     public String getProductOrderKey() {
-        return productOrderKey;
+        if (bucketEntry != null) {
+            return bucketEntry.getPoBusinessKey();
+        }
+        return null;
     }
 
+/*
     public void setProductOrderKey(String productOrderKey) {
         this.productOrderKey = productOrderKey;
     }
+*/
 
     /**
      * Gets the name of the sample's workflow, based on LCSETs.
@@ -206,8 +210,8 @@ public class SampleInstance {
      */
     @Nullable
     public String getWorkflowName() {
-        if (labBatch != null) {
-            return labBatch.getWorkflowName();
+        if (bucketEntry != null) {
+            return bucketEntry.getLabBatch().getWorkflowName();
         }
         String workflowName = null;
         for (LabBatch localLabBatch : allLabBatches) {
