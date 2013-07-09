@@ -23,6 +23,7 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MiSeqReagentKit;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
@@ -145,7 +146,7 @@ public class VesselTransferEjb {
     public LabEvent reagentKitToFlowcell(@Nonnull String reagentKitBarcode, @Nonnull String flowcellBarcode,
                                          @Nonnull String username, @Nonnull String stationName) {
         PlateCherryPickEvent transferEvent = new PlateCherryPickEvent();
-        transferEvent.setEventType(LabEventType.FLOWCELL_TRANSFER.getName());
+        transferEvent.setEventType(LabEventType.REAGENT_KIT_TO_FLOWCELL_TRANSFER.getName());
         GregorianCalendar gregorianCalendar = new GregorianCalendar();
         try {
             transferEvent.setStart(DatatypeFactory.newInstance().newXMLGregorianCalendar(gregorianCalendar));
@@ -169,6 +170,18 @@ public class VesselTransferEjb {
             CherryPickSourceType cherryPickSource = BettalimsObjectFactory.createCherryPickSourceType(reagentKitBarcode,
                     MiSeqReagentKit.LOADING_WELL.name(), flowcellBarcode, vesselPosition.name());
             transferEvent.getSource().add(cherryPickSource);
+
+            PlateType reagentKit = new PlateType();
+            reagentKit.setBarcode(flowcellBarcode);
+            reagentKit.setPhysType(LabVessel.ContainerType.MISEQ_REAGENT_KIT.getName());
+            reagentKit.setSection(MiSeqReagentKit.LOADING_WELL.name());
+            transferEvent.getSourcePlate().add(reagentKit);
+
+            PlateType flowcell = new PlateType();
+            flowcell.setBarcode(flowcellBarcode);
+            flowcell.setPhysType(MiSeqFlowcell.getAutomationName());
+            flowcell.setSection(SBSSection.ALL96.getSectionName());
+            transferEvent.getPlate().add(flowcell);
         }
 
         LabEvent labEvent = labEventFactory.buildFromBettaLims(transferEvent);

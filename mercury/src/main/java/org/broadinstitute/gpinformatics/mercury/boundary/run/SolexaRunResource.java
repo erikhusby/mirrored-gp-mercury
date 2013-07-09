@@ -157,7 +157,7 @@ public class SolexaRunResource {
         if (!StringUtils.isEmpty(solexaRunBean.getReagentBlockBarcode())) {
             vesselTransferEjb
                     .reagentKitToFlowcell(solexaRunBean.getReagentBlockBarcode(), solexaRunBean.getFlowcellBarcode(),
-                            "pipeline", solexaRunBean.getMachineName());
+                            "pdunlea", solexaRunBean.getMachineName());
         }
 
         return illuminaSequencingRun;

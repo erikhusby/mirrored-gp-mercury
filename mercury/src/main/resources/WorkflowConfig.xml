@@ -486,6 +486,20 @@
                 </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
+                <name>Denature To Reagent Kit Transfer</name>
+                <labEventTypes>DENATURE_TO_REAGENT_KIT_TRANSFER</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Reagent Kit To Flowcell Transfer</name>
+                <labEventTypes>REAGENT_KIT_TO_FLOWCELL_TRANSFER</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
                 <name>Strip Tube B Transfer</name>
                 <labEventTypes>STRIP_TUBE_B_TRANSFER</labEventTypes>
                 <optional>false</optional>
@@ -534,6 +548,20 @@
                     <project>LCSET</project>
                     <statusTransition>In MiSeq Sequencing</statusTransition>
                 </jiraTransition>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Denature To Reagent Kit Transfer</name>
+                <labEventTypes>DENATURE_TO_REAGENT_KIT_TRANSFER</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Reagent Kit To Flowcell Transfer</name>
+                <labEventTypes>REAGENT_KIT_TO_FLOWCELL_TRANSFER</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
