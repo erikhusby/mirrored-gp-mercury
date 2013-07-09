@@ -54,7 +54,7 @@
             </div>
             <div class="control-group">
                 <div class="controls actionButtons">
-                    <stripes:submit name="load" value="Load Denature Tubes" class="btn btn-mini"/>
+                    <stripes:submit id="loadDenatureBtn" name="load" value="Load Denature Tubes" class="btn btn-mini"/>
                 </div>
             </div>
             <c:if test="${not empty actionBean.denatureTubeToEvent}">
@@ -108,7 +108,8 @@
                 </div>
                 <div class="control-group" style="margin-left: 50px">
                     <div class="controls actionButtons">
-                        <stripes:submit name="save" value="Create FCT Tickets" class="btn btn-primary"/>
+                        <stripes:submit id="createFctBtn" name="save" value="Create FCT Tickets"
+                                        class="btn btn-primary"/>
                     </div>
                 </div>
             </c:if>

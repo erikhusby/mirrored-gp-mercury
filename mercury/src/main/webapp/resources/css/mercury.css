@@ -19,6 +19,8 @@ a.external {background-image:url("/Mercury/images/external-link.gif");background
 .navbar .nav > li > a { padding: 7px 15px; }
 .navbar-inner { min-height: 30px; }
 
+input.search-query { padding-left: 0px; }
+
 .control-group a, table a { font-size: 12px; }
 
 h1, h2, h3, h4, h5 {font-family: 'Carrois Gothic SC', sans-serif; color: #644436;}
