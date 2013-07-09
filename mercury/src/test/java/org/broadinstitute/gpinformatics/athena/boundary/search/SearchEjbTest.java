@@ -33,9 +33,9 @@ public class SearchEjbTest extends ContainerTest {
      *
      * @return data provider data
      */
-    @DataProvider(name="Success-Provider")
-    public Object[][] successfulSearchItemsTestProvider(){
-        return new Object[][]{{"RP-173"},{"PDO-325"},{"P-EX-0001"}, {"rp-173"},{"pdo-325"},{"p-ex-0001"}};
+    @DataProvider(name = "Success-Provider")
+    public Object[][] successfulSearchItemsTestProvider() {
+        return new Object[][]{{"RP-173"}, {"PDO-325"}, {"P-EX-0001"}, {"rp-173"}, {"pdo-325"}, {"p-ex-0001"}};
     }
 
     /**
@@ -43,9 +43,9 @@ public class SearchEjbTest extends ContainerTest {
      *
      * @return data provider data
      */
-    @DataProvider(name="Failure-Provider")
-    public Object[][] failureSearchItemsTestProvider(){
-        return new Object[][]{{"RP-000"},{"PDO-000"},{"P-000"}, {"rp-000"}};
+    @DataProvider(name = "Failure-Provider")
+    public Object[][] failureSearchItemsTestProvider() {
+        return new Object[][]{{"RP-000"}, {"PDO-000"}, {"P-000"}, {"rp-000"}};
     }
 
 }
