@@ -29,9 +29,8 @@ import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder
 public class ProductOrderTestFactory {
 
     public static ProductOrder createDummyProductOrder(int sampleCount, @Nonnull String jiraKey,
-                                                       WorkflowName workflowName,
-                                                       long creatorId, String rpTitle, String rpSynopsis,
-                                                       boolean irbNotEngaged, String productPartNumber) {
+            WorkflowName workflowName, long creatorId, String rpTitle, String rpSynopsis, boolean irbNotEngaged,
+            String productPartNumber, String sampleSuffix) {
 
         PriceItem exExPriceItem =
                 new PriceItem("ExExQuoteId", PriceItem.PLATFORM_GENOMICS, PriceItem.CATEGORY_EXOME_SEQUENCING_ANALYSIS,
@@ -43,7 +42,7 @@ public class ProductOrderTestFactory {
         List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>(sampleCount);
         for (int sampleIndex = 1; sampleIndex <= sampleCount; sampleIndex++) {
             String bspStock = "SM-" + String.valueOf(sampleIndex) + String.valueOf(sampleIndex + 1) +
-                              String.valueOf(sampleIndex + 3) + String.valueOf(sampleIndex + 2);
+                              String.valueOf(sampleIndex + 3) + String.valueOf(sampleIndex + 2) + sampleSuffix;
             productOrderSamples.add(new ProductOrderSample(bspStock, new BSPSampleDTO()));
         }
 
@@ -74,7 +73,7 @@ public class ProductOrderTestFactory {
 
     public static ProductOrder createDummyProductOrder(@Nonnull String jiraTicketKey) {
         return createDummyProductOrder(1, jiraTicketKey, WorkflowName.EXOME_EXPRESS, 10950, "MyResearchProject",
-                AthenaClientServiceStub.otherRpSynopsis, ResearchProject.IRB_ENGAGED, "partNumber");
+                AthenaClientServiceStub.otherRpSynopsis, ResearchProject.IRB_ENGAGED, "partNumber", "A");
     }
 
     public static Map<String, ProductOrder> buildTestProductOrderMap() {
@@ -87,7 +86,7 @@ public class ProductOrderTestFactory {
         ProductOrder tempPO2 = buildExExProductOrder(96);
         productOrderByBusinessKeyMap.put(tempPO2.getBusinessKey(), tempPO2);
 
-        ProductOrder tempPO3 = buildHybridSelectionProductOrder(96);
+        ProductOrder tempPO3 = buildHybridSelectionProductOrder(96, "A");
         productOrderByBusinessKeyMap.put(tempPO3.getBusinessKey(), tempPO3);
 
         ProductOrder tempPO4 = buildWholeGenomeProductOrder(96);
@@ -99,20 +98,20 @@ public class ProductOrderTestFactory {
     public static ProductOrder buildExExProductOrder(int maxSamples) {
         return createDummyProductOrder(maxSamples, "PD0-1EE", WorkflowName.EXOME_EXPRESS, 101, "Test RP",
                 AthenaClientServiceStub.rpSynopsis,
-                ResearchProject.IRB_ENGAGED, "P-EXEXTest-1232");
+                ResearchProject.IRB_ENGAGED, "P-EXEXTest-1232", "A");
     }
 
-    public static ProductOrder buildHybridSelectionProductOrder(int maxSamples) {
+    public static ProductOrder buildHybridSelectionProductOrder(int maxSamples, String sampleSuffix) {
         return createDummyProductOrder(maxSamples, "PD0-1HS",
                 WorkflowName.HYBRID_SELECTION, 101,
                 "Test RP", AthenaClientServiceStub.rpSynopsis,
-                ResearchProject.IRB_ENGAGED, "P-HSEL-9293");
+                ResearchProject.IRB_ENGAGED, "P-HSEL-9293", sampleSuffix);
     }
 
     public static ProductOrder buildWholeGenomeProductOrder(int maxSamples) {
         return createDummyProductOrder(maxSamples, "PD0-2WGS", WorkflowName.WHOLE_GENOME,
                 301, "Test RP", AthenaClientServiceStub.rpSynopsis,
-                ResearchProject.IRB_ENGAGED, "P-WGS-9294");
+                ResearchProject.IRB_ENGAGED, "P-WGS-9294", "A");
     }
 
 

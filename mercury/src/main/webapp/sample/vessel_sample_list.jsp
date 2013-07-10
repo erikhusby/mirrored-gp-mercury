@@ -47,6 +47,7 @@
     <tbody>
     <c:forEach items="${actionBean.vessel.vesselGeometry.positionNames}" var="position">
         <c:forEach items="${actionBean.getSampleInstancesAtPosition(position)}" var="sample">
+            <%--@elvariable id="sample" type="org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance"--%>
             <tr>
                 <td>
                     <a href="javascript:showPlasticHistoryVisualizer('${sample.startingSample.sampleKey}')">

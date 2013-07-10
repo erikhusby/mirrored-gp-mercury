@@ -21,6 +21,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 import java.util.Collection;
 import java.util.Comparator;
@@ -100,7 +101,6 @@ public class LabEvent {
     @JoinTable(schema = "mercury")
     private Set<Reagent> reagents = new HashSet<>();
 
-    // todo jmt a single transfer superclass that permits all section, position, vessel combinations
     /** for transfers using a tip box, e.g. Bravo */
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "labEvent")
     private Set<SectionTransfer> sectionTransfers = new HashSet<>();
@@ -122,17 +122,29 @@ public class LabEvent {
     @ManyToOne(cascade = {CascadeType.PERSIST}, fetch = FetchType.LAZY)
     private LabVessel inPlaceLabVessel;
 
+    // todo jmt delete productOrderId?
     /**
      * Business Key of a product order to which this event is associated
      */
     private String productOrderId;
-
 
     @Enumerated(EnumType.STRING)
     private LabEventType labEventType;
 
     @ManyToOne(cascade = {CascadeType.PERSIST}, fetch = FetchType.LAZY)
     private LabBatch labBatch;
+
+    /** Set by transfer traversal, based on ancestor lab batches and transfers. */
+    @Transient
+    private Set<LabBatch> computedLcSets;
+
+    // todo jmt persist this
+    /**
+     * Can be set by a user to indicate the LCSET, in the absence of any distinguishing context, e.g. a set of samples
+     * processed in multiple technologies.
+     */
+    @Transient
+    private Set<LabBatch> manualOverrideLcSet;
 
     /** For JPA */
     protected LabEvent() {
@@ -363,4 +375,22 @@ todo jmt adder methods
         return labBatch;
     }
 
+    public Set<LabBatch> getManualOverrideLcSet() {
+        return manualOverrideLcSet;
+    }
+
+    public void setManualOverrideLcSet(Set<LabBatch> manualOverrideLcSet) {
+        this.manualOverrideLcSet = manualOverrideLcSet;
+    }
+
+    public Set<LabBatch> getComputedLcSets() {
+        if (computedLcSets == null) {
+            computedLcSets = new HashSet<>();
+            for (SectionTransfer sectionTransfer : sectionTransfers) {
+                computedLcSets.addAll(sectionTransfer.getSourceVesselContainer().getComputedLcSetsForSection(
+                        sectionTransfer.getSourceSection()));
+            }
+        }
+        return computedLcSets;
+    }
 }

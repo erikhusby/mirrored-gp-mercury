@@ -14,7 +14,6 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
-import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
@@ -29,7 +28,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
@@ -62,8 +60,6 @@ public class BaseEventTest {
 
     private LabBatchEjb labBatchEJB;
 
-    private BucketEjb bucketEjb;
-
     protected final LabEventFactory.LabEventRefDataFetcher labEventRefDataFetcher =
             new LabEventFactory.LabEventRefDataFetcher() {
 
@@ -93,7 +89,6 @@ public class BaseEventTest {
         JiraTicketDao mockJira = EasyMock.createNiceMock(JiraTicketDao.class);
         labBatchEJB.setJiraTicketDao(mockJira);
         labEventFactory.setLabEventRefDataFetcher(labEventRefDataFetcher);
-        bucketEjb = new BucketEjb(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB);
     }
 
     /**
@@ -178,6 +173,9 @@ public class BaseEventTest {
         JiraServiceStub.setCreatedIssueSuffix(defaultLcsetSuffix);
 
         Bucket workingBucket = createAndPopulateBucket(mapBarcodeToTube, productOrder, "Pico/Plating Bucket");
+        for (BucketEntry bucketEntry : workingBucket.getBucketEntries()) {
+            bucketEntry.setLabBatch(workflowBatch);
+        }
 
         PicoPlatingEntityBuilder invoke = new PicoPlatingEntityBuilder(bettaLimsMessageTestFactory,
                 labEventFactory, getLabEventHandler(),
@@ -229,6 +227,9 @@ public class BaseEventTest {
         labBatchEJB.createLabBatch(workflowBatch, "scotmatt", CreateFields.IssueType.EXOME_EXPRESS);
 
         Bucket workingBucket = createAndPopulateBucket(mapBarcodeToTube, productOrder, "Preflight Bucket");
+        for (BucketEntry bucketEntry : workingBucket.getBucketEntries()) {
+            bucketEntry.setLabBatch(workflowBatch);
+        }
 
         BucketDao mockBucketDao = EasyMock.createNiceMock(BucketDao.class);
         EasyMock.expect(mockBucketDao.findByName("Preflight Bucket")).andReturn(workingBucket);
