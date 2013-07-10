@@ -606,32 +606,67 @@ public interface TransferTraverserCriteria {
     }
 
     public class VesselForEventTypeCriteria implements TransferTraverserCriteria {
-        private LabEventType type;
-        private Map<LabVessel, LabEvent> vesselsForLabEventType = new HashMap<>();
+        private List<LabEventType> types;
+        private Map<LabEvent, Set<LabVessel>> vesselsForLabEventType = new HashMap<>();
 
-        public VesselForEventTypeCriteria(LabEventType type) {
-            this.type = type;
+        public VesselForEventTypeCriteria(List<LabEventType> type) {
+            this.types = type;
         }
 
         @Override
         public TraversalControl evaluateVesselPreOrder(
                 Context context) {
             LabVessel vessel = context.getLabVessel();
+            LabEvent event = context.getEvent();
+            if (event != null) {
+                evaluteEvent(vessel, event);
+            }
             if (vessel != null) {
-                for (LabEvent event : vessel.getEvents()) {
-                    if (type.equals(event.getLabEventType())) {
-                        for (LabVessel targetVessel : event.getTargetLabVessels()) {
-                            if (targetVessel.getContainerRole() != null
-                                && targetVessel.getContainerRole().getContainedVessels().contains(vessel)) {
-                                vesselsForLabEventType.put(vessel, event);
-                            } else if (targetVessel.equals(vessel)) {
-                                vesselsForLabEventType.put(vessel, event);
-                            }
-                        }
+                //check all in place events and descendant in place events
+                for (LabEvent inPlaceEvent : vessel.getInPlaceEvents()) {
+                    evaluteEvent(vessel, inPlaceEvent);
+                }
+                for (LabVessel descendant : vessel.getDescendantVessels()) {
+                    for (LabEvent inPlaceEvent : descendant.getInPlaceEvents()) {
+                        evaluteEvent(vessel, inPlaceEvent);
                     }
                 }
             }
             return ContinueTraversing;
+        }
+
+        private void evaluteEvent(LabVessel vessel, LabEvent event) {
+            if (types.contains(event.getLabEventType())) {
+                //if this is in place just add the vessel
+                if (event.getInPlaceLabVessel() != null) {
+                    Set<LabVessel> vessels = vesselsForLabEventType.get(event);
+                    if (vessels == null) {
+                        vessels = new HashSet<>();
+                    }
+                    vessels.add(vessel);
+                    vesselsForLabEventType.put(event, vessels);
+                }
+                //otherwise check the target vessels
+                for (LabVessel targetVessel : event.getTargetLabVessels()) {
+                    Set<LabVessel> vessels = vesselsForLabEventType.get(event);
+                    if (vessels == null) {
+                        vessels = new HashSet<>();
+                    }
+                    if (vessel == null) {
+                        vessels.add(targetVessel);
+                        vesselsForLabEventType.put(event, vessels);
+                    } else {
+                        vessels.add(vessel);
+                        //if we are a container and we contain the vessel then add it
+                        if (targetVessel.getContainerRole() != null
+                            && targetVessel.getContainerRole().getContainedVessels().contains(vessel)) {
+                            vesselsForLabEventType.put(event, vessels);
+                        } else if (targetVessel.equals(vessel)) {
+                            vesselsForLabEventType.put(event, vessels);
+                        }
+                    }
+                }
+            }
         }
 
         @Override
@@ -642,7 +677,7 @@ public interface TransferTraverserCriteria {
         public void evaluateVesselPostOrder(Context context) {
         }
 
-        public Map<LabVessel, LabEvent> getVesselsForLabEventType() {
+        public Map<LabEvent, Set<LabVessel>> getVesselsForLabEventType() {
             return vesselsForLabEventType;
         }
     }
