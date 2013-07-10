@@ -38,6 +38,10 @@ public class BillingSessionEtl extends GenericEntityEtl<BillingSession, BillingS
 
     @Override
     String dataRecord(String etlDateStr, boolean isDelete, BillingSession entity) {
+        if (entity.getBilledDate() == null) {
+            // We only want to ETL completed billing sessions, not ones that are in progress.
+            return null;
+        }
         return genericRecord(etlDateStr, isDelete,
                 entity.getBillingSessionId(),
                 format(entity.getBilledDate()),
