@@ -95,6 +95,9 @@ public abstract class LabVessel implements Serializable {
     @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "labVessel")
     private Set<LabBatchStartingVessel> labBatches = new HashSet<>();
 
+    @Transient
+    private Set<LabBatchStartingVessel> dilutionReferences = new HashSet<>();
+
     @ManyToMany(cascade = CascadeType.PERSIST, mappedBy = "reworks")
     @BatchSize(size = 100)
     private Set<LabBatch> reworkLabBatches = new HashSet<LabBatch>();
@@ -1043,6 +1046,19 @@ public abstract class LabVessel implements Serializable {
 
     public Set<LabBatchStartingVessel> getLabBatchStartingVessels() {
         return labBatches;
+    }
+
+
+    public Set<LabBatchStartingVessel> getDilutionReferences() {
+        return dilutionReferences;
+    }
+
+    public void setDilutionReferences(Set<LabBatchStartingVessel> dilutionReferences) {
+        this.dilutionReferences = dilutionReferences;
+    }
+
+    public void addDilutionReferences(LabBatchStartingVessel dilutionReferences) {
+        this.dilutionReferences.add(dilutionReferences);
     }
 
     /**
