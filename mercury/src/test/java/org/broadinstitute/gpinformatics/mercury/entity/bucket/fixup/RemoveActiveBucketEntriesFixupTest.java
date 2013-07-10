@@ -25,10 +25,10 @@ public class RemoveActiveBucketEntriesFixupTest extends Arquillian {
     @Deployment
     public static WebArchive buildMercuryWar() {
         return DeploymentBuilder.buildMercuryWar(
-                org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV, "prod");
+                org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV, "dev");
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void removeActiveBucketEntries() {
         ejb.removeActiveBucketEntries();
     }
