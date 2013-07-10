@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -42,8 +43,16 @@ public class LabMetricProcessor extends TableProcessor {
 
     @Override
     public void processRowDetails(Map<String, String> dataRow, int dataRowIndex) {
+        String barcode = dataRow.get(LabMetricHeaders.BARCODE.getText());
+
+        // If the barcode is blank, we just skip the row. This is a valid case since we only want to update
+        // rows that have a barcode.
+        if (StringUtils.isBlank(barcode)) {
+            return;
+        }
+
         // Get the barcode.
-        String barcode = padBarcode(dataRow.get(LabMetricHeaders.BARCODE.getText()));
+        barcode = padBarcode(barcode);
 
         BigDecimal metric;
 
@@ -114,8 +123,8 @@ public class LabMetricProcessor extends TableProcessor {
      */
     private enum LabMetricHeaders implements ColumnHeader {
         LOCATION("Location", 0, ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_VALUE),
-        BARCODE("Barcode", 1, ColumnHeader.REQUIRED_HEADER, ColumnHeader.REQUIRED_VALUE),
-        METRIC("Quant", 2, ColumnHeader.REQUIRED_HEADER, ColumnHeader.REQUIRED_VALUE);
+        BARCODE("Barcode", 1, ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_VALUE),
+        METRIC("Quant", 2, ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_VALUE);
 
         private final String text;
         private final int index;
