@@ -66,6 +66,13 @@ public class Bucket {
         return bucketDefinitionName;
     }
 
+    /**
+     * Returns the active bucket entries for this bucket, sorted by added date and product order ranking.
+     *
+     * @return the active bucket entries
+     *
+     * @see BucketEntry#byDate
+     */
     public Collection<BucketEntry> getBucketEntries() {
 
         List<BucketEntry> setList = new ArrayList<>(bucketEntries);
@@ -73,6 +80,13 @@ public class Bucket {
         return Collections.unmodifiableList(setList);
     }
 
+    /**
+     * Returns the active rework entries for this bucket, sorted by added date and product order ranking.
+     *
+     * @return the active rework entries
+     *
+     * @see BucketEntry#byDate
+     */
     public Collection<BucketEntry> getReworkEntries() {
         List<BucketEntry> setList = new ArrayList<>(reworkEntries);
         Collections.sort(setList, BucketEntry.byDate);
