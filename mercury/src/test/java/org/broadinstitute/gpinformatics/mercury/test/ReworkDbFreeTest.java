@@ -50,7 +50,6 @@ public class ReworkDbFreeTest extends BaseEventTest {
         ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(NUM_POSITIONS_IN_RACK);
         AthenaClientServiceStub.addProductOrder(productOrder);
         Map<String, TwoDBarcodedTube> origRackMap = createInitialRack(productOrder, origTubePrefix);
-        Bucket workingBucket = createAndPopulateBucket(origRackMap, productOrder, "Pico/Plating Bucket");
 
         LabBatch origBatch =
                 new LabBatch("origBatch", new HashSet<LabVessel>(origRackMap.values()), LabBatch.LabBatchType.WORKFLOW);
@@ -85,10 +84,6 @@ public class ReworkDbFreeTest extends BaseEventTest {
         Assert.assertTrue(reworkRackMap.containsKey(reworkTubePrefix + reworkIdx));
         reworkRackMap.remove(reworkTubePrefix + reworkIdx);
         reworkRackMap.put(reworkTube.getLabel(), reworkTube);
-        for (TwoDBarcodedTube tube : reworkRackMap.values()) {
-            workingBucket.addEntry(productOrder.getBusinessKey(), tube,
-                    org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry.BucketEntryType.PDO_ENTRY);
-        }
 
         LabBatch reworkBatch = new LabBatch("reworkBatch", new HashSet<LabVessel>(reworkRackMap.values()),
                 LabBatch.LabBatchType.WORKFLOW);

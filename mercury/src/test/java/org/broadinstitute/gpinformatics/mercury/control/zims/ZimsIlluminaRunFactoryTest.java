@@ -103,11 +103,13 @@ public class ZimsIlluminaRunFactoryTest {
         String sourceTubeBarcode = "testTube";
         testTube = new TwoDBarcodedTube(sourceTubeBarcode);
         testTube.addSample(new MercurySample("TestSM-1"));
-        testTube.addBucketEntry(new BucketEntry(testTube, "TestPDO-1", BucketEntry.BucketEntryType.PDO_ENTRY));
+        BucketEntry bucketEntry = new BucketEntry(testTube, "TestPDO-1", BucketEntry.BucketEntryType.PDO_ENTRY);
+        testTube.addBucketEntry(bucketEntry);
         JiraTicket lcSetTicket = new JiraTicket(mockJiraService, "LCSET-1");
         LabBatch lcSetBatch = new LabBatch("LCSET-1 batch", Collections.<LabVessel>singleton(testTube),
                 LabBatch.LabBatchType.WORKFLOW);
         lcSetBatch.setJiraTicket(lcSetTicket);
+        bucketEntry.setLabBatch(lcSetBatch);
 
         // Record some events for the sample
         BettaLimsMessageTestFactory bettaLimsMessageFactory = new BettaLimsMessageTestFactory(true);

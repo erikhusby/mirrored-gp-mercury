@@ -481,7 +481,7 @@ public class LabEventTest extends BaseEventTest {
             workflowBatch1.setWorkflowName("Exome Express");
 
             PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube1, productOrder1,
-                    workflowBatch1, null, String.valueOf(runDate.getTime()), "1", true);
+                    workflowBatch1, "1", String.valueOf(runDate.getTime()), "1", true);
             ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder =
                     runExomeExpressShearingProcess(productOrder1, picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
                             picoPlatingEntityBuilder.getNormTubeFormation(),
@@ -498,7 +498,7 @@ public class LabEventTest extends BaseEventTest {
             workflowBatch2.setWorkflowName("Exome Express");
 
             PicoPlatingEntityBuilder picoPlatingEntityBuilder2 = runPicoPlatingProcess(mapBarcodeToTube2, productOrder2,
-                    workflowBatch2, null, String.valueOf(runDate.getTime()), "2", true);
+                    workflowBatch2, "2", String.valueOf(runDate.getTime()), "2", true);
             ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder2 =
                     runExomeExpressShearingProcess(productOrder2, picoPlatingEntityBuilder2.getNormBarcodeToTubeMap(),
                             picoPlatingEntityBuilder2.getNormTubeFormation(),
@@ -558,7 +558,7 @@ public class LabEventTest extends BaseEventTest {
                     runDate, machineName, runPath.getAbsolutePath(), null);
 
             IlluminaSequencingRun run2 =
-                    runFactory.buildDbFree(runBean2, hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell());
+                    runFactory.buildDbFree(runBean2, hiSeq2500FlowcellEntityBuilder2.getIlluminaFlowcell());
 
             ZimsIlluminaRun zimsIlluminaRun2 = zimsIlluminaRunFactory.makeZimsIlluminaRun(run2);
             Assert.assertEquals(zimsIlluminaRun2.getLanes().size(), 2, "Wrong number of lanes");
