@@ -235,7 +235,7 @@ public class SolexaRunRestResourceTest extends Arquillian {
 
     }
 
-    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, enabled = false)
     public void testCreate2500Run() {
 
         Assert.assertTrue(result);
