@@ -27,7 +27,10 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
 import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
@@ -36,7 +39,16 @@ import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import javax.inject.Inject;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria.TraversalDirection.Ancestors;
 
@@ -118,7 +130,7 @@ public class ZimsIlluminaRunFactory {
                 false, sequencingRun.getActualReadStructure(), 0.0, sequencingRun.getSetupReadStructure());
 
         for (List<SampleInstanceDto> sampleInstanceDtos : perLaneSampleInstanceDtos) {
-            if (sampleInstanceDtos != null && sampleInstanceDtos.size() > 0) {
+            if (sampleInstanceDtos != null && !sampleInstanceDtos.isEmpty()) {
                 ArrayList<LibraryBean> libraryBeans = new ArrayList<>();
                 short laneNumber = sampleInstanceDtos.get(0).getLaneNumber();
                 libraryBeans.addAll(
@@ -144,12 +156,9 @@ public class ZimsIlluminaRunFactory {
 
             // LcSet is null unless there is exactly one workflow lab batch.
             String lcSet = null;
-            Collection<LabBatch> workflowLabBatches = sampleInstance.getAllWorkflowLabBatches();
-            if (workflowLabBatches.size() == 1) {
-                LabBatch labBatch = workflowLabBatches.iterator().next();
-                if (labBatch.getJiraTicket() != null) {
-                    lcSet = labBatch.getJiraTicket().getTicketId();
-                }
+            LabBatch labBatch = sampleInstance.getLabBatch();
+            if (labBatch != null && labBatch.getJiraTicket() != null) {
+                lcSet = labBatch.getJiraTicket().getTicketId();
             }
 
             // This loop goes through all the reagents and takes the last bait name (under the assumption that
@@ -157,7 +166,7 @@ public class ZimsIlluminaRunFactory {
             // last indexing scheme reagent.
             MolecularIndexingScheme indexingSchemeEntity = null;
             String baitName = null;
-            List<String> catNames = new ArrayList<String>();
+            List<String> catNames = new ArrayList<>();
             for (Reagent reagent : sampleInstance.getReagents()) {
                 if (OrmUtil.proxySafeIsInstance(reagent, MolecularIndexReagent.class)) {
                     indexingSchemeEntity = OrmUtil.proxySafeCast(reagent, MolecularIndexReagent.class).getMolecularIndexingScheme();
@@ -174,7 +183,7 @@ public class ZimsIlluminaRunFactory {
 
             edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme indexingSchemeDto = null;
             if (indexingSchemeEntity != null) {
-                Map<IndexPosition, String> positionSequenceMap = new HashMap<IndexPosition, String>();
+                Map<IndexPosition, String> positionSequenceMap = new HashMap<>();
                 Set<Map.Entry<MolecularIndexingScheme.IndexPosition, MolecularIndex>> entries =
                         indexingSchemeEntity.getIndexes().entrySet();
 
@@ -262,7 +271,7 @@ public class ZimsIlluminaRunFactory {
             aligner = project.getSequenceAlignerKey();
 
             // If there is a reference sequence value on the project, then populate the name and version.
-            String[] referenceSequenceValues = null;
+            String[] referenceSequenceValues;
             if (!StringUtils.isBlank(project.getReferenceSequenceKey())) {
                 referenceSequenceValues = project.getReferenceSequenceKey().split("\\|");
                 referenceSequence = referenceSequenceValues[0];
@@ -285,7 +294,7 @@ public class ZimsIlluminaRunFactory {
                 new Factory<Set<LabVessel>>() {
             @Override
             public Set<LabVessel> create() {
-                return new HashSet<LabVessel>();
+                return new HashSet<>();
             }
         });
 
@@ -323,6 +332,9 @@ public class ZimsIlluminaRunFactory {
         public void evaluateVesselPostOrder(Context context) {}
     }
 
+    /**
+     * Need DTO to store choice of aliquot or root sample ID.
+     */
     static class SampleInstanceDto {
         private short laneNumber;
         private LabVessel labVessel;

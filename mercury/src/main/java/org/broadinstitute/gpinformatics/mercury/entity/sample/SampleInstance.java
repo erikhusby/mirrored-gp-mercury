@@ -110,14 +110,6 @@ public class SampleInstance {
         }
     }
 
-    public void setMolecularState(MolecularState molecularState) {
-        this.molecularState = molecularState;
-    }
-
-    public void addReagent(Reagent reagent) {
-        reagents.add(reagent);
-    }
-
     public List<Reagent> getReagents() {
         return reagents;
     }
@@ -129,7 +121,7 @@ public class SampleInstance {
      * @return A list of indexes associated with this sample instance.
      */
     public List<MolecularIndexReagent> getIndexes() {
-        List<MolecularIndexReagent> indexes = new ArrayList<MolecularIndexReagent>();
+        List<MolecularIndexReagent> indexes = new ArrayList<>();
         for (Reagent reagent : reagents) {
             if (OrmUtil.proxySafeIsInstance(reagent, MolecularIndexReagent.class)) {
                 indexes.add((MolecularIndexReagent) reagent);
@@ -144,7 +136,10 @@ public class SampleInstance {
      */
     @Nullable
     public LabBatch getLabBatch() {
-        return bucketEntry.getLabBatch();
+        if (bucketEntry != null) {
+            return bucketEntry.getLabBatch();
+        }
+        return null;
     }
 
     public void setBucketEntry(BucketEntry bucketEntry) {
@@ -157,13 +152,13 @@ public class SampleInstance {
 
     public void addLabBatches(Collection<LabBatch> batches){
         if(allLabBatches == null){
-            allLabBatches = new HashSet<LabBatch>();
+            allLabBatches = new HashSet<>();
         }
         allLabBatches.addAll(batches);
     }
 
     public Collection<LabBatch> getAllWorkflowLabBatches() {
-        Set<LabBatch> workflowBatches = new HashSet<LabBatch>();
+        Set<LabBatch> workflowBatches = new HashSet<>();
         for (LabBatch batch : allLabBatches) {
             if (batch.getLabBatchType() == LabBatch.LabBatchType.WORKFLOW) {
                 workflowBatches.add(batch);
@@ -182,7 +177,7 @@ public class SampleInstance {
      */
     public List<LabBatchComposition> getLabBatchCompositionInVesselContext(LabVessel vessel) {
         List<LabBatchComposition> allLabBatchCompositions = vessel.getWorkflowLabBatchCompositions();
-        List<LabBatchComposition> filteredBatchCompositions = new ArrayList<LabBatchComposition>();
+        List<LabBatchComposition> filteredBatchCompositions = new ArrayList<>();
         for (LabBatch labBatch : getAllWorkflowLabBatches()) {
             for (LabBatchComposition composition : allLabBatchCompositions) {
                 if (composition.getLabBatch().equals(labBatch)) {
@@ -209,7 +204,7 @@ public class SampleInstance {
      */
     @Nullable
     public String getWorkflowName() {
-        if (bucketEntry != null) {
+        if (bucketEntry != null && bucketEntry.getLabBatch() != null) {
             return bucketEntry.getLabBatch().getWorkflowName();
         }
         String workflowName = null;

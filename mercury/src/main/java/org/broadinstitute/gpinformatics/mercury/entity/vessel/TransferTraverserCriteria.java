@@ -4,6 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import javax.annotation.Nonnull;
@@ -512,9 +513,9 @@ public interface TransferTraverserCriteria {
                 if (tube == null) {
                     tube = context.getLabVessel();
                 }
-                return StopTraversing;
+                return TraversalControl.StopTraversing;
             }
-            return ContinueTraversing;
+            return TraversalControl.ContinueTraversing;
         }
 
         @Override
@@ -544,7 +545,7 @@ public interface TransferTraverserCriteria {
             if (OrmUtil.proxySafeIsInstance(context.getLabVessel(), typeParameterClass)) {
                 descendantsOfVesselType.add(typeParameterClass.cast(context.getLabVessel()));
             }
-            return ContinueTraversing;
+            return TraversalControl.ContinueTraversing;
         }
 
         @Override
@@ -586,7 +587,7 @@ public interface TransferTraverserCriteria {
                     }
                 }
             }
-            return ContinueTraversing;
+            return TraversalControl.ContinueTraversing;
         }
 
         @Override

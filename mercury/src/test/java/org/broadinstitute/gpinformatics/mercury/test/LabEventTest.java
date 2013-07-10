@@ -730,7 +730,7 @@ public class LabEventTest extends BaseEventTest {
         PlateCherryPickEvent rackToPlateCherryPickEvent = bettaLimsMessageTestFactory.buildCherryPick(
                 "PoolingTransfer", Collections.singletonList("SourceRack"),
                 Collections.<List<String>>singletonList(new ArrayList<>(mapBarcodeToTube.keySet())),
-                Collections.singletonList("SourcePlate"), Collections.singletonList(Arrays.asList("tube1", "tube2")),
+                Collections.singletonList("SourcePlate"), Collections.<List<String>>emptyList(),
                 Arrays.asList(new BettaLimsMessageTestFactory.CherryPick("SourceRack", "A01", "SourcePlate", "A01")));
         rackToPlateCherryPickEvent.getPlate().get(0).setPhysType(LabEventFactory.PHYS_TYPE_EPPENDORF_96);
         LabEvent rackToPlateEntity = labEventFactory.buildFromBettaLims(rackToPlateCherryPickEvent, mapBarcodeToVessel);

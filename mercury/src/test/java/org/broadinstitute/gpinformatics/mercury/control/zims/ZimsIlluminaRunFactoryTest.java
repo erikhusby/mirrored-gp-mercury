@@ -28,7 +28,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.MolecularState;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StripTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
@@ -123,10 +122,12 @@ public class ZimsIlluminaRunFactoryTest {
         testTube.addSample(new MercurySample("TestSM-1"));
         BucketEntry bucketEntry = new BucketEntry(testTube, "TestPDO-1", BucketEntry.BucketEntryType.PDO_ENTRY);
         testTube.addBucketEntry(bucketEntry);
-        JiraTicket lcSetTicket = new JiraTicket(mockJiraService, "LCSET-1");
-        LabBatch lcSetBatch = new LabBatch("LCSET-1 batch", Collections.<LabVessel>singleton(testTube),
+        JiraTicket lcSetTicket = new JiraTicket(mockJiraService, labBatchName);
+        lcSetBatch = new LabBatch(labBatchName, Collections.<LabVessel>singleton(testTube),
                 LabBatch.LabBatchType.WORKFLOW);
         lcSetBatch.setJiraTicket(lcSetTicket);
+        lcSetBatch.setWorkflowName("Exome Express");
+        lcSetBatch.addBucketEntry(bucketEntry);
         bucketEntry.setLabBatch(lcSetBatch);
 
         // Record some events for the sample
@@ -235,14 +236,14 @@ public class ZimsIlluminaRunFactoryTest {
         List<ZimsIlluminaRunFactory.SampleInstanceDto> sampleInstanceDtos = new ArrayList<>();
         short laneNumber = 1;
         MercurySample sample = new MercurySample(sampleId);
-        MolecularState molecularState = new MolecularState(null, null);
-        SampleInstance sampleInstance = new SampleInstance(sample,  molecularState);
+        SampleInstance sampleInstance = new SampleInstance(sample);
         Collection<LabBatch> labBatches = new ArrayList<>();
         LabBatch sampleImportBatch = new LabBatch("BSP-123", Collections.<LabVessel>singleton(testTube),
                 LabBatch.LabBatchType.SAMPLES_IMPORT);
         labBatches.add(sampleImportBatch);
         labBatches.add(lcSetBatch);
         sampleInstance.addLabBatches(labBatches);
+        sampleInstance.setBucketEntry(lcSetBatch.getBucketEntries().iterator().next());
 
         String productOrderKey = "TestPDO-1";
         sampleInstanceDtos.add(new ZimsIlluminaRunFactory.SampleInstanceDto(laneNumber, testTube, sampleInstance,
