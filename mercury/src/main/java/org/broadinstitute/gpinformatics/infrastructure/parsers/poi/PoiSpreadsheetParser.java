@@ -98,7 +98,8 @@ public final class PoiSpreadsheetParser implements Serializable {
             Map<String, String> dataByHeader = new HashMap<>();
             for (String headerName : processor.getHeaderNames()) {
                 dataByHeader.put(headerName,
-                        extractCellContent(row, headerName, columnIndex, processor.isDateColumn(columnIndex)));
+                        extractCellContent(row, headerName, columnIndex,
+                                processor.isDateColumn(columnIndex), processor.isStringColumn(columnIndex)));
                 columnIndex++;
             }
 
@@ -125,7 +126,9 @@ public final class PoiSpreadsheetParser implements Serializable {
             List<String> headers = new ArrayList<>();
             Iterator<Cell> cellIterator = headerRow.cellIterator();
             while (cellIterator.hasNext()) {
-                headers.add(getCellValues(cellIterator.next(), false));
+                // Headers are always strings, so the false is for the date and the true is in case the header looks
+                // like a number to excel
+                headers.add(getCellValues(cellIterator.next(), false, true));
             }
 
             // The primary header row is the one that needs to be generally validated.
@@ -178,11 +181,11 @@ public final class PoiSpreadsheetParser implements Serializable {
      *
      * @return A string representation of the data in the cell indicated by the given row/column (header) combination
      */
-    protected String extractCellContent(Row row, String headerName, int columnIndex, boolean isDate) {
+    protected String extractCellContent(Row row, String headerName, int columnIndex, boolean isDate, boolean isString) {
 
         Cell cell = row.getCell(columnIndex);
 
-        String result = getCellValues(cell, isDate);
+        String result = getCellValues(cell, isDate, isString);
         if (StringUtils.isBlank(result)) {
             validationMessages.add(
                     "Row # " + row.getRowNum() + ": Unable to determine cell type for " + headerName);
@@ -200,7 +203,7 @@ public final class PoiSpreadsheetParser implements Serializable {
      *
      * @return A string representation of the cell.
      */
-    private String getCellValues(Cell cell, boolean isDate) {
+    private String getCellValues(Cell cell, boolean isDate, boolean isString) {
         String result = "";
 
         if (cell != null) {
@@ -211,9 +214,11 @@ public final class PoiSpreadsheetParser implements Serializable {
             case Cell.CELL_TYPE_NUMERIC:
                 if (isDate) {
                     result = dateFormatter.format(cell.getDateCellValue());
-                } else {
+                } else if (isString) {
                     cell.setCellType(Cell.CELL_TYPE_STRING);
                     result = cell.getStringCellValue();
+                } else {
+                    result = String.valueOf(cell.getNumericCellValue());
                 }
                 break;
             case Cell.CELL_TYPE_STRING:

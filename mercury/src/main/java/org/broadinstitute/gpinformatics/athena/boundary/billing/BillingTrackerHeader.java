@@ -73,6 +73,11 @@ public enum BillingTrackerHeader implements ColumnHeader {
     }
 
     @Override
+    public boolean isStringColumn() {
+        return false;
+    }
+
+    @Override
     public boolean isDateColumn() {
         return isDate;
     }

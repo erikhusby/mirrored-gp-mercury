@@ -119,23 +119,31 @@ public class LabMetricProcessor extends TableProcessor {
     }
 
     /**
-     * Definition of the headers defined in the Lab Metrics (Quant) upload file.
+     * Definition of the headers defined in the Lab Metrics (Quant) upload file. Barcode MUST be a string but
+     * sometimes looks like a numeric.
      */
     private enum LabMetricHeaders implements ColumnHeader {
         LOCATION("Location", 0, ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_VALUE),
-        BARCODE("Barcode", 1, ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_VALUE),
+        BARCODE("Barcode", 1, ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_VALUE, true),
         METRIC("Quant", 2, ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_VALUE);
 
         private final String text;
         private final int index;
         private final boolean requredHeader;
         private final boolean requiredValue;
+        private boolean isString;
 
         private LabMetricHeaders(String text, int index, boolean requiredHeader, boolean requiredValue) {
+            this(text, index, requiredHeader, requiredValue, false);
+        }
+
+        private LabMetricHeaders(String text, int index, boolean requiredHeader, boolean requiredValue,
+                                 boolean isString) {
             this.text = text;
             this.index = index;
             this.requredHeader = requiredHeader;
             this.requiredValue = requiredValue;
+            this.isString = isString;
         }
 
         @Override
@@ -161,6 +169,11 @@ public class LabMetricProcessor extends TableProcessor {
         @Override
         public boolean isDateColumn() {
             return false;
+        }
+
+        @Override
+        public boolean isStringColumn() {
+            return isString;
         }
     }
 }
