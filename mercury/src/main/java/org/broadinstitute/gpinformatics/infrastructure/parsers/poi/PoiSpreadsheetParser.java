@@ -212,7 +212,8 @@ public final class PoiSpreadsheetParser implements Serializable {
                 if (isDate) {
                     result = dateFormatter.format(cell.getDateCellValue());
                 } else {
-                    result = String.valueOf(cell.getNumericCellValue());
+                    cell.setCellType(Cell.CELL_TYPE_STRING);
+                    result = cell.getStringCellValue();
                 }
                 break;
             case Cell.CELL_TYPE_STRING:
@@ -252,7 +253,6 @@ public final class PoiSpreadsheetParser implements Serializable {
         Workbook workbook = WorkbookFactory.create(inputStream);
         int numberOfSheets = workbook.getNumberOfSheets();
         for (int i = 0; i < numberOfSheets; i++) {
-
             Sheet sheet = workbook.getSheetAt(i);
             sheetNames.add(sheet.getSheetName());
         }

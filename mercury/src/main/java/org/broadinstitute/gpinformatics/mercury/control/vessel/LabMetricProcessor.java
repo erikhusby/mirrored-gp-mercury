@@ -43,7 +43,7 @@ public class LabMetricProcessor extends TableProcessor {
     @Override
     public void processRowDetails(Map<String, String> dataRow, int dataRowIndex) {
         // Get the barcode.
-        String barcode = dataRow.get(LabMetricHeaders.BARCODE.getText());
+        String barcode = padBarcode(dataRow.get(LabMetricHeaders.BARCODE.getText()));
 
         BigDecimal metric;
 
@@ -65,6 +65,19 @@ public class LabMetricProcessor extends TableProcessor {
                     "Value for quant: " + dataRow.get(LabMetricHeaders.METRIC.getText()) + " is invalid.",
                     dataRowIndex);
         }
+    }
+
+    private static final int SHORT_BARCODE = 10;
+    private static final int LONG_BARCODE = 12;
+
+    private static String padBarcode(String inputString) {
+        int toLength = (inputString.length() <= SHORT_BARCODE) ? SHORT_BARCODE : LONG_BARCODE;
+
+        while (inputString.length() < toLength) {
+            inputString = "0" + inputString;
+        }
+
+        return inputString;
     }
 
     @Override
