@@ -44,22 +44,21 @@ public class LabMetricProcessor extends TableProcessor {
     @Override
     public void processRowDetails(Map<String, String> dataRow, int dataRowIndex) {
         String barcode = dataRow.get(LabMetricHeaders.BARCODE.getText());
+        String metric = dataRow.get(LabMetricHeaders.METRIC.getText());
 
         // If the barcode is blank, we just skip the row. This is a valid case since we only want to update
         // rows that have a barcode.
-        if (StringUtils.isBlank(barcode)) {
+        if (StringUtils.isBlank(barcode) && StringUtils.isBlank(metric)) {
             return;
         }
 
         // Get the barcode.
         barcode = padBarcode(barcode);
 
-        BigDecimal metric;
-
         // Convert to a number.
         try {
-            metric = new BigDecimal(dataRow.get(LabMetricHeaders.METRIC.getText()));
-            LabMetric currentMetric = new LabMetric(metric, metricType, LabMetric.LabUnit.UG_PER_ML);
+            BigDecimal metricDecimal = new BigDecimal(dataRow.get(LabMetricHeaders.METRIC.getText()));
+            LabMetric currentMetric = new LabMetric(metricDecimal, metricType, LabMetric.LabUnit.UG_PER_ML);
             LabVessel metricVessel = labVesselDao.findByIdentifier(barcode);
             if (metricVessel == null) {
                 addDataMessage("Vessel not found for " + barcode, dataRowIndex);
