@@ -88,21 +88,6 @@ public class BucketEjb {
     }
 
     /**
-     * adds a pre-defined collection of {@link LabVessel}s to a given bucket
-     *
-     * @param entriesToAdd     Collection of LabVessels to be added to a bucket
-     * @param bucket           instance of a bucket entity associated with a workflow bucket step
-     * @param operator         Represents the user that initiated adding the vessels to the bucket
-     * @param labEventLocation Machine location from which operator initiated this action
-     * @param eventType        Type of the Lab Event that initiated this bucket add request
-     */
-    public void add(@Nonnull Collection<LabVessel> entriesToAdd, @Nonnull Bucket bucket,
-                    @Nonnull String operator, @Nonnull String labEventLocation, LabEventType eventType) {
-
-        add(entriesToAdd, bucket, BucketEntry.BucketEntryType.PDO_ENTRY, operator, labEventLocation, eventType, null);
-    }
-
-    /**
      * Adds a pre-defined collection of {@link LabVessel}s to a given bucket.  When the vessels do not already
      * have a product order association, uses the specified pdoBusinessKey instead.
      *
@@ -118,31 +103,18 @@ public class BucketEjb {
                                        BucketEntry.BucketEntryType entryType, @Nonnull String operator,
                                        @Nonnull String labEventLocation,
                                        LabEventType eventType,
-                                       String singlePdoBusinessKey) {
+                                       @Nonnull String singlePdoBusinessKey) {
 
         List<BucketEntry> listOfNewEntries = new LinkedList<BucketEntry>();
         Map<String, Collection<LabVessel>> pdoKeyToVesselMap = new HashMap<String, Collection<LabVessel>>();
 
         for (LabVessel currVessel : entriesToAdd) {
-            String pdoBusinessKey;
-            if (singlePdoBusinessKey == null) {
-                Collection<String> productOrderBusinessKeys = currVessel.getNearestProductOrders();
+            listOfNewEntries.add(bucket.addEntry(singlePdoBusinessKey, currVessel, entryType));
 
-                if (productOrderBusinessKeys.size() > 1) {
-                    logger.error("Vessel " + currVessel.getLabel() +
-                                 " has more than one PDO's associated with it, Using the first found: " +
-                                 StringUtils.join(productOrderBusinessKeys, ", "));
-                }
-                pdoBusinessKey = productOrderBusinessKeys.iterator().next();
-            } else {
-                pdoBusinessKey = singlePdoBusinessKey;
+            if (!pdoKeyToVesselMap.containsKey(singlePdoBusinessKey)) {
+                pdoKeyToVesselMap.put(singlePdoBusinessKey, new LinkedList<LabVessel>());
             }
-            listOfNewEntries.add(bucket.addEntry(pdoBusinessKey, currVessel, entryType));
-
-            if (!pdoKeyToVesselMap.containsKey(pdoBusinessKey)) {
-                pdoKeyToVesselMap.put(pdoBusinessKey, new LinkedList<LabVessel>());
-            }
-            pdoKeyToVesselMap.get(pdoBusinessKey).add(currVessel);
+            pdoKeyToVesselMap.get(singlePdoBusinessKey).add(currVessel);
         }
 
         Set<LabEvent> eventList = new HashSet<LabEvent>();

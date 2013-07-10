@@ -313,7 +313,7 @@ public class BucketEjbTest extends ContainerTest {
                 bspAliquot3, bspAliquot4));
 
 
-        resource.add(bucketCreateBatch, bucket, howieTest, "Superman", LabEventType.SHEARING_BUCKET);
+        resource.add(bucketCreateBatch, bucket, BucketEntry.BucketEntryType.PDO_ENTRY, howieTest, "Superman", LabEventType.SHEARING_BUCKET, poBusinessKey3);
 
         bucketDao.flush();
         bucketDao.clear();
@@ -425,7 +425,7 @@ public class BucketEjbTest extends ContainerTest {
 
         Assert.assertTrue(Collections.addAll(bucketCreateBatch, bspAliquot2, bspAliquot3, bspAliquot4));
 
-        resource.add(bucketCreateBatch, bucket, howieTest, "Superman", LabEventType.SHEARING_BUCKET);
+        resource.add(bucketCreateBatch, bucket, BucketEntry.BucketEntryType.PDO_ENTRY, howieTest, "Superman", LabEventType.SHEARING_BUCKET, poBusinessKey3);
 
         bucketDao.flush();
         bucketDao.clear();
