@@ -140,12 +140,6 @@ public class SampleInstance {
         this.bucketEntry = bucketEntry;
     }
 
-/*
-    public void setLabBatch(LabBatch labBatch) {
-        this.labBatch = labBatch;
-    }
-*/
-
     public Collection<LabBatch> getAllLabBatches() {
         return allLabBatches;
     }
@@ -197,12 +191,6 @@ public class SampleInstance {
         }
         return null;
     }
-
-/*
-    public void setProductOrderKey(String productOrderKey) {
-        this.productOrderKey = productOrderKey;
-    }
-*/
 
     /**
      * Gets the name of the sample's workflow, based on LCSETs.
