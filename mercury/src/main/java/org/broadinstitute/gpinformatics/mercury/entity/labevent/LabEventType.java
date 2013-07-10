@@ -119,9 +119,9 @@ public enum LabEventType {
     // For HiSeq 2500
     DENATURE_TO_FLOWCELL_TRANSFER("DenatureToFlowcellTransfer", false, true, SystemOfRecord.WORKFLOW_DEPENDENT, false,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE),
-    DENATURE_TO_DILUTION_TRANSFER("DenatureToDilutionTransfer", false, true,SystemOfRecord.WORKFLOW_DEPENDENT, false,
+    DENATURE_TO_DILUTION_TRANSFER("DenatureToDilutionTransfer", false, true, SystemOfRecord.WORKFLOW_DEPENDENT, false,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE),
-    DILUTION_TO_FLOWCELL_TRANSFER("DilutionToFlowcellTransfer", false, true,SystemOfRecord.WORKFLOW_DEPENDENT, false,
+    DILUTION_TO_FLOWCELL_TRANSFER("DilutionToFlowcellTransfer", false, true, SystemOfRecord.WORKFLOW_DEPENDENT, false,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE),
 
     // for MiSeq
