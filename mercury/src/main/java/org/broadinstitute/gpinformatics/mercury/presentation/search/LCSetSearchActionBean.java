@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.search;
 
+import clover.org.apache.commons.lang.StringUtils;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
@@ -8,7 +9,11 @@ import net.sourceforge.stripes.action.UrlBinding;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import javax.inject.Inject;
@@ -94,5 +99,29 @@ public class LCSetSearchActionBean extends SearchActionBean {
             latestEventForVessel.put(lastVessel, latestEvent);
         }
         return latestEvent;
+    }
+
+    public String getPositionsForEvent(LabVessel vessel, LabEventType type) {
+        Collection<LabVessel> descendants = vessel.getDescendantVessels();
+        Set<MercurySample> allMercurySamples = new HashSet<>();
+        for (LabVessel descendant : descendants) {
+            allMercurySamples.addAll(descendant.getMercurySamples());
+        }
+        Map<LabEvent, Set<LabVessel>> eventMap = vessel.findVesselsForLabEventType(type);
+        List<String> positions = new ArrayList<>();
+        for (Map.Entry<LabEvent, Set<LabVessel>> entry : eventMap.entrySet()) {
+            Set<VesselPosition> allPositions = new HashSet<>();
+            for (LabVessel sourceVessel : entry.getValue()) {
+                for (SampleInstance targetSampleInstance : sourceVessel.getSampleInstances()) {
+                    if (allMercurySamples.contains(targetSampleInstance.getStartingSample())) {
+                        allPositions.addAll(sourceVessel.getLastKnownPositionsOfSample(targetSampleInstance));
+                    }
+                }
+            }
+            for (VesselPosition position : allPositions) {
+                positions.add(position.name());
+            }
+        }
+        return StringUtils.join(positions, ',');
     }
 }

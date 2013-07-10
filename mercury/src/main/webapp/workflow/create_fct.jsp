@@ -93,15 +93,17 @@
                         </thead>
                         <tbody>
                         <c:forEach items="${actionBean.denatureTubeToEvent}" var="tubeToEvent">
-                            <tr>
-                                <td>
-                                    <stripes:checkbox class="tube-checkbox" name="selectedVesselLabels"
-                                                      value="${tubeToEvent.key.label}"/>
-                                </td>
-                                <td>${tubeToEvent.key.label}</td>
-                                <td><fmt:formatDate value="${tubeToEvent.value.eventDate}"
-                                                    pattern="${actionBean.dateTimePattern}"/></td>
-                            </tr>
+                            <c:forEach items="${tubeToEvent.value}" var="eventVessel">
+                                <tr>
+                                    <td>
+                                        <stripes:checkbox class="tube-checkbox" name="selectedVesselLabels"
+                                                          value="${eventVessel.label}"/>
+                                    </td>
+                                    <td>${eventVessel.label}</td>
+                                    <td><fmt:formatDate value="${tubeToEvent.key.eventDate}"
+                                                        pattern="${actionBean.dateTimePattern}"/></td>
+                                </tr>
+                            </c:forEach>
                         </c:forEach>
                         </tbody>
                     </table>

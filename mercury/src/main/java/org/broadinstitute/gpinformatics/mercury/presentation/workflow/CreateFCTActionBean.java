@@ -59,7 +59,7 @@ public class CreateFCTActionBean extends CoreActionBean {
 
     private LabBatch labBatch;
 
-    private Map<LabVessel, LabEvent> denatureTubeToEvent = new HashMap<>();
+    private Map<LabEvent, Set<LabVessel>> denatureTubeToEvent = new HashMap<>();
 
     private List<String> selectedVesselLabels;
 
@@ -99,11 +99,11 @@ public class CreateFCTActionBean extends CoreActionBean {
         this.labBatch = labBatch;
     }
 
-    public Map<LabVessel, LabEvent> getDenatureTubeToEvent() {
+    public Map<LabEvent, Set<LabVessel>> getDenatureTubeToEvent() {
         return denatureTubeToEvent;
     }
 
-    public void setDenatureTubeToEvent(Map<LabVessel, LabEvent> denatureTubeToEvent) {
+    public void setDenatureTubeToEvent(Map<LabEvent, Set<LabVessel>> denatureTubeToEvent) {
         this.denatureTubeToEvent = denatureTubeToEvent;
     }
 
