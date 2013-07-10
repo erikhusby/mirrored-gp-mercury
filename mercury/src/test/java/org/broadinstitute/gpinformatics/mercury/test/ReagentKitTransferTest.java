@@ -37,7 +37,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Test(enabled = true)
+@Test(enabled = false)
 public class ReagentKitTransferTest {
     BettaLimsMessageTestFactory bettaLimsMessageTestFactory = null;
 
