@@ -202,51 +202,37 @@ public class ReworkEjb {
         labVessels.addAll(labVesselDao.findBySampleKey(query));
 
         for (LabVessel vessel : labVessels) {
-            Set<SampleInstance> sampleInstances = vessel.getSampleInstances(PREFER_PDO, null);
 
             /*
              * By using PREFER_PDO, we are able to get all samples for a vessel.  If there are samples associated with
              * PDOs, we will get just the PDO associated Samples.  If there are samples that are NOT associated with
              * PDOs, we will get those samples.
              */
-            List<ProductOrderSample> productOrderSamples = null;
+            Set<SampleInstance> sampleInstances = vessel.getSampleInstances(PREFER_PDO, null);
 
-            SampleInstance sampleInstance = sampleInstances.iterator().next();
-            String sampleKey = sampleInstance.getStartingSample().getSampleKey();
-            String productOrderKey = sampleInstance.getProductOrderKey();
-            List<String> sampleIds;
-
-            if (StringUtils.isNotBlank(productOrderKey)) {
-                sampleIds = Collections.singletonList(sampleKey);
-            } else {
-
-                sampleIds = new ArrayList<>(sampleInstances.size());
-                for (SampleInstance currentInstance : sampleInstances) {
-                    sampleIds.add(currentInstance.getStartingSample().getSampleKey());
-                }
-
+            List<String> sampleIds = new ArrayList<>(sampleInstances.size());
+            for (SampleInstance currentInstance : sampleInstances) {
+                sampleIds.add(currentInstance.getStartingSample().getSampleKey());
             }
+
             for (Map.Entry<String, List<ProductOrderSample>> entryMap : athenaClientService
                     .findMapSampleNameToPoSample(sampleIds).entrySet()) {
                 // TODO: fetch for all vessels in a single call and make looping over labVessels a @DaoFree method
-                productOrderSamples = entryMap.getValue();
+                List<ProductOrderSample> productOrderSamples = entryMap.getValue();
                 // make sure we have a matching product order sample
                 for (ProductOrderSample sample : productOrderSamples) {
-                    if (StringUtils.isBlank(productOrderKey) ||
-                        sample.getProductOrder().getBusinessKey().equals(productOrderKey)) {
 
-                        ReworkCandidate candidate = new ReworkCandidate(entryMap.getKey(),
-                                sample.getProductOrder().getBusinessKey(), vessel.getLabel(),
-                                sample.getProductOrder(), vessel);
+                    ReworkCandidate candidate = new ReworkCandidate(entryMap.getKey(),
+                            sample.getProductOrder().getBusinessKey(), vessel.getLabel(),
+                            sample.getProductOrder(), vessel);
 
-                        if (!sample.getProductOrder().getProduct().isSameProductFamily(ProductFamily.ProductFamilyName.EXOME)) {
-                            candidate.addValidationMessage("The PDO " + sample.getProductOrder().getBusinessKey() +
-                                                           " for Sample " + entryMap.getKey() +
-                                                           " is not part of the Exome family");
-                        }
-
-                        reworkCandidates.add(candidate);
+                    if (!sample.getProductOrder().getProduct().isSameProductFamily(ProductFamily.ProductFamilyName.EXOME)) {
+                        candidate.addValidationMessage("The PDO " + sample.getProductOrder().getBusinessKey() +
+                                                       " for Sample " + entryMap.getKey() +
+                                                       " is not part of the Exome family");
                     }
+
+                    reworkCandidates.add(candidate);
                 }
             }
         }
