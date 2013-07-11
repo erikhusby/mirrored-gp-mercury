@@ -30,6 +30,7 @@ public class LCSetSearchActionBean extends SearchActionBean {
     public static final String ACTIONBEAN_URL_BINDING = "/search/lcset.action";
     public static final String LCSET_SEARCH = "lcsetSearch";
     private static final String LCSET_SEARCH_PAGE = "/search/lcset_search.jsp";
+
     private Map<LabVessel, LabEvent> latestEventForVessel = new HashMap<>();
 
     @Inject
