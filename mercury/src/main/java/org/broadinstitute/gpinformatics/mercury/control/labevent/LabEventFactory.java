@@ -28,6 +28,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StripTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.validators.AbstractEventValidator;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
@@ -302,6 +303,10 @@ public class LabEventFactory implements Serializable {
             LabEvent labEvent = buildFromBettaLims(receptacleEventType);
             persistLabEvent(uniqueEvents, labEvent, true);
             labEvents.add(labEvent);
+        }
+
+        for(LabEvent eventToValidate:labEvents) {
+            AbstractEventValidator.executeValidation(eventToValidate);
         }
 
         return labEvents;
