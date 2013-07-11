@@ -804,7 +804,8 @@ public abstract class LabVessel implements Serializable {
 
         /**
          * Called after an event has been traversed, sets lab batch and product order key.
-         * @param labEvent event that was traverses
+         *
+         * @param labEvent  event that was traverses
          * @param labVessel plastic involved in the event
          */
         public void applyEvent(@Nonnull LabEvent labEvent, @Nonnull LabVessel labVessel) {
@@ -830,7 +831,7 @@ public abstract class LabVessel implements Serializable {
     /**
      * Traverse all ancestors of this vessel, accumulating SampleInstances.
      *
-     * @param sampleType where to stop recursion
+     * @param sampleType   where to stop recursion
      * @param labBatchType which batches to accumulate
      *
      * @return accumulated sampleInstances
@@ -1623,7 +1624,7 @@ public abstract class LabVessel implements Serializable {
      *
      * @return Returns a map of lab metrics keyed by the metric display name.
      */
-    public Map<String, LabMetric> getMetricsForVesselandDescendants() {
+    public Map<String, LabMetric> getMetricsForVesselAndDescendants() {
         Set<LabMetric> allMetrics = new HashSet<>();
         if (metricMap == null) {
             metricMap = new HashMap<>();

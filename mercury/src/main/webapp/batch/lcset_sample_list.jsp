@@ -13,28 +13,30 @@
                 var active = $j('.accordion').accordion('option', 'active');
                 var resultsId = "#batchSampleListView" + active;
                 $j(resultsId).dataTable({
-                    "oTableTools":ttExportDefines,
-                    "aaSorting":[
+                    oTableTools:ttExportDefines,
+                    aaSorting:[
                         [0, 'asc']
                     ],
-                    "aoColumns":[
-                        {"bSortable":true, sWidth:'100px', sType:'html'},
-                        { "bSortable":true, sType:'numeric'},
-                        { "bSortable":true, sType:'numeric'},
-                        { "bSortable":true, sType:'numeric'},
-                        { "bSortable":true, sType:'numeric'},
-                        { "bSortable":true},
-                        { "bSortable":true},
-                        { "bSortable":true},
-                        { "bSortable":true},
-                        { "bSortable":true},
-                        { "bSortable":true},
-                        { "bSortable":true},
-                        {"bSortable":true, sType:'date'}
+                    aoColumns:[
+                        { bSortable:true, sWidth:'100px', sType:'html'},
+                        { bSortable:true, sType:'numeric'},
+                        { bSortable:true, sType:'numeric'},
+                        { bSortable:true, sType:'numeric'},
+                        { bSortable:true, sType:'numeric'},
+                        { bSortable:true, sType:'numeric'},
+                        { bSortable:true, sType:'numeric'},
+                        { bSortable:true},
+                        { bSortable:true},
+                        { bSortable:true},
+                        { bSortable:true},
+                        { bSortable:true},
+                        { bSortable:true},
+                        { bSortable:true},
+                        { bSortable:true, sType:'date'}
 
                     ],
-                    "bRetrieve":true,
-                    "sScrollY":500
+                    bRetrieve:true,
+                    sScrollY:500
                 });
             });
         });
@@ -47,9 +49,11 @@
         <thead>
         <tr>
             <th>Sample</th>
-            <th>BSP Pico</th>
-            <th>Catch Pico</th>
+            <th>Initial Stock Volume</th>
+            <th>BSP Initial Pico</th>
+            <th>BSP Export Quant</th>
             <th>Pond Pico</th>
+            <th>Catch Pico</th>
             <th>ECO QPCR</th>
             <th>Export Position</th>
             <th>Shearing Position</th>
@@ -71,10 +75,12 @@
                         <stripes:param name="searchKey" value="${sample.startingSample.sampleKey}"/>
                         ${sample.startingSample.sampleKey}
                     </stripes:link></td>
-                    <td> ${bean.sampleToBspPicoValueMap.get(sample.startingSample.sampleKey).concentration} </td>
-                    <td> ${vessel.metricsForVesselandDescendants.get("Catch Pico").value} </td>
-                    <td> ${vessel.metricsForVesselandDescendants.get("Pond Pico").value} </td>
-                    <td> ${vessel.metricsForVesselandDescendants.get("ECO QPCR").value} </td>
+                    <td> ${bean.sampleToBspPicoValueMap.get(sample.startingSample.sampleKey).volume}</td>
+                    <td> ${bean.sampleToBspPicoValueMap.get(sample.startingSample.sampleKey).concentration}</td>
+                    <td> ${bean.getExportedSampleConcentration(vessel)}</td>
+                    <td> ${vessel.metricsForVesselAndDescendants.get("Pond Pico").value} </td>
+                    <td> ${vessel.metricsForVesselAndDescendants.get("Catch Pico").value} </td>
+                    <td> ${vessel.metricsForVesselAndDescendants.get("ECO QPCR").value} </td>
                     <td> ${bean.getPositionsForEvent(vessel, "SAMPLE_IMPORT")}</td>
                     <td> ${bean.getPositionsForEvent(vessel, "SHEARING_TRANSFER")}</td>
                     <td> ${bean.getPositionsForEvent(vessel, "POND_ENRICHMENT")}</td>
