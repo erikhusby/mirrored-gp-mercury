@@ -439,6 +439,8 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
         if (string == null) {
             return "\"\"";
         }
+        // Newlines are not allowed in the output.
+        string = string.replace('\n', ' ');
         if (string.contains(ExtractTransform.DELIM)) {
             // Escapes all embedded double quotes by doubling them: " becomes ""
             return "\"" + string.replaceAll("\"", "\"\"") + "\"";
