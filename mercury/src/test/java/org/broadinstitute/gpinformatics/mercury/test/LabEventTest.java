@@ -949,9 +949,7 @@ public class LabEventTest extends BaseEventTest {
     }
 
     public static void validateWorkflow(String nextEventTypeName, LabVessel labVessel) {
-        List<LabVessel> labVessels = new ArrayList<>();
-        labVessels.add(labVessel);
-        validateWorkflow(nextEventTypeName, labVessels);
+        validateWorkflow(nextEventTypeName, Collections.singletonList(labVessel));
     }
 
     public static void validateWorkflow(String nextEventTypeName, List<LabVessel> labVessels) {

@@ -164,6 +164,12 @@ public class HybridSelectionEntityBuilder {
         labEventHandler.processEvent(baitSetupEntity);
         StaticPlate baitSetupPlate = (StaticPlate) baitSetupEntity.getTargetLabVessels().iterator().next();
 
+        // PostHybridizationThermoCyclerLoaded
+        LabEventTest.validateWorkflow("PostHybridizationThermoCyclerLoaded", hybridizationPlate);
+        LabEvent postHybridizationThermoCyclerLoadedEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
+                hybridSelectionJaxbBuilder.getHybridizationJaxb(), hybridizationPlate);
+        labEventHandler.processEvent(postHybridizationThermoCyclerLoadedEntity);
+
         // BaitAddition
         LabEventTest.validateWorkflow("BaitAddition", hybridizationPlate);
         mapBarcodeToVessel.clear();
@@ -226,6 +232,12 @@ public class HybridSelectionEntityBuilder {
         LabEvent catchEnrichmentSetupEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
                 hybridSelectionJaxbBuilder.getCatchEnrichmentSetupJaxb(), hybridizationPlate);
         labEventHandler.processEvent(catchEnrichmentSetupEntity);
+
+        // PostCatchEnrichmentThermoCycler
+        LabEventTest.validateWorkflow("PostCatchEnrichmentSetupThermoCyclerLoaded", hybridizationPlate);
+        LabEvent postCatchEnrichmentSetupThermoCyclerEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
+                hybridSelectionJaxbBuilder.getCatchEnrichmentSetupJaxb(), hybridizationPlate);
+        labEventHandler.processEvent(postCatchEnrichmentSetupThermoCyclerEntity);
 
         // CatchEnrichmentCleanup
         LabEventTest.validateWorkflow("CatchEnrichmentCleanup", hybridizationPlate);

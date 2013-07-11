@@ -153,8 +153,8 @@ public class BaseEventTest {
      * @param lcsetSuffix          Set this non-null to override the lcset id number.
      * @param rackBarcodeSuffix    rack barcode suffix.
      * @param barcodeSuffix        Uniquifies the generated vessel barcodes. NOT date if test quickly invokes twice.
-     * @param archiveBucketEntries allows a DBFree test case to force "ancestor" tubes to be currently in a bucket
-     *                             for scenarios where that state is important to the test
+     * @param archiveBucketEntries Setting this true removes all samples from the bucket after sending the PicoPlating
+     *                             message, which is the normal case.
      *
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */

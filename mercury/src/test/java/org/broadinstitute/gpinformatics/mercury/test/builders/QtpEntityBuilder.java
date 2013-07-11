@@ -55,6 +55,10 @@ public class QtpEntityBuilder {
     }
 
     public QtpEntityBuilder invoke() {
+        return invoke(false);
+    }
+
+    public QtpEntityBuilder invoke(boolean substituteViia7) {
         QtpJaxbBuilder qtpJaxbBuilder = new QtpJaxbBuilder(bettaLimsMessageTestFactory, testPrefix,
                 listLcsetListNormCatchBarcodes, normCatchRackBarcodes, workflowName).invoke();
         PlateCherryPickEvent cherryPickJaxb = qtpJaxbBuilder.getPoolingTransferJaxb();
@@ -108,18 +112,21 @@ public class QtpEntityBuilder {
             catchSampleInstanceCount += normCatchRack.getSampleInstances().size();
         }
 
-        // EcoTransfer
-        LabEventTest.validateWorkflow("EcoTransfer", rearrayedPoolingRack);
+        // EcoTransfer or Viia7Transfer
+        String ecoViia7Step = substituteViia7 ? "Viaa7Transfer" : "EcoTransfer";
+        PlateTransferEventType ecoViia7Event =
+                substituteViia7 ? qtpJaxbBuilder.getViia7TransferJaxb() : qtpJaxbBuilder.getEcoTransferJaxb();
+
+        LabEventTest.validateWorkflow(ecoViia7Step, rearrayedPoolingRack);
         Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
         mapBarcodeToVessel.put(rearrayedPoolingRack.getLabel(), rearrayedPoolingRack);
         for (TwoDBarcodedTube twoDBarcodedTube : rearrayedPoolingRack.getContainerRole().getContainedVessels()) {
             mapBarcodeToVessel.put(twoDBarcodedTube.getLabel(), twoDBarcodedTube);
         }
-        LabEvent ecoTransferEventEntity = labEventFactory.buildFromBettaLims(qtpJaxbBuilder.getEcoTransferJaxb(),
-                mapBarcodeToVessel);
-        labEventHandler.processEvent(ecoTransferEventEntity);
+        LabEvent ecoViia7TransferEventEntity = labEventFactory.buildFromBettaLims(ecoViia7Event, mapBarcodeToVessel);
+        labEventHandler.processEvent(ecoViia7TransferEventEntity);
         // asserts
-        StaticPlate ecoPlate = (StaticPlate) ecoTransferEventEntity.getTargetLabVessels().iterator().next();
+        StaticPlate ecoPlate = (StaticPlate) ecoViia7TransferEventEntity.getTargetLabVessels().iterator().next();
         Assert.assertEquals(ecoPlate.getSampleInstances().size(), catchSampleInstanceCount,
                 "Wrong number of sample instances");
 

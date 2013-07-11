@@ -85,6 +85,12 @@ public class LibraryConstructionEntityBuilder {
                 libraryConstructionJaxbBuilder.getEndRepairJaxb(), shearingCleanupPlate);
         labEventHandler.processEvent(endRepairEntity);
 
+        // PostEndRepairThermoCyclerLoaded
+        LabEventTest.validateWorkflow("PostEndRepairThermoCyclerLoaded", shearingCleanupPlate);
+        LabEvent postEndRepairThermoCyclerLoadedEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
+                libraryConstructionJaxbBuilder.getEndRepairJaxb(), shearingCleanupPlate);
+        labEventHandler.processEvent(postEndRepairThermoCyclerLoadedEntity);
+
         // EndRepairCleanup
         LabEventTest.validateWorkflow("EndRepairCleanup", shearingCleanupPlate);
         LabEvent endRepairCleanupEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
@@ -96,6 +102,12 @@ public class LibraryConstructionEntityBuilder {
         LabEvent aBaseEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
                 libraryConstructionJaxbBuilder.getaBaseJaxb(), shearingCleanupPlate);
         labEventHandler.processEvent(aBaseEntity);
+
+        // PostABaseThermoCyclerLoaded
+        LabEventTest.validateWorkflow("PostABaseThermoCyclerLoaded", shearingCleanupPlate);
+        LabEvent postABaseThermoCyclerLoadedEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
+                libraryConstructionJaxbBuilder.getEndRepairJaxb(), shearingCleanupPlate);
+        labEventHandler.processEvent(postABaseThermoCyclerLoadedEntity);
 
         // ABaseCleanup
         LabEventTest.validateWorkflow("ABaseCleanup", shearingCleanupPlate);
@@ -141,6 +153,12 @@ public class LibraryConstructionEntityBuilder {
         Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(), "Illumina_P7-M",
                                    "Wrong index");
 
+        // PostIndexedAdapterLigationThermoCyclerLoaded
+        LabEventTest.validateWorkflow("PostIndexedAdapterLigationThermoCyclerLoaded", shearingCleanupPlate);
+        LabEvent postIdxAdapterLigationThermoCyclerLoadedEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
+                libraryConstructionJaxbBuilder.getEndRepairJaxb(), shearingCleanupPlate);
+        labEventHandler.processEvent(postIdxAdapterLigationThermoCyclerLoadedEntity);
+
         // AdapterLigationCleanup
         LabEventTest.validateWorkflow("AdapterLigationCleanup", shearingCleanupPlate);
         mapBarcodeToVessel.clear();
@@ -174,6 +192,12 @@ public class LibraryConstructionEntityBuilder {
                     libraryConstructionJaxbBuilder.getIndexP5PondEnrichmentJaxb(), mapBarcodeToVessel);
             labEventHandler.processEvent(indexP5PondEnrichmentEntity);
         }
+
+        // PostPondEnrichmentThermoCyclerLoaded
+        LabEventTest.validateWorkflow("PostPondEnrichmentThermoCyclerLoaded", ligationCleanupPlate);
+        LabEvent postPondEnrichmentThermoCyclerLoadedEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
+                libraryConstructionJaxbBuilder.getEndRepairJaxb(), ligationCleanupPlate);
+        labEventHandler.processEvent(postPondEnrichmentThermoCyclerLoadedEntity);
 
         // HybSelPondEnrichmentCleanup
         LabEventTest.validateWorkflow("HybSelPondEnrichmentCleanup", ligationCleanupPlate);

@@ -103,6 +103,8 @@ public enum LabEventType {
             PlasticToValidate.SOURCE, PipelineTransformation.NONE),
     ECO_TRANSFER("EcoTransfer", false, true, SystemOfRecord.WORKFLOW_DEPENDENT, false,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE),
+    VIIA7_TRANSFER("Viia7Transfer", false, true, SystemOfRecord.WORKFLOW_DEPENDENT, false,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE),
     NORMALIZATION_TRANSFER("NormalizationTransfer", false, true, SystemOfRecord.WORKFLOW_DEPENDENT, false,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE),
     DENATURE_TRANSFER("DenatureTransfer", false, true, SystemOfRecord.WORKFLOW_DEPENDENT, false,
