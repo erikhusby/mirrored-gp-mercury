@@ -526,9 +526,16 @@ public class VesselContainer<T extends LabVessel> {
         return batchList;
     }
 
-    public Collection<LabMetric> getNearestMetricOfType(LabMetric.MetricType quantType) {
+    /**
+     * This method returns a collection of the closest lab metrics given the metric type.
+     *
+     * @param metricType The type of metrics to return.
+     *
+     * @return A collection of the nearest metrics of the given type.
+     */
+    public Collection<LabMetric> getNearestMetricOfType(LabMetric.MetricType metricType) {
         TransferTraverserCriteria.NearestLabMetricOfTypeCriteria metricTypeCriteria =
-                new TransferTraverserCriteria.NearestLabMetricOfTypeCriteria(quantType);
+                new TransferTraverserCriteria.NearestLabMetricOfTypeCriteria(metricType);
         applyCriteriaToAllPositions(metricTypeCriteria);
         return metricTypeCriteria.getNearestMetrics();
     }
@@ -569,9 +576,16 @@ public class VesselContainer<T extends LabVessel> {
         return computedLcSets;
     }
 
-    public Map<LabVessel, LabEvent> getVesselsForLabEventType(LabEventType eventType) {
+    /**
+     * This method gets all of the target lab vessels for the given event types.
+     *
+     * @param eventTypes The event types to search for vessels at.
+     *
+     * @return All of the lab vessels for each event type passed in keyed on event.
+     */
+    public Map<LabEvent, Set<LabVessel>> getVesselsForLabEventTypes(List<LabEventType> eventTypes) {
         TransferTraverserCriteria.VesselForEventTypeCriteria vesselForEventTypeCriteria =
-                new TransferTraverserCriteria.VesselForEventTypeCriteria(eventType);
+                new TransferTraverserCriteria.VesselForEventTypeCriteria(eventTypes);
         applyCriteriaToAllPositions(vesselForEventTypeCriteria);
         return vesselForEventTypeCriteria.getVesselsForLabEventType();
     }

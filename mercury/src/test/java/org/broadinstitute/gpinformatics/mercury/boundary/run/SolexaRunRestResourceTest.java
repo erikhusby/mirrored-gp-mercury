@@ -83,6 +83,7 @@ public class SolexaRunRestResourceTest extends Arquillian {
     private IlluminaFlowcell newFlowcell;
     private boolean result;
     private String runBarcode;
+    private String reagentKitBarcode;
     private String runFileDirectory;
     private String pdoKey;
     private ProductOrder exexOrder;
@@ -113,7 +114,7 @@ public class SolexaRunRestResourceTest extends Arquillian {
         }
 
         runDate = new Date();
-
+        reagentKitBarcode = "ReagentKitBarcode-" + runDate.getTime();
         String testPrefix = "runResourceTst";
 
         String rpJiraTicketKey = "RP-" + testPrefix + runDate.getTime() + "RP";
@@ -217,6 +218,34 @@ public class SolexaRunRestResourceTest extends Arquillian {
                 .accept(MediaType.APPLICATION_XML)
                 .entity(new SolexaRunBean(flowcellBarcode, runBarcode, runDate, "SL-HAL",
                         runFileDirectory, null)).post(Response.class);
+
+
+        Assert.assertEquals(response.getStatus(), Response.Status.CREATED);
+        System.out.println(response.getStatus());
+
+        String runName = new File(runFileDirectory).getName();
+
+        IlluminaSequencingRun sequencingRun = runDao.findByRunName(runName);
+
+        IlluminaFlowcell createdFlowcell = flowcellDao.findByBarcode(flowcellBarcode);
+
+        Assert.assertEquals(sequencingRun.getSampleCartridge(), createdFlowcell);
+
+        Assert.assertEquals(createdFlowcell.getSequencingRuns().iterator().next(), sequencingRun);
+
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, enabled = false)
+    public void testCreate2500Run() {
+
+        Assert.assertTrue(result);
+
+
+        Response response = Client.create().resource(appConfig.getUrl() + "rest/solexarun")
+                .type(MediaType.APPLICATION_XML_TYPE)
+                .accept(MediaType.APPLICATION_XML)
+                .entity(new SolexaRunBean(flowcellBarcode, runBarcode, runDate, "SL-HAL",
+                        runFileDirectory, reagentKitBarcode)).post(Response.class);
 
 
         Assert.assertEquals(response.getStatus(), Response.Status.CREATED);
