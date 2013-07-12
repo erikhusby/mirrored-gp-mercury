@@ -92,5 +92,6 @@ public class LabBatchStartingVessel {
 
     public void setDilutionVessel(LabVessel dilutionVessel) {
         this.dilutionVessel = dilutionVessel;
+        this.dilutionVessel.addDilutionReferences(this);
     }
 }

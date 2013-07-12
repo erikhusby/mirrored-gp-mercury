@@ -18,9 +18,6 @@ public abstract class AbstractEventValidator {
             validator = new DenatureToDilutionTubeValidator();
 
             break;
-        case DENATURE_TO_FLOWCELL_TRANSFER:
-            break;
-
         }
 
         if (validator != null) {

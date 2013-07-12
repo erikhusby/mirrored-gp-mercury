@@ -372,4 +372,11 @@ public class BaseEventTest {
     }
 
 
+    public BettaLimsMessageTestFactory getBettaLimsMessageTestFactory() {
+        return bettaLimsMessageTestFactory;
+    }
+
+    public LabEventFactory getLabEventFactory() {
+        return labEventFactory;
+    }
 }
