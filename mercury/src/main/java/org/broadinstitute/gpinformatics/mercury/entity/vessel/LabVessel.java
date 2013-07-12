@@ -804,7 +804,7 @@ public abstract class LabVessel implements Serializable {
 
         /**
          * Called after an event has been traversed, sets lab batch and product order key.
-         * @param labEvent event that was traverses
+         * @param labEvent event that was traversed
          * @param labVessel plastic involved in the event
          */
         public void applyEvent(@Nonnull LabEvent labEvent, @Nonnull LabVessel labVessel) {

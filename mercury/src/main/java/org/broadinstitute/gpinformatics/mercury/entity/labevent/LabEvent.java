@@ -383,6 +383,10 @@ todo jmt adder methods
         this.manualOverrideLcSet = manualOverrideLcSet;
     }
 
+    /**
+     * Computes the LCSET(s) for this transfer, based on the source vessels.
+     * @return LCSETs, empty if the source vessels are not associated with an LCSET.
+     */
     public Set<LabBatch> getComputedLcSets() {
         if (computedLcSets == null) {
             computedLcSets = new HashSet<>();

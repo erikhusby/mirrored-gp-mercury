@@ -540,6 +540,13 @@ public class VesselContainer<T extends LabVessel> {
         return metricTypeCriteria.getNearestMetrics();
     }
 
+    /**
+     * Computes the LCSET(s) that all contained vessels have in common.  Contained vessels that don't have references
+     * to LCSETs (e.g. controls) don't disturb the calculation, but they are inferred to be part of the LCSET by being
+     * part of the transfer, i.e. controls are "guilty by association".
+     * @param section the section of interest for a transfer
+     * @return LCSETs, empty if no contained vessels are associated with LCSETs
+     */
     public Set<LabBatch> getComputedLcSetsForSection(SBSSection section) {
         Set<LabBatch> computedLcSets = new HashSet<>();
         // find lab batch that is used by every vessel in section
