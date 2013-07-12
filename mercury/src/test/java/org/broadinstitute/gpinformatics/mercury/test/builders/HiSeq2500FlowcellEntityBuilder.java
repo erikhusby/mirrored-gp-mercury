@@ -56,8 +56,7 @@ public class HiSeq2500FlowcellEntityBuilder {
     public HiSeq2500FlowcellEntityBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
                                           LabEventFactory labEventFactory, LabEventHandler labEventHandler,
                                           final TubeFormation denatureRack, String flowcellBarcode, String testPrefix,
-                                          String designationName,
-                                          String fctTicket) {
+                                          String fctTicket, String designationName) {
 
         this(bettaLimsMessageTestFactory, labEventFactory, labEventHandler, denatureRack, flowcellBarcode, testPrefix,
                 fctTicket);
@@ -67,7 +66,7 @@ public class HiSeq2500FlowcellEntityBuilder {
     public HiSeq2500FlowcellEntityBuilder invoke() {
         final HiSeq2500JaxbBuilder hiSeq2500JaxbBuilder = new HiSeq2500JaxbBuilder(bettaLimsMessageTestFactory, testPrefix,
                 denatureRack.getContainerRole().getContainedVessels().iterator().next().getLabel(),
-                null,denatureRack.getLabel(),fctTicket);
+                denatureRack.getLabel(), fctTicket, null);
         if (StringUtils.isNotBlank(designationName)) {
             hiSeq2500JaxbBuilder.setSquidDesignationName(designationName);
         }

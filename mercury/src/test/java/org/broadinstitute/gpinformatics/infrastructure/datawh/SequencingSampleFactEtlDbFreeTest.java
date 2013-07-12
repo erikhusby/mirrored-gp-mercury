@@ -409,7 +409,7 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
                 hybridSelectionEntityBuilder.getNormCatchBarcodes(),
                 hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), "Exome Express", "1");
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
-                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", null, "FCT-1");
+                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", "FCT-1", null);
         LabVessel dilutionSource =
                 hiSeq2500FlowcellEntityBuilder.getDilutionRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
 

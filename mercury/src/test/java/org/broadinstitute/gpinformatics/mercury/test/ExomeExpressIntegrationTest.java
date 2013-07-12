@@ -133,7 +133,8 @@ public class ExomeExpressIntegrationTest {
 
             HiSeq2500JaxbBuilder hiSeq2500JaxbBuilder =
                     new HiSeq2500JaxbBuilder(bettaLimsMessageTestFactory, testSuffix,
-                            qtpJaxbBuilder.getDenatureTubeBarcode(), null, qtpJaxbBuilder.getDenatureRackBarcode(),fctName);
+                            qtpJaxbBuilder.getDenatureTubeBarcode(), qtpJaxbBuilder.getDenatureRackBarcode(), fctName,
+                            null);
 
             hiSeq2500JaxbBuilder.invoke();
 

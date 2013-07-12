@@ -53,9 +53,8 @@ public class HiSeq2500JaxbBuilder {
     }
 
     public HiSeq2500JaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
-                                String testPrefix, String denatureTubeBarcode, String designationName,
-                                String denatureRackBarcode,
-                                String fctTicket) {
+                                String testPrefix, String denatureTubeBarcode, String denatureRackBarcode,
+                                String fctTicket, String designationName) {
         this(bettaLimsMessageTestFactory, testPrefix, denatureTubeBarcode, denatureRackBarcode, fctTicket);
         squidDesignationName = designationName;
     }
