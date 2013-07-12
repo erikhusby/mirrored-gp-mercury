@@ -115,7 +115,7 @@ public class DenatureToDilutionValidatorTest extends BaseEventTest {
 
     @Test(groups = {TestGroups.DATABASE_FREE})
     public void testDifferentFctTickets() throws Exception {
-        final String fctBatchName = "FCT-Test1";
+        final String fctBatchName = "FCT-Test2";
         LabBatch fctBatch =
                 new LabBatch(fctBatchName, Collections.singleton(denatureSource), LabBatch.LabBatchType.FCT);
 
@@ -142,7 +142,7 @@ public class DenatureToDilutionValidatorTest extends BaseEventTest {
     }
     @Test(groups = {TestGroups.DATABASE_FREE})
     public void testFctTicketWithDIfferentDilutionTube() throws Exception {
-        final String fctBatchName = "FCT-Test1";
+        final String fctBatchName = "FCT-Test3";
         LabBatch fctBatch =
                 new LabBatch(fctBatchName, Collections.singleton(denatureSource), LabBatch.LabBatchType.FCT);
 
@@ -171,4 +171,41 @@ public class DenatureToDilutionValidatorTest extends BaseEventTest {
             e.printStackTrace();
         }
     }
+
+    @Test(groups = {TestGroups.DATABASE_FREE})
+    public void testDilutionInDifferentFctTicket() throws Exception {
+        final String fctBatchName = "FCT-Test4";
+        LabBatch fctBatch =
+                new LabBatch(fctBatchName, Collections.singleton(denatureSource), LabBatch.LabBatchType.FCT);
+
+        final String altFctTicketName = fctBatchName + "ALT";
+
+        HiSeq2500JaxbBuilder dilutionBuilder =
+                new HiSeq2500JaxbBuilder(getBettaLimsMessageTestFactory(), "dilutionTest" + runDate.getTime(),
+                        denatureSource.getLabel(), qtpEntityBuilder.getDenatureRack().getLabel(), fctBatchName)
+                        .invoke();
+        PlateCherryPickEvent dilutionEvent = dilutionBuilder.getDilutionJaxb();
+        LabEvent dilutionTransferEntity =
+                getLabEventFactory().buildFromBettaLims(dilutionEvent, new HashMap<String, LabVessel>() {{
+                    put(qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01)
+                            .getLabel(),
+                            qtpEntityBuilder.getDenatureRack().getContainerRole()
+                                    .getVesselAtPosition(VesselPosition.A01));
+                    put(qtpEntityBuilder.getDenatureRack().getLabel(), qtpEntityBuilder.getDenatureRack());
+                }});
+
+        LabBatch fctBatch2 =
+                new LabBatch(altFctTicketName,
+                        Collections.singleton((LabVessel)new TwoDBarcodedTube(denatureSource.getLabel()+"ALT")),
+                        LabBatch.LabBatchType.FCT);
+        fctBatch2.getLabBatchStartingVessels().iterator().next().setDilutionVessel(dilutionTransferEntity.getTargetVesselTubes().iterator().next());
+
+        try {
+            AbstractEventHandler.applyEventSpecificHandling(dilutionTransferEntity, dilutionEvent);
+            Assert.fail("Dilution registered to a Different FCT ticket should have caused a failure");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 }
