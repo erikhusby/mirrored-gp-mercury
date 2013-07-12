@@ -29,7 +29,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
@@ -328,14 +327,15 @@ public class BaseEventTest {
      * @param denatureRack  The denature tube rack.
      * @param barcodeSuffix Uniquifies the generated vessel barcodes. NOT date if test quickly invokes twice.
      *
+     * @param fctTicket
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
     public HiSeq2500FlowcellEntityBuilder runHiSeq2500FlowcellProcess(TubeFormation denatureRack,
-                                                                      String barcodeSuffix) {
+                                                                      String barcodeSuffix, String fctTicket) {
 
         String flowcellBarcode = "flowcell" + new Date().getTime();
         return new HiSeq2500FlowcellEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
-                denatureRack, flowcellBarcode, barcodeSuffix).invoke();
+                denatureRack, flowcellBarcode, barcodeSuffix, fctTicket).invoke();
     }
 
     /**
@@ -349,11 +349,11 @@ public class BaseEventTest {
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
     public HiSeq2500FlowcellEntityBuilder runHiSeq2500FlowcellProcess(TubeFormation denatureRack, String barcodeSuffix,
-                                                                      String designationName) {
+                                                                      String designationName, String fctTicket) {
 
         String flowcellBarcode = "flowcell" + new Date().getTime();
         return new HiSeq2500FlowcellEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
-                denatureRack, flowcellBarcode, barcodeSuffix, designationName).invoke();
+                denatureRack, flowcellBarcode, barcodeSuffix, designationName,fctTicket).invoke();
     }
 
     /**

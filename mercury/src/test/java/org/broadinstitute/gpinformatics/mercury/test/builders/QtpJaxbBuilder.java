@@ -135,9 +135,9 @@ public class QtpJaxbBuilder {
 
     public QtpJaxbBuilder invoke() {
         int i = 0;
+        // PoolingTransfer
+        poolRackBarcode = "PoolRack" + testPrefix;
         for (List<String> normCatchBarcodes : listLcsetListNormCatchBarcodes) {
-            // PoolingTransfer
-            poolRackBarcode = "PoolRack" + testPrefix;
             List<BettaLimsMessageTestFactory.CherryPick> poolingCherryPicks =
                     new ArrayList<>();
             for (int rackPosition = 1; rackPosition <= normCatchBarcodes.size(); rackPosition++) {

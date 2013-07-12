@@ -539,7 +539,8 @@ public class LabEventTest extends BaseEventTest {
                 "EcoTransfer",
                 "NormalizationTransfer",
                 "DenatureTransfer",
-                "DenatureToFlowcellTransfer",
+                "DenatureToDilutionTransfer",
+                "DilutionToFlowcellTransfer",
         };
         verifyEventSequence(labEventNames, expectedEventNames);
 
