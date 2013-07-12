@@ -6,7 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServic
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
-import org.broadinstitute.gpinformatics.mercury.control.labevent.validators.AbstractEventValidator;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.AbstractEventHandler;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
@@ -21,7 +21,6 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructio
 import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -111,7 +110,7 @@ public class DenatureToDilutionValidatorTest extends BaseEventTest {
                     put(qtpEntityBuilder.getDenatureRack().getLabel(), qtpEntityBuilder.getDenatureRack());
                 }});
 
-        AbstractEventValidator.executeValidation(dilutionTransferEntity, dilutionEvent);
+        AbstractEventHandler.applyEventSpecificHandling(dilutionTransferEntity, dilutionEvent);
     }
 
     @Test(groups = {TestGroups.DATABASE_FREE})
@@ -135,7 +134,7 @@ public class DenatureToDilutionValidatorTest extends BaseEventTest {
                 }});
 
         try {
-            AbstractEventValidator.executeValidation(dilutionTransferEntity, dilutionEvent);
+            AbstractEventHandler.applyEventSpecificHandling(dilutionTransferEntity, dilutionEvent);
             Assert.fail("Different FCT tickets should have caused a failure");
         } catch (Exception e) {
             e.printStackTrace();
@@ -166,7 +165,7 @@ public class DenatureToDilutionValidatorTest extends BaseEventTest {
                 }});
 
         try {
-            AbstractEventValidator.executeValidation(dilutionTransferEntity, dilutionEvent);
+            AbstractEventHandler.applyEventSpecificHandling(dilutionTransferEntity, dilutionEvent);
             Assert.fail("FCT ticket having a different dilution tube should have caused a failure");
         } catch (Exception e) {
             e.printStackTrace();

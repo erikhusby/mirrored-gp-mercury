@@ -6,7 +6,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMes
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.MetadataType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
-import org.broadinstitute.gpinformatics.mercury.control.labevent.validators.DenatureToDilutionTubeValidator;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.DenatureToDilutionTubeHandler;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 
 import java.util.ArrayList;
@@ -77,7 +77,7 @@ public class HiSeq2500JaxbBuilder {
                 Collections.singletonList(dilutionRackBarcode),
                 Collections.singletonList(Collections.singletonList(dilutionTubeBarcode)), dilutionCherrypicks);
         MetadataType dilutionMetadata = new MetadataType();
-        dilutionMetadata.setName(DenatureToDilutionTubeValidator.FCT_METADATA_NAME);
+        dilutionMetadata.setName(DenatureToDilutionTubeHandler.FCT_METADATA_NAME);
         dilutionMetadata.setValue(fctTicket);
         dilutionTransferJaxb.getPositionMap().iterator().next().getReceptacle().iterator().next().getMetadata()
                 .add(dilutionMetadata);
