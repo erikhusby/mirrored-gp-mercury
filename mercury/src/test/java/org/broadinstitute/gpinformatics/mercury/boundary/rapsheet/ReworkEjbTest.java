@@ -424,7 +424,7 @@ public class ReworkEjbTest extends Arquillian {
                 Collections.singletonList(new ProductOrderSample(genomicSample3)), "GSP-123", exExProduct,
                 researchProject);
         extraProductOrder.prepareToSave(bspUserList.getByUsername("scottmat"));
-        String pdo4JiraKey = "PDO-SGM-WRINT_tst" + currDate.getTime() + 4;
+        String pdo4JiraKey = "PDO-SGM-RWINT_tst" + currDate.getTime() + 4;
         extraProductOrder.setJiraTicketKey(pdo4JiraKey);
         productOrderDao.persist(extraProductOrder);
 
@@ -1117,14 +1117,14 @@ public class ReworkEjbTest extends Arquillian {
             candidates.addAll(reworkEjb.findReworkCandidates(tubes.getValue().getSampleNames().iterator().next()));
         }
 
-        Assert.assertEquals(candidates.size(), mapBarcodeToTube.size());
+        // genomicSample3 is in 3 PDOs and somaticSample3 is in 2 PDOs
+        Assert.assertEquals(candidates.size(), 5);
 
         for (ReworkEjb.ReworkCandidate candidate : candidates) {
 
             //TODO SGM/BR  Need to figure a way to get Stub search really working to validate the Barcode
 
             Assert.assertTrue(candidate.isValid());
-            Assert.assertEquals(candidate.getProductOrderKey(), duplicatePO.getBusinessKey());
         }
     }
 
