@@ -3,8 +3,6 @@ package org.broadinstitute.gpinformatics.mercury.boundary.zims;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniLane;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniLibrary;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
-import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
-import org.testng.Assert;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
@@ -13,14 +11,18 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServic
 import org.broadinstitute.gpinformatics.infrastructure.thrift.MockThriftService;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftFileAccessor;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
+import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.zims.SquidThriftLibraryConverter;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.easymock.EasyMock;
+import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -60,6 +62,32 @@ public class DbFreeIlluminaRunResourceTest {
                 new BSPSampleDataFetcher(new BSPSampleSearchServiceStub()),
                 illuminaSequencingRunDao
         ).getRun("whatever");
+
+        Assert.assertNotNull(runBean.getError());
+        Assert.assertTrue(runBean.getError().contains("Failed while running pipeline query for run"));
+    }
+
+    @Test(groups = DATABASE_FREE)
+    public void testErrorWithMultipleBatches() throws Exception {
+//        Assert.fail("not implemented");
+        // TODO: set up a mercury run that will cause getMercuryRun() to throw an exception
+        ThriftService brokenThrift = EasyMock.createMock(ThriftService.class);
+        EasyMock.expect(brokenThrift.fetchRun((String) EasyMock.anyObject())).andThrow(
+                new RuntimeException("something blew up remotely")
+        );
+
+        IlluminaSequencingRunDao illuminaSequencingRunDao = EasyMock.createMock(IlluminaSequencingRunDao.class);
+        long timeStamp=new Date().getTime();
+        IlluminaFlowcell flowcell=new IlluminaFlowcell(IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell,"FS-"+timeStamp);
+//        IlluminaSequencingRun run = new IlluminaSequencingRun(flowcell, "testrun-"+timeStamp);
+//        EasyMock.expect(illuminaSequencingRunDao.findByRunName((String)EasyMock.anyObject())).andReturn(run);
+        EasyMock.replay(brokenThrift, illuminaSequencingRunDao);
+
+        ZimsIlluminaRun runBean = new IlluminaRunResource(
+                brokenThrift,
+                new BSPSampleDataFetcher(new BSPSampleSearchServiceStub()),
+                illuminaSequencingRunDao
+        ).getMercuryRun("whatever");
 
         Assert.assertNotNull(runBean.getError());
         Assert.assertTrue(runBean.getError().contains("Failed while running pipeline query for run"));

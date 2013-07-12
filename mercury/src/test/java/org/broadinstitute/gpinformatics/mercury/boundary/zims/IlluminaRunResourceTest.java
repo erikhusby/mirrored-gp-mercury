@@ -3,14 +3,30 @@ package org.broadinstitute.gpinformatics.mercury.boundary.zims;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.api.json.JSONConfiguration;
-import edu.mit.broad.prodinfo.thrift.lims.*;
+import edu.mit.broad.prodinfo.thrift.lims.IndexPosition;
+import edu.mit.broad.prodinfo.thrift.lims.LibraryData;
+import edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme;
+import edu.mit.broad.prodinfo.thrift.lims.TZDevExperimentData;
+import edu.mit.broad.prodinfo.thrift.lims.TZamboniLane;
+import edu.mit.broad.prodinfo.thrift.lims.TZamboniLibrary;
+import edu.mit.broad.prodinfo.thrift.lims.TZamboniRead;
+import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.thrift.*;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.ImportFromSquidTest;
-import org.broadinstitute.gpinformatics.mercury.entity.zims.*;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.thrift.MockThriftService;
+import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftFileAccessor;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.ImportFromSquidTest;
+import org.broadinstitute.gpinformatics.mercury.entity.zims.DevExperimentDataBean;
+import org.broadinstitute.gpinformatics.mercury.entity.zims.IndexComponent;
+import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
+import org.broadinstitute.gpinformatics.mercury.entity.zims.MolecularIndexingSchemeBean;
+import org.broadinstitute.gpinformatics.mercury.entity.zims.ThriftConversionUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.zims.ZamboniRead;
+import org.broadinstitute.gpinformatics.mercury.entity.zims.ZamboniReadType;
+import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
+import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
@@ -23,11 +39,20 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
-import static org.testng.Assert.*;
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 public class IlluminaRunResourceTest extends Arquillian {
 
@@ -83,6 +108,13 @@ public class IlluminaRunResourceTest extends Arquillian {
         ZimsIlluminaRun runBean = runLaneResource.getRun(RUN_NAME);
 
         doAssertions(zamboniRun,runBean,wrIdToPDO);
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION)
+    public void testMercuryRunWithMultipleBatches() throws Exception {
+        String runNameHasMultipleBatches = null; // todo: implement this
+        ZimsIlluminaRun runBean = runLaneResource.getMercuryRun(runNameHasMultipleBatches);
+        Assert.assertTrue(runBean.getError().contains("Expected one LabBatch but found"));
     }
 
     /**
