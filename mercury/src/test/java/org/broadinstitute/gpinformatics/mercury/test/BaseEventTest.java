@@ -335,7 +335,7 @@ public class BaseEventTest {
 
         String flowcellBarcode = "flowcell" + new Date().getTime();
         return new HiSeq2500FlowcellEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
-                denatureRack, flowcellBarcode, barcodeSuffix, fctTicket).invoke();
+                denatureRack, flowcellBarcode, barcodeSuffix, null, fctTicket).invoke();
     }
 
     /**

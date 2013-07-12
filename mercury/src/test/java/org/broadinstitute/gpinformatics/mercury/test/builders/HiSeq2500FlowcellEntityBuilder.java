@@ -67,7 +67,7 @@ public class HiSeq2500FlowcellEntityBuilder {
     public HiSeq2500FlowcellEntityBuilder invoke() {
         final HiSeq2500JaxbBuilder hiSeq2500JaxbBuilder = new HiSeq2500JaxbBuilder(bettaLimsMessageTestFactory, testPrefix,
                 denatureRack.getContainerRole().getContainedVessels().iterator().next().getLabel(),
-                denatureRack.getLabel(), fctTicket);
+                null,denatureRack.getLabel(),fctTicket);
         if (StringUtils.isNotBlank(designationName)) {
             hiSeq2500JaxbBuilder.setSquidDesignationName(designationName);
         }
@@ -148,5 +148,9 @@ public class HiSeq2500FlowcellEntityBuilder {
 
     public void setDesignationName(String designationName) {
         this.designationName = designationName;
+    }
+
+    public TubeFormation getDilutionRack() {
+        return dilutionRack;
     }
 }

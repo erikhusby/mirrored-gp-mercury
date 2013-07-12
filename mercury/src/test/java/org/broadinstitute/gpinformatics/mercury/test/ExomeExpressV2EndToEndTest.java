@@ -289,7 +289,7 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
                 new HiSeq2500FlowcellEntityBuilder(bettaLimsMessageTestFactory, labEventFactory,
                         leHandler,
                         qtpEntityBuilder.getDenatureRack(),
-                        flowcellBarcode, "testPrefix", "designationName").invoke();
+                        flowcellBarcode, "testPrefix", null,"FCT-1").invoke();
         // MiSeq reagent block transfer message
         String miSeqReagentKitBarcode="MiSeqReagentKit"+new Date().getTime();
 

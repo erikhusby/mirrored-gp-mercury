@@ -408,10 +408,10 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         QtpEntityBuilder qtpEntityBuilder = runQtpProcess(hybridSelectionEntityBuilder.getNormCatchRack(),
                 hybridSelectionEntityBuilder.getNormCatchBarcodes(),
                 hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), "Exome Express", "1");
-        LabVessel denatureSource =
-                qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
-                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", "squidDesignationName");
+                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", null, "FCT-1");
+        LabVessel dilutionSource =
+                hiSeq2500FlowcellEntityBuilder.getDilutionRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
 
         IlluminaFlowcell illuminaFlowcell = hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell();
 
@@ -466,7 +466,7 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         }
 
 
-        for (SampleInstance testInstance : denatureSource.getSampleInstances()) {
+        for (SampleInstance testInstance : dilutionSource.getSampleInstances()) {
 
             SortedSet<String> names = new TreeSet<>();
 
@@ -480,13 +480,13 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
             for (String record : mapSampleToRecord.get(testInstance.getStartingSample().getSampleKey())) {
                 if (record.contains(",2,")) {
                     verifyRecord(record, molecularIndexingSchemeName, pdoId,
-                            testInstance.getStartingSample().getSampleKey(), 2, denatureSource.getLabel(),
-                            ExtractTransform.secTimestampFormat.format(denatureSource.getCreatedOn()),
+                            testInstance.getStartingSample().getSampleKey(), 2, dilutionSource.getLabel(),
+                            ExtractTransform.secTimestampFormat.format(dilutionSource.getCreatedOn()),
                             illuminaFlowcell.getLabel(), researchProjectId);
                 } else {
                     verifyRecord(record, molecularIndexingSchemeName, pdoId,
-                            testInstance.getStartingSample().getSampleKey(), 1, denatureSource.getLabel(),
-                            ExtractTransform.secTimestampFormat.format(denatureSource.getCreatedOn()),
+                            testInstance.getStartingSample().getSampleKey(), 1, dilutionSource.getLabel(),
+                            ExtractTransform.secTimestampFormat.format(dilutionSource.getCreatedOn()),
                             illuminaFlowcell.getLabel(), researchProjectId);
                 }
             }

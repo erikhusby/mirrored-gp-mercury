@@ -125,15 +125,15 @@ public class ExomeExpressIntegrationTest {
             String parallelIndicator = scanner.nextLine();
             boolean parallelFlag = parallelIndicator.contains("y");
 
-            String designationName = "";
+            String fctName = "";
             if (parallelFlag) {
-                System.out.println("Enter the squid designation name");
-                designationName = scanner.nextLine();
+                System.out.println("Enter the FCT Ticket Name");
+                fctName = scanner.nextLine();
             }
 
             HiSeq2500JaxbBuilder hiSeq2500JaxbBuilder =
                     new HiSeq2500JaxbBuilder(bettaLimsMessageTestFactory, testSuffix,
-                            qtpJaxbBuilder.getDenatureTubeBarcode(), designationName, qtpJaxbBuilder.getDenatureRackBarcode());
+                            qtpJaxbBuilder.getDenatureTubeBarcode(), null, qtpJaxbBuilder.getDenatureRackBarcode(),fctName);
 
             hiSeq2500JaxbBuilder.invoke();
 
