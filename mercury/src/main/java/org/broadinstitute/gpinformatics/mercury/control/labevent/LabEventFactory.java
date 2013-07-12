@@ -280,33 +280,34 @@ public class LabEventFactory implements Serializable {
         // vessels that are referenced by the second event, e.g. PreSelectionPool
         for (PlateCherryPickEvent plateCherryPickEvent : bettaLIMSMessage.getPlateCherryPickEvent()) {
             LabEvent labEvent = buildFromBettaLims(plateCherryPickEvent);
+            AbstractEventValidator.executeValidation(labEvent,plateCherryPickEvent);
             persistLabEvent(uniqueEvents, labEvent, true);
             labEvents.add(labEvent);
         }
         for (PlateEventType plateEventType : bettaLIMSMessage.getPlateEvent()) {
             LabEvent labEvent = buildFromBettaLims(plateEventType);
+            AbstractEventValidator.executeValidation(labEvent,plateEventType);
             persistLabEvent(uniqueEvents, labEvent, true);
             labEvents.add(labEvent);
         }
         for (PlateTransferEventType plateTransferEventType : bettaLIMSMessage.getPlateTransferEvent()) {
             LabEvent labEvent = buildFromBettaLims(plateTransferEventType);
+            AbstractEventValidator.executeValidation(labEvent,plateTransferEventType);
             persistLabEvent(uniqueEvents, labEvent, true);
             labEvents.add(labEvent);
         }
         for (ReceptaclePlateTransferEvent receptaclePlateTransferEvent :
                 bettaLIMSMessage.getReceptaclePlateTransferEvent()) {
             LabEvent labEvent = buildFromBettaLims(receptaclePlateTransferEvent);
+            AbstractEventValidator.executeValidation(labEvent,receptaclePlateTransferEvent);
             persistLabEvent(uniqueEvents, labEvent, true);
             labEvents.add(labEvent);
         }
         for (ReceptacleEventType receptacleEventType : bettaLIMSMessage.getReceptacleEvent()) {
             LabEvent labEvent = buildFromBettaLims(receptacleEventType);
+            AbstractEventValidator.executeValidation(labEvent,receptacleEventType);
             persistLabEvent(uniqueEvents, labEvent, true);
             labEvents.add(labEvent);
-        }
-
-        for(LabEvent eventToValidate:labEvents) {
-            AbstractEventValidator.executeValidation(eventToValidate);
         }
 
         return labEvents;

@@ -95,7 +95,7 @@ public abstract class LabVessel implements Serializable {
     @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "labVessel")
     private Set<LabBatchStartingVessel> labBatches = new HashSet<>();
 
-    @Transient
+    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "dilutionVessel")
     private Set<LabBatchStartingVessel> dilutionReferences = new HashSet<>();
 
     @ManyToMany(cascade = CascadeType.PERSIST, mappedBy = "reworks")

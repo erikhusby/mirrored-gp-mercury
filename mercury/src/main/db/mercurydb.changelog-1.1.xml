@@ -67,12 +67,12 @@
     <changeSet id="GPLIM-1434-2" author="jcarey">
 
         <createTable tableName="batch_starting_vessels_aud" schemaName="mercury">
-            <column name="batch_starting_vessel_id" type="number(19,0)"/>
-            <column name="lab_vessel" type="number(19,0)"/>
-            <column name="lab_batch" type="number(19,0)"/>
+            <column name="batch_starting_vessel_id" type="number(19,0)" />
+            <column name="lab_vessel" type="number(19,0)" />
+            <column name="lab_batch" type="number(19,0)" />
             <column name="concentration" type="number(19,2)"/>
-            <column name="rev" type="number(19,0)"/>
-            <column name="revtype" type="number(3,0)"/>
+            <column name="rev" type="number(19,0)" />
+            <column name="revtype" type="number(3,0)" />
         </createTable>
 
         <addPrimaryKey tableName="batch_starting_vessels_aud" schemaName="mercury"
@@ -252,177 +252,31 @@
                                  referencedTableName="lab_event" referencedTableSchemaName="mercury"
                                  referencedColumnNames="lab_event_id"/>
     </changeSet>
-
     <changeSet author="scottmat" id="GPLIM-1698-1">
         <preConditions onFail="MARK_RAN">
             <not>
-                <tableExists tableName="message_meta_data" schemaName="mercury"/>
+                <columnExists columnName="dilution_vessel" schemaName="mercury" tableName="batch_starting_vessels" />
             </not>
         </preConditions>
-        <createTable schemaName="mercury" tableName="message_meta_data">
-            <column name="meta_data_id" type="number(19,0)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="name" type="varchar(255)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="value" type="varchar(255)">
-                <constraints nullable="false"/>
-            </column>
-        </createTable>
-        <addPrimaryKey tableName="message_meta_data" schemaName="mercury" columnNames="meta_data_id"/>
-        <createSequence sequenceName="SEQ_MESSAGE_META_DATA" schemaName="mercury" startValue="1" incrementBy="50"/>
+        <addColumn tableName="batch_starting_vessels" schemaName="mercury">
+            <column name="dilution_vessel" type="number(19,0)" />
+        </addColumn>
+        <addForeignKeyConstraint baseColumnNames="dilution_vessel" baseTableName="batch_starting_vessels"
+                                 baseTableSchemaName="mercury" constraintName="fk_starting_vessel_dilution"
+                                 referencedColumnNames="lab_vessel_id" referencedTableName="lab_vessel"
+                                 referencedTableSchemaName="mercury" />
+        <createIndex indexName="idx_lab_batch_dilution" tableName="batch_starting_vessels" >
+            <column name="dilution_vessel" type="number(19,0)"/>
+        </createIndex>
     </changeSet>
-
     <changeSet author="scottmat" id="GPLIM-1698-2">
         <preConditions onFail="MARK_RAN">
             <not>
-                <tableExists tableName="message_meta_data_aud" schemaName="mercury"/>
+                <columnExists columnName="dilution_vessel" schemaName="mercury" tableName="batch_starting_vessels_aud" />
             </not>
         </preConditions>
-        <createTable schemaName="mercury" tableName="message_meta_data_aud">
-            <column name="meta_data_id" type="number(19,0)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="rev" type="number(19,0)">
-                <constraints nullable="true"/>
-            </column>
-            <column name="revtype" type="number(3,0)">
-                <constraints nullable="true"/>
-            </column>
-            <column name="name" type="varchar(255)">
-                <constraints nullable="true"/>
-            </column>
-            <column name="value" type="varchar(255)">
-                <constraints nullable="true"/>
-            </column>
-        </createTable>
-        <addPrimaryKey tableName="message_meta_data_aud" schemaName="mercury" columnNames="meta_data_id, rev"/>
-        <addForeignKeyConstraint baseTableName="message_meta_data_aud" baseTableSchemaName="mercury"
-                                 baseColumnNames="rev"
-                                 constraintName="fk_msg_meta_data_aud_rev_info"
-                                 referencedTableName="rev_info" referencedTableSchemaName="mercury"
-                                 referencedColumnNames="rev_info_id"/>
-
-    </changeSet>
-
-    <changeSet author="scottmat" id="GPLIM-1698-3">
-        <preConditions onFail="MARK_RAN">
-            <not>
-                <tableExists schemaName="mercury" tableName="vessel_transfer_source_meta_data"/>
-            </not>
-        </preConditions>
-        <createTable tableName="vessel_transfer_source_meta_data" schemaName="mercury">
-            <column name="vessel_transfer" type="number(19,0)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="source_meta_data" type="number(19,0)">
-                <constraints nullable="false"/>
-            </column>
-        </createTable>
-        <addPrimaryKey columnNames="vessel_transfer, source_meta_data" schemaName="mercury"
-                       tableName="vessel_transfer_source_meta_data"/>
-        <addForeignKeyConstraint baseTableName="vessel_transfer_source_meta_data" baseTableSchemaName="mercury"
-                                 baseColumnNames="vessel_transfer" referencedColumnNames="vessel_transfer_id"
-                                 referencedTableName="vessel_transfer" referencedTableSchemaName="mercury"
-                                 constraintName="fk_vsl_xfr_src_md_vsl_xfr"/>
-        <addForeignKeyConstraint baseTableName="vessel_transfer_source_meta_data" baseTableSchemaName="mercury"
-                                 baseColumnNames="source_meta_data" referencedTableName="message_meta_data"
-                                 referencedTableSchemaName="mercury" referencedColumnNames="meta_data_id"
-                                 constraintName="fk_vsl_xfr_src_md_md" />
-        <createIndex tableName="vessel_transfer_source_meta_data" indexName="idx_vessel_xfer">
-            <column name="vessel_transfer" type="number(19,0)" />
-        </createIndex>
-        <createIndex tableName="vessel_transfer_source_meta_data" indexName="idx_meta_data">
-            <column name="source_meta_data" type="number(19,0)"/>
-        </createIndex>
-    </changeSet>
-    <changeSet author="scottmat" id="GPLIM-1698-4">
-        <preConditions onFail="MARK_RAN">
-            <not>
-                <tableExists schemaName="mercury" tableName="vessel_transfer_source_meta_data_aud"/>
-            </not>
-        </preConditions>
-        <createTable tableName="vessel_transfer_source_meta_data_aud" schemaName="mercury">
-            <column name="rev" type="number(19,0)">
-                <constraints nullable="true"/>
-            </column>
-            <column name="revtype" type="number(3,0)">
-                <constraints nullable="true"/>
-            </column>
-            <column name="vessel_transfer" type="number(19,0)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="source_meta_data" type="number(19,0)">
-                <constraints nullable="false"/>
-            </column>
-        </createTable>
-        <addPrimaryKey columnNames="vessel_transfer, source_meta_data, rev" schemaName="mercury"
-                       tableName="vessel_transfer_source_meta_data_aud"/>
-        <addForeignKeyConstraint baseTableName="vessel_transfer_source_meta_data_aud" baseTableSchemaName="mercury"
-                                 baseColumnNames="rev"
-                                 constraintName="fk_vsl_xfr_src_md_aud_rev_inf"
-                                 referencedTableName="rev_info" referencedTableSchemaName="mercury"
-                                 referencedColumnNames="rev_info_id"/>
-    </changeSet>
-
-    <changeSet author="scottmat" id="GPLIM-1698-5">
-        <preConditions onFail="MARK_RAN">
-            <not>
-                <tableExists schemaName="mercury" tableName="vessel_transfer_target_meta_data"/>
-            </not>
-        </preConditions>
-        <createTable tableName="vessel_transfer_target_meta_data" schemaName="mercury">
-            <column name="vessel_transfer" type="number(19,0)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="target_meta_data" type="number(19,0)">
-                <constraints nullable="false"/>
-            </column>
-        </createTable>
-        <addPrimaryKey columnNames="vessel_transfer, target_meta_data" schemaName="mercury"
-                       tableName="vessel_transfer_target_meta_data"/>
-        <addForeignKeyConstraint baseTableName="vessel_transfer_target_meta_data" baseTableSchemaName="mercury"
-                                 baseColumnNames="vessel_transfer" referencedColumnNames="vessel_transfer_id"
-                                 referencedTableName="vessel_transfer" referencedTableSchemaName="mercury"
-                                 constraintName="fk_vsl_xfr_trgt_md_vsl_xfr"/>
-        <addForeignKeyConstraint baseTableName="vessel_transfer_target_meta_data" baseTableSchemaName="mercury"
-                                 baseColumnNames="target_meta_data" referencedTableName="message_meta_data"
-                                 referencedTableSchemaName="mercury" referencedColumnNames="meta_data_id"
-                                 constraintName="fk_vsl_xfr_trgt_md_md" />
-        <createIndex tableName="vessel_transfer_target_meta_data" indexName="idx_vessel_xfer">
-            <column name="vessel_transfer" type="number(19,0)" />
-        </createIndex>
-        <createIndex tableName="vessel_transfer_target_meta_data" indexName="idx_meta_data">
-            <column name="target_meta_data" type="number(19,0)"/>
-        </createIndex>
-    </changeSet>
-    <changeSet author="scottmat" id="GPLIM-1698-6">
-        <preConditions onFail="MARK_RAN">
-            <not>
-                <tableExists schemaName="mercury" tableName="vessel_transfer_target_meta_data_aud"/>
-            </not>
-        </preConditions>
-        <createTable tableName="vessel_transfer_target_meta_data_aud" schemaName="mercury">
-            <column name="rev" type="number(19,0)">
-                <constraints nullable="true"/>
-            </column>
-            <column name="revtype" type="number(3,0)">
-                <constraints nullable="true"/>
-            </column>
-            <column name="vessel_transfer" type="number(19,0)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="target_meta_data" type="number(19,0)">
-                <constraints nullable="false"/>
-            </column>
-        </createTable>
-        <addPrimaryKey columnNames="vessel_transfer, target_meta_data, rev" schemaName="mercury"
-                       tableName="vessel_transfer_target_meta_data_aud"/>
-        <addForeignKeyConstraint baseTableName="vessel_transfer_target_meta_data_aud" baseTableSchemaName="mercury"
-                                 baseColumnNames="rev"
-                                 constraintName="fk_vsl_xfr_trgt_md_aud_rev_inf"
-                                 referencedTableName="rev_info" referencedTableSchemaName="mercury"
-                                 referencedColumnNames="rev_info_id"/>
+        <addColumn tableName="batch_starting_vessels_aud" schemaName="mercury">
+            <column name="dilution_vessel" type="number(19,0)" />
+        </addColumn>
     </changeSet>
 </databaseChangeLog>

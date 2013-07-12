@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.labevent.validators;
 
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 
 /**
@@ -8,7 +9,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 public class DilutionToFlowcellValidator extends AbstractEventValidator {
 
     @Override
-    public void validateEvent(LabEvent targetEvent) {
+    public void validateEvent(LabEvent targetEvent, StationEventType stationEvent) {
 
     }
 }

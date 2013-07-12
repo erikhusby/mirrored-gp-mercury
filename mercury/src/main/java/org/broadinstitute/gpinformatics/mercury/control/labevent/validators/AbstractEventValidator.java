@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.labevent.validators;
 
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 
 /**
@@ -7,9 +8,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
  */
 public abstract class AbstractEventValidator {
 
-    public abstract void validateEvent(LabEvent targetEvent) ;
+    public abstract void validateEvent(LabEvent targetEvent, StationEventType stationEvent) ;
 
-    public static void executeValidation(LabEvent targetEvent){
+    public static void executeValidation(LabEvent targetEvent, StationEventType stationEvent){
         AbstractEventValidator validator = null;
 
         switch (targetEvent.getLabEventType()) {
@@ -23,7 +24,7 @@ public abstract class AbstractEventValidator {
         }
 
         if (validator != null) {
-            validator.validateEvent(targetEvent);
+            validator.validateEvent(targetEvent, stationEvent);
         }
     }
 

@@ -37,7 +37,7 @@ public class LabBatchStartingVessel {
     @Column
     private Float concentration;
 
-    @Transient
+    @ManyToOne
     private LabVessel dilutionVessel;
 
     public LabBatchStartingVessel() {
