@@ -192,14 +192,24 @@ public class ReworkEjb {
      * @return tube/sample/PDO selections that are valid for rework
      */
     public Collection<ReworkCandidate> findReworkCandidates(String query) {
+        return findReworkCandidates(Collections.singletonList(query));
+    }
+
+    /**
+     * Searches for and returns candidate vessels and samples that can be used for "rework". All candidates must at
+     * least have a single sample, a tube barcode, and a PDO. Multiple results for the same sample may be returned if
+     * the sample is included in multiple PDOs.
+     *
+     * @param query list of tube barcodes or sample IDs to search for
+     *
+     * @return tube/sample/PDO selections that are valid for rework
+     */
+    public Collection<ReworkCandidate> findReworkCandidates(List<String> query) {
         Collection<ReworkCandidate> reworkCandidates = new ArrayList<>();
 
         List<LabVessel> labVessels = new ArrayList<>();
-        LabVessel labVessel = labVesselDao.findByIdentifier(query);
-        if (labVessel != null) {
-            labVessels.add(labVessel);
-        }
-        labVessels.addAll(labVesselDao.findBySampleKey(query));
+        labVessels.addAll(labVesselDao.findByListIdentifiers(query));
+        labVessels.addAll(labVesselDao.findBySampleKeyList(query));
 
         for (LabVessel vessel : labVessels) {
             Set<SampleInstance> sampleInstances = vessel.getSampleInstances(PREFER_PDO, null);
@@ -252,28 +262,29 @@ public class ReworkEjb {
         }
 
         if (reworkCandidates.isEmpty()) {
-            List<ProductOrderSample> samples = athenaClientService.findMapSampleNameToPoSample(
-                    Collections.singletonList(query)).get(query);
-
-            Collection<String> sampleIDs = new ArrayList<>();
-            for (ProductOrderSample sample : samples) {
-                sampleIDs.add(sample.getSampleName());
-            }
-            Map<String, BSPSampleDTO> bspResult = bspSampleDataFetcher.fetchSamplesFromBSP(sampleIDs);
-            bspSampleDataFetcher.fetchSamplePlastic(bspResult.values());
-            for (ProductOrderSample sample : samples) {
-                String sampleKey = sample.getSampleName();
-                String tubeBarcode = bspResult.get(sampleKey).getBarcodeForLabVessel();
-                final ReworkCandidate candidate =
-                        new ReworkCandidate(sampleKey, sample.getProductOrder().getBusinessKey(),
-                                tubeBarcode, sample.getProductOrder(), null);
-                if (!sample.getProductOrder().getProduct().isSameProductFamily(ProductFamily.ProductFamilyName.EXOME)) {
-                    candidate.addValidationMessage("The PDO " + sample.getProductOrder().getBusinessKey() +
-                                                   " for Sample " + sampleKey +
-                                                   " is not part of the Exome family");
+            Map<String, List<ProductOrderSample>> samplesById =
+                    athenaClientService.findMapSampleNameToPoSample(query);
+            for (List<ProductOrderSample> samples : samplesById.values()) {
+                Collection<String> sampleIDs = new ArrayList<>();
+                for (ProductOrderSample sample : samples) {
+                    sampleIDs.add(sample.getSampleName());
                 }
+                Map<String, BSPSampleDTO> bspResult = bspSampleDataFetcher.fetchSamplesFromBSP(sampleIDs);
+                bspSampleDataFetcher.fetchSamplePlastic(bspResult.values());
+                for (ProductOrderSample sample : samples) {
+                    String sampleKey = sample.getSampleName();
+                    String tubeBarcode = bspResult.get(sampleKey).getBarcodeForLabVessel();
+                    final ReworkCandidate candidate =
+                            new ReworkCandidate(sampleKey, sample.getProductOrder().getBusinessKey(),
+                                    tubeBarcode, sample.getProductOrder(), null);
+                    if (!sample.getProductOrder().getProduct().isSameProductFamily(ProductFamily.ProductFamilyName.EXOME)) {
+                        candidate.addValidationMessage("The PDO " + sample.getProductOrder().getBusinessKey() +
+                                                       " for Sample " + sampleKey +
+                                                       " is not part of the Exome family");
+                    }
 
-                reworkCandidates.add(candidate);
+                    reworkCandidates.add(candidate);
+                }
             }
         }
 
@@ -330,6 +341,37 @@ public class ReworkEjb {
     }
 
     /**
+     * Validate and add a set of reworks to the specified bucket.
+     *
+     * @param reworkCandidates    tubes/samples/PDOs that are to be reworked
+     * @param reworkReason        predefined Text describing why the given vessels need to be reworked
+     * @param reworkFromStep      Step in the workflow at which rework is to begin
+     * @param bucketName          the name of the bucket to add reworks to
+     * @param comment             Brief user comment to associate with these reworks
+     * @param workflowName        Name of the workflow in which these vessels are to be reworked
+     * @param userName            the user adding the reworks, in case vessels/samples need to be created on-the-fly
+     * @return Collection of validation messages
+     *
+     * @throws ValidationException Thrown in the case that some checked state of any Lab Vessel will not allow the
+     *                             method to continue
+     */
+    public Collection<String> addAndValidateReworks(@Nonnull Collection<ReworkCandidate> reworkCandidates,
+                                                    @Nonnull ReworkEntry.ReworkReason reworkReason,
+                                                    @Nonnull LabEventType reworkFromStep,
+                                                    @Nonnull String bucketName,
+                                                    @Nonnull String comment,
+                                                    @Nonnull String workflowName,
+                                                    @Nonnull String userName) throws ValidationException {
+        Collection<String> validationMessages = new ArrayList<>();
+        for (ReworkCandidate reworkCandidate : reworkCandidates) {
+            validationMessages
+                    .addAll(addAndValidateRework(reworkCandidate, reworkReason, reworkFromStep, bucketName, comment,
+                            workflowName, userName));
+        }
+        return validationMessages;
+    }
+
+    /**
      * addAndValidateRework will, like
      * {@link #addRework(org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel, String, org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb.ReworkCandidate, org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry.ReworkReason, org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType, String, String, String, String)}, create a
      * {@link ReworkEntry} for all samples in a vessel.
@@ -341,7 +383,7 @@ public class ReworkEjb {
      * @param reworkCandidate     tube/sample/PDO that is to be reworked
      * @param reworkReason        predefined Text describing why the given vessel needs to be reworked
      * @param reworkFromStep      Step in the workflow at which rework is to begin
-     * @param bucketName
+     * @param bucketName          the name of the bucket to add rework to
      * @param comment             Brief user comment to associate with this rework.
      * @param workflowName        Name of the workflow in which this vessel is to be reworked
      * @param userName            the user adding the rework, in case vessels/samples need to be created on-the-fly
