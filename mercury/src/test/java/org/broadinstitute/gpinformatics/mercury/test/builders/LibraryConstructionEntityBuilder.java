@@ -106,7 +106,7 @@ public class LibraryConstructionEntityBuilder {
         // PostABaseThermoCyclerLoaded
         LabEventTest.validateWorkflow("PostABaseThermoCyclerLoaded", shearingCleanupPlate);
         LabEvent postABaseThermoCyclerLoadedEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
-                libraryConstructionJaxbBuilder.getEndRepairJaxb(), shearingCleanupPlate);
+                libraryConstructionJaxbBuilder.getPostABaseThermoCyclerLoadedJaxb(), shearingCleanupPlate);
         labEventHandler.processEvent(postABaseThermoCyclerLoadedEntity);
 
         // ABaseCleanup
@@ -156,7 +156,7 @@ public class LibraryConstructionEntityBuilder {
         // PostIndexedAdapterLigationThermoCyclerLoaded
         LabEventTest.validateWorkflow("PostIndexedAdapterLigationThermoCyclerLoaded", shearingCleanupPlate);
         LabEvent postIdxAdapterLigationThermoCyclerLoadedEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
-                libraryConstructionJaxbBuilder.getEndRepairJaxb(), shearingCleanupPlate);
+                libraryConstructionJaxbBuilder.getPostIdxAdapterLigationThermoCyclerLoadedJaxb(), shearingCleanupPlate);
         labEventHandler.processEvent(postIdxAdapterLigationThermoCyclerLoadedEntity);
 
         // AdapterLigationCleanup
@@ -196,7 +196,7 @@ public class LibraryConstructionEntityBuilder {
         // PostPondEnrichmentThermoCyclerLoaded
         LabEventTest.validateWorkflow("PostPondEnrichmentThermoCyclerLoaded", ligationCleanupPlate);
         LabEvent postPondEnrichmentThermoCyclerLoadedEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
-                libraryConstructionJaxbBuilder.getEndRepairJaxb(), ligationCleanupPlate);
+                libraryConstructionJaxbBuilder.getPostPondEnrichmentThermoCyclerLoadedJaxb(), ligationCleanupPlate);
         labEventHandler.processEvent(postPondEnrichmentThermoCyclerLoadedEntity);
 
         // HybSelPondEnrichmentCleanup
@@ -219,11 +219,13 @@ public class LibraryConstructionEntityBuilder {
         pondRegRack = (TubeFormation) pondRegistrationEntity.getTargetLabVessels().iterator().next();
         Assert.assertEquals(pondRegRack.getSampleInstances().size(),
                 shearingPlate.getSampleInstances().size(), "Wrong number of sample instances");
-        Set<SampleInstance> sampleInstancesInPondRegWell = pondRegRack.getContainerRole().getSampleInstancesAtPosition(VesselPosition.A01);
+        Set<SampleInstance> sampleInstancesInPondRegWell =
+                pondRegRack.getContainerRole().getSampleInstancesAtPosition(VesselPosition.A01);
         Assert.assertEquals(sampleInstancesInPondRegWell.size(), 1, "Wrong number of sample instances in position");
         SampleInstance pondRegSampleInstance = sampleInstancesInPondRegWell.iterator().next();
         Assert.assertEquals(pondRegSampleInstance.getStartingSample().getSampleKey(),
-                shearingPlate.getContainerRole().getSampleInstancesAtPosition(VesselPosition.A01).iterator().next().getStartingSample().getSampleKey(),
+                shearingPlate.getContainerRole().getSampleInstancesAtPosition(VesselPosition.A01).iterator().next()
+                        .getStartingSample().getSampleKey(),
                 "Wrong sample");
         reagents = pondRegSampleInstance.getReagents();
         Assert.assertEquals(reagents.size(), 1, "Wrong number of reagents");

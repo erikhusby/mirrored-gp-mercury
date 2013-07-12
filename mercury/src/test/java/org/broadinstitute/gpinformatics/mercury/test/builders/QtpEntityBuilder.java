@@ -55,10 +55,10 @@ public class QtpEntityBuilder {
     }
 
     public QtpEntityBuilder invoke() {
-        return invoke(false);
+        return invoke(true);
     }
 
-    public QtpEntityBuilder invoke(boolean substituteViia7) {
+    public QtpEntityBuilder invoke(boolean doEco) {
         QtpJaxbBuilder qtpJaxbBuilder = new QtpJaxbBuilder(bettaLimsMessageTestFactory, testPrefix,
                 listLcsetListNormCatchBarcodes, normCatchRackBarcodes, workflowName).invoke();
         PlateCherryPickEvent cherryPickJaxb = qtpJaxbBuilder.getPoolingTransferJaxb();
@@ -113,9 +113,9 @@ public class QtpEntityBuilder {
         }
 
         // EcoTransfer or Viia7Transfer
-        String ecoViia7Step = substituteViia7 ? "Viaa7Transfer" : "EcoTransfer";
+        String ecoViia7Step = doEco ? "EcoTransfer" : "Viia7Transfer";
         PlateTransferEventType ecoViia7Event =
-                substituteViia7 ? qtpJaxbBuilder.getViia7TransferJaxb() : qtpJaxbBuilder.getEcoTransferJaxb();
+                doEco ? qtpJaxbBuilder.getEcoTransferJaxb() : qtpJaxbBuilder.getViia7TransferJaxb();
 
         LabEventTest.validateWorkflow(ecoViia7Step, rearrayedPoolingRack);
         Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
