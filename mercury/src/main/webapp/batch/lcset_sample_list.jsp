@@ -45,16 +45,31 @@
                     checkAllClass:'sample-checkAll' + active,
                     countDisplayClass:'sample-checkedCount' + active,
                     checkboxClass:'sample-checkbox' + active});
+
+                $j('.initialPico').heatcolor(function () {
+                    return $j(this).text();
+                }, { lightness:0.6, maxval:60, minval:10, colorStyle:'greentored' });
+                $j('.exportPico').heatcolor(function () {
+                    return $j(this).text();
+                }, { lightness:0.6, maxval:3, minval:1, colorStyle:'greentored' });
+                $j('.pondPico').heatcolor(function () {
+                    return $j(this).text();
+                }, { lightness:0.6, maxval:80, minval:30, colorStyle:'greentored' });
+                $j('.catchPico').heatcolor(function () {
+                    return $j(this).text();
+                }, { lightness:0.6, maxval:60, minval:10, colorStyle:'greentored' });
+                $j('.ecoQPCR').heatcolor(function () {
+                    return $j(this).text();
+                }, { lightness:0.6, maxval:60, minval:10, colorStyle:'greentored' });
             });
         });
     </script>
-    <div>
-        JIRA Link <a target="JIRA" href="${batch.jiraTicket.browserUrl}" class="external"
-                     target="JIRA"> ${batch.businessKey} </a>
-    </div>
+
     <stripes:form beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.SampleLibrariesActionBean">
         <div class="actionButtons">
             <stripes:submit name="showLibraries" value="Show Libraries" class="btn" style="margin-right:30px;"/>
+            JIRA Link <a target="JIRA" href="${batch.jiraTicket.browserUrl}" class="external"
+                         target="JIRA"> ${batch.businessKey} </a>
         </div>
         <table id="batchSampleListView${index - 1}" class="table simple" style="margin: 0 0; width: 100%;">
             <thead>
@@ -95,11 +110,11 @@
                             ${sample.startingSample.sampleKey}
                         </stripes:link></td>
                         <td> ${bean.sampleToBspPicoValueMap.get(sample.startingSample.sampleKey).volume}</td>
-                        <td> ${bean.sampleToBspPicoValueMap.get(sample.startingSample.sampleKey).concentration}</td>
-                        <td> ${bean.getExportedSampleConcentration(vessel)}</td>
-                        <td> ${vessel.metricsForVesselAndDescendants.get("Pond Pico").value} </td>
-                        <td> ${vessel.metricsForVesselAndDescendants.get("Catch Pico").value} </td>
-                        <td> ${vessel.metricsForVesselAndDescendants.get("ECO QPCR").value} </td>
+                        <td class="initialPico">${bean.sampleToBspPicoValueMap.get(sample.startingSample.sampleKey).concentration}</td>
+                        <td class="exportPico"> ${bean.getExportedSampleConcentration(vessel)}</td>
+                        <td class="pondPico"> ${vessel.metricsForVesselAndDescendants.get("Pond Pico").value} </td>
+                        <td class="catchPico"> ${vessel.metricsForVesselAndDescendants.get("Catch Pico").value} </td>
+                        <td class="ecoQPCR"> ${vessel.metricsForVesselAndDescendants.get("ECO QPCR").value} </td>
                         <td> ${bean.getPositionsForEvent(vessel, "SAMPLE_IMPORT")}</td>
                         <td> ${bean.getPositionsForEvent(vessel, "SHEARING_TRANSFER")}</td>
                         <td> ${bean.getPositionsForEvent(vessel, "POND_ENRICHMENT")}</td>
