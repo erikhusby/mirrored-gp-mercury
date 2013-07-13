@@ -363,4 +363,17 @@ public class ProductOrderFixupTest extends Arquillian {
         // JIRA key.
         changeJiraKey("PDO-1043", "PDO-1042");
     }
+
+    @Test(enabled = false)
+    public void unAbandonPDOSample() throws Exception {
+        ProductOrder order = productOrderDao.findByBusinessKey("PDO-190");
+        List<ProductOrderSample> pdoSamples = productOrderSampleDao.findByOrderAndName(order, "SM-1ISV5");
+        for (ProductOrderSample pdoSample : pdoSamples) {
+            pdoSample.setDeliveryStatus(ProductOrderSample.DeliveryStatus.NOT_STARTED);
+        }
+
+        productOrderSampleDao.persistAll(pdoSamples);
+
+        productOrderEjb.updateOrderStatus(order.getJiraTicketKey());
+    }
 }
