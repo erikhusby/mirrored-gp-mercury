@@ -283,7 +283,7 @@
             <workflowStepDefs>
                 <name>Pond Enrichment Cleanup</name>
                 <labEventTypes>POND_ENRICHMENT_CLEANUP</labEventTypes>
-                <optional>false</optional>
+                <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
@@ -333,15 +333,6 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
-            <!--
-                    <workflowStepDefs>
-                        <name>BaitSetup</name>
-                        <labEventTypes>BAIT_SETUP</labEventTypes>
-                        <optional>false</optional>
-                        <entryPoint>false</entryPoint>
-                        <reEntryPoint>false</reEntryPoint>
-                    </workflowStepDefs>
-            -->
             <workflowStepDefs>
                 <name>Bait Addition</name>
                 <labEventTypes>BAIT_ADDITION</labEventTypes>
@@ -357,14 +348,56 @@
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name>Capture</name>
+                <name>AP Wash</name>
                 <labEventTypes>AP_WASH</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>GS Wash1</name>
                 <labEventTypes>GS_WASH_1</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>GS Wash2</name>
                 <labEventTypes>GS_WASH_2</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>GS Wash3</name>
                 <labEventTypes>GS_WASH_3</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>GS Wash4</name>
                 <labEventTypes>GS_WASH_4</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>GS Wash5</name>
                 <labEventTypes>GS_WASH_5</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>GS Wash6</name>
                 <labEventTypes>GS_WASH_6</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Catch Enrichment Setup</name>
                 <labEventTypes>CATCH_ENRICHMENT_SETUP</labEventTypes>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
@@ -380,7 +413,7 @@
             <workflowStepDefs>
                 <name>Catch Enrichment Cleanup</name>
                 <labEventTypes>CATCH_ENRICHMENT_CLEANUP</labEventTypes>
-                <optional>false</optional>
+                <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
@@ -444,15 +477,6 @@
         <workflowProcessDefVersions>
             <version>1.0</version>
             <effectiveDate>2012-09-30T21:03:24.085-04:00</effectiveDate>
-            <!--
-                    <workflowStepDefs>
-                        <name>Catch Pico?</name>
-                        <labEventTypes></labEventTypes>
-                        <optional>false</optional>
-                        <entryPoint>false</entryPoint>
-                        <reEntryPoint>false</reEntryPoint>
-                    </workflowStepDefs>
-            -->
             <workflowStepDefs>
                 <name>Pooling Transfer</name>
                 <labEventTypes>POOLING_TRANSFER</labEventTypes>
@@ -463,7 +487,14 @@
             <workflowStepDefs>
                 <name>EcoTransfer</name>
                 <labEventTypes>ECO_TRANSFER</labEventTypes>
-                <optional>false</optional>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Viia7Transfer</name>
+                <labEventTypes>VIIA7_TRANSFER</labEventTypes>
+                <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
@@ -482,73 +513,16 @@
                 <reEntryPoint>false</reEntryPoint>
                 <jiraTransition>
                     <project>LCSET</project>
-                    <statusTransition>In MiSeq Sequencing</statusTransition>
-                </jiraTransition>
-            </workflowStepDefs>
-            <workflowStepDefs>
-                <name>Denature To Reagent Kit Transfer</name>
-                <labEventTypes>DENATURE_TO_REAGENT_KIT_TRANSFER</labEventTypes>
-                <optional>true</optional>
-                <entryPoint>false</entryPoint>
-                <reEntryPoint>false</reEntryPoint>
-            </workflowStepDefs>
-            <workflowStepDefs>
-                <name>Reagent Kit To Flowcell Transfer</name>
-                <labEventTypes>REAGENT_KIT_TO_FLOWCELL_TRANSFER</labEventTypes>
-                <optional>true</optional>
-                <entryPoint>false</entryPoint>
-                <reEntryPoint>false</reEntryPoint>
-            </workflowStepDefs>
-            <workflowStepDefs>
-                <name>Strip Tube B Transfer</name>
-                <labEventTypes>STRIP_TUBE_B_TRANSFER</labEventTypes>
-                <optional>false</optional>
-                <entryPoint>false</entryPoint>
-                <reEntryPoint>false</reEntryPoint>
-                <jiraTransition>
-                    <project>FCT</project>
-                    <statusTransition>Strip Tube Created (or Registered)</statusTransition>
+                    <statusTransition>In HiSeq Sequencing</statusTransition>
                 </jiraTransition>
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
     <workflowProcessDefs>
-        <name>QTP 2500</name>
+        <name>MiSEQ</name>
         <workflowProcessDefVersions>
             <version>1.0</version>
             <effectiveDate>2012-09-30T21:03:24.085-04:00</effectiveDate>
-            <workflowStepDefs>
-                <name>Pooling Transfer</name>
-                <labEventTypes>POOLING_TRANSFER</labEventTypes>
-                <optional>false</optional>
-                <entryPoint>false</entryPoint>
-                <reEntryPoint>false</reEntryPoint>
-            </workflowStepDefs>
-            <workflowStepDefs>
-                <name>EcoTransfer</name>
-                <labEventTypes>ECO_TRANSFER</labEventTypes>
-                <optional>false</optional>
-                <entryPoint>false</entryPoint>
-                <reEntryPoint>false</reEntryPoint>
-            </workflowStepDefs>
-            <workflowStepDefs>
-                <name>Normalization Transfer</name>
-                <labEventTypes>NORMALIZATION_TRANSFER</labEventTypes>
-                <optional>true</optional>
-                <entryPoint>false</entryPoint>
-                <reEntryPoint>false</reEntryPoint>
-            </workflowStepDefs>
-            <workflowStepDefs>
-                <name>Denature Transfer</name>
-                <labEventTypes>DENATURE_TRANSFER</labEventTypes>
-                <optional>false</optional>
-                <entryPoint>false</entryPoint>
-                <reEntryPoint>false</reEntryPoint>
-                <jiraTransition>
-                    <project>LCSET</project>
-                    <statusTransition>In MiSeq Sequencing</statusTransition>
-                </jiraTransition>
-            </workflowStepDefs>
             <workflowStepDefs>
                 <name>Denature To Reagent Kit Transfer</name>
                 <labEventTypes>DENATURE_TO_REAGENT_KIT_TRANSFER</labEventTypes>
@@ -570,6 +544,17 @@
         <workflowProcessDefVersions>
             <version>1.0</version>
             <effectiveDate>2012-09-30T21:03:24.085-04:00</effectiveDate>
+            <workflowStepDefs>
+                <name>Strip Tube B Transfer</name>
+                <labEventTypes>STRIP_TUBE_B_TRANSFER</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <jiraTransition>
+                    <project>FCT</project>
+                    <statusTransition>Strip Tube Created (or Registered)</statusTransition>
+                </jiraTransition>
+            </workflowStepDefs>
             <workflowStepDefs>
                 <name>Flowcell Transfer</name>
                 <labEventTypes>FLOWCELL_TRANSFER</labEventTypes>
@@ -670,7 +655,8 @@
             <workflowProcessDefs>Exome Express Shearing</workflowProcessDefs>
             <workflowProcessDefs>Library Construction</workflowProcessDefs>
             <workflowProcessDefs>Hybrid Selection</workflowProcessDefs>
-            <workflowProcessDefs>QTP 2500</workflowProcessDefs>
+            <workflowProcessDefs>QTP</workflowProcessDefs>
+            <workflowProcessDefs>MiSEQ</workflowProcessDefs>
             <workflowProcessDefs>HiSEQ 2500</workflowProcessDefs>
             <sequencingConfigDefs>Resequencing-Pool-Default</sequencingConfigDefs>
             <sequencingConfigDefs>Amplicon-Pool-Default</sequencingConfigDefs>

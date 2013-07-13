@@ -34,6 +34,9 @@ public class LibraryConstructionJaxbBuilder {
     private PlateTransferEventType indexP5PondEnrichmentJaxb;
     private PlateTransferEventType pondCleanupJaxb;
     private PlateTransferEventType pondRegistrationJaxb;
+    private PlateEventType postABaseThermoCyclerLoadedJaxb;
+    private PlateEventType postIdxAdapterLigationThermoCyclerLoadedJaxb;
+    private PlateEventType postPondEnrichmentThermoCyclerLoadedJaxb;
     private final List<BettaLIMSMessage> messageList = new ArrayList<BettaLIMSMessage>();
     private int numSamples;
 
@@ -107,6 +110,18 @@ public class LibraryConstructionJaxbBuilder {
         return pondRegTubeBarcodes;
     }
 
+    public PlateEventType getPostABaseThermoCyclerLoadedJaxb() {
+        return postABaseThermoCyclerLoadedJaxb;
+    }
+
+    public PlateEventType getPostIdxAdapterLigationThermoCyclerLoadedJaxb() {
+        return postIdxAdapterLigationThermoCyclerLoadedJaxb;
+    }
+
+    public PlateEventType getPostPondEnrichmentThermoCyclerLoadedJaxb() {
+        return postPondEnrichmentThermoCyclerLoadedJaxb;
+    }
+
     public LibraryConstructionJaxbBuilder invoke() {
         endRepairJaxb = bettaLimsMessageTestFactory.buildPlateEvent("EndRepair", shearCleanPlateBarcode);
         bettaLimsMessageTestFactory.addMessage(messageList, endRepairJaxb);
@@ -117,6 +132,10 @@ public class LibraryConstructionJaxbBuilder {
         aBaseJaxb = bettaLimsMessageTestFactory.buildPlateEvent("ABase", shearCleanPlateBarcode);
         bettaLimsMessageTestFactory.addMessage(messageList, aBaseJaxb);
 
+        postABaseThermoCyclerLoadedJaxb = bettaLimsMessageTestFactory.buildPlateEvent("PostABaseThermoCyclerLoaded", shearCleanPlateBarcode);
+        bettaLimsMessageTestFactory.addMessage(messageList, postABaseThermoCyclerLoadedJaxb);
+
+
         aBaseCleanupJaxb = bettaLimsMessageTestFactory.buildPlateEvent("ABaseCleanup", shearCleanPlateBarcode);
         bettaLimsMessageTestFactory.addMessage(messageList, aBaseCleanupJaxb);
 
@@ -125,6 +144,10 @@ public class LibraryConstructionJaxbBuilder {
                 p7IndexPlateBarcode,
                 shearCleanPlateBarcode);
         bettaLimsMessageTestFactory.addMessage(messageList, indexedAdapterLigationJaxb);
+
+        postIdxAdapterLigationThermoCyclerLoadedJaxb = bettaLimsMessageTestFactory.buildPlateEvent(
+                "PostIndexedAdapterLigationThermoCyclerLoaded", shearCleanPlateBarcode);
+        bettaLimsMessageTestFactory.addMessage(messageList, postIdxAdapterLigationThermoCyclerLoadedJaxb);
 
         String ligationCleanupBarcode = "ligationCleanupPlate" + testPrefix;
         ligationCleanupJaxb = bettaLimsMessageTestFactory.buildPlateToPlate("AdapterLigationCleanup",
@@ -140,6 +163,10 @@ public class LibraryConstructionJaxbBuilder {
                     p5IndexPlateBarcode, ligationCleanupBarcode);
             bettaLimsMessageTestFactory.addMessage(messageList, indexP5PondEnrichmentJaxb);
         }
+
+        postPondEnrichmentThermoCyclerLoadedJaxb = bettaLimsMessageTestFactory.buildPlateEvent(
+                "PostPondEnrichmentThermoCyclerLoaded", ligationCleanupBarcode);
+        bettaLimsMessageTestFactory.addMessage(messageList, postPondEnrichmentThermoCyclerLoadedJaxb);
 
         String pondCleanupBarcode = "pondCleanupPlate" + testPrefix;
         pondCleanupJaxb = bettaLimsMessageTestFactory.buildPlateToPlate("HybSelPondEnrichmentCleanup",

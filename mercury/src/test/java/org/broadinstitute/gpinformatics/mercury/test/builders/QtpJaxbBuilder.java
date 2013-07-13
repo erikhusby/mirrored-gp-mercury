@@ -38,6 +38,8 @@ public class QtpJaxbBuilder {
     private String denatureTubeBarcode;
     private String ecoPlateBarcode;
     private PlateTransferEventType ecoTransferJaxb;
+    private String viia7PlateBarcode;
+    private PlateTransferEventType viia7TransferJaxb;
     private String normalizationTubeBarcode;
     private String normalizationRackBarcode;
     private PlateCherryPickEvent normalizationJaxb;
@@ -46,6 +48,7 @@ public class QtpJaxbBuilder {
 
     private BettaLIMSMessage poolingTransferMessage;
     private BettaLIMSMessage ecoTransferMessage;
+    private BettaLIMSMessage viia7TransferMessage;
     private BettaLIMSMessage denatureMessage;
     private BettaLIMSMessage stripTubeTransferMessage;
     private BettaLIMSMessage flowcellTransferMessage;
@@ -73,12 +76,12 @@ public class QtpJaxbBuilder {
         return poolingTransferJaxb;
     }
 
-    public String getEcoPlateBarcode() {
-        return ecoPlateBarcode;
-    }
-
     public PlateTransferEventType getEcoTransferJaxb() {
         return ecoTransferJaxb;
+    }
+
+    public PlateTransferEventType getViia7TransferJaxb() {
+        return viia7TransferJaxb;
     }
 
     public String getDenatureRackBarcode() {
@@ -161,6 +164,11 @@ public class QtpJaxbBuilder {
                 poolTubeBarcodes, ecoPlateBarcode, "Eco48", "3BY6A1", "8BY6A3ALTROWS");
         ecoTransferMessage = bettaLimsMessageTestFactory.addMessage(messageList, ecoTransferJaxb);
 
+        // Viia7Transfer reuses the eco barcode since they are interchangable from workflow point of view.
+        viia7TransferJaxb = bettaLimsMessageTestFactory.buildRackToPlate("Viia7Transfer", poolRackBarcode,
+                poolTubeBarcodes, ecoPlateBarcode, "Eco48", "3BY6A1", "8BY6A3ALTROWS");
+        viia7TransferMessage = bettaLimsMessageTestFactory.addMessage(messageList, viia7TransferJaxb);
+
         // NormalizationTransfer
         normalizationRackBarcode = "NormalizationRack" + testPrefix;
         List<BettaLimsMessageTestFactory.CherryPick> normaliztionCherryPicks = new ArrayList<>();
@@ -242,6 +250,10 @@ public class QtpJaxbBuilder {
 
     public BettaLIMSMessage getStep02EcoTransferMessage() {
         return ecoTransferMessage;
+    }
+
+    public BettaLIMSMessage getStep02Viia7TransferMessage() {
+        return viia7TransferMessage;
     }
 
     public BettaLIMSMessage getStep03DenatureMessage() {
