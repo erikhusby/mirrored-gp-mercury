@@ -256,78 +256,85 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         List<EventFactDto> dtos = new ArrayList<>();
 
         if (entity != null && entity.getLabEventType() != null) {
-            String eventName = entity.getLabEventType().getName();
+            try {
+                String eventName = entity.getLabEventType().getName();
 
-            Collection<LabVessel> vessels = entity.getTargetLabVessels();
-            if (vessels.isEmpty() && entity.getInPlaceLabVessel() != null) {
-                vessels.add(entity.getInPlaceLabVessel());
-            }
+                Collection<LabVessel> vessels = entity.getTargetLabVessels();
+                if (vessels.isEmpty() && entity.getInPlaceLabVessel() != null) {
+                    vessels.add(entity.getInPlaceLabVessel());
+                }
 
-            if (vessels.isEmpty()) {
-                dtos.add(new EventFactDto(entity, null, null, null, null, null, null, false));
-            }
+                if (vessels.isEmpty()) {
+                    dtos.add(new EventFactDto(entity, null, null, null, null, null, null, false));
+                }
 
-            for (LabVessel vessel : vessels) {
-                try {
-                    Set<SampleInstance> sampleInstances =
-                            vessel.getSampleInstances(SampleType.WITH_PDO, LabBatchType.WORKFLOW);
+                for (LabVessel vessel : vessels) {
+                    try {
+                        Set<SampleInstance> sampleInstances =
+                                vessel.getSampleInstances(SampleType.WITH_PDO, LabBatchType.WORKFLOW);
 
-                    if (!sampleInstances.isEmpty()) {
-                        for (SampleInstance si : sampleInstances) {
+                        if (!sampleInstances.isEmpty()) {
+                            for (SampleInstance si : sampleInstances) {
 
-                            String pdoKey = si.getProductOrderKey();
-                            if (pdoKey != null) {
-                                ProductOrder pdo;
-                                synchronized(cachedPdo) {
-                                    if (cachedPdo.containsKey(pdoKey)) {
-                                        pdo = cachedPdo.get(pdoKey);
-                                    } else {
-                                        pdo = pdoDao.findByBusinessKey(pdoKey);
-                                        cachedPdo.put(pdoKey, pdo);
+                                String pdoKey = si.getProductOrderKey();
+                                if (pdoKey != null) {
+                                    ProductOrder pdo;
+                                    synchronized (cachedPdo) {
+                                        if (cachedPdo.containsKey(pdoKey)) {
+                                            pdo = cachedPdo.get(pdoKey);
+                                        } else {
+                                            pdo = pdoDao.findByBusinessKey(pdoKey);
+                                            cachedPdo.put(pdoKey, pdo);
+                                        }
                                     }
-                                }
 
-                                MercurySample sample = si.getStartingSample();
-                                if (sample != null) {
+                                    MercurySample sample = si.getStartingSample();
+                                    if (sample != null) {
 
-                                    Collection<LabBatch> labBatches = si.getAllWorkflowLabBatches();
-                                    if (labBatches != null && labBatches.size() > 0) {
-                                        for (LabBatch labBatch : labBatches) {
-                                            String workflowName = labBatch.getWorkflowName();
-                                            if (StringUtils.isBlank(workflowName)) {
-                                                workflowName = pdo.getProduct().getWorkflowName();
+                                        Collection<LabBatch> labBatches = si.getAllWorkflowLabBatches();
+                                        if (labBatches != null && labBatches.size() > 0) {
+                                            for (LabBatch labBatch : labBatches) {
+                                                String workflowName = labBatch.getWorkflowName();
+                                                if (StringUtils.isBlank(workflowName)) {
+                                                    workflowName = pdo.getProduct().getWorkflowName();
+                                                }
+                                                WorkflowConfigDenorm wfDenorm =
+                                                        workflowConfigLookup.lookupWorkflowConfig(
+                                                                eventName, workflowName, entity.getEventDate());
+
+                                                boolean canExportToEtl =
+                                                        wfDenorm != null &&
+                                                        (pdo != null || !wfDenorm.isProductOrderNeeded());
+
+                                                dtos.add(new EventFactDto(entity, vessel, null, labBatch, sample, pdo,
+                                                        wfDenorm, canExportToEtl));
                                             }
-                                            WorkflowConfigDenorm wfDenorm = workflowConfigLookup.lookupWorkflowConfig(
-                                                    eventName, workflowName, entity.getEventDate());
-
-                                            boolean canExportToEtl =
-                                                    wfDenorm != null &&
-                                                    (pdo != null || !wfDenorm.isProductOrderNeeded());
-
-                                            dtos.add(new EventFactDto(entity, vessel, null, labBatch, sample, pdo,
-                                                    wfDenorm, canExportToEtl));
+                                        } else {
+                                            dtos.add(new EventFactDto(entity, vessel, vessel.getIndexesString(si),
+                                                    null, sample, pdo, null, false));
                                         }
                                     } else {
                                         dtos.add(new EventFactDto(entity, vessel, vessel.getIndexesString(si),
-                                                null, sample, pdo, null, false));
+                                                null, null, pdo, null, false));
                                     }
                                 } else {
                                     dtos.add(new EventFactDto(entity, vessel, vessel.getIndexesString(si),
-                                            null, null, pdo, null, false));
+                                            null, null, null, null, false));
                                 }
-                            } else {
-                                dtos.add(new EventFactDto(entity, vessel, vessel.getIndexesString(si),
-                                        null, null, null, null, false));
                             }
+                        } else {
+                            dtos.add(new EventFactDto(entity, vessel, null, null, null, null, null, false));
                         }
-                    } else {
-                        dtos.add(new EventFactDto(entity, vessel, null, null, null, null, null, false));
+                    } catch (RuntimeException e) {
+                        logger.debug("Skipping ETL on labEvent " + entity.getLabEventId() +
+                                     " on vessel " + vessel.getLabel(), e);
                     }
-                } catch (RuntimeException e) {
-                    logger.debug("Skipping ETL on labEvent " + entity.getLabEventId() +
-                                 " on vessel " + vessel.getLabel(), e);
                 }
+            } catch (RuntimeException e) {
+                // Uncaught RuntimeExceptions kill the injected LabEventEtl in ExtractTransform.
+                logger.error("Error doing ETL analysis of labEventId " + entity.getLabEventId(), e);
             }
+
         }
         Collections.sort(dtos, EventFactDto.BY_SAMPLE_KEY);
 

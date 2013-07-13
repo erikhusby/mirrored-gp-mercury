@@ -201,7 +201,8 @@ public class ReworkEjbTest extends Arquillian {
 
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWarWithAlternatives(DEV, BSPSampleSearchServiceStub.class, JiraServiceStub.class);
+        return DeploymentBuilder
+                .buildMercuryWarWithAlternatives(DEV, BSPSampleSearchServiceStub.class, JiraServiceStub.class);
     }
 
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
@@ -450,7 +451,22 @@ public class ReworkEjbTest extends Arquillian {
         if (reworkEjb == null) {
             return;
         }
+        exExProductOrder1 = productOrderDao.findByBusinessKey(exExProductOrder1.getBusinessKey());
+        exExProductOrder1.setOrderStatus(ProductOrder.OrderStatus.Completed);
+        exExProductOrder2 = productOrderDao.findByBusinessKey(exExProductOrder2.getBusinessKey());
+        exExProductOrder2.setOrderStatus(ProductOrder.OrderStatus.Completed);
+        nonExExProductOrder = productOrderDao.findByBusinessKey(nonExExProductOrder.getBusinessKey());
+        nonExExProductOrder.setOrderStatus(ProductOrder.OrderStatus.Completed);
+        extraProductOrder = productOrderDao.findByBusinessKey(extraProductOrder.getBusinessKey());
+        extraProductOrder.setOrderStatus(ProductOrder.OrderStatus.Completed);
 
+        List<ProductOrder> ordersToUpdate = new ArrayList<>();
+
+        Collections.addAll(ordersToUpdate, exExProductOrder1, exExProductOrder2, nonExExProductOrder, extraProductOrder);
+
+        productOrderDao.persistAll(ordersToUpdate);
+        productOrderDao.flush();
+        productOrderDao.clear();
         mapBarcodeToTube.clear();
     }
 

@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -190,6 +191,7 @@ public class BucketEntry  {
         this.status = status;
     }
 
+    @Nullable
     public LabBatch getLabBatch() {
         return labBatch;
     }

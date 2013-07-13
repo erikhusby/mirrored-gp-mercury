@@ -16,16 +16,25 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.monitoring.HipChatMessageSender;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
+import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettalimsMessageResource;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettalimsMessageResourceTest;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.VesselTransferEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.rapsheet.ReworkEjbTest;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.MiSeqReagentKitDao;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.MiSeqReagentKit;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -42,6 +51,9 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
@@ -57,6 +69,12 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
 
     @Inject
     IlluminaFlowcellDao flowcellDao;
+
+    @Inject
+    LabVesselDao labVesselDao;
+
+    @Inject
+    MiSeqReagentKitDao miSeqReagentKitDao;
 
     @Inject
     private BSPUserList bspUserList;
@@ -85,15 +103,19 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
     @Inject
     private VesselTransferEjb vesselTransferEjb;
 
-
     @Inject
     AppConfig appConfig;
 
     private Date runDate;
     private String flowcellBarcode;
+    private String denatureBarcode;
     private IlluminaFlowcell newFlowcell;
+    private String miSeqBarcode;
+    private IlluminaFlowcell miSeqFlowcell;
     private boolean result;
     private String runBarcode;
+    private String miSeqRunBarcode;
+    private String reagentKitBarcode;
     private String runFileDirectory;
     private String pdoKey;
     private ProductOrder exexOrder;
@@ -101,6 +123,11 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
     private Product exExProduct;
     private ArrayList<ProductOrderSample> bucketReadySamples1;
     private String runName;
+    private String machineName;
+    private String pdo1JiraKey;
+
+    @Inject
+    BettalimsMessageResource bettalimsMessageResource;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -117,9 +144,11 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         }
 
         runDate = new Date();
-
+        reagentKitBarcode = "ReagentKit-" + runDate.getTime();
+        miSeqBarcode = "miSeqFlowcell-" + runDate.getTime();
+        denatureBarcode = "DenatureTube-" + runDate.getTime();
         String testPrefix = "runResourceTst";
-
+        machineName = "SL-HAL";
         String rpJiraTicketKey = "RP-" + testPrefix + runDate.getTime() + "RP";
         researchProject = new ResearchProject(bspUserList.getByUsername("scottmat").getUserId(),
                 "Rework Integration Test RP " + runDate.getTime() + "RP", "Rework Integration Test RP", false);
@@ -172,25 +201,27 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
                         bucketReadySamples1, "GSP-123", exExProduct, researchProject);
         exexOrder.setProduct(exExProduct);
         exexOrder.prepareToSave(bspUserList.getByUsername("scottmat"));
-        String pdo1JiraKey = "PDO-" + testPrefix + runDate.getTime() + 1;
+        pdo1JiraKey = "PDO-" + testPrefix + runDate.getTime() + 1;
         exexOrder.setJiraTicketKey(pdo1JiraKey);
         productOrderDao.persist(exexOrder);
 
-
         flowcellBarcode = testPrefix + "Flowcell" + runDate.getTime();
 
-        newFlowcell = new IlluminaFlowcell(IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell,
-                flowcellBarcode);
+        newFlowcell = new IlluminaFlowcell(IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell, flowcellBarcode);
+        miSeqFlowcell = new IlluminaFlowcell(IlluminaFlowcell.FlowcellType.MiSeqFlowcell, miSeqBarcode);
 
         for (ProductOrderSample currSample : exexOrder.getSamples()) {
             newFlowcell.addSample(new MercurySample(currSample.getBspSampleName()));
+            miSeqFlowcell.addSample(new MercurySample(currSample.getBspSampleName()));
         }
 
         flowcellDao.persist(newFlowcell);
+        flowcellDao.persist(miSeqFlowcell);
 
         SimpleDateFormat dateFormat = new SimpleDateFormat(IlluminaSequencingRun.RUN_FORMAT_PATTERN);
 
         runBarcode = flowcellBarcode + dateFormat.format(runDate);
+        miSeqRunBarcode = miSeqBarcode + dateFormat.format(runDate);
         runName = "testRunName" + testPrefix + runDate.getTime();
         String baseDirectory = System.getProperty("java.io.tmpdir");
         runFileDirectory = baseDirectory + File.separator + "bin" + File.separator +
@@ -206,8 +237,58 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
             return;
         }
 
+        exexOrder = productOrderDao.findByBusinessKey(pdo1JiraKey);
+
         exexOrder.setOrderStatus(ProductOrder.OrderStatus.Abandoned);
-        flowcellDao.persist(exexOrder);
+        productOrderDao.persist(exexOrder);
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION,
+            dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
+    public void testRunResource() {
+
+        Map<String, VesselPosition> denatureRackMap = new HashMap<>();
+        denatureRackMap.put(denatureBarcode, VesselPosition.A01);
+        TwoDBarcodedTube tube = new TwoDBarcodedTube(denatureBarcode);
+        labVesselDao.persist(tube);
+        labVesselDao.flush();
+
+        BettaLIMSMessage bettaLIMSMessage = vesselTransferEjb
+                .denatureToReagentKitTransfer(null, denatureRackMap, reagentKitBarcode, "pdunlea", "ZAN");
+        bettalimsMessageResource.processMessage(bettaLIMSMessage);
+
+        IlluminaSequencingRun run;
+        SolexaRunResource runResource =
+                new SolexaRunResource(runDao, illuminaSequencingRunFactory, flowcellDao, vesselTransferEjb, router,
+                        null, messageSender);
+
+        SolexaRunBean runBean =
+                new SolexaRunBean(miSeqBarcode, miSeqRunBarcode, runDate, machineName, runFileDirectory,
+                        reagentKitBarcode);
+        runResource.registerRun(runBean, miSeqFlowcell);
+
+        run = runDao.findByBarcode(miSeqRunBarcode);
+        Assert.assertNotNull(run);
+        Assert.assertEquals(run.getRunName(), runName);
+        Assert.assertEquals(run.getMachineName(), machineName);
+        Assert.assertEquals(run.getRunBarcode(), miSeqRunBarcode);
+        Assert.assertEquals(run.getRunDirectory(), runFileDirectory);
+        IlluminaFlowcell illuminaFlowcell = (IlluminaFlowcell) run.getSampleCartridge();
+        Assert.assertEquals(illuminaFlowcell.getFlowcellType(), IlluminaFlowcell.FlowcellType.MiSeqFlowcell);
+        Assert.assertEquals(illuminaFlowcell.getLabel(), miSeqBarcode);
+        Set<CherryPickTransfer> cherryPickTransfersTo = illuminaFlowcell.getContainerRole().getCherryPickTransfersTo();
+        Assert.assertEquals(cherryPickTransfersTo.size(), 1);
+        CherryPickTransfer cherryPickTransfer = cherryPickTransfersTo.toArray(new CherryPickTransfer[1])[0];
+        Assert.assertEquals(cherryPickTransfer.getLabEvent().getLabEventType(),
+                LabEventType.REAGENT_KIT_TO_FLOWCELL_TRANSFER);
+        MiSeqReagentKit reagentKit = (MiSeqReagentKit) cherryPickTransfer.getSourceVesselContainer().getEmbedder();
+        Assert.assertEquals(reagentKit.getLabel(), reagentKitBarcode);
+        Assert.assertEquals(cherryPickTransfer.getSourcePosition(), VesselPosition.D04);
+        Assert.assertEquals(cherryPickTransfer.getTargetPosition(), VesselPosition.LANE1);
+        IlluminaFlowcell targetFlowcell =
+                (IlluminaFlowcell) cherryPickTransfer.getTargetVesselContainer().getEmbedder();
+        Assert.assertEquals(targetFlowcell.getLabel(), miSeqBarcode);
+        Assert.assertEquals(targetFlowcell.getSequencingRuns().size(), 1);
     }
 
     /**
@@ -223,7 +304,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         readStructure.setSetupReadStructure("71T8B8B101T");
 
         IlluminaSequencingRun run =
-                new IlluminaSequencingRun(newFlowcell, runName, runBarcode, "SL-HAL",
+                new IlluminaSequencingRun(newFlowcell, runName, runBarcode, machineName,
                         bspUserList.getByUsername("scottmat").getUserId(), true, runDate, runFileDirectory);
 
         runDao.persist(run);

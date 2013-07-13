@@ -41,6 +41,7 @@
         </thead>
         <tbody>
         <c:forEach items="${vessel.getSampleInstances('WITH_PDO', null)}" var="sample">
+            <%--@elvariable id="sample" type="org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance"--%>
             <tr>
                 <td>
                     <stripes:link

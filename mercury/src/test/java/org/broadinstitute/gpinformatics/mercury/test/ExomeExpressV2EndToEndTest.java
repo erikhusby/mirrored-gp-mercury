@@ -24,6 +24,7 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
@@ -40,7 +41,6 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressSheari
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.MiSeqReagentKitJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
 import org.easymock.EasyMock;
@@ -183,6 +183,9 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
                         "Shearing Bucket");
         // Lab Event Factory should have put tubes into the Bucket after normalization
         Assert.assertEquals(LabEventTest.NUM_POSITIONS_IN_RACK, workingBucket.getBucketEntries().size());
+        for (BucketEntry bucketEntry : workingBucket.getBucketEntries()) {
+            bucketEntry.setLabBatch(workflowBatch);
+        }
 
         leHandler = getLabEventHandler();
         // Bucket for Shearing - enters from workflow?
@@ -270,7 +273,7 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
                 bettaLimsMessageTestFactory, labEventFactory, leHandler,
                 libraryConstructionEntityBuilder.getPondRegRack(),
                 libraryConstructionEntityBuilder.getPondRegRackBarcode(),
-                libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), "testPrefix").invoke();
+                libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), "testPrefix").invoke(false);
 
         // Pooling calculator
         // Strip Tube B
@@ -281,7 +284,7 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
                 Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchRackBarcode()),
                 Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchBarcodes()),
                 hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), "Exome Express", "testPrefix");
-        qtpEntityBuilder.invoke();
+        qtpEntityBuilder.invoke(false);
 
         String flowcellBarcode = "flowcell" + new Date().getTime();
 
@@ -309,11 +312,6 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
         }
         Assert.assertNotNull(denatureRackMap.get(denatureBarcode));
         Assert.assertEquals(denatureRackMap.values().size(),1);
-
-        String miSeqFlowcellBarcode = "MiSeq" + flowcellBarcode;
-                MiSeqReagentKitJaxbBuilder miSeqReagentKitJaxbBuilder =
-                new MiSeqReagentKitJaxbBuilder(denatureRackMap, miSeqReagentKitBarcode, miSeqFlowcellBarcode);
-        miSeqReagentKitJaxbBuilder.invoke();
 
         // Register run
         IlluminaSequencingRunFactory illuminaSequencingRunFactory =

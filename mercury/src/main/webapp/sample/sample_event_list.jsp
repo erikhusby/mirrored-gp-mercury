@@ -65,6 +65,7 @@
                     <td>
                         <c:forEach items="${bean.getSampleInstancesForSample(vessel, sample, 'ANY')}"
                                    var="sampleInstance">
+                            <%--@elvariable id="sampleInstance" type="org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance"--%>
                             <c:forEach items="${vessel.getLastKnownPositionsOfSample(sampleInstance)}" var="position">
                                 ${position}
                             </c:forEach>
@@ -116,6 +117,7 @@
                     <td style="padding: 0;">
                         <c:forEach items="${bean.getSampleInstancesForSample(vessel, sample, 'WITH_PDO')}"
                                    var="sampleInstance">
+                            <%--@elvariable id="sampleInstance" type="org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance"--%>
                             <c:forEach items="${sampleInstance.getLabBatchCompositionInVesselContext(vessel)}"
                                        var="batchComposition">
                                 <c:if test="${not empty batchComposition.labBatch.businessKey}">

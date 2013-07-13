@@ -3,13 +3,13 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabBatchComposition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.MolecularState;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import javax.annotation.Nullable;
@@ -21,71 +21,35 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * An aliquot of a sample in a particular molecular state.
- * <p/>
- * "Molecular state" describes the molecular changes the target has undergone.  Knowing the molecular state is key to
- * identifying what lab processes the sample instance can undergo.
- * <p/>
- * This might all seem a bit too abstract.  Consider what our users are trying to do when the search for lims materials:
- * they're trying to find some piece of plastic that contains a sample in a state that is amenable to a particular
- * "next" lab step.
- * <p/>
- * For example, currently you ask for denatured illumina libraries so you can do some topoff sequencing.  But
- * "denatured" doesn't tell the whole story of the state of the DNA.  So you say "Oh, I want the denatured libraries for
- * hybrid selection."  This turns into a bit of a workflow query in the current squid, but if we want users to be able
- * to inject samples in any state into our lab, we don't want to rely on our workflow to tell us the state of the
- * library.  We want to know the molecular state.
- * <p/>
- * So instead of saying "give me the denatured libraries which are associated with a hybrid selection work request", we
- * say "give me the libraries that are denatured and are in a molecular status which is amenable to pooling for the
- * catch operation."
- * <p/>
- * This might seem like an overly subtle difference, but when a collaborator says to us "Hey, I did my own hybrid
- * selection and pooling, can you just sequence my library?", the current answer is "not unless we backfill a bunch of
- * fake workflow information first.", which then breaks reporting because what we're doing is saying we actually did all
- * the prep work, when in fact we didn't.
- * <p/>
- * A good challenge for whether this model works in reality is to take all possible molecular state configurations and
- * map them to solexa_library_type, four54_library_type, etc.  If you can take the molecular state and produce a simple
- * string that summarizes that state, we're all good.  One caveat is that the current library "types" conflate they
- * "why" (for example, 454 library type "RNA rework aliquot") with the molecular status.
- * <p/>
- * There's a fuzzy line between molecular state "facts" and measured attributes, like concentration and volume.  Metrics
- * are captured on containers for many things at 320.  See LabVessel.getMetric() for examples.  At the same time,
- * however, external collaborators may ship us samples and tell us various metrics, so we have to be able to resolve
- * metrics either at the aliquot instance level as part of the sample sheet, or by traversing lims event histories.
- * <p/>
- * The unique key of a SampleInstance is the {@link MercurySample} and the {@link MolecularState}.  You can have the
- * same Goop in a SampleSheet or a {@link LabVessel}, in which case they'll have to have different {@link
- * MolecularState}.
+ * This class is the result of a call to getSampleInstances on a {@link LabVessel}.  It holds: a sample (typically
+ * imported from BSP); LabBatches to which the sample's plastic (including descendants of transfers) have been added;
+ * reagents added to the sample's plastic (including descendants of transfers).
+ * This class is currently transient, i.e. it is not persisted, but is created on demand by transfer traversal logic.
  */
 public class SampleInstance {
 
     private static final Log log = LogFactory.getLog(SampleInstance.class);
 
+    /** Sample, from another system, typically BSP via Athena. */
     private final MercurySample sample;
 
-    private MolecularState molecularState;
-
+    /** Reagents added, e.g. molecular indexes, baits. */
     private final List<Reagent> reagents = new ArrayList<>();
 
-    // todo use this when the definitive batch is known
-    private LabBatch labBatch;
-
-    // All lab batches found in ancestry.
-    private Collection<LabBatch> allLabBatches;
-
-    private String productOrderKey;
+    /** The single LCSET associated with the plastic on which getSampleInstances was called.  This is not set if
+     * traversal logic encounters multiple LCSETs, and can't pick a single one.
+     */
+    private BucketEntry bucketEntry;
 
     // This gets set if the sample instance traverses a SAMPLE_IMPORT lab batch.
     private MercurySample bspExportSample;
 
-    public SampleInstance(MercurySample sample,
-                          MolecularState molecularState) {
-        this.sample = sample;
-        this.molecularState = molecularState;
-    }
+    /** All lab batches found during the traversal */
+    private Collection<LabBatch> allLabBatches;
 
+    public SampleInstance(MercurySample sample) {
+        this.sample = sample;
+    }
 
     /**
      * Ultimately from whence this instance
@@ -95,26 +59,16 @@ public class SampleInstance {
      * (think of "just kiosk that" in the current
      * model, except that it would actually work)
      *
-     * @return
+     * @return sample
      */
     public MercurySample getStartingSample() {
         return sample;
     }
 
     /**
-     * What is the molecular state  of this
-     * sample in this container?
-     *
-     * @return
+     * Adds a reagent encountered during transfer traversal.
+     * @param newReagent reagent to add
      */
-    public MolecularState getMolecularState() {
-        return molecularState;
-    }
-
-    public void setMolecularState(MolecularState molecularState) {
-        this.molecularState = molecularState;
-    }
-
     public void addReagent(Reagent newReagent) {
         // If we're adding a molecular index
         if (OrmUtil.proxySafeIsInstance(newReagent, MolecularIndexReagent.class)) {
@@ -122,9 +76,9 @@ public class SampleInstance {
                     OrmUtil.proxySafeCast(newReagent, MolecularIndexReagent.class);
             boolean foundExistingIndex = false;
             boolean foundMergedScheme = false;
-            // The new index has to be merged with the index in the field, if any
-            // E.g. If the field index is Illumina_P7-M, and the new index is Illumina_P5-M, we need a merged index
-            // called Illumina_P5-M_P7-M.
+            // The new index has to be merged with other indexes encountered, if any.
+            // E.g. If the field index is Illumina_P7-A, and the new index is Illumina_P5-B, we need a merged index
+            // called Illumina_P5-B_P7-A.
             for (int i = 0; i < reagents.size(); i++) {
                 Reagent fieldReagent = reagents.get(i);
                 if (OrmUtil.proxySafeIsInstance(fieldReagent, MolecularIndexReagent.class)) {
@@ -160,6 +114,7 @@ public class SampleInstance {
         return reagents;
     }
 
+    // todo jmt unused?
     /**
      * This getter filters the reagents to return only the indexes.
      *
@@ -181,7 +136,14 @@ public class SampleInstance {
      */
     @Nullable
     public LabBatch getLabBatch() {
-        return labBatch;
+        if (bucketEntry != null) {
+            return bucketEntry.getLabBatch();
+        }
+        return null;
+    }
+
+    public void setBucketEntry(BucketEntry bucketEntry) {
+        this.bucketEntry = bucketEntry;
     }
 
     public Collection<LabBatch> getAllLabBatches() {
@@ -193,10 +155,6 @@ public class SampleInstance {
             allLabBatches = new HashSet<>();
         }
         allLabBatches.addAll(batches);
-        // todo jmt improve this logic
-        if (allLabBatches.size() == 1) {
-            labBatch = allLabBatches.iterator().next();
-        }
     }
 
     public Collection<LabBatch> getAllWorkflowLabBatches() {
@@ -220,9 +178,9 @@ public class SampleInstance {
     public List<LabBatchComposition> getLabBatchCompositionInVesselContext(LabVessel vessel) {
         List<LabBatchComposition> allLabBatchCompositions = vessel.getWorkflowLabBatchCompositions();
         List<LabBatchComposition> filteredBatchCompositions = new ArrayList<>();
-        for (LabBatch localLabBatch : getAllWorkflowLabBatches()) {
+        for (LabBatch labBatch : getAllWorkflowLabBatches()) {
             for (LabBatchComposition composition : allLabBatchCompositions) {
-                if (composition.getLabBatch().equals(localLabBatch)) {
+                if (composition.getLabBatch().equals(labBatch)) {
                     filteredBatchCompositions.add(composition);
                 }
             }
@@ -234,11 +192,10 @@ public class SampleInstance {
 
     @Nullable
     public String getProductOrderKey() {
-        return productOrderKey;
-    }
-
-    public void setProductOrderKey(String productOrderKey) {
-        this.productOrderKey = productOrderKey;
+        if (bucketEntry != null) {
+            return bucketEntry.getPoBusinessKey();
+        }
+        return null;
     }
 
     /**
@@ -247,6 +204,9 @@ public class SampleInstance {
      */
     @Nullable
     public String getWorkflowName() {
+        if (bucketEntry != null && bucketEntry.getLabBatch() != null) {
+            return bucketEntry.getLabBatch().getWorkflowName();
+        }
         String workflowName = null;
         for (LabBatch localLabBatch : allLabBatches) {
             if (localLabBatch.getWorkflowName() != null) {
@@ -254,8 +214,8 @@ public class SampleInstance {
                     workflowName = localLabBatch.getWorkflowName();
                 } else {
                     if(!workflowName.equals(localLabBatch.getWorkflowName())) {
-                        throw new RuntimeException("Conflicting workflows: " + workflowName + ", " +
-                                                   localLabBatch.getWorkflowName());
+                        throw new RuntimeException("Conflicting workflows for sample " + sample.getSampleKey() + ": " +
+                                workflowName + ", " + localLabBatch.getWorkflowName());
                     }
                 }
             }

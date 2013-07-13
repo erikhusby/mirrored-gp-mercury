@@ -67,10 +67,10 @@ public class BillingSessionEtlDbFreeTest {
     }
 
     public void testMakeRecord() throws Exception {
-        EasyMock.expect(billingSessionDao.findById(BillingSession.class, BILLING_SESSION_ID)).andReturn(billingSession);
-        EasyMock.expect(billingSession.getBillingSessionId()).andReturn(BILLING_SESSION_ID);
-        EasyMock.expect(billingSession.getBilledDate()).andReturn(BILLED_DATE);
-        EasyMock.expect(billingSession.getBillingSessionType()).andReturn(BILLING_SESSION_TYPE);
+        EasyMock.expect(billingSessionDao.findById(BillingSession.class, BILLING_SESSION_ID)).andReturn(billingSession).anyTimes();
+        EasyMock.expect(billingSession.getBillingSessionId()).andReturn(BILLING_SESSION_ID).anyTimes();
+        EasyMock.expect(billingSession.getBilledDate()).andReturn(BILLED_DATE).anyTimes();
+        EasyMock.expect(billingSession.getBillingSessionType()).andReturn(BILLING_SESSION_TYPE).anyTimes();
         EasyMock.replay(mocks);
 
         Collection<String> records = billingSessionEtl.dataRecords(etlDateStr, false, BILLING_SESSION_ID);

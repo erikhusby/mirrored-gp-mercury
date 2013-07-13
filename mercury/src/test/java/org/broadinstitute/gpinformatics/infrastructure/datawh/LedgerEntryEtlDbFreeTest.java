@@ -32,7 +32,8 @@ public class LedgerEntryEtlDbFreeTest {
     private static final LedgerEntry.PriceItemType PRICE_ITEM_TYPE = LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM;
     private static final double LEDGER_QUANTITY = 1;
     private static final long BILLING_SESSION_ID = 456;
-    private static final String BILLING_SESSION_MESSAGE = "Billing Successful";
+    private static final String BILLING_SESSION_MESSAGE = "Quote server returned:\nERROR";
+    private static final String FORMATTED_BILLING_SESSION_MESSAGE = BILLING_SESSION_MESSAGE.replace('\n', ' ');
     private static final Date WORK_COMPLETE_DATE = new Date();
     private String datafileDir;
     private LedgerEntryEtl ledgerEntryEtl;
@@ -120,7 +121,7 @@ public class LedgerEntryEtlDbFreeTest {
         Assert.assertEquals(parts[i++], PRICE_ITEM_TYPE.toString());
         Assert.assertEquals(parts[i++], String.valueOf(LEDGER_QUANTITY));
         Assert.assertEquals(parts[i++], String.valueOf(BILLING_SESSION_ID));
-        Assert.assertEquals(parts[i++], BILLING_SESSION_MESSAGE);
+        Assert.assertEquals(parts[i++], FORMATTED_BILLING_SESSION_MESSAGE);
         Assert.assertEquals(parts[i++], EtlTestUtilities.format(WORK_COMPLETE_DATE));
         Assert.assertEquals(parts.length, i);
     }

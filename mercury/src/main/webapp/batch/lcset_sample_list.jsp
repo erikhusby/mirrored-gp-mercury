@@ -15,7 +15,7 @@
                 $j(resultsId).dataTable({
                     "oTableTools":ttExportDefines,
                     "aaSorting":[
-                        [1, 'asc']
+                        [0, 'asc']
                     ],
                     "aoColumns":[
                         {"bSortable":true, sWidth:'100px', sType:'html'},
@@ -23,6 +23,10 @@
                         { "bSortable":true, sType:'numeric'},
                         { "bSortable":true, sType:'numeric'},
                         { "bSortable":true, sType:'numeric'},
+                        { "bSortable":true},
+                        { "bSortable":true},
+                        { "bSortable":true},
+                        { "bSortable":true},
                         { "bSortable":true},
                         { "bSortable":true},
                         { "bSortable":true},
@@ -47,6 +51,10 @@
             <th>Catch Pico</th>
             <th>Pond Pico</th>
             <th>ECO QPCR</th>
+            <th>Export Position</th>
+            <th>Shearing Position</th>
+            <th>Pond Position</th>
+            <th>Catch Position</th>
             <th>Latest Event</th>
             <th>Event Operator</th>
             <th>Event Location</th>
@@ -67,6 +75,10 @@
                     <td> ${vessel.metricsForVesselandDescendants.get("Catch Pico").value} </td>
                     <td> ${vessel.metricsForVesselandDescendants.get("Pond Pico").value} </td>
                     <td> ${vessel.metricsForVesselandDescendants.get("ECO QPCR").value} </td>
+                    <td> ${bean.getPositionsForEvent(vessel, "SAMPLE_IMPORT")}</td>
+                    <td> ${bean.getPositionsForEvent(vessel, "SHEARING_TRANSFER")}</td>
+                    <td> ${bean.getPositionsForEvent(vessel, "POND_ENRICHMENT")}</td>
+                    <td> ${bean.getPositionsForEvent(vessel, "NORMALIZED_CATCH_REGISTRATION")}</td>
                     <td> ${bean.getLatestEventForVessel(vessel).labEventType.name} </td>
                     <td> ${bean.getUserFullName(bean.getLatestEventForVessel(vessel).eventOperator)} </td>
                     <td> ${bean.getLatestEventForVessel(vessel).eventLocation} </td>

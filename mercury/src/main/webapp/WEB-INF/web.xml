@@ -108,6 +108,17 @@
         </taglib>
     </jsp-config -->
 
+
+    <filter>
+        <filter-name>CacheFilter</filter-name>
+        <filter-class>org.broadinstitute.gpinformatics.athena.presentation.filters.CacheFilter</filter-class>
+    </filter>
+
+    <filter>
+        <filter-name>GZipFilter</filter-name>
+        <filter-class>org.broadinstitute.gpinformatics.athena.presentation.filters.GZipFilter</filter-class>
+    </filter>
+
     <filter>
         <filter-name>AuthorizationFilter</filter-name>
         <filter-class>org.broadinstitute.gpinformatics.mercury.presentation.security.AuthorizationFilter</filter-class>
@@ -141,6 +152,36 @@
             <param-value>StripesResources</param-value>
         </init-param>
     </filter>
+
+    <filter-mapping>
+        <filter-name>CacheFilter</filter-name>
+        <url-pattern>/images/*</url-pattern>
+    </filter-mapping>
+
+    <filter-mapping>
+        <filter-name>CacheFilter</filter-name>
+        <url-pattern>/resources/scripts/*</url-pattern>
+    </filter-mapping>
+
+    <filter-mapping>
+        <filter-name>CacheFilter</filter-name>
+        <url-pattern>/resources/css/*</url-pattern>
+    </filter-mapping>
+
+    <filter-mapping>
+        <filter-name>CacheFilter</filter-name>
+        <url-pattern>*.ico</url-pattern>
+    </filter-mapping>
+
+    <filter-mapping>
+        <filter-name>GZipFilter</filter-name>
+        <url-pattern>/resources/scripts/*</url-pattern>
+    </filter-mapping>
+
+    <filter-mapping>
+        <filter-name>GZipFilter</filter-name>
+        <url-pattern>/resources/css/*</url-pattern>
+    </filter-mapping>
 
     <filter-mapping>
         <filter-name>StripesFilter</filter-name>

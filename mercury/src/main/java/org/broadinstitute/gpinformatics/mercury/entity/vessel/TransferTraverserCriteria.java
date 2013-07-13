@@ -5,8 +5,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import javax.annotation.Nonnull;
@@ -20,11 +18,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-
-import static org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria.TraversalControl.ContinueTraversing;
-import static org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria.TraversalControl.StopTraversing;
-import static org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria.TraversalDirection.Ancestors;
-import static org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria.TraversalDirection.Descendants;
 
 /**
  * Implemented by classes that accumulate information from a traversal of transfer history
@@ -269,43 +262,6 @@ public interface TransferTraverserCriteria {
 
     }
 
-    /**
-     * Traverses transfers to find the single sample libraries.
-     */
-    class SingleSampleLibraryCriteria implements TransferTraverserCriteria {
-        private final Map<MercurySample, Collection<LabVessel>> singleSampleLibrariesForInstance =
-                new HashMap<MercurySample, Collection<LabVessel>>();
-
-        @Override
-        public TraversalControl evaluateVesselPreOrder(Context context) {
-            if (context.getLabVessel() != null) {
-                for (SampleInstance sampleInstance : context.getLabVessel().getSampleInstances()) {
-                    MercurySample startingSample = sampleInstance.getStartingSample();
-                    // todo jmt fix this
-//                    if (labVessel.isSingleSampleLibrary(sampleInstance.getSingleProjectPlan().getWorkflowDescription())) {
-//                        if (!singleSampleLibrariesForInstance.containsKey(startingSample)) {
-//                            singleSampleLibrariesForInstance.put(startingSample,new HashSet<LabVessel>());
-//                        }
-//                        singleSampleLibrariesForInstance.get(startingSample).add(labVessel);
-//                    }
-                }
-            }
-            return TraversalControl.ContinueTraversing;
-        }
-
-        @Override
-        public void evaluateVesselInOrder(Context context) {
-        }
-
-        @Override
-        public void evaluateVesselPostOrder(Context context) {
-        }
-
-        public Map<MercurySample, Collection<LabVessel>> getSingleSampleLibraries() {
-            return singleSampleLibrariesForInstance;
-        }
-    }
-
     class NearestLabMetricOfTypeCriteria implements TransferTraverserCriteria {
         private LabMetric.MetricType metricType;
         private Map<Integer, Collection<LabMetric>> labMetricsAtHop = new HashMap<Integer, Collection<LabMetric>>();
@@ -420,7 +376,7 @@ public interface TransferTraverserCriteria {
             if (context.getLabVessel() != null) {
                 vesselList.add(context.getLabVessel());
             } else if (context.getEvent() != null) {
-                if (context.getTraversalDirection() == Descendants) {
+                if (context.getTraversalDirection() == TraversalDirection.Descendants) {
                     vesselList.addAll(context.getEvent().getTargetLabVessels());
                 } else {
                     vesselList.addAll(context.getEvent().getSourceLabVessels());
@@ -467,7 +423,7 @@ public interface TransferTraverserCriteria {
             if (context.getLabVessel() != null) {
                 vesselList.add(context.getLabVessel());
             } else if (context.getEvent() != null) {
-                if (context.getTraversalDirection() == Ancestors) {
+                if (context.getTraversalDirection() == TraversalDirection.Ancestors) {
                     vesselList.addAll(context.getEvent().getTargetLabVessels());
                 } else {
                     vesselList.addAll(context.getEvent().getSourceLabVessels());
@@ -518,9 +474,9 @@ public interface TransferTraverserCriteria {
             if (OrmUtil.proxySafeIsInstance(context.getLabVessel(), TwoDBarcodedTube.class)) {
                 tubes.add(context.getLabVessel());
                 vesselAndPositions.add(new VesselAndPosition(context.getLabVessel(), context.getVesselPosition()));
-                return StopTraversing;
+                return TraversalControl.StopTraversing;
             } else {
-                return ContinueTraversing;
+                return TraversalControl.ContinueTraversing;
             }
         }
 
@@ -557,9 +513,9 @@ public interface TransferTraverserCriteria {
                 if (tube == null) {
                     tube = context.getLabVessel();
                 }
-                return StopTraversing;
+                return TraversalControl.StopTraversing;
             }
-            return ContinueTraversing;
+            return TraversalControl.ContinueTraversing;
         }
 
         @Override
@@ -589,7 +545,7 @@ public interface TransferTraverserCriteria {
             if (OrmUtil.proxySafeIsInstance(context.getLabVessel(), typeParameterClass)) {
                 descendantsOfVesselType.add(typeParameterClass.cast(context.getLabVessel()));
             }
-            return ContinueTraversing;
+            return TraversalControl.ContinueTraversing;
         }
 
         @Override
@@ -606,32 +562,67 @@ public interface TransferTraverserCriteria {
     }
 
     public class VesselForEventTypeCriteria implements TransferTraverserCriteria {
-        private LabEventType type;
-        private Map<LabVessel, LabEvent> vesselsForLabEventType = new HashMap<>();
+        private List<LabEventType> types;
+        private Map<LabEvent, Set<LabVessel>> vesselsForLabEventType = new HashMap<>();
 
-        public VesselForEventTypeCriteria(LabEventType type) {
-            this.type = type;
+        public VesselForEventTypeCriteria(List<LabEventType> type) {
+            this.types = type;
         }
 
         @Override
         public TraversalControl evaluateVesselPreOrder(
                 Context context) {
             LabVessel vessel = context.getLabVessel();
+            LabEvent event = context.getEvent();
+            if (event != null) {
+                evaluteEvent(vessel, event);
+            }
             if (vessel != null) {
-                for (LabEvent event : vessel.getEvents()) {
-                    if (type.equals(event.getLabEventType())) {
-                        for (LabVessel targetVessel : event.getTargetLabVessels()) {
-                            if (targetVessel.getContainerRole() != null
-                                && targetVessel.getContainerRole().getContainedVessels().contains(vessel)) {
-                                vesselsForLabEventType.put(vessel, event);
-                            } else if (targetVessel.equals(vessel)) {
-                                vesselsForLabEventType.put(vessel, event);
-                            }
+                //check all in place events and descendant in place events
+                for (LabEvent inPlaceEvent : vessel.getInPlaceEvents()) {
+                    evaluteEvent(vessel, inPlaceEvent);
+                }
+                for (LabVessel descendant : vessel.getDescendantVessels()) {
+                    for (LabEvent inPlaceEvent : descendant.getInPlaceEvents()) {
+                        evaluteEvent(vessel, inPlaceEvent);
+                    }
+                }
+            }
+            return TraversalControl.ContinueTraversing;
+        }
+
+        private void evaluteEvent(LabVessel vessel, LabEvent event) {
+            if (types.contains(event.getLabEventType())) {
+                //if this is in place just add the vessel
+                if (event.getInPlaceLabVessel() != null) {
+                    Set<LabVessel> vessels = vesselsForLabEventType.get(event);
+                    if (vessels == null) {
+                        vessels = new HashSet<>();
+                    }
+                    vessels.add(vessel);
+                    vesselsForLabEventType.put(event, vessels);
+                }
+                //otherwise check the target vessels
+                for (LabVessel targetVessel : event.getTargetLabVessels()) {
+                    Set<LabVessel> vessels = vesselsForLabEventType.get(event);
+                    if (vessels == null) {
+                        vessels = new HashSet<>();
+                    }
+                    if (vessel == null) {
+                        vessels.add(targetVessel);
+                        vesselsForLabEventType.put(event, vessels);
+                    } else {
+                        vessels.add(vessel);
+                        //if we are a container and we contain the vessel then add it
+                        if (targetVessel.getContainerRole() != null
+                            && targetVessel.getContainerRole().getContainedVessels().contains(vessel)) {
+                            vesselsForLabEventType.put(event, vessels);
+                        } else if (targetVessel.equals(vessel)) {
+                            vesselsForLabEventType.put(event, vessels);
                         }
                     }
                 }
             }
-            return ContinueTraversing;
         }
 
         @Override
@@ -642,7 +633,7 @@ public interface TransferTraverserCriteria {
         public void evaluateVesselPostOrder(Context context) {
         }
 
-        public Map<LabVessel, LabEvent> getVesselsForLabEventType() {
+        public Map<LabEvent, Set<LabVessel>> getVesselsForLabEventType() {
             return vesselsForLabEventType;
         }
     }

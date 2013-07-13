@@ -14,7 +14,6 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
-import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
@@ -61,8 +60,6 @@ public class BaseEventTest {
 
     private LabBatchEjb labBatchEJB;
 
-    private BucketEjb bucketEjb;
-
     protected final LabEventFactory.LabEventRefDataFetcher labEventRefDataFetcher =
             new LabEventFactory.LabEventRefDataFetcher() {
 
@@ -92,7 +89,6 @@ public class BaseEventTest {
         JiraTicketDao mockJira = EasyMock.createNiceMock(JiraTicketDao.class);
         labBatchEJB.setJiraTicketDao(mockJira);
         labEventFactory.setLabEventRefDataFetcher(labEventRefDataFetcher);
-        bucketEjb = new BucketEjb(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB);
     }
 
     /**
@@ -157,8 +153,8 @@ public class BaseEventTest {
      * @param lcsetSuffix          Set this non-null to override the lcset id number.
      * @param rackBarcodeSuffix    rack barcode suffix.
      * @param barcodeSuffix        Uniquifies the generated vessel barcodes. NOT date if test quickly invokes twice.
-     * @param archiveBucketEntries allows a DBFree test case to force "ancestor" tubes to be currently in a bucket
-     *                             for scenarios where that state is important to the test
+     * @param archiveBucketEntries Setting this true removes all samples from the bucket after sending the PicoPlating
+     *                             message, which is the normal case.
      *
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
@@ -177,6 +173,9 @@ public class BaseEventTest {
         JiraServiceStub.setCreatedIssueSuffix(defaultLcsetSuffix);
 
         Bucket workingBucket = createAndPopulateBucket(mapBarcodeToTube, productOrder, "Pico/Plating Bucket");
+        for (BucketEntry bucketEntry : workingBucket.getBucketEntries()) {
+            bucketEntry.setLabBatch(workflowBatch);
+        }
 
         PicoPlatingEntityBuilder invoke = new PicoPlatingEntityBuilder(bettaLimsMessageTestFactory,
                 labEventFactory, getLabEventHandler(),
@@ -228,6 +227,9 @@ public class BaseEventTest {
         labBatchEJB.createLabBatch(workflowBatch, "scotmatt", CreateFields.IssueType.EXOME_EXPRESS);
 
         Bucket workingBucket = createAndPopulateBucket(mapBarcodeToTube, productOrder, "Preflight Bucket");
+        for (BucketEntry bucketEntry : workingBucket.getBucketEntries()) {
+            bucketEntry.setLabBatch(workflowBatch);
+        }
 
         BucketDao mockBucketDao = EasyMock.createNiceMock(BucketDao.class);
         EasyMock.expect(mockBucketDao.findByName("Preflight Bucket")).andReturn(workingBucket);

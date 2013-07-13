@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -159,7 +160,7 @@ public class MercuryOrSquidRouterTest {
     }
 
     private BSPSampleDTO makeBspSampleDTO(String collaboratorSampleId) {
-        Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>();
+        Map<BSPSampleSearchColumn, String> dataMap = new HashMap<>();
         dataMap.put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, collaboratorSampleId);
         return new BSPSampleDTO(dataMap);
     }
@@ -367,13 +368,16 @@ public class MercuryOrSquidRouterTest {
         order.setJiraTicketKey(jiraTicketKey);
         when(mockAthenaClientService.retrieveProductOrderDetails(jiraTicketKey)).thenReturn(order);
         tube.addSample(new MercurySample("SM-1"));
+        BucketEntry bucketEntry = null;
         if (bucket != null) {
-            bucket.addEntry(jiraTicketKey, tube,
-                    org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry.BucketEntryType.PDO_ENTRY);
+            bucketEntry = bucket.addEntry(jiraTicketKey, tube, BucketEntry.BucketEntryType.PDO_ENTRY);
         }
         LabBatch labBatch = new LabBatch("LCSET-" + productOrderSequence, Collections.<LabVessel>singleton(tube),
                 LabBatch.LabBatchType.WORKFLOW);
         labBatch.setWorkflowName(product.getWorkflowName());
+        if (bucketEntry != null) {
+            bucketEntry.setLabBatch(labBatch);
+        }
         return order;
     }
 

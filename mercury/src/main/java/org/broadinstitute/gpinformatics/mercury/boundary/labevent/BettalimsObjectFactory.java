@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.CherryPickSourceType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.MetadataType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReagentType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
@@ -31,6 +32,10 @@ public class BettalimsObjectFactory {
         return positionMapType;
     }
 
+    public static ReceptacleType createReceptacleType(String barcode, String receptacleType, String position) {
+        return createReceptacleType(barcode, receptacleType, position, null, null, null, null, null, null);
+    }
+
     public static ReceptacleType createReceptacleType(String barcode, String receptacleType, String position,
                                                       String materialType, Double volume, Double concentration,
                                                       Double fragmentSize, List<ReagentType> reagent,
@@ -50,5 +55,14 @@ public class BettalimsObjectFactory {
             receptacle.getMetadata().addAll(metadata);
         }
         return receptacle;
+    }
+
+    public static PlateType createPlateType(String barcode, String physType, String section, String tubeType) {
+        PlateType plateType = new PlateType();
+        plateType.setBarcode(barcode);
+        plateType.setPhysType(physType);
+        plateType.setSection(section);
+        plateType.setTubeType(tubeType);
+        return plateType;
     }
 }
