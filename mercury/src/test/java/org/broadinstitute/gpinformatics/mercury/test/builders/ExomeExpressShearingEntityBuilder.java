@@ -74,8 +74,10 @@ public class ExomeExpressShearingEntityBuilder {
 
         LabEventTest.validateWorkflow("ShearingTransfer", mapBarcodeToTube.values());
         Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
-        mapBarcodeToVessel.put(preflightRack.getLabel(), preflightRack);
-        for (TwoDBarcodedTube twoDBarcodedTube : preflightRack.getContainerRole().getContainedVessels()) {
+        if (preflightRack != null) {
+            mapBarcodeToVessel.put(preflightRack.getLabel(), preflightRack);
+        }
+        for (TwoDBarcodedTube twoDBarcodedTube : mapBarcodeToTube.values()) {
             mapBarcodeToVessel.put(twoDBarcodedTube.getLabel(), twoDBarcodedTube);
         }
 

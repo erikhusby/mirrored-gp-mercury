@@ -9,11 +9,13 @@ import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProduc
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
+import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
@@ -60,6 +62,8 @@ public class BaseEventTest {
 
     private LabBatchEjb labBatchEJB;
 
+    private BucketEjb bucketEjb;
+
     protected final LabEventFactory.LabEventRefDataFetcher labEventRefDataFetcher =
             new LabEventFactory.LabEventRefDataFetcher() {
 
@@ -83,12 +87,16 @@ public class BaseEventTest {
     public void setUp() {
         labBatchEJB = new LabBatchEjb();
         labBatchEJB.setAthenaClientService(AthenaClientProducer.stubInstance());
-        labBatchEJB.setJiraService(JiraServiceProducer.stubInstance());
+        JiraService jiraService = JiraServiceProducer.stubInstance();
+        labBatchEJB.setJiraService(jiraService);
         labBatchEJB.setLabBatchDao(EasyMock.createMock(LabBatchDAO.class));
 
         JiraTicketDao mockJira = EasyMock.createNiceMock(JiraTicketDao.class);
         labBatchEJB.setJiraTicketDao(mockJira);
+
         labEventFactory.setLabEventRefDataFetcher(labEventRefDataFetcher);
+
+        bucketEjb = new BucketEjb(labEventFactory, jiraService, labBatchEJB);
     }
 
     /**
@@ -145,6 +153,40 @@ public class BaseEventTest {
     }
 
     /**
+     *
+     * @param mapBarcodeToTube     A map of barcodes to tubes that will be added to the bucket and drained into the
+     *                             batch.
+     * @param productOrder         The product order to use for bucket entries.
+     * @param workflowBatch        The batch that will be used for this process.
+     * @param lcsetSuffix          Set this non-null to override the lcset id number.
+     * @return
+     */
+    public Bucket bucketBatchAndDrain(Map<String, TwoDBarcodedTube> mapBarcodeToTube, ProductOrder productOrder,
+            LabBatch workflowBatch, String lcsetSuffix) {
+        Bucket workingBucket = createAndPopulateBucket(mapBarcodeToTube, productOrder, "Pico/Plating Bucket");
+
+        // Controls what the created lcset id is by temporarily overriding the static variable.
+        String defaultLcsetSuffix = JiraServiceStub.getCreatedIssueSuffix();
+        if (lcsetSuffix != null) {
+            JiraServiceStub.setCreatedIssueSuffix(lcsetSuffix);
+        }
+        labBatchEJB.createLabBatch(workflowBatch, "scottmat", CreateFields.IssueType.EXOME_EXPRESS);
+        JiraServiceStub.setCreatedIssueSuffix(defaultLcsetSuffix);
+
+        bucketEjb.startBucketDrain(workingBucket.getBucketEntries(), "pdunlea", null, false);
+        for (BucketEntry bucketEntry : workingBucket.getBucketEntries()) {
+            bucketEntry.setLabBatch(workflowBatch);
+        }
+        return workingBucket;
+    }
+
+    public void archiveBucketEntries(Bucket bucket) {
+        for (BucketEntry picoEntries : bucket.getBucketEntries()) {
+            picoEntries.setStatus(BucketEntry.Status.Archived);
+        }
+    }
+
+    /**
      * This method runs the entities through the pico/plating process.
      *
      * @param mapBarcodeToTube     A map of barcodes to tubes that will be run the starting point of the pico/plating process.
@@ -164,30 +206,9 @@ public class BaseEventTest {
                                                           String barcodeSuffix, boolean archiveBucketEntries) {
         String rackBarcode = "REXEX" + rackBarcodeSuffix;
 
-        // Controls what the created lcset id is by temporarily overriding the static variable.
-        String defaultLcsetSuffix = JiraServiceStub.getCreatedIssueSuffix();
-        if (lcsetSuffix != null) {
-            JiraServiceStub.setCreatedIssueSuffix(lcsetSuffix);
-        }
-        labBatchEJB.createLabBatch(workflowBatch, "scottmat", CreateFields.IssueType.EXOME_EXPRESS);
-        JiraServiceStub.setCreatedIssueSuffix(defaultLcsetSuffix);
-
-        Bucket workingBucket = createAndPopulateBucket(mapBarcodeToTube, productOrder, "Pico/Plating Bucket");
-        for (BucketEntry bucketEntry : workingBucket.getBucketEntries()) {
-            bucketEntry.setLabBatch(workflowBatch);
-        }
-
-        PicoPlatingEntityBuilder invoke = new PicoPlatingEntityBuilder(bettaLimsMessageTestFactory,
+        return new PicoPlatingEntityBuilder(bettaLimsMessageTestFactory,
                 labEventFactory, getLabEventHandler(),
                 mapBarcodeToTube, rackBarcode, barcodeSuffix).invoke();
-
-        if (archiveBucketEntries) {
-            for (BucketEntry picoEntries : workingBucket.getBucketEntries()) {
-                picoEntries.setStatus(BucketEntry.Status.Archived);
-            }
-        }
-
-        return invoke;
     }
 
     /**
