@@ -16,6 +16,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceExcep
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.MiSeqReagentKitDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -47,18 +48,23 @@ public class SequencingTemplateFactory {
     @Inject
     LabVesselDao labVesselDao;
 
+    @Inject
+    LabBatchDAO labBatchDAO;
+
     /**
      * What you will be searching for with the ID parameter in fetchSequencingTemplate.
      * Yes, this is an enum of enums. Having a unique enum which was basically a subset of
      * LabVessel.ContainerType seemed creepy.
      * <p/>
-     * FTC Ticket names are not yet supported
+     * FCT Ticket names are not yet supported
      */
     public static enum QueryVesselType {
         FLOWCELL(LabVessel.ContainerType.FLOWCELL),
         TUBE(LabVessel.ContainerType.TUBE),
         STRIP_TUBE(LabVessel.ContainerType.STRIP_TUBE),
-        MISEQ_REAGENT_KIT(LabVessel.ContainerType.MISEQ_REAGENT_KIT);
+        MISEQ_REAGENT_KIT(LabVessel.ContainerType.MISEQ_REAGENT_KIT),
+        FLOWCELL_TICKET(LabVessel.ContainerType.TUBE),
+        DENATURE_TUBE(LabVessel.ContainerType.TUBE);
 
         private LabVessel.ContainerType value;
 
@@ -93,26 +99,32 @@ public class SequencingTemplateFactory {
         case FLOWCELL:
             IlluminaFlowcell illuminaFlowcell = illuminaFlowcellDao.findByBarcode(id);
             if (illuminaFlowcell == null) {
-                throw new RuntimeException(String.format("Flowcell '%s' was not found.", id));
+                throw new InformaticsServiceException(String.format("Flowcell '%s' was not found.", id));
             }
             loadedVesselsAndPositions = getLoadingVessels(illuminaFlowcell);
             return getSequencingTemplate(illuminaFlowcell, loadedVesselsAndPositions, isPoolTest);
         case MISEQ_REAGENT_KIT:
             MiSeqReagentKit miSeqReagentKit = miSeqReagentKitDao.findByBarcode(id);
             if (miSeqReagentKit == null) {
-                throw new RuntimeException(String.format("MiSeq Reagent Kit '%s' was not found.", id));
+                throw new InformaticsServiceException(String.format("MiSeq Reagent Kit '%s' was not found.", id));
             }
             return getSequencingTemplate(miSeqReagentKit, isPoolTest);
         case TUBE:
-            LabVessel denatureTube = labVesselDao.findByIdentifier(id);
-            if (denatureTube == null) {
-                throw new InformaticsServiceException(String.format("Denature Tube '%s' was not found.", id));
+        case DENATURE_TUBE:
+            LabVessel dilutionTube = labVesselDao.findByIdentifier(id);
+            if (dilutionTube == null) {
+                throw new InformaticsServiceException(String.format("Tube '%s' was not found.", id));
             }
-            return getSequencingTemplate(denatureTube, isPoolTest);
+            return getSequencingTemplate(dilutionTube, isPoolTest, queryVesselType);
+
+        case FLOWCELL_TICKET:
+            LabBatch fctTicket = labBatchDAO.findByBusinessKey(id);
+            return getSequencingTemplate(fctTicket, isPoolTest);
         // Don't support the following for now, so fall through and throw exception.
         case STRIP_TUBE:
         default:
-            throw new RuntimeException(String.format("Sequencing template unavailable for %s.", queryVesselType));
+            throw new InformaticsServiceException(
+                    String.format("Sequencing template unavailable for %s.", queryVesselType));
         }
     }
 
@@ -137,55 +149,89 @@ public class SequencingTemplateFactory {
     /**
      * This method gets the sequencing template given a denature tube.
      *
-     * @param denatureTube The denature tube to create the sequencing template for.
+     * @param dilutionTube The Dilution tube to create the sequencing template for.
      * @param isPoolTest   A boolean to determine if this is a MiSeq pool test run or not.
+     * @param tubeType
      *
      * @return Returns a populated sequencing template.
      */
-    public SequencingTemplateType getSequencingTemplate(LabVessel denatureTube, boolean isPoolTest) {
+    public SequencingTemplateType getSequencingTemplate(LabVessel dilutionTube, boolean isPoolTest,
+                                                        QueryVesselType tubeType) {
         SequencingConfigDef sequencingConfig = getSequencingConfig(isPoolTest);
-        Set<LabBatch> labBatches;
-        if (isPoolTest) {
-            labBatches = denatureTube.getLabBatchesOfType(LabBatch.LabBatchType.MISEQ);
-        } else {
-            labBatches = denatureTube.getLabBatchesOfType(LabBatch.LabBatchType.FCT);
+
+        Set<LabBatchStartingVessel> batchReferences;
+        Set<LabBatch> labBatches = new HashSet<>();
+        switch (tubeType) {
+        case TUBE:
+            batchReferences = dilutionTube.getDilutionReferences();
+            for (LabBatchStartingVessel reference : batchReferences) {
+                labBatches.add(reference.getLabBatch());
+            }
+            break;
+        case DENATURE_TUBE:
+
+            if (isPoolTest) {
+                labBatches = dilutionTube.getLabBatchesOfType(LabBatch.LabBatchType.MISEQ);
+            } else {
+                labBatches = dilutionTube.getLabBatchesOfType(LabBatch.LabBatchType.FCT);
+            }
+            break;
         }
+
         if (labBatches.size() > 1 && !isPoolTest) {
             throw new InformaticsServiceException("Found more than one FCT batch for denature tube.");
         }
         if (!labBatches.isEmpty()) {
             LabBatch fctBatch = labBatches.iterator().next();
-            SequencingTemplateType sequencingTemplate = LimsQueryObjectFactory.createSequencingTemplate(null,
-                    null, isPoolTest, sequencingConfig.getInstrumentWorkflow().getValue(),
-                    sequencingConfig.getChemistry().getValue(), sequencingConfig.getReadStructure().getValue());
-            Set<LabBatchStartingVessel> startingFCTVessels = fctBatch.getLabBatchStartingVessels();
-            if (startingFCTVessels.size() != 1) {
-                throw new InformaticsServiceException(
-                        String.format("More than one starting denature tube for FCT ticket %s",
-                                fctBatch.getBatchName()));
-            } else {
-                LabBatchStartingVessel startingVessel = startingFCTVessels.iterator().next();
-                List<SequencingTemplateLaneType> lanes = new ArrayList<>();
-                Iterator<String> positionNames;
-                if (isPoolTest) {
-                    positionNames = IlluminaFlowcell.FlowcellType.MiSeqFlowcell.getVesselGeometry().getPositionNames();
-                } else {
-                    positionNames =
-                            IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell.getVesselGeometry().getPositionNames();
-                }
-                while (positionNames.hasNext()) {
-                    String vesselPosition = positionNames.next();
-                    SequencingTemplateLaneType lane =
-                            LimsQueryObjectFactory.createSequencingTemplateLaneType(vesselPosition,
-                                    (double) startingVessel.getConcentration(),
-                                    startingVessel.getLabVessel().getLabel());
-                    lanes.add(lane);
-                }
-                sequencingTemplate.getLanes().addAll(lanes);
-                return sequencingTemplate;
-            }
+            return getSequencingTemplateByLabBatch(isPoolTest, sequencingConfig, fctBatch);
         } else {
-            throw new InformaticsServiceException("Could not find FCT batch for denature tube.");
+            throw new InformaticsServiceException("Could not find FCT batch for tube " + dilutionTube.getLabel() + ".");
+        }
+    }
+
+    /**
+     * @param labBatch
+     * @param isPoolTest
+     *
+     * @return
+     */
+    public SequencingTemplateType getSequencingTemplate(LabBatch labBatch, boolean isPoolTest) {
+        SequencingConfigDef sequencingConfig = getSequencingConfig(isPoolTest);
+
+        return getSequencingTemplateByLabBatch(isPoolTest, sequencingConfig, labBatch);
+    }
+
+    private SequencingTemplateType getSequencingTemplateByLabBatch(boolean isPoolTest,
+                                                                   SequencingConfigDef sequencingConfig,
+                                                                   LabBatch fctBatch) {
+        SequencingTemplateType sequencingTemplate = LimsQueryObjectFactory.createSequencingTemplate(null,
+                null, isPoolTest, sequencingConfig.getInstrumentWorkflow().getValue(),
+                sequencingConfig.getChemistry().getValue(), sequencingConfig.getReadStructure().getValue());
+        Set<LabBatchStartingVessel> startingFCTVessels = fctBatch.getLabBatchStartingVessels();
+        if (startingFCTVessels.size() != 1) {
+            throw new InformaticsServiceException(
+                    String.format("More than one starting denature tube for FCT ticket %s",
+                            fctBatch.getBatchName()));
+        } else {
+            LabBatchStartingVessel startingVessel = startingFCTVessels.iterator().next();
+            List<SequencingTemplateLaneType> lanes = new ArrayList<>();
+            Iterator<String> positionNames;
+            if (isPoolTest) {
+                positionNames = IlluminaFlowcell.FlowcellType.MiSeqFlowcell.getVesselGeometry().getPositionNames();
+            } else {
+                positionNames =
+                        IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell.getVesselGeometry().getPositionNames();
+            }
+            while (positionNames.hasNext()) {
+                String vesselPosition = positionNames.next();
+                SequencingTemplateLaneType lane =
+                        LimsQueryObjectFactory.createSequencingTemplateLaneType(vesselPosition,
+                                (double) startingVessel.getConcentration(),
+                                startingVessel.getLabVessel().getLabel());
+                lanes.add(lane);
+            }
+            sequencingTemplate.getLanes().addAll(lanes);
+            return sequencingTemplate;
         }
     }
 

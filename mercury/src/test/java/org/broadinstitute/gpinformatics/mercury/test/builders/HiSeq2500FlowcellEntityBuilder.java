@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEv
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.AbstractEventHandler;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
@@ -84,6 +85,7 @@ public class HiSeq2500FlowcellEntityBuilder {
                     put(denatureRack.getLabel(), denatureRack);
                 }});
         labEventHandler.processEvent(dilutionTransferEntity);
+        AbstractEventHandler.applyEventSpecificHandling(dilutionTransferEntity, dilutionJaxb);
         dilutionRack = (TubeFormation) dilutionTransferEntity.getTargetLabVessels().iterator().next();
         Assert.assertEquals(denatureRack.getContainerRole().getContainedVessels().size(), 1);
 
