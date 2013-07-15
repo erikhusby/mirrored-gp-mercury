@@ -353,9 +353,9 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
 
         EasyMock.expect(runCartridge.getNearestTubeAncestorsForLanes()).andReturn(laneVesselsAndPositions);
         EasyMock.expect(sampleInstance.getAllWorkflowLabBatches()).andReturn(
-                Collections.<LabBatch>singletonList(workflowBatch)).times(2);
+                Collections.<LabBatch>singletonList(workflowBatch));
         EasyMock.expect(sampleInstance2.getAllWorkflowLabBatches()).andReturn(
-                Collections.<LabBatch>singletonList(workflowBatch)).times(2);
+                Collections.<LabBatch>singletonList(workflowBatch));
 
         String pdoKey = "PDO-7654";
         EasyMock.expect(sampleInstance.getProductOrderKey()).andReturn(pdoKey);

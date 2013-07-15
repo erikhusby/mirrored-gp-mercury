@@ -301,8 +301,7 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
 
                         boolean canEtl = !StringUtils.isBlank(flowcellBarcode)
                                          && !StringUtils.isBlank(productOrderId)
-                                         && !StringUtils.isBlank(researchProjectId)
-                                         && !batchName.equals(NONE) && !batchName.equals(MULTIPLE);
+                                         && !StringUtils.isBlank(researchProjectId);
 
                         dtos.add(new SequencingRunDto(entity, flowcellBarcode, position.name(),
                                 molecularIndexingSchemeName, productOrderId, sampleKey, researchProjectId, canEtl,

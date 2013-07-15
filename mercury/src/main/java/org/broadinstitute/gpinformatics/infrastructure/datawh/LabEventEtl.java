@@ -315,8 +315,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                                             eventName, workflowName, entity.getEventDate());
 
                                     boolean canEtl = wfDenorm != null &&
-                                                     (pdo != null || !wfDenorm.isProductOrderNeeded()) &&
-                                                     !batchName.equals(NONE) && !batchName.equals(MULTIPLE);
+                                                     (pdo != null || !wfDenorm.isProductOrderNeeded());
 
                                     dtos.add(new EventFactDto(entity, vessel, null, batchName, workflowName,
                                             sample, pdo, wfDenorm, canEtl));

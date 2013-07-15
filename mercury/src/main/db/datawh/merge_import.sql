@@ -919,7 +919,18 @@ IS
 
     FOR new IN im_event_fact_cur LOOP
     BEGIN
--- No update is possible due to lack of common unique key
+    
+      BEGIN
+        -- Reports an invalid batch_name.
+        SELECT 1 INTO v_tmp FROM DUAL
+        WHERE NVL(new.batch_name, 'NONE') NOT IN ('NONE', 'MULTIPLE');
+
+        EXCEPTION WHEN NO_DATA_FOUND
+        THEN RAISE INVALID_LAB_BATCH;
+      END;
+
+
+    -- No update is possible due to lack of common unique key
 
       INSERT INTO event_fact (
         event_fact_id,
@@ -953,7 +964,16 @@ IS
             FROM event_fact
             WHERE event_fact_id = new.event_fact_id
         );
-      EXCEPTION WHEN OTHERS THEN
+        
+      EXCEPTION
+      
+      WHEN INVALID_LAB_BATCH THEN
+      DBMS_OUTPUT.PUT_LINE(
+          TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_event_fact.dat line ' || new.line_number || '  ' ||
+          'Event fact has invalid lab batch name: ' || NVL(new.batch_name, 'NONE'));
+      CONTINUE;
+      
+      WHEN OTHERS THEN
       errmsg := SQLERRM;
       DBMS_OUTPUT.PUT_LINE(
           TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_event_fact.dat line ' || new.line_number || '  ' || errmsg);
@@ -1266,7 +1286,7 @@ IS
       WHEN INVALID_LAB_BATCH THEN
       DBMS_OUTPUT.PUT_LINE(
           TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_sequencing_sample_fact.dat line ' || new.line_number || '  ' ||
-          'Sequencing Fact has lab batch name ' || NVL(new.batch_name, 'NONE'));
+          'Sequencing Fact has invalid lab batch name: ' || NVL(new.batch_name, 'NONE'));
       CONTINUE;
       
       WHEN OTHERS THEN
