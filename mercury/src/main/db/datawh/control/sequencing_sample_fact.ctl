@@ -15,5 +15,6 @@ TRAILING NULLCOLS
  sample_name,
  research_project_id,
  loaded_library_barcode,
- loaded_library_create_date DATE "YYYYMMDDHH24MISS"
+ loaded_library_create_date DATE "YYYYMMDDHH24MISS",
+ batchName
 )

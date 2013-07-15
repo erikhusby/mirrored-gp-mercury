@@ -80,37 +80,36 @@ public class ExtractTransformResource {
         StringBuilder sb = new StringBuilder()
                 .append("<html><head/><body>")
                 .append("<p>SequencingRunId ").append(sequencingRunId).append("</p>")
-                .append("<table cellpadding=\"3\">")
-                .append("<tr><th>canEtl")
-                .append("</th><th>flowcellBarcode")
-                .append("</th><th>position")
-                .append("</th><th>molecularIndexingSchemeName")
-                .append("</th><th>productOrderId")
-                .append("</th><th>sampleKey")
-                .append("</th><th>researchProjectId")
-                .append("</th><th>loadedLibraryBarcode")
-                .append("</th><th>loadedLibraryCreationDate")
-                .append("</th></tr>");
+                .append("<table cellpadding=\"3\">");
 
+        // Outputs the html table header.
+        sb.append(formatHeaderRow(
+                "canEtl",
+                "flowcellBarcode",
+                "position",
+                "molecularIndexingSchemeName",
+                "productOrderId",
+                "sampleKey",
+                "researchProjectId",
+                "loadedLibraryBarcode",
+                "loadedLibraryCreationDate",
+                "batchName"));
+
+        // Outputs html table row for each dto.
         for (SequencingRunDto dto : extractTransform.analyzeSequencingRun(sequencingRunId)) {
-            sb.append("<tr><td>")
-                    .append(dto.isComplete())
-                    .append("</td><td>")
-                    .append(dto.getFlowcellBarcode())
-                    .append("</td><td>")
-                    .append(dto.getPosition())
-                    .append("</td><td>")
-                    .append(dto.getMolecularIndexingSchemeName())
-                    .append("</td><td>")
-                    .append(dto.getProductOrderId())
-                    .append("</td><td>")
-                    .append(dto.getSampleKey())
-                    .append("</td><td>")
-                    .append(dto.getResearchProjectId())
-                    .append("</td><td>")
-                    .append(dto.getLoadingVessel() != null ? dto.getLoadingVessel().getLabel() : null)
-                    .append("</td><td>")
-                    .append(dto.getLoadingVessel() != null ? ExtractTransform.secTimestampFormat.format(dto.getLoadingVessel().getCreatedOn()) : null);
+            sb.append(formatRow(
+                    String.valueOf(dto.canEtl()),
+                    dto.getFlowcellBarcode(),
+                    dto.getPosition(),
+                    dto.getMolecularIndexingSchemeName(),
+                    dto.getProductOrderId(),
+                    dto.getSampleKey(),
+                    dto.getResearchProjectId(),
+                    dto.getLoadingVessel() != null ? dto.getLoadingVessel().getLabel() : "null",
+                    dto.getLoadingVessel() != null && dto.getLoadingVessel().getCreatedOn() != null ?
+                            ExtractTransform.secTimestampFormat.format(dto.getLoadingVessel().getCreatedOn()) : "null",
+                    dto.getBatchName()
+            ));
         }
         sb.append("</table></body></html>");
         return sb.toString();
@@ -129,7 +128,8 @@ public class ExtractTransformResource {
     public String analyzeEvent(@PathParam("labEventId") long labEventId) {
         Long id = null;
         String type = null;
-        // Supresses the column if no indexes are given.
+
+        // Supresses the "molecularIndex" column if no indexes are given.
         boolean showMolecularBarcodes = false;
         for (EventFactDto dto : extractTransform.analyzeEvent(labEventId)) {
             id = (dto.getLabEvent() != null) ? dto.getLabEvent().getLabEventId() : null;
@@ -142,45 +142,78 @@ public class ExtractTransformResource {
         StringBuilder sb = new StringBuilder();
         sb.append("<html><head/><body>")
                 .append("<p>LabEventId ").append(id).append(", EventName ").append(type).append("</p>")
-                .append("<table cellpadding=\"3\">")
-                .append("<tr><th>canEtl")
-                .append("</th><th>labVessel")
-                .append(showMolecularBarcodes ? "</th><th>molecularIndex" : "")
-                .append("</th><th>labBatch")
-                .append("</th><th>labBatchId")
-                .append("</th><th>workflowName")
-                .append("</th><th>sample")
-                .append("</th><th>productOrder")
-                .append("</th><th>workflow")
-                .append("</th><th>process")
-                .append("</th><th>step")
-                .append("</th></tr>");
+                .append("<table cellpadding=\"3\">");
 
+        // Outputs the table header row.
+        sb.append(showMolecularBarcodes ?
+                formatHeaderRow("canEtl",
+                        "labVessel",
+                        "molecularIndex",
+                        "batchName",
+                        "workflowName",
+                        "sample",
+                        "productOrder",
+                        "workflow",
+                        "process",
+                        "step") :
+                formatHeaderRow("canEtl",
+                        "labVessel",
+                        "batchName",
+                        "workflowName",
+                        "sample",
+                        "productOrder",
+                        "workflow",
+                        "process",
+                        "step")
+        );
+
+        // Outputs a table row for each dto.
         for (EventFactDto dto : extractTransform.analyzeEvent(labEventId)) {
-            sb.append("<tr><td>").append(dto.isComplete())
-                    .append("</td><td>")
-                    .append(dto.getLabVessel() != null ? dto.getLabVessel().getLabel() : null)
-                    .append("</td><td>")
-                    .append(showMolecularBarcodes ? dto.getSampleInstanceIndexes() + "</td><td>" : "")
-                    .append(dto.getLabBatch() != null ? dto.getLabBatch().getBusinessKey() : null)
-                    .append("</td><td>")
-                    .append(dto.getLabBatchId())
-                    .append("</td><td>")
-                    .append(dto.getLabBatch() != null ? dto.getLabBatch().getWorkflowName() : null)
-                    .append("</td><td>")
-                    .append(dto.getSample() != null ? dto.getSample().getSampleKey() : null)
-                    .append("</td><td>")
-                    .append(dto.getProductOrder() != null ? dto.getProductOrder().getBusinessKey() : null)
-                    .append("</td><td>")
-                    .append(dto.getWfDenorm() != null ? dto.getWfDenorm().getProductWorkflowName() : null)
-                    .append("</td><td>")
-                    .append(dto.getWfDenorm() != null ? dto.getWfDenorm().getWorkflowProcessName() : null)
-                    .append("</td><td>")
-                    .append(dto.getWfDenorm() != null ? dto.getWfDenorm().getWorkflowStepName() : null)
-                    .append("</td></tr>");
+            sb.append(showMolecularBarcodes ?
+                    formatRow(String.valueOf(dto.isCanEtl()),
+                            dto.getLabVessel() != null ? dto.getLabVessel().getLabel() : "null",
+                            dto.getSampleInstanceIndexes(),
+                            dto.getBatchName(),
+                            dto.getWorkflowName(),
+                            dto.getSample() != null ? dto.getSample().getSampleKey() : "null",
+                            dto.getProductOrder() != null ? dto.getProductOrder().getBusinessKey() : "null",
+                            dto.getWfDenorm() != null ? dto.getWfDenorm().getProductWorkflowName() : "null",
+                            dto.getWfDenorm() != null ? dto.getWfDenorm().getWorkflowProcessName() : "null",
+                            dto.getWfDenorm() != null ? dto.getWfDenorm().getWorkflowStepName() : "null") :
+                    formatRow(String.valueOf(dto.isCanEtl()),
+                            dto.getLabVessel() != null ? dto.getLabVessel().getLabel() : "null",
+                            dto.getBatchName(),
+                            dto.getWorkflowName(),
+                            dto.getSample() != null ? dto.getSample().getSampleKey() : "null",
+                            dto.getProductOrder() != null ? dto.getProductOrder().getBusinessKey() : "null",
+                            dto.getWfDenorm() != null ? dto.getWfDenorm().getProductWorkflowName() : "null",
+                            dto.getWfDenorm() != null ? dto.getWfDenorm().getWorkflowProcessName() : "null",
+                            dto.getWfDenorm() != null ? dto.getWfDenorm().getWorkflowStepName() : "null")
+            );
         }
+
         sb.append("</table></body></html>");
 
+        return sb.toString();
+    }
+
+
+    private String formatRow(String... columns) {
+        return formatRowOrHeader("td", columns);
+    }
+
+    private String formatHeaderRow(String... columns) {
+        return formatRowOrHeader("th", columns);
+    }
+
+    private String formatRowOrHeader(String element, String... columns) {
+        StringBuilder sb = new StringBuilder("<tr>");
+        for (String column : columns) {
+            sb.append("<").append(element).append(">");
+            sb.append(column);
+            sb.append("</").append(element).append(">");
+        }
+        sb.append("</tr>");
         return sb.toString();
     }
 

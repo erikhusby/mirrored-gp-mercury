@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.datawh;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.common.SessionContextUtility;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
@@ -16,9 +17,20 @@ import org.testng.annotations.Test;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
-import static org.easymock.EasyMock.*;
+import static org.easymock.EasyMock.anyLong;
+import static org.easymock.EasyMock.anyObject;
+import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.eq;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.reset;
+import static org.easymock.EasyMock.verify;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotEquals;
 
@@ -37,7 +49,6 @@ public class ExtractTransformDbFreeTest {
     private ExtractTransform extractTransform;
     private final AuditReaderDao auditReaderDao = createMock(AuditReaderDao.class);
     private final LabEventEtl labEventEtl = createMock(LabEventEtl.class);
-    private final LabBatchEtl labBatchEtl = createMock(LabBatchEtl.class);
     private final LabVesselEtl labVesselEtl = createMock(LabVesselEtl.class);
     private final PriceItemEtl priceItemEtl = createMock(PriceItemEtl.class);
     private final ProductEtl productEtl = createMock(ProductEtl.class);
@@ -59,7 +70,6 @@ public class ExtractTransformDbFreeTest {
     private Object[] mocks = new Object[]{
             auditReaderDao,
             labEventEtl,
-            labBatchEtl,
             labVesselEtl,
             priceItemEtl,
             productEtl,
@@ -266,7 +276,6 @@ public class ExtractTransformDbFreeTest {
         expect(productOrderSampleEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
         expect(productOrderEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
         expect(productOrderAddOnEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(labBatchEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
         expect(labVesselEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
         expect(workflowConfigEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
         expect(labEventEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
@@ -285,7 +294,7 @@ public class ExtractTransformDbFreeTest {
 
     public void testBackfillDefaultEnd() {
         long startEtl = System.currentTimeMillis();
-        Class testClass = LabBatch.class;
+        Class testClass = Product.class;
         expect(productEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(1);
         expect(priceItemEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
         expect(researchProjectEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
@@ -296,7 +305,6 @@ public class ExtractTransformDbFreeTest {
         expect(productOrderSampleEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
         expect(productOrderEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
         expect(productOrderAddOnEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(labBatchEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
         expect(labVesselEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
         expect(workflowConfigEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
         expect(labEventEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
@@ -350,7 +358,6 @@ public class ExtractTransformDbFreeTest {
         expect(productOrderSampleEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
         expect(productOrderEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
         expect(productOrderAddOnEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
-        expect(labBatchEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
         expect(labVesselEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
         expect(workflowConfigEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
         expect(labEventEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);

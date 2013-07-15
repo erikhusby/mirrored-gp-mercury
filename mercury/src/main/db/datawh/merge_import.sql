@@ -56,10 +56,6 @@ IS
                                *
                              FROM im_research_project_status
                              WHERE is_delete = 'F';
-  CURSOR im_lab_batch_cur IS SELECT
-                               *
-                             FROM im_lab_batch
-                             WHERE is_delete = 'F';
   CURSOR im_lab_vessel_cur IS SELECT
                                 *
                               FROM im_lab_vessel
@@ -103,6 +99,7 @@ IS
 
   errmsg        VARCHAR2(255);
   PDO_SAMPLE_NOT_IN_EVENT_FACT EXCEPTION;
+  INVALID_LAB_BATCH EXCEPTION;
   v_tmp  NUMBER;
   
   BEGIN
@@ -187,14 +184,6 @@ IS
       SELECT
         product_order_id
       FROM im_product_order
-      WHERE is_delete = 'T'
-    );
-
-    DELETE FROM lab_batch
-    WHERE lab_batch_id IN (
-      SELECT
-        lab_batch_id
-      FROM im_lab_batch
       WHERE is_delete = 'T'
     );
 
@@ -445,39 +434,6 @@ IS
 
     END LOOP;
 
-    FOR new IN im_lab_batch_cur LOOP
-    BEGIN
-      UPDATE lab_batch
-      SET
-        lab_batch_id = new.lab_batch_id,
-        batch_name = new.batch_name,
-        etl_date = new.etl_date
-      WHERE lab_batch_id = new.lab_batch_id;
-
-      INSERT INTO lab_batch (
-        lab_batch_id,
-        batch_name,
-        etl_date
-      )
-        SELECT
-          new.lab_batch_id,
-          new.batch_name,
-          new.etl_date
-        FROM DUAL
-        WHERE NOT EXISTS(
-            SELECT
-              1
-            FROM lab_batch
-            WHERE lab_batch_id = new.lab_batch_id
-        );
-      EXCEPTION WHEN OTHERS THEN
-      errmsg := SQLERRM;
-      DBMS_OUTPUT.PUT_LINE(
-          TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_lab_batch.dat line ' || new.line_number || '  ' || errmsg);
-      CONTINUE;
-    END;
-
-    END LOOP;
 
     FOR new IN im_workflow_cur LOOP
     BEGIN
@@ -963,7 +919,18 @@ IS
 
     FOR new IN im_event_fact_cur LOOP
     BEGIN
--- No update is possible due to lack of common unique key
+    
+      BEGIN
+        -- Reports an invalid batch_name.
+        SELECT 1 INTO v_tmp FROM DUAL
+        WHERE NVL(new.batch_name, 'NONE') NOT IN ('NONE', 'MULTIPLE');
+
+        EXCEPTION WHEN NO_DATA_FOUND
+        THEN RAISE INVALID_LAB_BATCH;
+      END;
+
+
+    -- No update is possible due to lack of common unique key
 
       INSERT INTO event_fact (
         event_fact_id,
@@ -972,7 +939,7 @@ IS
         process_id,
         product_order_id,
         sample_name,
-        lab_batch_id,
+        batch_name,
         station_name,
         lab_vessel_id,
         event_date,
@@ -985,7 +952,7 @@ IS
           new.process_id,
           new.product_order_id,
           new.sample_name,
-          new.lab_batch_id,
+          new.batch_name,
           new.station_name,
           new.lab_vessel_id,
           new.event_date,
@@ -997,7 +964,16 @@ IS
             FROM event_fact
             WHERE event_fact_id = new.event_fact_id
         );
-      EXCEPTION WHEN OTHERS THEN
+        
+      EXCEPTION
+      
+      WHEN INVALID_LAB_BATCH THEN
+      DBMS_OUTPUT.PUT_LINE(
+          TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_event_fact.dat line ' || new.line_number || '  ' ||
+          'Event fact has invalid lab batch name: ' || NVL(new.batch_name, 'NONE'));
+      CONTINUE;
+      
+      WHEN OTHERS THEN
       errmsg := SQLERRM;
       DBMS_OUTPUT.PUT_LINE(
           TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_event_fact.dat line ' || new.line_number || '  ' || errmsg);
@@ -1256,6 +1232,15 @@ IS
         THEN RAISE PDO_SAMPLE_NOT_IN_EVENT_FACT;
       END;
 
+      BEGIN
+        -- Reports an invalid batch_name.
+        SELECT 1 INTO v_tmp FROM DUAL
+        WHERE NVL(new.batch_name, 'NONE') NOT IN ('NONE', 'MULTIPLE');
+
+        EXCEPTION WHEN NO_DATA_FOUND
+        THEN RAISE INVALID_LAB_BATCH;
+      END;
+
       INSERT INTO sequencing_sample_fact (
         sequencing_sample_fact_id,
         flowcell_barcode,
@@ -1267,6 +1252,7 @@ IS
         research_project_id,
         loaded_library_barcode,
         loaded_library_create_date,
+        batch_name,
         etl_date
       )
         SELECT
@@ -1280,6 +1266,7 @@ IS
           new.research_project_id,
           new.loaded_library_barcode,
           new.loaded_library_create_date,
+	  new.batch_name,
           new.etl_date
         FROM DUAL
         WHERE NOT EXISTS(
@@ -1294,6 +1281,12 @@ IS
       DBMS_OUTPUT.PUT_LINE(
           TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_sequencing_sample_fact.dat line ' || new.line_number || '  ' ||
           'Sequencing Fact sample and product order not found in Event_Fact table');
+      CONTINUE;
+      
+      WHEN INVALID_LAB_BATCH THEN
+      DBMS_OUTPUT.PUT_LINE(
+          TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_sequencing_sample_fact.dat line ' || new.line_number || '  ' ||
+          'Sequencing Fact has invalid lab batch name: ' || NVL(new.batch_name, 'NONE'));
       CONTINUE;
       
       WHEN OTHERS THEN

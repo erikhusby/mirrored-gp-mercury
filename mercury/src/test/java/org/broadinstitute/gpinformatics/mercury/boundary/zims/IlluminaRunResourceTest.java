@@ -3,14 +3,30 @@ package org.broadinstitute.gpinformatics.mercury.boundary.zims;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.api.json.JSONConfiguration;
-import edu.mit.broad.prodinfo.thrift.lims.*;
+import edu.mit.broad.prodinfo.thrift.lims.IndexPosition;
+import edu.mit.broad.prodinfo.thrift.lims.LibraryData;
+import edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme;
+import edu.mit.broad.prodinfo.thrift.lims.TZDevExperimentData;
+import edu.mit.broad.prodinfo.thrift.lims.TZamboniLane;
+import edu.mit.broad.prodinfo.thrift.lims.TZamboniLibrary;
+import edu.mit.broad.prodinfo.thrift.lims.TZamboniRead;
+import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.thrift.*;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.ImportFromSquidTest;
-import org.broadinstitute.gpinformatics.mercury.entity.zims.*;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.thrift.MockThriftService;
+import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftFileAccessor;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.ImportFromSquidTest;
+import org.broadinstitute.gpinformatics.mercury.entity.zims.DevExperimentDataBean;
+import org.broadinstitute.gpinformatics.mercury.entity.zims.IndexComponent;
+import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
+import org.broadinstitute.gpinformatics.mercury.entity.zims.MolecularIndexingSchemeBean;
+import org.broadinstitute.gpinformatics.mercury.entity.zims.ThriftConversionUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.zims.ZamboniRead;
+import org.broadinstitute.gpinformatics.mercury.entity.zims.ZamboniReadType;
+import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
+import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
@@ -23,11 +39,20 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
-import static org.testng.Assert.*;
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 public class IlluminaRunResourceTest extends Arquillian {
 
@@ -63,7 +88,7 @@ public class IlluminaRunResourceTest extends Arquillian {
      */
     public static final String PDO_COMPARISON_ERROR_MESSAGE = "check run " + RUN_NAME + " in serialized .thrift file to make sure WRs are linked to " + PDO_KEY;
 
-    private Map<Long,ProductOrder> wrIdToPDO = new HashMap<Long, ProductOrder>();
+    private Map<Long,ProductOrder> wrIdToPDO = new HashMap<>();
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -76,7 +101,7 @@ public class IlluminaRunResourceTest extends Arquillian {
      * directly in container.
      */
     @Test(groups = EXTERNAL_INTEGRATION)
-    public void test_zims_in_container() throws Exception {
+    public void testZimsInContainer() throws Exception {
         // todo arz update the run in QA squid to link all WRS to the PDO
         wrIdToPDO.put(29225L,pdoDao.findByBusinessKey(PDO_KEY));
 
@@ -92,7 +117,7 @@ public class IlluminaRunResourceTest extends Arquillian {
     @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER,
           groups = EXTERNAL_INTEGRATION)
     @RunAsClient
-    public void test_error_handling(@ArquillianResource URL baseUrl) throws Exception {
+    public void testErrorHandling(@ArquillianResource URL baseUrl) throws Exception {
         String url = baseUrl.toExternalForm() + WEBSERVICE_URL;
 
         DefaultClientConfig clientConfig = new DefaultClientConfig();
@@ -107,7 +132,7 @@ public class IlluminaRunResourceTest extends Arquillian {
 
 
     /**
-    * Does the same test as {@link #test_zims_in_container()},
+    * Does the same test as {@link #testZimsInContainer()},
     * but does it over http, which means it's actually checking
     * that various annotations like {@link javax.xml.bind.annotation.XmlAttribute}
     * are applied properly in {@link LibraryBean}.
@@ -116,7 +141,7 @@ public class IlluminaRunResourceTest extends Arquillian {
     @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER,
         groups = EXTERNAL_INTEGRATION)
     @RunAsClient
-    public void test_zims_over_http(@ArquillianResource URL baseUrl) throws Exception {
+    public void testZimsOverHttp(@ArquillianResource URL baseUrl) throws Exception {
         String url = baseUrl.toExternalForm() + WEBSERVICE_URL;
 
         DefaultClientConfig clientConfig = new DefaultClientConfig();
@@ -428,7 +453,7 @@ public class IlluminaRunResourceTest extends Arquillian {
     }
 
     public List<LibraryData> fetchLibraryDetailsByLibraryName(List<String> libraryNames) {
-        List<LibraryData> libraryDataList = new ArrayList<LibraryData>();
+        List<LibraryData> libraryDataList = new ArrayList<>();
         for (String libraryName : libraryNames) {
             LibraryData libraryData = new LibraryData();
             libraryData.setLibraryName(libraryName);

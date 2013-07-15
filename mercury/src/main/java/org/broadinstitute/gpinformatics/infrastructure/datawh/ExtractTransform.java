@@ -12,7 +12,6 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfiguration;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 
-import javax.ejb.EJBException;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.ApplicationScoped;
@@ -30,7 +29,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -140,7 +138,6 @@ public class ExtractTransform implements Serializable {
     @Inject
     public ExtractTransform(
             LabEventEtl labEventEtl,
-            LabBatchEtl labBatchEtl,
             LabVesselEtl labVesselEtl,
             PriceItemEtl priceItemEtl,
             ProductEtl productEtl,
@@ -161,7 +158,6 @@ public class ExtractTransform implements Serializable {
             BillingSessionEtl billingSessionEtl
     ) {
         etlInstances.add(labEventEtl);
-        etlInstances.add(labBatchEtl);
         etlInstances.add(labVesselEtl);
         etlInstances.add(priceItemEtl);
         etlInstances.add(productEtl);
