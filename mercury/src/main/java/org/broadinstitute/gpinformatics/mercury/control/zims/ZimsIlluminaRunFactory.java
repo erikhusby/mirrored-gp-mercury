@@ -16,6 +16,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.DesignedReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
@@ -154,11 +155,31 @@ public class ZimsIlluminaRunFactory {
             ProductOrder productOrder = (sampleInstanceDto.getProductOrderKey() != null) ?
                     mapKeyToProductOrder.get(sampleInstanceDto.getProductOrderKey()) : null;
 
-            // LcSet is null unless there is exactly one workflow lab batch.
+            Set<LabBatch> allLabBatches = new HashSet<>(sampleInstance.getAllLabBatches());
+            List<LabBatch> lcSetBatches = new ArrayList<>();
+            for (LabBatch labBatch : allLabBatches) {
+                if (labBatch.getLabBatchType() == LabBatch.LabBatchType.WORKFLOW) {
+                    lcSetBatches.add(labBatch);
+                }
+            }
+
+            // if there's at least one LCSET batch, and getLabBatch (the singular version) returns null,
+            // then throw an exception
+            if (lcSetBatches.size() > 1 && sampleInstance.getLabBatch() == null) {
+                throw new RuntimeException(
+                        String.format("Expected one LabBatch but found %s.", lcSetBatches.size()));
+            }
             String lcSet = null;
-            LabBatch labBatch = sampleInstance.getLabBatch();
-            if (labBatch != null && labBatch.getJiraTicket() != null) {
-                lcSet = labBatch.getJiraTicket().getTicketId();
+            if (lcSetBatches.size() == 1) {
+                JiraTicket jiraTicket = lcSetBatches.get(0).getJiraTicket();
+                if (jiraTicket != null) {
+                    lcSet = jiraTicket.getTicketId();
+                }
+            // else it is probably a control.
+            } else {
+                if (sampleInstance.getLabBatch() != null) {
+                    lcSet = sampleInstance.getLabBatch().getBatchName();
+                }
             }
 
             // This loop goes through all the reagents and takes the last bait name (under the assumption that
@@ -169,7 +190,8 @@ public class ZimsIlluminaRunFactory {
             List<String> catNames = new ArrayList<>();
             for (Reagent reagent : sampleInstance.getReagents()) {
                 if (OrmUtil.proxySafeIsInstance(reagent, MolecularIndexReagent.class)) {
-                    indexingSchemeEntity = OrmUtil.proxySafeCast(reagent, MolecularIndexReagent.class).getMolecularIndexingScheme();
+                    indexingSchemeEntity =
+                            OrmUtil.proxySafeCast(reagent, MolecularIndexReagent.class).getMolecularIndexingScheme();
                 } else if (OrmUtil.proxySafeIsInstance(reagent, DesignedReagent.class)) {
                     DesignedReagent designedReagent = OrmUtil.proxySafeCast(reagent, DesignedReagent.class);
                     ReagentDesign.ReagentType reagentType = designedReagent.getReagentDesign().getReagentType();

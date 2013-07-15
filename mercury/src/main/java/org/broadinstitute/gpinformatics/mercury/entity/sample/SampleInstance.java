@@ -45,7 +45,7 @@ public class SampleInstance {
     private MercurySample bspExportSample;
 
     /** All lab batches found during the traversal */
-    private Collection<LabBatch> allLabBatches;
+    private Collection<LabBatch> allLabBatches=new HashSet<>();
 
     public SampleInstance(MercurySample sample) {
         this.sample = sample;
@@ -151,9 +151,6 @@ public class SampleInstance {
     }
 
     public void addLabBatches(Collection<LabBatch> batches){
-        if(allLabBatches == null){
-            allLabBatches = new HashSet<>();
-        }
         allLabBatches.addAll(batches);
     }
 
