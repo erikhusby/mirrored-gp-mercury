@@ -31,6 +31,8 @@ public class SequencingRun {
 
     private String actualReadStructure;
 
+    private Double imagedAreaPerMM2;
+
     @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "run_cartridge")
     private RunCartridge runCartridge;
@@ -152,5 +154,13 @@ public class SequencingRun {
 
     public void setActualReadStructure(String actualReadStructure) {
         this.actualReadStructure = actualReadStructure;
+    }
+
+    public Double getImagedAreaPerMM2() {
+        return imagedAreaPerMM2;
+    }
+
+    public void setImagedAreaPerMM2(Double imagedAreaPerMM2) {
+        this.imagedAreaPerMM2 = imagedAreaPerMM2;
     }
 }

@@ -94,7 +94,7 @@ public class ZimsIlluminaRun {
 
     public ZimsIlluminaRun(String runName, String runBarcode, String flowcellBarcode, String sequencer,
                            String sequencerModel, String runDate, Boolean paired, String actualReadStructure,
-                           Double imagedAreaPerLaneMM2, String setupReadStructure) {
+                           double imagedAreaPerLaneMM2, String setupReadStructure) {
         this(runName, runBarcode, flowcellBarcode, sequencer, sequencerModel, runDate, paired, actualReadStructure, imagedAreaPerLaneMM2);
         this.setupReadStructure = setupReadStructure;
     }

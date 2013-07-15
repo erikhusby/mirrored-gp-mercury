@@ -286,6 +286,8 @@ public class LabEventTest extends BaseEventTest {
         // todo jmt need to investigate the ordering of libraries in ZIMS API results, and do more asserts here
         Assert.assertNotNull(libraryBean.getMolecularIndexingScheme().getName(), "No molecular index");
         Assert.assertEquals(libraryBean.getBaitSetName(), HybridSelectionEntityBuilder.BAIT_DESIGN_NAME, "Wrong bait");
+        // want to check that null is represented properly
+        Assert.assertNull(zimsIlluminaRun.getImagedAreaPerLaneMM2());
 
         for (LibraryBean bean : zimsIlluminaChamber.getLibraries()) {
             // Every library should have an LCSET, even controls.
@@ -411,6 +413,7 @@ public class LabEventTest extends BaseEventTest {
         readStructureRequest.setRunBarcode(run.getRunBarcode());
         readStructureRequest.setSetupReadStructure("71T8B8B71T");
         readStructureRequest.setActualReadStructure("101T8B8B101T");
+        readStructureRequest.setImagedArea(new Double("185.2049407959"));
 
         runFactory.storeReadsStructureDBFree(readStructureRequest, run);
 
@@ -419,6 +422,7 @@ public class LabEventTest extends BaseEventTest {
         Assert.assertEquals(zimsIlluminaRun.getLanes().size(), 2, "Wrong number of lanes");
         Assert.assertEquals(zimsIlluminaRun.getActualReadStructure(), readStructureRequest.getActualReadStructure());
         Assert.assertEquals(zimsIlluminaRun.getSetupReadStructure(), readStructureRequest.getSetupReadStructure());
+        Assert.assertEquals(zimsIlluminaRun.getImagedAreaPerLaneMM2(),readStructureRequest.getImagedArea());
 
         Map.Entry<String, TwoDBarcodedTube> stringTwoDBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
         ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
@@ -528,6 +532,7 @@ public class LabEventTest extends BaseEventTest {
         readStructureRequest.setRunBarcode(run.getRunBarcode());
         readStructureRequest.setSetupReadStructure("71T8B8B71T");
         readStructureRequest.setActualReadStructure("101T8B8B101T");
+        readStructureRequest.setImagedArea(new Double("185.2049407959"));
 
         runFactory.storeReadsStructureDBFree(readStructureRequest, run);
 
@@ -536,6 +541,7 @@ public class LabEventTest extends BaseEventTest {
         Assert.assertEquals(zimsIlluminaRun.getLanes().size(), 2, "Wrong number of lanes");
         Assert.assertEquals(zimsIlluminaRun.getActualReadStructure(), readStructureRequest.getActualReadStructure());
         Assert.assertEquals(zimsIlluminaRun.getSetupReadStructure(), readStructureRequest.getSetupReadStructure());
+        Assert.assertEquals(zimsIlluminaRun.getImagedAreaPerLaneMM2(),readStructureRequest.getImagedArea());
 
         Map.Entry<String, TwoDBarcodedTube> stringTwoDBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
         ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
