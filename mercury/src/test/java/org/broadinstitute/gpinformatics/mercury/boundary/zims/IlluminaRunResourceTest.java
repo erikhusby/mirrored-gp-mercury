@@ -110,13 +110,6 @@ public class IlluminaRunResourceTest extends Arquillian {
         doAssertions(zamboniRun,runBean,wrIdToPDO);
     }
 
-    @Test(groups = EXTERNAL_INTEGRATION)
-    public void testMercuryRunWithMultipleBatches() throws Exception {
-        String runNameHasMultipleBatches = null; // todo: implement this
-        ZimsIlluminaRun runBean = runLaneResource.getMercuryRun(runNameHasMultipleBatches);
-        Assert.assertTrue(runBean.getError().contains("Expected one LabBatch but found"));
-    }
-
     /**
      * Ensures that error handling makes it all the way through
      * out to HTTP
