@@ -1058,6 +1058,7 @@
                         <configuration>
                             <includes>
                                 <include>**/*JaxbBuilder.class</include>
+                                <include>**/ProductionFlowcellPath.class</include>
                                 <include>**/BettaLimsMessageTestFactory*.class</include>
                             </includes>
                         </configuration>
