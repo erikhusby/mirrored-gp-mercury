@@ -118,7 +118,7 @@ public class BaseEventTest {
      * @return Returns a map of String barcodes to their tube objects.
      */
     public Map<String, TwoDBarcodedTube> createInitialRack(ProductOrder productOrder, String tubeBarcodePrefix) {
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
+        Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<>();
         int rackPosition = 1;
         for (ProductOrderSample poSample : productOrder.getSamples()) {
             String barcode = tubeBarcodePrefix + rackPosition;
@@ -168,7 +168,7 @@ public class BaseEventTest {
      * @param productOrder         The product order to use for bucket entries.
      * @param workflowBatch        The batch that will be used for this process.
      * @param lcsetSuffix          Set this non-null to override the lcset id number.
-     * @return
+     * @return created bucket
      */
     public Bucket bucketBatchAndDrain(Map<String, TwoDBarcodedTube> mapBarcodeToTube, ProductOrder productOrder,
             LabBatch workflowBatch, String lcsetSuffix) {
@@ -199,9 +199,6 @@ public class BaseEventTest {
      * This method runs the entities through the pico/plating process.
      *
      * @param mapBarcodeToTube     A map of barcodes to tubes that will be run the starting point of the pico/plating process.
-     * @param productOrder         The product order to use for bucket entries.
-     * @param workflowBatch        The batch that will be used for this process.
-     * @param lcsetSuffix          Set this non-null to override the lcset id number.
      * @param rackBarcodeSuffix    rack barcode suffix.
      * @param barcodeSuffix        Uniquifies the generated vessel barcodes. NOT date if test quickly invokes twice.
      * @param archiveBucketEntries allows a DBFree test case to force "ancestor" tubes to be currently in a bucket
@@ -210,9 +207,7 @@ public class BaseEventTest {
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
     public PicoPlatingEntityBuilder runPicoPlatingProcess(Map<String, TwoDBarcodedTube> mapBarcodeToTube,
-                                                          ProductOrder productOrder, LabBatch workflowBatch,
-                                                          String lcsetSuffix, String rackBarcodeSuffix,
-                                                          String barcodeSuffix, boolean archiveBucketEntries) {
+            String rackBarcodeSuffix, String barcodeSuffix, boolean archiveBucketEntries) {
         String rackBarcode = "REXEX" + rackBarcodeSuffix;
 
         return new PicoPlatingEntityBuilder(bettaLimsMessageTestFactory,
@@ -223,7 +218,7 @@ public class BaseEventTest {
     /**
      * This method runs the entities through the ExEx shearing process.
      *
-     * @param productOrder         The product order to use for bucket entries.
+     *
      * @param normBarcodeToTubeMap A map of barcodes to tubes that will be run the starting point of the ExEx shearing process.
      * @param normTubeFormation    The tube formation that represents the entities coming out of pico/plating.
      * @param normBarcode          The rack barcode of the tube formation.
@@ -231,10 +226,10 @@ public class BaseEventTest {
      *
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
-    public ExomeExpressShearingEntityBuilder runExomeExpressShearingProcess(ProductOrder productOrder,
-                                                                            Map<String, TwoDBarcodedTube> normBarcodeToTubeMap,
-                                                                            TubeFormation normTubeFormation,
-                                                                            String normBarcode, String barcodeSuffix) {
+    public ExomeExpressShearingEntityBuilder runExomeExpressShearingProcess(
+            Map<String, TwoDBarcodedTube> normBarcodeToTubeMap,
+            TubeFormation normTubeFormation,
+            String normBarcode, String barcodeSuffix) {
 
         return new ExomeExpressShearingEntityBuilder(normBarcodeToTubeMap, normTubeFormation,
                 bettaLimsMessageTestFactory, labEventFactory,
@@ -245,15 +240,12 @@ public class BaseEventTest {
      * This method runs the entities through the preflight process.
      *
      * @param mapBarcodeToTube A map of barcodes to tubes that will be run the starting point of the preflight process.
-     * @param productOrder     The product order to use for bucket entries.
-     * @param workflowBatch    The batch that will be used for this process.
      * @param barcodeSuffix    Uniquifies the generated vessel barcodes. NOT date if test quickly invokes twice.
      *
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
     public PreFlightEntityBuilder runPreflightProcess(Map<String, TwoDBarcodedTube> mapBarcodeToTube,
-                                                      ProductOrder productOrder,
-                                                      LabBatch workflowBatch, String barcodeSuffix) {
+            String barcodeSuffix) {
         return new PreFlightEntityBuilder(bettaLimsMessageTestFactory,
                 labEventFactory, getLabEventHandler(),
                 mapBarcodeToTube, barcodeSuffix).invoke();

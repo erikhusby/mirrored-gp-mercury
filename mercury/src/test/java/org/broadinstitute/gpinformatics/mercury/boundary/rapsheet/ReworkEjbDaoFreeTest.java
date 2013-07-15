@@ -96,8 +96,8 @@ public class ReworkEjbDaoFreeTest extends BaseEventTest {
         Date runDate = new Date();
 
         bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
-        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube, productOrder,
-                workflowBatch, null, String.valueOf(runDate.getTime()), "1", true);
+        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube,
+                String.valueOf(runDate.getTime()), "1", true);
 
         ReworkEjb reworkEjb = new ReworkEjb();
 
@@ -128,8 +128,8 @@ public class ReworkEjbDaoFreeTest extends BaseEventTest {
         Date runDate = new Date();
 
         bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
-        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube, productOrder,
-                workflowBatch, null, String.valueOf(runDate.getTime()), "1", false);
+        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube,
+                String.valueOf(runDate.getTime()), "1", false);
 
         ReworkEjb reworkEjb = new ReworkEjb();
 

@@ -39,6 +39,7 @@ import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRu
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowValidator;
 import org.broadinstitute.gpinformatics.mercury.control.zims.ZimsIlluminaRunFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.DesignedReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
@@ -237,8 +238,8 @@ public class LabEventTest extends BaseEventTest {
             mapBarcodeToDaughterTube.put(twoDBarcodedTube.getLabel(), twoDBarcodedTube);
         }
 
-        PreFlightEntityBuilder preFlightEntityBuilder = runPreflightProcess(mapBarcodeToDaughterTube, productOrder,
-                workflowBatch, "1");
+        PreFlightEntityBuilder preFlightEntityBuilder = runPreflightProcess(mapBarcodeToDaughterTube,
+                "1");
         ShearingEntityBuilder shearingEntityBuilder = runShearingProcess(mapBarcodeToDaughterTube,
                 preFlightEntityBuilder.getTubeFormation(), preFlightEntityBuilder.getRackBarcode(), "1");
         LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = runLibraryConstructionProcess(
@@ -370,10 +371,10 @@ public class LabEventTest extends BaseEventTest {
         workflowBatch.setWorkflowName("Exome Express");
 
         bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
-        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube, productOrder,
-                workflowBatch, null, String.valueOf(runDate.getTime()), "1", true);
+        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube,
+                String.valueOf(runDate.getTime()), "1", true);
         ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder =
-                runExomeExpressShearingProcess(productOrder, picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
+                runExomeExpressShearingProcess(picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
                         picoPlatingEntityBuilder.getNormTubeFormation(),
                         picoPlatingEntityBuilder.getNormalizationBarcode(), "1");
         LibraryConstructionEntityBuilder libraryConstructionEntityBuilder =
@@ -496,10 +497,10 @@ public class LabEventTest extends BaseEventTest {
             workflowBatch1.setWorkflowName("Exome Express");
 
             bucketBatchAndDrain(mapBarcodeToTube1, productOrder1, workflowBatch1, "1");
-            PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube1, productOrder1,
-                    workflowBatch1, "1", String.valueOf(runDate.getTime()), "1", true);
+            PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube1,
+                    String.valueOf(runDate.getTime()), "1", true);
             ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder =
-                    runExomeExpressShearingProcess(productOrder1, picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
+                    runExomeExpressShearingProcess(picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
                             picoPlatingEntityBuilder.getNormTubeFormation(),
                             picoPlatingEntityBuilder.getNormalizationBarcode(), "1");
 
@@ -514,10 +515,10 @@ public class LabEventTest extends BaseEventTest {
             workflowBatch2.setWorkflowName("Exome Express");
 
             bucketBatchAndDrain(mapBarcodeToTube2, productOrder2, workflowBatch2, "2");
-            PicoPlatingEntityBuilder picoPlatingEntityBuilder2 = runPicoPlatingProcess(mapBarcodeToTube2, productOrder2,
-                    workflowBatch2, "2", String.valueOf(runDate.getTime()), "2", true);
+            PicoPlatingEntityBuilder picoPlatingEntityBuilder2 = runPicoPlatingProcess(mapBarcodeToTube2,
+                    String.valueOf(runDate.getTime()), "2", true);
             ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder2 =
-                    runExomeExpressShearingProcess(productOrder2, picoPlatingEntityBuilder2.getNormBarcodeToTubeMap(),
+                    runExomeExpressShearingProcess(picoPlatingEntityBuilder2.getNormBarcodeToTubeMap(),
                             picoPlatingEntityBuilder2.getNormTubeFormation(),
                             picoPlatingEntityBuilder2.getNormalizationBarcode(), "2");
             LibraryConstructionEntityBuilder libraryConstructionEntityBuilder2 =
@@ -610,10 +611,10 @@ public class LabEventTest extends BaseEventTest {
             workflowBatch1.setWorkflowName("Exome Express");
 
             bucketBatchAndDrain(mapBarcodeToTube1, productOrder1, workflowBatch1, "1");
-            PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube1, productOrder1,
-                    workflowBatch1, "1", String.valueOf(runDate.getTime()), "1", true);
+            PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube1,
+                    String.valueOf(runDate.getTime()), "1", true);
             ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder =
-                    runExomeExpressShearingProcess(productOrder1, picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
+                    runExomeExpressShearingProcess(picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
                             picoPlatingEntityBuilder.getNormTubeFormation(),
                             picoPlatingEntityBuilder.getNormalizationBarcode(), "1");
 
@@ -629,8 +630,8 @@ public class LabEventTest extends BaseEventTest {
             workflowBatch2.setWorkflowName("Exome Express");
 
             bucketBatchAndDrain(mapBarcodeToTube2, productOrder2, workflowBatch2, "2");
-            PicoPlatingEntityBuilder picoPlatingEntityBuilder2 = runPicoPlatingProcess(mapBarcodeToTube2, productOrder2,
-                    workflowBatch2, "2", String.valueOf(runDate.getTime()), "2", true);
+            PicoPlatingEntityBuilder picoPlatingEntityBuilder2 = runPicoPlatingProcess(mapBarcodeToTube2,
+                    String.valueOf(runDate.getTime()), "2", true);
 
             // Add sample from LCSET 1 TO LCSET 2 at shearing bucket
             TwoDBarcodedTube reworkTube = mapBarcodeToTube1.values().iterator().next();
@@ -644,7 +645,7 @@ public class LabEventTest extends BaseEventTest {
 //            }
 
             ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder2 =
-                    runExomeExpressShearingProcess(productOrder2, mapBarcodeToTubesPlusRework,
+                    runExomeExpressShearingProcess(mapBarcodeToTubesPlusRework,
                             null,
                             picoPlatingEntityBuilder2.getNormalizationBarcode(), "2");
             LibraryConstructionEntityBuilder libraryConstructionEntityBuilder2 =
@@ -787,7 +788,7 @@ public class LabEventTest extends BaseEventTest {
         bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
 
         PreFlightEntityBuilder preFlightEntityBuilder =
-                runPreflightProcess(mapBarcodeToTube, productOrder, workflowBatch, "1");
+                runPreflightProcess(mapBarcodeToTube, "1");
         ShearingEntityBuilder shearingEntityBuilder =
                 runShearingProcess(mapBarcodeToTube, preFlightEntityBuilder.getTubeFormation(),
                         preFlightEntityBuilder.getRackBarcode(), "1");

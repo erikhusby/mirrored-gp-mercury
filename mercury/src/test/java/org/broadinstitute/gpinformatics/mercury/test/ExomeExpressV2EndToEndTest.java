@@ -174,8 +174,8 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
         workflowBatch.setWorkflowName("Exome Express");
 
         bucketBatchAndDrain(mapBarcodeToTube, productOrder1, workflowBatch, "1");
-        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube, productOrder1,
-                workflowBatch, null, String.valueOf(LabEventTest.NUM_POSITIONS_IN_RACK), "1", true);
+        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube,
+                String.valueOf(LabEventTest.NUM_POSITIONS_IN_RACK), "1", true);
 
         LabEventHandler leHandler = getLabEventHandler();
 
