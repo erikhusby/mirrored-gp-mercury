@@ -7,6 +7,8 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProducer;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
@@ -15,9 +17,9 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
-import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
@@ -25,10 +27,14 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
@@ -42,8 +48,11 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingEntityBuil
 import org.easymock.EasyMock;
 import org.testng.annotations.BeforeClass;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -245,18 +254,6 @@ public class BaseEventTest {
     public PreFlightEntityBuilder runPreflightProcess(Map<String, TwoDBarcodedTube> mapBarcodeToTube,
                                                       ProductOrder productOrder,
                                                       LabBatch workflowBatch, String barcodeSuffix) {
-        labBatchEJB.createLabBatch(workflowBatch, "scotmatt", CreateFields.IssueType.EXOME_EXPRESS);
-
-        Bucket workingBucket = createAndPopulateBucket(mapBarcodeToTube, productOrder, "Preflight Bucket");
-        for (BucketEntry bucketEntry : workingBucket.getBucketEntries()) {
-            bucketEntry.setLabBatch(workflowBatch);
-        }
-
-        BucketDao mockBucketDao = EasyMock.createNiceMock(BucketDao.class);
-        EasyMock.expect(mockBucketDao.findByName("Preflight Bucket")).andReturn(workingBucket);
-        EasyMock.expect(mockBucketDao.findByName(EasyMock.anyObject(String.class))).andReturn(new Bucket("FAKEBUCKET"));
-        EasyMock.replay(mockBucketDao);
-
         return new PreFlightEntityBuilder(bettaLimsMessageTestFactory,
                 labEventFactory, getLabEventHandler(),
                 mapBarcodeToTube, barcodeSuffix).invoke();
@@ -393,5 +390,51 @@ public class BaseEventTest {
                 pondRegRackBarcode, pondRegRack, pondRegTubeBarcodes).invoke();
     }
 
+    /**
+     * Simulates a BSP daughter plate transfer, prior to export from BSP to Mercury, then does a re-array to add
+     * controls.
+     *
+     * @param mapBarcodeToTube source tubes
+     *
+     * @return destination tube formation
+     */
+    public TubeFormation daughterPlateTransfer(Map<String, TwoDBarcodedTube> mapBarcodeToTube) {
+        // Daughter plate transfer that doesn't include controls
+        List<String> daughterTubeBarcodes = new ArrayList<>();
+        for (int i = 0; i < mapBarcodeToTube.size(); i++) {
+            daughterTubeBarcodes.add("D" + i);
+        }
+        PlateTransferEventType daughterPlateTransferJaxb =
+                bettaLimsMessageTestFactory.buildRackToRack("SamplesDaughterPlateCreation", "MotherRack",
+                        new ArrayList<>(mapBarcodeToTube.keySet()), "DaughterRack", daughterTubeBarcodes);
+        Map<String, LabVessel> mapBarcodeToVessel = new HashMap<String, LabVessel>(mapBarcodeToTube);
+        LabEvent daughterPlateTransferEntity =
+                labEventFactory.buildFromBettaLims(daughterPlateTransferJaxb, mapBarcodeToVessel);
+        TubeFormation daughterPlate =
+                (TubeFormation) daughterPlateTransferEntity.getTargetLabVessels().iterator().next();
+
+        Map<VesselPosition, TwoDBarcodedTube> mapBarcodeToDaughterTube = new EnumMap<>(VesselPosition.class);
+        for (TwoDBarcodedTube twoDBarcodedTube : daughterPlate.getContainerRole().getContainedVessels()) {
+            mapBarcodeToDaughterTube.put(daughterPlate.getContainerRole().getPositionOfVessel(twoDBarcodedTube),
+                    twoDBarcodedTube);
+        }
+
+        // Controls are added in a re-array
+        TwoDBarcodedTube posControlTube = new TwoDBarcodedTube("C1");
+        posControlTube.addSample(new MercurySample("NA12878", new BSPSampleDTO(
+                new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
+                    put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, "NA12878");
+                }})));
+        mapBarcodeToDaughterTube.put(VesselPosition.H11, posControlTube);
+
+        TwoDBarcodedTube negControlTube = new TwoDBarcodedTube("C2");
+        negControlTube.addSample(new MercurySample("WATER_CONTROL", new BSPSampleDTO(
+                new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
+                    put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, "WATER_CONTROL");
+                }})));
+        mapBarcodeToDaughterTube.put(VesselPosition.H12, negControlTube);
+
+        return new TubeFormation(mapBarcodeToDaughterTube, RackOfTubes.RackType.Matrix96);
+    }
 
 }

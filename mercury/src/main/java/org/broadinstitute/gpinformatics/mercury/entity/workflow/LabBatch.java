@@ -490,4 +490,9 @@ public class LabBatch {
 
         return result;
     }
+
+    @Override
+    public String toString() {
+        return batchName;
+    }
 }

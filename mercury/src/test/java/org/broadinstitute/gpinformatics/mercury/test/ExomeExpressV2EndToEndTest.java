@@ -173,6 +173,7 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
         workflowBatch.setWorkflowName("Exome Express");
 
+        bucketBatchAndDrain(mapBarcodeToTube, productOrder1, workflowBatch, "1");
         PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube, productOrder1,
                 workflowBatch, null, String.valueOf(LabEventTest.NUM_POSITIONS_IN_RACK), "1", true);
 

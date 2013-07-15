@@ -36,10 +36,17 @@ public class SampleInstance {
     /** Reagents added, e.g. molecular indexes, baits. */
     private final List<Reagent> reagents = new ArrayList<>();
 
-    /** The single LCSET associated with the plastic on which getSampleInstances was called.  This is not set if
-     * traversal logic encounters multiple LCSETs, and can't pick a single one.
+    /**
+     * The bucket entry for the single LCSET associated with the plastic on which getSampleInstances was called.
+     * This is not set if traversal logic encounters multiple LCSETs, and can't pick a single one.
      */
     private BucketEntry bucketEntry;
+
+    /**
+     * Similar to bucketEntry, but controls aren't associated explicitly with LCSETs, so they don't have bucket
+     * entries, so have to refer to the lab batch.
+     */
+    private LabBatch labBatch;
 
     // This gets set if the sample instance traverses a SAMPLE_IMPORT lab batch.
     private MercurySample bspExportSample;
@@ -139,7 +146,11 @@ public class SampleInstance {
         if (bucketEntry != null) {
             return bucketEntry.getLabBatch();
         }
-        return null;
+        return labBatch;
+    }
+
+    public void setLabBatch(LabBatch labBatch) {
+        this.labBatch = labBatch;
     }
 
     public void setBucketEntry(BucketEntry bucketEntry) {

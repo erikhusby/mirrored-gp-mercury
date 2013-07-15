@@ -54,6 +54,7 @@ public class ReworkDbFreeTest extends BaseEventTest {
         LabBatch origBatch =
                 new LabBatch("origBatch", new HashSet<LabVessel>(origRackMap.values()), LabBatch.LabBatchType.WORKFLOW);
         origBatch.setWorkflowName("Exome Express");
+        bucketBatchAndDrain(origRackMap, productOrder, origBatch, origLcsetSuffix);
         PicoPlatingEntityBuilder pplatingEntityBuilder1 = runPicoPlatingProcess(
                 origRackMap,
                 productOrder,
@@ -88,6 +89,7 @@ public class ReworkDbFreeTest extends BaseEventTest {
         LabBatch reworkBatch = new LabBatch("reworkBatch", new HashSet<LabVessel>(reworkRackMap.values()),
                 LabBatch.LabBatchType.WORKFLOW);
         reworkBatch.setWorkflowName("Exome Express");
+        bucketBatchAndDrain(reworkRackMap, productOrder, reworkBatch, reworkLcsetSuffix);
         PicoPlatingEntityBuilder pplatingEntityBuilder2 = runPicoPlatingProcess(
                 reworkRackMap,
                 productOrder,
@@ -166,8 +168,10 @@ public class ReworkDbFreeTest extends BaseEventTest {
                 new HashSet<LabVessel>(mapBarcodeToTube2.values()), LabBatch.LabBatchType.WORKFLOW);
         workflowBatch2.setWorkflowName("Exome Express");
 
+        bucketBatchAndDrain(mapBarcodeToTube1, productOrder1, workflowBatch1, "1");
         PicoPlatingEntityBuilder picoPlatingEntityBuilder1 = runPicoPlatingProcess(mapBarcodeToTube1, productOrder1,
                 workflowBatch1, "1", String.valueOf(runDate.getTime()), "1", true);
+        bucketBatchAndDrain(mapBarcodeToTube2, productOrder2, workflowBatch2, "2");
         PicoPlatingEntityBuilder picoPlatingEntityBuilder2 = runPicoPlatingProcess(mapBarcodeToTube2, productOrder2,
                 workflowBatch2, "2", String.valueOf(runDate.getTime()), "2", true);
 

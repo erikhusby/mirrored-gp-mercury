@@ -167,10 +167,14 @@ public abstract class LabVessel implements Serializable {
     private Set<LabMetric> labMetrics = new HashSet<>();
 
     @Transient
-    private Integer sampleInstanceCount = null;
+    private Integer sampleInstanceCount;
 
     @Transient
-    private Map<String, LabMetric> metricMap = null;
+    private Map<String, LabMetric> metricMap;
+
+    /** Set by {@link #preProcessEvents()} */
+    @Transient
+    private boolean havePreProcessedEvents;
 
     protected LabVessel(String label) {
         createdOn = new Date();
@@ -352,16 +356,19 @@ public abstract class LabVessel implements Serializable {
      * @return transfers
      */
     public Set<LabEvent> getTransfersTo() {
+        Set<LabEvent> transfersTo = new HashSet<>();
         if (getContainerRole() == null) {
-            Set<LabEvent> transfersTo = new HashSet<>();
             for (VesselContainer<?> vesselContainer : getContainers()) {
                 transfersTo.addAll(vesselContainer.getTransfersTo());
             }
-            return transfersTo;
         } else {
-            return getContainerRole().getTransfersTo();
+            for (VesselContainer<?> vesselContainer : getContainers()) {
+                transfersTo.addAll(vesselContainer.getTransfersTo());
+            }
+            transfersTo.addAll(getContainerRole().getTransfersTo());
         }
         // todo jmt vessel to vessel transfers
+        return transfersTo;
     }
 
     public abstract VesselGeometry getVesselGeometry();
@@ -720,6 +727,10 @@ public abstract class LabVessel implements Serializable {
      * @return sample instances
      */
     public Set<SampleInstance> getSampleInstances(SampleType sampleType, @Nullable LabBatch.LabBatchType labBatchType) {
+        if (!havePreProcessedEvents) {
+            preProcessEvents();
+            havePreProcessedEvents = true;
+        }
         if (getContainerRole() != null) {
             return getContainerRole().getSampleInstances(sampleType, labBatchType);
         }
@@ -820,7 +831,7 @@ public abstract class LabVessel implements Serializable {
                         }
                     }
                     if (foundBucketEntries != 1) {
-                        throw new RuntimeException("Expected 1 bucket entry, found " + foundBucketEntries);
+                        sampleInstance.setLabBatch(labBatch);
                     }
                 }
             }
@@ -1638,4 +1649,38 @@ public abstract class LabVessel implements Serializable {
         return metricMap;
     }
 
+    /**
+     * In preparation for getSampleInstances recursion, sets the computed LCSETs in each ancestor lab event.
+     */
+    public void preProcessEvents() {
+        Set<LabEvent> visitedLabEvents = new HashSet<>();
+        recurseEvents(visitedLabEvents, getTransfersTo());
+    }
+
+    /**
+     * Recurses ancestor transfers, setting computed LCSETs.
+     * @param visitedLabEvents avoid visiting event twice
+     * @param currentTransfers the transfers at the current point in the recursion
+     * @return results of recursion
+     */
+    Set<LabBatch> recurseEvents(Set<LabEvent> visitedLabEvents, Set<LabEvent> currentTransfers) {
+        Set<LabBatch> returnLcSets = new HashSet<>();
+        for (LabEvent labEvent : currentTransfers) {
+            if (visitedLabEvents.add(labEvent)) {
+                Set<LabBatch> lcSetsFromRecursion = new HashSet<>();
+                for (LabVessel labVessel : labEvent.getSourceLabVessels()) {
+                    lcSetsFromRecursion.addAll(recurseEvents(visitedLabEvents, labVessel.getTransfersTo()));
+                }
+                Set<LabBatch> computedLcSets = labEvent.computeLcSets();
+                if (computedLcSets.isEmpty()) {
+                    returnLcSets.addAll(lcSetsFromRecursion);
+                } else {
+                    returnLcSets.addAll(computedLcSets);
+                }
+                labEvent.addComputedLcSets(returnLcSets);
+//                System.out.println(labEvent.getLabEventType() + " " + labEvent.getComputedLcSets());
+            }
+        }
+        return returnLcSets;
+    }
 }
