@@ -88,7 +88,7 @@ public class IlluminaRunResourceTest extends Arquillian {
      */
     public static final String PDO_COMPARISON_ERROR_MESSAGE = "check run " + RUN_NAME + " in serialized .thrift file to make sure WRs are linked to " + PDO_KEY;
 
-    private Map<Long,ProductOrder> wrIdToPDO = new HashMap<Long, ProductOrder>();
+    private Map<Long,ProductOrder> wrIdToPDO = new HashMap<>();
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -101,7 +101,7 @@ public class IlluminaRunResourceTest extends Arquillian {
      * directly in container.
      */
     @Test(groups = EXTERNAL_INTEGRATION)
-    public void test_zims_in_container() throws Exception {
+    public void testZimsInContainer() throws Exception {
         // todo arz update the run in QA squid to link all WRS to the PDO
         wrIdToPDO.put(29225L,pdoDao.findByBusinessKey(PDO_KEY));
 
@@ -117,7 +117,7 @@ public class IlluminaRunResourceTest extends Arquillian {
     @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER,
           groups = EXTERNAL_INTEGRATION)
     @RunAsClient
-    public void test_error_handling(@ArquillianResource URL baseUrl) throws Exception {
+    public void testErrorHandling(@ArquillianResource URL baseUrl) throws Exception {
         String url = baseUrl.toExternalForm() + WEBSERVICE_URL;
 
         DefaultClientConfig clientConfig = new DefaultClientConfig();
@@ -132,7 +132,7 @@ public class IlluminaRunResourceTest extends Arquillian {
 
 
     /**
-    * Does the same test as {@link #test_zims_in_container()},
+    * Does the same test as {@link #testZimsInContainer()},
     * but does it over http, which means it's actually checking
     * that various annotations like {@link javax.xml.bind.annotation.XmlAttribute}
     * are applied properly in {@link LibraryBean}.
@@ -141,7 +141,7 @@ public class IlluminaRunResourceTest extends Arquillian {
     @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER,
         groups = EXTERNAL_INTEGRATION)
     @RunAsClient
-    public void test_zims_over_http(@ArquillianResource URL baseUrl) throws Exception {
+    public void testZimsOverHttp(@ArquillianResource URL baseUrl) throws Exception {
         String url = baseUrl.toExternalForm() + WEBSERVICE_URL;
 
         DefaultClientConfig clientConfig = new DefaultClientConfig();
@@ -453,7 +453,7 @@ public class IlluminaRunResourceTest extends Arquillian {
     }
 
     public List<LibraryData> fetchLibraryDetailsByLibraryName(List<String> libraryNames) {
-        List<LibraryData> libraryDataList = new ArrayList<LibraryData>();
+        List<LibraryData> libraryDataList = new ArrayList<>();
         for (String libraryName : libraryNames) {
             LibraryData libraryData = new LibraryData();
             libraryData.setLibraryName(libraryName);
