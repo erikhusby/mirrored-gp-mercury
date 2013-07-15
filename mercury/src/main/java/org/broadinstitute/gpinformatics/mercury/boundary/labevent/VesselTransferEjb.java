@@ -87,12 +87,6 @@ public class VesselTransferEjb {
                                                          Map<String, VesselPosition> denatureBarcodeMap,
                                                          String reagentKitBarcode, String username,
                                                          String stationName) {
-        MiSeqReagentKit reagentKit = miSeqReagentKitDao.findByBarcode(reagentKitBarcode);
-        if (reagentKit == null) {
-            reagentKit = new MiSeqReagentKit(reagentKitBarcode);
-            miSeqReagentKitDao.persist(reagentKit);
-        }
-
         BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
 
         PlateCherryPickEvent transferEvent = new PlateCherryPickEvent();
