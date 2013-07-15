@@ -49,6 +49,7 @@ import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -169,6 +170,12 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
 
         EasyMock.expect(runCartridge.getNearestTubeAncestorsForLanes()).andReturn(laneVesselsAndPositions).times(2);
         String pdoKey = "PDO-0123";
+
+        LabBatch workflowBatch = new LabBatch("Exome Express Batch", new HashSet<LabVessel>(), LabBatch.LabBatchType.WORKFLOW);
+        workflowBatch.setWorkflowName("Exome Express");
+
+        EasyMock.expect(sampleInstance.getAllWorkflowLabBatches()).andReturn(
+                Collections.<LabBatch>singletonList(workflowBatch)).times(4);
         EasyMock.expect(sampleInstance.getProductOrderKey()).andReturn(pdoKey).times(4);
 
         // Only needs this set of expects once for the cache fill.
@@ -497,7 +504,7 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
 
     private String[] verifyRecord(String record, String expectedName, long pdoId, String sampleKey, int lane,
                                   String tubeBarcode, String createdDateStr, String cartridgeName1,
-                                  long researchProjectId1) {
+                                  long researchProjectId1, String batchName) {
         int i = 0;
         String[] parts = record.split(",");
         assertEquals(parts[i++], etlDateStr);
@@ -513,6 +520,7 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         i++;
         assertEquals(parts[i++], String.valueOf(researchProjectId1));
         assertEquals(parts[i++], tubeBarcode);
+        assertEquals(parts[i++], batchName);
         assertEquals(parts[i++], createdDateStr);
 
         assertEquals(parts.length, i);

@@ -147,12 +147,6 @@ CREATE TABLE lab_vessel (
   etl_date        DATE         NOT NULL
 );
 
-CREATE TABLE lab_batch (
-  lab_batch_id NUMERIC(19)  NOT NULL PRIMARY KEY,
-  batch_name   VARCHAR2(40) NOT NULL,
-  etl_date     DATE         NOT NULL
-);
-
 CREATE TABLE workflow (
   workflow_id      NUMERIC(19)   NOT NULL PRIMARY KEY,
   workflow_name    VARCHAR2(255) NOT NULL,
@@ -176,7 +170,7 @@ CREATE TABLE event_fact (
   process_id       NUMERIC(19),
   product_order_id NUMERIC(19),
   sample_name      VARCHAR(40),
-  lab_batch_id     NUMERIC(19),
+  batch_name       VARCHAR(40),
   station_name     VARCHAR2(255),
   lab_vessel_id    NUMERIC(19),
   event_date       DATE        NOT NULL,
@@ -193,7 +187,8 @@ CREATE TABLE sequencing_sample_fact (
   sample_name                 VARCHAR2(40),
   research_project_id         NUMERIC(19),
   loaded_library_barcode      VARCHAR2(255),
-  loaded_library_create_date  DATE ,
+  loaded_library_create_date  DATE,
+  batch_name       	      VARCHAR(40),
   etl_date                    DATE          NOT NULL
 );
 
@@ -391,14 +386,6 @@ CREATE TABLE im_lab_vessel (
   lab_vessel_type VARCHAR2(40)
 );
 
-CREATE TABLE im_lab_batch (
-  line_number  NUMERIC(9)  NOT NULL,
-  etl_date     DATE        NOT NULL,
-  is_delete    CHAR(1)     NOT NULL,
-  lab_batch_id NUMERIC(19) NOT NULL,
-  batch_name   VARCHAR2(40)
-);
-
 CREATE TABLE im_workflow (
   line_number      NUMERIC(9)  NOT NULL,
   etl_date         DATE        NOT NULL,
@@ -428,7 +415,7 @@ CREATE TABLE im_event_fact (
   process_id       NUMERIC(19),
   product_order_id NUMERIC(19),
   sample_name      VARCHAR(40),
-  lab_batch_id     NUMERIC(19),
+  batch_name       VARCHAR(40),
   station_name     VARCHAR2(255),
   lab_vessel_id    NUMERIC(19),
   event_date       DATE,
@@ -490,7 +477,8 @@ CREATE TABLE im_sequencing_sample_fact (
   sample_name                 VARCHAR2(40),
   research_project_id         NUMERIC(19),
   loaded_library_barcode      VARCHAR2(255),
-  loaded_library_create_date  DATE
+  loaded_library_create_date  DATE,
+  batch_name                  VARCHAR(40)
 );
 
 CREATE TABLE im_sequencing_run (
@@ -553,9 +541,6 @@ REFERENCES price_item (price_item_id) ON DELETE CASCADE;
 
 ALTER TABLE event_fact ADD CONSTRAINT fk_event_lab_vessel FOREIGN KEY (lab_vessel_id)
 REFERENCES lab_vessel (lab_vessel_id) ON DELETE CASCADE;
-
-ALTER TABLE event_fact ADD CONSTRAINT fk_event_lab_batch FOREIGN KEY (lab_batch_id)
-REFERENCES lab_batch (lab_batch_id) ON DELETE CASCADE;
 
 ALTER TABLE event_fact ADD CONSTRAINT fk_event_pdo FOREIGN KEY (product_order_id)
 REFERENCES product_order (product_order_id) ON DELETE CASCADE;
