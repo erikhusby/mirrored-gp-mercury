@@ -292,6 +292,7 @@ public class SolexaRunRestResourceTest extends Arquillian {
         Assert.assertNotNull(readstructureResult.getSetupReadStructure());
         Assert.assertEquals(readstructureResult.getSetupReadStructure(), run.getSetupReadStructure());
         Assert.assertNull(readstructureResult.getActualReadStructure());
+        Assert.assertNull(readstructureResult.getImagedArea());
 
         readStructure.setActualReadStructure("101T8B8B101T");
 
@@ -308,6 +309,23 @@ public class SolexaRunRestResourceTest extends Arquillian {
         Assert.assertEquals(readstructureResult.getSetupReadStructure(), run.getSetupReadStructure());
         Assert.assertNotNull(readstructureResult.getActualReadStructure());
         Assert.assertEquals(readstructureResult.getActualReadStructure(), run.getActualReadStructure());
+
+        readStructure.setImagedArea(185.2049407959);
+
+        readstructureResult =
+                Client.create(clientConfig).resource(appConfig.getUrl() + "rest/solexarun/storeRunReadStructure")
+                        .type(MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON)
+                        .entity(readStructure).post(ReadStructureRequest.class);
+
+        runDao.clear();
+        run = runDao.findByBarcode(runBarcode);
+
+        Assert.assertEquals(readstructureResult.getRunBarcode(), run.getRunBarcode());
+        Assert.assertNotNull(readstructureResult.getSetupReadStructure());
+        Assert.assertEquals(readstructureResult.getSetupReadStructure(), run.getSetupReadStructure());
+        Assert.assertNotNull(readstructureResult.getActualReadStructure());
+        Assert.assertEquals(readstructureResult.getActualReadStructure(), run.getActualReadStructure());
+        Assert.assertEquals(readstructureResult.getImagedArea(),185.2049407959);
     }
 
 }
