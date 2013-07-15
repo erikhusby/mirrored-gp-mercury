@@ -808,18 +808,28 @@ public abstract class LabVessel implements Serializable {
          * @param labVessel plastic involved in the event
          */
         public void applyEvent(@Nonnull LabEvent labEvent, @Nonnull LabVessel labVessel) {
-            Set<LabBatch> computedLcSets1 = labEvent.getComputedLcSets();
-            if (computedLcSets1.size() == 1) {
+            List<LabBatch> lcSets = new ArrayList<>();
+            for (LabBatch labBatch : labEvent.getComputedLcSets()) {
+                if (labBatch.getLabBatchType() == LabBatch.LabBatchType.WORKFLOW) {
+                    lcSets.add(labBatch);
+                }
+            }
+            if (lcSets.size() == 1) {
+                LabBatch labBatch = lcSets.iterator().next();
                 for (SampleInstance sampleInstance : getSampleInstances()) {
-                    LabBatch labBatch = computedLcSets1.iterator().next();
                     int foundBucketEntries = 0;
+                    boolean foundWorkflowBatch = false;
                     for (BucketEntry bucketEntry : labVessel.getBucketEntries()) {
-                        if (bucketEntry.getLabBatch() != null && bucketEntry.getLabBatch().equals(labBatch)) {
-                            sampleInstance.setBucketEntry(bucketEntry);
-                            foundBucketEntries++;
+                        LabBatch bucketBatch = bucketEntry.getLabBatch();
+                        if (bucketBatch != null && bucketBatch.getLabBatchType() == LabBatch.LabBatchType.WORKFLOW) {
+                            foundWorkflowBatch = true;
+                            if (bucketBatch.equals(labBatch)) {
+                                sampleInstance.setBucketEntry(bucketEntry);
+                                foundBucketEntries++;
+                            }
                         }
                     }
-                    if (foundBucketEntries != 1) {
+                    if (foundWorkflowBatch && foundBucketEntries != 1) {
                         throw new RuntimeException("Expected 1 bucket entry, found " + foundBucketEntries);
                     }
                 }

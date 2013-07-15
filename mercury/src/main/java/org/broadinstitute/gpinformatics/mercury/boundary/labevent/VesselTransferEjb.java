@@ -87,6 +87,12 @@ public class VesselTransferEjb {
                                                          Map<String, VesselPosition> denatureBarcodeMap,
                                                          String reagentKitBarcode, String username,
                                                          String stationName) {
+        MiSeqReagentKit reagentKit = miSeqReagentKitDao.findByBarcode(reagentKitBarcode);
+        if (reagentKit == null) {
+            reagentKit = new MiSeqReagentKit(reagentKitBarcode);
+            miSeqReagentKitDao.persist(reagentKit);
+        }
+
         BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
 
         PlateCherryPickEvent transferEvent = new PlateCherryPickEvent();
@@ -118,7 +124,7 @@ public class VesselTransferEjb {
 
         // source plate: denature rack
         transferEvent.getSourcePlate().add(sourceTubeRack);
-        List<ReceptacleType> sourceReceptacles=new ArrayList<>();
+        List<ReceptacleType> sourceReceptacles = new ArrayList<>();
 
         for (Map.Entry<String, VesselPosition> entry : denatureBarcodeMap.entrySet()) {
             String sourceBarcode = entry.getKey();
@@ -133,9 +139,9 @@ public class VesselTransferEjb {
                     MiSeqReagentKit.LOADING_WELL.name());
             transferEvent.getSource().add(cherryPickSource);
         }
-            // where on rack is tube?
-            transferEvent.getSourcePositionMap().add(BettalimsObjectFactory.createPositionMapType(
-                    denatureRackBarcode, sourceReceptacles));
+        // where on rack is tube?
+        transferEvent.getSourcePositionMap().add(BettalimsObjectFactory.createPositionMapType(
+                denatureRackBarcode, sourceReceptacles));
         // target plate
         PlateType reagentKitType = BettalimsObjectFactory.createPlateType(reagentKitBarcode,
                 LabEventFactory.PHYS_TYPE_REAGENT_BLOCK, MiSeqReagentKit.LOADING_WELL.name(), null);

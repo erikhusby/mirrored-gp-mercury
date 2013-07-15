@@ -16,6 +16,8 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.monitoring.HipChatMessageSender;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
+import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettalimsMessageResource;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettalimsMessageResourceTest;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.VesselTransferEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
@@ -31,6 +33,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MiSeqReagentKit;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
@@ -123,6 +126,8 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
     private String machineName;
     private String pdo1JiraKey;
 
+    @Inject
+    BettalimsMessageResource bettalimsMessageResource;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -244,8 +249,14 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
 
         Map<String, VesselPosition> denatureRackMap = new HashMap<>();
         denatureRackMap.put(denatureBarcode, VesselPosition.A01);
+        TwoDBarcodedTube tube = new TwoDBarcodedTube(denatureBarcode);
+        labVesselDao.persist(tube);
+        labVesselDao.flush();
 
-        vesselTransferEjb.denatureToReagentKitTransfer(null, denatureRackMap, reagentKitBarcode, "pdunlea", "ZAN");
+        BettaLIMSMessage bettaLIMSMessage = vesselTransferEjb
+                .denatureToReagentKitTransfer(null, denatureRackMap, reagentKitBarcode, "pdunlea", "ZAN");
+        bettalimsMessageResource.processMessage(bettaLIMSMessage);
+
         IlluminaSequencingRun run;
         SolexaRunResource runResource =
                 new SolexaRunResource(runDao, illuminaSequencingRunFactory, flowcellDao, vesselTransferEjb, router,

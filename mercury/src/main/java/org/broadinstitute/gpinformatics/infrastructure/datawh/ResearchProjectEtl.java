@@ -40,7 +40,7 @@ public class ResearchProjectEtl extends GenericEntityAndStatusEtl<ResearchProjec
 
     @Override
     String statusRecord(String etlDateStr, boolean isDelete, ResearchProject entity, Date statusDate) {
-        if (entity != null || entity.getStatus() != null) {
+        if (entity != null && entity.getStatus() != null) {
             return genericRecord(etlDateStr, isDelete,
                     entity.getResearchProjectId(),
                     format(statusDate),

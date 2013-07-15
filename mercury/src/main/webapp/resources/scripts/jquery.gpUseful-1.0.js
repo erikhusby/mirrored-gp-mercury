@@ -92,7 +92,7 @@
         },
 
         checkAll:function (input, options) {
-            $('.' + options.checkboxClass).attr('checked', input.checked);
+            $('.' + options.checkboxClass).prop("checked", input.checked);
             this.updateCheckCount(options);
         },
 
@@ -121,7 +121,7 @@
                         currentList.slice(
                                 Math.min($lastCheckbox, currentIndex),
                                 Math.max($lastCheckbox, currentIndex) + 1
-                        ).attr({checked:e.target.checked ? "checked" : ""});
+                        ).prop("checked", e.target.checked);
                     }
 
                     $options.rangeSelection.updateCheckCount($options);

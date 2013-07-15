@@ -381,7 +381,7 @@ public class ExomeExpressEndToEndTest {
                             libraryConstructionEntityBuilder
                                     .getPondRegRackBarcode(),
                             libraryConstructionEntityBuilder
-                                    .getPondRegTubeBarcodes(), "testPrefix").invoke();
+                                    .getPondRegTubeBarcodes(), "testPrefix").invoke(false);
 
             TubeFormation pondRack = libraryConstructionEntityBuilder.getPondRegRack();
             Assert.assertEquals(pondRack.getSampleInstances().size(), 2);

@@ -273,7 +273,7 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
                 bettaLimsMessageTestFactory, labEventFactory, leHandler,
                 libraryConstructionEntityBuilder.getPondRegRack(),
                 libraryConstructionEntityBuilder.getPondRegRackBarcode(),
-                libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), "testPrefix").invoke();
+                libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), "testPrefix").invoke(false);
 
         // Pooling calculator
         // Strip Tube B
@@ -284,7 +284,7 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
                 Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchRackBarcode()),
                 Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchBarcodes()),
                 hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), "Exome Express", "testPrefix");
-        qtpEntityBuilder.invoke();
+        qtpEntityBuilder.invoke(false);
 
         String flowcellBarcode = "flowcell" + new Date().getTime();
 
