@@ -402,7 +402,7 @@ public class BucketEjb {
 
         LabBatch bucketBatch = null;
         if (!batchVessels.isEmpty()) {
-            for (LabBatch currBatch : batchVessels.iterator().next().getNearestLabBatches()) {
+            for (LabBatch currBatch : batchVessels.iterator().next().getNearestWorkflowLabBatches()) {
                 if (LabBatch.isCommonBatch(currBatch, batchVessels)) {
                     bucketBatch = currBatch;
                 }
