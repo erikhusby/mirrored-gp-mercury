@@ -74,27 +74,31 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
     @Override
     Collection<String> dataRecords(String etlDateStr, boolean isDelete, SequencingRun entity) {
         Collection<String> records = new ArrayList<String>();
+        try {
+            Collection<SequencingRunDto> dtos = makeSequencingRunDtos(entity);
+            for (SequencingRunDto dto : dtos) {
+                if (dto.canEtl()) {
+                    // Turns "LANE1" to "LANE8" into "1" to "8".
+                    String position = dto.getPosition().replaceAll("LANE", "");
 
-        Collection<SequencingRunDto> dtos = makeSequencingRunDtos(entity);
-        for (SequencingRunDto dto : dtos) {
-            if (dto.canEtl()) {
-                // Turns "LANE1" to "LANE8" into "1" to "8".
-                String position = dto.getPosition().replaceAll("LANE", "");
-
-                records.add(genericRecord(etlDateStr, isDelete,
-                        entity.getSequencingRunId(),
-                        format(dto.getFlowcellBarcode()),
-                        format(position),
-                        format(dto.getMolecularIndexingSchemeName()),
-                        format(dto.getProductOrderId()),
-                        format(dto.getSampleKey()),
-                        format(dto.getResearchProjectId()),
-                        (dto.getLoadingVessel() != null) ? format(dto.getLoadingVessel().getLabel()) : null,
-                        (dto.getLoadingVessel() != null) ? format(ExtractTransform.secTimestampFormat
-                                .format(dto.getLoadingVessel().getCreatedOn())) : null,
-                        format(dto.getBatchName())
-                ));
+                    records.add(genericRecord(etlDateStr, isDelete,
+                            entity.getSequencingRunId(),
+                            format(dto.getFlowcellBarcode()),
+                            format(position),
+                            format(dto.getMolecularIndexingSchemeName()),
+                            format(dto.getProductOrderId()),
+                            format(dto.getSampleKey()),
+                            format(dto.getResearchProjectId()),
+                            (dto.getLoadingVessel() != null) ? format(dto.getLoadingVessel().getLabel()) : null,
+                            (dto.getLoadingVessel() != null) ? format(ExtractTransform.secTimestampFormat
+                                    .format(dto.getLoadingVessel().getCreatedOn())) : null,
+                            format(dto.getBatchName())
+                    ));
+                }
             }
+        } catch (Exception e) {
+            // Uncaught RuntimeExceptions kill the injected SequencingSampleFactEtl in ExtractTransform.
+            logger.error("Error doing ETL of sequencingRun", e);
         }
 
         return records;
@@ -234,15 +238,19 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
     private static final Map<String, String> pdoKeyToResearchProjectId = new LRUMap<>(CACHE_SIZE);
 
     public List<SequencingRunDto> makeSequencingRunDtos(long sequencingRunId) {
-        SequencingRun sequencingRun = dao.findById(SequencingRun.class, sequencingRunId);
-        return makeSequencingRunDtos(sequencingRun);
+        try {
+            SequencingRun sequencingRun = dao.findById(SequencingRun.class, sequencingRunId);
+            return makeSequencingRunDtos(sequencingRun);
+        } catch (Exception e) {
+            // Uncaught RuntimeExceptions kill the injected SequencingSampleFactEtl in ExtractTransform.
+            logger.error("Error doing ETL sequencingRunId " + sequencingRunId, e);
+            return Collections.<SequencingRunDto>emptyList();
+        }
     }
 
     public List<SequencingRunDto> makeSequencingRunDtos(SequencingRun entity) {
         List<SequencingRunDto> dtos = new ArrayList<>();
         if (entity != null) {
-            try {
-
                 RunCartridge cartridge = entity.getSampleCartridge();
                 String flowcellBarcode = cartridge.getCartridgeName();
 
@@ -305,10 +313,6 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
                                 vesselsWithPositions.get(position), null));
                     }
                 }
-            } catch (RuntimeException e) {
-                // Uncaught RuntimeExceptions kill the injected SequencingSampleFactEtl in ExtractTransform.
-                logger.error("Error doing ETL analysis of sequencingRunId " + entity.getSequencingRunId(), e);
-            }
         } else {
             dtos.add(new SequencingRunDto(null, null, null, null, null, null, null, false, null, null));
         }
