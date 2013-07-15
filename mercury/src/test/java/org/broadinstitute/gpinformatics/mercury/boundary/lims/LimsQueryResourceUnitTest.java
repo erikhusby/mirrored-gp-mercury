@@ -397,7 +397,8 @@ public class LimsQueryResourceUnitTest {
     @Test(groups = DATABASE_FREE, enabled = true)
     public void testFetchIlluminaSeqTemplate() {
         SequencingTemplateLaneType laneType =
-                LimsQueryObjectFactory.createSequencingTemplateLaneType("LANE_1234", 33.333, "LOADING_VESSEL_1234");
+                LimsQueryObjectFactory.createSequencingTemplateLaneType("LANE_1234", 33.333, "LOADING_VESSEL_1234",
+                        "LOADING_VESSEL_1234");
         SequencingTemplateType template =
                 LimsQueryObjectFactory
                         .createSequencingTemplate("NAME_1234", "BARCODE_1234", true, "Resequencing", "Default",

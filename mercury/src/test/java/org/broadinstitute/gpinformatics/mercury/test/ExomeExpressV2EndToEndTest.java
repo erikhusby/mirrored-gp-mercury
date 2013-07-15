@@ -42,6 +42,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellE
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.ProductionFlowcellPath;
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
 import org.easymock.EasyMock;
 import org.testng.Assert;
@@ -66,6 +67,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DA
  */
 public class ExomeExpressV2EndToEndTest extends BaseEventTest {
 
+    public static final String FCT_TICKET = "FCT-1";
     public static List<String> RACK_COLUMNS = Arrays.asList("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11",
             "12");
     public static List<String> RACK_ROWS = Arrays.asList("A", "B", "C", "D", "E", "F", "G", "H");
@@ -283,16 +285,24 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
                 Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchRack()),
                 Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchRackBarcode()),
                 Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchBarcodes()),
-                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), "Exome Express", "testPrefix");
+                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), "testPrefix");
         qtpEntityBuilder.invoke(false);
 
         String flowcellBarcode = "flowcell" + new Date().getTime();
+
+        final LabVessel denatureSource =
+                qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
+        LabBatch fctBatch =
+                new LabBatch(FCT_TICKET,
+                        Collections.singleton(denatureSource),
+                        LabBatch.LabBatchType.FCT);
 
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
                 new HiSeq2500FlowcellEntityBuilder(bettaLimsMessageTestFactory, labEventFactory,
                         leHandler,
                         qtpEntityBuilder.getDenatureRack(),
-                        flowcellBarcode, "testPrefix", "FCT-1", null).invoke();
+                        flowcellBarcode, "testPrefix", FCT_TICKET, ProductionFlowcellPath.DILUTION_TO_FLOWCELL,null,
+                        "Exome Express").invoke();
         // MiSeq reagent block transfer message
         String miSeqReagentKitBarcode="MiSeqReagentKit"+new Date().getTime();
 

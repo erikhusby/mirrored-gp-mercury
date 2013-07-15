@@ -5,11 +5,16 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMess
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.MetadataType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.DenatureToDilutionTubeHandler;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -26,14 +31,6 @@ public class HiSeq2500JaxbBuilder {
     private String squidDesignationName;
     private final String denatureRackBarcode;
 
-    public String getDilutionTubeBarcode() {
-        return dilutionTubeBarcode;
-    }
-
-    public String getDilutionRackBarcode() {
-        return dilutionRackBarcode;
-    }
-
     private String dilutionTubeBarcode;
     private String dilutionRackBarcode;
     private final String fctTicket;
@@ -41,60 +38,116 @@ public class HiSeq2500JaxbBuilder {
     private final List<BettaLIMSMessage> messageList = new ArrayList<BettaLIMSMessage>();
     private ReceptaclePlateTransferEvent flowcellTransferJaxb;
     private PlateCherryPickEvent dilutionTransferJaxb;
+    private final ProductionFlowcellPath productionFlowcellPath;
+
+    private String stripTubeHolderBarcode;
+    private PlateCherryPickEvent stripTubeTransferJaxb;
+
+    private PlateTransferEventType stbFlowcellTransferJaxb;
+    private ReceptacleEventType flowcellLoad;
+    private String stripTubeBarcode;
+
+    private final int poolSize;
+    private final String workflowName;
+
 
     public HiSeq2500JaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
                                 String testPrefix, String denatureTubeBarcode, String denatureRackBarcode,
-                                String fctTicket) {
+                                String fctTicket, ProductionFlowcellPath productionFlowcellPath,
+                                int poolSize, String designationName, String workflowName) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.testPrefix = testPrefix;
         this.denatureTubeBarcode = denatureTubeBarcode;
         this.denatureRackBarcode = denatureRackBarcode;
         this.fctTicket = fctTicket;
-    }
-
-    public HiSeq2500JaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
-                                String testPrefix, String denatureTubeBarcode, String denatureRackBarcode,
-                                String fctTicket, String designationName) {
-        this(bettaLimsMessageTestFactory, testPrefix, denatureTubeBarcode, denatureRackBarcode, fctTicket);
+        this.productionFlowcellPath = productionFlowcellPath;
+        this.poolSize = poolSize;
         squidDesignationName = designationName;
+        this.workflowName = workflowName;
     }
 
     public HiSeq2500JaxbBuilder invoke() {
 
         dilutionRackBarcode = "DilutionRack" + testPrefix;
         dilutionTubeBarcode = "DilutionTube" + testPrefix;
-
-
-        List<BettaLimsMessageTestFactory.CherryPick> dilutionCherrypicks =
-                Collections.singletonList(new BettaLimsMessageTestFactory.CherryPick(
-                        denatureRackBarcode, Character.toString((char) ('A')) + "01",
-                        dilutionRackBarcode, Character.toString((char) ('A')) + "01"));
-
-        dilutionTransferJaxb = bettaLimsMessageTestFactory.buildCherryPick("DenatureToDilutionTransfer",
-                Collections.singletonList(denatureRackBarcode),
-                Collections.singletonList(Collections.singletonList(denatureTubeBarcode)),
-                Collections.singletonList(dilutionRackBarcode),
-                Collections.singletonList(Collections.singletonList(dilutionTubeBarcode)), dilutionCherrypicks);
-        MetadataType dilutionMetadata = new MetadataType();
-        dilutionMetadata.setName(DenatureToDilutionTubeHandler.FCT_METADATA_NAME);
-        dilutionMetadata.setValue(fctTicket);
-        dilutionTransferJaxb.getPositionMap().iterator().next().getReceptacle().iterator().next().getMetadata()
-                .add(dilutionMetadata);
-
-        bettaLimsMessageTestFactory.addMessage(messageList, dilutionTransferJaxb);
-
         flowcellBarcode = "Flowcell" + testPrefix;
-        flowcellTransferJaxb =
-                bettaLimsMessageTestFactory.buildTubeToPlate("DilutionToFlowcellTransfer",
-                        dilutionTubeBarcode, flowcellBarcode, LabEventTest.PHYS_TYPE_FLOWCELL_2_LANE,
-                        LabEventTest.SECTION_ALL_2, "tube");
-        if (StringUtils.isNotBlank(dilutionTubeBarcode)) {
-            MetadataType denatureMetaData = new MetadataType();
-            denatureMetaData.setName("DesignationName");
-            denatureMetaData.setValue(squidDesignationName);
-            flowcellTransferJaxb.getSourceReceptacle().getMetadata().add(denatureMetaData);
+
+        switch (productionFlowcellPath) {
+
+        case DILUTION_TO_FLOWCELL:
+            List<BettaLimsMessageTestFactory.CherryPick> dilutionCherrypicks =
+                    Collections.singletonList(new BettaLimsMessageTestFactory.CherryPick(
+                            denatureRackBarcode, Character.toString((char) ('A')) + "01",
+                            dilutionRackBarcode, Character.toString((char) ('A')) + "01"));
+
+            dilutionTransferJaxb = bettaLimsMessageTestFactory.buildCherryPick("DenatureToDilutionTransfer",
+                    Collections.singletonList(denatureRackBarcode),
+                    Collections.singletonList(Collections.singletonList(denatureTubeBarcode)),
+                    Collections.singletonList(dilutionRackBarcode),
+                    Collections.singletonList(Collections.singletonList(dilutionTubeBarcode)), dilutionCherrypicks);
+            MetadataType dilutionMetadata = new MetadataType();
+            dilutionMetadata.setName(DenatureToDilutionTubeHandler.FCT_METADATA_NAME);
+            dilutionMetadata.setValue(fctTicket);
+            dilutionTransferJaxb.getPositionMap().iterator().next().getReceptacle().iterator().next().getMetadata()
+                    .add(dilutionMetadata);
+
+            bettaLimsMessageTestFactory.addMessage(messageList, dilutionTransferJaxb);
+
+            flowcellTransferJaxb =
+                    bettaLimsMessageTestFactory.buildTubeToPlate("DilutionToFlowcellTransfer",
+                            dilutionTubeBarcode, flowcellBarcode, LabEventTest.PHYS_TYPE_FLOWCELL_2_LANE,
+                            LabEventTest.SECTION_ALL_2, "tube");
+            if (StringUtils.isNotBlank(dilutionTubeBarcode)) {
+                MetadataType denatureMetaData = new MetadataType();
+                denatureMetaData.setName("DesignationName");
+                denatureMetaData.setValue(squidDesignationName);
+                flowcellTransferJaxb.getSourceReceptacle().getMetadata().add(denatureMetaData);
+            }
+            bettaLimsMessageTestFactory.addMessage(messageList, flowcellTransferJaxb);
+            break;
+        case DENATURE_TO_FLOWCELL:
+
+            flowcellTransferJaxb =
+                    bettaLimsMessageTestFactory.buildTubeToPlate("DenatureToFlowcellTransfer",
+                            denatureTubeBarcode, flowcellBarcode, LabEventTest.PHYS_TYPE_FLOWCELL_2_LANE,
+                            LabEventTest.SECTION_ALL_2, "tube");
+            bettaLimsMessageTestFactory.addMessage(messageList, flowcellTransferJaxb);
+            break;
+        case STRIPTUBE_TO_FLOWCELL:
+            // StripTubeBTransfer
+            stripTubeHolderBarcode = "StripTubeHolder" + testPrefix;
+            List<BettaLimsMessageTestFactory.CherryPick> stripTubeCherryPicks = new ArrayList<>();
+            int sourcePosition = 0;
+            // Transfer column 1 to 8 rows, using non-empty source rows
+            int maxTubes = ("Exome Express".equals(workflowName))? 2:8;
+            for (int destinationPosition = 0; destinationPosition < maxTubes; destinationPosition++) {
+                stripTubeCherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(
+                        denatureRackBarcode, Character.toString((char) ('A' + 0)) + "01",
+                        stripTubeHolderBarcode, Character.toString((char) ('A' + destinationPosition)) + "01"));
+                if (sourcePosition + 1 < poolSize) {
+                    sourcePosition++;
+                }
+            }
+            stripTubeBarcode = "StripTube" + testPrefix + "1";
+
+            stripTubeTransferJaxb = bettaLimsMessageTestFactory.buildCherryPickToStripTube("StripTubeBTransfer",
+                    Collections.singletonList(denatureRackBarcode),
+                    Collections.singletonList(Collections.singletonList(denatureTubeBarcode)),
+                    stripTubeHolderBarcode,
+                    Collections.singletonList(stripTubeBarcode),
+                    stripTubeCherryPicks);
+            bettaLimsMessageTestFactory.addMessage(messageList, stripTubeTransferJaxb);
+
+            // FlowcellTransfer
+            stbFlowcellTransferJaxb = bettaLimsMessageTestFactory.buildStripTubeToFlowcell("FlowcellTransfer",
+                    stripTubeBarcode, flowcellBarcode);
+            bettaLimsMessageTestFactory.addMessage(messageList, stbFlowcellTransferJaxb);
+
+            break;
         }
-        bettaLimsMessageTestFactory.addMessage(messageList, flowcellTransferJaxb);
+        flowcellLoad = bettaLimsMessageTestFactory.buildReceptacleEvent(LabEventType.FLOWCELL_LOADED.getName(),
+                flowcellBarcode, LabEventFactory.PHYS_TYPE_FLOWCELL);
+        bettaLimsMessageTestFactory.addMessage(messageList, flowcellLoad);
 
         return this;
     }
@@ -118,4 +171,35 @@ public class HiSeq2500JaxbBuilder {
     public PlateCherryPickEvent getDilutionJaxb() {
         return dilutionTransferJaxb;
     }
+
+    public String getDilutionTubeBarcode() {
+        return dilutionTubeBarcode;
+    }
+
+    public String getDilutionRackBarcode() {
+        return dilutionRackBarcode;
+    }
+
+    public String getStripTubeHolderBarcode() {
+        return stripTubeHolderBarcode;
+    }
+
+    public PlateCherryPickEvent getStripTubeTransferJaxb() {
+        return stripTubeTransferJaxb;
+    }
+
+    public ReceptacleEventType getFlowcellLoad() {
+        return flowcellLoad;
+    }
+
+    public String getStripTubeBarcode() {
+        return stripTubeBarcode;
+    }
+
+    public PlateTransferEventType getStbFlowcellTransferJaxb() {
+        return stbFlowcellTransferJaxb;
+    }
+
+
+
 }

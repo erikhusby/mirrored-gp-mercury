@@ -807,7 +807,8 @@ public abstract class LabVessel implements Serializable {
 
         /**
          * Called after an event has been traversed, sets lab batch and product order key.
-         * @param labEvent event that was traverses
+         *
+         * @param labEvent  event that was traverses
          * @param labVessel plastic involved in the event
          */
         public void applyEvent(@Nonnull LabEvent labEvent, @Nonnull LabVessel labVessel) {
@@ -843,7 +844,7 @@ public abstract class LabVessel implements Serializable {
     /**
      * Traverse all ancestors of this vessel, accumulating SampleInstances.
      *
-     * @param sampleType where to stop recursion
+     * @param sampleType   where to stop recursion
      * @param labBatchType which batches to accumulate
      *
      * @return accumulated sampleInstances
@@ -1040,8 +1041,9 @@ public abstract class LabVessel implements Serializable {
      *
      * @return filtered lab batches
      */
-    public Set<LabBatch> getLabBatchesOfType(LabBatch.LabBatchType labBatchType) {
-        Set<LabBatch> allLabBatches = getLabBatches();
+    public Collection<LabBatch> getLabBatchesOfType(LabBatch.LabBatchType labBatchType) {
+        Collection<LabBatch> allLabBatches = getAllLabBatches(labBatchType);
+
         if (labBatchType == null) {
             return allLabBatches;
         } else {
@@ -1284,6 +1286,17 @@ public abstract class LabVessel implements Serializable {
         } else {
             TransferTraverserCriteria.NearestLabBatchFinder batchCriteria =
                     new TransferTraverserCriteria.NearestLabBatchFinder(null);
+            evaluateCriteria(batchCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+            return batchCriteria.getAllLabBatches();
+        }
+    }
+
+    public Collection<LabBatch> getAllLabBatches(LabBatch.LabBatchType type) {
+        if (getContainerRole() != null) {
+            return getContainerRole().getAllLabBatches(type);
+        } else {
+            TransferTraverserCriteria.NearestLabBatchFinder batchCriteria =
+                    new TransferTraverserCriteria.NearestLabBatchFinder(type);
             evaluateCriteria(batchCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
             return batchCriteria.getAllLabBatches();
         }

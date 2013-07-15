@@ -19,6 +19,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500JaxbBuild
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.ProductionFlowcellPath;
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -98,7 +99,9 @@ public class DenatureToDilutionValidatorTest extends BaseEventTest {
 
         HiSeq2500JaxbBuilder dilutionBuilder =
                 new HiSeq2500JaxbBuilder(getBettaLimsMessageTestFactory(), "dilutionTest" + runDate.getTime(),
-                        denatureSource.getLabel(), qtpEntityBuilder.getDenatureRack().getLabel(), fctBatchName)
+                        denatureSource.getLabel(), qtpEntityBuilder.getDenatureRack().getLabel(), fctBatchName,
+                        ProductionFlowcellPath.DILUTION_TO_FLOWCELL, denatureSource.getSampleInstanceCount(),null,
+                        "Exome Express")
                         .invoke();
         PlateCherryPickEvent dilutionEvent = dilutionBuilder.getDilutionJaxb();
         LabEvent dilutionTransferEntity =
@@ -121,7 +124,9 @@ public class DenatureToDilutionValidatorTest extends BaseEventTest {
 
         HiSeq2500JaxbBuilder dilutionBuilder =
                 new HiSeq2500JaxbBuilder(getBettaLimsMessageTestFactory(), "dilutionTest" + runDate.getTime(),
-                        denatureSource.getLabel(), qtpEntityBuilder.getDenatureRack().getLabel(), fctBatchName+"bad")
+                        denatureSource.getLabel(), qtpEntityBuilder.getDenatureRack().getLabel(), fctBatchName+"bad",
+                        ProductionFlowcellPath.DILUTION_TO_FLOWCELL, denatureSource.getSampleInstanceCount(),null,
+                        "Exome Express")
                         .invoke();
         PlateCherryPickEvent dilutionEvent = dilutionBuilder.getDilutionJaxb();
         LabEvent dilutionTransferEntity =
@@ -152,7 +157,9 @@ public class DenatureToDilutionValidatorTest extends BaseEventTest {
 
         HiSeq2500JaxbBuilder dilutionBuilder =
                 new HiSeq2500JaxbBuilder(getBettaLimsMessageTestFactory(), "dilutionTest" + runDate.getTime(),
-                        denatureSource.getLabel(), qtpEntityBuilder.getDenatureRack().getLabel(), fctBatchName)
+                        denatureSource.getLabel(), qtpEntityBuilder.getDenatureRack().getLabel(), fctBatchName,
+                        ProductionFlowcellPath.DILUTION_TO_FLOWCELL, denatureSource.getSampleInstanceCount(),null,
+                        "Exome Express")
                         .invoke();
         PlateCherryPickEvent dilutionEvent = dilutionBuilder.getDilutionJaxb();
         LabEvent dilutionTransferEntity =
@@ -182,7 +189,9 @@ public class DenatureToDilutionValidatorTest extends BaseEventTest {
 
         HiSeq2500JaxbBuilder dilutionBuilder =
                 new HiSeq2500JaxbBuilder(getBettaLimsMessageTestFactory(), "dilutionTest" + runDate.getTime(),
-                        denatureSource.getLabel(), qtpEntityBuilder.getDenatureRack().getLabel(), fctBatchName)
+                        denatureSource.getLabel(), qtpEntityBuilder.getDenatureRack().getLabel(), fctBatchName,
+                        ProductionFlowcellPath.DILUTION_TO_FLOWCELL, denatureSource.getSampleInstanceCount(),null,
+                        "Exome Express")
                         .invoke();
         PlateCherryPickEvent dilutionEvent = dilutionBuilder.getDilutionJaxb();
         LabEvent dilutionTransferEntity =
@@ -198,7 +207,8 @@ public class DenatureToDilutionValidatorTest extends BaseEventTest {
                 new LabBatch(altFctTicketName,
                         Collections.singleton((LabVessel)new TwoDBarcodedTube(denatureSource.getLabel()+"ALT")),
                         LabBatch.LabBatchType.FCT);
-        fctBatch2.getLabBatchStartingVessels().iterator().next().setDilutionVessel(dilutionTransferEntity.getTargetVesselTubes().iterator().next());
+        fctBatch2.getLabBatchStartingVessels().iterator().next().setDilutionVessel(
+                dilutionTransferEntity.getTargetVesselTubes().iterator().next());
 
         try {
             AbstractEventHandler.applyEventSpecificHandling(dilutionTransferEntity, dilutionEvent);
