@@ -877,10 +877,10 @@ public abstract class LabVessel implements Serializable {
             }
         }
         for (SampleInstance sampleInstance : traversalResults.getSampleInstances()) {
-            sampleInstance.addLabBatches(getLabBatchesOfType(labBatchType));
+            sampleInstance.addLabBatches(getAllLabBatches(labBatchType));
             // If this vessel is a BSP export, sets the aliquot sample.
             // Expects one sample per vessel in the BSP export.
-            if (!getLabBatchesOfType(LabBatch.LabBatchType.SAMPLES_IMPORT).isEmpty()) {
+            if (!getAllLabBatches(LabBatch.LabBatchType.SAMPLES_IMPORT).isEmpty()) {
                 for (MercurySample mercurySample : mercurySamples) {
                     sampleInstance.setBspExportSample(mercurySample);
                 }
@@ -1030,7 +1030,11 @@ public abstract class LabVessel implements Serializable {
      * @param labBatchType null to get all types
      *
      * @return filtered lab batches
+     *
+     * @deprecated this implementation is not necessary with the addition of a method that utilizes transfer entity
+     * traverser
      */
+    @Deprecated
     public Collection<LabBatch> getLabBatchesOfType(LabBatch.LabBatchType labBatchType) {
         Collection<LabBatch> allLabBatches = getAllLabBatches(labBatchType);
 

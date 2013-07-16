@@ -60,7 +60,7 @@ public class DenatureToDilutionTubeHandler extends AbstractEventHandler {
             LabVessel dilutionTube =
                     transfer.getTargetVesselContainer().getVesselAtPosition(transfer.getTargetPosition());
 
-            Collection<LabBatch> fctBatches = denatureTube.getLabBatchesOfType(LabBatch.LabBatchType.FCT);
+            Collection<LabBatch> fctBatches = denatureTube.getAllLabBatches(LabBatch.LabBatchType.FCT);
 
             //Get FCT Ticket for which the Dilution tube is targeted
             String fctTicket = "";

@@ -172,6 +172,10 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         laneVesselsAndPositions.put(VesselPosition.LANE1, denatureSource);
         laneVesselsAndPositions.put(VesselPosition.LANE2, denatureSource);
 
+        LabBatch fctBatch = new LabBatch("FCT1", Collections.singleton(denatureSource), LabBatch.LabBatchType.FCT);
+
+        EasyMock.expect(runCartridge.getAllLabBatches(EasyMock.anyObject(LabBatch.LabBatchType.class))).andReturn(
+                Collections.singleton(fctBatch)).times(2);
         EasyMock.expect(runCartridge.getNearestTubeAncestorsForLanes()).andReturn(laneVesselsAndPositions).times(2);
         EasyMock.expect(sampleInstance.getAllWorkflowLabBatches()).andReturn(
                 Collections.<LabBatch>singletonList(workflowBatch)).times(4);
@@ -234,6 +238,10 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         laneVesselsAndPositions.put(VesselPosition.LANE2, denatureSource);
         EasyMock.expect(runCartridge.getVesselGeometry()).andReturn(VesselGeometry.FLOWCELL1x2);
 
+        LabBatch fctBatch = new LabBatch("FCT1", Collections.singleton(denatureSource), LabBatch.LabBatchType.FCT);
+
+        EasyMock.expect(runCartridge.getAllLabBatches(EasyMock.anyObject(LabBatch.LabBatchType.class))).andReturn(
+                Collections.singleton(fctBatch));
         EasyMock.expect(runCartridge.getNearestTubeAncestorsForLanes()).andReturn(laneVesselsAndPositions);
         EasyMock.expect(sampleInstance.getAllWorkflowLabBatches()).andReturn(
                 Collections.<LabBatch>singletonList(workflowBatch)).times(2);
@@ -297,6 +305,10 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         laneVesselsAndPositions.put(VesselPosition.LANE1, denatureSource);
         laneVesselsAndPositions.put(VesselPosition.LANE2, denatureSource);
 
+        LabBatch fctBatch = new LabBatch("FCT1", Collections.singleton(denatureSource), LabBatch.LabBatchType.FCT);
+
+        EasyMock.expect(runCartridge.getAllLabBatches(EasyMock.anyObject(LabBatch.LabBatchType.class))).andReturn(
+                Collections.singleton(fctBatch));
         EasyMock.expect(runCartridge.getNearestTubeAncestorsForLanes()).andReturn(laneVesselsAndPositions);
         EasyMock.expect(sampleInstance.getAllWorkflowLabBatches()).andReturn(
                 Collections.<LabBatch>singletonList(workflowBatch)).times(2);
@@ -353,6 +365,10 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         laneVesselsAndPositions.put(VesselPosition.LANE1, denatureSource);
         laneVesselsAndPositions.put(VesselPosition.LANE2, denatureSource);
 
+        LabBatch fctBatch = new LabBatch("FCT1", Collections.singleton(denatureSource), LabBatch.LabBatchType.FCT);
+
+        EasyMock.expect(runCartridge.getAllLabBatches(EasyMock.anyObject(LabBatch.LabBatchType.class))).andReturn(
+                Collections.singleton(fctBatch));
         EasyMock.expect(runCartridge.getNearestTubeAncestorsForLanes()).andReturn(laneVesselsAndPositions);
         EasyMock.expect(sampleInstance.getAllWorkflowLabBatches()).andReturn(
                 Collections.<LabBatch>singletonList(workflowBatch));
@@ -434,7 +450,8 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         LabBatch fct = new LabBatch(FCT_TICKET, Collections.singleton(denatureSource), LabBatch.LabBatchType.FCT);
 
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
-                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", FCT_TICKET, ProductionFlowcellPath.DILUTION_TO_FLOWCELL, null,
+                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", FCT_TICKET,
+                        ProductionFlowcellPath.DILUTION_TO_FLOWCELL, null,
                         "Exome Express");
         LabVessel dilutionSource =
                 hiSeq2500FlowcellEntityBuilder.getDilutionRack().getContainerRole().getVesselAtPosition(

@@ -161,9 +161,9 @@ public class SequencingTemplateFactory {
         batchReferences = templateTargetTube.getDilutionReferences();
         if (batchReferences.isEmpty()) {
             if (isPoolTest) {
-                labBatches = templateTargetTube.getLabBatchesOfType(LabBatch.LabBatchType.MISEQ);
+                labBatches = templateTargetTube.getAllLabBatches(LabBatch.LabBatchType.MISEQ);
             } else {
-                labBatches = templateTargetTube.getLabBatchesOfType(LabBatch.LabBatchType.FCT);
+                labBatches = templateTargetTube.getAllLabBatches(LabBatch.LabBatchType.FCT);
             }
         } else {
             for (LabBatchStartingVessel reference : batchReferences) {
@@ -246,26 +246,14 @@ public class SequencingTemplateFactory {
         /** FIXME: Temporary Hack for Exome Express until we get lane to starting vessel tracking **/
         List<SequencingTemplateLaneType> lanes = new ArrayList<>();
 
-        Collection<LabBatch> prodFlowcellBatches = flowcell.getLabBatchesOfType(LabBatch.LabBatchType.FCT);
+        Collection<LabBatch> prodFlowcellBatches = flowcell.getAllLabBatches(LabBatch.LabBatchType.FCT);
 
         if (prodFlowcellBatches.size() > 1) {
             throw new InformaticsServiceException(String.format("There are more than one FCT Batches " +
                                                                 "associated with %s", flowcell.getLabel()));
         }
-        Set<LabVessel> designatedVessels = new HashSet<>();
 
-        for (LabBatch poolTestBatch : prodFlowcellBatches) {
-            for (LabBatchStartingVessel startingBatchVessel : poolTestBatch.getLabBatchStartingVessels()) {
-                designatedVessels.add(startingBatchVessel.getLabVessel());
-            }
-        }
-
-        if(designatedVessels.size()>1) {
-            throw new InformaticsServiceException("Not currently able to support more than one starting " +
-                                                  "vessel per flowcell");
-        }
-
-        /** END **/
+        /** END Temp Hack **/
 
 
         for (VesselAndPosition vesselAndPosition : loadedVesselsAndPositions) {
@@ -274,7 +262,9 @@ public class SequencingTemplateFactory {
             Double concentration = getLoadingConcentrationForVessel(sourceVessel);
             SequencingTemplateLaneType lane =
                     LimsQueryObjectFactory.createSequencingTemplateLaneType(vesselPosition.name(), concentration,
-                            sourceVessel.getLabel(), designatedVessels.iterator().next().getLabel());
+                            sourceVessel.getLabel(),
+                            prodFlowcellBatches.iterator().next().getStartingVesselByPosition(vesselPosition)
+                                    .getLabel());
             lanes.add(lane);
         }
 
@@ -303,7 +293,7 @@ public class SequencingTemplateFactory {
      * @return The loading concentration for the vessel.
      */
     private Double getLoadingConcentrationForVessel(LabVessel sourceVessel) {
-        Collection<LabBatch> batches = sourceVessel.getLabBatchesOfType(LabBatch.LabBatchType.FCT);
+        Collection<LabBatch> batches = sourceVessel.getAllLabBatches(LabBatch.LabBatchType.FCT);
         Double concentration = null;
         for (LabBatch batch : batches) {
             for (LabBatchStartingVessel labBatchStartingVessel : batch.getLabBatchStartingVessels()) {
@@ -333,7 +323,7 @@ public class SequencingTemplateFactory {
         }
         List<SequencingTemplateLaneType> lanes = new ArrayList<>();
 
-        Collection<LabBatch> miseqBatches = miSeqReagentKit.getLabBatchesOfType(LabBatch.LabBatchType.MISEQ);
+        Collection<LabBatch> miseqBatches = miSeqReagentKit.getAllLabBatches(LabBatch.LabBatchType.MISEQ);
 
         if (miseqBatches.size() > 1) {
             throw new InformaticsServiceException(String.format("There are more than one MiSeq Batches " +
@@ -341,12 +331,10 @@ public class SequencingTemplateFactory {
         }
 
         for (LabBatch poolTestBatch : miseqBatches) {
-            for (LabBatchStartingVessel startingBatchVessel : poolTestBatch.getLabBatchStartingVessels()) {
-                lanes.add(LimsQueryObjectFactory.createSequencingTemplateLaneType(
-                        IlluminaFlowcell.FlowcellType.MiSeqFlowcell.getVesselGeometry().getRowNames()[0],
-                        concentration,
-                        startingBatchVessel.getLabVessel().getLabel(), ""));
-            }
+            lanes.add(LimsQueryObjectFactory.createSequencingTemplateLaneType(
+                    IlluminaFlowcell.FlowcellType.MiSeqFlowcell.getVesselGeometry().getRowNames()[0],
+                    concentration,
+                    poolTestBatch.getStartingVesselByPosition(VesselPosition.LANE1).getLabel(), ""));
         }
         return LimsQueryObjectFactory.createSequencingTemplate(null, null, isPoolTest,
                 sequencingConfig.getInstrumentWorkflow().getValue(), sequencingConfig.getChemistry().getValue(),
