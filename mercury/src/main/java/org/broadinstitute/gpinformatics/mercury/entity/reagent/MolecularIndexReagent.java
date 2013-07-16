@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.reagent;
 
 
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
@@ -12,6 +13,7 @@ import javax.persistence.ManyToOne;
 public class MolecularIndexReagent extends Reagent {
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @BatchSize(size = 500)
     private MolecularIndexingScheme molecularIndexingScheme;
 
     public MolecularIndexReagent(MolecularIndexingScheme molecularIndexingScheme) {
