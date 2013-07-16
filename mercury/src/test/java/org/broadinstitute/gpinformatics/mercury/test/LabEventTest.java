@@ -271,6 +271,7 @@ public class LabEventTest extends BaseEventTest {
         readStructureRequest.setRunBarcode(illuminaSequencingRun.getRunBarcode());
         readStructureRequest.setSetupReadStructure("71T8B8B71T");
         readStructureRequest.setActualReadStructure("101T8B8B101T");
+        readStructureRequest.setLanesSequenced("1,4");
 
         illuminaSequencingRunFactory.storeReadsStructureDBFree(readStructureRequest, illuminaSequencingRun);
 
@@ -288,6 +289,7 @@ public class LabEventTest extends BaseEventTest {
         Assert.assertEquals(libraryBean.getBaitSetName(), HybridSelectionEntityBuilder.BAIT_DESIGN_NAME, "Wrong bait");
         // want to check that null is represented properly
         Assert.assertNull(zimsIlluminaRun.getImagedAreaPerLaneMM2());
+        Assert.assertEquals(zimsIlluminaRun.getLanesSequenced(),"1,4");
 
         for (LibraryBean bean : zimsIlluminaChamber.getLibraries()) {
             // Every library should have an LCSET, even controls.
@@ -414,6 +416,7 @@ public class LabEventTest extends BaseEventTest {
         readStructureRequest.setSetupReadStructure("71T8B8B71T");
         readStructureRequest.setActualReadStructure("101T8B8B101T");
         readStructureRequest.setImagedArea(new Double("185.2049407959"));
+        readStructureRequest.setLanesSequenced("3,6");
 
         runFactory.storeReadsStructureDBFree(readStructureRequest, run);
 
@@ -423,6 +426,7 @@ public class LabEventTest extends BaseEventTest {
         Assert.assertEquals(zimsIlluminaRun.getActualReadStructure(), readStructureRequest.getActualReadStructure());
         Assert.assertEquals(zimsIlluminaRun.getSetupReadStructure(), readStructureRequest.getSetupReadStructure());
         Assert.assertEquals(zimsIlluminaRun.getImagedAreaPerLaneMM2(),readStructureRequest.getImagedArea());
+        Assert.assertEquals(zimsIlluminaRun.getLanesSequenced(),"3,6");
 
         Map.Entry<String, TwoDBarcodedTube> stringTwoDBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
         ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
@@ -542,6 +546,7 @@ public class LabEventTest extends BaseEventTest {
         Assert.assertEquals(zimsIlluminaRun.getActualReadStructure(), readStructureRequest.getActualReadStructure());
         Assert.assertEquals(zimsIlluminaRun.getSetupReadStructure(), readStructureRequest.getSetupReadStructure());
         Assert.assertEquals(zimsIlluminaRun.getImagedAreaPerLaneMM2(),readStructureRequest.getImagedArea());
+        Assert.assertNull(zimsIlluminaRun.getLanesSequenced());
 
         Map.Entry<String, TwoDBarcodedTube> stringTwoDBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
         ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();

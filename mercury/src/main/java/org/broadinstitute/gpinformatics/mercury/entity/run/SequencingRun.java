@@ -33,6 +33,8 @@ public class SequencingRun {
 
     private Double imagedAreaPerMM2;
 
+    private String lanesSequenced;
+
     @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "run_cartridge")
     private RunCartridge runCartridge;
@@ -162,5 +164,13 @@ public class SequencingRun {
 
     public void setImagedAreaPerMM2(Double imagedAreaPerMM2) {
         this.imagedAreaPerMM2 = imagedAreaPerMM2;
+    }
+
+    public String getLanesSequenced() {
+        return lanesSequenced;
+    }
+
+    public void setLanesSequenced(String lanesSequenced) {
+        this.lanesSequenced = lanesSequenced;
     }
 }

@@ -300,6 +300,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
     public void testSetReadStructure() {
 
         Double imagedArea = new Double("276.4795532227");
+        String lanesSequenced = "2,3";
         ReadStructureRequest readStructure = new ReadStructureRequest();
         readStructure.setRunBarcode(runBarcode);
         readStructure.setSetupReadStructure("71T8B8B101T");
@@ -336,8 +337,10 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         Assert.assertNotNull(readstructureResult.getActualReadStructure());
         Assert.assertEquals(readstructureResult.getActualReadStructure(), run.getActualReadStructure());
         Assert.assertNull(readstructureResult.getImagedArea());
+        Assert.assertNull(readstructureResult.getLanesSequenced());
 
         readStructure.setImagedArea(imagedArea);
+        readStructure.setLanesSequenced(lanesSequenced);
 
         readstructureResult = runResource.storeRunReadStructure(readStructure);
 
@@ -349,6 +352,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         Assert.assertNotNull(readstructureResult.getActualReadStructure());
         Assert.assertEquals(readstructureResult.getActualReadStructure(), run.getActualReadStructure());
         Assert.assertEquals(readstructureResult.getImagedArea(),imagedArea);
+        Assert.assertEquals(readstructureResult.getLanesSequenced(),lanesSequenced);
     }
 
 }

@@ -134,7 +134,7 @@ public class ZimsIlluminaRunFactory {
         }
         ZimsIlluminaRun run = new ZimsIlluminaRun(sequencingRun.getRunName(), sequencingRun.getRunBarcode(),
                 flowcell.getLabel(), sequencingRun.getMachineName(), null, dateFormat.format(illuminaRun.getRunDate()),
-                false, sequencingRun.getActualReadStructure(), imagedArea, sequencingRun.getSetupReadStructure());
+                false, sequencingRun.getActualReadStructure(), imagedArea, sequencingRun.getSetupReadStructure(),sequencingRun.getLanesSequenced());
 
         for (List<SampleInstanceDto> sampleInstanceDtos : perLaneSampleInstanceDtos) {
             if (sampleInstanceDtos != null && !sampleInstanceDtos.isEmpty()) {

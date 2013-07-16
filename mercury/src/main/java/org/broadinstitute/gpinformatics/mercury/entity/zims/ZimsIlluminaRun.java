@@ -63,6 +63,9 @@ public class ZimsIlluminaRun {
     @JsonProperty("setupReadStructure")
     private String setupReadStructure;
 
+    @JsonProperty("lanesSequenced")
+    private String lanesSequenced;
+
 
     public ZimsIlluminaRun() {
     }
@@ -75,7 +78,8 @@ public class ZimsIlluminaRun {
                            String runDate,
                            Boolean isPaired,
                            String actualReadStructure,
-                           double  imagedAreaPerLaneMM2) {
+                           double  imagedAreaPerLaneMM2,
+                           String lanesSequenced) {
         this.runName = runName;
         this.runBarcode = runBarcode;
         this.flowcellBarcode = flowcellBarcode;
@@ -90,13 +94,15 @@ public class ZimsIlluminaRun {
         this.isPaired = isPaired;
         this.actualReadStructure = actualReadStructure;
         this.imagedAreaPerLaneMM2 = ThriftConversionUtil.zeroAsNull(imagedAreaPerLaneMM2);
+        this.lanesSequenced = lanesSequenced;
     }
 
     public ZimsIlluminaRun(String runName, String runBarcode, String flowcellBarcode, String sequencer,
                            String sequencerModel, String runDate, Boolean paired, String actualReadStructure,
-                           double imagedAreaPerLaneMM2, String setupReadStructure) {
-        this(runName, runBarcode, flowcellBarcode, sequencer, sequencerModel, runDate, paired, actualReadStructure, imagedAreaPerLaneMM2);
+                           double imagedAreaPerLaneMM2, String setupReadStructure,String lanesSequenced) {
+        this(runName, runBarcode, flowcellBarcode, sequencer, sequencerModel, runDate, paired, actualReadStructure, imagedAreaPerLaneMM2,lanesSequenced);
         this.setupReadStructure = setupReadStructure;
+        this.lanesSequenced = lanesSequenced;
     }
 
     /**
@@ -195,4 +201,10 @@ public class ZimsIlluminaRun {
     public String getSetupReadStructure() {
         return setupReadStructure;
     }
+
+    public String getLanesSequenced() {
+        return lanesSequenced;
+    }
 }
+
+
