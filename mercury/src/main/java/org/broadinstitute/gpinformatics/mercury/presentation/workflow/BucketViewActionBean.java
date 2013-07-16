@@ -50,6 +50,10 @@ import java.util.Set;
 public class BucketViewActionBean extends CoreActionBean {
 
     private static final String VIEW_PAGE = "/workflow/bucket_view.jsp";
+    private static final String REWORK_BUCKET_PAGE = "/workflow/rework_bucket_view.jsp";
+    public static final String REWORK_ACTION = "viewRework";
+    public static final String ADD_TO_BATCH_ACTION = "addToBatch";
+    private static final String CONFIRMATION_PAGE = "/workflow/rework_confirmation.jsp";
     @Inject
     private WorkflowLoader workflowLoader;
     @Inject
@@ -68,6 +72,7 @@ public class BucketViewActionBean extends CoreActionBean {
     public static final String EXISTING_TICKET = "existingTicket";
     public static final String NEW_TICKET = "newTicket";
     public static final String CREATE_BATCH_ACTION = "createBatch";
+    private static final String REWORK_CONFIRMED_ACTION = "reworkConfirmed";
 
     private List<WorkflowBucketDef> buckets = new ArrayList<>();
     private List<String> selectedVesselLabels = new ArrayList<>();
@@ -93,6 +98,8 @@ public class BucketViewActionBean extends CoreActionBean {
     private String selectedProductWorkflowDef;
     private List<ProductWorkflowDef> allProductWorkflowDefs = new ArrayList<>();
     private Map<LabVessel, Set<String>> vesselToPDOKeys = new HashMap<>();
+    @Validate(required = true, on = {ADD_TO_BATCH_ACTION})
+    private String selectedLcset;
 
     @Before(stages = LifecycleStage.BindingAndValidation)
     public void init() {
@@ -109,7 +116,7 @@ public class BucketViewActionBean extends CoreActionBean {
         //set the initial bucket to the first in the list and load it
         if (!buckets.isEmpty()) {
             selectedBucket = buckets.get(0).getName();
-            viewBucket();
+//            viewBucket();
         }
     }
 
@@ -177,6 +184,14 @@ public class BucketViewActionBean extends CoreActionBean {
         this.allProductWorkflowDefs = allProductWorkflowDefs;
     }
 
+    public String getSelectedLcset() {
+        return selectedLcset;
+    }
+
+    public void setSelectedLcset(String selectedLcset) {
+        this.selectedLcset = selectedLcset;
+    }
+
     @DefaultHandler
     public Resolution view() {
         return new ForwardResolution(VIEW_PAGE);
@@ -202,6 +217,11 @@ public class BucketViewActionBean extends CoreActionBean {
         }
     }
 
+    @HandlesEvent(REWORK_ACTION)
+    public Resolution viewReworkBucket() {
+        return new ForwardResolution(REWORK_BUCKET_PAGE);
+    }
+
     public Resolution viewBucket() {
 
         if (selectedBucket != null) {
@@ -211,6 +231,7 @@ public class BucketViewActionBean extends CoreActionBean {
                 reworkEntries = bucket.getReworkEntries();
             } else {
                 bucketEntries = new ArrayList<>();
+                reworkEntries = new ArrayList<>();
             }
             if (!bucketEntries.isEmpty() || !reworkEntries.isEmpty()) {
                 jiraEnabled = true;
@@ -260,6 +281,18 @@ public class BucketViewActionBean extends CoreActionBean {
             sampleNames.add(sampleInstance.getStartingSample().getSampleKey());
         }
         return sampleNames;
+    }
+
+    @HandlesEvent(ADD_TO_BATCH_ACTION)
+    public Resolution addToBatch() {
+        //load lcset
+        return new ForwardResolution(CONFIRMATION_PAGE);
+    }
+
+    @HandlesEvent(REWORK_CONFIRMED_ACTION)
+    public Resolution reworkConfirmed() {
+        addMessage("Successfully added rework to bucket");
+        return new RedirectResolution(REWORK_BUCKET_PAGE);
     }
 
     /**
