@@ -43,6 +43,7 @@ public class SampleLibrariesActionBean extends CoreActionBean {
     private Map<String, BSPSampleDTO> sampleToBspPicoValueMap = new HashMap<>();
     private Map<LabVessel, Map<LabEvent, Set<LabVessel>>> vesselToEventVesselsMap = new HashMap<>();
     private List<String> selectedSamples;
+    private Map<String, List<LabVessel>> sampleNameToVesselsMap = new HashMap<>();
 
     public Map<String, BSPSampleDTO> getSampleToBspPicoValueMap() {
         return sampleToBspPicoValueMap;
@@ -79,7 +80,16 @@ public class SampleLibrariesActionBean extends CoreActionBean {
 
         List<LabVessel> vessels = labVesselDao.findBySampleKeyList(selectedSamples);
         for (LabVessel startingVessel : vessels) {
-            sampleNames.addAll(startingVessel.getSampleNames());
+            Collection<String> vesselSampleNames = startingVessel.getSampleNames();
+            sampleNames.addAll(vesselSampleNames);
+            for (String sampleName : vesselSampleNames) {
+                List<LabVessel> vesselList = sampleNameToVesselsMap.get(sampleName);
+                if (vesselList == null) {
+                    vesselList = new ArrayList<>();
+                    sampleNameToVesselsMap.put(sampleName, vesselList);
+                }
+                vesselList.add(startingVessel);
+            }
             Map<LabEvent, Set<LabVessel>> eventListMap =
                     startingVessel.findVesselsForLabEventTypes(eventTypes);
             vesselToEventVesselsMap.put(startingVessel, eventListMap);
@@ -89,7 +99,7 @@ public class SampleLibrariesActionBean extends CoreActionBean {
 
     public List<MolecularIndexReagent> getIndexesForSample(String sampleName) {
         List<MolecularIndexReagent> allIndexes = new ArrayList<>();
-        List<LabVessel> vessels = labVesselDao.findBySampleKey(sampleName);
+        List<LabVessel> vessels = sampleNameToVesselsMap.get(sampleName);
         for (LabVessel vessel : vessels) {
             Set<MercurySample> mercurySamples = new HashSet<>();
             Collection<LabVessel> descendants = vessel.getDescendantVessels();
@@ -112,7 +122,7 @@ public class SampleLibrariesActionBean extends CoreActionBean {
 
     public List<LabVessel> getVesselStringBySampleAndType(String sampleName, LabEventType type) {
         List<LabVessel> allVessels = new ArrayList<>();
-        List<LabVessel> vessels = labVesselDao.findBySampleKey(sampleName);
+        List<LabVessel> vessels = sampleNameToVesselsMap.get(sampleName);
         for (LabVessel vessel : vessels) {
             Map<LabEvent, Set<LabVessel>> eventToVessels = vesselToEventVesselsMap.get(vessel);
             for (Map.Entry<LabEvent, Set<LabVessel>> entry : eventToVessels.entrySet()) {
