@@ -204,14 +204,14 @@ public class BettalimsMessageResourceTest extends Arquillian {
         Iterator<Map.Entry<String, TwoDBarcodedTube>> iterator = mapBarcodeToTube.entrySet().iterator();
         Map.Entry<String, TwoDBarcodedTube> barcodeTubeEntry = iterator.next();
         reworkEjb.addAndValidateRework(new ReworkEjb.ReworkCandidate(barcodeTubeEntry.getValue().getLabel()),
-                ReworkEntry.ReworkReason.UNKNOWN_ERROR, LabEventType.PICO_PLATING_BUCKET, "Pico/Plating Bucket", "Test",
+                ReworkEntry.ReworkReason.UNKNOWN_ERROR, "Pico/Plating Bucket", "Test",
                 WorkflowName.EXOME_EXPRESS.getWorkflowName(), "jowalsh");
         mapBarcodeToTube2.put(barcodeTubeEntry.getKey(), barcodeTubeEntry.getValue());
         reworks.add(barcodeTubeEntry.getValue());
 
         barcodeTubeEntry = iterator.next();
         reworkEjb.addAndValidateRework(new ReworkEjb.ReworkCandidate(barcodeTubeEntry.getValue().getLabel()),
-                ReworkEntry.ReworkReason.UNKNOWN_ERROR, LabEventType.PICO_PLATING_BUCKET, "Pico/Plating Bucket", "Test",
+                ReworkEntry.ReworkReason.UNKNOWN_ERROR, "Pico/Plating Bucket", "Test",
                 WorkflowName.EXOME_EXPRESS.getWorkflowName(), "jowalsh");
         mapBarcodeToTube2.put(barcodeTubeEntry.getKey(), barcodeTubeEntry.getValue());
         reworks.add(barcodeTubeEntry.getValue());

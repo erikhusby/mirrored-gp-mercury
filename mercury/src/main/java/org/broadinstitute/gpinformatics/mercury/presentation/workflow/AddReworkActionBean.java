@@ -87,20 +87,14 @@ public class AddReworkActionBean extends CoreActionBean {
         if (getBuckets().isEmpty()) {
             addValidationError("vesselLabel", "{2} is not in a bucket.", vesselLabel);
         }
-        if (bucketName.equals("Pico/Plating Bucket")) {
-            reworkStep = LabEventType.PICO_PLATING_BUCKET;
-        } else {
-            reworkStep = LabEventType.SHEARING_BUCKET;
-        }
 
         for (String selectedReworkCandidate : selectedReworkCandidates) {
             reworkCandidates.add(ReworkEjb.ReworkCandidate.fromString(selectedReworkCandidate));
         }
 
         try {
-            Collection<String> validationMessages =
-                    reworkEjb.addAndValidateReworks(reworkCandidates, reworkReason, reworkStep, "Pico/Plating Bucket",
-                            commentText,
+            Collection<String> validationMessages = reworkEjb
+                    .addAndValidateReworks(reworkCandidates, reworkReason, bucketName, commentText,
                             WorkflowName.EXOME_EXPRESS.getWorkflowName(), getUserBean().getLoginUserName());
             addMessage("{0} vessel(s) have been added to the {1} bucket.", reworkCandidates.size(), bucketName);
 
