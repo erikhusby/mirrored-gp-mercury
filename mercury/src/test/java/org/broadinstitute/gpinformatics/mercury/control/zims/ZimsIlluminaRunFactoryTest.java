@@ -216,6 +216,7 @@ public class ZimsIlluminaRunFactoryTest {
         for (ZimsIlluminaChamber lane : zimsIlluminaRun.getLanes()) {
             assertThat(lane.getLibraries().size(), is(1));
         }
+        assertThat(zimsIlluminaRun.getSequencerModel(),equalTo("Illumina HiSeq 2000"));
     }
 
     @Test(groups = DATABASE_FREE)

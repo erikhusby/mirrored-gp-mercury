@@ -51,4 +51,11 @@ public abstract class RunCartridge extends LabVessel {
     }
 
     public abstract Map<VesselPosition, LabVessel> getNearestTubeAncestorsForLanes();
+
+    /**
+     * Returns the model of sequencer (think vendor/make/model) that
+     * can sequence this cartridge
+     * @return
+     */
+    public abstract String getSequencerModel();
 }

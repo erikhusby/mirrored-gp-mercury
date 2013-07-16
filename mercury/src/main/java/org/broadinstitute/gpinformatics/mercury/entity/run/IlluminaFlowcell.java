@@ -206,4 +206,32 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
 
         return vesselsWithPositions;
     }
+
+    /**
+     * Returns the sequencer model (think "vendor/make/model"),
+     * Initialized from squid's lab_machine.model field.
+     * @return
+     */
+    @Override
+    public String getSequencerModel() {
+        String model = null;
+        if (flowcellType == null) {
+            throw new RuntimeException("Could not determine sequencer model because flowcellType is null");
+        }
+        else {
+            if (flowcellType == FlowcellType.HiSeq2500Flowcell) {
+                model = "Illumina HiSeq 2500";
+            }
+            else if (flowcellType == FlowcellType.HiSeqFlowcell) {
+                model =  "Illumina HiSeq 2000";
+            }
+            else if (flowcellType == FlowcellType.MiSeqFlowcell) {
+                model = "Illumina MiSeq";
+            }
+            else {
+                throw new RuntimeException("Could not determine sequencer model.  Is this a new kind of sequencer?");
+            }
+        }
+        return model;
+    }
 }

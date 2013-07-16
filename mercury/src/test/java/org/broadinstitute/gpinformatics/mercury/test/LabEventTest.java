@@ -468,6 +468,8 @@ public class LabEventTest extends BaseEventTest {
         Assert.assertEquals(illuminaSequencingRun.getSampleCartridge(),
                 hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell(), "Wrong flowcell");
 
+        Assert.assertEquals(illuminaSequencingRun.getSampleCartridge().getSequencerModel(),"Illumina HiSeq 2500");
+
 //        Controller.stopCPURecording();
     }
 
