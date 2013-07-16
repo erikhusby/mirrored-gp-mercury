@@ -11,17 +11,21 @@
                     if (barcode) {
                         $j('#vesselInfo').html("<img src=\"${ctxpath}/images/spinner.gif\"/>");
                         $j.ajax({
-                            url:"${ctxpath}/workflow/AddRework.action?vesselInfo=&vesselLabel=" + barcode,
+                            type: "POST",
+                            url:"${ctxpath}/workflow/AddRework.action?vesselInfo=",
+                            data: { vesselLabel: barcode },
                             dataType:'html',
                             success:updateDetails
                         });
                     }
                 })
+
+                // Invoke ajax request in the case that this is a redisplay of the page because of an error
+                $j('#vesselBarcode').change();
             });
             function updateDetails(data) {
                 $j("#vesselInfo").html(data);
             }
-
         </script>
     </stripes:layout-component>
 
@@ -29,10 +33,10 @@
         <stripes:form beanclass="${actionBean.class.name}" class="form-horizontal" id="reworkEntryForm">
             <div class="control-group">
                 <stripes:label for="vesselLabel" class="control-label">
-                    Barcode or Sample ID
+                    Barcodes or Sample IDs
                 </stripes:label>
                 <div id="barcodeDiv" class="controls">
-                    <stripes:text id="vesselBarcode" name="vesselLabel"/>
+                    <stripes:textarea id="vesselBarcode" name="vesselLabel" rows="3" cols="16"/>
                 </div>
             </div>
             <div id="vesselInfo"></div>
