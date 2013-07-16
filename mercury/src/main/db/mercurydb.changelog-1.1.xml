@@ -274,4 +274,26 @@
             <column name="imaged_area_permm2" type="number(15,10)"></column>
         </addColumn>
     </changeSet>
+
+    <changeSet id="GPLIM-1688-2" author="andrew">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="sequencing_run" columnName="lanes_sequenced" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="sequencing_run" schemaName="mercury">
+            <column name="lanes_sequenced" type="varchar(255)"></column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-1688-3" author="andrew">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="sequencing_run_aud" columnName="lanes_sequenced" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="sequencing_run_aud" schemaName="mercury">
+            <column name="lanes_sequenced" type="varchar(255)"></column>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>
