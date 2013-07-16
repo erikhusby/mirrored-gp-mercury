@@ -247,6 +247,7 @@ public class ReworkEjb {
             }
         }
 
+        // TODO: be smarter about which inputs produced results and query BSP for any that had no results from Mercury
         if (reworkCandidates.isEmpty()) {
             Map<String, List<ProductOrderSample>> samplesById =
                     athenaClientService.findMapSampleNameToPoSample(query);

@@ -66,6 +66,8 @@ table.simple tr.odd { background-color: #f5f5f5; }
 table.simple { border: 1px solid #ccc; border-collapse: collapse; }
 table.simple tr:hover td { background-color: #def; }
 table.simple td,table.simple th { spacing: 10px ; border-right: 1px solid #ccc; border-bottom: 1px dotted #dfdfdf; padding: 2px; vertical-align: middle }
+table.dataTable tr:hover td.group, table.dataTable td.group { background-color: #D1CFD0; border-bottom: 1px solid #A19B9E; }
+table.dataTable tr:hover td.subgroup, table.dataTable td.subgroup { background-color: #D4DFD8; border-bottom: 1px solid #A19B9E; }
 
 table.workflow td.latest { background-color: #b4ffcc }
 table.workflow td.current { background-color: #eecac6}
