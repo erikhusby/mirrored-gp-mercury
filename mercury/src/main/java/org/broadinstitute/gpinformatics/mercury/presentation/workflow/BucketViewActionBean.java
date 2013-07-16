@@ -19,6 +19,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -68,6 +69,8 @@ public class BucketViewActionBean extends CoreActionBean {
     private LabVesselDao labVesselDao;
     @Inject
     private UserBean userBean;
+    @Inject
+    private LabBatchDAO labBatchDAO;
 
     public static final String EXISTING_TICKET = "existingTicket";
     public static final String NEW_TICKET = "newTicket";
@@ -100,6 +103,8 @@ public class BucketViewActionBean extends CoreActionBean {
     private Map<LabVessel, Set<String>> vesselToPDOKeys = new HashMap<>();
     @Validate(required = true, on = {ADD_TO_BATCH_ACTION})
     private String selectedLcset;
+    private LabBatch batch;
+    private Set<LabVessel> reworkVessels;
 
     @Before(stages = LifecycleStage.BindingAndValidation)
     public void init() {
@@ -116,8 +121,29 @@ public class BucketViewActionBean extends CoreActionBean {
         //set the initial bucket to the first in the list and load it
         if (!buckets.isEmpty()) {
             selectedBucket = buckets.get(0).getName();
-//            viewBucket();
+            if (REWORK_ACTION.equals(getContext().getEventName()) || ADD_TO_BATCH_ACTION.equals(
+                    getContext().getEventName()) || REWORK_CONFIRMED_ACTION.equals(getContext().getEventName())) {
+                viewReworkBucket();
+            } else {
+                viewBucket();
+            }
         }
+    }
+
+    public Set<LabVessel> getReworkVessels() {
+        return reworkVessels;
+    }
+
+    public void setReworkVessels(Set<LabVessel> reworkVessels) {
+        this.reworkVessels = reworkVessels;
+    }
+
+    public LabBatch getBatch() {
+        return batch;
+    }
+
+    public void setBatch(LabBatch batch) {
+        this.batch = batch;
     }
 
     public List<WorkflowBucketDef> getBuckets() {
@@ -217,13 +243,42 @@ public class BucketViewActionBean extends CoreActionBean {
         }
     }
 
+    @ValidationMethod(on = ADD_TO_BATCH_ACTION)
+    public void addReworkToBatchValidation() {
+        if (CollectionUtils.isEmpty(selectedReworks)) {
+            addValidationError("selectedReworks", "At least one rework must be selected to add to the batch.");
+            viewReworkBucket();
+        }
+    }
+
     @HandlesEvent(REWORK_ACTION)
     public Resolution viewReworkBucket() {
+        if (selectedBucket != null) {
+            Bucket bucket = bucketDao.findByName(selectedBucket);
+            if (bucket != null) {
+                reworkEntries = bucket.getReworkEntries();
+            } else {
+                reworkEntries = new ArrayList<>();
+            }
+            if (!reworkEntries.isEmpty()) {
+                List<String> poKeys = new ArrayList<>();
+                List<BucketEntry> collectiveEntries = new ArrayList<>(reworkEntries);
+
+                for (BucketEntry entryForPO : collectiveEntries) {
+                    poKeys.add(entryForPO.getPoBusinessKey());
+                }
+
+                Collection<ProductOrder> foundOrders = athenaClientService.retrieveMultipleProductOrderDetails(poKeys);
+
+                for (ProductOrder orderEntry : foundOrders) {
+                    pdoByKeyMap.put(orderEntry.getBusinessKey(), orderEntry);
+                }
+            }
+        }
         return new ForwardResolution(REWORK_BUCKET_PAGE);
     }
 
     public Resolution viewBucket() {
-
         if (selectedBucket != null) {
             Bucket bucket = bucketDao.findByName(selectedBucket);
             if (bucket != null) {
@@ -285,13 +340,27 @@ public class BucketViewActionBean extends CoreActionBean {
 
     @HandlesEvent(ADD_TO_BATCH_ACTION)
     public Resolution addToBatch() {
-        //load lcset
+        if (!selectedLcset.startsWith("LCSET-")) {
+            selectedLcset = "LCSET-" + selectedLcset;
+        }
+        batch = labBatchDAO.findByBusinessKey(selectedLcset);
+        reworkVessels = new HashSet<>(labVesselDao.findByListIdentifiers(selectedReworks));
+        if (batch == null) {
+            addValidationError("selectedLcset", String.format("Could not find %s.", selectedLcset));
+            return new ForwardResolution(REWORK_BUCKET_PAGE);
+        }
         return new ForwardResolution(CONFIRMATION_PAGE);
     }
 
     @HandlesEvent(REWORK_CONFIRMED_ACTION)
     public Resolution reworkConfirmed() {
-        addMessage("Successfully added rework to bucket");
+        //add the samples to the new batch
+        if (!selectedLcset.startsWith("LCSET-")) {
+            selectedLcset = "LCSET-" + selectedLcset;
+        }
+        reworkVessels = new HashSet<>(labVesselDao.findByListIdentifiers(selectedReworks));
+        addMessage(String.format("Successfully added %d reworks to %s at the '%s'.", reworkVessels.size(),
+                selectedLcset, selectedBucket));
         return new RedirectResolution(REWORK_BUCKET_PAGE);
     }
 
