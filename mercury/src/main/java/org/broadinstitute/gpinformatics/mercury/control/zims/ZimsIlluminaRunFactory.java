@@ -305,6 +305,11 @@ public class ZimsIlluminaRunFactory {
                 referenceSequence = referenceSequenceValues[0];
                 referenceSequenceVersion = referenceSequenceValues[1];
             }
+
+            // horrible 7/25 hack.  todo fixme with workflow
+            if (analysisType != null) {
+                analysisType = "HybridSelection." + analysisType;
+            }
         }
 
         return new LibraryBean(
