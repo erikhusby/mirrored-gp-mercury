@@ -808,28 +808,18 @@ public abstract class LabVessel implements Serializable {
          * @param labVessel plastic involved in the event
          */
         public void applyEvent(@Nonnull LabEvent labEvent, @Nonnull LabVessel labVessel) {
-            List<LabBatch> lcSets = new ArrayList<>();
-            for (LabBatch labBatch : labEvent.getComputedLcSets()) {
-                if (labBatch.getLabBatchType() == LabBatch.LabBatchType.WORKFLOW) {
-                    lcSets.add(labBatch);
-                }
-            }
-            if (lcSets.size() == 1) {
-                LabBatch labBatch = lcSets.iterator().next();
+            Set<LabBatch> computedLcSets1 = labEvent.getComputedLcSets();
+            if (computedLcSets1.size() == 1) {
+                LabBatch labBatch = computedLcSets1.iterator().next();
                 for (SampleInstance sampleInstance : getSampleInstances()) {
                     int foundBucketEntries = 0;
-                    boolean foundWorkflowBatch = false;
                     for (BucketEntry bucketEntry : labVessel.getBucketEntries()) {
-                        LabBatch bucketBatch = bucketEntry.getLabBatch();
-                        if (bucketBatch != null && bucketBatch.getLabBatchType() == LabBatch.LabBatchType.WORKFLOW) {
-                            foundWorkflowBatch = true;
-                            if (bucketBatch.equals(labBatch)) {
-                                sampleInstance.setBucketEntry(bucketEntry);
-                                foundBucketEntries++;
-                            }
+                        if (bucketEntry.getLabBatch() != null && bucketEntry.getLabBatch().equals(labBatch)) {
+                            sampleInstance.setBucketEntry(bucketEntry);
+                            foundBucketEntries++;
                         }
                     }
-                    if (foundWorkflowBatch && foundBucketEntries != 1) {
+                    if (foundBucketEntries != 1) {
                         throw new RuntimeException("Expected 1 bucket entry, found " + foundBucketEntries);
                     }
                 }

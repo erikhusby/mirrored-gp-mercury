@@ -45,7 +45,7 @@ public class EventEtlDbFreeTest {
     private final String pdoKey = "PDO-0000";
     private final long pdoId = 3344551122L;
     private final String sampleKey = "SMID-000000";
-    private final long labBatchId = 4455112233L;
+    private final String labBatchName = "LCSET-123";
     private final String location = "Machine-XYZ";
     private final long vesselId = 5511223344L;
     private final Date eventDate = new Date(1350000000000L);
@@ -180,7 +180,7 @@ public class EventEtlDbFreeTest {
         EasyMock.expect(sampleInst.getAllWorkflowLabBatches()).andReturn(workflowLabBatches);
         EasyMock.expect(sampleInst.getProductOrderKey()).andReturn(pdoKey);
 
-        EasyMock.expect(labBatch.getLabBatchId()).andReturn(labBatchId);
+        EasyMock.expect(labBatch.getBatchName()).andReturn(labBatchName);
         EasyMock.expect(labBatch.getWorkflowName()).andReturn(workflowName);
         EasyMock.expect(sample.getSampleKey()).andReturn(sampleKey);
         EasyMock.expect(pdoDao.findByBusinessKey(pdoKey)).andReturn(pdo);
@@ -212,7 +212,7 @@ public class EventEtlDbFreeTest {
         EasyMock.expect(sampleInst.getAllWorkflowLabBatches()).andReturn(workflowLabBatches);
         EasyMock.expect(sampleInst.getProductOrderKey()).andReturn(pdoKey);
 
-        EasyMock.expect(labBatch.getLabBatchId()).andReturn(labBatchId);
+        EasyMock.expect(labBatch.getBatchName()).andReturn(labBatchName);
         EasyMock.expect(labBatch.getWorkflowName()).andReturn(workflowName);
         EasyMock.expect(sample.getSampleKey()).andReturn(sampleKey);
         EasyMock.expect(pdoDao.findByBusinessKey(pdoKey)).andReturn(pdo);
@@ -311,7 +311,7 @@ public class EventEtlDbFreeTest {
         Assert.assertEquals(parts[i++], String.valueOf(processId));
         Assert.assertEquals(parts[i++], String.valueOf(pdoId));
         Assert.assertEquals(parts[i++], sampleKey);
-        Assert.assertEquals(parts[i++], String.valueOf(labBatchId));
+        Assert.assertEquals(parts[i++], String.valueOf(labBatchName));
         Assert.assertEquals(parts[i++], location);
         Assert.assertEquals(parts[i++], String.valueOf(vesselId));
         Assert.assertEquals(parts[i++], ExtractTransform.secTimestampFormat.format(eventDate));
