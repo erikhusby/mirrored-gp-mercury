@@ -219,9 +219,7 @@ public class SequencingTemplateFactory {
                 String vesselPosition = positionNames.next();
                 SequencingTemplateLaneType lane =
                         LimsQueryObjectFactory.createSequencingTemplateLaneType(vesselPosition,
-                                (double) startingVessel.getConcentration(),
-                                /*FIXME: this should be the vessel loaded onto the Flowcell*/
-                                startingVessel.getLabVessel().getLabel(),
+                                (double) startingVessel.getConcentration(),"",
                                 startingVessel.getLabVessel().getLabel());
                 lanes.add(lane);
             }
@@ -333,8 +331,8 @@ public class SequencingTemplateFactory {
         for (LabBatch poolTestBatch : miseqBatches) {
             lanes.add(LimsQueryObjectFactory.createSequencingTemplateLaneType(
                     IlluminaFlowcell.FlowcellType.MiSeqFlowcell.getVesselGeometry().getRowNames()[0],
-                    concentration,
-                    poolTestBatch.getStartingVesselByPosition(VesselPosition.LANE1).getLabel(), ""));
+                    concentration, "",
+                    poolTestBatch.getStartingVesselByPosition(VesselPosition.LANE1).getLabel()));
         }
         return LimsQueryObjectFactory.createSequencingTemplate(null, null, isPoolTest,
                 sequencingConfig.getInstrumentWorkflow().getValue(), sequencingConfig.getChemistry().getValue(),
