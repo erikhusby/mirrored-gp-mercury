@@ -143,7 +143,8 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         assertThat(template.getReadStructure(), is(POOL_TEST_CIGAR));
 
         assertThat(template.getLanes().get(0).getLaneName(), is("LANE1"));
-        assertThat(template.getLanes().get(0).getLoadingVesselLabel(), is(denatureTubeBarcode));
+        assertThat(template.getLanes().get(0).getLoadingVesselLabel(), is(""));
+        assertThat(template.getLanes().get(0).getDerivedVesselLabel(), is(denatureTubeBarcode));
     }
 
     public void testGetSequencingTemplateFromReagentKitProduction() {
@@ -155,7 +156,8 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         assertThat(template.getReadStructure(), is(PRODUCTION_CIGAR));
 
         assertThat(template.getLanes().get(0).getLaneName(), is("LANE1"));
-        assertThat(template.getLanes().get(0).getLoadingVesselLabel(), is(denatureTubeBarcode));
+        assertThat(template.getLanes().get(0).getLoadingVesselLabel(), is(""));
+        assertThat(template.getLanes().get(0).getDerivedVesselLabel(), is(denatureTubeBarcode));
     }
 
     public void testGetSequencingTemplatePoolTest() {
@@ -223,7 +225,8 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         assertThat(template.getReadStructure(), is(POOL_TEST_CIGAR));
 
         assertThat(template.getLanes().get(0).getLaneName(), is("LANE1"));
-        assertThat(template.getLanes().get(0).getLoadingVesselLabel(), is(denatureTubeBarcode));
+        assertThat(template.getLanes().get(0).getLoadingVesselLabel(), is(""));
+        assertThat(template.getLanes().get(0).getDerivedVesselLabel(), is(denatureTubeBarcode));
         assertThat(template.getLanes().get(0).getLoadingConcentration(), is(7.0));
     }
 
@@ -238,7 +241,8 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
 
         for (SequencingTemplateLaneType lane : template.getLanes()) {
             allLanes.add(lane.getLaneName());
-            assertThat(lane.getLoadingVesselLabel(), equalTo(denatureTubeBarcode));
+            assertThat(lane.getLoadingVesselLabel(), equalTo(""));
+            assertThat(lane.getDerivedVesselLabel(), equalTo(denatureTubeBarcode));
             assertThat(lane.getLoadingConcentration().floatValue(), is(12.33f));
         }
         assertThat(allLanes, hasItem("LANE1"));
@@ -255,7 +259,8 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
 
         for (SequencingTemplateLaneType lane : template.getLanes()) {
             allLanes.add(lane.getLaneName());
-            assertThat(lane.getLoadingVesselLabel(), equalTo(denatureTubeBarcode));
+            assertThat(lane.getLoadingVesselLabel(), equalTo(""));
+            assertThat(lane.getDerivedVesselLabel(), equalTo(denatureTubeBarcode));
             assertThat(lane.getLoadingConcentration().floatValue(), is(12.33f));
         }
         assertThat(allLanes, hasItem("LANE1"));
@@ -272,7 +277,8 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
 
         for (SequencingTemplateLaneType lane : template.getLanes()) {
             allLanes.add(lane.getLaneName());
-            assertThat(lane.getLoadingVesselLabel(), equalTo(denatureTubeBarcode));
+            assertThat(lane.getLoadingVesselLabel(), equalTo(""));
+            assertThat(lane.getDerivedVesselLabel(), equalTo(denatureTubeBarcode));
             assertThat(lane.getLoadingConcentration().floatValue(), is(12.33f));
         }
         assertThat(allLanes, hasItem("LANE1"));
