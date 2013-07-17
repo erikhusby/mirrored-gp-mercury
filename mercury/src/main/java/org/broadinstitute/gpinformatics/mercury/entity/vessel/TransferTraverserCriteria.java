@@ -582,8 +582,10 @@ public interface TransferTraverserCriteria {
                 for (LabEvent inPlaceEvent : vessel.getInPlaceEvents()) {
                     evaluteEvent(vessel, inPlaceEvent);
                 }
-                for (LabVessel descendant : vessel.getDescendantVessels()) {
-                    for (LabEvent inPlaceEvent : descendant.getInPlaceEvents()) {
+                Collection<LabVessel> descendantVessels = vessel.getDescendantVessels();
+                for (LabVessel descendant : descendantVessels) {
+                    Set<LabEvent> inPlaceEvents = descendant.getInPlaceEvents();
+                    for (LabEvent inPlaceEvent : inPlaceEvents) {
                         evaluteEvent(vessel, inPlaceEvent);
                     }
                 }
@@ -599,7 +601,7 @@ public interface TransferTraverserCriteria {
                     if (vessels == null) {
                         vessels = new HashSet<>();
                     }
-                    vessels.add(vessel);
+                    vessels.add(event.getInPlaceLabVessel());
                     vesselsForLabEventType.put(event, vessels);
                 }
                 //otherwise check the target vessels

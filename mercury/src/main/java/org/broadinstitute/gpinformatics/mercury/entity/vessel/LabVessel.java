@@ -1658,7 +1658,7 @@ public abstract class LabVessel implements Serializable {
      *
      * @return Returns a map of lab metrics keyed by the metric display name.
      */
-    public Map<String, LabMetric> getMetricsForVesselandDescendants() {
+    public Map<String, LabMetric> getMetricsForVesselAndDescendants() {
         Set<LabMetric> allMetrics = new HashSet<>();
         if (metricMap == null) {
             metricMap = new HashMap<>();
