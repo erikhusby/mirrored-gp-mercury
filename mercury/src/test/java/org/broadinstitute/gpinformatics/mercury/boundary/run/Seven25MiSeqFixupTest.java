@@ -11,7 +11,11 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.util.Date;
 
-public class Seven25MiSeqTest extends ContainerTest {
+/**
+ * Utility to apply some 7/25 production data to dev database
+ * for testing the pipeline API.
+ */
+public class Seven25MiSeqFixupTest extends ContainerTest {
 
     @Inject
     SolexaRunResource runResource;
