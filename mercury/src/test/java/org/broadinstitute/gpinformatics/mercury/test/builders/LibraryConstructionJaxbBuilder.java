@@ -132,7 +132,7 @@ public class LibraryConstructionJaxbBuilder {
         aBaseJaxb = bettaLimsMessageTestFactory.buildPlateEvent("ABase", shearCleanPlateBarcode);
         bettaLimsMessageTestFactory.addMessage(messageList, aBaseJaxb);
 
-        postABaseThermoCyclerLoadedJaxb = bettaLimsMessageTestFactory.buildPlateEvent("PostABaseThermoCyclerLoaded", shearCleanPlateBarcode);
+        postABaseThermoCyclerLoadedJaxb = bettaLimsMessageTestFactory.buildPlateEvent("PostAbaseThermoCyclerLoaded", shearCleanPlateBarcode);
         bettaLimsMessageTestFactory.addMessage(messageList, postABaseThermoCyclerLoadedJaxb);
 
 

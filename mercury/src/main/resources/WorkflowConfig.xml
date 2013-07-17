@@ -712,23 +712,6 @@
             <sequencingConfigDefs>Amplicon-Pool-Amplicon</sequencingConfigDefs>
             <sequencingConfigDefs>Resequencing-Production</sequencingConfigDefs>
         </productWorkflowDefVersions>
-        <productWorkflowDefVersions>
-            <version>3.0</version>
-            <effectiveDate>2013-07-25T00:00:00.000-04:00</effectiveDate>
-            <!--<workflowProcessDefs>Extraction</workflowProcessDefs>-->
-            <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
-            <workflowProcessDefs>Exome Express Shearing</workflowProcessDefs>
-            <workflowProcessDefs>Library Construction</workflowProcessDefs>
-            <workflowProcessDefs>Hybrid Selection</workflowProcessDefs>
-            <workflowProcessDefs>QTP</workflowProcessDefs>
-            <workflowProcessDefs>MiSEQ</workflowProcessDefs>
-            <workflowProcessDefs>HiSEQ 2500</workflowProcessDefs>
-            <sequencingConfigDefs>Resequencing-Pool-Default</sequencingConfigDefs>
-            <sequencingConfigDefs>Amplicon-Pool-Default</sequencingConfigDefs>
-            <sequencingConfigDefs>Resequencing-Pool-Amplicon</sequencingConfigDefs>
-            <sequencingConfigDefs>Amplicon-Pool-Amplicon</sequencingConfigDefs>
-            <sequencingConfigDefs>Resequencing-Production</sequencingConfigDefs>
-        </productWorkflowDefVersions>
         <routingRule>BOTH</routingRule>
         <inValidation>true</inValidation>
     </productWorkflowDefs>
