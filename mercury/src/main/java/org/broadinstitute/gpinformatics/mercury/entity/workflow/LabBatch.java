@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
@@ -489,5 +490,26 @@ public class LabBatch {
         }
 
         return result;
+    }
+
+    /**
+     * Future implementation of this method would get a starting vessel based on its specified position (Lane) defined
+     * during the creation of an FCT/MiSeq ticket.
+     *
+     * For now (Exome Express Launch) this method will return the one designated vessel for this batch.
+     * @param position position (lane) by which the targeted lab vessel is referenced
+     * @return Lab Vessel referenced by the given position.
+     */
+    public LabVessel getStartingVesselByPosition(VesselPosition position) {
+        if(labBatchType != LabBatchType.FCT &&
+                labBatchType != LabBatchType.MISEQ) {
+            throw new RuntimeException("Vessel by Position is only supported for Flowcell Tickets");
+        }
+
+        if(startingBatchLabVessels.size() >1) {
+            throw new RuntimeException("more than one starting vessel for a flowcell is not currently supported");
+        }
+
+        return startingBatchLabVessels.iterator().next().getLabVessel();
     }
 }

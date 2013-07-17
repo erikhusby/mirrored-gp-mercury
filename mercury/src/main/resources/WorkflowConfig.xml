@@ -603,9 +603,57 @@
             <version>1.0</version>
             <effectiveDate>2012-09-30T21:03:24.085-04:00</effectiveDate>
             <workflowStepDefs>
+                <name>Strip Tube B Transfer</name>
+                <labEventTypes>STRIP_TUBE_B_TRANSFER</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <jiraTransition>
+                    <project>FCT</project>
+                    <statusTransition>Strip Tube Created (or Registered)</statusTransition>
+                </jiraTransition>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Flowcell Transfer</name>
+                <labEventTypes>FLOWCELL_TRANSFER</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>Closed</statusTransition>
+                </jiraTransition>
+                <jiraTransition>
+                    <project>FCT</project>
+                    <statusTransition>Flowcell Registered</statusTransition>
+                </jiraTransition>
+            </workflowStepDefs>
+            <workflowStepDefs>
                 <name>Denature to Flowcell Transfer</name>
                 <labEventTypes>DENATURE_TO_FLOWCELL_TRANSFER</labEventTypes>
-                <optional>false</optional>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>Closed</statusTransition>
+                </jiraTransition>
+                <jiraTransition>
+                    <project>FCT</project>
+                    <statusTransition>Flowcell Registered</statusTransition>
+                </jiraTransition>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Denature To Dilution Transfer</name>
+                <labEventTypes>DENATURE_TO_DILUTION_TRANSFER</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Dilution to Flowcell Transfer</name>
+                <labEventTypes>DILUTION_TO_FLOWCELL_TRANSFER</labEventTypes>
+                <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
                 <jiraTransition>

@@ -40,6 +40,7 @@
                     </xsd:documentation>
                 </xsd:annotation>
             </xsd:element>
+            <xsd:element name="derivedVesselLabel" type="xsd:string" />
         </xsd:sequence>
     </xsd:complexType>
 

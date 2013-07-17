@@ -96,6 +96,9 @@ public abstract class LabVessel implements Serializable {
     @BatchSize(size = 100)
     private Set<LabBatchStartingVessel> labBatches = new HashSet<>();
 
+    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "dilutionVessel")
+    private Set<LabBatchStartingVessel> dilutionReferences = new HashSet<>();
+
     @ManyToMany(cascade = CascadeType.PERSIST, mappedBy = "reworks")
     @BatchSize(size = 100)
     private Set<LabBatch> reworkLabBatches = new HashSet<>();
@@ -806,7 +809,8 @@ public abstract class LabVessel implements Serializable {
 
         /**
          * Called after an event has been traversed, sets lab batch and product order key.
-         * @param labEvent event that was traverses
+         *
+         * @param labEvent  event that was traverses
          * @param labVessel plastic involved in the event
          */
         public void applyEvent(@Nonnull LabEvent labEvent, @Nonnull LabVessel labVessel) {
@@ -832,7 +836,7 @@ public abstract class LabVessel implements Serializable {
     /**
      * Traverse all ancestors of this vessel, accumulating SampleInstances.
      *
-     * @param sampleType where to stop recursion
+     * @param sampleType   where to stop recursion
      * @param labBatchType which batches to accumulate
      *
      * @return accumulated sampleInstances
@@ -875,10 +879,10 @@ public abstract class LabVessel implements Serializable {
             }
         }
         for (SampleInstance sampleInstance : traversalResults.getSampleInstances()) {
-            sampleInstance.addLabBatches(getLabBatchesOfType(labBatchType));
+            sampleInstance.addLabBatches(getAllLabBatches(labBatchType));
             // If this vessel is a BSP export, sets the aliquot sample.
             // Expects one sample per vessel in the BSP export.
-            if (!getLabBatchesOfType(LabBatch.LabBatchType.SAMPLES_IMPORT).isEmpty()) {
+            if (!getAllLabBatches(LabBatch.LabBatchType.SAMPLES_IMPORT).isEmpty()) {
                 for (MercurySample mercurySample : mercurySamples) {
                     sampleInstance.setBspExportSample(mercurySample);
                 }
@@ -1009,15 +1013,33 @@ public abstract class LabVessel implements Serializable {
         return labBatches;
     }
 
+
+    public Set<LabBatchStartingVessel> getDilutionReferences() {
+        return dilutionReferences;
+    }
+
+    public void setDilutionReferences(Set<LabBatchStartingVessel> dilutionReferences) {
+        this.dilutionReferences = dilutionReferences;
+    }
+
+    public void addDilutionReferences(LabBatchStartingVessel dilutionReferences) {
+        this.dilutionReferences.add(dilutionReferences);
+    }
+
     /**
      * Get lab batches of the specified type
      *
      * @param labBatchType null to get all types
      *
      * @return filtered lab batches
+     *
+     * @deprecated this implementation is not necessary with the addition of a method that utilizes transfer entity
+     * traverser
      */
-    public Set<LabBatch> getLabBatchesOfType(LabBatch.LabBatchType labBatchType) {
-        Set<LabBatch> allLabBatches = getLabBatches();
+    @Deprecated
+    public Collection<LabBatch> getLabBatchesOfType(LabBatch.LabBatchType labBatchType) {
+        Collection<LabBatch> allLabBatches = getAllLabBatches(labBatchType);
+
         if (labBatchType == null) {
             return allLabBatches;
         } else {
@@ -1260,6 +1282,17 @@ public abstract class LabVessel implements Serializable {
         } else {
             TransferTraverserCriteria.NearestLabBatchFinder batchCriteria =
                     new TransferTraverserCriteria.NearestLabBatchFinder(null);
+            evaluateCriteria(batchCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+            return batchCriteria.getAllLabBatches();
+        }
+    }
+
+    public Collection<LabBatch> getAllLabBatches(LabBatch.LabBatchType type) {
+        if (getContainerRole() != null) {
+            return getContainerRole().getAllLabBatches(type);
+        } else {
+            TransferTraverserCriteria.NearestLabBatchFinder batchCriteria =
+                    new TransferTraverserCriteria.NearestLabBatchFinder(type);
             evaluateCriteria(batchCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
             return batchCriteria.getAllLabBatches();
         }

@@ -49,7 +49,6 @@ import org.broadinstitute.gpinformatics.mercury.control.zims.ZimsIlluminaRunFact
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingReceipt;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventName;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.AliquotParameters;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
@@ -61,13 +60,14 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
+import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PreFlightEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.ProductionFlowcellPath;
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.entity.bsp.BSPSampleExportTest;
@@ -86,6 +86,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
 
@@ -423,10 +424,21 @@ public class ExomeExpressEndToEndTest {
                     Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchRackBarcode()),
                     Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchBarcodes()),
                     hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(),
-                    "Hybrid Selection", "testPrefix");
+                    "testPrefix");
             qtpEntityBuilder.invoke();
 
             TubeFormation poolingResult = qtpEntityBuilder.getDenatureRack();
+            TwoDBarcodedTube denatureTube =
+                    qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
+
+
+            LabBatch fctBatch = new LabBatch("FCT-3", Collections.singleton((LabVessel)denatureTube),
+                    LabBatch.LabBatchType.FCT, 12.33f);
+
+            HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
+                    new HiSeq2500FlowcellEntityBuilder(bettaLimsMessageTestFactory,
+                            labEventFactory, labEventHandler, qtpEntityBuilder.getDenatureRack(),fctBatch.getBusinessKey()
+                            , "testPrefix", "", ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL, "", "Exome Express");
 
             // LC metrics - upload page?
             // LabVessel.addMetric?
@@ -435,7 +447,8 @@ public class ExomeExpressEndToEndTest {
 
             final TwoDBarcodedTube currEntry = poolingResult.getContainerRole().getVesselAtPosition(VesselPosition.A01);
 
-            final SequelLibrary registerLibrary = null; //RegistrationJaxbConverter.squidify(currEntry/*, projectPlan*/);
+            final SequelLibrary registerLibrary =
+                    null; //RegistrationJaxbConverter.squidify(currEntry/*, projectPlan*/);
 
             //            final Collection<Starter> startersFromProjectPlan = projectPlan.getStarters();
 
@@ -508,8 +521,9 @@ public class ExomeExpressEndToEndTest {
             IlluminaSequencingRun illuminaSequencingRun;
             try {
                 illuminaSequencingRun = illuminaSequencingRunFactory.buildDbFree(new SolexaRunBean(
-                        qtpEntityBuilder.getIlluminaFlowcell().getCartridgeBarcode(), "Run1", new Date(), "SL-HAL",
-                        File.createTempFile("RunDir", ".txt").getAbsolutePath(), null), qtpEntityBuilder
+                        hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell().getCartridgeBarcode(), "Run1", new Date(),
+                        "SL-HAL",
+                        File.createTempFile("RunDir", ".txt").getAbsolutePath(), null), hiSeq2500FlowcellEntityBuilder
                         .getIlluminaFlowcell());
             } catch (IOException e) {
                 throw new RuntimeException(e);
