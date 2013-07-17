@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.control.run;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
@@ -21,6 +23,8 @@ import java.text.MessageFormat;
  * Creates a sequencing run from a JAX-RS DTO.  Implements Serializable because it's used by a Stateful session bean.
  */
 public class IlluminaSequencingRunFactory implements Serializable {
+
+    private final static Log log = LogFactory.getLog(IlluminaSequencingRunFactory.class);
 
     private JiraCommentUtil jiraCommentUtil;
 
@@ -77,11 +81,21 @@ public class IlluminaSequencingRunFactory implements Serializable {
 
     public IlluminaSequencingRun build(SolexaRunBean solexaRunBean, IlluminaFlowcell illuminaFlowcell) {
         IlluminaSequencingRun builtRun = buildDbFree(solexaRunBean, illuminaFlowcell);
-        jiraCommentUtil.postUpdate(MessageFormat.format("Registered new Solexa run {0} located at {1}",
-                builtRun.getRunName(),
-                builtRun.getRunDirectory()),
-                illuminaFlowcell);
-
+        String runName = null;
+        String runDirectory = null;
+        if (builtRun != null) {
+            runName = builtRun.getRunName();
+            runDirectory = builtRun.getRunDirectory();
+        }
+        try {
+            jiraCommentUtil.postUpdate(MessageFormat.format("Registered new Solexa run {0} located at {1}",
+                    runName,
+                    runDirectory),
+                    illuminaFlowcell);
+        }
+        catch(Throwable t) {
+            log.error("Failed to log jira run comment for " + runName);
+        }
         return builtRun;
     }
 
