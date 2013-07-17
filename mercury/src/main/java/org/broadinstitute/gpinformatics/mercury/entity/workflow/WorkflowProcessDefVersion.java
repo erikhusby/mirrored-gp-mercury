@@ -21,15 +21,19 @@ public class WorkflowProcessDefVersion implements Serializable {
 
     private String version;
     private Date effectiveDate;
-    /** Process graphs tend to be straight lines, with one or two optional steps (e.g. Normalization is optional in QTP,
+    /**
+     * Process graphs tend to be straight lines, with one or two optional steps (e.g. Normalization is optional in QTP,
      * because the concentration may be fine as is).  (In Squid workflow, new transitions are often initially optional,
      * to allow the automation to be rolled out, but this could be addressed in Mercury by versioning.)
-     * Treating steps as lists would simplify visualization and editing. */
+     * Treating steps as lists would simplify visualization and editing.
+     */
     private List<WorkflowStepDef> workflowStepDefs = new ArrayList<WorkflowStepDef>();
     private Map<String, WorkflowStepDef> workflowStepsByName = new HashMap<String, WorkflowStepDef>();
     private WorkflowProcessDef workflowProcessDef;
 
-    /** For JAXB */
+    /**
+     * For JAXB
+     */
     WorkflowProcessDefVersion() {
     }
 
@@ -60,11 +64,13 @@ public class WorkflowProcessDefVersion implements Serializable {
         return workflowProcessDef;
     }
 
-    /** At a QC review, the user needs to know the options for re-entry */
+    /**
+     * At a QC review, the user needs to know the options for re-entry
+     */
     public List<WorkflowStepDef> getReEntryPoints() {
         List<WorkflowStepDef> reEntryPoints = new ArrayList<WorkflowStepDef>();
         for (WorkflowStepDef workflowStepDef : workflowStepDefs) {
-            if(workflowStepDef.isReEntryPoint()) {
+            if (workflowStepDef.isReEntryPoint()) {
                 reEntryPoints.add(workflowStepDef);
             }
         }
@@ -74,8 +80,28 @@ public class WorkflowProcessDefVersion implements Serializable {
     public List<WorkflowBucketDef> getBuckets() {
         List<WorkflowBucketDef> workflowBucketDefs = new ArrayList<WorkflowBucketDef>();
         for (WorkflowStepDef workflowStepDef : workflowStepDefs) {
-            if(OrmUtil.proxySafeIsInstance(workflowStepDef, WorkflowBucketDef.class)) {
+            if (OrmUtil.proxySafeIsInstance(workflowStepDef, WorkflowBucketDef.class)) {
                 workflowBucketDefs.add(OrmUtil.proxySafeCast(workflowStepDef, WorkflowBucketDef.class));
+            }
+        }
+        return workflowBucketDefs;
+    }
+
+    public List<WorkflowBucketDef> getCreationBuckets() {
+        List<WorkflowBucketDef> workflowBucketDefs = new ArrayList<WorkflowBucketDef>();
+        for (WorkflowBucketDef workflowBucketDef : getBuckets()) {
+            if (workflowBucketDef.getBatchJiraProjectType() != null) {
+                workflowBucketDefs.add(workflowBucketDef);
+            }
+        }
+        return workflowBucketDefs;
+    }
+
+    public List<WorkflowBucketDef> getReworkBuckets() {
+        List<WorkflowBucketDef> workflowBucketDefs = new ArrayList<WorkflowBucketDef>();
+        for (WorkflowBucketDef workflowBucketDef : getBuckets()) {
+            if (workflowBucketDef.getBatchJiraProjectType() == null) {
+                workflowBucketDefs.add(workflowBucketDef);
             }
         }
         return workflowBucketDefs;
@@ -83,8 +109,9 @@ public class WorkflowProcessDefVersion implements Serializable {
 
     /**
      * Called by JAXB, sets relationship to parent.
+     *
      * @param unmarshaller JAXB
-     * @param parent enclosing XML element
+     * @param parent       enclosing XML element
      */
     @SuppressWarnings("UnusedDeclaration")
     void afterUnmarshal(Unmarshaller unmarshaller, Object parent) {

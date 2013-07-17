@@ -62,7 +62,7 @@
                 <stripes:label for="bucketselect" name="Select Bucket" class="control-label"/>
                 <div class="controls">
                     <stripes:select id="bucketSelect" name="selectedBucket" onchange="submitBucket()">
-                        <stripes:options-collection collection="${actionBean.buckets}" label="name"
+                        <stripes:options-collection collection="${actionBean.reworkBuckets}" label="name"
                                                     value="name"/>
                     </stripes:select>
                 </div>

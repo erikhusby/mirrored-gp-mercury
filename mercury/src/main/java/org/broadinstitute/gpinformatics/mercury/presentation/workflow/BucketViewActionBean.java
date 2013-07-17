@@ -78,6 +78,7 @@ public class BucketViewActionBean extends CoreActionBean {
     private static final String REWORK_CONFIRMED_ACTION = "reworkConfirmed";
 
     private List<WorkflowBucketDef> buckets = new ArrayList<>();
+    private List<WorkflowBucketDef> reworkBuckets = new ArrayList<>();
     private List<String> selectedVesselLabels = new ArrayList<>();
     private List<LabVessel> selectedBatchVessels;
     private List<String> selectedReworks = new ArrayList<>();
@@ -115,19 +116,29 @@ public class BucketViewActionBean extends CoreActionBean {
             ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
             if (workflowDef.getName().equals(WorkflowName.EXOME_EXPRESS.getWorkflowName())) {
                 allProductWorkflowDefs.add(workflowDef);
-                buckets.addAll(workflowVersion.getBuckets());
+                buckets.addAll(workflowVersion.getCreationBuckets());
+                reworkBuckets.addAll(workflowVersion.getReworkBuckets());
             }
         }
         //set the initial bucket to the first in the list and load it
         if (!buckets.isEmpty()) {
-            selectedBucket = buckets.get(0).getName();
             if (REWORK_ACTION.equals(getContext().getEventName()) || ADD_TO_BATCH_ACTION.equals(
                     getContext().getEventName()) || REWORK_CONFIRMED_ACTION.equals(getContext().getEventName())) {
+                selectedBucket = reworkBuckets.get(0).getName();
                 viewReworkBucket();
             } else {
+                selectedBucket = buckets.get(0).getName();
                 viewBucket();
             }
         }
+    }
+
+    public List<WorkflowBucketDef> getReworkBuckets() {
+        return reworkBuckets;
+    }
+
+    public void setReworkBuckets(List<WorkflowBucketDef> reworkBuckets) {
+        this.reworkBuckets = reworkBuckets;
     }
 
     public Set<LabVessel> getReworkVessels() {
@@ -371,8 +382,6 @@ public class BucketViewActionBean extends CoreActionBean {
      */
     @HandlesEvent(CREATE_BATCH_ACTION)
     public Resolution createBatch() throws Exception {
-
-//        ProductWorkflowDef workflowDef = workflowLoader.load().getWorkflowByName(selectedProductWorkflowDef);
 
         Set<LabVessel> vesselSet = new HashSet<>(labVesselDao.findByListIdentifiers(selectedVesselLabels));
 
