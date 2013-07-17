@@ -369,7 +369,10 @@ public class BucketViewActionBean extends CoreActionBean {
         if (!selectedLcset.startsWith("LCSET-")) {
             selectedLcset = "LCSET-" + selectedLcset;
         }
+        batch = labBatchDAO.findByBusinessKey(selectedLcset);
         reworkVessels = new HashSet<>(labVesselDao.findByListIdentifiers(selectedReworks));
+        batch.addReworks(reworkVessels);
+        //todo jac add JIRA Message?
         addMessage(String.format("Successfully added %d reworks to %s at the '%s'.", reworkVessels.size(),
                 selectedLcset, selectedBucket));
         return new RedirectResolution(REWORK_BUCKET_PAGE);
