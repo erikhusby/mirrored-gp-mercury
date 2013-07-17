@@ -279,4 +279,26 @@
             <column name="dilution_vessel" type="number(19,0)" />
         </addColumn>
     </changeSet>
+
+    <changeSet id="GPLIM-1688" author="andrew">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="sequencing_run" columnName="imaged_area_permm2" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="sequencing_run" schemaName="mercury">
+            <column name="imaged_area_permm2" type="number(15,10)"></column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-1688-1" author="andrew">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="sequencing_run_aud" columnName="imaged_area_permm2" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="sequencing_run_aud" schemaName="mercury">
+            <column name="imaged_area_permm2" type="number(15,10)"></column>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>

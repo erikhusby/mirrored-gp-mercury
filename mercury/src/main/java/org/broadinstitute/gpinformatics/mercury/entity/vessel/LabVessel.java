@@ -89,9 +89,11 @@ public abstract class LabVessel implements Serializable {
 
     @OneToMany(cascade = CascadeType.PERSIST) // todo jmt should this have mappedBy?
     @JoinTable(schema = "mercury")
+    @BatchSize(size = 100)
     private final Set<JiraTicket> ticketsCreated = new HashSet<>();
 
     @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "labVessel")
+    @BatchSize(size = 100)
     private Set<LabBatchStartingVessel> labBatches = new HashSet<>();
 
     @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "dilutionVessel")

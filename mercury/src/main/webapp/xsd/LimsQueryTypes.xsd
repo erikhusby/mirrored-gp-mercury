@@ -120,6 +120,7 @@
             <xsd:element name="runBarcode" type="xsd:string" />
             <xsd:element name="setupReadStructure" type="xsd:string" />
             <xsd:element name="actualReadStructure" type="xsd:string" />
+            <xsd:element name="imagedArea" type="xsd:double" nillable="true"/>
         </xsd:sequence>
     </xsd:complexType>
 

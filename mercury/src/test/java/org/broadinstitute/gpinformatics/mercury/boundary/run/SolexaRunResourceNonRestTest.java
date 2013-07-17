@@ -299,6 +299,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
             dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     public void testSetReadStructure() {
 
+        Double imagedArea = new Double("276.4795532227");
         ReadStructureRequest readStructure = new ReadStructureRequest();
         readStructure.setRunBarcode(runBarcode);
         readStructure.setSetupReadStructure("71T8B8B101T");
@@ -321,6 +322,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         Assert.assertNotNull(readstructureResult.getSetupReadStructure());
         Assert.assertEquals(readstructureResult.getSetupReadStructure(), run.getSetupReadStructure());
         Assert.assertNull(readstructureResult.getActualReadStructure());
+        Assert.assertNull(readstructureResult.getImagedArea());
 
         readStructure.setActualReadStructure("101T8B8B101T");
 
@@ -333,6 +335,20 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         Assert.assertEquals(readstructureResult.getSetupReadStructure(), run.getSetupReadStructure());
         Assert.assertNotNull(readstructureResult.getActualReadStructure());
         Assert.assertEquals(readstructureResult.getActualReadStructure(), run.getActualReadStructure());
+        Assert.assertNull(readstructureResult.getImagedArea());
+
+        readStructure.setImagedArea(imagedArea);
+
+        readstructureResult = runResource.storeRunReadStructure(readStructure);
+
+        run = runDao.findByBarcode(runBarcode);
+
+        Assert.assertEquals(readstructureResult.getRunBarcode(), run.getRunBarcode());
+        Assert.assertNotNull(readstructureResult.getSetupReadStructure());
+        Assert.assertEquals(readstructureResult.getSetupReadStructure(), run.getSetupReadStructure());
+        Assert.assertNotNull(readstructureResult.getActualReadStructure());
+        Assert.assertEquals(readstructureResult.getActualReadStructure(), run.getActualReadStructure());
+        Assert.assertEquals(readstructureResult.getImagedArea(),imagedArea);
     }
 
 }

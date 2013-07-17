@@ -42,8 +42,9 @@ public class IlluminaSequencingRunFactory implements Serializable {
                                                            SequencingRun run) {
 
         if (StringUtils.isBlank(readStructureRequest.getActualReadStructure()) &&
-            StringUtils.isBlank(readStructureRequest.getSetupReadStructure())) {
-            throw new ResourceException("Neither the actual nor the setup read structures are set",
+            StringUtils.isBlank(readStructureRequest.getSetupReadStructure()) &&
+            readStructureRequest.getImagedArea() == null) {
+            throw new ResourceException("Actual read structure, setup read structure, and imaged area aren't set.",
                     Response.Status.BAD_REQUEST);
         }
 
@@ -55,11 +56,17 @@ public class IlluminaSequencingRunFactory implements Serializable {
             run.setSetupReadStructure(readStructureRequest.getSetupReadStructure());
         }
 
+        if (readStructureRequest.getImagedArea() != null) {
+            run.setImagedAreaPerMM2(readStructureRequest.getImagedArea());
+        }
+
         ReadStructureRequest returnValue = new ReadStructureRequest();
         returnValue.setRunBarcode(run.getRunBarcode());
 
         returnValue.setActualReadStructure(run.getActualReadStructure());
         returnValue.setSetupReadStructure(run.getSetupReadStructure());
+        returnValue.setImagedArea(run.getImagedAreaPerMM2());
+
         return returnValue;
     }
 
