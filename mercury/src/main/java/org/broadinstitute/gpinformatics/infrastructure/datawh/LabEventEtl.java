@@ -82,7 +82,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         Collection<String> records = new ArrayList<>();
         try {
             for (EventFactDto fact : makeEventFacts(entity)) {
-                if (fact.isCanEtl()) {
+                if (fact.canEtl()) {
                     ProductOrder pdo = fact.getProductOrder();
                     records.add(genericRecord(etlDateStr, isDelete,
                             fact.getLabEvent().getLabEventId(),
@@ -245,7 +245,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             return wfDenorm;
         }
 
-        public boolean isCanEtl() {
+        public boolean canEtl() {
             return canEtl;
         }
 
@@ -278,10 +278,6 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             if (vessels.isEmpty()) {
                 dtos.add(new EventFactDto(entity, null, null, null, null, null, null, null, false));
             }
-
-            // For quant events on a plate, instead of reporting on the plate vessel, substitute in the
-            // direct ancestor tube vessels in order to join to labMetrics on vesselId.
-            vessels = substituteVessels(entity, vessels);
 
             for (LabVessel vessel : vessels) {
                 try {
@@ -350,28 +346,6 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         return dtos;
     }
 
-    // For quant events, looks up the immediate tube ancestors, and puts them in the collection of vessels.
-    private Collection<LabVessel> substituteVessels(LabEvent event, Collection<LabVessel> vessels) {
-        if (LabMetricEtl.mapMetricTypeToEventType.values().contains(event.getLabEventType())
-            && vessels.size() == 1
-            && vessels.iterator().next().getContainerRole() != null) {
-
-            LabVessel plate = vessels.iterator().next();
-            Set<LabVessel> directAncestors = new HashSet<>();
-
-            for (LabEvent transferFromEvent : plate.getTransfersTo()) {
-                for (LabVessel vessel : transferFromEvent.getSourceLabVessels()) {
-                    if (vessel.getContainerRole() != null) {
-                        directAncestors.addAll(vessel.getContainerRole().getContainedVessels());
-                    }
-                }
-            }
-            return directAncestors;
-        } else {
-            return vessels;
-        }
-    }
-
     @Override
     public void postEtlLogging() {
         List<EventFactDto> dtos = new ArrayList<>();
@@ -386,7 +360,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         //  Only logs dtos that did not get exported.  Only logs each dto once.  Attempts to show the most basic flaw.
         for (Iterator<EventFactDto> iter = dtos.iterator(); iter.hasNext(); ) {
             EventFactDto fact = iter.next();
-            if (fact.isCanEtl()) {
+            if (fact.canEtl()) {
                 iter.remove();
             }
         }
