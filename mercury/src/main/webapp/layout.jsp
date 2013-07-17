@@ -38,6 +38,7 @@
         <script src="${ctxpath}/resources/scripts/jquery.dateRangeSelector.js"></script>
         <script src="${ctxpath}/resources/scripts/DataTables-1.9.4/media/js/jquery.dataTables.min.js"></script>
         <script src="${ctxpath}/resources/scripts/DataTables-1.9.4/extras/TableTools/media/js/TableTools.min.js"></script>
+        <script src="${ctxpath}/resources/scripts/DataTables-1.9.4/extras/RowGrouping/media/js/jquery.dataTables.rowGrouping.js"></script>
         <script src="${ctxpath}/resources/scripts/DataTables-1.9.4/extras/dataTables.fnSetFilteringDelay.js"></script>
         <script src="${ctxpath}/resources/scripts/bootstrap-dt.js"></script>
         <script src="${ctxpath}/resources/scripts/json2.js"></script>

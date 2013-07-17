@@ -267,6 +267,7 @@ public class SolexaRunRestResourceTest extends Arquillian {
             dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     public void testSetReadStructure() {
 
+        String lanesSequenced = "1,4";
         ClientConfig clientConfig = new DefaultClientConfig();
         clientConfig.getClasses().add(JacksonJsonProvider.class);
 
@@ -292,6 +293,7 @@ public class SolexaRunRestResourceTest extends Arquillian {
         Assert.assertNotNull(readstructureResult.getSetupReadStructure());
         Assert.assertEquals(readstructureResult.getSetupReadStructure(), run.getSetupReadStructure());
         Assert.assertNull(readstructureResult.getActualReadStructure());
+        Assert.assertNull(readstructureResult.getImagedArea());
 
         readStructure.setActualReadStructure("101T8B8B101T");
 
@@ -308,6 +310,26 @@ public class SolexaRunRestResourceTest extends Arquillian {
         Assert.assertEquals(readstructureResult.getSetupReadStructure(), run.getSetupReadStructure());
         Assert.assertNotNull(readstructureResult.getActualReadStructure());
         Assert.assertEquals(readstructureResult.getActualReadStructure(), run.getActualReadStructure());
+        Assert.assertNull(readstructureResult.getLanesSequenced());
+
+        readStructure.setImagedArea(185.2049407959);
+        readStructure.setLanesSequenced(lanesSequenced);
+
+        readstructureResult =
+                Client.create(clientConfig).resource(appConfig.getUrl() + "rest/solexarun/storeRunReadStructure")
+                        .type(MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON)
+                        .entity(readStructure).post(ReadStructureRequest.class);
+
+        runDao.clear();
+        run = runDao.findByBarcode(runBarcode);
+
+        Assert.assertEquals(readstructureResult.getRunBarcode(), run.getRunBarcode());
+        Assert.assertNotNull(readstructureResult.getSetupReadStructure());
+        Assert.assertEquals(readstructureResult.getSetupReadStructure(), run.getSetupReadStructure());
+        Assert.assertNotNull(readstructureResult.getActualReadStructure());
+        Assert.assertEquals(readstructureResult.getActualReadStructure(), run.getActualReadStructure());
+        Assert.assertEquals(readstructureResult.getImagedArea(),185.2049407959);
+        Assert.assertEquals(readstructureResult.getLanesSequenced(),lanesSequenced);
     }
 
 }

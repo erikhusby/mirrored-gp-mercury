@@ -34,7 +34,7 @@ public enum LabEventType {
             PlasticToValidate.SOURCE, PipelineTransformation.NONE),
     A_BASE("ABase", true, true, SystemOfRecord.WORKFLOW_DEPENDENT, false,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE),
-    POST_ABASE_THERMO_CYCLER_LOADED("PostABaseThermoCyclerLoaded", false, true, SystemOfRecord.WORKFLOW_DEPENDENT, false,
+    POST_ABASE_THERMO_CYCLER_LOADED("PostAbaseThermoCyclerLoaded", false, true, SystemOfRecord.WORKFLOW_DEPENDENT, false,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE),
     A_BASE_CLEANUP("ABaseCleanup", true, true, SystemOfRecord.WORKFLOW_DEPENDENT, false,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE),
@@ -63,6 +63,7 @@ public enum LabEventType {
     // Hybrid Selection
     PRE_SELECTION_POOL("PreSelectionPool", false, true, SystemOfRecord.WORKFLOW_DEPENDENT, false,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE),
+    HYBRIDIZATION_BUCKET("HybridizationBucket", true, true, SystemOfRecord.MERCURY, false, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
     HYBRIDIZATION("Hybridization", false, true, SystemOfRecord.WORKFLOW_DEPENDENT, false,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE),
     POST_HYBRIDIZATION_THERMO_CYCLER_LOADED("PostHybridizationThermoCyclerLoaded", false, true, SystemOfRecord.WORKFLOW_DEPENDENT, false,
@@ -99,6 +100,7 @@ public enum LabEventType {
             PlasticToValidate.SOURCE, PipelineTransformation.NONE),
 
     // QTP
+    POOLING_BUCKET("PoolingBucket", true, true, SystemOfRecord.MERCURY, false, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
     POOLING_TRANSFER("PoolingTransfer", false, true, SystemOfRecord.WORKFLOW_DEPENDENT, false,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE),
     ECO_TRANSFER("EcoTransfer", false, true, SystemOfRecord.WORKFLOW_DEPENDENT, false,

@@ -212,6 +212,38 @@ public class ProductWorkflowDefVersion implements Serializable {
     }
 
     /**
+     * Scans the workflow's processes and returns the first bucket it finds.
+     *
+     * @return the first bucket for the workflow, or null if there are no buckets
+     */
+    public WorkflowBucketDef getInitialBucket() {
+        for (WorkflowProcessDef workflowProcessDef : workflowProcessDefs) {
+            for (WorkflowBucketDef bucketDef : workflowProcessDef.getEffectiveVersion().getBuckets()) {
+                return bucketDef;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Finds the workflow bucket step with the given bucket name.
+     *
+     * @param bucketName    the name of the bucket to find
+     * @return the bucket, or null if not found
+     */
+    public WorkflowBucketDef findBucketDefByName(String bucketName) {
+        WorkflowBucketDef bucketDef = null;
+        for (WorkflowProcessDef workflowProcessDef : workflowProcessDefs) {
+            WorkflowProcessDefVersion workflowProcessDefVersion = workflowProcessDef.getEffectiveVersion();
+            bucketDef = workflowProcessDefVersion.getBucketByName(bucketName);
+            if (bucketDef != null) {
+                break;
+            }
+        }
+        return bucketDef;
+    }
+
+    /**
      * Based on the name of an event type, determine if the known previous workflow step is a bucket
      *
      * @param eventTypeName Event name associated with workflow process step

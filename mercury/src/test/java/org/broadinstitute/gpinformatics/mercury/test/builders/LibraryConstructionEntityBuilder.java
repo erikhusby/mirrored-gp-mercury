@@ -104,7 +104,7 @@ public class LibraryConstructionEntityBuilder {
         labEventHandler.processEvent(aBaseEntity);
 
         // PostABaseThermoCyclerLoaded
-        LabEventTest.validateWorkflow("PostABaseThermoCyclerLoaded", shearingCleanupPlate);
+        LabEventTest.validateWorkflow("PostAbaseThermoCyclerLoaded", shearingCleanupPlate);
         LabEvent postABaseThermoCyclerLoadedEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
                 libraryConstructionJaxbBuilder.getPostABaseThermoCyclerLoadedJaxb(), shearingCleanupPlate);
         labEventHandler.processEvent(postABaseThermoCyclerLoadedEntity);

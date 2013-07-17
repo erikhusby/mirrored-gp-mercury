@@ -34,6 +34,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEnt
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PreFlightEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.ProductionFlowcellPath;
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.SageEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingEntityBuilder;
@@ -320,41 +321,51 @@ public class BaseEventTest {
                 Collections.singletonList(rack),
                 Collections.singletonList(rack.getLabel()),
                 Collections.singletonList(tubeBarcodes),
-                mapBarcodeToTube, workflowName, barcodeSuffix).invoke();
+                mapBarcodeToTube, barcodeSuffix).invoke();
     }
 
     /**
      * This method runs the entities through the HiSeq2500 process.
+     *
      *
      * @param denatureRack  The denature tube rack.
      * @param barcodeSuffix Uniquifies the generated vessel barcodes. NOT date if test quickly invokes twice.
      *
+     * @param fctTicket
+     * @param productionFlowcellPath
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
-    public HiSeq2500FlowcellEntityBuilder runHiSeq2500FlowcellProcess(TubeFormation denatureRack,
-                                                                      String barcodeSuffix) {
-
-        String flowcellBarcode = "flowcell" + new Date().getTime();
-        return new HiSeq2500FlowcellEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
-                denatureRack, flowcellBarcode, barcodeSuffix).invoke();
-    }
+//    public HiSeq2500FlowcellEntityBuilder runHiSeq2500FlowcellProcess(TubeFormation denatureRack,
+//                                                                      String barcodeSuffix, String fctTicket,
+//                                                                      ProductionFlowcellPath productionFlowcellPath) {
+//
+//        String flowcellBarcode = "flowcell" + new Date().getTime();
+//        return new HiSeq2500FlowcellEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
+//                denatureRack, flowcellBarcode, barcodeSuffix, fctTicket, productionFlowcellPath).invoke();
+//    }
 
     /**
      * This method runs the entities through the HiSeq2500 process.
      *
+     *
+     *
      * @param denatureRack    The denature tube rack.
      * @param barcodeSuffix   Uniquifies the generated vessel barcodes. NOT date if test quickly invokes twice.
+     * @param productionFlowcellPath
      * @param designationName Name of the designation created in Squid to support testing the systems running in
-     *                        parallel
-     *
+*                        parallel
+     * @param workflowName
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
     public HiSeq2500FlowcellEntityBuilder runHiSeq2500FlowcellProcess(TubeFormation denatureRack, String barcodeSuffix,
-                                                                      String designationName) {
+                                                                      String fctTicket,
+                                                                      ProductionFlowcellPath productionFlowcellPath,
+                                                                      String designationName, String workflowName) {
 
         String flowcellBarcode = "flowcell" + new Date().getTime();
         return new HiSeq2500FlowcellEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
-                denatureRack, flowcellBarcode, barcodeSuffix, designationName).invoke();
+                denatureRack, flowcellBarcode, barcodeSuffix, fctTicket, productionFlowcellPath,
+                designationName, workflowName).invoke();
     }
 
     /**
@@ -373,4 +384,11 @@ public class BaseEventTest {
     }
 
 
+    public BettaLimsMessageTestFactory getBettaLimsMessageTestFactory() {
+        return bettaLimsMessageTestFactory;
+    }
+
+    public LabEventFactory getLabEventFactory() {
+        return labEventFactory;
+    }
 }

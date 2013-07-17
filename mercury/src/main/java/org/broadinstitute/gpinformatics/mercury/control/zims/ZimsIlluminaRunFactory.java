@@ -126,9 +126,15 @@ public class ZimsIlluminaRunFactory {
 
         DateFormat dateFormat = new SimpleDateFormat(ZimsIlluminaRun.DATE_FORMAT);
         // TODO: fill in sequencerModel and isPaired
+
+        double imagedArea = 0;
+        if (sequencingRun.getImagedAreaPerMM2() != null) {
+            // avoid unboxing NPE
+            imagedArea = sequencingRun.getImagedAreaPerMM2().doubleValue();
+        }
         ZimsIlluminaRun run = new ZimsIlluminaRun(sequencingRun.getRunName(), sequencingRun.getRunBarcode(),
-                flowcell.getLabel(), sequencingRun.getMachineName(), null, dateFormat.format(illuminaRun.getRunDate()),
-                false, sequencingRun.getActualReadStructure(), 0.0, sequencingRun.getSetupReadStructure());
+                flowcell.getLabel(), sequencingRun.getMachineName(), flowcell.getSequencerModel(), dateFormat.format(illuminaRun.getRunDate()),
+                false, sequencingRun.getActualReadStructure(), imagedArea, sequencingRun.getSetupReadStructure(),sequencingRun.getLanesSequenced());
 
         for (List<SampleInstanceDto> sampleInstanceDtos : perLaneSampleInstanceDtos) {
             if (sampleInstanceDtos != null && !sampleInstanceDtos.isEmpty()) {
@@ -298,6 +304,11 @@ public class ZimsIlluminaRunFactory {
                 referenceSequenceValues = project.getReferenceSequenceKey().split("\\|");
                 referenceSequence = referenceSequenceValues[0];
                 referenceSequenceVersion = referenceSequenceValues[1];
+            }
+
+            // horrible 7/25 hack.  todo fixme with workflow
+            if (analysisType != null) {
+                analysisType = "HybridSelection." + analysisType;
             }
         }
 

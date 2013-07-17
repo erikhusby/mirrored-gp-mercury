@@ -40,6 +40,7 @@
                     </xsd:documentation>
                 </xsd:annotation>
             </xsd:element>
+            <xsd:element name="derivedVesselLabel" type="xsd:string" />
         </xsd:sequence>
     </xsd:complexType>
 
@@ -119,6 +120,13 @@
             <xsd:element name="runBarcode" type="xsd:string" />
             <xsd:element name="setupReadStructure" type="xsd:string" />
             <xsd:element name="actualReadStructure" type="xsd:string" />
+            <xsd:element name="imagedArea" type="xsd:double" nillable="true"/>
+            <!-- concatenated list of lanes that "really" contain data.  this is a bit
+            of a hack from the days of running partial flowcells -->
+            <xsd:element name="lanesSequenced" type="xsd:string" />
+            <!-- if something goes wrong during the processing of this,
+            here's a human readable error string -->
+            <xsd:element name="error" type="xsd:string" />
         </xsd:sequence>
     </xsd:complexType>
 

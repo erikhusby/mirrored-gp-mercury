@@ -13,6 +13,8 @@ var ttExportDefines = {
     "aButtons": [ "copy", "csv", "print" ]
 };
 
+var sDomNoTableToolsButtons = "lfrtip";
+
 /**
  *  Set the defaults for DataTables initialization
  */

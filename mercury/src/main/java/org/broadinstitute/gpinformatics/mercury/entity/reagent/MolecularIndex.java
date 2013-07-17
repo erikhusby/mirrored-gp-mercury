@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.reagent;
 
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
@@ -50,6 +51,7 @@ public class MolecularIndex implements Serializable {
     private Long molecularIndexId;
 
     @ManyToMany(cascade = {CascadeType.PERSIST}, fetch= FetchType.LAZY, mappedBy = "indexes")
+    @BatchSize(size = 500)
     private Set<MolecularIndexingScheme> molecularIndexingSchemes = new HashSet<>();
 
     private String sequence;

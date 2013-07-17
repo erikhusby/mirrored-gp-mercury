@@ -82,6 +82,20 @@ public class WorkflowProcessDefVersion implements Serializable {
     }
 
     /**
+     * Returns the bucket with the specified name, or null of no bucket is found.
+     *
+     * @return the named bucket
+     */
+    public WorkflowBucketDef getBucketByName(String bucketName) {
+        for (WorkflowBucketDef bucketDef : getBuckets()) {
+            if (bucketDef.getName().equals(bucketName)) {
+                return bucketDef;
+            }
+        }
+        return null;
+    }
+
+    /**
      * Called by JAXB, sets relationship to parent.
      * @param unmarshaller JAXB
      * @param parent enclosing XML element

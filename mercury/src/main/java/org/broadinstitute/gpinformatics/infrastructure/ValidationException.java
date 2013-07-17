@@ -1,9 +1,10 @@
 package org.broadinstitute.gpinformatics.infrastructure;
 
+import javax.ejb.ApplicationException;
 import java.util.ArrayList;
 import java.util.List;
 
-
+@ApplicationException(rollback = true)
 public class ValidationException extends Exception {
 
     private final List<String> validationMessages = new ArrayList<String>();

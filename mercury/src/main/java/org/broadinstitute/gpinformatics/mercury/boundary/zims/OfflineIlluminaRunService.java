@@ -29,7 +29,7 @@ public class OfflineIlluminaRunService implements IlluminaRunService, Serializab
     }
 
     public static ZimsIlluminaRun makeRun(String runName, int numLanes, int numLibraries) {
-        ZimsIlluminaRun run = new ZimsIlluminaRun(runName, "Run-123", "Flowcell-123", "Sequencer 123", "Test Sequencer", "05/11/2012 17:08", false, "36T8B", 999.987654 );
+        ZimsIlluminaRun run = new ZimsIlluminaRun(runName, "Run-123", "Flowcell-123", "Sequencer 123", "Test Sequencer", "05/11/2012 17:08", false, "36T8B", 999.987654,null );
         run.addRead(new TZamboniRead((short) 1, (short) 10, TZReadType.INDEX));
         run.addRead(new TZamboniRead((short) 11, (short) 20, TZReadType.TEMPLATE));
         for (int i = 1; i <= numLanes; i++) {

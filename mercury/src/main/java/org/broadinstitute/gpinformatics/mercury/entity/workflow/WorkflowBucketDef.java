@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -55,4 +56,16 @@ public class WorkflowBucketDef extends WorkflowStepDef {
         return true;
     }
 
+    /**
+     * Returns the type of event to be created when on a vessel entering the bucket.
+     *
+     * @return the bucket entry event type
+     */
+    public LabEventType getBucketEventType() {
+        if (!getLabEventTypes().isEmpty()) {
+            return getLabEventTypes().get(0);
+        } else {
+            return null;
+        }
+    }
 }
