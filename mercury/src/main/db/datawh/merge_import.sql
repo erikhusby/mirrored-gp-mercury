@@ -97,6 +97,8 @@ IS
                                    FROM im_billing_session
                                    WHERE is_delete = 'F';
 
+  CURSOR im_lab_metric_cur IS SELECT * FROM im_lab_metric WHERE is_delete = 'F';
+
   errmsg        VARCHAR2(255);
   PDO_SAMPLE_NOT_IN_EVENT_FACT EXCEPTION;
   INVALID_LAB_BATCH EXCEPTION;
@@ -109,7 +111,7 @@ IS
 -- Does the most dependent (FK dependency) tables first.
 ---------------------------------------------------------------------------
 
--- For this fact table, a re-export of audited entity ids should replace existing ones.
+    -- For this fact table, a re-export of audited entity ids should replace existing ones.
     DELETE FROM event_fact
     WHERE lab_event_id IN (SELECT
                              DISTINCT lab_event_id
@@ -195,6 +197,9 @@ IS
       WHERE is_delete = 'T'
     );
 
+    DELETE FROM lab_metric
+    WHERE lab_metric_id IN (SELECT lab_metric_id FROM im_lab_metric WHERE is_delete = 'T');
+
     DELETE FROM product
     WHERE product_id IN (
       SELECT
@@ -219,7 +224,7 @@ IS
       WHERE is_delete = 'T'
     );
 
--- For this fact table, a re-export of audited entity ids should replace existing ones.
+    -- For this fact table, a re-export of audited entity ids should replace existing ones.
     DELETE FROM sequencing_sample_fact
     WHERE sequencing_run_id IN (SELECT
                                   DISTINCT sequencing_run_id
@@ -429,6 +434,54 @@ IS
       errmsg := SQLERRM;
       DBMS_OUTPUT.PUT_LINE(
           TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_lab_vessel.dat line ' || new.line_number || '  ' || errmsg);
+      CONTINUE;
+    END;
+
+    END LOOP;
+
+
+    FOR new IN im_lab_metric_cur LOOP
+    BEGIN
+
+      UPDATE lab_metric
+      SET
+        lab_vessel_id = new.lab_vessel_id, 
+        lab_event_id = new.lab_event_id, 
+        quant_type = new.quant_type,	   
+      	quant_units = new.quant_units,   
+        quant_value = new.quant_value,   
+        run_name = new.run_name,	   
+        run_date = new.run_date,	   
+        etl_date = new.etl_date       
+      WHERE lab_metric_id = new.lab_metric_id;
+
+      INSERT INTO lab_metric (
+        lab_metric_id,
+        lab_vessel_id,
+        lab_event_id,
+        quant_type,
+        quant_units,
+        quant_value,
+        run_name,
+        run_date,
+        etl_date
+      )
+      SELECT
+        new.lab_metric_id,
+        new.lab_vessel_id,
+        new.lab_event_id,
+        new.quant_type,
+        new.quant_units,
+        new.quant_value,
+        new.run_name,
+        new.run_date,
+        new.etl_date       
+      FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM lab_metric WHERE lab_metric_id = new.lab_metric_id);
+
+      EXCEPTION WHEN OTHERS THEN
+      errmsg := SQLERRM;
+      DBMS_OUTPUT.PUT_LINE(
+          TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_lab_metric.dat line ' || new.line_number || '  ' || errmsg);
       CONTINUE;
     END;
 
@@ -912,7 +965,7 @@ IS
 
     END LOOP;
 
--- Only sets PK when it is null, so we can do an idempotent repeatable merge.
+    -- Only sets PK when it is null, so we can do an idempotent repeatable merge.
     UPDATE im_event_fact
     SET event_fact_id = event_fact_id_seq.nextval
     WHERE event_fact_id IS NULL;
