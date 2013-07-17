@@ -214,9 +214,10 @@ public class WorkflowValidator {
                     LabBatch.LabBatchType.WORKFLOW);
             for (SampleInstance sampleInstance : sampleInstances) {
                 String workflowName = sampleInstance.getWorkflowName();
+                LabBatch effectiveBatch = sampleInstance.getLabBatch();
                 if (workflowName != null) {
                     ProductWorkflowDefVersion workflowVersion = workflowLoader.load().getWorkflowByName(workflowName).
-                            getEffectiveVersion();
+                            getEffectiveVersion(effectiveBatch.getCreatedOn());
                     if (workflowVersion != null) {
                         List<ProductWorkflowDefVersion.ValidationError> errors = workflowVersion.validate(labVessel, eventType);
                         if (!errors.isEmpty()) {

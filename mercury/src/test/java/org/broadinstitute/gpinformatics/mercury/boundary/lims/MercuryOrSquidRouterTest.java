@@ -6,30 +6,51 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
+import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.MiSeqReagentKit;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
+import org.broadinstitute.gpinformatics.mercury.test.BaseEventTest;
+import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.ProductionFlowcellPath;
+import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
 import static org.broadinstitute.gpinformatics.infrastructure.test.dbfree.LabEventTestFactory.doSectionTransfer;
@@ -37,6 +58,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.dbfree.LabEve
 import static org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid.BOTH;
 import static org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid.MERCURY;
 import static org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid.SQUID;
+import static org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType.DENATURE_TO_REAGENT_KIT_TRANSFER;
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate.PlateType.Eppendorf96;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
@@ -66,7 +88,7 @@ import static org.mockito.Mockito.when;
  * can configure mock DAOs to return the various test entities without also setting the expectation that each test will
  * fetch every test entity.
  */
-public class MercuryOrSquidRouterTest {
+public class MercuryOrSquidRouterTest extends BaseEventTest {
 
     private static final String MERCURY_TUBE_1 = "mercuryTube1";
     private static final String MERCURY_TUBE_2 = "mercuryTube2";
@@ -75,6 +97,9 @@ public class MercuryOrSquidRouterTest {
     public static final String CONTROL_SAMPLE_ID = "SM-CONTROL1";
     public static final String NA12878 = "NA12878";
     public static final String MERCURY_PLATE = "mercuryPlate";
+    public static final String BARCODE_SUFFIX = "mosRte";
+    public static final String FLOWCELL_2500_TICKET = "FCT-3mosrte";
+
 
     private MercuryOrSquidRouter mercuryOrSquidRouter;
 
@@ -95,7 +120,10 @@ public class MercuryOrSquidRouterTest {
     private Bucket picoBucket;
 
     @BeforeMethod(groups = DATABASE_FREE)
-    public void setUp() throws Exception {
+    public void setUp() {
+
+        super.setUp();
+
         // Some of this mocking could be replaced by testing the @DaoFree routeForVessel method, but the mocks
         // existed before that method was factored out.
         mockLabVesselDao = mock(LabVesselDao.class);
@@ -350,6 +378,105 @@ public class MercuryOrSquidRouterTest {
         verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>() {{
             add(MERCURY_TUBE_1);
         }});
+    }
+
+    @Test(groups = DATABASE_FREE, enabled = true)
+    public void testMercuryOnlyRouting() {
+        final ProductOrder
+                productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
+        AthenaClientServiceStub.addProductOrder(productOrder);
+        Date runDate = new Date();
+        Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
+        LabBatch workflowBatch = new LabBatch("Exome Express Batch",
+                new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
+
+        Calendar postJuly25CalendarDate = new GregorianCalendar(2013,6,26);
+
+        Date today = new Date();
+
+        if(today.before(postJuly25CalendarDate.getTime())) {
+            workflowBatch.setCreatedOn(postJuly25CalendarDate.getTime());
+        }
+
+        workflowBatch.setWorkflowName("Exome Express");
+
+        assertThat(mercuryOrSquidRouter.routeForVessels(new HashSet<LabVessel>(mapBarcodeToTube.values())),
+                is(MercuryOrSquidRouter.MercuryOrSquid.MERCURY));
+
+
+        //Build Event History
+        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube, productOrder,
+                workflowBatch, null, String.valueOf(runDate.getTime()), BARCODE_SUFFIX, true);
+        ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder =
+                runExomeExpressShearingProcess(productOrder, picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
+                        picoPlatingEntityBuilder.getNormTubeFormation(),
+                        picoPlatingEntityBuilder.getNormalizationBarcode(), BARCODE_SUFFIX);
+        LibraryConstructionEntityBuilder libraryConstructionEntityBuilder =
+                runLibraryConstructionProcess(exomeExpressShearingEntityBuilder.getShearingCleanupPlate(),
+                        exomeExpressShearingEntityBuilder.getShearCleanPlateBarcode(),
+                        exomeExpressShearingEntityBuilder.getShearingPlate(), BARCODE_SUFFIX);
+
+        TubeFormation pondRegRack = libraryConstructionEntityBuilder.getPondRegRack();
+
+
+        assertThat(mercuryOrSquidRouter.routeForVessels(Collections.<LabVessel>singleton
+                                                        (pondRegRack)),
+                is(MercuryOrSquidRouter.MercuryOrSquid.MERCURY));
+
+        HybridSelectionEntityBuilder hybridSelectionEntityBuilder =
+                runHybridSelectionProcess(libraryConstructionEntityBuilder.getPondRegRack(),
+                        libraryConstructionEntityBuilder.getPondRegRackBarcode(),
+                        libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), BARCODE_SUFFIX);
+        TubeFormation normRack = hybridSelectionEntityBuilder.getNormCatchRack();
+        assertThat(mercuryOrSquidRouter.routeForVessels(Collections.<LabVessel>singleton
+                (normRack)),
+                is(MercuryOrSquidRouter.MercuryOrSquid.MERCURY));
+
+        QtpEntityBuilder qtpEntityBuilder = runQtpProcess(hybridSelectionEntityBuilder.getNormCatchRack(),
+                hybridSelectionEntityBuilder.getNormCatchBarcodes(),
+                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), "Exome Express", "1");
+
+        TwoDBarcodedTube denatureTube =
+                qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
+        assertThat(mercuryOrSquidRouter.routeForVessels(Collections.<LabVessel>singleton
+                (denatureTube)),
+                is(MercuryOrSquidRouter.MercuryOrSquid.MERCURY));
+        String denatureTubeBarcode = denatureTube.getLabel();
+        MiSeqReagentKit reagentKit = new MiSeqReagentKit("reagent_kit_barcode");
+        LabEvent denatureToReagentKitEvent = new LabEvent(DENATURE_TO_REAGENT_KIT_TRANSFER, new Date(),
+                "ZLAB", 1L, 1L);
+        final VesselToSectionTransfer sectionTransfer =
+                new VesselToSectionTransfer(denatureTube,
+                        SBSSection.getBySectionName(MiSeqReagentKit.LOADING_WELL.name()),
+                        reagentKit.getContainerRole(), denatureToReagentKitEvent);
+        denatureToReagentKitEvent.getVesselToSectionTransfers().add(sectionTransfer);
+        assertThat(mercuryOrSquidRouter.routeForVessels(Collections.<LabVessel>singleton
+                (reagentKit)),
+                is(MercuryOrSquidRouter.MercuryOrSquid.MERCURY));
+
+
+        Set<LabVessel> starterVessels = Collections.singleton((LabVessel) denatureTube);
+        //create a couple Miseq batches then one FCT (2500) batch
+        LabBatch fctBatch = new LabBatch(FLOWCELL_2500_TICKET, starterVessels, LabBatch.LabBatchType.FCT, 12.33f);
+
+        HiSeq2500FlowcellEntityBuilder flowcellEntityBuilder =
+                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), BARCODE_SUFFIX, FLOWCELL_2500_TICKET,
+                        ProductionFlowcellPath.DILUTION_TO_FLOWCELL,null, "Exome Express");
+        TwoDBarcodedTube dilutionTube =
+                flowcellEntityBuilder.getDilutionRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
+        assertThat(mercuryOrSquidRouter.routeForVessels(Collections.<LabVessel>singleton
+                (dilutionTube)),
+                is(MercuryOrSquidRouter.MercuryOrSquid.MERCURY));
+
+        String dilutionTubeBarcode = dilutionTube.getLabel();
+
+        IlluminaFlowcell flowcell = flowcellEntityBuilder.getIlluminaFlowcell();
+        assertThat(mercuryOrSquidRouter.routeForVessels(Collections.<LabVessel>singleton
+                (flowcell)),
+                is(MercuryOrSquidRouter.MercuryOrSquid.MERCURY));
+
+        String flowcellBarcode = flowcell.getLabel();
+
     }
 
     /*
