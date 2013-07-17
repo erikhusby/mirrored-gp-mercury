@@ -6,7 +6,6 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransfe
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
 import org.broadinstitute.gpinformatics.mercury.presentation.transfervis.TransferVisualizerFrame;
@@ -53,7 +52,7 @@ public class QtpEntityBuilder {
 
     public QtpEntityBuilder invoke(boolean doEco) {
         QtpJaxbBuilder qtpJaxbBuilder = new QtpJaxbBuilder(bettaLimsMessageTestFactory, testPrefix,
-                listLcsetListNormCatchBarcodes, normCatchRackBarcodes).invoke();
+                listLcsetListNormCatchBarcodes, normCatchRackBarcodes, doEco).invoke();
         PlateCherryPickEvent cherryPickJaxb = qtpJaxbBuilder.getPoolingTransferJaxb();
         PlateCherryPickEvent denatureJaxb = qtpJaxbBuilder.getDenatureJaxb();
         String normalizationRackBarcode = qtpJaxbBuilder.getNormalizationRackBarcode();

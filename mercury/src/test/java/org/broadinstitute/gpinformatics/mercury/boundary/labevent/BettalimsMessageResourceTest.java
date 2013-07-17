@@ -181,8 +181,8 @@ public class BettalimsMessageResourceTest extends Arquillian {
 
         QtpJaxbBuilder qtpJaxbBuilder = new QtpJaxbBuilder(bettaLimsMessageFactory, testPrefix,
                 Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchBarcodes()),
-                Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchRackBarcode())
-        ).invoke();
+                Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchRackBarcode()),
+                false).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : qtpJaxbBuilder.getMessageList()) {
             sendMessage(bettaLIMSMessage, bettalimsMessageResource, ImportFromSquidTest.TEST_MERCURY_URL);
         }
@@ -236,8 +236,8 @@ public class BettalimsMessageResourceTest extends Arquillian {
 
         qtpJaxbBuilder = new QtpJaxbBuilder(bettaLimsMessageFactory, testPrefix,
                 Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchBarcodes()),
-                Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchRackBarcode())
-        ).invoke();
+                Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchRackBarcode()),
+                false).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : qtpJaxbBuilder.getMessageList()) {
             sendMessage(bettaLIMSMessage, bettalimsMessageResource, ImportFromSquidTest.TEST_MERCURY_URL);
         }
@@ -271,8 +271,8 @@ public class BettalimsMessageResourceTest extends Arquillian {
 
         QtpJaxbBuilder qtpJaxbBuilder = new QtpJaxbBuilder(bettaLimsMessageFactory, testPrefix,
                 Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchBarcodes()),
-                Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchRackBarcode())
-        ).invoke();
+                Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchRackBarcode()),
+                false).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : qtpJaxbBuilder.getMessageList()) {
             sendMessage(bettaLIMSMessage, bettalimsMessageResource, ImportFromSquidTest.TEST_MERCURY_URL);
         }
@@ -541,8 +541,8 @@ public class BettalimsMessageResourceTest extends Arquillian {
         testPrefix = testPrefixDateFormat.format(new Date());
         QtpJaxbBuilder qtpJaxbBuilder = new QtpJaxbBuilder(bettaLimsMessageFactory, testPrefix,
                 listLcsetListNormCatchBarcodes,
-                normCatchRackBarcodes
-        ).invoke();
+                normCatchRackBarcodes,
+                false).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : qtpJaxbBuilder.getMessageList()) {
             sendMessage(bettaLIMSMessage, bettalimsMessageResource, ImportFromSquidTest.TEST_MERCURY_URL);
         }
