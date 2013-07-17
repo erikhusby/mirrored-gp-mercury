@@ -267,6 +267,7 @@ public class SolexaRunRestResourceTest extends Arquillian {
             dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     public void testSetReadStructure() {
 
+        Double imagedArea = 185.2049407959;
         String lanesSequenced = "1,4";
         ClientConfig clientConfig = new DefaultClientConfig();
         clientConfig.getClasses().add(JacksonJsonProvider.class);
@@ -312,7 +313,7 @@ public class SolexaRunRestResourceTest extends Arquillian {
         Assert.assertEquals(readstructureResult.getActualReadStructure(), run.getActualReadStructure());
         Assert.assertNull(readstructureResult.getLanesSequenced());
 
-        readStructure.setImagedArea(185.2049407959);
+        readStructure.setImagedArea(imagedArea);
         readStructure.setLanesSequenced(lanesSequenced);
 
         readstructureResult =
@@ -328,7 +329,7 @@ public class SolexaRunRestResourceTest extends Arquillian {
         Assert.assertEquals(readstructureResult.getSetupReadStructure(), run.getSetupReadStructure());
         Assert.assertNotNull(readstructureResult.getActualReadStructure());
         Assert.assertEquals(readstructureResult.getActualReadStructure(), run.getActualReadStructure());
-        Assert.assertEquals(readstructureResult.getImagedArea(),185.2049407959);
+        Assert.assertEquals(readstructureResult.getImagedArea(),imagedArea);
         Assert.assertEquals(readstructureResult.getLanesSequenced(),lanesSequenced);
     }
 
