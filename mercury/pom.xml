@@ -1088,7 +1088,7 @@
                         <artifactId>maven-jar-plugin</artifactId>
                         <configuration>
                             <includes>
-                                <include>**/*JaxbBuilder.class</include>
+                                <include>**/*JaxbBuilder*.class</include>
                                 <include>**/ProductionFlowcellPath.class</include>
                                 <include>**/BettaLimsMessageTestFactory*.class</include>
                             </includes>
