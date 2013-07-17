@@ -26,11 +26,14 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDe
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @UrlBinding(value = "/workflow/AddRework.action")
 public class AddReworkActionBean extends CoreActionBean {
@@ -57,8 +60,12 @@ public class AddReworkActionBean extends CoreActionBean {
     @Validate(required = true, on = {VESSEL_INFO_ACTION})
     private String vesselLabel;
 
+    private int numQueryInputs;
+
+    private List<String> noResultQueryTerms = new ArrayList<>();
+
     @Validate(required = true, on = REWORK_SAMPLE_ACTION)
-    private String reworkCandidate;
+    private List<String> selectedReworkCandidates;
 
     @Validate(required = true, on = REWORK_SAMPLE_ACTION)
     private String bucketName;
@@ -67,7 +74,7 @@ public class AddReworkActionBean extends CoreActionBean {
 
     @Validate(required = true, on = REWORK_SAMPLE_ACTION)
     private ReworkEntry.ReworkReason reworkReason;
-    @Validate(required = true, on = REWORK_SAMPLE_ACTION)
+    @Validate(required = true, on = REWORK_SAMPLE_ACTION, label = "Comments")
     private String commentText;
 
     private static final String VIEW_PAGE = "/workflow/add_rework.jsp";
@@ -80,20 +87,16 @@ public class AddReworkActionBean extends CoreActionBean {
         if (getBuckets().isEmpty()) {
             addValidationError("vesselLabel", "{2} is not in a bucket.", vesselLabel);
         }
-        if (bucketName.equals("Pico/Plating Bucket")) {
-            reworkStep = LabEventType.PICO_PLATING_BUCKET;
-        } else {
-            reworkStep = LabEventType.SHEARING_BUCKET;
+
+        for (String selectedReworkCandidate : selectedReworkCandidates) {
+            reworkCandidates.add(ReworkEjb.ReworkCandidate.fromString(selectedReworkCandidate));
         }
 
-        ReworkEjb.ReworkCandidate candidate = ReworkEjb.ReworkCandidate.fromString(reworkCandidate);
-
         try {
-            Collection<String> validationMessages =
-                    reworkEjb.addAndValidateRework(candidate, reworkReason, reworkStep, "Pico/Plating Bucket",
-                            commentText,
+            Collection<String> validationMessages = reworkEjb
+                    .addAndValidateReworks(reworkCandidates, reworkReason, bucketName, commentText,
                             WorkflowName.EXOME_EXPRESS.getWorkflowName(), getUserBean().getLoginUserName());
-            addMessage("Vessel {0} has been added to the {1} bucket.", candidate.getTubeBarcode(), bucketName);
+            addMessage("{0} vessel(s) have been added to the {1} bucket.", reworkCandidates.size(), bucketName);
 
             if (CollectionUtils.isNotEmpty(validationMessages)) {
                 for (String validationMessage : validationMessages) {
@@ -141,8 +144,23 @@ public class AddReworkActionBean extends CoreActionBean {
     }
 
     @After(stages = LifecycleStage.BindingAndValidation, on = VESSEL_INFO_ACTION)
-    public void setUpLabVessel() {
-        reworkCandidates = new ArrayList(reworkEjb.findReworkCandidates(vesselLabel));
+    public void setUpReworkCandidates() {
+        List<String> searchTerms = SearchActionBean.cleanInputStringForSamples(vesselLabel);
+        numQueryInputs = searchTerms.size();
+        reworkCandidates = new ArrayList(reworkEjb.findReworkCandidates(
+                searchTerms));
+
+        Set<String> barcodes = new HashSet<>();
+        Set<String> sampleIds = new HashSet<>();
+        for (ReworkEjb.ReworkCandidate reworkCandidate : reworkCandidates) {
+            barcodes.add(reworkCandidate.getTubeBarcode());
+            sampleIds.add(reworkCandidate.getSampleKey());
+        }
+        for (String searchTerm : searchTerms) {
+            if (!barcodes.contains(searchTerm) && !sampleIds.contains(searchTerm)) {
+                noResultQueryTerms.add(searchTerm);
+            }
+        }
     }
 
     @HandlesEvent(VESSEL_INFO_ACTION)
@@ -175,6 +193,22 @@ public class AddReworkActionBean extends CoreActionBean {
 
     public void setLabVessel(LabVessel labVessel) {
         this.labVessel = labVessel;
+    }
+
+    public int getNumQueryInputs() {
+        return numQueryInputs;
+    }
+
+    public void setNumQueryInputs(int numQueryInputs) {
+        this.numQueryInputs = numQueryInputs;
+    }
+
+    public List<String> getNoResultQueryTerms() {
+        return noResultQueryTerms;
+    }
+
+    public void setNoResultQueryTerms(List<String> noResultQueryTerms) {
+        this.noResultQueryTerms = noResultQueryTerms;
     }
 
     public List<WorkflowBucketDef> getBuckets() {
@@ -213,11 +247,11 @@ public class AddReworkActionBean extends CoreActionBean {
         return reworkCandidates;
     }
 
-    public String getReworkCandidate() {
-        return reworkCandidate;
+    public List<String> getSelectedReworkCandidates() {
+        return selectedReworkCandidates;
     }
 
-    public void setReworkCandidate(String reworkCandidate) {
-        this.reworkCandidate = reworkCandidate;
+    public void setSelectedReworkCandidates(List<String> selectedReworkCandidates) {
+        this.selectedReworkCandidates = selectedReworkCandidates;
     }
 }

@@ -24,8 +24,10 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.test.BaseEventTest;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
+import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PreFlightEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.ProductionFlowcellPath;
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.SageEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingEntityBuilder;
@@ -99,6 +101,10 @@ public class SolexaRunRoutingTest extends BaseEventTest{
         QtpEntityBuilder qtpEntityBuilder = runQtpProcess(sageEntityBuilder.getSageCleanupRack(), sageEntityBuilder.getSageCleanupTubeBarcodes(),
                 sageEntityBuilder.getMapBarcodeToSageUnloadTubes(), "Whole Genome", "1");
 
+        HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
+                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1",null,
+                        ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL,"designation", "Whole Genome");
+
         Map.Entry<String, TwoDBarcodedTube> stringTwoDBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
         LabEventTest.ListTransfersFromStart transferTraverserCriteria = new LabEventTest.ListTransfersFromStart();
         stringTwoDBarcodedTubeEntry.getValue().evaluateCriteria(transferTraverserCriteria,
@@ -106,7 +112,7 @@ public class SolexaRunRoutingTest extends BaseEventTest{
         @SuppressWarnings("UnusedDeclaration")
         List<String> labEventNames = transferTraverserCriteria.getLabEventNames();
 
-        IlluminaFlowcell flowcell = qtpEntityBuilder.getIlluminaFlowcell();
+        IlluminaFlowcell flowcell = hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell();
         Date runDate = new Date();
 
         SolexaRunBean runBean =

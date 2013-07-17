@@ -72,6 +72,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEnt
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PreFlightEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.ProductionFlowcellPath;
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.SageEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingEntityBuilder;
@@ -122,6 +123,7 @@ public class LabEventTest extends BaseEventTest {
     public static final String SECTION_ALL_2 = "ALL2";
 
     public static final String POND_REGISTRATION_TUBE_PREFIX = "PondReg";
+    public static final String FCT_TICKET = "FCT-1";
 
     private final TemplateEngine templateEngine = new TemplateEngine();
 
@@ -249,7 +251,11 @@ public class LabEventTest extends BaseEventTest {
                 hybridSelectionEntityBuilder.getNormCatchBarcodes(),
                 hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), "Hybrid Selection", "1");
 
-        IlluminaFlowcell illuminaFlowcell = qtpEntityBuilder.getIlluminaFlowcell();
+        HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
+                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", null,
+                        ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL, "Squid Designation", "Hybrid Selection");
+
+        IlluminaFlowcell illuminaFlowcell = hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell();
         Set<SampleInstance> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
                 VesselPosition.LANE1);
         Assert.assertEquals(lane1SampleInstances.iterator().next().getReagents().size(), 2,
@@ -260,9 +266,9 @@ public class LabEventTest extends BaseEventTest {
         IlluminaSequencingRun illuminaSequencingRun;
         try {
             illuminaSequencingRun = illuminaSequencingRunFactory.buildDbFree(new SolexaRunBean(
-                    qtpEntityBuilder.getIlluminaFlowcell().getCartridgeBarcode(), "Run1", new Date(), "SL-HAL",
+                    illuminaFlowcell.getCartridgeBarcode(), "Run1", new Date(), "SL-HAL",
                     File.createTempFile("RunDir", ".txt").getAbsolutePath(), null),
-                    qtpEntityBuilder.getIlluminaFlowcell());
+                    illuminaFlowcell);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -326,8 +332,7 @@ public class LabEventTest extends BaseEventTest {
         };
         verifyEventSequence(labEventNames, expectedEventNames);
 
-        Assert.assertEquals(illuminaSequencingRun.getSampleCartridge(),
-                qtpEntityBuilder.getIlluminaFlowcell(), "Wrong flowcell");
+        Assert.assertEquals(illuminaSequencingRun.getSampleCartridge(), illuminaFlowcell, "Wrong flowcell");
 
         if (false) {
             TransferVisualizerFrame transferVisualizerFrame = new TransferVisualizerFrame();
@@ -381,8 +386,17 @@ public class LabEventTest extends BaseEventTest {
         QtpEntityBuilder qtpEntityBuilder = runQtpProcess(hybridSelectionEntityBuilder.getNormCatchRack(),
                 hybridSelectionEntityBuilder.getNormCatchBarcodes(),
                 hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), "Exome Express", "1");
+
+        final LabVessel denatureSource =
+                qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
+        LabBatch fctBatch =
+                new LabBatch(FCT_TICKET,
+                        Collections.singleton(denatureSource),
+                        LabBatch.LabBatchType.FCT);
+
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
-                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", "squidDesignationName");
+                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", FCT_TICKET,
+                        ProductionFlowcellPath.DILUTION_TO_FLOWCELL, null, "Exome Express");
 
         IlluminaFlowcell illuminaFlowcell = hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell();
         Set<SampleInstance> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
@@ -457,7 +471,8 @@ public class LabEventTest extends BaseEventTest {
                 "EcoTransfer",
                 "NormalizationTransfer",
                 "DenatureTransfer",
-                "DenatureToFlowcellTransfer",
+                "DenatureToDilutionTransfer",
+                "DilutionToFlowcellTransfer",
         };
         verifyEventSequence(labEventNames, expectedEventNames);
 
@@ -505,7 +520,8 @@ public class LabEventTest extends BaseEventTest {
                 hybridSelectionEntityBuilder.getNormCatchBarcodes(),
                 hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), "Exome Express", "1");
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
-                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", "squidDesignationName");
+                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", "squidDesignationName",
+                        ProductionFlowcellPath.DENATURE_TO_FLOWCELL,null, "Exome Express");
 
         IlluminaFlowcell illuminaFlowcell = hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell();
         Set<SampleInstance> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
@@ -645,7 +661,8 @@ public class LabEventTest extends BaseEventTest {
                     hybridSelectionEntityBuilder2.getNormCatchBarcodes(),
                     hybridSelectionEntityBuilder2.getMapBarcodeToNormCatchTubes(), "Exome Express", "2");
             HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder2 =
-                    runHiSeq2500FlowcellProcess(qtpEntityBuilder2.getDenatureRack(), "2", "squidDesignationName");
+                    runHiSeq2500FlowcellProcess(qtpEntityBuilder2.getDenatureRack(), "2", "squidDesignationName", ProductionFlowcellPath.DENATURE_TO_FLOWCELL,null,
+                            "Exome Express");
 
             LibraryConstructionEntityBuilder libraryConstructionEntityBuilder =
                     runLibraryConstructionProcess(exomeExpressShearingEntityBuilder.getShearingCleanupPlate(),
@@ -659,7 +676,8 @@ public class LabEventTest extends BaseEventTest {
                     hybridSelectionEntityBuilder.getNormCatchBarcodes(),
                     hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), "Exome Express", "1");
             HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
-                    runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", "squidDesignationName");
+                    runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", "squidDesignationName", ProductionFlowcellPath.DENATURE_TO_FLOWCELL,null,
+                            "Exome Express");
 
             SimpleDateFormat dateFormat = new SimpleDateFormat(IlluminaSequencingRun.RUN_FORMAT_PATTERN);
             File runPath = File.createTempFile("tempRun" + dateFormat.format(runDate), ".txt");
@@ -802,7 +820,11 @@ public class LabEventTest extends BaseEventTest {
                 runQtpProcess(sageEntityBuilder.getSageCleanupRack(), sageEntityBuilder.getSageCleanupTubeBarcodes(),
                         sageEntityBuilder.getMapBarcodeToSageUnloadTubes(), "Whole Genome", "1");
 
-        IlluminaFlowcell illuminaFlowcell = qtpEntityBuilder.getIlluminaFlowcell();
+        HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
+                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", null,
+                        ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL, "Squid Designation", "Whole Genome");
+
+        IlluminaFlowcell illuminaFlowcell = hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell();
         Set<SampleInstance> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
                 VesselPosition.LANE1);
         Assert.assertEquals(lane1SampleInstances.iterator().next().getReagents().size(), 1,

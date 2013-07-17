@@ -15,6 +15,7 @@ import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 
 @Entity
 @Audited
@@ -35,6 +36,9 @@ public class LabBatchStartingVessel {
 
     @Column
     private Float concentration;
+
+    @ManyToOne
+    private LabVessel dilutionVessel;
 
     public LabBatchStartingVessel() {
     }
@@ -80,5 +84,14 @@ public class LabBatchStartingVessel {
 
     public void setConcentration(float concentration) {
         this.concentration = concentration;
+    }
+
+    public LabVessel getDilutionVessel() {
+        return dilutionVessel;
+    }
+
+    public void setDilutionVessel(LabVessel dilutionVessel) {
+        this.dilutionVessel = dilutionVessel;
+        this.dilutionVessel.addDilutionReferences(this);
     }
 }

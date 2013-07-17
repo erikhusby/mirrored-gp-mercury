@@ -220,19 +220,33 @@ public class BucketEjbTest extends ContainerTest {
         Assert.assertNotNull(bucket.getBucketEntries());
         Assert.assertTrue(bucket.getBucketEntries().isEmpty());
 
-        BucketEntry testEntry1 = resource.add(bspAliquot1, bucket,
-                howieTest, LabEventType.SHEARING_BUCKET, LabEvent.UI_EVENT_LOCATION);
+        Collection<BucketEntry> testEntries1 = resource.add(Collections.<LabVessel>singleton(bspAliquot1), bucket,
+                BucketEntry.BucketEntryType.PDO_ENTRY, howieTest, LabEvent.UI_EVENT_LOCATION,
+                LabEventType.SHEARING_BUCKET, poBusinessKey1);
+        Assert.assertEquals(testEntries1.size(), 1);
+        BucketEntry testEntry1 = testEntries1.iterator().next();
 
         Assert.assertEquals(1, bucket.getBucketEntries().size());
         Assert.assertTrue(bucket.contains(testEntry1));
 
 
-        BucketEntry testEntry2 = resource.add(bspAliquot2, bucket,
-                howieTest, LabEventType.SHEARING_BUCKET, LabEvent.UI_EVENT_LOCATION);
-        BucketEntry testEntry3 = resource.add(bspAliquot3, bucket,
-                howieTest, LabEventType.SHEARING_BUCKET, LabEvent.UI_EVENT_LOCATION);
-        BucketEntry testEntry4 = resource.add(bspAliquot4, bucket,
-                howieTest, LabEventType.SHEARING_BUCKET, LabEvent.UI_EVENT_LOCATION);
+        Collection<BucketEntry> testEntries2 = resource.add(Collections.<LabVessel>singleton(bspAliquot2), bucket,
+                BucketEntry.BucketEntryType.PDO_ENTRY, howieTest, LabEvent.UI_EVENT_LOCATION,
+                LabEventType.SHEARING_BUCKET, poBusinessKey2);
+        Assert.assertEquals(testEntries2.size(), 1);
+        BucketEntry testEntry2 = testEntries2.iterator().next();
+
+        Collection<BucketEntry> testEntries3 = resource.add(Collections.<LabVessel>singleton(bspAliquot3), bucket,
+                BucketEntry.BucketEntryType.PDO_ENTRY, howieTest, LabEvent.UI_EVENT_LOCATION,
+                LabEventType.SHEARING_BUCKET, poBusinessKey3);
+        Assert.assertEquals(testEntries3.size(), 1);
+        BucketEntry testEntry3 = testEntries3.iterator().next();
+
+        Collection<BucketEntry> testEntries4 = resource.add(Collections.<LabVessel>singleton(bspAliquot4), bucket,
+                BucketEntry.BucketEntryType.PDO_ENTRY, howieTest, LabEvent.UI_EVENT_LOCATION,
+                LabEventType.SHEARING_BUCKET, poBusinessKey3);
+        Assert.assertEquals(testEntries4.size(), 1);
+        BucketEntry testEntry4 = testEntries4.iterator().next();
 
         Assert.assertTrue(bucket.contains(testEntry2));
         Assert.assertTrue(bucket.contains(testEntry3));
@@ -294,8 +308,11 @@ public class BucketEjbTest extends ContainerTest {
         Assert.assertNotNull(bucket.getBucketEntries());
         Assert.assertTrue(bucket.getBucketEntries().isEmpty());
 
-        BucketEntry testEntry1 = resource.add(bspAliquot1, bucket,
-                howieTest, LabEventType.SHEARING_BUCKET, LabEvent.UI_EVENT_LOCATION);
+        Collection<BucketEntry> testEntries1 = resource.add(Collections.<LabVessel>singleton(bspAliquot1), bucket,
+                BucketEntry.BucketEntryType.PDO_ENTRY, howieTest, LabEvent.UI_EVENT_LOCATION,
+                LabEventType.SHEARING_BUCKET, poBusinessKey1);
+        Assert.assertEquals(testEntries1.size(), 1);
+        BucketEntry testEntry1 = testEntries1.iterator().next();
 
         Assert.assertEquals(1, bucket.getBucketEntries().size());
         Assert.assertTrue(bucket.contains(testEntry1));
@@ -313,7 +330,7 @@ public class BucketEjbTest extends ContainerTest {
                 bspAliquot3, bspAliquot4));
 
 
-        resource.add(bucketCreateBatch, bucket, howieTest, "Superman", LabEventType.SHEARING_BUCKET);
+        resource.add(bucketCreateBatch, bucket, BucketEntry.BucketEntryType.PDO_ENTRY, howieTest, "Superman", LabEventType.SHEARING_BUCKET, poBusinessKey3);
 
         bucketDao.flush();
         bucketDao.clear();
@@ -411,8 +428,11 @@ public class BucketEjbTest extends ContainerTest {
         Assert.assertNotNull(bucket.getBucketEntries());
         Assert.assertTrue(bucket.getBucketEntries().isEmpty());
 
-        BucketEntry testEntry1 = resource.add(bspAliquot1, bucket,
-                howieTest, LabEventType.SHEARING_BUCKET, LabEvent.UI_EVENT_LOCATION);
+        Collection<BucketEntry> testEntries1 = resource.add(Collections.<LabVessel>singleton(bspAliquot1), bucket,
+                BucketEntry.BucketEntryType.PDO_ENTRY, howieTest, LabEvent.UI_EVENT_LOCATION,
+                LabEventType.SHEARING_BUCKET, poBusinessKey1);
+        Assert.assertEquals(testEntries1.size(), 1);
+        BucketEntry testEntry1 = testEntries1.iterator().next();
 
         Assert.assertEquals(1, bucket.getBucketEntries().size());
         Assert.assertTrue(bucket.contains(testEntry1));
@@ -425,7 +445,7 @@ public class BucketEjbTest extends ContainerTest {
 
         Assert.assertTrue(Collections.addAll(bucketCreateBatch, bspAliquot2, bspAliquot3, bspAliquot4));
 
-        resource.add(bucketCreateBatch, bucket, howieTest, "Superman", LabEventType.SHEARING_BUCKET);
+        resource.add(bucketCreateBatch, bucket, BucketEntry.BucketEntryType.PDO_ENTRY, howieTest, "Superman", LabEventType.SHEARING_BUCKET, poBusinessKey3);
 
         bucketDao.flush();
         bucketDao.clear();

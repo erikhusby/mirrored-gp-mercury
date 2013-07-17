@@ -296,4 +296,32 @@
             <column name="lanes_sequenced" type="varchar(255)"></column>
         </addColumn>
     </changeSet>
+    
+    <changeSet author="scottmat" id="GPLIM-1698-1">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists columnName="dilution_vessel" schemaName="mercury" tableName="batch_starting_vessels" />
+            </not>
+        </preConditions>
+        <addColumn tableName="batch_starting_vessels" schemaName="mercury">
+            <column name="dilution_vessel" type="number(19,0)" />
+        </addColumn>
+        <addForeignKeyConstraint baseColumnNames="dilution_vessel" baseTableName="batch_starting_vessels"
+                                 baseTableSchemaName="mercury" constraintName="fk_starting_vessel_dilution"
+                                 referencedColumnNames="lab_vessel_id" referencedTableName="lab_vessel"
+                                 referencedTableSchemaName="mercury" />
+        <createIndex indexName="idx_lab_batch_dilution" tableName="batch_starting_vessels" >
+            <column name="dilution_vessel" type="number(19,0)"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="scottmat" id="GPLIM-1698-2">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists columnName="dilution_vessel" schemaName="mercury" tableName="batch_starting_vessels_aud" />
+            </not>
+        </preConditions>
+        <addColumn tableName="batch_starting_vessels_aud" schemaName="mercury">
+            <column name="dilution_vessel" type="number(19,0)" />
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>
