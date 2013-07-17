@@ -52,7 +52,7 @@ public class SampleInstance {
     /**
      * All lab batches found during the traversal
      */
-    private Collection<LabBatch> allLabBatches;
+    private Collection<LabBatch> allLabBatches = new HashSet<>();
 
     public SampleInstance(MercurySample sample) {
         this.sample = sample;
@@ -213,6 +213,7 @@ public class SampleInstance {
 
     /**
      * Gets the name of the sample's workflow, based on LCSETs.
+     *
      * @return workflow name
      */
     @Nullable
