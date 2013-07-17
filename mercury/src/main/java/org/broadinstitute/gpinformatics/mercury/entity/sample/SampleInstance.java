@@ -30,13 +30,18 @@ public class SampleInstance {
 
     private static final Log log = LogFactory.getLog(SampleInstance.class);
 
-    /** Sample, from another system, typically BSP via Athena. */
+    /**
+     * Sample, from another system, typically BSP via Athena.
+     */
     private final MercurySample sample;
 
-    /** Reagents added, e.g. molecular indexes, baits. */
+    /**
+     * Reagents added, e.g. molecular indexes, baits.
+     */
     private final List<Reagent> reagents = new ArrayList<>();
 
-    /** The single LCSET associated with the plastic on which getSampleInstances was called.  This is not set if
+    /**
+     * The single LCSET associated with the plastic on which getSampleInstances was called.  This is not set if
      * traversal logic encounters multiple LCSETs, and can't pick a single one.
      */
     private BucketEntry bucketEntry;
@@ -44,8 +49,10 @@ public class SampleInstance {
     // This gets set if the sample instance traverses a SAMPLE_IMPORT lab batch.
     private MercurySample bspExportSample;
 
-    /** All lab batches found during the traversal */
-    private Collection<LabBatch> allLabBatches=new HashSet<>();
+    /**
+     * All lab batches found during the traversal
+     */
+    private Collection<LabBatch> allLabBatches = new HashSet<>();
 
     public SampleInstance(MercurySample sample) {
         this.sample = sample;
@@ -67,6 +74,7 @@ public class SampleInstance {
 
     /**
      * Adds a reagent encountered during transfer traversal.
+     *
      * @param newReagent reagent to add
      */
     public void addReagent(Reagent newReagent) {
@@ -74,6 +82,8 @@ public class SampleInstance {
         if (OrmUtil.proxySafeIsInstance(newReagent, MolecularIndexReagent.class)) {
             MolecularIndexReagent newMolecularIndexReagent =
                     OrmUtil.proxySafeCast(newReagent, MolecularIndexReagent.class);
+            Collection<MolecularIndex> newValues =
+                    newMolecularIndexReagent.getMolecularIndexingScheme().getIndexes().values();
             boolean foundExistingIndex = false;
             boolean foundMergedScheme = false;
             // The new index has to be merged with other indexes encountered, if any.
@@ -85,12 +95,13 @@ public class SampleInstance {
                     foundExistingIndex = true;
                     MolecularIndexReagent fieldMolecularIndexReagent =
                             OrmUtil.proxySafeCast(fieldReagent, MolecularIndexReagent.class);
-                    for (MolecularIndex molecularIndex : fieldMolecularIndexReagent.getMolecularIndexingScheme()
-                            .getIndexes().values()) {
+                    Collection<MolecularIndex> values = fieldMolecularIndexReagent.getMolecularIndexingScheme()
+                            .getIndexes().values();
+                    for (MolecularIndex molecularIndex : values) {
                         for (MolecularIndexingScheme molecularIndexingScheme :
                                 molecularIndex.getMolecularIndexingSchemes()) {
                             if (molecularIndexingScheme.getIndexes().values().containsAll(
-                                    newMolecularIndexReagent.getMolecularIndexingScheme().getIndexes().values())) {
+                                    newValues)) {
                                 foundMergedScheme = true;
                                 reagents.remove(i);
                                 reagents.add(new MolecularIndexReagent(molecularIndexingScheme));
@@ -115,6 +126,7 @@ public class SampleInstance {
     }
 
     // todo jmt unused?
+
     /**
      * This getter filters the reagents to return only the indexes.
      *
@@ -132,6 +144,7 @@ public class SampleInstance {
 
     /**
      * This is set only when there is a single lab batch.
+     *
      * @return lab batch
      */
     @Nullable
@@ -150,7 +163,10 @@ public class SampleInstance {
         return allLabBatches;
     }
 
-    public void addLabBatches(Collection<LabBatch> batches){
+    public void addLabBatches(Collection<LabBatch> batches) {
+        if (allLabBatches == null) {
+            allLabBatches = new HashSet<>();
+        }
         allLabBatches.addAll(batches);
     }
 
@@ -197,6 +213,7 @@ public class SampleInstance {
 
     /**
      * Gets the name of the sample's workflow, based on LCSETs.
+     *
      * @return workflow name
      */
     @Nullable
@@ -207,12 +224,12 @@ public class SampleInstance {
         String workflowName = null;
         for (LabBatch localLabBatch : allLabBatches) {
             if (localLabBatch.getWorkflowName() != null) {
-                if(workflowName == null) {
+                if (workflowName == null) {
                     workflowName = localLabBatch.getWorkflowName();
                 } else {
-                    if(!workflowName.equals(localLabBatch.getWorkflowName())) {
+                    if (!workflowName.equals(localLabBatch.getWorkflowName())) {
                         throw new RuntimeException("Conflicting workflows for sample " + sample.getSampleKey() + ": " +
-                                workflowName + ", " + localLabBatch.getWorkflowName());
+                                                   workflowName + ", " + localLabBatch.getWorkflowName());
                     }
                 }
             }

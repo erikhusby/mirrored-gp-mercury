@@ -151,8 +151,7 @@ public class IlluminaRunResource implements Serializable {
                 tRun.getRunDate(),
                 tRun.isPairedRun(),
                 tRun.getActualReadStructure(),
-                tRun.getImagedAreaPerLaneMM2(),
-                null);
+                tRun.getImagedAreaPerLaneMM2());
 
         for (TZamboniRead tZamboniRead : tRun.getReads()) {
             runBean.addRead(tZamboniRead);

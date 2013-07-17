@@ -30,12 +30,14 @@ public class LCSetSearchActionBean extends SearchActionBean {
     public static final String ACTIONBEAN_URL_BINDING = "/search/lcset.action";
     public static final String LCSET_SEARCH = "lcsetSearch";
     private static final String LCSET_SEARCH_PAGE = "/search/lcset_search.jsp";
+
     private Map<LabVessel, LabEvent> latestEventForVessel = new HashMap<>();
 
     @Inject
     private BSPSampleDataFetcher sampleDataFetcher;
 
     private Map<String, BSPSampleDTO> sampleToBspPicoValueMap = new HashMap<>();
+    private Map<LabVessel, Set<SampleInstance>> vesselToSampleInstanceMap = new HashMap<>();
 
     public Map<String, BSPSampleDTO> getSampleToBspPicoValueMap() {
         return sampleToBspPicoValueMap;
@@ -50,6 +52,9 @@ public class LCSetSearchActionBean extends SearchActionBean {
 
     @HandlesEvent(LCSET_SEARCH)
     public Resolution lcsetSearch() throws Exception {
+        if (!getSearchKey().startsWith("LCSET")) {
+            setSearchKey("LCSET-" + getSearchKey());
+        }
         doSearch(SearchType.BATCH_BY_KEY);
         filterResults();
         generateBspPicoMap();
@@ -62,11 +67,30 @@ public class LCSetSearchActionBean extends SearchActionBean {
     private void generateBspPicoMap() {
         Set<String> sampleNames = new HashSet<>();
         for (LabBatch batch : getFoundBatches()) {
-            for (LabVessel startingVessel : batch.getStartingBatchLabVessels()) {
+            Set<LabVessel> startingBatchLabVessels = batch.getStartingBatchLabVessels();
+            for (LabVessel startingVessel : startingBatchLabVessels) {
                 sampleNames.addAll(startingVessel.getSampleNames());
+                Map<LabEvent, Set<LabVessel>> eventListMap =
+                        startingVessel.findVesselsForLabEventType(LabEventType.SAMPLE_IMPORT);
+                for (Map.Entry<LabEvent, Set<LabVessel>> entry : eventListMap.entrySet()) {
+                    for (LabVessel sourceVessel : entry.getValue()) {
+                        Set<SampleInstance> sampleInstances = sourceVessel.getSampleInstances();
+                        for (SampleInstance targetSampleInstance : sampleInstances) {
+                            sampleNames.add(targetSampleInstance.getStartingSample().getSampleKey());
+                        }
+                        vesselToSampleInstanceMap.put(startingVessel, sampleInstances);
+                    }
+                }
             }
         }
         sampleToBspPicoValueMap = sampleDataFetcher.fetchSamplesFromBSP(sampleNames);
+    }
+
+    public Double getExportedSampleConcentration(LabVessel vessel) {
+        Set<SampleInstance> sampleInstances = vesselToSampleInstanceMap.get(vessel);
+        //a little hacky but we should only get one sample instance for sample import (no pooled imports)
+        return sampleToBspPicoValueMap.get(sampleInstances.iterator().next().getStartingSample().getSampleKey())
+                .getConcentration();
     }
 
     /**
@@ -90,38 +114,44 @@ public class LCSetSearchActionBean extends SearchActionBean {
      * @return The last event we've seen this sample or its descendants go through.
      */
     public LabEvent getLatestEventForVessel(LabVessel vessel) {
-        Collection<LabVessel> descendants = vessel.getDescendantVessels();
-        LabVessel[] events = descendants.toArray(new LabVessel[descendants.size()]);
-        LabVessel lastVessel = events[descendants.size() - 1];
-        LabEvent latestEvent = latestEventForVessel.get(lastVessel);
+        LabEvent latestEvent = latestEventForVessel.get(vessel);
         if (latestEvent == null) {
+            Collection<LabVessel> descendants = vessel.getDescendantVessels();
+            LabVessel[] events = descendants.toArray(new LabVessel[descendants.size()]);
+            LabVessel lastVessel = events[descendants.size() - 1];
             latestEvent = lastVessel.getLatestEvent();
-            latestEventForVessel.put(lastVessel, latestEvent);
+            latestEventForVessel.put(vessel, latestEvent);
         }
         return latestEvent;
     }
 
     public String getPositionsForEvent(LabVessel vessel, LabEventType type) {
-        Collection<LabVessel> descendants = vessel.getDescendantVessels();
+        Map<LabEvent, Set<LabVessel>> eventMap = vessel.findVesselsForLabEventType(type);
+
         Set<MercurySample> allMercurySamples = new HashSet<>();
+        Collection<LabVessel> descendants = vessel.getDescendantVessels();
         for (LabVessel descendant : descendants) {
             allMercurySamples.addAll(descendant.getMercurySamples());
         }
-        Map<LabEvent, Set<LabVessel>> eventMap = vessel.findVesselsForLabEventType(type);
+
         List<String> positions = new ArrayList<>();
         for (Map.Entry<LabEvent, Set<LabVessel>> entry : eventMap.entrySet()) {
-            Set<VesselPosition> allPositions = new HashSet<>();
-            for (LabVessel sourceVessel : entry.getValue()) {
-                for (SampleInstance targetSampleInstance : sourceVessel.getSampleInstances()) {
-                    if (allMercurySamples.contains(targetSampleInstance.getStartingSample())) {
-                        allPositions.addAll(sourceVessel.getLastKnownPositionsOfSample(targetSampleInstance));
+            if (entry.getKey().getLabEventType().equals(type)) {
+                Set<VesselPosition> allPositions = new HashSet<>();
+                for (LabVessel sourceVessel : entry.getValue()) {
+                    Set<SampleInstance> sampleInstances = sourceVessel.getSampleInstances();
+                    for (SampleInstance targetSampleInstance : sampleInstances) {
+                        if (allMercurySamples.contains(targetSampleInstance.getStartingSample())) {
+                            allPositions.addAll(sourceVessel.getLastKnownPositionsOfSample(targetSampleInstance));
+                        }
                     }
                 }
-            }
-            for (VesselPosition position : allPositions) {
-                positions.add(position.name());
+                for (VesselPosition position : allPositions) {
+                    positions.add(position.name());
+                }
             }
         }
+
         return StringUtils.join(positions, ',');
     }
 }
