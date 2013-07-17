@@ -215,7 +215,12 @@ public class WorkflowValidator {
             for (SampleInstance sampleInstance : sampleInstances) {
                 String workflowName = sampleInstance.getWorkflowName();
                 LabBatch effectiveBatch = sampleInstance.getLabBatch();
-                if (workflowName != null) {
+
+                /*
+                    Not necessarily an ideal solution but validation should not necessarily cause a Null pointer which
+                    is what will happen if the batch is not found (Sample exists in multiple batches)
+                 */
+                if (workflowName != null && effectiveBatch != null) {
                     ProductWorkflowDefVersion workflowVersion = workflowLoader.load().getWorkflowByName(workflowName).
                             getEffectiveVersion(effectiveBatch.getCreatedOn());
                     if (workflowVersion != null) {
