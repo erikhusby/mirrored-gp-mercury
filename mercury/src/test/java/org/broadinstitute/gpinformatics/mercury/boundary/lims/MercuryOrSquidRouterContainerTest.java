@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bettalims.BettalimsConnector;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
@@ -13,11 +14,13 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryP
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettalimsMessageResource;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexingSchemeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
@@ -84,6 +87,9 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
     @Inject
     private BucketDao bucketDao;
+
+    @Inject
+    private LabBatchEjb labBatchEjb;
 
     @Inject
     private MolecularIndexingSchemeDao molecularIndexingSchemeDao;
@@ -895,11 +901,12 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
      * @param bucketDao1 Optional:  Dao to assist in finding/persisting to a bucket
      * @return
      */
-    private static Map<String, TwoDBarcodedTube> buildVesselsForPdo(@Nonnull ProductOrder productOrder,
+    private Map<String, TwoDBarcodedTube> buildVesselsForPdo(@Nonnull ProductOrder productOrder,
                                                                     @Nonnull LabVesselDao vesselDao1,
                                                                     @Nullable String bucketName,
                                                                     @Nullable BucketDao bucketDao1) {
 
+        Date testSuffix = new Date();
         Set<LabVessel> tubes = new HashSet<LabVessel>(productOrder.getTotalSampleCount());
 
         List<String> barcodes = new ArrayList<String>(productOrder.getTotalSampleCount());
@@ -927,9 +934,18 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
             }
         }
 
+
         //THis will automatically add the batch to the tubes via the internal set methods
-        LabBatch labBatch = new LabBatch(" ", tubes, LabBatch.LabBatchType.WORKFLOW);
+        LabBatch labBatch = new LabBatch("testBatch"+testSuffix.getTime(), tubes, LabBatch.LabBatchType.WORKFLOW);
         labBatch.setWorkflowName("Exome Express");
+
+//        labBatchEjb.createLabBatchAndRemoveFromBucket(labBatch,"scottmat",bucketName,"HOME", CreateFields.IssueType.EXOME_EXPRESS);
+        for(LabVessel currTube:tubes) {
+            for(BucketEntry currentEntry: currTube.getBucketEntries()) {
+                currentEntry.setStatus(BucketEntry.Status.Archived);
+                currentEntry.setLabBatch(labBatch);
+            }
+        }
 
         Map<String, TwoDBarcodedTube> mapBarcodeToTube =
                 new LinkedHashMap<String, TwoDBarcodedTube>(productOrder.getTotalSampleCount());

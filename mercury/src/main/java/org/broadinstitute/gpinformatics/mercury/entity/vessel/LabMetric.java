@@ -139,6 +139,10 @@ public class LabMetric {
         this.labUnit = labUnit;
     }
 
+    public Long getLabMetricId() {
+        return labMetricId;
+    }
+
     public BigDecimal getValue() {
         return value;
     }

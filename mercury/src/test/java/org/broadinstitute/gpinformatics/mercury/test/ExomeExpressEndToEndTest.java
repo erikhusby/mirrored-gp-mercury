@@ -86,7 +86,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
 
@@ -337,14 +336,15 @@ public class ExomeExpressEndToEndTest {
             labBatchEJB.setLabBatchDao(labBatchDAO);
 
             ReworkEjb reworkEjb = EasyMock.createNiceMock(ReworkEjb.class);
+            BucketDao bucketDao = EasyMock.createNiceMock(BucketDao.class);
 
 //            EasyMock.expect(mockBucketDao.findByName(EasyMock.eq(LabEventType.SHEARING_BUCKET.getName())))
 //                    .andReturn(new LabEventTest.MockBucket(new WorkflowStepDef(LabEventType.SHEARING_BUCKET
 //                            .getName()), jiraTicket.getTicketName()));
-            BucketEjb bucketEjb = new BucketEjb(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB
-            );
+            BucketEjb bucketEjb = new BucketEjb(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB,
+                    bucketDao);
 
-            EasyMock.replay(mockBucketDao, mockJira, labBatchDAO, tubeDao, reworkEjb);
+            EasyMock.replay(mockBucketDao, mockJira, labBatchDAO, tubeDao, reworkEjb, bucketDao);
 
 
             TemplateEngine templateEngine = new TemplateEngine();

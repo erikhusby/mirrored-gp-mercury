@@ -305,7 +305,7 @@ public class ReworkEjb {
                                @Nonnull String comment, @Nonnull String workflowName, @Nonnull String userName)
             throws ValidationException {
 
-        Bucket bucket = bucketDao.findByName(bucketName);
+        Bucket bucket = bucketEjb.findOrCreateBucket(bucketName);
         Collection<BucketEntry> bucketEntries = bucketEjb
                 .add(Collections.singleton(reworkVessel), bucket, BucketEntry.BucketEntryType.REWORK_ENTRY, userName,
                         LabEvent.UI_EVENT_LOCATION, reworkFromStep, productOrderKey);

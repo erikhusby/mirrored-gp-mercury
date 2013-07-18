@@ -173,7 +173,7 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
                 if (StringUtils.isNotBlank(builtProtocol)) {
                     builtProtocol += ", ";
                 }
-                builtProtocol += currWorkflowDef.getName() + ":" + currWorkflowDef.getEffectiveVersion().getVersion();
+                builtProtocol += currWorkflowDef.getName() + ":" + currWorkflowDef.getEffectiveVersion(batch.getCreatedOn()).getVersion();
             }
             customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.PROTOCOL,
                     builtProtocol));

@@ -29,6 +29,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
 import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
 import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.container.test.api.RunAsClient;
+import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
@@ -40,6 +42,7 @@ import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.File;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -78,6 +81,9 @@ public class SolexaRunRestResourceTest extends Arquillian {
     @Inject
     private AppConfig appConfig;
 
+    @Inject
+    private SolexaRunResource solexaRunResource;
+
     private Date runDate;
     private String flowcellBarcode;
     private IlluminaFlowcell newFlowcell;
@@ -108,6 +114,7 @@ public class SolexaRunRestResourceTest extends Arquillian {
 
     @BeforeMethod(groups = EXTERNAL_INTEGRATION)
     public void setUp() throws Exception {
+        runBarcode = "RunBarcode" + System.currentTimeMillis();
 
         if (flowcellDao == null) {
             return;
@@ -187,7 +194,6 @@ public class SolexaRunRestResourceTest extends Arquillian {
 
         SimpleDateFormat dateFormat = new SimpleDateFormat(IlluminaSequencingRun.RUN_FORMAT_PATTERN);
 
-        runBarcode = flowcellBarcode + dateFormat.format(runDate);
         runName = "testRunName" + testPrefix + runDate.getTime();
         String baseDirectory = System.getProperty("java.io.tmpdir");
         runFileDirectory = baseDirectory + File.separator + "bin" + File.separator +
@@ -264,9 +270,40 @@ public class SolexaRunRestResourceTest extends Arquillian {
     }
 
     @Test(groups = EXTERNAL_INTEGRATION,
+          dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testReadStructureOverHttp(@ArquillianResource URL baseUrl) {
+        String wsUrl = baseUrl.toExternalForm() + "rest/solexarun/storeRunReadStructure";
+
+        ReadStructureRequest readStructureData = new ReadStructureRequest();
+        readStructureData.setRunBarcode(runBarcode);
+        readStructureData.setImagedArea(20.23932);
+        readStructureData.setLanesSequenced("2,5");
+        readStructureData.setActualReadStructure("71T8B8B101T");
+        readStructureData.setActualReadStructure("76T8B8B76T");
+
+
+        ClientConfig clientConfig = new DefaultClientConfig();
+        clientConfig.getClasses().add(JacksonJsonProvider.class);
+
+
+        ReadStructureRequest readStructureResult =
+                Client.create(clientConfig).resource(wsUrl)
+                        .type(MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON)
+                        .entity(readStructureData).post(ReadStructureRequest.class);
+
+        Assert.assertEquals(readStructureResult.getSetupReadStructure(),readStructureData.getSetupReadStructure());
+        Assert.assertEquals(readStructureResult.getActualReadStructure(),readStructureData.getActualReadStructure());
+        Assert.assertEquals(readStructureResult.getLanesSequenced(),readStructureData.getLanesSequenced());
+        Assert.assertEquals(readStructureResult.getImagedArea(),readStructureData.getImagedArea());
+
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION,
             dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     public void testSetReadStructure() {
 
+        Double imagedArea = 185.2049407959;
         String lanesSequenced = "1,4";
         ClientConfig clientConfig = new DefaultClientConfig();
         clientConfig.getClasses().add(JacksonJsonProvider.class);
@@ -281,10 +318,7 @@ public class SolexaRunRestResourceTest extends Arquillian {
 
         runDao.persist(run);
 
-        ReadStructureRequest readstructureResult =
-                Client.create(clientConfig).resource(appConfig.getUrl() + "rest/solexarun/storeRunReadStructure")
-                        .type(MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON)
-                        .entity(readStructure).post(ReadStructureRequest.class);
+        ReadStructureRequest readstructureResult = solexaRunResource.storeRunReadStructure(readStructure);
 
         runDao.clear();
         run = runDao.findByBarcode(runBarcode);
@@ -297,10 +331,7 @@ public class SolexaRunRestResourceTest extends Arquillian {
 
         readStructure.setActualReadStructure("101T8B8B101T");
 
-        readstructureResult =
-                Client.create(clientConfig).resource(appConfig.getUrl() + "rest/solexarun/storeRunReadStructure")
-                        .type(MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON)
-                        .entity(readStructure).post(ReadStructureRequest.class);
+        readstructureResult = solexaRunResource.storeRunReadStructure(readStructure);
 
         runDao.clear();
         run = runDao.findByBarcode(runBarcode);
@@ -312,13 +343,10 @@ public class SolexaRunRestResourceTest extends Arquillian {
         Assert.assertEquals(readstructureResult.getActualReadStructure(), run.getActualReadStructure());
         Assert.assertNull(readstructureResult.getLanesSequenced());
 
-        readStructure.setImagedArea(185.2049407959);
+        readStructure.setImagedArea(imagedArea);
         readStructure.setLanesSequenced(lanesSequenced);
 
-        readstructureResult =
-                Client.create(clientConfig).resource(appConfig.getUrl() + "rest/solexarun/storeRunReadStructure")
-                        .type(MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON)
-                        .entity(readStructure).post(ReadStructureRequest.class);
+        readstructureResult = solexaRunResource.storeRunReadStructure(readStructure);
 
         runDao.clear();
         run = runDao.findByBarcode(runBarcode);
@@ -328,7 +356,7 @@ public class SolexaRunRestResourceTest extends Arquillian {
         Assert.assertEquals(readstructureResult.getSetupReadStructure(), run.getSetupReadStructure());
         Assert.assertNotNull(readstructureResult.getActualReadStructure());
         Assert.assertEquals(readstructureResult.getActualReadStructure(), run.getActualReadStructure());
-        Assert.assertEquals(readstructureResult.getImagedArea(),185.2049407959);
+        Assert.assertEquals(readstructureResult.getImagedArea(),imagedArea);
         Assert.assertEquals(readstructureResult.getLanesSequenced(),lanesSequenced);
     }
 

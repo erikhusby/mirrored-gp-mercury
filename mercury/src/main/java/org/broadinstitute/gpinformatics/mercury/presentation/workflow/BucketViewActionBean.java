@@ -211,6 +211,7 @@ public class BucketViewActionBean extends CoreActionBean {
                 reworkEntries = bucket.getReworkEntries();
             } else {
                 bucketEntries = new ArrayList<>();
+                reworkEntries = new ArrayList<>();
             }
             if (!bucketEntries.isEmpty() || !reworkEntries.isEmpty()) {
                 jiraEnabled = true;
@@ -228,6 +229,8 @@ public class BucketViewActionBean extends CoreActionBean {
                 for (ProductOrder orderEntry : foundOrders) {
                     pdoByKeyMap.put(orderEntry.getBusinessKey(), orderEntry);
                 }
+            } else {
+                jiraEnabled = false;
             }
         }
         return view();

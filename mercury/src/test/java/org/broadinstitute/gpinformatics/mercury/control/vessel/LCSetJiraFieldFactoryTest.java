@@ -166,7 +166,7 @@ public class LCSetJiraFieldFactoryTest {
                 ProductWorkflowDef workflowDef = wfConfig.getWorkflowByName(
                         athenaSvc.retrieveProductOrderDetails(pdoBusinessName).getProduct().getWorkflowName());
 
-                Assert.assertEquals(workflowDef.getName() + ":" + workflowDef.getEffectiveVersion().getVersion(),
+                Assert.assertEquals(workflowDef.getName() + ":" + workflowDef.getEffectiveVersion(testBatch.getCreatedOn()).getVersion(),
                         currField.getValue());
 
             }

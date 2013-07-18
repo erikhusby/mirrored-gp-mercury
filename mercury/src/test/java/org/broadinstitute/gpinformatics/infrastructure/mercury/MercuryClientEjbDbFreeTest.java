@@ -172,7 +172,7 @@ public class MercuryClientEjbDbFreeTest {
 
         }
         expect(labVesselDao.findBySampleKeyList((Collection<String>)anyObject())).andReturn(mockVessels);
-        expect(bucketDao.findByName(PICO_PLATING_BUCKET)).andReturn(bucket);
+        expect(bucketEjb.findOrCreateBucket(PICO_PLATING_BUCKET)).andReturn(bucket);
         // Should be OK to return more samples in map than was asked for.
         expect(bspSampleDataFetcher.fetchSamplesFromBSP((List<String>)anyObject())).andReturn(bspDtoMap);
         bucketDao.persist(bucket);
