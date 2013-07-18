@@ -218,7 +218,8 @@ public class SolexaRunResource {
             requestToReturn = readStructureRequest;
         }
 
-        if (EnumSet.of(MercuryOrSquidRouter.MercuryOrSquid.MERCURY,MercuryOrSquidRouter.MercuryOrSquid.BOTH).contains(route)) {
+        if (EnumSet.of(MercuryOrSquidRouter.MercuryOrSquid.MERCURY,MercuryOrSquidRouter.MercuryOrSquid.BOTH).contains(route) || run != null) {
+            // the run != null bit is there as a catch all.  if mercury knows the run, let's save the read structure data in mercury too!
             requestToReturn = illuminaSequencingRunFactory.storeReadsStructureDBFree(readStructureRequest, run);
         }
 
