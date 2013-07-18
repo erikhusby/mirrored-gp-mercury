@@ -477,11 +477,10 @@ public class ReworkEjbTest extends Arquillian {
 
         for (Map.Entry<String, TwoDBarcodedTube> entry : mapBarcodeToTube.entrySet()) {
             TwoDBarcodedTube vessel = entry.getValue();
-            String sampleKey = vessel.getMercurySamples().iterator().next().getSampleKey();
-            reworkEjb.addRework(vessel, exExProductOrder1.getBusinessKey(),
-                    new ReworkEjb.ReworkCandidate(entry.getKey(), sampleKey, exExProductOrder1.getBusinessKey()),
-                    ReworkEntry.ReworkReason.UNKNOWN_ERROR, LabEventType.PICO_PLATING_BUCKET, "Pico/Plating Bucket",
-                    "test Rework", WorkflowName.EXOME_EXPRESS.getWorkflowName(), "scottmat");
+            reworkEjb.addAndValidateRework(
+                    new ReworkEjb.ReworkCandidate(vessel.getLabel(), exExProductOrder1.getBusinessKey()),
+                    ReworkEntry.ReworkReason.UNKNOWN_ERROR, "Pico/Plating Bucket", "test Rework", "Exome Express",
+                    "scottmat");
         }
 
         bucketDao.clear();
@@ -785,10 +784,8 @@ public class ReworkEjbTest extends Arquillian {
             reworkCandidates.add(new ReworkEjb.ReworkCandidate(barcode, exExProductOrder1.getBusinessKey()));
         }
         Collection<String> validationMessages = reworkEjb
-                .addAndValidateReworks(reworkCandidates,
-                        ReworkEntry.ReworkReason.UNKNOWN_ERROR,
-                        "Pico/Plating Bucket", "test Rework", WorkflowName.EXOME_EXPRESS.getWorkflowName(),
-                        "jowalsh");
+                .addAndValidateReworks(reworkCandidates, ReworkEntry.ReworkReason.UNKNOWN_ERROR, "test Rework",
+                        "jowalsh", WorkflowName.EXOME_EXPRESS.getWorkflowName(), "Pico/Plating Bucket");
         Assert.assertEquals(validationMessages.size(), 2);
 
         bucketDao.clear();
