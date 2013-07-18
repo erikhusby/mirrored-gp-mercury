@@ -128,13 +128,15 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
          * @return The FlowcellType, if found or fall back to HiSeqFlowcell
          */
         public static FlowcellType getTypeForBarcode(@Nonnull String barcode) {
-            for (FlowcellType plateType : FlowcellType.values()) {
-                if (plateType.getFlowcellTypeRegex().matcher(barcode).matches()) {
-                    return plateType;
-                }
+            if (FlowcellType.MiSeqFlowcell.getFlowcellTypeRegex().matcher(barcode).matches()) {
+                return MiSeqFlowcell;
+            } else if (FlowcellType.HiSeq2500Flowcell.getFlowcellTypeRegex().matcher(barcode).matches()) {
+                return HiSeq2500Flowcell;
+            } else if (FlowcellType.HiSeqFlowcell.getFlowcellTypeRegex().matcher(barcode).matches()) {
+                return HiSeqFlowcell;
+            } else {
+                throw new RuntimeException("You seem to have found a FlowcellType that I don't know about.");
             }
-
-            return HiSeqFlowcell;
         }
     }
 

@@ -30,18 +30,31 @@ public class IlluminaFlowcellTest {
         2500's end in ADXX
         MiSeqs are A plus 4 digits/chars
         2000's are (mostly) any other 9 char/digit FC name.
-         */
-    @DataProvider(name = "barcodesWithTypes")
-    public Object[][] getBarcodesAndTypes() {
-     return new Object[][] {
-       { "123456789", IlluminaFlowcell.FlowcellType.HiSeqFlowcell },
-       { "AADXX", IlluminaFlowcell.FlowcellType.MiSeqFlowcell },
-       { "012345ADXX", IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell },
-       { "BB0CDEADXX",  IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell },
-       { "A1569", IlluminaFlowcell.FlowcellType.MiSeqFlowcell },
-       { "AQDZ1234x", IlluminaFlowcell.FlowcellType.HiSeqFlowcell }
-     };
 
-    }
+        select fc.barcode, mach.model
+        from receptacle fc, next_generation_run nrun, lab_machine mach, solexa_run srun
+        where fc.receptacle_id = srun.new_flowcell_id
+        and srun.run_id = nrun.run_id and nrun.lab_machine_id = mach.lab_machine_id
+
+         */
+        @DataProvider(name = "barcodesWithTypes")
+        public Object[][] getBarcodesAndTypes() {
+            return new Object[][]{
+                    {"A29GC", IlluminaFlowcell.FlowcellType.MiSeqFlowcell},
+                    {"A222Y", IlluminaFlowcell.FlowcellType.MiSeqFlowcell},
+                    {"A4LLL", IlluminaFlowcell.FlowcellType.MiSeqFlowcell},
+                    {"A0AKE", IlluminaFlowcell.FlowcellType.MiSeqFlowcell},
+                    {"C0D78ACXX", IlluminaFlowcell.FlowcellType.HiSeqFlowcell},
+                    {"D0M0LACXX", IlluminaFlowcell.FlowcellType.HiSeqFlowcell},
+                    {"80345ABXX", IlluminaFlowcell.FlowcellType.HiSeqFlowcell},
+                    {"800VLABXX", IlluminaFlowcell.FlowcellType.HiSeqFlowcell},
+                    {"H01MAADXX", IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell},
+                    {"H01KNADXX", IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell},
+                    {"H0YKNADXX", IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell},
+                    {"D27AEACXX", IlluminaFlowcell.FlowcellType.HiSeqFlowcell},
+                    {"D27B9ACXX", IlluminaFlowcell.FlowcellType.HiSeqFlowcell}
+            };
+
+        }
 
 }
