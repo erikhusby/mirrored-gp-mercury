@@ -52,7 +52,8 @@ public class IlluminaFlowcellTest {
                     {"H01KNADXX", IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell},
                     {"H0YKNADXX", IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell},
                     {"D27AEACXX", IlluminaFlowcell.FlowcellType.HiSeqFlowcell},
-                    {"D27B9ACXX", IlluminaFlowcell.FlowcellType.HiSeqFlowcell}
+                    {"D27B9ACXX", IlluminaFlowcell.FlowcellType.HiSeqFlowcell},
+                    {"flowBcode123412341234123", IlluminaFlowcell.FlowcellType.OtherFlowcell}
             };
 
         }

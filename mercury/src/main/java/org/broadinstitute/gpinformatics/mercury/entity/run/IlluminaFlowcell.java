@@ -31,7 +31,8 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
     public enum FlowcellType {
         MiSeqFlowcell("Flowcell1Lane", "MiSeq Flowcell", VesselGeometry.FLOWCELL1x1,"Illumina MiSeq", "^A{1}\\w{4}$"),
         HiSeqFlowcell("Flowcell8Lane", "HiSeq 2000 Flowcell", VesselGeometry.FLOWCELL1x8,"Illumina HiSeq 2000", "^\\w{9}$"),
-        HiSeq2500Flowcell("Flowcell2Lane", "HiSeq 2500 Flowcell", VesselGeometry.FLOWCELL1x2,"Illumina HiSeq 2500", "^\\w+ADXX$");
+        HiSeq2500Flowcell("Flowcell2Lane", "HiSeq 2500 Flowcell", VesselGeometry.FLOWCELL1x2,"Illumina HiSeq 2500", "^\\w+ADXX$"),
+        OtherFlowcell("FlowcellUnknown", "Unknown Flowcell", VesselGeometry.FLOWCELL1x2,"Unknown Model", ".*");
 
         /**
          * The sequencer model (think vendor/make/model)
@@ -134,6 +135,8 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
                 return HiSeq2500Flowcell;
             } else if (FlowcellType.HiSeqFlowcell.getFlowcellTypeRegex().matcher(barcode).matches()) {
                 return HiSeqFlowcell;
+            } else if (FlowcellType.OtherFlowcell.getFlowcellTypeRegex().matcher(barcode).matches()) {
+                return OtherFlowcell;
             } else {
                 throw new RuntimeException("You seem to have found a FlowcellType that I don't know about.");
             }
