@@ -20,6 +20,7 @@ public class ProductOrderData {
     private String product;
     private String status;
     private List<String> samples;
+    private String aggregationDataType;
 
     @SuppressWarnings("UnusedDeclaration")
     /** Required by JAXB. */
@@ -82,5 +83,14 @@ public class ProductOrderData {
 
     public void setSamples(List<String> samples) {
         this.samples = samples;
+    }
+
+
+    public void setAggregationDataType(String aggregationDataType) {
+        this.aggregationDataType = aggregationDataType;
+    }
+
+    public String getAggregationDataType() {
+        return aggregationDataType;
     }
 }
