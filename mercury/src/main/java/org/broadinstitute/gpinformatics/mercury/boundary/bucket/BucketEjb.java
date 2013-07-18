@@ -77,6 +77,7 @@ public class BucketEjb {
                                        @Nonnull String singlePdoBusinessKey) {
 
         List<BucketEntry> listOfNewEntries = new LinkedList<BucketEntry>();
+        // TODO: is pdoKeyToVesselMap needed? doesn't look like it's used for anything
         Map<String, Collection<LabVessel>> pdoKeyToVesselMap = new HashMap<String, Collection<LabVessel>>();
 
         for (LabVessel currVessel : entriesToAdd) {
@@ -110,6 +111,21 @@ public class BucketEjb {
     public void start(@Nonnull String operator, @Nonnull Collection<LabVessel> vesselsToBatch,
                       @Nonnull Bucket workingBucket, String batchInitiationLocation) {
         start(operator, vesselsToBatch, workingBucket, batchInitiationLocation, null);
+    }
+
+    /**
+     * Start work on the specified bucket entries by archiving them (removing them from the bucket view) and associating
+     * them with the given lab batch.
+     *
+     * @param bucketEntries    the bucket entries being batched
+     * @param labBatch         the lab batch that the entries are being added to
+     */
+    public void start(@Nonnull Collection<BucketEntry> bucketEntries, LabBatch labBatch) {
+        archiveEntries(bucketEntries);
+
+        for (BucketEntry bucketEntry : bucketEntries) {
+            labBatch.addBucketEntry(bucketEntry);
+        }
     }
 
     /**

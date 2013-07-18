@@ -442,9 +442,10 @@ public abstract class LabVessel implements Serializable {
         Map<String, Set<LabVessel>> vesselByPdoMap = new HashMap<>();
 
         for (LabVessel currVessel : labVessels) {
-            Collection<String> nearestPdos = currVessel.getNearestProductOrders();
+            Set<SampleInstance> sampleInstances = currVessel.getSampleInstances(LabVessel.SampleType.WITH_PDO, null);
 
-            for (String pdoKey : nearestPdos) {
+            for (SampleInstance sampleInstance : sampleInstances) {
+                String pdoKey = sampleInstance.getProductOrderKey();
 
                 if (!vesselByPdoMap.containsKey(pdoKey)) {
                     vesselByPdoMap.put(pdoKey, new HashSet<LabVessel>());

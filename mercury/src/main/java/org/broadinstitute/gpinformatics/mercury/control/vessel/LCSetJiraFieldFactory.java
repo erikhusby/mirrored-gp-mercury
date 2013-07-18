@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
@@ -64,8 +65,18 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
         WorkflowLoader wfLoader = new WorkflowLoader();
         WorkflowConfig wfConfig = wfLoader.load();
 
-        pdoToVesselMap = LabVessel.extractPdoLabVesselMap(batch.getStartingBatchLabVessels());
 
+        if (!batch.getBucketEntries().isEmpty()) {
+            for (BucketEntry bucketEntry : batch.getBucketEntries()) {
+                String pdoKey = bucketEntry.getPoBusinessKey();
+                if (!pdoToVesselMap.containsKey(pdoKey)) {
+                    pdoToVesselMap.put(pdoKey, new HashSet<LabVessel>());
+                }
+                pdoToVesselMap.get(pdoKey).add(bucketEntry.getLabVessel());
+            }
+        } else {
+            pdoToVesselMap = LabVessel.extractPdoLabVesselMap(batch.getStartingBatchLabVessels());
+        }
 
         for (String currPdo : pdoToVesselMap.keySet()) {
             ProductOrder pdo = athenaClientService.retrieveProductOrderDetails(currPdo);
