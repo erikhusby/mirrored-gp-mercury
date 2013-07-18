@@ -50,4 +50,18 @@ public class LabEventTestFactory {
                 new SectionTransfer(source.getContainerRole(), ALL96, destination.getContainerRole(), ALL96, event));
         return event;
     }
+
+    public static TubeFormation makeTubeFormation(TubeFormation normTubeFormation, TwoDBarcodedTube... tubes) {
+        Map<VesselPosition, TwoDBarcodedTube> positionMap = new HashMap<VesselPosition, TwoDBarcodedTube>();
+        int i = 0;
+        for (TwoDBarcodedTube tube : normTubeFormation.getContainerRole().getContainedVessels()) {
+            positionMap.put(VesselPosition.values()[i], tube);
+            i++;
+        }
+        for (TwoDBarcodedTube tube : tubes) {
+            positionMap.put(VesselPosition.values()[i], tube);
+            i++;
+        }
+        return new TubeFormation(positionMap, Matrix96);
+    }
 }

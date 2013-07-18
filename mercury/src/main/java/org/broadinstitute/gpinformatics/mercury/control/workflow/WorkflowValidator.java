@@ -101,7 +101,8 @@ public class WorkflowValidator {
                         BettalimsMessageUtils.getBarcodesForReceptacleEvent(receptacleEventType)));
             }
 
-            for (ReceptaclePlateTransferEvent receptaclePlateTransferEvent : bettaLIMSMessage.getReceptaclePlateTransferEvent()) {
+            for (ReceptaclePlateTransferEvent receptaclePlateTransferEvent : bettaLIMSMessage
+                    .getReceptaclePlateTransferEvent()) {
                 validateWorkflow(receptaclePlateTransferEvent, new ArrayList<String>(
                         BettalimsMessageUtils.getBarcodesForReceptaclePlateTransfer(receptaclePlateTransferEvent)));
             }
@@ -133,7 +134,8 @@ public class WorkflowValidator {
         private final AppConfig appConfig;
 
         public WorkflowValidationError(SampleInstance sampleInstance,
-                                       List<ProductWorkflowDefVersion.ValidationError> errors, ProductOrder productOrder,
+                                       List<ProductWorkflowDefVersion.ValidationError> errors,
+                                       ProductOrder productOrder,
                                        AppConfig appConfig) {
             this.sampleInstance = sampleInstance;
             this.errors = errors;
@@ -158,8 +160,8 @@ public class WorkflowValidator {
                 return "";
             } else {
                 return appConfig.getUrl() + ProductOrderActionBean.ACTIONBEAN_URL_BINDING + "?" +
-                        CoreActionBean.VIEW_ACTION + "&" + ProductOrderActionBean.PRODUCT_ORDER_PARAMETER +
-                        "=" + productOrder.getBusinessKey();
+                       CoreActionBean.VIEW_ACTION + "&" + ProductOrderActionBean.PRODUCT_ORDER_PARAMETER +
+                       "=" + productOrder.getBusinessKey();
             }
         }
 
@@ -168,8 +170,8 @@ public class WorkflowValidator {
                 return "";
             } else {
                 return appConfig.getUrl() + ResearchProjectActionBean.ACTIONBEAN_URL_BINDING + "?" +
-                        CoreActionBean.VIEW_ACTION + "&" + ResearchProjectActionBean.RESEARCH_PROJECT_PARAMETER +
-                        "=" + productOrder.getResearchProject().getBusinessKey();
+                       CoreActionBean.VIEW_ACTION + "&" + ResearchProjectActionBean.RESEARCH_PROJECT_PARAMETER +
+                       "=" + productOrder.getResearchProject().getBusinessKey();
             }
         }
     }
@@ -187,7 +189,8 @@ public class WorkflowValidator {
         if (!validationErrors.isEmpty()) {
             Map<String, Object> rootMap = new HashMap<String, Object>();
             String linkToPlastic = appConfig.getUrl() + VesselSearchActionBean.ACTIONBEAN_URL_BINDING + "?" +
-                    VesselSearchActionBean.VESSEL_SEARCH + "=&searchKey=" + labVessels.iterator().next().getLabel();
+                                   VesselSearchActionBean.VESSEL_SEARCH + "=&searchKey=" + labVessels.iterator().next()
+                    .getLabel();
             rootMap.put("linkToPlastic", linkToPlastic);
             rootMap.put("stationEvent", stationEventType);
             rootMap.put("bspUser", bspUserList.getByUsername(stationEventType.getOperator()));
@@ -195,7 +198,8 @@ public class WorkflowValidator {
             StringWriter stringWriter = new StringWriter();
             templateEngine.processTemplate("WorkflowValidation.ftl", rootMap, stringWriter);
             emailSender.sendHtmlEmail(appConfig.getWorkflowValidationEmail(), "Workflow validation failure for " +
-                    stationEventType.getEventType(), stringWriter.toString());
+                                                                              stationEventType.getEventType(),
+                    stringWriter.toString());
         }
     }
 
@@ -204,6 +208,7 @@ public class WorkflowValidator {
      *
      * @param labVessels entities
      * @param eventType  name
+     *
      * @return list of errors
      */
     public List<WorkflowValidationError> validateWorkflow(Collection<LabVessel> labVessels, String eventType) {
@@ -218,15 +223,26 @@ public class WorkflowValidator {
                     ProductWorkflowDefVersion workflowVersion = workflowLoader.load().getWorkflowByName(workflowName).
                             getEffectiveVersion();
                     if (workflowVersion != null) {
-                        List<ProductWorkflowDefVersion.ValidationError> errors = workflowVersion.validate(labVessel, eventType);
+                        List<ProductWorkflowDefVersion.ValidationError> errors =
+                                workflowVersion.validate(labVessel, eventType);
                         if (!errors.isEmpty()) {
                             ProductOrder productOrder = null;
                             if (sampleInstance.getProductOrderKey() != null) {
                                 productOrder = athenaClientService.retrieveProductOrderDetails(
                                         sampleInstance.getProductOrderKey());
                             }
-                            validationErrors.add(new WorkflowValidationError(sampleInstance, errors, productOrder,
-                                    appConfig));
+                            //if this is a rework and we are at the first step of the process it was reworked from ignore the error
+                            boolean ignoreErrors = false;
+                            for (LabBatch batch : labVessel.getReworkLabBatches()) {
+                                if (batch.getReworks().contains(labVessel)) {
+                                    ignoreErrors = true;
+                                }
+                            }
+                            if (!ignoreErrors) {
+                                validationErrors.add(new WorkflowValidationError(sampleInstance, errors, productOrder,
+                                        appConfig));
+                            }
+
                         }
                     }
                 }

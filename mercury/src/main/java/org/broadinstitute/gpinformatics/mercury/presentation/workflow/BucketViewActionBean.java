@@ -372,6 +372,7 @@ public class BucketViewActionBean extends CoreActionBean {
         batch = labBatchDAO.findByBusinessKey(selectedLcset);
         reworkVessels = new HashSet<>(labVesselDao.findByListIdentifiers(selectedReworks));
         batch.addReworks(reworkVessels);
+        batch.addLabVessels(reworkVessels);
         //todo jac add JIRA Message?
         addMessage(String.format("Successfully added %d reworks to %s at the '%s'.", reworkVessels.size(),
                 selectedLcset, selectedBucket));
