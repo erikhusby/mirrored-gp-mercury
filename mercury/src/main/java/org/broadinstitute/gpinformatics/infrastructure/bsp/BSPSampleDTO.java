@@ -135,7 +135,7 @@ public class BSPSampleDTO {
      */
     private double [] getDoubleOrRangeOfDoubles(BSPSampleSearchColumn column) {
         try {
-            return new double [] {getDouble(column)};
+            return new double [] { getDouble(column) };
         } catch (NumberFormatException e) {
             // The data did not parse as a double; how about as a range of doubles?
             Matcher matcher = RIN_RANGE.matcher(getValue(column));
@@ -143,7 +143,7 @@ public class BSPSampleDTO {
                 // Not a range either.
                 throw new NumberFormatException(getValue(column));
             } else {
-                return new double [] { Double.valueOf(matcher.group(1)), Double.valueOf(matcher.group(2)) };
+                return new double [] { Double.parseDouble(matcher.group(1)), Double.parseDouble(matcher.group(2)) };
             }
         }
     }
