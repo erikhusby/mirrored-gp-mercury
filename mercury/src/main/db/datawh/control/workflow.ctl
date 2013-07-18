@@ -9,6 +9,5 @@ TRAILING NULLCOLS
  is_delete,
  workflow_id,
  workflow_name,
- workflow_version,
- effective_date DATE "YYYYMMDDHH24MISS"
+ workflow_version
 )

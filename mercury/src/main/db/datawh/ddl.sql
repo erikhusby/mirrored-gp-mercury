@@ -151,7 +151,6 @@ CREATE TABLE workflow (
   workflow_id      NUMERIC(19)   NOT NULL PRIMARY KEY,
   workflow_name    VARCHAR2(255) NOT NULL,
   workflow_version VARCHAR2(40)  NOT NULL,
-  effective_date   DATE          NOT NULL,
   etl_date         DATE          NOT NULL
 );
 
@@ -161,7 +160,6 @@ CREATE TABLE workflow_process (
   process_version VARCHAR2(40)  NOT NULL,
   step_name       VARCHAR2(255) NOT NULL,
   event_name      VARCHAR2(255) NOT NULL,
-  effective_date  DATE          NOT NULL,
   etl_date        DATE          NOT NULL
 );
 
@@ -394,8 +392,7 @@ CREATE TABLE im_workflow (
   is_delete        CHAR(1)     NOT NULL,
   workflow_id      NUMERIC(19) NOT NULL,
   workflow_name    VARCHAR2(255),
-  workflow_version VARCHAR2(40),
-  effective_date   DATE
+  workflow_version VARCHAR2(40)
 );
 
 CREATE TABLE im_workflow_process (
@@ -406,8 +403,7 @@ CREATE TABLE im_workflow_process (
   process_name    VARCHAR2(255),
   process_version VARCHAR2(40),
   step_name       VARCHAR2(255),
-  event_name      VARCHAR2(255),
-  effective_date  DATE
+  event_name      VARCHAR2(255)
 );
 
 CREATE TABLE im_event_fact (

@@ -11,6 +11,5 @@ TRAILING NULLCOLS
  process_name,
  process_version,
  step_name,
- event_name,
- effective_date DATE "YYYYMMDDHH24MISS"
+ event_name
 )

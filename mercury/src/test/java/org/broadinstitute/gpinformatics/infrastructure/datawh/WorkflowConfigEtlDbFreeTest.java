@@ -124,13 +124,13 @@ public class WorkflowConfigEtlDbFreeTest {
 
         boolean[] found = new boolean[]{false, false, false};
         for (String line : lines) {
-            if (verifyWorkflowRecord(line, -8190592328589523234L, "Workflow 1", "1.0", effDate)) {
+            if (verifyWorkflowRecord(line, -8190592328589523234L, "Workflow 1", "1.0")) {
                 assertFalse(found[0]);
                 found[0] = true;
-            } else if (verifyWorkflowRecord(line, -8190592328589522273L, "Workflow 1", "2.0", effDate)) {
+            } else if (verifyWorkflowRecord(line, -8190592328589522273L, "Workflow 1", "2.0")) {
                 assertFalse(found[1]);
                 found[1] = true;
-            } else if (verifyWorkflowRecord(line, -8190592328588599713L, "Workflow 2", "1.0", effDate)) {
+            } else if (verifyWorkflowRecord(line, -8190592328588599713L, "Workflow 2", "1.0")) {
                 assertFalse(found[2]);
                 found[2] = true;
             } else {
@@ -142,14 +142,13 @@ public class WorkflowConfigEtlDbFreeTest {
         assertTrue(found[2]);
     }
 
-    private boolean verifyWorkflowRecord(String record, long id, String name, String version, String effectiveDate) {
+    private boolean verifyWorkflowRecord(String record, long id, String name, String version) {
         String[] parts = record.split(",");
         assertEquals(parts[1], etlDateStr);
         assertEquals(parts[2], "F");
         return parts[3].equals(String.valueOf(id))
                 && parts[4].equals(name)
-                && parts[5].equals(version)
-                && parts[6].equals(effectiveDate);
+                && parts[5].equals(version);
     }
 
     private void verifyProcessFile(File datafile) throws Exception {
@@ -160,51 +159,40 @@ public class WorkflowConfigEtlDbFreeTest {
 
         boolean[] found = new boolean[]{false, false, false, false, false, false, false, false, false, false, false, false};
         for (String line : lines) {
-            if (verifyProcessRecord(line, -8467717764871572157L, "Process 1", "1.0", "Step 1", "GSWash1", effectiveDate)) {
+            if (verifyProcessRecord(line, -8467717764871572157L, "Process 1", "1.0", "Step 1", "GSWash1")) {
                 assertFalse(found[0]);
                 found[0] = true;
-            } else if (verifyProcessRecord(line, -8467716911980534715L, "Process 1", "1.0", "Step 2", "GSWash2",
-                    effectiveDate)) {
+            } else if (verifyProcessRecord(line, -8467716911980534715L, "Process 1", "1.0", "Step 2", "GSWash2")) {
                 assertFalse(found[1]);
                 found[1] = true;
-            } else if (verifyProcessRecord(line, -8467716059089497273L, "Process 1", "1.0", "Step 3", "GSWash3",
-                    effectiveDate)) {
+            } else if (verifyProcessRecord(line, -8467716059089497273L, "Process 1", "1.0", "Step 3", "GSWash3")) {
                 assertFalse(found[2]);
                 found[2] = true;
-            } else if (verifyProcessRecord(line, -3305996820808558747L, "Process 1", "2.0", "Step 1", "GSWash4",
-                    effectiveDate)) {
+            } else if (verifyProcessRecord(line, -3305996820808558747L, "Process 1", "2.0", "Step 1", "GSWash4")) {
                 assertFalse(found[3]);
                 found[3] = true;
-            } else if (verifyProcessRecord(line, -3305995967917521305L, "Process 1", "2.0", "Step 2", "GSWash5",
-                    effectiveDate)) {
+            } else if (verifyProcessRecord(line, -3305995967917521305L, "Process 1", "2.0", "Step 2", "GSWash5")) {
                 assertFalse(found[4]);
                 found[4] = true;
-            } else if (verifyProcessRecord(line, -3305995115026483863L, "Process 1", "2.0", "Step 3", "GSWash6",
-                    effectiveDate)) {
+            } else if (verifyProcessRecord(line, -3305995115026483863L, "Process 1", "2.0", "Step 3", "GSWash6")) {
                 assertFalse(found[5]);
                 found[5] = true;
-            } else if (verifyProcessRecord(line, 1855724123254454657L, "Process 1", "3.0", "Step 1", "GSWash1",
-                    effectiveDate)) {
+            } else if (verifyProcessRecord(line, 1855724123254454657L, "Process 1", "3.0", "Step 1", "GSWash1")) {
                 assertFalse(found[6]);
                 found[6] = true;
-            } else if (verifyProcessRecord(line, 1855724976145492099L, "Process 1", "3.0", "Step 2", "GSWash2",
-                    effectiveDate)) {
+            } else if (verifyProcessRecord(line, 1855724976145492099L, "Process 1", "3.0", "Step 2", "GSWash2")) {
                 assertFalse(found[7]);
                 found[7] = true;
-            } else if (verifyProcessRecord(line, 5742336828830808460L, "Process 2", "1.0", "Step 1", "SageLoading",
-                    effectiveDate)) {
+            } else if (verifyProcessRecord(line, 5742336828830808460L, "Process 2", "1.0", "Step 1", "SageLoading")) {
                 assertFalse(found[8]);
                 found[8] = true;
-            } else if (verifyProcessRecord(line, -384411111648070892L, "Process 2", "1.0", "Step 2", "SageLoaded",
-                    effectiveDate)) {
+            } else if (verifyProcessRecord(line, -384411111648070892L, "Process 2", "1.0", "Step 2", "SageLoaded")) {
                 assertFalse(found[9]);
                 found[9] = true;
-            } else if (verifyProcessRecord(line, 4064078523236908373L, "Process 2", "1.0", "Step 3", "SageUnloading",
-                    effectiveDate)) {
+            } else if (verifyProcessRecord(line, 4064078523236908373L, "Process 2", "1.0", "Step 3", "SageUnloading")) {
                 assertFalse(found[10]);
                 found[10] = true;
-            } else if (verifyProcessRecord(line, 8105325172126646903L, "Process 2", "1.0", "Step 4", "SageCleanup",
-                    effectiveDate)) {
+            } else if (verifyProcessRecord(line, 8105325172126646903L, "Process 2", "1.0", "Step 4", "SageCleanup")) {
                 assertFalse(found[11]);
                 found[11] = true;
             } else {
@@ -217,8 +205,7 @@ public class WorkflowConfigEtlDbFreeTest {
         }
     }
 
-    private boolean verifyProcessRecord(String record, long id, String name, String version, String step, String event,
-                                        String effectiveDate) {
+    private boolean verifyProcessRecord(String record, long id, String name, String version, String step, String event) {
         String[] parts = record.split(",");
         assertEquals(parts.length, 8);
         assertEquals(parts[1], etlDateStr);
@@ -227,8 +214,7 @@ public class WorkflowConfigEtlDbFreeTest {
                 && parts[4].equals(name)
                 && parts[5].equals(version)
                 && parts[6].equals(step)
-                && parts[7].equals(event)
-                && parts[8].equals(effectiveDate);
+                && parts[7].equals(event);
     }
 
 }
