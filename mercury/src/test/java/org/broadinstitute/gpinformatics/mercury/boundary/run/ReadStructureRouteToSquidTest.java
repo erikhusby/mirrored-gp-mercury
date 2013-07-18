@@ -41,12 +41,7 @@ public class ReadStructureRouteToSquidTest extends Arquillian {
         readStructureRequest.setRunBarcode("FunkyColdMedina");
         readStructureRequest.setLanesSequenced("2,5");
 
-        try {
-            solexaRunResource.storeRunReadStructure(readStructureRequest);
-            Assert.fail("This should have thrown an exception");
-        }
-        catch(RuntimeException e) {
-            Assert.assertTrue(e.getMessage().contains("is not registered in squid"));
-        }
+        ReadStructureRequest result = solexaRunResource.storeRunReadStructure(readStructureRequest);
+        Assert.assertTrue(result.getError().contains("is not registered in squid"));
     }
 }

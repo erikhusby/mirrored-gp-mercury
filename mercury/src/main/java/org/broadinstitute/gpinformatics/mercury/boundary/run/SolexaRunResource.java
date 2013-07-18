@@ -195,7 +195,7 @@ public class SolexaRunResource {
         // in the absence of information, route to squid
         MercuryOrSquidRouter.MercuryOrSquid route = MercuryOrSquidRouter.MercuryOrSquid.SQUID;
 
-        IlluminaSequencingRun run = illuminaSequencingRunDao.findByBarcode(readStructureRequest.getRunBarcode());
+        IlluminaSequencingRun run = illuminaSequencingRunDao.findByBarcode(runBarcode);
 
         if (run != null) {
             // can only do routing if mercury actually knows the run
@@ -204,16 +204,26 @@ public class SolexaRunResource {
             ));
         }
 
+        Throwable squidError = null;
         if (EnumSet.of(MercuryOrSquidRouter.MercuryOrSquid.SQUID,MercuryOrSquidRouter.MercuryOrSquid.BOTH).contains(route)) {
             if (squidConfig.getMercuryDeployment() != Deployment.STUBBY) {
                 String squidUrl = squidConfig.getUrl() + "/resources/solexarunsynopsis";
-                sendToSquid(readStructureRequest,squidUrl);
+                try {
+                    sendToSquid(readStructureRequest,squidUrl);
+                }
+                catch(Throwable t) {
+                    squidError = t;
+                }
             }
             requestToReturn = readStructureRequest;
         }
 
         if (EnumSet.of(MercuryOrSquidRouter.MercuryOrSquid.MERCURY,MercuryOrSquidRouter.MercuryOrSquid.BOTH).contains(route)) {
             requestToReturn = illuminaSequencingRunFactory.storeReadsStructureDBFree(readStructureRequest, run);
+        }
+
+        if (squidError != null) {
+            requestToReturn.setError("Failed while sending solexa_run_synopsis data to squid for " + runBarcode +":" + squidError.getMessage());
         }
         return requestToReturn;
     }
