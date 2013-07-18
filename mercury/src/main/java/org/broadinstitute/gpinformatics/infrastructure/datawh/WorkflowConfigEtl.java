@@ -155,7 +155,8 @@ public class WorkflowConfigEtl extends GenericEntityEtl<WorkflowConfig, Object> 
         return genericRecord(etlDateStr, isDelete,
                 entity.getWorkflowId(),
                 entity.getProductWorkflowName(),
-                entity.getProductWorkflowVersion()
+                entity.getProductWorkflowVersion(),
+                entity.getEffectiveDateStr()
         );
     }
 
@@ -172,7 +173,8 @@ public class WorkflowConfigEtl extends GenericEntityEtl<WorkflowConfig, Object> 
                     entity.getWorkflowProcessName(),
                     entity.getWorkflowProcessVersion(),
                     entity.getWorkflowStepName(),
-                    entity.getWorkflowStepEventName()
+                    entity.getWorkflowStepEventName(),
+                    entity.getEffectiveDateStr()
             );
     }
 

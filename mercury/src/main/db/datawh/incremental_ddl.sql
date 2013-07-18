@@ -13,3 +13,7 @@ alter table event_fact drop column lab_batch_id;
 drop table lab_batch cascade constraints;
 drop table im_lab_batch cascade constraints;
 
+alter table workflow add effective_date DATE;
+alter table workflow_process add effective_date DATE;
+
+
