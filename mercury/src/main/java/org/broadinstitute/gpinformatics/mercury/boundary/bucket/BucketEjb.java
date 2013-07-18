@@ -1,11 +1,11 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.bucket;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
+import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -44,14 +44,18 @@ public class BucketEjb {
 
     private static final Log logger = LogFactory.getLog(BucketEjb.class);
 
+    private BucketDao bucketDao;
+
     public BucketEjb() {
     }
 
     @Inject
-    public BucketEjb(LabEventFactory labEventFactory, JiraService jiraService, LabBatchEjb batchEjb) {
+    public BucketEjb(LabEventFactory labEventFactory, JiraService jiraService, LabBatchEjb batchEjb,
+                     BucketDao bucketDao) {
         this.labEventFactory = labEventFactory;
         this.jiraService = jiraService;
         this.batchEjb = batchEjb;
+        this.bucketDao = bucketDao;
     }
 
     /**
@@ -73,6 +77,7 @@ public class BucketEjb {
                                        @Nonnull String singlePdoBusinessKey) {
 
         List<BucketEntry> listOfNewEntries = new LinkedList<BucketEntry>();
+        // TODO: is pdoKeyToVesselMap needed? doesn't look like it's used for anything
         Map<String, Collection<LabVessel>> pdoKeyToVesselMap = new HashMap<String, Collection<LabVessel>>();
 
         for (LabVessel currVessel : entriesToAdd) {
@@ -106,6 +111,21 @@ public class BucketEjb {
     public void start(@Nonnull String operator, @Nonnull Collection<LabVessel> vesselsToBatch,
                       @Nonnull Bucket workingBucket, String batchInitiationLocation) {
         start(operator, vesselsToBatch, workingBucket, batchInitiationLocation, null);
+    }
+
+    /**
+     * Start work on the specified bucket entries by archiving them (removing them from the bucket view) and associating
+     * them with the given lab batch.
+     *
+     * @param bucketEntries    the bucket entries being batched
+     * @param labBatch         the lab batch that the entries are being added to
+     */
+    public void start(@Nonnull Collection<BucketEntry> bucketEntries, LabBatch labBatch) {
+        archiveEntries(bucketEntries);
+
+        for (BucketEntry bucketEntry : bucketEntries) {
+            labBatch.addBucketEntry(bucketEntry);
+        }
     }
 
     /**
@@ -507,4 +527,12 @@ public class BucketEjb {
         return labVessels;
     }
 
+    public Bucket findOrCreateBucket(String bucketName) {
+        Bucket bucket = bucketDao.findByName(bucketName);
+        if (bucket == null) {
+            bucket = new Bucket(bucketName);
+            logger.debug("Created new bucket " + bucketName);
+        }
+        return bucket;
+    }
 }

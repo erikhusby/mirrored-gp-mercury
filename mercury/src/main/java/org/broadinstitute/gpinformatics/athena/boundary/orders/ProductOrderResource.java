@@ -37,7 +37,7 @@ public class ProductOrderResource {
     private ProductOrders buildProductOrdersFromList(@Nonnull List<ProductOrder> productOrderList,
                                                      boolean includeSamples) {
 
-        List<ProductOrderData> productOrderDataList = new ArrayList<ProductOrderData>(productOrderList.size());
+        List<ProductOrderData> productOrderDataList = new ArrayList<>(productOrderList.size());
 
         for (ProductOrder productOrder : productOrderList) {
             ProductOrderData productOrderData = new ProductOrderData();
@@ -47,8 +47,9 @@ public class ProductOrderResource {
             productOrderData.setModifiedDate(productOrder.getModifiedDate());
             productOrderData.setProduct(productOrder.getProduct().getPartNumber());
             productOrderData.setStatus(productOrder.getOrderStatus().name());
+            productOrderData.setAggregationDataType(productOrder.getProduct().getAggregationDataType());
             if (includeSamples) {
-                List<String> sampleNames = new ArrayList<String>(productOrder.getSamples().size());
+                List<String> sampleNames = new ArrayList<>(productOrder.getSamples().size());
                 for (ProductOrderSample sample : productOrder.getSamples()) {
                     sampleNames.add(sample.getSampleName());
                 }

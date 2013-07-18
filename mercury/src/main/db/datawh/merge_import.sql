@@ -97,11 +97,13 @@ IS
                                    FROM im_billing_session
                                    WHERE is_delete = 'F';
 
+  CURSOR im_lab_metric_cur IS SELECT * FROM im_lab_metric WHERE is_delete = 'F';
+
   errmsg        VARCHAR2(255);
   PDO_SAMPLE_NOT_IN_EVENT_FACT EXCEPTION;
   INVALID_LAB_BATCH EXCEPTION;
   v_tmp  NUMBER;
-  
+
   BEGIN
 
 ---------------------------------------------------------------------------
@@ -109,7 +111,7 @@ IS
 -- Does the most dependent (FK dependency) tables first.
 ---------------------------------------------------------------------------
 
--- For this fact table, a re-export of audited entity ids should replace existing ones.
+    -- For this fact table, a re-export of audited entity ids should replace existing ones.
     DELETE FROM event_fact
     WHERE lab_event_id IN (SELECT
                              DISTINCT lab_event_id
@@ -195,6 +197,9 @@ IS
       WHERE is_delete = 'T'
     );
 
+    DELETE FROM lab_metric
+    WHERE lab_metric_id IN (SELECT lab_metric_id FROM im_lab_metric WHERE is_delete = 'T');
+
     DELETE FROM product
     WHERE product_id IN (
       SELECT
@@ -219,7 +224,7 @@ IS
       WHERE is_delete = 'T'
     );
 
--- For this fact table, a re-export of audited entity ids should replace existing ones.
+    -- For this fact table, a re-export of audited entity ids should replace existing ones.
     DELETE FROM sequencing_sample_fact
     WHERE sequencing_run_id IN (SELECT
                                   DISTINCT sequencing_run_id
@@ -429,6 +434,60 @@ IS
       errmsg := SQLERRM;
       DBMS_OUTPUT.PUT_LINE(
           TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_lab_vessel.dat line ' || new.line_number || '  ' || errmsg);
+      CONTINUE;
+    END;
+
+    END LOOP;
+
+
+    FOR new IN im_lab_metric_cur LOOP
+    BEGIN
+
+      UPDATE lab_metric
+      SET
+        sample_name = new.sample_name,
+        lab_vessel_id = new.lab_vessel_id,
+        product_order_id = new.product_order_id,
+        batch_name = new.batch_name,
+        quant_type = new.quant_type,
+        quant_units = new.quant_units,
+        quant_value = new.quant_value,
+        run_name = new.run_name,
+        run_date = new.run_date,
+        etl_date = new.etl_date
+      WHERE lab_metric_id = new.lab_metric_id;
+
+      INSERT INTO lab_metric (
+        lab_metric_id,
+        sample_name,
+        lab_vessel_id,
+        product_order_id,
+        batch_name,
+        quant_type,
+        quant_units,
+        quant_value,
+        run_name,
+        run_date,
+        etl_date
+      )
+      SELECT
+        new.lab_metric_id,
+        new.sample_name,
+        new.lab_vessel_id,
+        new.product_order_id,
+        new.batch_name,
+        new.quant_type,
+        new.quant_units,
+        new.quant_value,
+        new.run_name,
+        new.run_date,
+        new.etl_date
+      FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM lab_metric WHERE lab_metric_id = new.lab_metric_id);
+
+      EXCEPTION WHEN OTHERS THEN
+      errmsg := SQLERRM;
+      DBMS_OUTPUT.PUT_LINE(
+          TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_lab_metric.dat line ' || new.line_number || '  ' || errmsg);
       CONTINUE;
     END;
 
@@ -912,18 +971,20 @@ IS
 
     END LOOP;
 
--- Only sets PK when it is null, so we can do an idempotent repeatable merge.
+    -- Only sets PK when it is null, so we can do an idempotent repeatable merge.
     UPDATE im_event_fact
     SET event_fact_id = event_fact_id_seq.nextval
     WHERE event_fact_id IS NULL;
 
     FOR new IN im_event_fact_cur LOOP
     BEGIN
-    
+
       BEGIN
-        -- Reports an invalid batch_name.
+        -- Raises exception for an invalid batch_name if not a BSP workflow.
         SELECT 1 INTO v_tmp FROM DUAL
-        WHERE NVL(new.batch_name, 'NONE') NOT IN ('NONE', 'MULTIPLE');
+        WHERE NVL(new.batch_name, 'NONE') NOT IN ('NONE', 'MULTIPLE')
+        OR EXISTS (SELECT 1 FROM workflow w
+        WHERE w.workflow_name = 'BSP' AND new.workflow_id = w.workflow_id);
 
         EXCEPTION WHEN NO_DATA_FOUND
         THEN RAISE INVALID_LAB_BATCH;
@@ -964,15 +1025,15 @@ IS
             FROM event_fact
             WHERE event_fact_id = new.event_fact_id
         );
-        
+
       EXCEPTION
-      
+
       WHEN INVALID_LAB_BATCH THEN
       DBMS_OUTPUT.PUT_LINE(
           TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_event_fact.dat line ' || new.line_number || '  ' ||
           'Event fact has invalid lab batch name: ' || NVL(new.batch_name, 'NONE'));
       CONTINUE;
-      
+
       WHEN OTHERS THEN
       errmsg := SQLERRM;
       DBMS_OUTPUT.PUT_LINE(
@@ -1266,7 +1327,7 @@ IS
           new.research_project_id,
           new.loaded_library_barcode,
           new.loaded_library_create_date,
-	  new.batch_name,
+          new.batch_name,
           new.etl_date
         FROM DUAL
         WHERE NOT EXISTS(
@@ -1282,13 +1343,13 @@ IS
           TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_sequencing_sample_fact.dat line ' || new.line_number || '  ' ||
           'Sequencing Fact sample and product order not found in Event_Fact table');
       CONTINUE;
-      
+
       WHEN INVALID_LAB_BATCH THEN
       DBMS_OUTPUT.PUT_LINE(
           TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_sequencing_sample_fact.dat line ' || new.line_number || '  ' ||
           'Sequencing Fact has invalid lab batch name: ' || NVL(new.batch_name, 'NONE'));
       CONTINUE;
-      
+
       WHEN OTHERS THEN
       errmsg := SQLERRM;
       DBMS_OUTPUT.PUT_LINE(

@@ -155,7 +155,8 @@ public class ExtractTransform implements Serializable {
             LedgerEntryEtl ledgerEntryEtl,
             SequencingRunEtl sequencingRunEtl,
             SequencingSampleFactEtl sequencingSampleFactEtl,
-            BillingSessionEtl billingSessionEtl
+            BillingSessionEtl billingSessionEtl,
+            LabMetricEtl labMetricEtl
     ) {
         etlInstances.add(labEventEtl);
         etlInstances.add(labVesselEtl);
@@ -176,6 +177,7 @@ public class ExtractTransform implements Serializable {
         etlInstances.add(sequencingRunEtl);
         etlInstances.add(sequencingSampleFactEtl);
         etlInstances.add(billingSessionEtl);
+        etlInstances.add(labMetricEtl);
     }
 
     /**

@@ -76,7 +76,7 @@ public class MercuryClientEjb {
 
         Bucket initialBucket = null;
         if (initialBucketDef != null) {
-            initialBucket = findOrCreateBucket(initialBucketDef);
+            initialBucket = bucketEjb.findOrCreateBucket(initialBucketDef.getName());
         }
         if (initialBucket == null) {
             return Collections.emptyList();
@@ -149,16 +149,6 @@ public class MercuryClientEjb {
             }
         }
         return validVessels;
-    }
-
-    private Bucket findOrCreateBucket(WorkflowBucketDef bucketStep) {
-        String bucketName = bucketStep.getName();
-        Bucket bucket = bucketDao.findByName(bucketName);
-        if (bucket == null) {
-            bucket = new Bucket(bucketStep);
-            logger.debug("Created new bucket " + bucketName);
-        }
-        return bucket;
     }
 
     /**

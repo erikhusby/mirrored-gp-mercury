@@ -10,11 +10,9 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEv
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.DenatureToDilutionTubeHandler;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -88,7 +86,8 @@ public class HiSeq2500JaxbBuilder {
             MetadataType dilutionMetadata = new MetadataType();
             dilutionMetadata.setName(DenatureToDilutionTubeHandler.FCT_METADATA_NAME);
             dilutionMetadata.setValue(fctTicket);
-            dilutionTransferJaxb.getPositionMap().iterator().next().getReceptacle().iterator().next().getMetadata()
+            dilutionTransferJaxb.getPositionMap().iterator().next().
+                    getReceptacle().iterator().next().getMetadata()
                     .add(dilutionMetadata);
 
             bettaLimsMessageTestFactory.addMessage(messageList, dilutionTransferJaxb);
@@ -97,12 +96,6 @@ public class HiSeq2500JaxbBuilder {
                     bettaLimsMessageTestFactory.buildTubeToPlate("DilutionToFlowcellTransfer",
                             dilutionTubeBarcode, flowcellBarcode, LabEventTest.PHYS_TYPE_FLOWCELL_2_LANE,
                             LabEventTest.SECTION_ALL_2, "tube");
-            if (StringUtils.isNotBlank(dilutionTubeBarcode)) {
-                MetadataType denatureMetaData = new MetadataType();
-                denatureMetaData.setName("DesignationName");
-                denatureMetaData.setValue(squidDesignationName);
-                flowcellTransferJaxb.getSourceReceptacle().getMetadata().add(denatureMetaData);
-            }
             bettaLimsMessageTestFactory.addMessage(messageList, flowcellTransferJaxb);
             break;
         case DENATURE_TO_FLOWCELL:
@@ -111,6 +104,12 @@ public class HiSeq2500JaxbBuilder {
                     bettaLimsMessageTestFactory.buildTubeToPlate("DenatureToFlowcellTransfer",
                             denatureTubeBarcode, flowcellBarcode, LabEventTest.PHYS_TYPE_FLOWCELL_2_LANE,
                             LabEventTest.SECTION_ALL_2, "tube");
+            if (StringUtils.isNotBlank(squidDesignationName)) {
+                MetadataType denatureMetaData = new MetadataType();
+                denatureMetaData.setName("DesignationName");
+                denatureMetaData.setValue(squidDesignationName);
+                flowcellTransferJaxb.getSourceReceptacle().getMetadata().add(denatureMetaData);
+            }
             bettaLimsMessageTestFactory.addMessage(messageList, flowcellTransferJaxb);
             break;
         case STRIPTUBE_TO_FLOWCELL:
@@ -119,7 +118,7 @@ public class HiSeq2500JaxbBuilder {
             List<BettaLimsMessageTestFactory.CherryPick> stripTubeCherryPicks = new ArrayList<>();
             int sourcePosition = 0;
             // Transfer column 1 to 8 rows, using non-empty source rows
-            int maxTubes = ("Exome Express".equals(workflowName))? 2:8;
+            int maxTubes = ("Exome Express".equals(workflowName)) ? 2 : 8;
             for (int destinationPosition = 0; destinationPosition < maxTubes; destinationPosition++) {
                 stripTubeCherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(
                         denatureRackBarcode, Character.toString((char) ('A' + 0)) + "01",
@@ -145,7 +144,7 @@ public class HiSeq2500JaxbBuilder {
 
             break;
         }
-        flowcellLoad = bettaLimsMessageTestFactory.buildReceptacleEvent(LabEventType.FLOWCELL_LOADED.getName(),
+        flowcellLoad = bettaLimsMessageTestFactory.buildReceptacleEvent("FlowcellLoaded",
                 flowcellBarcode, LabEventFactory.PHYS_TYPE_FLOWCELL);
         bettaLimsMessageTestFactory.addMessage(messageList, flowcellLoad);
 
@@ -199,7 +198,6 @@ public class HiSeq2500JaxbBuilder {
     public PlateTransferEventType getStbFlowcellTransferJaxb() {
         return stbFlowcellTransferJaxb;
     }
-
 
 
 }

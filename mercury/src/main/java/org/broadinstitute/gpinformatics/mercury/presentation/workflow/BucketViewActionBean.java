@@ -13,8 +13,8 @@ import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
@@ -70,9 +70,9 @@ public class BucketViewActionBean extends CoreActionBean {
     public static final String CREATE_BATCH_ACTION = "createBatch";
 
     private List<WorkflowBucketDef> buckets = new ArrayList<>();
-    private List<String> selectedVesselLabels = new ArrayList<>();
+    private List<Long> selectedVesselLabels = new ArrayList<>();
     private List<LabVessel> selectedBatchVessels;
-    private List<String> selectedReworks = new ArrayList<>();
+    private List<Long> selectedReworks = new ArrayList<>();
 
     @Validate(required = true, on = {CREATE_BATCH_ACTION, "viewBucket"})
     private String selectedBucket;
@@ -145,11 +145,11 @@ public class BucketViewActionBean extends CoreActionBean {
         this.jiraEnabled = jiraEnabled;
     }
 
-    public List<String> getSelectedReworks() {
+    public List<Long> getSelectedReworks() {
         return selectedReworks;
     }
 
-    public void setSelectedReworks(List<String> selectedReworks) {
+    public void setSelectedReworks(List<Long> selectedReworks) {
         this.selectedReworks = selectedReworks;
     }
 
@@ -211,6 +211,7 @@ public class BucketViewActionBean extends CoreActionBean {
                 reworkEntries = bucket.getReworkEntries();
             } else {
                 bucketEntries = new ArrayList<>();
+                reworkEntries = new ArrayList<>();
             }
             if (!bucketEntries.isEmpty() || !reworkEntries.isEmpty()) {
                 jiraEnabled = true;
@@ -228,6 +229,8 @@ public class BucketViewActionBean extends CoreActionBean {
                 for (ProductOrder orderEntry : foundOrders) {
                     pdoByKeyMap.put(orderEntry.getBusinessKey(), orderEntry);
                 }
+            } else {
+                jiraEnabled = false;
             }
         }
         return view();
@@ -268,32 +271,24 @@ public class BucketViewActionBean extends CoreActionBean {
      * @return The resolution
      */
     @HandlesEvent(CREATE_BATCH_ACTION)
-    public Resolution createBatch() throws Exception {
+    public Resolution createBatch() {
 
-//        ProductWorkflowDef workflowDef = workflowLoader.load().getWorkflowByName(selectedProductWorkflowDef);
-
-        Set<LabVessel> vesselSet = new HashSet<>(labVesselDao.findByListIdentifiers(selectedVesselLabels));
-
-        Set<LabVessel> reworks = new HashSet<>(labVesselDao.findByListIdentifiers(selectedReworks));
-
-        LabBatch batchObject = new LabBatch(summary.trim(), vesselSet, LabBatch.LabBatchType.WORKFLOW, description,
-                dueDate, important);
-        batchObject.setWorkflowName(selectedProductWorkflowDef);
-        batchObject.addReworks(reworks);
-
-        labBatchEjb.createLabBatchAndRemoveFromBucket(batchObject, userBean.getBspUser().getUsername(), selectedBucket,
-                LabEvent.UI_EVENT_LOCATION, CreateFields.IssueType.EXOME_EXPRESS);
-
-        //link the JIRA tickets for the batch created to the pdo batches.
-        for (String pdoKey : LabVessel.extractPdoKeyList(vesselSet)) {
-            labBatchEjb.linkJiraBatchToTicket(pdoKey, batchObject);
+        LabBatch batch;
+        try {
+            batch = labBatchEjb
+                    .createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW, selectedProductWorkflowDef,
+                            selectedVesselLabels, selectedReworks, summary.trim(), description, dueDate, important,
+                            userBean.getBspUser().getUsername(), LabEvent.UI_EVENT_LOCATION);
+        } catch (ValidationException e) {
+            addGlobalValidationError(e.getMessage());
+            return view();
         }
 
         addMessage(MessageFormat
-                .format("Lab batch ''{0}'' has been created.", batchObject.getJiraTicket().getTicketName()));
+                .format("Lab batch ''{0}'' has been created.", batch.getJiraTicket().getTicketName()));
 
         return new RedirectResolution(CreateBatchActionBean.class, CreateBatchActionBean.CONFIRM_ACTION)
-                .addParameter("batchLabel", batchObject.getBatchName());
+                .addParameter("batchLabel", batch.getBatchName());
     }
 
     public Date getDueDate() {
@@ -320,7 +315,7 @@ public class BucketViewActionBean extends CoreActionBean {
         return selectedBatchVessels;
     }
 
-    public List<String> getSelectedVesselLabels() {
+    public List<Long> getSelectedVesselLabels() {
         return selectedVesselLabels;
     }
 
@@ -352,7 +347,7 @@ public class BucketViewActionBean extends CoreActionBean {
         this.selectedBatchVessels = selectedBatchVessels;
     }
 
-    public void setSelectedVesselLabels(List<String> selectedVesselLabels) {
+    public void setSelectedVesselLabels(List<Long> selectedVesselLabels) {
         this.selectedVesselLabels = selectedVesselLabels;
     }
 }

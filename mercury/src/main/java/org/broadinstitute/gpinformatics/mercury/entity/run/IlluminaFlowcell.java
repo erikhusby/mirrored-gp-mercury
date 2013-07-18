@@ -4,13 +4,13 @@ package org.broadinstitute.gpinformatics.mercury.entity.run;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselAndPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainerEmbedder;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.hibernate.envers.Audited;
 
+import javax.annotation.Nonnull;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -19,14 +19,20 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 @Entity
 @Audited
 public class IlluminaFlowcell extends AbstractRunCartridge implements VesselContainerEmbedder<RunChamber> {
+    public IlluminaFlowcell(String flowcellBarcode) {
+        this(FlowcellType.getTypeForBarcode(flowcellBarcode),flowcellBarcode);
+    }
+
     public enum FlowcellType {
-        MiSeqFlowcell("Flowcell1Lane", "MiSeq Flowcell", VesselGeometry.FLOWCELL1x1,"Illumina MiSeq"),
-        HiSeqFlowcell("Flowcell8Lane", "HiSeq 2000 Flowcell", VesselGeometry.FLOWCELL1x8,"Illumina HiSeq 2000"),
-        HiSeq2500Flowcell("Flowcell2Lane", "HiSeq 2500 Flowcell", VesselGeometry.FLOWCELL1x2,"Illumina HiSeq 2500");
+        MiSeqFlowcell("Flowcell1Lane", "MiSeq Flowcell", VesselGeometry.FLOWCELL1x1,"Illumina MiSeq", "^A{1}\\w{4}$"),
+        HiSeqFlowcell("Flowcell8Lane", "HiSeq 2000 Flowcell", VesselGeometry.FLOWCELL1x8,"Illumina HiSeq 2000", "^\\w{9}$"),
+        HiSeq2500Flowcell("Flowcell2Lane", "HiSeq 2500 Flowcell", VesselGeometry.FLOWCELL1x2,"Illumina HiSeq 2500", "^\\w+ADXX$"),
+        OtherFlowcell("FlowcellUnknown", "Unknown Flowcell", VesselGeometry.FLOWCELL1x2,"Unknown Model", ".*");
 
         /**
          * The sequencer model (think vendor/make/model)
@@ -43,6 +49,8 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
          */
         private String displayName;
 
+        private Pattern flowcellTypeRegex;
+
         private VesselGeometry vesselGeometry;
 
         /**
@@ -52,11 +60,12 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
          * @param displayName       the name that will be supplied by automation scripts
          * @param vesselGeometry    the vessel geometry
          */
-        FlowcellType(String automationName, String displayName, VesselGeometry vesselGeometry,String model) {
+        FlowcellType(String automationName, String displayName, VesselGeometry vesselGeometry,String model, String flowcellTypeRegex) {
             this.automationName = automationName;
             this.displayName = displayName;
             this.vesselGeometry = vesselGeometry;
             this.model = model;
+            this.flowcellTypeRegex = Pattern.compile(flowcellTypeRegex);
         }
 
         /**
@@ -81,8 +90,8 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
             return model;
         }
 
-        private static Map<String, FlowcellType> mapAutomationNameToType = new HashMap<String, FlowcellType>();
-        private static Map<String, FlowcellType> mapDisplayNameToType = new HashMap<String, FlowcellType>();
+        private static Map<String, FlowcellType> mapAutomationNameToType = new HashMap<>();
+        private static Map<String, FlowcellType> mapDisplayNameToType = new HashMap<>();
 
         static {
             for (FlowcellType plateType : FlowcellType.values()) {
@@ -104,6 +113,34 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
         public VesselGeometry getVesselGeometry() {
             return vesselGeometry;
         }
+
+        public Pattern getFlowcellTypeRegex() {
+            return flowcellTypeRegex;
+        }
+
+        /**
+         * Try to figure out what kind of flowcell it is based on barcode:
+         * 2500's end in ADXX
+         * MiSeqs are A plus 4 digits/chars
+         * 2000's are (mostly) any other 9 char/digit FC name.
+         *
+         * @param barcode Barcode to test
+         *
+         * @return The FlowcellType, if found or fall back to HiSeqFlowcell
+         */
+        public static FlowcellType getTypeForBarcode(@Nonnull String barcode) {
+            if (FlowcellType.MiSeqFlowcell.getFlowcellTypeRegex().matcher(barcode).matches()) {
+                return MiSeqFlowcell;
+            } else if (FlowcellType.HiSeq2500Flowcell.getFlowcellTypeRegex().matcher(barcode).matches()) {
+                return HiSeq2500Flowcell;
+            } else if (FlowcellType.HiSeqFlowcell.getFlowcellTypeRegex().matcher(barcode).matches()) {
+                return HiSeqFlowcell;
+            } else if (FlowcellType.OtherFlowcell.getFlowcellTypeRegex().matcher(barcode).matches()) {
+                return OtherFlowcell;
+            } else {
+                throw new RuntimeException("You seem to have found a FlowcellType that I don't know about.");
+            }
+        }
     }
 
     @Enumerated(EnumType.STRING)
@@ -115,9 +152,9 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
     @Embedded
     VesselContainer<RunChamber> vesselContainer = new VesselContainer<>(this);
 
-    protected IlluminaFlowcell(String label, FlowcellType flowcellType) {
-        super(label);
-        this.flowcellBarcode = label;
+    public IlluminaFlowcell(FlowcellType flowcellType, String flowcellBarcode) {
+        super(flowcellBarcode);
+        this.flowcellBarcode = flowcellBarcode;
         this.flowcellType = flowcellType;
     }
 
@@ -147,12 +184,6 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
     @Override
     public VesselContainer<RunChamber> getContainerRole() {
         return this.vesselContainer;
-    }
-
-    public IlluminaFlowcell(FlowcellType flowcellType, String flowcellBarcode) {
-        super(flowcellBarcode);
-        this.flowcellBarcode = flowcellBarcode;
-        this.flowcellType = flowcellType;
     }
 
 /*

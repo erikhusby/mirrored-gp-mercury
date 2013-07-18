@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServic
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.monitoring.HipChatMessageSender;
+import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConfig;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettalimsMessageResource;
@@ -63,6 +64,8 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EX
  */
 public class SolexaRunResourceNonRestTest extends Arquillian {
 
+    @Inject
+    SquidConfig squidConfig;
 
     @Inject
     IlluminaSequencingRunDao runDao;
@@ -260,7 +263,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         IlluminaSequencingRun run;
         SolexaRunResource runResource =
                 new SolexaRunResource(runDao, illuminaSequencingRunFactory, flowcellDao, vesselTransferEjb, router,
-                        null, messageSender);
+                        null, messageSender,squidConfig);
 
         SolexaRunBean runBean =
                 new SolexaRunBean(miSeqBarcode, miSeqRunBarcode, runDate, machineName, runFileDirectory,
@@ -313,7 +316,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
 
         SolexaRunResource runResource =
                 new SolexaRunResource(runDao, illuminaSequencingRunFactory, flowcellDao, vesselTransferEjb, router,
-                        null, messageSender);
+                        null, messageSender,squidConfig);
 
         ReadStructureRequest readstructureResult = runResource.storeRunReadStructure(readStructure);
 
