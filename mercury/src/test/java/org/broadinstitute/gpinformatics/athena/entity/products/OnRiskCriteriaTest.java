@@ -15,6 +15,8 @@ public class OnRiskCriteriaTest {
 
     private static final String LOW_NUMBER = "25.0";
     private static final String HIGH_NUMBER = "50.0";
+    private static final String SM_1234 = "SM-1234";
+    private static final String SM_1235 = "SM-1235";
 
     /**
      * Tests Concentration on risk.
@@ -23,13 +25,13 @@ public class OnRiskCriteriaTest {
     public void testConcentrationOnRisk() {
         Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
             put(BSPSampleSearchColumn.CONCENTRATION, LOW_NUMBER);
-            put(BSPSampleSearchColumn.SAMPLE_ID, "SM-1234");
+            put(BSPSampleSearchColumn.SAMPLE_ID, SM_1234);
         }};
 
         BSPSampleDTO lowNumSample = new BSPSampleDTO(dataMap);
         dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
             put(BSPSampleSearchColumn.CONCENTRATION, HIGH_NUMBER);
-            put(BSPSampleSearchColumn.SAMPLE_ID, "SM-1234");
+            put(BSPSampleSearchColumn.SAMPLE_ID, SM_1234);
         }};
         BSPSampleDTO highNumSample = new BSPSampleDTO(dataMap);
 
@@ -44,13 +46,13 @@ public class OnRiskCriteriaTest {
 
         Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
             put(BSPSampleSearchColumn.VOLUME, LOW_NUMBER);
-            put(BSPSampleSearchColumn.SAMPLE_ID, "SM-1234");
+            put(BSPSampleSearchColumn.SAMPLE_ID, SM_1234);
         }};
         BSPSampleDTO lowNumSample = new BSPSampleDTO(dataMap);
 
         dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
             put(BSPSampleSearchColumn.VOLUME, HIGH_NUMBER);
-            put(BSPSampleSearchColumn.SAMPLE_ID, "SM-1235");
+            put(BSPSampleSearchColumn.SAMPLE_ID, SM_1235);
         }};
 
         BSPSampleDTO highNumSample =  new BSPSampleDTO(dataMap);
@@ -64,17 +66,34 @@ public class OnRiskCriteriaTest {
     public void testRin() {
         Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
             put(BSPSampleSearchColumn.RIN, LOW_NUMBER);
-            put(BSPSampleSearchColumn.SAMPLE_ID, "SM-1234");
+            put(BSPSampleSearchColumn.SAMPLE_ID, SM_1234);
         }};
         BSPSampleDTO lowNumSample = new BSPSampleDTO(dataMap);
 
         dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
             put(BSPSampleSearchColumn.RIN, HIGH_NUMBER);
-            put(BSPSampleSearchColumn.SAMPLE_ID, "SM-1235");
+            put(BSPSampleSearchColumn.SAMPLE_ID, SM_1235);
         }};
         BSPSampleDTO highNumSample =  new BSPSampleDTO(dataMap);
 
         handleNumericOnRisk(lowNumSample, highNumSample, RiskCriterion.RiskCriteriaType.RIN);
+
+        // Test RIN ranges.  This first instance should effectively give the low number.
+        dataMap = new HashMap<BSPSampleSearchColumn, String>() {{
+            put(BSPSampleSearchColumn.RIN, LOW_NUMBER + " - " + HIGH_NUMBER);
+            put(BSPSampleSearchColumn.SAMPLE_ID, SM_1234);
+        }};
+        lowNumSample = new BSPSampleDTO(dataMap);
+
+        // Putting the high number in twice should effectively give the high number.
+        dataMap = new HashMap<BSPSampleSearchColumn, String>() {{
+            put(BSPSampleSearchColumn.RIN, HIGH_NUMBER + " - " + HIGH_NUMBER);
+            put(BSPSampleSearchColumn.SAMPLE_ID, SM_1234);
+        }};
+        highNumSample = new BSPSampleDTO(dataMap);
+
+        handleNumericOnRisk(lowNumSample, highNumSample, RiskCriterion.RiskCriteriaType.RIN);
+
     }
 
     /**
@@ -84,13 +103,13 @@ public class OnRiskCriteriaTest {
     public void testTotalDnaOnRisk() {
         Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
             put(BSPSampleSearchColumn.TOTAL_DNA, LOW_NUMBER);
-            put(BSPSampleSearchColumn.SAMPLE_ID, "SM-1234");
+            put(BSPSampleSearchColumn.SAMPLE_ID, SM_1234);
         }};
         BSPSampleDTO lowNumSample = new BSPSampleDTO(dataMap);
 
         dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
             put(BSPSampleSearchColumn.TOTAL_DNA, HIGH_NUMBER);
-            put(BSPSampleSearchColumn.SAMPLE_ID, "SM-1235");
+            put(BSPSampleSearchColumn.SAMPLE_ID, SM_1235);
         }};
         BSPSampleDTO highNumSample =  new BSPSampleDTO(dataMap);
 
@@ -106,13 +125,13 @@ public class OnRiskCriteriaTest {
         // Create one sample with WGA for material and one with non-WGA for material
         Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
             put(BSPSampleSearchColumn.MATERIAL_TYPE, "DNA:DNA WGA Cleaned");
-            put(BSPSampleSearchColumn.SAMPLE_ID, "SM-1234");
+            put(BSPSampleSearchColumn.SAMPLE_ID, SM_1234);
         }};
         BSPSampleDTO hasWgaDummy = new BSPSampleDTO(dataMap);
 
         dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
             put(BSPSampleSearchColumn.MATERIAL_TYPE, "DNA:DNA Genomic");
-            put(BSPSampleSearchColumn.SAMPLE_ID, "SM-1235");
+            put(BSPSampleSearchColumn.SAMPLE_ID, SM_1235);
         }};
         BSPSampleDTO nonWgaDummy = new BSPSampleDTO(dataMap);
 
@@ -127,14 +146,14 @@ public class OnRiskCriteriaTest {
 
         Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
             put(BSPSampleSearchColumn.MATERIAL_TYPE, "DNA:DNA WGA Cleaned");
-            put(BSPSampleSearchColumn.SAMPLE_ID, "SM-1234");
+            put(BSPSampleSearchColumn.SAMPLE_ID, SM_1234);
         }};
         BSPSampleDTO hasWgaDummy = new BSPSampleDTO(dataMap);
         hasWgaDummy.setFfpeStatus(true);
 
         dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
             put(BSPSampleSearchColumn.TOTAL_DNA, "DNA:DNA WGA Cleaned");
-            put(BSPSampleSearchColumn.SAMPLE_ID, "SM-1235");
+            put(BSPSampleSearchColumn.SAMPLE_ID, SM_1235);
         }};
         BSPSampleDTO nonWgaDummy =  new BSPSampleDTO(dataMap);
         nonWgaDummy.setFfpeStatus(false);
