@@ -179,7 +179,7 @@
         <tr>
             <td>
                 <stripes:checkbox class="bucket-checkbox" name="selectedVesselLabels"
-                                  value="${entry.labVessel.label}"/>
+                                  value="${entry.bucketEntryId}"/>
             </td>
             <td>
                 <a href="${ctxpath}/search/vessel.action?vesselSearch=&searchKey=${entry.labVessel.label}">
@@ -248,7 +248,7 @@
         <tr>
             <td>
                 <stripes:checkbox class="bucket-checkbox" name="selectedReworks"
-                                  value="${reworkVessel.labVessel.label}"/>
+                                  value="${reworkVessel.bucketEntryId}"/>
             </td>
             <td>
 
@@ -268,13 +268,13 @@
                 </c:forEach>
             </td>
             <td>
-                    ${actionBean.getSinglePDOBusinessKey(reworkVessel.labVessel)}
+                    ${reworkVessel.poBusinessKey}
             </td>
             <td>
-                <div class="tdfield">${actionBean.getPDODetails(actionBean.getSinglePDOBusinessKey(reworkVessel.labVessel)).title}</div>
+                <div class="tdfield">${actionBean.getPDODetails(reworkVessel.poBusinessKey).title}</div>
             </td>
             <td>
-                    ${actionBean.getUserFullName(actionBean.getPDODetails(actionBean.getSinglePDOBusinessKey(reworkVessel.labVessel)).createdBy)}
+                    ${actionBean.getUserFullName(actionBean.getPDODetails(reworkVessel.poBusinessKey).createdBy)}
             </td>
             <td>
                 <c:forEach items="${reworkVessel.labVessel.nearestWorkflowLabBatches}" var="batch"

@@ -5,7 +5,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry_;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel_;
 
 import javax.ejb.Stateful;
 import javax.ejb.TransactionAttribute;
@@ -26,6 +25,10 @@ import java.util.List;
 @TransactionAttribute ( TransactionAttributeType.SUPPORTS)
 @RequestScoped
 public class BucketEntryDao extends GenericDao {
+
+    public List<BucketEntry> findByIds(List<Long> ids) {
+        return findListByList(BucketEntry.class, BucketEntry_.bucketEntryId, ids);
+    }
 
     public BucketEntry findByVesselAndPO(LabVessel vessel, String productOrder) {
         CriteriaBuilder vesselPOCriteria = getEntityManager().getCriteriaBuilder();

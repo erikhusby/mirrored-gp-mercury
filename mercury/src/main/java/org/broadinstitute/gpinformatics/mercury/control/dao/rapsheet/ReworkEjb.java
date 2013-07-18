@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.infrastructure.ValidationWithRollbackException;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
@@ -348,12 +349,16 @@ public class ReworkEjb {
                                                     @Nonnull ReworkEntry.ReworkReason reworkReason,
                                                     @Nonnull String comment, @Nonnull String userName,
                                                     @Nonnull String workflowName, @Nonnull String bucketName)
-            throws ValidationException {
+            throws ValidationWithRollbackException {
         Bucket bucket = bucketEjb.findOrCreateBucket(bucketName);
         Collection<String> validationMessages = new ArrayList<>();
         for (ReworkCandidate reworkCandidate : reworkCandidates) {
-            validationMessages.addAll(
-                    addAndValidateRework(reworkCandidate, reworkReason, bucket, comment, workflowName, userName));
+            try {
+                validationMessages.addAll(
+                        addAndValidateRework(reworkCandidate, reworkReason, bucket, comment, workflowName, userName));
+            } catch (ValidationException e) {
+                throw new ValidationWithRollbackException(e);
+            }
         }
         return validationMessages;
     }

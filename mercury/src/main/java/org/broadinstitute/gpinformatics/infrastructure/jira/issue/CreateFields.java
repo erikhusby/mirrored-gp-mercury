@@ -113,6 +113,15 @@ public class CreateFields extends UpdateFields {
         public String getJiraName() {
             return jiraName;
         }
+
+        public static IssueType valueForJiraName(String jiraName) {
+            for (IssueType issueType : IssueType.values()) {
+                if (issueType.getJiraName().equals(jiraName)) {
+                    return issueType;
+                }
+            }
+            return null;
+        }
     }
 
 

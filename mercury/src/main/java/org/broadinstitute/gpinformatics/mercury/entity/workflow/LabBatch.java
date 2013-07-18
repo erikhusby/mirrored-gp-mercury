@@ -170,6 +170,13 @@ public class LabBatch {
         this.important = important;
     }
 
+    public LabBatch(String batchName, Set<LabVessel> startingLabVessels, Set<LabVessel> reworkLabVessels,
+                    LabBatchType labBatchType, String workflowName, String batchDescription, Date dueDate,
+                    String important) {
+        this(batchName, startingLabVessels, labBatchType, batchDescription, dueDate, important);
+        setWorkflowName(workflowName);
+        addReworks(reworkLabVessels);
+    }
 
     /**
      * Adds the given rework vessels to the list of reworks for the batch.
@@ -439,6 +446,7 @@ public class LabBatch {
 
     public void addBucketEntry(BucketEntry bucketEntry) {
         bucketEntries.add(bucketEntry);
+        bucketEntry.setLabBatch(this);
     }
 
     @Override
