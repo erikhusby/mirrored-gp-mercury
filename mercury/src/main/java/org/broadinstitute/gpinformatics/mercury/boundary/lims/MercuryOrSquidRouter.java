@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
 import javax.annotation.Nonnull;
@@ -19,6 +20,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
@@ -210,8 +212,10 @@ public class MercuryOrSquidRouter implements Serializable {
                         possibleControls.add(sampleInstance);
                     } else {
                         String workflowName = sampleInstance.getWorkflowName();
-                        if (workflowName != null) {
-                            ProductWorkflowDef productWorkflowDef = getWorkflow(workflowName);
+                        LabBatch effectiveBatch = sampleInstance.getLabBatch();
+                        if (workflowName != null && effectiveBatch != null) {
+                            ProductWorkflowDefVersion productWorkflowDef = getWorkflowVersion(workflowName,
+                                    effectiveBatch.getCreatedOn());
                             if (intent ==  Intent.SYSTEM_OF_RECORD) {
                                 MercuryOrSquid mercuryOrSquid;
                                 if (productWorkflowDef.getInValidation()) {
@@ -323,14 +327,18 @@ public class MercuryOrSquidRouter implements Serializable {
      * does this by querying to the "Athena" side of Mercury for the ProductOrder Definition and looks up the
      * workflow definition based on the workflow name defined on the ProductOrder
      *
+     *
      * @param workflowName e.g. Exome Express
      *
+     * @param effectiveDate
      * @return Workflow Definition for the defined workflow for the product order represented by productOrderKey
      */
-    private ProductWorkflowDef getWorkflow(@Nonnull String workflowName) {
+    private ProductWorkflowDefVersion getWorkflowVersion(@Nonnull String workflowName, Date effectiveDate) {
 
         WorkflowConfig workflowConfig = workflowLoader.load();
 
-        return workflowConfig.getWorkflowByName(workflowName);
+        ProductWorkflowDef workflow =  workflowConfig.getWorkflowByName(workflowName);
+
+        return workflow.getEffectiveVersion(effectiveDate);
     }
 }
