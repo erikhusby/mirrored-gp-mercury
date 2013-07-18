@@ -82,7 +82,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         Collection<String> records = new ArrayList<>();
         try {
             for (EventFactDto fact : makeEventFacts(entity)) {
-                if (fact.isCanEtl()) {
+                if (fact.canEtl()) {
                     ProductOrder pdo = fact.getProductOrder();
                     records.add(genericRecord(etlDateStr, isDelete,
                             fact.getLabEvent().getLabEventId(),
@@ -245,7 +245,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             return wfDenorm;
         }
 
-        public boolean isCanEtl() {
+        public boolean canEtl() {
             return canEtl;
         }
 
@@ -360,7 +360,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         //  Only logs dtos that did not get exported.  Only logs each dto once.  Attempts to show the most basic flaw.
         for (Iterator<EventFactDto> iter = dtos.iterator(); iter.hasNext(); ) {
             EventFactDto fact = iter.next();
-            if (fact.isCanEtl()) {
+            if (fact.canEtl()) {
                 iter.remove();
             }
         }
