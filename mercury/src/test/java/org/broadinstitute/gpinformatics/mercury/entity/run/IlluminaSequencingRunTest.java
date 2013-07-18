@@ -51,7 +51,7 @@ public class IlluminaSequencingRunTest {
         flowcellBarcode = "flowBcode" + runDate.getTime();
         runName = "runTest" + runDate.getTime();
         runBarcode = "runBcode" + runDate.getTime();
-        testFlowcell = new IlluminaFlowcell(flowcellBarcode, IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell);
+        testFlowcell = new IlluminaFlowcell(flowcellBarcode);
         runPath = "/start/of/run/";
         fullRunPath = runPath + runName;
         machineName = "Superman";

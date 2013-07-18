@@ -170,7 +170,7 @@ public class ExtractTransformResource {
         // Outputs a table row for each dto.
         for (EventFactDto dto : extractTransform.analyzeEvent(labEventId)) {
             sb.append(showMolecularBarcodes ?
-                    formatRow(String.valueOf(dto.isCanEtl()),
+                    formatRow(String.valueOf(dto.canEtl()),
                             dto.getLabVessel() != null ? dto.getLabVessel().getLabel() : "null",
                             dto.getSampleInstanceIndexes(),
                             dto.getBatchName(),
@@ -180,7 +180,7 @@ public class ExtractTransformResource {
                             dto.getWfDenorm() != null ? dto.getWfDenorm().getProductWorkflowName() : "null",
                             dto.getWfDenorm() != null ? dto.getWfDenorm().getWorkflowProcessName() : "null",
                             dto.getWfDenorm() != null ? dto.getWfDenorm().getWorkflowStepName() : "null") :
-                    formatRow(String.valueOf(dto.isCanEtl()),
+                    formatRow(String.valueOf(dto.canEtl()),
                             dto.getLabVessel() != null ? dto.getLabVessel().getLabel() : "null",
                             dto.getBatchName(),
                             dto.getWorkflowName(),
