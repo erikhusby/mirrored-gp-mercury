@@ -3,7 +3,9 @@ package org.broadinstitute.gpinformatics.mercury.boundary.run;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.monitoring.HipChatMessageSender;
+import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConfig;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnectorProducer;
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -141,7 +143,7 @@ public class SolexaRunRoutingTest extends BaseEventTest{
 
         SolexaRunResource runResource =
                 new SolexaRunResource(runDao, runFactory, flowcellDao, vesselTransferEjb, router,
-                        SquidConnectorProducer.stubInstance(), hipChatMsgSender);
+                        SquidConnectorProducer.stubInstance(), hipChatMsgSender, SquidConfig.produce(Deployment.STUBBY));
 
         UriInfo uriInfoMock = EasyMock.createNiceMock(UriInfo.class);
         EasyMock.expect(uriInfoMock.getAbsolutePathBuilder()).andReturn(UriBuilder.fromPath(""));
@@ -182,7 +184,7 @@ public class SolexaRunRoutingTest extends BaseEventTest{
         VesselTransferEjb vesselTransferEjb = EasyMock.createMock(VesselTransferEjb.class);
 
         SolexaRunResource runResource = new SolexaRunResource(runDao, runFactory, flowcellDao, vesselTransferEjb,
-                router, SquidConnectorProducer.stubInstance(), hipChatMsgSender);
+                router, SquidConnectorProducer.stubInstance(), hipChatMsgSender,SquidConfig.produce(Deployment.STUBBY));
 
         UriInfo uriInfoMock = EasyMock.createNiceMock(UriInfo.class);
         EasyMock.expect(uriInfoMock.getAbsolutePathBuilder()).andReturn(UriBuilder.fromPath(""));

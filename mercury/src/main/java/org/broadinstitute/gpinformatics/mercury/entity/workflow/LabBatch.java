@@ -441,6 +441,10 @@ public class LabBatch {
         bucketEntries.add(bucketEntry);
     }
 
+    public void setCreatedOn(Date createdOn) {
+        this.createdOn = createdOn;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {

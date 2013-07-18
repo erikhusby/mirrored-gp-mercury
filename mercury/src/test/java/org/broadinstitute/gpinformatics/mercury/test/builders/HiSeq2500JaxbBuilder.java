@@ -86,7 +86,8 @@ public class HiSeq2500JaxbBuilder {
             MetadataType dilutionMetadata = new MetadataType();
             dilutionMetadata.setName(DenatureToDilutionTubeHandler.FCT_METADATA_NAME);
             dilutionMetadata.setValue(fctTicket);
-            dilutionTransferJaxb.getPositionMap().iterator().next().getReceptacle().iterator().next().getMetadata()
+            dilutionTransferJaxb.getPositionMap().iterator().next().
+                    getReceptacle().iterator().next().getMetadata()
                     .add(dilutionMetadata);
 
             bettaLimsMessageTestFactory.addMessage(messageList, dilutionTransferJaxb);
@@ -95,12 +96,6 @@ public class HiSeq2500JaxbBuilder {
                     bettaLimsMessageTestFactory.buildTubeToPlate("DilutionToFlowcellTransfer",
                             dilutionTubeBarcode, flowcellBarcode, LabEventTest.PHYS_TYPE_FLOWCELL_2_LANE,
                             LabEventTest.SECTION_ALL_2, "tube");
-            if (StringUtils.isNotBlank(dilutionTubeBarcode)) {
-                MetadataType denatureMetaData = new MetadataType();
-                denatureMetaData.setName("DesignationName");
-                denatureMetaData.setValue(squidDesignationName);
-                flowcellTransferJaxb.getSourceReceptacle().getMetadata().add(denatureMetaData);
-            }
             bettaLimsMessageTestFactory.addMessage(messageList, flowcellTransferJaxb);
             break;
         case DENATURE_TO_FLOWCELL:
@@ -109,6 +104,12 @@ public class HiSeq2500JaxbBuilder {
                     bettaLimsMessageTestFactory.buildTubeToPlate("DenatureToFlowcellTransfer",
                             denatureTubeBarcode, flowcellBarcode, LabEventTest.PHYS_TYPE_FLOWCELL_2_LANE,
                             LabEventTest.SECTION_ALL_2, "tube");
+            if (StringUtils.isNotBlank(squidDesignationName)) {
+                MetadataType denatureMetaData = new MetadataType();
+                denatureMetaData.setName("DesignationName");
+                denatureMetaData.setValue(squidDesignationName);
+                flowcellTransferJaxb.getSourceReceptacle().getMetadata().add(denatureMetaData);
+            }
             bettaLimsMessageTestFactory.addMessage(messageList, flowcellTransferJaxb);
             break;
         case STRIPTUBE_TO_FLOWCELL:

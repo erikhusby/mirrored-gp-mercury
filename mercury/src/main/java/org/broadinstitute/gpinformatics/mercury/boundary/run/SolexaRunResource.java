@@ -1,9 +1,15 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
+import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.UniformInterfaceException;
+import com.sun.jersey.api.client.config.ClientConfig;
+import com.sun.jersey.api.client.config.DefaultClientConfig;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.monitoring.HipChatMessageSender;
+import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConfig;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnector;
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.VesselTransferEjb;
@@ -15,7 +21,10 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
+import org.broadinstitute.gpinformatics.mercury.squid.generated.SolexaRunSynopsisBean;
+import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
 
+import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -23,10 +32,7 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.core.*;
 import java.io.File;
 import java.net.URI;
 import java.util.Collections;
@@ -61,12 +67,15 @@ public class SolexaRunResource {
 
     private HipChatMessageSender messageSender;
 
+    private SquidConfig squidConfig;
+
     @Inject
     public SolexaRunResource(IlluminaSequencingRunDao illuminaSequencingRunDao,
                              IlluminaSequencingRunFactory illuminaSequencingRunFactory,
                              IlluminaFlowcellDao illuminaFlowcellDao, VesselTransferEjb vesselTransferEjb,
                              MercuryOrSquidRouter router, SquidConnector connector,
-                             HipChatMessageSender messageSender) {
+                             HipChatMessageSender messageSender,
+                             SquidConfig squidConfig) {
         this.illuminaSequencingRunDao = illuminaSequencingRunDao;
         this.illuminaSequencingRunFactory = illuminaSequencingRunFactory;
         this.illuminaFlowcellDao = illuminaFlowcellDao;
@@ -74,6 +83,7 @@ public class SolexaRunResource {
         this.router = router;
         this.connector = connector;
         this.messageSender = messageSender;
+        this.squidConfig = squidConfig;
     }
 
     public SolexaRunResource() {
@@ -177,14 +187,81 @@ public class SolexaRunResource {
     @Path("/storeRunReadStructure")
     public ReadStructureRequest storeRunReadStructure(ReadStructureRequest readStructureRequest) {
 
-        IlluminaSequencingRun run = illuminaSequencingRunDao.findByBarcode(readStructureRequest.getRunBarcode());
+        ReadStructureRequest requestToReturn = null;
+        String runBarcode = readStructureRequest.getRunBarcode();
+        if (runBarcode == null) {
+            throw new ResourceException("No run barcode given.", Response.Status.NOT_FOUND);
+        }
+        // in the absence of information, route to squid
+        MercuryOrSquidRouter.MercuryOrSquid route = MercuryOrSquidRouter.MercuryOrSquid.SQUID;
 
-        if (run == null) {
-            throw new ResourceException("Unable to find a run associated with " + readStructureRequest.getRunBarcode(),
-                    Response.Status.NOT_FOUND);
+        IlluminaSequencingRun run = illuminaSequencingRunDao.findByBarcode(runBarcode);
+
+        if (run != null) {
+            // can only do routing if mercury actually knows the run
+            route = router.routeForVessels(Collections.<LabVessel>singletonList(
+                run.getSampleCartridge()
+            ));
         }
 
-        return illuminaSequencingRunFactory.storeReadsStructureDBFree(readStructureRequest, run);
+        Throwable squidError = null;
+        if (EnumSet.of(MercuryOrSquidRouter.MercuryOrSquid.SQUID,MercuryOrSquidRouter.MercuryOrSquid.BOTH).contains(route)) {
+            if (squidConfig.getMercuryDeployment() != Deployment.STUBBY) {
+                String squidUrl = squidConfig.getUrl() + "/resources/solexarunsynopsis";
+                try {
+                    sendToSquid(readStructureRequest,squidUrl);
+                }
+                catch(Throwable t) {
+                    squidError = t;
+                }
+            }
+            requestToReturn = readStructureRequest;
+        }
+
+        if (EnumSet.of(MercuryOrSquidRouter.MercuryOrSquid.MERCURY,MercuryOrSquidRouter.MercuryOrSquid.BOTH).contains(route) || run != null) {
+            // the run != null bit is there as a catch all.  if mercury knows the run, let's save the read structure data in mercury too!
+            requestToReturn = illuminaSequencingRunFactory.storeReadsStructureDBFree(readStructureRequest, run);
+        }
+
+        if (squidError != null) {
+            requestToReturn.setError("Failed while sending solexa_run_synopsis data to squid for " + runBarcode +":" + squidError.getMessage());
+        }
+        return requestToReturn;
     }
+
+    /**
+     * Sends the given read structure changes to squid's
+     * solexa_run_synopsis table
+     * @param readStructureData
+     * @param squidWSUrl
+     */
+    private void sendToSquid(@Nonnull ReadStructureRequest readStructureData,
+                             @Nonnull String squidWSUrl) {
+
+        SolexaRunSynopsisBean solexaRunSynopsis = new SolexaRunSynopsisBean();
+        solexaRunSynopsis.setRunBarcode(readStructureData.getRunBarcode());
+        solexaRunSynopsis.setLanesSequenced(readStructureData.getLanesSequenced());
+        solexaRunSynopsis.setActualReadStructure(readStructureData.getActualReadStructure());
+        solexaRunSynopsis.setSetupReadStructure(readStructureData.getSetupReadStructure());
+        solexaRunSynopsis.setImagedAreaPerLaneMM2(readStructureData.getImagedArea());
+
+        ClientConfig clientConfig = new DefaultClientConfig();
+        clientConfig.getClasses().add(JacksonJsonProvider.class);
+
+        try {
+            Client.create(clientConfig).resource(squidWSUrl)
+                    .type(MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON)
+                    .post(solexaRunSynopsis);
+        }
+        catch(UniformInterfaceException e) {
+            if (e.getResponse().getClientResponseStatus().getStatusCode() == 412) {
+                throw new RuntimeException("Run " + readStructureData.getRunBarcode() + " is not registered in squid.");
+            }
+            else {
+                throw e;
+            }
+        }
+    }
+
 
 }
