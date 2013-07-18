@@ -14,12 +14,16 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
+import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.LCSetJiraFieldFactory;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -37,6 +41,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.CreateBatchActionBean;
 
 import javax.inject.Inject;
+import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -71,6 +76,8 @@ public class BucketViewActionBean extends CoreActionBean {
     private UserBean userBean;
     @Inject
     private LabBatchDAO labBatchDAO;
+    @Inject
+    private JiraService jiraService;
 
     public static final String EXISTING_TICKET = "existingTicket";
     public static final String NEW_TICKET = "newTicket";
@@ -373,7 +380,18 @@ public class BucketViewActionBean extends CoreActionBean {
         reworkVessels = new HashSet<>(labVesselDao.findByListIdentifiers(selectedReworks));
         batch.addReworks(reworkVessels);
         batch.addLabVessels(reworkVessels);
-        //todo jac add JIRA Message?
+
+        try {
+            Set<CustomField> customFields = new HashSet<>();
+            Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
+            customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.GSSR_IDS,
+                    LCSetJiraFieldFactory.buildSamplesListString(batch)));
+            jiraService.updateIssue(batch.getJiraTicket().getTicketName(), customFields);
+        } catch (IOException e) {
+            addGlobalValidationError("IOException contacting JIRA service." + e.getMessage());
+            return new RedirectResolution(REWORK_BUCKET_PAGE);
+        }
+
         addMessage(String.format("Successfully added %d reworks to %s at the '%s'.", reworkVessels.size(),
                 selectedLcset, selectedBucket));
         return new RedirectResolution(REWORK_BUCKET_PAGE);
