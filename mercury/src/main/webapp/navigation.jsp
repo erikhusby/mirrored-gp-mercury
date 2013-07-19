@@ -91,6 +91,11 @@
                                           event="view">Buckets</stripes:link>
                         </li>
                         <li>
+                            <stripes:link id="viewReworkBuckets"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BucketViewActionBean"
+                                          event="viewRework">Rework Buckets</stripes:link>
+                        </li>
+                        <li>
                             <stripes:link id="linkDenatureToRB"
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.LinkDenatureTubeToReagentBlockActionBean"
                                           event="view">Link Denature Tube to Reagent Block</stripes:link>

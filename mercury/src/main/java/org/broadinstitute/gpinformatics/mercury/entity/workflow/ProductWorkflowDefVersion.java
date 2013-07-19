@@ -34,7 +34,9 @@ public class ProductWorkflowDefVersion implements Serializable {
 
     private String version;
     private Date effectiveDate;
-    /** e.g. Library Construction */
+    /**
+     * e.g. Library Construction
+     */
     // When serializing, we want to refer to WorkflowConfig.workflowProcessDefs, not make copies of them
     @XmlIDREF
     private final List<WorkflowProcessDef> workflowProcessDefs = new ArrayList<>();
@@ -78,8 +80,8 @@ public class ProductWorkflowDefVersion implements Serializable {
     public static WorkflowBucketDef findBucketDef(@Nonnull String workflowName, @Nonnull LabEventType stepDef) {
 
         WorkflowConfig workflowConfig = (new WorkflowLoader()).load();
-        assert(workflowConfig != null && workflowConfig.getProductWorkflowDefs() != null &&
-               !workflowConfig.getProductWorkflowDefs().isEmpty());
+        assert (workflowConfig != null && workflowConfig.getProductWorkflowDefs() != null &&
+                !workflowConfig.getProductWorkflowDefs().isEmpty());
         ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(workflowName);
         ProductWorkflowDefVersion versionResult = productWorkflowDef.getEffectiveVersion();
 
@@ -105,7 +107,7 @@ public class ProductWorkflowDefVersion implements Serializable {
         return workflowProcessDefs;
     }
 
-    public WorkflowProcessDef getProcessDefsByName (String processDefName) {
+    public WorkflowProcessDef getProcessDefsByName(String processDefName) {
         return processDefsByName.get(processDefName);
     }
 
@@ -142,7 +144,22 @@ public class ProductWorkflowDefVersion implements Serializable {
         }
         return workflowBucketDefs;
     }
+    
+    public List<WorkflowBucketDef> getCreationBuckets() {
+        List<WorkflowBucketDef> workflowBucketDefs = new ArrayList<>();
+        for (WorkflowProcessDef workflowProcessDef : workflowProcessDefs) {
+            workflowBucketDefs.addAll(workflowProcessDef.getEffectiveVersion().getCreationBuckets());
+        }
+        return workflowBucketDefs;
+    }
 
+    public List<WorkflowBucketDef> getReworkBuckets() {
+        List<WorkflowBucketDef> workflowBucketDefs = new ArrayList<>();
+        for (WorkflowProcessDef workflowProcessDef : workflowProcessDefs) {
+            workflowBucketDefs.addAll(workflowProcessDef.getEffectiveVersion().getReworkBuckets());
+        }
+        return workflowBucketDefs;
+    }
 
     /**
      * Accessor for the routing logic associated with a workflow instance.  The routing logic helps the system determine
@@ -244,7 +261,9 @@ public class ProductWorkflowDefVersion implements Serializable {
 
     /**
      * This method will find the workflow step that is associated with the given Event type
+     *
      * @param eventTypeName name of an event to use as an index to the cataloged workflow steps
+     *
      * @return found node
      */
     public LabEventNode findStepByEventType(String eventTypeName) {
@@ -291,6 +310,7 @@ public class ProductWorkflowDefVersion implements Serializable {
      * Based on the name of an event type, determine if the known previous workflow step is a bucket
      *
      * @param eventTypeName Event name associated with workflow process step
+     *
      * @return true if the step before the one associated with with the given event name is defined as a bucket by the
      *         workflow
      */
@@ -304,6 +324,7 @@ public class ProductWorkflowDefVersion implements Serializable {
      * Based on the name of an event type, determine if the known next workflow step is a bucket
      *
      * @param eventTypeName Event name associated with workflow process step
+     *
      * @return true if the step after the one associated with with the given event name is defined as a bucket by the
      *         workflow
      */
@@ -318,15 +339,14 @@ public class ProductWorkflowDefVersion implements Serializable {
      * determine if the next workflow step, that is not found on a "Branch", is bucket step
      */
     public boolean isNextNonDeadBranchStepBucket(String eventTypeName) {
-         WorkflowStepDef nextStep = getNextNonDeadBranchStep(eventTypeName);
+        WorkflowStepDef nextStep = getNextNonDeadBranchStep(eventTypeName);
 
-         return OrmUtil.proxySafeIsInstance(nextStep, WorkflowBucketDef.class);
+        return OrmUtil.proxySafeIsInstance(nextStep, WorkflowBucketDef.class);
     }
 
     /**
      * This convenience method performs both a search of a workflow step based on an event and checks if that step
      * is defined as being on a workflow branch that dead ends
-     *
      */
     public boolean isStepDeadBranch(String eventTypeName) {
 
@@ -344,7 +364,6 @@ public class ProductWorkflowDefVersion implements Serializable {
     /**
      * Similar to {@link #isNextNonDeadBranchStepBucket(String)} this method navigates forward in the Workflow to find
      * the next step that is not located on a branch of the workflow that dead ends.
-     *
      */
     public WorkflowStepDef getNextNonDeadBranchStep(String eventTypeName) {
         WorkflowStepDef nextStep = getNextStep(eventTypeName);
@@ -359,6 +378,7 @@ public class ProductWorkflowDefVersion implements Serializable {
      * the configured workflow step which is defined as the given event types' immediate predecessor
      *
      * @param eventTypeName Event name associated with workflow process step
+     *
      * @return an instance of a {@link WorkflowStepDef} that is associated with the step that is defined as the given
      *         event types' predecessor
      */
@@ -378,6 +398,7 @@ public class ProductWorkflowDefVersion implements Serializable {
      * the configured workflow step which is defined as the given event types' immediate Successor
      *
      * @param eventTypeName Event name associated with workflow process step
+     *
      * @return an instance of a {@link WorkflowStepDef} that is associated with the step that is defined as the given
      *         event types' immediate predecessor
      */
@@ -422,8 +443,10 @@ public class ProductWorkflowDefVersion implements Serializable {
 
     /**
      * Determine whether the given next event is valid for the given lab vessel.
-     * @param labVessel vessel, typically with event history
+     *
+     * @param labVessel         vessel, typically with event history
      * @param nextEventTypeName the event that the lab intends to do next
+     *
      * @return list of errors, empty if event is valid
      */
     public List<ValidationError> validate(LabVessel labVessel, String nextEventTypeName) {
@@ -432,7 +455,7 @@ public class ProductWorkflowDefVersion implements Serializable {
         LabEventNode labEventNode = findStepByEventType(nextEventTypeName);
         if (labEventNode == null) {
             errors.add(new ValidationError("Failed to find " + nextEventTypeName + " in " +
-                    productWorkflowDef.getName() + " version " + getVersion()));
+                                           productWorkflowDef.getName() + " version " + getVersion()));
         } else {
             Set<String> actualEventNames = new HashSet<>();
 
@@ -461,8 +484,10 @@ public class ProductWorkflowDefVersion implements Serializable {
     /**
      * Add predecessors to list of valid events, and if they're optional, keep adding predecessors until find one
      * that is not optional.
+     *
      * @param validPredecessorEventNames this method adds predecessors to this collection
-     * @param labEventNode node for which to evaluate predecessors
+     * @param labEventNode               node for which to evaluate predecessors
+     *
      * @return true if reached start of workflow
      */
     private boolean recurseToNonOptional(Set<String> validPredecessorEventNames, LabEventNode labEventNode) {
@@ -484,11 +509,11 @@ public class ProductWorkflowDefVersion implements Serializable {
             String actualEventName = labEvent.getLabEventType().getName();
             actualEventNames.add(actualEventName);
             if (false) {
-                if(actualEventName.equals(nextEventTypeName) && labEventNode.getStepDef().getNumberOfRepeats() == 0) {
+                if (actualEventName.equals(nextEventTypeName) && labEventNode.getStepDef().getNumberOfRepeats() == 0) {
                     errors.add(new ValidationError("Event " + nextEventTypeName + " has already occurred"));
                 }
             }
-            if(/*actualEventName.equals(nextEventTypeName) || */validPredecessorEventNames.contains(actualEventName)) {
+            if (/*actualEventName.equals(nextEventTypeName) || */validPredecessorEventNames.contains(actualEventName)) {
                 found = true;
                 break;
             }
@@ -498,8 +523,9 @@ public class ProductWorkflowDefVersion implements Serializable {
 
     /**
      * Called by JAXB, sets relationship to parent.
+     *
      * @param unmarshaller JAXB
-     * @param parent enclosing XML element
+     * @param parent       enclosing XML element
      */
     @SuppressWarnings("UnusedDeclaration")
     void afterUnmarshal(Unmarshaller unmarshaller, Object parent) {

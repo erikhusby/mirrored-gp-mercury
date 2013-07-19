@@ -1014,6 +1014,10 @@ public abstract class LabVessel implements Serializable {
         return allLabBatches;
     }
 
+    public Set<LabBatch> getReworkLabBatches() {
+        return reworkLabBatches;
+    }
+
     public Set<LabBatchStartingVessel> getLabBatchStartingVessels() {
         return labBatches;
     }

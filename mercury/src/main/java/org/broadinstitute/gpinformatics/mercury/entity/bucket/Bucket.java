@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.bucket;
 
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
 
@@ -42,10 +43,12 @@ public class Bucket {
 
     @OneToMany(mappedBy = "bucket", cascade = CascadeType.PERSIST)
     @Where(clause = "status='Active' and entry_type='PDO_ENTRY'")
+    @BatchSize(size = 100)
     private Set<BucketEntry> bucketEntries = new HashSet<>();
 
     @OneToMany(mappedBy = "bucket", cascade = CascadeType.PERSIST)
     @Where(clause = "status='Active' and entry_type='REWORK_ENTRY'")
+    @BatchSize(size = 100)
     private Set<BucketEntry> reworkEntries = new HashSet<>();
 
     @Column()
@@ -121,11 +124,10 @@ public class Bucket {
     /**
      * Helper method to add a new item into the bucket
      *
-     *
      * @param productOrderKey Business key of a Product order to associate with the new entry
      * @param vessel          Lab Vessel to enter into the bucket.
-     *
      * @param entryType
+     *
      * @return an instance of a Bucket entry which represents the lab vessel and the product order for that entry
      */
     public BucketEntry addEntry(String productOrderKey, LabVessel vessel, BucketEntry.BucketEntryType entryType) {
