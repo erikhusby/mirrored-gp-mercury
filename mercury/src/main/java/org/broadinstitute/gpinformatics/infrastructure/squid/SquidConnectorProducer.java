@@ -23,6 +23,10 @@ public class SquidConnectorProducer {
         return new SquidConnectorStub();
     }
 
+    public static SquidConnector failureStubInstance() {
+        return new SquidConnectorFailureStub();
+    }
+
     // Can't call SessionScoped beans from a message driven bean, so use RequestScoped
     @Produces
     @Default

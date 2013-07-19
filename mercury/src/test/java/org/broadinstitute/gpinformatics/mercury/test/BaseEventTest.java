@@ -32,6 +32,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressSheari
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.MiSeqReagentKitEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PreFlightEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ProductionFlowcellPath;
@@ -46,6 +47,7 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 /**
  * This class handles setting up various factories and EJBs for use in any lab event test.
@@ -347,14 +349,13 @@ public class BaseEventTest {
     /**
      * This method runs the entities through the HiSeq2500 process.
      *
-     *
-     *
-     * @param denatureRack    The denature tube rack.
-     * @param barcodeSuffix   Uniquifies the generated vessel barcodes. NOT date if test quickly invokes twice.
+     * @param denatureRack           The denature tube rack.
+     * @param barcodeSuffix          Uniquifies the generated vessel barcodes. NOT date if test quickly invokes twice.
      * @param productionFlowcellPath
-     * @param designationName Name of the designation created in Squid to support testing the systems running in
-*                        parallel
+     * @param designationName        Name of the designation created in Squid to support testing the systems running in
+     *                               parallel
      * @param workflowName
+     *
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
     public HiSeq2500FlowcellEntityBuilder runHiSeq2500FlowcellProcess(TubeFormation denatureRack, String barcodeSuffix,
@@ -362,10 +363,28 @@ public class BaseEventTest {
                                                                       ProductionFlowcellPath productionFlowcellPath,
                                                                       String designationName, String workflowName) {
 
-        String flowcellBarcode = "flowcell" + new Date().getTime();
+        String flowcellBarcode = "flowcell" + new Date().getTime() + "ADXX";
         return new HiSeq2500FlowcellEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
                 denatureRack, flowcellBarcode, barcodeSuffix, fctTicket, productionFlowcellPath,
                 designationName, workflowName).invoke();
+    }
+
+    public MiSeqReagentKitEntityBuilder runMiSeqReagentEntityBuilder(TubeFormation denatureRack, String barcodeSuffix,
+                                                                     String reagentBlockBarcode) {
+
+        char[] pool = {
+                'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i',
+                'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r',
+                's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '1',
+                '2', '3', '4', '5', '6', '7', '8', '9', '0'};
+
+        Random rnd = new Random();
+
+        String flowcellBarcode =
+                "A" + pool[rnd.nextInt(pool.length)] + pool[rnd.nextInt(pool.length)] + pool[rnd.nextInt(pool.length)]
+                + pool[rnd.nextInt(pool.length)];
+        return new MiSeqReagentKitEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
+                reagentBlockBarcode, denatureRack, flowcellBarcode).invoke();
     }
 
     /**

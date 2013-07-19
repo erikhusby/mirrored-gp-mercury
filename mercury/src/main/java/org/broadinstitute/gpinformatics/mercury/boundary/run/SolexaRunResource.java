@@ -16,10 +16,12 @@ import org.broadinstitute.gpinformatics.mercury.boundary.labevent.VesselTransfer
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.MiSeqReagentKitDao;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.MiSeqReagentKit;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
 import org.broadinstitute.gpinformatics.mercury.squid.generated.SolexaRunSynopsisBean;
 import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
@@ -69,13 +71,15 @@ public class SolexaRunResource {
 
     private SquidConfig squidConfig;
 
+    private MiSeqReagentKitDao reagentKitDao;
+
     @Inject
     public SolexaRunResource(IlluminaSequencingRunDao illuminaSequencingRunDao,
                              IlluminaSequencingRunFactory illuminaSequencingRunFactory,
                              IlluminaFlowcellDao illuminaFlowcellDao, VesselTransferEjb vesselTransferEjb,
                              MercuryOrSquidRouter router, SquidConnector connector,
                              HipChatMessageSender messageSender,
-                             SquidConfig squidConfig) {
+                             SquidConfig squidConfig, MiSeqReagentKitDao reagentKitDao) {
         this.illuminaSequencingRunDao = illuminaSequencingRunDao;
         this.illuminaSequencingRunFactory = illuminaSequencingRunFactory;
         this.illuminaFlowcellDao = illuminaFlowcellDao;
@@ -84,6 +88,7 @@ public class SolexaRunResource {
         this.connector = connector;
         this.messageSender = messageSender;
         this.squidConfig = squidConfig;
+        this.reagentKitDao = reagentKitDao;
     }
 
     public SolexaRunResource() {
@@ -105,9 +110,19 @@ public class SolexaRunResource {
                     Response.Status.INTERNAL_SERVER_ERROR);
         }
 
-        IlluminaFlowcell flowcell = illuminaFlowcellDao.findByBarcode(solexaRunBean.getFlowcellBarcode());
-        MercuryOrSquidRouter.MercuryOrSquid route = router.routeForVessels(
-                Collections.<LabVessel>singletonList(flowcell));
+        IlluminaFlowcell flowcell= illuminaFlowcellDao.findByBarcode(solexaRunBean.getFlowcellBarcode());;
+        MiSeqReagentKit reagentKit;
+        MercuryOrSquidRouter.MercuryOrSquid route;
+
+        if(StringUtils.isNotBlank(solexaRunBean.getReagentBlockBarcode())) {
+            reagentKit = reagentKitDao.findByBarcode(solexaRunBean.getReagentBlockBarcode());
+            route = router.routeForVessels(
+                    Collections.<LabVessel>singletonList(reagentKit ));
+        } else {
+
+            route = router.routeForVessels(
+                    Collections.<LabVessel>singletonList(flowcell));
+        }
 
         Response callerResponse = null;
         UriBuilder absolutePathBuilder = uriInfo.getAbsolutePathBuilder();
