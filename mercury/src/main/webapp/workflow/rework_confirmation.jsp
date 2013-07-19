@@ -32,7 +32,7 @@
             <stripes:hidden name="selectedBucket"/>
             <stripes:hidden name="selectedReworks"/>
             <h5>Adding samples :</h5>
-            <table id="selectedReworks" class="table simple">
+            <table id="selectedReworkVessels" class="table simple">
                 <thead>
                 <tr>
                     <th width="60">Vessel Name</th>

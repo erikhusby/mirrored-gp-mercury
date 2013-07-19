@@ -18,9 +18,10 @@ import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServic
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
+import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
@@ -79,6 +80,10 @@ public class BucketViewActionBean extends CoreActionBean {
     private LabBatchDAO labBatchDAO;
     @Inject
     private JiraService jiraService;
+    @Inject
+    private BucketEntryDao bucketEntryDao;
+    @Inject
+    private BucketEjb bucketEjb;
 
     public static final String EXISTING_TICKET = "existingTicket";
     public static final String NEW_TICKET = "newTicket";
@@ -87,7 +92,7 @@ public class BucketViewActionBean extends CoreActionBean {
 
     private List<WorkflowBucketDef> buckets = new ArrayList<>();
     private List<WorkflowBucketDef> reworkBuckets = new ArrayList<>();
-    private List<String> selectedVesselLabels = new ArrayList<>();
+    private List<Long> selectedVesselLabels = new ArrayList<>();
     private List<LabVessel> selectedBatchVessels;
     private List<Long> selectedReworks = new ArrayList<>();
 
@@ -361,11 +366,8 @@ public class BucketViewActionBean extends CoreActionBean {
 
     @HandlesEvent(ADD_TO_BATCH_ACTION)
     public Resolution addToBatch() {
-        if (!selectedLcset.startsWith("LCSET-")) {
-            selectedLcset = "LCSET-" + selectedLcset;
-        }
-        batch = labBatchDAO.findByBusinessKey(selectedLcset);
-        reworkVessels = new HashSet<>(labVesselDao.findByListIdentifiers(selectedReworks));
+        List<BucketEntry> reworkBucketEntries = bucketEntryDao.findByIds(selectedReworks);
+        loadReworkVessels(reworkBucketEntries);
         if (batch == null) {
             addValidationError("selectedLcset", String.format("Could not find %s.", selectedLcset));
             return new ForwardResolution(REWORK_BUCKET_PAGE);
@@ -373,14 +375,23 @@ public class BucketViewActionBean extends CoreActionBean {
         return new ForwardResolution(CONFIRMATION_PAGE);
     }
 
-    @HandlesEvent(REWORK_CONFIRMED_ACTION)
-    public Resolution reworkConfirmed() {
-        //add the samples to the new batch
+    private void loadReworkVessels(List<BucketEntry> reworkBucketEntries) {
         if (!selectedLcset.startsWith("LCSET-")) {
             selectedLcset = "LCSET-" + selectedLcset;
         }
         batch = labBatchDAO.findByBusinessKey(selectedLcset);
-        reworkVessels = new HashSet<>(labVesselDao.findByListIdentifiers(selectedReworks));
+
+        reworkVessels = new HashSet<>();
+        for (BucketEntry entry : reworkBucketEntries) {
+            reworkVessels.add(entry.getLabVessel());
+        }
+    }
+
+    @HandlesEvent(REWORK_CONFIRMED_ACTION)
+    public Resolution reworkConfirmed() {
+        //add the samples to the new batch
+        List<BucketEntry> reworkBucketEntries = bucketEntryDao.findByIds(selectedReworks);
+        loadReworkVessels(reworkBucketEntries);
         batch.addReworks(reworkVessels);
         batch.addLabVessels(reworkVessels);
 
@@ -395,9 +406,10 @@ public class BucketViewActionBean extends CoreActionBean {
             return new RedirectResolution(REWORK_BUCKET_PAGE);
         }
 
+        bucketEjb.start(reworkBucketEntries, batch);
         addMessage(String.format("Successfully added %d reworks to %s at the '%s'.", reworkVessels.size(),
                 selectedLcset, selectedBucket));
-        return new RedirectResolution(REWORK_BUCKET_PAGE);
+        return new RedirectResolution(BucketViewActionBean.class, REWORK_ACTION);
     }
 
     /**

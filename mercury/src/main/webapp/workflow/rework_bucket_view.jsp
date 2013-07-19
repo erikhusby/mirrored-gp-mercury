@@ -105,20 +105,20 @@
                 </tr>
                 </thead>
                 <tbody>
-                <c:forEach items="${actionBean.reworkEntries}" var="reworkVessel">
+                <c:forEach items="${actionBean.reworkEntries}" var="entry">
                     <tr>
                         <td>
                             <stripes:checkbox class="bucket-checkbox" name="selectedReworks"
-                                              value="${reworkVessel.labVessel.label}"/>
+                                              value="${entry.bucketEntryId}"/>
                         </td>
                         <td>
 
-                            <a href="${ctxpath}/search/vessel.action?vesselSearch=&searchKey=${reworkVessel.labVessel.label}">
-                                    ${reworkVessel.labVessel.label}
+                            <a href="${ctxpath}/search/vessel.action?vesselSearch=&searchKey=${entry.labVessel.label}">
+                                    ${entry.labVessel.label}
                             </a>
                         </td>
                         <td>
-                            <c:forEach items="${reworkVessel.labVessel.mercurySamples}"
+                            <c:forEach items="${entry.labVessel.mercurySamples}"
                                        var="mercurySample"
                                        varStatus="stat">
                                 <a href="${ctxpath}/search/sample.action?sampleSearch=&searchKey=${mercurySample.sampleKey}">
@@ -129,16 +129,16 @@
                             </c:forEach>
                         </td>
                         <td>
-                                ${actionBean.getSinglePDOBusinessKey(reworkVessel.labVessel)}
+                                ${actionBean.getSinglePDOBusinessKey(entry.labVessel)}
                         </td>
                         <td>
-                            <div class="tdfield">${actionBean.getPDODetails(actionBean.getSinglePDOBusinessKey(reworkVessel.labVessel)).title}</div>
+                            <div class="tdfield">${actionBean.getPDODetails(actionBean.getSinglePDOBusinessKey(entry.labVessel)).title}</div>
                         </td>
                         <td>
-                                ${actionBean.getUserFullName(actionBean.getPDODetails(actionBean.getSinglePDOBusinessKey(reworkVessel.labVessel)).createdBy)}
+                                ${actionBean.getUserFullName(actionBean.getPDODetails(actionBean.getSinglePDOBusinessKey(entry.labVessel)).createdBy)}
                         </td>
                         <td>
-                            <c:forEach items="${reworkVessel.labVessel.nearestWorkflowLabBatches}" var="batch"
+                            <c:forEach items="${entry.labVessel.nearestWorkflowLabBatches}" var="batch"
                                        varStatus="stat">
                                 ${batch.businessKey}
                                 <c:if test="${!stat.last}">&nbsp;</c:if>
@@ -146,16 +146,16 @@
 
                         </td>
                         <td>
-                                ${reworkVessel.reworkDetail.reworkReason.value}
+                                ${entry.reworkDetail.reworkReason.value}
                         </td>
                         <td>
-                                ${reworkVessel.reworkDetail.comment}
+                                ${entry.reworkDetail.comment}
                         </td>
                         <td>
-                                ${actionBean.getUserFullName(reworkVessel.reworkDetail.addToReworkBucketEvent.eventOperator)}
+                                ${actionBean.getUserFullName(entry.reworkDetail.addToReworkBucketEvent.eventOperator)}
                         </td>
                         <td>
-                            <fmt:formatDate value="${reworkVessel.reworkDetail.addToReworkBucketEvent.eventDate}"
+                            <fmt:formatDate value="${entry.reworkDetail.addToReworkBucketEvent.eventDate}"
                                             pattern="MM/dd/yyyy HH:mm:ss"/>
                         </td>
                     </tr>
