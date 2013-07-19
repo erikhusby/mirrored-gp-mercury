@@ -182,15 +182,12 @@ public class BaseEventTest {
         labBatchEJB.createLabBatch(workflowBatch, "scottmat", CreateFields.IssueType.EXOME_EXPRESS);
         JiraServiceStub.setCreatedIssueSuffix(defaultLcsetSuffix);
 
-        drainBucket(workflowBatch, workingBucket);
+        drainBucket(workingBucket);
         return workingBucket;
     }
 
-    public void drainBucket(LabBatch workflowBatch, Bucket workingBucket) {
+    public void drainBucket(Bucket workingBucket) {
         bucketEjb.startBucketDrain(workingBucket.getBucketEntries(), "pdunlea", null, false);
-        for (BucketEntry bucketEntry : workingBucket.getBucketEntries()) {
-            bucketEntry.setLabBatch(workflowBatch);
-        }
     }
 
     public void archiveBucketEntries(Bucket bucket) {

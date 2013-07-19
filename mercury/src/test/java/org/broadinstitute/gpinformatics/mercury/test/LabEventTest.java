@@ -259,8 +259,6 @@ public class LabEventTest extends BaseEventTest {
         Assert.assertEquals(lane1SampleInstances.iterator().next().getReagents().size(), 2,
                 "Wrong number of reagents");
 
-        illuminaFlowcell.preProcessEvents();
-
         IlluminaSequencingRunFactory illuminaSequencingRunFactory =
                 new IlluminaSequencingRunFactory(EasyMock.createNiceMock(JiraCommentUtil.class));
         IlluminaSequencingRun illuminaSequencingRun;
@@ -596,7 +594,7 @@ public class LabEventTest extends BaseEventTest {
      * add one sample from LCSET 1 to shearing bucket for LCSET 2; message both sets to completion;
      * verify that pipeline API correctly reflects LCSETS.
      */
-    @Test
+    @Test(groups = {TestGroups.DATABASE_FREE})
     public void testExomeExpressShearingRework() {
         try {
             // Use Standard Exome product, to verify that workflow is taken from LCSet, not Product
@@ -639,18 +637,20 @@ public class LabEventTest extends BaseEventTest {
             final TwoDBarcodedTube reworkTube = picoPlatingEntityBuilder1.getNormBarcodeToTubeMap().values().iterator().next();
 //            workflowBatch2.addLabVessel(reworkTube);
             Map<String, TwoDBarcodedTube> mapBarcodeToTubesPlusRework =
-                    new HashMap<>(picoPlatingEntityBuilder2.getNormBarcodeToTubeMap());
+                    new LinkedHashMap<>(picoPlatingEntityBuilder2.getNormBarcodeToTubeMap());
             mapBarcodeToTubesPlusRework.put(reworkTube.getLabel(), reworkTube);
 
             Bucket shearingBucket = createAndPopulateBucket(
                     new HashMap<String, TwoDBarcodedTube>() {{
                         put(reworkTube.getLabel(), reworkTube);
                     }}, productOrder2, "Shearing");
-            drainBucket(workflowBatch2, shearingBucket);
+            workflowBatch2.addLabVessel(reworkTube);
+            drainBucket(shearingBucket);
 
             ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder2 =
                     runExomeExpressShearingProcess(mapBarcodeToTubesPlusRework, null,
                             picoPlatingEntityBuilder2.getNormalizationBarcode(), "2");
+
             LibraryConstructionEntityBuilder libraryConstructionEntityBuilder2 =
                     runLibraryConstructionProcess(exomeExpressShearingEntityBuilder2.getShearingCleanupPlate(),
                             exomeExpressShearingEntityBuilder2.getShearCleanPlateBarcode(),
@@ -669,6 +669,15 @@ public class LabEventTest extends BaseEventTest {
                     runLibraryConstructionProcess(exomeExpressShearingEntityBuilder.getShearingCleanupPlate(),
                             exomeExpressShearingEntityBuilder.getShearCleanPlateBarcode(),
                             exomeExpressShearingEntityBuilder.getShearingPlate(), "1");
+            if (false) {
+                TransferVisualizerFrame transferVisualizerFrame = new TransferVisualizerFrame();
+                transferVisualizerFrame.renderVessel(reworkTube);
+                try {
+                    Thread.sleep(500000L);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
             HybridSelectionEntityBuilder hybridSelectionEntityBuilder =
                     runHybridSelectionProcess(libraryConstructionEntityBuilder.getPondRegRack(),
                             libraryConstructionEntityBuilder.getPondRegRackBarcode(),
@@ -714,16 +723,7 @@ public class LabEventTest extends BaseEventTest {
             ZimsIlluminaChamber zimsIlluminaChamber2 = zimsIlluminaRun2.getLanes().iterator().next();
             for (LibraryBean libraryBean : zimsIlluminaChamber2.getLibraries()) {
                 Assert.assertEquals(libraryBean.getLcSet(), workflowBatch2.getBatchName());
-//                Assert.assertEquals(libraryBean.getProductOrderKey(), productOrder2.getBusinessKey());
-            }
-            if (false) {
-                TransferVisualizerFrame transferVisualizerFrame = new TransferVisualizerFrame();
-                transferVisualizerFrame.renderVessel(reworkTube);
-                try {
-                    Thread.sleep(500000L);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
+                Assert.assertEquals(libraryBean.getProductOrderKey(), productOrder2.getBusinessKey());
             }
         } catch (IOException e) {
             throw new RuntimeException(e);

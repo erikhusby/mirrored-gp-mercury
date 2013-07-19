@@ -362,9 +362,6 @@ public abstract class LabVessel implements Serializable {
                 transfersTo.addAll(vesselContainer.getTransfersTo());
             }
         } else {
-            for (VesselContainer<?> vesselContainer : getContainers()) {
-                transfersTo.addAll(vesselContainer.getTransfersTo());
-            }
             transfersTo.addAll(getContainerRole().getTransfersTo());
         }
         // todo jmt vessel to vessel transfers
@@ -1674,10 +1671,11 @@ public abstract class LabVessel implements Serializable {
                 Set<LabBatch> computedLcSets = labEvent.computeLcSets();
                 if (computedLcSets.isEmpty()) {
                     returnLcSets.addAll(lcSetsFromRecursion);
+                    labEvent.addComputedLcSets(lcSetsFromRecursion);
                 } else {
                     returnLcSets.addAll(computedLcSets);
+                    labEvent.addComputedLcSets(computedLcSets);
                 }
-                labEvent.addComputedLcSets(returnLcSets);
 //                System.out.println(labEvent.getLabEventType() + " " + labEvent.getComputedLcSets());
             }
         }

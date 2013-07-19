@@ -14,7 +14,7 @@ import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.testng.Assert;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -73,7 +73,7 @@ public class ExomeExpressShearingEntityBuilder {
 //            labEventHandler.processEvent(shearingBucketEntity);
 
         LabEventTest.validateWorkflow("ShearingTransfer", mapBarcodeToTube.values());
-        Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
+        Map<String, LabVessel> mapBarcodeToVessel = new LinkedHashMap<>();
         if (preflightRack != null) {
             mapBarcodeToVessel.put(preflightRack.getLabel(), preflightRack);
         }
@@ -88,7 +88,6 @@ public class ExomeExpressShearingEntityBuilder {
         shearingPlate = (StaticPlate) shearingTransferEventEntity.getTargetLabVessels().iterator().next();
         Assert.assertEquals(shearingPlate.getSampleInstances().size(), mapBarcodeToTube.size(),
                                    "Wrong number of sample instances");
-
 
         // Covaris Load
 //            validateWorkflow("CovarisLoaded", shearingPlate);

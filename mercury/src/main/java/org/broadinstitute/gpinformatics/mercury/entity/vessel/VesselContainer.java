@@ -10,8 +10,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionT
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.hibernate.annotations.Parent;
-import org.jetbrains.annotations.Nullable;
 
+import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
 import javax.persistence.Embeddable;
 import javax.persistence.EnumType;
@@ -90,6 +90,7 @@ public class VesselContainer<T extends LabVessel> {
         this.embedder = embedder;
     }
 
+    @Nullable
     public T getVesselAtPosition(VesselPosition position) {
         //noinspection unchecked
         return (T) mapPositionToVessel.get(position);
@@ -112,10 +113,13 @@ public class VesselContainer<T extends LabVessel> {
      */
     public Set<LabEvent> getTransfersTo() {
         Set<LabEvent> transfersTo = getLabEventsTo();
-        // Re-arrays
+        // Need to follow Re-arrays, otherwise the chain of custody is broken.  Ignore re-arrays that add tubes
         for (LabVessel labVessel : mapPositionToVessel.values()) {
             for (VesselContainer<?> vesselContainer : labVessel.getContainers()) {
-                if (!vesselContainer.equals(this)) {
+                Set<T> containedVessels = getContainedVessels();
+                Set<? extends LabVessel> containedVesselsOther = vesselContainer.getContainedVessels();
+                if (!vesselContainer.equals(this) && (containedVessels.containsAll(containedVesselsOther) ||
+                        containedVesselsOther.containsAll(containedVessels))) {
                     transfersTo.addAll(vesselContainer.getLabEventsTo());
                 }
             }
