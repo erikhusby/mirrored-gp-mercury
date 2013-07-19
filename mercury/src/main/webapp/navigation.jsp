@@ -102,12 +102,12 @@
                         </li>
                         <security:authorizeBlock roles="<%= roles(LabUser, LabManager, PDM, PM, Developer) %>">
                             <li>
-                                <stripes:link
+                                <stripes:link id="controls"
                                         beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.CollaboratorControlsActionBean"
                                         event="list">Controls</stripes:link>
                             </li>
                             <li>
-                                <stripes:link
+                                <stripes:link id="addRework"
                                         beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.AddReworkActionBean"
                                         event="view">Add Rework</stripes:link>
                             </li>
