@@ -117,8 +117,8 @@ public class BucketEjb {
      * Start work on the specified bucket entries by archiving them (removing them from the bucket view) and associating
      * them with the given lab batch.
      *
-     * @param bucketEntries    the bucket entries being batched
-     * @param labBatch         the lab batch that the entries are being added to
+     * @param bucketEntries the bucket entries being batched
+     * @param labBatch      the lab batch that the entries are being added to
      */
     public void start(@Nonnull Collection<BucketEntry> bucketEntries, LabBatch labBatch) {
         archiveEntries(bucketEntries);
@@ -535,4 +535,5 @@ public class BucketEjb {
         }
         return bucket;
     }
+
 }

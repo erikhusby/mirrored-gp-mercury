@@ -8,6 +8,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
@@ -20,6 +21,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDa
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.AbstractBatchJiraFieldFactory;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.LCSetJiraFieldFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
@@ -124,9 +126,8 @@ public class LabBatchEjb {
 
     /**
      * This method will create a batch entity and a new JIRA Ticket for that entity.
-     *
+     * <p/>
      * TODO: consider making this private; seems strange to take a batch object, persist it, then return the same object
-     * @see #createLabBatch(org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch.LabBatchType, String, String, String, java.util.Date, String, String, java.util.Set, java.util.Set)
      *
      * @param batchObject A constructed, but not persisted, batch object containing all initial information necessary
      *                    to persist a new batch.
@@ -134,6 +135,8 @@ public class LabBatchEjb {
      * @param issueType   The type of issue to create in JIRA for this lab batch.
      *
      * @return The lab batch that was created.
+     *
+     * @see #createLabBatch(org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch.LabBatchType, String, String, String, java.util.Date, String, String, java.util.Set, java.util.Set)
      */
     public LabBatch createLabBatch(@Nonnull LabBatch batchObject, String reporter,
                                    @Nonnull CreateFields.IssueType issueType) {
@@ -177,17 +180,16 @@ public class LabBatchEjb {
     /**
      * Creates a new lab batch and archives the bucket entries used to create the batch.
      *
-     *
-     * @param labBatchType            the type of lab batch to create
-     * @param workflowName            the workflow that the batch is to run through
-     * @param bucketEntryIds          the IDs of the bucket entries to include in the batch
-     * @param reworkBucketEntryIds    the vessels being reworked to include in the batch
-     * @param batchName               the name for the batch (also the summary for JIRA)
-     * @param description             the description for the batch (for JIRA)
-     * @param dueDate                 the due date for the batch (for JIRA)
-     * @param important               the important notes for the batch (for JIRA)
-     * @param username                the user creating the batch (for JIRA)
-     * @param location                the machine location where the batch was created
+     * @param labBatchType         the type of lab batch to create
+     * @param workflowName         the workflow that the batch is to run through
+     * @param bucketEntryIds       the IDs of the bucket entries to include in the batch
+     * @param reworkBucketEntryIds the vessels being reworked to include in the batch
+     * @param batchName            the name for the batch (also the summary for JIRA)
+     * @param description          the description for the batch (for JIRA)
+     * @param dueDate              the due date for the batch (for JIRA)
+     * @param important            the important notes for the batch (for JIRA)
+     * @param username             the user creating the batch (for JIRA)
+     * @param location             the machine location where the batch was created
      *
      * @return The lab batch that was created.
      */
@@ -261,21 +263,22 @@ public class LabBatchEjb {
     /**
      * Creates a lab batch for a set of lab vessels (and reworks).
      *
-     * @param labBatchType     the type of lab batch to create
-     * @param workflowName     the workflow that the batch is to run through
-     * @param batchName        the name for the batch (also the summary for JIRA)
-     * @param description      the description for the batch (for JIRA)
-     * @param dueDate          the due date for the batch (for JIRA)
-     * @param important        the important notes for the batch (for JIRA)
-     * @param username         the user creating the batch (for JIRA)
-     * @param vessels          the vessels to include in the batch
-     * @param reworkVessels    the vessels being reworked to include in the batch
+     * @param labBatchType  the type of lab batch to create
+     * @param workflowName  the workflow that the batch is to run through
+     * @param batchName     the name for the batch (also the summary for JIRA)
+     * @param description   the description for the batch (for JIRA)
+     * @param dueDate       the due date for the batch (for JIRA)
+     * @param important     the important notes for the batch (for JIRA)
+     * @param username      the user creating the batch (for JIRA)
+     * @param vessels       the vessels to include in the batch
+     * @param reworkVessels the vessels being reworked to include in the batch
+     *
      * @return a new lab batch
      */
     public LabBatch createLabBatch(@Nonnull LabBatch.LabBatchType labBatchType, @Nonnull String workflowName,
-                                    @Nonnull String batchName, @Nonnull String description, @Nonnull Date dueDate,
-                                    @Nonnull String important, @Nonnull String username,
-                                    @Nonnull Set<LabVessel> vessels, @Nonnull Set<LabVessel> reworkVessels) {
+                                   @Nonnull String batchName, @Nonnull String description, @Nonnull Date dueDate,
+                                   @Nonnull String important, @Nonnull String username,
+                                   @Nonnull Set<LabVessel> vessels, @Nonnull Set<LabVessel> reworkVessels) {
         LabBatch batch =
                 new LabBatch(batchName, vessels, reworkVessels, labBatchType, workflowName, description, dueDate,
                         important);
@@ -436,6 +439,25 @@ public class LabBatchEjb {
         }
 
         return result;
+    }
+
+    public void updateBatchWithReworks(String businessKey, List<Long> reworkEntries) throws IOException {
+        //add the samples to the new batch
+        LabBatch batch = labBatchDao.findByBusinessKey(businessKey);
+        List<BucketEntry> reworkBucketEntries = bucketEntryDao.findByIds(reworkEntries);
+        Set<LabVessel> reworkVessels = new HashSet<>();
+        for (BucketEntry entry : reworkBucketEntries) {
+            reworkVessels.add(entry.getLabVessel());
+            entry.getBucket().removeEntry(entry);
+        }
+        batch.addReworks(reworkVessels);
+        batch.addLabVessels(reworkVessels);
+
+        Set<CustomField> customFields = new HashSet<>();
+        Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
+        customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.GSSR_IDS,
+                LCSetJiraFieldFactory.buildSamplesListString(batch)));
+        jiraService.updateIssue(batch.getJiraTicket().getTicketName(), customFields);
     }
 
     /*

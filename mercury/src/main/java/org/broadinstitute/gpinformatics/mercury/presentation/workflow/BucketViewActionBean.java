@@ -16,8 +16,6 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
-import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
-import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
@@ -25,7 +23,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDa
 import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
-import org.broadinstitute.gpinformatics.mercury.control.vessel.LCSetJiraFieldFactory;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -95,6 +92,7 @@ public class BucketViewActionBean extends CoreActionBean {
     private List<Long> selectedVesselLabels = new ArrayList<>();
     private List<LabVessel> selectedBatchVessels;
     private List<Long> selectedReworks = new ArrayList<>();
+    private List<BucketEntry> seletecReworkEntries = new ArrayList<>();
 
     @Validate(required = true, on = {CREATE_BATCH_ACTION, "viewBucket"})
     private String selectedBucket;
@@ -118,7 +116,6 @@ public class BucketViewActionBean extends CoreActionBean {
     @Validate(required = true, on = {ADD_TO_BATCH_ACTION})
     private String selectedLcset;
     private LabBatch batch;
-    private Set<LabVessel> reworkVessels;
 
     @Before(stages = LifecycleStage.BindingAndValidation)
     public void init() {
@@ -154,12 +151,12 @@ public class BucketViewActionBean extends CoreActionBean {
         this.reworkBuckets = reworkBuckets;
     }
 
-    public Set<LabVessel> getReworkVessels() {
-        return reworkVessels;
+    public List<BucketEntry> getSeletecReworkEntries() {
+        return seletecReworkEntries;
     }
 
-    public void setReworkVessels(Set<LabVessel> reworkVessels) {
-        this.reworkVessels = reworkVessels;
+    public void setSeletecReworkEntries(List<BucketEntry> seletecReworkEntries) {
+        this.seletecReworkEntries = seletecReworkEntries;
     }
 
     public LabBatch getBatch() {
@@ -381,33 +378,21 @@ public class BucketViewActionBean extends CoreActionBean {
         }
         batch = labBatchDAO.findByBusinessKey(selectedLcset);
 
-        reworkVessels = new HashSet<>();
-        for (BucketEntry entry : reworkBucketEntries) {
-            reworkVessels.add(entry.getLabVessel());
-        }
+        seletecReworkEntries = bucketEntryDao.findByIds(selectedReworks);
     }
 
     @HandlesEvent(REWORK_CONFIRMED_ACTION)
     public Resolution reworkConfirmed() {
-        //add the samples to the new batch
-        List<BucketEntry> reworkBucketEntries = bucketEntryDao.findByIds(selectedReworks);
-        loadReworkVessels(reworkBucketEntries);
-        batch.addReworks(reworkVessels);
-        batch.addLabVessels(reworkVessels);
-
         try {
-            Set<CustomField> customFields = new HashSet<>();
-            Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
-            customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.GSSR_IDS,
-                    LCSetJiraFieldFactory.buildSamplesListString(batch)));
-            jiraService.updateIssue(batch.getJiraTicket().getTicketName(), customFields);
+            if (!selectedLcset.startsWith("LCSET-")) {
+                selectedLcset = "LCSET-" + selectedLcset;
+            }
+            labBatchEjb.updateBatchWithReworks(selectedLcset, selectedReworks);
         } catch (IOException e) {
             addGlobalValidationError("IOException contacting JIRA service." + e.getMessage());
             return new RedirectResolution(REWORK_BUCKET_PAGE);
         }
-
-        bucketEjb.start(reworkBucketEntries, batch);
-        addMessage(String.format("Successfully added %d reworks to %s at the '%s'.", reworkVessels.size(),
+        addMessage(String.format("Successfully added %d reworks to %s at the '%s'.", selectedReworks.size(),
                 selectedLcset, selectedBucket));
         return new RedirectResolution(BucketViewActionBean.class, REWORK_ACTION);
     }

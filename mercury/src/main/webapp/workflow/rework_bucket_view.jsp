@@ -129,13 +129,13 @@
                             </c:forEach>
                         </td>
                         <td>
-                                ${actionBean.getSinglePDOBusinessKey(entry.labVessel)}
+                                ${entry.poBusinessKey}
                         </td>
                         <td>
-                            <div class="tdfield">${actionBean.getPDODetails(actionBean.getSinglePDOBusinessKey(entry.labVessel)).title}</div>
+                            <div class="tdfield">${actionBean.getPDODetails(entry.poBusinessKey).title}</div>
                         </td>
                         <td>
-                                ${actionBean.getUserFullName(actionBean.getPDODetails(actionBean.getSinglePDOBusinessKey(entry.labVessel)).createdBy)}
+                                ${actionBean.getUserFullName(actionBean.getPDODetails(entry.poBusinessKey).createdBy)}
                         </td>
                         <td>
                             <c:forEach items="${entry.labVessel.nearestWorkflowLabBatches}" var="batch"

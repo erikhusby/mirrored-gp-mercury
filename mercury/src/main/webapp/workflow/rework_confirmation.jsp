@@ -44,16 +44,16 @@
                 </tr>
                 </thead>
                 <tbody>
-                <c:forEach items="${actionBean.reworkVessels}" var="reworkVessel">
+                <c:forEach items="${actionBean.seletecReworkEntries}" var="entry">
                     <tr>
                         <td>
 
-                            <a href="${ctxpath}/search/vessel.action?vesselSearch=&searchKey=${reworkVessel.label}">
-                                    ${reworkVessel.label}
+                            <a href="${ctxpath}/search/vessel.action?vesselSearch=&searchKey=${entry.labVessel.label}">
+                                    ${entry.labVessel.label}
                             </a>
                         </td>
                         <td>
-                            <c:forEach items="${reworkVessel.mercurySamples}"
+                            <c:forEach items="${entry.labVessel.mercurySamples}"
                                        var="mercurySample"
                                        varStatus="stat">
                                 <a href="${ctxpath}/search/sample.action?sampleSearch=&searchKey=${mercurySample.sampleKey}">
@@ -64,16 +64,16 @@
                             </c:forEach>
                         </td>
                         <td>
-                                ${actionBean.getSinglePDOBusinessKey(reworkVessel)}
+                                ${entry.poBusinessKey}
                         </td>
                         <td>
-                            <div class="tdfield">${actionBean.getPDODetails(actionBean.getSinglePDOBusinessKey(reworkVessel)).title}</div>
+                            <div class="tdfield">${actionBean.getPDODetails(entry.poBusinessKey).title}</div>
                         </td>
                         <td>
-                                ${actionBean.getUserFullName(actionBean.getPDODetails(actionBean.getSinglePDOBusinessKey(reworkVessel)).createdBy)}
+                                ${actionBean.getUserFullName(actionBean.getPDODetails(entry.poBusinessKey).createdBy)}
                         </td>
                         <td>
-                            <c:forEach items="${reworkVessel.nearestWorkflowLabBatches}" var="batch"
+                            <c:forEach items="${entry.labVessel.nearestWorkflowLabBatches}" var="batch"
                                        varStatus="stat">
                                 ${batch.businessKey}
                                 <c:if test="${!stat.last}">&nbsp;</c:if>
