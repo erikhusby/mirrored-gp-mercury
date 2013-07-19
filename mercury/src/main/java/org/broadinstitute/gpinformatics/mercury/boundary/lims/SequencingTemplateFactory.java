@@ -136,10 +136,10 @@ public class SequencingTemplateFactory {
     @DaoFree
     public Set<VesselAndPosition> getLoadingVessels(IlluminaFlowcell flowcell) {
         Set<VesselAndPosition> loadedVesselsAndPositions = new HashSet<>();
-        for (Map.Entry<VesselPosition, LabVessel> vesselPositionEntry : flowcell.getNearestTubeAncestorsForLanes()
-                .entrySet()) {
-            loadedVesselsAndPositions.add(new VesselAndPosition(vesselPositionEntry.getValue(),
-                    vesselPositionEntry.getKey()));
+        for (Map.Entry<VesselPosition, LabVessel> vesselPositionEntry : flowcell.getNearestTubeAncestorsForLanes().entrySet()) {
+            if (vesselPositionEntry.getValue() != null) {
+                loadedVesselsAndPositions.add(new VesselAndPosition(vesselPositionEntry.getValue(),vesselPositionEntry.getKey()));
+            }
         }
         return loadedVesselsAndPositions;
     }
