@@ -121,7 +121,7 @@ public class ProductOrderSampleTest {
             }};
             sample2 = new ProductOrderSample("Sample2", new BSPSampleDTO(dataMap));
 
-            List<ProductOrderSample> samples = new ArrayList<ProductOrderSample>();
+            List<ProductOrderSample> samples = new ArrayList<>();
             samples.add(sample1);
             samples.add(sample2);
             order.setSamples(samples);
@@ -134,7 +134,7 @@ public class ProductOrderSampleTest {
         Product product = data.product;
         Product addOn = data.addOn;
 
-        List<PriceItem> expectedItems = new ArrayList<PriceItem>();
+        List<PriceItem> expectedItems = new ArrayList<>();
         expectedItems.add(product.getPrimaryPriceItem());
         expectedItems.add(addOn.getPrimaryPriceItem());
 
@@ -157,7 +157,7 @@ public class ProductOrderSampleTest {
     public static Object[][] makeAutoBillSampleData() {
         TestPDOData data = new TestPDOData("GSP-123");
         Date completedDate = new Date();
-        Set<LedgerEntry> ledgers = new HashSet<LedgerEntry>();
+        Set<LedgerEntry> ledgers = new HashSet<>();
         ledgers.add(new LedgerEntry(data.sample1, data.product.getPrimaryPriceItem(), completedDate, 1));
         ledgers.add(new LedgerEntry(data.sample1, data.addOn.getPrimaryPriceItem(), completedDate, 1));
 

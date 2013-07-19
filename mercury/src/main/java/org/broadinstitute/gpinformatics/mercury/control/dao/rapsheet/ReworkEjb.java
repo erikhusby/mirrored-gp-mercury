@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.infrastructure.ValidationWithRollbackException;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
@@ -283,29 +284,26 @@ public class ReworkEjb {
     }
 
     /**
-     * Create rework for all samples in a LabVessel;
+     * Create rework for all samples in a LabVessel.
      *
-     * @param reworkVessel
-     * @param productOrderKey
-     * @param reworkCandidate  tube/sample/PDO that is to be reworked
-     * @param reworkReason     Why is the rework being done.
-     * @param reworkFromStep   Where should the rework be reworked from.
-     * @param bucketName
-     * @param comment          text describing why you are doing this.
-     * @param workflowName     Name of the workflow in which this vessel is to be reworked
+     * TODO: make this @DaoFree; can't right now because of an eventual call to persist from LabEventFactory
+     *
+     * @param reworkVessel     the vessel being reworked
+     * @param productOrderKey  the product order that the vessel is being reworked for
+     * @param reworkReason     why the rework is being done
+     * @param reworkFromStep   where the rework should be reworked from
+     * @param bucket           the bucket to add the rework to
+     * @param comment          text describing why you are doing this
      * @param userName         the user adding the rework, in case vessels/samples need to be created on-the-fly
      *
      * @return The LabVessel instance related to the 2D Barcode given in the method call
      *
      * @throws ValidationException
      */
-    public LabVessel addRework(@Nonnull LabVessel reworkVessel, @Nonnull String productOrderKey, @Nonnull ReworkCandidate reworkCandidate,
-                               @Nonnull ReworkEntry.ReworkReason reworkReason,
-                               @Nonnull LabEventType reworkFromStep, @Nonnull String bucketName,
-                               @Nonnull String comment, @Nonnull String workflowName, @Nonnull String userName)
+    public LabVessel addRework(@Nonnull LabVessel reworkVessel, @Nonnull String productOrderKey,
+                               @Nonnull ReworkEntry.ReworkReason reworkReason, @Nonnull LabEventType reworkFromStep,
+                               @Nonnull Bucket bucket, @Nonnull String comment, @Nonnull String userName)
             throws ValidationException {
-
-        Bucket bucket = bucketEjb.findOrCreateBucket(bucketName);
         Collection<BucketEntry> bucketEntries = bucketEjb
                 .add(Collections.singleton(reworkVessel), bucket, BucketEntry.BucketEntryType.REWORK_ENTRY, userName,
                         LabEvent.UI_EVENT_LOCATION, reworkFromStep, productOrderKey);
@@ -321,25 +319,27 @@ public class ReworkEjb {
         return reworkVessel;
     }
 
-    private LabVessel getReworkLabVessel(ReworkCandidate reworkCandidate, String userName) {
-        LabVessel reworkVessel = labVesselDao.findByIdentifier(reworkCandidate.getTubeBarcode());
+    private LabVessel getReworkLabVessel(String tubeBarcode, String sampleKey, String userName) {
+        LabVessel reworkVessel = labVesselDao.findByIdentifier(tubeBarcode);
 
         if (reworkVessel == null) {
-            reworkVessel = mercuryClientEjb.createInitialVessels(Collections.singleton(reworkCandidate.getSampleKey()),
+            reworkVessel = mercuryClientEjb.createInitialVessels(Collections.singleton(sampleKey),
                     userName).iterator().next();
         }
         return reworkVessel;
     }
 
     /**
-     * Validate and add a set of reworks to the specified bucket.
+     * Validate and add a group of reworks to the specified bucket. This is the primary entry point for clients, e.g.
+     * action beans.
+     *
      *
      * @param reworkCandidates    tubes/samples/PDOs that are to be reworked
-     * @param reworkReason        predefined Text describing why the given vessels need to be reworked
-     * @param bucketName          the name of the bucket to add reworks to
-     * @param comment             Brief user comment to associate with these reworks
-     * @param workflowName        Name of the workflow in which these vessels are to be reworked
+     * @param reworkReason        predefined text describing why the given vessels need to be reworked
+     * @param comment             brief user comment to associate with these reworks
      * @param userName            the user adding the reworks, in case vessels/samples need to be created on-the-fly
+     * @param workflowName        name of the workflow in which these vessels are to be reworked
+     * @param bucketName          the name of the bucket to add reworks to
      * @return Collection of validation messages
      *
      * @throws ValidationException Thrown in the case that some checked state of any Lab Vessel will not allow the
@@ -347,66 +347,30 @@ public class ReworkEjb {
      */
     public Collection<String> addAndValidateReworks(@Nonnull Collection<ReworkCandidate> reworkCandidates,
                                                     @Nonnull ReworkEntry.ReworkReason reworkReason,
-                                                    @Nonnull String bucketName,
-                                                    @Nonnull String comment,
-                                                    @Nonnull String workflowName,
-                                                    @Nonnull String userName) throws ValidationException {
+                                                    @Nonnull String comment, @Nonnull String userName,
+                                                    @Nonnull String workflowName, @Nonnull String bucketName)
+            throws ValidationWithRollbackException {
+        Bucket bucket = bucketEjb.findOrCreateBucket(bucketName);
         Collection<String> validationMessages = new ArrayList<>();
         for (ReworkCandidate reworkCandidate : reworkCandidates) {
-            validationMessages
-                    .addAll(addAndValidateRework(reworkCandidate, reworkReason, bucketName, comment, workflowName,
-                            userName));
+            try {
+                validationMessages.addAll(
+                        addAndValidateRework(reworkCandidate, reworkReason, bucket, comment, workflowName, userName));
+            } catch (ValidationException e) {
+                throw new ValidationWithRollbackException(e);
+            }
         }
         return validationMessages;
     }
 
     /**
-     * addAndValidateRework will, like
-     * {@link #addRework(org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel, String, org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb.ReworkCandidate, org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry.ReworkReason, org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType, String, String, String, String)}, create a
-     * {@link ReworkEntry} for all samples in a vessel.
-     * <p/>
-     * In addition to creating a ReworkEntry, this method will execute some validation rules against the rework entry
-     * for the sole purpose of informing the user of the state of the vessel that they have just submitted for rework.
-     *
+     * Validate and add a single rework to the specified bucket.
      *
      * @param reworkCandidate     tube/sample/PDO that is to be reworked
-     * @param reworkReason        predefined Text describing why the given vessel needs to be reworked
-     * @param reworkFromStep      Step in the workflow at which rework is to begin
+     * @param reworkReason        predefined text describing why the given vessel needs to be reworked
      * @param bucketName          the name of the bucket to add rework to
-     * @param comment             Brief user comment to associate with this rework.
-     * @param workflowName        Name of the workflow in which this vessel is to be reworked
-     * @param userName            the user adding the rework, in case vessels/samples need to be created on-the-fly
-     * @return Collection of validation messages
-     *
-     * @throws ValidationException Thrown in the case that some checked state of the Lab Vessel will not allow the
-     *                             method to continue
-     * @deprecated use signature that does not take a LabEventType instead
-     */
-    public Collection<String> addAndValidateRework(@Nonnull ReworkCandidate reworkCandidate,
-                                                   @Nonnull ReworkEntry.ReworkReason reworkReason,
-                                                   @Nonnull LabEventType reworkFromStep,
-                                                   @Nonnull String bucketName,
-                                                   @Nonnull String comment,
-                                                   @Nonnull String workflowName,
-                                                   @Nonnull String userName)
-            throws ValidationException {
-
-        return addAndValidateRework(reworkCandidate, reworkReason, bucketName, comment, workflowName, userName);
-    }
-
-    /**
-     * addAndValidateRework will, like
-     * {@link #addRework(org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel, String, org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb.ReworkCandidate, org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry.ReworkReason, org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType, String, String, String, String)}, create a
-     * {@link ReworkEntry} for all samples in a vessel.
-     * <p/>
-     * In addition to creating a ReworkEntry, this method will execute some validation rules against the rework entry
-     * for the sole purpose of informing the user of the state of the vessel that they have just submitted for rework.
-     *
-     * @param reworkCandidate     tube/sample/PDO that is to be reworked
-     * @param reworkReason        predefined Text describing why the given vessel needs to be reworked
-     * @param bucketName          the name of the bucket to add rework to
-     * @param comment             Brief user comment to associate with this rework.
-     * @param workflowName        Name of the workflow in which this vessel is to be reworked
+     * @param comment             brief user comment to associate with this rework
+     * @param workflowName        name of the workflow in which this vessel is to be reworked
      * @param userName            the user adding the rework, in case vessels/samples need to be created on-the-fly
      * @return Collection of validation messages
      *
@@ -421,6 +385,49 @@ public class ReworkEjb {
                                                    @Nonnull String userName)
         throws ValidationException {
 
+        Bucket bucket = bucketEjb.findOrCreateBucket(bucketName);
+        return addAndValidateRework(reworkCandidate, reworkReason, bucket, comment, workflowName, userName);
+    }
+
+    /**
+     * Validate and add a single rework to the specified bucket.
+     *
+     * @param reworkCandidate     tube/sample/PDO that is to be reworked
+     * @param reworkReason        predefined Text describing why the given vessel needs to be reworked
+     * @param bucket              the bucket to add rework to
+     * @param comment             brief user comment to associate with this rework
+     * @param workflowName        name of the workflow in which this vessel is to be reworked
+     * @param userName            the user adding the rework, in case vessels/samples need to be created on-the-fly
+     * @return Collection of validation messages
+     *
+     * @throws ValidationException Thrown in the case that some checked state of the Lab Vessel will not allow the
+     *                             method to continue
+     */
+    private Collection<String> addAndValidateRework(@Nonnull ReworkCandidate reworkCandidate,
+                                                    @Nonnull ReworkEntry.ReworkReason reworkReason,
+                                                    @Nonnull Bucket bucket,
+                                                    @Nonnull String comment,
+                                                    @Nonnull String workflowName,
+                                                    @Nonnull String userName)
+            throws ValidationException {
+
+        WorkflowBucketDef bucketDef = findWorkflowBucketDef(workflowName, bucket.getBucketDefinitionName());
+        LabEventType reworkFromStep = bucketDef.getBucketEventType();
+
+        LabVessel reworkVessel =
+                getReworkLabVessel(reworkCandidate.getTubeBarcode(), reworkCandidate.getSampleKey(), userName);
+
+        Collection<String> validationMessages =
+                validateReworkItem(reworkVessel, ProductWorkflowDefVersion.findBucketDef(workflowName, reworkFromStep),
+                        reworkCandidate.getProductOrderKey(), reworkCandidate.getSampleKey());
+
+        addRework(reworkVessel, reworkCandidate.getProductOrderKey(), reworkReason, reworkFromStep, bucket, comment,
+                userName);
+
+        return validationMessages;
+    }
+
+    private WorkflowBucketDef findWorkflowBucketDef(String workflowName, String bucketName) {
         WorkflowConfig workflowConfig = workflowLoader.load();
         ProductWorkflowDefVersion workflowDefVersion = workflowConfig.getWorkflowByName(workflowName)
                 .getEffectiveVersion();
@@ -428,17 +435,7 @@ public class ReworkEjb {
         if (bucketDef == null) {
             throw new RuntimeException("Could not find bucket definition for: " + bucketName);
         }
-        LabEventType reworkFromStep = bucketDef.getBucketEventType();
-
-        LabVessel reworkVessel = getReworkLabVessel(reworkCandidate, userName);
-
-        Collection<String> validationMessages =
-                validateReworkItem(reworkVessel, ProductWorkflowDefVersion.findBucketDef(workflowName, reworkFromStep),
-                        reworkCandidate.getProductOrderKey(), reworkCandidate.getSampleKey());
-
-        addRework(reworkVessel, reworkCandidate.getProductOrderKey(), reworkCandidate, reworkReason, reworkFromStep, bucketName, comment, workflowName, userName);
-
-        return validationMessages;
+        return bucketDef;
     }
 
     /**
@@ -486,7 +483,10 @@ public class ReworkEjb {
                                  @Nonnull LabEventType reworkFromStep, @Nonnull String comment, String workflowName,
                                  String userName)
             throws ValidationException {
-        LabVessel reworkVessel = getReworkLabVessel(new ReworkCandidate(labVesselBarcode), userName);
+        final ReworkCandidate reworkCandidate = new ReworkCandidate(labVesselBarcode);
+        LabVessel reworkVessel = getReworkLabVessel(reworkCandidate.getTubeBarcode(), reworkCandidate.getSampleKey(),
+                userName
+        );
         batch.addReworks(Arrays.asList(reworkVessel));
     }
 

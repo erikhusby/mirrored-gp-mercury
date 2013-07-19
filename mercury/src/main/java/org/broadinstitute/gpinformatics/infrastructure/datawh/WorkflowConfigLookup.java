@@ -39,6 +39,8 @@ public class WorkflowConfigLookup implements Serializable {
                 LabEventType.SAMPLES_DAUGHTER_PLATE_CREATION.getName()));
         syntheticWorkflowConfigs.add(new WorkflowConfigDenorm(NOV_1_2012, "BSP", "0", "BSP", "0",
                 LabEventType.SAMPLES_EXTRACTION_START.getName(), LabEventType.SAMPLES_EXTRACTION_START.getName()));
+        syntheticWorkflowConfigs.add(new WorkflowConfigDenorm(NOV_1_2012, "BSP", "0", "BSP", "0",
+                LabEventType.SAMPLE_IMPORT.getName(), LabEventType.SAMPLE_IMPORT.getName()));
     }
 
 
