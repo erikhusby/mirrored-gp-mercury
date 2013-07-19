@@ -32,6 +32,7 @@ fi
 ROOT_DIR=`grep -Ei '^rootDir:' ${DB_PARAMS_FILE} | sed -e 's/^rootDir://' | tr -d ' '`
 
 NEW_DIR=${ROOT_DIR}/new
+DONE_DIR=${ROOT_DIR}/done
 LOCKFILE=${NEW_DIR}/.lockfile
 LAST_ETL_RUN_FILE=${NEW_DIR}/last_etl_run
 LAST_CRON_RUN_FILE=~/dw_etl.log
@@ -45,21 +46,18 @@ if [ ! -e ${LAST_CRON_RUN_FILE} ]; then
    exit 1
 fi
 
-# Time in seconds.
-tmp="`ls -l ${LAST_ETL_RUN_FILE} | cut -d ' ' -f 6,7,8`"
-let lastExtractTransform="`date -d ${tmp} +%s`"
-tmp="`ls -l ${LAST_CRON_RUN_FILE} | cut -d ' ' -f 6,7,8`"
-let lastCronRun="`date -d ${tmp} +%s`"
+# Gets the last modified timestamps, in seconds since start of the epoch.
+
+let lastExtractTransform=`ls -l --time-style=+%s ${LAST_ETL_RUN_FILE} | cut -d ' ' -f 6`
+let lastCronRun=`ls -l --time-style=+%s ${LAST_CRON_RUN_FILE} | cut -d ' ' -f 6`
 let now=`date +%s`
 
-# Time in hours.
-let hourDiffExtractTransform=$(now-lastExtractTransform)/(60*60)
-let hourDiffCronRun=$(now-lastCronRun)/(60*60)
-
-if [[ ${hourDiffExtractTransform} > ${hourThresholdForWarning} ]]; then
-   echo "ETL (extract changes from Mercury application) has not run in ${hourDiffExtractTransform} hours."
-fi
-if [[ ${hourDiffCronRun} > ${hourThresholdForWarning} ]]; then
-   echo "ETL (load changes into database) has not run in ${hourDiffCronRun} hours."
+let "hourDiff = (now-lastExtractTransform)/(60*60)"
+if (( ${hourDiff} > ${hourThresholdForWarning} )); then
+   echo "Incremental ETL has not run in ${hourDiff} hours (i.e. extracting any data changes from Mercury application)."
 fi
 
+let "hourDiff = (now-lastCronRun)/(60*60)"
+if (( ${hourDiff} > ${hourThresholdForWarning} )); then
+   echo "ETL has not run in ${hourDiff} hours (i.e. loading any data changes into the warehouse database)."
+fi
