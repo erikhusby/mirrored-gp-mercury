@@ -441,8 +441,15 @@ public class LabBatchEjb {
         return result;
     }
 
+    /**
+     * This method adds rework entries to an existing lab batch.
+     *
+     * @param businessKey   The business key for the lab batch we are adding samples to.
+     * @param reworkEntries The rework bucket entries whose vessels are being added to the batch.
+     *
+     * @throws IOException This exception is thrown when the JIRA service can not be contacted.
+     */
     public void updateBatchWithReworks(String businessKey, List<Long> reworkEntries) throws IOException {
-        //add the samples to the new batch
         LabBatch batch = labBatchDao.findByBusinessKey(businessKey);
         List<BucketEntry> reworkBucketEntries = bucketEntryDao.findByIds(reworkEntries);
         Set<LabVessel> reworkVessels = new HashSet<>();
