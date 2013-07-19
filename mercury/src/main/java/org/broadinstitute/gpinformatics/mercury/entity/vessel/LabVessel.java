@@ -826,12 +826,16 @@ public abstract class LabVessel implements Serializable {
                             foundBucketEntries++;
                         }
                     }
-                    if (foundBucketEntries != 1) {
+                    if (foundBucketEntries > 1 || foundBucketEntries == 0 && !isBspEvent(labEvent)) {
                         throw new RuntimeException("Expected 1 bucket entry, found " + foundBucketEntries);
                     }
                 }
             }
         }
+    }
+
+    private static boolean isBspEvent(LabEvent labEvent) {
+        return labEvent.getEventLocation().equals("BSP");
     }
 
     /**
