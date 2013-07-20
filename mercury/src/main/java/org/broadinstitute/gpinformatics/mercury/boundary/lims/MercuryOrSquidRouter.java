@@ -262,7 +262,15 @@ public class MercuryOrSquidRouter implements Serializable {
                                     // For system-of-record, controls defer to their travel partners.
                                     // TODO: Figure out how to handle this for validation and production sets in Mercury
                                     if (intent != Intent.SYSTEM_OF_RECORD) {
-                                        routingOptions.add(BOTH);
+                                        String workflowName = possibleControl.getWorkflowName();
+                                        LabBatch effectiveBatch = possibleControl.getLabBatch();
+                                        if (workflowName != null && effectiveBatch != null) {
+                                            ProductWorkflowDefVersion productWorkflowDef = getWorkflowVersion(workflowName,
+                                                    effectiveBatch.getCreatedOn());
+                                            routingOptions.add(productWorkflowDef.getRouting());
+                                        } else {
+                                            routingOptions.add(BOTH);
+                                        }
                                     }
                                 } else {
                                     routingOptions.add(SQUID);
