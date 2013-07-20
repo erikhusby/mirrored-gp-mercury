@@ -891,7 +891,10 @@ public abstract class LabVessel implements Serializable {
             }
         }
         if (bucketEntries.size() == 1) {
-            traversalResults.setBucketEntry(bucketEntries.iterator().next());
+            BucketEntry bucketEntry = bucketEntries.iterator().next();
+            if (bucketEntry.getReworkDetail() == null) {
+                traversalResults.setBucketEntry(bucketEntry);
+            }
         }
 
         for (Reagent reagent : getReagentContents()) {

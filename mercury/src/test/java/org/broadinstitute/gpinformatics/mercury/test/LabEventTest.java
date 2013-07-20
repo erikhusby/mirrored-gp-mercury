@@ -40,7 +40,10 @@ import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowValidator;
 import org.broadinstitute.gpinformatics.mercury.control.zims.ZimsIlluminaRunFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkDetail;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.DesignedReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
@@ -646,6 +649,9 @@ public class LabEventTest extends BaseEventTest {
                     }}, productOrder2, "Shearing");
             workflowBatch2.addLabVessel(reworkTube);
             drainBucket(shearingBucket);
+            reworkTube.getBucketEntries().iterator().next().setReworkDetail(new ReworkDetail(
+                    ReworkEntry.ReworkReason.MACHINE_ERROR, ReworkEntry.ReworkLevel.ONE_SAMPLE_RELEASE_REST_BATCH,
+                    LabEventType.SHEARING_TRANSFER, "test", null));
 
             ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder2 =
                     runExomeExpressShearingProcess(mapBarcodeToTubesPlusRework, null,
@@ -669,15 +675,6 @@ public class LabEventTest extends BaseEventTest {
                     runLibraryConstructionProcess(exomeExpressShearingEntityBuilder.getShearingCleanupPlate(),
                             exomeExpressShearingEntityBuilder.getShearCleanPlateBarcode(),
                             exomeExpressShearingEntityBuilder.getShearingPlate(), "1");
-            if (false) {
-                TransferVisualizerFrame transferVisualizerFrame = new TransferVisualizerFrame();
-                transferVisualizerFrame.renderVessel(reworkTube);
-                try {
-                    Thread.sleep(500000L);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-            }
             HybridSelectionEntityBuilder hybridSelectionEntityBuilder =
                     runHybridSelectionProcess(libraryConstructionEntityBuilder.getPondRegRack(),
                             libraryConstructionEntityBuilder.getPondRegRackBarcode(),
@@ -709,6 +706,15 @@ public class LabEventTest extends BaseEventTest {
             for (LibraryBean libraryBean : zimsIlluminaChamber1.getLibraries()) {
                 Assert.assertEquals(libraryBean.getLcSet(), workflowBatch1.getBatchName());
                 Assert.assertEquals(libraryBean.getProductOrderKey(), productOrder1.getBusinessKey());
+            }
+            if (false) {
+                TransferVisualizerFrame transferVisualizerFrame = new TransferVisualizerFrame();
+                transferVisualizerFrame.renderVessel(reworkTube);
+                try {
+                    Thread.sleep(500000L);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
             }
 
             SolexaRunBean runBean2 = new SolexaRunBean(flowcellBarcode, flowcellBarcode + dateFormat.format(runDate),
