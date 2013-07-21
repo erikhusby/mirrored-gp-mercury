@@ -359,10 +359,10 @@ public abstract class LabVessel implements Serializable {
         Set<LabEvent> transfersTo = new HashSet<>();
         if (getContainerRole() == null) {
             for (VesselContainer<?> vesselContainer : getContainers()) {
-                transfersTo.addAll(vesselContainer.getTransfersTo());
+                transfersTo.addAll(vesselContainer.getTransfersToWithRearrays());
             }
         } else {
-            transfersTo.addAll(getContainerRole().getTransfersTo());
+            transfersTo.addAll(getContainerRole().getTransfersToWithRearrays());
         }
         // todo jmt vessel to vessel transfers
         return transfersTo;

@@ -111,8 +111,8 @@ public class VesselContainer<T extends LabVessel> {
      * Gets transfers to this container.  Includes re-arrays.
      * @return transfers to
      */
-    public Set<LabEvent> getTransfersTo() {
-        Set<LabEvent> transfersTo = getLabEventsTo();
+    public Set<LabEvent> getTransfersToWithRearrays() {
+        Set<LabEvent> transfersTo = getTransfersTo();
         // Need to follow Re-arrays, otherwise the chain of custody is broken.  Ignore re-arrays that add tubes
         for (LabVessel labVessel : mapPositionToVessel.values()) {
             for (VesselContainer<?> vesselContainer : labVessel.getContainers()) {
@@ -120,7 +120,7 @@ public class VesselContainer<T extends LabVessel> {
                 Set<? extends LabVessel> containedVesselsOther = vesselContainer.getContainedVessels();
                 if (!vesselContainer.equals(this) && (containedVessels.containsAll(containedVesselsOther) ||
                         containedVesselsOther.containsAll(containedVessels))) {
-                    transfersTo.addAll(vesselContainer.getLabEventsTo());
+                    transfersTo.addAll(vesselContainer.getTransfersTo());
                 }
             }
         }
@@ -132,7 +132,7 @@ public class VesselContainer<T extends LabVessel> {
      * Gets transfers to this container.  Does not include re-arrays, to avoid recursion.
      * @return transfers to
      */
-    private Set<LabEvent> getLabEventsTo() {
+    public Set<LabEvent> getTransfersTo() {
         Set<LabEvent> transfersTo = new HashSet<>();
         for (SectionTransfer sectionTransfer : sectionTransfersTo) {
             transfersTo.add(sectionTransfer.getLabEvent());
