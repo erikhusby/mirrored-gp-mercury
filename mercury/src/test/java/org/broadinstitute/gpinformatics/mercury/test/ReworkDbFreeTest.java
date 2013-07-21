@@ -5,7 +5,7 @@ import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServic
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.LabEventTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
-import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabBatchComposition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -178,16 +178,13 @@ public class ReworkDbFreeTest extends BaseEventTest {
         LabBatch origBatch =
                 new LabBatch("origBatch", new HashSet<LabVessel>(origRackMap.values()), LabBatch.LabBatchType.WORKFLOW);
         origBatch.setWorkflowName("Exome Express");
+        bucketBatchAndDrain(origRackMap, productOrder, origBatch, origLcsetSuffix);
         PicoPlatingEntityBuilder pplatingEntityBuilder1 = runPicoPlatingProcess(
                 origRackMap,
-                productOrder,
-                origBatch,
-                origLcsetSuffix,
                 origRackBarcodeSuffix,
                 "1", true);
 
         ExomeExpressShearingEntityBuilder shearingEntityBuilder1 = runExomeExpressShearingProcess(
-                productOrder,
                 pplatingEntityBuilder1.getNormBarcodeToTubeMap(),
                 pplatingEntityBuilder1.getNormTubeFormation(),
                 pplatingEntityBuilder1.getNormalizationBarcode(),
@@ -212,16 +209,13 @@ public class ReworkDbFreeTest extends BaseEventTest {
         LabBatch reworkBatch = new LabBatch("reworkBatch", new HashSet<LabVessel>(reworkRackMap.values()),
                 LabBatch.LabBatchType.WORKFLOW);
         reworkBatch.setWorkflowName("Exome Express");
+        bucketBatchAndDrain(reworkRackMap, productOrder, reworkBatch, reworkLcsetSuffix);
         PicoPlatingEntityBuilder pplatingEntityBuilder2 = runPicoPlatingProcess(
                 reworkRackMap,
-                productOrder,
-                reworkBatch,
-                reworkLcsetSuffix,
                 reworkRackBarcodeSuffix,
                 "2", true);
 
         ExomeExpressShearingEntityBuilder shearingEntityBuilder2 = runExomeExpressShearingProcess(
-                productOrder,
                 pplatingEntityBuilder2.getNormBarcodeToTubeMap(),
                 pplatingEntityBuilder2.getNormTubeFormation(),
                 pplatingEntityBuilder2.getNormalizationBarcode(),
@@ -291,19 +285,19 @@ public class ReworkDbFreeTest extends BaseEventTest {
                 new HashSet<LabVessel>(mapBarcodeToTube2.values()), LabBatch.LabBatchType.WORKFLOW);
         workflowBatch2.setWorkflowName("Exome Express");
 
-        PicoPlatingEntityBuilder picoPlatingEntityBuilder1 = runPicoPlatingProcess(mapBarcodeToTube1, productOrder1,
-                workflowBatch1, "1", String.valueOf(runDate.getTime()), "1", true);
-        PicoPlatingEntityBuilder picoPlatingEntityBuilder2 = runPicoPlatingProcess(mapBarcodeToTube2, productOrder2,
-                workflowBatch2, "2", String.valueOf(runDate.getTime()), "2", true);
+        bucketBatchAndDrain(mapBarcodeToTube1, productOrder1, workflowBatch1, "1");
+        PicoPlatingEntityBuilder picoPlatingEntityBuilder1 = runPicoPlatingProcess(mapBarcodeToTube1,
+                String.valueOf(runDate.getTime()), "1", true);
+        bucketBatchAndDrain(mapBarcodeToTube2, productOrder2, workflowBatch2, "2");
+        PicoPlatingEntityBuilder picoPlatingEntityBuilder2 = runPicoPlatingProcess(mapBarcodeToTube2,
+                String.valueOf(runDate.getTime()), "2", true);
 
         ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder1 = runExomeExpressShearingProcess(
-                productOrder1, picoPlatingEntityBuilder1.getNormBarcodeToTubeMap(),
-                picoPlatingEntityBuilder1.getNormTubeFormation(), picoPlatingEntityBuilder1.getNormalizationBarcode(),
-                "1");
+                picoPlatingEntityBuilder1.getNormBarcodeToTubeMap(),
+                picoPlatingEntityBuilder1.getNormTubeFormation(), picoPlatingEntityBuilder1.getNormalizationBarcode(), "1");
         ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder2 = runExomeExpressShearingProcess(
-                productOrder1, picoPlatingEntityBuilder2.getNormBarcodeToTubeMap(),
-                picoPlatingEntityBuilder2.getNormTubeFormation(), picoPlatingEntityBuilder1.getNormalizationBarcode(),
-                "2");
+                picoPlatingEntityBuilder2.getNormBarcodeToTubeMap(),
+                picoPlatingEntityBuilder2.getNormTubeFormation(), picoPlatingEntityBuilder1.getNormalizationBarcode(), "2");
         if (false) {
             TransferVisualizerFrame transferVisualizerFrame = new TransferVisualizerFrame();
             transferVisualizerFrame.renderVessel(stringTwoDBarcodedTubeEntry.getValue());

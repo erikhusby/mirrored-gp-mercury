@@ -39,7 +39,11 @@ import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRu
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowValidator;
 import org.broadinstitute.gpinformatics.mercury.control.zims.ZimsIlluminaRunFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkDetail;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.DesignedReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
@@ -217,36 +221,39 @@ public class LabEventTest extends BaseEventTest {
      */
     @Test(groups = {TestGroups.DATABASE_FREE})
     public void testHybridSelection() {
-        // Controller.startCPURecording(true);
+//        Controller.startCPURecording(true);
 
-        ProductOrder productOrder = ProductOrderTestFactory.buildHybridSelectionProductOrder(NUM_POSITIONS_IN_RACK,
+        // todo jmt receipt batch?
+        ProductOrder productOrder = ProductOrderTestFactory.buildHybridSelectionProductOrder(NUM_POSITIONS_IN_RACK - 2,
                 "A");
         AthenaClientServiceStub.addProductOrder(productOrder);
         productOrder.getResearchProject().setJiraTicketKey("RP-123");
 
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
 
-        // Create the batch with two less tubes, controls don't go in the batch
-        ArrayList<TwoDBarcodedTube> tubesWithoutControls = new ArrayList<>(mapBarcodeToTube.values());
-        tubesWithoutControls.remove(tubesWithoutControls.size() - 1);
-        tubesWithoutControls.remove(tubesWithoutControls.size() - 1);
         LabBatch workflowBatch = new LabBatch("Hybrid Selection Batch",
-                new HashSet<LabVessel>(tubesWithoutControls), LabBatch.LabBatchType.WORKFLOW);
+                new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
         workflowBatch.setWorkflowName("Hybrid Selection");
+        bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
 
-        PreFlightEntityBuilder preFlightEntityBuilder =
-                runPreflightProcess(mapBarcodeToTube, productOrder, workflowBatch, "1");
-        ShearingEntityBuilder shearingEntityBuilder =
-                runShearingProcess(mapBarcodeToTube, preFlightEntityBuilder.getTubeFormation(),
-                        preFlightEntityBuilder.getRackBarcode(), "1");
-        LibraryConstructionEntityBuilder libraryConstructionEntityBuilder =
-                runLibraryConstructionProcess(shearingEntityBuilder.getShearingCleanupPlate(),
-                        shearingEntityBuilder.getShearCleanPlateBarcode(), shearingEntityBuilder.getShearingPlate(),
-                        "1");
-        HybridSelectionEntityBuilder hybridSelectionEntityBuilder =
-                runHybridSelectionProcess(libraryConstructionEntityBuilder.getPondRegRack(),
-                        libraryConstructionEntityBuilder.getPondRegRackBarcode(),
-                        libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), "1");
+        TubeFormation daughterTubeFormation = daughterPlateTransfer(mapBarcodeToTube);
+
+        Map<String, TwoDBarcodedTube> mapBarcodeToDaughterTube = new HashMap<>();
+        for (TwoDBarcodedTube twoDBarcodedTube : daughterTubeFormation.getContainerRole().getContainedVessels()) {
+            mapBarcodeToDaughterTube.put(twoDBarcodedTube.getLabel(), twoDBarcodedTube);
+        }
+
+        PreFlightEntityBuilder preFlightEntityBuilder = runPreflightProcess(mapBarcodeToDaughterTube,
+                "1");
+        ShearingEntityBuilder shearingEntityBuilder = runShearingProcess(mapBarcodeToDaughterTube,
+                preFlightEntityBuilder.getTubeFormation(), preFlightEntityBuilder.getRackBarcode(), "1");
+        LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = runLibraryConstructionProcess(
+                shearingEntityBuilder.getShearingCleanupPlate(), shearingEntityBuilder.getShearCleanPlateBarcode(),
+                shearingEntityBuilder.getShearingPlate(), "1");
+        HybridSelectionEntityBuilder hybridSelectionEntityBuilder = runHybridSelectionProcess(
+                libraryConstructionEntityBuilder.getPondRegRack(),
+                libraryConstructionEntityBuilder.getPondRegRackBarcode(),
+                libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), "1");
         QtpEntityBuilder qtpEntityBuilder = runQtpProcess(hybridSelectionEntityBuilder.getNormCatchRack(),
                 hybridSelectionEntityBuilder.getNormCatchBarcodes(),
                 hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), "Hybrid Selection", "1");
@@ -300,7 +307,10 @@ public class LabEventTest extends BaseEventTest {
         for (LibraryBean bean : zimsIlluminaChamber.getLibraries()) {
             // Every library should have an LCSET, even controls.
             Assert.assertEquals(bean.getLcSet(), workflowBatch.getBatchName());
-            Assert.assertEquals(bean.getProductOrderKey(), productOrder.getBusinessKey());
+//            if (!((libraryBean.isPositiveControl() != null && libraryBean.isPositiveControl()) ||
+//                  (libraryBean.isNegativeControl() != null && libraryBean.isNegativeControl()))) {
+//                Assert.assertEquals(bean.getProductOrderKey(), productOrder.getBusinessKey());
+//            }
         }
 
         ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
@@ -309,6 +319,7 @@ public class LabEventTest extends BaseEventTest {
                 TransferTraverserCriteria.TraversalDirection.Descendants);
         List<String> labEventNames = transferTraverserCriteria.getAllEventNamesPerHop();
         String[] expectedEventNames = {
+                "SamplesDaughterPlateCreation",
                 "PreflightPicoSetup",
                 "PreflightPicoSetup",
                 "PreflightPostNormPicoSetup",
@@ -348,7 +359,7 @@ public class LabEventTest extends BaseEventTest {
         transferEntityGrapher.setMaxNumVesselsPerRequest(1000);
         Graph graph = new Graph();
         transferEntityGrapher.startWithTube(startingTube, graph, new ArrayList<TransferVisualizer.AlternativeId>());
-        Assert.assertEquals(graph.getMapIdToVertex().size(), 1308, "Wrong number of vertices");
+        Assert.assertEquals(graph.getMapIdToVertex().size(), 1690, "Wrong number of vertices");
 //        Controller.stopCPURecording();
     }
 
@@ -357,7 +368,7 @@ public class LabEventTest extends BaseEventTest {
      * Build object graph for Exome Express messages, verify chain of events.
      */
     @Test(groups = {TestGroups.DATABASE_FREE})
-    public void testExomeExpress() throws Exception {
+    public void testExomeExpress() {
 //        Controller.startCPURecording(true);
         // Use Standard Exome product, to verify that workflow is taken from LCSet, not Product
         ProductOrder productOrder = ProductOrderTestFactory.buildHybridSelectionProductOrder(96, "A");
@@ -369,10 +380,11 @@ public class LabEventTest extends BaseEventTest {
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
         workflowBatch.setWorkflowName("Exome Express");
 
-        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube, productOrder,
-                workflowBatch, null, String.valueOf(runDate.getTime()), "1", true);
+        bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
+        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube,
+                String.valueOf(runDate.getTime()), "1", true);
         ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder =
-                runExomeExpressShearingProcess(productOrder, picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
+                runExomeExpressShearingProcess(picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
                         picoPlatingEntityBuilder.getNormTubeFormation(),
                         picoPlatingEntityBuilder.getNormalizationBarcode(), "1");
         LibraryConstructionEntityBuilder libraryConstructionEntityBuilder =
@@ -533,13 +545,17 @@ public class LabEventTest extends BaseEventTest {
         Assert.assertEquals(lane2SampleInstances.iterator().next().getReagents().size(), 2,
                 "Wrong number of reagents");
 
-        String machineName = "Superman";
-
         SimpleDateFormat dateFormat = new SimpleDateFormat(IlluminaSequencingRun.RUN_FORMAT_PATTERN);
 
-        File runPath = File.createTempFile("tempRun" + dateFormat.format(runDate), ".txt");
+        File runPath;
+        try {
+            runPath = File.createTempFile("tempRun" + dateFormat.format(runDate), ".txt");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         String flowcellBarcode = hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell().getCartridgeBarcode();
 
+        String machineName = "Superman";
         SolexaRunBean runBean = new SolexaRunBean(flowcellBarcode,
                 flowcellBarcode + dateFormat.format(runDate),
                 runDate, machineName,
@@ -626,10 +642,11 @@ public class LabEventTest extends BaseEventTest {
                     new HashSet<LabVessel>(mapBarcodeToTube1.values()), LabBatch.LabBatchType.WORKFLOW);
             workflowBatch1.setWorkflowName("Exome Express");
 
-            PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube1, productOrder1,
-                    workflowBatch1, "1", String.valueOf(runDate.getTime()), "1", true);
+            bucketBatchAndDrain(mapBarcodeToTube1, productOrder1, workflowBatch1, "1");
+            PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube1,
+                    String.valueOf(runDate.getTime()), "1", true);
             ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder =
-                    runExomeExpressShearingProcess(productOrder1, picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
+                    runExomeExpressShearingProcess(picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
                             picoPlatingEntityBuilder.getNormTubeFormation(),
                             picoPlatingEntityBuilder.getNormalizationBarcode(), "1");
 
@@ -640,14 +657,15 @@ public class LabEventTest extends BaseEventTest {
 //            TwoDBarcodedTube reworkTube =  picoPlatingEntityBuilder.getNormTubeFormation().getContainerRole().getContainedVessels().iterator().next();
             TwoDBarcodedTube reworkTube = mapBarcodeToTube1.values().iterator().next();
             mapBarcodeToTube2.put(reworkTube.getLabel(), reworkTube);
-            LabBatch workflowBatch2 = new LabBatch("Exome Express Batch 1",
+            LabBatch workflowBatch2 = new LabBatch("Exome Express Batch 2",
                     new HashSet<LabVessel>(mapBarcodeToTube2.values()), LabBatch.LabBatchType.WORKFLOW);
             workflowBatch2.setWorkflowName("Exome Express");
 
-            PicoPlatingEntityBuilder picoPlatingEntityBuilder2 = runPicoPlatingProcess(mapBarcodeToTube2, productOrder2,
-                    workflowBatch2, "2", String.valueOf(runDate.getTime()), "2", true);
+            bucketBatchAndDrain(mapBarcodeToTube2, productOrder2, workflowBatch2, "2");
+            PicoPlatingEntityBuilder picoPlatingEntityBuilder2 = runPicoPlatingProcess(mapBarcodeToTube2,
+                    String.valueOf(runDate.getTime()), "2", true);
             ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder2 =
-                    runExomeExpressShearingProcess(productOrder2, picoPlatingEntityBuilder2.getNormBarcodeToTubeMap(),
+                    runExomeExpressShearingProcess(picoPlatingEntityBuilder2.getNormBarcodeToTubeMap(),
                             picoPlatingEntityBuilder2.getNormTubeFormation(),
                             picoPlatingEntityBuilder2.getNormalizationBarcode(), "2");
             LibraryConstructionEntityBuilder libraryConstructionEntityBuilder2 =
@@ -717,7 +735,127 @@ public class LabEventTest extends BaseEventTest {
                  Assert.assertEquals(libraryBean.getLcSet(), workflowBatch2.getBatchName());
                  Assert.assertEquals(libraryBean.getProductOrderKey(), productOrder2.getBusinessKey());
             }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
+    }
+
+    /**
+     * Message LCSET 1 through Pico and Shearing to ShearingQC; message LCSET 2 through Pico;
+     * add one sample from LCSET 1 to shearing bucket for LCSET 2; message both sets to completion;
+     * verify that pipeline API correctly reflects LCSETS.
+     */
+    @Test(groups = {TestGroups.DATABASE_FREE})
+    public void testExomeExpressShearingRework() {
+        try {
+            // Use Standard Exome product, to verify that workflow is taken from LCSet, not Product
+            ProductOrder productOrder1 = ProductOrderTestFactory.buildHybridSelectionProductOrder(96, "A");
+            AthenaClientServiceStub.addProductOrder(productOrder1);
+            Date runDate = new Date();
+
+            Map<String, TwoDBarcodedTube> mapBarcodeToTube1 = createInitialRack(productOrder1, "R1_");
+            LabBatch workflowBatch1 = new LabBatch("Exome Express Pico Batch 1",
+                    new HashSet<LabVessel>(mapBarcodeToTube1.values()), LabBatch.LabBatchType.WORKFLOW);
+            workflowBatch1.setWorkflowName("Exome Express");
+
+            bucketBatchAndDrain(mapBarcodeToTube1, productOrder1, workflowBatch1, "1");
+            PicoPlatingEntityBuilder picoPlatingEntityBuilder1 = runPicoPlatingProcess(mapBarcodeToTube1,
+                    String.valueOf(runDate.getTime()), "1", true);
+            ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder =
+                    runExomeExpressShearingProcess(picoPlatingEntityBuilder1.getNormBarcodeToTubeMap(),
+                            picoPlatingEntityBuilder1.getNormTubeFormation(),
+                            picoPlatingEntityBuilder1.getNormalizationBarcode(), "1");
+
+            LabBatch importBatch1 = new LabBatch("EX-123", new HashSet<LabVessel>(mapBarcodeToTube1.values()),
+                    LabBatch.LabBatchType.SAMPLES_IMPORT);
+
+            ProductOrder productOrder2 = ProductOrderTestFactory.buildHybridSelectionProductOrder(95, "B");
+            AthenaClientServiceStub.addProductOrder(productOrder2);
+
+            Map<String, TwoDBarcodedTube> mapBarcodeToTube2 = createInitialRack(productOrder2, "R2_");
+            LabBatch workflowBatch2 = new LabBatch("Exome Express Pico Batch 2",
+                    new HashSet<LabVessel>(mapBarcodeToTube2.values()), LabBatch.LabBatchType.WORKFLOW);
+            workflowBatch2.setWorkflowName("Exome Express");
+
+            bucketBatchAndDrain(mapBarcodeToTube2, productOrder2, workflowBatch2, "2");
+            PicoPlatingEntityBuilder picoPlatingEntityBuilder2 = runPicoPlatingProcess(mapBarcodeToTube2,
+                    String.valueOf(runDate.getTime()), "2", true);
+
+            LabBatch importBatch2 = new LabBatch("EX-123", new HashSet<LabVessel>(mapBarcodeToTube2.values()),
+                    LabBatch.LabBatchType.SAMPLES_IMPORT);
+
+            // Add sample from LCSET 1 TO LCSET 2 at shearing bucket
+            final TwoDBarcodedTube reworkTube = picoPlatingEntityBuilder1.getNormBarcodeToTubeMap().values().iterator().next();
+//            workflowBatch2.addLabVessel(reworkTube);
+            Map<String, TwoDBarcodedTube> mapBarcodeToTubesPlusRework =
+                    new LinkedHashMap<>(picoPlatingEntityBuilder2.getNormBarcodeToTubeMap());
+            mapBarcodeToTubesPlusRework.put(reworkTube.getLabel(), reworkTube);
+
+            Bucket shearingBucket = createAndPopulateBucket(
+                    new HashMap<String, TwoDBarcodedTube>() {{
+                        put(reworkTube.getLabel(), reworkTube);
+                    }}, productOrder2, "Shearing");
+            workflowBatch2.addLabVessel(reworkTube);
+            drainBucket(shearingBucket);
+            reworkTube.getBucketEntries().iterator().next().setReworkDetail(new ReworkDetail(
+                    ReworkEntry.ReworkReason.MACHINE_ERROR, ReworkEntry.ReworkLevel.ONE_SAMPLE_RELEASE_REST_BATCH,
+                    LabEventType.SHEARING_TRANSFER, "test", null));
+
+            ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder2 =
+                    runExomeExpressShearingProcess(mapBarcodeToTubesPlusRework, null,
+                            picoPlatingEntityBuilder2.getNormalizationBarcode(), "2");
+
+            LibraryConstructionEntityBuilder libraryConstructionEntityBuilder2 =
+                    runLibraryConstructionProcess(exomeExpressShearingEntityBuilder2.getShearingCleanupPlate(),
+                            exomeExpressShearingEntityBuilder2.getShearCleanPlateBarcode(),
+                            exomeExpressShearingEntityBuilder2.getShearingPlate(), "2");
+            HybridSelectionEntityBuilder hybridSelectionEntityBuilder2 =
+                    runHybridSelectionProcess(libraryConstructionEntityBuilder2.getPondRegRack(),
+                            libraryConstructionEntityBuilder2.getPondRegRackBarcode(),
+                            libraryConstructionEntityBuilder2.getPondRegTubeBarcodes(), "2");
+            QtpEntityBuilder qtpEntityBuilder2 = runQtpProcess(hybridSelectionEntityBuilder2.getNormCatchRack(),
+                    hybridSelectionEntityBuilder2.getNormCatchBarcodes(),
+                    hybridSelectionEntityBuilder2.getMapBarcodeToNormCatchTubes(), "Exome Express", "2");
+            HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder2 =
+                    runHiSeq2500FlowcellProcess(qtpEntityBuilder2.getDenatureRack(), "2", "squidDesignationName");
+
+            LibraryConstructionEntityBuilder libraryConstructionEntityBuilder =
+                    runLibraryConstructionProcess(exomeExpressShearingEntityBuilder.getShearingCleanupPlate(),
+                            exomeExpressShearingEntityBuilder.getShearCleanPlateBarcode(),
+                            exomeExpressShearingEntityBuilder.getShearingPlate(), "1");
+            HybridSelectionEntityBuilder hybridSelectionEntityBuilder =
+                    runHybridSelectionProcess(libraryConstructionEntityBuilder.getPondRegRack(),
+                            libraryConstructionEntityBuilder.getPondRegRackBarcode(),
+                            libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), "1");
+            QtpEntityBuilder qtpEntityBuilder = runQtpProcess(hybridSelectionEntityBuilder.getNormCatchRack(),
+                    hybridSelectionEntityBuilder.getNormCatchBarcodes(),
+                    hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), "Exome Express", "1");
+            HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
+                    runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", "squidDesignationName");
+
+            SimpleDateFormat dateFormat = new SimpleDateFormat(IlluminaSequencingRun.RUN_FORMAT_PATTERN);
+            File runPath = File.createTempFile("tempRun" + dateFormat.format(runDate), ".txt");
+            String flowcellBarcode = hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell().getCartridgeBarcode();
+            String machineName = "Superman";
+            IlluminaSequencingRunFactory runFactory =
+                    new IlluminaSequencingRunFactory(EasyMock.createMock(JiraCommentUtil.class));
+            ZimsIlluminaRunFactory zimsIlluminaRunFactory = constructZimsIlluminaRunFactory(productOrder1);
+
+            SolexaRunBean runBean1 = new SolexaRunBean(flowcellBarcode, flowcellBarcode + dateFormat.format(runDate),
+                    runDate, machineName, runPath.getAbsolutePath(), null);
+
+            IlluminaSequencingRun run1 =
+                    runFactory.buildDbFree(runBean1, hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell());
+
+            ZimsIlluminaRun zimsIlluminaRun1 = zimsIlluminaRunFactory.makeZimsIlluminaRun(run1);
+            Assert.assertEquals(zimsIlluminaRun1.getLanes().size(), 2, "Wrong number of lanes");
+
+            ZimsIlluminaChamber zimsIlluminaChamber1 = zimsIlluminaRun1.getLanes().iterator().next();
+            for (LibraryBean libraryBean : zimsIlluminaChamber1.getLibraries()) {
+                Assert.assertEquals(libraryBean.getLcSet(), workflowBatch1.getBatchName());
+                Assert.assertEquals(libraryBean.getProductOrderKey(), productOrder1.getBusinessKey());
+            }
             if (false) {
                 TransferVisualizerFrame transferVisualizerFrame = new TransferVisualizerFrame();
                 transferVisualizerFrame.renderVessel(reworkTube);
@@ -728,10 +866,23 @@ public class LabEventTest extends BaseEventTest {
                 }
             }
 
+            SolexaRunBean runBean2 = new SolexaRunBean(flowcellBarcode, flowcellBarcode + dateFormat.format(runDate),
+                    runDate, machineName, runPath.getAbsolutePath(), null);
+
+            IlluminaSequencingRun run2 =
+                    runFactory.buildDbFree(runBean2, hiSeq2500FlowcellEntityBuilder2.getIlluminaFlowcell());
+
+            ZimsIlluminaRun zimsIlluminaRun2 = zimsIlluminaRunFactory.makeZimsIlluminaRun(run2);
+            Assert.assertEquals(zimsIlluminaRun2.getLanes().size(), 2, "Wrong number of lanes");
+
+            ZimsIlluminaChamber zimsIlluminaChamber2 = zimsIlluminaRun2.getLanes().iterator().next();
+            for (LibraryBean libraryBean : zimsIlluminaChamber2.getLibraries()) {
+                Assert.assertEquals(libraryBean.getLcSet(), workflowBatch2.getBatchName());
+                Assert.assertEquals(libraryBean.getProductOrderKey(), productOrder2.getBusinessKey());
+            }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
     }
 
     private ZimsIlluminaRunFactory constructZimsIlluminaRunFactory(final ProductOrder productOrder) {
@@ -801,8 +952,10 @@ public class LabEventTest extends BaseEventTest {
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
         workflowBatch.setWorkflowName("Whole Genome");
 
+        bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
+
         PreFlightEntityBuilder preFlightEntityBuilder =
-                runPreflightProcess(mapBarcodeToTube, productOrder, workflowBatch, "1");
+                runPreflightProcess(mapBarcodeToTube, "1");
         ShearingEntityBuilder shearingEntityBuilder =
                 runShearingProcess(mapBarcodeToTube, preFlightEntityBuilder.getTubeFormation(),
                         preFlightEntityBuilder.getRackBarcode(), "1");
