@@ -5,7 +5,7 @@ import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServic
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.LabEventTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
-import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabBatchComposition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -56,16 +56,13 @@ public class ReworkDbFreeTest extends BaseEventTest {
         LabBatch origBatch =
                 new LabBatch("origBatch", new HashSet<LabVessel>(origRackMap.values()), LabBatch.LabBatchType.WORKFLOW);
         origBatch.setWorkflowName("Exome Express");
+        bucketBatchAndDrain(origRackMap, productOrder, origBatch, origLcsetSuffix);
         PicoPlatingEntityBuilder pplatingEntityBuilder1 = runPicoPlatingProcess(
                 origRackMap,
-                productOrder,
-                origBatch,
-                origLcsetSuffix,
                 origRackBarcodeSuffix,
                 "1", true);
 
         ExomeExpressShearingEntityBuilder shearingEntityBuilder1 = runExomeExpressShearingProcess(
-                productOrder,
                 pplatingEntityBuilder1.getNormBarcodeToTubeMap(),
                 pplatingEntityBuilder1.getNormTubeFormation(),
                 pplatingEntityBuilder1.getNormalizationBarcode(),
@@ -84,11 +81,9 @@ public class ReworkDbFreeTest extends BaseEventTest {
                 LabBatch.LabBatchType.WORKFLOW);
 
         reworkBatch.setWorkflowName("Exome Express");
+        bucketBatchAndDrain(reworkRackMap, productOrder, reworkBatch, reworkLcsetSuffix);
         PicoPlatingEntityBuilder pplatingEntityBuilder2 = runPicoPlatingProcess(
                 reworkRackMap,
-                productOrder,
-                reworkBatch,
-                reworkLcsetSuffix,
                 reworkRackBarcodeSuffix,
                 "2", true);
         //add reworks midstream at the shearing bucket from the original lcset which is at after lc construction
@@ -128,7 +123,6 @@ public class ReworkDbFreeTest extends BaseEventTest {
         }
 
         ExomeExpressShearingEntityBuilder shearingEntityBuilder2 = runExomeExpressShearingProcess(
-                productOrder,
                 reworkBarcodedTubeMap,
                 reworkTubeFormation,
                 pplatingEntityBuilder2.getNormalizationBarcode(),

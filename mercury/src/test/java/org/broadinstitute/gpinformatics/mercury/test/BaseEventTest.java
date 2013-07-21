@@ -108,7 +108,7 @@ public class BaseEventTest {
 
         labEventFactory.setLabEventRefDataFetcher(labEventRefDataFetcher);
 
-        bucketEjb = new BucketEjb(labEventFactory, jiraService, labBatchEJB);
+        bucketEjb = new BucketEjb(labEventFactory, jiraService, labBatchEJB, null);
     }
 
     /**

@@ -424,7 +424,12 @@ public class LabEventTest extends BaseEventTest {
 
         SimpleDateFormat dateFormat = new SimpleDateFormat(IlluminaSequencingRun.RUN_FORMAT_PATTERN);
 
-        File runPath = File.createTempFile("tempRun" + dateFormat.format(runDate), ".txt");
+        File runPath = null;
+        try {
+            runPath = File.createTempFile("tempRun" + dateFormat.format(runDate), ".txt");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         String flowcellBarcode = hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell().getCartridgeBarcode();
 
         SolexaRunBean runBean = new SolexaRunBean(flowcellBarcode,
@@ -514,10 +519,11 @@ public class LabEventTest extends BaseEventTest {
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
         workflowBatch.setWorkflowName("Exome Express");
 
-        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube, productOrder,
-                workflowBatch, null, String.valueOf(runDate.getTime()), "1", true);
+        bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
+        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube,
+                String.valueOf(runDate.getTime()), "1", true);
         ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder =
-                runExomeExpressShearingProcess(productOrder, picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
+                runExomeExpressShearingProcess(picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
                         picoPlatingEntityBuilder.getNormTubeFormation(),
                         picoPlatingEntityBuilder.getNormalizationBarcode(), "1");
         LibraryConstructionEntityBuilder libraryConstructionEntityBuilder =
@@ -533,7 +539,7 @@ public class LabEventTest extends BaseEventTest {
                 hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), "Exome Express", "1");
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
                 runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", "squidDesignationName",
-                        ProductionFlowcellPath.DENATURE_TO_FLOWCELL,null, "Exome Express");
+                        ProductionFlowcellPath.DENATURE_TO_FLOWCELL, null, "Exome Express");
 
         IlluminaFlowcell illuminaFlowcell = hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell();
         Set<SampleInstance> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
@@ -818,7 +824,8 @@ public class LabEventTest extends BaseEventTest {
                     hybridSelectionEntityBuilder2.getNormCatchBarcodes(),
                     hybridSelectionEntityBuilder2.getMapBarcodeToNormCatchTubes(), "Exome Express", "2");
             HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder2 =
-                    runHiSeq2500FlowcellProcess(qtpEntityBuilder2.getDenatureRack(), "2", "squidDesignationName");
+                    runHiSeq2500FlowcellProcess(qtpEntityBuilder2.getDenatureRack(), "2", null,
+                            ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL, "squidDesignationName", "Exome Express");
 
             LibraryConstructionEntityBuilder libraryConstructionEntityBuilder =
                     runLibraryConstructionProcess(exomeExpressShearingEntityBuilder.getShearingCleanupPlate(),
@@ -832,7 +839,8 @@ public class LabEventTest extends BaseEventTest {
                     hybridSelectionEntityBuilder.getNormCatchBarcodes(),
                     hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), "Exome Express", "1");
             HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
-                    runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", "squidDesignationName");
+                    runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", null,
+                            ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL, "squidDesignationName", "Exome Express");
 
             SimpleDateFormat dateFormat = new SimpleDateFormat(IlluminaSequencingRun.RUN_FORMAT_PATTERN);
             File runPath = File.createTempFile("tempRun" + dateFormat.format(runDate), ".txt");
