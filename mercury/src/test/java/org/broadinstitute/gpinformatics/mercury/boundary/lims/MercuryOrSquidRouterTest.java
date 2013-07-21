@@ -216,7 +216,7 @@ public class MercuryOrSquidRouterTest extends BaseEventTest {
 
         ProductFamily family = new ProductFamily("Test Product Family");
         testProduct = new Product("Test Product", family, "Test product", "P-TEST-1", new Date(), new Date(),
-                0, 0, 0, 0, "Test samples only", "None", true, "Test Workflow", false, "agg type");
+                0, 0, 0, 0, "Test samples only", "None", true, "Whole Genome", false, "agg type");
 
         //todo SGM:  Revisit. This probably meant to set the Workflow to ExEx
         exomeExpress = new Product("Exome Express", family, "Exome express", "P-EX-1", new Date(), new Date(),

@@ -30,6 +30,7 @@ if [ ! -f ${DB_PARAMS_FILE} ]; then
     exit 1
 fi
 ROOT_DIR=`grep -Ei '^rootDir:' ${DB_PARAMS_FILE} | sed -e 's/^rootDir://' | tr -d ' '`
+SERVERLOG_DIR=`grep -Ei '^serverLogDir:' ${DB_PARAMS_FILE} | sed -e 's/^serverLogDir://' | tr -d ' '`
 
 NEW_DIR=${ROOT_DIR}/new
 DONE_DIR=${ROOT_DIR}/done
@@ -43,6 +44,10 @@ if [ ! -e ${LAST_ETL_RUN_FILE} ]; then
 fi
 if [ ! -e ${LAST_CRON_RUN_FILE} ]; then
    echo "Cannot check time of last ExtractTransform.  File is missing: ${LAST_CRON_RUN_FILE}" | tee /dev/stderr
+   exit 1
+fi
+if [ -z "${SERVERLOG_DIR}" -o ! -d "${SERVERLOG_DIR}" ]; then
+   echo "Cannot check ETL errors in server.log.  Cannot find directory: \"${SERVERLOG_DIR}\"" | tee /dev/stderr
    exit 1
 fi
 
@@ -60,4 +65,50 @@ fi
 let "hourDiff = (now-lastCronRun)/(60*60)"
 if (( ${hourDiff} > ${hourThresholdForWarning} )); then
    echo "ETL has not run in ${hourDiff} hours (i.e. loading any data changes into the warehouse database)."
+fi
+
+
+# Looks in the log for datawh WARN and ERROR messages that appears since the
+# last 4q cron run, which means the previous 6 hours.
+
+TMPFILE="/tmp/dw_etl_4q_output"
+if [ -e ${TMPFILE} ]; then
+  rm ${TMPFILE}
+fi
+
+let thisHour=`date +%k`
+let startHour=(${thisHour}+24-7)%24
+for ((hour24=$startHour; hour24 <= ($startHour+6) ; hour24++))
+do
+  let hour=${hour24}%24
+
+  if (( ${hour} < 10 )); then
+    zeropadHour=0${hour}
+  else
+    zeropadHour=${hour}
+  fi
+
+  # If the hour value is greater than this hour (e.g. it's midnight (hour=0) and we want
+  # hours 17-23, then look in yesterday's log.
+  if (( $hour > $thisHour )); then
+    logfile=${SERVERLOG_DIR}/server.log.`date --date="yesterday" +%Y-%m-%d`
+  else
+    logfile=${SERVERLOG_DIR}/server.log
+  fi
+
+  if [ ! -e ${logfile} ]; then
+    echo "Cannot find logfile: ${logfile}" | tee /dev/stderr
+    break
+  else
+    grep -E "^${zeropadHour}" ${logfile} | grep datawh | grep -E ' ERROR '\|' WARN  ' >> ${TMPFILE}
+  fi
+
+done
+
+if [ -s ${TMPFILE} ]; then
+  echo ' '
+  echo ' '
+  echo 'The server log shows these recent ETL messages:'
+  echo ' '
+  cat ${TMPFILE} | cut -c 13- | sort -u | sed -e 's/$/\n/'
 fi

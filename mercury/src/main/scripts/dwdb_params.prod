@@ -4,3 +4,4 @@ servername: gpinfoprod
 port: 1521
 sid: gpinfprd
 rootDir: /seq/lims/datawh/prod
+serverLogDir: /prodinfo/prodapps/jboss/vseqlims-standalone/log
