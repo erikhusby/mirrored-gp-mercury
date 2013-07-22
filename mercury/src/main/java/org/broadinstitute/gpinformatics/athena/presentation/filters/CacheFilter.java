@@ -17,9 +17,8 @@ import java.util.TimeZone;
 
 /**
  * This filter allows caching of things for any configured timeout period. It uses a default of twenty-four hours if no
- * servlet filter configuration is supplied.
- *
- * @author <a href="mailto:dinsmore@broadinstitute.org">Michael Dinsmore</a>
+ * servlet filter configuration is supplied.  Typically any dynamic content should not be cached, but this is highly
+ * effective for speeding up page load speeds containing more static content, like images, scripts and the like.
  */
 public class CacheFilter implements Filter {
     /**
@@ -31,6 +30,9 @@ public class CacheFilter implements Filter {
      * Should the filter cache or set to NOT cache the content?  Useful for local debugging of various issues.
      */
     private boolean shouldCache;
+
+    private static final String SHOULD_CACHE = "shouldCache";
+    private static final String EXPIRATION_TIME = "expirationTime";
 
     /**
      * Default expiration time is twenty-four hours.
@@ -50,18 +52,14 @@ public class CacheFilter implements Filter {
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
         try {
-            expirationTime = Integer.valueOf(filterConfig.getInitParameter("expirationTime"));
+            expirationTime = Integer.valueOf(filterConfig.getInitParameter(EXPIRATION_TIME));
         } catch (Exception e) {
             // No override timeout period specified, use application server settings.
             expirationTime = DEFAULT_EXPIRE;
         }
 
         try {
-            if (filterConfig.getInitParameter("shouldCache") != null) {
-                shouldCache = Boolean.valueOf(filterConfig.getInitParameter("shouldCache"));
-            } else {
-                shouldCache = true;
-            }
+            shouldCache = Boolean.valueOf(filterConfig.getInitParameter(SHOULD_CACHE));
         } catch (Exception e) {
             // If not specified, the default is to cache.
             shouldCache = true;
@@ -76,14 +74,14 @@ public class CacheFilter implements Filter {
     }
 
     /**
-     * Set http proper headers.
+     * Set the proper HTTP headers.
      */
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException, ServletException {
         HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-        // set the provided HTTP response parameters
+        // Set the provided HTTP response parameters.
         if (shouldCache) {
             setCacheExpireDate(httpResponse, expirationTime);
         } else {

@@ -5,6 +5,7 @@ import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
+import net.sourceforge.stripes.validation.ValidationMethod;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
@@ -40,9 +41,11 @@ public class SampleLibrariesActionBean extends CoreActionBean {
     @Inject
     private BSPSampleDataFetcher sampleDataFetcher;
 
+
+    private String searchKey;
     private Map<String, BSPSampleDTO> sampleToBspPicoValueMap = new HashMap<>();
     private Map<LabVessel, Map<LabEvent, Set<LabVessel>>> vesselToEventVesselsMap = new HashMap<>();
-    private List<String> selectedSamples;
+    private List<String> selectedSamples = new ArrayList<>();
     private Map<String, List<LabVessel>> sampleNameToVesselsMap = new HashMap<>();
 
     public Map<String, BSPSampleDTO> getSampleToBspPicoValueMap() {
@@ -55,6 +58,14 @@ public class SampleLibrariesActionBean extends CoreActionBean {
 
     public void setSelectedSamples(List<String> selectedSamples) {
         this.selectedSamples = selectedSamples;
+    }
+
+    public String getSearchKey() {
+        return searchKey;
+    }
+
+    public void setSearchKey(String searchKey) {
+        this.searchKey = searchKey;
     }
 
     @DefaultHandler
@@ -136,4 +147,10 @@ public class SampleLibrariesActionBean extends CoreActionBean {
         return allVessels;
     }
 
+    @ValidationMethod(on = SHOW_LIBRARIES)
+    public void validateSelection() {
+        if (selectedSamples.isEmpty()) {
+            addGlobalValidationError("You must select one or more samples to show libraries.");
+        }
+    }
 }

@@ -73,10 +73,10 @@ fi
 
 TMPFILE="/tmp/dw_etl_4q_output"
 if [ -e ${TMPFILE} ]; then
-  rm ${TMPFILE}
+  cat /dev/null > ${TMPFILE}
 fi
 
-let thisHour=`date +%k`
+let thisHour=`date +%k | tr -d ' '`
 let startHour=(${thisHour}+24-7)%24
 for ((hour24=$startHour; hour24 <= ($startHour+6) ; hour24++))
 do
