@@ -37,7 +37,7 @@ public class LabBatchStartingVessel {
     @Column
     private Float concentration;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private LabVessel dilutionVessel;
 
     public LabBatchStartingVessel() {

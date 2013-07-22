@@ -15,7 +15,6 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMes
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.CherryPickSourceType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateType;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
@@ -24,9 +23,9 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MiSeqReagentKit;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
@@ -38,7 +37,6 @@ import javax.inject.Inject;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
@@ -168,14 +166,6 @@ public class VesselTransferEjb {
         transferEvent.setOperator(username);
         transferEvent.setStation(stationName);
 
-        ReceptacleType receptacleType = BettalimsObjectFactory.createReceptacleType(
-                reagentKitBarcode, "plate", MiSeqReagentKit.LOADING_WELL.name(), null, null, null, null, null, null);
-
-        PositionMapType positionMap =
-                BettalimsObjectFactory.createPositionMapType(reagentKitBarcode, Arrays.asList(receptacleType));
-
-        transferEvent.getSourcePositionMap().add(positionMap);
-
         // yes, yes, miSeq flowcell has one lane.
         for (VesselPosition vesselPosition : MiSeqFlowcell.getVesselGeometry().getVesselPositions()) {
             CherryPickSourceType cherryPickSource = BettalimsObjectFactory.createCherryPickSourceType(reagentKitBarcode,
@@ -183,9 +173,8 @@ public class VesselTransferEjb {
             transferEvent.getSource().add(cherryPickSource);
         }
 
-        PlateType reagentKitType = BettalimsObjectFactory
-                .createPlateType(flowcellBarcode, LabVessel.ContainerType.MISEQ_REAGENT_KIT.getName(),
-                        MiSeqReagentKit.LOADING_WELL.name(), null);
+        PlateType reagentKitType = BettalimsObjectFactory.createPlateType(reagentKitBarcode,
+                StaticPlate.PlateType.MiSeqReagentKit.getDisplayName(), MiSeqReagentKit.LOADING_WELL.name(), null);
         transferEvent.getSourcePlate().add(reagentKitType);
 
         PlateType flowcell = BettalimsObjectFactory

@@ -425,11 +425,12 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
         workflowBatch.setWorkflowName("Exome Express");
 
+        bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
         //Build Event History
-        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube, productOrder,
-                workflowBatch, null, String.valueOf(runDate.getTime()), "1", true);
+        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube,
+                String.valueOf(runDate.getTime()), "1", true);
         ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder =
-                runExomeExpressShearingProcess(productOrder, picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
+                runExomeExpressShearingProcess(picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
                         picoPlatingEntityBuilder.getNormTubeFormation(),
                         picoPlatingEntityBuilder.getNormalizationBarcode(), "1");
         LibraryConstructionEntityBuilder libraryConstructionEntityBuilder =

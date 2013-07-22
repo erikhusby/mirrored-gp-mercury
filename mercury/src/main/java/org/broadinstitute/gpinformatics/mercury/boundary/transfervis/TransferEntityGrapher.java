@@ -20,6 +20,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainerEmbedder;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import javax.ejb.Remote;
 import javax.ejb.Stateful;
@@ -280,17 +281,17 @@ public class TransferEntityGrapher implements TransferVisualizer {
     /**
      * Builds a label for an edge, with event name etc.
      *
-     * @param stationEvent holds details of the event
+     * @param labEvent holds details of the event
      * @return HTML
      */
-    private String buildEdgeLabel(LabEvent stationEvent) {
+    private String buildEdgeLabel(LabEvent labEvent) {
         StringBuilder label = new StringBuilder();
         label.append("<html>");
-        String eventTypeName = stationEvent.getLabEventType().getName();
+        String eventTypeName = labEvent.getLabEventType().getName();
 //        if (!ReceptacleTransferEvent.TRANSFER_EVENT.equals(eventTypeName)) {
             label.append(eventTypeName);
-//            if (stationEvent instanceof PlateTransferEvent) {
-//                PlateTransferEvent plateTransferEvent = (PlateTransferEvent) stationEvent;
+//            if (labEvent instanceof PlateTransferEvent) {
+//                PlateTransferEvent plateTransferEvent = (PlateTransferEvent) labEvent;
 //                label.append("<br/>");
 //                label.append(plateTransferEvent.getSourceSectionLayout());
 //                label.append(" to ");
@@ -298,16 +299,23 @@ public class TransferEntityGrapher implements TransferVisualizer {
 //            }
             label.append("<br/>");
 //        }
-        String labMachineName = stationEvent.getEventLocation();
+        String labMachineName = labEvent.getEventLocation();
         if (!labMachineName.contains("Unknown")) {
             label.append(labMachineName).append(", ");
         }
-        label.append(stationEvent.getEventDate());
+        label.append(labEvent.getEventDate());
         label.append("<br/>");
         if (bspUserList != null) {
-            BspUser bspUser = bspUserList.getById(stationEvent.getEventOperator());
+            BspUser bspUser = bspUserList.getById(labEvent.getEventOperator());
             if (bspUser != null) {
                 label.append(bspUser.getFullName());
+            }
+            label.append("<br/>");
+        }
+        if (!labEvent.getComputedLcSets().isEmpty()) {
+            for (LabBatch labBatch : labEvent.getComputedLcSets()) {
+                label.append(labBatch.getBatchName());
+                label.append(", ");
             }
         }
         label.append("</html>");
@@ -482,7 +490,11 @@ public class TransferEntityGrapher implements TransferVisualizer {
                     vesselVertexQueue.add(destinationContainerVertex);
                     numVesselsAddedReturn++;
                 }
-                renderRearrayEdge(graph, sourceContainer, destinationContainer, receptacle);
+                if (sourceContainer.getEmbedder().getCreatedOn().after(sourceContainer.getEmbedder().getCreatedOn())) {
+                    renderRearrayEdge(graph, destinationContainer, sourceContainer, receptacle);
+                } else {
+                    renderRearrayEdge(graph, sourceContainer, destinationContainer, receptacle);
+                }
             }
         }
         return numVesselsAddedReturn;

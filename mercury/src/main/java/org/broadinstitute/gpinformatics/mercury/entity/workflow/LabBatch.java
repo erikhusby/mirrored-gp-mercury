@@ -524,4 +524,9 @@ public class LabBatch {
 
         return startingBatchLabVessels.iterator().next().getLabVessel();
     }
+
+    @Override
+    public String toString() {
+        return batchName;
+    }
 }
