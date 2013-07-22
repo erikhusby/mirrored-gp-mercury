@@ -75,7 +75,7 @@ public class ProductResource {
      */
     @GET
     @Produces(MediaType.APPLICATION_XML)
-    public Products findOrders() {
+    public Products findProducts() {
         return new Products(productDao.findProductsForProductList());
     }
 }

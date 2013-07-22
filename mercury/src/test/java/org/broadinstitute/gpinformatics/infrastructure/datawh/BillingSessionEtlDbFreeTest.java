@@ -76,19 +76,18 @@ public class BillingSessionEtlDbFreeTest {
         Collection<String> records = billingSessionEtl.dataRecords(etlDateStr, false, BILLING_SESSION_ID);
         Assert.assertEquals(records.size(), 1);
 
-        verifyRecord(records.iterator().next());
+        verifyRecord(records.iterator().next(), etlDateStr, "F", String.valueOf(BILLING_SESSION_ID),
+                EtlTestUtilities.format(BILLED_DATE), String.valueOf(BILLING_SESSION_TYPE));
 
         EasyMock.verify(mocks);
     }
 
-    private void verifyRecord(String record) {
+    private static void verifyRecord(String record, String... matchValues) {
         int i = 0;
         String[] parts = record.split(",");
-        Assert.assertEquals(parts[i++], etlDateStr);
-        Assert.assertEquals(parts[i++], "F");
-        Assert.assertEquals(parts[i++], String.valueOf(BILLING_SESSION_ID));
-        Assert.assertEquals(parts[i++], EtlTestUtilities.format(BILLED_DATE));
-        Assert.assertEquals(parts[i++], String.valueOf(BILLING_SESSION_TYPE));
+        for (String matchValue : matchValues) {
+            Assert.assertEquals(parts[i++], matchValue);
+        }
         Assert.assertEquals(parts.length, i);
     }
 }
