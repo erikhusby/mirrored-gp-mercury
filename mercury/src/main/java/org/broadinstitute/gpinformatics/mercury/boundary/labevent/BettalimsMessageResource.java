@@ -5,6 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bettalims.BettalimsConnector;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
+import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
 import org.broadinstitute.gpinformatics.infrastructure.ws.WsMessageStore;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
@@ -104,6 +105,9 @@ public class BettalimsMessageResource {
 
     @Inject
     private AppConfig appConfig;
+
+    @Inject
+    private EmailSender emailSender;
 
     /**
      * Accepts a message from (typically) a liquid handling deck.  We unmarshal ourselves, rather than letting JAX-RS
@@ -225,7 +229,8 @@ public class BettalimsMessageResource {
         } catch (Exception e) {
             wsMessageStore.recordError(WsMessageStore.BETTALIMS_RESOURCE_TYPE, message, now, e);
             LOG.error("Failed to process run", e);
-            //            notifySupport(e);
+            emailSender.sendHtmlEmail(appConfig.getWorkflowValidationEmail(), "[Mercury] Failed to process message",
+                    e.getMessage());
             throw e;
         }
     }
