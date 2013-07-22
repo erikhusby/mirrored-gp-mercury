@@ -12,9 +12,8 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletResponseWrapper;
 
 /**
- * This filter is used for compressing streams for web requests.
- *
- * @author <a href="mailto:dinsmore@broadinstitute.org">Michael Dinsmore</a>
+ * This filter is used for compressing streams for web requests.  Typically used for more static content since most of
+ * the time spent for page HTML is the dynamic creation of the page -- not downloading the few KB of HTML text in it.
  */
 public class GZipFilter implements Filter {
     /**
@@ -50,6 +49,9 @@ public class GZipFilter implements Filter {
     }
 }
 
+/**
+ * Class to handle the gzipping of the content as a stream.
+ */
 class GZIPResponseStream extends ServletOutputStream {
     protected ByteArrayOutputStream byteArrayOutputStream = null;
 
@@ -108,9 +110,6 @@ class GZIPResponseStream extends ServletOutputStream {
         // noop
     }
 
-    /**
-     *
-     */
     @Override
     public void write(int b) throws IOException {
         if (closed) {
@@ -119,17 +118,11 @@ class GZIPResponseStream extends ServletOutputStream {
         gzipStream.write((byte) b);
     }
 
-    /**
-     *
-     */
     @Override
     public void write(byte b[]) throws IOException {
         write(b, 0, b.length);
     }
 
-    /**
-     *
-     */
     @Override
     public void write(byte b[], int off, int len) throws IOException {
         if (closed) {
@@ -196,9 +189,6 @@ class GZIPResponseWrapper extends HttpServletResponseWrapper {
         this.error = error;
     }
 
-    /**
-     *
-     */
     @Override
     public PrintWriter getWriter() throws IOException {
         // If denied access, don't create new stream or write because it causes the web.xml's 403 page to not render.
