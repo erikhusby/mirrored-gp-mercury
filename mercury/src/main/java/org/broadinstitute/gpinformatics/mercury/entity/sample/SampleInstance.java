@@ -231,6 +231,9 @@ public class SampleInstance {
         if (bucketEntry != null && bucketEntry.getLabBatch() != null) {
             return bucketEntry.getLabBatch().getWorkflowName();
         }
+        if (labBatch != null && labBatch.getWorkflowName() != null) {
+            return labBatch.getWorkflowName();
+        }
         String workflowName = null;
         for (LabBatch localLabBatch : allLabBatches) {
             if (localLabBatch.getWorkflowName() != null) {
