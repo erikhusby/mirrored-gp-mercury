@@ -475,8 +475,9 @@ public class MercuryOrSquidRouterTest extends BaseEventTest {
                 is(MercuryOrSquidRouter.MercuryOrSquid.SQUID));
 
         //Build Event History
-        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube, productOrder,
-                workflowBatch, null, String.valueOf(runDate.getTime()), BARCODE_SUFFIX, true);
+        bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, BARCODE_SUFFIX);
+        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube,
+                String.valueOf(runDate.getTime()), BARCODE_SUFFIX, true);
 
         /*
          * Bucketing (which is required to find batch and Product key) happens in PicoPlatingEntityBuilder so
@@ -491,7 +492,7 @@ public class MercuryOrSquidRouterTest extends BaseEventTest {
 
 
         ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder =
-                runExomeExpressShearingProcess(productOrder, picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
+                runExomeExpressShearingProcess(picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
                         picoPlatingEntityBuilder.getNormTubeFormation(),
                         picoPlatingEntityBuilder.getNormalizationBarcode(), BARCODE_SUFFIX);
 
@@ -598,8 +599,9 @@ public class MercuryOrSquidRouterTest extends BaseEventTest {
                 is(MercuryOrSquidRouter.MercuryOrSquid.SQUID));
 
         //Build Event History
-        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube, productOrder,
-                workflowBatch, null, String.valueOf(runDate.getTime()), BARCODE_SUFFIX, true);
+        bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, BARCODE_SUFFIX);
+        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube,
+                String.valueOf(runDate.getTime()), BARCODE_SUFFIX, true);
 
         /*
          * Bucketing (which is required to find batch and Product key) happens in PicoPlatingEntityBuilder so
@@ -614,7 +616,7 @@ public class MercuryOrSquidRouterTest extends BaseEventTest {
 
 
         ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder =
-                runExomeExpressShearingProcess(productOrder, picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
+                runExomeExpressShearingProcess(picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
                         picoPlatingEntityBuilder.getNormTubeFormation(),
                         picoPlatingEntityBuilder.getNormalizationBarcode(), BARCODE_SUFFIX);
 

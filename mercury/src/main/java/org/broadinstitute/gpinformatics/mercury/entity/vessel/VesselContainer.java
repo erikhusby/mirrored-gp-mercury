@@ -10,8 +10,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionT
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.hibernate.annotations.Parent;
-import org.jetbrains.annotations.Nullable;
 
+import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
 import javax.persistence.Embeddable;
 import javax.persistence.EnumType;
@@ -90,6 +90,7 @@ public class VesselContainer<T extends LabVessel> {
         this.embedder = embedder;
     }
 
+    @Nullable
     public T getVesselAtPosition(VesselPosition position) {
         //noinspection unchecked
         return (T) mapPositionToVessel.get(position);
@@ -106,6 +107,31 @@ public class VesselContainer<T extends LabVessel> {
         return transfersFrom;
     }
 
+    /**
+     * Gets transfers to this container.  Includes re-arrays.
+     * @return transfers to
+     */
+    public Set<LabEvent> getTransfersToWithRearrays() {
+        Set<LabEvent> transfersTo = getTransfersTo();
+        // Need to follow Re-arrays, otherwise the chain of custody is broken.  Ignore re-arrays that add tubes
+        for (LabVessel labVessel : mapPositionToVessel.values()) {
+            for (VesselContainer<?> vesselContainer : labVessel.getContainers()) {
+                Set<T> containedVessels = getContainedVessels();
+                Set<? extends LabVessel> containedVesselsOther = vesselContainer.getContainedVessels();
+                if (!vesselContainer.equals(this) && (containedVessels.containsAll(containedVesselsOther) ||
+                        containedVesselsOther.containsAll(containedVessels))) {
+                    transfersTo.addAll(vesselContainer.getTransfersTo());
+                }
+            }
+        }
+
+        return transfersTo;
+    }
+
+    /**
+     * Gets transfers to this container.  Does not include re-arrays, to avoid recursion.
+     * @return transfers to
+     */
     public Set<LabEvent> getTransfersTo() {
         Set<LabEvent> transfersTo = new HashSet<>();
         for (SectionTransfer sectionTransfer : sectionTransfersTo) {
@@ -540,6 +566,13 @@ public class VesselContainer<T extends LabVessel> {
         return metricTypeCriteria.getNearestMetrics();
     }
 
+    /**
+     * Computes the LCSET(s) that all contained vessels have in common.  Contained vessels that don't have references
+     * to LCSETs (e.g. controls) don't disturb the calculation, but they are inferred to be part of the LCSET by being
+     * part of the transfer, i.e. controls are "guilty by association".
+     * @param section the section of interest for a transfer
+     * @return LCSETs, empty if no contained vessels are associated with LCSETs
+     */
     public Set<LabBatch> getComputedLcSetsForSection(SBSSection section) {
         Set<LabBatch> computedLcSets = new HashSet<>();
         // find lab batch that is used by every vessel in section
@@ -553,7 +586,7 @@ public class VesselContainer<T extends LabVessel> {
                     numVesselsWithBucketEntries++;
                 }
                 for (BucketEntry bucketEntry : bucketEntries) {
-                    if (bucketEntry.getLabBatch() != null) {
+                    if (bucketEntry.getLabBatch() != null && bucketEntry.getReworkDetail() == null) {
                         LabBatch labBatch = bucketEntry.getLabBatch();
                         if (labBatch.getLabBatchType() == LabBatch.LabBatchType.WORKFLOW) {
                             Integer count = mapLabBatchToCount.get(labBatch);

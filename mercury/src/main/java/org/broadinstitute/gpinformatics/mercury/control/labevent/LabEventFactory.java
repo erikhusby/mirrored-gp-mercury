@@ -543,8 +543,18 @@ public class LabEventFactory implements Serializable {
                     }
                 }
                 if (labVessel == null) {
-                    mapBarcodeToVessel.put(plateType.getBarcode(), new StaticPlate(plateType.getBarcode(),
-                            StaticPlate.PlateType.getByDisplayName(plateType.getPhysType())));
+                    for (IlluminaFlowcell.FlowcellType flowcellType : IlluminaFlowcell.FlowcellType.values()) {
+                        if (plateType.getPhysType().equals(flowcellType.getAutomationName())) {
+                            labVessel = new IlluminaFlowcell(flowcellType, plateType.getBarcode());
+                            break;
+                        }
+                    }
+
+                    if (labVessel == null) {
+                        labVessel = new StaticPlate(plateType.getBarcode(),
+                                StaticPlate.PlateType.getByDisplayName(plateType.getPhysType()));
+                    }
+                    mapBarcodeToVessel.put(plateType.getBarcode(), labVessel);
                 }
             }
         }

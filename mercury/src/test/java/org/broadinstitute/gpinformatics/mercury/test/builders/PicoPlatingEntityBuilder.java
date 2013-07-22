@@ -9,11 +9,12 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.testng.Assert;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -72,7 +73,7 @@ public class PicoPlatingEntityBuilder {
         TubeFormation initialTubeFormation = (TubeFormation) picoPlatingBucket.getInPlaceLabVessel();
 
         LabEventTest.validateWorkflow(LabEventType.PICO_PLATING_QC.getName(), mapBarcodeToTube.values());
-        Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
+        Map<String, LabVessel> mapBarcodeToVessel = new LinkedHashMap<>();
         mapBarcodeToVessel.putAll(mapBarcodeToTube);
         LabEvent picoQcEntity = labEventFactory.buildFromBettaLims(jaxbBuilder.getPicoPlatingQc(), mapBarcodeToVessel);
         labEventHandler.processEvent(picoQcEntity);
@@ -130,10 +131,14 @@ public class PicoPlatingEntityBuilder {
         normalizationBarcode = jaxbBuilder.getPicoPlatingNormalizationBarcode();
 
         normBarcodedTubeMap =
-                new HashMap<>(normTubeFormation.getContainerRole().getContainedVessels().size());
+                new LinkedHashMap<>(normTubeFormation.getContainerRole().getContainedVessels().size());
 
-        for (TwoDBarcodedTube currTube : normTubeFormation.getContainerRole().getContainedVessels()) {
-            normBarcodedTubeMap.put(currTube.getLabel(), currTube);
+        for (VesselPosition vesselPosition : normTubeFormation.getVesselGeometry().getVesselPositions()) {
+            TwoDBarcodedTube vesselAtPosition =
+                    normTubeFormation.getContainerRole().getVesselAtPosition(vesselPosition);
+            if (vesselAtPosition != null) {
+                normBarcodedTubeMap.put(vesselAtPosition.getLabel(), vesselAtPosition);
+            }
         }
 
         LabEventTest.validateWorkflow(LabEventType.PICO_PLATING_POST_NORM_PICO.getName(), normTubeFormation);

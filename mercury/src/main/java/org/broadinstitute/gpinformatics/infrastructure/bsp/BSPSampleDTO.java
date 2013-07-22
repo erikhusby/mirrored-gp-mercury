@@ -133,18 +133,17 @@ public class BSPSampleDTO {
      * Returns an array of one double if this is a regular non-range (e.g. "3.14159") or an array of two doubles if
      * this is a range ("2.71828 - 3.14159").
      */
-    private double [] getDoubleOrRangeOfDoubles(BSPSampleSearchColumn column) {
+    private double[] getDoubleOrRangeOfDoubles(BSPSampleSearchColumn column) {
         try {
-            return new double [] { getDouble(column) };
+            return new double[]{getDouble(column)};
         } catch (NumberFormatException e) {
             // The data did not parse as a double; how about as a range of doubles?
             Matcher matcher = RIN_RANGE.matcher(getValue(column));
             if (!matcher.matches()) {
                 // Not a range either.
                 throw new NumberFormatException(getValue(column));
-            } else {
-                return new double [] { Double.parseDouble(matcher.group(1)), Double.parseDouble(matcher.group(2)) };
             }
+            return new double[]{Double.parseDouble(matcher.group(1)), Double.parseDouble(matcher.group(2))};
         }
     }
 

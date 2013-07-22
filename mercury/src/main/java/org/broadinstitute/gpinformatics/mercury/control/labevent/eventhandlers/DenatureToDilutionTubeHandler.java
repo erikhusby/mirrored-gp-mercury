@@ -85,8 +85,6 @@ public class DenatureToDilutionTubeHandler extends AbstractEventHandler {
                                                 " is already associated with another FCT Ticket: " +
                                                 dilutionFctAssociations.getLabBatch().getBusinessKey(),
                             Response.Status.BAD_REQUEST);
-                } else {
-                    return;
                 }
             }
 
