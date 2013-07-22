@@ -43,6 +43,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -233,6 +234,13 @@ public class ZimsIlluminaRunFactory {
                                   indexingSchemeEntity, catNames, indexingSchemeDto, mapNameToControl));
         }
 
+        // Make order predictable
+        Collections.sort(libraryBeans, new Comparator<LibraryBean>() {
+            @Override
+            public int compare(LibraryBean o1, LibraryBean o2) {
+                return o1.getSampleId().compareTo(o2.getSampleId());
+            }
+        });
         return libraryBeans;
     }
 

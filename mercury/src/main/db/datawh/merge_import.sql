@@ -224,6 +224,22 @@ IS
       WHERE is_delete = 'T'
     );
 
+    DELETE FROM ledger_entry
+    WHERE ledger_id IN (
+      SELECT
+        ledger_id
+      FROM im_ledger_entry
+      WHERE is_delete = 'T'
+    );
+
+    DELETE FROM billing_session
+    WHERE billing_session_id IN (
+      SELECT
+        billing_session_id
+      FROM im_billing_session
+      WHERE is_delete = 'T'
+    );
+
     -- For this fact table, a re-export of audited entity ids should replace existing ones.
     DELETE FROM sequencing_sample_fact
     WHERE sequencing_run_id IN (SELECT

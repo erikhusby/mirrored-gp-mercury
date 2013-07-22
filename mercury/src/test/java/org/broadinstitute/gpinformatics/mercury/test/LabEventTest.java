@@ -908,7 +908,9 @@ public class LabEventTest extends BaseEventTest {
                             put(BSPSampleSearchColumn.PARTICIPANT_ID, "PT-1234");
                         }};
                         for (String sampleName : sampleNames) {
-                            mapSampleIdToDto.put(sampleName, new BSPSampleDTO(dataMap));
+                            Map<BSPSampleSearchColumn, String> dataMapCopy = new HashMap<>(dataMap);
+                            dataMapCopy.put(BSPSampleSearchColumn.SAMPLE_ID, sampleName);
+                            mapSampleIdToDto.put(sampleName, new BSPSampleDTO(dataMapCopy));
                         }
                         return mapSampleIdToDto;
                     }

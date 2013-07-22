@@ -890,16 +890,23 @@ public abstract class LabVessel implements Serializable {
                 traversalResults.add(sampleInstance);
             }
         }
-        for (SampleInstance sampleInstance : traversalResults.getSampleInstances()) {
-            sampleInstance.addLabBatches(getAllLabBatches(labBatchType));
+        for (LabBatch labBatch : getLabBatches()) {
+            if (labBatchType == null || labBatch.getLabBatchType() == labBatchType) {
+                for (SampleInstance sampleInstance : traversalResults.getSampleInstances()) {
+                    sampleInstance.addLabBatches(Collections.singleton(labBatch));
+                }
+            }
             // If this vessel is a BSP export, sets the aliquot sample.
             // Expects one sample per vessel in the BSP export.
-            if (!getAllLabBatches(LabBatch.LabBatchType.SAMPLES_IMPORT).isEmpty()) {
+            if (labBatch.getLabBatchType() == LabBatch.LabBatchType.SAMPLES_IMPORT) {
                 for (MercurySample mercurySample : mercurySamples) {
-                    sampleInstance.setBspExportSample(mercurySample);
+                    for (SampleInstance sampleInstance : traversalResults.getSampleInstances()) {
+                        sampleInstance.setBspExportSample(mercurySample);
+                    }
                 }
             }
         }
+
         if (bucketEntries.size() == 1) {
             BucketEntry bucketEntry = bucketEntries.iterator().next();
             if (bucketEntry.getReworkDetail() == null) {
@@ -1205,6 +1212,7 @@ public abstract class LabVessel implements Serializable {
         return event;
     }
 
+    // todo jmt unused?
     public Collection<String> getNearestProductOrders() {
 
         if (getContainerRole() != null) {
@@ -1376,7 +1384,7 @@ public abstract class LabVessel implements Serializable {
      * This method walks the vessel transfers in both directions and returns all of the ancestor and descendant
      * vessels.
      *
-     * @return A collection contain all ancestor and descentdant vessels.
+     * @return A collection containing all ancestor and descendant vessels.
      */
     public Collection<LabVessel> getAncestorAndDescendantVessels() {
         Collection<LabVessel> allVessels;
