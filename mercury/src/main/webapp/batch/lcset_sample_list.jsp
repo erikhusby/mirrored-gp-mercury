@@ -67,6 +67,7 @@
 
     <stripes:form beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.SampleLibrariesActionBean">
         <div class="actionButtons">
+            <stripes:hidden name="searchKey"/>
             <stripes:submit name="showLibraries" value="Show Libraries" class="btn" style="margin-right:30px;"/>
             JIRA Link <a target="JIRA" href="${batch.jiraTicket.browserUrl}" class="external"
                          target="JIRA"> ${batch.businessKey} </a>
