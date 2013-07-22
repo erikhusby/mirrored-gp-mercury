@@ -350,8 +350,8 @@ public class BucketEjb {
      * @return Either a newly created batch object, or the most recent one found that incorporates all
      *         lab vessels being processed in this request.
      */
-//    @DaoFree
-    private LabBatch startBucketDrain(@Nonnull Collection<BucketEntry> bucketEntries, @Nonnull String operator,
+    @DaoFree
+    public LabBatch startBucketDrain(@Nonnull Collection<BucketEntry> bucketEntries, @Nonnull String operator,
                                       String batchInitiationLocation, boolean autoBatch) {
         Set<LabVessel> batchVessels = new HashSet<LabVessel>();
 

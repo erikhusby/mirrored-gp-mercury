@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequenci
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.MiSeqReagentKitDao;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -153,18 +154,15 @@ public class SolexaRunResource {
             try {
                 run = registerRun(solexaRunBean, flowcell);
                 URI createdUri = absolutePathBuilder.path(run.getRunName()).build();
-                if (callerResponse != null && callerResponse.getStatus() == Response.Status.CREATED.getStatusCode()) {
+                if (callerResponse == null || callerResponse.getStatus() == Response.Status.CREATED.getStatusCode()) {
                     callerResponse = Response.created(createdUri).entity(solexaRunBean).build();
                 }
             } catch (Exception e) {
                 LOG.error("Failed to process run" + Response.Status.INTERNAL_SERVER_ERROR, e);
                 messageSender.postMessageToGpLims("Failed to process run" + Response.Status.INTERNAL_SERVER_ERROR);
-                /*
-                * TODO SGM  Until ExExV2 is totally live, errors thrown from the Mercury side with Registration should
-                * not be thrown (except if registering a run multiple times
-                *
-                * throw new ResourceException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR, e);
-                */
+                if (route == MercuryOrSquidRouter.MercuryOrSquid.MERCURY) {
+                    throw new ResourceException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR, e);
+                }
             }
         }
 
@@ -173,17 +171,16 @@ public class SolexaRunResource {
 
 
     public IlluminaSequencingRun registerRun(SolexaRunBean solexaRunBean, IlluminaFlowcell illuminaFlowcell) {
-         IlluminaSequencingRun illuminaSequencingRun =
-                illuminaSequencingRunFactory.build(solexaRunBean, illuminaFlowcell);
-
-        illuminaSequencingRunDao.persist(illuminaSequencingRun);
-
         // Link the reagentKit to flowcell if you have a reagentBlockBarcode. Only MiSeq uses reagentKits.;
         if (!StringUtils.isEmpty(solexaRunBean.getReagentBlockBarcode())) {
-            vesselTransferEjb
-                    .reagentKitToFlowcell(solexaRunBean.getReagentBlockBarcode(), solexaRunBean.getFlowcellBarcode(),
-                            "pdunlea", solexaRunBean.getMachineName());
+            LabEvent labEvent = vesselTransferEjb.reagentKitToFlowcell(solexaRunBean.getReagentBlockBarcode(),
+                    solexaRunBean.getFlowcellBarcode(), "pdunlea", solexaRunBean.getMachineName());
+            illuminaFlowcell = (IlluminaFlowcell) labEvent.getTargetLabVessels().iterator().next();
         }
+
+        IlluminaSequencingRun illuminaSequencingRun = illuminaSequencingRunFactory.build(solexaRunBean,
+                illuminaFlowcell);
+        illuminaSequencingRunDao.persist(illuminaSequencingRun);
 
         return illuminaSequencingRun;
     }

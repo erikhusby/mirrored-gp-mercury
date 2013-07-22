@@ -86,10 +86,11 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         workflowBatch.setWorkflowName("Exome Express");
 
         //Build Event History
-        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube, productOrder,
-                workflowBatch, null, String.valueOf(runDate.getTime()), BARCODE_SUFFIX, true);
+        bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, BARCODE_SUFFIX);
+        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube,
+                String.valueOf(runDate.getTime()), BARCODE_SUFFIX, true);
         ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder =
-                runExomeExpressShearingProcess(productOrder, picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
+                runExomeExpressShearingProcess(picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
                         picoPlatingEntityBuilder.getNormTubeFormation(),
                         picoPlatingEntityBuilder.getNormalizationBarcode(), BARCODE_SUFFIX);
         LibraryConstructionEntityBuilder libraryConstructionEntityBuilder =
