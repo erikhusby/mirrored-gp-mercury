@@ -364,6 +364,24 @@ public abstract class LabVessel implements Serializable {
         Set<LabEvent> transfersTo = new HashSet<>();
         if (getContainerRole() == null) {
             for (VesselContainer<?> vesselContainer : getContainers()) {
+                transfersTo.addAll(vesselContainer.getTransfersTo());
+            }
+        } else {
+            transfersTo.addAll(getContainerRole().getTransfersTo());
+        }
+        // todo jmt vessel to vessel transfers
+        return transfersTo;
+    }
+
+    /**
+     * Get LabEvents that are transfers to this vessel, including re-arrays
+     *
+     * @return transfers
+     */
+    public Set<LabEvent> getTransfersToWithReArrays() {
+        Set<LabEvent> transfersTo = new HashSet<>();
+        if (getContainerRole() == null) {
+            for (VesselContainer<?> vesselContainer : getContainers()) {
                 transfersTo.addAll(vesselContainer.getTransfersToWithRearrays());
             }
         } else {
@@ -1705,7 +1723,7 @@ public abstract class LabVessel implements Serializable {
      */
     public void preProcessEvents() {
         Set<LabEvent> visitedLabEvents = new HashSet<>();
-        recurseEvents(visitedLabEvents, getTransfersTo());
+        recurseEvents(visitedLabEvents, getTransfersToWithReArrays());
     }
 
     /**
@@ -1720,7 +1738,7 @@ public abstract class LabVessel implements Serializable {
             if (visitedLabEvents.add(labEvent)) {
                 Set<LabBatch> lcSetsFromRecursion = new HashSet<>();
                 for (LabVessel labVessel : labEvent.getSourceLabVessels()) {
-                    lcSetsFromRecursion.addAll(recurseEvents(visitedLabEvents, labVessel.getTransfersTo()));
+                    lcSetsFromRecursion.addAll(recurseEvents(visitedLabEvents, labVessel.getTransfersToWithReArrays()));
                 }
                 Set<LabBatch> computedLcSets = labEvent.computeLcSets();
                 if (computedLcSets.isEmpty()) {
