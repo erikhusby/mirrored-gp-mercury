@@ -190,6 +190,12 @@ public class ExtractTransform implements Serializable {
         this.etlInstances.addAll(etlInstances);
     }
 
+    private static final String ZERO = "0";
+
+    private static boolean isZero(String value) {
+        return ZERO.equals(value);
+    }
+
     /**
      * Extracts data from operational database, transforms the data into data warehouse records,
      * and writes the records to files, one per DW table.
@@ -201,7 +207,6 @@ public class ExtractTransform implements Serializable {
      * @return count of records created, or -1 if could not run
      */
     public int incrementalEtl(String requestedStart, String requestedEnd) {
-        String ZERO = "0";
 
         // Bails if target directory is not defined, is missing or cannot read it.
         String dataDir = getDatafileDir();
@@ -230,7 +235,7 @@ public class ExtractTransform implements Serializable {
         // Forces start and end to be whole second boundaries, which the auditReaderDao needs.
         try {
             long startTimeSec;
-            if (ZERO.equals(requestedStart)) {
+            if (isZero(requestedStart)) {
                 startTimeSec = readLastEtlRun();
                 if (startTimeSec == 0L) {
                     log.warn("Cannot start ETL because the run time of the last incremental ETL can't be read");
@@ -241,7 +246,7 @@ public class ExtractTransform implements Serializable {
             }
 
             long endTimeSec;
-            if (ZERO.equals(requestedEnd)) {
+            if (isZero(requestedEnd)) {
                 endTimeSec = System.currentTimeMillis() / MSEC_IN_SEC;
             } else {
                 endTimeSec = secTimestampFormat.parse(requestedEnd).getTime() / MSEC_IN_SEC;
@@ -255,7 +260,7 @@ public class ExtractTransform implements Serializable {
 
                 // Updates the lastEtlRun file with the actual end of etl, but only when doing etl ending now,
                 // which is the case for timer-driven incremental etl.
-                if (ZERO.equals(requestedEnd)) {
+                if (isZero(requestedEnd)) {
                     writeLastEtlRun(secTimestampFormat.parse(countAndDate.right).getTime() / MSEC_IN_SEC);
                 }
 
