@@ -172,7 +172,10 @@ public class MercuryOrSquidRouter implements Serializable {
             }
         }
         for (LabVessel labVessel : labVessels) {
-            routingOptions.add(routeForVessel(labVessel, controlCollaboratorSampleIds, mapSampleNameToDto, intent));
+            MercuryOrSquid mercuryOrSquid = routeForVessel(labVessel, controlCollaboratorSampleIds, mapSampleNameToDto, intent);
+            if (mercuryOrSquid != null) {
+                routingOptions.add(mercuryOrSquid);
+            }
         }
 
         return evaluateRoutingOption(routingOptions, intent);
@@ -189,6 +192,8 @@ public class MercuryOrSquidRouter implements Serializable {
      * The logic within this method will utilize the vessel to navigate back to the correct PDO and determine what
      * routing is configured for the workflow associated with the PDO.
      *
+     * When the intent is system-of-record and a control tube is given, null will be returned. This reflects the fact
+     * that, for system-of-record determination, controls defer to their travel partners.
      *
      * @param vessel an instance of a LabVessel for which system routing is to be determined
      * @param controlCollaboratorSampleIds list of collaborator IDs for controls
@@ -282,7 +287,11 @@ public class MercuryOrSquidRouter implements Serializable {
             }
         }
 
-        return evaluateRoutingOption(routingOptions, intent);
+        if (routingOptions.isEmpty() && intent == Intent.SYSTEM_OF_RECORD) {
+            return null;
+        } else {
+            return evaluateRoutingOption(routingOptions, intent);
+        }
     }
 
     /**
