@@ -343,7 +343,7 @@ public class ExtractTransformTest extends Arquillian {
         for (Class backfillClass : backfillClasses) {
             Response response = extractTransform.backfillEtl(backfillClass.getName(), 1, 1);
             Assert.assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
-            Assert.assertTrue(((String)response.getEntity()).contains("created"));
+            Assert.assertTrue(((String)response.getEntity()).toLowerCase().contains("created"));
         }
     }
 
