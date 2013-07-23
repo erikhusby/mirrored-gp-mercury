@@ -49,8 +49,8 @@ public class BSPSampleDTO {
 
     private final Map<BSPSampleSearchColumn, String> columnToValue;
 
-    //This is the BSP sample receipt date formatter. (ex. 11/18/2010)
-    public static final SimpleDateFormat BSP_DATE_FORMAT = new SimpleDateFormat("MM/dd/yyyy");
+    // This is the BSP sample receipt date format string. (ex. 11/18/2010)
+    public static final String BSP_DATE_FORMAT_STRING = "MM/dd/yyyy";
 
     public boolean hasData() {
         return !columnToValue.isEmpty();
@@ -153,7 +153,7 @@ public class BSPSampleDTO {
 
         if (StringUtils.isNotBlank(dateString)) {
             try {
-                return BSP_DATE_FORMAT.parse(dateString);
+                return new SimpleDateFormat(BSP_DATE_FORMAT_STRING).parse(dateString);
             } catch (Exception e) {
                 // Fall through to return.
                 logger.warn(
