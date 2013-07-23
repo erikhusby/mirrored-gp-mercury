@@ -34,7 +34,7 @@ public class LabMetricEtl extends GenericEntityEtl<LabMetric, LabMetric> {
 
     @Inject
     public LabMetricEtl(LabMetricRunDao labMetricDao, ProductOrderDao pdoDao) {
-        super(LabMetric.class, "lab_metric", labMetricDao);
+        super(LabMetric.class, "lab_metric", "lab_metric_aud", "lab_metric_id", labMetricDao);
         this.labMetricDao = labMetricDao;
         this.pdoDao = pdoDao;
     }

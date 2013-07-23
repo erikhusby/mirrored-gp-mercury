@@ -18,7 +18,8 @@ public class ResearchProjectFundingEtl extends GenericEntityEtl<ResearchProjectF
 
     @Inject
     public ResearchProjectFundingEtl(ResearchProjectDao dao) {
-        super(ResearchProjectFunding.class, "research_project_funding", dao);
+        super(ResearchProjectFunding.class, "research_project_funding", "athena.research_project_funding_aud",
+                "research_project_funding_id", dao);
     }
 
     @Override

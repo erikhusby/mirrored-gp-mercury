@@ -30,7 +30,7 @@ public class WorkflowConfigEtl extends GenericEntityEtl<WorkflowConfig, Object> 
 
     @Inject
     public WorkflowConfigEtl(WorkflowConfigLookup workflowConfigLookup) {
-        super(WorkflowConfig.class, WORKFLOW_BASE_FILENAME, null);
+        super(WorkflowConfig.class, WORKFLOW_BASE_FILENAME, null, null, null);
         this.workflowConfigLookup = workflowConfigLookup;
     }
 

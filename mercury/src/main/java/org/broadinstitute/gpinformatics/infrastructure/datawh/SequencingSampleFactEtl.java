@@ -47,7 +47,7 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
 
     @Inject
     public SequencingSampleFactEtl(IlluminaSequencingRunDao dao, ProductOrderDao pdoDao) {
-        super(SequencingRun.class, "sequencing_sample_fact", dao);
+        super(SequencingRun.class, "sequencing_sample_fact", "sequencing_run_aud", "sequencing_run_id", dao);
         this.pdoDao = pdoDao;
     }
 

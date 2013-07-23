@@ -30,8 +30,8 @@ public abstract class GenericEntityAndStatusEtl<AUDITED_ENTITY_CLASS, ETL_DATA_S
     }
 
     protected GenericEntityAndStatusEtl(Class entityClass, String baseFilename, String baseStatusFilename,
-                                        GenericDao dao) {
-        super(entityClass, baseFilename, dao);
+                                        String auditTableName, String auditTableEntityIdColumnName, GenericDao dao) {
+        super(entityClass, baseFilename, auditTableName, auditTableEntityIdColumnName, dao);
         this.baseStatusFilename = baseStatusFilename;
     }
 
@@ -123,7 +123,8 @@ public abstract class GenericEntityAndStatusEtl<AUDITED_ENTITY_CLASS, ETL_DATA_S
     }
 
     @Override
-    protected int writeRecords(Collection<ETL_DATA_SOURCE_CLASS> entities, String etlDateStr) {
+    protected int writeRecords(Collection<ETL_DATA_SOURCE_CLASS> entities, Collection<Long> deletedEntityIds,
+                               String etlDateStr) {
 
         Date statusDate = null;
         try {
@@ -138,13 +139,20 @@ public abstract class GenericEntityAndStatusEtl<AUDITED_ENTITY_CLASS, ETL_DATA_S
         DataFile statusFile = new DataFile(dataFilename(etlDateStr, baseStatusFilename));
 
         try {
+            // Deletion records only contain the entityId field.
+            for (Long entityId : deletedEntityIds) {
+                String record = genericRecord(etlDateStr, true, entityId);
+                dataFile.write(record);
+            }
             // Writes the data and status records.
             for (ETL_DATA_SOURCE_CLASS entity : entities) {
-                for (String record : dataRecords(etlDateStr, false, entity)) {
-                    dataFile.write(record);
+                if (!deletedEntityIds.contains(dataSourceEntityId(entity))) {
+                    for (String record : dataRecords(etlDateStr, false, entity)) {
+                        dataFile.write(record);
+                    }
+                    String record = statusRecord(etlDateStr, false, entity, statusDate);
+                    statusFile.write(record);
                 }
-                String record = statusRecord(etlDateStr, false, entity, statusDate);
-                statusFile.write(record);
             }
 
             return dataFile.getRecordCount() + statusFile.getRecordCount();

@@ -18,7 +18,7 @@ public class ProductOrderAddOnEtl extends GenericEntityEtl<ProductOrderAddOn, Pr
 
     @Inject
     public ProductOrderAddOnEtl(ProductOrderDao dao) {
-        super(ProductOrderAddOn.class, "product_order_add_on", dao);
+        super(ProductOrderAddOn.class, "product_order_add_on", "athena.product_add_ons_aud", "add_ons", dao);
     }
 
     @Override

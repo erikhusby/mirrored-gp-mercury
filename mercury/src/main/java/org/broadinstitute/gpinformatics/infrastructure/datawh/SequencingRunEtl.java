@@ -19,7 +19,7 @@ public class SequencingRunEtl extends GenericEntityEtl<SequencingRun, Sequencing
 
     @Inject
     public SequencingRunEtl(IlluminaSequencingRunDao dao) {
-        super(SequencingRun.class, "sequencing_run", dao);
+        super(SequencingRun.class, "sequencing_run", "sequencing_run_aud", "sequencing_run_id", dao);
     }
 
     @Override
