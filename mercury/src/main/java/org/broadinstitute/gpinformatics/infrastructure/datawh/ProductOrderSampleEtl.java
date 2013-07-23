@@ -19,7 +19,8 @@ public class ProductOrderSampleEtl extends GenericEntityAndStatusEtl<ProductOrde
 
     @Inject
     public ProductOrderSampleEtl(ProductOrderSampleDao dao) {
-        super(ProductOrderSample.class, "product_order_sample", "product_order_sample_status", dao);
+        super(ProductOrderSample.class, "product_order_sample", "product_order_sample_status",
+                "athena.product_order_sample_aud", "product_order_sample_id", dao);
     }
 
     @Override

@@ -19,7 +19,7 @@ public class LabVesselEtl extends GenericEntityEtl<LabVessel, LabVessel> {
 
     @Inject
     public LabVesselEtl(LabVesselDao dao) {
-        super(LabVessel.class, "lab_vessel", dao);
+        super(LabVessel.class, "lab_vessel", "lab_vessel_aud", "lab_vessel_id", dao);
     }
 
     @Override

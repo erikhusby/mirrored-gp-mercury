@@ -50,7 +50,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
     @Inject
     public LabEventEtl(WorkflowConfigLookup workflowConfigLookup, LabEventDao dao, ProductOrderDao pdoDao,
                        SequencingSampleFactEtl sequencingSampleFactEtl) {
-        super(LabEvent.class, "event_fact", dao);
+        super(LabEvent.class, "event_fact", "lab_event_aud", "lab_event_id", dao);
         this.workflowConfigLookup = workflowConfigLookup;
         this.pdoDao = pdoDao;
         this.sequencingSampleFactEtl = sequencingSampleFactEtl;

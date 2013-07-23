@@ -18,7 +18,7 @@ public class BillingSessionEtl extends GenericEntityEtl<BillingSession, BillingS
 
     @Inject
     public BillingSessionEtl(BillingSessionDao dao) {
-        super(BillingSession.class, "billing_session", dao);
+        super(BillingSession.class, "billing_session", "athena.billing_session_aud", "billing_session_id", dao);
     }
 
     @Override

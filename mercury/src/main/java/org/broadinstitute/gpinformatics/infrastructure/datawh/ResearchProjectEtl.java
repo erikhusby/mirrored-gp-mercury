@@ -20,7 +20,8 @@ public class ResearchProjectEtl extends GenericEntityAndStatusEtl<ResearchProjec
 
     @Inject
     public ResearchProjectEtl(ResearchProjectDao dao) {
-        super(ResearchProject.class, "research_project", "research_project_status", dao);
+        super(ResearchProject.class, "research_project", "research_project_status", "athena.research_project_aud",
+                "research_project_id", dao);
     }
 
     @Override

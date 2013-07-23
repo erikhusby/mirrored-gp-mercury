@@ -19,7 +19,8 @@ public class ResearchProjectCohortEtl extends GenericEntityEtl<ResearchProjectCo
 
     @Inject
     public ResearchProjectCohortEtl(ResearchProjectDao dao) {
-        super(ResearchProjectCohort.class, "research_project_cohort", dao);
+        super(ResearchProjectCohort.class, "research_project_cohort", "athena.research_project_cohort_aud",
+                "research_project_cohort_id", dao);
     }
 
     @Override

@@ -17,6 +17,7 @@ import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -400,28 +401,33 @@ public class ExtractTransform implements Serializable {
      * @param endId           Last entity id of a range of ids to backfill.  Optional query param that defaults to max id.
      */
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
-    public Response.Status backfillEtl(String entityClassname, final long startId, long endId) {
+    public Response backfillEtl(String entityClassname, final long startId, long endId) {
         String dataDir = getDatafileDir();
         if (StringUtils.isBlank(dataDir)) {
-            log.info("ETL data file directory is not configured. Backfill ETL will not be run");
-            return Response.Status.INTERNAL_SERVER_ERROR;
+            String msg = "ETL data file directory is not configured. Backfill ETL will not be run";
+            log.info(msg);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(msg).build();
         } else if (!(new File(dataDir)).exists()) {
-            log.error("ETL data file directory is missing: " + dataDir);
-            return Response.Status.INTERNAL_SERVER_ERROR;
+            String msg = "ETL data file directory is missing: " + dataDir;
+            log.error(msg);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(msg).build();
         } else if (!(new File(dataDir)).canRead()) {
-            log.error("Cannot read the ETL data file directory: " + dataDir);
-            return Response.Status.INTERNAL_SERVER_ERROR;
+            String msg = "Cannot read the ETL data file directory: " + dataDir;
+            log.error(msg);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(msg).build();
         } else if (!(new File(dataDir)).canWrite()) {
-            log.error("Cannot write to the ETL data file directory: " + dataDir);
-            return Response.Status.INTERNAL_SERVER_ERROR;
+            String msg = "Cannot write to the ETL data file directory: " + dataDir;
+            log.error(msg);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(msg).build();
         }
 
         Class entityClass;
         try {
             entityClass = Class.forName(entityClassname);
         } catch (ClassNotFoundException e) {
-            log.error("Unknown class " + entityClassname);
-            return Response.Status.NOT_FOUND;
+            String msg = "Unknown class " + entityClassname;
+            log.error(msg);
+            return Response.status(Response.Status.NOT_FOUND).entity(msg).build();
         }
 
         if (endId == -1) {
@@ -429,8 +435,9 @@ public class ExtractTransform implements Serializable {
         }
 
         if (startId < 0 || endId < startId) {
-            log.error("Invalid entity id range " + startId + " to " + endId);
-            return Response.Status.BAD_REQUEST;
+            String msg = "Invalid entity id range " + startId + " to " + endId;
+            log.error(msg);
+            return Response.status(Response.Status.BAD_REQUEST).entity(msg).build();
         }
 
         log.debug("Starting ETL backfill of " + entityClass.getName() + " having ids " + startId + " to " + endId);
@@ -455,6 +462,7 @@ public class ExtractTransform implements Serializable {
                 date.add(etlDateStr);
             }
         });
+        String msg = null;
         if (!count.isEmpty() && !date.isEmpty()) {
             int recordCount = count.get(0);
             String etlDateStr = date.get(0);
@@ -462,11 +470,13 @@ public class ExtractTransform implements Serializable {
             if (recordCount > 0) {
                 writeIsReadyFile(etlDateStr);
             }
-            log.info("Backfill ETL created " + recordCount +
-                    " data records in " + (int) ((System.currentTimeMillis() - backfillStartTime) / MSEC_IN_SEC) + " seconds");
+            msg = "Created " + recordCount + " " +  " data records in " +
+                  (int) ((System.currentTimeMillis() - backfillStartTime) / MSEC_IN_SEC) + " seconds";
+            log.info(msg);
+        } else {
+            msg = "Backfill ETL created no data records";
         }
-        return Response.Status.NO_CONTENT;
-
+        return Response.status(Response.Status.OK).type(MediaType.TEXT_PLAIN_TYPE).entity(msg).build();
     }
 
     /**

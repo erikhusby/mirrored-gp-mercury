@@ -22,7 +22,7 @@ public class ProductEtl extends GenericEntityEtl<Product, Product> {
      */
     @Inject
     public ProductEtl(ProductDao dao) {
-        super(Product.class, "product", dao);
+        super(Product.class, "product", "athena.product_aud", "product_id", dao);
     }
 
     @Override
