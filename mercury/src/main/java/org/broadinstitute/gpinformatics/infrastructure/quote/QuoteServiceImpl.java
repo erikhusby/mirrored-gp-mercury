@@ -1,10 +1,15 @@
 package org.broadinstitute.gpinformatics.infrastructure.quote;
 
-import com.sun.jersey.api.client.*;
+import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.ClientHandlerException;
+import com.sun.jersey.api.client.ClientResponse;
+import com.sun.jersey.api.client.UniformInterfaceException;
+import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
 
@@ -14,7 +19,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.text.SimpleDateFormat;
+import java.text.Format;
 import java.util.Date;
 
 @Impl
@@ -61,7 +66,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
                                   Date reportedCompletionDate, double numWorkUnits,
                                   String callbackUrl, String callbackParameterName, String callbackParameterValue) {
 
-        SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
+        Format dateFormat = FastDateFormat.getInstance("MM/dd/yyyy");
 
         // see https://iwww.broadinstitute.org/blogs/quote/?page_id=272 for details.
         String url = url(Endpoint.REGISTER_WORK);

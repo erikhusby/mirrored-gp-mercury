@@ -255,7 +255,7 @@ public class ExtractTransformDbFreeTest {
     public void testOnDemandIncr2() {
         long startEtl = 1364411920L;
         long endEtl = 1364411930L;
-        String endEtlStr = ExtractTransform.secTimestampFormat.format(new Date(endEtl * 1000L));
+        String endEtlStr = ExtractTransform.formatTimestamp(new Date(endEtl * 1000L));
 
         expect(auditReaderDao.fetchAuditIds(startEtl, endEtl)).andReturn(new TreeMap<Long, Date>());
         replay(mocks);

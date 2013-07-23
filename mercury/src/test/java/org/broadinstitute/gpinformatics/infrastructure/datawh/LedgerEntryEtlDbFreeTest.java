@@ -24,7 +24,7 @@ import java.util.Date;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class LedgerEntryEtlDbFreeTest {
-    private final String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
+    private final String etlDateStr = ExtractTransform.formatTimestamp(new Date());
     private static final long LEDGER_ID = 1122334455;
     private static final long PRODUCT_ORDER_SAMPLE_ID = 223344551;
     private static final String QUOTE_ID = "ABCD9";

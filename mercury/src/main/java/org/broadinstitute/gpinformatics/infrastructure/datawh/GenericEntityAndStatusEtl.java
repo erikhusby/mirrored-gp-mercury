@@ -125,9 +125,9 @@ public abstract class GenericEntityAndStatusEtl<AUDITED_ENTITY_CLASS, ETL_DATA_S
     @Override
     protected int writeRecords(Collection<ETL_DATA_SOURCE_CLASS> entities, String etlDateStr) {
 
-        Date statusDate = null;
+        Date statusDate;
         try {
-            statusDate = ExtractTransform.secTimestampFormat.parse(etlDateStr);
+            statusDate = ExtractTransform.parseTimestamp(etlDateStr);
         } catch (ParseException e) {
             logger.warn("Cannot parse date string '" + etlDateStr + "'");
             statusDate = new Date();

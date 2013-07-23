@@ -5,6 +5,7 @@ import edu.mit.broad.prodinfo.thrift.lims.TZDevExperimentData;
 import org.apache.commons.collections15.Factory;
 import org.apache.commons.collections15.map.LazyMap;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -38,8 +39,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 
 import javax.inject.Inject;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
+import java.text.Format;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -125,7 +125,7 @@ public class ZimsIlluminaRunFactory {
             mapNameToControl.put(activeControl.getCollaboratorSampleId(), activeControl);
         }
 
-        DateFormat dateFormat = new SimpleDateFormat(ZimsIlluminaRun.DATE_FORMAT);
+        Format dateFormat = FastDateFormat.getInstance(ZimsIlluminaRun.DATE_FORMAT);
         // TODO: fill in sequencerModel and isPaired
 
         double imagedArea = 0;

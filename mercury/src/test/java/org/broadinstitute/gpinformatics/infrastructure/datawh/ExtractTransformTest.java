@@ -87,7 +87,7 @@ public class ExtractTransformTest extends Arquillian {
         // Writes and commits an entity to the db.  Envers requires the transaction to commit.
         final long startSec = System.currentTimeMillis() / MSEC_IN_SEC;
         final long startMSec = startSec * MSEC_IN_SEC;
-        final String startEtl = ExtractTransform.secTimestampFormat.format(new Date(startMSec));
+        final String startEtl = ExtractTransform.formatTimestamp(new Date(startMSec));
         Assert.assertNotNull(utx);
         utx.begin();
         labVesselDao.persist(labVessel);
@@ -116,7 +116,7 @@ public class ExtractTransformTest extends Arquillian {
 
         // Runs an incremental etl that starts after the entity was created.
         // Entity create should not be in the etl file, if any was created.
-        String endEtl = ExtractTransform.secTimestampFormat.format(new Date(endEtlMSec));
+        String endEtl = ExtractTransform.formatTimestamp(new Date(endEtlMSec));
         extractTransform.incrementalEtl(endEtl, "0");
         Assert.assertFalse(searchEtlFile(datafileDir, datFileEnding, "F", entityId));
         EtlTestUtilities.deleteEtlFiles(datafileDir);
@@ -207,10 +207,10 @@ public class ExtractTransformTest extends Arquillian {
         long rev = ids[2];
         RevInfo revInfo = auditReaderDao.findById(RevInfo.class, rev);
         // Brackets the change with interval on whole second boundaries.
-        String startEtl = ExtractTransform.secTimestampFormat.format(revInfo.getRevDate());
-        long startMsec = ExtractTransform.secTimestampFormat.parse(startEtl).getTime();
+        String startEtl = ExtractTransform.formatTimestamp(revInfo.getRevDate());
+        long startMsec = ExtractTransform.parseTimestamp(startEtl).getTime();
         long endMsec = startMsec + MSEC_IN_SEC;
-        String endEtl = ExtractTransform.secTimestampFormat.format(new Date(endMsec));
+        String endEtl = ExtractTransform.formatTimestamp(new Date(endMsec));
         int recordCount = extractTransform.incrementalEtl(startEtl, endEtl);
         Assert.assertTrue(recordCount > 0);
         // Filename is "back dated".
@@ -229,10 +229,10 @@ public class ExtractTransformTest extends Arquillian {
         long rev = ids[2];
         RevInfo revInfo = auditReaderDao.findById(RevInfo.class, rev);
         // Brackets the change with interval on whole second boundaries.
-        String startEtl = ExtractTransform.secTimestampFormat.format(revInfo.getRevDate());
-        long startMsec = ExtractTransform.secTimestampFormat.parse(startEtl).getTime();
+        String startEtl = ExtractTransform.formatTimestamp(revInfo.getRevDate());
+        long startMsec = ExtractTransform.parseTimestamp(startEtl).getTime();
         long endMsec = startMsec + MSEC_IN_SEC;
-        String endEtl = ExtractTransform.secTimestampFormat.format(new Date(endMsec));
+        String endEtl = ExtractTransform.formatTimestamp(new Date(endMsec));
         int recordCount = extractTransform.incrementalEtl(startEtl, endEtl);
         Assert.assertTrue(recordCount > 0);
 
@@ -265,10 +265,10 @@ public class ExtractTransformTest extends Arquillian {
         long rev = ids[2];
         RevInfo revInfo = auditReaderDao.findById(RevInfo.class, rev);
         // Brackets the change with interval on whole second boundaries.
-        String startEtl = ExtractTransform.secTimestampFormat.format(revInfo.getRevDate());
-        long startMsec = ExtractTransform.secTimestampFormat.parse(startEtl).getTime();
+        String startEtl = ExtractTransform.formatTimestamp(revInfo.getRevDate());
+        long startMsec = ExtractTransform.parseTimestamp(startEtl).getTime();
         long endMsec = startMsec + MSEC_IN_SEC;
-        String endEtl = ExtractTransform.secTimestampFormat.format(new Date(endMsec));
+        String endEtl = ExtractTransform.formatTimestamp(new Date(endMsec));
         int recordCount = extractTransform.incrementalEtl(startEtl, endEtl);
         Assert.assertTrue(recordCount > 0);
         // Filename is "back dated".
@@ -287,10 +287,10 @@ public class ExtractTransformTest extends Arquillian {
         long rev = ids[2];
         RevInfo revInfo = auditReaderDao.findById(RevInfo.class, rev);
         // Brackets the change with interval on whole second boundaries.
-        String startEtl = ExtractTransform.secTimestampFormat.format(revInfo.getRevDate());
-        long startMsec = ExtractTransform.secTimestampFormat.parse(startEtl).getTime();
+        String startEtl = ExtractTransform.formatTimestamp(revInfo.getRevDate());
+        long startMsec = ExtractTransform.parseTimestamp(startEtl).getTime();
         long endMsec = startMsec + MSEC_IN_SEC;
-        String endEtl = ExtractTransform.secTimestampFormat.format(new Date(endMsec));
+        String endEtl = ExtractTransform.formatTimestamp(new Date(endMsec));
         int recordCount = extractTransform.incrementalEtl(startEtl, endEtl);
         Assert.assertTrue(recordCount > 0);
 

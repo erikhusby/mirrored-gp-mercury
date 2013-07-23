@@ -10,13 +10,14 @@
 package org.broadinstitute.gpinformatics.infrastructure.widget.daterange;
 
 import clover.org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.hibernate.Criteria;
 import org.hibernate.criterion.Restrictions;
 
 import javax.annotation.Nullable;
 import java.io.Serializable;
+import java.text.Format;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -53,6 +54,8 @@ public class DateRangeSelector implements Serializable {
     public static final int CREATE_CUSTOM = 14;
 
     private int rangeSelector = DateRangeSelector.ALL;
+
+    private static final Format DATE_FORMATTER = FastDateFormat.getInstance("d-MMM-yyyy");
 
     public int getRangeSelector() {
         return rangeSelector;
@@ -98,7 +101,7 @@ public class DateRangeSelector implements Serializable {
     // Validate the range
 
     public boolean isValidRange() {
-        return (start == null) || (end == null) || this.end.equals(start) || this.end.after(start);
+        return (start == null) || (end == null) || end.equals(start) || end.after(start);
     }
 
     public String getStartStr() {
@@ -133,17 +136,17 @@ public class DateRangeSelector implements Serializable {
     }
 
     public String getDateRangeAsString() {
-        Date startDate = this.getStartTime();
+        Date startDate = getStartTime();
         if (startDate == null) {
             startDate = new Date(0L);
         }
-        Date stopDate = this.getEndTime();
+        Date stopDate = getEndTime();
         if (stopDate == null) {
             stopDate = new Date();
         }
-        StringBuilder dateString = new StringBuilder(new SimpleDateFormat("d-MMM-yyyy").format(startDate));
+        StringBuilder dateString = new StringBuilder(DATE_FORMATTER.format(startDate));
         dateString.append(" - ");
-        dateString.append(new SimpleDateFormat("d-MMM-yyyy").format(stopDate));
+        dateString.append(DATE_FORMATTER.format(stopDate));
         return dateString.toString();
     }
 
@@ -258,7 +261,7 @@ public class DateRangeSelector implements Serializable {
         final DateRange dateRange;
         final String naturalLanguageString;
 
-        private RangeDefinition(int rangeSelector, DateRange dateRange, String naturalLanguageString) {
+        RangeDefinition(int rangeSelector, DateRange dateRange, String naturalLanguageString) {
             this.rangeSelector = rangeSelector;
             this.dateRange = dateRange;
             this.naturalLanguageString = naturalLanguageString;

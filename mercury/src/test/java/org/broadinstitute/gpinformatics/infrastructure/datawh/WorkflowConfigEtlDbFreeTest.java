@@ -39,7 +39,7 @@ public class WorkflowConfigEtlDbFreeTest {
     // Reuses the setup and values from WorkflowConfigLookupDbFreeTest
     private WorkflowConfig config = WorkflowConfigLookupDbFreeTest.buildWorkflowConfig();
     private Collection<WorkflowConfigDenorm> configs = new ArrayList<>();
-    private String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
+    private final String etlDateString = ExtractTransform.formatTimestamp(new Date());
     private final int EXPECTED_RECORD_COUNT = 15;
     private WorkflowConfigEtl tst;
 
@@ -83,7 +83,7 @@ public class WorkflowConfigEtlDbFreeTest {
         replay(mocks);
         boolean gotIt = false;
         try {
-            tst.dataRecords(etlDateStr, false, 1L);
+            tst.dataRecords(etlDateString, false, 1L);
         } catch (RuntimeException e) {
             gotIt = true;
         }
@@ -104,12 +104,12 @@ public class WorkflowConfigEtlDbFreeTest {
         expect(loader.getDenormConfigs()).andReturn(configs);
         replay(mocks);
 
-        File workflowDatafile = new File(datafileDir, etlDateStr + "_" + WorkflowConfigEtl.WORKFLOW_BASE_FILENAME + ".dat");
-        File processDatafile = new File(datafileDir, etlDateStr + "_" + WorkflowConfigEtl.PROCESS_BASE_FILENAME + ".dat");
+        File workflowDatafile = new File(datafileDir, etlDateString + "_" + WorkflowConfigEtl.WORKFLOW_BASE_FILENAME + ".dat");
+        File processDatafile = new File(datafileDir, etlDateString + "_" + WorkflowConfigEtl.PROCESS_BASE_FILENAME + ".dat");
         assertFalse(workflowDatafile.exists());
         assertFalse(processDatafile.exists());
 
-        assertEquals(tst.doEtl(Collections.<Long>emptyList(), etlDateStr), EXPECTED_RECORD_COUNT);
+        assertEquals(tst.doEtl(Collections.<Long>emptyList(), etlDateString), EXPECTED_RECORD_COUNT);
 
         verifyWorkflowFile(workflowDatafile);
         verifyProcessFile(processDatafile);
@@ -144,7 +144,7 @@ public class WorkflowConfigEtlDbFreeTest {
 
     private boolean verifyWorkflowRecord(String record, long id, String name, String version) {
         String[] parts = record.split(",");
-        assertEquals(parts[1], etlDateStr);
+        assertEquals(parts[1], etlDateString);
         assertEquals(parts[2], "F");
         return parts[3].equals(String.valueOf(id))
                 && parts[4].equals(name)
@@ -208,7 +208,7 @@ public class WorkflowConfigEtlDbFreeTest {
     private boolean verifyProcessRecord(String record, long id, String name, String version, String step, String event) {
         String[] parts = record.split(",");
         assertEquals(parts.length, 8);
-        assertEquals(parts[1], etlDateStr);
+        assertEquals(parts[1], etlDateString);
         assertEquals(parts[2], "F");
         return parts[3].equals(String.valueOf(id))
                 && parts[4].equals(name)

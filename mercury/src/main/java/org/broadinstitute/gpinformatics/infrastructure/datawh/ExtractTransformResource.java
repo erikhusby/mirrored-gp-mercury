@@ -107,7 +107,7 @@ public class ExtractTransformResource {
                     dto.getResearchProjectId(),
                     dto.getLoadingVessel() != null ? dto.getLoadingVessel().getLabel() : "null",
                     dto.getLoadingVessel() != null && dto.getLoadingVessel().getCreatedOn() != null ?
-                            ExtractTransform.secTimestampFormat.format(dto.getLoadingVessel().getCreatedOn()) : "null",
+                            ExtractTransform.formatTimestamp(dto.getLoadingVessel().getCreatedOn()) : "null",
                     dto.getBatchName()
             ));
         }

@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -25,6 +26,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.Serializable;
 import java.io.Writer;
+import java.text.Format;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -72,7 +74,23 @@ public class ExtractTransform implements Serializable {
     /**
      * This date format matches what cron job expects in filenames, and in SqlLoader data files.
      */
-    public static final SimpleDateFormat secTimestampFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+    private static final String TIMESTAMP_FORMAT_STRING = "yyyyMMddHHmmss";
+
+    /**
+     * Format a timestamp for output.
+     */
+    public static final Format TIMESTAMP_FORMATTER = FastDateFormat.getInstance(TIMESTAMP_FORMAT_STRING);
+
+    public static String formatTimestamp(Date timestamp) {
+        return TIMESTAMP_FORMATTER.format(timestamp);
+    }
+
+    /**
+     * Parse a timestamp from a string.
+     */
+    public static Date parseTimestamp(String text) throws ParseException {
+        return new SimpleDateFormat(TIMESTAMP_FORMAT_STRING).parse(text);
+    }
 
     /**
      * Name of file that contains the mSec time of the last etl run.
@@ -242,14 +260,14 @@ public class ExtractTransform implements Serializable {
                     return -1;
                 }
             } else {
-                startTimeSec = secTimestampFormat.parse(requestedStart).getTime() / MSEC_IN_SEC;
+                startTimeSec = parseTimestamp(requestedStart).getTime() / MSEC_IN_SEC;
             }
 
             long endTimeSec;
             if (isZero(requestedEnd)) {
                 endTimeSec = System.currentTimeMillis() / MSEC_IN_SEC;
             } else {
-                endTimeSec = secTimestampFormat.parse(requestedEnd).getTime() / MSEC_IN_SEC;
+                endTimeSec = parseTimestamp(requestedEnd).getTime() / MSEC_IN_SEC;
             }
 
             if (startTimeSec < endTimeSec) {
@@ -261,7 +279,7 @@ public class ExtractTransform implements Serializable {
                 // Updates the lastEtlRun file with the actual end of etl, but only when doing etl ending now,
                 // which is the case for timer-driven incremental etl.
                 if (isZero(requestedEnd)) {
-                    writeLastEtlRun(secTimestampFormat.parse(countAndDate.right).getTime() / MSEC_IN_SEC);
+                    writeLastEtlRun(parseTimestamp(countAndDate.right).getTime() / MSEC_IN_SEC);
                 }
 
                 if (countAndDate.left > 0) {
@@ -316,13 +334,12 @@ public class ExtractTransform implements Serializable {
                         log.debug("Incremental ETL found " + revs.size() + " changes");
                     }
 
-                    String actualEtlDateStr = secTimestampFormat.format(
-                            new Date(revsAndDate.right * MSEC_IN_SEC));
+                    String actualEtlDateStr = formatTimestamp(new Date(revsAndDate.right * MSEC_IN_SEC));
 
                     int recordCount = 0;
                     if (!revsAndDate.left.isEmpty()) {
                         // The order of ETL is not significant since import tables have no referential integrity.
-                        for (GenericEntityEtl etlInstance : etlInstances) {
+                        for (GenericEntityEtl<?, ?> etlInstance : etlInstances) {
                             recordCount += etlInstance.doEtl(revsAndDate.left.keySet(), actualEtlDateStr);
                         }
                     }
@@ -420,7 +437,7 @@ public class ExtractTransform implements Serializable {
         long backfillStartTime = System.currentTimeMillis();
 
         final long finalEndId = endId;
-        final Class finalEntityClass = entityClass;
+        final Class<?> finalEntityClass = entityClass;
         final List<Integer> count = new ArrayList<Integer>(1);
         final List<String> date = new ArrayList<String>(1);
 
@@ -429,9 +446,9 @@ public class ExtractTransform implements Serializable {
             public void apply() {
                 int recordCount = 0;
                 // The one of these that matches the entityClass will make ETL records, others are no-ops.
-                String etlDateStr = secTimestampFormat.format(new Date());
+                String etlDateStr = formatTimestamp(new Date());
 
-                for (GenericEntityEtl etlInstance : etlInstances) {
+                for (GenericEntityEtl<?, ?> etlInstance : etlInstances) {
                     recordCount += etlInstance.doEtl(finalEntityClass, startId, finalEndId, etlDateStr);
                 }
                 count.add(recordCount);

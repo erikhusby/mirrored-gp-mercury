@@ -28,7 +28,7 @@ public class WorkflowConfigLookup implements Serializable {
     static {
         // This should move to WorkflowConfigDao if it ever exists.
         try {
-            NOV_1_2012 = ExtractTransform.secTimestampFormat.parse("20121101000000");
+            NOV_1_2012 = ExtractTransform.parseTimestamp("20121101000000");
         } catch (ParseException e) {
             logger.error("Cannot create syntheticWorkflowConfigs.");
         }

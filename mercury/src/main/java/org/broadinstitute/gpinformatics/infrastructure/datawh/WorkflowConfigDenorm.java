@@ -90,7 +90,7 @@ public class WorkflowConfigDenorm implements Serializable {
     }
 
     public String getEffectiveDateStr() {
-        return ExtractTransform.secTimestampFormat.format(effectiveDate);
+        return ExtractTransform.formatTimestamp(effectiveDate);
     }
 
     public String getProductWorkflowName() {
@@ -161,9 +161,9 @@ public class WorkflowConfigDenorm implements Serializable {
                         if (pwdvEndDate != null && wpdvStartDate.after(pwdvEndDate)) {
                             logger.debug("Useless workflow config element: ProductWorkflowName "
                                     + productWorkflowName + " version " + productWorkflowVersion + " starts (" +
-                                    ExtractTransform.secTimestampFormat.format(wpdvStartDate) + ") after WorkflowProcessDef "
+                                    ExtractTransform.formatTimestamp(wpdvStartDate) + ") after WorkflowProcessDef "
                                     + workflowProcessName + " version " + wpdv.getVersion() + " ends (" +
-                                    ExtractTransform.secTimestampFormat.format(pwdvEndDate) + ")");
+                                    ExtractTransform.formatTimestamp(pwdvEndDate) + ")");
                             continue;
                         }
                         Date netEffectiveDate = wpdvStartDate.after(pwdvStartDate) ? wpdvStartDate : pwdvStartDate;

@@ -38,7 +38,7 @@ public class ZimsIlluminaRun {
     private Date runDate;
 
     @JsonIgnore
-    private final SimpleDateFormat dateFormat =  new SimpleDateFormat(DATE_FORMAT);
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
 
     @JsonProperty("lanes")
     private List<ZimsIlluminaChamber> chambers = new ArrayList<ZimsIlluminaChamber>();

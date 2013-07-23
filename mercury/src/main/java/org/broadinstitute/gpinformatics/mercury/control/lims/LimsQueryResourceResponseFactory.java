@@ -15,6 +15,10 @@ import java.util.GregorianCalendar;
  */
 public class LimsQueryResourceResponseFactory {
 
+    private static final String CREATE_DATE_FORMAT_STRING = "yyyy/MM/dd HH:mm";
+
+    private final SimpleDateFormat createDateFormat = new SimpleDateFormat(CREATE_DATE_FORMAT_STRING);
+
     public FlowcellDesignationType makeFlowcellDesignation(FlowcellDesignation designation) {
         FlowcellDesignationType outDesignation = new FlowcellDesignationType();
         for (Lane lane : designation.getLanes()) {
@@ -62,9 +66,10 @@ public class LimsQueryResourceResponseFactory {
         String dateCreated = libraryData.getDateCreated();
         if (dateCreated != null) {
             try {
-                createDateTime = new SimpleDateFormat("yyyy/MM/dd HH:mm").parse(dateCreated);
+                createDateTime = createDateFormat.parse(dateCreated);
             } catch (ParseException e) {
-                throw new RuntimeException("Unexpected date format. Wanted: yyyy-MM-ddTHH:mm:ss.SSSZ. Got: " + dateCreated, e);
+                throw new RuntimeException("Unexpected date format. Wanted: " + CREATE_DATE_FORMAT_STRING
+                                           + ". Got: " + dateCreated, e);
             }
             GregorianCalendar calendar = new GregorianCalendar();
             calendar.setTime(createDateTime);

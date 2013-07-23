@@ -418,7 +418,7 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
      * @param date the date to format
      */
     public static String format(Date date) {
-        return (date != null ? ExtractTransform.secTimestampFormat.format(date) : "\"\"");
+        return (date != null ? ExtractTransform.formatTimestamp(date) : "\"\"");
     }
 
     /**
