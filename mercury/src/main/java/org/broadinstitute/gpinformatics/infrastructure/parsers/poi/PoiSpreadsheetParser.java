@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.parsers.poi;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
@@ -17,7 +18,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
-import java.text.SimpleDateFormat;
+import java.text.Format;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -32,7 +33,7 @@ public final class PoiSpreadsheetParser implements Serializable {
 
     private static final String DATE_PATTERN = "MM/dd/yyyy";
 
-    private final SimpleDateFormat dateFormatter = new SimpleDateFormat(DATE_PATTERN);
+    private final Format dateFormatter = FastDateFormat.getInstance(DATE_PATTERN);
 
     private static final long serialVersionUID = 1294878041185823009L;
     protected List<String> validationMessages = new ArrayList<>();

@@ -21,7 +21,7 @@ import static org.testng.Assert.assertEquals;
 @Test(groups = TestGroups.DATABASE_FREE)
 public class SequencingRunEtlDbFreeTest {
     private final String actualReadStructure = "101T8B8B101T";
-    private String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
+    private final String etlDateString = ExtractTransform.formatTimestamp(new Date());
     private long entityId = 1122334455L;
     private String runName = "adfASDF0890821lkmxzcv-09zuvb";
     private Date runDate = new Date(1354000000000L);
@@ -64,7 +64,7 @@ public class SequencingRunEtlDbFreeTest {
         expect(dao.findById(SequencingRun.class, -1L)).andReturn(null);
         replay(mocks);
 
-        assertEquals(tst.dataRecords(etlDateStr, false, -1L).size(), 0);
+        assertEquals(tst.dataRecords(etlDateString, false, -1L).size(), 0);
 
         verify(mocks);
     }
@@ -73,7 +73,7 @@ public class SequencingRunEtlDbFreeTest {
         expect(dao.findById(SequencingRun.class, entityId)).andReturn(run);
         replay(mocks);
 
-        Collection<String> records = tst.dataRecords(etlDateStr, false, entityId);
+        Collection<String> records = tst.dataRecords(etlDateString, false, entityId);
         assertEquals(records.size(), 1);
         verifyRecord(records.iterator().next());
 
@@ -83,12 +83,12 @@ public class SequencingRunEtlDbFreeTest {
     private void verifyRecord(String record) {
         int i = 0;
         String[] parts = record.split(",");
-        assertEquals(parts[i++], etlDateStr);
+        assertEquals(parts[i++], etlDateString);
         assertEquals(parts[i++], "F");
         assertEquals(parts[i++], String.valueOf(entityId));
         assertEquals(parts[i++], runName);
         assertEquals(parts[i++], barcode);
-        assertEquals(parts[i++], ExtractTransform.secTimestampFormat.format(runDate));
+        assertEquals(parts[i++], ExtractTransform.formatTimestamp(runDate));
         assertEquals(parts[i++], machineName);
         assertEquals(parts[i++], setupReadStructure);
         assertEquals(parts[i++], actualReadStructure);

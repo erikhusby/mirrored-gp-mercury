@@ -47,7 +47,7 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
 
     @Inject
     public SequencingSampleFactEtl(IlluminaSequencingRunDao dao, ProductOrderDao pdoDao) {
-        super(SequencingRun.class, "sequencing_sample_fact", dao);
+        super(SequencingRun.class, "sequencing_sample_fact", "sequencing_run_aud", "sequencing_run_id", dao);
         this.pdoDao = pdoDao;
     }
 
@@ -81,6 +81,7 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
                     // Turns "LANE1" to "LANE8" into "1" to "8".
                     String position = dto.getPosition().replaceAll("LANE", "");
 
+                    LabVessel loadingVessel = dto.getLoadingVessel();
                     records.add(genericRecord(etlDateStr, isDelete,
                             entity.getSequencingRunId(),
                             format(dto.getFlowcellBarcode()),
@@ -89,9 +90,9 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
                             format(dto.getProductOrderId()),
                             format(dto.getSampleKey()),
                             format(dto.getResearchProjectId()),
-                            (dto.getLoadingVessel() != null) ? format(dto.getLoadingVessel().getLabel()) : null,
-                            (dto.getLoadingVessel() != null) ? format(ExtractTransform.secTimestampFormat
-                                    .format(dto.getLoadingVessel().getCreatedOn())) : null,
+                            (loadingVessel != null) ? format(loadingVessel.getLabel()) : null,
+                            (loadingVessel != null) ?
+                                    format(ExtractTransform.formatTimestamp(loadingVessel.getCreatedOn())) : null,
                             format(dto.getBatchName())
                     ));
                 }

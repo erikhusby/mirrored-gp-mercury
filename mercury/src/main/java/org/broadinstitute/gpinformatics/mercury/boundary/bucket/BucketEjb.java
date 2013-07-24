@@ -531,6 +531,7 @@ public class BucketEjb {
         Bucket bucket = bucketDao.findByName(bucketName);
         if (bucket == null) {
             bucket = new Bucket(bucketName);
+            bucketDao.persist(bucket);
             logger.debug("Created new bucket " + bucketName);
         }
         return bucket;

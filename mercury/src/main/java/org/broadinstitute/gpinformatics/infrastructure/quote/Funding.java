@@ -19,9 +19,7 @@ import java.util.*;
 @XmlRootElement(name = "Funding")
 public class Funding implements Displayable {
 
-    private static final String QUOTE_SERVER_DATE_STR = "yyyy-MM-dd hh:mm:ss.SSS";
-    public static final DateFormat QUOTE_DATE_FORMAT = new SimpleDateFormat(QUOTE_SERVER_DATE_STR);
-
+    private static final String QUOTE_SERVER_DATE_STRING = "yyyy-MM-dd hh:mm:ss.SSS";
 
     public static final String FUNDS_RESERVATION = "Funds Reservation";
 
@@ -199,6 +197,8 @@ public class Funding implements Displayable {
     public static Set<Funding> getFundingSet(Document response) {
         Set<Funding> fundingSet = new TreeSet<Funding>(byDisplayName);
 
+        DateFormat quoteDateFormat = new SimpleDateFormat(QUOTE_SERVER_DATE_STRING);
+
         NodeList rowNodes = response.getElementsByTagName("rowData");
         for (int i = 0; i < rowNodes.getLength(); i++) {
             Node node = rowNodes.item(i);
@@ -228,13 +228,13 @@ public class Funding implements Displayable {
                 funding.setFundingType(type);
 
                 String dateStr = nameValueAttributes.get("GRANT_END");
-                Date date = StringUtils.isBlank(dateStr) ? null : QUOTE_DATE_FORMAT.parse(dateStr);
+                Date date = StringUtils.isBlank(dateStr) ? null : quoteDateFormat.parse(dateStr);
                 funding.setGrantEndDate(date);
 
                 funding.setGrantNumber(nameValueAttributes.get("GRANT_NUM"));
 
                 dateStr = nameValueAttributes.get("GRANT_START");
-                date = StringUtils.isBlank(dateStr) ? null : QUOTE_DATE_FORMAT.parse(dateStr);
+                date = StringUtils.isBlank(dateStr) ? null : quoteDateFormat.parse(dateStr);
                 funding.setGrantStartDate(date);
 
                 funding.setGrantStatus(nameValueAttributes.get("GRANT_STATUS"));

@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>Mercury</groupId>
     <artifactId>Mercury</artifactId>
-    <version>1.28-SNAPSHOT</version>
+    <version>1.29-SNAPSHOT</version>
     <packaging>war</packaging>
     <inceptionYear>2012</inceptionYear>
 
@@ -1081,6 +1081,13 @@
 
         <profile>
             <id>MessageTestJar</id>
+            <properties>
+                <version>${project.version}</version>
+                <file>target/${project.artifactId}-${project.version}-tests.jar</file>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>${project.artifactId}</artifactId>
+                <packaging>jar</packaging>
+            </properties>
             <build>
                 <plugins>
                     <plugin>
@@ -1099,11 +1106,6 @@
                         <artifactId>maven-deploy-plugin</artifactId>
                         <configuration>
                             <url>${project.distributionManagement.repository.url}</url>
-                            <file>target/${project.artifactId}-${project.version}-tests.jar</file>
-                            <groupId>${project.groupId}</groupId>
-                            <artifactId>${project.artifactId}</artifactId>
-                            <version>${project.version}</version>
-                            <packaging>jar</packaging>
                             <classifier>message-test</classifier>
                             <uniqueVersion>false</uniqueVersion>
                         </configuration>

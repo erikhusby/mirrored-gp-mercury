@@ -15,9 +15,8 @@ import java.util.Date;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class BillingSessionEtlDbFreeTest {
-    private final String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
+    private final String etlDateStr = ExtractTransform.formatTimestamp(new Date());
     private static final long BILLING_SESSION_ID = 1122334455;
-    private static final String BILLING_SESSION_MESSAGE = "Billing Successful";
     private static final Date BILLED_DATE = new Date();
     private static final BillingSession.BillingSessionType BILLING_SESSION_TYPE = BillingSession.BillingSessionType.ROLLUP_DAILY;
     private String datafileDir;

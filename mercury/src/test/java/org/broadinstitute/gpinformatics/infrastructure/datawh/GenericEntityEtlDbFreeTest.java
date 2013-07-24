@@ -34,7 +34,7 @@ import static org.testng.Assert.assertEquals;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class GenericEntityEtlDbFreeTest {
-    private String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
+    private String etlDateStr = ExtractTransform.formatTimestamp(new Date());
     private final long entityId = 1122334455L;
     private final String label = "012345678";
     private final LabVessel.ContainerType type = LabVessel.ContainerType.TUBE;

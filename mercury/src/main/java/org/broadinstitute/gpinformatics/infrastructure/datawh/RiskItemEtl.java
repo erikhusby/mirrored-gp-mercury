@@ -31,13 +31,18 @@ public class RiskItemEtl extends GenericEntityEtl<RiskItem, ProductOrderSample> 
 
     @Inject
     public RiskItemEtl(RiskItemDao dao, ProductOrderSampleDao pdoSampleDao) {
-        super(RiskItem.class, "product_order_sample_risk", dao);
+        super(RiskItem.class, "product_order_sample_risk", "athena.risk_item_aud", "risk_item_id", dao);
         this.pdoSampleDao = pdoSampleDao;
     }
 
     @Override
     Long entityId(RiskItem entity) {
         return entity.getRiskItemId();
+    }
+
+    @Override
+    protected Long dataSourceEntityId(ProductOrderSample entity) {
+        return entity.getProductOrderSampleId();
     }
 
     @Override

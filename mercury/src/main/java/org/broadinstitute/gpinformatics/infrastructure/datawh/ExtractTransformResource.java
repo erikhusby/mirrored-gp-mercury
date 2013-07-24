@@ -11,6 +11,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 /**
@@ -43,8 +44,7 @@ public class ExtractTransformResource {
                                      @PathParam("endId") long endId) {
 
         extractTransform.initConfig();
-        Response.Status status = extractTransform.backfillEtl(entityClassname, startId, endId);
-        return Response.status(status).build();
+        return extractTransform.backfillEtl(entityClassname, startId, endId);
     }
 
     /**
@@ -62,8 +62,13 @@ public class ExtractTransformResource {
                                       @PathParam("endDateTime") String endDateTime) {
 
         extractTransform.initConfig();
-        extractTransform.incrementalEtl(startDateTime, endDateTime);
-        return Response.status(ClientResponse.Status.ACCEPTED).build();
+        int recordCount = extractTransform.incrementalEtl(startDateTime, endDateTime);
+        if (recordCount >= 0) {
+            return Response.status(ClientResponse.Status.OK).entity("created " + recordCount + " records").build();
+        } else {
+            return Response.status(ClientResponse.Status.INTERNAL_SERVER_ERROR)
+                    .entity("Problem running incremental etl").build();
+        }
     }
 
     /**
@@ -107,7 +112,7 @@ public class ExtractTransformResource {
                     dto.getResearchProjectId(),
                     dto.getLoadingVessel() != null ? dto.getLoadingVessel().getLabel() : "null",
                     dto.getLoadingVessel() != null && dto.getLoadingVessel().getCreatedOn() != null ?
-                            ExtractTransform.secTimestampFormat.format(dto.getLoadingVessel().getCreatedOn()) : "null",
+                            ExtractTransform.formatTimestamp(dto.getLoadingVessel().getCreatedOn()) : "null",
                     dto.getBatchName()
             ));
         }

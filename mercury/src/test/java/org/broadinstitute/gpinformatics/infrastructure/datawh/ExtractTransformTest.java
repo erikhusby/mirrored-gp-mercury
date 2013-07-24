@@ -4,16 +4,33 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
+import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.RiskItem;
+import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.project.ProjectPerson;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectCohort;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectFunding;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectIRB;
 import org.broadinstitute.gpinformatics.infrastructure.common.SessionContextUtilityKeepScope;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.RevInfo;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
+import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.hibernate.SQLQuery;
 import org.hibernate.type.LongType;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -32,6 +49,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
@@ -49,6 +67,28 @@ public class ExtractTransformTest extends Arquillian {
     private String datafileDir;
     public final long MSEC_IN_SEC = 1000L;
     private final String barcode = "TEST" + System.currentTimeMillis();
+
+    // This list should contain every class that can be backfilled.
+    private final Class[] backfillClasses = new Class[] {
+            BillingSession.class,
+            LabEvent.class,
+            LabMetric.class,
+            LabVessel.class,
+            LedgerEntry.class,
+            PriceItem.class,
+            Product.class,
+            ProductOrder.class,
+            ProductOrderAddOn.class,
+            ProductOrderSample.class,
+            ProjectPerson.class,
+            ResearchProject.class,
+            ResearchProjectCohort.class,
+            ResearchProjectFunding.class,
+            ResearchProjectIRB.class,
+            RiskItem.class,
+            SequencingRun.class,
+            WorkflowConfig.class,
+    };
 
     @Inject
     private ExtractTransform extractTransform;
@@ -87,7 +127,7 @@ public class ExtractTransformTest extends Arquillian {
         // Writes and commits an entity to the db.  Envers requires the transaction to commit.
         final long startSec = System.currentTimeMillis() / MSEC_IN_SEC;
         final long startMSec = startSec * MSEC_IN_SEC;
-        final String startEtl = ExtractTransform.secTimestampFormat.format(new Date(startMSec));
+        final String startEtl = ExtractTransform.formatTimestamp(new Date(startMSec));
         Assert.assertNotNull(utx);
         utx.begin();
         labVesselDao.persist(labVessel);
@@ -116,7 +156,7 @@ public class ExtractTransformTest extends Arquillian {
 
         // Runs an incremental etl that starts after the entity was created.
         // Entity create should not be in the etl file, if any was created.
-        String endEtl = ExtractTransform.secTimestampFormat.format(new Date(endEtlMSec));
+        String endEtl = ExtractTransform.formatTimestamp(new Date(endEtlMSec));
         extractTransform.incrementalEtl(endEtl, "0");
         Assert.assertFalse(searchEtlFile(datafileDir, datFileEnding, "F", entityId));
         EtlTestUtilities.deleteEtlFiles(datafileDir);
@@ -124,8 +164,8 @@ public class ExtractTransformTest extends Arquillian {
         // Runs backfill ETL on a range of entity ids that includes the known entity id.
         // Checks that the new data file contains the known entity id.
 
-        Response.Status status = extractTransform.backfillEtl(LabVessel.class.getName(), entityId, entityId);
-        Assert.assertEquals(status, Response.Status.NO_CONTENT);
+        Response response = extractTransform.backfillEtl(LabVessel.class.getName(), entityId, entityId);
+        Assert.assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
         Assert.assertTrue(searchEtlFile(datafileDir, datFileEnding, "F", entityId));
         EtlTestUtilities.deleteEtlFiles(datafileDir);
 
@@ -196,8 +236,8 @@ public class ExtractTransformTest extends Arquillian {
         // Tests backfill etl.
         long entityId = ids[0];
         long pdoSampleId = ids[1];
-        Response.Status status = extractTransform.backfillEtl(RiskItem.class.getName(), entityId, entityId);
-        Assert.assertEquals(status, Response.Status.NO_CONTENT);
+        Response response = extractTransform.backfillEtl(RiskItem.class.getName(), entityId, entityId);
+        Assert.assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
 
         final String datFileEnding = "_product_order_sample_risk.dat";
         Assert.assertTrue(searchEtlFile(datafileDir, datFileEnding, "F", pdoSampleId));
@@ -207,10 +247,10 @@ public class ExtractTransformTest extends Arquillian {
         long rev = ids[2];
         RevInfo revInfo = auditReaderDao.findById(RevInfo.class, rev);
         // Brackets the change with interval on whole second boundaries.
-        String startEtl = ExtractTransform.secTimestampFormat.format(revInfo.getRevDate());
-        long startMsec = ExtractTransform.secTimestampFormat.parse(startEtl).getTime();
+        String startEtl = ExtractTransform.formatTimestamp(revInfo.getRevDate());
+        long startMsec = ExtractTransform.parseTimestamp(startEtl).getTime();
         long endMsec = startMsec + MSEC_IN_SEC;
-        String endEtl = ExtractTransform.secTimestampFormat.format(new Date(endMsec));
+        String endEtl = ExtractTransform.formatTimestamp(new Date(endMsec));
         int recordCount = extractTransform.incrementalEtl(startEtl, endEtl);
         Assert.assertTrue(recordCount > 0);
         // Filename is "back dated".
@@ -229,10 +269,10 @@ public class ExtractTransformTest extends Arquillian {
         long rev = ids[2];
         RevInfo revInfo = auditReaderDao.findById(RevInfo.class, rev);
         // Brackets the change with interval on whole second boundaries.
-        String startEtl = ExtractTransform.secTimestampFormat.format(revInfo.getRevDate());
-        long startMsec = ExtractTransform.secTimestampFormat.parse(startEtl).getTime();
+        String startEtl = ExtractTransform.formatTimestamp(revInfo.getRevDate());
+        long startMsec = ExtractTransform.parseTimestamp(startEtl).getTime();
         long endMsec = startMsec + MSEC_IN_SEC;
-        String endEtl = ExtractTransform.secTimestampFormat.format(new Date(endMsec));
+        String endEtl = ExtractTransform.formatTimestamp(new Date(endMsec));
         int recordCount = extractTransform.incrementalEtl(startEtl, endEtl);
         Assert.assertTrue(recordCount > 0);
 
@@ -252,8 +292,8 @@ public class ExtractTransformTest extends Arquillian {
         // Tests backfill etl.
         long entityId = ids[0];
         long pdoSampleId = ids[1];
-        Response.Status status = extractTransform.backfillEtl(LedgerEntry.class.getName(), entityId, entityId);
-        Assert.assertEquals(status, Response.Status.NO_CONTENT);
+        Response response = extractTransform.backfillEtl(LedgerEntry.class.getName(), entityId, entityId);
+        Assert.assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
 
         final String datFileEnding = "product_order_sample_bill.dat";
         Assert.assertTrue(searchEtlFile(datafileDir, datFileEnding, "F", pdoSampleId));
@@ -265,10 +305,10 @@ public class ExtractTransformTest extends Arquillian {
         long rev = ids[2];
         RevInfo revInfo = auditReaderDao.findById(RevInfo.class, rev);
         // Brackets the change with interval on whole second boundaries.
-        String startEtl = ExtractTransform.secTimestampFormat.format(revInfo.getRevDate());
-        long startMsec = ExtractTransform.secTimestampFormat.parse(startEtl).getTime();
+        String startEtl = ExtractTransform.formatTimestamp(revInfo.getRevDate());
+        long startMsec = ExtractTransform.parseTimestamp(startEtl).getTime();
         long endMsec = startMsec + MSEC_IN_SEC;
-        String endEtl = ExtractTransform.secTimestampFormat.format(new Date(endMsec));
+        String endEtl = ExtractTransform.formatTimestamp(new Date(endMsec));
         int recordCount = extractTransform.incrementalEtl(startEtl, endEtl);
         Assert.assertTrue(recordCount > 0);
         // Filename is "back dated".
@@ -287,15 +327,24 @@ public class ExtractTransformTest extends Arquillian {
         long rev = ids[2];
         RevInfo revInfo = auditReaderDao.findById(RevInfo.class, rev);
         // Brackets the change with interval on whole second boundaries.
-        String startEtl = ExtractTransform.secTimestampFormat.format(revInfo.getRevDate());
-        long startMsec = ExtractTransform.secTimestampFormat.parse(startEtl).getTime();
+        String startEtl = ExtractTransform.formatTimestamp(revInfo.getRevDate());
+        long startMsec = ExtractTransform.parseTimestamp(startEtl).getTime();
         long endMsec = startMsec + MSEC_IN_SEC;
-        String endEtl = ExtractTransform.secTimestampFormat.format(new Date(endMsec));
+        String endEtl = ExtractTransform.formatTimestamp(new Date(endMsec));
         int recordCount = extractTransform.incrementalEtl(startEtl, endEtl);
         Assert.assertTrue(recordCount > 0);
 
         final String datFileEnding = "_product_order_sample_bill.dat";
         Assert.assertTrue(searchEtlFile(datafileDir, datFileEnding, "T", pdoSampleId));
+    }
+
+    @Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION)
+    public void testBackfill() throws Exception {
+        for (Class backfillClass : backfillClasses) {
+            Response response = extractTransform.backfillEtl(backfillClass.getName(), 1, 1);
+            Assert.assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
+            Assert.assertTrue(((String)response.getEntity()).toLowerCase().contains("created"));
+        }
     }
 
 

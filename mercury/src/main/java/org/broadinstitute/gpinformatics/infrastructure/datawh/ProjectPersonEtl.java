@@ -21,7 +21,7 @@ public class ProjectPersonEtl extends GenericEntityEtl<ProjectPerson, ProjectPer
 
     @Inject
     public ProjectPersonEtl(ResearchProjectDao dao, BSPUserList userList) {
-        super(ProjectPerson.class, "research_project_person", dao);
+        super(ProjectPerson.class, "research_project_person", "athena.project_person_aud", "project_person_id", dao);
         this.userList = userList;
     }
 

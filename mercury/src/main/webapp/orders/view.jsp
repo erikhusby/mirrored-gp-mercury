@@ -219,9 +219,9 @@
                         "oTableTools": ttExportDefines,
                         "aaSorting": [[1, 'asc']],
                         "aoColumns": [
-                            {"bSortable": false},                          // Checkbox
+                            {"bSortable": false},                           // Checkbox
                             {"bSortable": true, "sType": "numeric"},        // Position
-                            {"bSortable": true},                            // ID
+                            {"bSortable": true, "sType": "html"},           // ID
                             {"bSortable": true},                            // Collaborator Sample ID
                             {"bSortable": true},                            // Participant ID
                             {"bSortable": true},                            // Collaborator Participant ID

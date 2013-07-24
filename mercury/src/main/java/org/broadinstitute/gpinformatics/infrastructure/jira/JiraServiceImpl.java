@@ -191,21 +191,21 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         return issueResult;
     }
 
-    private JiraSearchIssueData parseSearch(String queryResponse, String... searchFields) throws IOException {
+    private static JiraSearchIssueData parseSearch(String queryResponse, String... searchFields) throws IOException {
 
         JiraSearchIssueData parsedResults = new JiraSearchIssueData();
 
-        final Map root = new ObjectMapper().readValue(queryResponse, Map.class);
+        Map<?, ?> root = new ObjectMapper().readValue(queryResponse, Map.class);
         parsedResults.setKey((String) root.get("key"));
-        final Map fields = (Map) root.get("fields");
+        Map<?, ?> fields = (Map<?, ?>) root.get("fields");
 
         parsedResults.description = (String) fields.get("description");
         parsedResults.summary = (String) fields.get("summary");
 
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
         String dueDateValue = (String) fields.get("duedate");
         try {
             if (StringUtils.isNotBlank(dueDateValue)) {
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
                 parsedResults.dueDate = dateFormat.parse(dueDateValue);
             }
         } catch (ParseException pe) {
