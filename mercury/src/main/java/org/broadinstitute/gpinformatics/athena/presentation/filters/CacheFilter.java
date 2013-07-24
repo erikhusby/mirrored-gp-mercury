@@ -27,7 +27,8 @@ public class CacheFilter implements Filter {
     private int expirationTime;
 
     /**
-     * Should the filter cache or set to NOT cache the content?  Useful for local debugging of various issues.
+     * Should the filter set to cache or NOT cache the content?  Useful for local debugging of various issues if set to
+     * not cache when one is changing around static content.
      */
     private boolean shouldCache;
 
@@ -39,12 +40,18 @@ public class CacheFilter implements Filter {
      */
     private static final int DEFAULT_EXPIRE = 24 * 60 * 60;
 
-    private static final DateFormat HTTP_DATE_FORMAT;
+    /**
+     * DateFormat wrapped in a ThreadLocal to make thread-safe.
+     */
+    private static final ThreadLocal<DateFormat> DATE_FORMAT = new ThreadLocal<DateFormat>() {
+        @Override
+        protected DateFormat initialValue() {
+            DateFormat localDateFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US);
+            localDateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
 
-    static {
-        HTTP_DATE_FORMAT = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US);
-        HTTP_DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
-    }
+            return localDateFormat;
+        }
+    };
 
     /**
      * @see javax.servlet.Filter#init(javax.servlet.FilterConfig)
@@ -103,7 +110,7 @@ public class CacheFilter implements Filter {
             cal.add(Calendar.SECOND, expirationSeconds);
             response.setHeader("Cache-Control", "public" + ", max-age=" + expirationSeconds
                                                 + ", public");
-            response.setHeader("Expires", HTTP_DATE_FORMAT.format(cal.getTime()));
+            response.setHeader("Expires", DATE_FORMAT.get().format(cal.getTime()));
             response.setHeader("ExpiresDefault", "access plus " + expirationSeconds + " seconds");
         }
     }
@@ -116,8 +123,6 @@ public class CacheFilter implements Filter {
     private void setNoCache(HttpServletResponse response) {
         response.setHeader("Pragma", "no-cache");
         response.setHeader("Cache-Control", "no-store, no-cache");
-        response.setHeader("Cache-Control", "no-store");
         response.setDateHeader("Expires", -1);
     }
-
 }

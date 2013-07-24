@@ -78,6 +78,7 @@ public class SolexaRunRoutingTest extends BaseEventTest{
      * @throws Exception
      */
     public void testWholeGenomeFlowcell() throws Exception {
+        expectedRouting = MercuryOrSquidRouter.MercuryOrSquid.SQUID;
 
         TemplateEngine templateEngine = new TemplateEngine();
         templateEngine.postConstruct();
@@ -93,6 +94,7 @@ public class SolexaRunRoutingTest extends BaseEventTest{
         LabBatch workflowBatch = new LabBatch("Whole Genome Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
         workflowBatch.setWorkflowName("Whole Genome");
+        workflowBatch.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
 
         bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
         PreFlightEntityBuilder preFlightEntityBuilder = runPreflightProcess(mapBarcodeToTube, "1");

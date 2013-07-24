@@ -1,15 +1,23 @@
 package org.broadinstitute.gpinformatics.athena.presentation.filters;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletOutputStream;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpServletResponseWrapper;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.zip.GZIPOutputStream;
-
-import javax.servlet.*;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpServletResponseWrapper;
 
 /**
  * This filter is used for compressing streams for web requests.  Typically used for more static content since most of
@@ -25,9 +33,10 @@ public class GZipFilter implements Filter {
         if (req instanceof HttpServletRequest) {
             HttpServletRequest request = (HttpServletRequest) req;
             HttpServletResponse response = (HttpServletResponse) res;
-            String ae = request.getHeader("accept-encoding");
+            String acceptEncoding = request.getHeader("accept-encoding");
 
-            if (ae != null && ae.contains("gzip")) {
+            // Check to see if the browser supports compression before doing it.
+            if (acceptEncoding != null && acceptEncoding.contains("gzip")) {
                 GZIPResponseWrapper wrappedResponse = new GZIPResponseWrapper(response);
                 chain.doFilter(req, wrappedResponse);
                 wrappedResponse.finishResponse();
@@ -53,15 +62,15 @@ public class GZipFilter implements Filter {
      * Class to handle the gzipping of the content as a stream.
      */
     class GZIPResponseStream extends ServletOutputStream {
-        protected ByteArrayOutputStream byteArrayOutputStream = null;
+        protected ByteArrayOutputStream byteArrayOutputStream;
 
-        protected GZIPOutputStream gzipStream = null;
+        protected GZIPOutputStream gzipStream;
 
         protected boolean closed = false;
 
-        protected HttpServletResponse response = null;
+        protected HttpServletResponse response;
 
-        protected ServletOutputStream output = null;
+        protected ServletOutputStream output;
 
         public GZIPResponseStream(HttpServletResponse response) throws IOException {
             super();
@@ -81,9 +90,6 @@ public class GZipFilter implements Filter {
             gzipStream.flush();
         }
 
-        /**
-         *
-         */
         @Override
         public void close() throws IOException {
             if (closed) {
@@ -136,11 +142,13 @@ public class GZipFilter implements Filter {
      * Response wrapper for the {@link HttpServletResponseWrapper}.
      */
     class GZIPResponseWrapper extends HttpServletResponseWrapper {
-        protected HttpServletResponse origResponse = null;
+        private Log log = LogFactory.getLog(GZIPResponseStream.class);
 
-        protected ServletOutputStream stream = null;
+        protected HttpServletResponse origResponse;
 
-        protected PrintWriter writer = null;
+        protected ServletOutputStream stream;
+
+        protected PrintWriter writer;
 
         protected int error;
 
@@ -163,6 +171,7 @@ public class GZipFilter implements Filter {
                     }
                 }
             } catch (IOException e) {
+                log.error("Problem finishing response", e);
             }
         }
 
