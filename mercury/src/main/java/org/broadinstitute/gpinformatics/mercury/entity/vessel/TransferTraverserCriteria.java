@@ -176,7 +176,7 @@ public interface TransferTraverserCriteria {
         private static final int STARTER_INDEX = -1;
 
         private final Map<Integer, Collection<LabBatch>> labBatchesAtHopCount =
-                new HashMap<Integer, Collection<LabBatch>>();
+                new HashMap<>();
         private LabBatch.LabBatchType type;
 
         /**
@@ -197,7 +197,7 @@ public interface TransferTraverserCriteria {
 
                     Collection<LabBatch> batchesAtHop = labBatchesAtHopCount.get(context.getHopCount());
                     if (batchesAtHop == null) {
-                        batchesAtHop = new HashSet<LabBatch>();
+                        batchesAtHop = new HashSet<>();
                     }
                     if (type == null) {
                         batchesAtHop.addAll(labBatches);
@@ -229,7 +229,7 @@ public interface TransferTraverserCriteria {
 
         public Collection<LabBatch> getNearestLabBatches() {
             int nearest = Integer.MAX_VALUE;
-            Set<LabBatch> nearestSet = new HashSet<LabBatch>();
+            Set<LabBatch> nearestSet = new HashSet<>();
             for (Map.Entry<Integer, Collection<LabBatch>> labBatchesForHopCount : labBatchesAtHopCount.entrySet()) {
                 if (labBatchesForHopCount.getKey() < nearest) {
                     nearest = labBatchesForHopCount.getKey();
@@ -253,7 +253,7 @@ public interface TransferTraverserCriteria {
         }
 
         public Collection<LabBatch> getAllLabBatches() {
-            Set<LabBatch> allBatches = new HashSet<LabBatch>();
+            Set<LabBatch> allBatches = new HashSet<>();
             for (Collection<LabBatch> collection : labBatchesAtHopCount.values()) {
                 allBatches.addAll(collection);
             }
@@ -264,7 +264,7 @@ public interface TransferTraverserCriteria {
 
     class NearestLabMetricOfTypeCriteria implements TransferTraverserCriteria {
         private LabMetric.MetricType metricType;
-        private Map<Integer, Collection<LabMetric>> labMetricsAtHop = new HashMap<Integer, Collection<LabMetric>>();
+        private Map<Integer, Collection<LabMetric>> labMetricsAtHop = new HashMap<>();
 
         public NearestLabMetricOfTypeCriteria(LabMetric.MetricType metricType) {
             this.metricType = metricType;
@@ -279,7 +279,7 @@ public interface TransferTraverserCriteria {
                         Collection<LabMetric> metricsAtHop;
                         metricsAtHop = labMetricsAtHop.get(context.getHopCount());
                         if (metricsAtHop == null) {
-                            metricsAtHop = new ArrayList<LabMetric>();
+                            metricsAtHop = new ArrayList<>();
                             labMetricsAtHop.put(context.getHopCount(), metricsAtHop);
                         }
                         metricsAtHop.add(metric);
@@ -311,7 +311,7 @@ public interface TransferTraverserCriteria {
     class NearestProductOrderCriteria implements TransferTraverserCriteria {
 
         private final Map<Integer, Collection<String>> productOrdersAtHopCount =
-                new HashMap<Integer, Collection<String>>();
+                new HashMap<>();
 
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
@@ -345,7 +345,7 @@ public interface TransferTraverserCriteria {
 
         public Collection<String> getNearestProductOrders() {
             int nearest = Integer.MAX_VALUE;
-            Set<String> nearestSet = new HashSet<String>();
+            Set<String> nearestSet = new HashSet<>();
             for (Map.Entry<Integer, Collection<String>> posForHopCount : productOrdersAtHopCount.entrySet()) {
                 if (posForHopCount.getKey() < nearest) {
                     nearest = posForHopCount.getKey();
@@ -362,7 +362,7 @@ public interface TransferTraverserCriteria {
     }
 
     class LabVesselDescendantCriteria implements TransferTraverserCriteria {
-        private final Map<Integer, List<LabVessel>> labVesselAtHopCount = new TreeMap<Integer, List<LabVessel>>();
+        private final Map<Integer, List<LabVessel>> labVesselAtHopCount = new TreeMap<>();
 
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
@@ -370,7 +370,7 @@ public interface TransferTraverserCriteria {
             if (labVesselAtHopCount.containsKey(context.getHopCount())) {
                 vesselList = labVesselAtHopCount.get(context.getHopCount());
             } else {
-                vesselList = new ArrayList<LabVessel>();
+                vesselList = new ArrayList<>();
             }
 
             if (context.getLabVessel() != null) {
@@ -396,20 +396,20 @@ public interface TransferTraverserCriteria {
         }
 
         public Collection<LabVessel> getLabVesselDescendants() {
-            Set<LabVessel> allVessels = new HashSet<LabVessel>();
+            Set<LabVessel> allVessels = new HashSet<>();
             for (List<LabVessel> vesselList : labVesselAtHopCount.values()) {
                 allVessels.addAll(vesselList);
             }
-            Map<Date, LabVessel> sortedTreeMap = new TreeMap<Date, LabVessel>();
+            Map<Date, LabVessel> sortedTreeMap = new TreeMap<>();
             for (LabVessel vessel : allVessels) {
                 sortedTreeMap.put(vessel.getCreatedOn(), vessel);
             }
-            return new ArrayList<LabVessel>(sortedTreeMap.values());
+            return new ArrayList<>(sortedTreeMap.values());
         }
     }
 
     class LabVesselAncestorCriteria implements TransferTraverserCriteria {
-        private final Map<Integer, List<LabVessel>> labVesselAtHopCount = new TreeMap<Integer, List<LabVessel>>();
+        private final Map<Integer, List<LabVessel>> labVesselAtHopCount = new TreeMap<>();
 
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
@@ -417,7 +417,7 @@ public interface TransferTraverserCriteria {
             if (labVesselAtHopCount.containsKey(context.getHopCount())) {
                 vesselList = labVesselAtHopCount.get(context.getHopCount());
             } else {
-                vesselList = new ArrayList<LabVessel>();
+                vesselList = new ArrayList<>();
             }
 
             if (context.getLabVessel() != null) {
@@ -443,15 +443,15 @@ public interface TransferTraverserCriteria {
         }
 
         public Collection<LabVessel> getLabVesselAncestors() {
-            Set<LabVessel> allVessels = new HashSet<LabVessel>();
+            Set<LabVessel> allVessels = new HashSet<>();
             for (List<LabVessel> vesselList : labVesselAtHopCount.values()) {
                 allVessels.addAll(vesselList);
             }
-            Map<Date, LabVessel> sortedTreeMap = new TreeMap<Date, LabVessel>();
+            Map<Date, LabVessel> sortedTreeMap = new TreeMap<>();
             for (LabVessel vessel : allVessels) {
                 sortedTreeMap.put(vessel.getCreatedOn(), vessel);
             }
-            return new ArrayList<LabVessel>(sortedTreeMap.values());
+            return new ArrayList<>(sortedTreeMap.values());
         }
     }
 

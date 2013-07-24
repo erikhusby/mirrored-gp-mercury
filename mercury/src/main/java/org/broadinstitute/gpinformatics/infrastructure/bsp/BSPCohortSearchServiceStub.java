@@ -19,7 +19,7 @@ public class BSPCohortSearchServiceStub implements BSPCohortSearchService {
 
     @Override
     public Set<Cohort> getAllCohorts() {
-        Set<Cohort> cohorts = new HashSet<Cohort>();
+        Set<Cohort> cohorts = new HashSet<>();
 
         Cohort cohort = new Cohort("1", "name1", "category1", "group1", true);
         cohorts.add( cohort);

@@ -12,7 +12,7 @@ public class ZimsIlluminaChamber {
     private String chamberName;
 
     @JsonProperty("libraries")
-    private List<LibraryBean> libraries = new ArrayList<LibraryBean>();
+    private List<LibraryBean> libraries = new ArrayList<>();
 
     @JsonProperty("primer")
     private String primer;

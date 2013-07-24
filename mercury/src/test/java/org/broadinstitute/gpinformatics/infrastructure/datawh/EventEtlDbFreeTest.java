@@ -76,9 +76,9 @@ public class EventEtlDbFreeTest {
             sampleInst, sample, labBatch, sequencingSampleFactEtl, modEvent, denature, cartridge, cartridgeEvent,
             flowcell};
 
-    private final Set<LabVessel> vesselList = new HashSet<LabVessel>();
-    private final Set<SampleInstance> sampleInstList = new HashSet<SampleInstance>();
-    private final Set<LabBatch> workflowLabBatches = new HashSet<LabBatch>();
+    private final Set<LabVessel> vesselList = new HashSet<>();
+    private final Set<SampleInstance> sampleInstList = new HashSet<>();
+    private final Set<LabBatch> workflowLabBatches = new HashSet<>();
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void setUp() {

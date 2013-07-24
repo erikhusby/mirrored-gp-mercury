@@ -74,7 +74,7 @@ public class BSPCohortSearchServiceImpl extends AbstractJerseyClientService impl
     @Override
     public Set<Cohort> getAllCohorts() {
 
-        SortedSet<Cohort> usersCohorts = new TreeSet<Cohort>(Cohort.COHORT_BY_ID);
+        SortedSet<Cohort> usersCohorts = new TreeSet<>(Cohort.COHORT_BY_ID);
 
         String urlString = getUrlForEndPoint( Endpoint.ALL_COHORTS );
         WebResource webResource = getJerseyClient().resource(urlString);
@@ -137,7 +137,7 @@ public class BSPCohortSearchServiceImpl extends AbstractJerseyClientService impl
             throw new IllegalArgumentException( "Cannot lookup cohorts for user without a valid username." );
         }
 
-        HashSet<Cohort> usersCohorts = new HashSet<Cohort>();
+        HashSet<Cohort> usersCohorts = new HashSet<>();
         String urlString = getUrlForEndPoint( Endpoint.USERS_COHORT ) + bspUsername;
         WebResource webResource = getJerseyClient().resource(urlString);
 

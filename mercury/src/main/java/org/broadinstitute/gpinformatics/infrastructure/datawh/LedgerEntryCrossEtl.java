@@ -55,7 +55,7 @@ public class LedgerEntryCrossEtl extends GenericEntityEtl<LedgerEntry, ProductOr
 
     @Override
     protected Collection<ProductOrderSample> convertAuditedEntityToDataSourceEntity(Collection<LedgerEntry> auditEntities) {
-        Set<ProductOrderSample> pdoSamples = new HashSet<ProductOrderSample>();
+        Set<ProductOrderSample> pdoSamples = new HashSet<>();
         for (LedgerEntry ledgerEntry : auditEntities) {
             pdoSamples.add(ledgerEntry.getProductOrderSample());
         }

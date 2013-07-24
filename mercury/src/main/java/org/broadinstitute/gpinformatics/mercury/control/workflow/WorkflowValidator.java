@@ -82,28 +82,28 @@ public class WorkflowValidator {
     public void validateWorkflow(BettaLIMSMessage bettaLIMSMessage) throws WorkflowException {
         try {
             for (PlateCherryPickEvent plateCherryPickEvent : bettaLIMSMessage.getPlateCherryPickEvent()) {
-                validateWorkflow(plateCherryPickEvent, new ArrayList<String>(
+                validateWorkflow(plateCherryPickEvent, new ArrayList<>(
                         BettalimsMessageUtils.getBarcodesForCherryPick(plateCherryPickEvent)));
             }
 
             for (PlateEventType plateEventType : bettaLIMSMessage.getPlateEvent()) {
-                validateWorkflow(plateEventType, new ArrayList<String>(
+                validateWorkflow(plateEventType, new ArrayList<>(
                         BettalimsMessageUtils.getBarcodesForPlateEvent(plateEventType)));
             }
 
             for (PlateTransferEventType plateTransferEventType : bettaLIMSMessage.getPlateTransferEvent()) {
-                validateWorkflow(plateTransferEventType, new ArrayList<String>(
+                validateWorkflow(plateTransferEventType, new ArrayList<>(
                         BettalimsMessageUtils.getBarcodesForPlateTransfer(plateTransferEventType)));
             }
 
             for (ReceptacleEventType receptacleEventType : bettaLIMSMessage.getReceptacleEvent()) {
-                validateWorkflow(receptacleEventType, new ArrayList<String>(
+                validateWorkflow(receptacleEventType, new ArrayList<>(
                         BettalimsMessageUtils.getBarcodesForReceptacleEvent(receptacleEventType)));
             }
 
             for (ReceptaclePlateTransferEvent receptaclePlateTransferEvent : bettaLIMSMessage
                     .getReceptaclePlateTransferEvent()) {
-                validateWorkflow(receptaclePlateTransferEvent, new ArrayList<String>(
+                validateWorkflow(receptaclePlateTransferEvent, new ArrayList<>(
                         BettalimsMessageUtils.getBarcodesForReceptaclePlateTransfer(receptaclePlateTransferEvent)));
             }
         } catch (RuntimeException e) {
@@ -187,7 +187,7 @@ public class WorkflowValidator {
         List<WorkflowValidationError> validationErrors = validateWorkflow(labVessels, stationEventType.getEventType());
 
         if (!validationErrors.isEmpty()) {
-            Map<String, Object> rootMap = new HashMap<String, Object>();
+            Map<String, Object> rootMap = new HashMap<>();
             String linkToPlastic = appConfig.getUrl() + VesselSearchActionBean.ACTIONBEAN_URL_BINDING + "?" +
                                    VesselSearchActionBean.VESSEL_SEARCH + "=&searchKey=" + labVessels.iterator().next()
                     .getLabel();
@@ -212,7 +212,7 @@ public class WorkflowValidator {
      * @return list of errors
      */
     public List<WorkflowValidationError> validateWorkflow(Collection<LabVessel> labVessels, String eventType) {
-        List<WorkflowValidationError> validationErrors = new ArrayList<WorkflowValidationError>();
+        List<WorkflowValidationError> validationErrors = new ArrayList<>();
 
         for (LabVessel labVessel : labVessels) { // todo jmt can this be null?
             Set<SampleInstance> sampleInstances = labVessel.getSampleInstances(LabVessel.SampleType.PREFER_PDO,

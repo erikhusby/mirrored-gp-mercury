@@ -32,7 +32,7 @@ public class LedgerEntryCrossEtlDbFreeTest {
     private final String etlDateStr = ExtractTransform.formatTimestamp(new Date());
     private long posId = 2233445511L;
     private String datafileDir;
-    private Set<LedgerEntry> ledgerItems = new HashSet<LedgerEntry>();
+    private Set<LedgerEntry> ledgerItems = new HashSet<>();
     private LedgerEntryCrossEtl tst;
 
     private AuditReaderDao auditReader = createMock(AuditReaderDao.class);

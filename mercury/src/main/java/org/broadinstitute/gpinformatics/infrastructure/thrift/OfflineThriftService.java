@@ -78,7 +78,7 @@ public class OfflineThriftService implements ThriftService {
 
     @Override
     public List<LibraryData> fetchLibraryDetailsByLibraryName(List<String> libraryNames) {
-        List<LibraryData> libraryDataList = new ArrayList<LibraryData>();
+        List<LibraryData> libraryDataList = new ArrayList<>();
         for (String libraryName : libraryNames) {
             LibraryData libraryData = new LibraryData();
             libraryData.setLibraryName(libraryName);
@@ -115,11 +115,11 @@ public class OfflineThriftService implements ThriftService {
     }
 
     public static TZamboniRun makeRun(String runName, int numLanes, int numLibraries) {
-        List<TZamboniLane> lanes = new ArrayList<TZamboniLane>();
+        List<TZamboniLane> lanes = new ArrayList<>();
         for (int i = 1; i <= numLanes; i++) {
             lanes.add(makeLane(i, numLibraries));
         }
-        List<TZamboniRead> reads = new ArrayList<TZamboniRead>();
+        List<TZamboniRead> reads = new ArrayList<>();
         reads.add(new TZamboniRead((short) 1, (short) 10, TZReadType.INDEX));
         reads.add(new TZamboniRead((short) 11, (short) 20, TZReadType.TEMPLATE));
         //TZamboniRun run = new TZamboniRun(runName, "Flowcell-123", lanes, "Sequencer 123", "Test Sequencer", "05/11/2012 17:08", "Run-123", (short) 1, (short) 2,
@@ -136,7 +136,7 @@ public class OfflineThriftService implements ThriftService {
     }
 
     private static TZamboniLane makeLane(int laneNumber, int numLibraries) {
-        List<TZamboniLibrary> libraries = new ArrayList<TZamboniLibrary>();
+        List<TZamboniLibrary> libraries = new ArrayList<>();
         for (int i = 0; i < numLibraries; i++) {
             libraries.add(makeLibrary(Integer.toString(libraryNumber)));
             libraryNumber++;
@@ -145,11 +145,11 @@ public class OfflineThriftService implements ThriftService {
     }
 
     private static TZamboniLibrary makeLibrary(String number) {
-        List<String> conditions = new ArrayList<String>();
+        List<String> conditions = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
             conditions.add("condition " + number + "-" + i);
         }
-        List<String> gssrBarcodes = new ArrayList<String>();
+        List<String> gssrBarcodes = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
             gssrBarcodes.add(number + "." + i);
         }

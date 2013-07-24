@@ -131,7 +131,7 @@ public class ZimsIlluminaRunFactory {
         double imagedArea = 0;
         if (sequencingRun.getImagedAreaPerMM2() != null) {
             // avoid unboxing NPE
-            imagedArea = sequencingRun.getImagedAreaPerMM2().doubleValue();
+            imagedArea = sequencingRun.getImagedAreaPerMM2();
         }
         ZimsIlluminaRun run = new ZimsIlluminaRun(sequencingRun.getRunName(), sequencingRun.getRunBarcode(),
                 flowcell.getLabel(), sequencingRun.getMachineName(), flowcell.getSequencerModel(), dateFormat.format(illuminaRun.getRunDate()),

@@ -29,7 +29,7 @@ public class DriedBloodSpotDbTest extends ContainerTest {
     public void testEndToEnd(@ArquillianResource URL baseUrl) {
         String timestamp = timestampFormat.format(new Date());
 
-        List<String> ftaPaperBarcodes = new ArrayList<String>();
+        List<String> ftaPaperBarcodes = new ArrayList<>();
         for(int i = 1; i <= 4; i++) {
             ftaPaperBarcodes.add("FTA" + i + "_" + timestamp);
         }

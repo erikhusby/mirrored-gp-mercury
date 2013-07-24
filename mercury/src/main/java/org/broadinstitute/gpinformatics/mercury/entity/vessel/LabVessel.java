@@ -1690,7 +1690,7 @@ public abstract class LabVessel implements Serializable {
      */
     public boolean hasAncestorBeenInBucket(@Nonnull String bucketName) {
 
-        List<LabVessel> vesselHierarchy = new ArrayList<LabVessel>();
+        List<LabVessel> vesselHierarchy = new ArrayList<>();
 
         vesselHierarchy.add(this);
         vesselHierarchy.addAll(this.getAncestorVessels());

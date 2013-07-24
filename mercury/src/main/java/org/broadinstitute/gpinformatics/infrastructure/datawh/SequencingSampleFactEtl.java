@@ -73,7 +73,7 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
 
     @Override
     Collection<String> dataRecords(String etlDateStr, boolean isDelete, SequencingRun entity) {
-        Collection<String> records = new ArrayList<String>();
+        Collection<String> records = new ArrayList<>();
         try {
             Collection<SequencingRunDto> dtos = makeSequencingRunDtos(entity);
             for (SequencingRunDto dto : dtos) {

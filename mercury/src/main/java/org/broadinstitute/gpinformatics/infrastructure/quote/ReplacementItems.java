@@ -15,7 +15,7 @@ import java.util.Collection;
 public class ReplacementItems {
 
     @XmlElement(name = "priceItem")
-    private final Collection<QuotePriceItem> quotePriceItems = new ArrayList<QuotePriceItem>();
+    private final Collection<QuotePriceItem> quotePriceItems = new ArrayList<>();
 
     public ReplacementItems() {}
 

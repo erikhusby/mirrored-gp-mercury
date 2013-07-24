@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.presentation.tokenimporters;
 
 import org.broadinstitute.bsp.client.users.BspUser;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.json.JSONException;
@@ -54,7 +53,7 @@ public class UserTokenInput extends TokenInput<BspUser> {
     public List<Long> getOwnerIds() {
         List<BspUser> users = getTokenObjects();
 
-        List<Long> businessKeyList = new ArrayList<Long>();
+        List<Long> businessKeyList = new ArrayList<>();
         for (BspUser user : users) {
             businessKeyList.add(user.getUserId());
         }
@@ -65,7 +64,7 @@ public class UserTokenInput extends TokenInput<BspUser> {
     public List<String> getBusinessKeyList() {
         List<BspUser> users = getTokenObjects();
 
-        List<String> businessKeyList = new ArrayList<String>();
+        List<String> businessKeyList = new ArrayList<>();
         for (BspUser user : users) {
             businessKeyList.add(user.getUserId().toString());
         }

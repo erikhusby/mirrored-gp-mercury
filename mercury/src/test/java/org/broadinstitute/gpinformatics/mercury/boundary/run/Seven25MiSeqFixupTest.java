@@ -6,7 +6,6 @@ import org.easymock.EasyMock;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.util.Date;

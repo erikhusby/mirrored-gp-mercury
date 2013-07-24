@@ -57,7 +57,7 @@ public class LabBatchEJBTest extends ContainerTest {
     @Inject
     private BucketDao bucketDao;
 
-    private LinkedHashMap<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
+    private LinkedHashMap<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<>();
     private String workflowName;
     private ArrayList<String> pdoNames;
     private String scottmat;
@@ -81,12 +81,12 @@ public class LabBatchEJBTest extends ContainerTest {
             bucketDao.clear();
         }
 
-        pdoNames = new ArrayList<String>();
+        pdoNames = new ArrayList<>();
         Collections.addAll(pdoNames, STUB_TEST_PDO_KEY);
 
         workflowName = WorkflowName.EXOME_EXPRESS.getWorkflowName();
 
-        List<String> vesselSampleList = new ArrayList<String>(6);
+        List<String> vesselSampleList = new ArrayList<>(6);
 
         Collections.addAll(vesselSampleList, "SM-423", "SM-243", "SM-765", "SM-143", "SM-9243", "SM-118");
 

@@ -377,7 +377,7 @@ public enum LabEventType {
 
     private final SystemOfRecord systemOfRecord;
 
-    private static final Map<String, LabEventType> mapNameToType = new HashMap<String, LabEventType>();
+    private static final Map<String, LabEventType> mapNameToType = new HashMap<>();
 
     public enum PlasticToValidate {
         /*

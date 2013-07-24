@@ -47,7 +47,7 @@ public class BaseSplitter {
         }
 
         // The full split up results
-        List<Collection<T>> result = new ArrayList<Collection<T>>(collection.size() / size);
+        List<Collection<T>> result = new ArrayList<>(collection.size() / size);
 
         // If the collection is a list, use List.subList() to avoid unnecessary allocation and copying.
 
@@ -58,14 +58,14 @@ public class BaseSplitter {
             }
         } else {
             // Each chunk is here
-            Collection<T> temp = new ArrayList<T>(size);
+            Collection<T> temp = new ArrayList<>(size);
 
             // Go through each item in the list and add it to the temp list
             for (T d : collection) {
 
                 // If we have reached the chunk size, then add it to the chunked result and clear the temp
                 if (temp.size() == size) {
-                    result.add(new ArrayList<T>(temp));
+                    result.add(new ArrayList<>(temp));
                     temp.clear();
                 }
 
@@ -115,7 +115,7 @@ public class BaseSplitter {
         }
 
         // The full split up results
-        List<T[]> result = new ArrayList<T[]>(array.length / size);
+        List<T[]> result = new ArrayList<>(array.length / size);
 
         for (int i = 0; i < array.length; i += size) {
             result.add(Arrays.copyOfRange(array, i, Math.min(array.length, i + size)));

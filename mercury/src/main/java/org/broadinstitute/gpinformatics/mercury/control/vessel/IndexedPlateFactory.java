@@ -103,8 +103,8 @@ public class IndexedPlateFactory {
     }
 
     public Map<String, StaticPlate> uploadIndexedPlates(final List<PlateWellIndexAssociation> plateWellIndexes/*, final String technology*/) {
-        final Map<String, StaticPlate> platesByBarcode = new HashMap<String, StaticPlate>();
-        final Set<PlateWell> previousWells = new HashSet<PlateWell>();
+        final Map<String, StaticPlate> platesByBarcode = new HashMap<>();
+        final Set<PlateWell> previousWells = new HashSet<>();
 
 
         for (final PlateWellIndexAssociation plateWellIndex : plateWellIndexes) {

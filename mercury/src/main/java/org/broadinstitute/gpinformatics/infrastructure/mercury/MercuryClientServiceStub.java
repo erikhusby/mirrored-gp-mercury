@@ -23,7 +23,7 @@ public class MercuryClientServiceStub implements MercuryClientService {
     @Override
     public Collection<ProductOrderSample> addSampleToPicoBucket(@Nonnull ProductOrder pdo,
                                                                 @Nonnull Collection<ProductOrderSample> samples) {
-        Collection<ProductOrderSample> addedSamples = new ArrayList<ProductOrderSample>();
+        Collection<ProductOrderSample> addedSamples = new ArrayList<>();
         for (ProductOrderSample sample : samples) {
             addedSamples.add(sample);
             // Pretends to put half the samples in the pico bucket.

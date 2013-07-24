@@ -55,7 +55,7 @@ public class LabEventResource {
         if (labBatch == null) {
             throw new RuntimeException("Batch not found: " + batchId);
         }
-        List<LabEvent> labEventsByTime = new ArrayList<LabEvent>(labBatch.getLabEvents());
+        List<LabEvent> labEventsByTime = new ArrayList<>(labBatch.getLabEvents());
         Collections.sort(labEventsByTime, LabEvent.byEventDate);
         List<LabEventBean> labEventBeans =
                 buildLabEventBeans(labEventsByTime, new LabEventFactory.LabEventRefDataFetcher() {
@@ -81,7 +81,7 @@ public class LabEventResource {
 
     public List<LabEventBean> buildLabEventBeans(List<LabEvent> labEvents,
                                                  LabEventFactory.LabEventRefDataFetcher dataFetcherHelper) {
-        List<LabEventBean> labEventBeans = new ArrayList<LabEventBean>();
+        List<LabEventBean> labEventBeans = new ArrayList<>();
 
         for (LabEvent labEvent : labEvents) {
             BspUser operator = dataFetcherHelper.getOperator(labEvent.getEventOperator());

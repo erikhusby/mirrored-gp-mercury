@@ -98,7 +98,7 @@ public class ReagentDesignActionBean extends CoreActionBean {
             editReagentDesign = new ReagentDesign();
         }
 
-        allBarcodes = new ArrayList<String>();
+        allBarcodes = new ArrayList<>();
         allReagentDesigns = reagentDesignDao.findAll();
 
     }
@@ -171,7 +171,7 @@ public class ReagentDesignActionBean extends CoreActionBean {
 
     @HandlesEvent(BARCODE_REAGENT_ACTION)
     public Resolution barcodeReagent() {
-        List<TwoDBarcodedTube> twoDBarcodedTubeList = new ArrayList<TwoDBarcodedTube>();
+        List<TwoDBarcodedTube> twoDBarcodedTubeList = new ArrayList<>();
         String savedChanges = "";
 
         savedChanges += editReagentDesign.getBusinessKey() + " " + barcode + ")\n";
@@ -229,7 +229,7 @@ public class ReagentDesignActionBean extends CoreActionBean {
 
     public Map<String, String> getBarcodeMap() {
         if (barcodeMap == null) {
-            barcodeMap = new HashMap<String, String>();
+            barcodeMap = new HashMap<>();
         }
 
         return barcodeMap;

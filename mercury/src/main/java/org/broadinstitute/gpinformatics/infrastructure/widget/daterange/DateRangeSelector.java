@@ -236,7 +236,7 @@ public class DateRangeSelector implements Serializable {
      * @return This creates a list of strings representing the three values for the date.
      */
     public List<String> createDateStrings() {
-        List<String> dateStrings = new ArrayList<String>();
+        List<String> dateStrings = new ArrayList<>();
         dateStrings.add(String.valueOf(rangeSelector));
         dateStrings.add(getStartStr());
         dateStrings.add(getEndStr());

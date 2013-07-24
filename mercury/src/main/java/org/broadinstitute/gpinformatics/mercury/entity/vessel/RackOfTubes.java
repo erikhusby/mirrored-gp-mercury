@@ -6,8 +6,6 @@ import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import java.util.HashSet;
 import java.util.Set;
@@ -21,7 +19,7 @@ import java.util.Set;
 public class RackOfTubes extends LabVessel {
 
     @ManyToMany(cascade = CascadeType.PERSIST, mappedBy = "racksOfTubes")
-    private Set<TubeFormation> tubeFormations = new HashSet<TubeFormation>();
+    private Set<TubeFormation> tubeFormations = new HashSet<>();
 
     /**
      * For JPA

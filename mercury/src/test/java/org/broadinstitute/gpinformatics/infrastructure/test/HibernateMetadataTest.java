@@ -50,7 +50,7 @@ public class HibernateMetadataTest extends ContainerTest {
     public void testEverything() throws Exception {
         Session session = entityManager.unwrap(Session.class);
         SessionFactory sessionFactory = session.getSessionFactory();
-        Map<String, String> failedEntityMap = new HashMap<String, String>();
+        Map<String, String> failedEntityMap = new HashMap<>();
         Map<String, ClassMetadata> metadata = sessionFactory.getAllClassMetadata();
         EntityPersister entityPersister;
         for (Object o : metadata.values()) {

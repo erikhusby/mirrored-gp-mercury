@@ -79,7 +79,7 @@ public class MercuryClientEjbDbFreeTest {
 
         labBatch = new LabBatch("ExEx Receipt Batch", new HashSet<LabVessel>(), LabBatch.LabBatchType.SAMPLES_RECEIPT);
         bucket = new Bucket(new WorkflowStepDef(PICO_PLATING_BUCKET));
-        bspDtoMap = new HashMap<String, BSPSampleDTO>();
+        bspDtoMap = new HashMap<>();
 
         pdo = ProductOrderTestFactory.buildExExProductOrder(SAMPLE_SIZE);
         pdo.setCreatedBy(BSPManagerFactoryStub.QA_DUDE_USER_ID);
@@ -92,12 +92,12 @@ public class MercuryClientEjbDbFreeTest {
     private void setupMercurySamples(ProductOrder pdo, Collection<ProductOrderSample> expectedSamples,
                                      List<LabVessel> labVessels) {
 
-        List<MercurySample> mercurySamples = new ArrayList<MercurySample>();
+        List<MercurySample> mercurySamples = new ArrayList<>();
 
         for (int rackPosition = 1; rackPosition <= pdo.getSamples().size(); ++rackPosition) {
             ProductOrderSample pdoSample = pdo.getSamples().get(rackPosition - 1);
 
-            Map<BSPSampleSearchColumn, String> bspData = new HashMap<BSPSampleSearchColumn, String>();
+            Map<BSPSampleSearchColumn, String> bspData = new HashMap<>();
             switch (rackPosition) {
                 case 1:
                     // Unreceived root should be rejected.
@@ -148,22 +148,22 @@ public class MercuryClientEjbDbFreeTest {
 
     public void testSamplesToPicoBucket() throws Exception {
 
-        Collection<ProductOrderSample> expectedSamples = new ArrayList<ProductOrderSample>();
-        List<LabVessel> labVessels = new ArrayList<LabVessel>();
+        Collection<ProductOrderSample> expectedSamples = new ArrayList<>();
+        List<LabVessel> labVessels = new ArrayList<>();
         setupMercurySamples(pdo, expectedSamples, labVessels);
 
         reset(mocks);
         // Mock should return sample for those that Mercury knows about, i.e. all except the 1st and 4th test samples.
         // The 4th sample is in house so a standalone vessel/sample should be created.
-        List<String> pdoSampleNames = new ArrayList<String>();
-        List<LabVessel> mockVessels = new ArrayList<LabVessel>();
+        List<String> pdoSampleNames = new ArrayList<>();
+        List<LabVessel> mockVessels = new ArrayList<>();
         for (int rackPosition = 1; rackPosition <= SAMPLE_SIZE; ++rackPosition) {
             ProductOrderSample pdoSample = pdo.getSamples().get(rackPosition - 1);
             if (rackPosition != 1 && rackPosition != 4) {
                 mockVessels.add(labVessels.get(rackPosition - 1));
             }
             if (rackPosition == 4) {
-                List<LabVessel> mockCreatedVessels = new ArrayList<LabVessel>();
+                List<LabVessel> mockCreatedVessels = new ArrayList<>();
                 mockCreatedVessels.add(labVessels.get(rackPosition - 1));
                 expect(labVesselFactory.buildInitialLabVessels(eq(pdoSample.getSampleName()),
                         eq(makeTubeBarcode(rackPosition)), eq(pdoCreator), (Date)anyObject()))

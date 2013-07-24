@@ -46,7 +46,7 @@ public class JPASplitter extends BaseSplitter {
             return Collections.emptyList();
         }
 
-        List<RETURN_DATA_TYPE> result = new ArrayList<RETURN_DATA_TYPE>();
+        List<RETURN_DATA_TYPE> result = new ArrayList<>();
         List<Collection<SPLIT_DATA_TYPE>> temp = split(parameterList);
         for (Collection<SPLIT_DATA_TYPE> data : temp) {
             List<RETURN_DATA_TYPE> o = runQueryStandard(query, propertyName, data);
@@ -92,7 +92,7 @@ public class JPASplitter extends BaseSplitter {
             return Collections.emptyList();
         }
 
-        List<RETURN_DATA_TYPE> result = new ArrayList<RETURN_DATA_TYPE>();
+        List<RETURN_DATA_TYPE> result = new ArrayList<>();
         List<Collection<SPLIT_DATA_TYPE>> temp = split(parameterList);
         for (Collection<SPLIT_DATA_TYPE> data : temp) {
             List<RETURN_DATA_TYPE> o = runCriteriaQuery(criteriaCreator, data);

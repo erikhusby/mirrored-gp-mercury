@@ -21,7 +21,7 @@ public class ShearingJaxbBuilder {
     private PlateTransferEventType shearingTransferEventJaxb;
     private PlateTransferEventType postShearingTransferCleanupEventJaxb;
     private PlateTransferEventType shearingQcEventJaxb;
-    private final List<BettaLIMSMessage> messageList = new ArrayList<BettaLIMSMessage>();
+    private final List<BettaLIMSMessage> messageList = new ArrayList<>();
 
     public ShearingJaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory, List<String> tubeBarcodeList,
                                String testPrefix, String rackBarcode) {

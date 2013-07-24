@@ -191,13 +191,13 @@ public class ResearchProjectTest {
                 {oneAllowed, testUser, Collections.singleton(oneAllowed)},
                 {oneAllowed, testUser + 1, Collections.emptySet()},
                 {otherAllowed, testUser, Collections.emptySet()},
-                {root, testUser, new HashSet<ResearchProject>(Arrays.asList(p1, p11, p12, p2, p31, p22))},
+                {root, testUser, new HashSet<>(Arrays.asList(p1, p11, p12, p2, p31, p22))},
         };
     }
 
     @Test(dataProvider = "collectAccessible")
     public void testCollectAccessibleByUser(ResearchProject root, long userId, Set<ResearchProject> expected) {
-        Set<ResearchProject> found = new HashSet<ResearchProject>();
+        Set<ResearchProject> found = new HashSet<>();
         root.collectAccessibleByUser(userId, found);
         Assert.assertEquals(found, expected);
     }

@@ -118,7 +118,7 @@ public class ExomeExpressEndToEndTest {
 
     @Test(groups = {DATABASE_FREE}, enabled = false)
     public void testAll() throws Exception {
-        List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>();
+        List<ProductOrderSample> productOrderSamples = new ArrayList<>();
         ProductOrder productOrder1 = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123", new Product(
                 "Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000, 20000, 100,
                 40, null, null, true, WorkflowName.EXOME_EXPRESS.getWorkflowName(), false, "agg type"),
@@ -154,7 +154,7 @@ public class ExomeExpressEndToEndTest {
             //            String laneNumber = "3";
 
             // BasicProjectPlan
-            HashMap<LabEventName, QuotePriceItem> billableEvents = new HashMap<LabEventName, QuotePriceItem>();
+            HashMap<LabEventName, QuotePriceItem> billableEvents = new HashMap<>();
 
             //            BasicProjectPlan projectPlan = new BasicProjectPlan(
             //                    project,
@@ -227,7 +227,7 @@ public class ExomeExpressEndToEndTest {
             CustomField descriptionCustomField =
                     new CustomField(requiredFieldsMap.get(JiraCustomFieldsUtil.DESCRIPTION), "Pass ");
 
-            Collection<CustomField> allCustomFields = new HashSet<CustomField>();
+            Collection<CustomField> allCustomFields = new HashSet<>();
             allCustomFields.add(workRequestCustomField);
             allCustomFields.add(stockSamplesCustomField);
             allCustomFields.add(protocolCustomField);
@@ -252,7 +252,7 @@ public class ExomeExpressEndToEndTest {
             //From projectPlan .. build BSPPlatingRequest objects
             //            Collection<Starter> starterStocks = testLabBatch.getStarters();
             //List<StartingSample> startingSamples = new ArrayList<StartingSample>();
-            Map<MercurySample, AliquotParameters> starterMap = new HashMap<MercurySample, AliquotParameters>();
+            Map<MercurySample, AliquotParameters> starterMap = new HashMap<>();
             //            for (Starter stock : starterStocks) {
             //                starterMap.put((StartingSample) stock, new AliquotParameters(/*projectPlan, */1.9f, 1.6f));
             //            }
@@ -264,7 +264,7 @@ public class ExomeExpressEndToEndTest {
             //            Assert.assertEquals(bspRequests.size(), starterStocks.size(), "Plating Requests returned doesn't match the Starter count");
 
             //add the controls ??
-            List<ControlWell> controls = new ArrayList<ControlWell>();
+            List<ControlWell> controls = new ArrayList<>();
             BSPPlatingRequestService bspPlatingService = new BSPPlatingRequestServiceStub();
             BSPPlatingRequestOptions options = bspPlatingService.getBSPPlatingRequestDefaultOptions();
             BSPPlatingRequestResult platingResult = bspPlatingService.issueBSPPlatingRequest(options, bspRequests,
@@ -286,7 +286,7 @@ public class ExomeExpressEndToEndTest {
 
             //bspPlatingReceipt.getPlatingRequests().iterator().next().
             //            Collection<Starter> starters = projectPlan.getStarters();
-            Map<String, LabVessel> stockSampleAliquotMap = new HashMap<String, LabVessel>();
+            Map<String, LabVessel> stockSampleAliquotMap = new HashMap<>();
             //            for (Starter starter : starters) {
             //                LabVessel aliquot = projectPlan.getAliquotForStarter(starter);
             //                Assert.assertNotNull(aliquot);
@@ -352,7 +352,7 @@ public class ExomeExpressEndToEndTest {
             LabEventHandler labEventHandler = new LabEventHandler(new WorkflowLoader(),
                     AthenaClientProducer.stubInstance());
             BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
-            Map<String, TwoDBarcodedTube> mapBarcodeToTube = new HashMap<String, TwoDBarcodedTube>();
+            Map<String, TwoDBarcodedTube> mapBarcodeToTube = new HashMap<>();
 
             for (Map.Entry<String, LabVessel> stockToAliquotEntry : stockSampleAliquotMap.entrySet()) {
                 mapBarcodeToTube.put(stockToAliquotEntry.getValue().getLabel(),
@@ -453,7 +453,7 @@ public class ExomeExpressEndToEndTest {
             //            final Collection<Starter> startersFromProjectPlan = projectPlan.getStarters();
 
             int numStartersFromSampleInstances = 0;
-            final Collection<String> aliquotsFromProjectPlan = new HashSet<String>();
+            final Collection<String> aliquotsFromProjectPlan = new HashSet<>();
             //            for (Starter starter : projectPlan.getStarters()) {
             //                final LabVessel aliquot = projectPlan.getAliquotForStarter(starter);
             //                for (SampleInstance sampleInstance : aliquot.getSampleInstances()) {

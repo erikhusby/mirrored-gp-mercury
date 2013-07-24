@@ -34,7 +34,7 @@ public class BSPPlatingTest extends ContainerTest {
     public void testIssueBSPPlating() throws Exception {
         platingService = new BSPPlatingRequestServiceImpl();
 
-        Map<MercurySample, AliquotParameters> starterMap = new HashMap<MercurySample, AliquotParameters>();
+        Map<MercurySample, AliquotParameters> starterMap = new HashMap<>();
 
         MercurySample sample = new MercurySample("SM-26BPV");
         starterMap.put(sample, new AliquotParameters(0.0f, 1.0f));
@@ -55,7 +55,7 @@ public class BSPPlatingTest extends ContainerTest {
         BSPSampleFactory bspSampleFactory = new BSPSampleFactory();
         List<BSPPlatingRequest> bspRequests = bspSampleFactory.buildBSPPlatingRequests(starterMap);
 
-        List<ControlWell> controls = new ArrayList<ControlWell>();
+        List<ControlWell> controls = new ArrayList<>();
         BSPPlatingRequestService bspPlatingService = new BSPPlatingRequestServiceStub();
         BSPPlatingRequestOptions options = bspPlatingService.getBSPPlatingRequestDefaultOptions();
 

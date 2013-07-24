@@ -59,15 +59,15 @@ public class LCSetJiraFieldFactoryTest {
     public void startUp() throws IOException {
         pdoBusinessName = "PDO-999";
 
-        pdoNames = new ArrayList<String>();
+        pdoNames = new ArrayList<>();
         Collections.addAll(pdoNames, pdoBusinessName);
 
         workflowName = WorkflowName.EXOME_EXPRESS.getWorkflowName();
-        mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
+        mapBarcodeToTube = new LinkedHashMap<>();
 
-        Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<String, ProductOrder>();
+        Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<>();
 
-        List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>();
+        List<ProductOrderSample> productOrderSamples = new ArrayList<>();
         rpSynopsis = "Test synopsis";
         ProductOrder productOrder = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123",
                 new Product("Test product",
@@ -78,7 +78,7 @@ public class LCSetJiraFieldFactoryTest {
         productOrder.setJiraTicketKey(pdoBusinessName);
         mapKeyToProductOrder.put(pdoBusinessName, productOrder);
 
-        List<String> vesselSampleList = new ArrayList<String>(6);
+        List<String> vesselSampleList = new ArrayList<>(6);
 
         Collections.addAll(vesselSampleList, "SM-423", "SM-243", "SM-765", "SM-143", "SM-9243", "SM-118");
 
@@ -109,7 +109,7 @@ public class LCSetJiraFieldFactoryTest {
         testBatch.setWorkflowName("Exome Express");
         testBatch.setBatchDescription("Batch Test Description");
 
-        Set<LabVessel> reworks = new HashSet<LabVessel>();
+        Set<LabVessel> reworks = new HashSet<>();
         reworks.add(new TwoDBarcodedTube("Rework1"));
         reworks.add(new TwoDBarcodedTube("Rework2"));
         testBatch.addReworks(reworks);
@@ -177,8 +177,8 @@ public class LCSetJiraFieldFactoryTest {
     public void test_sample_field_text_with_reworks() {
         String expectedText = "SM-1\n\nSM-2 (rework)";
 
-        Set<LabVessel> newTubes = new HashSet<LabVessel>();
-        Set<LabVessel> reworks = new HashSet<LabVessel>();
+        Set<LabVessel> newTubes = new HashSet<>();
+        Set<LabVessel> reworks = new HashSet<>();
         LabVessel tube1 = new TwoDBarcodedTube("000012");
         tube1.addSample(new MercurySample("SM-1"));
         LabVessel tube2 = new TwoDBarcodedTube("000033");
@@ -199,7 +199,7 @@ public class LCSetJiraFieldFactoryTest {
     public void test_sample_field_text_no_reworks() {
         String sampleKey = "SM-123";
 
-        Set<LabVessel> newTubes = new HashSet<LabVessel>();
+        Set<LabVessel> newTubes = new HashSet<>();
         LabVessel tube = new TwoDBarcodedTube("000012");
         tube.addSample(new MercurySample(sampleKey));
         newTubes.add(tube);

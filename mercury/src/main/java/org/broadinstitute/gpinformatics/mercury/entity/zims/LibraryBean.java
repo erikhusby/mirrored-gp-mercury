@@ -88,10 +88,10 @@ public class LibraryBean {
     private DevExperimentDataBean devExperimentData; // Squid only
 
     @JsonProperty("gssrBarcodes")
-    private Collection<String> gssrBarcodes = new ArrayList<String>(); // Squid only
+    private Collection<String> gssrBarcodes = new ArrayList<>(); // Squid only
 
     @JsonProperty("customAmpliconSetNames")
-    private Collection<String> customAmpliconSetNames = new ArrayList<String>(); // Squid only
+    private Collection<String> customAmpliconSetNames = new ArrayList<>(); // Squid only
 
     @JsonProperty
     private String lcSet;

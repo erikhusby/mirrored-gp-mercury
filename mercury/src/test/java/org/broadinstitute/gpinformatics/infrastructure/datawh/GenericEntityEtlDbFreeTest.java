@@ -72,10 +72,10 @@ public class GenericEntityEtlDbFreeTest {
 
 
     public void testEtl() throws Exception {
-        Collection<Long> revIds = new ArrayList<Long>();
+        Collection<Long> revIds = new ArrayList<>();
         revIds.add(entityId);
 
-        List<Object[]> dataChanges = new ArrayList<Object[]>();
+        List<Object[]> dataChanges = new ArrayList<>();
         dataChanges.add(new Object[]{obj, revInfo[0], RevisionType.ADD});
 
         expect(auditReader.fetchDataChanges(revIds, tst.entityClass)).andReturn(dataChanges);
@@ -100,11 +100,11 @@ public class GenericEntityEtlDbFreeTest {
     }
 
     public void testDeletionEtl() throws Exception {
-        Collection<Long> revIds = new ArrayList<Long>();
+        Collection<Long> revIds = new ArrayList<>();
         revIds.add(entityId);
 
         // Three changes to one entity result in one deletion record.
-        List<Object[]> dataChanges = new ArrayList<Object[]>();
+        List<Object[]> dataChanges = new ArrayList<>();
         dataChanges.add(new Object[]{obj, revInfo[0], RevisionType.ADD});
         dataChanges.add(new Object[]{obj, revInfo[1], RevisionType.MOD});
         dataChanges.add(new Object[]{obj, revInfo[2], RevisionType.DEL});

@@ -42,7 +42,7 @@ public class QuotesCache {
      * @return
      */
     public Collection<Funding> getAllFundingSources() {
-        Set<Funding> fundingSources = new HashSet<Funding>();
+        Set<Funding> fundingSources = new HashSet<>();
         for (Quote quote : quotes.getQuotes()) {
             if (quote.getQuoteFunding() != null) {
                 if (quote.getQuoteFunding().getFundingLevel() != null) {
@@ -65,7 +65,7 @@ public class QuotesCache {
         if (grantDescription == null) {
             throw new NullPointerException("grantDescription cannot be null.");
         }
-        Set<Quote> quotesForFundingSource = new HashSet<Quote>();
+        Set<Quote> quotesForFundingSource = new HashSet<>();
         for (Quote quote : quotes.getQuotes()) {
             if (quote.getQuoteFunding() != null) {
                 if (quote.getQuoteFunding().getFundingLevel() != null) {
@@ -87,7 +87,7 @@ public class QuotesCache {
     public Map<Funding, HashSet<Quote>> getQuotesByFundingSource(){
 
 //        Collection<Funding> fundingSources = getAllFundingSources();
-        Map<Funding, HashSet<Quote>> quotesByFundingSource = new HashMap<Funding, HashSet<Quote>>();
+        Map<Funding, HashSet<Quote>> quotesByFundingSource = new HashMap<>();
 
         for (Quote quote : quotes.getQuotes()) {
             if (quote.getQuoteFunding() != null) {
@@ -98,7 +98,7 @@ public class QuotesCache {
                             // get/create the set of quotes
                             HashSet<Quote> quotesSet=quotesByFundingSource.get(funding);
                             if  (quotesSet== null) {
-                                quotesSet = new HashSet<Quote>();
+                                quotesSet = new HashSet<>();
                                 quotesByFundingSource.put(funding, quotesSet);
                             }
                             quotesSet.add(quote);

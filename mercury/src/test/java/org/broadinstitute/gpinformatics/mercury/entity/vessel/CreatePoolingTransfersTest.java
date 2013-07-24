@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -93,7 +92,7 @@ public class CreatePoolingTransfersTest extends ContainerTest {
                 "ORDER BY " +
                 "    target_tube_barcode, " +
                 "    well_name ");
-        nativeQuery.setHint("org.hibernate.timeout", new Integer(600));
+        nativeQuery.setHint("org.hibernate.timeout", 600);
         List resultList = nativeQuery.getResultList();
         String previousTargetTubeBarcode = "";
 
@@ -136,7 +135,7 @@ public class CreatePoolingTransfersTest extends ContainerTest {
                     labEventDao.flush();
                     labEventDao.clear();
                 }
-                sourceTubeBarcodes = new ArrayList<String>();
+                sourceTubeBarcodes = new ArrayList<>();
             }
             sourceTubeBarcodes.add(sourceTubeBarcode);
         }

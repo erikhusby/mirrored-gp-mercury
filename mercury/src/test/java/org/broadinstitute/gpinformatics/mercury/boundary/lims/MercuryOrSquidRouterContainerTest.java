@@ -4,7 +4,6 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bettalims.BettalimsConnector;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
@@ -171,7 +170,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
                 buildVesselsForPdo(testExExOrder, vesselDao, "Shearing Bucket", bucketDao);
 
         String rackBarcode = "REXEX" + (new Date()).toString();
-        List<VesselPosition> vesselPositions = new ArrayList<VesselPosition>(mapBarcodeToTube.size());
+        List<VesselPosition> vesselPositions = new ArrayList<>(mapBarcodeToTube.size());
 
         for (int sampleIdx = 0; sampleIdx < mapBarcodeToTube.size(); sampleIdx++) {
             vesselPositions.add(VesselPosition.values()[sampleIdx]);
@@ -180,7 +179,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
         TubeFormation shearingSourceRack =
 
                 makeTubeFormation(vesselPositions.toArray(new VesselPosition[vesselPositions.size()]),
-                                         new ArrayList<TwoDBarcodedTube>(mapBarcodeToTube.values())
+                                         new ArrayList<>(mapBarcodeToTube.values())
                                                  .toArray(new TwoDBarcodedTube[mapBarcodeToTube.size()]));
         shearingSourceRack.addRackOfTubes(new RackOfTubes(rackBarcode, RackOfTubes.RackType.Matrix96));
 
@@ -192,7 +191,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
         String postShearingPlateBarCode = "Shearing" + testPrefix;
         PlateTransferEventType shearingEventJaxb =
                 bettaLimsMessageTestFactory.buildRackToPlate(LabEventType.SHEARING_TRANSFER.getName(), rackBarcode,
-                                                                new ArrayList<String>(mapBarcodeToTube.keySet()),
+                                                                new ArrayList<>(mapBarcodeToTube.keySet()),
                                                                 postShearingPlateBarCode);
 
         BettaLIMSMessage msg = new BettaLIMSMessage();
@@ -249,7 +248,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
                 buildVesselsForPdo(squidProductOrder, vesselDao, null, bucketDao);
 
         String rackBarcode = "RSQUID" + (new Date()).toString();
-        List<VesselPosition> vesselPositions = new ArrayList<VesselPosition>(mapBarcodeToTube.size());
+        List<VesselPosition> vesselPositions = new ArrayList<>(mapBarcodeToTube.size());
 
         for (int sampleIdx = 0; sampleIdx < mapBarcodeToTube.size(); sampleIdx++) {
             vesselPositions.add(VesselPosition.values()[sampleIdx]);
@@ -257,7 +256,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
         TubeFormation shearingSourceRack =
                 makeTubeFormation(vesselPositions.toArray(new VesselPosition[vesselPositions.size()]),
-                                         new ArrayList<TwoDBarcodedTube>(mapBarcodeToTube.values())
+                                         new ArrayList<>(mapBarcodeToTube.values())
                                                  .toArray(new TwoDBarcodedTube[mapBarcodeToTube.size()]));
 
         shearingSourceRack.addRackOfTubes(new RackOfTubes(rackBarcode, RackOfTubes.RackType.Matrix96));
@@ -270,7 +269,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
         String postShearingPlateBarCode = "Shearing" + testPrefix;
         PlateTransferEventType shearingEventJaxb =
                 bettaLimsMessageTestFactory.buildRackToPlate(LabEventType.SHEARING_TRANSFER.getName(), rackBarcode,
-                                                                new ArrayList<String>(mapBarcodeToTube.keySet()),
+                                                                new ArrayList<>(mapBarcodeToTube.keySet()),
                                                                 postShearingPlateBarCode);
 
         BettaLIMSMessage msg = new BettaLIMSMessage();
@@ -309,7 +308,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
                 buildVesselsForPdo(squidProductOrder, vesselDao, null, bucketDao);
 
         String rackBarcode = "RSQUID" + (new Date()).toString();
-        List<VesselPosition> vesselPositions = new ArrayList<VesselPosition>(mapBarcodeToTube.size());
+        List<VesselPosition> vesselPositions = new ArrayList<>(mapBarcodeToTube.size());
 
         for (int sampleIdx = 0; sampleIdx < mapBarcodeToTube.size(); sampleIdx++) {
             vesselPositions.add(VesselPosition.values()[sampleIdx]);
@@ -317,7 +316,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
         TubeFormation shearingSourceRack =
                 makeTubeFormation(vesselPositions.toArray(new VesselPosition[vesselPositions.size()]),
-                                         new ArrayList<TwoDBarcodedTube>(mapBarcodeToTube.values())
+                                         new ArrayList<>(mapBarcodeToTube.values())
                                                  .toArray(new TwoDBarcodedTube[mapBarcodeToTube.size()]));
 
         shearingSourceRack.addRackOfTubes(new RackOfTubes(rackBarcode, RackOfTubes.RackType.Matrix96));
@@ -332,7 +331,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
         String postShearingPlateBarCode = "Shearing" + testPrefix;
         PlateTransferEventType shearingEventJaxb =
                 bettaLimsMessageTestFactory.buildRackToPlate(LabEventType.SHEARING_TRANSFER.getName(), rackBarcode,
-                                                                new ArrayList<String>(mapBarcodeToTube.keySet()),
+                                                                new ArrayList<>(mapBarcodeToTube.keySet()),
                                                                 postShearingPlateBarCode);
 
         BettaLIMSMessage msg = new BettaLIMSMessage();
@@ -390,7 +389,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
                 buildVesselsForPdo(squidProductOrder, vesselDao, null, bucketDao);
 
         String rackBarcode = "RSQUID" + (new Date()).toString();
-        List<VesselPosition> vesselPositions = new ArrayList<VesselPosition>(mapBarcodeToTube.size());
+        List<VesselPosition> vesselPositions = new ArrayList<>(mapBarcodeToTube.size());
 
         for (int sampleIdx = 0; sampleIdx < mapBarcodeToTube.size(); sampleIdx++) {
             vesselPositions.add(VesselPosition.values()[sampleIdx]);
@@ -398,7 +397,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
         TubeFormation shearingSourceRack =
                 makeTubeFormation(vesselPositions.toArray(new VesselPosition[vesselPositions.size()]),
-                                         new ArrayList<TwoDBarcodedTube>(mapBarcodeToTube.values())
+                                         new ArrayList<>(mapBarcodeToTube.values())
                                                  .toArray(new TwoDBarcodedTube[mapBarcodeToTube.size()]));
 
         shearingSourceRack.addRackOfTubes(new RackOfTubes(rackBarcode, RackOfTubes.RackType.Matrix96));
@@ -413,7 +412,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
         String postShearingPlateBarCode = "Shearing" + testPrefix;
         PlateTransferEventType shearingEventJaxb =
                 bettaLimsMessageTestFactory.buildRackToPlate(LabEventType.SHEARING_TRANSFER.getName(), rackBarcode,
-                                                                new ArrayList<String>(mapBarcodeToTube.keySet()),
+                                                                new ArrayList<>(mapBarcodeToTube.keySet()),
                                                                 postShearingPlateBarCode);
 
         BettaLIMSMessage msg = new BettaLIMSMessage();
@@ -434,7 +433,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
             We now have a Plate that we can do a Plate to Rack utilizing the Routing calls
          */
 
-        List<String> pondRegBarcodes = new ArrayList<String>();
+        List<String> pondRegBarcodes = new ArrayList<>();
         for (int rackPosition = 1; rackPosition <= 24 / 2; rackPosition++) {
             pondRegBarcodes.add("NormCatch" + testPrefix + rackPosition);
         }
@@ -476,7 +475,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
                 buildVesselsForPdo(squidProductOrder, vesselDao, null, bucketDao);
 
         String rackBarcode = "RSQUID" + (new Date()).toString();
-        List<VesselPosition> vesselPositions = new ArrayList<VesselPosition>(mapBarcodeToTube.size());
+        List<VesselPosition> vesselPositions = new ArrayList<>(mapBarcodeToTube.size());
 
         for (int sampleIdx = 0; sampleIdx < mapBarcodeToTube.size(); sampleIdx++) {
             vesselPositions.add(VesselPosition.values()[sampleIdx]);
@@ -484,7 +483,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
         TubeFormation shearingSourceRack =
                 makeTubeFormation(vesselPositions.toArray(new VesselPosition[vesselPositions.size()]),
-                                         new ArrayList<TwoDBarcodedTube>(mapBarcodeToTube.values())
+                                         new ArrayList<>(mapBarcodeToTube.values())
                                                  .toArray(new TwoDBarcodedTube[mapBarcodeToTube.size()]));
 
         shearingSourceRack.addRackOfTubes(new RackOfTubes(rackBarcode, RackOfTubes.RackType.Matrix96));
@@ -499,7 +498,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
         String postShearingPlateBarCode = "Shearing" + testPrefix;
         PlateTransferEventType shearingEventJaxb =
                 bettaLimsMessageTestFactory.buildRackToPlate(LabEventType.SHEARING_TRANSFER.getName(), rackBarcode,
-                                                                new ArrayList<String>(mapBarcodeToTube.keySet()),
+                                                                new ArrayList<>(mapBarcodeToTube.keySet()),
                                                                 postShearingPlateBarCode);
 
         BettaLIMSMessage msg = new BettaLIMSMessage();
@@ -520,7 +519,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
             We now have a Plate that we can do a Plate to Rack utilizing the Routing calls
          */
 
-        List<String> pondRegBarcodes = new ArrayList<String>();
+        List<String> pondRegBarcodes = new ArrayList<>();
         for (int rackPosition = 1; rackPosition <= 24 / 2; rackPosition++) {
             pondRegBarcodes.add("NormCatch" + testPrefix + rackPosition);
         }
@@ -545,7 +544,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
          // Strip Tube B Transfer  (Rack to Strip tube)
         String stripTubeHolderBarcode = "StripTubeHolder" + testPrefix;
         List<BettaLimsMessageTestFactory.CherryPick> stripTubeCherryPicks =
-                new ArrayList<BettaLimsMessageTestFactory.CherryPick>();
+                new ArrayList<>();
         for (int rackPosition = 0; rackPosition < 8; rackPosition++) {
             stripTubeCherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(pondRegJaxb.getPlate().getBarcode(), "A01",
                                                                                    stripTubeHolderBarcode,
@@ -600,7 +599,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
                 buildVesselsForPdo(squidProductOrder, vesselDao, null, bucketDao);
 
         String rackBarcode = "RSQUID" + (new Date()).toString();
-        List<VesselPosition> vesselPositions = new ArrayList<VesselPosition>(mapBarcodeToTube.size());
+        List<VesselPosition> vesselPositions = new ArrayList<>(mapBarcodeToTube.size());
 
         for (int sampleIdx = 0; sampleIdx < mapBarcodeToTube.size(); sampleIdx++) {
             vesselPositions.add(VesselPosition.values()[sampleIdx]);
@@ -608,7 +607,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
         TubeFormation shearingSourceRack =
                 makeTubeFormation(vesselPositions.toArray(new VesselPosition[vesselPositions.size()]),
-                                         new ArrayList<TwoDBarcodedTube>(mapBarcodeToTube.values())
+                                         new ArrayList<>(mapBarcodeToTube.values())
                                                  .toArray(new TwoDBarcodedTube[mapBarcodeToTube.size()]));
 
         shearingSourceRack.addRackOfTubes(new RackOfTubes(rackBarcode, RackOfTubes.RackType.Matrix96));
@@ -623,7 +622,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
         String postShearingPlateBarCode = "Shearing" + testPrefix;
         PlateTransferEventType shearingEventJaxb =
                 bettaLimsMessageTestFactory.buildRackToPlate(LabEventType.SHEARING_TRANSFER.getName(), rackBarcode,
-                                                                new ArrayList<String>(mapBarcodeToTube.keySet()),
+                                                                new ArrayList<>(mapBarcodeToTube.keySet()),
                                                                 postShearingPlateBarCode);
 
         BettaLIMSMessage msg = new BettaLIMSMessage();
@@ -644,7 +643,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
             We now have a Plate that we can do a Plate to Rack utilizing the Routing calls
          */
 
-        List<String> pondRegBarcodes = new ArrayList<String>();
+        List<String> pondRegBarcodes = new ArrayList<>();
         for (int rackPosition = 1; rackPosition <= 24 / 2; rackPosition++) {
             pondRegBarcodes.add("NormCatch" + testPrefix + rackPosition);
         }
@@ -668,7 +667,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
          // Strip Tube B Transfer  (Rack to Strip tube)
         String stripTubeHolderBarcode = "StripTubeHolder" + testPrefix;
         List<BettaLimsMessageTestFactory.CherryPick> stripTubeCherryPicks =
-                new ArrayList<BettaLimsMessageTestFactory.CherryPick>();
+                new ArrayList<>();
         for (int rackPosition = 0; rackPosition < 8; rackPosition++) {
             stripTubeCherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(pondRegJaxb.getPlate().getBarcode(), "A01",
                                                                                    stripTubeHolderBarcode,
@@ -743,7 +742,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
                 buildVesselsForPdo(squidProductOrder, vesselDao, null, bucketDao);
 
         String rackBarcode = "RSQUID" + (new Date()).toString();
-        List<VesselPosition> vesselPositions = new ArrayList<VesselPosition>(mapBarcodeToTube.size());
+        List<VesselPosition> vesselPositions = new ArrayList<>(mapBarcodeToTube.size());
 
         for (int sampleIdx = 0; sampleIdx < mapBarcodeToTube.size(); sampleIdx++) {
             vesselPositions.add(VesselPosition.values()[sampleIdx]);
@@ -751,7 +750,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
         TubeFormation shearingSourceRack =
                 makeTubeFormation(vesselPositions.toArray(new VesselPosition[vesselPositions.size()]),
-                                         new ArrayList<TwoDBarcodedTube>(mapBarcodeToTube.values())
+                                         new ArrayList<>(mapBarcodeToTube.values())
                                                  .toArray(new TwoDBarcodedTube[mapBarcodeToTube.size()]));
 
         shearingSourceRack.addRackOfTubes(new RackOfTubes(rackBarcode, RackOfTubes.RackType.Matrix96));
@@ -766,7 +765,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
         String postShearingPlateBarCode = "Shearing" + testPrefix;
         PlateTransferEventType shearingEventJaxb =
                 bettaLimsMessageTestFactory.buildRackToPlate(LabEventType.SHEARING_TRANSFER.getName(), rackBarcode,
-                                                                new ArrayList<String>(mapBarcodeToTube.keySet()),
+                                                                new ArrayList<>(mapBarcodeToTube.keySet()),
                                                                 postShearingPlateBarCode);
 
         BettaLIMSMessage msg = new BettaLIMSMessage();
@@ -787,7 +786,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
             We now have a Plate that we can do a Plate to Rack utilizing the Routing calls
          */
 
-        List<String> pondRegBarcodes = new ArrayList<String>();
+        List<String> pondRegBarcodes = new ArrayList<>();
         for (int rackPosition = 1; rackPosition <= 24 / 2; rackPosition++) {
             pondRegBarcodes.add("NormCatch" + testPrefix + rackPosition);
         }
@@ -811,7 +810,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
          // Strip Tube B Transfer  (Rack to Strip tube)
         String stripTubeHolderBarcode = "StripTubeHolder" + testPrefix;
         List<BettaLimsMessageTestFactory.CherryPick> stripTubeCherryPicks =
-                new ArrayList<BettaLimsMessageTestFactory.CherryPick>();
+                new ArrayList<>();
         for (int rackPosition = 0; rackPosition < 8; rackPosition++) {
             stripTubeCherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(pondRegJaxb.getPlate().getBarcode(), "A01",
                                                                                    stripTubeHolderBarcode,
@@ -907,9 +906,9 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
                                                                     @Nullable BucketDao bucketDao1) {
 
         Date testSuffix = new Date();
-        Set<LabVessel> tubes = new HashSet<LabVessel>(productOrder.getTotalSampleCount());
+        Set<LabVessel> tubes = new HashSet<>(productOrder.getTotalSampleCount());
 
-        List<String> barcodes = new ArrayList<String>(productOrder.getTotalSampleCount());
+        List<String> barcodes = new ArrayList<>(productOrder.getTotalSampleCount());
 
         Bucket bucket = null;
         if (bucketName != null) {
@@ -948,7 +947,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
         }
 
         Map<String, TwoDBarcodedTube> mapBarcodeToTube =
-                new LinkedHashMap<String, TwoDBarcodedTube>(productOrder.getTotalSampleCount());
+                new LinkedHashMap<>(productOrder.getTotalSampleCount());
 
         if (bucketName != null) {
             bucketDao1.persist(bucket);

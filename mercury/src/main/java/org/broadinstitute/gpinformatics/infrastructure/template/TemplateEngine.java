@@ -34,9 +34,7 @@ public class TemplateEngine {
         try {
             Template template = configuration.getTemplate(templateName);
             template.process(mapNameToObject, writer);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (TemplateException e) {
+        } catch (IOException | TemplateException e) {
             throw new RuntimeException(e);
         }
     }

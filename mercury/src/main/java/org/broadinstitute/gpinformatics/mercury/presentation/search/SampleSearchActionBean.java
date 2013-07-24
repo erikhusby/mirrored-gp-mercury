@@ -29,7 +29,7 @@ public class SampleSearchActionBean extends SearchActionBean {
 
     private Map<String, BSPSampleDTO> sampleDTOMap = new HashMap<>();
 
-    private Map<MercurySample, Set<LabVessel>> mercurySampleToVessels = new HashMap<MercurySample, Set<LabVessel>>();
+    private Map<MercurySample, Set<LabVessel>> mercurySampleToVessels = new HashMap<>();
 
     public Map<MercurySample, Set<LabVessel>> getMercurySampleToVessels() {
         return mercurySampleToVessels;

@@ -159,7 +159,7 @@ public class QuoteServiceTest {
     public static Set<String> getFundingTypes(Quotes quotes) {
         Assert.assertNotNull(quotes);
         Assert.assertFalse(quotes.getQuotes().isEmpty());
-        Set<String> fundingTypes = new HashSet<String>();
+        Set<String> fundingTypes = new HashSet<>();
         for (Quote quote : quotes.getQuotes()) {
             if (quote.getQuoteFunding() != null) {
                 if (quote.getQuoteFunding().getFundingLevel() != null) {

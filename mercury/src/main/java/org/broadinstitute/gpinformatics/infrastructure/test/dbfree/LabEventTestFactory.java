@@ -23,7 +23,7 @@ import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 public class LabEventTestFactory {
 
     public static TubeFormation makeTubeFormation(TwoDBarcodedTube... tubes) {
-        Map<VesselPosition, TwoDBarcodedTube> positionMap = new HashMap<VesselPosition, TwoDBarcodedTube>();
+        Map<VesselPosition, TwoDBarcodedTube> positionMap = new HashMap<>();
         int i = 0;
         for (TwoDBarcodedTube tube : tubes) {
             positionMap.put(VesselPosition.values()[i], tube);
@@ -35,7 +35,7 @@ public class LabEventTestFactory {
     public static TubeFormation makeTubeFormation(VesselPosition[] positions, TwoDBarcodedTube[] tubes) {
         assertThat("There must be at least as many positions as tubes",
                 positions.length, greaterThanOrEqualTo(tubes.length));
-        Map<VesselPosition, TwoDBarcodedTube> positionMap = new HashMap<VesselPosition, TwoDBarcodedTube>();
+        Map<VesselPosition, TwoDBarcodedTube> positionMap = new HashMap<>();
         for (int i = 0; i < tubes.length; i++) {
             TwoDBarcodedTube tube = tubes[i];
             VesselPosition position = positions[i];
@@ -52,7 +52,7 @@ public class LabEventTestFactory {
     }
 
     public static TubeFormation makeTubeFormation(TubeFormation normTubeFormation, TwoDBarcodedTube... tubes) {
-        Map<VesselPosition, TwoDBarcodedTube> positionMap = new HashMap<VesselPosition, TwoDBarcodedTube>();
+        Map<VesselPosition, TwoDBarcodedTube> positionMap = new HashMap<>();
         int i = 0;
         for (TwoDBarcodedTube tube : normTubeFormation.getContainerRole().getContainedVessels()) {
             positionMap.put(VesselPosition.values()[i], tube);

@@ -282,16 +282,18 @@ public class IlluminaRunResourceTest extends Arquillian {
                     if (firstCycle.equals(beanRead.getFirstCycle()) && readLength.equals(beanRead.getLength())) {
                         if (thriftRead.getReadType() != null) {
                             String readTypeName = thriftRead.getReadType().name();
-                            if (readTypeName.equals(ZamboniRead.INDEX)) {
-                                assertEquals(beanRead.getReadType(),ZamboniReadType.INDEX);
+                            switch (readTypeName) {
+                            case ZamboniRead.INDEX:
+                                assertEquals(beanRead.getReadType(), ZamboniReadType.INDEX);
                                 haveIt = true;
-                            }
-                            else if (readTypeName.equals(ZamboniRead.TEMPLATE)) {
-                                assertEquals(beanRead.getReadType(),ZamboniReadType.TEMPLATE);
+                                break;
+                            case ZamboniRead.TEMPLATE:
+                                assertEquals(beanRead.getReadType(), ZamboniReadType.TEMPLATE);
                                 haveIt = true;
-                            }
-                            else {
+                                break;
+                            default:
                                 fail("Read type " + thriftRead.getReadType() + " is unknown");
+                                break;
                             }
                         }
                         else {

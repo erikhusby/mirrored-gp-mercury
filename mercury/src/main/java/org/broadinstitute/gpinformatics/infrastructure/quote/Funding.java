@@ -195,7 +195,7 @@ public class Funding implements Displayable {
     }
 
     public static Set<Funding> getFundingSet(Document response) {
-        Set<Funding> fundingSet = new TreeSet<Funding>(byDisplayName);
+        Set<Funding> fundingSet = new TreeSet<>(byDisplayName);
 
         DateFormat quoteDateFormat = new SimpleDateFormat(QUOTE_SERVER_DATE_STRING);
 
@@ -205,7 +205,7 @@ public class Funding implements Displayable {
 
             NodeList entries = node.getChildNodes();
 
-            Map<String, String> nameValueAttributes = new HashMap<String, String> (rowNodes.getLength());
+            Map<String, String> nameValueAttributes = new HashMap<>(rowNodes.getLength());
             for (int j = 0; j < entries.getLength(); j++) {
                 Node entry = entries.item(j);
 

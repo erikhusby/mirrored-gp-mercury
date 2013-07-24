@@ -39,9 +39,6 @@ public class EmailSender implements Serializable {
                 message.setContent(body, "text/html; charset=utf-8");
                 message.setSentDate(new Date());
                 Transport.send(message);
-            } catch (AddressException e) {
-                LOG.error("Failed to send email", e);
-                // Don't rethrow, not fatal
             } catch (MessagingException e) {
                 LOG.error("Failed to send email", e);
                 // Don't rethrow, not fatal

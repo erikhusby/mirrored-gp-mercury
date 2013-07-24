@@ -94,14 +94,14 @@ public class MercuryClientEjb {
         // Finds existing vessels for the pdo samples, or if none, then either the sample has not been received
         // or the sample is a derived stock that has not been seen by Mercury.  Creates both standalone vessel and
         // MercurySample for the latter.
-        Map<String, Collection<ProductOrderSample>> nameToSampleMap = new HashMap<String, Collection<ProductOrderSample>>();
-        Set<String> sampleKeyList = new HashSet<String>();
+        Map<String, Collection<ProductOrderSample>> nameToSampleMap = new HashMap<>();
+        Set<String> sampleKeyList = new HashSet<>();
         for (ProductOrderSample pdoSample : samples) {
             // A pdo can have multiple samples all with same sample name but with different sample position.
             // Each one will get a MercurySample and LabVessel put into the bucket.
             Collection<ProductOrderSample> pdoSampleList = nameToSampleMap.get(pdoSample.getSampleName());
             if (pdoSampleList == null) {
-                pdoSampleList = new ArrayList<ProductOrderSample>();
+                pdoSampleList = new ArrayList<>();
                 nameToSampleMap.put(pdoSample.getSampleName(), pdoSampleList);
             }
             pdoSampleList.add(pdoSample);
@@ -111,7 +111,7 @@ public class MercuryClientEjb {
         List<LabVessel> vessels = labVesselDao.findBySampleKeyList(sampleKeyList);
 
         // Finds samples with no existing vessels.
-        Collection<String> samplesWithoutVessel = new ArrayList<String>(sampleKeyList);
+        Collection<String> samplesWithoutVessel = new ArrayList<>(sampleKeyList);
         for (LabVessel vessel : vessels) {
             for (MercurySample sample : vessel.getMercurySamples()) {
                 samplesWithoutVessel.remove(sample.getSampleKey());
@@ -131,7 +131,7 @@ public class MercuryClientEjb {
             bucketDao.persist(initialBucket);
         }
 
-        List<ProductOrderSample> samplesAdded = new ArrayList<ProductOrderSample>();
+        List<ProductOrderSample> samplesAdded = new ArrayList<>();
         for (LabVessel vessel : validVessels) {
             for (MercurySample sample : vessel.getMercurySamples()) {
                 samplesAdded.addAll(nameToSampleMap.get(sample.getSampleKey()));
@@ -142,7 +142,7 @@ public class MercuryClientEjb {
 
     // todo jmt should this check be in bucketEjb.add?
     private Collection<LabVessel> applyBucketCriteria(Collection<LabVessel> vessels, WorkflowBucketDef bucketDef) {
-        Collection<LabVessel> validVessels = new HashSet<LabVessel>();
+        Collection<LabVessel> validVessels = new HashSet<>();
         for (LabVessel vessel : vessels) {
             if (bucketDef.meetsBucketCriteria(vessel)) {
                 validVessels.add(vessel);
@@ -159,7 +159,7 @@ public class MercuryClientEjb {
      * @return the created LabVessels
      */
     public Collection<LabVessel> createInitialVessels(Collection<String>samplesWithoutVessel, String username) {
-        Collection<LabVessel> vessels = new ArrayList<LabVessel>();
+        Collection<LabVessel> vessels = new ArrayList<>();
         Map<String, BSPSampleDTO> bspDtoMap = bspSampleDataFetcher.fetchSamplesFromBSP(samplesWithoutVessel);
         for (String sampleName : samplesWithoutVessel) {
             BSPSampleDTO bspDto = bspDtoMap.get(sampleName);

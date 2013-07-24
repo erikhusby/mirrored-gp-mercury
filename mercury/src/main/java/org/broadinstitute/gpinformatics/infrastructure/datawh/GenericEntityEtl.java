@@ -107,7 +107,7 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
      * Returns multiple sqlLoader records for the entity.  Override for fact table etl.
      */
     Collection<String> dataRecords(String etlDateStr, boolean isDelete, ETL_DATA_SOURCE_CLASS entity) {
-        Collection<String> records = new ArrayList<String>();
+        Collection<String> records = new ArrayList<>();
         if (entity != null) {
             records.add(dataRecord(etlDateStr, isDelete, entity));
         }
@@ -268,9 +268,9 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
     //
     @DaoFree
     protected AuditLists<AUDITED_ENTITY_CLASS> fetchAuditIds(List<Object[]> auditEntities) {
-        Set<Long> deletedEntityIds = new HashSet<Long>();
-        Set<Long> modifiedEntityIds = new HashSet<Long>();
-        Set<Long> addedEntityIds = new HashSet<Long>();
+        Set<Long> deletedEntityIds = new HashSet<>();
+        Set<Long> modifiedEntityIds = new HashSet<>();
+        Set<Long> addedEntityIds = new HashSet<>();
         List<RevInfoPair<AUDITED_ENTITY_CLASS>> revInfoPairs = new ArrayList<>();
 
         for (Object[] dataChange : auditEntities) {
@@ -294,7 +294,7 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
         addedEntityIds.removeAll(deletedEntityIds);
         modifiedEntityIds.removeAll(addedEntityIds);
 
-        return new AuditLists<AUDITED_ENTITY_CLASS>(deletedEntityIds, modifiedEntityIds, addedEntityIds, revInfoPairs);
+        return new AuditLists<>(deletedEntityIds, modifiedEntityIds, addedEntityIds, revInfoPairs);
     }
 
     protected void addRevInfoPairs(Collection<RevInfoPair<AUDITED_ENTITY_CLASS>> revInfoPairs,
@@ -419,7 +419,7 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
      * @return Set of associated ids, deduplicated
      */
     public Collection<Long> lookupAssociatedIds(Collection<Long> ids, String queryString) {
-        Collection<Long> associatedIds = new HashSet<Long>();
+        Collection<Long> associatedIds = new HashSet<>();
 
         // Cannot use JPASplitter because it doesn't support native query (fails querying PO_SAMPLE_RISK_JOIN_AUD).
         for (Collection<Long> split : BaseSplitter.split(ids)) {

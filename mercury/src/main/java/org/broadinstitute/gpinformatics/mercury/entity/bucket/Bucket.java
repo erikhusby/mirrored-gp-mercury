@@ -162,7 +162,7 @@ public class Bucket {
 
     public BucketEntry findEntry(@Nonnull LabVessel entryVessel) {
 
-        List<BucketEntry> foundEntries = new LinkedList<BucketEntry>();
+        List<BucketEntry> foundEntries = new LinkedList<>();
         BucketEntry foundBucketItem = null;
 
         for (BucketEntry currEntry : bucketEntries) {

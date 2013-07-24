@@ -53,8 +53,8 @@ public class LabVesselFactory implements Serializable {
             String userName,
             Date eventDate,
             LabEventType labEventType) {
-        List<String> barcodes = new ArrayList<String>();
-        List<String> sampleIds = new ArrayList<String>();
+        List<String> barcodes = new ArrayList<>();
+        List<String> sampleIds = new ArrayList<>();
         for (ParentVesselBean parentVesselBean : parentVesselBeans) {
             barcodes.add(parentVesselBean.getManufacturerBarcode() == null ? parentVesselBean.getSampleId() :
                     parentVesselBean.getManufacturerBarcode());
@@ -91,18 +91,18 @@ public class LabVesselFactory implements Serializable {
      * @return vessels, associated with samples
      */
     public List<LabVessel> buildInitialLabVessels(String sampleName, String barcode, String userName, Date eventDate) {
-        List<String> barcodes = new ArrayList<String>();
+        List<String> barcodes = new ArrayList<>();
         barcodes.add(barcode);
         Map<String,LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
 
-        List<String> sampleIds = new ArrayList<String>();
+        List<String> sampleIds = new ArrayList<>();
         sampleIds.add(sampleName);
         Map<String, List<MercurySample>> mapIdToListMercurySample =
                 mercurySampleDao.findMapIdToListMercurySample(sampleIds);
         Map<String, List<ProductOrderSample>> mapIdToListPdoSamples =
                 athenaClientService.findMapSampleNameToPoSample(sampleIds);
 
-        List<ParentVesselBean> parentVesselBeans = new ArrayList<ParentVesselBean>();
+        List<ParentVesselBean> parentVesselBeans = new ArrayList<>();
         parentVesselBeans.add(new ParentVesselBean(barcode, sampleName, null, null));
 
         return buildLabVesselDaoFree(mapBarcodeToVessel, mapIdToListMercurySample, mapIdToListPdoSamples, userName,
@@ -130,7 +130,7 @@ public class LabVesselFactory implements Serializable {
             List<ParentVesselBean> parentVesselBeans,
             LabEventType labEventType) {
 
-        List<LabVessel> labVessels = new ArrayList<LabVessel>();
+        List<LabVessel> labVessels = new ArrayList<>();
         BspUser bspUser = bspUserList.getByUsername(userName);
         if (bspUser == null) {
             throw new RuntimeException("Failed to find user " + userName);
@@ -183,7 +183,7 @@ public class LabVesselFactory implements Serializable {
                         rackOfTubes = new RackOfTubes(parentVesselBean.getManufacturerBarcode(),
                                 RackOfTubes.RackType.Matrix96);
                     }
-                    Map<VesselPosition, TwoDBarcodedTube> mapPositionToTube = new HashMap<VesselPosition, TwoDBarcodedTube>();
+                    Map<VesselPosition, TwoDBarcodedTube> mapPositionToTube = new HashMap<>();
                     for (ChildVesselBean childVesselBean : parentVesselBean.getChildVesselBeans()) {
                         VesselPosition vesselPosition = VesselPosition.getByName(childVesselBean.getPosition());
                         if (vesselPosition == null) {

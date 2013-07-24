@@ -23,7 +23,7 @@ public class BSPLSIDUtil {
      *
      */
     public static Map<String, String> lsidsToBareIds(Collection<String> lsids) {
-        Map<String, String> ret = new HashMap<String, String>();
+        Map<String, String> ret = new HashMap<>();
 
         for (String lsid : lsids) {
             ret.put(lsid, lsidToBareId(lsid));

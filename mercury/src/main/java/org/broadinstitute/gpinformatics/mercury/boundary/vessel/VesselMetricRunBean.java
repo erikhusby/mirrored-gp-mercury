@@ -20,7 +20,7 @@ public class VesselMetricRunBean {
     private String runName;
     private Date runDate;
     private String quantType;
-    private List<VesselMetricBean> vesselMetricBeans = new ArrayList<VesselMetricBean>();
+    private List<VesselMetricBean> vesselMetricBeans = new ArrayList<>();
 
     public VesselMetricRunBean() {
     }

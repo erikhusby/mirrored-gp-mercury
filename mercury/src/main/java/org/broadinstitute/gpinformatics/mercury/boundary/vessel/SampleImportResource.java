@@ -63,7 +63,7 @@ public class SampleImportResource {
         LabVessel firstLabVessel = startingLabVessels.iterator().next();
         LabEvent labEvent = firstLabVessel.getInPlaceEvents().iterator().next();
 
-        List<ChildVesselBean> childVesselBeans = new ArrayList<ChildVesselBean>();
+        List<ChildVesselBean> childVesselBeans = new ArrayList<>();
         TubeFormation tubeFormation = (TubeFormation) firstLabVessel.getContainers().iterator().next().getEmbedder();
         for (LabVessel startingLabVessel : startingLabVessels) {
             childVesselBeans.add(new ChildVesselBean(
@@ -74,7 +74,7 @@ public class SampleImportResource {
         }
 
         RackOfTubes rackOfTubes = tubeFormation.getRacksOfTubes().iterator().next();
-        List<ParentVesselBean> parentVesselBeans = new ArrayList<ParentVesselBean>();
+        List<ParentVesselBean> parentVesselBeans = new ArrayList<>();
         parentVesselBeans.add(new ParentVesselBean(rackOfTubes.getLabel(), null, rackOfTubes.getType().getName(),
                 childVesselBeans));
         BspUser bspUser = bspUserList.getById(labEvent.getEventOperator());
@@ -108,7 +108,7 @@ public class SampleImportResource {
                     "Export has already been received " + sampleImportBean.getSourceSystemExportId());
         }
         String batchName = sampleImportBean.getSourceSystemExportId();
-        labBatchDAO.persist(new LabBatch(batchName, new HashSet<LabVessel>(labVessels),
+        labBatchDAO.persist(new LabBatch(batchName, new HashSet<>(labVessels),
                 LabBatch.LabBatchType.SAMPLES_IMPORT));
         return "Samples imported: " + batchName;
     }

@@ -29,7 +29,7 @@ public class LabMetric {
         Bp("Bp");
 
         private String displayName;
-        private static final Map<String, LabUnit> mapNameToUnit = new HashMap<String, LabUnit>();
+        private static final Map<String, LabUnit> mapNameToUnit = new HashMap<>();
         static {
             for (LabUnit unit : LabUnit.values()) {
                 mapNameToUnit.put(unit.getDisplayName(), unit);
@@ -68,7 +68,7 @@ public class LabMetric {
 
         private String displayName;
         private boolean uploadEnabled;
-        private static final Map<String, MetricType> mapNameToType = new HashMap<String, MetricType>();
+        private static final Map<String, MetricType> mapNameToType = new HashMap<>();
         static {
             for (MetricType metricType : MetricType.values()) {
                 mapNameToType.put(metricType.getDisplayName(), metricType);
@@ -93,7 +93,7 @@ public class LabMetric {
         }
 
         public static List<MetricType> getUploadSupportedMetrics(){
-            List<MetricType> metricTypes = new ArrayList<MetricType>();
+            List<MetricType> metricTypes = new ArrayList<>();
             for (MetricType value : values()) {
                 if (value.uploadEnabled) {
                     metricTypes.add(value);

@@ -32,7 +32,7 @@ public class VesselSearchActionBean extends SearchActionBean {
      * This method orders the results based on the order of strings passed in.
      */
     private void orderResults() {
-        Map<String, LabVessel> labelToVessel = new HashMap<String, LabVessel>();
+        Map<String, LabVessel> labelToVessel = new HashMap<>();
         for (LabVessel vessel : getFoundVessels()) {
             labelToVessel.put(vessel.getLabel(), vessel);
         }

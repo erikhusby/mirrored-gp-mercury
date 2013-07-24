@@ -13,7 +13,6 @@ import org.jboss.shrinkwrap.resolver.api.maven.MavenDependency;
 import org.jboss.shrinkwrap.resolver.api.maven.MavenImporter;
 import org.jboss.shrinkwrap.resolver.api.maven.MavenResolutionFilter;
 
-import javax.enterprise.inject.Alternative;
 import java.io.File;
 import java.util.Collection;
 

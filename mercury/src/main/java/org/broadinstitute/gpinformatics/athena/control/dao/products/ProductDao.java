@@ -65,7 +65,7 @@ public class ProductDao extends GenericDao implements Serializable {
                                       @Nonnull IncludePDMOnly includePDMOnly) {
         CriteriaBuilder cb = getCriteriaBuilder();
         CriteriaQuery<Product> cq = cb.createQuery(Product.class);
-        List<Predicate> predicateList = new ArrayList<Predicate>();
+        List<Predicate> predicateList = new ArrayList<>();
         cq.distinct(true);
 
         Root<Product> product = cq.from(Product.class);
@@ -173,7 +173,7 @@ public class ProductDao extends GenericDao implements Serializable {
      * @return The matching products
      */
     private List<Product> findInProducts(String searchText, List<Product> products) {
-        List<Product> list = new ArrayList<Product>();
+        List<Product> list = new ArrayList<>();
         String[] searchWords = (searchText == null ? "" : searchText).split("\\s");
 
         Collections.sort(products);

@@ -53,7 +53,7 @@ public class MercuryClientServiceImpl implements MercuryClientService {
     }
 
     private Collection<DisplayableItem> makeDisplayableItemCollection(List<? extends BusinessObject> items) {
-        Collection<DisplayableItem> displayableItems = new ArrayList<DisplayableItem>(items.size());
+        Collection<DisplayableItem> displayableItems = new ArrayList<>(items.size());
 
         for (BusinessObject item : items) {
             displayableItems.add(new DisplayableItem(item.getBusinessKey(), item.getName()));

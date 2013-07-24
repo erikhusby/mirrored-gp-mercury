@@ -28,8 +28,8 @@ public class NameValueDefinitionValue implements PreferenceDefinitionValue {
     }
 
     public NameValueDefinitionValue() throws JAXBException {
-        dataMap = new HashMap<String, List<String>> ();
-        marshaller = new ObjectMarshaller<NameValueDefinitionValue>(NameValueDefinitionValue.class);
+        dataMap = new HashMap<>();
+        marshaller = new ObjectMarshaller<>(NameValueDefinitionValue.class);
     }
 
     @XmlJavaTypeAdapter(NameValueAdapter.class)
@@ -77,7 +77,7 @@ public class NameValueDefinitionValue implements PreferenceDefinitionValue {
     public static class NameValueAdapter extends XmlAdapter<NameValueAdapter.AdaptedMap, HashMap<String, List<String>>> {
 
         public static class AdaptedMap {
-            public List<Entry> entry = new ArrayList<Entry>();
+            public List<Entry> entry = new ArrayList<>();
         }
 
         public static class Entry {
@@ -87,7 +87,7 @@ public class NameValueDefinitionValue implements PreferenceDefinitionValue {
 
         @Override
         public HashMap<String, List<String>> unmarshal(AdaptedMap adaptedMap) throws Exception {
-            HashMap<String, List<String>> map = new HashMap<String, List<String>>();
+            HashMap<String, List<String>> map = new HashMap<>();
             for (Entry entry : adaptedMap.entry) {
                 map.put(entry.key, entry.value);
             }

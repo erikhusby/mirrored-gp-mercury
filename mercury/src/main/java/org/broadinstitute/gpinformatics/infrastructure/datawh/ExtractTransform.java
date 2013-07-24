@@ -12,13 +12,11 @@ import org.broadinstitute.gpinformatics.infrastructure.datawh.SequencingSampleFa
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfiguration;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
-import org.omg.PortableInterceptor.SUCCESSFUL;
 
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -133,7 +131,7 @@ public class ExtractTransform implements Serializable {
     private static long incrementalRunStartTime = System.currentTimeMillis();  // only useful for logging
     private static boolean loggedConfigError = false;
     private static EtlConfig etlConfig = null;
-    private final Collection<GenericEntityEtl> etlInstances = new HashSet<GenericEntityEtl>();
+    private final Collection<GenericEntityEtl> etlInstances = new HashSet<>();
 
     @Inject
     private AuditReaderDao auditReaderDao;
@@ -355,7 +353,7 @@ public class ExtractTransform implements Serializable {
             mutex.release();
         }
 
-        return (!count.isEmpty() && !date.isEmpty()) ? new ImmutablePair<Integer, String>(count.get(0), date.get(0)) : null;
+        return (!count.isEmpty() && !date.isEmpty()) ? new ImmutablePair<>(count.get(0), date.get(0)) : null;
     }
 
     // Limits batch size and adjusts end time accordingly.
@@ -386,7 +384,7 @@ public class ExtractTransform implements Serializable {
                 revs = revs.headMap(itemBeyondEnd);
             }
         }
-        return new ImmutablePair<SortedMap<Long, Date>, Long>(revs, batchEndSec);
+        return new ImmutablePair<>(revs, batchEndSec);
     }
 
 
@@ -434,8 +432,8 @@ public class ExtractTransform implements Serializable {
 
         final long finalEndId = endId;
         final Class<?> finalEntityClass = entityClass;
-        final List<Integer> count = new ArrayList<Integer>(1);
-        final List<String> date = new ArrayList<String>(1);
+        final List<Integer> count = new ArrayList<>(1);
+        final List<String> date = new ArrayList<>(1);
 
         sessionContextUtility.executeInContext(new SessionContextUtility.Function() {
             @Override

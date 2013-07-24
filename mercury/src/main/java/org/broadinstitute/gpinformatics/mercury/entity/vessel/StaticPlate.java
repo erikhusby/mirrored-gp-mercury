@@ -13,7 +13,6 @@ import java.io.Serializable;
 import java.util.*;
 
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.ContainerType.STATIC_PLATE;
-import static org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria.TraversalDirection.Ancestors;
 
 /**
  * A traditional plate.
@@ -74,8 +73,8 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
             return displayName;
         }
 
-        private static Map<String, PlateType> mapAutomationNameToType = new HashMap<String, PlateType>();
-        private static Map<String, PlateType> mapDisplayNameToType = new HashMap<String, PlateType>();
+        private static Map<String, PlateType> mapAutomationNameToType = new HashMap<>();
+        private static Map<String, PlateType> mapDisplayNameToType = new HashMap<>();
 
         static {
             for (PlateType plateType : PlateType.values()) {
@@ -131,7 +130,7 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
      * @return immediate plate parents
      */
     public List<StaticPlate> getImmediatePlateParents() {
-        List<StaticPlate> parents = new ArrayList<StaticPlate>();
+        List<StaticPlate> parents = new ArrayList<>();
         for (LabEvent event : getTransfersTo()) {
             for (LabVessel source : event.getSourceLabVessels()) {
                 if (source.getType() == STATIC_PLATE) {
@@ -144,7 +143,7 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
 
     public static class HasRackContentByWellCriteria implements TransferTraverserCriteria {
 
-        private Map<VesselPosition, Boolean> result = new HashMap<VesselPosition, Boolean>();
+        private Map<VesselPosition, Boolean> result = new HashMap<>();
 
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
@@ -202,8 +201,8 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
     @Deprecated
     public static class NearestTubeAncestorsCriteria implements TransferTraverserCriteria {
 
-        private Set<LabVessel> tubes = new HashSet<LabVessel>();
-        private Set<VesselAndPosition> vesselAndPositions = new LinkedHashSet<VesselAndPosition>();
+        private Set<LabVessel> tubes = new HashSet<>();
+        private Set<VesselAndPosition> vesselAndPositions = new LinkedHashSet<>();
 
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
@@ -260,7 +259,7 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
      * @return
      */
     public List<SectionTransfer> getUpstreamPlateTransfers(int depth) {
-        Set<SectionTransfer> sectionTransfers = new LinkedHashSet<SectionTransfer>();
+        Set<SectionTransfer> sectionTransfers = new LinkedHashSet<>();
         collectPlateTransfers(sectionTransfers, vesselContainer, depth, 1);
         return new ArrayList<>(sectionTransfers);
     }

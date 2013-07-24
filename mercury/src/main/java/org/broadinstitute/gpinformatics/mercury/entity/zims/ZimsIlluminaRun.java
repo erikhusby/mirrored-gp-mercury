@@ -41,13 +41,13 @@ public class ZimsIlluminaRun {
     private final SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
 
     @JsonProperty("lanes")
-    private List<ZimsIlluminaChamber> chambers = new ArrayList<ZimsIlluminaChamber>();
+    private List<ZimsIlluminaChamber> chambers = new ArrayList<>();
 
     @JsonProperty("pairedRun")
     private Boolean isPaired;
 
     @JsonProperty("reads")
-    private List<ZamboniRead> reads = new ArrayList<ZamboniRead>();
+    private List<ZamboniRead> reads = new ArrayList<>();
 
     // if something blows up, we put the error message here
     // to keep clients happy
