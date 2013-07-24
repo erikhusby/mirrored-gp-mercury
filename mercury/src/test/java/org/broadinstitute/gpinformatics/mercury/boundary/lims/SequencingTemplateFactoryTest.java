@@ -72,6 +72,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
 
     @BeforeTest(alwaysRun = true)
     public void setUp() {
+        expectedRouting = MercuryOrSquidRouter.MercuryOrSquid.MERCURY;
 
         super.setUp();
         factory = new SequencingTemplateFactory();
@@ -84,6 +85,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
         workflowBatch.setWorkflowName("Exome Express");
+        workflowBatch.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
 
         //Build Event History
         bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, BARCODE_SUFFIX);

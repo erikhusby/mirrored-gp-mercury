@@ -289,8 +289,9 @@ public class MercuryOrSquidRouterTest extends BaseEventTest {
     public void testRouteForTubesAllInMercuryWithOrdersSomeExomeExpress() {
         placeOrderForTube(tube1, testProduct);
         ProductOrder order = placeOrderForTubeAndBucket(tube2, exomeExpress, picoBucket);
+        // todo jmt should this throw an exception, it's a mixture of Squid only and Mercury only?
         assertThat(mercuryOrSquidRouter.routeForVesselBarcodes(Arrays.asList(MERCURY_TUBE_1, MERCURY_TUBE_2)),
-                is(SQUID));
+                is(BOTH));
         verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>() {{
             add(MERCURY_TUBE_1);
             add(MERCURY_TUBE_2);
@@ -361,7 +362,8 @@ public class MercuryOrSquidRouterTest extends BaseEventTest {
         placeOrderForTube(tube1, testProduct);
         ProductOrder order = placeOrderForTubeAndBucket(tube2, exomeExpress, picoBucket);
         doSectionTransfer(makeTubeFormation(tube1, tube2), plate);
-        assertThat(mercuryOrSquidRouter.routeForVessel(MERCURY_PLATE), equalTo(SQUID));
+        // todo jmt should this throw an exception, it's a mixture of Squid only and Mercury only?
+        assertThat(mercuryOrSquidRouter.routeForVessel(MERCURY_PLATE), equalTo(BOTH));
         verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>() {{
             add(MERCURY_PLATE);
         }});
@@ -449,6 +451,8 @@ public class MercuryOrSquidRouterTest extends BaseEventTest {
 
     @Test(groups = DATABASE_FREE, enabled = true)
     public void testMercuryOnlyRouting() {
+        expectedRouting = MercuryOrSquidRouter.MercuryOrSquid.MERCURY;
+
         final ProductOrder
                 productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
         AthenaClientServiceStub.addProductOrder(productOrder);
@@ -571,6 +575,8 @@ public class MercuryOrSquidRouterTest extends BaseEventTest {
 
     @Test(groups = DATABASE_FREE, enabled = true)
     public void testMercuryAndSquidRouting() {
+        expectedRouting = MercuryOrSquidRouter.MercuryOrSquid.BOTH;
+
         final ProductOrder
                 productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
         AthenaClientServiceStub.addProductOrder(productOrder);

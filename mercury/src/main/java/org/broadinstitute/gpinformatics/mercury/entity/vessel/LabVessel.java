@@ -179,7 +179,7 @@ public abstract class LabVessel implements Serializable {
 
     /** Set by {@link #preProcessEvents()} */
     @Transient
-    private boolean havePreProcessedEvents;
+    private Set<LabBatch> preProcessedEvents;
 
     protected LabVessel(String label) {
         createdOn = new Date();
@@ -748,12 +748,17 @@ public abstract class LabVessel implements Serializable {
      * @return sample instances
      */
     public Set<SampleInstance> getSampleInstances(SampleType sampleType, @Nullable LabBatch.LabBatchType labBatchType) {
-        if (!havePreProcessedEvents) {
-            preProcessEvents();
-            havePreProcessedEvents = true;
+        if (preProcessedEvents == null) {
+            preProcessedEvents = preProcessEvents();
         }
         if (getContainerRole() != null) {
-            return getContainerRole().getSampleInstances(sampleType, labBatchType);
+            Set<SampleInstance> sampleInstances = getContainerRole().getSampleInstances(sampleType, labBatchType);
+            for (SampleInstance sampleInstance : sampleInstances) {
+                if (sampleInstance.getLabBatch() == null && preProcessedEvents != null && preProcessedEvents.size() == 1) {
+                    sampleInstance.setLabBatch(preProcessedEvents.iterator().next());
+                }
+            }
+            return sampleInstances;
         }
         TraversalResults traversalResults = traverseAncestors(sampleType, labBatchType);
         Set<SampleInstance> filteredSampleInstances;
@@ -768,6 +773,14 @@ public abstract class LabVessel implements Serializable {
             filteredSampleInstances = traversalResults.getSampleInstances();
         }
 
+        // This handles the case where controls are added in a re-array of the destination of the first transfer
+        // from LCSET starting tubes.
+        if (filteredSampleInstances.size() == 1) {
+            SampleInstance sampleInstance = filteredSampleInstances.iterator().next();
+            if (sampleInstance.getLabBatch() == null && preProcessedEvents != null && preProcessedEvents.size() == 1) {
+                sampleInstance.setLabBatch(preProcessedEvents.iterator().next());
+            }
+        }
         return filteredSampleInstances;
     }
 
@@ -1719,11 +1732,13 @@ public abstract class LabVessel implements Serializable {
     }
 
     /**
-     * In preparation for getSampleInstances recursion, sets the computed LCSETs in each ancestor lab event.
+     * In preparation for getSampleInstances recursion, sets the computed LCSETs in each ancestor lab event.  This is
+     * necessary because a control doesn't have a {@link BucketEntry}; controls become associated with LCSETs by being
+     * in the same transfer as vessels with BucketEntries.
      */
-    public void preProcessEvents() {
+    public Set<LabBatch> preProcessEvents() {
         Set<LabEvent> visitedLabEvents = new HashSet<>();
-        recurseEvents(visitedLabEvents, getTransfersToWithReArrays());
+        return recurseEvents(visitedLabEvents, getTransfersToWithReArrays());
     }
 
     /**
@@ -1748,7 +1763,6 @@ public abstract class LabVessel implements Serializable {
                     returnLcSets.addAll(computedLcSets);
                     labEvent.addComputedLcSets(computedLcSets);
                 }
-//                System.out.println(labEvent.getLabEventType() + " " + labEvent.getComputedLcSets());
             }
         }
         return returnLcSets;

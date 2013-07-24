@@ -215,7 +215,7 @@ public class WorkflowValidator {
         List<WorkflowValidationError> validationErrors = new ArrayList<WorkflowValidationError>();
 
         for (LabVessel labVessel : labVessels) { // todo jmt can this be null?
-            Set<SampleInstance> sampleInstances = labVessel.getSampleInstances(LabVessel.SampleType.WITH_PDO,
+            Set<SampleInstance> sampleInstances = labVessel.getSampleInstances(LabVessel.SampleType.PREFER_PDO,
                     LabBatch.LabBatchType.WORKFLOW);
             for (SampleInstance sampleInstance : sampleInstances) {
                 String workflowName = sampleInstance.getWorkflowName();

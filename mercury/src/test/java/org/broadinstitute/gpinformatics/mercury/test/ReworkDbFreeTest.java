@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServic
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.LabEventTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabBatchComposition;
@@ -39,6 +40,8 @@ public class ReworkDbFreeTest extends BaseEventTest {
 
     @Test(enabled = true, groups = TestGroups.DATABASE_FREE)
     public void testAddReworkToBatchFromBucket() {
+        expectedRouting = MercuryOrSquidRouter.MercuryOrSquid.MERCURY;
+
         String origLcsetSuffix = "-111";
         String reworkLcsetSuffix = "-222";
 
@@ -56,6 +59,7 @@ public class ReworkDbFreeTest extends BaseEventTest {
         LabBatch origBatch =
                 new LabBatch("origBatch", new HashSet<LabVessel>(origRackMap.values()), LabBatch.LabBatchType.WORKFLOW);
         origBatch.setWorkflowName("Exome Express");
+        origBatch.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
         bucketBatchAndDrain(origRackMap, productOrder, origBatch, origLcsetSuffix);
         PicoPlatingEntityBuilder pplatingEntityBuilder1 = runPicoPlatingProcess(
                 origRackMap,
@@ -81,6 +85,7 @@ public class ReworkDbFreeTest extends BaseEventTest {
                 LabBatch.LabBatchType.WORKFLOW);
 
         reworkBatch.setWorkflowName("Exome Express");
+        reworkBatch.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
         bucketBatchAndDrain(reworkRackMap, productOrder, reworkBatch, reworkLcsetSuffix);
         PicoPlatingEntityBuilder pplatingEntityBuilder2 = runPicoPlatingProcess(
                 reworkRackMap,
@@ -153,6 +158,7 @@ public class ReworkDbFreeTest extends BaseEventTest {
     // Advance to Pond Pico, rework a sample from the start
     @Test(enabled = true, groups = TestGroups.DATABASE_FREE)
     public void testRework() {
+        expectedRouting = MercuryOrSquidRouter.MercuryOrSquid.MERCURY;
 
         String origLcsetSuffix = "-111";
         String reworkLcsetSuffix = "-222";
@@ -172,6 +178,7 @@ public class ReworkDbFreeTest extends BaseEventTest {
         LabBatch origBatch =
                 new LabBatch("origBatch", new HashSet<LabVessel>(origRackMap.values()), LabBatch.LabBatchType.WORKFLOW);
         origBatch.setWorkflowName("Exome Express");
+        origBatch.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
         bucketBatchAndDrain(origRackMap, productOrder, origBatch, origLcsetSuffix);
         PicoPlatingEntityBuilder pplatingEntityBuilder1 = runPicoPlatingProcess(
                 origRackMap,
@@ -203,6 +210,8 @@ public class ReworkDbFreeTest extends BaseEventTest {
         LabBatch reworkBatch = new LabBatch("reworkBatch", new HashSet<LabVessel>(reworkRackMap.values()),
                 LabBatch.LabBatchType.WORKFLOW);
         reworkBatch.setWorkflowName("Exome Express");
+        reworkBatch.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
+
         bucketBatchAndDrain(reworkRackMap, productOrder, reworkBatch, reworkLcsetSuffix);
         PicoPlatingEntityBuilder pplatingEntityBuilder2 = runPicoPlatingProcess(
                 reworkRackMap,
@@ -258,6 +267,8 @@ public class ReworkDbFreeTest extends BaseEventTest {
     // todo jmt enable this
     @Test(enabled = true)
     public void testMultiplePdos() {
+        expectedRouting = MercuryOrSquidRouter.MercuryOrSquid.MERCURY;
+
         ProductOrder productOrder1 = ProductOrderTestFactory.createDummyProductOrder(4, "PDO-1",
                 WorkflowName.EXOME_EXPRESS, 1L, "Test 1", "Test 1", false, "ExEx-001", "A");
         ProductOrder productOrder2 = ProductOrderTestFactory.createDummyProductOrder(3, "PDO-2",
@@ -275,9 +286,12 @@ public class ReworkDbFreeTest extends BaseEventTest {
         LabBatch workflowBatch1 = new LabBatch("Exome Express Batch 1",
                 new HashSet<LabVessel>(mapBarcodeToTube1.values()), LabBatch.LabBatchType.WORKFLOW);
         workflowBatch1.setWorkflowName("Exome Express");
+        workflowBatch1.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
+
         LabBatch workflowBatch2 = new LabBatch("Exome Express Batch 2",
                 new HashSet<LabVessel>(mapBarcodeToTube2.values()), LabBatch.LabBatchType.WORKFLOW);
         workflowBatch2.setWorkflowName("Exome Express");
+        workflowBatch2.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
 
         bucketBatchAndDrain(mapBarcodeToTube1, productOrder1, workflowBatch1, "1");
         PicoPlatingEntityBuilder picoPlatingEntityBuilder1 = runPicoPlatingProcess(mapBarcodeToTube1,
