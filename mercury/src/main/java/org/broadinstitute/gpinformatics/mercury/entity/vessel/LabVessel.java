@@ -859,10 +859,6 @@ public abstract class LabVessel implements Serializable {
         }
     }
 
-    private static boolean isBspEvent(LabEvent labEvent) {
-        return labEvent.getEventLocation().equals("BSP");
-    }
-
     /**
      * Traverse all ancestors of this vessel, accumulating SampleInstances.
      *
