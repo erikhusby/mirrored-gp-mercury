@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.infrastructure.datawh.SequencingSampleFa
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfiguration;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
+import org.omg.PortableInterceptor.SUCCESSFUL;
 
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
@@ -404,30 +405,20 @@ public class ExtractTransform implements Serializable {
     public Response backfillEtl(String entityClassname, final long startId, long endId) {
         String dataDir = getDatafileDir();
         if (StringUtils.isBlank(dataDir)) {
-            String msg = "ETL data file directory is not configured. Backfill ETL will not be run";
-            log.info(msg);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(msg).build();
+            return createErrorResponse("ETL data file directory is not configured. Backfill ETL will not be run");
         } else if (!(new File(dataDir)).exists()) {
-            String msg = "ETL data file directory is missing: " + dataDir;
-            log.error(msg);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(msg).build();
+            return createErrorResponse("ETL data file directory is missing: " + dataDir);
         } else if (!(new File(dataDir)).canRead()) {
-            String msg = "Cannot read the ETL data file directory: " + dataDir;
-            log.error(msg);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(msg).build();
+            return createErrorResponse("Cannot read the ETL data file directory: " + dataDir);
         } else if (!(new File(dataDir)).canWrite()) {
-            String msg = "Cannot write to the ETL data file directory: " + dataDir;
-            log.error(msg);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(msg).build();
+            return createErrorResponse("Cannot write to the ETL data file directory: " + dataDir);
         }
 
         Class entityClass;
         try {
             entityClass = Class.forName(entityClassname);
         } catch (ClassNotFoundException e) {
-            String msg = "Unknown class " + entityClassname;
-            log.error(msg);
-            return Response.status(Response.Status.NOT_FOUND).entity(msg).build();
+            return createInfoResponse("Unknown class " + entityClassname, Response.Status.NOT_FOUND);
         }
 
         if (endId == -1) {
@@ -435,9 +426,7 @@ public class ExtractTransform implements Serializable {
         }
 
         if (startId < 0 || endId < startId) {
-            String msg = "Invalid entity id range " + startId + " to " + endId;
-            log.error(msg);
-            return Response.status(Response.Status.BAD_REQUEST).entity(msg).build();
+            return createInfoResponse("Invalid entity id range " + startId + " to " + endId, Response.Status.BAD_REQUEST);
         }
 
         log.debug("Starting ETL backfill of " + entityClass.getName() + " having ids " + startId + " to " + endId);
@@ -472,11 +461,10 @@ public class ExtractTransform implements Serializable {
             }
             msg = "Created " + recordCount + " " +  " data records in " +
                   (int) ((System.currentTimeMillis() - backfillStartTime) / MSEC_IN_SEC) + " seconds";
-            log.info(msg);
         } else {
             msg = "Backfill ETL created no data records";
         }
-        return Response.status(Response.Status.OK).type(MediaType.TEXT_PLAIN_TYPE).entity(msg).build();
+        return createInfoResponse(msg, Response.Status.OK);
     }
 
     /**
@@ -608,4 +596,18 @@ public class ExtractTransform implements Serializable {
     private int minutesSince(long msecTimestamp) {
         return (int) Math.ceil((System.currentTimeMillis() - msecTimestamp) / MSEC_IN_SEC / SEC_IN_MIN);
     }
+
+    private Response createErrorResponse(String msg) {
+        return createErrorResponse(msg, Response.Status.INTERNAL_SERVER_ERROR);
+    }
+    private Response createErrorResponse(String msg, Response.Status status) {
+        log.warn(msg);
+        return Response.status(status).entity(msg).build();
+    }
+    private Response createInfoResponse(String msg, Response.Status status) {
+        log.debug(msg);
+        return Response.status(status).entity(msg).build();
+    }
+
+
 }
