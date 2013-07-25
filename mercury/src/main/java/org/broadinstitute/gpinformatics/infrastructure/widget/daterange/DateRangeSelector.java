@@ -138,7 +138,7 @@ public class DateRangeSelector implements Serializable {
     public String getDateRangeAsString() {
         Date startDate = getStartTime();
         if (startDate == null) {
-            startDate = new Date(0L);
+            startDate = new Date(0);
         }
         Date stopDate = getEndTime();
         if (stopDate == null) {
