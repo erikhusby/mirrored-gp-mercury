@@ -60,6 +60,9 @@ public class SampleInstance {
      */
     private Collection<LabBatch> allLabBatches = new HashSet<>();
 
+    private Set<LabBatch> workflowBatches;
+
+
     public SampleInstance(MercurySample sample) {
         this.sample = sample;
     }
@@ -181,10 +184,12 @@ public class SampleInstance {
     }
 
     public Collection<LabBatch> getAllWorkflowLabBatches() {
-        Set<LabBatch> workflowBatches = new HashSet<>();
-        for (LabBatch batch : allLabBatches) {
-            if (batch.getLabBatchType() == LabBatch.LabBatchType.WORKFLOW) {
-                workflowBatches.add(batch);
+        if (workflowBatches == null) {
+            workflowBatches = new HashSet<>();
+            for (LabBatch batch : allLabBatches) {
+                if (batch.getLabBatchType() == LabBatch.LabBatchType.WORKFLOW) {
+                    workflowBatches.add(batch);
+                }
             }
         }
         return workflowBatches;
