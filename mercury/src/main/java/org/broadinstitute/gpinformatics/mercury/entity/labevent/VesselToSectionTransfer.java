@@ -55,4 +55,14 @@ public class VesselToSectionTransfer extends VesselTransfer {
     public LabEvent getLabEvent() {
         return labEvent;
     }
+
+    /**
+     * Constructs a String that is likely to be unique for this transfer
+     * @return concatenation of critical fields
+     */
+    public String getKey() {
+        return sourceVessel.getLabel() + "|" + targetVessel.getLabel() + "|" +
+               targetSection.getSectionName();
+    }
+
 }
