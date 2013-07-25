@@ -61,7 +61,7 @@ public class SampleReceiptResource {
     private LabVesselFactory labVesselFactory;
 
     public SampleReceiptResource() throws JAXBException {
-        marshaller = new ObjectMarshaller<SampleReceiptBean>(SampleReceiptBean.class);
+        marshaller = new ObjectMarshaller<>(SampleReceiptBean.class);
     }
 
     @GET
@@ -72,7 +72,7 @@ public class SampleReceiptResource {
         if (labBatch == null) {
             return null;
         }
-        List<ParentVesselBean> parentVesselBeans = new ArrayList<ParentVesselBean>();
+        List<ParentVesselBean> parentVesselBeans = new ArrayList<>();
         Set<LabVessel> startingLabVessels = labBatch.getStartingBatchLabVessels();
         for (LabVessel startingLabVessel : startingLabVessels) {
             parentVesselBeans.add(new ParentVesselBean(
@@ -133,7 +133,7 @@ public class SampleReceiptResource {
         LabBatch labBatch = labBatchDAO.findByName(sampleReceiptBean.getKitId());
         String batchName =
                 sampleReceiptBean.getKitId() + (labBatch == null ? "" : "-" + simpleDateFormat.format(new Date()));
-        labBatchDAO.persist(new LabBatch(batchName, new HashSet<LabVessel>(labVessels),
+        labBatchDAO.persist(new LabBatch(batchName, new HashSet<>(labVessels),
                 LabBatch.LabBatchType.SAMPLES_RECEIPT));
         return "Samples received: " + batchName;
     }

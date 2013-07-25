@@ -281,7 +281,7 @@ public class ProductOrderFixupTest extends Arquillian {
         @SuppressWarnings("unchecked")
         List<Object[]> resultList = query.getResultList();
 
-        Map<String, Date> keyToDateMap = new HashMap<String, Date>();
+        Map<String, Date> keyToDateMap = new HashMap<>();
 
         for (Object[] row : resultList) {
             String key = (String) row[0];

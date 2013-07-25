@@ -22,7 +22,7 @@ public class LedgerEntryTest {
 
     private static final DateFormat formatter = new SimpleDateFormat("MM/dd/yy");
 
-    private static final Map<String, ProductOrderSample> sampleMap = new HashMap<String, ProductOrderSample>();
+    private static final Map<String, ProductOrderSample> sampleMap = new HashMap<>();
 
     // Use a factory to create samples, so identical samples map to the same object.
     private static ProductOrderSample createSample(String sampleName) {

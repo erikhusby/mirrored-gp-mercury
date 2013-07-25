@@ -40,7 +40,7 @@ public class LabVesselPosition {
 
     @Column(nullable = false)
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
-    private List<MercurySample> mercurySamples = new ArrayList<MercurySample>();
+    private List<MercurySample> mercurySamples = new ArrayList<>();
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)

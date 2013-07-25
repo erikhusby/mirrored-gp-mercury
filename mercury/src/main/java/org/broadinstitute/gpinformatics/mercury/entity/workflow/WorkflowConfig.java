@@ -52,7 +52,7 @@ public class WorkflowConfig {
 
     public SequencingConfigDef getSequencingConfigByName(String sequencingConfigName) {
         if (mapNameToSequencingConfig == null) {
-            mapNameToSequencingConfig = new HashMap<String, SequencingConfigDef>();
+            mapNameToSequencingConfig = new HashMap<>();
             for (SequencingConfigDef sequencingConfigDef : sequencingConfigDefs) {
                 mapNameToSequencingConfig.put(sequencingConfigDef.getName(), sequencingConfigDef);
             }
@@ -66,7 +66,7 @@ public class WorkflowConfig {
 
     public ProductWorkflowDef getWorkflowByName(String workflowName) {
         if (mapNameToWorkflow == null) {
-            mapNameToWorkflow = new HashMap<String, ProductWorkflowDef>();
+            mapNameToWorkflow = new HashMap<>();
             for (ProductWorkflowDef productWorkflowDef : productWorkflowDefs) {
                 mapNameToWorkflow.put(productWorkflowDef.getName(), productWorkflowDef);
             }

@@ -9,7 +9,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.envers.RevInfo;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.RevInfo_;
 import org.hibernate.envers.AuditReader;
 import org.hibernate.envers.AuditReaderFactory;
-import org.hibernate.envers.RevisionType;
 import org.hibernate.envers.exception.AuditException;
 import org.hibernate.envers.query.AuditEntity;
 import org.hibernate.envers.query.AuditQuery;
@@ -24,8 +23,6 @@ import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.SortedMap;
@@ -86,7 +83,7 @@ public class AuditReaderDao extends GenericDao {
                 criteriaBuilder.lessThan(root.get(RevInfo_.revDate), endDate));
         criteriaQuery.where(predicate);
 
-        SortedMap<Long, Date> map = new TreeMap<Long, Date>();
+        SortedMap<Long, Date> map = new TreeMap<>();
         try {
             List<Tuple> list = getEntityManager().createQuery(criteriaQuery).getResultList();
             for (Tuple tuple : list) {
@@ -109,7 +106,7 @@ public class AuditReaderDao extends GenericDao {
 
     // Allows "unrolling" the batch to handle AuditReader failures on individual records.
     private List<Object[]> fetchDataChanges(Collection<Long> revIds, Class<?> entityClass, boolean doChunks) {
-        List<Object[]> dataChanges = new ArrayList<Object[]>();
+        List<Object[]> dataChanges = new ArrayList<>();
 
         if (revIds == null || revIds.size() == 0) {
             return dataChanges;

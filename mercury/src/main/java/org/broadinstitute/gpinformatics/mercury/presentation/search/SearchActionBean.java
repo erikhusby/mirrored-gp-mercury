@@ -111,7 +111,7 @@ public class SearchActionBean extends CoreActionBean {
     private String batchLabel;
     private LabBatch batch;
 
-    private Set<LabVessel> foundVessels = new HashSet<LabVessel>();
+    private Set<LabVessel> foundVessels = new HashSet<>();
     private List<MercurySample> foundSamples;
     private List<ProductOrder> foundPDOs;
     private List<LabBatch> foundBatches;
@@ -251,7 +251,7 @@ public class SearchActionBean extends CoreActionBean {
         LabBatch batchObject;
 
         Set<LabVessel> vesselSet =
-                new HashSet<LabVessel>(labVesselDao.findByListIdentifiers(selectedVesselLabels));
+                new HashSet<>(labVesselDao.findByListIdentifiers(selectedVesselLabels));
 
         if (isUseExistingTicket()) {
             // If the user is associating the batch with an existing ticket, just the ticket ID and the set of vessels
@@ -365,7 +365,7 @@ public class SearchActionBean extends CoreActionBean {
             valueArray = new String[0];
         }
 
-        List<String> sampleIds = new ArrayList<String>(valueArray.length);
+        List<String> sampleIds = new ArrayList<>(valueArray.length);
         for (String value : valueArray) {
             if (!StringUtils.isBlank(value)) {
                 value = value.trim();

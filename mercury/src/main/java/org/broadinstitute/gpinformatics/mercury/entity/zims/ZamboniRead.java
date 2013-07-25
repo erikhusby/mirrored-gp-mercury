@@ -35,13 +35,14 @@ public class ZamboniRead {
         this.firstCycle = firstCycle;
         this.length = length;
         if (readType != null) {
-            if (TEMPLATE.equals(readType)) {
+            switch (readType) {
+            case TEMPLATE:
                 this.readType = ZamboniReadType.TEMPLATE;
-            }
-            else if (INDEX.equals(readType)) {
+                break;
+            case INDEX:
                 this.readType = ZamboniReadType.INDEX;
-            }
-            else {
+                break;
+            default:
                 throw new RuntimeException("Unknown read type: " + readType);
             }
         }

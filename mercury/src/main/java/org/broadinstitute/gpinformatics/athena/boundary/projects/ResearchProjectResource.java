@@ -59,7 +59,7 @@ public class ResearchProjectResource {
         }
 
         private static List<String> createUsernamesFromIds(BSPUserList bspUserList, Long[] ids) {
-            List<String> names = new ArrayList<String>(ids.length);
+            List<String> names = new ArrayList<>(ids.length);
             for (Long id : ids) {
                 BspUser user = bspUserList.getById(id);
                 if (user != null) {
@@ -83,7 +83,7 @@ public class ResearchProjectResource {
             synopsis = researchProject.getSynopsis();
             projectManagers = createUsernamesFromIds(bspUserList, researchProject.getProjectManagers());
             broadPIs = createUsernamesFromIds(bspUserList, researchProject.getBroadPIs());
-            orders = new ArrayList<String>(researchProject.getProductOrders().size());
+            orders = new ArrayList<>(researchProject.getProductOrders().size());
             for (ProductOrder order : researchProject.getProductOrders()) {
                 // We omit draft orders from the report. At this point there is no requirement to expose draft
                 // orders to client of this web service.
@@ -106,7 +106,7 @@ public class ResearchProjectResource {
         }
 
         public ResearchProjects(BSPUserList bspUserList, List<ResearchProject> projects) {
-            this.projects = new ArrayList<ResearchProjectData>(projects.size());
+            this.projects = new ArrayList<>(projects.size());
             for (ResearchProject project : projects) {
                 this.projects.add(new ResearchProjectData(bspUserList, project));
             }

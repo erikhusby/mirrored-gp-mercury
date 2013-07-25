@@ -64,7 +64,7 @@ public class PlasticHistoryViewActionBean extends CoreActionBean {
      * @return a list of items that represents the plastic history of the selected sample.
      */
     public Set<PlasticHistoryListItem> getPlasticHistory() {
-        Set<PlasticHistoryListItem> targetItems = new HashSet<PlasticHistoryListItem>();
+        Set<PlasticHistoryListItem> targetItems = new HashSet<>();
         if (sampleKey != null) {
             List<MercurySample> selectedSamples = mercurySampleDao.findBySampleKey(sampleKey);
             if (selectedSamples != null) {
@@ -84,7 +84,7 @@ public class PlasticHistoryViewActionBean extends CoreActionBean {
     }
 
     private void addVesselsToItemList(Set<PlasticHistoryListItem> targetItems, Collection<LabVessel> vessels) {
-        Set<LabVessel> vesselSet = new HashSet<LabVessel>();
+        Set<LabVessel> vesselSet = new HashSet<>();
         for (LabVessel vessel : vessels) {
             vesselSet.addAll(vessel.getDescendantVessels());
         }

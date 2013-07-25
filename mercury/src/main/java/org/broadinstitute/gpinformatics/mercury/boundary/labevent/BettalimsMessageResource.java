@@ -350,7 +350,7 @@ public class BettalimsMessageResource {
      */
     private Collection<String> getRegisteredBarcodesFromMessage(BettaLIMSMessage bettaLIMSMessage) {
 
-        Set<String> barcodes = new HashSet<String>();
+        Set<String> barcodes = new HashSet<>();
 
         for (PlateCherryPickEvent plateCherryPickEvent : bettaLIMSMessage.getPlateCherryPickEvent()) {
             barcodes.addAll(BettalimsMessageUtils.getBarcodesForCherryPick(plateCherryPickEvent));

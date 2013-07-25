@@ -36,20 +36,20 @@ public class DriedBloodSpotDbFreeTest {
         // import batch and tubes
         String timestamp = timestampFormat.format(new Date());
         LabBatchResource labBatchResource = new LabBatchResource();
-        List<TubeBean> tubeBeans = new ArrayList<TubeBean>();
+        List<TubeBean> tubeBeans = new ArrayList<>();
         for(int rackPosition = 1; rackPosition <= 96; rackPosition++) {
             String barcode = "SM-FTA" + rackPosition + timestamp;
             tubeBeans.add(new TubeBean(barcode, null));
         }
 
         String batchId = "BP-2";
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
-        Map<MercurySample, MercurySample> mapSampleToSample = new LinkedHashMap<MercurySample, MercurySample>();
+        Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<>();
+        Map<MercurySample, MercurySample> mapSampleToSample = new LinkedHashMap<>();
         LabBatch labBatch = labBatchResource.buildLabBatch(new LabBatchBean(batchId, "DBS", tubeBeans),
                 mapBarcodeToTube, mapSampleToSample/*, null*/);
 
         DriedBloodSpotJaxbBuilder driedBloodSpotJaxbBuilder = new DriedBloodSpotJaxbBuilder(
-                new ArrayList<String>(mapBarcodeToTube.keySet()), labBatch.getBatchName(), timestamp);
+                new ArrayList<>(mapBarcodeToTube.keySet()), labBatch.getBatchName(), timestamp);
         driedBloodSpotJaxbBuilder.buildJaxb();
         DriedBloodSpotEntityBuilder driedBloodSpotEntityBuilder = new DriedBloodSpotEntityBuilder(
                 driedBloodSpotJaxbBuilder, labBatch, mapBarcodeToTube);
@@ -57,7 +57,7 @@ public class DriedBloodSpotDbFreeTest {
 
         LabEventResource labEventResource = new LabEventResource();
         List<LabEventBean> labEventBeans = labEventResource.buildLabEventBeans(
-                new ArrayList<LabEvent>(labBatch.getLabEvents()),
+                new ArrayList<>(labBatch.getLabEvents()),
                 new LabEventFactory.LabEventRefDataFetcher() {
                    @Override
                    public BspUser getOperator(String userId) {

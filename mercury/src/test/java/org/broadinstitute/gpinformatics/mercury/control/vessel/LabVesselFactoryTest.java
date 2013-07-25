@@ -64,7 +64,7 @@ public class LabVesselFactoryTest {
         labVesselFactory.setBspUserList(new BSPUserList(BSPManagerFactoryProducer.stubInstance()));
         SampleReceiptBean sampleReceiptBean = buildTubes("");
 
-        Map<String, List<ProductOrderSample>> mapIdToListPdoSamples = new HashMap<String, List<ProductOrderSample>>();
+        Map<String, List<ProductOrderSample>> mapIdToListPdoSamples = new HashMap<>();
         ProductOrderSample productOrderSample = new ProductOrderSample(SAMPLE1);
         ProductOrder productOrder = new ProductOrder();
         String pdoKey = "PDO-1234";
@@ -87,7 +87,7 @@ public class LabVesselFactoryTest {
     }
 
     public static SampleReceiptBean buildTubes(String date) {
-        ArrayList<ParentVesselBean> parentVesselBeans = new ArrayList<ParentVesselBean>();
+        ArrayList<ParentVesselBean> parentVesselBeans = new ArrayList<>();
         parentVesselBeans.add(new ParentVesselBean(BARCODE1 + date, SAMPLE1 + date, "Matrix Tube [0.75mL]", null));
         parentVesselBeans.add(new ParentVesselBean(BARCODE2 + date, SAMPLE2 + date, "Matrix Tube [0.75mL]", null));
         return new SampleReceiptBean(new Date(), "SK-123-" + date, parentVesselBeans, "jowalsh");
@@ -97,8 +97,8 @@ public class LabVesselFactoryTest {
     public void testReceivePlates() {
         LabVesselFactory labVesselFactory = new LabVesselFactory();
         labVesselFactory.setBspUserList(new BSPUserList(BSPManagerFactoryProducer.stubInstance()));
-        ArrayList<ParentVesselBean> parentVesselBeans = new ArrayList<ParentVesselBean>();
-        ArrayList<ChildVesselBean> childVesselBeans = new ArrayList<ChildVesselBean>();
+        ArrayList<ParentVesselBean> parentVesselBeans = new ArrayList<>();
+        ArrayList<ChildVesselBean> childVesselBeans = new ArrayList<>();
         String sampleId1 = "SM-1234";
         childVesselBeans.add(new ChildVesselBean(null, sampleId1, "Well [200uL]", "A01"));
         childVesselBeans.add(new ChildVesselBean(null, "SM-2345", "Well [200uL]", "A02"));

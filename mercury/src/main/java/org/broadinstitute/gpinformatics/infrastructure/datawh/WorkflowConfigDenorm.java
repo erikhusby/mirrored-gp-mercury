@@ -137,7 +137,7 @@ public class WorkflowConfigDenorm implements Serializable {
      * @return list of denormalized config objects
      */
     public static Collection<WorkflowConfigDenorm> parse(WorkflowConfig workflowConfig) {
-        Collection<WorkflowConfigDenorm> list = new ArrayList<WorkflowConfigDenorm>();
+        Collection<WorkflowConfigDenorm> list = new ArrayList<>();
         if (workflowConfig == null) {
             return list;
         }

@@ -48,20 +48,20 @@ public class SamplesPicoEndToEndTest {
     public void testAll() {
         // import batch and tubes
         LabBatchResource labBatchResource = new LabBatchResource();
-        List<TubeBean> tubeBeans = new ArrayList<TubeBean>();
+        List<TubeBean> tubeBeans = new ArrayList<>();
         for (int rackPosition = 1; rackPosition <= 96; rackPosition++) {
             String barcode = "R" + rackPosition;
             tubeBeans.add(new TubeBean(barcode, null));
         }
         String batchId = "BP-1";
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
-        Map<MercurySample, MercurySample> mapSampleToSample = new LinkedHashMap<MercurySample, MercurySample>();
+        Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<>();
+        Map<MercurySample, MercurySample> mapSampleToSample = new LinkedHashMap<>();
         LabBatch labBatch = labBatchResource.buildLabBatch(new LabBatchBean(batchId, "HybSel", tubeBeans),
                                                            mapBarcodeToTube, mapSampleToSample/*, null*/);
 
         // validate workflow?
         // messaging
-        SamplesPicoJaxbBuilder samplesPicoJaxbBuilder = new SamplesPicoJaxbBuilder(new ArrayList<String>(
+        SamplesPicoJaxbBuilder samplesPicoJaxbBuilder = new SamplesPicoJaxbBuilder(new ArrayList<>(
                 mapBarcodeToTube.keySet()), labBatch.getBatchName(), "");
         SamplesPicoEntityBuilder samplesPicoEntityBuilder = new SamplesPicoEntityBuilder(samplesPicoJaxbBuilder,
                                                                                          labBatch, mapBarcodeToTube);
@@ -69,7 +69,7 @@ public class SamplesPicoEndToEndTest {
 
         // event web service, by batch
         LabEventResource labEventResource = new LabEventResource();
-        List<LabEventBean> labEventBeans = labEventResource.buildLabEventBeans(new ArrayList<LabEvent>(
+        List<LabEventBean> labEventBeans = labEventResource.buildLabEventBeans(new ArrayList<>(
                 labBatch.getLabEvents()),
                 new LabEventFactory.LabEventRefDataFetcher() {
                     @Override
@@ -106,7 +106,7 @@ public class SamplesPicoEndToEndTest {
     }
 
     public static void printLabEvents(List<LabEventBean> labEventBeans) {
-        Set<String> barcodes = new HashSet<String>();
+        Set<String> barcodes = new HashSet<>();
         for (LabEventBean labEventBean : labEventBeans) {
             System.out.println(labEventBean.getEventType() + " " + labEventBean.getEventDate());
             for (LabVesselBean labVesselBean : labEventBean.getSources()) {

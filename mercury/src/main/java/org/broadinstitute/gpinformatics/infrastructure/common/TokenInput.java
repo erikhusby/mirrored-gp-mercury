@@ -70,7 +70,7 @@ public abstract class TokenInput<TOKEN_OBJECT> {
         } else {
             String[] keys = listOfKeys.split(getSeparator());
 
-            tokenObjects = new ArrayList<TOKEN_OBJECT>(keys.length);
+            tokenObjects = new ArrayList<>(keys.length);
             for (String key : keys) {
                 TOKEN_OBJECT object = getById(key.trim());
                 if (object != null) {

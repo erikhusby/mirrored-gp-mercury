@@ -12,7 +12,6 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.io.File;
 import java.net.URL;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;

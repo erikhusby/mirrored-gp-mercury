@@ -54,7 +54,7 @@ public class BSPManagerFactoryStub implements BSPManagerFactory {
 
             @Override
             public List<BspUser> getPrimaryInvestigators() {
-                List<BspUser> testList = new LinkedList<BspUser>();
+                List<BspUser> testList = new LinkedList<>();
                 testList.add(new BSPUserList.QADudeUser("PM", QA_DUDE_USER_ID + 1));
                 testList.add(new BSPUserList.QADudeUser("PDM", QA_DUDE_USER_ID + 2));
                 testList.add(new BSPUserList.QADudeUser("LU", QA_DUDE_USER_ID + 3));
@@ -64,14 +64,14 @@ public class BSPManagerFactoryStub implements BSPManagerFactory {
 
             @Override
             public List<BspUser> getProjectManagers() {
-                List<BspUser> testList = new LinkedList<BspUser>();
+                List<BspUser> testList = new LinkedList<>();
                 testList.add(new BSPUserList.QADudeUser("PM", QA_DUDE_USER_ID + 1));
                 return testList;
             }
 
             @Override
             public List<BspUser> getUsers() {
-                List<BspUser> testList = new LinkedList<BspUser>();
+                List<BspUser> testList = new LinkedList<>();
                 testList.add(new BSPUserList.QADudeUser("Test", QA_DUDE_USER_ID));
                 testList.add(new BSPUserList.QADudeUser("PM", QA_DUDE_USER_ID + 1));
                 testList.add(new BSPUserList.QADudeUser("PDM", QA_DUDE_USER_ID + 2));
@@ -133,7 +133,7 @@ public class BSPManagerFactoryStub implements BSPManagerFactory {
 
             @Override
             public List<MaterialType> getMaterialTypes() {
-                List<MaterialType> materialTypes = new ArrayList<MaterialType>();
+                List<MaterialType> materialTypes = new ArrayList<>();
 
                 materialTypes.add( new MaterialType("Cells:Pellet frozen") );
                 materialTypes.add( new MaterialType("DNA:DNA Genomic") );

@@ -61,7 +61,7 @@ public class ProductResource {
         }
 
         public Products(List<Product> products) {
-            this.products = new ArrayList<ProductData>(products.size());
+            this.products = new ArrayList<>(products.size());
             for (Product order : products) {
                 this.products.add(new ProductData(order));
             }

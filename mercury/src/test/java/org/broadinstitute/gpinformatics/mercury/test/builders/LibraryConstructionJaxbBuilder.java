@@ -37,7 +37,7 @@ public class LibraryConstructionJaxbBuilder {
     private PlateEventType postABaseThermoCyclerLoadedJaxb;
     private PlateEventType postIdxAdapterLigationThermoCyclerLoadedJaxb;
     private PlateEventType postPondEnrichmentThermoCyclerLoadedJaxb;
-    private final List<BettaLIMSMessage> messageList = new ArrayList<BettaLIMSMessage>();
+    private final List<BettaLIMSMessage> messageList = new ArrayList<>();
     private int numSamples;
 
     public LibraryConstructionJaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory, String testPrefix,
@@ -174,7 +174,7 @@ public class LibraryConstructionJaxbBuilder {
         bettaLimsMessageTestFactory.addMessage(messageList, pondCleanupJaxb);
 
         pondRegRackBarcode = "PondReg" + testPrefix;
-        pondRegTubeBarcodes = new ArrayList<String>();
+        pondRegTubeBarcodes = new ArrayList<>();
         for (int rackPosition = 1; rackPosition <= numSamples; rackPosition++) {
             pondRegTubeBarcodes.add(LabEventTest.POND_REGISTRATION_TUBE_PREFIX + testPrefix + rackPosition);
         }

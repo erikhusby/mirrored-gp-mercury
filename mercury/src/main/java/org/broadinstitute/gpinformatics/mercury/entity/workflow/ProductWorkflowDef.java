@@ -1,9 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
-import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import java.io.Serializable;
@@ -12,10 +8,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * The workflow definition for a product, composed of processes
@@ -29,12 +23,12 @@ public class ProductWorkflowDef implements Serializable {
     private String name;
 
     /** List of versions */
-    private List<ProductWorkflowDefVersion> productWorkflowDefVersions = new ArrayList<ProductWorkflowDefVersion>();
+    private List<ProductWorkflowDefVersion> productWorkflowDefVersions = new ArrayList<>();
 
     /** Transient list of versions, in descending order of effective date */
     private transient ArrayList<ProductWorkflowDefVersion> workflowVersionsDescEffDate;
     private transient Map<String, ProductWorkflowDefVersion> productDefVersionsByVersion =
-            new HashMap<String, ProductWorkflowDefVersion>();
+            new HashMap<>();
 
     public ProductWorkflowDef(String name) {
         this.name = name;
@@ -57,7 +51,7 @@ public class ProductWorkflowDef implements Serializable {
     /** Returns a list of all product defs sorted by decreasing effective date. */
     public List<ProductWorkflowDefVersion> getWorkflowVersionsDescEffDate() {
         if (workflowVersionsDescEffDate == null) {
-            workflowVersionsDescEffDate = new ArrayList<ProductWorkflowDefVersion>(productWorkflowDefVersions);
+            workflowVersionsDescEffDate = new ArrayList<>(productWorkflowDefVersions);
             Collections.sort(workflowVersionsDescEffDate, new Comparator<ProductWorkflowDefVersion>() {
                 @Override
                 public int compare(ProductWorkflowDefVersion o1, ProductWorkflowDefVersion o2) {

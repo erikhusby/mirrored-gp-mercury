@@ -63,7 +63,7 @@ public class PreferenceDAO extends GenericDao {
         CriteriaQuery<Preference> criteriaQuery = criteriaBuilder.createQuery(Preference.class);
         Root<Preference> preferenceRoot = criteriaQuery.from(Preference.class);
 
-        List<Predicate> terms = new ArrayList<Predicate>();
+        List<Predicate> terms = new ArrayList<>();
         terms.add(criteriaBuilder.equal(preferenceRoot.get(Preference_.associatedUser), associatedUser));
         terms.add(criteriaBuilder.equal(preferenceRoot.get(Preference_.preferenceType), preferenceType));
 
@@ -89,7 +89,7 @@ public class PreferenceDAO extends GenericDao {
         CriteriaQuery<Preference> criteriaQuery = criteriaBuilder.createQuery(Preference.class);
         Root<Preference> preferenceRoot = criteriaQuery.from(Preference.class);
 
-        List<Predicate> terms = new ArrayList<Predicate>();
+        List<Predicate> terms = new ArrayList<>();
         terms.add(criteriaBuilder.equal(preferenceRoot.get(Preference_.object1Id), object1Id));
         terms.add(criteriaBuilder.equal(preferenceRoot.get(Preference_.preferenceType), preferenceType));
 

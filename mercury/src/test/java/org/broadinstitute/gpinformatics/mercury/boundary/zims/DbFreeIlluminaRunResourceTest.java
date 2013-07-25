@@ -122,7 +122,7 @@ public class DbFreeIlluminaRunResourceTest {
         BSPSampleDataFetcher sampleDataFetcher = new BSPSampleDataFetcher(new BSPSampleSearchServiceStub());
         String sample = BSPSampleSearchServiceStub.SM_12CO4;
         BSPSampleDTO sampleDTO = sampleDataFetcher.fetchSingleSampleFromBSP(sample);
-        Map <String, BSPSampleDTO> lsidToSampleDTO = new HashMap<String, BSPSampleDTO>();
+        Map <String, BSPSampleDTO> lsidToSampleDTO = new HashMap<>();
         lsidToSampleDTO.put(sampleDTO.getSampleLsid(),sampleDTO);
 
         IlluminaSequencingRunDao illuminaSequencingRunDao = EasyMock.createMock(IlluminaSequencingRunDao.class);

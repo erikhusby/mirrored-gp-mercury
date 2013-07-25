@@ -39,7 +39,7 @@ public class VesselSampleListViewActionBean extends CoreActionBean {
 
     private LabVessel vessel;
 
-    private Map<String, BSPSampleDTO> bspInfoDetails = new HashMap<String, BSPSampleDTO>();
+    private Map<String, BSPSampleDTO> bspInfoDetails = new HashMap<>();
 
     public String getVesselLabel() {
         return vesselLabel;

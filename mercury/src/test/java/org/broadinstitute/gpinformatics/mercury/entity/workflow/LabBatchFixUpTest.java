@@ -70,7 +70,7 @@ public class LabBatchFixUpTest extends Arquillian {
     @Test(enabled = false)
     public void updateNullLabBatchType() {
         final List<LabBatch> nullTypes = labBatchDAO.findList(LabBatch.class, LabBatch_.labBatchType, null);
-        List<LabBatch> fixedBatches = new ArrayList<LabBatch>(nullTypes.size());
+        List<LabBatch> fixedBatches = new ArrayList<>(nullTypes.size());
         for (LabBatch nullType : nullTypes) {
             if (nullType.getLabBatchType() != null) {
                 throw new IllegalStateException(

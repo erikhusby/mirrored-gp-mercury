@@ -17,10 +17,10 @@ public class LabEventBean {
     private String operator;
     private Date eventDate;
     private String batchId;
-    private List<LabVesselBean> sources = new ArrayList<LabVesselBean>();
-    private List<LabVesselBean> targets = new ArrayList<LabVesselBean>();
-    private List<TransferBean> transfers = new ArrayList<TransferBean>();
-    private List<ReagentBean> reagents = new ArrayList<ReagentBean>();
+    private List<LabVesselBean> sources = new ArrayList<>();
+    private List<LabVesselBean> targets = new ArrayList<>();
+    private List<TransferBean> transfers = new ArrayList<>();
+    private List<ReagentBean> reagents = new ArrayList<>();
 
     public LabEventBean(String eventType, String station, String operator, Date eventDate) {
         this.eventType = eventType;

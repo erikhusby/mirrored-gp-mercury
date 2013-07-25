@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.squid;
 
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 
 import javax.xml.bind.annotation.XmlRootElement;

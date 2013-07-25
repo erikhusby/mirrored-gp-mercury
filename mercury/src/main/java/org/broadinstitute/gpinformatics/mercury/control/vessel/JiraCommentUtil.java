@@ -95,7 +95,7 @@ public class JiraCommentUtil {
      * @param vessels the containers used in the operation
      */
     public void postUpdate(String message, Collection<LabVessel> vessels) {
-        Set<JiraTicket> tickets = new HashSet<JiraTicket>();
+        Set<JiraTicket> tickets = new HashSet<>();
         for (LabVessel vessel : vessels) {
             Collection<LabBatch> batches = vessel.getNearestWorkflowLabBatches();
             if (batches != null) {

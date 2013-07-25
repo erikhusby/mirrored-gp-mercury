@@ -57,7 +57,7 @@ public class ProductFixupTest extends Arquillian {
     @Test(enabled = false)
     public void addWholeGenomeWorkflowName() {
 
-        List<Product> wgProducts = new ArrayList<Product>(3);
+        List<Product> wgProducts = new ArrayList<>(3);
 
         Product wholeGenomeProduct1 = productDao.findByPartNumber("P-WG-0001");
             wholeGenomeProduct1.setWorkflowName("Whole Genome");

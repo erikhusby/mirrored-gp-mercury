@@ -39,7 +39,7 @@ public class OfflineIlluminaRunService implements IlluminaRunService, Serializab
     }
 
     public static ZimsIlluminaChamber makeLane(int laneNumber, int numLibraries) {
-        List<LibraryBean> libraries = new ArrayList<LibraryBean>();
+        List<LibraryBean> libraries = new ArrayList<>();
         libraries.toArray(new LibraryBean[] {});
         for (int i = 0; i < numLibraries; i++) {
             libraries.add(makeLibrary(Integer.toString(libraryNumber)));
@@ -53,11 +53,11 @@ public class OfflineIlluminaRunService implements IlluminaRunService, Serializab
     }
 
     private static LibraryBean makeLibrary(String number) {
-        List<String> conditions = new ArrayList<String>();
+        List<String> conditions = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
             conditions.add("condition " + number + "-" + i);
         }
-        List<String> gssrBarcodes = new ArrayList<String>();
+        List<String> gssrBarcodes = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
             gssrBarcodes.add(number + "." + i);
         }

@@ -43,7 +43,7 @@ public class StripTube extends LabVessel implements VesselContainerEmbedder<Stri
     }
 
     @Embedded
-    VesselContainer<StripTubeWell> vesselContainer = new VesselContainer<StripTubeWell>(this);
+    VesselContainer<StripTubeWell> vesselContainer = new VesselContainer<>(this);
 
     public StripTube(String label) {
         super(label);

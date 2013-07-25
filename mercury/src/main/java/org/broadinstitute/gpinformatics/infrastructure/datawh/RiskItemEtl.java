@@ -66,11 +66,11 @@ public class RiskItemEtl extends GenericEntityEtl<RiskItem, ProductOrderSample> 
     @Override
     protected Collection<ProductOrderSample> convertAuditedEntityToDataSourceEntity(
             Collection<RiskItem> auditEntities) {
-        Collection<Long> riskIds = new ArrayList<Long>();
+        Collection<Long> riskIds = new ArrayList<>();
         for (RiskItem auditedEntity : auditEntities) {
             riskIds.add(auditedEntity.getRiskItemId());
         }
-        List<Long> pdoSampleIds = new ArrayList<Long>(convertAuditedEntityIdToDataSourceEntityId(riskIds));
+        List<Long> pdoSampleIds = new ArrayList<>(convertAuditedEntityIdToDataSourceEntityId(riskIds));
         return pdoSampleDao
                 .findListByList(ProductOrderSample.class, ProductOrderSample_.productOrderSampleId, pdoSampleIds);
     }

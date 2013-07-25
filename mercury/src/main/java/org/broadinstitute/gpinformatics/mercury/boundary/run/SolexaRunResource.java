@@ -111,7 +111,7 @@ public class SolexaRunResource {
                     Response.Status.INTERNAL_SERVER_ERROR);
         }
 
-        IlluminaFlowcell flowcell= illuminaFlowcellDao.findByBarcode(solexaRunBean.getFlowcellBarcode());;
+        IlluminaFlowcell flowcell= illuminaFlowcellDao.findByBarcode(solexaRunBean.getFlowcellBarcode());
         MiSeqReagentKit reagentKit;
         MercuryOrSquidRouter.MercuryOrSquid route;
 

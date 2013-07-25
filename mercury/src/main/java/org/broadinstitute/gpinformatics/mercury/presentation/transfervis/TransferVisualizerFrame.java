@@ -30,7 +30,7 @@ public class TransferVisualizerFrame extends JFrame {
     private String barcode;
     private TransferVisualizerClient transferVisualizerClient;
     private JPopupMenu popupMenu;
-    private List<JCheckBox> alternativeIdCheckBoxes = new ArrayList<JCheckBox>();
+    private List<JCheckBox> alternativeIdCheckBoxes = new ArrayList<>();
     private static final Pattern FILL_COLOR_PATTERN = Pattern.compile("fillColor=[^;]*;");
     private mxICell clickedCell;
     private JLabel status = new JLabel(" ");
@@ -100,7 +100,7 @@ public class TransferVisualizerFrame extends JFrame {
                     SwingWorker<Graph, Void> swingWorker = new SwingWorker<Graph, Void>() {
                         @Override
                         protected Graph doInBackground() throws Exception {
-                            List<TransferVisualizer.AlternativeId> alternativeDisplayIds = new ArrayList<TransferVisualizer.AlternativeId>();
+                            List<TransferVisualizer.AlternativeId> alternativeDisplayIds = new ArrayList<>();
                             for (JCheckBox alternativeIdCheckBox : alternativeIdCheckBoxes) {
                                 if(alternativeIdCheckBox.isSelected()) {
                                     boolean found = false;
@@ -126,9 +126,7 @@ public class TransferVisualizerFrame extends JFrame {
                             try {
                                 Graph graph = get();
                                 renderGraph(graph);
-                            } catch (InterruptedException e1) {
-                                JOptionPane.showMessageDialog(TransferVisualizerFrame.this, e1);
-                            } catch (ExecutionException e1) {
+                            } catch (InterruptedException | ExecutionException e1) {
                                 JOptionPane.showMessageDialog(TransferVisualizerFrame.this, e1);
                             } finally {
                                 statusFrame.setVisible(false);
@@ -265,9 +263,7 @@ public class TransferVisualizerFrame extends JFrame {
                                             } else {
                                                 JOptionPane.showMessageDialog(TransferVisualizerFrame.this, response);
                                             }
-                                        } catch (InterruptedException e1) {
-                                            JOptionPane.showMessageDialog(TransferVisualizerFrame.this, e1);
-                                        } catch (ExecutionException e1) {
+                                        } catch (InterruptedException | ExecutionException e1) {
                                             JOptionPane.showMessageDialog(TransferVisualizerFrame.this, e1);
                                         }
                                     }

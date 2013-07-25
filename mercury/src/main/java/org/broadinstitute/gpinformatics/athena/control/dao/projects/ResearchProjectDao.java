@@ -67,7 +67,7 @@ public class ResearchProjectDao extends GenericDao {
      * @return a collection of all accessible projects for this user
      */
     public Set<ResearchProject> findAllAccessibleByUser(long userId) {
-        Set<ResearchProject> foundProjects = new HashSet<ResearchProject>();
+        Set<ResearchProject> foundProjects = new HashSet<>();
         List<ResearchProject> allRootProjects =
                 findList(ResearchProject.class, ResearchProject_.parentResearchProject, null);
 
@@ -161,7 +161,7 @@ public class ResearchProjectDao extends GenericDao {
         TypedQuery<Object> typedQuery = getEntityManager().createQuery(select);
         List<Object> listActual = typedQuery.getResultList();
 
-        Map<String, Long> projectOrderCounts = new HashMap<String, Long>(listActual.size());
+        Map<String, Long> projectOrderCounts = new HashMap<>(listActual.size());
         for (Object result : listActual) {
             Object[] values = (Object[]) result;
             projectOrderCounts.put((String) values[1], (Long) values[0]);
@@ -172,7 +172,7 @@ public class ResearchProjectDao extends GenericDao {
 
     public Collection<ResearchProject> searchProjects(String searchText) {
         List<ResearchProject> allProjects = findAllResearchProjects();
-        SortedSet<ResearchProject> list = new TreeSet<ResearchProject>();
+        SortedSet<ResearchProject> list = new TreeSet<>();
         String[] searchWords = searchText.split("\\s");
 
         for (ResearchProject project : allProjects) {

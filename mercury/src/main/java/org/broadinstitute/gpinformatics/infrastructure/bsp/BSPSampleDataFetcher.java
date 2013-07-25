@@ -9,11 +9,9 @@ import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientServ
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -89,7 +87,7 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
             return Collections.emptyMap();
         }
 
-        Map<String, BSPSampleDTO> sampleNameToDTO = new HashMap<String, BSPSampleDTO>();
+        Map<String, BSPSampleDTO> sampleNameToDTO = new HashMap<>();
         List<Map<BSPSampleSearchColumn, String>> results =
                 service.runSampleSearch(sampleNames, BSPSampleSearchColumn.PDO_SEARCH_COLUMNS);
         for (Map<BSPSampleSearchColumn, String> result : results) {
@@ -116,7 +114,7 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
             return;
         }
 
-        final Map<String, BSPSampleDTO> barcodeToDTOMap = new HashMap<String, BSPSampleDTO>();
+        final Map<String, BSPSampleDTO> barcodeToDTOMap = new HashMap<>();
         for (BSPSampleDTO bspSampleDTO : bspSampleDTOs) {
             barcodeToDTOMap.put(bspSampleDTO.getSampleId(), bspSampleDTO);
         }
@@ -147,7 +145,7 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
             return;
         }
 
-        final Map<String, BSPSampleDTO> lsidToDTOMap = new HashMap<String, BSPSampleDTO>();
+        final Map<String, BSPSampleDTO> lsidToDTOMap = new HashMap<>();
         for (BSPSampleDTO bspSampleDTO : bspSampleDTOs) {
             lsidToDTOMap.put(bspSampleDTO.getSampleLsid(), bspSampleDTO);
         }

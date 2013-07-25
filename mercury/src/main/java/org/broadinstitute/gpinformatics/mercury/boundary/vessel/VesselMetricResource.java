@@ -35,7 +35,7 @@ public class VesselMetricResource {
     @POST
     public String uploadQuantRun(VesselMetricRunBean vesselMetricRunBean) {
         // fetch existing run and vessels
-        List<String> barcodes = new ArrayList<String>();
+        List<String> barcodes = new ArrayList<>();
         for (VesselMetricBean vesselMetricBean : vesselMetricRunBean.getVesselMetricBeans()) {
             barcodes.add(vesselMetricBean.getBarcode());
         }

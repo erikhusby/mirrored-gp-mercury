@@ -59,7 +59,7 @@ public class WorkflowConfigLookup implements Serializable {
         for (WorkflowConfigDenorm config : configs) {
             List<WorkflowConfigDenorm> workflows = mapEventToWorkflows.get(config.getWorkflowStepEventName());
             if (workflows == null) {
-                workflows = new ArrayList<WorkflowConfigDenorm>();
+                workflows = new ArrayList<>();
                 mapEventToWorkflows.put(config.getWorkflowStepEventName(), workflows);
             }
             workflows.add(config);

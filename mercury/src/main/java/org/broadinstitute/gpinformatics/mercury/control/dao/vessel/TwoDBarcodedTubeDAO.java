@@ -23,7 +23,7 @@ public class TwoDBarcodedTubeDAO extends GenericDao {
      * @return map from barcode to tube, tube is null if not found
      */
     public Map<String, TwoDBarcodedTube> findByBarcodes(List<String> barcodes) {
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = new TreeMap<String, TwoDBarcodedTube>();
+        Map<String, TwoDBarcodedTube> mapBarcodeToTube = new TreeMap<>();
         for (String barcode : barcodes) {
             mapBarcodeToTube.put(barcode, null);
         }

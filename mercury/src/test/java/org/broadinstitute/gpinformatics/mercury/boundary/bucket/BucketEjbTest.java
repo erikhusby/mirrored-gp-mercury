@@ -86,7 +86,7 @@ public class BucketEjbTest extends ContainerTest {
 //        utx.setTransactionTimeout(300);
         utx.begin();
 
-        List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>();
+        List<ProductOrderSample> productOrderSamples = new ArrayList<>();
         poBusinessKey1 = "PDO-1";
         poBusinessKey2 = "PDO-2";
         poBusinessKey3 = "PDO-3";
@@ -117,11 +117,11 @@ public class BucketEjbTest extends ContainerTest {
         twoDBarcode3 = "6625345234";
         twoDBarcode4 = "9202340293";
 
-        List<String> shearingTubeBarcodes = new ArrayList<String>()/*Arrays.asList("SH1", "SH2", "SH3")*/;
-        Map<String, String> barcodesByRackPositions = new HashMap<String, String>();
+        List<String> shearingTubeBarcodes = new ArrayList<>()/*Arrays.asList("SH1", "SH2", "SH3")*/;
+        Map<String, String> barcodesByRackPositions = new HashMap<>();
 
 
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
+        Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<>();
 
 
         shearingTubeBarcodes.add(twoDBarcode1);
@@ -252,7 +252,7 @@ public class BucketEjbTest extends ContainerTest {
         Assert.assertTrue(bucket.contains(testEntry3));
         Assert.assertTrue(bucket.contains(testEntry4));
 
-        Set<BucketEntry> bucketBatch = new HashSet<BucketEntry>();
+        Set<BucketEntry> bucketBatch = new HashSet<>();
 
         Assert.assertTrue(Collections.addAll(bucketBatch, testEntry1, testEntry2, testEntry3));
 
@@ -323,7 +323,7 @@ public class BucketEjbTest extends ContainerTest {
         BucketEntry testEntry4;
 
 
-        List<LabVessel> bucketCreateBatch = new LinkedList<LabVessel>();
+        List<LabVessel> bucketCreateBatch = new LinkedList<>();
 
 
         Assert.assertTrue(Collections.addAll(bucketCreateBatch, bspAliquot2,
@@ -347,14 +347,14 @@ public class BucketEjbTest extends ContainerTest {
         testEntry3 = bucketEntryDao.findByVesselAndBucket(vessel3, bucket);
         testEntry4 = bucketEntryDao.findByVesselAndBucket(vessel4, bucket);
 
-        Set<BucketEntry> bucketBatch = new HashSet<BucketEntry>();
+        Set<BucketEntry> bucketBatch = new HashSet<>();
         Assert.assertTrue(Collections.addAll(bucketBatch, testEntry1, testEntry2, testEntry3));
 
         Assert.assertTrue(bucket.contains(testEntry2));
         Assert.assertTrue(bucket.contains(testEntry3));
         Assert.assertTrue(bucket.contains(testEntry4));
 
-        Set<LabVessel> vesselBucketBatch = new HashSet<LabVessel>();
+        Set<LabVessel> vesselBucketBatch = new HashSet<>();
 
         Assert.assertTrue(Collections.addAll(vesselBucketBatch, vessel1,
                 vessel2, vessel3));
@@ -441,7 +441,7 @@ public class BucketEjbTest extends ContainerTest {
         BucketEntry testEntry3;
         BucketEntry testEntry4;
 
-        List<LabVessel> bucketCreateBatch = new LinkedList<LabVessel>();
+        List<LabVessel> bucketCreateBatch = new LinkedList<>();
 
         Assert.assertTrue(Collections.addAll(bucketCreateBatch, bspAliquot2, bspAliquot3, bspAliquot4));
 
@@ -463,7 +463,7 @@ public class BucketEjbTest extends ContainerTest {
         testEntry3 = bucketEntryDao.findByVesselAndBucket(vessel3, bucket);
         testEntry4 = bucketEntryDao.findByVesselAndBucket(vessel4, bucket);
 
-        Set<BucketEntry> bucketBatch = new HashSet<BucketEntry>();
+        Set<BucketEntry> bucketBatch = new HashSet<>();
         Assert.assertTrue(Collections.addAll(bucketBatch, testEntry1, testEntry2, testEntry3));
 
         Assert.assertTrue(bucket.contains(testEntry2));

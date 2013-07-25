@@ -44,7 +44,7 @@ public class PingResource {
     @Produces(MediaType.TEXT_PLAIN)
     @Path("ping")
     public List<String> ping() {
-        List<String> results = new ArrayList<String>();
+        List<String> results = new ArrayList<>();
 
          List<ResearchProject> rpList = rpDao.findAllResearchProjects();
         for (ResearchProject rp : rpList) {

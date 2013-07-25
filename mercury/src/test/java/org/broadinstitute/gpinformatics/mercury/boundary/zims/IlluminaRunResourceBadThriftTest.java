@@ -4,11 +4,9 @@ package org.broadinstitute.gpinformatics.mercury.boundary.zims;
 import edu.mit.broad.prodinfo.thrift.lims.TZIMSException;
 import org.testng.Assert;
 import org.apache.thrift.TException;
-import org.apache.thrift.transport.TTransportException;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.easymock.EasyMock;
-import org.jboss.shrinkwrap.api.asset.Asset;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 

@@ -101,7 +101,7 @@ public enum VesselGeometry {
     private final String[] rowNames;
     private final Integer capacity;
     private VesselPosition[] vesselPositions;
-    private Map<VesselPosition, RowColumn> mapVesselPositionToRowColumn = new HashMap<VesselPosition, RowColumn>();
+    private Map<VesselPosition, RowColumn> mapVesselPositionToRowColumn = new HashMap<>();
 
     public class RowColumn implements Serializable {
         private int row;

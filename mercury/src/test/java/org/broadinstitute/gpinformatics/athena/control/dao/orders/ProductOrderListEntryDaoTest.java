@@ -17,12 +17,10 @@ import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import javax.transaction.UserTransaction;
 import java.util.*;
 
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
@@ -83,7 +81,7 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
      */
     private static void assertPDOUniqueness(Collection<ProductOrderListEntry> productOrderListEntries) {
 
-        Map<String, Long> countsMap = new HashMap<String, Long>();
+        Map<String, Long> countsMap = new HashMap<>();
         for (ProductOrderListEntry productOrderListEntry : productOrderListEntries) {
             if (!countsMap.containsKey(productOrderListEntry.getJiraTicketKey())) {
                 countsMap.put(productOrderListEntry.getJiraTicketKey(), 1L);
@@ -103,7 +101,7 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
         });
 
         if (!countsEntries.isEmpty()) {
-            List<String> strings = new ArrayList<String>();
+            List<String> strings = new ArrayList<>();
             for (Map.Entry<String, Long> countEntry : countsEntries) {
                 strings.add(countEntry.getKey() + ": " + countEntry.getValue());
                 Assert.fail("Found PDOs represented more than once: " + StringUtils.join(strings, ", "));

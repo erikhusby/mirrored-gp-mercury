@@ -46,6 +46,6 @@ public class AthenaClientServiceImpl implements AthenaClientService {
 
     @Override
     public Collection<ProductOrder> retrieveMultipleProductOrderDetails(@Nonnull Collection<String> poBusinessKeys) {
-        return productOrderDao.findListByBusinessKeyList(new ArrayList<String>(poBusinessKeys));
+        return productOrderDao.findListByBusinessKeyList(new ArrayList<>(poBusinessKeys));
     }
 }

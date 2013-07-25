@@ -25,9 +25,9 @@ public class MercurySampleDao extends GenericDao {
      * @return map from input to found, or null if not found, in same order as input list
      */
     public Map<MercurySample, MercurySample> findByMercurySample(List<MercurySample> mercurySamples) {
-        HashMap<MercurySample, MercurySample> mapSampleToSample = new HashMap<MercurySample, MercurySample>();
+        HashMap<MercurySample, MercurySample> mapSampleToSample = new HashMap<>();
 
-        List<String> sampleKeys = new ArrayList<String>();
+        List<String> sampleKeys = new ArrayList<>();
         for (MercurySample mercurySample : mercurySamples) {
             sampleKeys.add(mercurySample.getSampleKey());
             mapSampleToSample.put(mercurySample, null);
@@ -60,7 +60,7 @@ public class MercurySampleDao extends GenericDao {
     }
 
     public Map<String, List<MercurySample>> findMapIdToListMercurySample(List<String> sampleKeys) {
-        Map<String, List<MercurySample>> mapSampleIdToListMercurySamples = new HashMap<String, List<MercurySample>>();
+        Map<String, List<MercurySample>> mapSampleIdToListMercurySamples = new HashMap<>();
         for (String sampleKey : sampleKeys) {
             mapSampleIdToListMercurySamples.put(sampleKey, new ArrayList<MercurySample>());
         }

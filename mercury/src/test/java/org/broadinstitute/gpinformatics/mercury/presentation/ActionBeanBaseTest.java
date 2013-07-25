@@ -1,16 +1,11 @@
 package org.broadinstitute.gpinformatics.mercury.presentation;
 
 import net.sourceforge.stripes.action.ActionBean;
-import net.sourceforge.stripes.action.Before;
-import net.sourceforge.stripes.controller.DispatcherServlet;
-import net.sourceforge.stripes.controller.StripesFilter;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 
 import javax.servlet.Filter;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * This is used to test action beans.
