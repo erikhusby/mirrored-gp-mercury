@@ -857,8 +857,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         if (samples != null) {
             // Assuming all samples come from same product order here.
-            List<String> sampleNames = ProductOrderSample.getSampleNames(samples);
-            ProductOrder.loadBspData(sampleNames, samples);
+            ProductOrder.loadBspData(samples);
 
             for (ProductOrderSample sample : samples) {
                 JSONObject item = new JSONObject();
