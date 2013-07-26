@@ -333,6 +333,8 @@ public class MercuryOrSquidRouter implements Serializable {
         } else if (routingOptions.equals(EnumSet.of(SQUID, BOTH)) ||
                 (intent == Intent.SYSTEM_OF_RECORD && routingOptions.equals(EnumSet.of(SQUID, MERCURY)))) {
             result = SQUID;
+        } else if (routingOptions.equals(EnumSet.of(MERCURY, BOTH))) {
+            result = MERCURY;
         } else {
             throw new RouterException("The Routing cannot be determined for options: " + routingOptions);
         }
