@@ -15,7 +15,7 @@ public class MolecularIndexingSchemeBean {
     private String name;
 
     @JsonProperty("sequences")
-    private List<IndexComponent> sequences = new ArrayList<IndexComponent>();
+    private List<IndexComponent> sequences = new ArrayList<>();
 
     public MolecularIndexingSchemeBean() {}
 

@@ -55,7 +55,7 @@ public class JiraCustomFieldsUtil {
                         CreateFields.IssueType.WHOLE_EXOME_HYBSEL);
 
         final Map<String, CustomFieldDefinition> requiredCustomFieldDefinitions =
-                new HashMap<String, CustomFieldDefinition>();
+                new HashMap<>();
 
         for (String requiredFieldName : REQUIRED_FIELD_NAMES) {
             boolean foundIt = false;

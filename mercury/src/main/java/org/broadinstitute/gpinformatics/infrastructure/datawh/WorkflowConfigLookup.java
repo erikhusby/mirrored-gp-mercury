@@ -28,7 +28,7 @@ public class WorkflowConfigLookup implements Serializable {
     static {
         // This should move to WorkflowConfigDao if it ever exists.
         try {
-            NOV_1_2012 = ExtractTransform.secTimestampFormat.parse("20121101000000");
+            NOV_1_2012 = ExtractTransform.parseTimestamp("20121101000000");
         } catch (ParseException e) {
             logger.error("Cannot create syntheticWorkflowConfigs.");
         }
@@ -39,6 +39,8 @@ public class WorkflowConfigLookup implements Serializable {
                 LabEventType.SAMPLES_DAUGHTER_PLATE_CREATION.getName()));
         syntheticWorkflowConfigs.add(new WorkflowConfigDenorm(NOV_1_2012, "BSP", "0", "BSP", "0",
                 LabEventType.SAMPLES_EXTRACTION_START.getName(), LabEventType.SAMPLES_EXTRACTION_START.getName()));
+        syntheticWorkflowConfigs.add(new WorkflowConfigDenorm(NOV_1_2012, "BSP", "0", "BSP", "0",
+                LabEventType.SAMPLE_IMPORT.getName(), LabEventType.SAMPLE_IMPORT.getName()));
     }
 
 
@@ -57,7 +59,7 @@ public class WorkflowConfigLookup implements Serializable {
         for (WorkflowConfigDenorm config : configs) {
             List<WorkflowConfigDenorm> workflows = mapEventToWorkflows.get(config.getWorkflowStepEventName());
             if (workflows == null) {
-                workflows = new ArrayList<WorkflowConfigDenorm>();
+                workflows = new ArrayList<>();
                 mapEventToWorkflows.put(config.getWorkflowStepEventName(), workflows);
             }
             workflows.add(config);

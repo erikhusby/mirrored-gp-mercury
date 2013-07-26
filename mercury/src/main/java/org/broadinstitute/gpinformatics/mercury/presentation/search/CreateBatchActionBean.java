@@ -151,7 +151,7 @@ public class CreateBatchActionBean extends CoreActionBean {
         } else {
 
             Set<LabVessel> vesselSet =
-                    new HashSet<LabVessel>(labVesselDao.findByListIdentifiers(selectedVesselLabels));
+                    new HashSet<>(labVesselDao.findByListIdentifiers(selectedVesselLabels));
 
             /*
                If a new ticket is to be created, pass the description, summary, due date and important info in a batch

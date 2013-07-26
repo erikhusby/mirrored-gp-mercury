@@ -11,11 +11,11 @@
 
 package org.broadinstitute.gpinformatics.mercury.test.builders;
 
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.VesselTransferEjb;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
-import org.testng.Assert;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,13 +26,16 @@ public class MiSeqReagentKitJaxbBuilder {
 
     private final Map<String, VesselPosition> denatureBarcodeMap;
     private final String miSeqReagentKitBarcode;
-    private BettaLIMSMessage denatureToReagentKitJaxb;
-    private final List<BettaLIMSMessage> messageList = new ArrayList<BettaLIMSMessage>();
+    private final BettaLimsMessageTestFactory bettaLimsMessageTestFactory;
+    private PlateCherryPickEvent denatureToReagentKitJaxb;
+    private final List<BettaLIMSMessage> messageList = new ArrayList<>();
 
     public MiSeqReagentKitJaxbBuilder(Map<String, VesselPosition> denatureBarcodeMap,
-                                      String miSeqReagentKitBarcode, String flowcellBarcode) {
+                                      String miSeqReagentKitBarcode, String flowcellBarcode,
+                                      BettaLimsMessageTestFactory bettaLimsMessageTestFactory) {
         this.denatureBarcodeMap = denatureBarcodeMap;
         this.miSeqReagentKitBarcode = miSeqReagentKitBarcode;
+        this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
     }
 
     public MiSeqReagentKitJaxbBuilder invoke() {
@@ -40,18 +43,14 @@ public class MiSeqReagentKitJaxbBuilder {
         String username = "pdunlea";
         String stationName = "ZAN";
         denatureToReagentKitJaxb = vesselTransferEjb
-                .denatureToReagentKitTransfer(null, denatureBarcodeMap, miSeqReagentKitBarcode, username, stationName);
+                .denatureToReagentKitTransfer(null, denatureBarcodeMap, miSeqReagentKitBarcode, username, stationName).getPlateCherryPickEvent().iterator().next();
 
-        messageList.add(denatureToReagentKitJaxb);
-        Assert.assertNotNull(denatureToReagentKitJaxb);
-        Assert.assertNotNull(denatureToReagentKitJaxb.getPlateCherryPickEvent());
-        PlateCherryPickEvent plateCherryPickEvent = denatureToReagentKitJaxb.getPlateCherryPickEvent().get(0);
-        Assert.assertEquals(plateCherryPickEvent.getPlate().size(), 1);
-        Assert.assertEquals(getMessageList().size(), 1);
+        bettaLimsMessageTestFactory.addMessage(messageList, denatureToReagentKitJaxb);
+
         return this;
     }
 
-    public BettaLIMSMessage getDenatureToReagentKitJaxb() {
+    public PlateCherryPickEvent getDenatureToReagentKitJaxb() {
         return denatureToReagentKitJaxb;
     }
 

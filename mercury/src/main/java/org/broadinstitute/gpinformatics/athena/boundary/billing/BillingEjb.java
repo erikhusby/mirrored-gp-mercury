@@ -131,8 +131,8 @@ public class BillingEjb {
 
         boolean errorsInBilling = false;
 
-        List<BillingResult> results = new ArrayList<BillingResult>();
-        Set<String> updatedPDOs = new HashSet<String>();
+        List<BillingResult> results = new ArrayList<>();
+        Set<String> updatedPDOs = new HashSet<>();
 
         for (QuoteImportItem item : billingSession.getUnBilledQuoteImportItems(priceListCache)) {
 

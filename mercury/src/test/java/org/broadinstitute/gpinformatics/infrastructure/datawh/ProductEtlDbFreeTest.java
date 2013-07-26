@@ -24,7 +24,7 @@ import static org.testng.Assert.*;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ProductEtlDbFreeTest {
-    private String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
+    private final String etlDateString = ExtractTransform.formatTimestamp(new Date());
     private long entityId = 1122334455L;
     private String productName = "Test Product";
     private String partNumber = "TestNumber-5544";
@@ -71,7 +71,7 @@ public class ProductEtlDbFreeTest {
 
         replay(mocks);
 
-        assertEquals(tst.dataRecords(etlDateStr, false, -1L).size(), 0);
+        assertEquals(tst.dataRecords(etlDateString, false, -1L).size(), 0);
 
         verify(mocks);
     }
@@ -98,7 +98,7 @@ public class ProductEtlDbFreeTest {
 
         replay(mocks);
 
-        Collection<String> records = tst.dataRecords(etlDateStr, false, entityId);
+        Collection<String> records = tst.dataRecords(etlDateString, false, entityId);
         assertEquals(records.size(), 1);
 
         verifyRecord(records.iterator().next());
@@ -109,7 +109,7 @@ public class ProductEtlDbFreeTest {
     private void verifyRecord(String record) {
         String[] parts = record.split(",");
         int i = 0;
-        assertEquals(parts[i++], etlDateStr);
+        assertEquals(parts[i++], etlDateString);
         assertEquals(parts[i++], "F");
         assertEquals(parts[i++], String.valueOf(entityId));
         assertEquals(parts[i++], productName);

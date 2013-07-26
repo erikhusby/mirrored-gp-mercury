@@ -51,7 +51,7 @@ public class MaterialTypeDao extends GenericDao {
 
         CriteriaBuilder cb = getCriteriaBuilder();
         CriteriaQuery<MaterialType> cq = cb.createQuery(MaterialType.class);
-        List<Predicate> predicateList = new ArrayList<Predicate>();
+        List<Predicate> predicateList = new ArrayList<>();
 
         Root<MaterialType> MaterialType = cq.from(MaterialType.class);
 

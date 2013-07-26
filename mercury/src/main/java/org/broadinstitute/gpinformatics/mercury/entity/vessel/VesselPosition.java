@@ -413,7 +413,7 @@ public enum VesselPosition {
     LANE8;
 
     private static final Map<String, VesselPosition> MAP_NAME_TO_POSITION =
-            new HashMap<String, VesselPosition>(VesselPosition.values().length);
+            new HashMap<>(VesselPosition.values().length);
     private static final Pattern MIDDLE_ZERO_PATTERN = Pattern.compile("([A-Z])0([0-9])");
 
     static {

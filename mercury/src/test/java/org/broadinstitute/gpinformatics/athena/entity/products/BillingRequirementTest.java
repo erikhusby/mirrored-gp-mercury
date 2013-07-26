@@ -16,7 +16,7 @@ public class BillingRequirementTest {
     static final String CALL_RATE = "callRate";
 
     static Map<String, MessageDataValue> makeMap(String name, String value) {
-        Map<String, MessageDataValue> data = new HashMap<String, MessageDataValue>();
+        Map<String, MessageDataValue> data = new HashMap<>();
         data.put(name, new MessageDataValue(name, value));
         return data;
     }

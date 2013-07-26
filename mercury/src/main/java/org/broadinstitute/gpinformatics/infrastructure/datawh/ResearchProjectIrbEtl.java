@@ -18,7 +18,8 @@ public class ResearchProjectIrbEtl extends GenericEntityEtl<ResearchProjectIRB, 
 
     @Inject
     public ResearchProjectIrbEtl(ResearchProjectDao dao) {
-        super(ResearchProjectIRB.class, "research_project_irb", dao);
+        super(ResearchProjectIRB.class, "research_project_irb", "athena.research_projectirb_aud",
+                "research_projectirbid", dao);
     }
 
     @Override

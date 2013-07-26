@@ -174,7 +174,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
         }
 
         // Get the totals for the order
-        Collection<String> businessKeys = new ArrayList<String> ();
+        Collection<String> businessKeys = new ArrayList<>();
         for (ProductOrder order : editResearchProject.getProductOrders()) {
             businessKeys.add(order.getBusinessKey());
         }

@@ -135,7 +135,7 @@ public enum Operator {
     }
 
     public static List<Operator> findOperatorsByType(OperatorType type) {
-        List<Operator> operators = new ArrayList<Operator>();
+        List<Operator> operators = new ArrayList<>();
         for (Operator value : values()) {
             if (type == value.type) {
                 operators.add(value);

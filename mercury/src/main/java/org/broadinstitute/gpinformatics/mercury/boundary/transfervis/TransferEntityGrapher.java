@@ -20,6 +20,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainerEmbedder;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import javax.ejb.Remote;
 import javax.ejb.Stateful;
@@ -67,7 +68,7 @@ public class TransferEntityGrapher implements TransferVisualizer {
                 TransferEntityGrapher transferEntityGrapher, List<AlternativeId> alternativeIds);
     }
 
-    private final Map<IdType, ExpandVertex> mapIdTypeToExpandVertex = new HashMap<IdType, ExpandVertex>();
+    private final Map<IdType, ExpandVertex> mapIdTypeToExpandVertex = new HashMap<>();
 
     void initMap() {
         mapIdTypeToExpandVertex.put(IdType.PLATE_ID_TYPE, new ExpandVertex() {
@@ -132,7 +133,7 @@ public class TransferEntityGrapher implements TransferVisualizer {
 //            if (plate.getPlatePhysicalType().getName().equals(PlatePhysicalType.TUBE_RACK)) {
 //                graph.setMessage("The barcode is attached to a rack, please enter a plate barcode");
 //            } else {
-                Queue<VesselVertex> vesselVertexQueue = new LinkedList<VesselVertex>();
+                Queue<VesselVertex> vesselVertexQueue = new LinkedList<>();
 
                 vesselVertexQueue.add(new PlateVesselVertex(plate));
                 processQueue(vesselVertexQueue, graph, alternativeIds);
@@ -171,7 +172,7 @@ public class TransferEntityGrapher implements TransferVisualizer {
         if (receptacle == null) {
             graph.setMessage("No tube was found with that barcode");
         } else {
-            Queue<VesselVertex> vesselVertexQueue = new LinkedList<VesselVertex>();
+            Queue<VesselVertex> vesselVertexQueue = new LinkedList<>();
 
             for (VesselContainer vesselContainer : receptacle.getContainers()) {
                 vesselVertexQueue.add(new ContainerVertex(vesselContainer));
@@ -185,7 +186,7 @@ public class TransferEntityGrapher implements TransferVisualizer {
         if (vesselContainer == null) {
             graph.setMessage("No container was found with that barcode");
         } else {
-            Queue<VesselVertex> vesselVertexQueue = new LinkedList<VesselVertex>();
+            Queue<VesselVertex> vesselVertexQueue = new LinkedList<>();
 
             vesselVertexQueue.add(new ContainerVertex(vesselContainer));
             processQueue(vesselVertexQueue, graph, alternativeIds);
@@ -280,17 +281,17 @@ public class TransferEntityGrapher implements TransferVisualizer {
     /**
      * Builds a label for an edge, with event name etc.
      *
-     * @param stationEvent holds details of the event
+     * @param labEvent holds details of the event
      * @return HTML
      */
-    private String buildEdgeLabel(LabEvent stationEvent) {
+    private String buildEdgeLabel(LabEvent labEvent) {
         StringBuilder label = new StringBuilder();
         label.append("<html>");
-        String eventTypeName = stationEvent.getLabEventType().getName();
+        String eventTypeName = labEvent.getLabEventType().getName();
 //        if (!ReceptacleTransferEvent.TRANSFER_EVENT.equals(eventTypeName)) {
             label.append(eventTypeName);
-//            if (stationEvent instanceof PlateTransferEvent) {
-//                PlateTransferEvent plateTransferEvent = (PlateTransferEvent) stationEvent;
+//            if (labEvent instanceof PlateTransferEvent) {
+//                PlateTransferEvent plateTransferEvent = (PlateTransferEvent) labEvent;
 //                label.append("<br/>");
 //                label.append(plateTransferEvent.getSourceSectionLayout());
 //                label.append(" to ");
@@ -298,16 +299,23 @@ public class TransferEntityGrapher implements TransferVisualizer {
 //            }
             label.append("<br/>");
 //        }
-        String labMachineName = stationEvent.getEventLocation();
+        String labMachineName = labEvent.getEventLocation();
         if (!labMachineName.contains("Unknown")) {
             label.append(labMachineName).append(", ");
         }
-        label.append(stationEvent.getEventDate());
+        label.append(labEvent.getEventDate());
         label.append("<br/>");
         if (bspUserList != null) {
-            BspUser bspUser = bspUserList.getById(stationEvent.getEventOperator());
+            BspUser bspUser = bspUserList.getById(labEvent.getEventOperator());
             if (bspUser != null) {
                 label.append(bspUser.getFullName());
+            }
+            label.append("<br/>");
+        }
+        if (!labEvent.getComputedLcSets().isEmpty()) {
+            for (LabBatch labBatch : labEvent.getComputedLcSets()) {
+                label.append(labBatch.getBatchName());
+                label.append(", ");
             }
         }
         label.append("</html>");
@@ -367,7 +375,7 @@ public class TransferEntityGrapher implements TransferVisualizer {
                 plateVertex = new Vertex(plate.getLabel(), IdType.PLATE_ID_TYPE.toString(),
                         new StringBuilder().append(plate.getPlateType().getDisplayName()).append(" : ").append(plate.getLabel()).toString());
                 // If there are self-referential plate events, draw a box for the user to click on, to see a list of these events
-                List<LabEvent> sortedPlateEvents = new ArrayList<LabEvent>();
+                List<LabEvent> sortedPlateEvents = new ArrayList<>();
                 for (LabEvent plateEvent : plate.getInPlaceEvents()) {
                     sortedPlateEvents.add(plateEvent);
                 }
@@ -482,7 +490,11 @@ public class TransferEntityGrapher implements TransferVisualizer {
                     vesselVertexQueue.add(destinationContainerVertex);
                     numVesselsAddedReturn++;
                 }
-                renderRearrayEdge(graph, sourceContainer, destinationContainer, receptacle);
+                if (sourceContainer.getEmbedder().getCreatedOn().after(sourceContainer.getEmbedder().getCreatedOn())) {
+                    renderRearrayEdge(graph, destinationContainer, sourceContainer, receptacle);
+                } else {
+                    renderRearrayEdge(graph, sourceContainer, destinationContainer, receptacle);
+                }
             }
         }
         return numVesselsAddedReturn;
@@ -842,7 +854,7 @@ public class TransferEntityGrapher implements TransferVisualizer {
      */
     private Map<String, List<String>> getAlternativeIds(
             LabVessel receptacle, List<AlternativeId> alternativeIdList) {
-        Map<String, List<String>> alternativeIdValues = new HashMap<String, List<String>>();
+        Map<String, List<String>> alternativeIdValues = new HashMap<>();
 //        if (alternativeIdList.contains(AlternativeId.LIBRARY_NAME) || alternativeIdList.contains(AlternativeId.GSSR_SAMPLE)) {
 //            if (receptacle.getContainedContents() != null) {
 //                for (ISeqContent iSeqContent : receptacle.getContainedContents()) {

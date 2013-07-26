@@ -39,7 +39,7 @@ public class SamplesPicoDbTest extends ContainerTest {
         client.addFilter(new LoggingFilter(System.out));
 
         String batchId = "BP-" + timestamp;
-        ArrayList<String> tubeBarcodes = new ArrayList<String>();
+        ArrayList<String> tubeBarcodes = new ArrayList<>();
         for(int i = 1; i <= 96; i++) {
             tubeBarcodes.add("PICO" + i + "_" + timestamp);
         }
@@ -70,7 +70,7 @@ public class SamplesPicoDbTest extends ContainerTest {
      */
     public static LabBatchBean createBatch(URL baseUrl, Client client, String batchId,
             List<String> tubeBarcodes) {
-        ArrayList<TubeBean> tubeBeans = new ArrayList<TubeBean>();
+        ArrayList<TubeBean> tubeBeans = new ArrayList<>();
         for (String tubeBarcode : tubeBarcodes) {
             tubeBeans.add(new TubeBean(tubeBarcode, null));
         }

@@ -224,6 +224,22 @@ IS
       WHERE is_delete = 'T'
     );
 
+    DELETE FROM ledger_entry
+    WHERE ledger_id IN (
+      SELECT
+        ledger_id
+      FROM im_ledger_entry
+      WHERE is_delete = 'T'
+    );
+
+    DELETE FROM billing_session
+    WHERE billing_session_id IN (
+      SELECT
+        billing_session_id
+      FROM im_billing_session
+      WHERE is_delete = 'T'
+    );
+
     -- For this fact table, a re-export of audited entity ids should replace existing ones.
     DELETE FROM sequencing_sample_fact
     WHERE sequencing_run_id IN (SELECT
@@ -980,9 +996,11 @@ IS
     BEGIN
 
       BEGIN
-        -- Reports an invalid batch_name.
+        -- Raises exception for an invalid batch_name if not a BSP workflow.
         SELECT 1 INTO v_tmp FROM DUAL
-        WHERE NVL(new.batch_name, 'NONE') NOT IN ('NONE', 'MULTIPLE');
+        WHERE NVL(new.batch_name, 'NONE') NOT IN ('NONE', 'MULTIPLE')
+        OR EXISTS (SELECT 1 FROM workflow w
+        WHERE w.workflow_name = 'BSP' AND new.workflow_id = w.workflow_id);
 
         EXCEPTION WHEN NO_DATA_FOUND
         THEN RAISE INVALID_LAB_BATCH;

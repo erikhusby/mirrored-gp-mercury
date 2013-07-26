@@ -58,7 +58,7 @@ public class BettalimsMessageBeanTest {
         Connection connection = null;
         Session session = null;
         try{
-            Map<String, Object> connectionParams = new HashMap<String, Object>();
+            Map<String, Object> connectionParams = new HashMap<>();
             connectionParams.put(TransportConstants.PORT_PROP_NAME, 5445);
             connectionParams.put(TransportConstants.HOST_PROP_NAME, "localhost");
 //            connectionParams.put(TransportConstants.HOST_PROP_NAME, "gpinfx-jms");

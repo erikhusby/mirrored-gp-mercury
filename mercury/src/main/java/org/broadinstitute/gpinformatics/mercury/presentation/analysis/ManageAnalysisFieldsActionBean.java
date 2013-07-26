@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.mercury.presentation.analysis;
 import net.sourceforge.stripes.action.*;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
-import org.apache.commons.lang3.math.NumberUtils;
 import org.broadinstitute.gpinformatics.mercury.boundary.analysis.AnalysisEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AlignerDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AnalysisTypeDao;
@@ -16,8 +15,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
-import java.text.MessageFormat;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 

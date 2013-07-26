@@ -30,7 +30,7 @@ public class WorkflowConfigEtl extends GenericEntityEtl<WorkflowConfig, Object> 
 
     @Inject
     public WorkflowConfigEtl(WorkflowConfigLookup workflowConfigLookup) {
-        super(WorkflowConfig.class, WORKFLOW_BASE_FILENAME, null);
+        super(WorkflowConfig.class, WORKFLOW_BASE_FILENAME, null, null, null);
         this.workflowConfigLookup = workflowConfigLookup;
     }
 
@@ -120,7 +120,7 @@ public class WorkflowConfigEtl extends GenericEntityEtl<WorkflowConfig, Object> 
     /** Writes the Workflow records to a sqlLoader file */
     private void exportWorkflow(Collection<WorkflowConfigDenorm>flatConfig, DataFile dataFile, String etlDateStr)
             throws IOException {
-        Set<Long> ids = new HashSet<Long>();
+        Set<Long> ids = new HashSet<>();
         for (WorkflowConfigDenorm denorm : flatConfig) {
             // Deduplicates the workflow records.
             if (!ids.contains(denorm.getWorkflowId())) {
@@ -133,7 +133,7 @@ public class WorkflowConfigEtl extends GenericEntityEtl<WorkflowConfig, Object> 
     /** Writes the Process records to a sqlLoader file */
     private void exportProcess(Collection<WorkflowConfigDenorm>flatConfig, DataFile dataFile, String etlDateStr)
             throws IOException {
-        Set<Long> ids = new HashSet<Long>();
+        Set<Long> ids = new HashSet<>();
         for (WorkflowConfigDenorm denorm : flatConfig) {
             // Deduplicates the process records.
             if (!ids.contains(denorm.getProcessId())) {

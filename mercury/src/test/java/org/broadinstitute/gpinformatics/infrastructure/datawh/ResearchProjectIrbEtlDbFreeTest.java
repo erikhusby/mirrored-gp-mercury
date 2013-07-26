@@ -3,16 +3,13 @@ package org.broadinstitute.gpinformatics.infrastructure.datawh;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectIRB;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.List;
 
 import static org.easymock.EasyMock.*;
 import static org.testng.Assert.*;
@@ -25,7 +22,7 @@ import static org.testng.Assert.*;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ResearchProjectIrbEtlDbFreeTest {
-    private String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
+    private final String etlDateString = ExtractTransform.formatTimestamp(new Date());
     private long entityId = 1122334455L;
     private long researchProjectId = 2233445511L;
     private String irb = "NHGRI-1234-00-02042012-7";
@@ -63,7 +60,7 @@ public class ResearchProjectIrbEtlDbFreeTest {
 
         replay(mocks);
 
-        assertEquals(tst.dataRecords(etlDateStr, false, -1L).size(), 0);
+        assertEquals(tst.dataRecords(etlDateString, false, -1L).size(), 0);
 
         verify(mocks);
     }
@@ -78,7 +75,7 @@ public class ResearchProjectIrbEtlDbFreeTest {
 
         replay(mocks);
 
-        Collection<String> records = tst.dataRecords(etlDateStr, false, entityId);
+        Collection<String> records = tst.dataRecords(etlDateString, false, entityId);
         assertEquals(records.size(), 1);
 
         verifyRecord(records.iterator().next());
@@ -95,7 +92,7 @@ public class ResearchProjectIrbEtlDbFreeTest {
 
         replay(mocks);
 
-        Collection<String> records = tst.dataRecords(etlDateStr, false, entityId);
+        Collection<String> records = tst.dataRecords(etlDateString, false, entityId);
         assertEquals(records.size(), 1);
 
         String[] parts = records.iterator().next().split(",");
@@ -108,7 +105,7 @@ public class ResearchProjectIrbEtlDbFreeTest {
     private void verifyRecord(String record) {
         int i = 0;
         String[] parts = record.split(",");
-        assertEquals(parts[i++], etlDateStr);
+        assertEquals(parts[i++], etlDateString);
         assertEquals(parts[i++], "F");
         assertEquals(parts[i++], String.valueOf(entityId));
         assertEquals(parts[i++], String.valueOf(researchProjectId));

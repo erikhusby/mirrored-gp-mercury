@@ -101,7 +101,7 @@ public class ControlDao extends GenericDao {
      *         the type given.  The state of the controls found are irrelevant to this search.
      */
     public List<Control> findAllControlsByType(Control.ControlType type) {
-        List<Control> results = new LinkedList<Control>();
+        List<Control> results = new LinkedList<>();
 
         results.addAll(findAll(Control.class,
                                       new ControlTypeCallback(this, Control.ControlState.ACTIVE, type)));

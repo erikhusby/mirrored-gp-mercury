@@ -116,7 +116,7 @@ public class BSPSampleDataFetcher extends BSPJerseyClient {
             return;
         }
 
-        final Map<String, BSPSampleDTO> barcodeToDTOMap = new HashMap<String, BSPSampleDTO>();
+        final Map<String, BSPSampleDTO> barcodeToDTOMap = new HashMap<>();
         for (BSPSampleDTO bspSampleDTO : bspSampleDTOs) {
             barcodeToDTOMap.put(bspSampleDTO.getSampleId(), bspSampleDTO);
         }
@@ -147,7 +147,7 @@ public class BSPSampleDataFetcher extends BSPJerseyClient {
             return;
         }
 
-        final Map<String, BSPSampleDTO> lsidToDTOMap = new HashMap<String, BSPSampleDTO>();
+        final Map<String, BSPSampleDTO> lsidToDTOMap = new HashMap<>();
         for (BSPSampleDTO bspSampleDTO : bspSampleDTOs) {
             lsidToDTOMap.put(bspSampleDTO.getSampleLsid(), bspSampleDTO);
         }

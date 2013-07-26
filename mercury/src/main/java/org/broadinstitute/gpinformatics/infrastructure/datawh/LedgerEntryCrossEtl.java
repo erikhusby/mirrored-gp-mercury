@@ -23,12 +23,17 @@ public class LedgerEntryCrossEtl extends GenericEntityEtl<LedgerEntry, ProductOr
 
     @Inject
     public LedgerEntryCrossEtl(ProductOrderSampleDao dao) {
-        super(LedgerEntry.class, "product_order_sample_bill", dao);
+        super(LedgerEntry.class, "product_order_sample_bill", "athena.billing_ledger_aud", "ledger_id", dao);
     }
 
     @Override
     Long entityId(LedgerEntry entity) {
         return entity.getLedgerId();
+    }
+
+    @Override
+    protected Long dataSourceEntityId(ProductOrderSample entity) {
+        return entity.getProductOrderSampleId();
     }
 
     @Override
@@ -50,7 +55,7 @@ public class LedgerEntryCrossEtl extends GenericEntityEtl<LedgerEntry, ProductOr
 
     @Override
     protected Collection<ProductOrderSample> convertAuditedEntityToDataSourceEntity(Collection<LedgerEntry> auditEntities) {
-        Set<ProductOrderSample> pdoSamples = new HashSet<ProductOrderSample>();
+        Set<ProductOrderSample> pdoSamples = new HashSet<>();
         for (LedgerEntry ledgerEntry : auditEntities) {
             pdoSamples.add(ledgerEntry.getProductOrderSample());
         }

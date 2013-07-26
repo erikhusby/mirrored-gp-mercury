@@ -91,6 +91,11 @@
                                           event="view">Buckets</stripes:link>
                         </li>
                         <li>
+                            <stripes:link id="viewReworkBuckets"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BucketViewActionBean"
+                                          event="viewRework">Rework Buckets</stripes:link>
+                        </li>
+                        <li>
                             <stripes:link id="linkDenatureToRB"
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.LinkDenatureTubeToReagentBlockActionBean"
                                           event="view">Link Denature Tube to Reagent Block</stripes:link>
@@ -102,19 +107,19 @@
                         </li>
                         <security:authorizeBlock roles="<%= roles(LabUser, LabManager, PDM, PM, Developer) %>">
                             <li>
-                                <stripes:link
+                                <stripes:link id="controls"
                                         beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.CollaboratorControlsActionBean"
                                         event="list">Controls</stripes:link>
                             </li>
                             <li>
-                                <stripes:link
+                                <stripes:link id="addRework"
                                         beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.AddReworkActionBean"
                                         event="view">Add Rework</stripes:link>
                             </li>
                         </security:authorizeBlock>
                         <security:authorizeBlock roles="<%= roles(Developer) %>">
                             <li>
-                                <stripes:link
+                                <stripes:link id="linkDenatureToFlowcell"
                                         beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.LinkDenatureTubeToFlowcellActionBean"
                                         event="view">Link Denature Tube to Flowcell</stripes:link>
                             </li>
@@ -167,17 +172,17 @@
                         class="icon-search"></span> Search <b class="caret"></b></a>
                 <ul class="dropdown-menu" role="menu">
                     <li>
-                        <stripes:link
+                        <stripes:link id="vesselSearch"
                                 beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.VesselSearchActionBean"
                                 event="view">Vessels</stripes:link>
                     </li>
                     <li>
-                        <stripes:link
+                        <stripes:link id="sampleSearch"
                                 beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.SampleSearchActionBean"
                                 event="view">Samples</stripes:link>
                     </li>
                     <li>
-                        <stripes:link
+                        <stripes:link id="lcsetSearch"
                                 beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.LCSetSearchActionBean"
                                 event="view">LCSets</stripes:link>
                     </li>
@@ -185,7 +190,7 @@
                     <security:authorizeBlock roles="<%= roles(Developer) %>">
                         <li class="divider"></li>
                         <li>
-                            <stripes:link
+                            <stripes:link id="allSearch"
                                     beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean"
                                     event="view">All Types</stripes:link>
                         </li>

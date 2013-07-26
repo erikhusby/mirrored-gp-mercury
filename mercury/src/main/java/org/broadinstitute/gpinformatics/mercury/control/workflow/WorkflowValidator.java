@@ -82,27 +82,28 @@ public class WorkflowValidator {
     public void validateWorkflow(BettaLIMSMessage bettaLIMSMessage) throws WorkflowException {
         try {
             for (PlateCherryPickEvent plateCherryPickEvent : bettaLIMSMessage.getPlateCherryPickEvent()) {
-                validateWorkflow(plateCherryPickEvent, new ArrayList<String>(
+                validateWorkflow(plateCherryPickEvent, new ArrayList<>(
                         BettalimsMessageUtils.getBarcodesForCherryPick(plateCherryPickEvent)));
             }
 
             for (PlateEventType plateEventType : bettaLIMSMessage.getPlateEvent()) {
-                validateWorkflow(plateEventType, new ArrayList<String>(
+                validateWorkflow(plateEventType, new ArrayList<>(
                         BettalimsMessageUtils.getBarcodesForPlateEvent(plateEventType)));
             }
 
             for (PlateTransferEventType plateTransferEventType : bettaLIMSMessage.getPlateTransferEvent()) {
-                validateWorkflow(plateTransferEventType, new ArrayList<String>(
+                validateWorkflow(plateTransferEventType, new ArrayList<>(
                         BettalimsMessageUtils.getBarcodesForPlateTransfer(plateTransferEventType)));
             }
 
             for (ReceptacleEventType receptacleEventType : bettaLIMSMessage.getReceptacleEvent()) {
-                validateWorkflow(receptacleEventType, new ArrayList<String>(
+                validateWorkflow(receptacleEventType, new ArrayList<>(
                         BettalimsMessageUtils.getBarcodesForReceptacleEvent(receptacleEventType)));
             }
 
-            for (ReceptaclePlateTransferEvent receptaclePlateTransferEvent : bettaLIMSMessage.getReceptaclePlateTransferEvent()) {
-                validateWorkflow(receptaclePlateTransferEvent, new ArrayList<String>(
+            for (ReceptaclePlateTransferEvent receptaclePlateTransferEvent : bettaLIMSMessage
+                    .getReceptaclePlateTransferEvent()) {
+                validateWorkflow(receptaclePlateTransferEvent, new ArrayList<>(
                         BettalimsMessageUtils.getBarcodesForReceptaclePlateTransfer(receptaclePlateTransferEvent)));
             }
         } catch (RuntimeException e) {
@@ -133,7 +134,8 @@ public class WorkflowValidator {
         private final AppConfig appConfig;
 
         public WorkflowValidationError(SampleInstance sampleInstance,
-                                       List<ProductWorkflowDefVersion.ValidationError> errors, ProductOrder productOrder,
+                                       List<ProductWorkflowDefVersion.ValidationError> errors,
+                                       ProductOrder productOrder,
                                        AppConfig appConfig) {
             this.sampleInstance = sampleInstance;
             this.errors = errors;
@@ -158,8 +160,8 @@ public class WorkflowValidator {
                 return "";
             } else {
                 return appConfig.getUrl() + ProductOrderActionBean.ACTIONBEAN_URL_BINDING + "?" +
-                        CoreActionBean.VIEW_ACTION + "&" + ProductOrderActionBean.PRODUCT_ORDER_PARAMETER +
-                        "=" + productOrder.getBusinessKey();
+                       CoreActionBean.VIEW_ACTION + "&" + ProductOrderActionBean.PRODUCT_ORDER_PARAMETER +
+                       "=" + productOrder.getBusinessKey();
             }
         }
 
@@ -168,8 +170,8 @@ public class WorkflowValidator {
                 return "";
             } else {
                 return appConfig.getUrl() + ResearchProjectActionBean.ACTIONBEAN_URL_BINDING + "?" +
-                        CoreActionBean.VIEW_ACTION + "&" + ResearchProjectActionBean.RESEARCH_PROJECT_PARAMETER +
-                        "=" + productOrder.getResearchProject().getBusinessKey();
+                       CoreActionBean.VIEW_ACTION + "&" + ResearchProjectActionBean.RESEARCH_PROJECT_PARAMETER +
+                       "=" + productOrder.getResearchProject().getBusinessKey();
             }
         }
     }
@@ -185,9 +187,10 @@ public class WorkflowValidator {
         List<WorkflowValidationError> validationErrors = validateWorkflow(labVessels, stationEventType.getEventType());
 
         if (!validationErrors.isEmpty()) {
-            Map<String, Object> rootMap = new HashMap<String, Object>();
+            Map<String, Object> rootMap = new HashMap<>();
             String linkToPlastic = appConfig.getUrl() + VesselSearchActionBean.ACTIONBEAN_URL_BINDING + "?" +
-                    VesselSearchActionBean.VESSEL_SEARCH + "=&searchKey=" + labVessels.iterator().next().getLabel();
+                                   VesselSearchActionBean.VESSEL_SEARCH + "=&searchKey=" + labVessels.iterator().next()
+                    .getLabel();
             rootMap.put("linkToPlastic", linkToPlastic);
             rootMap.put("stationEvent", stationEventType);
             rootMap.put("bspUser", bspUserList.getByUsername(stationEventType.getOperator()));
@@ -195,7 +198,8 @@ public class WorkflowValidator {
             StringWriter stringWriter = new StringWriter();
             templateEngine.processTemplate("WorkflowValidation.ftl", rootMap, stringWriter);
             emailSender.sendHtmlEmail(appConfig.getWorkflowValidationEmail(), "Workflow validation failure for " +
-                    stationEventType.getEventType(), stringWriter.toString());
+                                                                              stationEventType.getEventType(),
+                    stringWriter.toString());
         }
     }
 
@@ -204,13 +208,14 @@ public class WorkflowValidator {
      *
      * @param labVessels entities
      * @param eventType  name
+     *
      * @return list of errors
      */
     public List<WorkflowValidationError> validateWorkflow(Collection<LabVessel> labVessels, String eventType) {
-        List<WorkflowValidationError> validationErrors = new ArrayList<WorkflowValidationError>();
+        List<WorkflowValidationError> validationErrors = new ArrayList<>();
 
         for (LabVessel labVessel : labVessels) { // todo jmt can this be null?
-            Set<SampleInstance> sampleInstances = labVessel.getSampleInstances(LabVessel.SampleType.WITH_PDO,
+            Set<SampleInstance> sampleInstances = labVessel.getSampleInstances(LabVessel.SampleType.PREFER_PDO,
                     LabBatch.LabBatchType.WORKFLOW);
             for (SampleInstance sampleInstance : sampleInstances) {
                 String workflowName = sampleInstance.getWorkflowName();
@@ -224,15 +229,26 @@ public class WorkflowValidator {
                     ProductWorkflowDefVersion workflowVersion = workflowLoader.load().getWorkflowByName(workflowName).
                             getEffectiveVersion(effectiveBatch.getCreatedOn());
                     if (workflowVersion != null) {
-                        List<ProductWorkflowDefVersion.ValidationError> errors = workflowVersion.validate(labVessel, eventType);
+                        List<ProductWorkflowDefVersion.ValidationError> errors =
+                                workflowVersion.validate(labVessel, eventType);
                         if (!errors.isEmpty()) {
                             ProductOrder productOrder = null;
                             if (sampleInstance.getProductOrderKey() != null) {
                                 productOrder = athenaClientService.retrieveProductOrderDetails(
                                         sampleInstance.getProductOrderKey());
                             }
-                            validationErrors.add(new WorkflowValidationError(sampleInstance, errors, productOrder,
-                                    appConfig));
+                            //if this is a rework and we are at the first step of the process it was reworked from ignore the error
+                            boolean ignoreErrors = false;
+                            for (LabBatch batch : labVessel.getReworkLabBatches()) {
+                                if (batch.getReworks().contains(labVessel)) {
+                                    ignoreErrors = true;
+                                }
+                            }
+                            if (!ignoreErrors) {
+                                validationErrors.add(new WorkflowValidationError(sampleInstance, errors, productOrder,
+                                        appConfig));
+                            }
+
                         }
                     }
                 }

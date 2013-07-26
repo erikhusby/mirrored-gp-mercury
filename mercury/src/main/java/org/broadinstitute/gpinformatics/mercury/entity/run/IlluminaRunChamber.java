@@ -52,7 +52,7 @@ public class IlluminaRunChamber extends RunChamber {
      */
     @Override
     public Set<Reagent> getReagentContents() {
-        final Set<Reagent> sequencerReagents = new HashSet<Reagent>();
+        final Set<Reagent> sequencerReagents = new HashSet<>();
         for (LabEvent event: getEvents()) {
             sequencerReagents.addAll(event.getReagents());
         }

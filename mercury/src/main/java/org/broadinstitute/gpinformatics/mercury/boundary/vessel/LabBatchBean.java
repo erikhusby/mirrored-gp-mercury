@@ -15,7 +15,7 @@ import java.util.List;
 public class LabBatchBean {
     private String batchId;
     private String workflowName;
-    private List<TubeBean> tubeBeans = new ArrayList<TubeBean>();
+    private List<TubeBean> tubeBeans = new ArrayList<>();
 
     public LabBatchBean(String batchId, String workflowName, List<TubeBean> tubeBeans) {
         this.batchId = batchId;

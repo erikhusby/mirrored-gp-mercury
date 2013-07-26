@@ -1,10 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.jira.issue.link;
 
-import org.broadinstitute.gpinformatics.infrastructure.jira.JsonLabopsJiraIssueTypeSerializer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JsonLabopsJiraLinkTypeSerializer;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JsonLabopsJiraVisibilitySerializer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.Visibility;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.comment.AddCommentRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.comment.GetCommentsResponse;
 import org.codehaus.jackson.annotate.JsonPropertyOrder;
 import org.codehaus.jackson.map.annotate.JsonSerialize;

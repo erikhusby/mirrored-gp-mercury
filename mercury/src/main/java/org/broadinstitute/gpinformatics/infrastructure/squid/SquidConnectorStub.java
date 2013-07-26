@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.squid;
 
-import org.broadinstitute.gpinformatics.infrastructure.bettalims.BettalimsConnector;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 

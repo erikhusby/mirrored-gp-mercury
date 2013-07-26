@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
 import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -84,6 +85,7 @@ public class ReworkEjbDaoFreeTest extends BaseEventTest {
 
     @Test(groups = TestGroups.DATABASE_FREE)
     public void reworkDaoFreeAncestorPreviouslyInBucket() throws ValidationException {
+        expectedRouting = MercuryOrSquidRouter.MercuryOrSquid.MERCURY;
 
         ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(1);
         AthenaClientServiceStub.addProductOrder(productOrder);
@@ -92,11 +94,14 @@ public class ReworkEjbDaoFreeTest extends BaseEventTest {
 
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
+        workflowBatch.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
+        workflowBatch.setWorkflowName("Exome Express");
 
         Date runDate = new Date();
 
-        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube, productOrder,
-                workflowBatch, null, String.valueOf(runDate.getTime()), "1", true);
+        bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
+        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube,
+                String.valueOf(runDate.getTime()), "1", true);
 
         ReworkEjb reworkEjb = new ReworkEjb();
 
@@ -115,6 +120,7 @@ public class ReworkEjbDaoFreeTest extends BaseEventTest {
 
     @Test(groups = TestGroups.DATABASE_FREE)
     public void reworkDaoFreeAncestorStillInBucket() throws ValidationException {
+        expectedRouting = MercuryOrSquidRouter.MercuryOrSquid.MERCURY;
 
         ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(1);
         AthenaClientServiceStub.addProductOrder(productOrder);
@@ -123,11 +129,14 @@ public class ReworkEjbDaoFreeTest extends BaseEventTest {
 
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
+        workflowBatch.setWorkflowName("Exome Express");
+        workflowBatch.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
 
         Date runDate = new Date();
 
-        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube, productOrder,
-                workflowBatch, null, String.valueOf(runDate.getTime()), "1", false);
+        bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
+        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube,
+                String.valueOf(runDate.getTime()), "1", false);
 
         ReworkEjb reworkEjb = new ReworkEjb();
 

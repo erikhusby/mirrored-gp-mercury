@@ -7,15 +7,20 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProducer;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
+import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
-import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
@@ -23,15 +28,20 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.MiSeqReagentKitEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PreFlightEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ProductionFlowcellPath;
@@ -41,25 +51,43 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingEntityBuil
 import org.easymock.EasyMock;
 import org.testng.annotations.BeforeClass;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.EnumMap;
+import java.util.GregorianCalendar;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 /**
  * This class handles setting up various factories and EJBs for use in any lab event test.
  */
 public class BaseEventTest {
+    public static final String POSITIVE_CONTROL = "NA12878";
+    public static final String NEGATIVE_CONTROL = "WATER_CONTROL";
     private static Log log = LogFactory.getLog(BaseEventTest.class);
 
     public static final int NUM_POSITIONS_IN_RACK = 96;
+
+    // todo jmt find a better way to do this, without propagating it to every call to validateWorkflow.
+    /** Referenced in validation of routing. */
+    protected static MercuryOrSquidRouter.MercuryOrSquid expectedRouting = MercuryOrSquidRouter.MercuryOrSquid.MERCURY;
 
     private BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
 
     private LabEventFactory labEventFactory = new LabEventFactory();
 
     private LabBatchEjb labBatchEJB;
+
+    private BucketEjb bucketEjb;
+
+    /** The date on which Exome Express is routed to Mercury only. */
+    public static final GregorianCalendar EX_EX_IN_MERCURY_CALENDAR = new GregorianCalendar(2013, 6, 26);
+
+    protected static Map<String, BSPSampleDTO> mapSampleNameToDto = new HashMap<>();
 
     protected final LabEventFactory.LabEventRefDataFetcher labEventRefDataFetcher =
             new LabEventFactory.LabEventRefDataFetcher() {
@@ -84,12 +112,16 @@ public class BaseEventTest {
     public void setUp() {
         labBatchEJB = new LabBatchEjb();
         labBatchEJB.setAthenaClientService(AthenaClientProducer.stubInstance());
-        labBatchEJB.setJiraService(JiraServiceProducer.stubInstance());
+        JiraService jiraService = JiraServiceProducer.stubInstance();
+        labBatchEJB.setJiraService(jiraService);
         labBatchEJB.setLabBatchDao(EasyMock.createMock(LabBatchDAO.class));
 
         JiraTicketDao mockJira = EasyMock.createNiceMock(JiraTicketDao.class);
         labBatchEJB.setJiraTicketDao(mockJira);
+
         labEventFactory.setLabEventRefDataFetcher(labEventRefDataFetcher);
+
+        bucketEjb = new BucketEjb(labEventFactory, jiraService, labBatchEJB, null);
     }
 
     /**
@@ -102,13 +134,16 @@ public class BaseEventTest {
      * @return Returns a map of String barcodes to their tube objects.
      */
     public Map<String, TwoDBarcodedTube> createInitialRack(ProductOrder productOrder, String tubeBarcodePrefix) {
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
+        Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<>();
         int rackPosition = 1;
         for (ProductOrderSample poSample : productOrder.getSamples()) {
             String barcode = tubeBarcodePrefix + rackPosition;
             TwoDBarcodedTube bspAliquot = new TwoDBarcodedTube(barcode);
             bspAliquot.addSample(new MercurySample(poSample.getSampleName()));
             mapBarcodeToTube.put(barcode, bspAliquot);
+            Map<BSPSampleSearchColumn, String> dataMap = new HashMap<>();
+            dataMap.put(BSPSampleSearchColumn.SAMPLE_ID, poSample.getSampleName());
+            mapSampleNameToDto.put(poSample.getSampleName(), new BSPSampleDTO(dataMap));
             if (rackPosition > NUM_POSITIONS_IN_RACK) {
                 log.error(
                         "More product order samples than allowed in a single rack. " + productOrder.getSamples().size()
@@ -146,24 +181,18 @@ public class BaseEventTest {
     }
 
     /**
-     * This method runs the entities through the pico/plating process.
      *
-     * @param mapBarcodeToTube     A map of barcodes to tubes that will be run the starting point of the pico/plating process.
+     * @param mapBarcodeToTube     A map of barcodes to tubes that will be added to the bucket and drained into the
+     *                             batch.
      * @param productOrder         The product order to use for bucket entries.
      * @param workflowBatch        The batch that will be used for this process.
      * @param lcsetSuffix          Set this non-null to override the lcset id number.
-     * @param rackBarcodeSuffix    rack barcode suffix.
-     * @param barcodeSuffix        Uniquifies the generated vessel barcodes. NOT date if test quickly invokes twice.
-     * @param archiveBucketEntries Setting this true removes all samples from the bucket after sending the PicoPlating
-     *                             message, which is the normal case.
      *
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
-    public PicoPlatingEntityBuilder runPicoPlatingProcess(Map<String, TwoDBarcodedTube> mapBarcodeToTube,
-                                                          ProductOrder productOrder, LabBatch workflowBatch,
-                                                          String lcsetSuffix, String rackBarcodeSuffix,
-                                                          String barcodeSuffix, boolean archiveBucketEntries) {
-        String rackBarcode = "REXEX" + rackBarcodeSuffix;
+    public Bucket bucketBatchAndDrain(Map<String, TwoDBarcodedTube> mapBarcodeToTube, ProductOrder productOrder,
+            LabBatch workflowBatch, String lcsetSuffix) {
+        Bucket workingBucket = createAndPopulateBucket(mapBarcodeToTube, productOrder, "Pico/Plating Bucket");
 
         // Controls what the created lcset id is by temporarily overriding the static variable.
         String defaultLcsetSuffix = JiraServiceStub.getCreatedIssueSuffix();
@@ -173,28 +202,44 @@ public class BaseEventTest {
         labBatchEJB.createLabBatch(workflowBatch, "scottmat", CreateFields.IssueType.EXOME_EXPRESS);
         JiraServiceStub.setCreatedIssueSuffix(defaultLcsetSuffix);
 
-        Bucket workingBucket = createAndPopulateBucket(mapBarcodeToTube, productOrder, "Pico/Plating Bucket");
-        for (BucketEntry bucketEntry : workingBucket.getBucketEntries()) {
-            bucketEntry.setLabBatch(workflowBatch);
-        }
+        drainBucket(workingBucket);
+        return workingBucket;
+    }
 
-        PicoPlatingEntityBuilder invoke = new PicoPlatingEntityBuilder(bettaLimsMessageTestFactory,
+    public void drainBucket(Bucket workingBucket) {
+        bucketEjb.startBucketDrain(workingBucket.getBucketEntries(), "pdunlea", null, false);
+    }
+
+    public void archiveBucketEntries(Bucket bucket) {
+        for (BucketEntry picoEntries : bucket.getBucketEntries()) {
+            picoEntries.setStatus(BucketEntry.Status.Archived);
+        }
+    }
+
+    /**
+     * This method runs the entities through the pico/plating process.
+     *
+     * @param mapBarcodeToTube     A map of barcodes to tubes that will be run the starting point of the pico/plating process.
+     * @param rackBarcodeSuffix    rack barcode suffix.
+     * @param barcodeSuffix        Uniquifies the generated vessel barcodes. NOT date if test quickly invokes twice.
+     * @param archiveBucketEntries allows a DBFree test case to force "ancestor" tubes to be currently in a bucket
+     *                             for scenarios where that state is important to the test
+     *
+     * @return Returns the entity builder that contains the entities after this process has been invoked.
+     */
+    public PicoPlatingEntityBuilder runPicoPlatingProcess(Map<String, TwoDBarcodedTube> mapBarcodeToTube,
+            String rackBarcodeSuffix, String barcodeSuffix, boolean archiveBucketEntries) {
+        String rackBarcode = "REXEX" + rackBarcodeSuffix;
+
+        return new PicoPlatingEntityBuilder(bettaLimsMessageTestFactory,
                 labEventFactory, getLabEventHandler(),
                 mapBarcodeToTube, rackBarcode, barcodeSuffix).invoke();
-
-        if (archiveBucketEntries) {
-            for (BucketEntry picoEntries : workingBucket.getBucketEntries()) {
-                picoEntries.setStatus(BucketEntry.Status.Archived);
-            }
-        }
-
-        return invoke;
     }
 
     /**
      * This method runs the entities through the ExEx shearing process.
      *
-     * @param productOrder         The product order to use for bucket entries.
+     *
      * @param normBarcodeToTubeMap A map of barcodes to tubes that will be run the starting point of the ExEx shearing process.
      * @param normTubeFormation    The tube formation that represents the entities coming out of pico/plating.
      * @param normBarcode          The rack barcode of the tube formation.
@@ -202,10 +247,10 @@ public class BaseEventTest {
      *
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
-    public ExomeExpressShearingEntityBuilder runExomeExpressShearingProcess(ProductOrder productOrder,
-                                                                            Map<String, TwoDBarcodedTube> normBarcodeToTubeMap,
-                                                                            TubeFormation normTubeFormation,
-                                                                            String normBarcode, String barcodeSuffix) {
+    public ExomeExpressShearingEntityBuilder runExomeExpressShearingProcess(
+            Map<String, TwoDBarcodedTube> normBarcodeToTubeMap,
+            TubeFormation normTubeFormation,
+            String normBarcode, String barcodeSuffix) {
 
         return new ExomeExpressShearingEntityBuilder(normBarcodeToTubeMap, normTubeFormation,
                 bettaLimsMessageTestFactory, labEventFactory,
@@ -216,27 +261,12 @@ public class BaseEventTest {
      * This method runs the entities through the preflight process.
      *
      * @param mapBarcodeToTube A map of barcodes to tubes that will be run the starting point of the preflight process.
-     * @param productOrder     The product order to use for bucket entries.
-     * @param workflowBatch    The batch that will be used for this process.
      * @param barcodeSuffix    Uniquifies the generated vessel barcodes. NOT date if test quickly invokes twice.
      *
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
     public PreFlightEntityBuilder runPreflightProcess(Map<String, TwoDBarcodedTube> mapBarcodeToTube,
-                                                      ProductOrder productOrder,
-                                                      LabBatch workflowBatch, String barcodeSuffix) {
-        labBatchEJB.createLabBatch(workflowBatch, "scotmatt", CreateFields.IssueType.EXOME_EXPRESS);
-
-        Bucket workingBucket = createAndPopulateBucket(mapBarcodeToTube, productOrder, "Preflight Bucket");
-        for (BucketEntry bucketEntry : workingBucket.getBucketEntries()) {
-            bucketEntry.setLabBatch(workflowBatch);
-        }
-
-        BucketDao mockBucketDao = EasyMock.createNiceMock(BucketDao.class);
-        EasyMock.expect(mockBucketDao.findByName("Preflight Bucket")).andReturn(workingBucket);
-        EasyMock.expect(mockBucketDao.findByName(EasyMock.anyObject(String.class))).andReturn(new Bucket("FAKEBUCKET"));
-        EasyMock.replay(mockBucketDao);
-
+            String barcodeSuffix) {
         return new PreFlightEntityBuilder(bettaLimsMessageTestFactory,
                 labEventFactory, getLabEventHandler(),
                 mapBarcodeToTube, barcodeSuffix).invoke();
@@ -347,14 +377,13 @@ public class BaseEventTest {
     /**
      * This method runs the entities through the HiSeq2500 process.
      *
-     *
-     *
-     * @param denatureRack    The denature tube rack.
-     * @param barcodeSuffix   Uniquifies the generated vessel barcodes. NOT date if test quickly invokes twice.
+     * @param denatureRack           The denature tube rack.
+     * @param barcodeSuffix          Uniquifies the generated vessel barcodes. NOT date if test quickly invokes twice.
      * @param productionFlowcellPath
-     * @param designationName Name of the designation created in Squid to support testing the systems running in
-*                        parallel
+     * @param designationName        Name of the designation created in Squid to support testing the systems running in
+     *                               parallel
      * @param workflowName
+     *
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
     public HiSeq2500FlowcellEntityBuilder runHiSeq2500FlowcellProcess(TubeFormation denatureRack, String barcodeSuffix,
@@ -362,10 +391,28 @@ public class BaseEventTest {
                                                                       ProductionFlowcellPath productionFlowcellPath,
                                                                       String designationName, String workflowName) {
 
-        String flowcellBarcode = "flowcell" + new Date().getTime();
+        String flowcellBarcode = "flowcell" + new Date().getTime() + "ADXX";
         return new HiSeq2500FlowcellEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
                 denatureRack, flowcellBarcode, barcodeSuffix, fctTicket, productionFlowcellPath,
                 designationName, workflowName).invoke();
+    }
+
+    public MiSeqReagentKitEntityBuilder runMiSeqReagentEntityBuilder(TubeFormation denatureRack, String barcodeSuffix,
+                                                                     String reagentBlockBarcode) {
+
+        char[] pool = {
+                'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i',
+                'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r',
+                's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '1',
+                '2', '3', '4', '5', '6', '7', '8', '9', '0'};
+
+        Random rnd = new Random();
+
+        String flowcellBarcode =
+                "A" + pool[rnd.nextInt(pool.length)] + pool[rnd.nextInt(pool.length)] + pool[rnd.nextInt(pool.length)]
+                + pool[rnd.nextInt(pool.length)];
+        return new MiSeqReagentKitEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
+                reagentBlockBarcode, denatureRack, flowcellBarcode).invoke();
     }
 
     /**
@@ -383,6 +430,56 @@ public class BaseEventTest {
                 pondRegRackBarcode, pondRegRack, pondRegTubeBarcodes).invoke();
     }
 
+    /**
+     * Simulates a BSP daughter plate transfer, prior to export from BSP to Mercury, then does a re-array to add
+     * controls.
+     *
+     * @param mapBarcodeToTube source tubes
+     *
+     * @return destination tube formation
+     */
+    public TubeFormation daughterPlateTransfer(Map<String, TwoDBarcodedTube> mapBarcodeToTube) {
+        // Daughter plate transfer that doesn't include controls
+        List<String> daughterTubeBarcodes = new ArrayList<>();
+        for (int i = 0; i < mapBarcodeToTube.size(); i++) {
+            daughterTubeBarcodes.add("D" + i);
+        }
+        PlateTransferEventType daughterPlateTransferJaxb =
+                bettaLimsMessageTestFactory.buildRackToRack("SamplesDaughterPlateCreation", "MotherRack",
+                        new ArrayList<>(mapBarcodeToTube.keySet()), "DaughterRack", daughterTubeBarcodes);
+        Map<String, LabVessel> mapBarcodeToVessel = new HashMap<String, LabVessel>(mapBarcodeToTube);
+        LabEvent daughterPlateTransferEntity =
+                labEventFactory.buildFromBettaLims(daughterPlateTransferJaxb, mapBarcodeToVessel);
+        TubeFormation daughterPlate =
+                (TubeFormation) daughterPlateTransferEntity.getTargetLabVessels().iterator().next();
+
+        Map<VesselPosition, TwoDBarcodedTube> mapBarcodeToDaughterTube = new EnumMap<>(VesselPosition.class);
+        for (TwoDBarcodedTube twoDBarcodedTube : daughterPlate.getContainerRole().getContainedVessels()) {
+            mapBarcodeToDaughterTube.put(daughterPlate.getContainerRole().getPositionOfVessel(twoDBarcodedTube),
+                    twoDBarcodedTube);
+        }
+
+        // Controls are added in a re-array
+        TwoDBarcodedTube posControlTube = new TwoDBarcodedTube("C1");
+        BSPSampleDTO bspSampleDtoPos = new BSPSampleDTO(
+                new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
+                    put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, POSITIVE_CONTROL);
+                }});
+        posControlTube.addSample(new MercurySample(POSITIVE_CONTROL, bspSampleDtoPos));
+        mapSampleNameToDto.put(POSITIVE_CONTROL, bspSampleDtoPos);
+        mapBarcodeToDaughterTube.put(VesselPosition.H11, posControlTube);
+
+        TwoDBarcodedTube negControlTube = new TwoDBarcodedTube("C2");
+        BSPSampleDTO bspSampleDtoNeg = new BSPSampleDTO(
+                new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
+                    put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, NEGATIVE_CONTROL);
+                }});
+        negControlTube.addSample(new MercurySample(NEGATIVE_CONTROL, bspSampleDtoNeg));
+        mapSampleNameToDto.put(NEGATIVE_CONTROL, bspSampleDtoNeg);
+        mapBarcodeToDaughterTube.put(VesselPosition.H12, negControlTube);
+
+        return new TubeFormation(mapBarcodeToDaughterTube, RackOfTubes.RackType.Matrix96);
+    }
 
     public BettaLimsMessageTestFactory getBettaLimsMessageTestFactory() {
         return bettaLimsMessageTestFactory;

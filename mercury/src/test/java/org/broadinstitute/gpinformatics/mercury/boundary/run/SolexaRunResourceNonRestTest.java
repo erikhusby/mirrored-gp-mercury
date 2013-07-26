@@ -132,6 +132,9 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
     @Inject
     BettalimsMessageResource bettalimsMessageResource;
 
+    @Inject
+    private MiSeqReagentKitDao reagentKitDao;
+
     @Deployment
     public static WebArchive buildMercuryWar() {
 
@@ -263,7 +266,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         IlluminaSequencingRun run;
         SolexaRunResource runResource =
                 new SolexaRunResource(runDao, illuminaSequencingRunFactory, flowcellDao, vesselTransferEjb, router,
-                        null, messageSender,squidConfig);
+                        null, messageSender,squidConfig, reagentKitDao);
 
         SolexaRunBean runBean =
                 new SolexaRunBean(miSeqBarcode, miSeqRunBarcode, runDate, machineName, runFileDirectory,
@@ -316,7 +319,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
 
         SolexaRunResource runResource =
                 new SolexaRunResource(runDao, illuminaSequencingRunFactory, flowcellDao, vesselTransferEjb, router,
-                        null, messageSender,squidConfig);
+                        null, messageSender,squidConfig, reagentKitDao);
 
         ReadStructureRequest readstructureResult = runResource.storeRunReadStructure(readStructure);
 

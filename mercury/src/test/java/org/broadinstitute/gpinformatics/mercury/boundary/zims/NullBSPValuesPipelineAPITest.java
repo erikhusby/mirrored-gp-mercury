@@ -14,7 +14,6 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 
-import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
 
 public class NullBSPValuesPipelineAPITest extends Arquillian {

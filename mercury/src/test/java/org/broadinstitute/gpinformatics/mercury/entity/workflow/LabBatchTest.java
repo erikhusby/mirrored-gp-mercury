@@ -45,15 +45,15 @@ public class LabBatchTest {
 
         pdoBusinessName = "PD0-999";
 
-        pdoNames = new ArrayList<String>();
+        pdoNames = new ArrayList<>();
         Collections.addAll(pdoNames, pdoBusinessName);
 
         workflowName = WorkflowName.EXOME_EXPRESS.getWorkflowName();
-        mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
+        mapBarcodeToTube = new LinkedHashMap<>();
 
-        Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<String, ProductOrder>();
+        Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<>();
 
-        List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>();
+        List<ProductOrderSample> productOrderSamples = new ArrayList<>();
         ProductOrder productOrder = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123", new Product(
                 "Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000, 20000, 100,
                 40, null, null, true, workflowName, false, "agg type"),
@@ -63,7 +63,7 @@ public class LabBatchTest {
         productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
         mapKeyToProductOrder.put(pdoBusinessName, productOrder);
 
-        List<String> vesselSampleList = new ArrayList<String>(6);
+        List<String> vesselSampleList = new ArrayList<>(6);
 
         Collections.addAll(vesselSampleList, "SM-423", "SM-243", "SM-765", "SM-143", "SM-9243", "SM-118");
 

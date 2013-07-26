@@ -29,7 +29,7 @@ import java.util.Set;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class LabMetricEtlDbFreeTest {
-    private final String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
+    private final String etlDateStr = ExtractTransform.formatTimestamp(new Date());
     private final long entityId = 1122334455L;
     private final long labVesselId = 2233445566L;
     private final LabMetric.MetricType type = LabMetric.MetricType.POND_PICO;

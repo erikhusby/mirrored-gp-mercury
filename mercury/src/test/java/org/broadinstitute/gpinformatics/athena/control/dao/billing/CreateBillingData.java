@@ -33,7 +33,7 @@ public class CreateBillingData extends ContainerTest {
             String pdoBusinessKey = "PDO-72";
             ProductOrder productOrder = productOrderDao.findByBusinessKey(pdoBusinessKey);
 
-            Set<LedgerEntry> ledgerEntries = new HashSet<LedgerEntry>();
+            Set<LedgerEntry> ledgerEntries = new HashSet<>();
             for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
                 if (productOrderSample.getSampleName().contains("A")) {
                     ledgerEntries.add(new LedgerEntry(productOrderSample, productOrder.getProduct().getPrimaryPriceItem(),
@@ -53,15 +53,7 @@ public class CreateBillingData extends ContainerTest {
 
             userTransaction.commit();
 
-        } catch (NotSupportedException e) {
-            throw new RuntimeException(e);
-        } catch (SystemException e) {
-            throw new RuntimeException(e);
-        } catch (HeuristicRollbackException e) {
-            throw new RuntimeException(e);
-        } catch (RollbackException e) {
-            throw new RuntimeException(e);
-        } catch (HeuristicMixedException e) {
+        } catch (NotSupportedException | HeuristicMixedException | RollbackException | HeuristicRollbackException | SystemException e) {
             throw new RuntimeException(e);
         }
 

@@ -21,7 +21,7 @@ public class JiraIssue implements Serializable {
     private String summary;
     private String description;
 
-    private Map<String, Object> extraFields = new HashMap<String, Object>();
+    private Map<String, Object> extraFields = new HashMap<>();
 
     private Date dueDate;
 

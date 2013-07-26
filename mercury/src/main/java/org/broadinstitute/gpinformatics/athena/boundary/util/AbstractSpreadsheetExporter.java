@@ -1,20 +1,27 @@
 package org.broadinstitute.gpinformatics.athena.boundary.util;
 
-import org.apache.poi.ss.usermodel.*;
+import org.apache.commons.lang3.time.FastDateFormat;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.CreationHelper;
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
+import java.text.Format;
 import java.util.Date;
 import java.util.Iterator;
 
 /**
- * Wrapper for all exporters so that the writer and exporter can share some members
+ * Wrapper for all exporters so that the writer and exporter can share some members.
  */
 public abstract class AbstractSpreadsheetExporter {
 
-    public static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd-HH:mm:ss");
+    public static final Format DATE_FORMAT = FastDateFormat.getInstance("yyyy-MM-dd-HH:mm:ss");
 
     private final Workbook workbook;
 

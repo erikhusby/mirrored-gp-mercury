@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
@@ -41,9 +42,9 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
     public static final String LIB_QC_SEQ_REQUIRED_MISEQ = "Yes - MiSeq";
 
 
-    private final Map<String, ResearchProject> foundResearchProjectList = new HashMap<String, ResearchProject>();
-    private Map<String, Set<LabVessel>> pdoToVesselMap = new HashMap<String, Set<LabVessel>>();
-    private final Map<String, ProductWorkflowDef> workflowDefs = new HashMap<String, ProductWorkflowDef>();
+    private final Map<String, ResearchProject> foundResearchProjectList = new HashMap<>();
+    private Map<String, Set<LabVessel>> pdoToVesselMap = new HashMap<>();
+    private final Map<String, ProductWorkflowDef> workflowDefs = new HashMap<>();
 //    private final Collection<String> pdos;
 
     private static final Log logger = LogFactory.getLog(LCSetJiraFieldFactory.class);
@@ -64,8 +65,18 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
         WorkflowLoader wfLoader = new WorkflowLoader();
         WorkflowConfig wfConfig = wfLoader.load();
 
-        pdoToVesselMap = LabVessel.extractPdoLabVesselMap(batch.getStartingBatchLabVessels());
 
+        if (!batch.getBucketEntries().isEmpty()) {
+            for (BucketEntry bucketEntry : batch.getBucketEntries()) {
+                String pdoKey = bucketEntry.getPoBusinessKey();
+                if (!pdoToVesselMap.containsKey(pdoKey)) {
+                    pdoToVesselMap.put(pdoKey, new HashSet<LabVessel>());
+                }
+                pdoToVesselMap.get(pdoKey).add(bucketEntry.getLabVessel());
+            }
+        } else {
+            pdoToVesselMap = LabVessel.extractPdoLabVesselMap(batch.getStartingBatchLabVessels());
+        }
 
         for (String currPdo : pdoToVesselMap.keySet()) {
             ProductOrder pdo = athenaClientService.retrieveProductOrderDetails(currPdo);
@@ -94,8 +105,8 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
      */
     public static String buildSamplesListString(LabBatch labBatch) {
         StringBuilder samplesText = new StringBuilder();
-        Set<String> newSamples = new HashSet<String>();
-        Set<String> reworkSamples = new HashSet<String>();
+        Set<String> newSamples = new HashSet<>();
+        Set<String> reworkSamples = new HashSet<>();
         for (LabVessel labVessel : labBatch.getNonReworkStartingLabVessels()) {
             Collection<String> samplesNamesForVessel = labVessel.getSampleNames();
             if (samplesNamesForVessel.size() > 1) {
@@ -133,7 +144,7 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
 
         //TODO SGM: Modify Field settings to Append instead of Overwriting.  This would cover associating an Existing Ticket
 
-        Set<CustomField> customFields = new HashSet<CustomField>();
+        Set<CustomField> customFields = new HashSet<>();
 
         customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.DESCRIPTION,
                 batch.getBatchDescription()));

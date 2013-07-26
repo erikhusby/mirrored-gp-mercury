@@ -39,7 +39,7 @@ public class ProductOrderTestFactory {
                 ProductTestFactory.createDummyProduct(workflowName.getWorkflowName(), productPartNumber);
         dummyProduct.setPrimaryPriceItem(exExPriceItem);
 
-        List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>(sampleCount);
+        List<ProductOrderSample> productOrderSamples = new ArrayList<>(sampleCount);
         for (int sampleIndex = 1; sampleIndex <= sampleCount; sampleIndex++) {
             String bspStock = "SM-" + String.valueOf(sampleIndex) + String.valueOf(sampleIndex + 1) +
                               String.valueOf(sampleIndex + 3) + String.valueOf(sampleIndex + 2) + sampleSuffix;
@@ -78,7 +78,7 @@ public class ProductOrderTestFactory {
 
     public static Map<String, ProductOrder> buildTestProductOrderMap() {
 
-        Map<String, ProductOrder> productOrderByBusinessKeyMap = new HashMap<String, ProductOrder>();
+        Map<String, ProductOrder> productOrderByBusinessKeyMap = new HashMap<>();
         ProductOrder tempPO = createDummyProductOrder("PDO-" + (new Random().nextInt() * 11));
 
         productOrderByBusinessKeyMap.put(tempPO.getBusinessKey(), tempPO);
@@ -133,7 +133,7 @@ public class ProductOrderTestFactory {
         ResearchProject researchProject = new ResearchProject(-1L, "Research Project " + uuid, "Synopsis", false);
         researchProject.setJiraTicketKey("RP-" + uuid);
 
-        List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>();
+        List<ProductOrderSample> productOrderSamples = new ArrayList<>();
         for (String sampleName : sampleNames) {
             productOrderSamples.add(new ProductOrderSample(sampleName));
         }

@@ -216,7 +216,7 @@ public class MercuryOrSquidRouterTest extends BaseEventTest {
 
         ProductFamily family = new ProductFamily("Test Product Family");
         testProduct = new Product("Test Product", family, "Test product", "P-TEST-1", new Date(), new Date(),
-                0, 0, 0, 0, "Test samples only", "None", true, "Test Workflow", false, "agg type");
+                0, 0, 0, 0, "Test samples only", "None", true, "Whole Genome", false, "agg type");
 
         //todo SGM:  Revisit. This probably meant to set the Workflow to ExEx
         exomeExpress = new Product("Exome Express", family, "Exome express", "P-EX-1", new Date(), new Date(),
@@ -289,8 +289,9 @@ public class MercuryOrSquidRouterTest extends BaseEventTest {
     public void testRouteForTubesAllInMercuryWithOrdersSomeExomeExpress() {
         placeOrderForTube(tube1, testProduct);
         ProductOrder order = placeOrderForTubeAndBucket(tube2, exomeExpress, picoBucket);
+        // todo jmt should this throw an exception, it's a mixture of Squid only and Mercury only?
         assertThat(mercuryOrSquidRouter.routeForVesselBarcodes(Arrays.asList(MERCURY_TUBE_1, MERCURY_TUBE_2)),
-                is(SQUID));
+                is(BOTH));
         verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>() {{
             add(MERCURY_TUBE_1);
             add(MERCURY_TUBE_2);
@@ -361,7 +362,8 @@ public class MercuryOrSquidRouterTest extends BaseEventTest {
         placeOrderForTube(tube1, testProduct);
         ProductOrder order = placeOrderForTubeAndBucket(tube2, exomeExpress, picoBucket);
         doSectionTransfer(makeTubeFormation(tube1, tube2), plate);
-        assertThat(mercuryOrSquidRouter.routeForVessel(MERCURY_PLATE), equalTo(SQUID));
+        // todo jmt should this throw an exception, it's a mixture of Squid only and Mercury only?
+        assertThat(mercuryOrSquidRouter.routeForVessel(MERCURY_PLATE), equalTo(BOTH));
         verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>() {{
             add(MERCURY_PLATE);
         }});
@@ -449,6 +451,8 @@ public class MercuryOrSquidRouterTest extends BaseEventTest {
 
     @Test(groups = DATABASE_FREE, enabled = true)
     public void testMercuryOnlyRouting() {
+        expectedRouting = MercuryOrSquidRouter.MercuryOrSquid.MERCURY;
+
         final ProductOrder
                 productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
         AthenaClientServiceStub.addProductOrder(productOrder);
@@ -475,8 +479,9 @@ public class MercuryOrSquidRouterTest extends BaseEventTest {
                 is(MercuryOrSquidRouter.MercuryOrSquid.SQUID));
 
         //Build Event History
-        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube, productOrder,
-                workflowBatch, null, String.valueOf(runDate.getTime()), BARCODE_SUFFIX, true);
+        bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, BARCODE_SUFFIX);
+        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube,
+                String.valueOf(runDate.getTime()), BARCODE_SUFFIX, true);
 
         /*
          * Bucketing (which is required to find batch and Product key) happens in PicoPlatingEntityBuilder so
@@ -491,7 +496,7 @@ public class MercuryOrSquidRouterTest extends BaseEventTest {
 
 
         ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder =
-                runExomeExpressShearingProcess(productOrder, picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
+                runExomeExpressShearingProcess(picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
                         picoPlatingEntityBuilder.getNormTubeFormation(),
                         picoPlatingEntityBuilder.getNormalizationBarcode(), BARCODE_SUFFIX);
 
@@ -570,6 +575,8 @@ public class MercuryOrSquidRouterTest extends BaseEventTest {
 
     @Test(groups = DATABASE_FREE, enabled = true)
     public void testMercuryAndSquidRouting() {
+        expectedRouting = MercuryOrSquidRouter.MercuryOrSquid.BOTH;
+
         final ProductOrder
                 productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
         AthenaClientServiceStub.addProductOrder(productOrder);
@@ -598,8 +605,9 @@ public class MercuryOrSquidRouterTest extends BaseEventTest {
                 is(MercuryOrSquidRouter.MercuryOrSquid.SQUID));
 
         //Build Event History
-        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube, productOrder,
-                workflowBatch, null, String.valueOf(runDate.getTime()), BARCODE_SUFFIX, true);
+        bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, BARCODE_SUFFIX);
+        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube,
+                String.valueOf(runDate.getTime()), BARCODE_SUFFIX, true);
 
         /*
          * Bucketing (which is required to find batch and Product key) happens in PicoPlatingEntityBuilder so
@@ -614,7 +622,7 @@ public class MercuryOrSquidRouterTest extends BaseEventTest {
 
 
         ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder =
-                runExomeExpressShearingProcess(productOrder, picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
+                runExomeExpressShearingProcess(picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
                         picoPlatingEntityBuilder.getNormTubeFormation(),
                         picoPlatingEntityBuilder.getNormalizationBarcode(), BARCODE_SUFFIX);
 

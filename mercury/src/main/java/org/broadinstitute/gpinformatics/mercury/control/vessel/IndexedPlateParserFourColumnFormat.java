@@ -24,7 +24,7 @@ public class IndexedPlateParserFourColumnFormat implements IndexedPlateParser {
 
     @Override
     public List<PlateWellIndexAssociation> parseInputStream(final InputStream is) {
-        final List<PlateWellIndexAssociation> plateIndexes = new ArrayList<PlateWellIndexAssociation>();
+        final List<PlateWellIndexAssociation> plateIndexes = new ArrayList<>();
 
         try {
             final StringWriter writer = new StringWriter();

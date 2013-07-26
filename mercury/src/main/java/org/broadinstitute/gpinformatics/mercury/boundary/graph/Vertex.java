@@ -16,8 +16,8 @@ public class Vertex implements Serializable {
     private String id;
     private String idType;
     private String title;
-    private List<String> details = new ArrayList<String>();
-    private Map<String, List<String>> alternativeIds = new HashMap<String, List<String>>();
+    private List<String> details = new ArrayList<>();
+    private Map<String, List<String>> alternativeIds = new HashMap<>();
     private Vertex[][] childVertices;
     private Vertex parentVertex;
     private boolean hasMoreEdges;
@@ -96,7 +96,7 @@ public class Vertex implements Serializable {
     public static void addAlternativeId(Map<String, List<String>> alternativeIds, String type, String id) {
         List<String> idList = alternativeIds.get(type);
         if(idList == null) {
-            idList = new ArrayList<String>();
+            idList = new ArrayList<>();
             alternativeIds.put(type, idList);
         }
         idList.add(id);

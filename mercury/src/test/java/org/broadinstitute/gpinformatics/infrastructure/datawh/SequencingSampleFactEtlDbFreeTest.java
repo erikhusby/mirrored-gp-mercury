@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServic
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
@@ -68,7 +69,7 @@ import java.util.TreeSet;
 @Test(groups = TestGroups.DATABASE_FREE, enabled = true)
 public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
     public static final String FCT_TICKET = "FCT-1";
-    private String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
+    private final String etlDateString = ExtractTransform.formatTimestamp(new Date());
     private long entityId = 9988776655L;
     private String runName = "hiseqRun_name_dbfreetest";
     private Date runDate = new Date(1377000000000L);
@@ -146,7 +147,7 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         EasyMock.expect(dao.findById(SequencingRun.class, -1L)).andReturn(null);
         EasyMock.replay(mocks);
 
-        Assert.assertEquals(tst.dataRecords(etlDateStr, false, -1L).size(), 0);
+        Assert.assertEquals(tst.dataRecords(etlDateString, false, -1L).size(), 0);
 
         EasyMock.verify(mocks);
     }
@@ -197,21 +198,21 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
 
         EasyMock.replay(mocks);
 
-        Collection<String> records = tst.dataRecords(etlDateStr, false, entityId);
+        Collection<String> records = tst.dataRecords(etlDateString, false, entityId);
         Assert.assertEquals(records.size(), 2);
         for (String record : records) {
             if (record.contains(",2,")) {
                 verifyRecord(record, molecularIndexSchemeName[0], pdoId, sampleKey, 2, denatureSource.getLabel(),
-                        ExtractTransform.secTimestampFormat.format(denatureSource.getCreatedOn()), cartridgeName,
+                        ExtractTransform.formatTimestamp(denatureSource.getCreatedOn()), cartridgeName,
                         researchProjectId, workflowBatch.getBatchName());
             } else {
                 verifyRecord(record, molecularIndexSchemeName[0], pdoId, sampleKey, 1, denatureSource.getLabel(),
-                        ExtractTransform.secTimestampFormat.format(denatureSource.getCreatedOn()), cartridgeName,
+                        ExtractTransform.formatTimestamp(denatureSource.getCreatedOn()), cartridgeName,
                         researchProjectId, workflowBatch.getBatchName());
             }
         }
         // Tests the pdo cache.  Should just skip some of the expects.
-        records = tst.dataRecords(etlDateStr, false, entityId);
+        records = tst.dataRecords(etlDateString, false, entityId);
         Assert.assertEquals(records.size(), 2);
 
         EasyMock.verify(mocks);
@@ -261,16 +262,16 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
 
         EasyMock.replay(mocks);
 
-        Collection<String> records = tst.dataRecords(etlDateStr, false, entityId);
+        Collection<String> records = tst.dataRecords(etlDateString, false, entityId);
         Assert.assertEquals(records.size(), 2);
         for (String record : records) {
             if (record.contains(",2,")) {
                 verifyRecord(record, molecularIndexSchemeName[1], pdoId, sampleKey, 2, denatureSource.getLabel(),
-                        ExtractTransform.secTimestampFormat.format(denatureSource.getCreatedOn()), cartridgeName,
+                        ExtractTransform.formatTimestamp(denatureSource.getCreatedOn()), cartridgeName,
                         researchProjectId, workflowBatch.getBatchName());
             } else {
                 verifyRecord(record, molecularIndexSchemeName[1], pdoId, sampleKey, 1, denatureSource.getLabel(),
-                        ExtractTransform.secTimestampFormat.format(denatureSource.getCreatedOn()), cartridgeName,
+                        ExtractTransform.formatTimestamp(denatureSource.getCreatedOn()), cartridgeName,
                         researchProjectId, workflowBatch.getBatchName());
             }
         }
@@ -328,16 +329,16 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
 
         EasyMock.replay(mocks);
         String expectedMolecularIndexName = molecularIndexSchemeName[0] + " " + molecularIndexSchemeName[2];
-        Collection<String> records = tst.dataRecords(etlDateStr, false, entityId);
+        Collection<String> records = tst.dataRecords(etlDateString, false, entityId);
         Assert.assertEquals(records.size(), 2);
         for (String record : records) {
             if (record.contains(",2,")) {
                 verifyRecord(record, expectedMolecularIndexName, pdoId, sampleKey, 2, denatureSource.getLabel(),
-                        ExtractTransform.secTimestampFormat.format(denatureSource.getCreatedOn()), cartridgeName,
+                        ExtractTransform.formatTimestamp(denatureSource.getCreatedOn()), cartridgeName,
                         researchProjectId, workflowBatch.getBatchName());
             } else {
                 verifyRecord(record, expectedMolecularIndexName, pdoId, sampleKey, 1, denatureSource.getLabel(),
-                        ExtractTransform.secTimestampFormat.format(denatureSource.getCreatedOn()), cartridgeName,
+                        ExtractTransform.formatTimestamp(denatureSource.getCreatedOn()), cartridgeName,
                         researchProjectId, workflowBatch.getBatchName());
             }
         }
@@ -395,7 +396,7 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
 
         EasyMock.replay(mocks);
 
-        Collection<String> records = tst.dataRecords(etlDateStr, false, entityId);
+        Collection<String> records = tst.dataRecords(etlDateString, false, entityId);
         Assert.assertEquals(records.size(), 2);
         boolean found1 = false;
         boolean found2 = false;
@@ -407,7 +408,7 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
                 found2 = true;
             }
             verifyRecord(record, "NONE", pdoId, null, 1, denatureSource.getLabel(),
-                    ExtractTransform.secTimestampFormat.format(denatureSource.getCreatedOn()), cartridgeName,
+                    ExtractTransform.formatTimestamp(denatureSource.getCreatedOn()), cartridgeName,
                     researchProjectId, workflowBatch.getBatchName());
         }
         Assert.assertTrue(found1 && found2);
@@ -416,6 +417,8 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
     }
 
     public void testWithEventHistory() throws Exception {
+        expectedRouting = MercuryOrSquidRouter.MercuryOrSquid.MERCURY;
+
         final ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
         Long pdoId = 9202938094820L;
         AthenaClientServiceStub.addProductOrder(productOrder);
@@ -424,12 +427,14 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
         workflowBatch.setWorkflowName("Exome Express");
+        workflowBatch.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
 
+        bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
         //Build Event History
-        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube, productOrder,
-                workflowBatch, null, String.valueOf(runDate.getTime()), "1", true);
+        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube,
+                String.valueOf(runDate.getTime()), "1", true);
         ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder =
-                runExomeExpressShearingProcess(productOrder, picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
+                runExomeExpressShearingProcess(picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
                         picoPlatingEntityBuilder.getNormTubeFormation(),
                         picoPlatingEntityBuilder.getNormalizationBarcode(), "1");
         LibraryConstructionEntityBuilder libraryConstructionEntityBuilder =
@@ -490,7 +495,7 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         EasyMock.expect(researchProject.getResearchProjectId()).andReturn(researchProjectId);
 
         EasyMock.replay(mocks);
-        Collection<String> records = tst.dataRecords(etlDateStr, false, entityId);
+        Collection<String> records = tst.dataRecords(etlDateString, false, entityId);
 
         Assert.assertEquals(records.size(), 192);
 
@@ -524,12 +529,12 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
                 if (record.contains(",2,")) {
                     verifyRecord(record, molecularIndexingSchemeName, pdoId,
                             testInstance.getStartingSample().getSampleKey(), 2, denatureSource.getLabel(),
-                            ExtractTransform.secTimestampFormat.format(denatureSource.getCreatedOn()),
+                            ExtractTransform.formatTimestamp(denatureSource.getCreatedOn()),
                             illuminaFlowcell.getLabel(), researchProjectId, workflowBatch.getBatchName());
                 } else {
                     verifyRecord(record, molecularIndexingSchemeName, pdoId,
                             testInstance.getStartingSample().getSampleKey(), 1, denatureSource.getLabel(),
-                            ExtractTransform.secTimestampFormat.format(denatureSource.getCreatedOn()),
+                            ExtractTransform.formatTimestamp(denatureSource.getCreatedOn()),
                             illuminaFlowcell.getLabel(), researchProjectId, workflowBatch.getBatchName());
                 }
             }
@@ -543,7 +548,7 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
                                   long researchProjectId1, String batchName) {
         int i = 0;
         String[] parts = record.split(",");
-        Assert.assertEquals(parts[i++], etlDateStr);
+        Assert.assertEquals(parts[i++], etlDateString);
         Assert.assertEquals(parts[i++], "F");
         Assert.assertEquals(parts[i++], String.valueOf(entityId));
         Assert.assertEquals(parts[i++], cartridgeName1);

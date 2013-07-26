@@ -44,8 +44,8 @@ public class LabBatchResource {
 
     @POST
     public String createLabBatch(LabBatchBean labBatchBean) {
-        List<String> tubeBarcodes = new ArrayList<String>();
-        List<MercurySample> mercurySampleKeys = new ArrayList<MercurySample>();
+        List<String> tubeBarcodes = new ArrayList<>();
+        List<MercurySample> mercurySampleKeys = new ArrayList<>();
         for (TubeBean tubeBean : labBatchBean.getTubeBeans()) {
             tubeBarcodes.add(tubeBean.getBarcode());
             if(tubeBean.getSampleBarcode() != null) {
@@ -78,7 +78,7 @@ public class LabBatchResource {
     @DaoFree
     public LabBatch buildLabBatch(LabBatchBean labBatchBean, Map<String, TwoDBarcodedTube> mapBarcodeToTube,
             Map<MercurySample, MercurySample> mapBarcodeToSample) {
-        Set<LabVessel> starters = new HashSet<LabVessel>();
+        Set<LabVessel> starters = new HashSet<>();
         for (TubeBean tubeBean : labBatchBean.getTubeBeans()) {
             TwoDBarcodedTube twoDBarcodedTube = mapBarcodeToTube.get(tubeBean.getBarcode());
             if (twoDBarcodedTube == null) {

@@ -12,7 +12,7 @@ public class BSPPlatingReceipt {
 
     private final String receiptId;
     
-    private Collection<BSPPlatingRequest> requests = new HashSet<BSPPlatingRequest>();
+    private Collection<BSPPlatingRequest> requests = new HashSet<>();
     
     public BSPPlatingReceipt(String receiptId) {
         this.receiptId = receiptId;        

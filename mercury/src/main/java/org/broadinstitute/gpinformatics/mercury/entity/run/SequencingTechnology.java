@@ -12,8 +12,8 @@ public interface SequencingTechnology {
         ION_TORRENT,
         PACBIO
         
-    };
-    
+    }
+
     public String asText();
 
 }

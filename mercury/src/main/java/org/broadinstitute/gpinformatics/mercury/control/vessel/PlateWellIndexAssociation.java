@@ -14,7 +14,7 @@ public class PlateWellIndexAssociation {
     private final String wellName;
     private final String technology;
     private final List<MolecularIndexingSchemeFactory.IndexPositionPair> positionPairs =
-            new ArrayList<MolecularIndexingSchemeFactory.IndexPositionPair>();
+            new ArrayList<>();
 
     PlateWellIndexAssociation(String barcode, String well, String tech) {
         this.plateBarcode = barcode;

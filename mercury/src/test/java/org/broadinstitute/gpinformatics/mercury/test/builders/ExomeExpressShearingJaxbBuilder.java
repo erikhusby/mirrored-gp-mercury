@@ -26,7 +26,7 @@ public class ExomeExpressShearingJaxbBuilder {
     private PlateEventType covarisLoadEventJaxb;
     private PlateTransferEventType postShearingTransferCleanupEventJaxb;
     private PlateTransferEventType shearingQcEventJaxb;
-    private final List<BettaLIMSMessage> messageList = new ArrayList<BettaLIMSMessage>();
+    private final List<BettaLIMSMessage> messageList = new ArrayList<>();
 
     public ExomeExpressShearingJaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
                                            List<String> tubeBarcodeList, String testPrefix, String rackBarcode) {

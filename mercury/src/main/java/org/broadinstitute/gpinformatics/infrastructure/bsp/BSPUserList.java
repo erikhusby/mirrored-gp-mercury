@@ -106,7 +106,7 @@ public class BSPUserList extends AbstractCache implements Serializable {
         }
 
         String[] lowerQueryItems = query.toLowerCase().split("\\s");
-        List<BspUser> results = new ArrayList<BspUser>();
+        List<BspUser> results = new ArrayList<>();
         for (BspUser user : getUsers().values()) {
             boolean eachItemMatchesSomething = true;
             for (String lowerQuery : lowerQueryItems) {
@@ -158,7 +158,7 @@ public class BSPUserList extends AbstractCache implements Serializable {
                 if (users != null) {
                     return;
                 } else {
-                    rawUsers = new ArrayList<BspUser>();
+                    rawUsers = new ArrayList<>();
                 }
             }
 
@@ -181,7 +181,7 @@ public class BSPUserList extends AbstractCache implements Serializable {
 
             // Use a LinkedHashMap since (1) it preserves the insertion order of its elements, so
             // our entries stay sorted and (2) it has lower overhead than a TreeMap.
-            Map<Long, BspUser> userMap = new LinkedHashMap<Long, BspUser>(rawUsers.size());
+            Map<Long, BspUser> userMap = new LinkedHashMap<>(rawUsers.size());
             for (BspUser user : rawUsers) {
                 userMap.put(user.getUserId(), user);
             }

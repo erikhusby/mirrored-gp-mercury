@@ -16,10 +16,13 @@ import org.broadinstitute.gpinformatics.mercury.boundary.labevent.VesselTransfer
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.MiSeqReagentKitDao;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.MiSeqReagentKit;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
 import org.broadinstitute.gpinformatics.mercury.squid.generated.SolexaRunSynopsisBean;
 import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
@@ -69,13 +72,15 @@ public class SolexaRunResource {
 
     private SquidConfig squidConfig;
 
+    private MiSeqReagentKitDao reagentKitDao;
+
     @Inject
     public SolexaRunResource(IlluminaSequencingRunDao illuminaSequencingRunDao,
                              IlluminaSequencingRunFactory illuminaSequencingRunFactory,
                              IlluminaFlowcellDao illuminaFlowcellDao, VesselTransferEjb vesselTransferEjb,
                              MercuryOrSquidRouter router, SquidConnector connector,
                              HipChatMessageSender messageSender,
-                             SquidConfig squidConfig) {
+                             SquidConfig squidConfig, MiSeqReagentKitDao reagentKitDao) {
         this.illuminaSequencingRunDao = illuminaSequencingRunDao;
         this.illuminaSequencingRunFactory = illuminaSequencingRunFactory;
         this.illuminaFlowcellDao = illuminaFlowcellDao;
@@ -84,6 +89,7 @@ public class SolexaRunResource {
         this.connector = connector;
         this.messageSender = messageSender;
         this.squidConfig = squidConfig;
+        this.reagentKitDao = reagentKitDao;
     }
 
     public SolexaRunResource() {
@@ -105,9 +111,16 @@ public class SolexaRunResource {
                     Response.Status.INTERNAL_SERVER_ERROR);
         }
 
-        IlluminaFlowcell flowcell = illuminaFlowcellDao.findByBarcode(solexaRunBean.getFlowcellBarcode());
-        MercuryOrSquidRouter.MercuryOrSquid route = router.routeForVessels(
-                Collections.<LabVessel>singletonList(flowcell));
+        IlluminaFlowcell flowcell= illuminaFlowcellDao.findByBarcode(solexaRunBean.getFlowcellBarcode());
+        MiSeqReagentKit reagentKit;
+        MercuryOrSquidRouter.MercuryOrSquid route;
+
+        if(StringUtils.isNotBlank(solexaRunBean.getReagentBlockBarcode())) {
+            reagentKit = reagentKitDao.findByBarcode(solexaRunBean.getReagentBlockBarcode());
+            route = router.routeForVessels(Collections.<LabVessel>singletonList(reagentKit));
+        } else {
+            route = router.routeForVessels(Collections.<LabVessel>singletonList(flowcell));
+        }
 
         Response callerResponse = null;
         UriBuilder absolutePathBuilder = uriInfo.getAbsolutePathBuilder();
@@ -138,18 +151,15 @@ public class SolexaRunResource {
             try {
                 run = registerRun(solexaRunBean, flowcell);
                 URI createdUri = absolutePathBuilder.path(run.getRunName()).build();
-                if (callerResponse != null && callerResponse.getStatus() == Response.Status.CREATED.getStatusCode()) {
+                if (callerResponse == null || callerResponse.getStatus() == Response.Status.CREATED.getStatusCode()) {
                     callerResponse = Response.created(createdUri).entity(solexaRunBean).build();
                 }
             } catch (Exception e) {
                 LOG.error("Failed to process run" + Response.Status.INTERNAL_SERVER_ERROR, e);
                 messageSender.postMessageToGpLims("Failed to process run" + Response.Status.INTERNAL_SERVER_ERROR);
-                /*
-                * TODO SGM  Until ExExV2 is totally live, errors thrown from the Mercury side with Registration should
-                * not be thrown (except if registering a run multiple times
-                *
-                * throw new ResourceException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR, e);
-                */
+                if (route == MercuryOrSquidRouter.MercuryOrSquid.MERCURY) {
+                    throw new ResourceException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR, e);
+                }
             }
         }
 
@@ -158,17 +168,16 @@ public class SolexaRunResource {
 
 
     public IlluminaSequencingRun registerRun(SolexaRunBean solexaRunBean, IlluminaFlowcell illuminaFlowcell) {
-         IlluminaSequencingRun illuminaSequencingRun =
-                illuminaSequencingRunFactory.build(solexaRunBean, illuminaFlowcell);
-
-        illuminaSequencingRunDao.persist(illuminaSequencingRun);
-
         // Link the reagentKit to flowcell if you have a reagentBlockBarcode. Only MiSeq uses reagentKits.;
         if (!StringUtils.isEmpty(solexaRunBean.getReagentBlockBarcode())) {
-            vesselTransferEjb
-                    .reagentKitToFlowcell(solexaRunBean.getReagentBlockBarcode(), solexaRunBean.getFlowcellBarcode(),
-                            "pdunlea", solexaRunBean.getMachineName());
+            LabEvent labEvent = vesselTransferEjb.reagentKitToFlowcell(solexaRunBean.getReagentBlockBarcode(),
+                    solexaRunBean.getFlowcellBarcode(), "pdunlea", solexaRunBean.getMachineName());
+            illuminaFlowcell = (IlluminaFlowcell) labEvent.getTargetLabVessels().iterator().next();
         }
+
+        IlluminaSequencingRun illuminaSequencingRun = illuminaSequencingRunFactory.build(solexaRunBean,
+                illuminaFlowcell);
+        illuminaSequencingRunDao.persist(illuminaSequencingRun);
 
         return illuminaSequencingRun;
     }

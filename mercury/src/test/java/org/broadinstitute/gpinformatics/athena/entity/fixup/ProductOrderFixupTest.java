@@ -281,7 +281,7 @@ public class ProductOrderFixupTest extends Arquillian {
         @SuppressWarnings("unchecked")
         List<Object[]> resultList = query.getResultList();
 
-        Map<String, Date> keyToDateMap = new HashMap<String, Date>();
+        Map<String, Date> keyToDateMap = new HashMap<>();
 
         for (Object[] row : resultList) {
             String key = (String) row[0];
@@ -371,9 +371,24 @@ public class ProductOrderFixupTest extends Arquillian {
         for (ProductOrderSample pdoSample : pdoSamples) {
             pdoSample.setDeliveryStatus(ProductOrderSample.DeliveryStatus.NOT_STARTED);
         }
+        List<String> samplesToUnAbandon = Arrays.asList(
+                "SM-2HJ9A",
+                "SM-2HMML",
+                "SM-2HMH9",
+                "SM-2IJBV",
+                "SM-2IJEK",
+                "SM-2LK3J");
 
-        productOrderSampleDao.persistAll(pdoSamples);
+        ProductOrder productOrder = productOrderDao.findByBusinessKey("PDO-652");
+        List<ProductOrderSample> sampleList = productOrder.getSamples();
 
-        productOrderEjb.updateOrderStatus(order.getJiraTicketKey());
+        for (ProductOrderSample sample : sampleList) {
+            if (samplesToUnAbandon.contains(sample.getSampleName())) {
+                sample.setDeliveryStatus(ProductOrderSample.DeliveryStatus.NOT_STARTED);
+            }
+        }
+
+        productOrderSampleDao.persistAll(sampleList);
+        productOrderEjb.updateOrderStatus(productOrder.getJiraTicketKey());
     }
 }

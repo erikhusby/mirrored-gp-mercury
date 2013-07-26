@@ -14,9 +14,12 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.easymock.EasyMock.*;
+import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.reset;
+import static org.easymock.EasyMock.verify;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNull;
 
 /**
  * dbfree unit test of entity etl.
@@ -26,10 +29,10 @@ import static org.testng.Assert.assertNull;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class LedgerEntryCrossEtlDbFreeTest {
-    private String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
+    private final String etlDateStr = ExtractTransform.formatTimestamp(new Date());
     private long posId = 2233445511L;
     private String datafileDir;
-    private Set<LedgerEntry> ledgerItems = new HashSet<LedgerEntry>();
+    private Set<LedgerEntry> ledgerItems = new HashSet<>();
     private LedgerEntryCrossEtl tst;
 
     private AuditReaderDao auditReader = createMock(AuditReaderDao.class);

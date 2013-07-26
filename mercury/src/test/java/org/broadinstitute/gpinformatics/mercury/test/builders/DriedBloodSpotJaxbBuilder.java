@@ -15,8 +15,8 @@ import java.util.List;
 * Builds JAXB BettaLIMS DTOs to test messaging for Dried Blood Spot extraction.
 */
 public class DriedBloodSpotJaxbBuilder {
-    private List<BettaLIMSMessage> messageList = new ArrayList<BettaLIMSMessage>();
-    private List<ReceptaclePlateTransferEvent> samplePunchJaxbs = new ArrayList<ReceptaclePlateTransferEvent>();
+    private List<BettaLIMSMessage> messageList = new ArrayList<>();
+    private List<ReceptaclePlateTransferEvent> samplePunchJaxbs = new ArrayList<>();
     private PlateEventType incubationMixJaxb;
     private PlateEventType lysisBufferJaxb;
     private PlateEventType magneticResinJaxb;
@@ -85,7 +85,7 @@ public class DriedBloodSpotJaxbBuilder {
         bettaLimsMessageTestFactory.addMessage(messageList, dbsElutionBufferJaxb);
 
         // DBSFinalTransfer plate -> rack
-        List<String> finalTubeBarcodes = new ArrayList<String>();
+        List<String> finalTubeBarcodes = new ArrayList<>();
         for(int i = 0; i < ftaPaperBarcodes.size(); i++) {
             finalTubeBarcodes.add("DBSFinal" + i + timestamp);
         }

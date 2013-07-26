@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
@@ -74,6 +75,7 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
 
     @Test(groups = DATABASE_FREE)
     public void test() {
+        expectedRouting = MercuryOrSquidRouter.MercuryOrSquid.MERCURY;
 
         BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
         BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
@@ -174,9 +176,11 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
         workflowBatch.setWorkflowName("Exome Express");
+        workflowBatch.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
 
-        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube, productOrder1,
-                workflowBatch, null, String.valueOf(LabEventTest.NUM_POSITIONS_IN_RACK), "1", true);
+        bucketBatchAndDrain(mapBarcodeToTube, productOrder1, workflowBatch, "1");
+        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube,
+                String.valueOf(LabEventTest.NUM_POSITIONS_IN_RACK), "1", true);
 
         LabEventHandler leHandler = getLabEventHandler();
 

@@ -14,13 +14,13 @@ public class DevExperimentDataBean {
     private String experiment;
 
     @JsonProperty("conditions")
-    private List<String> conditions = new ArrayList<String>();
+    private List<String> conditions = new ArrayList<>();
 
     public DevExperimentDataBean() {}
 
     public DevExperimentDataBean(TZDevExperimentData experimentData) {
         this.experiment = experimentData.getExperiment();
-        conditions = new ArrayList<String>();
+        conditions = new ArrayList<>();
         for (String condition : experimentData.getConditionChain()) {
             if (condition != null) {
                 if (condition.length() > 0) {

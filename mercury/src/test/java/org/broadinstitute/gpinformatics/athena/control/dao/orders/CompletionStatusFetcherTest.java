@@ -11,7 +11,6 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -129,7 +128,7 @@ public class CompletionStatusFetcherTest extends ContainerTest {
     public void testGetAllStatuses() throws Exception {
         List<ProductOrder> allOrders = pdoDao.findAll();
 
-        List<String> allBusinessKeys = new ArrayList<String>();
+        List<String> allBusinessKeys = new ArrayList<>();
         for (ProductOrder order : allOrders) {
             if (order.hasJiraTicketKey()) {
                 allBusinessKeys.add(order.getBusinessKey());

@@ -43,7 +43,7 @@ public class LabVesselComment<T extends RapSheetEntry> {
     @Column(nullable = false)
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, targetEntity = RapSheetEntry.class,
             mappedBy = "labVesselComment")
-    private List<T> rapSheetEntries = new ArrayList<T>();
+    private List<T> rapSheetEntries = new ArrayList<>();
 
     @Column(nullable = false)
     @Temporal(TemporalType.DATE)

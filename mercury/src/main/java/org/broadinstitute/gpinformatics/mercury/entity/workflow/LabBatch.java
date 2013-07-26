@@ -80,7 +80,7 @@ public class LabBatch {
 
     // todo jmt get Hibernate to sort this
     @OneToMany(mappedBy = "labBatch")
-    private Set<LabEvent> labEvents = new LinkedHashSet<LabEvent>();
+    private Set<LabEvent> labEvents = new LinkedHashSet<>();
 
     /**
      * Vessels in the batch that were added as rework from a previous batch.
@@ -88,7 +88,7 @@ public class LabBatch {
     @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(name = "lab_batch_reworks", joinColumns = @JoinColumn(name = "lab_batch"),
             inverseJoinColumns = @JoinColumn(name = "reworks"))
-    private Collection<LabVessel> reworks = new HashSet<LabVessel>();
+    private Collection<LabVessel> reworks = new HashSet<>();
 
     private Date createdOn;
 
@@ -145,7 +145,7 @@ public class LabBatch {
     private String important;
 
     @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "labBatch")
-    private Set<BucketEntry> bucketEntries = new HashSet<BucketEntry>();
+    private Set<BucketEntry> bucketEntries = new HashSet<>();
 
     public LabBatch(String batchName, Set<LabVessel> starterVessels, LabBatchType labBatchType) {
         this(batchName, starterVessels, labBatchType, null);
@@ -170,6 +170,13 @@ public class LabBatch {
         this.important = important;
     }
 
+    public LabBatch(String batchName, Set<LabVessel> startingLabVessels, Set<LabVessel> reworkLabVessels,
+                    LabBatchType labBatchType, String workflowName, String batchDescription, Date dueDate,
+                    String important) {
+        this(batchName, startingLabVessels, labBatchType, batchDescription, dueDate, important);
+        setWorkflowName(workflowName);
+        addReworks(reworkLabVessels);
+    }
 
     /**
      * Adds the given rework vessels to the list of reworks for the batch.
@@ -278,11 +285,11 @@ public class LabBatch {
     }
 
     private List<LabEvent> getAllEventsSortedByDate() {
-        Map<Date, LabEvent> sortedTreeMap = new TreeMap<Date, LabEvent>();
+        Map<Date, LabEvent> sortedTreeMap = new TreeMap<>();
         for (LabEvent event : getLabEvents()) {
             sortedTreeMap.put(event.getEventDate(), event);
         }
-        return new ArrayList<LabEvent>(sortedTreeMap.values());
+        return new ArrayList<>(sortedTreeMap.values());
     }
 
     public LabEvent getLatestEvent() {
@@ -439,6 +446,7 @@ public class LabBatch {
 
     public void addBucketEntry(BucketEntry bucketEntry) {
         bucketEntries.add(bucketEntry);
+        bucketEntry.setLabBatch(this);
     }
 
     public void setCreatedOn(Date createdOn) {
@@ -515,5 +523,10 @@ public class LabBatch {
         }
 
         return startingBatchLabVessels.iterator().next().getLabVessel();
+    }
+
+    @Override
+    public String toString() {
+        return batchName;
     }
 }

@@ -50,7 +50,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
     @Inject
     public LabEventEtl(WorkflowConfigLookup workflowConfigLookup, LabEventDao dao, ProductOrderDao pdoDao,
                        SequencingSampleFactEtl sequencingSampleFactEtl) {
-        super(LabEvent.class, "event_fact", dao);
+        super(LabEvent.class, "event_fact", "lab_event_aud", "lab_event_id", dao);
         this.workflowConfigLookup = workflowConfigLookup;
         this.pdoDao = pdoDao;
         this.sequencingSampleFactEtl = sequencingSampleFactEtl;
@@ -93,7 +93,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                             format(fact.getBatchName()),
                             format(fact.getLabEvent().getEventLocation()),
                             format(fact.getLabVessel().getLabVesselId()),
-                            format(ExtractTransform.secTimestampFormat.format(fact.getLabEvent().getEventDate()))
+                            format(ExtractTransform.formatTimestamp(fact.getLabEvent().getEventDate()))
                     ));
                 }
             }
@@ -282,50 +282,48 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             for (LabVessel vessel : vessels) {
                 try {
                     Set<SampleInstance> sampleInstances =
-                            vessel.getSampleInstances(SampleType.WITH_PDO, LabBatchType.WORKFLOW);
+                            vessel.getSampleInstances(SampleType.PREFER_PDO, LabBatchType.WORKFLOW);
 
                     if (!sampleInstances.isEmpty()) {
                         for (SampleInstance si : sampleInstances) {
 
                             String pdoKey = si.getProductOrderKey();
-                            if (pdoKey != null) {
-                                ProductOrder pdo;
-                                synchronized (cachedPdo) {
-                                    if (cachedPdo.containsKey(pdoKey)) {
-                                        pdo = cachedPdo.get(pdoKey);
-                                    } else {
-                                        pdo = pdoDao.findByBusinessKey(pdoKey);
-                                        cachedPdo.put(pdoKey, pdo);
-                                    }
-                                }
-
-                                MercurySample sample = si.getStartingSample();
-                                if (sample != null) {
-
-                                    Collection<LabBatch> batches = si.getAllWorkflowLabBatches();
-                                    LabBatch labBatch = batches.size() == 1 ? batches.iterator().next() : null;
-                                    String batchName = labBatch != null ? labBatch.getBatchName() :
-                                            batches.size() == 0 ? NONE : MULTIPLE;
-
-                                    String workflowName = labBatch != null ? labBatch.getWorkflowName() : null;
-                                    if (StringUtils.isBlank(workflowName)) {
-                                        workflowName = pdo.getProduct().getWorkflowName();
-                                    }
-                                    WorkflowConfigDenorm wfDenorm = workflowConfigLookup.lookupWorkflowConfig(
-                                            eventName, workflowName, entity.getEventDate());
-
-                                    boolean canEtl = wfDenorm != null &&
-                                                     (pdo != null || !wfDenorm.isProductOrderNeeded());
-
-                                    dtos.add(new EventFactDto(entity, vessel, null, batchName, workflowName,
-                                            sample, pdo, wfDenorm, canEtl));
+                            // null pdo is ok for BSP events.
+                            ProductOrder pdo = null;
+                            synchronized (cachedPdo) {
+                                if (cachedPdo.containsKey(pdoKey)) {
+                                    pdo = cachedPdo.get(pdoKey);
                                 } else {
-                                    dtos.add(new EventFactDto(entity, vessel, vessel.getIndexesString(si),
-                                            null, null, null, pdo, null, false));
+                                    if (pdoKey != null) {
+                                        pdo = pdoDao.findByBusinessKey(pdoKey);
+                                    }
+                                    cachedPdo.put(pdoKey, pdo);
                                 }
+                            }
+
+                            MercurySample sample = si.getStartingSample();
+                            if (sample != null) {
+
+                                Collection<LabBatch> batches = si.getAllWorkflowLabBatches();
+                                LabBatch labBatch = batches.size() == 1 ? batches.iterator().next() : null;
+                                String batchName = labBatch != null ? labBatch.getBatchName() :
+                                        batches.size() == 0 ? NONE : MULTIPLE;
+
+                                String workflowName = labBatch != null ? labBatch.getWorkflowName() : null;
+                                if (StringUtils.isBlank(workflowName) && pdo != null) {
+                                    workflowName = pdo.getProduct().getWorkflowName();
+                                }
+                                WorkflowConfigDenorm wfDenorm = workflowConfigLookup.lookupWorkflowConfig(
+                                        eventName, workflowName, entity.getEventDate());
+
+                                boolean canEtl = wfDenorm != null &&
+                                                 (pdo != null || !wfDenorm.isProductOrderNeeded());
+
+                                dtos.add(new EventFactDto(entity, vessel, null, batchName, workflowName,
+                                        sample, pdo, wfDenorm, canEtl));
                             } else {
                                 dtos.add(new EventFactDto(entity, vessel, vessel.getIndexesString(si),
-                                        null, null, null, null, null, false));
+                                        null, null, null, pdo, null, false));
                             }
                         }
                     } else {

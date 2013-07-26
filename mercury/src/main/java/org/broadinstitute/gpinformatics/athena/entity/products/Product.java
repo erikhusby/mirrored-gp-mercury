@@ -77,7 +77,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     @JoinTable(schema = "athena")
-    private final Set<Product> addOns = new HashSet<Product>();
+    private final Set<Product> addOns = new HashSet<>();
 
     private String workflowName;
 
@@ -115,13 +115,13 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
             joinColumns=@JoinColumn(name="PRODUCT_ID"),
             inverseJoinColumns=@JoinColumn(name="MATERIAL_TYPE_ID")
     )
-    private Set<MaterialType> allowableMaterialTypes = new HashSet<MaterialType>();
+    private Set<MaterialType> allowableMaterialTypes = new HashSet<>();
 
     // The onRisk criteria that are associated with the Product. When creating new, default to empty list.
     @OneToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     @JoinColumn(name = "product", nullable = true)
     @AuditJoinTable(name = "product_risk_criteria_join_aud")
-    private List<RiskCriterion> riskCriteria = new ArrayList<RiskCriterion>();
+    private List<RiskCriterion> riskCriteria = new ArrayList<>();
 
     /**
      * Default no-arg constructor, also used when creating a new Product.
@@ -426,8 +426,8 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
      * @return Get all duplicate price item names for any products or add ons on this product. Null if none.
      */
     public String[] getDuplicatePriceItemNames() {
-        List<String> duplicates = new ArrayList<String> ();
-        Set<String> priceItemNames = new HashSet<String> ();
+        List<String> duplicates = new ArrayList<>();
+        Set<String> priceItemNames = new HashSet<>();
 
         // Add the duplicates for this product.
         addProductDuplicates(duplicates, priceItemNames);
@@ -563,7 +563,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         assert (criteria.length == operators.length) && (criteria.length == values.length);
 
         // The new list.
-        List<RiskCriterion> newList = new ArrayList<RiskCriterion>();
+        List<RiskCriterion> newList = new ArrayList<>();
         // Assume that the new list is no different than the original.
         boolean isDifferent = false;
 

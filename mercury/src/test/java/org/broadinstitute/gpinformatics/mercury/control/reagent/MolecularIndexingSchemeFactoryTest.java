@@ -64,7 +64,7 @@ public class MolecularIndexingSchemeFactoryTest extends ContainerTest {
         molecularIndexDao.clear();
 
         List<MolecularIndexingSchemeFactory.IndexPositionPair> indexPositionPairs =
-                new ArrayList<MolecularIndexingSchemeFactory.IndexPositionPair>();
+                new ArrayList<>();
         indexPositionPairs.add(new MolecularIndexingSchemeFactory.IndexPositionPair(
                 MolecularIndexingScheme.IndexPosition.ILLUMINA_P7, sequence));
         MolecularIndexingScheme molecularIndexingScheme = molecularIndexingSchemeFactory.findOrCreateIndexingScheme(

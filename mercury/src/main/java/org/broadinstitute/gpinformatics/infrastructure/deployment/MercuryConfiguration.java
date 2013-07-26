@@ -3,13 +3,13 @@ package org.broadinstitute.gpinformatics.infrastructure.deployment;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.broadinstitute.gpinformatics.mercury.presentation.security.AuthorizationFilter;
 import org.scannotation.AnnotationDB;
 import org.scannotation.ClasspathUrlFinder;
 import org.scannotation.WarUrlFinder;
 import org.yaml.snakeyaml.Yaml;
 
-import javax.annotation.Nonnull;
 import javax.servlet.ServletContext;
 import java.io.IOException;
 import java.io.InputStream;
@@ -269,7 +269,7 @@ public class MercuryConfiguration {
                     buildDate = props.getProperty("build.buildTimeStamp");
                     Date date = new SimpleDateFormat("yyyyMMdd-HHmm").parse(buildDate);
 
-                    MERCURY_BUILD_INFO += " built on " + new SimpleDateFormat("yyyy/MM/dd hh:mm a").format(date);
+                    MERCURY_BUILD_INFO += " built on " + FastDateFormat.getInstance("yyyy/MM/dd hh:mm a").format(date);
                 } else {
                     return "Version unknown.  Are we in a sandbox?";
                 }

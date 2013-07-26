@@ -242,7 +242,7 @@ public class BillingSessionActionBean extends CoreActionBean {
         this.editSession = editSession;
     }
 
-    private final Map<String, String> priceItemNameMap = new HashMap<String, String>();
+    private final Map<String, String> priceItemNameMap = new HashMap<>();
     public Map<String, String> getQuotePriceItemNameMap() {
         Collection<QuotePriceItem> quotePriceItems = priceListCache.getQuotePriceItems();
         if (priceItemNameMap.isEmpty() && !quotePriceItems.isEmpty()) {

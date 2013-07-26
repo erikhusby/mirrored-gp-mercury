@@ -4,7 +4,6 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldJsonParser;
 import org.testng.annotations.Test;
 
-import java.util.Collection;
 import java.util.Map;
 
 import static org.testng.Assert.*;

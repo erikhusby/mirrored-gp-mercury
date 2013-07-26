@@ -63,7 +63,7 @@ public class MercuryOrSquidRouter implements Serializable {
         BOTH, MERCURY, SQUID
     }
 
-    private enum Intent {
+    public enum Intent {
         /** route messages (possibly to multiple systems) */
         ROUTE,
         /** determine which system will handle LIMS queries (only one system) */
@@ -171,8 +171,9 @@ public class MercuryOrSquidRouter implements Serializable {
                 controlCollaboratorSampleIds.add(control.getCollaboratorSampleId());
             }
         }
-        for (LabVessel labVessel : labVessels) {
-            routingOptions.add(routeForVessel(labVessel, controlCollaboratorSampleIds, mapSampleNameToDto, intent));
+        MercuryOrSquid mercuryOrSquid = routeForVessels(labVessels, controlCollaboratorSampleIds, mapSampleNameToDto, intent);
+        if (mercuryOrSquid != null) {
+            routingOptions.add(mercuryOrSquid);
         }
 
         return evaluateRoutingOption(routingOptions, intent);
@@ -189,83 +190,96 @@ public class MercuryOrSquidRouter implements Serializable {
      * The logic within this method will utilize the vessel to navigate back to the correct PDO and determine what
      * routing is configured for the workflow associated with the PDO.
      *
+     * When the intent is system-of-record and a control tube is given, null will be returned. This reflects the fact
+     * that, for system-of-record determination, controls defer to their travel partners.
      *
-     * @param vessel an instance of a LabVessel for which system routing is to be determined
+     * @param vessels a collection of LabVessels for which system routing is to be determined
      * @param controlCollaboratorSampleIds list of collaborator IDs for controls
      * @param mapSampleNameToDto map from sample name to BSP sample DTO
      * @param intent whether to return one routing option, or multiple
      * @return An instance of a MercuryOrSquid enum that will assist in determining to which system requests should be
      */
     @DaoFree
-    public MercuryOrSquid routeForVessel(LabVessel vessel, List<String> controlCollaboratorSampleIds,
+    public MercuryOrSquid routeForVessels(Collection<LabVessel> vessels, List<String> controlCollaboratorSampleIds,
                                          Map<String, BSPSampleDTO> mapSampleNameToDto, Intent intent) {
         Set<MercuryOrSquid> routingOptions = EnumSet.noneOf(MercuryOrSquid.class);
-        if (vessel != null) {
-
-            Set<SampleInstance> sampleInstances = vessel.getSampleInstances(SampleType.PREFER_PDO, LabBatchType.WORKFLOW);
-            if (sampleInstances.isEmpty()) {
+        for (LabVessel vessel : vessels) {
+            if (vessel == null) {
                 routingOptions.add(SQUID);
             } else {
-                Set<SampleInstance> possibleControls = new HashSet<>();
-                for (SampleInstance sampleInstance : sampleInstances) {
-                    if (sampleInstance.getProductOrderKey() == null) {
-                        possibleControls.add(sampleInstance);
-                    } else {
-                        String workflowName = sampleInstance.getWorkflowName();
-                        LabBatch effectiveBatch = sampleInstance.getLabBatch();
-                        if (workflowName != null && effectiveBatch != null) {
-                            ProductWorkflowDefVersion productWorkflowDef = getWorkflowVersion(workflowName,
-                                    effectiveBatch.getCreatedOn());
-                            if (intent ==  Intent.SYSTEM_OF_RECORD) {
-                                MercuryOrSquid mercuryOrSquid;
-                                if (productWorkflowDef.getInValidation()) {
-                                    LabBatch labBatch = sampleInstance.getLabBatch();
-                                    if(labBatch == null) {
-                                        throw new RuntimeException("No lab batch for sample " + sampleInstance.getStartingSample().getSampleKey());
-                                    }
-                                    // Per Andrew, we can assume that validation plastic has only one LCSET
-                                    if(labBatch.isValidationBatch()) {
-                                        mercuryOrSquid = MERCURY;
+                Set<SampleInstance> sampleInstances = vessel.getSampleInstances(SampleType.PREFER_PDO, LabBatchType.WORKFLOW);
+                if (sampleInstances.isEmpty()) {
+                    routingOptions.add(SQUID);
+                } else {
+                    Set<SampleInstance> possibleControls = new HashSet<>();
+                    for (SampleInstance sampleInstance : sampleInstances) {
+                        if (sampleInstance.getAllWorkflowLabBatches().isEmpty()) {
+                            possibleControls.add(sampleInstance);
+                        } else {
+                            String workflowName = sampleInstance.getWorkflowName();
+                            LabBatch effectiveBatch = sampleInstance.getLabBatch();
+                            if (workflowName != null && effectiveBatch != null) {
+                                ProductWorkflowDefVersion productWorkflowDef = getWorkflowVersion(workflowName,
+                                        effectiveBatch.getCreatedOn());
+                                if (intent ==  Intent.SYSTEM_OF_RECORD) {
+                                    MercuryOrSquid mercuryOrSquid;
+                                    if (productWorkflowDef.getInValidation()) {
+                                        LabBatch labBatch = sampleInstance.getLabBatch();
+                                        if(labBatch == null) {
+                                            throw new RuntimeException("No lab batch for sample " + sampleInstance.getStartingSample().getSampleKey());
+                                        }
+                                        // Per Andrew, we can assume that validation plastic has only one LCSET
+                                        if(labBatch.isValidationBatch()) {
+                                            mercuryOrSquid = MERCURY;
+                                        } else {
+                                            mercuryOrSquid = productWorkflowDef.getRouting();
+                                        }
                                     } else {
                                         mercuryOrSquid = productWorkflowDef.getRouting();
                                     }
+                                    if (mercuryOrSquid == BOTH) {
+                                        mercuryOrSquid = SQUID;
+                                    }
+                                    routingOptions.add(mercuryOrSquid);
                                 } else {
-                                    mercuryOrSquid = productWorkflowDef.getRouting();
+                                    routingOptions.add(productWorkflowDef.getRouting());
                                 }
-                                if (mercuryOrSquid == BOTH) {
-                                    mercuryOrSquid = SQUID;
-                                }
-                                routingOptions.add(mercuryOrSquid);
-                            } else {
-                                routingOptions.add(productWorkflowDef.getRouting());
                             }
                         }
                     }
-                }
-                if (!possibleControls.isEmpty()) {
+                    if (!possibleControls.isEmpty()) {
 
-                    // TODO: move this logic into ControlEjb?
+                        // TODO: move this logic into ControlEjb?
 
-                    // Don't bother querying BSP if Mercury doesn't have any active controls.
-                    if (controlCollaboratorSampleIds.isEmpty()) {
-                        routingOptions.add(SQUID);
-                    } else {
-                        for (SampleInstance possibleControl : possibleControls) {
-                            String sampleKey = possibleControl.getStartingSample().getSampleKey();
-                            BSPSampleDTO sampleDTO = mapSampleNameToDto.get(sampleKey);
-                            if (sampleDTO == null) {
-                                // Don't know what this is, but it isn't for Mercury.
-                                routingOptions.add(SQUID);
-                            } else {
-                                if (controlCollaboratorSampleIds.contains(sampleDTO.getCollaboratorsSampleName())) {
-
-                                    // For system-of-record, controls defer to their travel partners.
-                                    // TODO: Figure out how to handle this for validation and production sets in Mercury
-                                    if (intent != Intent.SYSTEM_OF_RECORD) {
-                                        routingOptions.add(BOTH);
-                                    }
-                                } else {
+                        // Don't bother querying BSP if Mercury doesn't have any active controls.
+                        if (controlCollaboratorSampleIds.isEmpty()) {
+                            routingOptions.add(SQUID);
+                        } else {
+                            for (SampleInstance possibleControl : possibleControls) {
+                                String sampleKey = possibleControl.getStartingSample().getSampleKey();
+                                BSPSampleDTO sampleDTO = mapSampleNameToDto.get(sampleKey);
+                                if (sampleDTO == null) {
+                                    // Don't know what this is, but it isn't for Mercury.
                                     routingOptions.add(SQUID);
+                                } else {
+                                    if (controlCollaboratorSampleIds.contains(sampleDTO.getCollaboratorsSampleName())) {
+
+                                        // For system-of-record, controls defer to their travel partners.
+                                        // TODO: Figure out how to handle this for validation and production sets in Mercury
+                                        if (intent != Intent.SYSTEM_OF_RECORD) {
+                                            String workflowName = possibleControl.getWorkflowName();
+                                            LabBatch effectiveBatch = possibleControl.getLabBatch();
+                                            if (workflowName != null && effectiveBatch != null) {
+                                                ProductWorkflowDefVersion productWorkflowDef = getWorkflowVersion(workflowName,
+                                                        effectiveBatch.getCreatedOn());
+                                                routingOptions.add(productWorkflowDef.getRouting());
+                                            } else {
+                                                routingOptions.add(BOTH);
+                                            }
+                                        }
+                                    } else {
+                                        routingOptions.add(SQUID);
+                                    }
                                 }
                             }
                         }
@@ -274,7 +288,11 @@ public class MercuryOrSquidRouter implements Serializable {
             }
         }
 
-        return evaluateRoutingOption(routingOptions, intent);
+        if (routingOptions.isEmpty() && intent == Intent.SYSTEM_OF_RECORD) {
+            return null;
+        } else {
+            return evaluateRoutingOption(routingOptions, intent);
+        }
     }
 
     /**

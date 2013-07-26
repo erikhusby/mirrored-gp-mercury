@@ -300,11 +300,16 @@ public class ProductOrderEjb {
             throw new BadBusinessKeyException(message);
         }
 
-        // If null, then it will calculate for all samples.
-        if (samples == null) {
-            editOrder.calculateRisk();
-        } else {
-            editOrder.calculateRisk(samples);
+        try {
+            // If null, then it will calculate for all samples.
+            if (samples == null) {
+                editOrder.calculateRisk();
+            } else {
+                editOrder.calculateRisk(samples);
+            }
+        } catch (Exception ex) {
+            log.error("Could not calculate risk", ex);
+            throw ex;
         }
 
         // Set the create and modified information.

@@ -122,7 +122,7 @@ public class ProductOrderDaoTest extends ContainerTest {
     public void testSplitterCriteriaFind() throws Exception {
         List<ProductOrder> allOrders = productOrderDao.findAll();
 
-        List<String> allBusinessKeys = new ArrayList<String>();
+        List<String> allBusinessKeys = new ArrayList<>();
         for (ProductOrder order : allOrders) {
             if (order.getJiraTicketKey() != null) {
                 allBusinessKeys.add(order.getBusinessKey());
@@ -138,7 +138,7 @@ public class ProductOrderDaoTest extends ContainerTest {
         List<ProductOrder> pdoList =
             productOrderDao.findListByList(ProductOrder.class, ProductOrder_.jiraTicketKey, allBusinessKeys);
 
-        Set<ProductOrder> uniqueOrders = new HashSet<ProductOrder> (pdoList);
+        Set<ProductOrder> uniqueOrders = new HashSet<>(pdoList);
         Assert.assertEquals(
             uniqueOrders.size(), originalSize, "The number of unique orders should be the same as original size");
     }
@@ -173,7 +173,7 @@ public class ProductOrderDaoTest extends ContainerTest {
         Assert.assertNotNull(productOrders);
         Assert.assertEquals(productOrders.size(), 3);
 
-        Map<String, ProductOrder> productOrderMap = new HashMap<String, ProductOrder>();
+        Map<String, ProductOrder> productOrderMap = new HashMap<>();
         for (ProductOrder productOrder : productOrders) {
             productOrderMap.put(productOrder.getBusinessKey(), productOrder);
         }
