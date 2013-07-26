@@ -8,7 +8,6 @@ import com.mxgraph.view.mxGraph;
 import org.broadinstitute.gpinformatics.mercury.boundary.graph.Graph;
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferEntityGrapher;
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVisualizer;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -306,10 +305,13 @@ public class TransferVisualizerFrame extends JFrame {
         }
     }
 
-    public void renderVessel(LabVessel labVessel) {
-        transferVisualizerClient = new TransferVisualizerClient(labVessel.getLabel(), new ArrayList<TransferVisualizer.AlternativeId>());
-        Graph graph = transferVisualizerClient.fetchGraph(labVessel);
-        renderGraph(graph);
+    /**
+     * Intended for use in unit tests, allows caller to construct client with a specific graph
+     * @param transferVisualizerClient    client, with graph loaded
+     */
+    public void setTransferVisualizerClient(TransferVisualizerClient transferVisualizerClient) {
+        this.transferVisualizerClient = transferVisualizerClient;
+        renderGraph(transferVisualizerClient.getGraph());
         refreshGraph();
     }
 

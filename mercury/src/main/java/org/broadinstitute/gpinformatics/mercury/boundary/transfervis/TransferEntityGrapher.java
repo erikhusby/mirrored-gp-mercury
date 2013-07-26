@@ -44,6 +44,9 @@ import java.util.Set;
 @Remote(TransferVisualizer.class)
 public class TransferEntityGrapher implements TransferVisualizer {
 
+    /** How many additional vessels to render each time the user clicks "More Transfers".  Larger numbers are
+     * confusing, because too much new stuff is disorientating, but small numbers require more clicks.
+     */
     private int maxNumVesselsPerRequest = 1;
 
     @Inject

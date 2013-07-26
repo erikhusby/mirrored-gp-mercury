@@ -16,7 +16,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
-import org.broadinstitute.gpinformatics.mercury.presentation.transfervis.TransferVisualizerFrame;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
@@ -306,15 +305,9 @@ public class ReworkDbFreeTest extends BaseEventTest {
         ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder2 = runExomeExpressShearingProcess(
                 picoPlatingEntityBuilder2.getNormBarcodeToTubeMap(),
                 picoPlatingEntityBuilder2.getNormTubeFormation(), picoPlatingEntityBuilder1.getNormalizationBarcode(), "2");
-        if (false) {
-            TransferVisualizerFrame transferVisualizerFrame = new TransferVisualizerFrame();
-            transferVisualizerFrame.renderVessel(stringTwoDBarcodedTubeEntry.getValue());
-            try {
-                Thread.sleep(500000L);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }
+
+        runTransferVisualizer(stringTwoDBarcodedTubeEntry.getValue());
+
         for (SampleInstance sampleInstance : exomeExpressShearingEntityBuilder2.getShearingCleanupPlate()
                 .getSampleInstances()) {
             Assert.assertEquals(sampleInstance.getLabBatch(), workflowBatch2);
