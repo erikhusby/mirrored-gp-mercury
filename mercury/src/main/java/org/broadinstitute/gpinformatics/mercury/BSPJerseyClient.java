@@ -1,12 +1,11 @@
 package org.broadinstitute.gpinformatics.mercury;
 
+import com.sun.jersey.api.client.Client;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
 
-import javax.annotation.Nonnull;
 import javax.inject.Inject;
 
 /**
@@ -35,5 +34,10 @@ public abstract class BSPJerseyClient extends AbstractJerseyClientService {
 
     public BSPConfig getBspConfig() {
         return bspConfig;
+    }
+
+    @Override
+    protected void customizeClient(Client client) {
+        specifyHttpAuthCredentials(client, getBspConfig());
     }
 }

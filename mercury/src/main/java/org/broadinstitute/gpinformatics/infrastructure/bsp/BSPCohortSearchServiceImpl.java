@@ -59,11 +59,6 @@ public class BSPCohortSearchServiceImpl extends BSPJerseyClient implements BSPCo
         super(bspConfig);
     }
 
-    @Override
-    protected void customizeClient(Client client) {
-        specifyHttpAuthCredentials(client, getBspConfig());
-    }
-
     /**
      * @return Get all the cohorts from BSP so that they can be cached and displayed in Mercury UIs.
      */

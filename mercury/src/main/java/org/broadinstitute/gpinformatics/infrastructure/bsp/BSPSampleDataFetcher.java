@@ -100,11 +100,6 @@ public class BSPSampleDataFetcher extends BSPJerseyClient {
         return sampleNameToDTO;
     }
 
-    @Override
-    protected void customizeClient(Client client) {
-        specifyHttpAuthCredentials(client, getBspConfig());
-    }
-
     /**
      * There is much copying and pasting of code from BSPSampleSearchServiceImpl into here -- a refactoring is needed.
      *
