@@ -123,4 +123,7 @@ public class BSPCohortSearchServiceImpl extends BSPJerseyClient implements BSPCo
             // Close the reader, which will close the underlying input stream.
             IOUtils.closeQuietly(rdr);
         }
+
+        return usersCohorts;
+    }
 }
