@@ -38,24 +38,26 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructio
 import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ProductionFlowcellPath;
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
+import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
 import static org.broadinstitute.gpinformatics.infrastructure.test.dbfree.LabEventTestFactory.doSectionTransfer;
 import static org.broadinstitute.gpinformatics.infrastructure.test.dbfree.LabEventTestFactory.makeTubeFormation;
-import static org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid.BOTH;
 import static org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid.MERCURY;
 import static org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid.SQUID;
 import static org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType.DENATURE_TO_REAGENT_KIT_TRANSFER;
@@ -277,8 +279,11 @@ public class MercuryOrSquidRouterTest extends BaseEventTest {
 
     @Test(groups = DATABASE_FREE)
     public void testRouteForTubesSomeInMercuryWithExomeExpressOrders() {
-        ProductOrder order = placeOrderForTubeAndBucket(tube1, exomeExpress, picoBucket);
-        assertThat(mercuryOrSquidRouter.routeForVesselBarcodes(Arrays.asList("squidTube", MERCURY_TUBE_1)), is(SQUID));
+        placeOrderForTubeAndBucket(tube1, exomeExpress, picoBucket);
+        try {
+            mercuryOrSquidRouter.routeForVesselBarcodes(Arrays.asList("squidTube", MERCURY_TUBE_1));
+            Assert.fail("Expected exception: The Routing cannot be determined for options: [MERCURY, SQUID]");
+        } catch (Exception expected) {}
         verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>() {{
             add("squidTube");
             add(MERCURY_TUBE_1);
@@ -288,10 +293,11 @@ public class MercuryOrSquidRouterTest extends BaseEventTest {
     @Test(groups = DATABASE_FREE)
     public void testRouteForTubesAllInMercuryWithOrdersSomeExomeExpress() {
         placeOrderForTube(tube1, testProduct);
-        ProductOrder order = placeOrderForTubeAndBucket(tube2, exomeExpress, picoBucket);
-        // todo jmt should this throw an exception, it's a mixture of Squid only and Mercury only?
-        assertThat(mercuryOrSquidRouter.routeForVesselBarcodes(Arrays.asList(MERCURY_TUBE_1, MERCURY_TUBE_2)),
-                is(BOTH));
+        placeOrderForTubeAndBucket(tube2, exomeExpress, picoBucket);
+        try {
+            mercuryOrSquidRouter.routeForVesselBarcodes(Arrays.asList(MERCURY_TUBE_1, MERCURY_TUBE_2));
+            Assert.fail("Expected exception: The Routing cannot be determined for options: [MERCURY, SQUID]");
+        } catch (Exception expected) {}
         verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>() {{
             add(MERCURY_TUBE_1);
             add(MERCURY_TUBE_2);
@@ -303,8 +309,7 @@ public class MercuryOrSquidRouterTest extends BaseEventTest {
         ProductOrder order1 = placeOrderForTubeAndBucket(tube1, exomeExpress, picoBucket);
         ProductOrder order2 = placeOrderForTubeAndBucket(tube2, exomeExpress, picoBucket);
         assertThat(mercuryOrSquidRouter.routeForVesselBarcodes(Arrays.asList(MERCURY_TUBE_1, MERCURY_TUBE_2)),
-                is(BOTH));
-        // only verify for one tube because current implementation short-circuits once one qualifying order is found
+                is(MERCURY));
         verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>() {{
             add(MERCURY_TUBE_1);
             add(MERCURY_TUBE_2);
@@ -313,15 +318,42 @@ public class MercuryOrSquidRouterTest extends BaseEventTest {
 
     @Test(groups = DATABASE_FREE)
     public void testRouteForTubesAllInMercuryWithExomeExpressOrdersWithControls() {
-        ProductOrder order1 = placeOrderForTubeAndBucket(tube1, exomeExpress, picoBucket);
-        ProductOrder order2 = placeOrderForTubeAndBucket(tube2, exomeExpress, picoBucket);
+        placeOrderForTubesAndBatch(new HashSet<LabVessel>(Arrays.asList(tube1, tube2)), exomeExpress, picoBucket);
         assertThat(mercuryOrSquidRouter.routeForVesselBarcodes(
                 Arrays.asList(MERCURY_TUBE_1, MERCURY_TUBE_2, CONTROL_TUBE)),
-                is(BOTH));
+                is(MERCURY));
         verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>() {{
             add(MERCURY_TUBE_1);
             add(MERCURY_TUBE_2);
             add(CONTROL_TUBE);
+        }});
+        verify(mockControlDao).findAllActive();
+        verify(mockBspSampleDataFetcher).fetchSamplesFromBSP(Arrays.asList(CONTROL_SAMPLE_ID));
+    }
+
+    @Test(groups = DATABASE_FREE)
+    public void testRouteForTubesAllInMercuryWithExomeExpressOrdersWithControlsAfterTransfer() {
+        final TwoDBarcodedTube target1 = new TwoDBarcodedTube("target1");
+        final TwoDBarcodedTube target2 = new TwoDBarcodedTube("target2");
+        final TwoDBarcodedTube target3 = new TwoDBarcodedTube("target3");
+        when(mockLabVesselDao.findByBarcodes(Arrays.asList("target1", "target2", "target3")))
+                .thenReturn(new HashMap<String, LabVessel>() {{
+                    put("target1", target1);
+                    put("target2", target2);
+                    put("target3", target3);
+                }});
+
+        placeOrderForTubesAndBatch(new HashSet<LabVessel>(Arrays.asList(tube1, tube2)), exomeExpress, picoBucket);
+        doSectionTransfer(makeTubeFormation(tube1, tube2, controlTube), plate);
+        doSectionTransfer(plate, makeTubeFormation(target1, target2, target3));
+
+        assertThat(mercuryOrSquidRouter.routeForVesselBarcodes(Arrays.asList("target1", "target2", "target3")),
+                is(MERCURY));
+
+        verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>() {{
+            add("target1");
+            add("target2");
+            add("target3");
         }});
         verify(mockControlDao).findAllActive();
         verify(mockBspSampleDataFetcher).fetchSamplesFromBSP(Arrays.asList(CONTROL_SAMPLE_ID));
@@ -360,10 +392,12 @@ public class MercuryOrSquidRouterTest extends BaseEventTest {
     @Test(groups = DATABASE_FREE)
     public void testRouteForPlateInMercuryWithOrdersSomeExomeExpress() {
         placeOrderForTube(tube1, testProduct);
-        ProductOrder order = placeOrderForTubeAndBucket(tube2, exomeExpress, picoBucket);
+        placeOrderForTubeAndBucket(tube2, exomeExpress, picoBucket);
         doSectionTransfer(makeTubeFormation(tube1, tube2), plate);
-        // todo jmt should this throw an exception, it's a mixture of Squid only and Mercury only?
-        assertThat(mercuryOrSquidRouter.routeForVessel(MERCURY_PLATE), equalTo(BOTH));
+        try {
+            mercuryOrSquidRouter.routeForVessel(MERCURY_PLATE);
+            Assert.fail("Expected exception: The Routing cannot be determined for options: [MERCURY, SQUID]");
+        } catch (Exception expected) {}
         verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>() {{
             add(MERCURY_PLATE);
         }});
@@ -374,7 +408,7 @@ public class MercuryOrSquidRouterTest extends BaseEventTest {
         ProductOrder order1 = placeOrderForTubeAndBucket(tube1, exomeExpress, picoBucket);
         ProductOrder order2 = placeOrderForTubeAndBucket(tube2, exomeExpress, picoBucket);
         doSectionTransfer(makeTubeFormation(tube1, tube2), plate);
-        assertThat(mercuryOrSquidRouter.routeForVessel(MERCURY_PLATE), equalTo(BOTH));
+        assertThat(mercuryOrSquidRouter.routeForVessel(MERCURY_PLATE), equalTo(MERCURY));
         verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>() {{
             add(MERCURY_PLATE);
         }});
@@ -416,7 +450,7 @@ public class MercuryOrSquidRouterTest extends BaseEventTest {
     @Test(groups = DATABASE_FREE)
     public void testRouteForTubeInMercuryWithExomeExpressOrder() {
         ProductOrder order = placeOrderForTubeAndBucket(tube1, exomeExpress, picoBucket);
-        assertThat(mercuryOrSquidRouter.routeForVessel(MERCURY_TUBE_1), is(BOTH));
+        assertThat(mercuryOrSquidRouter.routeForVessel(MERCURY_TUBE_1), is(MERCURY));
         verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>() {{
             add(MERCURY_TUBE_1);
         }});
@@ -703,29 +737,40 @@ public class MercuryOrSquidRouterTest extends BaseEventTest {
      * Test fixture utilities
      */
 
-    private ProductOrder placeOrderForTube(TwoDBarcodedTube tube, Product product) {
+    private ProductOrder placeOrderForTube(LabVessel tube, Product product) {
         return placeOrderForTubeAndBucket(tube, product, null);
     }
 
-    private ProductOrder placeOrderForTubeAndBucket(TwoDBarcodedTube tube, Product product, Bucket bucket) {
-        ProductOrder order = new ProductOrder(101L, "Test Order",
-                Collections.singletonList(new ProductOrderSample("SM-1")), "Quote-1", product, testProject);
+    private ProductOrder placeOrderForTubeAndBucket(LabVessel tube, Product product, Bucket bucket) {
+        return placeOrderForTubesAndBatch(Collections.singleton(tube), product, bucket);
+    }
+
+    private ProductOrder placeOrderForTubesAndBatch(Set<LabVessel> tubes, Product product, Bucket bucket) {
+        List<ProductOrderSample> productOrderSamples = new ArrayList<>();
+        int sampleNum = 1;
+        for (LabVessel tube : tubes) {
+            String sampleName = "SM-" + sampleNum;
+            productOrderSamples.add(new ProductOrderSample(sampleName));
+            tube.addSample(new MercurySample(sampleName));
+            sampleNum++;
+        }
+        ProductOrder order = new ProductOrder(101L, "Test Order", productOrderSamples, "Quote-1", product, testProject);
         productOrderSequence++;
         String jiraTicketKey = "PDO-" + productOrderSequence;
         order.setJiraTicketKey(jiraTicketKey);
         when(mockAthenaClientService.retrieveProductOrderDetails(jiraTicketKey)).thenReturn(order);
-        tube.addSample(new MercurySample("SM-1"));
-        BucketEntry bucketEntry = null;
+        Collection<BucketEntry> bucketEntries = new ArrayList<>();
         if (bucket != null) {
-            bucketEntry = bucket.addEntry(jiraTicketKey, tube, BucketEntry.BucketEntryType.PDO_ENTRY);
-        }
-        LabBatch labBatch = new LabBatch("LCSET-" + productOrderSequence, Collections.<LabVessel>singleton(tube),
-                LabBatch.LabBatchType.WORKFLOW);
-        labBatch.setWorkflowName(product.getWorkflowName());
-        if (bucketEntry != null) {
-            bucketEntry.setLabBatch(labBatch);
+            for (LabVessel tube : tubes) {
+                bucketEntries.add(bucket.addEntry(jiraTicketKey, tube, BucketEntry.BucketEntryType.PDO_ENTRY));
+            }
+            LabBatch labBatch = new LabBatch("LCSET-" + productOrderSequence, tubes,
+                    LabBatch.LabBatchType.WORKFLOW);
+            labBatch.setWorkflowName(product.getWorkflowName());
+            for (BucketEntry bucketEntry : bucketEntries) {
+                bucketEntry.setLabBatch(labBatch);
+            }
         }
         return order;
     }
-
 }

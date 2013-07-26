@@ -157,10 +157,6 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
         mockConnector = EasyMock.createNiceMock(BettalimsConnector.class);
 
-        EasyMock.expect(mockConnector.sendMessage(EasyMock.anyObject(String.class)))
-                .andReturn(new BettalimsConnector.BettalimsResponse(200, "Success"));
-//        .andThrow(new InformaticsServiceException("This methodShould have been thrown")).anyTimes();
-
         EasyMock.replay(mockConnector);
         bettalimsMessageResource.setBettalimsConnector(mockConnector);
 
