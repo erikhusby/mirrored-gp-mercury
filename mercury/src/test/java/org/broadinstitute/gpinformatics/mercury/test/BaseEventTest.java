@@ -501,7 +501,7 @@ public class BaseEventTest {
      */
     public void runTransferVisualizer(LabVessel labVessel) {
         // Disabled by default, because it would block Bamboo tests.
-        if (true) {
+        if (false) {
             TransferEntityGrapher transferEntityGrapher = new TransferEntityGrapher();
             // "More Transfers" buttons won't work when there's no server, so render all vessels in first "request"
             transferEntityGrapher.setMaxNumVesselsPerRequest(10000);
