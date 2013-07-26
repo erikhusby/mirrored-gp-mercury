@@ -15,7 +15,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PlateTransferType;
-import org.broadinstitute.gpinformatics.mercury.presentation.transfervis.TransferVisualizerFrame;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.testng.Assert;
 
@@ -133,15 +132,6 @@ public class HybridSelectionEntityBuilder {
         }
         Set<SampleInstance> sampleInstancesInPreSelPoolWell =
                 preSelPoolRack.getContainerRole().getSampleInstancesAtPosition(VesselPosition.A01);
-        if (false) {
-            TransferVisualizerFrame transferVisualizerFrame = new TransferVisualizerFrame();
-            transferVisualizerFrame.renderVessel(preSelPoolRack.getContainerRole().getVesselAtPosition(VesselPosition.A01));
-            try {
-                Thread.sleep(500000L);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }
         Assert.assertEquals(sampleInstancesInPreSelPoolWell.size(), 2, "Wrong number of sample instances in position");
 
         // Hybridization

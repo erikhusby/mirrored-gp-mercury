@@ -12,8 +12,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
@@ -25,10 +25,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import javax.ejb.Remote;
 import javax.ejb.Stateful;
 import javax.inject.Inject;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -46,6 +44,9 @@ import java.util.Set;
 @Remote(TransferVisualizer.class)
 public class TransferEntityGrapher implements TransferVisualizer {
 
+    /** How many additional vessels to render each time the user clicks "More Transfers".  Larger numbers are
+     * confusing, because too much new stuff is disorientating, but small numbers require more clicks.
+     */
     private int maxNumVesselsPerRequest = 1;
 
     @Inject
@@ -68,17 +69,9 @@ public class TransferEntityGrapher implements TransferVisualizer {
                 TransferEntityGrapher transferEntityGrapher, List<AlternativeId> alternativeIds);
     }
 
-    private final Map<IdType, ExpandVertex> mapIdTypeToExpandVertex = new HashMap<>();
+    private final Map<IdType, ExpandVertex> mapIdTypeToExpandVertex = new EnumMap<>(IdType.class);
 
     void initMap() {
-        mapIdTypeToExpandVertex.put(IdType.PLATE_ID_TYPE, new ExpandVertex() {
-            @Override
-            public void expandVertex(String vertexId, Graph graph,
-                    TransferEntityGrapher transferEntityGrapher, List<AlternativeId> alternativeIds) {
-                StaticPlate plate = staticPlateDAO.findByBarcode(vertexId);
-                transferEntityGrapher.startWithPlate(plate, graph, alternativeIds);
-            }
-        });
         mapIdTypeToExpandVertex.put(IdType.CONTAINER_ID_TYPE, new ExpandVertex() {
             @Override
             public void expandVertex(String vertexId, Graph graph,
@@ -108,7 +101,7 @@ public class TransferEntityGrapher implements TransferVisualizer {
     public Graph forPlate(String plateBarcode, List<AlternativeId> alternativeIds) {
         Graph graph = new Graph();
         StaticPlate plate = staticPlateDAO.findByBarcode(plateBarcode);
-        startWithPlate(plate, graph, alternativeIds);
+//        startWithPlate(plate, graph, alternativeIds);
         return graph;
     }
 
@@ -124,21 +117,6 @@ public class TransferEntityGrapher implements TransferVisualizer {
             graph.setMessage("The barcode is not attached to a container");
         }
         return graph;
-    }
-
-    private void startWithPlate(StaticPlate plate, Graph graph, List<AlternativeId> alternativeIds) {
-        if (plate == null) {
-            graph.setMessage("No plate was found with that barcode");
-        } else {
-//            if (plate.getPlatePhysicalType().getName().equals(PlatePhysicalType.TUBE_RACK)) {
-//                graph.setMessage("The barcode is attached to a rack, please enter a plate barcode");
-//            } else {
-                Queue<VesselVertex> vesselVertexQueue = new LinkedList<>();
-
-                vesselVertexQueue.add(new PlateVesselVertex(plate));
-                processQueue(vesselVertexQueue, graph, alternativeIds);
-//            }
-        }
     }
 
 //    private void startWithWellMap(WellMap wellMap, Graph graph, List<AlternativeId> alternativeIds) {
@@ -174,7 +152,7 @@ public class TransferEntityGrapher implements TransferVisualizer {
         } else {
             Queue<VesselVertex> vesselVertexQueue = new LinkedList<>();
 
-            for (VesselContainer vesselContainer : receptacle.getContainers()) {
+            for (VesselContainer<?> vesselContainer : receptacle.getContainers()) {
                 vesselVertexQueue.add(new ContainerVertex(vesselContainer));
             }
             vesselVertexQueue.add(new ReceptacleVesselVertex(receptacle));
@@ -182,7 +160,7 @@ public class TransferEntityGrapher implements TransferVisualizer {
         }
     }
 
-    public void startWithContainer(VesselContainer vesselContainer, Graph graph, List<AlternativeId> alternativeIds) {
+    public void startWithContainer(VesselContainer<?> vesselContainer, Graph graph, List<AlternativeId> alternativeIds) {
         if (vesselContainer == null) {
             graph.setMessage("No container was found with that barcode");
         } else {
@@ -271,11 +249,8 @@ public class TransferEntityGrapher implements TransferVisualizer {
      */
     @Override
     public Map<String, List<String>> getIdsForTube(String tubeBarcode) {
-        try {
-            TwoDBarcodedTube receptacle = twoDBarcodedTubeDAO.findByBarcode(tubeBarcode);
-            return getAlternativeIds(receptacle, Arrays.asList(AlternativeId.values()));
-        } finally {
-        }
+        TwoDBarcodedTube receptacle = twoDBarcodedTubeDAO.findByBarcode(tubeBarcode);
+        return getAlternativeIds(receptacle, Arrays.asList(AlternativeId.values()));
     }
 
     /**
@@ -357,71 +332,6 @@ public class TransferEntityGrapher implements TransferVisualizer {
     }
 
 
-    private class PlateVesselVertex extends VesselVertex {
-
-        private StaticPlate plate;
-
-        private PlateVesselVertex(StaticPlate plate) {
-            this.plate = plate;
-        }
-
-        @Override
-        boolean render(Graph graph, List<AlternativeId> alternativeIds) {
-//            System.out.println("Rendering plate " + plate.getBarcode());
-            boolean newVertex = false;
-            Vertex plateVertex = graph.getMapIdToVertex().get(plate.getLabel());
-            if (plateVertex == null) {
-                newVertex = true;
-                plateVertex = new Vertex(plate.getLabel(), IdType.PLATE_ID_TYPE.toString(),
-                        new StringBuilder().append(plate.getPlateType().getDisplayName()).append(" : ").append(plate.getLabel()).toString());
-                // If there are self-referential plate events, draw a box for the user to click on, to see a list of these events
-                List<LabEvent> sortedPlateEvents = new ArrayList<>();
-                for (LabEvent plateEvent : plate.getInPlaceEvents()) {
-                    sortedPlateEvents.add(plateEvent);
-                }
-                // Sort the plate events chronologically
-                Collections.sort(sortedPlateEvents, new Comparator<LabEvent>() {
-                    @Override
-                    public int compare(LabEvent o1, LabEvent o2) {
-                        return o1.getEventDate().compareTo(o2.getEventDate());
-                    }
-                });
-                for (LabEvent plateEvent : sortedPlateEvents) {
-                    BspUser bspUser;
-                    if(bspUserList == null) {
-                        bspUser = new BspUser();
-                    } else {
-                        bspUser = bspUserList.getById(plateEvent.getEventOperator());
-                    }
-                    plateVertex.getDetails().add(plateEvent.getLabEventType().getName() + ", " +
-                            plateEvent.getEventLocation() + ", " + plateEvent.getEventDate() + ", " +
-                            (bspUser == null ? "" : bspUser.getFullName()));
-                }
-                graph.getMapIdToVertex().put(plateVertex.getId(), plateVertex);
-                plateVertex.setHasMoreEdges(true);
-            }
-            setVertex(plateVertex);
-            return newVertex;
-        }
-
-        @Override
-        public int renderEdges(Graph graph, Queue<VesselVertex> vesselVertexQueue, List<AlternativeId> alternativeIds) {
-            int numVesselsAdded = 0;
-            VesselContainer<PlateWell> containerRole = plate.getContainerRole();
-            numVesselsAdded += renderSectionTransfers(graph, vesselVertexQueue, alternativeIds, containerRole.getSectionTransfersFrom(),
-                    containerRole.getSectionTransfersTo());
-            containerRole.getCherryPickTransfersFrom();
-//            for (ReceptaclePlateTransferEvent receptaclePlateTransferEvent : plate.getReceptaclePlateTransferEvents()) {
-//                ReceptacleVesselVertex receptacleVessel = new ReceptacleVesselVertex((Receptacle) receptaclePlateTransferEvent.getReceptacle());
-//                if(receptacleVessel.render(graph, alternativeIds)) {
-//                    vesselVertexQueue.add(receptacleVessel);
-//                    numVesselsAdded++;
-//                }
-//                renderEdge(graph, receptaclePlateTransferEvent);
-//            }
-            return numVesselsAdded;
-        }
-    }
 
     private int renderReceptacleEdges(LabVessel receptacle, Graph graph, Queue<VesselVertex> vesselVertexQueue, List<AlternativeId> alternativeIds) {
         int numVesselsAddedReturn = 0;
@@ -444,14 +354,14 @@ public class TransferEntityGrapher implements TransferVisualizer {
 //            }
 //            renderEdge(graph, receptacleTransferEvent);
 //        }
-//        for (ReceptaclePlateTransferEvent receptaclePlateTransferEvent : receptacle.getReceptaclePlateTransferEvents()) {
-//            PlateVesselVertex plateVessel = new PlateVesselVertex(receptaclePlateTransferEvent.getPlate());
-//            if(plateVessel.render(graph, alternativeIds)) {
-//                vesselVertexQueue.add(plateVessel);
-//                numVesselsAddedReturn++;
-//            }
-//            renderEdge(graph, receptaclePlateTransferEvent);
-//        }
+        for (VesselToSectionTransfer vesselToSectionTransfer : receptacle.getVesselToSectionTransfersThisAsSource()) {
+            ContainerVertex plateVessel = new ContainerVertex(vesselToSectionTransfer.getTargetVesselContainer());
+            if(plateVessel.render(graph, alternativeIds)) {
+                vesselVertexQueue.add(plateVessel);
+                numVesselsAddedReturn++;
+            }
+            renderEdge(graph, vesselToSectionTransfer);
+        }
 //        for (ReceptacleEvent receptacleEvent : receptacle.getReceptacleEvents()) {
 //            if (receptacleEvent instanceof ReceptacleTransferEvent) {
 //                ReceptacleTransferEvent receptacleTransferEvent = (ReceptacleTransferEvent) receptacleEvent;
@@ -588,6 +498,16 @@ public class TransferEntityGrapher implements TransferVisualizer {
                 numVesselsAdded += renderReceptacleEdges(vesselPositionTwoDBarcodedTubeEntry.getValue(),
                         graph, vesselVertexQueue, alternativeIds);
             }
+            for (Object o : vesselContainer.getVesselToSectionTransfersTo()) {
+                VesselToSectionTransfer vesselToSectionTransfer = (VesselToSectionTransfer) o;
+                ReceptacleVesselVertex receptacleVessel = new ReceptacleVesselVertex(
+                        (TwoDBarcodedTube) vesselToSectionTransfer.getSourceVessel());
+                if(receptacleVessel.render(graph, alternativeIds)) {
+                    vesselVertexQueue.add(receptacleVessel);
+                    numVesselsAdded++;
+                }
+                renderEdge(graph, vesselToSectionTransfer);
+            }
             return numVesselsAdded;
         }
     }
@@ -617,51 +537,10 @@ public class TransferEntityGrapher implements TransferVisualizer {
             Vertex vertex = graph.getMapIdToVertex().get(receptacle.getLabel());
             if (vertex == null) {
                 newVertex = true;
-                // todo jmt refactor FlowcellLane and StripTubeWell into their own classes?
-//                if (receptacle instanceof FlowcellLane) {
-//                    // render all lanes, even if they're not immediately referenced, because they may be referenced later by "more transfers"
-//                    Flowcell flowcell = ((FlowcellLane) receptacle).getFlowcell();
-//                    Vertex flowcellVertex = graph.getMapIdToVertex().get(flowcell.getBarcode());
-//                    if (flowcellVertex == null) {
-//                        flowcellVertex = new Vertex(flowcell.getBarcode(), IdType.RECEPTACLE_ID_TYPE.toString(),
-//                                new StringBuilder().append("Flowcell : ").append(flowcell.getBarcode()).toString(),
-//                                flowcell.getFlowcellLanes().size(), 1);
-//                        graph.getMapIdToVertex().put(flowcellVertex.getId(), flowcellVertex);
-//                        for (FlowcellLane flowcellLane : flowcell.getFlowcellLanes()) {
-//                            vertex = new Vertex(flowcellLane.getBarcode(), IdType.RECEPTACLE_ID_TYPE.toString(), flowcellLane.getBarcode());
-//                            flowcellVertex.getChildVertices()[(int) flowcellLane.getFlowcellLaneDescr().getUiSortOrder().shortValue() - 1][0] = vertex;
-//                            vertex.setParentVertex(flowcellVertex);
-//                            vertex.setAlternativeIds(getAlternativeIds(receptacle, alternativeIds));
-//                            addLibraryTypeToDetails(receptacle, vertex);
-//                            graph.getMapIdToVertex().put(vertex.getId(), vertex);
-//                        }
-//                        flowcellVertex.setHasMoreEdges(true);
-//                    }
-//                } else if (receptacle instanceof StripTubeWell) {
-//                    // render all wells, even if they're not immediately referenced, because they may be referenced later by "more transfers"
-//                    StripTube stripTube = ((StripTubeWell) receptacle).getStripTube();
-//                    Vertex stripTubeVertex = graph.getMapIdToVertex().get(stripTube.getBarcode());
-//                    if (stripTubeVertex == null) {
-//                        stripTubeVertex = new Vertex(stripTube.getBarcode(), IdType.RECEPTACLE_ID_TYPE.toString(),
-//                                new StringBuilder().append("Strip Tube : ").append(stripTube.getBarcode()).toString(),
-//                                stripTube.getWells().size(), 1);
-//                        graph.getMapIdToVertex().put(stripTubeVertex.getId(), stripTubeVertex);
-//                        for (StripTubeWell stripTubeWell : stripTube.getWells()) {
-//                            vertex = new Vertex(stripTubeWell.getBarcode(), IdType.RECEPTACLE_ID_TYPE.toString(), stripTubeWell.getBarcode());
-//                            stripTubeVertex.getChildVertices()[(int) stripTubeWell.getFlowcellLaneDescr().getUiSortOrder().shortValue() - 1][0] = vertex;
-//                            vertex.setParentVertex(stripTubeVertex);
-//                            vertex.setAlternativeIds(getAlternativeIds(receptacle, alternativeIds));
-//                            addLibraryTypeToDetails(receptacle, vertex);
-//                            graph.getMapIdToVertex().put(vertex.getId(), vertex);
-//                        }
-//                        stripTubeVertex.setHasMoreEdges(true);
-//                    }
-//                } else {
-                    vertex = new Vertex(receptacle.getLabel(), IdType.RECEPTACLE_ID_TYPE.toString(), buildReceptacleLabel(receptacle));
-                    vertex.setAlternativeIds(getAlternativeIds(receptacle, alternativeIds));
-                    graph.getMapIdToVertex().put(vertex.getId(), vertex);
-                    vertex.setHasMoreEdges(true);
-//                }
+                vertex = new Vertex(receptacle.getLabel(), IdType.RECEPTACLE_ID_TYPE.toString(), buildReceptacleLabel(receptacle));
+                vertex.setAlternativeIds(getAlternativeIds(receptacle, alternativeIds));
+                graph.getMapIdToVertex().put(vertex.getId(), vertex);
+                vertex.setHasMoreEdges(true);
             }
             setVertex(vertex);
             return newVertex;
@@ -670,19 +549,7 @@ public class TransferEntityGrapher implements TransferVisualizer {
         @Override
         public int renderEdges(Graph graph, Queue<VesselVertex> vesselVertexQueue, List<AlternativeId> alternativeIds) {
             int numVesselsAdded = 0;
-//            if (receptacle instanceof Flowcell) {
-//                Flowcell flowcell = (Flowcell) receptacle;
-//                for (FlowcellLane flowcellLane : flowcell.getFlowcellLanes()) {
-//                    numVesselsAdded = renderReceptacleEdges(flowcellLane, graph, vesselVertexQueue, alternativeIds);
-//                }
-//            } else if (receptacle instanceof StripTube) {
-//                StripTube stripTube = (StripTube) receptacle;
-//                for (StripTubeWell stripTubeWell : stripTube.getWells()) {
-//                    numVesselsAdded = renderReceptacleEdges(stripTubeWell, graph, vesselVertexQueue, alternativeIds);
-//                }
-//            } else {
-                numVesselsAdded = renderReceptacleEdges(receptacle, graph, vesselVertexQueue, alternativeIds);
-//            }
+            numVesselsAdded = renderReceptacleEdges(receptacle, graph, vesselVertexQueue, alternativeIds);
             return numVesselsAdded;
         }
 
@@ -743,13 +610,6 @@ public class TransferEntityGrapher implements TransferVisualizer {
         int numVesselsAdded = 0;
         switch (embedder.getType()) {
             case STATIC_PLATE:
-                PlateVesselVertex plateVessel = new PlateVesselVertex(OrmUtil.proxySafeCast(
-                        embedder, StaticPlate.class));
-                if(plateVessel.render(graph, alternativeIds)) {
-                    vesselVertexQueue.add(plateVessel);
-                    numVesselsAdded++;
-                }
-                break;
             case TUBE_FORMATION:
             case STRIP_TUBE:
             case FLOWCELL:
@@ -805,24 +665,28 @@ public class TransferEntityGrapher implements TransferVisualizer {
      * Insert an edge for a transfer from a receptacle to a plate section
      *
      * @param graph                        edges and vertices
-     * @param receptaclePlateTransferEvent source and destination
+     * @param vesselToSectionTransfer source and destination
      */
-//    private void renderEdge(Graph graph, ReceptaclePlateTransferEvent receptaclePlateTransferEvent) {
-//        String eventId = Long.toString(receptaclePlateTransferEvent.getId());
-//        if (graph.getVisitedEventIds().add(receptaclePlateTransferEvent.getId())) {
-//            Vertex sourceVertex = graph.getMapIdToVertex().get(receptaclePlateTransferEvent.getReceptacle().getBarcode());
-//            if (sourceVertex == null) {
-//                throw new RuntimeException("In receptaclePlateTransferEvent, no source vertex for " + receptaclePlateTransferEvent.getReceptacle().getBarcode());
-//            }
-//            Vertex destinationVertex = graph.getMapIdToVertex().get(receptaclePlateTransferEvent.getPlate().getBarcode());
-//            if (destinationVertex == null) {
-//                throw new RuntimeException("In receptaclePlateTransferEvent, no destination vertex for " + receptaclePlateTransferEvent.getPlate().getBarcode());
-//            }
-//            graph.getMapIdToEdge().put(eventId, new Edge(buildEdgeLabel(receptaclePlateTransferEvent),
-//                    sourceVertex,
-//                    destinationVertex));
-//        }
-//    }
+    private void renderEdge(Graph graph, VesselToSectionTransfer vesselToSectionTransfer) {
+        String eventId = vesselToSectionTransfer.getKey();
+        if (graph.getVisitedEventIds().add(eventId)) {
+            Vertex sourceVertex = graph.getMapIdToVertex().get(
+                    vesselToSectionTransfer.getSourceVessel().getLabel());
+            if (sourceVertex == null) {
+                throw new RuntimeException("In vesselToSectionTransfer, no source vertex for " +
+                        vesselToSectionTransfer.getSourceVessel().getLabel());
+            }
+            Vertex destinationVertex = graph.getMapIdToVertex().get(vesselToSectionTransfer.
+                    getTargetVesselContainer().getEmbedder().getLabel());
+            if (destinationVertex == null) {
+                throw new RuntimeException("In vesselToSectionTransfer, no destination vertex for " +
+                        vesselToSectionTransfer.getTargetVesselContainer().getEmbedder().getLabel());
+            }
+            graph.getMapIdToEdge().put(eventId, new Edge(buildEdgeLabel(vesselToSectionTransfer.getLabEvent()),
+                    sourceVertex,
+                    destinationVertex));
+        }
+    }
 
     /**
      * Insert an edge for a receptacle to receptacle transfer
