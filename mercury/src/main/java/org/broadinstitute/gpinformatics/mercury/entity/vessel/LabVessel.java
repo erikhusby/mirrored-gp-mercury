@@ -218,9 +218,8 @@ public abstract class LabVessel implements Serializable {
      * of a lab vessel.  Labels are GUIDs
      * for LabVessels; no two LabVessels
      * may share this id.  It's primarily the
-     * barcode on the piece of plastic.f
+     * barcode on the piece of plastic.
      *
-     * @return
      */
     public String getLabel() {
         return label;

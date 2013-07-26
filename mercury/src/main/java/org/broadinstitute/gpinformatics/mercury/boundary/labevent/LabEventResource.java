@@ -1,8 +1,13 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
@@ -21,6 +26,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
+import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -30,7 +36,9 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +55,31 @@ public class LabEventResource {
     @Inject
     private LabBatchDAO labBatchDAO;
 
+    @Inject
+    private LabVesselDao labVesselDao;
+
+    private static final Log log = LogFactory.getLog(LabEventResource.class);
+
+    private class DefaultLabEventRefDataFetcher implements LabEventFactory.LabEventRefDataFetcher {
+        @Override
+        public BspUser getOperator(String userId) {
+            BSPUserList list = ServiceAccessUtility.getBean(BSPUserList.class);
+            return list.getByUsername(userId);
+        }
+
+        @Override
+        public BspUser getOperator(Long bspUserId) {
+            BSPUserList list = ServiceAccessUtility.getBean(BSPUserList.class);
+            return list.getById(bspUserId);
+        }
+
+        @Override
+        public LabBatch getLabBatch(String labBatchName) {
+            return null;
+        }
+    }
+
+
     @Path("/batch/{batchId}")
     @GET
     @Produces({MediaType.APPLICATION_XML})
@@ -58,26 +91,73 @@ public class LabEventResource {
         List<LabEvent> labEventsByTime = new ArrayList<>(labBatch.getLabEvents());
         Collections.sort(labEventsByTime, LabEvent.byEventDate);
         List<LabEventBean> labEventBeans =
-                buildLabEventBeans(labEventsByTime, new LabEventFactory.LabEventRefDataFetcher() {
-                    @Override
-                    public BspUser getOperator(String userId) {
-                        BSPUserList list = ServiceAccessUtility.getBean(BSPUserList.class);
-                        return list.getByUsername(userId);
-                    }
-
-                    @Override
-                    public BspUser getOperator(Long bspUserId) {
-                        BSPUserList list = ServiceAccessUtility.getBean(BSPUserList.class);
-                        return list.getById(bspUserId);
-                    }
-
-                    @Override
-                    public LabBatch getLabBatch(String labBatchName) {
-                        return null;
-                    }
-                });
+                buildLabEventBeans(labEventsByTime, new DefaultLabEventRefDataFetcher());
         return new LabEventResponseBean(labEventBeans);
     }
+
+
+    private void transfersToFirstAncestorRack(@Nonnull LabVessel labVessel, @Nonnull Set<LabEvent> accumulator) {
+        Set<LabEvent> transfersTo = labVessel.getTransfersTo();
+        if (transfersTo.isEmpty()) {
+            log.error("Unexpected empty transfer for LabVessel " + labVessel);
+            return;
+        }
+
+        accumulator.addAll(transfersTo);
+        // If any of the sources represents a rack, terminate the recursion.
+        for (LabEvent labEvent : transfersTo) {
+            if (isSourceRack(labEvent)) {
+                return;
+            }
+        }
+
+        for (LabEvent transfer : transfersTo) {
+            for (LabVessel sourceVessel : transfer.getSourceLabVessels()) {
+                transfersToFirstAncestorRack(sourceVessel, accumulator);
+            }
+        }
+    }
+
+
+    private Set<LabEvent> transfersToFirstAncestorRack(@Nonnull LabVessel labVessel) {
+        Set<LabEvent> accumulator = new HashSet<>();
+        transfersToFirstAncestorRack(labVessel, accumulator);
+        return accumulator;
+    }
+
+
+    private boolean isSourceRack(@Nonnull LabEvent labEvent) {
+        return labEvent.getSourceLabVessels().iterator().next().getType() == LabVessel.ContainerType.TUBE_FORMATION;
+    }
+
+
+    @Path("/transfersToFirstAncestorRack/{plateBarcodes}")
+    @GET
+    @Produces(MediaType.APPLICATION_XML)
+    public LabEventResponseBean transfersToFirstAncestorRack(@PathParam("plateBarcodes") @Nonnull String plateBarcodes) {
+        String[] barcodes = StringUtils.split(plateBarcodes, ",");
+        Map<String, LabVessel> byBarcodes = labVesselDao.findByBarcodes(Arrays.asList(barcodes));
+
+        List<LabEvent> labEvents = new ArrayList<>();
+
+        for (LabVessel labVessel : byBarcodes.values()) {
+            // Not checking that all queried barcodes were accounted for in the results, that is up to the caller.
+            if (labVessel == null) {
+                continue;
+            }
+
+            labEvents.addAll(transfersToFirstAncestorRack(labVessel));
+        }
+
+        Collections.sort(labEvents, LabEvent.byEventDate);
+
+        List<LabEventBean> labEventBeans =
+                buildLabEventBeans(labEvents, new DefaultLabEventRefDataFetcher());
+
+        return new LabEventResponseBean(labEventBeans);
+    }
+
+
 
     public List<LabEventBean> buildLabEventBeans(List<LabEvent> labEvents,
                                                  LabEventFactory.LabEventRefDataFetcher dataFetcherHelper) {
