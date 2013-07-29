@@ -10,17 +10,20 @@
             function typeChanged() {
                 var numLanesInput = $j('#numLanesText');
                 var loadingConcInput = $j('#loadingConcText');
-                if ($j('#typeSelect').val() == 'MISEQ') {
+                if ($j('#typeSelect').val() == 'MiSeq Flowcell') {
                     numLanesInput.prop('readonly', true);
                     numLanesInput.val(1);
                     loadingConcInput.prop('readonly', true);
                     loadingConcInput.val('7');
-                }
-                else {
-                    numLanesInput.prop('readonly', false);
-                    numLanesInput.val(0);
+                } else if ($j('#typeSelect').val() == 'HiSeq 2500 Flowcell') {
+                    numLanesInput.prop('readonly', true);
+                    numLanesInput.val(2);
+                    loadingConcInput.val('7');
+                } else {
+                    numLanesInput.prop('readonly', true);
+                    numLanesInput.val(8);
                     loadingConcInput.prop('readonly', false);
-                    loadingConcInput.val('0');
+                    loadingConcInput.val('7');
                 }
             }
 
@@ -36,6 +39,7 @@
                         {"bSortable":true, "sType":"date"}
                     ]
                 });
+                typeChanged();
 
                 $j('.tube-checkbox').enableCheckboxRangeSelection({
                     checkAllClass:'tube-checkAll',
@@ -65,7 +69,7 @@
                 <div class="control-group" style="margin-left: 50px">
                     <div class="controls">
                         <stripes:select id="typeSelect" name="selectedType" onchange="typeChanged()">
-                            <stripes:options-collection collection="${actionBean.supportedTypes}"/>
+                            <stripes:options-collection collection="${actionBean.flowcellTypes}"/>
                         </stripes:select>
                     </div>
                 </div>

@@ -101,7 +101,7 @@ public class CreateFields extends UpdateFields {
         EXOME_EXPRESS(WorkflowName.EXOME_EXPRESS.getWorkflowName()),
         PRODUCT_ORDER("Product Order"),
         RESEARCH_PROJECT("Research Project"),
-        FLOWCELL("HiSeq 2500"),
+        FLOWCELL("Flowcell"),
         MISEQ("MiSeq");
 
         private final String jiraName;

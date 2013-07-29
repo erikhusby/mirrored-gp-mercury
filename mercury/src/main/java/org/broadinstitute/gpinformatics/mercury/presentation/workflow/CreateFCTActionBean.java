@@ -17,12 +17,14 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -32,10 +34,11 @@ import java.util.Set;
 @UrlBinding("/workflow/CreateFCT.action")
 public class CreateFCTActionBean extends CoreActionBean {
     private static String VIEW_PAGE = "/workflow/create_fct.jsp";
-
     public static final String LOAD_ACTION = "load";
-    public static final CreateFields.IssueType[] SUPPORTED_TYPES =
-            new CreateFields.IssueType[]{CreateFields.IssueType.FLOWCELL, CreateFields.IssueType.MISEQ};
+    public static final List<String> FLOWCELL_TYPES =
+            Arrays.asList(IlluminaFlowcell.FlowcellType.MiSeqFlowcell.getDisplayName(),
+                    IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell.getDisplayName(),
+                    IlluminaFlowcell.FlowcellType.HiSeqFlowcell.getDisplayName());
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -65,13 +68,13 @@ public class CreateFCTActionBean extends CoreActionBean {
 
     private List<LabBatch> createdBatches;
 
-    private CreateFields.IssueType selectedType;
+    private String selectedType;
 
-    public CreateFields.IssueType getSelectedType() {
+    public String getSelectedType() {
         return selectedType;
     }
 
-    public void setSelectedType(CreateFields.IssueType selectedType) {
+    public void setSelectedType(String selectedType) {
         this.selectedType = selectedType;
     }
 
@@ -180,21 +183,24 @@ public class CreateFCTActionBean extends CoreActionBean {
             Set<LabVessel> vesselSet = new HashSet<>(labVesselDao.findByListIdentifiers(selectedVesselLabels));
             //create a new FCT ticket for every two lanes requested.
             int lanesPerFlowcell = 1;
+            CreateFields.IssueType issueType = CreateFields.IssueType.FLOWCELL;;
             LabBatch.LabBatchType batchType = LabBatch.LabBatchType.FCT;
-            if (selectedType.equals(CreateFields.IssueType.FLOWCELL)) {
-                lanesPerFlowcell = 2;
-                batchType = LabBatch.LabBatchType.FCT;
+            if (selectedType.equals(IlluminaFlowcell.FlowcellType.HiSeqFlowcell.getDisplayName())) {
+                lanesPerFlowcell = IlluminaFlowcell.FlowcellType.HiSeqFlowcell.getVesselGeometry().getVesselPositions().length;
             }
-            if (selectedType.equals(CreateFields.IssueType.MISEQ)) {
-                lanesPerFlowcell = 1;
+            if (selectedType.equals(IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell.getDisplayName())) {
+                lanesPerFlowcell = IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell.getVesselGeometry().getVesselPositions().length;
+            }
+            if (selectedType.equals(IlluminaFlowcell.FlowcellType.MiSeqFlowcell.getDisplayName())) {
+                lanesPerFlowcell = IlluminaFlowcell.FlowcellType.MiSeqFlowcell.getVesselGeometry().getVesselPositions().length;
                 batchType = LabBatch.LabBatchType.MISEQ;
+                issueType = CreateFields.IssueType.MISEQ;
             }
             for (int i = 0; i < numberOfLanes; i += lanesPerFlowcell) {
                 LabBatch batch =
-                        new LabBatch(denatureTubeBarcode + " FCT ticket", vesselSet, batchType,
-                                loadingConc);
+                        new LabBatch(denatureTubeBarcode + " FCT ticket", vesselSet, batchType, loadingConc);
                 batch.setBatchDescription(batch.getBatchName());
-                labBatchEjb.createLabBatch(batch, userBean.getLoginUserName(), selectedType);
+                labBatchEjb.createLabBatch(batch, userBean.getLoginUserName(), issueType);
                 createdBatches.add(batch);
                 //link tickets
                 labBatchEjb.linkJiraBatches(labBatch, batch);
@@ -221,7 +227,7 @@ public class CreateFCTActionBean extends CoreActionBean {
         }
     }
 
-    public CreateFields.IssueType[] getSupportedTypes() {
-        return SUPPORTED_TYPES;
+    public List<String> getFlowcellTypes() {
+        return FLOWCELL_TYPES;
     }
 }
