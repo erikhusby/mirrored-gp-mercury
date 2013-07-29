@@ -114,7 +114,8 @@ public class LabEventResource {
             Set<List<LabEvent>> setOfLabEventLists =
                     PlateTransferUtils.shortestPathsToVesselsSatisfyingPredicate(labVessel, rackPredicate);
 
-            // Flatten the result as the current caller does not expect more than one List of transfers to be found.
+            // Flatten the result as the current caller does not expect more than one List of transfers to be found
+            // per query barcode.
             for (List<LabEvent> labEventList : setOfLabEventLists) {
                 labEvents.addAll(labEventList);
             }

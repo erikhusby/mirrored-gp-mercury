@@ -40,7 +40,7 @@ public class PlateTransferUtils {
             }
         }
 
-        // Continue until finding LabEvents satisfying the predicate or running out of LabEvents to test.
+        // Continue until finding LabVessels satisfying the predicate or running out of LabVessels to test.
         while (true) {
             // Search for LabVessels satisfying the predicate.
             for (Map<LabVessel, List<LabEvent>> currentTransfer : currentTransfers) {
@@ -51,7 +51,7 @@ public class PlateTransferUtils {
                 }
             }
 
-            // If any satisfying LabEvents at this depth were found, terminate the search.
+            // If any satisfying LabVessels at this depth were found, terminate the search.
             if (!foundEventLists.isEmpty()) {
                 break;
             }
@@ -79,7 +79,7 @@ public class PlateTransferUtils {
                         }
                     }
 
-                    // Add non-empty Maps from vessels to LabEvents to the Set of current transfers.
+                    // Add non-empty Maps from LabVessels to Lists of LabEvents to the Set of current transfers.
                     if (!vesselMap.isEmpty()) {
                         currentTransfers.add(vesselMap);
                     }
