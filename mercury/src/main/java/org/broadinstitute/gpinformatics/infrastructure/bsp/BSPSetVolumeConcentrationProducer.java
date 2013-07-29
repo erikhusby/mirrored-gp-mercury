@@ -12,7 +12,7 @@ import javax.inject.Inject;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.STUBBY;
 
-public class BSPCohortSearchServiceProducer {
+public class BSPSetVolumeConcentrationProducer {
 
     @Inject
     private Deployment deployment;
@@ -20,7 +20,8 @@ public class BSPCohortSearchServiceProducer {
     @Produces
     @Default
     @ApplicationScoped
-    public BSPCohortSearchService produce(@New BSPCohortSearchServiceStub stub, @New BSPCohortSearchServiceImpl impl) {
+    public BSPSetVolumeConcentration produce(
+            @New BSPSetVolumeConcentrationStub stub, @New BSPSetVolumeConcentrationImpl impl) {
 
         if (deployment == STUBBY) {
             return stub;
@@ -29,21 +30,17 @@ public class BSPCohortSearchServiceProducer {
         return impl;
     }
 
-    public static BSPCohortSearchService stubInstance() {
-        return new BSPCohortSearchServiceStub();
+    public static BSPSetVolumeConcentration stubInstance() {
+        return new BSPSetVolumeConcentrationStub();
     }
 
-
     /**
-     * Creates a BSPCohortSearchService with plain old new operator for container-free testing,
-     * not a managed bean!
+     * Creates a BSPSetVolumeConcentration with plain old new operator for container-free testing, not a managed bean!
      *
-     * @return The service
+     * @return The volume and concentration BSP web service setter.
      */
-    public static BSPCohortSearchService testInstance() {
-
+    public static BSPSetVolumeConcentration testInstance() {
         BSPConfig bspConfig = BSPConfig.produce(DEV);
-
-        return new BSPCohortSearchServiceImpl(bspConfig);
+        return new BSPSetVolumeConcentrationImpl(bspConfig);
     }
 }

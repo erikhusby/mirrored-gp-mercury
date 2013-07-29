@@ -26,10 +26,10 @@ public class BSPSetVolumeConcentrationTest extends Arquillian {
 
     @Test(enabled = true)
     public void testSetVolumeAndConcentration() {
-        BSPSetVolumeConcentration bspSetVolumeConcentration = new BSPSetVolumeConcentration(bspConfig);
+        BSPSetVolumeConcentrationImpl bspSetVolumeConcentration = new BSPSetVolumeConcentrationImpl(bspConfig);
         bspSetVolumeConcentration.setVolumeAndConcentration("SM-1234", 50.0D, 125.2D);
         String[] result = bspSetVolumeConcentration.getResult();
         Assert.assertTrue("There should be a result", result != null && result.length > 0);
-        Assert.assertTrue("Should have received update result", result[0].startsWith("updated volume and concentration for"));
+        Assert.assertTrue("Should have received update result", bspSetVolumeConcentration.isValidResult());
     }
 }
