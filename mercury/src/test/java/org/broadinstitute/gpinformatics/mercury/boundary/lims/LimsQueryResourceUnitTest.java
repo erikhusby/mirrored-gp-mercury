@@ -397,7 +397,7 @@ public class LimsQueryResourceUnitTest {
     @Test(groups = DATABASE_FREE, enabled = true)
     public void testFetchIlluminaSeqTemplate() {
         SequencingTemplateLaneType laneType =
-                LimsQueryObjectFactory.createSequencingTemplateLaneType("LANE_1234", 33.333, "LOADING_VESSEL_1234",
+                LimsQueryObjectFactory.createSequencingTemplateLaneType("LANE_1234", 33.333f, "LOADING_VESSEL_1234",
                         "LOADING_VESSEL_1234");
         SequencingTemplateType template =
                 LimsQueryObjectFactory
@@ -418,7 +418,7 @@ public class LimsQueryResourceUnitTest {
         Assert.assertTrue(result.isPairedRun());
         Assert.assertEquals(result.getLanes().size(), 1);
         SequencingTemplateLaneType laneOne = result.getLanes().get(0);
-        Assert.assertEquals(laneOne.getLoadingConcentration(), 33.333);
+        Assert.assertEquals(laneOne.getLoadingConcentration(), 33.333f);
         Assert.assertEquals(laneOne.getLoadingVesselLabel(), "LOADING_VESSEL_1234");
         Assert.assertEquals(laneOne.getLaneName(), "LANE_1234");
         verifyAll();

@@ -21,6 +21,9 @@ public class ProductOrderData {
     private String status;
     private List<String> samples;
     private String aggregationDataType;
+    private String researchProjectId;
+    private String productName;
+    private String quoteId;
 
     @SuppressWarnings("UnusedDeclaration")
     /** Required by JAXB. */
@@ -92,5 +95,29 @@ public class ProductOrderData {
 
     public String getAggregationDataType() {
         return aggregationDataType;
+    }
+
+    public void setResearchProjectId(String researchProjectId) {
+        this.researchProjectId = researchProjectId;
+    }
+
+    public String getResearchProjectId() {
+        return researchProjectId;
+    }
+
+    public void setProductName(String productName) {
+        this.productName = productName;
+    }
+
+    public String getProductName() {
+        return productName;
+    }
+
+    public void setQuoteId(String quoteId) {
+        this.quoteId = quoteId;
+    }
+
+    public String getQuoteId() {
+        return quoteId;
     }
 }

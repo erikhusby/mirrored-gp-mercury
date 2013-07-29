@@ -70,6 +70,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
     private LabBatch miseqBatch2;
     private LabBatch miseqBatch1;
 
+    @Override
     @BeforeTest(alwaysRun = true)
     public void setUp() {
         expectedRouting = MercuryOrSquidRouter.MercuryOrSquid.MERCURY;
@@ -230,7 +231,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         assertThat(template.getLanes().get(0).getLaneName(), is("LANE1"));
         assertThat(template.getLanes().get(0).getLoadingVesselLabel(), is(""));
         assertThat(template.getLanes().get(0).getDerivedVesselLabel(), is(denatureTubeBarcode));
-        assertThat(template.getLanes().get(0).getLoadingConcentration(), is(7.0));
+        assertThat(template.getLanes().get(0).getLoadingConcentration(), is(7.0f));
     }
 
     public void testGetSequencingTemplateFromDenatureTubeProduction() {
