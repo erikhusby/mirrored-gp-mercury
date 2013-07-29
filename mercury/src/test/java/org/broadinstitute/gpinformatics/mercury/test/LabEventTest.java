@@ -1064,8 +1064,7 @@ public class LabEventTest extends BaseEventTest {
         }
 
         BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
-        LabEventFactory labEventFactory = new LabEventFactory();
-        labEventFactory.setLabEventRefDataFetcher(labEventRefDataFetcher);
+        getLabEventFactory().setLabEventRefDataFetcher(labEventRefDataFetcher);
 
         Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
         mapBarcodeToVessel.putAll(mapBarcodeToTube);
@@ -1075,7 +1074,7 @@ public class LabEventTest extends BaseEventTest {
                 Collections.singletonList("SourcePlate"), Collections.<List<String>>emptyList(),
                 Arrays.asList(new BettaLimsMessageTestFactory.CherryPick("SourceRack", "A01", "SourcePlate", "A01")));
         rackToPlateCherryPickEvent.getPlate().get(0).setPhysType(LabEventFactory.PHYS_TYPE_EPPENDORF_96);
-        LabEvent rackToPlateEntity = labEventFactory.buildFromBettaLims(rackToPlateCherryPickEvent, mapBarcodeToVessel);
+        LabEvent rackToPlateEntity = getLabEventFactory().buildFromBettaLims(rackToPlateCherryPickEvent, mapBarcodeToVessel);
         StaticPlate plate = (StaticPlate) rackToPlateEntity.getTargetLabVessels().iterator().next();
 
         mapBarcodeToVessel.clear();
@@ -1085,7 +1084,7 @@ public class LabEventTest extends BaseEventTest {
                 Collections.singletonList("TargetRack"), Collections.singletonList(Arrays.asList("tube1", "tube2")),
                 Arrays.asList(new BettaLimsMessageTestFactory.CherryPick("SourcePlate", "A01", "TargetRack", "A01")));
         plateToRackCherryPickEvent.getSourcePlate().get(0).setPhysType(LabEventFactory.PHYS_TYPE_EPPENDORF_96);
-        LabEvent plateToRackEntity = labEventFactory.buildFromBettaLims(plateToRackCherryPickEvent, mapBarcodeToVessel);
+        LabEvent plateToRackEntity = getLabEventFactory().buildFromBettaLims(plateToRackCherryPickEvent, mapBarcodeToVessel);
         LabVessel targetRack = plateToRackEntity.getTargetLabVessels().iterator().next();
         Assert.assertEquals(targetRack.getContainerRole().getVesselAtPosition(VesselPosition.A01).getSampleInstances().size(),
                 1, "Wrong number of sample instances");

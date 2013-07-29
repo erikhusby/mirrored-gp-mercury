@@ -21,7 +21,7 @@ public class BSPSetVolumeConcentrationStub implements BSPSetVolumeConcentration 
     @Override
     public void setVolumeAndConcentration(String barcode, double volume, double concentration) {
 
-        result = new String[0];
+        result = new String[1];
         result[0] = "updated volume and concentration for STUB-1234";
     }
 
