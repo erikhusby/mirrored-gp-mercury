@@ -22,7 +22,10 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
+import org.broadinstitute.gpinformatics.mercury.boundary.graph.Graph;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
+import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferEntityGrapher;
+import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVisualizer;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
@@ -40,6 +43,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.presentation.transfervis.TransferVisualizerClient;
+import org.broadinstitute.gpinformatics.mercury.presentation.transfervis.TransferVisualizerFrame;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
@@ -492,5 +497,35 @@ public class BaseEventTest {
 
     public LabEventFactory getLabEventFactory() {
         return labEventFactory;
+    }
+
+    /**
+     * Allows Transfer Visualizer to be run inside a test, so developer can verify that vessel transfer graph is
+     * constructed correctly.
+     * @param labVessel    starting point in graph.
+     */
+    public void runTransferVisualizer(LabVessel labVessel) {
+        // Disabled by default, because it would block Bamboo tests.
+        if (false) {
+            TransferEntityGrapher transferEntityGrapher = new TransferEntityGrapher();
+            // "More Transfers" buttons won't work when there's no server, so render all vessels in first "request"
+            transferEntityGrapher.setMaxNumVesselsPerRequest(10000);
+            Graph graph = new Graph();
+            transferEntityGrapher.startWithTube((TwoDBarcodedTube) labVessel, graph,
+                    new ArrayList<TransferVisualizer.AlternativeId>());
+
+            TransferVisualizerClient transferVisualizerClient = new TransferVisualizerClient(
+                    labVessel.getLabel(), new ArrayList<TransferVisualizer.AlternativeId>());
+            transferVisualizerClient.setGraph(graph);
+
+            TransferVisualizerFrame transferVisualizerFrame = new TransferVisualizerFrame();
+            transferVisualizerFrame.setTransferVisualizerClient(transferVisualizerClient);
+            // Suspend the test thread, to give the user time to scroll around the graph.
+            try {
+                Thread.sleep(500000L);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 }

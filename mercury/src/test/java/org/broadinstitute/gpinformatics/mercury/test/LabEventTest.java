@@ -71,7 +71,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
-import org.broadinstitute.gpinformatics.mercury.presentation.transfervis.TransferVisualizerFrame;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
@@ -359,21 +358,13 @@ public class LabEventTest extends BaseEventTest {
 
         Assert.assertEquals(illuminaSequencingRun.getSampleCartridge(), illuminaFlowcell, "Wrong flowcell");
 
-        if (false) {
-            TransferVisualizerFrame transferVisualizerFrame = new TransferVisualizerFrame();
-            transferVisualizerFrame.renderVessel(startingTube);
-            try {
-                Thread.sleep(500000L);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }
+        runTransferVisualizer(startingTube);
 
         TransferEntityGrapher transferEntityGrapher = new TransferEntityGrapher();
         transferEntityGrapher.setMaxNumVesselsPerRequest(1000);
         Graph graph = new Graph();
         transferEntityGrapher.startWithTube(startingTube, graph, new ArrayList<TransferVisualizer.AlternativeId>());
-        Assert.assertEquals(graph.getMapIdToVertex().size(), 1690, "Wrong number of vertices");
+        Assert.assertEquals(graph.getMapIdToVertex().size(), 3276, "Wrong number of vertices");
 //        Controller.stopCPURecording();
     }
 
@@ -435,6 +426,8 @@ public class LabEventTest extends BaseEventTest {
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
                 runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", FCT_TICKET,
                         ProductionFlowcellPath.DILUTION_TO_FLOWCELL, null, "Exome Express");
+
+        runTransferVisualizer(mapBarcodeToTube.values().iterator().next());
 
         IlluminaFlowcell illuminaFlowcell = hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell();
         Set<SampleInstance> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
@@ -906,15 +899,8 @@ public class LabEventTest extends BaseEventTest {
                 Assert.assertEquals(libraryBean.getLcSet(), workflowBatch1.getBatchName());
                 Assert.assertEquals(libraryBean.getProductOrderKey(), productOrder1.getBusinessKey());
             }
-            if (false) {
-                TransferVisualizerFrame transferVisualizerFrame = new TransferVisualizerFrame();
-                transferVisualizerFrame.renderVessel(reworkTube);
-                try {
-                    Thread.sleep(500000L);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-            }
+
+            runTransferVisualizer(reworkTube);
 
             SolexaRunBean runBean2 = new SolexaRunBean(flowcellBarcode, flowcellBarcode + dateFormat.format(runDate),
                     runDate, machineName, runPath.getAbsolutePath(), null);

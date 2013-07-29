@@ -11,7 +11,7 @@ import javax.annotation.Nullable;
 /**
  * We use a custom serializer here because custom fields are not
  * instance portable.  In other words, the custom field names in a cloned
- * dev instance of jira arent't the same as they are in production,
+ * dev instance of jira aren't the same as they are in production,
  * so there's a bit more work here to make sure that tickets
  * which have custom fields can be properly created in dev and prod.
  */
@@ -101,7 +101,7 @@ public class CreateFields extends UpdateFields {
         EXOME_EXPRESS(WorkflowName.EXOME_EXPRESS.getWorkflowName()),
         PRODUCT_ORDER("Product Order"),
         RESEARCH_PROJECT("Research Project"),
-        FLOWCELL("Flowcell"),
+        FLOWCELL("HiSeq 2500"),
         MISEQ("MiSeq");
 
         private final String jiraName;

@@ -846,8 +846,14 @@ public class ProductOrder implements BusinessObject, Serializable {
 
     public static void loadBspData(List<ProductOrderSample> samples) {
 
-        List<String> sampleNames = ProductOrderSample.getSampleNames(samples);
-        if (sampleNames.isEmpty()) {
+        // Create a subset of the samples so we only call BSP for BSP samples that aren't already cached.
+        Set<String> bspSampleNames = new HashSet<>(samples.size()) ;
+        for (ProductOrderSample productOrderSample : samples) {
+            if (productOrderSample.needsBspMetaData()){
+                bspSampleNames.add(productOrderSample.getSampleName());
+            }
+        }
+        if (bspSampleNames.isEmpty()) {
             // This early return is needed to avoid making a unnecessary injection, which could cause
             // DB Free automated tests to fail.
             return;
@@ -855,7 +861,7 @@ public class ProductOrder implements BusinessObject, Serializable {
 
         // This gets all the sample names. We could get unique sample names from BSP as a future optimization.
         BSPSampleDataFetcher bspSampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
-        Map<String, BSPSampleDTO> bspSampleMetaData = bspSampleDataFetcher.fetchSamplesFromBSP(sampleNames);
+        Map<String, BSPSampleDTO> bspSampleMetaData = bspSampleDataFetcher.fetchSamplesFromBSP(bspSampleNames);
 
         // The non-null DTOs which we use to look up FFPE status.
         List<BSPSampleDTO> nonNullDTOs = new ArrayList<>();

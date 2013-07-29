@@ -7,12 +7,20 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
-import org.broadinstitute.gpinformatics.mercury.presentation.transfervis.TransferVisualizerFrame;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.testng.Assert;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Builds entity graph for Qtp events
@@ -153,16 +161,6 @@ public class QtpEntityBuilder {
         denatureRack = (TubeFormation) denatureEntity.getTargetLabVessels().iterator().next();
         Set<SampleInstance> denaturedSampleInstances =
                 denatureRack.getContainerRole().getSampleInstancesAtPosition(VesselPosition.A01);
-
-        if (false) {
-            TransferVisualizerFrame transferVisualizerFrame = new TransferVisualizerFrame();
-            transferVisualizerFrame.renderVessel(denatureRack.getContainerRole().getVesselAtPosition(VesselPosition.A01));
-            try {
-                Thread.sleep(500000L);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }
 
         Assert.assertEquals(denaturedSampleInstances.size(), catchSampleInstanceCount,
                 "Wrong number of denatured samples");
