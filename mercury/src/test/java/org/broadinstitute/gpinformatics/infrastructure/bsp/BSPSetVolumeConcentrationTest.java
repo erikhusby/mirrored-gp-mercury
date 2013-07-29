@@ -16,18 +16,20 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EX
 @Test(groups = EXTERNAL_INTEGRATION)
 public class BSPSetVolumeConcentrationTest extends Arquillian {
 
-    @Inject
-    private BSPSetVolumeConcentration bspSetVolumeConcentration;
-
     @Deployment
     public static WebArchive getDeployment() {
         return DeploymentBuilder.buildMercuryWar(DEV);
     }
 
+    @Inject
+    private BSPConfig bspConfig;
+
     @Test(enabled = true)
     public void testSetVolumeAndConcentration() {
-        bspSetVolumeConcentration.setVolumeAndConcentration("SM-1234", 50.0F, 125.2F);
+        BSPSetVolumeConcentration bspSetVolumeConcentration = new BSPSetVolumeConcentration(bspConfig);
+        bspSetVolumeConcentration.setVolumeAndConcentration("SM-1234", 50.0D, 125.2D);
         String[] result = bspSetVolumeConcentration.getResult();
-        Assert.assertTrue("There should be a result", result.length > 0);
+        Assert.assertTrue("There should be a result", result != null && result.length > 0);
+        Assert.assertTrue("Should have received update result", result[0].startsWith("updated volume and concentration for"));
     }
 }
