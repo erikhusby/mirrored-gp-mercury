@@ -1,15 +1,13 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.PlateTransferUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -38,7 +36,6 @@ import javax.ws.rs.core.MediaType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -58,7 +55,6 @@ public class LabEventResource {
     @Inject
     private LabVesselDao labVesselDao;
 
-    private static final Log log = LogFactory.getLog(LabEventResource.class);
 
     private class DefaultLabEventRefDataFetcher implements LabEventFactory.LabEventRefDataFetcher {
         @Override
@@ -96,39 +92,6 @@ public class LabEventResource {
     }
 
 
-    private void transfersToFirstAncestorRack(@Nonnull LabVessel labVessel, @Nonnull Set<LabEvent> accumulator) {
-        Set<LabEvent> transfersTo = labVessel.getTransfersTo();
-        if (transfersTo.isEmpty()) {
-            log.error("Unexpected empty transfer for LabVessel " + labVessel);
-            return;
-        }
-
-        accumulator.addAll(transfersTo);
-        // If any of the sources represents a rack, terminate the recursion.
-        for (LabEvent labEvent : transfersTo) {
-            if (isSourceRack(labEvent)) {
-                return;
-            }
-        }
-
-        for (LabEvent transfer : transfersTo) {
-            for (LabVessel sourceVessel : transfer.getSourceLabVessels()) {
-                transfersToFirstAncestorRack(sourceVessel, accumulator);
-            }
-        }
-    }
-
-
-    private Set<LabEvent> transfersToFirstAncestorRack(@Nonnull LabVessel labVessel) {
-        Set<LabEvent> accumulator = new HashSet<>();
-        transfersToFirstAncestorRack(labVessel, accumulator);
-        return accumulator;
-    }
-
-
-    private boolean isSourceRack(@Nonnull LabEvent labEvent) {
-        return labEvent.getSourceLabVessels().iterator().next().getType() == LabVessel.ContainerType.TUBE_FORMATION;
-    }
 
 
     @Path("/transfersToFirstAncestorRack/{plateBarcodes}")
@@ -140,13 +103,22 @@ public class LabEventResource {
 
         List<LabEvent> labEvents = new ArrayList<>();
 
+        PlateTransferUtils.IsLabVesselARackPredicate rackPredicate = new PlateTransferUtils.IsLabVesselARackPredicate();
+
         for (LabVessel labVessel : byBarcodes.values()) {
             // Not checking that all queried barcodes were accounted for in the results, that is up to the caller.
             if (labVessel == null) {
                 continue;
             }
 
-            labEvents.addAll(transfersToFirstAncestorRack(labVessel));
+            Set<List<LabEvent>> setOfLabEventLists =
+                    PlateTransferUtils.shortestPathsToVesselsSatisfyingPredicate(labVessel, rackPredicate);
+
+            // Flatten the result as the current caller does not expect more than one List of transfers to be found
+            // per query barcode.
+            for (List<LabEvent> labEventList : setOfLabEventLists) {
+                labEvents.addAll(labEventList);
+            }
         }
 
         Collections.sort(labEvents, LabEvent.byEventDate);
@@ -291,6 +263,7 @@ public class LabEventResource {
                     }
                 }
             } else {
+                @SuppressWarnings("unchecked")
                 Set<Map.Entry<VesselPosition, LabVessel>> entrySet =
                         vesselContainer.getMapPositionToVessel().entrySet();
                 for (Map.Entry<VesselPosition, LabVessel> positionToLabVessel : entrySet) {
