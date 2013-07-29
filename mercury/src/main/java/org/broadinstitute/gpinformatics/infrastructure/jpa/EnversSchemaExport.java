@@ -9,7 +9,6 @@ import org.hibernate.tool.hbm2ddl.SchemaExport;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.Field;
 
@@ -82,11 +81,7 @@ public class EnversSchemaExport {
             if (create) {
                 export(writer, delimiter, formatter, createSQL);
             }
-        } catch (NoSuchFieldException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        } catch (FileNotFoundException e) {
+        } catch (NoSuchFieldException | FileNotFoundException | IllegalAccessException e) {
             throw new RuntimeException(e);
         } finally {
             if (writer != null) {

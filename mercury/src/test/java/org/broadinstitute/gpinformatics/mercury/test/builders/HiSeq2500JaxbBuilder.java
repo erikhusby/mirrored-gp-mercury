@@ -33,7 +33,7 @@ public class HiSeq2500JaxbBuilder {
     private String dilutionRackBarcode;
     private final String fctTicket;
 
-    private final List<BettaLIMSMessage> messageList = new ArrayList<BettaLIMSMessage>();
+    private final List<BettaLIMSMessage> messageList = new ArrayList<>();
     private ReceptaclePlateTransferEvent flowcellTransferJaxb;
     private PlateCherryPickEvent dilutionTransferJaxb;
     private final ProductionFlowcellPath productionFlowcellPath;

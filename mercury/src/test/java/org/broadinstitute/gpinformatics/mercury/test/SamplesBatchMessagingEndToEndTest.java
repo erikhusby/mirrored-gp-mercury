@@ -40,7 +40,7 @@ public class SamplesBatchMessagingEndToEndTest extends ContainerTest {
         client.addFilter(new LoggingFilter(System.out));
 
         BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
-        List<String> sampleBarcodes = new ArrayList<String>();
+        List<String> sampleBarcodes = new ArrayList<>();
         sampleBarcodes.add("SM-1001-" + timestamp);
         sampleBarcodes.add("SM-1002-" + timestamp);
         sampleBarcodes.add("SM-1003-" + timestamp);
@@ -68,16 +68,16 @@ public class SamplesBatchMessagingEndToEndTest extends ContainerTest {
         bettaLimsMessageTestFactory.advanceTime();
 
         // End of extraction - Cherry pick, 1 tube to 15 tubes
-        List<String> sourceRackBarcodes = new ArrayList<String>();
+        List<String> sourceRackBarcodes = new ArrayList<>();
         String extStartRackBarcode = "ExtStartRack" + timestamp;
         sourceRackBarcodes.add(extStartRackBarcode);
 
-        List<List<String>> sourceTubeBarcodes = new ArrayList<List<String>>();
+        List<List<String>> sourceTubeBarcodes = new ArrayList<>();
         sourceTubeBarcodes.add(sampleBarcodes);
 
         String extEndRackBarcode = "ExtEndRack" + timestamp;
-        List<String> extractionEndTubeBarcodes = new ArrayList<String>();
-        List<BettaLimsMessageTestFactory.CherryPick> cherryPicks = new ArrayList<BettaLimsMessageTestFactory.CherryPick>();
+        List<String> extractionEndTubeBarcodes = new ArrayList<>();
+        List<BettaLimsMessageTestFactory.CherryPick> cherryPicks = new ArrayList<>();
         for(int i = 0; i < sampleBarcodes.size() * 15; i++){
             extractionEndTubeBarcodes.add("2DExt" + i + timestamp);
             // todo jmt different source tube types - falcon?
@@ -98,7 +98,7 @@ public class SamplesBatchMessagingEndToEndTest extends ContainerTest {
         // Pico - messages from deck
 
         // Normalization - in place dilution or rack to rack
-        List<String> normTubeBarcodes = new ArrayList<String>();
+        List<String> normTubeBarcodes = new ArrayList<>();
         for(int i = 0; i < extractionEndTubeBarcodes.size(); i++) {
             normTubeBarcodes.add("2DNorm" + i + timestamp);
         }

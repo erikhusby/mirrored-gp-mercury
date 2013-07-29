@@ -41,11 +41,11 @@ public class LabBatchDbTest extends ContainerTest {
      */
     public static class AccumulateLabEvents implements TransferTraverserCriteria {
         private int hopCount = -1;
-        private final List<LabEvent> labEventsList = new ArrayList<LabEvent>();
+        private final List<LabEvent> labEventsList = new ArrayList<>();
         /**
          * Avoid infinite loops
          */
-        private Set<LabEvent> visitedLabEvents = new HashSet<LabEvent>();
+        private Set<LabEvent> visitedLabEvents = new HashSet<>();
 
 
         public List<LabEvent> getLabEventsList() {
@@ -73,7 +73,7 @@ public class LabBatchDbTest extends ContainerTest {
                         }
                     }
 
-                    List<LabEvent> inPlaceLabEvents = new ArrayList<LabEvent>();
+                    List<LabEvent> inPlaceLabEvents = new ArrayList<>();
                     if (context.getLabVessel() == null) {
                         for (LabVessel sourceLabVessel : context.getEvent().getSourceLabVessels()) {
                             inPlaceLabEvents.addAll(sourceLabVessel.getInPlaceEvents());
@@ -109,7 +109,7 @@ public class LabBatchDbTest extends ContainerTest {
 
     @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
     public void findMessageFilesForBatch() {
-        List<String> lcSets = new ArrayList<String>();
+        List<String> lcSets = new ArrayList<>();
         // PDO-135, C19F5ACXX
         lcSets.add("LCSET-2519");
         // D1JNDACXX, WR 34532, LCSET-2588, PDO-183

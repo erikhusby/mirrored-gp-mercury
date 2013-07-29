@@ -15,9 +15,8 @@ import java.util.Date;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class BillingSessionEtlDbFreeTest {
-    private final String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
+    private final String etlDateStr = ExtractTransform.formatTimestamp(new Date());
     private static final long BILLING_SESSION_ID = 1122334455;
-    private static final String BILLING_SESSION_MESSAGE = "Billing Successful";
     private static final Date BILLED_DATE = new Date();
     private static final BillingSession.BillingSessionType BILLING_SESSION_TYPE = BillingSession.BillingSessionType.ROLLUP_DAILY;
     private String datafileDir;
@@ -76,19 +75,18 @@ public class BillingSessionEtlDbFreeTest {
         Collection<String> records = billingSessionEtl.dataRecords(etlDateStr, false, BILLING_SESSION_ID);
         Assert.assertEquals(records.size(), 1);
 
-        verifyRecord(records.iterator().next());
+        verifyRecord(records.iterator().next(), etlDateStr, "F", String.valueOf(BILLING_SESSION_ID),
+                EtlTestUtilities.format(BILLED_DATE), String.valueOf(BILLING_SESSION_TYPE));
 
         EasyMock.verify(mocks);
     }
 
-    private void verifyRecord(String record) {
+    private static void verifyRecord(String record, String... matchValues) {
         int i = 0;
         String[] parts = record.split(",");
-        Assert.assertEquals(parts[i++], etlDateStr);
-        Assert.assertEquals(parts[i++], "F");
-        Assert.assertEquals(parts[i++], String.valueOf(BILLING_SESSION_ID));
-        Assert.assertEquals(parts[i++], EtlTestUtilities.format(BILLED_DATE));
-        Assert.assertEquals(parts[i++], String.valueOf(BILLING_SESSION_TYPE));
+        for (String matchValue : matchValues) {
+            Assert.assertEquals(parts[i++], matchValue);
+        }
         Assert.assertEquals(parts.length, i);
     }
 }

@@ -14,7 +14,7 @@ public class LabVesselBean {
     private String type;
     private String starter;
     private String starterType;
-    private List<LabVesselPositionBean> labVesselPositionBeans = new java.util.ArrayList<LabVesselPositionBean>();
+    private List<LabVesselPositionBean> labVesselPositionBeans = new java.util.ArrayList<>();
 
     public LabVesselBean(String barcode, String type) {
         this.barcode = barcode;

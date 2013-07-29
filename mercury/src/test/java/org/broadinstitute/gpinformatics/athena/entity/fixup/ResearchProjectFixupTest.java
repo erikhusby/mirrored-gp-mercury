@@ -43,7 +43,7 @@ public class ResearchProjectFixupTest extends Arquillian {
     @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
     public void fixupGpLim95() throws IOException{
         List<ResearchProject> rpList = rpDao.findAllResearchProjects();
-        List<ResearchProject> rpListToPersist = new ArrayList<ResearchProject>();
+        List<ResearchProject> rpListToPersist = new ArrayList<>();
         int count = 0;
         StringBuilder userTitleList = new StringBuilder();
         for (ResearchProject rp : rpList) {

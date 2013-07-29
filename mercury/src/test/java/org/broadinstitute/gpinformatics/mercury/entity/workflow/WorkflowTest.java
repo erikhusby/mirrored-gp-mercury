@@ -93,7 +93,7 @@ public class WorkflowTest {
     }
 
     public void buildProcesses() {
-        ArrayList<WorkflowStepDef> workflowStepDefs = new ArrayList<WorkflowStepDef>();
+        ArrayList<WorkflowStepDef> workflowStepDefs = new ArrayList<>();
         WorkflowProcessDef sampleReceipt = new WorkflowProcessDef("Sample Receipt");
         new WorkflowProcessDef("Extraction");
         new WorkflowProcessDef("Finger Printing");
@@ -180,7 +180,7 @@ public class WorkflowTest {
 
             Marshaller marshaller = jc.createMarshaller();
             marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
-            JAXBElement<WorkflowConfig> jaxbElement = new JAXBElement<WorkflowConfig>(new QName("workflowConfig"),
+            JAXBElement<WorkflowConfig> jaxbElement = new JAXBElement<>(new QName("workflowConfig"),
                     WorkflowConfig.class,
                     workflowConfig);
             marshaller.marshal(jaxbElement, System.out);

@@ -98,7 +98,7 @@ public class ExtractTransformDbFreeTest {
         datafileDir = System.getProperty("java.io.tmpdir");
         badDataDir = datafileDir + System.getProperty("file.separator") + nowMsec;
 
-        Collection<GenericEntityEtl> etlInstances = new HashSet<GenericEntityEtl>();
+        Collection<GenericEntityEtl> etlInstances = new HashSet<>();
         for (Object mock : mocks) {
             if (mock.getClass().getName().contains("Etl")) {
                 etlInstances.add((GenericEntityEtl)mock);
@@ -130,8 +130,8 @@ public class ExtractTransformDbFreeTest {
         replay(mocks);
         ExtractTransform.setDatafileDir(null);
         Assert.assertEquals(extractTransform.incrementalEtl("0", "0"), -1);
-        Assert.assertEquals(Response.Status.INTERNAL_SERVER_ERROR,
-                extractTransform.backfillEtl(ProductOrderSample.class.getName(), 0, Long.MAX_VALUE));
+        Assert.assertEquals(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(),
+                extractTransform.backfillEtl(ProductOrderSample.class.getName(), 0, Long.MAX_VALUE).getStatus());
         verify(mocks);
     }
 
@@ -139,8 +139,8 @@ public class ExtractTransformDbFreeTest {
         replay(mocks);
         ExtractTransform.setDatafileDir("");
         Assert.assertEquals(extractTransform.incrementalEtl("0", "0"), -1);
-        Assert.assertEquals(Response.Status.INTERNAL_SERVER_ERROR,
-                extractTransform.backfillEtl(ProductOrderSample.class.getName(), 0, Long.MAX_VALUE));
+        Assert.assertEquals(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(),
+                extractTransform.backfillEtl(ProductOrderSample.class.getName(), 0, Long.MAX_VALUE).getStatus());
         verify(mocks);
     }
 
@@ -148,8 +148,8 @@ public class ExtractTransformDbFreeTest {
         replay(mocks);
         ExtractTransform.setDatafileDir(badDataDir);
         Assert.assertEquals(extractTransform.incrementalEtl("0", "0"), -1);
-        Assert.assertEquals(Response.Status.INTERNAL_SERVER_ERROR,
-                extractTransform.backfillEtl(ProductOrderSample.class.getName(), 0, Long.MAX_VALUE));
+        Assert.assertEquals(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(),
+                extractTransform.backfillEtl(ProductOrderSample.class.getName(), 0, Long.MAX_VALUE).getStatus());
         verify(mocks);
     }
 
@@ -172,24 +172,24 @@ public class ExtractTransformDbFreeTest {
     public void testBadRange1() {
         replay(mocks);
         Assert.assertEquals(
-                extractTransform.backfillEtl(ProductOrderSample.class.getName(), -1, Long.MAX_VALUE),
-                Response.Status.BAD_REQUEST);
+                extractTransform.backfillEtl(ProductOrderSample.class.getName(), -1, Long.MAX_VALUE).getStatus(),
+                Response.Status.BAD_REQUEST.getStatusCode());
         verify(mocks);
     }
 
     public void testBadRange2() {
         replay(mocks);
         Assert.assertEquals(
-                extractTransform.backfillEtl(ProductOrderSample.class.getName(), 1000, 999),
-                Response.Status.BAD_REQUEST);
+                extractTransform.backfillEtl(ProductOrderSample.class.getName(), 1000, 999).getStatus(),
+                Response.Status.BAD_REQUEST.getStatusCode());
         verify(mocks);
     }
 
     public void testInvalidClassName() {
         replay(mocks);
         Assert.assertEquals(
-                extractTransform.backfillEtl("NoSuchClass_Ihope", 0, Long.MAX_VALUE),
-                Response.Status.NOT_FOUND);
+                extractTransform.backfillEtl("NoSuchClass_Ihope", 0, Long.MAX_VALUE).getStatus(),
+                Response.Status.NOT_FOUND.getStatusCode());
         verify(mocks);
     }
 
@@ -255,7 +255,7 @@ public class ExtractTransformDbFreeTest {
     public void testOnDemandIncr2() {
         long startEtl = 1364411920L;
         long endEtl = 1364411930L;
-        String endEtlStr = ExtractTransform.secTimestampFormat.format(new Date(endEtl * 1000L));
+        String endEtlStr = ExtractTransform.formatTimestamp(new Date(endEtl * 1000L));
 
         expect(auditReaderDao.fetchAuditIds(startEtl, endEtl)).andReturn(new TreeMap<Long, Date>());
         replay(mocks);
@@ -340,7 +340,7 @@ public class ExtractTransformDbFreeTest {
 
     public void testOnDemandIncrementalNoChanges() {
         final long startEtlSec = 1360000000L;
-        SortedMap<Long, Date> revs = new TreeMap<Long, Date>();
+        SortedMap<Long, Date> revs = new TreeMap<>();
         expect(auditReaderDao.fetchAuditIds(eq(startEtlSec), anyLong())).andReturn(revs);
 
         replay(mocks);
@@ -352,7 +352,7 @@ public class ExtractTransformDbFreeTest {
 
     public void testOnDemandIncremental() {
         final long startEtlSec = 1360000000L;
-        SortedMap<Long, Date> revs = new TreeMap<Long, Date>();
+        SortedMap<Long, Date> revs = new TreeMap<>();
         revs.put(1L, new Date(startEtlSec));
         expect(auditReaderDao.fetchAuditIds(eq(startEtlSec), anyLong())).andReturn(revs);
         Collection<Long> revIds = revs.keySet();
@@ -396,7 +396,7 @@ public class ExtractTransformDbFreeTest {
     }
 
     public void testNoLimitEmptyBatch() {
-        SortedMap<Long, Date> revs = new TreeMap<Long, Date>();
+        SortedMap<Long, Date> revs = new TreeMap<>();
         long startTimeSec = 136000000;
         long endTimeSec =  startTimeSec + ExtractTransform.ETL_BATCH_SIZE;
         ImmutablePair<SortedMap<Long, Date>, Long> revAndDate = ExtractTransform.limitBatchSize(revs, endTimeSec);
@@ -405,7 +405,7 @@ public class ExtractTransformDbFreeTest {
     }
 
     public void testNoLimitSmallSameTimeBatch() {
-        SortedMap<Long, Date> revs = new TreeMap<Long, Date>();
+        SortedMap<Long, Date> revs = new TreeMap<>();
         long startTimeSec = 136000000;
         long endTimeSec =  startTimeSec + ExtractTransform.ETL_BATCH_SIZE;
         Date revDate = new Date(startTimeSec * ExtractTransform.MSEC_IN_SEC);
@@ -418,7 +418,7 @@ public class ExtractTransformDbFreeTest {
     }
 
     public void testNoLimitBigSameTimeBatch() {
-        SortedMap<Long, Date> revs = new TreeMap<Long, Date>();
+        SortedMap<Long, Date> revs = new TreeMap<>();
         long startTimeSec = 136000000;
         long endTimeSec =  startTimeSec + ExtractTransform.ETL_BATCH_SIZE + 1001;
         Date revDate = new Date(startTimeSec * ExtractTransform.MSEC_IN_SEC);
@@ -431,7 +431,7 @@ public class ExtractTransformDbFreeTest {
     }
 
     public void testLimitExcessBigBatch() {
-        SortedMap<Long, Date> revs = new TreeMap<Long, Date>();
+        SortedMap<Long, Date> revs = new TreeMap<>();
         long startTimeSec = 136000000;
         long endTimeSec =  startTimeSec + ExtractTransform.ETL_BATCH_SIZE + 1001;
         for (long i = 0; i < ExtractTransform.ETL_BATCH_SIZE + 1001; ++i) {
@@ -445,7 +445,7 @@ public class ExtractTransformDbFreeTest {
     }
 
     public void testLimitNormalBigBatch() {
-        SortedMap<Long, Date> revs = new TreeMap<Long, Date>();
+        SortedMap<Long, Date> revs = new TreeMap<>();
         long startTimeSec = 136000000;
         long endTimeSec = 0;
         for (long i = 0; i < ExtractTransform.ETL_BATCH_SIZE + 102; ++i) {

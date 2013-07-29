@@ -1,8 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.squid;
 
-import org.broadinstitute.gpinformatics.infrastructure.bettalims.BettalimsConnector;
-import org.broadinstitute.gpinformatics.infrastructure.bettalims.BettalimsConnectorImpl;
-import org.broadinstitute.gpinformatics.infrastructure.bettalims.BettalimsConnectorStub;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 
 import javax.enterprise.context.RequestScoped;

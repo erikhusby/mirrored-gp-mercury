@@ -15,6 +15,7 @@ import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.poi.util.IOUtils;
@@ -79,8 +80,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.text.Format;
 import java.text.MessageFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
@@ -206,7 +207,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private final CompletionStatusFetcher progressFetcher = new CompletionStatusFetcher();
 
-    private final SimpleDateFormat dateFormatter = new SimpleDateFormat(getDatePattern());
+    private final Format dateFormatter = FastDateFormat.getInstance(getDatePattern());
 
     @ValidateNestedProperties({
         @Validate(field="comments", maxlength=2000, on={SAVE_ACTION}),
@@ -856,8 +857,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         if (samples != null) {
             // Assuming all samples come from same product order here.
-            List<String> sampleNames = ProductOrderSample.getSampleNames(samples);
-            ProductOrder.loadBspData(sampleNames, samples);
+            ProductOrder.loadBspData(samples);
 
             for (ProductOrderSample sample : samples) {
                 JSONObject item = new JSONObject();

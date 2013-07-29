@@ -23,6 +23,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransfe
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.boundary.graph.Graph;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferEntityGrapher;
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVisualizer;
@@ -37,6 +38,7 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowValidator;
 import org.broadinstitute.gpinformatics.mercury.control.zims.ZimsIlluminaRunFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
@@ -69,7 +71,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
-import org.broadinstitute.gpinformatics.mercury.presentation.transfervis.TransferVisualizerFrame;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
@@ -131,6 +132,17 @@ public class LabEventTest extends BaseEventTest {
 
     private final TemplateEngine templateEngine = new TemplateEngine();
 
+    /** Controls are referenced in the routing logic */
+    private static final List<Control> controlList = new ArrayList<>();
+    private static final List<String> controlCollaboratorIdList = new ArrayList<>();
+    static {
+        controlList.add(new Control("NA12878", Control.ControlType.POSITIVE));
+        controlList.add(new Control("WATER_CONTROL", Control.ControlType.NEGATIVE));
+
+        for (Control control : controlList) {
+            controlCollaboratorIdList.add(control.getCollaboratorSampleId());
+        }
+    }
 
     /**
      * Used in test verification, accumulates the events in a chain of transfers
@@ -223,6 +235,7 @@ public class LabEventTest extends BaseEventTest {
     public void testHybridSelection() {
 //        Controller.startCPURecording(true);
 
+        expectedRouting = MercuryOrSquidRouter.MercuryOrSquid.SQUID;
         // todo jmt receipt batch?
         ProductOrder productOrder = ProductOrderTestFactory.buildHybridSelectionProductOrder(NUM_POSITIONS_IN_RACK - 2,
                 "A");
@@ -345,21 +358,13 @@ public class LabEventTest extends BaseEventTest {
 
         Assert.assertEquals(illuminaSequencingRun.getSampleCartridge(), illuminaFlowcell, "Wrong flowcell");
 
-        if (false) {
-            TransferVisualizerFrame transferVisualizerFrame = new TransferVisualizerFrame();
-            transferVisualizerFrame.renderVessel(startingTube);
-            try {
-                Thread.sleep(500000L);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }
+        runTransferVisualizer(startingTube);
 
         TransferEntityGrapher transferEntityGrapher = new TransferEntityGrapher();
         transferEntityGrapher.setMaxNumVesselsPerRequest(1000);
         Graph graph = new Graph();
         transferEntityGrapher.startWithTube(startingTube, graph, new ArrayList<TransferVisualizer.AlternativeId>());
-        Assert.assertEquals(graph.getMapIdToVertex().size(), 1690, "Wrong number of vertices");
+        Assert.assertEquals(graph.getMapIdToVertex().size(), 3276, "Wrong number of vertices");
 //        Controller.stopCPURecording();
     }
 
@@ -370,18 +375,30 @@ public class LabEventTest extends BaseEventTest {
     @Test(groups = {TestGroups.DATABASE_FREE})
     public void testExomeExpress() {
 //        Controller.startCPURecording(true);
+        expectedRouting = MercuryOrSquidRouter.MercuryOrSquid.MERCURY;
+
         // Use Standard Exome product, to verify that workflow is taken from LCSet, not Product
-        ProductOrder productOrder = ProductOrderTestFactory.buildHybridSelectionProductOrder(96, "A");
+        ProductOrder productOrder = ProductOrderTestFactory.buildHybridSelectionProductOrder(NUM_POSITIONS_IN_RACK - 2,
+                "A");
         AthenaClientServiceStub.addProductOrder(productOrder);
         Date runDate = new Date();
         // todo jmt create bucket, then batch, rather than rack then batch then bucket
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
+        workflowBatch.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
         workflowBatch.setWorkflowName("Exome Express");
 
         bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
-        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube,
+
+        TubeFormation daughterTubeFormation = daughterPlateTransfer(mapBarcodeToTube);
+
+        Map<String, TwoDBarcodedTube> mapBarcodeToDaughterTube = new HashMap<>();
+        for (TwoDBarcodedTube twoDBarcodedTube : daughterTubeFormation.getContainerRole().getContainedVessels()) {
+            mapBarcodeToDaughterTube.put(twoDBarcodedTube.getLabel(), twoDBarcodedTube);
+        }
+
+        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToDaughterTube,
                 String.valueOf(runDate.getTime()), "1", true);
         ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder =
                 runExomeExpressShearingProcess(picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
@@ -409,6 +426,8 @@ public class LabEventTest extends BaseEventTest {
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
                 runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", FCT_TICKET,
                         ProductionFlowcellPath.DILUTION_TO_FLOWCELL, null, "Exome Express");
+
+        runTransferVisualizer(mapBarcodeToTube.values().iterator().next());
 
         IlluminaFlowcell illuminaFlowcell = hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell();
         Set<SampleInstance> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
@@ -472,6 +491,7 @@ public class LabEventTest extends BaseEventTest {
          *      ListTransfersFromStart does not return (is not even told about) in-place events
          */
         String[] expectedEventNames = {
+                "SamplesDaughterPlateCreation",
                 "SamplesNormalizationTransfer",
                 "PicoPlatingPostNorm",
                 "ShearingTransfer",
@@ -510,13 +530,17 @@ public class LabEventTest extends BaseEventTest {
      */
     @Test(groups = {TestGroups.DATABASE_FREE})
     public void testExomeExpressAlternative() throws Exception {
-        ProductOrder productOrder = ProductOrderTestFactory.buildHybridSelectionProductOrder(96, "A");
+        expectedRouting = MercuryOrSquidRouter.MercuryOrSquid.MERCURY;
+
+        ProductOrder productOrder = ProductOrderTestFactory.buildHybridSelectionProductOrder(NUM_POSITIONS_IN_RACK,
+                "A");
         AthenaClientServiceStub.addProductOrder(productOrder);
         Date runDate = new Date();
         // todo jmt create bucket, then batch, rather than rack then batch then bucket
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
+        workflowBatch.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
         workflowBatch.setWorkflowName("Exome Express");
 
         bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
@@ -638,14 +662,18 @@ public class LabEventTest extends BaseEventTest {
     @Test(groups = {TestGroups.DATABASE_FREE})
     public void testExomeExpressRework() {
         try {
+            expectedRouting = MercuryOrSquidRouter.MercuryOrSquid.MERCURY;
+
             // Use Standard Exome product, to verify that workflow is taken from LCSet, not Product
-            ProductOrder productOrder1 = ProductOrderTestFactory.buildHybridSelectionProductOrder(96, "A");
+            ProductOrder productOrder1 = ProductOrderTestFactory.buildHybridSelectionProductOrder(NUM_POSITIONS_IN_RACK,
+                    "A");
             AthenaClientServiceStub.addProductOrder(productOrder1);
             Date runDate = new Date();
 
             Map<String, TwoDBarcodedTube> mapBarcodeToTube1 = createInitialRack(productOrder1, "R1_");
             LabBatch workflowBatch1 = new LabBatch("Exome Express Batch 1",
                     new HashSet<LabVessel>(mapBarcodeToTube1.values()), LabBatch.LabBatchType.WORKFLOW);
+            workflowBatch1.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
             workflowBatch1.setWorkflowName("Exome Express");
 
             bucketBatchAndDrain(mapBarcodeToTube1, productOrder1, workflowBatch1, "1");
@@ -656,7 +684,8 @@ public class LabEventTest extends BaseEventTest {
                             picoPlatingEntityBuilder.getNormTubeFormation(),
                             picoPlatingEntityBuilder.getNormalizationBarcode(), "1");
 
-            ProductOrder productOrder2 = ProductOrderTestFactory.buildHybridSelectionProductOrder(95, "B");
+            ProductOrder productOrder2 = ProductOrderTestFactory.buildHybridSelectionProductOrder(
+                    NUM_POSITIONS_IN_RACK - 1, "B");
             AthenaClientServiceStub.addProductOrder(productOrder2);
 
             Map<String, TwoDBarcodedTube> mapBarcodeToTube2 = createInitialRack(productOrder2, "R2_");
@@ -665,6 +694,7 @@ public class LabEventTest extends BaseEventTest {
             mapBarcodeToTube2.put(reworkTube.getLabel(), reworkTube);
             LabBatch workflowBatch2 = new LabBatch("Exome Express Batch 2",
                     new HashSet<LabVessel>(mapBarcodeToTube2.values()), LabBatch.LabBatchType.WORKFLOW);
+            workflowBatch2.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
             workflowBatch2.setWorkflowName("Exome Express");
 
             bucketBatchAndDrain(mapBarcodeToTube2, productOrder2, workflowBatch2, "2");
@@ -685,9 +715,9 @@ public class LabEventTest extends BaseEventTest {
             QtpEntityBuilder qtpEntityBuilder2 = runQtpProcess(hybridSelectionEntityBuilder2.getNormCatchRack(),
                     hybridSelectionEntityBuilder2.getNormCatchBarcodes(),
                     hybridSelectionEntityBuilder2.getMapBarcodeToNormCatchTubes(), "Exome Express", "2");
-            HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder2 =
-                    runHiSeq2500FlowcellProcess(qtpEntityBuilder2.getDenatureRack(), "2", "squidDesignationName", ProductionFlowcellPath.DENATURE_TO_FLOWCELL,null,
-                            "Exome Express");
+            HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder2 = runHiSeq2500FlowcellProcess(
+                    qtpEntityBuilder2.getDenatureRack(), "2", "squidDesignationName",
+                    ProductionFlowcellPath.DENATURE_TO_FLOWCELL, null, "Exome Express");
 
             LibraryConstructionEntityBuilder libraryConstructionEntityBuilder =
                     runLibraryConstructionProcess(exomeExpressShearingEntityBuilder.getShearingCleanupPlate(),
@@ -700,9 +730,9 @@ public class LabEventTest extends BaseEventTest {
             QtpEntityBuilder qtpEntityBuilder = runQtpProcess(hybridSelectionEntityBuilder.getNormCatchRack(),
                     hybridSelectionEntityBuilder.getNormCatchBarcodes(),
                     hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), "Exome Express", "1");
-            HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
-                    runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", "squidDesignationName", ProductionFlowcellPath.DENATURE_TO_FLOWCELL,null,
-                            "Exome Express");
+            HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder = runHiSeq2500FlowcellProcess(
+                    qtpEntityBuilder.getDenatureRack(), "1", "squidDesignationName",
+                    ProductionFlowcellPath.DENATURE_TO_FLOWCELL, null, "Exome Express");
 
             SimpleDateFormat dateFormat = new SimpleDateFormat(IlluminaSequencingRun.RUN_FORMAT_PATTERN);
             File runPath = File.createTempFile("tempRun" + dateFormat.format(runDate), ".txt");
@@ -755,14 +785,18 @@ public class LabEventTest extends BaseEventTest {
     @Test(groups = {TestGroups.DATABASE_FREE})
     public void testExomeExpressShearingRework() {
         try {
+            expectedRouting = MercuryOrSquidRouter.MercuryOrSquid.MERCURY;
+
             // Use Standard Exome product, to verify that workflow is taken from LCSet, not Product
-            ProductOrder productOrder1 = ProductOrderTestFactory.buildHybridSelectionProductOrder(96, "A");
+            ProductOrder productOrder1 = ProductOrderTestFactory.buildHybridSelectionProductOrder(NUM_POSITIONS_IN_RACK,
+                    "A");
             AthenaClientServiceStub.addProductOrder(productOrder1);
             Date runDate = new Date();
 
             Map<String, TwoDBarcodedTube> mapBarcodeToTube1 = createInitialRack(productOrder1, "R1_");
             LabBatch workflowBatch1 = new LabBatch("Exome Express Pico Batch 1",
                     new HashSet<LabVessel>(mapBarcodeToTube1.values()), LabBatch.LabBatchType.WORKFLOW);
+            workflowBatch1.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
             workflowBatch1.setWorkflowName("Exome Express");
 
             bucketBatchAndDrain(mapBarcodeToTube1, productOrder1, workflowBatch1, "1");
@@ -782,6 +816,7 @@ public class LabEventTest extends BaseEventTest {
             Map<String, TwoDBarcodedTube> mapBarcodeToTube2 = createInitialRack(productOrder2, "R2_");
             LabBatch workflowBatch2 = new LabBatch("Exome Express Pico Batch 2",
                     new HashSet<LabVessel>(mapBarcodeToTube2.values()), LabBatch.LabBatchType.WORKFLOW);
+            workflowBatch2.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
             workflowBatch2.setWorkflowName("Exome Express");
 
             bucketBatchAndDrain(mapBarcodeToTube2, productOrder2, workflowBatch2, "2");
@@ -864,15 +899,8 @@ public class LabEventTest extends BaseEventTest {
                 Assert.assertEquals(libraryBean.getLcSet(), workflowBatch1.getBatchName());
                 Assert.assertEquals(libraryBean.getProductOrderKey(), productOrder1.getBusinessKey());
             }
-            if (false) {
-                TransferVisualizerFrame transferVisualizerFrame = new TransferVisualizerFrame();
-                transferVisualizerFrame.renderVessel(reworkTube);
-                try {
-                    Thread.sleep(500000L);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-            }
+
+            runTransferVisualizer(reworkTube);
 
             SolexaRunBean runBean2 = new SolexaRunBean(flowcellBarcode, flowcellBarcode + dateFormat.format(runDate),
                     runDate, machineName, runPath.getAbsolutePath(), null);
@@ -908,7 +936,9 @@ public class LabEventTest extends BaseEventTest {
                             put(BSPSampleSearchColumn.PARTICIPANT_ID, "PT-1234");
                         }};
                         for (String sampleName : sampleNames) {
-                            mapSampleIdToDto.put(sampleName, new BSPSampleDTO(dataMap));
+                            Map<BSPSampleSearchColumn, String> dataMapCopy = new HashMap<>(dataMap);
+                            dataMapCopy.put(BSPSampleSearchColumn.SAMPLE_ID, sampleName);
+                            mapSampleIdToDto.put(sampleName, new BSPSampleDTO(dataMapCopy));
                         }
                         return mapSampleIdToDto;
                     }
@@ -933,9 +963,6 @@ public class LabEventTest extends BaseEventTest {
                 new ControlDao() {
                     @Override
                     public List<Control> findAllActive() {
-                        List<Control> controlList = new ArrayList<>();
-                        controlList.add(new Control("NA12878", Control.ControlType.POSITIVE));
-                        controlList.add(new Control("WATER_CONTROL", Control.ControlType.NEGATIVE));
                         return controlList;
                     }
                 }
@@ -948,6 +975,7 @@ public class LabEventTest extends BaseEventTest {
     @Test(groups = {TestGroups.DATABASE_FREE})
     public void testWholeGenomeShotgun() {
 //        Controller.startCPURecording(true);
+        expectedRouting = MercuryOrSquidRouter.MercuryOrSquid.SQUID;
 
         ProductOrder productOrder =
                 ProductOrderTestFactory.buildWholeGenomeProductOrder(NUM_POSITIONS_IN_RACK);
@@ -1068,6 +1096,8 @@ public class LabEventTest extends BaseEventTest {
      */
     @Test(groups = {TestGroups.DATABASE_FREE})
     public void testFluidigm() {
+        expectedRouting = MercuryOrSquidRouter.MercuryOrSquid.SQUID;
+
         // starting rack
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<>();
         for (int rackPosition = 1; rackPosition <= SBSSection.P96COLS1_6BYROW.getWells().size(); rackPosition++) {
@@ -1267,6 +1297,11 @@ public class LabEventTest extends BaseEventTest {
     }
 
     public static void validateWorkflow(String nextEventTypeName, List<LabVessel> labVessels) {
+        MercuryOrSquidRouter mercuryOrSquidRouter = new MercuryOrSquidRouter(null, null, new WorkflowLoader(), null);
+            MercuryOrSquidRouter.MercuryOrSquid mercuryOrSquid = mercuryOrSquidRouter.routeForVessels(labVessels,
+                    controlCollaboratorIdList, mapSampleNameToDto, MercuryOrSquidRouter.Intent.ROUTE);
+            Assert.assertEquals(mercuryOrSquid, expectedRouting);
+
         WorkflowValidator workflowValidator = new WorkflowValidator();
         AthenaClientService athenaClientService = AthenaClientProducer.stubInstance();
         workflowValidator.setAthenaClientService(athenaClientService);

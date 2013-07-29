@@ -21,7 +21,7 @@ public class LedgerEntryEtl extends GenericEntityEtl<LedgerEntry, LedgerEntry> {
 
     @Inject
     public LedgerEntryEtl(LedgerEntryDao dao) {
-        super(LedgerEntry.class, "ledger_entry", dao);
+        super(LedgerEntry.class, "ledger_entry", "athena.billing_ledger_aud", "ledger_id", dao);
     }
 
     @Override

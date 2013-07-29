@@ -116,8 +116,7 @@
 
 
                 // the criteria list
-                newCriteria += '    <select id="criteriaSelect-' + criteriaCount + '" onchange="updateOperatorOptions(' + criteriaCount + ', \'' +
-                        operator + '\')" style="width:auto;" name="criteria">';
+                newCriteria += '    <select id="criteriaSelect-' + criteriaCount + '" onchange="updateOperatorOptions(' + criteriaCount + ')" style="width:auto;" name="criteria">';
 
                 var operatorsLabel;
 
@@ -150,10 +149,10 @@
                 criteriaCount++;
             }
 
-            function updateOperatorOptions(criteriaCount, selectedOperator) {
-                var criteriaLabel = $j('#criteriaSelect-' + criteriaCount).attr('value');
+            function updateOperatorOptions(criteriaCount) {
+                var criteriaLabel = $j('#criteriaSelect-' + criteriaCount + " option:selected").text();
 
-                $j('#operatorSelect-' + criteriaCount).html(operatorOptions(criteriaCount, criteriaLabel, selectedOperator));
+                $j('#operatorSelect-' + criteriaCount).html(operatorOptions(criteriaCount, criteriaLabel, criteriaLabel));
 
                 // Set the value text
                 $j('#valueText-' + criteriaCount).attr("value", defaultValues[criteriaLabel]);

@@ -85,7 +85,7 @@ public class IlluminaRunResource implements Serializable {
 
     @GET
     @Path("/query")
-    @Produces({MediaType.APPLICATION_JSON})
+    @Produces(MediaType.APPLICATION_JSON)
     public ZimsIlluminaRun getRun(
             @QueryParam("runName") String runName) {
         ZimsIlluminaRun runBean = new ZimsIlluminaRun();
@@ -191,13 +191,14 @@ public class IlluminaRunResource implements Serializable {
         return runBean;
     }
 
-    private void setErrorNoRun(String runName, ZimsIlluminaRun runBean) {
-        runBean.setError("Run " + runName + " doesn't appear to have been registered yet.  Please try again later or contact the mercury team if the problem persists.");
+    private static void setErrorNoRun(String runName, ZimsIlluminaRun runBean) {
+        runBean.setError("Run " + runName + " doesn't appear to have been registered yet.  Please try again later " +
+                         "or contact the mercury team if the problem persists.");
     }
 
     /**
      * Fetches all BSP data for the run in one shot,
-     * returning a Map from the {@link org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO#getSampleLsid()} to the
+     * returning a Map from the {@link BSPSampleDTO#getSampleLsid()} to the
      * {@link BSPSampleDTO}.
      *
      * @param run from Thrift
@@ -215,7 +216,7 @@ public class IlluminaRunResource implements Serializable {
             }
         }
 
-        for (Map.Entry<String, String> lsIdToBareId :BSPLSIDUtil.lsidsToBareIds(sampleLsids).entrySet()) {
+        for (Map.Entry<String, String> lsIdToBareId : BSPLSIDUtil.lsidsToBareIds(sampleLsids).entrySet()) {
             if (lsIdToBareId.getValue() == null) {
                 throw new RuntimeException("Could not map lsid " + lsIdToBareId.getKey() + " to a bsp id.");
             } else {
@@ -227,15 +228,16 @@ public class IlluminaRunResource implements Serializable {
         for (Map.Entry<String, BSPSampleDTO> bspSampleDTOEntry : sampleToBspDto.entrySet()) {
             BSPSampleDTO bspDto = bspSampleDTOEntry.getValue();
             // make sure we get something out of BSP.  If we don't, consider it a
-            // catastrophe, especially for the pipeline
+            // catastrophe, especially for the pipeline.
+            String sampleName = bspSampleDTOEntry.getKey();
             if (bspDto == null) {
-                throw new BSPLookupException("BSP returned no data for " + bspSampleDTOEntry.getKey());
+                throw new BSPLookupException("BSP returned no data for " + sampleName);
             }
             if (bspDto.getSampleLsid() == null || StringUtils.isBlank(bspDto.getSampleLsid())) {
-                throw new BSPLookupException("BSP returned no LSID.");
+                throw new BSPLookupException("BSP returned no LSID for " + sampleName);
             }
             if (bspDto.getSampleId() == null || StringUtils.isBlank(bspDto.getSampleId())) {
-                throw new BSPLookupException("BSP returned no sample id.");
+                throw new BSPLookupException("BSP returned no sample id for " + sampleName);
             }
             lsidToBspDto.put(bspDto.getSampleLsid(), bspDto);
         }
@@ -254,7 +256,7 @@ public class IlluminaRunResource implements Serializable {
      * @param zamboniLibrary from Thrift
      * @return true if LSID indicates BSP
      */
-    private boolean isBspSample(TZamboniLibrary zamboniLibrary) {
+    private static boolean isBspSample(TZamboniLibrary zamboniLibrary) {
         String lsid = zamboniLibrary.getLsid();
         boolean isBsp = false;
         if (lsid != null) {
@@ -273,7 +275,7 @@ public class IlluminaRunResource implements Serializable {
      */
     @GET
     @Path("/queryMercury")
-    @Produces({MediaType.APPLICATION_JSON})
+    @Produces(MediaType.APPLICATION_JSON)
     public ZimsIlluminaRun getMercuryRun(
             @QueryParam("runName") String runName) {
         ZimsIlluminaRun runBean = new ZimsIlluminaRun();
@@ -304,7 +306,7 @@ public class IlluminaRunResource implements Serializable {
      */
     @GET
     @Path("/querySquid")
-    @Produces({MediaType.APPLICATION_JSON})
+    @Produces(MediaType.APPLICATION_JSON)
     public ZimsIlluminaRun getRunSquid(
             @QueryParam("runName") String runName) {
         ZimsIlluminaRun runBean = new ZimsIlluminaRun();

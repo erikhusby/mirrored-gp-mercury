@@ -75,7 +75,7 @@ public class BSPMaterialTypeList extends AbstractCache implements Serializable {
     }
 
     public List<MaterialType> getByFullNames(List<String> fullNames) {
-        List<MaterialType> results = new ArrayList<MaterialType>();
+        List<MaterialType> results = new ArrayList<>();
         if ( fullNames != null) {
             for (String fullName : fullNames) {
                 MaterialType materialType = getByFullName( fullName );
@@ -96,7 +96,7 @@ public class BSPMaterialTypeList extends AbstractCache implements Serializable {
      * @return the list of BSP material types in the category or null
      */
     public List<MaterialType> getByCategory(String category) {
-        List<MaterialType> results = new ArrayList<MaterialType>();
+        List<MaterialType> results = new ArrayList<>();
         for (MaterialType materialType : getMaterialTypes()) {
             if (materialType.getCategory().equalsIgnoreCase(category)) {
                 results.add( materialType );
@@ -111,7 +111,7 @@ public class BSPMaterialTypeList extends AbstractCache implements Serializable {
      * @return a list of matching materialTypes
      */
     public List<MaterialType> find(String query) {
-        Set<MaterialType> materialTypeHashSet = new HashSet<MaterialType>();
+        Set<MaterialType> materialTypeHashSet = new HashSet<>();
         if ( StringUtils.isNotBlank( query )) {
             for (MaterialType materialType : getMaterialTypes()) {
                 StringTokenizer st = new StringTokenizer( query.trim() );
@@ -123,7 +123,7 @@ public class BSPMaterialTypeList extends AbstractCache implements Serializable {
                 }
             }
         }
-        return new ArrayList<MaterialType>(materialTypeHashSet);
+        return new ArrayList<>(materialTypeHashSet);
     }
 
     @Override

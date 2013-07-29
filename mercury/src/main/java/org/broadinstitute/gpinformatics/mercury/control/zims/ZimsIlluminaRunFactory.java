@@ -5,6 +5,7 @@ import edu.mit.broad.prodinfo.thrift.lims.TZDevExperimentData;
 import org.apache.commons.collections15.Factory;
 import org.apache.commons.collections15.map.LazyMap;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -38,11 +39,11 @@ import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 
 import javax.inject.Inject;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
+import java.text.Format;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -124,13 +125,13 @@ public class ZimsIlluminaRunFactory {
             mapNameToControl.put(activeControl.getCollaboratorSampleId(), activeControl);
         }
 
-        DateFormat dateFormat = new SimpleDateFormat(ZimsIlluminaRun.DATE_FORMAT);
+        Format dateFormat = FastDateFormat.getInstance(ZimsIlluminaRun.DATE_FORMAT);
         // TODO: fill in sequencerModel and isPaired
 
         double imagedArea = 0;
         if (sequencingRun.getImagedAreaPerMM2() != null) {
             // avoid unboxing NPE
-            imagedArea = sequencingRun.getImagedAreaPerMM2().doubleValue();
+            imagedArea = sequencingRun.getImagedAreaPerMM2();
         }
         ZimsIlluminaRun run = new ZimsIlluminaRun(sequencingRun.getRunName(), sequencingRun.getRunBarcode(),
                 flowcell.getLabel(), sequencingRun.getMachineName(), flowcell.getSequencerModel(), dateFormat.format(illuminaRun.getRunDate()),
@@ -233,6 +234,13 @@ public class ZimsIlluminaRunFactory {
                                   indexingSchemeEntity, catNames, indexingSchemeDto, mapNameToControl));
         }
 
+        // Make order predictable
+        Collections.sort(libraryBeans, new Comparator<LibraryBean>() {
+            @Override
+            public int compare(LibraryBean o1, LibraryBean o2) {
+                return o1.getSampleId().compareTo(o2.getSampleId());
+            }
+        });
         return libraryBeans;
     }
 

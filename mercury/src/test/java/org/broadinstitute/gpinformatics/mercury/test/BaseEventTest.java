@@ -19,6 +19,10 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
+import org.broadinstitute.gpinformatics.mercury.boundary.graph.Graph;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
+import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferEntityGrapher;
+import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVisualizer;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
@@ -36,6 +40,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.presentation.transfervis.TransferVisualizerClient;
+import org.broadinstitute.gpinformatics.mercury.presentation.transfervis.TransferVisualizerFrame;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
@@ -54,6 +60,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumMap;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -64,9 +71,15 @@ import java.util.Random;
  * This class handles setting up various factories and EJBs for use in any lab event test.
  */
 public class BaseEventTest {
+    public static final String POSITIVE_CONTROL = "NA12878";
+    public static final String NEGATIVE_CONTROL = "WATER_CONTROL";
     private static Log log = LogFactory.getLog(BaseEventTest.class);
 
     public static final int NUM_POSITIONS_IN_RACK = 96;
+
+    // todo jmt find a better way to do this, without propagating it to every call to validateWorkflow.
+    /** Referenced in validation of routing. */
+    protected static MercuryOrSquidRouter.MercuryOrSquid expectedRouting = MercuryOrSquidRouter.MercuryOrSquid.MERCURY;
 
     private BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
 
@@ -75,6 +88,11 @@ public class BaseEventTest {
     private LabBatchEjb labBatchEJB;
 
     private BucketEjb bucketEjb;
+
+    /** The date on which Exome Express is routed to Mercury only. */
+    public static final GregorianCalendar EX_EX_IN_MERCURY_CALENDAR = new GregorianCalendar(2013, 6, 26);
+
+    protected static Map<String, BSPSampleDTO> mapSampleNameToDto = new HashMap<>();
 
     protected final LabEventFactory.LabEventRefDataFetcher labEventRefDataFetcher =
             new LabEventFactory.LabEventRefDataFetcher() {
@@ -128,6 +146,9 @@ public class BaseEventTest {
             TwoDBarcodedTube bspAliquot = new TwoDBarcodedTube(barcode);
             bspAliquot.addSample(new MercurySample(poSample.getSampleName()));
             mapBarcodeToTube.put(barcode, bspAliquot);
+            Map<BSPSampleSearchColumn, String> dataMap = new HashMap<>();
+            dataMap.put(BSPSampleSearchColumn.SAMPLE_ID, poSample.getSampleName());
+            mapSampleNameToDto.put(poSample.getSampleName(), new BSPSampleDTO(dataMap));
             if (rackPosition > NUM_POSITIONS_IN_RACK) {
                 log.error(
                         "More product order samples than allowed in a single rack. " + productOrder.getSamples().size()
@@ -445,17 +466,21 @@ public class BaseEventTest {
 
         // Controls are added in a re-array
         TwoDBarcodedTube posControlTube = new TwoDBarcodedTube("C1");
-        posControlTube.addSample(new MercurySample("NA12878", new BSPSampleDTO(
+        BSPSampleDTO bspSampleDtoPos = new BSPSampleDTO(
                 new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
-                    put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, "NA12878");
-                }})));
+                    put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, POSITIVE_CONTROL);
+                }});
+        posControlTube.addSample(new MercurySample(POSITIVE_CONTROL, bspSampleDtoPos));
+        mapSampleNameToDto.put(POSITIVE_CONTROL, bspSampleDtoPos);
         mapBarcodeToDaughterTube.put(VesselPosition.H11, posControlTube);
 
         TwoDBarcodedTube negControlTube = new TwoDBarcodedTube("C2");
-        negControlTube.addSample(new MercurySample("WATER_CONTROL", new BSPSampleDTO(
+        BSPSampleDTO bspSampleDtoNeg = new BSPSampleDTO(
                 new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
-                    put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, "WATER_CONTROL");
-                }})));
+                    put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, NEGATIVE_CONTROL);
+                }});
+        negControlTube.addSample(new MercurySample(NEGATIVE_CONTROL, bspSampleDtoNeg));
+        mapSampleNameToDto.put(NEGATIVE_CONTROL, bspSampleDtoNeg);
         mapBarcodeToDaughterTube.put(VesselPosition.H12, negControlTube);
 
         return new TubeFormation(mapBarcodeToDaughterTube, RackOfTubes.RackType.Matrix96);
@@ -467,5 +492,35 @@ public class BaseEventTest {
 
     public LabEventFactory getLabEventFactory() {
         return labEventFactory;
+    }
+
+    /**
+     * Allows Transfer Visualizer to be run inside a test, so developer can verify that vessel transfer graph is
+     * constructed correctly.
+     * @param labVessel    starting point in graph.
+     */
+    public void runTransferVisualizer(LabVessel labVessel) {
+        // Disabled by default, because it would block Bamboo tests.
+        if (false) {
+            TransferEntityGrapher transferEntityGrapher = new TransferEntityGrapher();
+            // "More Transfers" buttons won't work when there's no server, so render all vessels in first "request"
+            transferEntityGrapher.setMaxNumVesselsPerRequest(10000);
+            Graph graph = new Graph();
+            transferEntityGrapher.startWithTube((TwoDBarcodedTube) labVessel, graph,
+                    new ArrayList<TransferVisualizer.AlternativeId>());
+
+            TransferVisualizerClient transferVisualizerClient = new TransferVisualizerClient(
+                    labVessel.getLabel(), new ArrayList<TransferVisualizer.AlternativeId>());
+            transferVisualizerClient.setGraph(graph);
+
+            TransferVisualizerFrame transferVisualizerFrame = new TransferVisualizerFrame();
+            transferVisualizerFrame.setTransferVisualizerClient(transferVisualizerClient);
+            // Suspend the test thread, to give the user time to scroll around the graph.
+            try {
+                Thread.sleep(500000L);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 }

@@ -25,6 +25,7 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.util.ArrayList;
+import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Set;
 
@@ -70,7 +71,7 @@ public class LabBatchFixUpTest extends Arquillian {
     @Test(enabled = false)
     public void updateNullLabBatchType() {
         final List<LabBatch> nullTypes = labBatchDAO.findList(LabBatch.class, LabBatch_.labBatchType, null);
-        List<LabBatch> fixedBatches = new ArrayList<LabBatch>(nullTypes.size());
+        List<LabBatch> fixedBatches = new ArrayList<>(nullTypes.size());
         for (LabBatch nullType : nullTypes) {
             if (nullType.getLabBatchType() != null) {
                 throw new IllegalStateException(
@@ -112,5 +113,17 @@ public class LabBatchFixUpTest extends Arquillian {
         if (!fixedBatches.isEmpty()) {
             labBatchDAO.persistAll(fixedBatches);
         }
+    }
+
+    /**
+     * LCSET-3792 is supposed to be routed to Mercury, but it was created on July 24th, so change to
+     * July 25th.
+     */
+    @Test(enabled = false)
+    public void updateLcset3792ToMercury() {
+        LabBatch labBatch = labBatchDAO.findByName("LCSET-3792");
+        GregorianCalendar gregorianCalendar = new GregorianCalendar(2013, 6, 25, 1, 1, 1);
+        labBatch.setCreatedOn(gregorianCalendar.getTime());
+        labBatchDAO.flush();
     }
 }

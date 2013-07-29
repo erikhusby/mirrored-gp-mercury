@@ -37,7 +37,7 @@ public class ImportFromBspTest extends ContainerTest {
         String testSuffix = testPrefixDateFormat.format(new Date());
 
         // todo jmt incorporate query to fetch these
-        List<String> sampleIds = new ArrayList<String>();
+        List<String> sampleIds = new ArrayList<>();
         sampleIds.add("3TJ4Y");
         sampleIds.add("3TJ4T");
         sampleIds.add("3TJ44");
@@ -110,12 +110,12 @@ public class ImportFromBspTest extends ContainerTest {
                 "     AND bsp_sample_export.sample_id IN (:sampleList)");
         nativeQuery.setParameter("sampleList", sampleIds);
         List<?> resultList = nativeQuery.getResultList();
-        List<TubeBean> rootTubeBeans = new ArrayList<TubeBean>();
-        List<TubeBean> exportTubeBeans = new ArrayList<TubeBean>();
-        List<String> normSourceBarcodes = new ArrayList<String>();
-        List<String> normTargetBarcodes = new ArrayList<String>();
-        List<String> platingTargetBarcodes = new ArrayList<String>();
-        ArrayList<VesselMetricBean> vesselMetricBeans = new ArrayList<VesselMetricBean>();
+        List<TubeBean> rootTubeBeans = new ArrayList<>();
+        List<TubeBean> exportTubeBeans = new ArrayList<>();
+        List<String> normSourceBarcodes = new ArrayList<>();
+        List<String> normTargetBarcodes = new ArrayList<>();
+        List<String> platingTargetBarcodes = new ArrayList<>();
+        ArrayList<VesselMetricBean> vesselMetricBeans = new ArrayList<>();
 
         for (Object o : resultList) {
             Object[] columns = (Object[]) o;

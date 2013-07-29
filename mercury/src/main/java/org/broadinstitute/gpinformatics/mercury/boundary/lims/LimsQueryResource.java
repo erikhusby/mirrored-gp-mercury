@@ -80,7 +80,7 @@ public class LimsQueryResource {
             return limsQueries.fetchLibraryDetailsByTubeBarcode(tubeBarcodes, includeWorkRequestDetails);
         case SQUID:
             List<LibraryData> libraryData = thriftService.fetchLibraryDetailsByTubeBarcode(tubeBarcodes, includeWorkRequestDetails);
-            List<LibraryDataType> result = new ArrayList<LibraryDataType>();
+            List<LibraryDataType> result = new ArrayList<>();
             for (LibraryData data : libraryData) {
                 result.add(responseFactory.makeLibraryData(data));
             }
@@ -182,7 +182,7 @@ public class LimsQueryResource {
         }
 
         LibraryDataType libraryDataType = null;
-        List<LibraryDataType> libraryDataTypeList = new ArrayList<LibraryDataType>();
+        List<LibraryDataType> libraryDataTypeList = new ArrayList<>();
         List<LibraryData> libraryDataList = thriftService.fetchLibraryDetailsByLibraryName(libraryNames);
         if (libraryDataList == null || libraryDataList.isEmpty()) {
             return null;
@@ -291,7 +291,7 @@ public class LimsQueryResource {
             case MERCURY:
                 return limsQueries.fetchSourceTubesForPlate(plateBarcode);
             case SQUID:
-                List<WellAndSourceTubeType> wellAndSourceTubeTypes = new ArrayList<WellAndSourceTubeType>();
+                List<WellAndSourceTubeType> wellAndSourceTubeTypes = new ArrayList<>();
                 List<WellAndSourceTube> wellAndSourceTubes = thriftService.fetchSourceTubesForPlate(plateBarcode);
                 for (WellAndSourceTube wellAndSourceTube : wellAndSourceTubes) {
                     wellAndSourceTubeTypes.add(responseFactory.makeWellAndSourceTube(wellAndSourceTube));
@@ -313,7 +313,7 @@ public class LimsQueryResource {
             case MERCURY:
                 return limsQueries.fetchTransfersForPlate(plateBarcode, depth);
             case SQUID:
-                List<PlateTransferType> plateTransferTypes = new ArrayList<PlateTransferType>();
+                List<PlateTransferType> plateTransferTypes = new ArrayList<>();
                 List<PlateTransfer> plateTransfers = thriftService.fetchTransfersForPlate(plateBarcode, depth);
                 for (PlateTransfer plateTransfer : plateTransfers) {
                     plateTransferTypes.add(responseFactory.makePlateTransfer(plateTransfer));
@@ -330,7 +330,7 @@ public class LimsQueryResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchPoolGroups")
     public List<PoolGroupType> fetchPoolGroups(@QueryParam("q") List<String> tubeBarcodes) {
-        List<PoolGroupType> poolGroupTypes = new ArrayList<PoolGroupType>();
+        List<PoolGroupType> poolGroupTypes = new ArrayList<>();
         List<PoolGroup> poolGroups = thriftService.fetchPoolGroups(tubeBarcodes);
         for (PoolGroup poolGroup : poolGroups) {
             poolGroupTypes.add(responseFactory.makePoolGroup(poolGroup));

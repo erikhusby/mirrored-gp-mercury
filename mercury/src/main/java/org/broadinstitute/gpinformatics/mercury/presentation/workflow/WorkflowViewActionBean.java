@@ -37,7 +37,7 @@ public class WorkflowViewActionBean extends CoreActionBean {
     private LabEvent latestEvent;
 
     private Map<String, ProductWorkflowDefVersion> productWorkflowDefVersionMap =
-            new HashMap<String, ProductWorkflowDefVersion>();
+            new HashMap<>();
 
     public LabVessel getVessel() {
         return vessel;

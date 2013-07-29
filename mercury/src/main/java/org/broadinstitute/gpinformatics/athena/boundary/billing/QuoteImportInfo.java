@@ -32,7 +32,7 @@ public class QuoteImportInfo {
      *      Billing Ledger - We keep the whole ledger so we can place any errors on each item AND it has the count
      */
     private final Map<String, Map<PriceItem, Map<Date, List<LedgerEntry>>>> quantitiesByQuotePriceItem =
-            new HashMap<String, Map<PriceItem, Map<Date, List<LedgerEntry>>>>();
+            new HashMap<>();
 
     /**
      * Take the ledger item and bucket it into the nasty structure we use here.
@@ -85,7 +85,7 @@ public class QuoteImportInfo {
     }
 
     public List<QuoteImportItem> getQuoteImportItems(PriceListCache priceListCache) {
-        List<QuoteImportItem> quoteItems = new ArrayList<QuoteImportItem> ();
+        List<QuoteImportItem> quoteItems = new ArrayList<>();
 
         for (String quoteId : quantitiesByQuotePriceItem.keySet()) {
             Map<PriceItem, Map<Date, List<LedgerEntry>>> quotePriceItems = quantitiesByQuotePriceItem.get(quoteId);
@@ -93,10 +93,10 @@ public class QuoteImportInfo {
                 for (Date bucketDate : quotePriceItems.get(priceItem).keySet()) {
                     List<LedgerEntry> ledgerItems = quotePriceItems.get(priceItem).get(bucketDate);
 
-                    List<LedgerEntry> creditLedgerItems = new ArrayList<LedgerEntry>();
-                    List<LedgerEntry> debitLedgerItems = new ArrayList<LedgerEntry>();
-                    List<LedgerEntry> replacementCreditLedgerItems = new ArrayList<LedgerEntry>();
-                    List<LedgerEntry> replacementDebitLedgerItems = new ArrayList<LedgerEntry>();
+                    List<LedgerEntry> creditLedgerItems = new ArrayList<>();
+                    List<LedgerEntry> debitLedgerItems = new ArrayList<>();
+                    List<LedgerEntry> replacementCreditLedgerItems = new ArrayList<>();
+                    List<LedgerEntry> replacementDebitLedgerItems = new ArrayList<>();
 
                     // Separate the items into debits and credits so that the quote server will not cancel out items.
                     for (LedgerEntry ledger : ledgerItems) {

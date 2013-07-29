@@ -19,7 +19,7 @@ public class SamplesPicoJaxbBuilder {
     private final String       labBatchId;
     private final String       timestamp;
 
-    private final List<BettaLIMSMessage> messageList = new ArrayList<BettaLIMSMessage>();
+    private final List<BettaLIMSMessage> messageList = new ArrayList<>();
     private PlateTransferEventType picoDilutionTransferJaxbA1;
     private PlateTransferEventType picoDilutionTransferJaxbA2;
     private PlateTransferEventType picoDilutionTransferJaxbB1;

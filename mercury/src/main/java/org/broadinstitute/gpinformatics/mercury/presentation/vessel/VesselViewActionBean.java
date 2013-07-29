@@ -30,7 +30,7 @@ public class VesselViewActionBean extends CoreActionBean {
 
     private LabVessel vessel;
 
-    private Map<String, Set<LabMetric>> sampleToMetricsMap = new HashMap<String, Set<LabMetric>>();
+    private Map<String, Set<LabMetric>> sampleToMetricsMap = new HashMap<>();
 
     public String getVesselLabel() {
         return vesselLabel;

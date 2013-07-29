@@ -1,14 +1,11 @@
 package org.broadinstitute.gpinformatics.mercury.entity.billing;
 
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.Transient;
-import java.util.Collection;
 
 /**
  * Quote entity, which is just a alphanumeric id

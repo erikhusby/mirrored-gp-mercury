@@ -981,9 +981,7 @@ public class LabEventFactory implements Serializable {
                         destinationBarcode);
             } else if (physType.equals(PHYS_TYPE_FLOWCELL)) {
                 // Guard against the possibility that automation scripts send us bare "Flowcell" types.
-                // Assume it to mean an 8-lane HiSeq flowcell.
-                IlluminaFlowcell.FlowcellType flowcellType = IlluminaFlowcell.FlowcellType.getTypeForBarcode(destinationBarcode);
-                targetVessel = new IlluminaFlowcell(flowcellType, destinationBarcode);
+                targetVessel = new IlluminaFlowcell(destinationBarcode);
             } else {
                 throw new RuntimeException("Unexpected physical type: " + physType);
             }
@@ -1010,7 +1008,7 @@ public class LabEventFactory implements Serializable {
     public LabEvent buildFromBettaLims(ReceptaclePlateTransferEvent receptaclePlateTransferEvent) {
         return buildVesselToSectionDbFree(receptaclePlateTransferEvent,
                 twoDBarcodedTubeDao.findByBarcode(receptaclePlateTransferEvent.getSourceReceptacle().getBarcode()),
-                staticPlateDAO.findByBarcode(receptaclePlateTransferEvent.getDestinationPlate().getBarcode()),
+                (VesselContainerEmbedder) labVesselDao.findByIdentifier(receptaclePlateTransferEvent.getDestinationPlate().getBarcode()),
                 receptaclePlateTransferEvent.getDestinationPlate().getSection());
     }
 

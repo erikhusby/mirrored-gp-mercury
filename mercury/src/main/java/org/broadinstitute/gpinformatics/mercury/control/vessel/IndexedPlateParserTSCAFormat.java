@@ -64,7 +64,7 @@ public class IndexedPlateParserTSCAFormat extends IndexedPlateParserIDTSpreadshe
 
 
     List<ColumnParser> getColumnParsers() {
-        final List<ColumnParser> parsers = new ArrayList<ColumnParser>(5);
+        final List<ColumnParser> parsers = new ArrayList<>(5);
         parsers.add(this.p5AntisenseSequenceColumnParser);
         parsers.add(this.p7AntisenseSequenceColumnParser);
         parsers.add(this.broadBarcodeColumnParser);
@@ -83,7 +83,7 @@ public class IndexedPlateParserTSCAFormat extends IndexedPlateParserIDTSpreadshe
 
         this.validateWorksheet(sheet);
 
-        final List<PlateWellIndexAssociation> plateIndexes = new ArrayList<PlateWellIndexAssociation>();
+        final List<PlateWellIndexAssociation> plateIndexes = new ArrayList<>();
 
         final int lastRowNum = sheet.getLastRowNum();
         int i = 1;

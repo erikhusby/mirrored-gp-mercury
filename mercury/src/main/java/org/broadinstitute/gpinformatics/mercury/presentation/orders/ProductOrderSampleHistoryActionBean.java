@@ -44,8 +44,8 @@ public class ProductOrderSampleHistoryActionBean extends CoreActionBean {
 
     private ProductWorkflowDefVersion productWorkflowDefVersion;
     private String businessKey;
-    private Set<MercurySample> mercurySamples = new HashSet<MercurySample>();
-    public Map<Integer, String> indexToStepNameMap = new TreeMap<Integer, String>();
+    private Set<MercurySample> mercurySamples = new HashSet<>();
+    public Map<Integer, String> indexToStepNameMap = new TreeMap<>();
 
     public Map<Integer, String> getIndexToStepNameMap() {
         return indexToStepNameMap;
@@ -125,13 +125,13 @@ public class ProductOrderSampleHistoryActionBean extends CoreActionBean {
     }
 
     public Map<String, Set<LabEvent>> getAllLabEvents(MercurySample sample) {
-        Map<String, Set<LabEvent>> labEventsByName = new HashMap<String, Set<LabEvent>>();
+        Map<String, Set<LabEvent>> labEventsByName = new HashMap<>();
         List<LabVessel> vessels = labVesselDao.findBySampleKey(sample.getSampleKey());
         for (LabVessel vessel : vessels) {
             for (LabEvent event : vessel.getEvents()) {
                 Set<LabEvent> eventList = labEventsByName.get(event.getLabEventType().getName());
                 if (eventList == null) {
-                    eventList = new HashSet<LabEvent>();
+                    eventList = new HashSet<>();
                     labEventsByName.put(event.getLabEventType().getName(), eventList);
                 }
                 eventList.add(event);
@@ -141,7 +141,7 @@ public class ProductOrderSampleHistoryActionBean extends CoreActionBean {
                     for (LabEvent descendantEvent : descendantVessel.getEvents()) {
                         eventList = labEventsByName.get(descendantEvent.getLabEventType().getName());
                         if (eventList == null) {
-                            eventList = new HashSet<LabEvent>();
+                            eventList = new HashSet<>();
                             labEventsByName.put(descendantEvent.getLabEventType().getName(), eventList);
                         }
                         eventList.add(descendantEvent);

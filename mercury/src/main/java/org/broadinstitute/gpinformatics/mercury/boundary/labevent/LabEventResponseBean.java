@@ -13,7 +13,7 @@ import java.util.List;
 @XmlRootElement(namespace = Namespaces.LAB_EVENT)
 @XmlType(namespace = Namespaces.LAB_EVENT)
 public class LabEventResponseBean {
-    private List<LabEventBean> labEventBeans = new ArrayList<LabEventBean>();
+    private List<LabEventBean> labEventBeans = new ArrayList<>();
 
     public LabEventResponseBean(List<LabEventBean> labEventBeans) {
         this.labEventBeans = labEventBeans;

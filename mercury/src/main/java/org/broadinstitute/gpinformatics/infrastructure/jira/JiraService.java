@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.jira;
 
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
@@ -14,13 +15,13 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.Serializable;
-import java.text.SimpleDateFormat;
+import java.text.Format;
 import java.util.Collection;
 import java.util.Map;
 
 public interface JiraService extends Serializable {
 
-    SimpleDateFormat JIRA_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
+    Format JIRA_DATE_FORMAT = FastDateFormat.getInstance("yyyy-MM-dd");
 
     /**
      * Create an issue with a project prefix specified by projectPrefix; i.e. for this method projectPrefix would be 'TP' and not 'TP-5' for

@@ -43,7 +43,15 @@ public enum VesselGeometry {
     G8x6(
             "8 x 6",
             new String[] {"01", "02", "03", "04", "05", "06", "07", "08"},
-            new String[] {"A", "B", "C", "D", "E", "F"}),
+            new String[] {"A", "B", "C", "D", "E", "F"},
+            new VesselPosition[]{
+                    VesselPosition.A01, VesselPosition.A02, VesselPosition.A03, VesselPosition.A04, VesselPosition.A05, VesselPosition.A06, VesselPosition.A07, VesselPosition.A08,
+                    VesselPosition.B01, VesselPosition.B02, VesselPosition.B03, VesselPosition.B04, VesselPosition.B05, VesselPosition.B06, VesselPosition.B07, VesselPosition.B08,
+                    VesselPosition.C01, VesselPosition.C02, VesselPosition.C03, VesselPosition.C04, VesselPosition.C05, VesselPosition.C06, VesselPosition.C07, VesselPosition.C08,
+                    VesselPosition.D01, VesselPosition.D02, VesselPosition.D03, VesselPosition.D04, VesselPosition.D05, VesselPosition.D06, VesselPosition.D07, VesselPosition.D08,
+                    VesselPosition.E01, VesselPosition.E02, VesselPosition.E03, VesselPosition.E04, VesselPosition.E05, VesselPosition.E06, VesselPosition.E07, VesselPosition.E08,
+                    VesselPosition.F01, VesselPosition.F02, VesselPosition.F03, VesselPosition.F04, VesselPosition.F05, VesselPosition.F06, VesselPosition.F07, VesselPosition.F08,
+            }),
 
     SAGE_CASSETTE(
             "Sage Cassette",
@@ -101,7 +109,7 @@ public enum VesselGeometry {
     private final String[] rowNames;
     private final Integer capacity;
     private VesselPosition[] vesselPositions;
-    private Map<VesselPosition, RowColumn> mapVesselPositionToRowColumn = new HashMap<VesselPosition, RowColumn>();
+    private Map<VesselPosition, RowColumn> mapVesselPositionToRowColumn = new HashMap<>();
 
     public class RowColumn implements Serializable {
         private int row;

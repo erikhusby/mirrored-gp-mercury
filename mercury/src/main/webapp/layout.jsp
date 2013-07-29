@@ -141,7 +141,7 @@
                     |
                          <span id="userBadge" class="badge ${bean.userBean.badgeClass}" style="cursor: help;"
                                data-original-title="Account Info" rel="popover" data-placement="bottom"
-                               data-content="${bean.userBean.bspStatus}<br/>${bean.userBean.jiraStatus}<br/>${bean.userBean.rolesString}">${bean.userBean.loginUserName}</span>
+                               data-content="<b class='${bean.userBean.bspStatusClass}'>${bean.userBean.bspStatus}</b><br/><b class='${bean.userBean.jiraStatusClass}'>${bean.userBean.jiraStatus}</b><br/>${bean.userBean.rolesString}">${bean.userBean.loginUserName}</span>
 
                     &#160;
                     <stripes:link

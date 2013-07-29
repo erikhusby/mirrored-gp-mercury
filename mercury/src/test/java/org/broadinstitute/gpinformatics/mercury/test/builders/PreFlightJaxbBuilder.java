@@ -23,7 +23,7 @@ public class PreFlightJaxbBuilder {
     private PlateTransferEventType preflightPostNormPicoSetup1;
     private PlateTransferEventType preflightPostNormPicoSetup2;
 
-    private final List<BettaLIMSMessage> messageList = new ArrayList<BettaLIMSMessage>();
+    private final List<BettaLIMSMessage> messageList = new ArrayList<>();
 
     public PreFlightJaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory, String testPrefix,
                                 List<String> tubeBarcodes) {

@@ -92,7 +92,7 @@ public class QuoteFundingList extends AbstractCache {
      */
     public List<Funding> find(String query) {
         String[] lowerQueryItems = query.toLowerCase().split("\\s");
-        List<Funding> results = new ArrayList<Funding>();
+        List<Funding> results = new ArrayList<>();
         for (Funding funding : getFunding()) {
             boolean eachItemMatchesSomething = true;
             for (String lowerQuery : lowerQueryItems) {

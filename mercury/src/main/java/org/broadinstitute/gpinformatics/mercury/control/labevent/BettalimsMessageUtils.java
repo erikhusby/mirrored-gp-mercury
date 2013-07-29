@@ -23,7 +23,7 @@ public class BettalimsMessageUtils {
      * @return tube barcodes
      */
     public static Set<String> getBarcodesForCherryPick(PlateCherryPickEvent plateCherryPickEvent) {
-        Set<String> barcodes = new HashSet<String>();
+        Set<String> barcodes = new HashSet<>();
         switch (LabEventType.getByName(plateCherryPickEvent.getEventType()).getPlasticToValidate()) {
             case SOURCE:
                 for (PositionMapType positionMapType : plateCherryPickEvent.getSourcePositionMap()) {
@@ -42,7 +42,7 @@ public class BettalimsMessageUtils {
      * @return plate barcodes
      */
     public static Set<String> getBarcodesForPlateEvent(PlateEventType plateEventType) {
-        Set<String> barcodes = new HashSet<String>();
+        Set<String> barcodes = new HashSet<>();
         switch (LabEventType.getByName(plateEventType.getEventType()).getPlasticToValidate()) {
             case SOURCE:
                 if (plateEventType.getPositionMap() == null) {
@@ -63,7 +63,7 @@ public class BettalimsMessageUtils {
      * @return plate barcodes
      */
     public static Set<String> getBarcodesForPlateTransfer(PlateTransferEventType plateTransferEventType) {
-        Set<String> barcodes = new HashSet<String>();
+        Set<String> barcodes = new HashSet<>();
         switch (LabEventType.getByName(plateTransferEventType.getEventType()).getPlasticToValidate()) {
             case SOURCE:
                 if (plateTransferEventType.getSourcePositionMap() == null) {
@@ -96,7 +96,7 @@ public class BettalimsMessageUtils {
      * @return plate or tube barcode
      */
     public static Set<String> getBarcodesForReceptaclePlateTransfer(ReceptaclePlateTransferEvent receptaclePlateTransferEvent) {
-        Set<String> barcodes = new HashSet<String>();
+        Set<String> barcodes = new HashSet<>();
         switch (LabEventType.getByName(receptaclePlateTransferEvent.getEventType()).getPlasticToValidate()) {
             case SOURCE:
                 barcodes.add(receptaclePlateTransferEvent.getSourceReceptacle().getBarcode());
@@ -115,7 +115,7 @@ public class BettalimsMessageUtils {
      * @return tube barcodes
      */
     public static Set<String> getBarcodesForReceptacleEvent(ReceptacleEventType receptacleEventType) {
-        Set<String> barcodes = new HashSet<String>();
+        Set<String> barcodes = new HashSet<>();
         switch (LabEventType.getByName(receptacleEventType.getEventType()).getPlasticToValidate()) {
             case SOURCE:
                 barcodes.add(receptacleEventType.getReceptacle().getBarcode());

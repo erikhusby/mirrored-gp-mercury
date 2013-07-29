@@ -105,7 +105,7 @@ public class JiraServiceStub implements JiraService {
     public Map<String, CustomFieldDefinition> getRequiredFields(@Nonnull CreateFields.Project project,
                                                                 @Nonnull CreateFields.IssueType issueType) throws
             IOException {
-        Map<String, CustomFieldDefinition> customFields = new HashMap<String, CustomFieldDefinition>();
+        Map<String, CustomFieldDefinition> customFields = new HashMap<>();
         for (String requiredFieldName : JiraCustomFieldsUtil.REQUIRED_FIELD_NAMES) {
             customFields.put(requiredFieldName, new CustomFieldDefinition(
                     "stub_custom_field_" + requiredFieldName, requiredFieldName, true));
@@ -115,7 +115,7 @@ public class JiraServiceStub implements JiraService {
 
     @Override
     public Map<String, CustomFieldDefinition> getCustomFields(String... fieldNames) throws IOException {
-        Map<String, CustomFieldDefinition> customFields = new HashMap<String, CustomFieldDefinition>();
+        Map<String, CustomFieldDefinition> customFields = new HashMap<>();
         for (String requiredFieldName : JiraCustomFieldsUtil.REQUIRED_FIELD_NAMES) {
             customFields.put(requiredFieldName, new CustomFieldDefinition("stub_custom_field_" + requiredFieldName,
                     requiredFieldName, true));

@@ -121,10 +121,10 @@ public class LimsQueryResourceResponseFactoryTest {
             assertLane(outFlowcellDesignation.getLanes().get(i), expected.getLanes().get(i));
         }
         assertThat(outFlowcellDesignation.getDesignationName(), equalTo(expected.getDesignationName()));
-        assertThat(outFlowcellDesignation.getReadLength(), equalTo(Integer.valueOf(expected.getReadLength())));
+        assertThat(outFlowcellDesignation.getReadLength(), equalTo((int) expected.getReadLength()));
         assertThat(outFlowcellDesignation.isPairedEndRun(), equalTo(expected.isIsPairedEndRun()));
         assertThat(outFlowcellDesignation.isIndexedRun(), equalTo(expected.isIsIndexedRun()));
-        assertThat(outFlowcellDesignation.getControlLane(), equalTo(Integer.valueOf(expected.getControlLane())));
+        assertThat(outFlowcellDesignation.getControlLane(), equalTo((int) expected.getControlLane()));
         assertThat(outFlowcellDesignation.isKeepIntensityFiles(), equalTo(expected.isKeepIntensityFiles()));
         assertThat(outFlowcellDesignation.getIndexingReadConfiguration(), equalTo(expected.getIndexingReadConfiguration()));
     }
@@ -157,7 +157,7 @@ public class LimsQueryResourceResponseFactoryTest {
     private void assertSampleInfo(SampleInfoType outSampleInfo, SampleInfo expected) {
         assertThat(outSampleInfo.getSampleName(), equalTo(expected.getSampleName()));
         assertThat(outSampleInfo.getSampleType(), equalTo(expected.getSampleType()));
-        assertThat(outSampleInfo.getIndexLength(), equalTo(Integer.valueOf(expected.getIndexLength())));
+        assertThat(outSampleInfo.getIndexLength(), equalTo((int) expected.getIndexLength()));
         assertThat(outSampleInfo.getIndexSequence(), equalTo(expected.getIndexSequence()));
         assertThat(outSampleInfo.getReferenceSequence(), equalTo(expected.getReferenceSequence()));
     }

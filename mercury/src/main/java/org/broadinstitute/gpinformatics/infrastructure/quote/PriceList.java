@@ -10,7 +10,7 @@ import java.util.Collection;
 public class PriceList {
     
     @XmlElement(name = "priceItem")
-    private final Collection<QuotePriceItem> quotePriceItems = new ArrayList<QuotePriceItem>();
+    private final Collection<QuotePriceItem> quotePriceItems = new ArrayList<>();
 
     public PriceList() {}
     

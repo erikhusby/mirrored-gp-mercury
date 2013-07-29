@@ -179,7 +179,7 @@ public abstract class LabVessel implements Serializable {
 
     /** Set by {@link #preProcessEvents()} */
     @Transient
-    private boolean havePreProcessedEvents;
+    private Set<LabBatch> preProcessedEvents;
 
     protected LabVessel(String label) {
         createdOn = new Date();
@@ -218,9 +218,8 @@ public abstract class LabVessel implements Serializable {
      * of a lab vessel.  Labels are GUIDs
      * for LabVessels; no two LabVessels
      * may share this id.  It's primarily the
-     * barcode on the piece of plastic.f
+     * barcode on the piece of plastic.
      *
-     * @return
      */
     public String getLabel() {
         return label;
@@ -361,6 +360,24 @@ public abstract class LabVessel implements Serializable {
      * @return transfers
      */
     public Set<LabEvent> getTransfersTo() {
+        Set<LabEvent> transfersTo = new HashSet<>();
+        if (getContainerRole() == null) {
+            for (VesselContainer<?> vesselContainer : getContainers()) {
+                transfersTo.addAll(vesselContainer.getTransfersTo());
+            }
+        } else {
+            transfersTo.addAll(getContainerRole().getTransfersTo());
+        }
+        // todo jmt vessel to vessel transfers
+        return transfersTo;
+    }
+
+    /**
+     * Get LabEvents that are transfers to this vessel, including re-arrays
+     *
+     * @return transfers
+     */
+    public Set<LabEvent> getTransfersToWithReArrays() {
         Set<LabEvent> transfersTo = new HashSet<>();
         if (getContainerRole() == null) {
             for (VesselContainer<?> vesselContainer : getContainers()) {
@@ -730,12 +747,17 @@ public abstract class LabVessel implements Serializable {
      * @return sample instances
      */
     public Set<SampleInstance> getSampleInstances(SampleType sampleType, @Nullable LabBatch.LabBatchType labBatchType) {
-        if (!havePreProcessedEvents) {
-            preProcessEvents();
-            havePreProcessedEvents = true;
+        if (preProcessedEvents == null) {
+            preProcessedEvents = preProcessEvents();
         }
         if (getContainerRole() != null) {
-            return getContainerRole().getSampleInstances(sampleType, labBatchType);
+            Set<SampleInstance> sampleInstances = getContainerRole().getSampleInstances(sampleType, labBatchType);
+            for (SampleInstance sampleInstance : sampleInstances) {
+                if (sampleInstance.getLabBatch() == null && preProcessedEvents != null && preProcessedEvents.size() == 1) {
+                    sampleInstance.setLabBatch(preProcessedEvents.iterator().next());
+                }
+            }
+            return sampleInstances;
         }
         TraversalResults traversalResults = traverseAncestors(sampleType, labBatchType);
         Set<SampleInstance> filteredSampleInstances;
@@ -750,6 +772,14 @@ public abstract class LabVessel implements Serializable {
             filteredSampleInstances = traversalResults.getSampleInstances();
         }
 
+        // This handles the case where controls are added in a re-array of the destination of the first transfer
+        // from LCSET starting tubes.
+        if (filteredSampleInstances.size() == 1) {
+            SampleInstance sampleInstance = filteredSampleInstances.iterator().next();
+            if (sampleInstance.getLabBatch() == null && preProcessedEvents != null && preProcessedEvents.size() == 1) {
+                sampleInstance.setLabBatch(preProcessedEvents.iterator().next());
+            }
+        }
         return filteredSampleInstances;
     }
 
@@ -841,10 +871,6 @@ public abstract class LabVessel implements Serializable {
         }
     }
 
-    private static boolean isBspEvent(LabEvent labEvent) {
-        return labEvent.getEventLocation().equals("BSP");
-    }
-
     /**
      * Traverse all ancestors of this vessel, accumulating SampleInstances.
      *
@@ -890,16 +916,23 @@ public abstract class LabVessel implements Serializable {
                 traversalResults.add(sampleInstance);
             }
         }
-        for (SampleInstance sampleInstance : traversalResults.getSampleInstances()) {
-            sampleInstance.addLabBatches(getAllLabBatches(labBatchType));
+        for (LabBatch labBatch : getLabBatches()) {
+            if (labBatchType == null || labBatch.getLabBatchType() == labBatchType) {
+                for (SampleInstance sampleInstance : traversalResults.getSampleInstances()) {
+                    sampleInstance.addLabBatches(Collections.singleton(labBatch));
+                }
+            }
             // If this vessel is a BSP export, sets the aliquot sample.
             // Expects one sample per vessel in the BSP export.
-            if (!getAllLabBatches(LabBatch.LabBatchType.SAMPLES_IMPORT).isEmpty()) {
+            if (labBatch.getLabBatchType() == LabBatch.LabBatchType.SAMPLES_IMPORT) {
                 for (MercurySample mercurySample : mercurySamples) {
-                    sampleInstance.setBspExportSample(mercurySample);
+                    for (SampleInstance sampleInstance : traversalResults.getSampleInstances()) {
+                        sampleInstance.setBspExportSample(mercurySample);
+                    }
                 }
             }
         }
+
         if (bucketEntries.size() == 1) {
             BucketEntry bucketEntry = bucketEntries.iterator().next();
             if (bucketEntry.getReworkDetail() == null) {
@@ -1205,6 +1238,7 @@ public abstract class LabVessel implements Serializable {
         return event;
     }
 
+    // todo jmt unused?
     public Collection<String> getNearestProductOrders() {
 
         if (getContainerRole() != null) {
@@ -1376,7 +1410,7 @@ public abstract class LabVessel implements Serializable {
      * This method walks the vessel transfers in both directions and returns all of the ancestor and descendant
      * vessels.
      *
-     * @return A collection contain all ancestor and descentdant vessels.
+     * @return A collection containing all ancestor and descendant vessels.
      */
     public Collection<LabVessel> getAncestorAndDescendantVessels() {
         Collection<LabVessel> allVessels;
@@ -1655,7 +1689,7 @@ public abstract class LabVessel implements Serializable {
      */
     public boolean hasAncestorBeenInBucket(@Nonnull String bucketName) {
 
-        List<LabVessel> vesselHierarchy = new ArrayList<LabVessel>();
+        List<LabVessel> vesselHierarchy = new ArrayList<>();
 
         vesselHierarchy.add(this);
         vesselHierarchy.addAll(this.getAncestorVessels());
@@ -1693,11 +1727,13 @@ public abstract class LabVessel implements Serializable {
     }
 
     /**
-     * In preparation for getSampleInstances recursion, sets the computed LCSETs in each ancestor lab event.
+     * In preparation for getSampleInstances recursion, sets the computed LCSETs in each ancestor lab event.  This is
+     * necessary because a control doesn't have a {@link BucketEntry}; controls become associated with LCSETs by being
+     * in the same transfer as vessels with BucketEntries.
      */
-    public void preProcessEvents() {
+    public Set<LabBatch> preProcessEvents() {
         Set<LabEvent> visitedLabEvents = new HashSet<>();
-        recurseEvents(visitedLabEvents, getTransfersTo());
+        return recurseEvents(visitedLabEvents, getTransfersToWithReArrays());
     }
 
     /**
@@ -1712,7 +1748,7 @@ public abstract class LabVessel implements Serializable {
             if (visitedLabEvents.add(labEvent)) {
                 Set<LabBatch> lcSetsFromRecursion = new HashSet<>();
                 for (LabVessel labVessel : labEvent.getSourceLabVessels()) {
-                    lcSetsFromRecursion.addAll(recurseEvents(visitedLabEvents, labVessel.getTransfersTo()));
+                    lcSetsFromRecursion.addAll(recurseEvents(visitedLabEvents, labVessel.getTransfersToWithReArrays()));
                 }
                 Set<LabBatch> computedLcSets = labEvent.computeLcSets();
                 if (computedLcSets.isEmpty()) {
@@ -1722,7 +1758,6 @@ public abstract class LabVessel implements Serializable {
                     returnLcSets.addAll(computedLcSets);
                     labEvent.addComputedLcSets(computedLcSets);
                 }
-//                System.out.println(labEvent.getLabEventType() + " " + labEvent.getComputedLcSets());
             }
         }
         return returnLcSets;

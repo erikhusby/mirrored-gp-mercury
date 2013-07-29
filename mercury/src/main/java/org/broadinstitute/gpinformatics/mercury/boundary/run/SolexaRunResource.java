@@ -111,18 +111,15 @@ public class SolexaRunResource {
                     Response.Status.INTERNAL_SERVER_ERROR);
         }
 
-        IlluminaFlowcell flowcell= illuminaFlowcellDao.findByBarcode(solexaRunBean.getFlowcellBarcode());;
+        IlluminaFlowcell flowcell= illuminaFlowcellDao.findByBarcode(solexaRunBean.getFlowcellBarcode());
         MiSeqReagentKit reagentKit;
         MercuryOrSquidRouter.MercuryOrSquid route;
 
         if(StringUtils.isNotBlank(solexaRunBean.getReagentBlockBarcode())) {
             reagentKit = reagentKitDao.findByBarcode(solexaRunBean.getReagentBlockBarcode());
-            route = router.routeForVessels(
-                    Collections.<LabVessel>singletonList(reagentKit ));
+            route = router.routeForVessels(Collections.<LabVessel>singletonList(reagentKit));
         } else {
-
-            route = router.routeForVessels(
-                    Collections.<LabVessel>singletonList(flowcell));
+            route = router.routeForVessels(Collections.<LabVessel>singletonList(flowcell));
         }
 
         Response callerResponse = null;

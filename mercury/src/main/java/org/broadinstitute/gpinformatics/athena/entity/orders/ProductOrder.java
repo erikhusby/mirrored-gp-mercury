@@ -203,8 +203,10 @@ public class ProductOrder implements BusinessObject, Serializable {
      * @return The number of samples calculated to be on risk.
      */
     public int calculateRisk(List<ProductOrderSample> selectedSamples) {
-        Set<String> uniqueSampleNamesOnRisk = new HashSet<>();
+        // Load the bsp data for the selected samples
+        loadBspData(selectedSamples);
 
+        Set<String> uniqueSampleNamesOnRisk = new HashSet<>();
         for (ProductOrderSample sample : selectedSamples) {
             if (sample.calculateRisk()) {
                 uniqueSampleNamesOnRisk.add(sample.getSampleName());
@@ -839,27 +841,27 @@ public class ProductOrder implements BusinessObject, Serializable {
      * Use the BSP Manager to load the bsp data for every sample in this product order.
      */
     public void loadBspData() {
-        // Can't use SampleCounts here, it calls this recursively.
-        Set<String> uniqueNames = new HashSet<>(samples.size());
-        for (ProductOrderSample sample : samples) {
-            if (sample.needsBspMetaData()) {
-                uniqueNames.add(sample.getSampleName());
+        loadBspData(samples);
+    }
+
+    public static void loadBspData(List<ProductOrderSample> samples) {
+
+        // Create a subset of the samples so we only call BSP for BSP samples that aren't already cached.
+        Set<String> bspSampleNames = new HashSet<>(samples.size()) ;
+        for (ProductOrderSample productOrderSample : samples) {
+            if (productOrderSample.needsBspMetaData()){
+                bspSampleNames.add(productOrderSample.getSampleName());
             }
         }
-
-        if (uniqueNames.isEmpty()) {
+        if (bspSampleNames.isEmpty()) {
             // This early return is needed to avoid making a unnecessary injection, which could cause
             // DB Free automated tests to fail.
             return;
         }
 
-        loadBspData(uniqueNames, getSamples());
-    }
-
-    public static void loadBspData(Collection<String> names, List<ProductOrderSample> samples) {
-
+        // This gets all the sample names. We could get unique sample names from BSP as a future optimization.
         BSPSampleDataFetcher bspSampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
-        Map<String, BSPSampleDTO> bspSampleMetaData = bspSampleDataFetcher.fetchSamplesFromBSP(names);
+        Map<String, BSPSampleDTO> bspSampleMetaData = bspSampleDataFetcher.fetchSamplesFromBSP(bspSampleNames);
 
         // The non-null DTOs which we use to look up FFPE status.
         List<BSPSampleDTO> nonNullDTOs = new ArrayList<>();

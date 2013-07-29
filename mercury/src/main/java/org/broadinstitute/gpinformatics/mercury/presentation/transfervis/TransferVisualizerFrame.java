@@ -8,7 +8,6 @@ import com.mxgraph.view.mxGraph;
 import org.broadinstitute.gpinformatics.mercury.boundary.graph.Graph;
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferEntityGrapher;
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVisualizer;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,7 +29,7 @@ public class TransferVisualizerFrame extends JFrame {
     private String barcode;
     private TransferVisualizerClient transferVisualizerClient;
     private JPopupMenu popupMenu;
-    private List<JCheckBox> alternativeIdCheckBoxes = new ArrayList<JCheckBox>();
+    private List<JCheckBox> alternativeIdCheckBoxes = new ArrayList<>();
     private static final Pattern FILL_COLOR_PATTERN = Pattern.compile("fillColor=[^;]*;");
     private mxICell clickedCell;
     private JLabel status = new JLabel(" ");
@@ -100,7 +99,7 @@ public class TransferVisualizerFrame extends JFrame {
                     SwingWorker<Graph, Void> swingWorker = new SwingWorker<Graph, Void>() {
                         @Override
                         protected Graph doInBackground() throws Exception {
-                            List<TransferVisualizer.AlternativeId> alternativeDisplayIds = new ArrayList<TransferVisualizer.AlternativeId>();
+                            List<TransferVisualizer.AlternativeId> alternativeDisplayIds = new ArrayList<>();
                             for (JCheckBox alternativeIdCheckBox : alternativeIdCheckBoxes) {
                                 if(alternativeIdCheckBox.isSelected()) {
                                     boolean found = false;
@@ -126,9 +125,7 @@ public class TransferVisualizerFrame extends JFrame {
                             try {
                                 Graph graph = get();
                                 renderGraph(graph);
-                            } catch (InterruptedException e1) {
-                                JOptionPane.showMessageDialog(TransferVisualizerFrame.this, e1);
-                            } catch (ExecutionException e1) {
+                            } catch (InterruptedException | ExecutionException e1) {
                                 JOptionPane.showMessageDialog(TransferVisualizerFrame.this, e1);
                             } finally {
                                 statusFrame.setVisible(false);
@@ -265,9 +262,7 @@ public class TransferVisualizerFrame extends JFrame {
                                             } else {
                                                 JOptionPane.showMessageDialog(TransferVisualizerFrame.this, response);
                                             }
-                                        } catch (InterruptedException e1) {
-                                            JOptionPane.showMessageDialog(TransferVisualizerFrame.this, e1);
-                                        } catch (ExecutionException e1) {
+                                        } catch (InterruptedException | ExecutionException e1) {
                                             JOptionPane.showMessageDialog(TransferVisualizerFrame.this, e1);
                                         }
                                     }
@@ -310,10 +305,13 @@ public class TransferVisualizerFrame extends JFrame {
         }
     }
 
-    public void renderVessel(LabVessel labVessel) {
-        transferVisualizerClient = new TransferVisualizerClient(labVessel.getLabel(), new ArrayList<TransferVisualizer.AlternativeId>());
-        Graph graph = transferVisualizerClient.fetchGraph(labVessel);
-        renderGraph(graph);
+    /**
+     * Intended for use in unit tests, allows caller to construct client with a specific graph
+     * @param transferVisualizerClient    client, with graph loaded
+     */
+    public void setTransferVisualizerClient(TransferVisualizerClient transferVisualizerClient) {
+        this.transferVisualizerClient = transferVisualizerClient;
+        renderGraph(transferVisualizerClient.getGraph());
         refreshGraph();
     }
 

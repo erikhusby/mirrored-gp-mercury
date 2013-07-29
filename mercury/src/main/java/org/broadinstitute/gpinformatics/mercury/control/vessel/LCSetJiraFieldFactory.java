@@ -42,9 +42,9 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
     public static final String LIB_QC_SEQ_REQUIRED_MISEQ = "Yes - MiSeq";
 
 
-    private final Map<String, ResearchProject> foundResearchProjectList = new HashMap<String, ResearchProject>();
-    private Map<String, Set<LabVessel>> pdoToVesselMap = new HashMap<String, Set<LabVessel>>();
-    private final Map<String, ProductWorkflowDef> workflowDefs = new HashMap<String, ProductWorkflowDef>();
+    private final Map<String, ResearchProject> foundResearchProjectList = new HashMap<>();
+    private Map<String, Set<LabVessel>> pdoToVesselMap = new HashMap<>();
+    private final Map<String, ProductWorkflowDef> workflowDefs = new HashMap<>();
 //    private final Collection<String> pdos;
 
     private static final Log logger = LogFactory.getLog(LCSetJiraFieldFactory.class);
@@ -105,8 +105,8 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
      */
     public static String buildSamplesListString(LabBatch labBatch) {
         StringBuilder samplesText = new StringBuilder();
-        Set<String> newSamples = new HashSet<String>();
-        Set<String> reworkSamples = new HashSet<String>();
+        Set<String> newSamples = new HashSet<>();
+        Set<String> reworkSamples = new HashSet<>();
         for (LabVessel labVessel : labBatch.getNonReworkStartingLabVessels()) {
             Collection<String> samplesNamesForVessel = labVessel.getSampleNames();
             if (samplesNamesForVessel.size() > 1) {
@@ -144,7 +144,7 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
 
         //TODO SGM: Modify Field settings to Append instead of Overwriting.  This would cover associating an Existing Ticket
 
-        Set<CustomField> customFields = new HashSet<CustomField>();
+        Set<CustomField> customFields = new HashSet<>();
 
         customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.DESCRIPTION,
                 batch.getBatchDescription()));

@@ -29,7 +29,7 @@ public class ReagentDesign implements BusinessObject {
     private String manufacturersName;
 
     @OneToMany(mappedBy = "reagentDesign")
-    private Set<DesignedReagent> designedReagents = new HashSet<DesignedReagent>();
+    private Set<DesignedReagent> designedReagents = new HashSet<>();
 
     private static final char SEPERATOR = '|';
 

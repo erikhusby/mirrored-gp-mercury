@@ -221,7 +221,7 @@ public class LiveThriftServiceTest {
     @Test(groups = DATABASE_FREE)
     public void testFetchParentRackContentsForPlate() throws Exception {
         expectThriftCall();
-        Map<String, Boolean> expected = new HashMap<String, Boolean>();
+        Map<String, Boolean> expected = new HashMap<>();
         expected.put("0001", true);
         expected.put("0002", false);
         expect(mockClient.fetchParentRackContentsForPlate("123456")).andReturn(expected);

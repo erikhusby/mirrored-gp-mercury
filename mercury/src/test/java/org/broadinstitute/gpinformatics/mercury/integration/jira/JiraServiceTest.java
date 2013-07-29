@@ -51,7 +51,7 @@ public class JiraServiceTest {
                             CreateFields.ProjectType.LCSET_PROJECT.getKeyPrefix()),
                             CreateFields.IssueType.WHOLE_EXOME_HYBSEL);
 
-            Collection<CustomField> customFieldList = new LinkedList<CustomField>();
+            Collection<CustomField> customFieldList = new LinkedList<>();
 
             customFieldList.add(new CustomField(requiredFields.get("Protocol"), "test protocol"));
             customFieldList.add(new CustomField(requiredFields.get("Work Request ID(s)"), "WR 1 Billion!"));
@@ -78,7 +78,7 @@ public class JiraServiceTest {
 
     public void testCreatePdoTicket() {
         setUp();
-        Collection<CustomField> customFieldList = new LinkedList<CustomField>();
+        Collection<CustomField> customFieldList = new LinkedList<>();
 
         try {
             Map<String, CustomFieldDefinition> requiredFields =
@@ -112,7 +112,7 @@ public class JiraServiceTest {
                 service.getRequiredFields(
                         new CreateFields.Project(CreateFields.ProjectType.PRODUCT_ORDERING.getKeyPrefix()),
                         CreateFields.IssueType.PRODUCT_ORDER);
-        Collection<CustomField> customFieldList = new LinkedList<CustomField>();
+        Collection<CustomField> customFieldList = new LinkedList<>();
         customFieldList.add(new CustomField(requiredFields.get("Description"),
                 "Athena Test Case:  Test description setting"));
         JiraIssue issue = service.createIssue(

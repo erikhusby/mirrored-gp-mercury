@@ -76,9 +76,9 @@ public class BucketEjb {
                                        LabEventType eventType,
                                        @Nonnull String singlePdoBusinessKey) {
 
-        List<BucketEntry> listOfNewEntries = new LinkedList<BucketEntry>();
+        List<BucketEntry> listOfNewEntries = new LinkedList<>();
         // TODO: is pdoKeyToVesselMap needed? doesn't look like it's used for anything
-        Map<String, Collection<LabVessel>> pdoKeyToVesselMap = new HashMap<String, Collection<LabVessel>>();
+        Map<String, Collection<LabVessel>> pdoKeyToVesselMap = new HashMap<>();
 
         for (LabVessel currVessel : entriesToAdd) {
             listOfNewEntries.add(bucket.addEntry(singlePdoBusinessKey, currVessel, entryType));
@@ -89,7 +89,7 @@ public class BucketEjb {
             pdoKeyToVesselMap.get(singlePdoBusinessKey).add(currVessel);
         }
 
-        Set<LabEvent> eventList = new HashSet<LabEvent>();
+        Set<LabEvent> eventList = new HashSet<>();
 
         //TODO SGM: Pass in Latest Batch?
         eventList.addAll(labEventFactory.buildFromBatchRequests(listOfNewEntries, operator, null, labEventLocation,
@@ -185,7 +185,7 @@ public class BucketEjb {
      * @return
      */
     public Set<BucketEntry> buildBatchListByVessels(Collection<LabVessel> vesselsToBatch, Bucket workingBucket) {
-        Set<BucketEntry> bucketEntrySet = new HashSet<BucketEntry>();
+        Set<BucketEntry> bucketEntrySet = new HashSet<>();
 
         for (LabVessel workingVessel : vesselsToBatch) {
 
@@ -278,9 +278,9 @@ public class BucketEjb {
      *         numberOfBatchSamples
      */
     public Set<BucketEntry> buildBatchListBySize(int numberOfBatchSamples, Bucket workingBucket) {
-        Set<BucketEntry> bucketEntrySet = new HashSet<BucketEntry>();
+        Set<BucketEntry> bucketEntrySet = new HashSet<>();
 
-        List<BucketEntry> sortedBucketEntries = new ArrayList<BucketEntry>(workingBucket.getBucketEntries());
+        List<BucketEntry> sortedBucketEntries = new ArrayList<>(workingBucket.getBucketEntries());
 
         Iterator<BucketEntry> bucketEntryIterator = sortedBucketEntries.iterator();
 
@@ -353,7 +353,7 @@ public class BucketEjb {
     @DaoFree
     public LabBatch startBucketDrain(@Nonnull Collection<BucketEntry> bucketEntries, @Nonnull String operator,
                                       String batchInitiationLocation, boolean autoBatch) {
-        Set<LabVessel> batchVessels = new HashSet<LabVessel>();
+        Set<LabVessel> batchVessels = new HashSet<>();
 
         for (BucketEntry currEntry : bucketEntries) {
             batchVessels.add(currEntry.getLabVessel());
@@ -463,11 +463,11 @@ public class BucketEjb {
      * @param reason  captures the information about why this entry is being removed from the bucket
      */
     private void jiraRemovalUpdate(@Nonnull Collection<BucketEntry> entries, String reason) {
-        Map<String, Collection<BucketEntry>> pdoToEntries = new HashMap<String, Collection<BucketEntry>>();
+        Map<String, Collection<BucketEntry>> pdoToEntries = new HashMap<>();
         for (BucketEntry entry : entries) {
             Collection<BucketEntry> pdoEntries = pdoToEntries.get(entry.getPoBusinessKey());
             if (pdoEntries == null) {
-                pdoEntries = new ArrayList<BucketEntry>();
+                pdoEntries = new ArrayList<>();
                 pdoToEntries.put(entry.getPoBusinessKey(), pdoEntries);
             }
             pdoEntries.add(entry);
@@ -497,7 +497,7 @@ public class BucketEjb {
      *         processed
      */
     private static Set<String> extractProductOrderSet(Collection<BucketEntry> entries) {
-        Set<String> pdoSet = new HashSet<String>();
+        Set<String> pdoSet = new HashSet<>();
 
         for (BucketEntry currEntry : entries) {
             pdoSet.add(currEntry.getPoBusinessKey());
@@ -516,7 +516,7 @@ public class BucketEjb {
      * @return
      */
     private static Collection<LabVessel> extractPdoLabVessels(String pdo, Collection<BucketEntry> entries) {
-        List<LabVessel> labVessels = new LinkedList<LabVessel>();
+        List<LabVessel> labVessels = new LinkedList<>();
 
         for (BucketEntry currEntry : entries) {
             if (currEntry.getPoBusinessKey().equals(pdo)) {
@@ -531,6 +531,7 @@ public class BucketEjb {
         Bucket bucket = bucketDao.findByName(bucketName);
         if (bucket == null) {
             bucket = new Bucket(bucketName);
+            bucketDao.persist(bucket);
             logger.debug("Created new bucket " + bucketName);
         }
         return bucket;

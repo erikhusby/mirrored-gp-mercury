@@ -1414,8 +1414,8 @@ public enum SBSSection {
     ;
 
     private final String sectionName;
-    private List<VesselPosition> wells = new ArrayList<VesselPosition>();
-    private static Map<String, SBSSection> mapNameToSection = new HashMap<String, SBSSection>();
+    private List<VesselPosition> wells = new ArrayList<>();
+    private static Map<String, SBSSection> mapNameToSection = new HashMap<>();
     static {
         for (SBSSection sbsSection : SBSSection.values()) {
             mapNameToSection.put(sbsSection.getSectionName(), sbsSection);

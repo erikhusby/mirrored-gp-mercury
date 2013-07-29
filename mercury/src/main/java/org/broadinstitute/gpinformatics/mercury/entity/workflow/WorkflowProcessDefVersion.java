@@ -27,8 +27,8 @@ public class WorkflowProcessDefVersion implements Serializable {
      * to allow the automation to be rolled out, but this could be addressed in Mercury by versioning.)
      * Treating steps as lists would simplify visualization and editing.
      */
-    private List<WorkflowStepDef> workflowStepDefs = new ArrayList<WorkflowStepDef>();
-    private Map<String, WorkflowStepDef> workflowStepsByName = new HashMap<String, WorkflowStepDef>();
+    private List<WorkflowStepDef> workflowStepDefs = new ArrayList<>();
+    private Map<String, WorkflowStepDef> workflowStepsByName = new HashMap<>();
     private WorkflowProcessDef workflowProcessDef;
 
     /**
@@ -68,7 +68,7 @@ public class WorkflowProcessDefVersion implements Serializable {
      * At a QC review, the user needs to know the options for re-entry
      */
     public List<WorkflowStepDef> getReEntryPoints() {
-        List<WorkflowStepDef> reEntryPoints = new ArrayList<WorkflowStepDef>();
+        List<WorkflowStepDef> reEntryPoints = new ArrayList<>();
         for (WorkflowStepDef workflowStepDef : workflowStepDefs) {
             if (workflowStepDef.isReEntryPoint()) {
                 reEntryPoints.add(workflowStepDef);
@@ -78,7 +78,7 @@ public class WorkflowProcessDefVersion implements Serializable {
     }
 
     public List<WorkflowBucketDef> getBuckets() {
-        List<WorkflowBucketDef> workflowBucketDefs = new ArrayList<WorkflowBucketDef>();
+        List<WorkflowBucketDef> workflowBucketDefs = new ArrayList<>();
         for (WorkflowStepDef workflowStepDef : workflowStepDefs) {
             if (OrmUtil.proxySafeIsInstance(workflowStepDef, WorkflowBucketDef.class)) {
                 workflowBucketDefs.add(OrmUtil.proxySafeCast(workflowStepDef, WorkflowBucketDef.class));
@@ -88,7 +88,7 @@ public class WorkflowProcessDefVersion implements Serializable {
     }
 
     public List<WorkflowBucketDef> getCreationBuckets() {
-        List<WorkflowBucketDef> workflowBucketDefs = new ArrayList<WorkflowBucketDef>();
+        List<WorkflowBucketDef> workflowBucketDefs = new ArrayList<>();
         for (WorkflowBucketDef workflowBucketDef : getBuckets()) {
             if (workflowBucketDef.getBatchJiraProjectType() != null) {
                 workflowBucketDefs.add(workflowBucketDef);
@@ -98,7 +98,7 @@ public class WorkflowProcessDefVersion implements Serializable {
     }
 
     public List<WorkflowBucketDef> getReworkBuckets() {
-        List<WorkflowBucketDef> workflowBucketDefs = new ArrayList<WorkflowBucketDef>();
+        List<WorkflowBucketDef> workflowBucketDefs = new ArrayList<>();
         for (WorkflowBucketDef workflowBucketDef : getBuckets()) {
             if (workflowBucketDef.getBatchJiraProjectType() == null) {
                 workflowBucketDefs.add(workflowBucketDef);
