@@ -63,7 +63,7 @@ public class LimsQueryObjectFactory {
      * @param startingVesselLabel
      */
     public static SequencingTemplateLaneType createSequencingTemplateLaneType(@Nonnull String laneName,
-                                                                              @Nullable Double loadingConcentration,
+                                                                              @Nullable Float loadingConcentration,
                                                                               @Nonnull String loadingVesselLabel,
                                                                               String startingVesselLabel) {
         SequencingTemplateLaneType lane = new SequencingTemplateLaneType();
