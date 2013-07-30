@@ -63,17 +63,28 @@ public class LabMetricParserTest extends ContainerTest {
         positions = new String[]{"A01", "A02", "A03", "A04", "A05", "A06", "A07", "A08", "A09", "A10", "A11", "A12",
                 "B01", "B02", "B03", "B04", "B05", "B06", "B07", "B08", "B09", "B10", "B11", "B12"};
 
-        barcodeToQuant.put("SGMTEST0150674728", 71.66d);
-        barcodeToQuant.put("SGMTEST0150674722", 59.02d);
-        barcodeToQuant.put("SGMTEST0150674727", 50.44d);
-        barcodeToQuant.put("SGMTEST0150674703", 33.95d);
-        barcodeToQuant.put("SGMTEST0150674743", 38.44d);
+        barcodeToQuant.put("SGMTEST2402938482", 32.42d);
+        barcodeToQuant.put("SGMTEST2208428758", 54.22d);
+        barcodeToQuant.put("SGMTEST3559709487", 17.76d);
+        barcodeToQuant.put("SGMTEST3938342818", 16.22d);
+        barcodeToQuant.put("SGMTEST3585528276", 62.74d);
+        barcodeToQuant.put("SGMTEST3132943337", 99.11d);
+        barcodeToQuant.put("SGMTEST8815228500", 42.09d);
+        barcodeToQuant.put("SGMTEST5936483766", 28.04d);
+        barcodeToQuant.put("SGMTEST4621329996", 95.05d);
+        barcodeToQuant.put("SGMTEST9085949196", 41.21d);
+        barcodeToQuant.put("SGMTEST4069756425", 71.66d);
+        barcodeToQuant.put("SGMTEST3850486410", 59.02d);
+        barcodeToQuant.put("SGMTEST5761812024", 50.44d);
+        barcodeToQuant.put("SGMTEST4047896363", 33.95d);
+        barcodeToQuant.put("SGMTEST5142352881", 38.44d);
 
         for (Map.Entry<String, Double> quantEntry : barcodeToQuant.entrySet()) {
             TwoDBarcodedTube testTube = new TwoDBarcodedTube(quantEntry.getKey());
             vesselDao.persist(testTube);
         }
-
+        vesselDao.flush();
+        vesselDao.clear();
         String GOOD_QUANT_UPLOAD_FILE = "quant_upload_good.xlsx";
         resourceFile = Thread.currentThread().getContextClassLoader().getResourceAsStream(GOOD_QUANT_UPLOAD_FILE);
     }
