@@ -1064,7 +1064,6 @@ public class LabEventTest extends BaseEventTest {
         }
 
         BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
-        getLabEventFactory().setLabEventRefDataFetcher(labEventRefDataFetcher);
 
         Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
         mapBarcodeToVessel.putAll(mapBarcodeToTube);
