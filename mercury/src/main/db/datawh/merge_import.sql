@@ -1000,7 +1000,9 @@ IS
         SELECT 1 INTO v_tmp FROM DUAL
         WHERE NVL(new.batch_name, 'NONE') NOT IN ('NONE', 'MULTIPLE')
         OR EXISTS (SELECT 1 FROM workflow w
-        WHERE w.workflow_name = 'BSP' AND new.workflow_id = w.workflow_id);
+        WHERE w.workflow_name = 'BSP' AND new.workflow_id = w.workflow_id)
+        OR EXISTS (SELECT 1 FROM workflow_process p
+        WHERE p.event_name = 'PicoPlatingBucket' AND new.process_id = p.process_id);
 
         EXCEPTION WHEN NO_DATA_FOUND
         THEN RAISE INVALID_LAB_BATCH;
