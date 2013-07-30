@@ -165,7 +165,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
 
     public void testGetSequencingTemplatePoolTest() {
         // fixme this is a bit shady.  The flowcell here is a production flowcell, not a MiSeq flowcell
-        Set<VesselAndPosition> vesselsAndPositions = factory.getLoadingVessels(flowcell);
+        Set<VesselAndPosition> vesselsAndPositions = flowcell.getLoadingVessels();
         MatcherAssert.assertThat(vesselsAndPositions, not(Matchers.empty()));
         template = factory.getSequencingTemplate(flowcell, vesselsAndPositions, true);
         assertThat(template.getOnRigChemistry(), is("Default"));
@@ -185,7 +185,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
     }
 
     public void testGetSequencingTemplateProduction() {
-        Set<VesselAndPosition> vesselsAndPositions = factory.getLoadingVessels(flowcell);
+        Set<VesselAndPosition> vesselsAndPositions = flowcell.getLoadingVessels();
         MatcherAssert.assertThat(vesselsAndPositions, not(Matchers.empty()));
         template = factory.getSequencingTemplate(flowcell, vesselsAndPositions, false);
         assertThat(template.getOnRigChemistry(), is(nullValue()));
@@ -207,7 +207,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
     }
 
     public void testGetLoadingVesselsForFlowcell() {
-        Set<VesselAndPosition> vesselsAndPositions = factory.getLoadingVessels(flowcell);
+        Set<VesselAndPosition> vesselsAndPositions = flowcell.getLoadingVessels();
         MatcherAssert.assertThat(vesselsAndPositions, not(Matchers.empty()));
         final List<VesselPosition> vesselPositions = Arrays.asList(VesselPosition.LANE1, VesselPosition.LANE2);
 

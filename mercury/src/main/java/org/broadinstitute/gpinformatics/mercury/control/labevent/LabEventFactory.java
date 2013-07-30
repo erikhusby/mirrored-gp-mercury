@@ -29,6 +29,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormation
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.AbstractEventHandler;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.EventHandlerSelector;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
@@ -150,6 +151,9 @@ public class LabEventFactory implements Serializable {
 
     @Inject
     private GenericReagentDao genericReagentDao;
+
+    @Inject
+    EventHandlerSelector eventHandlerSelector;
 
     //TODO SGM Remove default constructor
     public LabEventFactory() {
@@ -280,32 +284,32 @@ public class LabEventFactory implements Serializable {
         // vessels that are referenced by the second event, e.g. PreSelectionPool
         for (PlateCherryPickEvent plateCherryPickEvent : bettaLIMSMessage.getPlateCherryPickEvent()) {
             LabEvent labEvent = buildFromBettaLims(plateCherryPickEvent);
-            AbstractEventHandler.applyEventSpecificHandling(labEvent, plateCherryPickEvent);
+            eventHandlerSelector.applyEventSpecificHandling(labEvent, plateCherryPickEvent);
             persistLabEvent(uniqueEvents, labEvent, true);
             labEvents.add(labEvent);
         }
         for (PlateEventType plateEventType : bettaLIMSMessage.getPlateEvent()) {
             LabEvent labEvent = buildFromBettaLims(plateEventType);
-            AbstractEventHandler.applyEventSpecificHandling(labEvent, plateEventType);
+            eventHandlerSelector.applyEventSpecificHandling(labEvent, plateEventType);
             persistLabEvent(uniqueEvents, labEvent, true);
             labEvents.add(labEvent);
         }
         for (PlateTransferEventType plateTransferEventType : bettaLIMSMessage.getPlateTransferEvent()) {
             LabEvent labEvent = buildFromBettaLims(plateTransferEventType);
-            AbstractEventHandler.applyEventSpecificHandling(labEvent, plateTransferEventType);
+            eventHandlerSelector.applyEventSpecificHandling(labEvent, plateTransferEventType);
             persistLabEvent(uniqueEvents, labEvent, true);
             labEvents.add(labEvent);
         }
         for (ReceptaclePlateTransferEvent receptaclePlateTransferEvent :
                 bettaLIMSMessage.getReceptaclePlateTransferEvent()) {
             LabEvent labEvent = buildFromBettaLims(receptaclePlateTransferEvent);
-            AbstractEventHandler.applyEventSpecificHandling(labEvent, receptaclePlateTransferEvent);
+            eventHandlerSelector.applyEventSpecificHandling(labEvent, receptaclePlateTransferEvent);
             persistLabEvent(uniqueEvents, labEvent, true);
             labEvents.add(labEvent);
         }
         for (ReceptacleEventType receptacleEventType : bettaLIMSMessage.getReceptacleEvent()) {
             LabEvent labEvent = buildFromBettaLims(receptacleEventType);
-            AbstractEventHandler.applyEventSpecificHandling(labEvent, receptacleEventType);
+            eventHandlerSelector.applyEventSpecificHandling(labEvent, receptacleEventType);
             persistLabEvent(uniqueEvents, labEvent, true);
             labEvents.add(labEvent);
         }

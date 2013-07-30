@@ -84,7 +84,7 @@ public class BatchToJiraTest extends Arquillian {
 
     private String getGssrFieldFromJiraTicket(JiraIssue issue) throws IOException {
         Map<String, CustomFieldDefinition> gssrField =
-                jiraService.getCustomFields(LabBatch.RequiredSubmissionFields.GSSR_IDS.getFieldName());
+                jiraService.getCustomFields(LabBatch.TicketFields.GSSR_IDS.getFieldName());
         String gssrIdsText =
                 (String) jiraService.getIssueFields(issue.getKey(), gssrField.values()).getFields().values().iterator()
                         .next();

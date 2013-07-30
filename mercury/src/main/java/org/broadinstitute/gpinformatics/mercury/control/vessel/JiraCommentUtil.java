@@ -111,14 +111,15 @@ public class JiraCommentUtil {
             try {
                 JiraIssue jiraIssue = ticket.getJiraDetails();
                 Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
-                String fieldValue = (String) jiraIssue.getFieldValue(submissionFields.get(LabBatch.RequiredSubmissionFields.LIMS_ACTIVITY_STREAM.getFieldName()).getJiraCustomFieldId());
+                String fieldValue = (String) jiraIssue.getFieldValue(submissionFields.get(
+                        LabBatch.TicketFields.LIMS_ACTIVITY_STREAM.getFieldName()).getJiraCustomFieldId());
                 if (fieldValue == null) {
                     fieldValue = "";
                 }
                 fieldValue = fieldValue + "{html}" + message + "<br/>{html}";
 
                 CustomField mercuryUrlField = new CustomField(
-                        submissionFields, LabBatch.RequiredSubmissionFields.LIMS_ACTIVITY_STREAM, fieldValue);
+                        submissionFields, LabBatch.TicketFields.LIMS_ACTIVITY_STREAM, fieldValue);
 
                 jiraIssue.updateIssue(Collections.singleton(mercuryUrlField));
             } catch (IOException e) {

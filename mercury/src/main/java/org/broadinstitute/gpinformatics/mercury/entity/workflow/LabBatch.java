@@ -390,10 +390,10 @@ public class LabBatch {
     }
 
     /**
-     * RequiredSubmissionFields is an enum intended to assist in the creation of a Jira ticket
+     * TicketFields is an enum intended to assist in the creation of a Jira ticket
      * for Product orders
      */
-    public enum RequiredSubmissionFields implements CustomField.SubmissionField {
+    public enum TicketFields implements CustomField.SubmissionField {
         PROTOCOL("Protocol", true),
 
         //Will not have WR ID info in Mercury.  Set to a Blank string
@@ -418,13 +418,15 @@ public class LabBatch {
         //List of Sample names
         GSSR_IDS("GSSR ID(s)", true),
 
-        LIMS_ACTIVITY_STREAM("LIMS Activity Stream", true);
+        LIMS_ACTIVITY_STREAM("LIMS Activity Stream", true),
+        SUMMARY("Summary", false),
+        SEQUENCING_STATION("Sequencing Station", true);
 
 
         private final String fieldName;
         private final boolean customField;
 
-        private RequiredSubmissionFields(String fieldNameIn, boolean customFieldInd) {
+        private TicketFields(String fieldNameIn, boolean customFieldInd) {
             fieldName = fieldNameIn;
             customField = customFieldInd;
         }

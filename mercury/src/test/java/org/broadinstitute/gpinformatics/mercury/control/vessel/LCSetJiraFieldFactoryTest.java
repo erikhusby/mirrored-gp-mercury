@@ -127,11 +127,11 @@ public class LCSetJiraFieldFactoryTest {
 
         for (CustomField currField : generatedFields) {
             if (currField.getFieldDefinition().getName()
-                    .equals(LabBatch.RequiredSubmissionFields.WORK_REQUEST_IDS.getFieldName())) {
+                    .equals(LabBatch.TicketFields.WORK_REQUEST_IDS.getFieldName())) {
                 Assert.assertEquals("N/A", (String) currField.getValue());
             }
             if (currField.getFieldDefinition().getName()
-                    .equals(LabBatch.RequiredSubmissionFields.GSSR_IDS.getFieldName())) {
+                    .equals(LabBatch.TicketFields.GSSR_IDS.getFieldName())) {
                 for (LabVessel currVessel : testBatch.getStartingBatchLabVessels()) {
                     for (String sampleName : currVessel.getSampleNames()) {
                         Assert.assertTrue(((String) currField.getValue()).contains(sampleName));
@@ -145,20 +145,20 @@ public class LCSetJiraFieldFactoryTest {
                 }
             }
             if (currField.getFieldDefinition().getName()
-                    .equals(LabBatch.RequiredSubmissionFields.LIBRARY_QC_SEQUENCING_REQUIRED.getFieldName())) {
+                    .equals(LabBatch.TicketFields.LIBRARY_QC_SEQUENCING_REQUIRED.getFieldName())) {
                 Assert.assertEquals(((CustomField.SelectOption) currField.getValue()).getId(), "-1");
             }
             if (currField.getFieldDefinition().getName()
-                    .equals(LabBatch.RequiredSubmissionFields.NUMBER_OF_SAMPLES.getFieldName())) {
+                    .equals(LabBatch.TicketFields.NUMBER_OF_SAMPLES.getFieldName())) {
                 Assert.assertEquals(numSamples, currField.getValue());
             }
             if (currField.getFieldDefinition().getName()
-                    .equals(LabBatch.RequiredSubmissionFields.PROGRESS_STATUS.getFieldName())) {
+                    .equals(LabBatch.TicketFields.PROGRESS_STATUS.getFieldName())) {
                 Assert.assertEquals(LCSetJiraFieldFactory.PROGRESS_STATUS,
                         ((CustomField.ValueContainer) currField.getValue()).getValue());
             }
             if (currField.getFieldDefinition().getName()
-                    .equals(LabBatch.RequiredSubmissionFields.PROTOCOL.getFieldName())) {
+                    .equals(LabBatch.TicketFields.PROTOCOL.getFieldName())) {
                 WorkflowLoader wfLoader = new WorkflowLoader();
                 WorkflowConfig wfConfig = wfLoader.load();
                 AthenaClientService athenaSvc = AthenaClientProducer.stubInstance();

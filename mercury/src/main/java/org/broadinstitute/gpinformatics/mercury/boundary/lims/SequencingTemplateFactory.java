@@ -36,7 +36,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 public class SequencingTemplateFactory {
@@ -100,7 +99,7 @@ public class SequencingTemplateFactory {
             if (illuminaFlowcell == null) {
                 throw new InformaticsServiceException(String.format("Flowcell '%s' was not found.", id));
             }
-            loadedVesselsAndPositions = getLoadingVessels(illuminaFlowcell);
+            loadedVesselsAndPositions = illuminaFlowcell.getLoadingVessels();
             return getSequencingTemplate(illuminaFlowcell, loadedVesselsAndPositions, isPoolTest);
         case MISEQ_REAGENT_KIT:
             MiSeqReagentKit miSeqReagentKit = miSeqReagentKitDao.findByBarcode(id);
@@ -124,24 +123,6 @@ public class SequencingTemplateFactory {
             throw new InformaticsServiceException(
                     String.format("Sequencing template unavailable for %s.", queryVesselType));
         }
-    }
-
-    /**
-     * get information on what vessels loaded given flowcell.
-     *
-     * @param flowcell the flowcell to get lane information on
-     *
-     * @return Map of VesselAndPosition representing what is loaded onto the flowcell
-     */
-    @DaoFree
-    public Set<VesselAndPosition> getLoadingVessels(IlluminaFlowcell flowcell) {
-        Set<VesselAndPosition> loadedVesselsAndPositions = new HashSet<>();
-        for (Map.Entry<VesselPosition, LabVessel> vesselPositionEntry : flowcell.getNearestTubeAncestorsForLanes().entrySet()) {
-            if (vesselPositionEntry.getValue() != null) {
-                loadedVesselsAndPositions.add(new VesselAndPosition(vesselPositionEntry.getValue(),vesselPositionEntry.getKey()));
-            }
-        }
-        return loadedVesselsAndPositions;
     }
 
     /**

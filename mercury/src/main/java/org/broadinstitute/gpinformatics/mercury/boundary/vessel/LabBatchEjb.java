@@ -462,7 +462,7 @@ public class LabBatchEjb {
 
         Set<CustomField> customFields = new HashSet<>();
         Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
-        customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.GSSR_IDS,
+        customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.GSSR_IDS,
                 LCSetJiraFieldFactory.buildSamplesListString(batch)));
         jiraService.updateIssue(batch.getJiraTicket().getTicketName(), customFields);
     }

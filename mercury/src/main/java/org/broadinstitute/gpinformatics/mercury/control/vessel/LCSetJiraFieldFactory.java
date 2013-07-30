@@ -146,34 +146,34 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
 
         Set<CustomField> customFields = new HashSet<>();
 
-        customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.DESCRIPTION,
+        customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.DESCRIPTION,
                 batch.getBatchDescription()));
 
-        customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.WORK_REQUEST_IDS, "N/A"));
+        customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.WORK_REQUEST_IDS, "N/A"));
 
-        customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.PROGRESS_STATUS,
+        customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.PROGRESS_STATUS,
                 new CustomField.ValueContainer(PROGRESS_STATUS)));
 
         customFields.add(new CustomField(
-                submissionFields.get(LabBatch.RequiredSubmissionFields.LIBRARY_QC_SEQUENCING_REQUIRED.getFieldName()),
+                submissionFields.get(LabBatch.TicketFields.LIBRARY_QC_SEQUENCING_REQUIRED.getFieldName()),
                 new CustomField.SelectOption(LIB_QC_SEQ_REQUIRED_DEFAULT)));
 
         int sampleCount = batch.getReworks().size() + batch.getStartingBatchLabVessels().size();
 
-        customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.GSSR_IDS,
+        customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.GSSR_IDS,
                 buildSamplesListString(batch)));
 
         customFields.add(new CustomField(
-                submissionFields.get(LabBatch.RequiredSubmissionFields.NUMBER_OF_SAMPLES.getFieldName()), sampleCount));
+                submissionFields.get(LabBatch.TicketFields.NUMBER_OF_SAMPLES.getFieldName()), sampleCount));
 
         if (batch.getDueDate() != null) {
 
-            customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.DUE_DATE,
+            customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.DUE_DATE,
                     JiraService.JIRA_DATE_FORMAT.format(batch.getDueDate())));
         }
 
         if (batch.getImportant() != null) {
-            customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.IMPORTANT, batch
+            customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.IMPORTANT, batch
                     .getImportant()));
         }
 
@@ -186,10 +186,10 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
                 }
                 builtProtocol += currWorkflowDef.getName() + ":" + currWorkflowDef.getEffectiveVersion(batch.getCreatedOn()).getVersion();
             }
-            customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.PROTOCOL,
+            customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.PROTOCOL,
                     builtProtocol));
         } else {
-            customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.PROTOCOL, "N/A"));
+            customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.PROTOCOL, "N/A"));
         }
 
         return customFields;

@@ -1,9 +1,11 @@
 package org.broadinstitute.gpinformatics.mercury.entity.run;
 
 
+import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselAndPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainerEmbedder;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
@@ -16,6 +18,7 @@ import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -28,30 +31,52 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
         this(FlowcellType.getTypeForBarcode(flowcellBarcode),flowcellBarcode);
     }
 
+    /**
+     * get information on what vessels loaded given flowcell.
+     *
+     * @return Map of VesselAndPosition representing what is loaded onto the flowcell
+     */
+    @DaoFree
+    public Set<VesselAndPosition> getLoadingVessels() {
+        Set<VesselAndPosition> loadedVesselsAndPositions = new HashSet<>();
+        for (Map.Entry<VesselPosition, LabVessel> vesselPositionEntry : getNearestTubeAncestorsForLanes().entrySet()) {
+            if (vesselPositionEntry.getValue() != null) {
+                loadedVesselsAndPositions.add(new VesselAndPosition(vesselPositionEntry.getValue(),vesselPositionEntry.getKey()));
+            }
+        }
+        return loadedVesselsAndPositions;
+    }
+
     public enum FlowcellType {
-        MiSeqFlowcell("Flowcell1Lane", "MiSeq Flowcell", VesselGeometry.FLOWCELL1x1,"Illumina MiSeq", "^A{1}\\w{4}$"),
-        HiSeqFlowcell("Flowcell8Lane", "HiSeq 2000 Flowcell", VesselGeometry.FLOWCELL1x8,"Illumina HiSeq 2000", "^\\w{9}$"),
-        HiSeq2500Flowcell("Flowcell2Lane", "HiSeq 2500 Flowcell", VesselGeometry.FLOWCELL1x2,"Illumina HiSeq 2500", "^\\w+ADXX$"),
-        OtherFlowcell("FlowcellUnknown", "Unknown Flowcell", VesselGeometry.FLOWCELL1x2,"Unknown Model", ".*");
+        MiSeqFlowcell("Flowcell1Lane", "MiSeq Flowcell", VesselGeometry.FLOWCELL1x1,"Illumina MiSeq", "^A{1}\\w{4}$",
+                "MiSeq"),
+        HiSeqFlowcell("Flowcell8Lane", "HiSeq 2000 Flowcell", VesselGeometry.FLOWCELL1x8,"Illumina HiSeq 2000", "^\\w{9}$",
+                "HiSeq"),
+        HiSeq2500Flowcell("Flowcell2Lane", "HiSeq 2500 Flowcell", VesselGeometry.FLOWCELL1x2,"Illumina HiSeq 2500", "^\\w+ADXX$",
+                "HiSeq"),
+        OtherFlowcell("FlowcellUnknown", "Unknown Flowcell", VesselGeometry.FLOWCELL1x2,"Unknown Model", ".*",
+                null);
 
         /**
          * The sequencer model (think vendor/make/model)
          */
-        private String model;
+        private final String model;
 
         /**
          * The name that will be supplied by automation scripts.
          */
-        private String automationName;
+        private final String automationName;
 
         /**
          * The name to be displayed in UI.
          */
-        private String displayName;
+        private final String displayName;
 
-        private Pattern flowcellTypeRegex;
+        private final Pattern flowcellTypeRegex;
 
-        private VesselGeometry vesselGeometry;
+        private final VesselGeometry vesselGeometry;
+
+        private  String sequencingStationName;
 
         /**
          * Creates a FlowcellType with an automation name, display name, and geometry.
@@ -59,12 +84,15 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
          * @param automationName    the name that will be supplied by automation scripts
          * @param displayName       the name that will be supplied by automation scripts
          * @param vesselGeometry    the vessel geometry
+         * @param sequencingStationName
          */
-        FlowcellType(String automationName, String displayName, VesselGeometry vesselGeometry,String model, String flowcellTypeRegex) {
+        FlowcellType(String automationName, String displayName, VesselGeometry vesselGeometry, String model,
+                     String flowcellTypeRegex, String sequencingStationName) {
             this.automationName = automationName;
             this.displayName = displayName;
             this.vesselGeometry = vesselGeometry;
             this.model = model;
+            this.sequencingStationName = sequencingStationName;
             this.flowcellTypeRegex = Pattern.compile(flowcellTypeRegex);
         }
 

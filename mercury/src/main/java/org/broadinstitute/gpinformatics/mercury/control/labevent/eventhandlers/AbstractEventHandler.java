@@ -23,19 +23,4 @@ public abstract class AbstractEventHandler {
      */
     public abstract void handleEvent(LabEvent targetEvent, StationEventType stationEvent) ;
 
-    public static void applyEventSpecificHandling(LabEvent targetEvent, StationEventType stationEvent){
-        AbstractEventHandler validator = null;
-
-        switch (targetEvent.getLabEventType()) {
-        case DENATURE_TO_DILUTION_TRANSFER:
-            validator = new DenatureToDilutionTubeHandler();
-
-            break;
-        }
-
-        if (validator != null) {
-            validator.handleEvent(targetEvent, stationEvent);
-        }
-    }
-
 }
