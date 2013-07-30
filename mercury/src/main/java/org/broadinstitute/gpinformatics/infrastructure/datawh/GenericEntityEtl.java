@@ -40,22 +40,22 @@ import java.util.Set;
 public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLASS> {
     public static final String IN_CLAUSE_PLACEHOLDER = "__IN_CLAUSE__";
 
-    public Class<AUDITED_ENTITY_CLASS> entityClass;
+    public final Class<AUDITED_ENTITY_CLASS> entityClass;
     /**
      * The entity-related name of the data file, and must sync with the ETL cron script and control file.
      */
-    public String baseFilename;
+    public final String baseFilename;
     /** The name of the audit table */
-    public String auditTableName;
+    public final String auditTableName;
     /** The name of the column in the audit table that represents entity id. */
-    public String auditTableEntityIdColumnName;
+    public final String auditTableEntityIdColumnName;
 
     protected final Log logger = LogFactory.getLog(getClass());
     protected AuditReaderDao auditReaderDao;
     /**
      * The Mercury or Athena dao needed by the subclass.
      */
-    protected GenericDao dao;
+    protected final GenericDao dao;
 
     @Inject
     public void setAuditReaderDao(AuditReaderDao auditReaderDao) {
@@ -63,6 +63,7 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
     }
 
     protected GenericEntityEtl() {
+        this(null, null, null, null, null);
     }
 
     protected GenericEntityEtl(Class<AUDITED_ENTITY_CLASS> entityClass, String baseFilename,
@@ -267,7 +268,7 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
     // Object[] is an array of heterogeneous datatypes and must not be made into a generic.
     //
     @DaoFree
-    protected AuditLists<AUDITED_ENTITY_CLASS> fetchAuditIds(List<Object[]> auditEntities) {
+    protected AuditLists<AUDITED_ENTITY_CLASS> fetchAuditIds(Collection<Object[]> auditEntities) {
         Set<Long> deletedEntityIds = new HashSet<>();
         Set<Long> modifiedEntityIds = new HashSet<>();
         Set<Long> addedEntityIds = new HashSet<>();
