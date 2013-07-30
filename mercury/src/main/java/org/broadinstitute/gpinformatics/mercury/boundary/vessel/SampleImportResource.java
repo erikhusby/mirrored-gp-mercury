@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
+import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -34,7 +34,7 @@ import java.util.Set;
 public class SampleImportResource {
 
     @Inject
-    private LabBatchDAO labBatchDAO;
+    private LabBatchDao labBatchDao;
 
     @Inject
     private LabVesselFactory labVesselFactory;
@@ -54,7 +54,7 @@ public class SampleImportResource {
     @Path("{batchName}")
     @Produces({MediaType.APPLICATION_XML})
     public SampleImportBean getByBatchName(@PathParam("batchName") String batchName) {
-        LabBatch labBatch = labBatchDAO.findByName(batchName);
+        LabBatch labBatch = labBatchDao.findByName(batchName);
         if (labBatch == null) {
             return null;
         }
@@ -102,13 +102,13 @@ public class SampleImportResource {
         List<LabVessel> labVessels = labVesselFactory.buildLabVessels(parentVesselBeans, sampleImportBean.getUserName(),
                 sampleImportBean.getExportDate(), LabEventType.SAMPLE_IMPORT);
 
-        LabBatch labBatch = labBatchDAO.findByName(sampleImportBean.getSourceSystemExportId());
+        LabBatch labBatch = labBatchDao.findByName(sampleImportBean.getSourceSystemExportId());
         if (labBatch != null) {
             throw new RuntimeException(
                     "Export has already been received " + sampleImportBean.getSourceSystemExportId());
         }
         String batchName = sampleImportBean.getSourceSystemExportId();
-        labBatchDAO.persist(new LabBatch(batchName, new HashSet<>(labVessels),
+        labBatchDao.persist(new LabBatch(batchName, new HashSet<>(labVessels),
                 LabBatch.LabBatchType.SAMPLES_IMPORT));
         return "Samples imported: " + batchName;
     }

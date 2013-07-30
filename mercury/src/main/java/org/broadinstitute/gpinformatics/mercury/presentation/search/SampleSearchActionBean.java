@@ -7,6 +7,7 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -24,8 +25,12 @@ import java.util.Set;
 public class SampleSearchActionBean extends SearchActionBean {
     public static final String ACTIONBEAN_URL_BINDING = "/search/sample.action";
     private static final String SESSION_LIST_PAGE = "/search/sample_search.jsp";
+
     @Inject
     private BSPSampleDataFetcher bspSampleDataFetcher;
+
+    @Inject
+    private MercurySampleDao mercurySampleDao;
 
     private Map<String, BSPSampleDTO> sampleDTOMap = new HashMap<>();
 
@@ -53,7 +58,7 @@ public class SampleSearchActionBean extends SearchActionBean {
 
         for (String searchKey : searchList) {
             Set<MercurySample> samples = new HashSet<>();
-            samples.addAll(getMercurySampleDao().findBySampleKey(searchKey));
+            samples.addAll(mercurySampleDao.findBySampleKey(searchKey));
             List<LabVessel> vessels = getLabVesselDao().findBySampleKey(searchKey);
             Set<LabVessel> allVessels = new LinkedHashSet<>(vessels);
             for (LabVessel vessel : vessels) {

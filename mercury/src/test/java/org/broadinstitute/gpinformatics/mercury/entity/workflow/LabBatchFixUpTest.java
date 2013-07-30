@@ -13,7 +13,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
+import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -37,7 +37,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class LabBatchFixUpTest extends Arquillian {
     @Inject
-    private LabBatchDAO labBatchDAO;
+    private LabBatchDao labBatchDao;
     @Inject
     private UserTransaction utx;
 
@@ -70,7 +70,7 @@ public class LabBatchFixUpTest extends Arquillian {
 
     @Test(enabled = false)
     public void updateNullLabBatchType() {
-        final List<LabBatch> nullTypes = labBatchDAO.findList(LabBatch.class, LabBatch_.labBatchType, null);
+        final List<LabBatch> nullTypes = labBatchDao.findList(LabBatch.class, LabBatch_.labBatchType, null);
         List<LabBatch> fixedBatches = new ArrayList<>(nullTypes.size());
         for (LabBatch nullType : nullTypes) {
             if (nullType.getLabBatchType() != null) {
@@ -94,14 +94,14 @@ public class LabBatchFixUpTest extends Arquillian {
             }
         }
         if (!fixedBatches.isEmpty()) {
-            labBatchDAO.persistAll(fixedBatches);
+            labBatchDao.persistAll(fixedBatches);
         }
 
     }
 
     @Test(enabled = false)
     public void updateStartingLabBatches() {
-        List<LabBatch> allBatches = labBatchDAO.findAll(LabBatch.class);
+        List<LabBatch> allBatches = labBatchDao.findAll(LabBatch.class);
         List<LabBatch> fixedBatches = new ArrayList<>(allBatches.size());
         for (LabBatch batch : allBatches) {
             Set<LabVessel> oldVessels = batch.getStartingLabVessels();
@@ -111,7 +111,7 @@ public class LabBatchFixUpTest extends Arquillian {
             fixedBatches.add(batch);
         }
         if (!fixedBatches.isEmpty()) {
-            labBatchDAO.persistAll(fixedBatches);
+            labBatchDao.persistAll(fixedBatches);
         }
     }
 
@@ -121,9 +121,9 @@ public class LabBatchFixUpTest extends Arquillian {
      */
     @Test(enabled = false)
     public void updateLcset3792ToMercury() {
-        LabBatch labBatch = labBatchDAO.findByName("LCSET-3792");
+        LabBatch labBatch = labBatchDao.findByName("LCSET-3792");
         GregorianCalendar gregorianCalendar = new GregorianCalendar(2013, 6, 25, 1, 1, 1);
         labBatch.setCreatedOn(gregorianCalendar.getTime());
-        labBatchDAO.flush();
+        labBatchDao.flush();
     }
 }

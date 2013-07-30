@@ -16,7 +16,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceExcep
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.MiSeqReagentKitDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
+import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -49,7 +49,7 @@ public class SequencingTemplateFactory {
     LabVesselDao labVesselDao;
 
     @Inject
-    LabBatchDAO labBatchDAO;
+    LabBatchDao labBatchDao;
 
     /**
      * What you will be searching for with the ID parameter in fetchSequencingTemplate.
@@ -116,7 +116,7 @@ public class SequencingTemplateFactory {
             return getSequencingTemplate(dilutionTube, isPoolTest);
 
         case FLOWCELL_TICKET:
-            LabBatch fctTicket = labBatchDAO.findByBusinessKey(id);
+            LabBatch fctTicket = labBatchDao.findByBusinessKey(id);
             return getSequencingTemplate(fctTicket, isPoolTest);
         // Don't support the following for now, so fall through and throw exception.
         case STRIP_TUBE:
@@ -136,9 +136,11 @@ public class SequencingTemplateFactory {
     @DaoFree
     public Set<VesselAndPosition> getLoadingVessels(IlluminaFlowcell flowcell) {
         Set<VesselAndPosition> loadedVesselsAndPositions = new HashSet<>();
-        for (Map.Entry<VesselPosition, LabVessel> vesselPositionEntry : flowcell.getNearestTubeAncestorsForLanes().entrySet()) {
+        for (Map.Entry<VesselPosition, LabVessel> vesselPositionEntry : flowcell.getNearestTubeAncestorsForLanes()
+                .entrySet()) {
             if (vesselPositionEntry.getValue() != null) {
-                loadedVesselsAndPositions.add(new VesselAndPosition(vesselPositionEntry.getValue(),vesselPositionEntry.getKey()));
+                loadedVesselsAndPositions
+                        .add(new VesselAndPosition(vesselPositionEntry.getValue(), vesselPositionEntry.getKey()));
             }
         }
         return loadedVesselsAndPositions;
@@ -219,7 +221,7 @@ public class SequencingTemplateFactory {
                 String vesselPosition = positionNames.next();
                 SequencingTemplateLaneType lane =
                         LimsQueryObjectFactory.createSequencingTemplateLaneType(vesselPosition,
-                                (double) startingVessel.getConcentration(),"",
+                                (double) startingVessel.getConcentration(), "",
                                 startingVessel.getLabVessel().getLabel());
                 lanes.add(lane);
             }

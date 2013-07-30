@@ -11,7 +11,13 @@
 
 package org.broadinstitute.gpinformatics.mercury.presentation.reagent;
 
-import net.sourceforge.stripes.action.*;
+import net.sourceforge.stripes.action.Before;
+import net.sourceforge.stripes.action.DefaultHandler;
+import net.sourceforge.stripes.action.ForwardResolution;
+import net.sourceforge.stripes.action.HandlesEvent;
+import net.sourceforge.stripes.action.RedirectResolution;
+import net.sourceforge.stripes.action.Resolution;
+import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidateNestedProperties;
@@ -20,7 +26,7 @@ import net.sourceforge.stripes.validation.ValidationState;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.DesignedReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -29,7 +35,12 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.tokenimporters.ReagentDesignTokenInput;
 
 import javax.inject.Inject;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This handles all the needed interface processing elements
@@ -53,7 +64,7 @@ public class ReagentDesignActionBean extends CoreActionBean {
     private ReagentDesignDao reagentDesignDao;
 
     @Inject
-    private TwoDBarcodedTubeDAO twoDBarcodedTubeDAO;
+    private TwoDBarcodedTubeDao twoDBarcodedTubeDao;
 
     @Inject
     private LabVesselDao labVesselDao;
@@ -132,7 +143,7 @@ public class ReagentDesignActionBean extends CoreActionBean {
         return new ForwardResolution(REAGENT_CREATE_PAGE);
     }
 
-    @ValidationMethod(on = {SAVE_ACTION,CREATE_ACTION}, when = ValidationState.ALWAYS)
+    @ValidationMethod(on = {SAVE_ACTION, CREATE_ACTION}, when = ValidationState.ALWAYS)
     public void validateReagent() {
         if (isCreating()) {
             if (editReagentDesign.getReagentType() == null) {
@@ -183,7 +194,7 @@ public class ReagentDesignActionBean extends CoreActionBean {
         }
 
 
-        twoDBarcodedTubeDAO.persistAll(twoDBarcodedTubeList);
+        twoDBarcodedTubeDao.persistAll(twoDBarcodedTubeList);
         addMessage(
                 String.format("%s tubes initialized with reagents: %s.", twoDBarcodedTubeList.size(), savedChanges));
 

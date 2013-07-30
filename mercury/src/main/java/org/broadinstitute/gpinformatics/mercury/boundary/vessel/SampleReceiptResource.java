@@ -8,7 +8,7 @@ import org.broadinstitute.gpinformatics.infrastructure.ObjectMarshaller;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.ws.WsMessageStore;
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
-import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
+import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -48,7 +48,7 @@ public class SampleReceiptResource {
     ObjectMarshaller<SampleReceiptBean> marshaller;
 
     @Inject
-    private LabBatchDAO labBatchDAO;
+    private LabBatchDao labBatchDao;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -68,7 +68,7 @@ public class SampleReceiptResource {
     @Path("{batchName}")
     @Produces({MediaType.APPLICATION_XML})
     public SampleReceiptBean getByBatchName(@PathParam("batchName") String batchName) {
-        LabBatch labBatch = labBatchDAO.findByName(batchName);
+        LabBatch labBatch = labBatchDao.findByName(batchName);
         if (labBatch == null) {
             return null;
         }
@@ -130,10 +130,10 @@ public class SampleReceiptResource {
 
         // If the kit has already been partially registered, append a timestamp to make a unique batch name.
         Format simpleDateFormat = FastDateFormat.getInstance("yyyyMMddHHmmssSSSS");
-        LabBatch labBatch = labBatchDAO.findByName(sampleReceiptBean.getKitId());
+        LabBatch labBatch = labBatchDao.findByName(sampleReceiptBean.getKitId());
         String batchName =
                 sampleReceiptBean.getKitId() + (labBatch == null ? "" : "-" + simpleDateFormat.format(new Date()));
-        labBatchDAO.persist(new LabBatch(batchName, new HashSet<>(labVessels),
+        labBatchDao.persist(new LabBatch(batchName, new HashSet<>(labVessels),
                 LabBatch.LabBatchType.SAMPLES_RECEIPT));
         return "Samples received: " + batchName;
     }

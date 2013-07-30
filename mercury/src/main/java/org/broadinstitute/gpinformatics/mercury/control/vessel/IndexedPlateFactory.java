@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.control.vessel;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.control.reagent.MolecularIndexingSchemeFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
@@ -38,7 +38,7 @@ public class IndexedPlateFactory {
     private MolecularIndexingSchemeFactory indexingSchemeFactory;
 
     @Inject
-    private StaticPlateDAO staticPlateDAO;
+    private StaticPlateDao staticPlateDao;
 
     public enum TechnologiesAndParsers {
         FOUR54_SINGLE("454 (Single Index)",
@@ -75,17 +75,18 @@ public class IndexedPlateFactory {
             throw new RuntimeException(e);
         }
         for (StaticPlate staticPlate : platesByBarcode.values()) {
-            if (staticPlateDAO.findByBarcode(staticPlate.getLabel()) != null) {
+            if (staticPlateDao.findByBarcode(staticPlate.getLabel()) != null) {
                 throw new RuntimeException("Plate already exists: " + staticPlate.getLabel());
             }
-            staticPlateDAO.persist(staticPlate);
-            staticPlateDAO.flush();
-            staticPlateDAO.clear();
+            staticPlateDao.persist(staticPlate);
+            staticPlateDao.flush();
+            staticPlateDao.clear();
         }
         return platesByBarcode;
     }
 
-    public Map<String, StaticPlate> parseStream(InputStream inputStream, TechnologiesAndParsers technologiesAndParsers) {
+    public Map<String, StaticPlate> parseStream(InputStream inputStream,
+                                                TechnologiesAndParsers technologiesAndParsers) {
         final IndexedPlateParser parser = technologiesAndParsers.getIndexedPlateParser();
         final List<PlateWellIndexAssociation> associations;
         try {
@@ -102,7 +103,8 @@ public class IndexedPlateFactory {
         return platesByBarcode;
     }
 
-    public Map<String, StaticPlate> uploadIndexedPlates(final List<PlateWellIndexAssociation> plateWellIndexes/*, final String technology*/) {
+    public Map<String, StaticPlate> uploadIndexedPlates(final List<PlateWellIndexAssociation> plateWellIndexes
+/*, final String technology*/) {
         final Map<String, StaticPlate> platesByBarcode = new HashMap<>();
         final Set<PlateWell> previousWells = new HashSet<>();
 
@@ -116,12 +118,13 @@ public class IndexedPlateFactory {
             if (previousWells.contains(plateWell)) {
                 throw new RuntimeException(
                         "Plate " + plate.getLabel() + " and well " + plateWellIndex.getWellName() +
-                                " has been defined two or more times in the uploaded file.");
+                        " has been defined two or more times in the uploaded file.");
             }
             previousWells.add(plateWell);
 
             final MolecularIndexingScheme indexingScheme =
-                    this.indexingSchemeFactory.findOrCreateIndexingScheme(Arrays.asList(plateWellIndex.getPositionPairs()));
+                    this.indexingSchemeFactory
+                            .findOrCreateIndexingScheme(Arrays.asList(plateWellIndex.getPositionPairs()));
             plateWell.addReagent(new MolecularIndexReagent(indexingScheme));
 
             plate.getContainerRole().addContainedVessel(plateWell, vesselPosition);
@@ -132,7 +135,8 @@ public class IndexedPlateFactory {
     }
 
 
-    private StaticPlate createOrGetPlate(final PlateWellIndexAssociation plateWellIndex, final Map<String, StaticPlate> platesByBarcode) {
+    private StaticPlate createOrGetPlate(final PlateWellIndexAssociation plateWellIndex,
+                                         final Map<String, StaticPlate> platesByBarcode) {
         final String formattedBarcode = StringUtils.leftPad(plateWellIndex.getPlateBarcode(), BARCODE_LENGTH, '0');
         StaticPlate plate = platesByBarcode.get(formattedBarcode);
         if (plate == null) {

@@ -6,7 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadshee
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.testng.Assert;
@@ -26,12 +26,12 @@ import java.util.Map;
 public class LabMetricParserTest extends ContainerTest {
 
     @Inject
-    private TwoDBarcodedTubeDAO vesselDao;
+    private TwoDBarcodedTubeDao vesselDao;
 
     @Inject
     private LabVesselDao labVesselDao;
 
- //   private Map<String, LabVessel> barcodeToTubeMap = new HashMap<>();
+    //   private Map<String, LabVessel> barcodeToTubeMap = new HashMap<>();
     private Map<String, Double> barcodeToQuant = new HashMap<>();
     private InputStream resourceFile;
 
@@ -74,7 +74,7 @@ public class LabMetricParserTest extends ContainerTest {
         barcodeToQuant.put("SGMTEST4047896363", 33.95d);
         barcodeToQuant.put("SGMTEST5142352881", 38.44d);
 
-        for(Map.Entry<String, Double> quantEntry:barcodeToQuant.entrySet()) {
+        for (Map.Entry<String, Double> quantEntry : barcodeToQuant.entrySet()) {
             TwoDBarcodedTube testTube = new TwoDBarcodedTube(quantEntry.getKey());
             vesselDao.persist(testTube);
 
@@ -95,9 +95,9 @@ public class LabMetricParserTest extends ContainerTest {
             return;
         }
 
-        for(Map.Entry<String, Double> quantEntry:barcodeToQuant.entrySet()) {
-            TwoDBarcodedTube testTube =  vesselDao.findByBarcode(quantEntry.getKey());
-                    vesselDao.remove(testTube);
+        for (Map.Entry<String, Double> quantEntry : barcodeToQuant.entrySet()) {
+            TwoDBarcodedTube testTube = vesselDao.findByBarcode(quantEntry.getKey());
+            vesselDao.remove(testTube);
         }
 
         vesselDao.flush();
@@ -114,7 +114,7 @@ public class LabMetricParserTest extends ContainerTest {
         Collection<LabMetric> createdMetrics = processor.getMetrics();
         Assert.assertEquals(createdMetrics.size(), barcodeToQuant.size());
 
-        for(LabMetric testMetric:createdMetrics) {
+        for (LabMetric testMetric : createdMetrics) {
             Assert.assertEquals(testMetric.getValue().setScale(2),
                     BigDecimal.valueOf(barcodeToQuant.get(testMetric.getLabVessel().getLabel())));
         }

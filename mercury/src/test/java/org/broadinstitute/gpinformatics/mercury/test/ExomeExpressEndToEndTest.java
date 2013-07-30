@@ -39,7 +39,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
+import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
@@ -327,13 +327,13 @@ public class ExomeExpressEndToEndTest {
             labBatchEJB.setJiraService(JiraServiceProducer.stubInstance());
 
             LabVesselDao tubeDao = EasyMock.createNiceMock(LabVesselDao.class);
-            labBatchEJB.setTubeDAO(tubeDao);
+            labBatchEJB.setTubeDao(tubeDao);
 
             JiraTicketDao mockJira = EasyMock.createNiceMock(JiraTicketDao.class);
             labBatchEJB.setJiraTicketDao(mockJira);
 
-            LabBatchDAO labBatchDAO = EasyMock.createNiceMock(LabBatchDAO.class);
-            labBatchEJB.setLabBatchDao(labBatchDAO);
+            LabBatchDao labBatchDao = EasyMock.createNiceMock(LabBatchDao.class);
+            labBatchEJB.setLabBatchDao(labBatchDao);
 
             ReworkEjb reworkEjb = EasyMock.createNiceMock(ReworkEjb.class);
             BucketDao bucketDao = EasyMock.createNiceMock(BucketDao.class);
@@ -344,7 +344,7 @@ public class ExomeExpressEndToEndTest {
             BucketEjb bucketEjb = new BucketEjb(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB,
                     bucketDao);
 
-            EasyMock.replay(mockBucketDao, mockJira, labBatchDAO, tubeDao, reworkEjb, bucketDao);
+            EasyMock.replay(mockBucketDao, mockJira, labBatchDao, tubeDao, reworkEjb, bucketDao);
 
 
             TemplateEngine templateEngine = new TemplateEngine();
@@ -432,12 +432,13 @@ public class ExomeExpressEndToEndTest {
                     qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
 
 
-            LabBatch fctBatch = new LabBatch("FCT-3", Collections.singleton((LabVessel)denatureTube),
+            LabBatch fctBatch = new LabBatch("FCT-3", Collections.singleton((LabVessel) denatureTube),
                     LabBatch.LabBatchType.FCT, 12.33f);
 
             HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
                     new HiSeq2500FlowcellEntityBuilder(bettaLimsMessageTestFactory,
-                            labEventFactory, labEventHandler, qtpEntityBuilder.getDenatureRack(),fctBatch.getBusinessKey()
+                            labEventFactory, labEventHandler, qtpEntityBuilder.getDenatureRack(),
+                            fctBatch.getBusinessKey()
                             , "testPrefix", "", ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL, "", "Exome Express");
 
             // LC metrics - upload page?

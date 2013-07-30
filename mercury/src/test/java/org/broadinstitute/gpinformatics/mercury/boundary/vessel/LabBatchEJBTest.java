@@ -5,8 +5,8 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
-import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -49,10 +49,10 @@ public class LabBatchEJBTest extends ContainerTest {
     private UserTransaction utx;
 
     @Inject
-    private TwoDBarcodedTubeDAO tubeDao;
+    private TwoDBarcodedTubeDao tubeDao;
 
     @Inject
-    private LabBatchDAO labBatchDAO;
+    private LabBatchDao labBatchDao;
 
     @Inject
     private BucketDao bucketDao;
@@ -123,10 +123,10 @@ public class LabBatchEJBTest extends ContainerTest {
 
         final String batchName = testBatch.getBatchName();
 
-        labBatchDAO.flush();
-        labBatchDAO.clear();
+        labBatchDao.flush();
+        labBatchDao.clear();
 
-        LabBatch testFind = labBatchDAO.findByName(batchName);
+        LabBatch testFind = labBatchDao.findByName(batchName);
 
         Assert.assertNotNull(testFind);
         Assert.assertNotNull(testFind.getJiraTicket());
@@ -164,10 +164,10 @@ public class LabBatchEJBTest extends ContainerTest {
 
         batchName = batchInput.getBatchName();
 
-        labBatchDAO.flush();
-        labBatchDAO.clear();
+        labBatchDao.flush();
+        labBatchDao.clear();
 
-        LabBatch testFind = labBatchDAO.findByName(batchName);
+        LabBatch testFind = labBatchDao.findByName(batchName);
 
         Assert.assertNotNull(testFind);
         Assert.assertNotNull(testFind.getJiraTicket());
@@ -192,14 +192,14 @@ public class LabBatchEJBTest extends ContainerTest {
             labBatchEJB.linkJiraBatchToTicket(pdoKey, savedBatch);
         }
 
-        labBatchDAO.flush();
-        labBatchDAO.clear();
+        labBatchDao.flush();
+        labBatchDao.clear();
         bucket = bucketDao.findByName(BUCKET_NAME);
 
         String expectedTicketId =
                 CreateFields.ProjectType.LCSET_PROJECT.getKeyPrefix() + JiraServiceStub.getCreatedIssueSuffix();
         Assert.assertEquals(expectedTicketId, savedBatch.getBatchName());
-        savedBatch = labBatchDAO.findByName(expectedTicketId);
+        savedBatch = labBatchDao.findByName(expectedTicketId);
 
         Assert.assertEquals(expectedTicketId, savedBatch.getJiraTicket().getTicketName());
         Assert.assertEquals(6, savedBatch.getStartingBatchLabVessels().size());
@@ -218,12 +218,12 @@ public class LabBatchEJBTest extends ContainerTest {
                         expectedTicketId, BUCKET_NAME, LabEvent.UI_EVENT_LOCATION, LabBatch.LabBatchType.WORKFLOW,
                         CreateFields.IssueType.EXOME_EXPRESS);
 
-        labBatchDAO.flush();
-        labBatchDAO.clear();
+        labBatchDao.flush();
+        labBatchDao.clear();
         bucket = bucketDao.findByName(BUCKET_NAME);
 
         Assert.assertEquals(expectedTicketId, savedBatch.getBatchName());
-        savedBatch = labBatchDAO.findByName(expectedTicketId);
+        savedBatch = labBatchDao.findByName(expectedTicketId);
 
         Assert.assertEquals(expectedTicketId, savedBatch.getJiraTicket().getTicketName());
         Assert.assertEquals(6, savedBatch.getStartingBatchLabVessels().size());

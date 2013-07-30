@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -8,7 +7,7 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
+import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
@@ -53,7 +52,7 @@ import java.util.Set;
 public class LabEventResource {
 
     @Inject
-    private LabBatchDAO labBatchDAO;
+    private LabBatchDao labBatchDao;
 
     @Inject
     private LabVesselDao labVesselDao;
@@ -84,7 +83,7 @@ public class LabEventResource {
     @GET
     @Produces({MediaType.APPLICATION_XML})
     public LabEventResponseBean transfersByBatchId(@PathParam("batchId") String batchId) {
-        LabBatch labBatch = labBatchDAO.findByName(batchId);
+        LabBatch labBatch = labBatchDao.findByName(batchId);
         if (labBatch == null) {
             throw new RuntimeException("Batch not found: " + batchId);
         }
@@ -134,7 +133,8 @@ public class LabEventResource {
     @Path("/transfersToFirstAncestorRack/{plateBarcodes}")
     @GET
     @Produces(MediaType.APPLICATION_XML)
-    public LabEventResponseBean transfersToFirstAncestorRack(@PathParam("plateBarcodes") @Nonnull String plateBarcodes) {
+    public LabEventResponseBean transfersToFirstAncestorRack(
+            @PathParam("plateBarcodes") @Nonnull String plateBarcodes) {
         String[] barcodes = StringUtils.split(plateBarcodes, ",");
         Map<String, LabVessel> byBarcodes = labVesselDao.findByBarcodes(Arrays.asList(barcodes));
 
@@ -156,7 +156,6 @@ public class LabEventResource {
 
         return new LabEventResponseBean(labEventBeans);
     }
-
 
 
     public List<LabEventBean> buildLabEventBeans(List<LabEvent> labEvents,
