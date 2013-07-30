@@ -24,7 +24,9 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * TODO scottmat fill in javadoc!!!
+ * This instance of the message handler supports messages that have flowcells for target vessels.
+ * FlowcellMessageHandler takes care of updating the FCT ticket associated with creating a Flowcell with the Flowcell
+ * barcode and other related information.
  */
 public class FlowcellMessageHandler extends AbstractEventHandler {
 

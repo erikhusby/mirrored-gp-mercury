@@ -34,11 +34,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
-/**
- * TODO scottmat fill in javadoc!!!
- */
 @Test(groups = {TestGroups.DATABASE_FREE})
-public class DenatureToDilutionValidatorTest extends BaseEventTest {
+public class DenatureToDilutionHandlerTest extends BaseEventTest {
 
 
     private LabVessel denatureSource;
