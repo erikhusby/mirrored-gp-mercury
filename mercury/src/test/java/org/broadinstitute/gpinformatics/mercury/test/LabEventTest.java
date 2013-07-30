@@ -156,7 +156,7 @@ public class LabEventTest extends BaseEventTest {
                         new Factory<SortedSet<LabEvent>>() {
                             @Override
                             public SortedSet<LabEvent> create() {
-                                return new TreeSet<>(LabEvent.byEventDate);
+                                return new TreeSet<>(LabEvent.BY_EVENT_DATE);
                             }
                         });
 
