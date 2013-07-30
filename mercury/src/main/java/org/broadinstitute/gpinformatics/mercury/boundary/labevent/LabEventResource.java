@@ -113,12 +113,14 @@ public class LabEventResource {
 
         for (LabVessel labVessel : byBarcodes.values()) {
             // Not checking that all queried barcodes were accounted for in the results, that is up to the caller.
-            if (labVessel == null) {
+            if (labVessel == null || labVessel.getContainerRole() == null) {
                 continue;
             }
 
+            VesselContainer<?> vesselContainer = labVessel.getContainerRole();
+
             List<List<LabEvent>> setOfLabEventLists =
-                    VesselContainer.shortestPathsToVesselsSatisfyingPredicate(labVessel, VesselContainer.IS_LAB_VESSEL_A_RACK);
+                    vesselContainer.shortestPathsToVesselsSatisfyingPredicate(VesselContainer.IS_LAB_VESSEL_A_RACK);
 
             // Flatten the result as the current caller does not expect more than one List of transfers to be found
             // per query barcode.
