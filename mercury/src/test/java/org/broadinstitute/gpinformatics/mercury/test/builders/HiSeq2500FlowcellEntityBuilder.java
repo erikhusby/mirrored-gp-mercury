@@ -82,7 +82,6 @@ public class HiSeq2500FlowcellEntityBuilder {
 
         ReceptacleEventType flowcellLoadJaxb = hiSeq2500JaxbBuilder.getFlowcellLoad();
 
-
         switch (productionFlowcellPath) {
 
         case DILUTION_TO_FLOWCELL:
@@ -95,10 +94,8 @@ public class HiSeq2500FlowcellEntityBuilder {
                                 denatureRack.getContainerRole().getVesselAtPosition(VesselPosition.A01));
                         put(denatureRack.getLabel(), denatureRack);
                     }});
+            labEventFactory.getEventHandlerSelector().applyEventSpecificHandling(dilutionTransferEntity, dilutionJaxb);
             labEventHandler.processEvent(dilutionTransferEntity);
-            EventHandlerSelector eventHandlerSelector = new EventHandlerSelector();
-            eventHandlerSelector.setDenatureToDilutionTubeHandler(new DenatureToDilutionTubeHandler());
-            eventHandlerSelector.applyEventSpecificHandling(dilutionTransferEntity, dilutionJaxb);
             dilutionRack = (TubeFormation) dilutionTransferEntity.getTargetLabVessels().iterator().next();
             Assert.assertEquals(denatureRack.getContainerRole().getContainedVessels().size(), 1);
 
@@ -107,6 +104,7 @@ public class HiSeq2500FlowcellEntityBuilder {
             LabEvent flowcellTransferEntity = labEventFactory.buildVesselToSectionDbFree(flowcellTransferJaxb,
                     dilutionRack.getContainerRole().getContainedVessels().iterator().next(), null,
                     SBSSection.ALL2.getSectionName());
+            labEventFactory.getEventHandlerSelector().applyEventSpecificHandling(flowcellTransferEntity, flowcellTransferJaxb);
             labEventHandler.processEvent(flowcellTransferEntity);
             //asserts
             illuminaFlowcell = (IlluminaFlowcell) flowcellTransferEntity.getTargetLabVessels().iterator().next();
@@ -117,6 +115,7 @@ public class HiSeq2500FlowcellEntityBuilder {
             flowcellTransferEntity = labEventFactory.buildVesselToSectionDbFree(flowcellTransferJaxb,
                     denatureRack.getContainerRole().getContainedVessels().iterator().next(), null,
                     SBSSection.ALL2.getSectionName());
+            labEventFactory.getEventHandlerSelector().applyEventSpecificHandling(flowcellTransferEntity, flowcellTransferJaxb);
             labEventHandler.processEvent(flowcellTransferEntity);
             illuminaFlowcell = (IlluminaFlowcell) flowcellTransferEntity.getTargetLabVessels().iterator().next();
             break;
@@ -138,6 +137,7 @@ public class HiSeq2500FlowcellEntityBuilder {
                             }},
                             mapBarcodeToStripTube, new HashMap<String, RackOfTubes>()
                     );
+            labEventFactory.getEventHandlerSelector().applyEventSpecificHandling(stripTubeTransferEntity , stripTubeTransferJaxb);
             labEventHandler.processEvent(stripTubeTransferEntity);
             // asserts
             stripTube = (StripTube) stripTubeTransferEntity.getTargetLabVessels().iterator().next();
@@ -151,6 +151,7 @@ public class HiSeq2500FlowcellEntityBuilder {
             LabEvent stbFlowcellTransferEntity =
                     labEventFactory.buildFromBettaLimsPlateToPlateDbFree(stbFlowcellTransferJaxb,
                             stripTube, null);
+            labEventFactory.getEventHandlerSelector().applyEventSpecificHandling(stbFlowcellTransferEntity, stbFlowcellTransferJaxb);
             labEventHandler.processEvent(stbFlowcellTransferEntity);
             //asserts
             illuminaFlowcell = (IlluminaFlowcell) stbFlowcellTransferEntity.getTargetLabVessels().iterator().next();
@@ -182,6 +183,7 @@ public class HiSeq2500FlowcellEntityBuilder {
 
         LabEvent flowcellLoadEntity = labEventFactory
                 .buildReceptacleEventDbFree(flowcellLoadJaxb, illuminaFlowcell);
+        labEventFactory.getEventHandlerSelector().applyEventSpecificHandling(flowcellLoadEntity , flowcellLoadJaxb);
         labEventHandler.processEvent(flowcellLoadEntity);
 
         return this;

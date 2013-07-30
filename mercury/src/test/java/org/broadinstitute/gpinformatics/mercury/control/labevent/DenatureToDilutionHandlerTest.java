@@ -114,9 +114,7 @@ public class DenatureToDilutionHandlerTest extends BaseEventTest {
                     put(qtpEntityBuilder.getDenatureRack().getLabel(), qtpEntityBuilder.getDenatureRack());
                 }});
 
-        EventHandlerSelector eventHandlerSelector = new EventHandlerSelector();
-        eventHandlerSelector.setDenatureToDilutionTubeHandler(new DenatureToDilutionTubeHandler());
-        eventHandlerSelector.applyEventSpecificHandling(dilutionTransferEntity, dilutionEvent);
+        getLabEventFactory().getEventHandlerSelector().applyEventSpecificHandling(dilutionTransferEntity, dilutionEvent);
     }
 
     @Test(groups = {TestGroups.DATABASE_FREE})
@@ -142,9 +140,7 @@ public class DenatureToDilutionHandlerTest extends BaseEventTest {
                 }});
 
         try {
-            EventHandlerSelector eventHandlerSelector = new EventHandlerSelector();
-            eventHandlerSelector.setDenatureToDilutionTubeHandler(new DenatureToDilutionTubeHandler());
-            eventHandlerSelector.applyEventSpecificHandling(dilutionTransferEntity, dilutionEvent);
+            getLabEventFactory().getEventHandlerSelector().applyEventSpecificHandling(dilutionTransferEntity, dilutionEvent);
             Assert.fail("Different FCT tickets should have caused a failure");
         } catch (Exception e) {
             e.printStackTrace();
@@ -178,9 +174,7 @@ public class DenatureToDilutionHandlerTest extends BaseEventTest {
                 }});
 
         try {
-            EventHandlerSelector eventHandlerSelector = new EventHandlerSelector();
-            eventHandlerSelector.setDenatureToDilutionTubeHandler(new DenatureToDilutionTubeHandler());
-            eventHandlerSelector.applyEventSpecificHandling(dilutionTransferEntity, dilutionEvent);
+            getLabEventFactory().getEventHandlerSelector().applyEventSpecificHandling(dilutionTransferEntity, dilutionEvent);
             Assert.fail("FCT ticket having a different dilution tube should have caused a failure");
         } catch (Exception e) {
             e.printStackTrace();
@@ -219,9 +213,7 @@ public class DenatureToDilutionHandlerTest extends BaseEventTest {
                 dilutionTransferEntity.getTargetVesselTubes().iterator().next());
 
         try {
-            EventHandlerSelector eventHandlerSelector = new EventHandlerSelector();
-            eventHandlerSelector.setDenatureToDilutionTubeHandler(new DenatureToDilutionTubeHandler());
-            eventHandlerSelector.applyEventSpecificHandling(dilutionTransferEntity, dilutionEvent);
+            getLabEventFactory().getEventHandlerSelector().applyEventSpecificHandling(dilutionTransferEntity, dilutionEvent);
             Assert.fail("Dilution registered to a Different FCT ticket should have caused a failure");
         } catch (Exception e) {
             e.printStackTrace();

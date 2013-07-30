@@ -153,7 +153,7 @@ public class LabEventFactory implements Serializable {
     private GenericReagentDao genericReagentDao;
 
     @Inject
-    EventHandlerSelector eventHandlerSelector;
+    private EventHandlerSelector eventHandlerSelector;
 
     //TODO SGM Remove default constructor
     public LabEventFactory() {
@@ -1143,5 +1143,11 @@ public class LabEventFactory implements Serializable {
         return bucketMoveEvent;
     }
 
+    public void setEventHandlerSelector(EventHandlerSelector eventHandlerSelector) {
+        this.eventHandlerSelector = eventHandlerSelector;
+    }
 
+    public EventHandlerSelector getEventHandlerSelector() {
+        return eventHandlerSelector;
+    }
 }

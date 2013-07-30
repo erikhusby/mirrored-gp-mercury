@@ -40,8 +40,9 @@ public class JiraCustomFieldsUtil {
                     LabBatch.TicketFields.LIBRARY_QC_SEQUENCING_REQUIRED.getFieldName(),
                     LabBatch.TicketFields.PROGRESS_STATUS.getFieldName(),
                     LabBatch.TicketFields.GSSR_IDS.getFieldName(),
-                    LabBatch.TicketFields.DESCRIPTION.getFieldName()
-                    ,
+                    LabBatch.TicketFields.DESCRIPTION.getFieldName(),
+                    LabBatch.TicketFields.SUMMARY.getFieldName(),
+                    LabBatch.TicketFields.SEQUENCING_STATION.getFieldName(),
             };
 
     /**

@@ -81,6 +81,7 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
         BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
 
         LabEventFactory labEventFactory = new LabEventFactory(testUserList);
+        labEventFactory.setEventHandlerSelector(getLabEventFactory().getEventHandlerSelector());
 
         List<ProductOrderSample> productOrderSamples = new ArrayList<>();
         ProductOrder productOrder1 = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123", new Product(

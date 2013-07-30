@@ -10,16 +10,17 @@ import javax.inject.Inject;
  */
 public class EventHandlerSelector {
 
-    @Inject
     DenatureToDilutionTubeHandler denatureToDilutionTubeHandler;
 
-    @Inject
     FlowcellMessageHandler flowcellMessageHandler;
 
-    public EventHandlerSelector() {
-
+    @Inject
+    public EventHandlerSelector(
+            DenatureToDilutionTubeHandler denatureToDilutionTubeHandler,
+            FlowcellMessageHandler flowcellMessageHandler) {
+        this.denatureToDilutionTubeHandler = denatureToDilutionTubeHandler;
+        this.flowcellMessageHandler = flowcellMessageHandler;
     }
-
 
     public void applyEventSpecificHandling(LabEvent targetEvent, StationEventType stationEvent) {
         AbstractEventHandler validator = null;
@@ -30,7 +31,7 @@ public class EventHandlerSelector {
 
             break;
         case DILUTION_TO_FLOWCELL_TRANSFER:
-        case STRIP_TUBE_B_TRANSFER:
+        case FLOWCELL_TRANSFER:
         case DENATURE_TO_FLOWCELL_TRANSFER:
         case REAGENT_KIT_TO_FLOWCELL_TRANSFER:
             validator =  flowcellMessageHandler;
