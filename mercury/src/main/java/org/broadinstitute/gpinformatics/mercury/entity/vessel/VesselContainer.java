@@ -655,10 +655,10 @@ public class VesselContainer<T extends LabVessel> {
      * The Lists of LabEvents in the returned Set are ordered with the most recent LabEvents first
      * (i.e. the source LabVessel satisfying the predicate is among the sources on the last LabEvent).
      */
-    public static Set<List<LabEvent>> shortestPathsToVesselsSatisfyingPredicate(@Nonnull LabVessel labVessel,
-                                                                                @Nonnull Predicate<LabVessel> predicate) {
+    public static List<List<LabEvent>> shortestPathsToVesselsSatisfyingPredicate(@Nonnull LabVessel labVessel,
+                                                                                 @Nonnull Predicate<LabVessel> predicate) {
 
-        Set<List<LabEvent>> foundEventLists = new HashSet<>();
+        List<List<LabEvent>> foundEventLists = new ArrayList<>();
 
         // Keep track of the List of LabEvents that lead to a source potentially satisfying the predicate.
         Set<Map<LabVessel, List<LabEvent>>> currentTransfers = new HashSet<>();

@@ -117,7 +117,7 @@ public class LabEventResource {
                 continue;
             }
 
-            Set<List<LabEvent>> setOfLabEventLists =
+            List<List<LabEvent>> setOfLabEventLists =
                     VesselContainer.shortestPathsToVesselsSatisfyingPredicate(labVessel, VesselContainer.IS_LAB_VESSEL_A_RACK);
 
             // Flatten the result as the current caller does not expect more than one List of transfers to be found
