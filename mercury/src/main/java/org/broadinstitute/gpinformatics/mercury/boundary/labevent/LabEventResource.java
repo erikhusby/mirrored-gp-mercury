@@ -3,11 +3,9 @@ package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
-import org.broadinstitute.gpinformatics.mercury.control.labevent.PlateTransferUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -55,18 +53,22 @@ public class LabEventResource {
     @Inject
     private LabVesselDao labVesselDao;
 
+    @Inject
+    private BSPUserList bspUserList;
 
+    /**
+     * Default implementation of the LabEventRefDataFetcher that gets real data from BSP.
+     */
     private class DefaultLabEventRefDataFetcher implements LabEventFactory.LabEventRefDataFetcher {
+
         @Override
         public BspUser getOperator(String userId) {
-            BSPUserList list = ServiceAccessUtility.getBean(BSPUserList.class);
-            return list.getByUsername(userId);
+            return bspUserList.getByUsername(userId);
         }
 
         @Override
         public BspUser getOperator(Long bspUserId) {
-            BSPUserList list = ServiceAccessUtility.getBean(BSPUserList.class);
-            return list.getById(bspUserId);
+            return bspUserList.getById(bspUserId);
         }
 
         @Override
@@ -79,13 +81,16 @@ public class LabEventResource {
     @Path("/batch/{batchId}")
     @GET
     @Produces({MediaType.APPLICATION_XML})
+    /**
+     * Find all LabEvents for the specified batch ID.
+     */
     public LabEventResponseBean transfersByBatchId(@PathParam("batchId") String batchId) {
         LabBatch labBatch = labBatchDAO.findByName(batchId);
         if (labBatch == null) {
             throw new RuntimeException("Batch not found: " + batchId);
         }
         List<LabEvent> labEventsByTime = new ArrayList<>(labBatch.getLabEvents());
-        Collections.sort(labEventsByTime, LabEvent.byEventDate);
+        Collections.sort(labEventsByTime, LabEvent.BY_EVENT_DATE);
         List<LabEventBean> labEventBeans =
                 buildLabEventBeans(labEventsByTime, new DefaultLabEventRefDataFetcher());
         return new LabEventResponseBean(labEventBeans);
@@ -97,13 +102,14 @@ public class LabEventResource {
     @Path("/transfersToFirstAncestorRack/{plateBarcodes}")
     @GET
     @Produces(MediaType.APPLICATION_XML)
+    /**
+     * Find all LabEvents for transfers from the specified plate barcodes back to ancestor Matrix racks.
+     */
     public LabEventResponseBean transfersToFirstAncestorRack(@PathParam("plateBarcodes") @Nonnull String plateBarcodes) {
         String[] barcodes = StringUtils.split(plateBarcodes, ",");
         Map<String, LabVessel> byBarcodes = labVesselDao.findByBarcodes(Arrays.asList(barcodes));
 
         List<LabEvent> labEvents = new ArrayList<>();
-
-        PlateTransferUtils.IsLabVesselARackPredicate rackPredicate = new PlateTransferUtils.IsLabVesselARackPredicate();
 
         for (LabVessel labVessel : byBarcodes.values()) {
             // Not checking that all queried barcodes were accounted for in the results, that is up to the caller.
@@ -112,7 +118,7 @@ public class LabEventResource {
             }
 
             Set<List<LabEvent>> setOfLabEventLists =
-                    PlateTransferUtils.shortestPathsToVesselsSatisfyingPredicate(labVessel, rackPredicate);
+                    VesselContainer.shortestPathsToVesselsSatisfyingPredicate(labVessel, VesselContainer.IS_LAB_VESSEL_A_RACK);
 
             // Flatten the result as the current caller does not expect more than one List of transfers to be found
             // per query barcode.
@@ -121,7 +127,7 @@ public class LabEventResource {
             }
         }
 
-        Collections.sort(labEvents, LabEvent.byEventDate);
+        Collections.sort(labEvents, LabEvent.BY_EVENT_DATE);
 
         List<LabEventBean> labEventBeans =
                 buildLabEventBeans(labEvents, new DefaultLabEventRefDataFetcher());
