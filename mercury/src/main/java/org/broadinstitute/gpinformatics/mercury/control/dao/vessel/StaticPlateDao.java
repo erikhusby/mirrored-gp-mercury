@@ -12,7 +12,7 @@ import javax.enterprise.context.RequestScoped;
  */
 @Stateful
 @RequestScoped
-public class StaticPlateDAO extends GenericDao {
+public class StaticPlateDao extends GenericDao {
 
     public StaticPlate findByBarcode(String barcode) {
         return findSingle(StaticPlate.class, StaticPlate_.label, barcode);

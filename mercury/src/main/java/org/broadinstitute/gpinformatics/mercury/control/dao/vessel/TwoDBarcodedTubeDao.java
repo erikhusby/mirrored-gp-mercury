@@ -15,11 +15,13 @@ import java.util.TreeMap;
  */
 @Stateful
 @RequestScoped
-public class TwoDBarcodedTubeDAO extends GenericDao {
+public class TwoDBarcodedTubeDao extends GenericDao {
 
     /**
      * Finds tube entities for given barcodes
+     *
      * @param barcodes tube barcodes
+     *
      * @return map from barcode to tube, tube is null if not found
      */
     public Map<String, TwoDBarcodedTube> findByBarcodes(List<String> barcodes) {

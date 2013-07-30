@@ -10,7 +10,7 @@ import java.util.List;
 
 @Stateful
 @RequestScoped
-public class LabBatchDAO extends GenericDao {
+public class LabBatchDao extends GenericDao {
 
     public LabBatch findByName(String batchName) {
         return findSingle(LabBatch.class, LabBatch_.batchName, batchName);
