@@ -46,8 +46,12 @@ public class ProductOrderResource {
             productOrderData.setComments(productOrder.getComments());
             productOrderData.setModifiedDate(productOrder.getModifiedDate());
             productOrderData.setProduct(productOrder.getProduct().getPartNumber());
+            productOrderData.setProductName(productOrder.getProduct().getName());
             productOrderData.setStatus(productOrder.getOrderStatus().name());
             productOrderData.setAggregationDataType(productOrder.getProduct().getAggregationDataType());
+            productOrderData.setResearchProjectId(productOrder.getResearchProject().getBusinessKey());
+            productOrderData.setQuoteId(productOrder.getQuoteId());
+
             if (includeSamples) {
                 List<String> sampleNames = new ArrayList<>(productOrder.getSamples().size());
                 for (ProductOrderSample sample : productOrder.getSamples()) {

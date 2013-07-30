@@ -2,7 +2,10 @@ package org.broadinstitute.gpinformatics.mercury.control.labevent;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentration;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
@@ -38,6 +41,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MiSeqReagentKit;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
@@ -151,13 +155,19 @@ public class LabEventFactory implements Serializable {
     @Inject
     private GenericReagentDao genericReagentDao;
 
+    @Inject
+    private BSPSetVolumeConcentration bspSetVolumeConcentration;
+
+    private static final Log logger = LogFactory.getLog(LabEventFactory.class);
+
     //TODO SGM Remove default constructor
     public LabEventFactory() {
     }
 
     //TODO SGM Make inject constructor.  Replace test cases with this and a BSPUserList initialized with test people.
-    public LabEventFactory(BSPUserList userList) {
+    public LabEventFactory(BSPUserList userList, BSPSetVolumeConcentration bspSetVolumeConcentration) {
         bspUserList = userList;
+        this.bspSetVolumeConcentration = bspSetVolumeConcentration;
     }
 
     public interface LabEventRefDataFetcher {
@@ -193,7 +203,6 @@ public class LabEventFactory implements Serializable {
             return labBatchDAO.findByName(labBatchName);
         }
     };
-
 
     /**
      * This class is used in a map, to detect duplicate events from a deck.
@@ -873,6 +882,26 @@ public class LabEventFactory implements Serializable {
                 twoDBarcodedTube = new TwoDBarcodedTube(receptacleType.getBarcode());
                 mapBarcodeToTubes.put(receptacleType.getBarcode(), twoDBarcodedTube);
             }
+
+            // If there is a volume and concentration on the message set it up and communicate it to BSP.
+            if ((receptacleType.getConcentration() != null) && (receptacleType.getVolume() != null)) {
+                twoDBarcodedTube.setVolume(receptacleType.getVolume().floatValue());
+                twoDBarcodedTube.setConcentration(receptacleType.getConcentration().floatValue());
+
+                // The only way to update volume on concentration in BSP here is if we have a single mercury sample.
+                if (twoDBarcodedTube.getMercurySamples().size() == 1) {
+                    // Loop through them even though there is only one.
+                    for (MercurySample mercurySample : twoDBarcodedTube.getMercurySamples()) {
+                        // Send web service call to BSP to update volume and concentration.
+                        bspSetVolumeConcentration.setVolumeAndConcentration(
+                                mercurySample.getSampleKey(), receptacleType.getVolume(), receptacleType.getConcentration());
+                        if (!bspSetVolumeConcentration.isValidResult()) {
+                            logger.error("Could not set volume and concentration: " + bspSetVolumeConcentration.getResult()[0]);
+                        }
+                    }
+                }
+            }
+
             mapPositionToTube.put(VesselPosition.getByName(receptacleType.getPosition()), twoDBarcodedTube);
         }
         TubeFormation tubeFormation = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
