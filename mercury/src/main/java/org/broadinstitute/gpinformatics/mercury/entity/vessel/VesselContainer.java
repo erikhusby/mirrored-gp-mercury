@@ -43,6 +43,7 @@ import java.util.Set;
  * inheritance is not supported.  As an example of multiple roles, A Cryo straw is held in a visotube, which is held
  * in a goblet; a visotube is both a container and a containee.
  */
+@SuppressWarnings("UnusedDeclaration")
 @Embeddable
 public class VesselContainer<T extends LabVessel> {
 
@@ -649,21 +650,20 @@ public class VesselContainer<T extends LabVessel> {
 
 
     /**
-     * Returns the shortest paths of LabEvents from the specified labVessel to source vessels satisfying the predicate.
+     * Returns the shortest paths of LabEvents from this VesselContainer to source vessels satisfying the predicate.
      * In the event that multiple paths of equal length are found, all paths will be returned.
      *
-     * The Lists of LabEvents in the returned Set are ordered with the most recent LabEvents first
+     * The Lists of LabEvents in the returned List are ordered with the most recent LabEvents first
      * (i.e. the source LabVessel satisfying the predicate is among the sources on the last LabEvent).
      */
-    public static List<List<LabEvent>> shortestPathsToVesselsSatisfyingPredicate(@Nonnull LabVessel labVessel,
-                                                                                 @Nonnull Predicate<LabVessel> predicate) {
+    public List<List<LabEvent>> shortestPathsToVesselsSatisfyingPredicate(@Nonnull Predicate<LabVessel> predicate) {
 
         List<List<LabEvent>> foundEventLists = new ArrayList<>();
 
         // Keep track of the List of LabEvents that lead to a source potentially satisfying the predicate.
-        Set<Map<LabVessel, List<LabEvent>>> currentTransfers = new HashSet<>();
+        List<Map<LabVessel, List<LabEvent>>> currentTransfers = new ArrayList<>();
 
-        for (LabEvent labEvent : labVessel.getTransfersTo()) {
+        for (LabEvent labEvent : getTransfersTo()) {
             for (LabVessel vessel : labEvent.getSourceLabVessels()) {
                 Map<LabVessel, List<LabEvent>> currentTransfer = new HashMap<>();
                 currentTransfer.put(vessel, Collections.singletonList(labEvent));
@@ -688,8 +688,8 @@ public class VesselContainer<T extends LabVessel> {
             }
 
             // Search for transfers one level deeper from the current set of transfers.
-            Set<Map<LabVessel, List<LabEvent>>> previousTransfers = currentTransfers;
-            currentTransfers = new HashSet<>();
+            List<Map<LabVessel, List<LabEvent>>> previousTransfers = currentTransfers;
+            currentTransfers = new ArrayList<>();
 
             for (Map<LabVessel, List<LabEvent>> previousTransfer : previousTransfers) {
 
@@ -707,14 +707,14 @@ public class VesselContainer<T extends LabVessel> {
                         }
                     }
 
-                    // Add non-empty Maps from LabVessels to Lists of LabEvents to the Set of current transfers.
+                    // Add non-empty Maps from LabVessels to Lists of LabEvents to the List of current transfers.
                     if (!vesselMap.isEmpty()) {
                         currentTransfers.add(vesselMap);
                     }
                 }
             }
 
-            // If there are no transfers left to search, break out.
+            // If there are no transfers left to search, terminate.
             if (currentTransfers.isEmpty()) {
                 return foundEventLists;
             }
