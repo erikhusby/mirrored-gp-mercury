@@ -55,6 +55,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
     private Date runDate;
     private QtpEntityBuilder qtpEntityBuilder;
     private TwoDBarcodedTube denatureTube;
+    private Set<LabVessel> starterVessels;
 
     @Override
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
@@ -93,18 +94,17 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
                 hybridSelectionEntityBuilder.getNormCatchBarcodes(),
                 hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), "Exome Express", "1");
 
-        Set<LabVessel> starterVessels =
-                Collections.singleton((LabVessel) qtpEntityBuilder.getDenatureRack().getContainerRole()
-                        .getVesselAtPosition(VesselPosition.A01));
-        //create a couple Miseq batches then one FCT (2500) batch
-        LabBatch miseqBatch = new LabBatch(MISEQ_TICKET_KEY, starterVessels, LabBatch.LabBatchType.MISEQ, 7f);
-        LabBatch fctBatch = new LabBatch(FLOWCELL_2500_TICKET_KEY, starterVessels, LabBatch.LabBatchType.FCT, 12.33f);
-
         denatureTube = qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
+
+        starterVessels = Collections.singleton((LabVessel) denatureTube);
     }
 
     @Test(groups = TestGroups.DATABASE_FREE)
     public void testSuccessfulDenatureToFlowcellMsg() throws Exception {
+
+        //create a couple Miseq batches then one FCT (2500) batch
+        LabBatch miseqBatch = new LabBatch(MISEQ_TICKET_KEY, starterVessels, LabBatch.LabBatchType.MISEQ, 7f);
+        LabBatch fctBatch = new LabBatch(FLOWCELL_2500_TICKET_KEY, starterVessels, LabBatch.LabBatchType.FCT, 12.33f);
 
         final String denatureToFlowcellFlowcellBarcode = "ADTF";
 
@@ -164,6 +164,8 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
                 Mockito.anyString());
         Mockito.verify(mockAppConfig, Mockito.never()).getWorkflowValidationEmail();
         Mockito.verify(mockJiraService, Mockito.times(1)).getCustomFields(Mockito.anyString(), Mockito.anyString());
+        Mockito.verify(mockJiraService, Mockito.times(1)).updateIssue(Mockito.anyString(), Mockito.anyCollection());
+
 
 
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
@@ -177,9 +179,389 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         Mockito.verify(mockJiraService, Mockito.times(2)).updateIssue(Mockito.anyString(), Mockito.anyCollection());
 
     }
+    @Test(groups = TestGroups.DATABASE_FREE)
+    public void testFailureDenatureToFlowcellMsgNoMiseqBatches() throws Exception {
+
+        //create a couple Miseq batches then one FCT (2500) batch
+        LabBatch fctBatch = new LabBatch(FLOWCELL_2500_TICKET_KEY, starterVessels, LabBatch.LabBatchType.FCT, 12.33f);
+
+        final String denatureToFlowcellFlowcellBarcode = "ADTF";
+
+        EmailSender mockEmailSender = Mockito.mock(EmailSender.class);
+        JiraService mockJiraService = Mockito.mock(JiraService.class);
+        JiraService mockJiraSource = JiraServiceProducer.stubInstance();
+        Mockito.when(mockJiraService.getCustomFields(Mockito.eq(LabBatch.TicketFields.SUMMARY.getFieldName()),
+                Mockito.eq(LabBatch.TicketFields.SEQUENCING_STATION.getFieldName())))
+                .thenReturn(mockJiraSource.getCustomFields(LabBatch.TicketFields.SUMMARY.getFieldName(),
+                        LabBatch.TicketFields.SEQUENCING_STATION.getFieldName()));
+        AppConfig mockAppConfig = Mockito.mock(AppConfig.class);
+
+        getLabEventFactory().getEventHandlerSelector().getFlowcellMessageHandler().setEmailSender(mockEmailSender);
+        getLabEventFactory().getEventHandlerSelector().getFlowcellMessageHandler().setJiraService(mockJiraService);
+        getLabEventFactory().getEventHandlerSelector().getFlowcellMessageHandler().setAppConfig(mockAppConfig);
+
+        TubeFormationDao mockTubeFormationDao = Mockito.mock(TubeFormationDao.class);
+        Mockito.when(mockTubeFormationDao.findByDigest(Mockito.anyString()))
+                .thenReturn(qtpEntityBuilder.getDenatureRack());
+        getLabEventFactory().setTubeFormationDao(mockTubeFormationDao);
+
+        TwoDBarcodedTubeDAO mockTwoDTubeDao = Mockito.mock(TwoDBarcodedTubeDAO.class);
+        Mockito.when(mockTwoDTubeDao.findByBarcodes(Mockito.anyList()))
+                .thenReturn(new HashMap<String, TwoDBarcodedTube>() {{
+                    put(denatureTube.getLabel(), denatureTube);
+                }});
+        getLabEventFactory().setTwoDBarcodedTubeDao(mockTwoDTubeDao);
+
+        RackOfTubesDao mockRackOfTubes = Mockito.mock(RackOfTubesDao.class);
+        Mockito.when(mockRackOfTubes.findByBarcode(Mockito.anyString())).thenReturn(null);
+        getLabEventFactory().setRackOfTubesDao(mockRackOfTubes);
+
+        MiSeqReagentKitEntityBuilder miSeqReagentKitEntityBuilder =
+                runMiSeqReagentEntityBuilder(qtpEntityBuilder.getDenatureRack(), "1",
+                        TST_REAGENT_KT).invoke();
+
+        Map<String, LabVessel> mockedMap = new HashMap<>();
+        mockedMap.put(miSeqReagentKitEntityBuilder.getReagentKit().getLabel(),
+                miSeqReagentKitEntityBuilder.getReagentKit());
+        mockedMap.put(denatureToFlowcellFlowcellBarcode, null);
+
+        LabVesselDao mockLabVesselDao2 = Mockito.mock(LabVesselDao.class);
+        Mockito.when(mockLabVesselDao2.findByBarcodes(Mockito.anyList())).thenReturn(mockedMap);
+
+        getLabEventFactory().setLabVesselDao(mockLabVesselDao2);
+
+
+        PlateCherryPickEvent reagentToFlowcellJaxb =
+                getLabEventFactory()
+                        .getReagentToFlowcellEventDBFree(TST_REAGENT_KT, denatureToFlowcellFlowcellBarcode, "hrafal",
+                                "ZAN");
+        LabEvent reagentToFlowcellEvent = getLabEventFactory().buildFromBettaLims(reagentToFlowcellJaxb);
+        getLabEventFactory().getEventHandlerSelector()
+                .applyEventSpecificHandling(reagentToFlowcellEvent, reagentToFlowcellJaxb);
+
+        Mockito.verify(mockEmailSender, Mockito.times(1)).sendHtmlEmail(Mockito.anyString(), Mockito.anyString(),
+                Mockito.anyString());
+        Mockito.verify(mockAppConfig, Mockito.times(1)).getWorkflowValidationEmail();
+        Mockito.verify(mockJiraService, Mockito.never()).getCustomFields(Mockito.anyString(), Mockito.anyString());
+        Mockito.verify(mockJiraService, Mockito.never()).updateIssue(Mockito.anyString(), Mockito.anyCollection());
+
+
+
+        EmailSender mockEmailSender2 = Mockito.mock(EmailSender.class);
+        JiraService mockJiraService2 = Mockito.mock(JiraService.class);
+        JiraService mockJiraSource2 = JiraServiceProducer.stubInstance();
+        Mockito.when(mockJiraService2.getCustomFields(Mockito.eq(LabBatch.TicketFields.SUMMARY.getFieldName()),
+                Mockito.eq(LabBatch.TicketFields.SEQUENCING_STATION.getFieldName())))
+                .thenReturn(mockJiraSource2.getCustomFields(LabBatch.TicketFields.SUMMARY.getFieldName(),
+                        LabBatch.TicketFields.SEQUENCING_STATION.getFieldName()));
+        AppConfig mockAppConfig2 = Mockito.mock(AppConfig.class);
+
+        getLabEventFactory().getEventHandlerSelector().getFlowcellMessageHandler().setEmailSender(mockEmailSender2);
+        getLabEventFactory().getEventHandlerSelector().getFlowcellMessageHandler().setJiraService(mockJiraService2);
+        getLabEventFactory().getEventHandlerSelector().getFlowcellMessageHandler().setAppConfig(mockAppConfig2);
+
+
+        HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
+                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", FLOWCELL_2500_TICKET_KEY,
+                        ProductionFlowcellPath.DENATURE_TO_FLOWCELL, null,
+                        WorkflowName.EXOME_EXPRESS.getWorkflowName());
+        Mockito.verify(mockEmailSender2, Mockito.never())
+                .sendHtmlEmail(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
+        Mockito.verify(mockAppConfig2, Mockito.never()).getWorkflowValidationEmail();
+        Mockito.verify(mockJiraService2, Mockito.times(1)).getCustomFields(Mockito.anyString(), Mockito.anyString());
+        Mockito.verify(mockJiraService2, Mockito.times(1)).updateIssue(Mockito.anyString(), Mockito.anyCollection());
+
+    }
+    @Test(groups = TestGroups.DATABASE_FREE)
+    public void testFailureDenatureToFlowcellMsgTooMany2500Batches() throws Exception {
+
+        //create a couple Miseq batches then one FCT (2500) batch
+        LabBatch fctBatch = new LabBatch(FLOWCELL_2500_TICKET_KEY, starterVessels, LabBatch.LabBatchType.FCT, 12.33f);
+        LabBatch fctBatch2 = new LabBatch(FLOWCELL_2500_TICKET_KEY+"2", starterVessels, LabBatch.LabBatchType.FCT, 12.33f);
+
+        final String denatureToFlowcellFlowcellBarcode = "ADTF";
+
+        EmailSender mockEmailSender = Mockito.mock(EmailSender.class);
+        JiraService mockJiraService = Mockito.mock(JiraService.class);
+        JiraService mockJiraSource = JiraServiceProducer.stubInstance();
+        Mockito.when(mockJiraService.getCustomFields(Mockito.eq(LabBatch.TicketFields.SUMMARY.getFieldName()),
+                Mockito.eq(LabBatch.TicketFields.SEQUENCING_STATION.getFieldName())))
+                .thenReturn(mockJiraSource.getCustomFields(LabBatch.TicketFields.SUMMARY.getFieldName(),
+                        LabBatch.TicketFields.SEQUENCING_STATION.getFieldName()));
+        AppConfig mockAppConfig = Mockito.mock(AppConfig.class);
+
+        getLabEventFactory().getEventHandlerSelector().getFlowcellMessageHandler().setEmailSender(mockEmailSender);
+        getLabEventFactory().getEventHandlerSelector().getFlowcellMessageHandler().setJiraService(mockJiraService);
+        getLabEventFactory().getEventHandlerSelector().getFlowcellMessageHandler().setAppConfig(mockAppConfig);
+
+        TubeFormationDao mockTubeFormationDao = Mockito.mock(TubeFormationDao.class);
+        Mockito.when(mockTubeFormationDao.findByDigest(Mockito.anyString()))
+                .thenReturn(qtpEntityBuilder.getDenatureRack());
+        getLabEventFactory().setTubeFormationDao(mockTubeFormationDao);
+
+        TwoDBarcodedTubeDAO mockTwoDTubeDao = Mockito.mock(TwoDBarcodedTubeDAO.class);
+        Mockito.when(mockTwoDTubeDao.findByBarcodes(Mockito.anyList()))
+                .thenReturn(new HashMap<String, TwoDBarcodedTube>() {{
+                    put(denatureTube.getLabel(), denatureTube);
+                }});
+        getLabEventFactory().setTwoDBarcodedTubeDao(mockTwoDTubeDao);
+
+        RackOfTubesDao mockRackOfTubes = Mockito.mock(RackOfTubesDao.class);
+        Mockito.when(mockRackOfTubes.findByBarcode(Mockito.anyString())).thenReturn(null);
+        getLabEventFactory().setRackOfTubesDao(mockRackOfTubes);
+
+        MiSeqReagentKitEntityBuilder miSeqReagentKitEntityBuilder =
+                runMiSeqReagentEntityBuilder(qtpEntityBuilder.getDenatureRack(), "1",
+                        TST_REAGENT_KT).invoke();
+
+        Map<String, LabVessel> mockedMap = new HashMap<>();
+        mockedMap.put(miSeqReagentKitEntityBuilder.getReagentKit().getLabel(),
+                miSeqReagentKitEntityBuilder.getReagentKit());
+        mockedMap.put(denatureToFlowcellFlowcellBarcode, null);
+
+        LabVesselDao mockLabVesselDao2 = Mockito.mock(LabVesselDao.class);
+        Mockito.when(mockLabVesselDao2.findByBarcodes(Mockito.anyList())).thenReturn(mockedMap);
+
+        getLabEventFactory().setLabVesselDao(mockLabVesselDao2);
+
+
+        PlateCherryPickEvent reagentToFlowcellJaxb =
+                getLabEventFactory()
+                        .getReagentToFlowcellEventDBFree(TST_REAGENT_KT, denatureToFlowcellFlowcellBarcode, "hrafal",
+                                "ZAN");
+        LabEvent reagentToFlowcellEvent = getLabEventFactory().buildFromBettaLims(reagentToFlowcellJaxb);
+        getLabEventFactory().getEventHandlerSelector()
+                .applyEventSpecificHandling(reagentToFlowcellEvent, reagentToFlowcellJaxb);
+
+        Mockito.verify(mockEmailSender, Mockito.times(1)).sendHtmlEmail(Mockito.anyString(), Mockito.anyString(),
+                Mockito.anyString());
+        Mockito.verify(mockAppConfig, Mockito.times(1)).getWorkflowValidationEmail();
+        Mockito.verify(mockJiraService, Mockito.never()).getCustomFields(Mockito.anyString(), Mockito.anyString());
+        Mockito.verify(mockJiraService, Mockito.never()).updateIssue(Mockito.anyString(), Mockito.anyCollection());
+
+
+
+        EmailSender mockEmailSender2 = Mockito.mock(EmailSender.class);
+        JiraService mockJiraService2 = Mockito.mock(JiraService.class);
+        JiraService mockJiraSource2 = JiraServiceProducer.stubInstance();
+        Mockito.when(mockJiraService2.getCustomFields(Mockito.eq(LabBatch.TicketFields.SUMMARY.getFieldName()),
+                Mockito.eq(LabBatch.TicketFields.SEQUENCING_STATION.getFieldName())))
+                .thenReturn(mockJiraSource2.getCustomFields(LabBatch.TicketFields.SUMMARY.getFieldName(),
+                        LabBatch.TicketFields.SEQUENCING_STATION.getFieldName()));
+        AppConfig mockAppConfig2 = Mockito.mock(AppConfig.class);
+
+        getLabEventFactory().getEventHandlerSelector().getFlowcellMessageHandler().setEmailSender(mockEmailSender2);
+        getLabEventFactory().getEventHandlerSelector().getFlowcellMessageHandler().setJiraService(mockJiraService2);
+        getLabEventFactory().getEventHandlerSelector().getFlowcellMessageHandler().setAppConfig(mockAppConfig2);
+
+
+        HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
+                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", FLOWCELL_2500_TICKET_KEY,
+                        ProductionFlowcellPath.DENATURE_TO_FLOWCELL, null,
+                        WorkflowName.EXOME_EXPRESS.getWorkflowName());
+        Mockito.verify(mockEmailSender2, Mockito.times(1))
+                .sendHtmlEmail(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
+        Mockito.verify(mockAppConfig2, Mockito.times(1)).getWorkflowValidationEmail();
+        Mockito.verify(mockJiraService2, Mockito.never()).getCustomFields(Mockito.anyString(), Mockito.anyString());
+        Mockito.verify(mockJiraService2, Mockito.never()).updateIssue(Mockito.anyString(), Mockito.anyCollection());
+
+    }
+
+    @Test(groups = TestGroups.DATABASE_FREE)
+    public void testFailureDenatureToFlowcellMsgNo2500Batches() throws Exception {
+
+        //create a couple Miseq batches then one FCT (2500) batch
+        LabBatch miseqBatch = new LabBatch(MISEQ_TICKET_KEY, starterVessels, LabBatch.LabBatchType.MISEQ, 7f);
+
+        final String denatureToFlowcellFlowcellBarcode = "ADTF";
+
+        EmailSender mockEmailSender = Mockito.mock(EmailSender.class);
+        JiraService mockJiraService = Mockito.mock(JiraService.class);
+        JiraService mockJiraSource = JiraServiceProducer.stubInstance();
+        Mockito.when(mockJiraService.getCustomFields(Mockito.eq(LabBatch.TicketFields.SUMMARY.getFieldName()),
+                Mockito.eq(LabBatch.TicketFields.SEQUENCING_STATION.getFieldName())))
+                .thenReturn(mockJiraSource.getCustomFields(LabBatch.TicketFields.SUMMARY.getFieldName(),
+                        LabBatch.TicketFields.SEQUENCING_STATION.getFieldName()));
+        AppConfig mockAppConfig = Mockito.mock(AppConfig.class);
+
+        getLabEventFactory().getEventHandlerSelector().getFlowcellMessageHandler().setEmailSender(mockEmailSender);
+        getLabEventFactory().getEventHandlerSelector().getFlowcellMessageHandler().setJiraService(mockJiraService);
+        getLabEventFactory().getEventHandlerSelector().getFlowcellMessageHandler().setAppConfig(mockAppConfig);
+
+        TubeFormationDao mockTubeFormationDao = Mockito.mock(TubeFormationDao.class);
+        Mockito.when(mockTubeFormationDao.findByDigest(Mockito.anyString()))
+                .thenReturn(qtpEntityBuilder.getDenatureRack());
+        getLabEventFactory().setTubeFormationDao(mockTubeFormationDao);
+
+        TwoDBarcodedTubeDAO mockTwoDTubeDao = Mockito.mock(TwoDBarcodedTubeDAO.class);
+        Mockito.when(mockTwoDTubeDao.findByBarcodes(Mockito.anyList()))
+                .thenReturn(new HashMap<String, TwoDBarcodedTube>() {{
+                    put(denatureTube.getLabel(), denatureTube);
+                }});
+        getLabEventFactory().setTwoDBarcodedTubeDao(mockTwoDTubeDao);
+
+        RackOfTubesDao mockRackOfTubes = Mockito.mock(RackOfTubesDao.class);
+        Mockito.when(mockRackOfTubes.findByBarcode(Mockito.anyString())).thenReturn(null);
+        getLabEventFactory().setRackOfTubesDao(mockRackOfTubes);
+
+        MiSeqReagentKitEntityBuilder miSeqReagentKitEntityBuilder =
+                runMiSeqReagentEntityBuilder(qtpEntityBuilder.getDenatureRack(), "1",
+                        TST_REAGENT_KT).invoke();
+
+        Map<String, LabVessel> mockedMap = new HashMap<>();
+        mockedMap.put(miSeqReagentKitEntityBuilder.getReagentKit().getLabel(),
+                miSeqReagentKitEntityBuilder.getReagentKit());
+        mockedMap.put(denatureToFlowcellFlowcellBarcode, null);
+
+        LabVesselDao mockLabVesselDao2 = Mockito.mock(LabVesselDao.class);
+        Mockito.when(mockLabVesselDao2.findByBarcodes(Mockito.anyList())).thenReturn(mockedMap);
+
+        getLabEventFactory().setLabVesselDao(mockLabVesselDao2);
+
+
+        PlateCherryPickEvent reagentToFlowcellJaxb =
+                getLabEventFactory()
+                        .getReagentToFlowcellEventDBFree(TST_REAGENT_KT, denatureToFlowcellFlowcellBarcode, "hrafal",
+                                "ZAN");
+        LabEvent reagentToFlowcellEvent = getLabEventFactory().buildFromBettaLims(reagentToFlowcellJaxb);
+        getLabEventFactory().getEventHandlerSelector()
+                .applyEventSpecificHandling(reagentToFlowcellEvent, reagentToFlowcellJaxb);
+
+        Mockito.verify(mockEmailSender, Mockito.never()).sendHtmlEmail(Mockito.anyString(), Mockito.anyString(),
+                Mockito.anyString());
+        Mockito.verify(mockAppConfig, Mockito.never()).getWorkflowValidationEmail();
+        Mockito.verify(mockJiraService, Mockito.times(1)).getCustomFields(Mockito.anyString(), Mockito.anyString());
+        Mockito.verify(mockJiraService, Mockito.times(1)).updateIssue(Mockito.anyString(), Mockito.anyCollection());
+
+
+
+        EmailSender mockEmailSender2 = Mockito.mock(EmailSender.class);
+        JiraService mockJiraService2 = Mockito.mock(JiraService.class);
+        JiraService mockJiraSource2 = JiraServiceProducer.stubInstance();
+        Mockito.when(mockJiraService2.getCustomFields(Mockito.eq(LabBatch.TicketFields.SUMMARY.getFieldName()),
+                Mockito.eq(LabBatch.TicketFields.SEQUENCING_STATION.getFieldName())))
+                .thenReturn(mockJiraSource2.getCustomFields(LabBatch.TicketFields.SUMMARY.getFieldName(),
+                        LabBatch.TicketFields.SEQUENCING_STATION.getFieldName()));
+        AppConfig mockAppConfig2 = Mockito.mock(AppConfig.class);
+
+        getLabEventFactory().getEventHandlerSelector().getFlowcellMessageHandler().setEmailSender(mockEmailSender2);
+        getLabEventFactory().getEventHandlerSelector().getFlowcellMessageHandler().setJiraService(mockJiraService2);
+        getLabEventFactory().getEventHandlerSelector().getFlowcellMessageHandler().setAppConfig(mockAppConfig2);
+
+
+        HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
+                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", FLOWCELL_2500_TICKET_KEY,
+                        ProductionFlowcellPath.DENATURE_TO_FLOWCELL, null,
+                        WorkflowName.EXOME_EXPRESS.getWorkflowName());
+        Mockito.verify(mockEmailSender2, Mockito.times(1))
+                .sendHtmlEmail(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
+        Mockito.verify(mockAppConfig2, Mockito.times(1)).getWorkflowValidationEmail();
+        Mockito.verify(mockJiraService2, Mockito.never()).getCustomFields(Mockito.anyString(), Mockito.anyString());
+        Mockito.verify(mockJiraService2, Mockito.never()).updateIssue(Mockito.anyString(), Mockito.anyCollection());
+
+    }
+    @Test(groups = TestGroups.DATABASE_FREE)
+    public void testFailureDenatureToFlowcellMsgTooManyMiSeqBatches() throws Exception {
+
+        //create a couple Miseq batches then one FCT (2500) batch
+        LabBatch miseqBatch = new LabBatch(MISEQ_TICKET_KEY, starterVessels, LabBatch.LabBatchType.MISEQ, 7f);
+        LabBatch miseqBatch2 = new LabBatch(MISEQ_TICKET_KEY+"2", starterVessels, LabBatch.LabBatchType.MISEQ, 7f);
+
+        final String denatureToFlowcellFlowcellBarcode = "ADTF";
+
+        EmailSender mockEmailSender = Mockito.mock(EmailSender.class);
+        JiraService mockJiraService = Mockito.mock(JiraService.class);
+        JiraService mockJiraSource = JiraServiceProducer.stubInstance();
+        Mockito.when(mockJiraService.getCustomFields(Mockito.eq(LabBatch.TicketFields.SUMMARY.getFieldName()),
+                Mockito.eq(LabBatch.TicketFields.SEQUENCING_STATION.getFieldName())))
+                .thenReturn(mockJiraSource.getCustomFields(LabBatch.TicketFields.SUMMARY.getFieldName(),
+                        LabBatch.TicketFields.SEQUENCING_STATION.getFieldName()));
+        AppConfig mockAppConfig = Mockito.mock(AppConfig.class);
+
+        getLabEventFactory().getEventHandlerSelector().getFlowcellMessageHandler().setEmailSender(mockEmailSender);
+        getLabEventFactory().getEventHandlerSelector().getFlowcellMessageHandler().setJiraService(mockJiraService);
+        getLabEventFactory().getEventHandlerSelector().getFlowcellMessageHandler().setAppConfig(mockAppConfig);
+
+        TubeFormationDao mockTubeFormationDao = Mockito.mock(TubeFormationDao.class);
+        Mockito.when(mockTubeFormationDao.findByDigest(Mockito.anyString()))
+                .thenReturn(qtpEntityBuilder.getDenatureRack());
+        getLabEventFactory().setTubeFormationDao(mockTubeFormationDao);
+
+        TwoDBarcodedTubeDAO mockTwoDTubeDao = Mockito.mock(TwoDBarcodedTubeDAO.class);
+        Mockito.when(mockTwoDTubeDao.findByBarcodes(Mockito.anyList()))
+                .thenReturn(new HashMap<String, TwoDBarcodedTube>() {{
+                    put(denatureTube.getLabel(), denatureTube);
+                }});
+        getLabEventFactory().setTwoDBarcodedTubeDao(mockTwoDTubeDao);
+
+        RackOfTubesDao mockRackOfTubes = Mockito.mock(RackOfTubesDao.class);
+        Mockito.when(mockRackOfTubes.findByBarcode(Mockito.anyString())).thenReturn(null);
+        getLabEventFactory().setRackOfTubesDao(mockRackOfTubes);
+
+        MiSeqReagentKitEntityBuilder miSeqReagentKitEntityBuilder =
+                runMiSeqReagentEntityBuilder(qtpEntityBuilder.getDenatureRack(), "1",
+                        TST_REAGENT_KT).invoke();
+
+        Map<String, LabVessel> mockedMap = new HashMap<>();
+        mockedMap.put(miSeqReagentKitEntityBuilder.getReagentKit().getLabel(),
+                miSeqReagentKitEntityBuilder.getReagentKit());
+        mockedMap.put(denatureToFlowcellFlowcellBarcode, null);
+
+        LabVesselDao mockLabVesselDao2 = Mockito.mock(LabVesselDao.class);
+        Mockito.when(mockLabVesselDao2.findByBarcodes(Mockito.anyList())).thenReturn(mockedMap);
+
+        getLabEventFactory().setLabVesselDao(mockLabVesselDao2);
+
+
+        PlateCherryPickEvent reagentToFlowcellJaxb =
+                getLabEventFactory()
+                        .getReagentToFlowcellEventDBFree(TST_REAGENT_KT, denatureToFlowcellFlowcellBarcode, "hrafal",
+                                "ZAN");
+        LabEvent reagentToFlowcellEvent = getLabEventFactory().buildFromBettaLims(reagentToFlowcellJaxb);
+        getLabEventFactory().getEventHandlerSelector()
+                .applyEventSpecificHandling(reagentToFlowcellEvent, reagentToFlowcellJaxb);
+
+        Mockito.verify(mockEmailSender, Mockito.times(1)).sendHtmlEmail(Mockito.anyString(), Mockito.anyString(),
+                Mockito.anyString());
+        Mockito.verify(mockAppConfig, Mockito.times(1)).getWorkflowValidationEmail();
+        Mockito.verify(mockJiraService, Mockito.never()).getCustomFields(Mockito.anyString(), Mockito.anyString());
+        Mockito.verify(mockJiraService, Mockito.never()).updateIssue(Mockito.anyString(), Mockito.anyCollection());
+
+
+
+        EmailSender mockEmailSender2 = Mockito.mock(EmailSender.class);
+        JiraService mockJiraService2 = Mockito.mock(JiraService.class);
+        JiraService mockJiraSource2 = JiraServiceProducer.stubInstance();
+        Mockito.when(mockJiraService2.getCustomFields(Mockito.eq(LabBatch.TicketFields.SUMMARY.getFieldName()),
+                Mockito.eq(LabBatch.TicketFields.SEQUENCING_STATION.getFieldName())))
+                .thenReturn(mockJiraSource2.getCustomFields(LabBatch.TicketFields.SUMMARY.getFieldName(),
+                        LabBatch.TicketFields.SEQUENCING_STATION.getFieldName()));
+        AppConfig mockAppConfig2 = Mockito.mock(AppConfig.class);
+
+        getLabEventFactory().getEventHandlerSelector().getFlowcellMessageHandler().setEmailSender(mockEmailSender2);
+        getLabEventFactory().getEventHandlerSelector().getFlowcellMessageHandler().setJiraService(mockJiraService2);
+        getLabEventFactory().getEventHandlerSelector().getFlowcellMessageHandler().setAppConfig(mockAppConfig2);
+
+
+        HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
+                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", FLOWCELL_2500_TICKET_KEY,
+                        ProductionFlowcellPath.DENATURE_TO_FLOWCELL, null,
+                        WorkflowName.EXOME_EXPRESS.getWorkflowName());
+        Mockito.verify(mockEmailSender2, Mockito.times(1))
+                .sendHtmlEmail(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
+        Mockito.verify(mockAppConfig2, Mockito.times(1)).getWorkflowValidationEmail();
+        Mockito.verify(mockJiraService2, Mockito.never()).getCustomFields(Mockito.anyString(), Mockito.anyString());
+        Mockito.verify(mockJiraService2, Mockito.never()).updateIssue(Mockito.anyString(), Mockito.anyCollection());
+
+    }
 
     @Test(groups = TestGroups.DATABASE_FREE)
     public void testSuccessfulDenatureToDilutionMsg() throws Exception {
+
+        //create a couple Miseq batches then one FCT (2500) batch
+        LabBatch miseqBatch = new LabBatch(MISEQ_TICKET_KEY, starterVessels, LabBatch.LabBatchType.MISEQ, 7f);
+        LabBatch fctBatch = new LabBatch(FLOWCELL_2500_TICKET_KEY, starterVessels, LabBatch.LabBatchType.FCT, 12.33f);
+        LabBatch fctBatch2 = new LabBatch(FLOWCELL_2500_TICKET_KEY+"2", starterVessels, LabBatch.LabBatchType.FCT, 12.33f);
 
         final String denatureToFlowcellFlowcellBarcode = "ADDF";
 
@@ -240,12 +622,15 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
                 Mockito.anyString());
         Mockito.verify(mockAppConfig, Mockito.never()).getWorkflowValidationEmail();
         Mockito.verify(mockJiraService, Mockito.times(1)).getCustomFields(Mockito.anyString(), Mockito.anyString());
+        Mockito.verify(mockJiraService, Mockito.times(1)).updateIssue(Mockito.anyString(), Mockito.anyCollection());
 
 
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
                 runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", FLOWCELL_2500_TICKET_KEY,
                         ProductionFlowcellPath.DILUTION_TO_FLOWCELL, null,
                         WorkflowName.EXOME_EXPRESS.getWorkflowName());
+
+
         Mockito.verify(mockEmailSender, Mockito.never())
                 .sendHtmlEmail(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
         Mockito.verify(mockAppConfig, Mockito.never()).getWorkflowValidationEmail();
@@ -256,6 +641,10 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
 
     @Test(groups = TestGroups.DATABASE_FREE)
     public void testSuccessfulSTBToFlowcellMsg() throws Exception {
+
+        //create a couple Miseq batches then one FCT (2500) batch
+        LabBatch miseqBatch = new LabBatch(MISEQ_TICKET_KEY, starterVessels, LabBatch.LabBatchType.MISEQ, 7f);
+        LabBatch fctBatch = new LabBatch(FLOWCELL_2500_TICKET_KEY, starterVessels, LabBatch.LabBatchType.FCT, 12.33f);
 
         final String denatureToFlowcellFlowcellBarcode = "ASTF";
 
@@ -316,6 +705,8 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
                 Mockito.anyString());
         Mockito.verify(mockAppConfig, Mockito.never()).getWorkflowValidationEmail();
         Mockito.verify(mockJiraService, Mockito.times(1)).getCustomFields(Mockito.anyString(), Mockito.anyString());
+        Mockito.verify(mockJiraService, Mockito.times(1)).updateIssue(Mockito.anyString(), Mockito.anyCollection());
+
 
 
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
