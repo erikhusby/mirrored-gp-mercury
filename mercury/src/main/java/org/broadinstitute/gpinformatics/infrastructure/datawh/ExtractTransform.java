@@ -208,6 +208,11 @@ public class ExtractTransform implements Serializable {
         this.etlInstances.addAll(etlInstances);
     }
 
+    /**
+     * "0" is used as a sentinel value for start/end times,
+     *
+     * @see ExtractTransform#incrementalEtl
+     */
     private static final String ZERO = "0";
 
     private static boolean isZero(String value) {

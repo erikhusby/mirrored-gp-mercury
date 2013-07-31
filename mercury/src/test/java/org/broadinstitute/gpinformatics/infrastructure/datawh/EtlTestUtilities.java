@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.apache.commons.io.FileUtils;
+import org.testng.Assert;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -90,5 +91,21 @@ public class EtlTestUtilities {
 
     public static String format(Date d) {
         return ExtractTransform.formatTimestamp(d);
+    }
+
+    /**
+     * Given a single SQL Loader record, verify that its values match the expected values.  If a non-matching value
+     * is found an assertion is fired.
+     *
+     * @param record the record to verify, comma separated values
+     * @param matchValues the values to match
+     */
+    static void verifyRecord(String record, String... matchValues) {
+        int i = 0;
+        String[] parts = record.split(",");
+        for (String matchValue : matchValues) {
+            Assert.assertEquals(parts[i++], matchValue);
+        }
+        Assert.assertEquals(parts.length, i);
     }
 }
