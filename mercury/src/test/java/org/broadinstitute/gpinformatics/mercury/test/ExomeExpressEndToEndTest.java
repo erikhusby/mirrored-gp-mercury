@@ -302,7 +302,7 @@ public class ExomeExpressEndToEndTest {
             // deck query for barcodes
             // (deck query for workflow)
             // deck sends message, check workflow
-            LabEventFactory labEventFactory = new LabEventFactory();
+            LabEventFactory labEventFactory = new LabEventFactory(null);
             labEventFactory.setLabEventRefDataFetcher(new LabEventFactory.LabEventRefDataFetcher() {
                 @Override
                 public BspUser getOperator(String userId) {

@@ -68,7 +68,7 @@ public class HiSeq2500JaxbBuilder {
 
         dilutionRackBarcode = "DilutionRack" + testPrefix;
         dilutionTubeBarcode = "DilutionTube" + testPrefix;
-        flowcellBarcode = "Flowcell" + testPrefix;
+        flowcellBarcode = "Flowcell" + testPrefix + "ADXX";
 
         switch (productionFlowcellPath) {
 

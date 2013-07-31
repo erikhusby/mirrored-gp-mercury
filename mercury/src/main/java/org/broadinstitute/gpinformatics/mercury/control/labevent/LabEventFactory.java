@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEv
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
+import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettalimsObjectFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.GenericReagentDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
@@ -54,11 +55,14 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -66,6 +70,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
+
+import static org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell.FlowcellType.MiSeqFlowcell;
 
 /**
  * Creates Lab Event entities from BettaLIMS JAXB beans.  Implements Serializable because it's used by a Stateful
@@ -124,8 +130,6 @@ public class LabEventFactory implements Serializable {
     @Inject
     private StaticPlateDAO staticPlateDAO;
 
-    //TODO SGM  remove inject here
-    @Inject
     private BSPUserList bspUserList;
 
     @Inject
@@ -155,13 +159,42 @@ public class LabEventFactory implements Serializable {
     @Inject
     private EventHandlerSelector eventHandlerSelector;
 
-    //TODO SGM Remove default constructor
-    public LabEventFactory() {
-    }
-
+    @Inject
     //TODO SGM Make inject constructor.  Replace test cases with this and a BSPUserList initialized with test people.
     public LabEventFactory(BSPUserList userList) {
-        bspUserList = userList;
+        this.bspUserList = userList;
+    }
+
+    public PlateCherryPickEvent getReagentToFlowcellEventDBFree(String reagentKitBarcode, String flowcellBarcode,
+                                                                 String username, String stationName) {
+        PlateCherryPickEvent transferEvent = new PlateCherryPickEvent();
+        transferEvent.setEventType(LabEventType.REAGENT_KIT_TO_FLOWCELL_TRANSFER.getName());
+        GregorianCalendar gregorianCalendar = new GregorianCalendar();
+        try {
+            transferEvent.setStart(DatatypeFactory.newInstance().newXMLGregorianCalendar(gregorianCalendar));
+        } catch (DatatypeConfigurationException e) {
+            throw new RuntimeException(e);
+        }
+        transferEvent.setDisambiguator(1L);
+        transferEvent.setOperator(username);
+        transferEvent.setStation(stationName);
+
+        // yes, yes, miSeq flowcell has one lane.
+        for (VesselPosition vesselPosition : MiSeqFlowcell.getVesselGeometry().getVesselPositions()) {
+            CherryPickSourceType cherryPickSource = BettalimsObjectFactory.createCherryPickSourceType(reagentKitBarcode,
+                    MiSeqReagentKit.LOADING_WELL.name(), flowcellBarcode, vesselPosition.name());
+            transferEvent.getSource().add(cherryPickSource);
+        }
+
+        PlateType reagentKitType = BettalimsObjectFactory.createPlateType(reagentKitBarcode,
+                StaticPlate.PlateType.MiSeqReagentKit.getDisplayName(), MiSeqReagentKit.LOADING_WELL.name(), null);
+        transferEvent.getSourcePlate().add(reagentKitType);
+
+        PlateType flowcell = BettalimsObjectFactory
+                .createPlateType(flowcellBarcode, MiSeqFlowcell.getAutomationName(), SBSSection.ALL96.getSectionName(),
+                        null);
+        transferEvent.getPlate().add(flowcell);
+        return transferEvent;
     }
 
     public interface LabEventRefDataFetcher {
@@ -1149,5 +1182,21 @@ public class LabEventFactory implements Serializable {
 
     public EventHandlerSelector getEventHandlerSelector() {
         return eventHandlerSelector;
+    }
+
+    public void setLabVesselDao(LabVesselDao labVesselDao) {
+        this.labVesselDao = labVesselDao;
+    }
+
+    public void setTubeFormationDao(TubeFormationDao tubeFormationDao) {
+        this.tubeFormationDao = tubeFormationDao;
+    }
+
+    public void setRackOfTubesDao(RackOfTubesDao rackOfTubesDao) {
+        this.rackOfTubesDao = rackOfTubesDao;
+    }
+
+    public void setTwoDBarcodedTubeDao(TwoDBarcodedTubeDAO twoDBarcodedTubeDao) {
+        this.twoDBarcodedTubeDao = twoDBarcodedTubeDao;
     }
 }

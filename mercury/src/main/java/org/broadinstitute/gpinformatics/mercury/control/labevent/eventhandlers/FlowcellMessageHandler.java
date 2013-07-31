@@ -32,19 +32,16 @@ public class FlowcellMessageHandler extends AbstractEventHandler {
 
     private static final Log LOG = LogFactory.getLog(FlowcellMessageHandler.class);
 
+    @Inject
     private JiraService jiraService;
 
+    @Inject
     private EmailSender emailSender;
 
+    @Inject
     private AppConfig appConfig;
 
-    @Inject
-    public FlowcellMessageHandler(JiraService jiraService,
-                                  EmailSender emailSender,
-                                  AppConfig appConfig) {
-        this.jiraService = jiraService;
-        this.emailSender = emailSender;
-        this.appConfig = appConfig;
+    public FlowcellMessageHandler() {
     }
 
     @Override

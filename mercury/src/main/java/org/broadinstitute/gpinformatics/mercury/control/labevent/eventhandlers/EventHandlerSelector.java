@@ -47,4 +47,8 @@ public class EventHandlerSelector {
     public void setDenatureToDilutionTubeHandler(DenatureToDilutionTubeHandler denatureToDilutionTubeHandler) {
         this.denatureToDilutionTubeHandler = denatureToDilutionTubeHandler;
     }
+
+    public FlowcellMessageHandler getFlowcellMessageHandler() {
+        return flowcellMessageHandler;
+    }
 }

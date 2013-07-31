@@ -89,7 +89,7 @@ public class BaseEventTest {
 
     private BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
 
-    private LabEventFactory labEventFactory = new LabEventFactory();
+    private LabEventFactory labEventFactory = new LabEventFactory(null);
 
     private LabBatchEjb labBatchEJB;
 
@@ -132,10 +132,16 @@ public class BaseEventTest {
 
         labEventFactory.setLabEventRefDataFetcher(labEventRefDataFetcher);
 
+        final FlowcellMessageHandler flowcellMessageHandler =
+                new FlowcellMessageHandler();
+        flowcellMessageHandler.setJiraService(JiraServiceProducer.stubInstance());
+        flowcellMessageHandler.setEmailSender( new EmailSender());
+        flowcellMessageHandler.setAppConfig(new AppConfig(
+                        Deployment.DEV));
+
         EventHandlerSelector eventHandlerSelector =
                 new EventHandlerSelector(new DenatureToDilutionTubeHandler(),
-                        new FlowcellMessageHandler(JiraServiceProducer.stubInstance(),new EmailSender(), new AppConfig(
-                                Deployment.DEV)));
+                        flowcellMessageHandler);
         labEventFactory.setEventHandlerSelector(eventHandlerSelector);
 
         bucketEjb = new BucketEjb(labEventFactory, jiraService, labBatchEJB, null);
