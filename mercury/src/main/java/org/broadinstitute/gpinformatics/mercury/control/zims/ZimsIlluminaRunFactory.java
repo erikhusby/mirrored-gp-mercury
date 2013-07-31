@@ -303,7 +303,6 @@ public class ZimsIlluminaRunFactory {
 
             // Project stuff.
             ResearchProject project = productOrder.getResearchProject();
-            projectName = project.getBusinessKey();
             aligner = project.getSequenceAlignerKey();
 
             // If there is a reference sequence value on the project, then populate the name and version.
@@ -321,7 +320,7 @@ public class ZimsIlluminaRunFactory {
         }
 
         return new LibraryBean(
-                library, projectName, initiative, workRequest, indexingSchemeDto, hasIndexingRead, expectedInsertSize,
+                library, null, initiative, workRequest, indexingSchemeDto, hasIndexingRead, expectedInsertSize,
                 analysisType, referenceSequence, referenceSequenceVersion, organism, species,
                 strain, aligner, rrbsSizeRange, restrictionEnzyme, bait, labMeasuredInsertSize,
                 positiveControl, negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation,

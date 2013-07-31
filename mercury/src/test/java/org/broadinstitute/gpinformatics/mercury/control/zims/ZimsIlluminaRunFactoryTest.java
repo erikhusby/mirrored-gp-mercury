@@ -229,7 +229,7 @@ public class ZimsIlluminaRunFactoryTest {
         for (LibraryBean libraryBean : zimsIlluminaRuns) {
             assertThat(libraryBean.getLibrary(),
                     equalTo("testTube")); // TODO: expand with full definition of generated library name
-            assertThat(libraryBean.getProject(), equalTo("TestRP-1"));
+            assertThat(libraryBean.getProject(), nullValue());
 //            assertThat(libraryBean.getMolecularIndexingScheme().getName(), equalTo("???")); // TODO
             assertThat(libraryBean.getSpecies(), equalTo("Hamster"));
             assertThat(libraryBean.getLsid(), equalTo("ZimsIlluminaRunFactoryTest.testMakeLibraryBean.sampleDTO"));
