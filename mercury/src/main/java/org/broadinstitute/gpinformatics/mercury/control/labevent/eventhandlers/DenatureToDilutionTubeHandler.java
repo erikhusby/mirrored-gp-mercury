@@ -30,7 +30,7 @@ import java.util.Map;
  */
 public class DenatureToDilutionTubeHandler extends AbstractEventHandler {
 
-    public static final String FCT_METADATA_NAME = "FLOWCELL_TICKET";
+    public static final String FCT_METADATA_NAME = "FCT";
 
     public DenatureToDilutionTubeHandler() {
     }
