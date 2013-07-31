@@ -32,7 +32,7 @@
     <xsd:complexType name="sequencingTemplateLaneType">
         <xsd:sequence>
             <xsd:element name="laneName" type="xsd:string"/>
-            <xsd:element name="loadingConcentration" nillable="true" type="xsd:double"/>
+            <xsd:element name="loadingConcentration" nillable="true" type="xsd:float"/>
             <xsd:element name="loadingVesselLabel" type="xsd:string">
                 <xsd:annotation>
                     <xsd:documentation>

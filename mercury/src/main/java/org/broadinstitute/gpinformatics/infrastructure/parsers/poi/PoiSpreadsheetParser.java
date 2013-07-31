@@ -118,7 +118,7 @@ public final class PoiSpreadsheetParser implements Serializable {
      * @param processor The Table Processor that will be turning rows of data into objects based on headers.
      * @param rows The row iterator.
      */
-    private void processHeaders(TableProcessor processor, Iterator<Row> rows) {
+    private void processHeaders(TableProcessor processor, Iterator<Row> rows) throws ValidationException {
         int headerRowIndex = 0;
         int numHeaderRows = processor.getNumHeaderRows();
         while (rows.hasNext() && headerRowIndex < numHeaderRows) {
@@ -134,7 +134,9 @@ public final class PoiSpreadsheetParser implements Serializable {
 
             // The primary header row is the one that needs to be generally validated.
             if (processor.getPrimaryHeaderRow() == headerRowIndex) {
-                processor.validateHeaders(headers);
+                if (!processor.validateHeaders(headers)) {
+                    throw new ValidationException("Error parsing headers.", processor.getMessages());
+                }
             }
 
             // Turn the header strings for this row into whatever objects are needed to continue on.

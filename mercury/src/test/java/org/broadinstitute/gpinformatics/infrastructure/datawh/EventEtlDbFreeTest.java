@@ -333,20 +333,9 @@ public class EventEtlDbFreeTest {
 
 
     private void verifyRecord(String record) {
-        int i = 0;
-        String[] parts = record.split(",");
-        Assert.assertEquals(parts[i++], etlDateStr);
-        Assert.assertEquals(parts[i++], "F");
-        Assert.assertEquals(parts[i++], String.valueOf(entityId));
-        Assert.assertEquals(parts[i++], String.valueOf(workflowId));
-        Assert.assertEquals(parts[i++], String.valueOf(processId));
-        Assert.assertEquals(parts[i++], String.valueOf(pdoId));
-        Assert.assertEquals(parts[i++], sampleKey);
-        Assert.assertEquals(parts[i++], String.valueOf(labBatchName));
-        Assert.assertEquals(parts[i++], location);
-        Assert.assertEquals(parts[i++], String.valueOf(vesselId));
-        Assert.assertEquals(parts[i++], ExtractTransform.formatTimestamp(eventDate));
-        Assert.assertEquals(parts.length, i);
+        EtlTestUtilities.verifyRecord(record, etlDateStr,"F", String.valueOf(entityId), String.valueOf(workflowId),
+                String.valueOf(processId), String.valueOf(pdoId), sampleKey, String.valueOf(labBatchName), location,
+                String.valueOf(vesselId), ExtractTransform.formatTimestamp(eventDate));
     }
 }
 

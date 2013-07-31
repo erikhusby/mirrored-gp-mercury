@@ -23,7 +23,6 @@ public class BSPSampleDataFetcherContainerTest extends Arquillian {
     @Inject
     private BSPSampleDataFetcher bspSampleDataFetcher;
 
-
     @Test(enabled = true)
     public void testFFPE() {
         BSPSampleDTO ffpe = bspSampleDataFetcher.fetchSingleSampleFromBSP("SM-16BL4");
