@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
+import com.google.common.base.Predicate;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
@@ -11,6 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.hibernate.annotations.Parent;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
 import javax.persistence.Embeddable;
@@ -41,10 +43,19 @@ import java.util.Set;
  * inheritance is not supported.  As an example of multiple roles, A Cryo straw is held in a visotube, which is held
  * in a goblet; a visotube is both a container and a containee.
  */
+@SuppressWarnings("UnusedDeclaration")
 @Embeddable
 public class VesselContainer<T extends LabVessel> {
 
-//    private static final Log LOG = LogFactory.getLog(VesselContainer.class);
+    /**
+     * Predicate that determines whether its argument represents a rack of tubes.
+     */
+    public static final Predicate<LabVessel> IS_LAB_VESSEL_A_RACK = new Predicate<LabVessel>() {
+        @Override
+        public boolean apply(@Nullable LabVessel labVessel) {
+            return labVessel != null && labVessel.getType() == LabVessel.ContainerType.TUBE_FORMATION;
+        }
+    };
 
     /* rack holds tubes, tubes have barcodes and can be removed.
     * plate holds wells, wells can't be removed.
@@ -636,4 +647,79 @@ public class VesselContainer<T extends LabVessel> {
         applyCriteriaToAllPositions(criteria);
         return new ArrayList<>(criteria.getVesselAndPositions());
     }
+
+
+    /**
+     * Returns the shortest paths of LabEvents from this VesselContainer to source vessels satisfying the predicate.
+     * In the event that multiple paths of equal length are found, all paths will be returned.
+     *
+     * The Lists of LabEvents in the returned List are ordered with the most recent LabEvents first
+     * (i.e. the source LabVessel satisfying the predicate is among the sources on the last LabEvent).
+     */
+    public List<List<LabEvent>> shortestPathsToVesselsSatisfyingPredicate(@Nonnull Predicate<LabVessel> predicate) {
+
+        List<List<LabEvent>> foundEventLists = new ArrayList<>();
+
+        // Keep track of the List of LabEvents that lead to a source potentially satisfying the predicate.
+        List<Map<LabVessel, List<LabEvent>>> currentTransfers = new ArrayList<>();
+
+        for (LabEvent labEvent : getTransfersTo()) {
+            for (LabVessel vessel : labEvent.getSourceLabVessels()) {
+                Map<LabVessel, List<LabEvent>> currentTransfer = new HashMap<>();
+                currentTransfer.put(vessel, Collections.singletonList(labEvent));
+                currentTransfers.add(currentTransfer);
+            }
+        }
+
+        // Continue until finding LabVessels satisfying the predicate or running out of LabVessels to test.
+        while (true) {
+            // Search for LabVessels satisfying the predicate.
+            for (Map<LabVessel, List<LabEvent>> currentTransfer : currentTransfers) {
+                for (Map.Entry<LabVessel, List<LabEvent>> entry : currentTransfer.entrySet()) {
+                    if (predicate.apply(entry.getKey())) {
+                        foundEventLists.add(entry.getValue());
+                    }
+                }
+            }
+
+            // If any satisfying LabVessels at this depth were found, terminate the search.
+            if (!foundEventLists.isEmpty()) {
+                return foundEventLists;
+            }
+
+            // Search for transfers one level deeper from the current set of transfers.
+            List<Map<LabVessel, List<LabEvent>>> previousTransfers = currentTransfers;
+            currentTransfers = new ArrayList<>();
+
+            for (Map<LabVessel, List<LabEvent>> previousTransfer : previousTransfers) {
+
+                for (Map.Entry<LabVessel, List<LabEvent>> entry : previousTransfer.entrySet()) {
+                    LabVessel vessel = entry.getKey();
+                    List<LabEvent> labEvents = entry.getValue();
+                    Map<LabVessel, List<LabEvent>> vesselMap = new HashMap<>();
+
+                    for (LabEvent labEvent : vessel.getTransfersTo()) {
+                        for (LabVessel sourceVessel : labEvent.getSourceLabVessels()) {
+                            if (!vesselMap.containsKey(sourceVessel)) {
+                                vesselMap.put(sourceVessel, new ArrayList<>(labEvents));
+                            }
+                            vesselMap.get(sourceVessel).add(labEvent);
+                        }
+                    }
+
+                    // Add non-empty Maps from LabVessels to Lists of LabEvents to the List of current transfers.
+                    if (!vesselMap.isEmpty()) {
+                        currentTransfers.add(vesselMap);
+                    }
+                }
+            }
+
+            // If there are no transfers left to search, terminate.
+            if (currentTransfers.isEmpty()) {
+                return foundEventLists;
+            }
+        }
+
+    }
+
 }
