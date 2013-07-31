@@ -22,8 +22,7 @@ public class BSPSetVolumeConcentrationImpl extends BSPJerseyClient implements BS
     private static final String VOLUME_CONCENTRATION_URL =
             "sample/setVolumeConcentration?barcode=%s&volume=%f&concentration=%f";
 
-
-    private String[] result = new String[] { "No result calculated" };
+    private final String[] result = new String[] { "No result calculated" };
 
     /**
      * Required for @Impl class.
@@ -59,12 +58,12 @@ public class BSPSetVolumeConcentrationImpl extends BSPJerseyClient implements BS
 
             // Check for OK status.
             if (clientResponse.getStatus() != ClientResponse.Status.OK.getStatusCode()) {
-                result = new String[] { "Cannot set volume and concentration: " + clientResponse.getStatus() };
+                result[0] = "Cannot set volume and concentration: " + clientResponse.getStatus();
             } else {
-                result = new String[] { rdr.readLine() };
+                result[0] = rdr.readLine();
             }
         } catch (Exception exp) {
-            result = new String[] { "Cannot set volume and concentration: " + exp.getMessage() };
+            result[0] = "Cannot set volume and concentration: " + exp.getMessage();
         } finally {
             // Close the reader, which will close the underlying input stream.
             IOUtils.closeQuietly(rdr);
