@@ -1,14 +1,11 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
-import org.broadinstitute.gpinformatics.athena.entity.project.Cohort;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 
 import javax.enterprise.inject.Alternative;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
- * Stubbed version of the cohort service.
+ * Stubbed version of the set volume and concentration service.
  */
 @Stub
 @Alternative
@@ -20,9 +17,7 @@ public class BSPSetVolumeConcentrationStub implements BSPSetVolumeConcentration 
 
     @Override
     public void setVolumeAndConcentration(String barcode, double volume, double concentration) {
-
-        result = new String[1];
-        result[0] = "updated volume and concentration for STUB-1234";
+        result = new String[] { VALID_COMMUNICATION_PREFIX + " " + barcode };
     }
 
     @Override

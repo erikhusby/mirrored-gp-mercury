@@ -1,11 +1,8 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
-import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.BSPJerseyClient;
 
@@ -15,17 +12,22 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 
 /**
- * This class handles grabbing collections from BSP for use in Mercury project set up.
+ * This class provides Mercury with a way to send volume and concentration to BSP.
  */
 @Impl
 public class BSPSetVolumeConcentrationImpl extends BSPJerseyClient implements BSPSetVolumeConcentration {
 
     private static final long serialVersionUID = -2649024856161379565L;
 
-    private static Log logger = LogFactory.getLog(BSPCohortSearchServiceImpl.class);
+    private static final String VOLUME_CONCENTRATION_URL =
+            "sample/setVolumeConcentration?barcode=%s&volume=%f&concentration=%f";
 
-    private String[] result;
 
+    private String[] result = new String[] { "No result calculated" };
+
+    /**
+     * Required for @Impl class.
+     */
     @SuppressWarnings("unused")
     public BSPSetVolumeConcentrationImpl() {
     }
@@ -42,9 +44,8 @@ public class BSPSetVolumeConcentrationImpl extends BSPJerseyClient implements BS
     @Override
     public void setVolumeAndConcentration(String barcode, double volume, double concentration) {
 
-        String SET_VOLUME_CONCENTRATION = "sample/setVolumeConcentration";
-        String queryString = String.format("?barcode=%s&volume=%f&concentration=%f", barcode, volume, concentration);
-        String urlString = getUrl(SET_VOLUME_CONCENTRATION + queryString);
+        String queryString = String.format(VOLUME_CONCENTRATION_URL, barcode, volume, concentration);
+        String urlString = getUrl(queryString);
 
         BufferedReader rdr = null;
 
@@ -58,21 +59,12 @@ public class BSPSetVolumeConcentrationImpl extends BSPJerseyClient implements BS
 
             // Check for OK status.
             if (clientResponse.getStatus() != ClientResponse.Status.OK.getStatusCode()) {
-                String errMsg = "Cannot set volume and concentration : " + clientResponse.getStatus();
-                logger.error(errMsg + " : " + rdr.readLine());
-                throw new RuntimeException(errMsg);
+                result = new String[] { "Cannot set volume and concentration: " + clientResponse.getStatus() };
+            } else {
+                result = new String[] { rdr.readLine() };
             }
-
-            // Skip the header line.
-            result = new String[1];
-            result[0] = rdr.readLine();
-        } catch(ClientHandlerException e) {
-            String errMsg = "Could not communicate with BSP platform to get all cohorts";
-            logger.error(errMsg + " at " + urlString, e);
-            throw e;
         } catch (Exception exp) {
-            logger.error(exp.getMessage(), exp);
-            throw new RuntimeException(exp);
+            result = new String[] { "Cannot set volume and concentration: " + exp.getMessage() };
         } finally {
             // Close the reader, which will close the underlying input stream.
             IOUtils.closeQuietly(rdr);
@@ -86,6 +78,6 @@ public class BSPSetVolumeConcentrationImpl extends BSPJerseyClient implements BS
 
     @Override
     public boolean isValidResult() {
-        return result[0].startsWith(BSPSetVolumeConcentration.VALID_COMMUNICATION_PREFIX);
+        return result[0].startsWith(VALID_COMMUNICATION_PREFIX);
     }
 }

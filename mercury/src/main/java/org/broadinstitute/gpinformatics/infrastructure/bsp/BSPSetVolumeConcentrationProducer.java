@@ -12,6 +12,12 @@ import javax.inject.Inject;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.STUBBY;
 
+/**
+ * This follows the Mercury guideline for producing test implementations of our services, described at:
+ *
+ * https://confluence.broadinstitute.org/display/SEQPLATINFX/Mercury+Configuration?focusedCommentId=44532773#comment-44532773
+ *
+ */
 public class BSPSetVolumeConcentrationProducer {
 
     @Inject

@@ -38,7 +38,7 @@ public class BSPCohortSearchServiceProducer {
      * Creates a BSPCohortSearchService with plain old new operator for container-free testing,
      * not a managed bean!
      *
-     * @return The service
+     * @return A new BSPCohortSearchService to be used for testing.
      */
     public static BSPCohortSearchService testInstance() {
 
