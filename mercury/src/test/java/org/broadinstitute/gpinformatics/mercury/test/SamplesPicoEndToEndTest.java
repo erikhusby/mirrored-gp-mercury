@@ -141,7 +141,7 @@ public class SamplesPicoEndToEndTest {
         void buildEntities() {
             samplesPicoJaxbBuilder.buildJaxb();
 
-            LabEventFactory labEventFactory = new LabEventFactory(null);
+            LabEventFactory labEventFactory = new LabEventFactory(null, null);
             labEventFactory.setLabEventRefDataFetcher(new LabEventFactory.LabEventRefDataFetcher() {
                 @Override
                 public BspUser getOperator(String userId) {

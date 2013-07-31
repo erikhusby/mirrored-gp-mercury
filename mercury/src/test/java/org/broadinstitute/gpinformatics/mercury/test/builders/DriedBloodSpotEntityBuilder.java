@@ -35,7 +35,7 @@ public class DriedBloodSpotEntityBuilder {
     public void buildEntities() {
         BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
         driedBloodSpotJaxbBuilder.buildJaxb();
-        LabEventFactory labEventFactory = new LabEventFactory(null);
+        LabEventFactory labEventFactory = new LabEventFactory(null, null);
         labEventFactory.setLabEventRefDataFetcher(new LabEventFactory.LabEventRefDataFetcher() {
             @Override
             public BspUser getOperator ( String userId ) {

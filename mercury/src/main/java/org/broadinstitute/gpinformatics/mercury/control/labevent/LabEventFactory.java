@@ -162,7 +162,7 @@ public class LabEventFactory implements Serializable {
 
     @Inject
     private EventHandlerSelector eventHandlerSelector;
-    @Inject
+
     private BSPSetVolumeConcentration bspSetVolumeConcentration;
 
     private static final Log logger = LogFactory.getLog(LabEventFactory.class);

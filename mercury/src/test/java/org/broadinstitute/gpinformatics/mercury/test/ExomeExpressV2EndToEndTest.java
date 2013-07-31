@@ -84,7 +84,6 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
         BSPSetVolumeConcentration bspSetVolumeConcentration = BSPSetVolumeConcentrationProducer.stubInstance();
         LabEventFactory labEventFactory = new LabEventFactory(testUserList, bspSetVolumeConcentration);
 
-        LabEventFactory labEventFactory = new LabEventFactory(testUserList);
         labEventFactory.setEventHandlerSelector(getLabEventFactory().getEventHandlerSelector());
 
         List<ProductOrderSample> productOrderSamples = new ArrayList<>();
