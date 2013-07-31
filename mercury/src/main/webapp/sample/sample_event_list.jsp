@@ -66,9 +66,12 @@
                         <c:forEach items="${bean.getSampleInstancesForSample(vessel, sample, 'ANY')}"
                                    var="sampleInstance">
                             <%--@elvariable id="sampleInstance" type="org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance"--%>
-                            <c:forEach items="${vessel.getLastKnownPositionsOfSample(sampleInstance)}" var="position">
-                                ${position}
-                            </c:forEach>
+                            <c:if test="${vessel.containerRole != null}">
+                                <c:forEach items="${vessel.containerRole.getPositionsOfSampleInstance(sampleInstance)}"
+                                           var="position">
+                                    ${position}
+                                </c:forEach>
+                            </c:if>
                         </c:forEach>
                     </td>
                     <td>
