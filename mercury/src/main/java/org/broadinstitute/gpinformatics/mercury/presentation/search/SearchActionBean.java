@@ -1,28 +1,20 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.search;
 
-import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.RedirectResolution;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
-import net.sourceforge.stripes.controller.LifecycleStage;
-import net.sourceforge.stripes.validation.SimpleError;
 import net.sourceforge.stripes.validation.Validate;
-import net.sourceforge.stripes.validation.ValidationErrors;
-import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
-import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
-import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
+import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -30,13 +22,10 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.inject.Inject;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -48,8 +37,7 @@ public class SearchActionBean extends CoreActionBean {
     public static final String ACTIONBEAN_URL_BINDING = "/search/all.action";
 
     protected enum SearchType {
-        PDO_BY_KEY, RP_BY_KEY, P_BY_KEY, VESSELS_BY_BARCODE, VESSELS_BY_PDO, VESSELS_BY_SAMPLE_KEY, SAMPLES_BY_NAME,
-        BATCH_BY_KEY
+        PDO_BY_KEY, RP_BY_KEY, P_BY_KEY, BATCH_BY_KEY, VESSELS_BY_BARCODE
     }
 
     private static final String SEPARATOR = ",";
@@ -61,42 +49,24 @@ public class SearchActionBean extends CoreActionBean {
     private static final Pattern UPPERCASE_PATTERN = Pattern.compile("[sS][mMpP]-.*");
 
     private static final String SEARCH_LIST_PAGE = "/search/search.jsp";
-    private static final String BATCH_CREATE_PAGE = "/search/create_batch.jsp";
-    private static final String BATCH_CONFIRM_PAGE = "/search/batch_confirm.jsp";
-
-    public static final String CREATE_BATCH_ACTION = "createBatch";
-    public static final String VIEW_ACTION = "startBatch";
-    public static final String CONFIRM_ACTION = "confirm";
     public static final String SEARCH_ACTION = "search";
-    public static final String VIEW_PLASTIC_ACTION = "viewPlastic";
-    public static final String SEARCH_PLASTIC_ACTION = "searchPlastic";
-    public static final String SEARCH_BATCH_CANDIDATES_ACTION = "searchBatchCandidates";
 
     /**
      * Action for handling when user enters search text in navigation form search textfield.
      */
     public static final String QUICK_SEARCH_ACTION = "quickSearch";
 
-    public static final String EXISTING_TICKET = "existingTicket";
-    public static final String NEW_TICKET = "newTicket";
-
-    @Inject
-    private LabBatchEjb labBatchEjb;
-
     @Inject
     private UserBean userBean;
+
+    @Inject
+    private LabBatchDao labBatchDao;
 
     @Inject
     private LabVesselDao labVesselDao;
 
     @Inject
-    private MercurySampleDao mercurySampleDao;
-
-    @Inject
     private ProductOrderDao productOrderDao;
-
-    @Inject
-    private LabBatchDAO labBatchDao;
 
     @Inject
     private ResearchProjectDao researchProjectDao;
@@ -105,11 +75,8 @@ public class SearchActionBean extends CoreActionBean {
     private ProductDao productDao;
 
     @Validate(required = true,
-            on = {SEARCH_ACTION, SEARCH_BATCH_CANDIDATES_ACTION, SEARCH_PLASTIC_ACTION, QUICK_SEARCH_ACTION})
+            on = {SEARCH_ACTION, QUICK_SEARCH_ACTION})
     private String searchKey;
-
-    private String batchLabel;
-    private LabBatch batch;
 
     private Set<LabVessel> foundVessels = new HashSet<>();
     private List<MercurySample> foundSamples;
@@ -118,36 +85,9 @@ public class SearchActionBean extends CoreActionBean {
 
     private boolean resultsAvailable = false;
     private boolean multipleResultTypes = false;
-    private Map<String, String> getPDOKeyMap = null;
-    private Map<String, String> getIndexesMap = null;
-
-    private List<String> selectedVesselLabels;
-    private List<LabVessel> selectedBatchVessels;
-    private List<String> selectedBatchLabels;
-
-    @Validate(required = true, on = {CREATE_BATCH_ACTION})
-    private String jiraInputType = EXISTING_TICKET;
-
-    private String jiraTicketId;
-
-    private String important;
-    private String description;
-    private String summary;
-    private Date dueDate;
 
     private boolean isSearchDone = false;
     private int numSearchTerms;
-
-    /**
-     * Initialize the product with the passed in key for display in the form.
-     */
-    @Before(stages = LifecycleStage.BindingAndValidation, on = {CONFIRM_ACTION})
-    public void init() {
-        batchLabel = getContext().getRequest().getParameter("batchLabel");
-        if (StringUtils.isNotBlank(batchLabel)) {
-            batch = labBatchDao.findByBusinessKey(batchLabel);
-        }
-    }
 
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
@@ -173,20 +113,6 @@ public class SearchActionBean extends CoreActionBean {
                     count++;
                     totalResults += foundVessels.size();
                 }
-
-                break;
-            case VESSELS_BY_PDO:
-                foundVessels.addAll(labVesselDao.findByPDOKeyList(searchList));
-                break;
-            case VESSELS_BY_SAMPLE_KEY:
-                foundVessels.addAll(labVesselDao.findBySampleKeyList(searchList));
-                break;
-            case SAMPLES_BY_NAME:
-                foundSamples = mercurySampleDao.findBySampleKeys(searchList);
-                if (!foundSamples.isEmpty()) {
-                    count++;
-                    totalResults += foundSamples.size();
-                }
                 break;
             case BATCH_BY_KEY:
                 foundBatches = labBatchDao.findByListIdentifier(searchList);
@@ -207,83 +133,6 @@ public class SearchActionBean extends CoreActionBean {
     public Resolution search() throws Exception {
         doSearch();
         return new ForwardResolution(SEARCH_LIST_PAGE);
-    }
-
-    @ValidationMethod(on = CREATE_BATCH_ACTION)
-    public void createBatchValidation(ValidationErrors errors) {
-        if (selectedVesselLabels == null || selectedVesselLabels.isEmpty()) {
-            doSearch(SearchType.VESSELS_BY_SAMPLE_KEY, SearchType.VESSELS_BY_PDO, SearchType.VESSELS_BY_BARCODE);
-            errors.add("selectedVesselLabels",
-                    new SimpleError("At least one vessel must be selected to create a batch"));
-        }
-
-        if (jiraInputType.equals(EXISTING_TICKET)) {
-            if (StringUtils.isBlank(jiraTicketId)) {
-                doSearch(SearchType.VESSELS_BY_SAMPLE_KEY, SearchType.VESSELS_BY_PDO, SearchType.VESSELS_BY_BARCODE);
-                errors.add("jiraTicketId", new SimpleError("An existing Jira ticket key is required"));
-            }
-        } else {
-            if (StringUtils.isBlank(summary)) {
-                doSearch(SearchType.VESSELS_BY_SAMPLE_KEY, SearchType.VESSELS_BY_PDO, SearchType.VESSELS_BY_BARCODE);
-                errors.add("summary", new SimpleError("You must provide at least a summary to create a Jira Ticket"));
-            }
-        }
-    }
-
-    @HandlesEvent(SEARCH_BATCH_CANDIDATES_ACTION)
-    public Resolution searchForBatchCandidates() throws Exception {
-        doSearch(SearchType.VESSELS_BY_SAMPLE_KEY, SearchType.VESSELS_BY_PDO, SearchType.VESSELS_BY_BARCODE);
-        return new ForwardResolution(BATCH_CREATE_PAGE);
-    }
-
-    @HandlesEvent(CONFIRM_ACTION)
-    public Resolution confirm() {
-        return new ForwardResolution(BATCH_CONFIRM_PAGE);
-    }
-
-    /**
-     * Supports the submission for the page.  Will forward to confirmation page on success.
-     *
-     * @return the resolution
-     */
-    @HandlesEvent(CREATE_BATCH_ACTION)
-    public Resolution createBatch() throws Exception {
-        LabBatch batchObject;
-
-        Set<LabVessel> vesselSet =
-                new HashSet<>(labVesselDao.findByListIdentifiers(selectedVesselLabels));
-
-        if (isUseExistingTicket()) {
-            // If the user is associating the batch with an existing ticket, just the ticket ID and the set of vessels
-            // are needed to create the batch.
-            batchObject =
-                    labBatchEjb.createLabBatch(vesselSet, userBean.getBspUser().getUsername(),
-                            jiraTicketId.trim(), LabBatch.LabBatchType.WORKFLOW, CreateFields.IssueType.EXOME_EXPRESS);
-        } else {
-
-            // If a new ticket is to be created, pass the description, summary, due date and important info in a batch
-            // object acting as a DTO.
-            batchObject = new LabBatch(summary.trim(), vesselSet, LabBatch.LabBatchType.WORKFLOW, description, dueDate,
-                    important);
-
-            labBatchEjb.createLabBatch(batchObject, userBean.getBspUser().getUsername(),
-                    CreateFields.IssueType.EXOME_EXPRESS);
-        }
-
-        // Link the JIRA tickets for the batch created to the pdo batches.
-        for (String pdoKey : LabVessel.extractPdoKeyList(selectedBatchVessels)) {
-            labBatchEjb.linkJiraBatchToTicket(pdoKey, batchObject);
-        }
-
-        addMessage(MessageFormat.format("Lab batch ''{0}'' has been ''{1}''.",
-                batchObject.getJiraTicket().getTicketName(), isUseExistingTicket() ? "assigned" : "created"));
-
-        return new RedirectResolution(CreateBatchActionBean.class, CONFIRM_ACTION)
-                .addParameter("batchLabel", batchObject.getBatchName());
-    }
-
-    private boolean isUseExistingTicket() {
-        return jiraInputType.equals(EXISTING_TICKET);
     }
 
     private RedirectResolution getRedirectResolution() {
@@ -391,124 +240,8 @@ public class SearchActionBean extends CoreActionBean {
         return "display:block";
     }
 
-    public Map<String, String> getGetPDOKeyMap() {
-        if (getPDOKeyMap == null) {
-
-        }
-
-        return getPDOKeyMap;
-    }
-
-    public Map<String, String> getIndexesMap() {
-        if (getIndexesMap == null) {
-
-        }
-
-        return getIndexesMap;
-    }
-
-    public List<String> getSelectedBatchLabels() {
-        return selectedBatchLabels;
-    }
-
-    public void setSelectedBatchLabels(List<String> selectedBatchLabels) {
-        this.selectedBatchLabels = selectedBatchLabels;
-    }
-
-    public List<String> getSelectedVesselLabels() {
-        return selectedVesselLabels;
-    }
-
-    public void setSelectedVesselLabels(List<String> selectedVesselLabels) {
-        this.selectedVesselLabels = selectedVesselLabels;
-    }
-
-    public List<LabVessel> getSelectedBatchVessels() {
-        return selectedBatchVessels;
-    }
-
-    public void setSelectedBatchVessels(List<LabVessel> selectedBatchVessels) {
-        this.selectedBatchVessels = selectedBatchVessels;
-    }
-
-    public String getExistingJiraTicketValue() {
-        return EXISTING_TICKET;
-    }
-
-    public String getNewJiraTicketValue() {
-        return NEW_TICKET;
-    }
-
-    public String getJiraInputType() {
-        return jiraInputType;
-    }
-
-    public void setJiraInputType(String jiraInputType) {
-        this.jiraInputType = jiraInputType;
-    }
-
-    public String getImportant() {
-        return important;
-    }
-
-    public void setImportant(String important) {
-        this.important = important;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public String getSummary() {
-        return summary;
-    }
-
-    public void setSummary(String summary) {
-        this.summary = summary;
-    }
-
-    public void setDueDate(Date dueDate) {
-        this.dueDate = dueDate;
-    }
-
-    public Date getDueDate() {
-        return dueDate;
-    }
-
-    public String getBatchLabel() {
-        return batchLabel;
-    }
-
-    public void setBatchLabel(String batchLabel) {
-        this.batchLabel = batchLabel;
-    }
-
-    public LabBatch getBatch() {
-        return batch;
-    }
-
-    public void setBatch(LabBatch batch) {
-        this.batch = batch;
-    }
-
-    public String getJiraTicketId() {
-        return jiraTicketId;
-    }
-
-    public void setJiraTicketId(String jiraTicketId) {
-        this.jiraTicketId = jiraTicketId;
-    }
-
     protected LabVesselDao getLabVesselDao() {
         return labVesselDao;
-    }
-
-    protected MercurySampleDao getMercurySampleDao() {
-        return mercurySampleDao;
     }
 
     public boolean isSearchDone() {

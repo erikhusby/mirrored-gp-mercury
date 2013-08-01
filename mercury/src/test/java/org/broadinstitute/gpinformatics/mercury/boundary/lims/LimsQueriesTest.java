@@ -1,8 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -44,9 +44,9 @@ import static org.hamcrest.Matchers.instanceOf;
  */
 public class LimsQueriesTest {
 
-    private StaticPlateDAO staticPlateDAO;
+    private StaticPlateDao staticPlateDao;
     private LabVesselDao labVesselDao;
-    private TwoDBarcodedTubeDAO twoDBarcodedTubeDAO;
+    private TwoDBarcodedTubeDao twoDBarcodedTubeDao;
     private LimsQueries limsQueries;
 
     private StaticPlate plate3;
@@ -54,16 +54,16 @@ public class LimsQueriesTest {
     @BeforeMethod(groups = DATABASE_FREE)
     public void setup() {
         // todo jmt mocks could be removed by small refactoring into @DaoFree methods
-        staticPlateDAO = createMock(StaticPlateDAO.class);
+        staticPlateDao = createMock(StaticPlateDao.class);
         labVesselDao = createMock(LabVesselDao.class);
-        twoDBarcodedTubeDAO = createMock(TwoDBarcodedTubeDAO.class);
+        twoDBarcodedTubeDao = createMock(TwoDBarcodedTubeDao.class);
 
         plate3 = new StaticPlate("plate3", Eppendorf96);
 
         doSectionTransfer(makeTubeFormation(new TwoDBarcodedTube("tube")), plate3);
         doSectionTransfer(new StaticPlate("plate1", Eppendorf96), plate3);
         doSectionTransfer(new StaticPlate("plate2", Eppendorf96), plate3);
-        limsQueries = new LimsQueries(staticPlateDAO, labVesselDao, twoDBarcodedTubeDAO);
+        limsQueries = new LimsQueries(staticPlateDao, labVesselDao, twoDBarcodedTubeDao);
     }
 
     @Test(groups = DATABASE_FREE)
@@ -94,8 +94,8 @@ public class LimsQueriesTest {
 
     @Test(groups = DATABASE_FREE)
     public void testFindImmediatePlateParentsNotFound() {
-        expect(staticPlateDAO.findByBarcode("unknown_plate")).andReturn(null);
-        replay(staticPlateDAO);
+        expect(staticPlateDao.findByBarcode("unknown_plate")).andReturn(null);
+        replay(staticPlateDao);
 
         Exception caught = null;
         try {
@@ -106,7 +106,7 @@ public class LimsQueriesTest {
         assertThat(caught, instanceOf(RuntimeException.class));
         assertThat(caught.getMessage(), Matchers.equalTo("Plate not found for barcode: unknown_plate"));
 
-        verify(staticPlateDAO);
+        verify(staticPlateDao);
     }
 
     @Test(groups = DATABASE_FREE)
@@ -114,9 +114,9 @@ public class LimsQueriesTest {
         TwoDBarcodedTube tube1 = new TwoDBarcodedTube("tube1");
         TwoDBarcodedTube tube2 = new TwoDBarcodedTube("tube2");
         StaticPlate plate = new StaticPlate("plate1", Eppendorf96);
-        expect(staticPlateDAO.findByBarcode("plate1")).andReturn(plate);
+        expect(staticPlateDao.findByBarcode("plate1")).andReturn(plate);
         doSectionTransfer(makeTubeFormation(tube1, tube2), plate);
-        replay(staticPlateDAO);
+        replay(staticPlateDao);
 
         Map<String, Boolean> result = limsQueries.fetchParentRackContentsForPlate("plate1");
         assertThat(result.size(), is(96));
@@ -129,7 +129,7 @@ public class LimsQueriesTest {
             }
         }
 
-        verify(staticPlateDAO);
+        verify(staticPlateDao);
     }
 
     @Test(groups = DATABASE_FREE)
@@ -138,15 +138,15 @@ public class LimsQueriesTest {
         TwoDBarcodedTube tube2 = new TwoDBarcodedTube("tube2");
         TwoDBarcodedTube tube3 = new TwoDBarcodedTube("tube3");
         StaticPlate plate = new StaticPlate("plate1", Eppendorf96);
-        expect(staticPlateDAO.findByBarcode("plate1")).andReturn(plate);
+        expect(staticPlateDao.findByBarcode("plate1")).andReturn(plate);
         doSectionTransfer(makeTubeFormation(tube1, tube2), plate);
         doSectionTransfer(makeTubeFormation(tube3), plate);
-        replay(staticPlateDAO);
+        replay(staticPlateDao);
 
         List<WellAndSourceTubeType> result = limsQueries.fetchSourceTubesForPlate("plate1");
         assertThat(result.size(), is(3));
 
-        verify(staticPlateDAO);
+        verify(staticPlateDao);
     }
 
     @Test(groups = DATABASE_FREE)
@@ -173,8 +173,8 @@ public class LimsQueriesTest {
 
     @Test(groups = DATABASE_FREE)
     public void testFetchTransfersForPlateNotFound() {
-        expect(staticPlateDAO.findByBarcode("unknown_plate")).andReturn(null);
-        replay(staticPlateDAO);
+        expect(staticPlateDao.findByBarcode("unknown_plate")).andReturn(null);
+        replay(staticPlateDao);
 
         Exception caught = null;
         try {
@@ -185,7 +185,7 @@ public class LimsQueriesTest {
         assertThat(caught, instanceOf(RuntimeException.class));
         assertThat(caught.getMessage(), Matchers.equalTo("Plate not found for barcode: unknown_plate"));
 
-        verify(staticPlateDAO);
+        verify(staticPlateDao);
     }
 
     @Test(groups = DATABASE_FREE)
@@ -221,15 +221,15 @@ public class LimsQueriesTest {
         Map<String, TwoDBarcodedTube> mercuryTubes = new HashMap<>();
         String barcode = "mercury_barcode";
         mercuryTubes.put(barcode, new TwoDBarcodedTube(barcode));
-        expect(twoDBarcodedTubeDAO.findByBarcodes(Arrays.asList(barcode))).andReturn(mercuryTubes);
+        expect(twoDBarcodedTubeDao.findByBarcodes(Arrays.asList(barcode))).andReturn(mercuryTubes);
         Map<String, TwoDBarcodedTube> badTubes = new HashMap<>();
         String badBarcode = "bad_barcode";
         badTubes.put(badBarcode, null);
-        expect(twoDBarcodedTubeDAO.findByBarcodes(Arrays.asList(badBarcode))).andReturn(badTubes);
-        replay(twoDBarcodedTubeDAO);
+        expect(twoDBarcodedTubeDao.findByBarcodes(Arrays.asList(badBarcode))).andReturn(badTubes);
+        replay(twoDBarcodedTubeDao);
 
         Assert.assertTrue(limsQueries.doesLimsRecognizeAllTubes(Arrays.asList(barcode)), "Wrong return");
         Assert.assertFalse(limsQueries.doesLimsRecognizeAllTubes(Arrays.asList(badBarcode)), "Wrong return");
-        verify(twoDBarcodedTubeDAO);
+        verify(twoDBarcodedTubeDao);
     }
 }

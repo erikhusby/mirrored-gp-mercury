@@ -24,6 +24,7 @@ import javax.persistence.MapKeyEnumerated;
 import javax.persistence.OneToMany;
 import javax.persistence.Transient;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -120,6 +121,7 @@ public class VesselContainer<T extends LabVessel> {
 
     /**
      * Gets transfers to this container.  Includes re-arrays.
+     *
      * @return transfers to
      */
     public Set<LabEvent> getTransfersToWithRearrays() {
@@ -130,7 +132,7 @@ public class VesselContainer<T extends LabVessel> {
                 Set<T> containedVessels = getContainedVessels();
                 Set<? extends LabVessel> containedVesselsOther = vesselContainer.getContainedVessels();
                 if (!vesselContainer.equals(this) && (containedVessels.containsAll(containedVesselsOther) ||
-                        containedVesselsOther.containsAll(containedVessels))) {
+                                                      containedVesselsOther.containsAll(containedVessels))) {
                     transfersTo.addAll(vesselContainer.getTransfersTo());
                 }
             }
@@ -141,6 +143,7 @@ public class VesselContainer<T extends LabVessel> {
 
     /**
      * Gets transfers to this container.  Does not include re-arrays, to avoid recursion.
+     *
      * @return transfers to
      */
     public Set<LabEvent> getTransfersTo() {
@@ -155,6 +158,40 @@ public class VesselContainer<T extends LabVessel> {
             transfersTo.add(vesselToSectionTransfer.getLabEvent());
         }
         return transfersTo;
+    }
+
+    /**
+     * This method gets all of the positions within this vessel that contain the sample instance passed in.
+     *
+     * @param sampleInstance The sample instance to search for positions of within the vessel
+     *
+     * @return This returns a list of vessel positions within this vessel that contain the sample instances passed in.
+     */
+    public Set<VesselPosition> getPositionsOfSampleInstance(@Nonnull SampleInstance sampleInstance) {
+        Set<VesselPosition> positions = getPositions();
+        Set<VesselPosition> positionList = new HashSet<>();
+        for (VesselPosition position : positions) {
+            for (SampleInstance curSampleInstance : getSampleInstancesAtPosition(position)) {
+                if (curSampleInstance.getStartingSample().equals(sampleInstance.getStartingSample())) {
+                    positionList.add(position);
+                }
+            }
+        }
+        return positionList;
+    }
+
+    public Set<VesselPosition> getPositionsOfSampleInstance(@Nonnull SampleInstance sampleInstance,
+                                                            LabVessel.SampleType sampleType) {
+        Set<VesselPosition> positions = getPositions();
+        Set<VesselPosition> positionList = new HashSet<>();
+        for (VesselPosition position : positions) {
+            for (SampleInstance curSampleInstance : getSampleInstancesAtPosition(position, sampleType)) {
+                if (curSampleInstance.getStartingSample().equals(sampleInstance.getStartingSample())) {
+                    positionList.add(position);
+                }
+            }
+        }
+        return positionList;
     }
 
     public Set<SampleInstance> getSampleInstancesAtPosition(VesselPosition position, LabVessel.SampleType sampleType,
@@ -331,7 +368,7 @@ public class VesselContainer<T extends LabVessel> {
 
     @Transient
     private Set<SampleInstance> getSampleInstances(LabVessel.SampleType sampleType, LabBatch.LabBatchType labBatchType,
-                                                  Set<LabVessel> sourceVessels) {
+                                                   Set<LabVessel> sourceVessels) {
         Set<SampleInstance> sampleInstances = new LinkedHashSet<>();
         for (VesselPosition position : mapPositionToVessel.keySet()) {
             sampleInstances.addAll(getSampleInstancesAtPosition(position, sampleType, labBatchType));
@@ -379,7 +416,13 @@ public class VesselContainer<T extends LabVessel> {
 
     @Transient
     public Set<VesselPosition> getPositions() {
-        return mapPositionToVessel.keySet();
+        if (hasAnonymousVessels()) {
+            Set<VesselPosition> positions = new HashSet<>();
+            positions.addAll(Arrays.asList(getEmbedder().getVesselGeometry().getVesselPositions()));
+            return positions;
+        } else {
+            return mapPositionToVessel.keySet();
+        }
     }
 
     public Map<VesselPosition, T> getMapPositionToVessel() {
@@ -581,7 +624,9 @@ public class VesselContainer<T extends LabVessel> {
      * Computes the LCSET(s) that all contained vessels have in common.  Contained vessels that don't have references
      * to LCSETs (e.g. controls) don't disturb the calculation, but they are inferred to be part of the LCSET by being
      * part of the transfer, i.e. controls are "guilty by association".
+     *
      * @param section the section of interest for a transfer
+     *
      * @return LCSETs, empty if no contained vessels are associated with LCSETs
      */
     public Set<LabBatch> getComputedLcSetsForSection(SBSSection section) {

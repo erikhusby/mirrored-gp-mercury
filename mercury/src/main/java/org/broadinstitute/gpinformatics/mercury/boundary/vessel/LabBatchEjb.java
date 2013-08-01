@@ -19,7 +19,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
+import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.AbstractBatchJiraFieldFactory;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LCSetJiraFieldFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
@@ -58,7 +58,7 @@ public class LabBatchEjb {
 
     private final static Log logger = LogFactory.getLog(LabBatchEjb.class);
 
-    private LabBatchDAO labBatchDao;
+    private LabBatchDao labBatchDao;
 
     private AthenaClientService athenaClientService;
 
@@ -66,7 +66,7 @@ public class LabBatchEjb {
 
     private JiraTicketDao jiraTicketDao;
 
-    private LabVesselDao tubeDAO;
+    private LabVesselDao tubeDao;
 
     private BucketDao bucketDao;
 
@@ -92,7 +92,7 @@ public class LabBatchEjb {
         Set<LabVessel> vesselsForBatch = new HashSet<>(labVesselNames.size());
 
         for (String currVesselLabel : labVesselNames) {
-            vesselsForBatch.add(tubeDAO.findByIdentifier(currVesselLabel));
+            vesselsForBatch.add(tubeDao.findByIdentifier(currVesselLabel));
         }
 
         return createLabBatch(vesselsForBatch, reporter, batchName, labBatchType, issueType);
@@ -170,7 +170,7 @@ public class LabBatchEjb {
                                                       @Nonnull LabBatch.LabBatchType labBatchType,
                                                       @Nonnull CreateFields.IssueType issueType) {
         Set<LabVessel> vessels =
-                new HashSet<>(tubeDAO.findByListIdentifiers(vesselLabels));
+                new HashSet<>(tubeDao.findByListIdentifiers(vesselLabels));
         Bucket bucket = bucketDao.findByName(bucketName);
         LabBatch batch = createLabBatch(vessels, operator, batchName, labBatchType, issueType);
         bucketEjb.start(operator, vessels, bucket, location);
@@ -471,7 +471,7 @@ public class LabBatchEjb {
        To Support DBFree Tests
     */
     @Inject
-    public void setLabBatchDao(LabBatchDAO labBatchDao) {
+    public void setLabBatchDao(LabBatchDao labBatchDao) {
         this.labBatchDao = labBatchDao;
     }
 
@@ -491,8 +491,8 @@ public class LabBatchEjb {
     }
 
     @Inject
-    public void setTubeDAO(LabVesselDao tubeDAO) {
-        this.tubeDAO = tubeDAO;
+    public void setTubeDao(LabVesselDao tubeDao) {
+        this.tubeDao = tubeDao;
     }
 
     @Inject

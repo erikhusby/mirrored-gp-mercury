@@ -22,7 +22,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
+import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -37,7 +37,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
-import org.broadinstitute.gpinformatics.mercury.presentation.search.CreateBatchActionBean;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -59,6 +58,8 @@ public class BucketViewActionBean extends CoreActionBean {
     public static final String REWORK_ACTION = "viewRework";
     public static final String ADD_TO_BATCH_ACTION = "addToBatch";
     private static final String CONFIRMATION_PAGE = "/workflow/rework_confirmation.jsp";
+    private static final String BATCH_CONFIRM_PAGE = "/batch/batch_confirm.jsp";
+
     @Inject
     private WorkflowLoader workflowLoader;
     @Inject
@@ -74,7 +75,7 @@ public class BucketViewActionBean extends CoreActionBean {
     @Inject
     private UserBean userBean;
     @Inject
-    private LabBatchDAO labBatchDAO;
+    private LabBatchDao labBatchDao;
     @Inject
     private JiraService jiraService;
     @Inject
@@ -112,7 +113,6 @@ public class BucketViewActionBean extends CoreActionBean {
     private Date dueDate;
     private String selectedProductWorkflowDef;
     private List<ProductWorkflowDef> allProductWorkflowDefs = new ArrayList<>();
-    private Map<LabVessel, Set<String>> vesselToPDOKeys = new HashMap<>();
     @Validate(required = true, on = {ADD_TO_BATCH_ACTION})
     private String selectedLcset;
     private LabBatch batch;
@@ -126,6 +126,9 @@ public class BucketViewActionBean extends CoreActionBean {
             ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
             if (workflowDef.getName().equals(WorkflowName.EXOME_EXPRESS.getWorkflowName())) {
                 allProductWorkflowDefs.add(workflowDef);
+                WorkflowBucketDef blankBucketDef = new WorkflowBucketDef("");
+                buckets.add(blankBucketDef);
+                reworkBuckets.add(blankBucketDef);
                 buckets.addAll(workflowVersion.getCreationBuckets());
                 reworkBuckets.addAll(workflowVersion.getReworkBuckets());
             }
@@ -134,10 +137,8 @@ public class BucketViewActionBean extends CoreActionBean {
         if (!buckets.isEmpty()) {
             if (REWORK_ACTION.equals(getContext().getEventName()) || ADD_TO_BATCH_ACTION.equals(
                     getContext().getEventName()) || REWORK_CONFIRMED_ACTION.equals(getContext().getEventName())) {
-                selectedBucket = reworkBuckets.get(0).getName();
                 viewReworkBucket();
             } else {
-                selectedBucket = buckets.get(0).getName();
                 viewBucket();
             }
         }
@@ -340,18 +341,6 @@ public class BucketViewActionBean extends CoreActionBean {
         return pdoByKeyMap.get(pdoKey);
     }
 
-    public String getSinglePDOBusinessKey(LabVessel vessel) {
-        Set<String> pdoKeys = vesselToPDOKeys.get(vessel);
-        if (pdoKeys == null) {
-            pdoKeys = vessel.getPdoKeys();
-            vesselToPDOKeys.put(vessel, pdoKeys);
-        }
-        if (pdoKeys.size() == 1) {
-            return pdoKeys.iterator().next();
-        }
-        return "Multiple PDOs";
-    }
-
     public Set<String> getSampleNames(LabVessel vessel) {
         Set<SampleInstance> allSamples = vessel.getAllSamples();
         Set<String> sampleNames = new HashSet<>();
@@ -363,8 +352,7 @@ public class BucketViewActionBean extends CoreActionBean {
 
     @HandlesEvent(ADD_TO_BATCH_ACTION)
     public Resolution addToBatch() {
-        List<BucketEntry> reworkBucketEntries = bucketEntryDao.findByIds(selectedReworks);
-        loadReworkVessels(reworkBucketEntries);
+        loadReworkVessels();
         if (batch == null) {
             addValidationError("selectedLcset", String.format("Could not find %s.", selectedLcset));
             return new ForwardResolution(REWORK_BUCKET_PAGE);
@@ -372,11 +360,11 @@ public class BucketViewActionBean extends CoreActionBean {
         return new ForwardResolution(CONFIRMATION_PAGE);
     }
 
-    private void loadReworkVessels(List<BucketEntry> reworkBucketEntries) {
+    private void loadReworkVessels() {
         if (!selectedLcset.startsWith("LCSET-")) {
             selectedLcset = "LCSET-" + selectedLcset;
         }
-        batch = labBatchDAO.findByBusinessKey(selectedLcset);
+        batch = labBatchDao.findByBusinessKey(selectedLcset);
 
         seletecReworkEntries = bucketEntryDao.findByIds(selectedReworks);
     }
@@ -404,8 +392,6 @@ public class BucketViewActionBean extends CoreActionBean {
      */
     @HandlesEvent(CREATE_BATCH_ACTION)
     public Resolution createBatch() {
-
-        LabBatch batch;
         try {
             batch = labBatchEjb
                     .createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW, selectedProductWorkflowDef,
@@ -419,8 +405,7 @@ public class BucketViewActionBean extends CoreActionBean {
         addMessage(MessageFormat
                 .format("Lab batch ''{0}'' has been created.", batch.getJiraTicket().getTicketName()));
 
-        return new RedirectResolution(CreateBatchActionBean.class, CreateBatchActionBean.CONFIRM_ACTION)
-                .addParameter("batchLabel", batch.getBatchName());
+        return new ForwardResolution(BATCH_CONFIRM_PAGE);
     }
 
     public Date getDueDate() {
@@ -482,4 +467,5 @@ public class BucketViewActionBean extends CoreActionBean {
     public void setSelectedVesselLabels(List<Long> selectedVesselLabels) {
         this.selectedVesselLabels = selectedVesselLabels;
     }
+
 }

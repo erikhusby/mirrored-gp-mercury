@@ -177,7 +177,9 @@ public abstract class LabVessel implements Serializable {
     @Transient
     private Map<String, LabMetric> metricMap;
 
-    /** Set by {@link #preProcessEvents()} */
+    /**
+     * Set by {@link #preProcessEvents()}
+     */
     @Transient
     private Set<LabBatch> preProcessedEvents;
 
@@ -219,7 +221,6 @@ public abstract class LabVessel implements Serializable {
      * for LabVessels; no two LabVessels
      * may share this id.  It's primarily the
      * barcode on the piece of plastic.
-     *
      */
     public String getLabel() {
         return label;
@@ -554,127 +555,6 @@ public abstract class LabVessel implements Serializable {
 
 
     /**
-     * Returns a Collection of SampleInstances at given position
-     *
-     * @param positionName position in vessel, eg: A01
-     *
-     * @return
-     */
-    public Collection<SampleInstance> getSamplesAtPosition(@Nonnull String positionName) {
-        VesselPosition position = VesselPosition.getByName(positionName);
-        return getSamplesAtPosition(position);
-    }
-
-    /**
-     * Returns a Collection of SampleInstances at given position
-     *
-     * @param vesselPosition position in vessel, eg: A01
-     *
-     * @return
-     */
-    public Collection<SampleInstance> getSamplesAtPosition(@Nonnull VesselPosition vesselPosition) {
-        return getSamplesAtPosition(vesselPosition, SampleType.ANY);
-    }
-
-    /**
-     * Returns a Collection of SampleInstances at given position, traversing until sample type is reached.
-     */
-    public Set<SampleInstance> getSamplesAtPosition(VesselPosition position, SampleType sampleType) {
-        Set<SampleInstance> sampleInstances;
-        VesselContainer<?> vesselContainer = getContainerRole();
-        if (vesselContainer != null) {
-            sampleInstances = vesselContainer.getSampleInstancesAtPosition(position, sampleType);
-        } else {
-            sampleInstances = getSampleInstances(sampleType, null);
-        }
-        if (sampleInstances == null) {
-            sampleInstances = Collections.emptySet();
-        }
-        return sampleInstances;
-    }
-
-
-    /**
-     * This method gets all of the positions within this vessel that contain the sample instance passed in.
-     *
-     * @param sampleInstance The sample instance to search for positions of within the vessel
-     *
-     * @return This returns a list of vessel positions within this vessel that contain the sample instances passed in.
-     */
-    public List<VesselPosition> getPositionsOfSample(@Nonnull SampleInstance sampleInstance) {
-        if (getContainerRole() == null) {
-            return Collections.emptyList();
-        }
-
-        VesselPosition[] positions = getContainerRole().getEmbedder().getVesselGeometry().getVesselPositions();
-        if (positions == null) {
-            return Collections.emptyList();
-        }
-
-        List<VesselPosition> positionList = new ArrayList<>();
-        for (VesselPosition position : positions) {
-            for (SampleInstance curSampleInstance : getSamplesAtPosition(position)) {
-                if (curSampleInstance.getStartingSample().equals(sampleInstance.getStartingSample())) {
-                    positionList.add(position);
-                }
-            }
-        }
-
-        return positionList;
-    }
-
-    public Set<VesselPosition> getPositionsOfSample(@Nonnull SampleInstance sampleInstance, SampleType sampleType) {
-        if (getContainerRole() == null) {
-            return Collections.emptySet();
-        }
-
-        VesselPosition[] positions = getContainerRole().getEmbedder().getVesselGeometry().getVesselPositions();
-        if (positions == null) {
-            return Collections.emptySet();
-        }
-
-        Set<VesselPosition> positionList = new HashSet<>();
-        for (VesselPosition position : positions) {
-            for (SampleInstance curSampleInstance : getSamplesAtPosition(position, sampleType)) {
-                if (curSampleInstance.getStartingSample().equals(sampleInstance.getStartingSample())) {
-                    positionList.add(position);
-                }
-            }
-        }
-
-        return positionList;
-    }
-
-    /**
-     * This method will get the last known position of a sample. If the sample is in a tube it will check the last rack
-     * it was in. Otherwise it will defer to the getPositionsOfSample.
-     *
-     * @param sampleInstance The sample instance to find the last position for.
-     *
-     * @return A list of vessel positions that the sample instance was last known to be at.
-     */
-    public List<VesselPosition> getLastKnownPositionsOfSample(@Nonnull SampleInstance sampleInstance) {
-        if (getContainerRole() == null) {
-            Map<Date, List<VesselPosition>> positionList = new TreeMap<>();
-            for (VesselContainer<?> container : getContainers()) {
-                List<VesselPosition> curPositionLists = positionList.get(container.getEmbedder().getCreatedOn());
-                if (curPositionLists == null) {
-                    curPositionLists = new ArrayList<>();
-                    positionList.put(container.getEmbedder().getCreatedOn(), curPositionLists);
-                }
-                curPositionLists.add(container.getPositionOfVessel(this));
-            }
-
-            if (positionList.isEmpty()) {
-                return Collections.emptyList();
-            }
-
-            return positionList.get(positionList.keySet().iterator().next());
-        }
-        return getPositionsOfSample(sampleInstance);
-    }
-
-    /**
      * Returned from getAncestors and getDescendants
      */
     public static class VesselEvent {
@@ -753,7 +633,8 @@ public abstract class LabVessel implements Serializable {
         if (getContainerRole() != null) {
             Set<SampleInstance> sampleInstances = getContainerRole().getSampleInstances(sampleType, labBatchType);
             for (SampleInstance sampleInstance : sampleInstances) {
-                if (sampleInstance.getLabBatch() == null && preProcessedEvents != null && preProcessedEvents.size() == 1) {
+                if (sampleInstance.getLabBatch() == null && preProcessedEvents != null
+                    && preProcessedEvents.size() == 1) {
                     sampleInstance.setLabBatch(preProcessedEvents.iterator().next());
                 }
             }
@@ -848,7 +729,8 @@ public abstract class LabVessel implements Serializable {
 
         /**
          * Called after an event has been traversed, sets lab batch and product order key.
-         * @param labEvent event that was traversed
+         *
+         * @param labEvent  event that was traversed
          * @param labVessel plastic involved in the event
          */
         public void applyEvent(@Nonnull LabEvent labEvent, @Nonnull LabVessel labVessel) {
@@ -1086,7 +968,7 @@ public abstract class LabVessel implements Serializable {
      * @return filtered lab batches
      *
      * @deprecated this implementation is not necessary with the addition of a method that utilizes transfer entity
-     * traverser
+     *             traverser
      */
     @Deprecated
     public Collection<LabBatch> getLabBatchesOfType(LabBatch.LabBatchType labBatchType) {
@@ -1738,8 +1620,10 @@ public abstract class LabVessel implements Serializable {
 
     /**
      * Recurses ancestor transfers, setting computed LCSETs.
+     *
      * @param visitedLabEvents avoid visiting event twice
      * @param currentTransfers the transfers at the current point in the recursion
+     *
      * @return results of recursion
      */
     Set<LabBatch> recurseEvents(Set<LabEvent> visitedLabEvents, Set<LabEvent> currentTransfers) {

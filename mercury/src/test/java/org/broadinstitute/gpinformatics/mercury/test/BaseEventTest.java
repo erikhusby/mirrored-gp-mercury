@@ -31,7 +31,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferEnt
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVisualizer;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
+import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.DenatureToDilutionTubeHandler;
@@ -87,7 +87,9 @@ public class BaseEventTest {
     public static final int NUM_POSITIONS_IN_RACK = 96;
 
     // todo jmt find a better way to do this, without propagating it to every call to validateWorkflow.
-    /** Referenced in validation of routing. */
+    /**
+     * Referenced in validation of routing.
+     */
     protected static MercuryOrSquidRouter.MercuryOrSquid expectedRouting = MercuryOrSquidRouter.MercuryOrSquid.MERCURY;
 
     private BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
@@ -98,7 +100,9 @@ public class BaseEventTest {
 
     private BucketEjb bucketEjb;
 
-    /** The date on which Exome Express is routed to Mercury only. */
+    /**
+     * The date on which Exome Express is routed to Mercury only.
+     */
     public static final GregorianCalendar EX_EX_IN_MERCURY_CALENDAR = new GregorianCalendar(2013, 6, 26);
 
     protected static Map<String, BSPSampleDTO> mapSampleNameToDto = new HashMap<>();
@@ -128,7 +132,7 @@ public class BaseEventTest {
         labBatchEJB.setAthenaClientService(AthenaClientProducer.stubInstance());
         JiraService jiraService = JiraServiceProducer.stubInstance();
         labBatchEJB.setJiraService(jiraService);
-        labBatchEJB.setLabBatchDao(EasyMock.createMock(LabBatchDAO.class));
+        labBatchEJB.setLabBatchDao(EasyMock.createMock(LabBatchDao.class));
 
         JiraTicketDao mockJira = EasyMock.createNiceMock(JiraTicketDao.class);
         labBatchEJB.setJiraTicketDao(mockJira);
@@ -210,17 +214,16 @@ public class BaseEventTest {
     }
 
     /**
-     *
-     * @param mapBarcodeToTube     A map of barcodes to tubes that will be added to the bucket and drained into the
-     *                             batch.
-     * @param productOrder         The product order to use for bucket entries.
-     * @param workflowBatch        The batch that will be used for this process.
-     * @param lcsetSuffix          Set this non-null to override the lcset id number.
+     * @param mapBarcodeToTube A map of barcodes to tubes that will be added to the bucket and drained into the
+     *                         batch.
+     * @param productOrder     The product order to use for bucket entries.
+     * @param workflowBatch    The batch that will be used for this process.
+     * @param lcsetSuffix      Set this non-null to override the lcset id number.
      *
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
     public Bucket bucketBatchAndDrain(Map<String, TwoDBarcodedTube> mapBarcodeToTube, ProductOrder productOrder,
-            LabBatch workflowBatch, String lcsetSuffix) {
+                                      LabBatch workflowBatch, String lcsetSuffix) {
         Bucket workingBucket = createAndPopulateBucket(mapBarcodeToTube, productOrder, "Pico/Plating Bucket");
 
         // Controls what the created lcset id is by temporarily overriding the static variable.
@@ -257,7 +260,8 @@ public class BaseEventTest {
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
     public PicoPlatingEntityBuilder runPicoPlatingProcess(Map<String, TwoDBarcodedTube> mapBarcodeToTube,
-            String rackBarcodeSuffix, String barcodeSuffix, boolean archiveBucketEntries) {
+                                                          String rackBarcodeSuffix, String barcodeSuffix,
+                                                          boolean archiveBucketEntries) {
         String rackBarcode = "REXEX" + rackBarcodeSuffix;
 
         return new PicoPlatingEntityBuilder(bettaLimsMessageTestFactory,
@@ -267,7 +271,6 @@ public class BaseEventTest {
 
     /**
      * This method runs the entities through the ExEx shearing process.
-     *
      *
      * @param normBarcodeToTubeMap A map of barcodes to tubes that will be run the starting point of the ExEx shearing process.
      * @param normTubeFormation    The tube formation that represents the entities coming out of pico/plating.
@@ -295,7 +298,7 @@ public class BaseEventTest {
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
     public PreFlightEntityBuilder runPreflightProcess(Map<String, TwoDBarcodedTube> mapBarcodeToTube,
-            String barcodeSuffix) {
+                                                      String barcodeSuffix) {
         return new PreFlightEntityBuilder(bettaLimsMessageTestFactory,
                 labEventFactory, getLabEventHandler(),
                 mapBarcodeToTube, barcodeSuffix).invoke();
@@ -521,7 +524,8 @@ public class BaseEventTest {
     /**
      * Allows Transfer Visualizer to be run inside a test, so developer can verify that vessel transfer graph is
      * constructed correctly.
-     * @param labVessel    starting point in graph.
+     *
+     * @param labVessel starting point in graph.
      */
     public void runTransferVisualizer(LabVessel labVessel) {
         // Disabled by default, because it would block Bamboo tests.

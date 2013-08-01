@@ -30,6 +30,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.SampleType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -93,13 +94,14 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
     private IlluminaSequencingRunDao dao = EasyMock.createMock(IlluminaSequencingRunDao.class);
     private ProductOrderDao pdoDao = EasyMock.createMock(ProductOrderDao.class);
     private RunCartridge runCartridge = EasyMock.createMock(RunCartridge.class);
+    private VesselContainer vesselContainer = EasyMock.createMock(VesselContainer.class);
     private ResearchProject researchProject = EasyMock.createMock(ResearchProject.class);
     private ProductOrder pdo = EasyMock.createMock(ProductOrder.class);
     private SampleInstance sampleInstance = EasyMock.createMock(SampleInstance.class);
     private SampleInstance sampleInstance2 = EasyMock.createMock(SampleInstance.class);
 
     private Object[] mocks = new Object[]{auditReader, dao, pdoDao, runCartridge, researchProject, pdo,
-            sampleInstance, sampleInstance2};
+            sampleInstance, sampleInstance2, vesselContainer};
 
     private final TemplateEngine templateEngine = new TemplateEngine();
     private LabBatch workflowBatch;
@@ -161,12 +163,13 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         reagents.add(new MolecularIndexReagent(mis));
 
         EasyMock.expect(dao.findById(SequencingRun.class, entityId)).andReturn(run).times(2);
-
         EasyMock.expect(runCartridge.getCartridgeName()).andReturn(cartridgeName).times(2);
         EasyMock.expect(runCartridge.getVesselGeometry()).andReturn(VesselGeometry.FLOWCELL1x2).times(2);
-        EasyMock.expect(runCartridge
-                .getSamplesAtPosition(EasyMock.anyObject(VesselPosition.class), EasyMock.anyObject(SampleType.class)))
-                .andReturn(sampleInstances).times(4);
+        EasyMock.expect(runCartridge.getContainerRole()).andReturn(vesselContainer).anyTimes();
+        EasyMock.expect(vesselContainer.getSampleInstancesAtPosition(
+                EasyMock.anyObject(VesselPosition.class), EasyMock.anyObject(SampleType.class))).andReturn(
+                sampleInstances).times(4);
+
         final Map<VesselPosition, LabVessel> laneVesselsAndPositions = new HashMap<>();
 
         LabVessel denatureSource = new TwoDBarcodedTube("Lane_1_vessel");
@@ -229,8 +232,9 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
 
         EasyMock.expect(dao.findById(SequencingRun.class, entityId)).andReturn(run);
         EasyMock.expect(runCartridge.getCartridgeName()).andReturn(cartridgeName);
-        EasyMock.expect(runCartridge
-                .getSamplesAtPosition(EasyMock.anyObject(VesselPosition.class), EasyMock.anyObject(SampleType.class)))
+        EasyMock.expect(runCartridge.getContainerRole()).andReturn(vesselContainer).anyTimes();
+        EasyMock.expect(vesselContainer.getSampleInstancesAtPosition(EasyMock.anyObject(VesselPosition.class),
+                EasyMock.anyObject(SampleType.class)))
                 .andReturn(sampleInstances).times(2);
         final Map<VesselPosition, LabVessel> laneVesselsAndPositions = new HashMap<>();
 
@@ -297,8 +301,9 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         EasyMock.expect(runCartridge.getVesselGeometry()).andReturn(VesselGeometry.FLOWCELL1x2);
 
         EasyMock.expect(runCartridge.getCartridgeName()).andReturn(cartridgeName);
-        EasyMock.expect(runCartridge
-                .getSamplesAtPosition(EasyMock.anyObject(VesselPosition.class), EasyMock.anyObject(SampleType.class)))
+        EasyMock.expect(runCartridge.getContainerRole()).andReturn(vesselContainer).anyTimes();
+        EasyMock.expect(vesselContainer.getSampleInstancesAtPosition(EasyMock.anyObject(VesselPosition.class),
+                EasyMock.anyObject(SampleType.class)))
                 .andReturn(sampleInstances).times(2);
         final Map<VesselPosition, LabVessel> laneVesselsAndPositions = new HashMap<>();
 
@@ -356,8 +361,9 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         // Adds a second sampleInstance
         sampleInstances.add(sampleInstance2);
         EasyMock.expect(runCartridge.getVesselGeometry()).andReturn(VesselGeometry.FLOWCELL1x1);
-        EasyMock.expect(runCartridge
-                .getSamplesAtPosition(EasyMock.anyObject(VesselPosition.class), EasyMock.anyObject(SampleType.class)))
+        EasyMock.expect(runCartridge.getContainerRole()).andReturn(vesselContainer).anyTimes();
+        EasyMock.expect(vesselContainer.getSampleInstancesAtPosition(EasyMock.anyObject(VesselPosition.class),
+                EasyMock.anyObject(SampleType.class)))
                 .andReturn(sampleInstances);
 
         final Map<VesselPosition, LabVessel> laneVesselsAndPositions = new HashMap<>();

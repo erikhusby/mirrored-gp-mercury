@@ -8,8 +8,8 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.lims.LimsQueryResourceResponseFactory;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.FlowcellDesignationType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PlateTransferType;
@@ -47,9 +47,9 @@ public class LimsQueryResourceUnitTest {
     private ThriftService mockThriftService;
     private LimsQueries mockLimsQueries;
     private LimsQueryResourceResponseFactory mockResponseFactory;
-    private TwoDBarcodedTubeDAO mockTwoDBarcodedTubeDAO;
+    private TwoDBarcodedTubeDao mockTwoDBarcodedTubeDao;
     private LimsQueryResource resource;
-    private StaticPlateDAO mockStaticPlateDAO;
+    private StaticPlateDao mockStaticPlateDao;
     private SequencingTemplateFactory sequencingTemplateFactory;
 
     @BeforeMethod(groups = DATABASE_FREE)
@@ -59,8 +59,8 @@ public class LimsQueryResourceUnitTest {
         mockLimsQueries = createMock(LimsQueries.class);
         sequencingTemplateFactory = createMock(SequencingTemplateFactory.class);
         mockResponseFactory = createMock(LimsQueryResourceResponseFactory.class);
-        mockTwoDBarcodedTubeDAO = createMock(TwoDBarcodedTubeDAO.class);
-        mockStaticPlateDAO = createMock(StaticPlateDAO.class);
+        mockTwoDBarcodedTubeDao = createMock(TwoDBarcodedTubeDao.class);
+        mockStaticPlateDao = createMock(StaticPlateDao.class);
         BSPUserList bspUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
         resource =
                 new LimsQueryResource(mockThriftService, mockLimsQueries, sequencingTemplateFactory,
@@ -426,11 +426,11 @@ public class LimsQueryResourceUnitTest {
 
     private void replayAll() {
         replay(mockMercuryOrSquidRouter, mockThriftService, mockLimsQueries, sequencingTemplateFactory,
-                mockResponseFactory, mockTwoDBarcodedTubeDAO, mockStaticPlateDAO);
+                mockResponseFactory, mockTwoDBarcodedTubeDao, mockStaticPlateDao);
     }
 
     private void verifyAll() {
         verify(mockMercuryOrSquidRouter, mockThriftService, mockLimsQueries, sequencingTemplateFactory,
-                mockResponseFactory, mockTwoDBarcodedTubeDAO, mockStaticPlateDAO);
+                mockResponseFactory, mockTwoDBarcodedTubeDao, mockStaticPlateDao);
     }
 }

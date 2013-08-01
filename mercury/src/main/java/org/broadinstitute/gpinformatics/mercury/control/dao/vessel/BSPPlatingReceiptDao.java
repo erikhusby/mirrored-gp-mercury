@@ -13,7 +13,7 @@ import javax.persistence.Query;
  */
 @Stateful
 @RequestScoped
-public class BSPPlatingReceiptDAO extends GenericDao {
+public class BSPPlatingReceiptDao extends GenericDao {
 
     public BSPPlatingReceipt findByReceipt(String receipt) {
 

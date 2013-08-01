@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 import org.apache.commons.io.FileUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
+import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -31,7 +31,7 @@ import java.util.Set;
 public class LabBatchDbTest extends ContainerTest {
 
     @Inject
-    private LabBatchDAO labBatchDAO;
+    private LabBatchDao labBatchDao;
 
     public static final String XML_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss";
     private SimpleDateFormat xmlDateFormat = new SimpleDateFormat(XML_DATE_FORMAT);
@@ -135,7 +135,7 @@ public class LabBatchDbTest extends ContainerTest {
         // D1K7DACXD
 
         for (String lcSet : lcSets) {
-            LabBatch labBatch = labBatchDAO.findByBusinessKey(lcSet);
+            LabBatch labBatch = labBatchDao.findByBusinessKey(lcSet);
             Set<LabVessel> startingLabVessels = labBatch.getStartingBatchLabVessels();
             // For now, assume all vessels have the same events
             LabVessel labVessel = startingLabVessels.iterator().next();

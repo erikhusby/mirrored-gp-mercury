@@ -1,16 +1,23 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.bsp;
 
 import org.apache.commons.logging.Log;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BSPPlatingReceiptDAO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingRequestResult;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingRequestService;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.Control;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.ControlWell;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.Plateable;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.Well;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BSPPlatingReceiptDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingReceipt;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.AliquotParameters;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.*;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 
 import javax.inject.Inject;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  */
@@ -21,7 +28,7 @@ public class BSPSampleFactory {
 //    private BSPStartingSampleDAO bspStartingSampleDAO;
 
     @Inject
-    private BSPPlatingReceiptDAO bspPlatingReceiptDAO;
+    private BSPPlatingReceiptDao bspPlatingReceiptDao;
 
     @Inject
     private BSPPlatingRequestService bspPlatingRequestService;
@@ -84,7 +91,9 @@ public class BSPSampleFactory {
      * @param negControlVolume
      * @param posControlQuote
      * @param negControlQuote
+     *
      * @return
+     *
      * @throws Exception
      */
     //TODO .. Why is this here rather than in BSPPlatingRequestServiceImpl ??
@@ -136,10 +145,12 @@ public class BSPSampleFactory {
 
     }
 
-    public BSPPlatingReceipt buildPlatingReceipt(List<BSPPlatingRequest> requests, BSPPlatingRequestResult platingResult) {
+    public BSPPlatingReceipt buildPlatingReceipt(List<BSPPlatingRequest> requests,
+                                                 BSPPlatingRequestResult platingResult) {
         BSPPlatingReceipt receipt = null;
 
-        if (platingResult != null && platingResult.getPlatingRequestReceipt() != null && (platingResult.getErrors() == null || platingResult.getErrors().isEmpty())) {
+        if (platingResult != null && platingResult.getPlatingRequestReceipt() != null && (
+                platingResult.getErrors() == null || platingResult.getErrors().isEmpty())) {
             //BSP work request was created
             receipt = new BSPPlatingReceipt(platingResult.getPlatingRequestReceipt());
             receipt.getPlatingRequests().addAll(requests);

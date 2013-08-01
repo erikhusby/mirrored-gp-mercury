@@ -9,7 +9,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
+import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -43,7 +43,7 @@ public class LabBatchEjbDBFreeTest {
 
     private LabBatchEjb labBatchEJB;
 
-    private LabBatchDAO labBatchDAO;
+    private LabBatchDao labBatchDao;
 
     private LabVesselDao tubeDao;
 
@@ -92,7 +92,7 @@ public class LabBatchEjbDBFreeTest {
         EasyMock.expect(tubeDao.findByIdentifier(EasyMock.eq("SM-143"))).andReturn(mapBarcodeToTube.get("R444444"));
         EasyMock.expect(tubeDao.findByIdentifier(EasyMock.eq("SM-9243"))).andReturn(mapBarcodeToTube.get("R555555"));
         EasyMock.expect(tubeDao.findByIdentifier(EasyMock.eq("SM-118"))).andReturn(mapBarcodeToTube.get("R666666"));
-        labBatchEJB.setTubeDAO(tubeDao);
+        labBatchEJB.setTubeDao(tubeDao);
 
         mockJira = EasyMock.createMock(JiraTicketDao.class);
         EasyMock.expect(mockJira.fetchByName(testLCSetKey))
@@ -101,22 +101,22 @@ public class LabBatchEjbDBFreeTest {
                 .andReturn(new JiraTicket(JiraServiceProducer.stubInstance(), testFCTKey)).times(0, 1);
         labBatchEJB.setJiraTicketDao(mockJira);
 
-        labBatchDAO = EasyMock.createNiceMock(LabBatchDAO.class);
-        labBatchEJB.setLabBatchDao(labBatchDAO);
+        labBatchDao = EasyMock.createNiceMock(LabBatchDao.class);
+        labBatchEJB.setLabBatchDao(labBatchDao);
 
         pdoNames = new ArrayList<>();
         Collections.addAll(pdoNames, STUB_TEST_PDO_KEY);
 
         workflowName = WorkflowName.EXOME_EXPRESS.getWorkflowName();
 
-        EasyMock.replay(mockJira, labBatchDAO, tubeDao);
+        EasyMock.replay(mockJira, labBatchDao, tubeDao);
 
         scottmat = "scottmat";
     }
 
     @AfterMethod(groups = TestGroups.DATABASE_FREE)
     public void tearDown() throws Exception {
-        EasyMock.verify(labBatchDAO);
+        EasyMock.verify(labBatchDao);
     }
 
     @Test

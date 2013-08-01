@@ -118,7 +118,7 @@
                         <td class="ecoQPCR"> ${vessel.metricsForVesselAndDescendants.get("ECO QPCR").value} </td>
                         <td> ${bean.getPositionsForEvent(vessel, "SAMPLE_IMPORT")}</td>
                         <td> ${bean.getPositionsForEvent(vessel, "SHEARING_TRANSFER")}</td>
-                        <td> ${bean.getPositionsForEvent(vessel, "POND_ENRICHMENT")}</td>
+                        <td> ${bean.getPositionsForEvent(vessel, "POND_REGISTRATION")}</td>
                         <td> ${bean.getPositionsForEvent(vessel, "NORMALIZED_CATCH_REGISTRATION")}</td>
                         <td> ${bean.getLatestEventForVessel(vessel).labEventType.name} </td>
                         <td> ${bean.getUserFullName(bean.getLatestEventForVessel(vessel).eventOperator)} </td>

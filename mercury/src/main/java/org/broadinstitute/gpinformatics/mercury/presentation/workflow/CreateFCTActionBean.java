@@ -14,7 +14,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
+import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
@@ -45,7 +45,7 @@ public class CreateFCTActionBean extends CoreActionBean {
     private JiraService jiraService;
 
     @Inject
-    private LabBatchDAO labBatchDAO;
+    private LabBatchDao labBatchDao;
 
     @Inject
     private LabBatchEjb labBatchEjb;
@@ -159,7 +159,7 @@ public class CreateFCTActionBean extends CoreActionBean {
      */
     @HandlesEvent(LOAD_ACTION)
     public Resolution loadLCSet() {
-        labBatch = labBatchDAO.findByBusinessKey(lcsetName);
+        labBatch = labBatchDao.findByBusinessKey(lcsetName);
         if (labBatch != null) {
             for (LabVessel vessel : labBatch.getStartingBatchLabVessels()) {
                 denatureTubeToEvent.putAll(vessel.findVesselsForLabEventType(LabEventType.DENATURE_TRANSFER));
@@ -177,7 +177,7 @@ public class CreateFCTActionBean extends CoreActionBean {
      */
     @HandlesEvent(SAVE_ACTION)
     public Resolution createFCTTicket() {
-        labBatch = labBatchDAO.findByBusinessKey(lcsetName);
+        labBatch = labBatchDao.findByBusinessKey(lcsetName);
         createdBatches = new ArrayList<>();
         for (String denatureTubeBarcode : selectedVesselLabels) {
             Set<LabVessel> vesselSet = new HashSet<>(labVesselDao.findByListIdentifiers(selectedVesselLabels));
