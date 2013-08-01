@@ -455,7 +455,7 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         LabBatch fct = new LabBatch(FCT_TICKET, Collections.singleton(denatureSource), LabBatch.LabBatchType.FCT);
 
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
-                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", FCT_TICKET,
+                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", FCT_TICKET,
                         ProductionFlowcellPath.DILUTION_TO_FLOWCELL, null,
                         "Exome Express");
         LabVessel dilutionSource =

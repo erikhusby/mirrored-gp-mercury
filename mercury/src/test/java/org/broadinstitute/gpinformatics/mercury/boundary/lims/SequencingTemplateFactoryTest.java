@@ -127,7 +127,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         fctBatch = new LabBatch(FLOWCELL_2500_TICKET, starterVessels, LabBatch.LabBatchType.FCT, 12.33f);
 
         HiSeq2500FlowcellEntityBuilder flowcellEntityBuilder =
-                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), BARCODE_SUFFIX, FLOWCELL_2500_TICKET,
+                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), BARCODE_SUFFIX + "ADXX", FLOWCELL_2500_TICKET,
                         ProductionFlowcellPath.DILUTION_TO_FLOWCELL,null, "Exome Express");
         dilutionTube = flowcellEntityBuilder.getDilutionRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
         dilutionTubeBarcode = dilutionTube.getLabel();

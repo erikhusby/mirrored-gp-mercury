@@ -424,7 +424,7 @@ public class LabEventTest extends BaseEventTest {
                         LabBatch.LabBatchType.FCT);
 
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
-                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", FCT_TICKET,
+                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", FCT_TICKET,
                         ProductionFlowcellPath.DILUTION_TO_FLOWCELL, null, "Exome Express");
 
         runTransferVisualizer(mapBarcodeToTube.values().iterator().next());
@@ -562,7 +562,7 @@ public class LabEventTest extends BaseEventTest {
                 hybridSelectionEntityBuilder.getNormCatchBarcodes(),
                 hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), "Exome Express", "1");
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
-                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", "squidDesignationName",
+                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", "squidDesignationName",
                         ProductionFlowcellPath.DENATURE_TO_FLOWCELL, null, "Exome Express");
 
         IlluminaFlowcell illuminaFlowcell = hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell();
@@ -716,7 +716,7 @@ public class LabEventTest extends BaseEventTest {
                     hybridSelectionEntityBuilder2.getNormCatchBarcodes(),
                     hybridSelectionEntityBuilder2.getMapBarcodeToNormCatchTubes(), "Exome Express", "2");
             HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder2 = runHiSeq2500FlowcellProcess(
-                    qtpEntityBuilder2.getDenatureRack(), "2", "squidDesignationName",
+                    qtpEntityBuilder2.getDenatureRack(), "2" + "ADXX", "squidDesignationName",
                     ProductionFlowcellPath.DENATURE_TO_FLOWCELL, null, "Exome Express");
 
             LibraryConstructionEntityBuilder libraryConstructionEntityBuilder =
@@ -731,7 +731,7 @@ public class LabEventTest extends BaseEventTest {
                     hybridSelectionEntityBuilder.getNormCatchBarcodes(),
                     hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), "Exome Express", "1");
             HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder = runHiSeq2500FlowcellProcess(
-                    qtpEntityBuilder.getDenatureRack(), "1", "squidDesignationName",
+                    qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", "squidDesignationName",
                     ProductionFlowcellPath.DENATURE_TO_FLOWCELL, null, "Exome Express");
 
             SimpleDateFormat dateFormat = new SimpleDateFormat(IlluminaSequencingRun.RUN_FORMAT_PATTERN);
@@ -859,7 +859,7 @@ public class LabEventTest extends BaseEventTest {
                     hybridSelectionEntityBuilder2.getNormCatchBarcodes(),
                     hybridSelectionEntityBuilder2.getMapBarcodeToNormCatchTubes(), "Exome Express", "2");
             HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder2 =
-                    runHiSeq2500FlowcellProcess(qtpEntityBuilder2.getDenatureRack(), "2", null,
+                    runHiSeq2500FlowcellProcess(qtpEntityBuilder2.getDenatureRack(), "2" + "ADXX", null,
                             ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL, "squidDesignationName", "Exome Express");
 
             LibraryConstructionEntityBuilder libraryConstructionEntityBuilder =
@@ -874,7 +874,7 @@ public class LabEventTest extends BaseEventTest {
                     hybridSelectionEntityBuilder.getNormCatchBarcodes(),
                     hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), "Exome Express", "1");
             HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
-                    runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", null,
+                    runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", null,
                             ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL, "squidDesignationName", "Exome Express");
 
             SimpleDateFormat dateFormat = new SimpleDateFormat(IlluminaSequencingRun.RUN_FORMAT_PATTERN);

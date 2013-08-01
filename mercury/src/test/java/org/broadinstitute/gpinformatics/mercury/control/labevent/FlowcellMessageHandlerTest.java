@@ -169,7 +169,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
 
 
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
-                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", FLOWCELL_2500_TICKET_KEY,
+                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", FLOWCELL_2500_TICKET_KEY,
                         ProductionFlowcellPath.DENATURE_TO_FLOWCELL, null,
                         WorkflowName.EXOME_EXPRESS.getWorkflowName());
         Mockito.verify(mockEmailSender, Mockito.never())
@@ -262,7 +262,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
 
 
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
-                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", FLOWCELL_2500_TICKET_KEY,
+                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", FLOWCELL_2500_TICKET_KEY,
                         ProductionFlowcellPath.DENATURE_TO_FLOWCELL, null,
                         WorkflowName.EXOME_EXPRESS.getWorkflowName());
         Mockito.verify(mockEmailSender2, Mockito.never())
@@ -356,7 +356,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
 
 
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
-                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", FLOWCELL_2500_TICKET_KEY,
+                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", FLOWCELL_2500_TICKET_KEY,
                         ProductionFlowcellPath.DENATURE_TO_FLOWCELL, null,
                         WorkflowName.EXOME_EXPRESS.getWorkflowName());
         Mockito.verify(mockEmailSender2, Mockito.times(1))
@@ -450,7 +450,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
 
 
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
-                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", FLOWCELL_2500_TICKET_KEY,
+                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", FLOWCELL_2500_TICKET_KEY,
                         ProductionFlowcellPath.DENATURE_TO_FLOWCELL, null,
                         WorkflowName.EXOME_EXPRESS.getWorkflowName());
         Mockito.verify(mockEmailSender2, Mockito.times(1))
@@ -544,7 +544,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
 
 
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
-                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", FLOWCELL_2500_TICKET_KEY,
+                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", FLOWCELL_2500_TICKET_KEY,
                         ProductionFlowcellPath.DENATURE_TO_FLOWCELL, null,
                         WorkflowName.EXOME_EXPRESS.getWorkflowName());
         Mockito.verify(mockEmailSender2, Mockito.times(1))
@@ -626,7 +626,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
 
 
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
-                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", FLOWCELL_2500_TICKET_KEY,
+                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", FLOWCELL_2500_TICKET_KEY,
                         ProductionFlowcellPath.DILUTION_TO_FLOWCELL, null,
                         WorkflowName.EXOME_EXPRESS.getWorkflowName());
 
@@ -710,7 +710,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
 
 
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
-                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", FLOWCELL_2500_TICKET_KEY,
+                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", FLOWCELL_2500_TICKET_KEY,
                         ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL, null,
                         WorkflowName.EXOME_EXPRESS.getWorkflowName());
         Mockito.verify(mockEmailSender, Mockito.never())

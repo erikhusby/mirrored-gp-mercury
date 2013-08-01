@@ -244,7 +244,7 @@ public class SolexaRunRoutingTest extends BaseEventTest{
 
 
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
-                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1",null,
+                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1" + "ADXX",null,
                         ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL,"designation", "Whole Genome");
 
         Map.Entry<String, TwoDBarcodedTube> stringTwoDBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
