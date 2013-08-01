@@ -167,9 +167,6 @@ public class IlluminaRunResourceTest extends Arquillian {
         assertEquals(run.getName(),RUN_NAME);
 
         doAssertions(zamboniRun,run,new HashMap<Long,ProductOrder>());
-        for (ZimsIlluminaChamber zimsIlluminaChamber : run.getLanes()) {
-            Assert.assertNotNull(zimsIlluminaChamber.getCreationTime());
-        }
 
         boolean foundBspSample = false;
         boolean foundLcSet = false;
