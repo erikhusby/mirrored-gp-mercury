@@ -6,7 +6,12 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import javax.inject.Inject;
 
 /**
- * TODO scottmat fill in javadoc!!!
+ * BettaLims messages that are processed in mercury are, for the most part, generic.  There is no specific validation
+ * or processing per message that needs to happen.  The purpose of this method is to provide a structure for those
+ * special cases where specific validation or handling needs to happen.
+ *
+ * By triggering off of the {@link org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType}, we can
+ * target each message at it's own message validator.
  */
 public class EventHandlerSelector {
 
@@ -22,6 +27,18 @@ public class EventHandlerSelector {
         this.flowcellMessageHandler = flowcellMessageHandler;
     }
 
+    /**
+     * primarily called in
+     * {@link org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory#buildFromBettaLims}, this
+     * method routes message specific handling of lab events to their appropriate handler based on the
+     * {@link org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType} associated with the given lab
+     * event
+     *
+     * @param targetEvent Event that is to be process.  This will have access to the existing/created entities that
+     *                    need some action performed based on the message they were processed with
+     * @param stationEvent This is the original JAXB message that was sent for processing.  It will typically contain
+     *                     some extra information that may not make sense to store with the {@link LabEvent}.
+     */
     public void applyEventSpecificHandling(LabEvent targetEvent, StationEventType stationEvent) {
         AbstractEventHandler validator = null;
 
