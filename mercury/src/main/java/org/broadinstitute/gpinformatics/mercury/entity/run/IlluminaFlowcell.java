@@ -76,6 +76,10 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
 
         private final VesselGeometry vesselGeometry;
 
+        /**
+         * Used primarily when updating the FCT Jira Ticket, this will indicate the Sequencing Station used when the
+         * flowcell was sequenced.
+         */
         private  String sequencingStationName;
 
         /**
