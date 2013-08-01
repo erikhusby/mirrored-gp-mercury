@@ -263,7 +263,6 @@ public class ReworkDbFreeTest extends BaseEventTest {
         Assert.assertTrue(reworkTube.getPluralityLabBatch(reworkContainer).getBatchName().endsWith(reworkLcsetSuffix));
     }
 
-    // todo jmt enable this
     @Test(enabled = true)
     public void testMultiplePdos() {
         expectedRouting = MercuryOrSquidRouter.MercuryOrSquid.MERCURY;

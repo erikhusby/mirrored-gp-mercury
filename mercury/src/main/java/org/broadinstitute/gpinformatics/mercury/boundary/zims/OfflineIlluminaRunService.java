@@ -5,13 +5,15 @@ import edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme;
 import edu.mit.broad.prodinfo.thrift.lims.TZDevExperimentData;
 import edu.mit.broad.prodinfo.thrift.lims.TZReadType;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniRead;
+import org.broadinstitute.gpinformatics.infrastructure.Offline;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
-import org.broadinstitute.gpinformatics.infrastructure.Offline;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 
@@ -45,7 +47,9 @@ public class OfflineIlluminaRunService implements IlluminaRunService, Serializab
             libraries.add(makeLibrary(Integer.toString(libraryNumber)));
             libraryNumber++;
         }
-        return new ZimsIlluminaChamber((short) laneNumber, libraries, "PESP1+T", "LaneLibrary-"+laneNumber);
+        Calendar cal = GregorianCalendar.getInstance();
+        cal.set(2013, Calendar.JUNE, 25, 14, 15);
+        return new ZimsIlluminaChamber((short) laneNumber, libraries, "PESP1+T", "LaneLibrary-"+laneNumber, cal.getTime());
     }
 
     private ZimsIlluminaChamber makeLane(int laneNumber) {

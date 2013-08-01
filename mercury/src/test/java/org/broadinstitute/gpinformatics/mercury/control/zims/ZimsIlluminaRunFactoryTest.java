@@ -175,7 +175,7 @@ public class ZimsIlluminaRunFactoryTest {
             }
             sampleInstanceDtoList.add(
                             new ZimsIlluminaRunFactory.SampleInstanceDto(LANE_NUMBER, testTube, instance, TEST_SAMPLE_ID,
-                                    PRODUCT_ORDER_KEY));
+                                    PRODUCT_ORDER_KEY, null, null));
         }
 
         return sampleInstanceDtoList;
@@ -199,6 +199,8 @@ public class ZimsIlluminaRunFactoryTest {
     public void testMakeZimsIlluminaRun() {
         Date runDate = new Date(1358889107084L);
         String testRunDirectory = "TestRun";
+        LabVessel denatureTube = flowcell.getNearestTubeAncestorsForLanes().values().iterator().next();
+
         IlluminaSequencingRun sequencingRun = new IlluminaSequencingRun(flowcell, testRunDirectory, "Run-123",
                 "IlluminaRunServiceImplTest", 101L, true, runDate, "/root/path/to/run/" + testRunDirectory);
         ZimsIlluminaRun zimsIlluminaRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(sequencingRun);
@@ -209,12 +211,14 @@ public class ZimsIlluminaRunFactoryTest {
         assertThat(zimsIlluminaRun.getSequencer(), equalTo("IlluminaRunServiceImplTest"));
         assertThat(zimsIlluminaRun.getFlowcellBarcode(), equalTo("testFlowcell"));
         assertThat(zimsIlluminaRun.getRunDateString(), equalTo("01/22/2013 16:11"));
+        assertThat(zimsIlluminaRun.getSequencerModel(), equalTo(
+                IlluminaFlowcell.FlowcellType.HiSeqFlowcell.getSequencerModel()));
 //        assertThat(zimsIlluminaRun.getPairedRun(), is(true)); // TODO SGM will pull from Workflow
-//        assertThat(zimsIlluminaRun.getSequencerModel(), equalTo("HiSeq")); // TODO  SGM Will pull from workflow
 //        assertThat(zimsIlluminaRun.getLanes().size(), equalTo(8)); // TODO SGM WIll pull from workflow
 
         for (ZimsIlluminaChamber lane : zimsIlluminaRun.getLanes()) {
             assertThat(lane.getLibraries().size(), is(1));
+            assertThat(lane.getSequencedLibrary(), equals(denatureTube.getLabel()));
         }
         assertThat(zimsIlluminaRun.getSequencerModel(),equalTo("Illumina HiSeq 2000"));
     }
