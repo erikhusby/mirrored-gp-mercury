@@ -19,6 +19,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStarting
 import javax.inject.Inject;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -107,17 +108,18 @@ public class FlowcellMessageHandler extends AbstractEventHandler {
             try {
                 for (LabBatch currentUpdateBatch : batchesToUpdate) {
 
-                    Set<CustomField> updateFields = new HashSet<>();
-
                     Map<String, CustomFieldDefinition> summaryFieldDefinition =
                             jiraService.getCustomFields(LabBatch.TicketFields.SUMMARY.getFieldName(),
                                     LabBatch.TicketFields.SEQUENCING_STATION.getFieldName());
 
-                    updateFields.add(new CustomField(summaryFieldDefinition, LabBatch.TicketFields.SUMMARY,
-                            flowcell.getLabel()));
-                    updateFields.add(new CustomField(summaryFieldDefinition, LabBatch.TicketFields.SEQUENCING_STATION,
-                            flowcell.getFlowcellType().getSequencingStationName(), stationEvent.getStation()));
-                    jiraService.updateIssue(currentUpdateBatch.getBusinessKey(), updateFields);
+                    final CustomField summaryCustomField = new CustomField(summaryFieldDefinition, LabBatch.TicketFields.SUMMARY,
+                            flowcell.getLabel());
+                    jiraService.updateIssue(currentUpdateBatch.getBusinessKey(), Collections.singleton(summaryCustomField));
+
+                    final CustomField sequencingStationCustomField =
+                            new CustomField(summaryFieldDefinition, LabBatch.TicketFields.SEQUENCING_STATION,
+                                    flowcell.getFlowcellType().getSequencingStationName(), stationEvent.getStation());
+                    jiraService.updateIssue(currentUpdateBatch.getBusinessKey(), Collections.singleton(sequencingStationCustomField));
                 }
 
             } catch (Exception e) {
