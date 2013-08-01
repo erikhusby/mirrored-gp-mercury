@@ -221,7 +221,7 @@ public class MercuryOrSquidRouter implements Serializable {
                             if (workflowName != null && effectiveBatch != null) {
                                 ProductWorkflowDefVersion productWorkflowDef = getWorkflowVersion(workflowName,
                                         effectiveBatch.getCreatedOn());
-                                if (intent ==  Intent.SYSTEM_OF_RECORD) {
+                                if (intent == Intent.SYSTEM_OF_RECORD) {
                                     MercuryOrSquid mercuryOrSquid;
                                     if (productWorkflowDef.getInValidation()) {
                                         LabBatch labBatch = sampleInstance.getLabBatch();
@@ -244,6 +244,8 @@ public class MercuryOrSquidRouter implements Serializable {
                                 } else {
                                     routingOptions.add(productWorkflowDef.getRouting());
                                 }
+                            } else {
+                                // TODO: what about this case?
                             }
                         }
                     }
@@ -264,18 +266,18 @@ public class MercuryOrSquidRouter implements Serializable {
                                 } else {
                                     if (controlCollaboratorSampleIds.contains(sampleDTO.getCollaboratorsSampleName())) {
 
-                                        // For system-of-record, controls defer to their travel partners.
-                                        // TODO: Figure out how to handle this for validation and production sets in Mercury
-                                        if (intent != Intent.SYSTEM_OF_RECORD) {
-                                            String workflowName = possibleControl.getWorkflowName();
-                                            LabBatch effectiveBatch = possibleControl.getLabBatch();
-                                            if (workflowName != null && effectiveBatch != null) {
-                                                ProductWorkflowDefVersion productWorkflowDef = getWorkflowVersion(workflowName,
-                                                        effectiveBatch.getCreatedOn());
-                                                routingOptions.add(productWorkflowDef.getRouting());
-                                            } else {
-                                                routingOptions.add(BOTH);
-                                            }
+                                        /*
+                                         * It's a control, but only give it a vote if we can pin it to a workflow. It
+                                         * might be slightly more correct to return SQUID if we don't have a workflow,
+                                         * but that doesn't work in the case of the first message for a batch that has
+                                         * had a non-batched control re-arrayed into it.
+                                         */
+                                        String workflowName = possibleControl.getWorkflowName();
+                                        LabBatch effectiveBatch = possibleControl.getLabBatch();
+                                        if (workflowName != null && effectiveBatch != null) {
+                                            ProductWorkflowDefVersion productWorkflowDef =
+                                                    getWorkflowVersion(workflowName, effectiveBatch.getCreatedOn());
+                                            routingOptions.add(productWorkflowDef.getRouting());
                                         }
                                     } else {
                                         routingOptions.add(SQUID);

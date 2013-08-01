@@ -597,7 +597,7 @@ public class VesselContainer<T extends LabVessel> {
                     numVesselsWithBucketEntries++;
                 }
                 for (BucketEntry bucketEntry : bucketEntries) {
-                    if (bucketEntry.getLabBatch() != null && bucketEntry.getReworkDetail() == null) {
+                    if (bucketEntry.getLabBatch() != null) {
                         LabBatch labBatch = bucketEntry.getLabBatch();
                         if (labBatch.getLabBatchType() == LabBatch.LabBatchType.WORKFLOW) {
                             Integer count = mapLabBatchToCount.get(labBatch);
