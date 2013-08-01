@@ -37,7 +37,8 @@ import java.util.Map;
 @SuppressWarnings("FeatureEnvy")
 public class BettaLimsMessageTestFactory {
     public static final int NUMBER_OF_RACK_COLUMNS = 12;
-    public static final String SEQUENCING_STATION_MACHINE_NAME = "SL-HBU";
+    public static final String HISEQ_SEQUENCING_STATION_MACHINE_NAME = "SL-HBU";
+    public static final String MISEQ_SEQUENCING_STATION_MACHINE_NAME = "SL-MAA";
 
     private long time = System.currentTimeMillis();
     /** True if the mode element in the messages should be set to Mercury. This causes all messages to bypass
@@ -187,7 +188,7 @@ public class BettaLimsMessageTestFactory {
         ReceptaclePlateTransferEvent receptaclePlateTransferEvent = new ReceptaclePlateTransferEvent();
         setStationEventData(eventType, receptaclePlateTransferEvent);
         if(physType.equals(LabEventTest.PHYS_TYPE_FLOWCELL_2_LANE)) {
-            receptaclePlateTransferEvent.setStation(SEQUENCING_STATION_MACHINE_NAME);
+            receptaclePlateTransferEvent.setStation(HISEQ_SEQUENCING_STATION_MACHINE_NAME);
         }
 
         ReceptacleType sourceReceptacle = new ReceptacleType();
@@ -359,7 +360,7 @@ public class BettaLimsMessageTestFactory {
     public PlateTransferEventType buildStripTubeToFlowcell(String eventType, String stripTubeBarcode, String flowcellBarcode) {
         PlateTransferEventType plateTransferEvent = new PlateTransferEventType();
         setStationEventData(eventType, plateTransferEvent);
-        plateTransferEvent.setStation(SEQUENCING_STATION_MACHINE_NAME);
+        plateTransferEvent.setStation(HISEQ_SEQUENCING_STATION_MACHINE_NAME);
 
         PlateType stripTube = new PlateType();
         stripTube.setBarcode(stripTubeBarcode);
