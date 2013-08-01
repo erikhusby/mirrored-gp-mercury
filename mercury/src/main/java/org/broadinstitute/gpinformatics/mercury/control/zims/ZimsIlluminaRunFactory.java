@@ -43,7 +43,7 @@ import java.text.Format;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -107,8 +107,11 @@ public class ZimsIlluminaRunFactory {
                             sampleInstance.getBspExportSample().getSampleKey() :
                             sampleInstance.getStartingSample().getSampleKey();
                     sampleIds.add(sampleId);
+                    LabVessel libraryVessel = flowcell.getNearestTubeAncestorsForLanes().get(vesselPosition);
+                    String libraryName = libraryVessel.getLabel();
                     sampleInstanceDtos
-                            .add(new SampleInstanceDto(laneNum, labVessel, sampleInstance, sampleId, productOrderKey));
+                            .add(new SampleInstanceDto(laneNum, labVessel, sampleInstance, sampleId, productOrderKey,
+                                    libraryName, libraryVessel.getCreatedOn()));
                 }
             }
         }
@@ -126,16 +129,16 @@ public class ZimsIlluminaRunFactory {
         }
 
         Format dateFormat = FastDateFormat.getInstance(ZimsIlluminaRun.DATE_FORMAT);
-        // TODO: fill in sequencerModel and isPaired
+        // TODO: fill in isPaired
 
         double imagedArea = 0;
-        if (sequencingRun.getImagedAreaPerMM2() != null) {
+        if (illuminaRun.getImagedAreaPerMM2() != null) {
             // avoid unboxing NPE
-            imagedArea = sequencingRun.getImagedAreaPerMM2();
+            imagedArea = illuminaRun.getImagedAreaPerMM2();
         }
-        ZimsIlluminaRun run = new ZimsIlluminaRun(sequencingRun.getRunName(), sequencingRun.getRunBarcode(),
-                flowcell.getLabel(), sequencingRun.getMachineName(), flowcell.getSequencerModel(), dateFormat.format(illuminaRun.getRunDate()),
-                false, sequencingRun.getActualReadStructure(), imagedArea, sequencingRun.getSetupReadStructure(),sequencingRun.getLanesSequenced());
+        ZimsIlluminaRun run = new ZimsIlluminaRun(illuminaRun.getRunName(), illuminaRun.getRunBarcode(),
+                flowcell.getLabel(), illuminaRun.getMachineName(), flowcell.getSequencerModel(), dateFormat.format(illuminaRun.getRunDate()),
+                false, illuminaRun.getActualReadStructure(), imagedArea, illuminaRun.getSetupReadStructure(),illuminaRun.getLanesSequenced());
 
         for (List<SampleInstanceDto> sampleInstanceDtos : perLaneSampleInstanceDtos) {
             if (sampleInstanceDtos != null && !sampleInstanceDtos.isEmpty()) {
@@ -143,7 +146,10 @@ public class ZimsIlluminaRunFactory {
                 short laneNumber = sampleInstanceDtos.get(0).getLaneNumber();
                 libraryBeans.addAll(
                         makeLibraryBeans(sampleInstanceDtos, mapSampleIdToDto, mapKeyToProductOrder, mapNameToControl));
-                ZimsIlluminaChamber lane = new ZimsIlluminaChamber(laneNumber, libraryBeans, null, null);
+               String sequencedLibraryName=sampleInstanceDtos.get(0).getSequencedLibraryName();
+                Date sequencedLibraryDate = sampleInstanceDtos.get(0).getSequencedLibraryDate();
+
+                ZimsIlluminaChamber lane = new ZimsIlluminaChamber(laneNumber, libraryBeans, null, sequencedLibraryName, sequencedLibraryDate);
                 run.addLane(lane);
             }
         }
@@ -235,12 +241,7 @@ public class ZimsIlluminaRunFactory {
         }
 
         // Make order predictable
-        Collections.sort(libraryBeans, new Comparator<LibraryBean>() {
-            @Override
-            public int compare(LibraryBean o1, LibraryBean o2) {
-                return o1.getSampleId().compareTo(o2.getSampleId());
-            }
-        });
+        Collections.sort(libraryBeans, LibraryBean.BY_SAMPLE_ID);
         return libraryBeans;
     }
 
@@ -381,14 +382,18 @@ public class ZimsIlluminaRunFactory {
         private SampleInstance sampleInstance;
         private String sampleId;
         private String productOrderKey;
+        private String sequencedLibraryName;
+        private Date sequencedLibraryDate;
 
         public SampleInstanceDto(short laneNumber, LabVessel labVessel, SampleInstance sampleInstance, String sampleId,
-                                  String productOrderKey) {
+                                 String productOrderKey, String sequencedLibraryName, Date sequencedLibraryDate) {
             this.laneNumber = laneNumber;
             this.labVessel = labVessel;
             this.sampleInstance = sampleInstance;
             this.sampleId = sampleId;
             this.productOrderKey = productOrderKey;
+            this.sequencedLibraryName = sequencedLibraryName;
+            this.sequencedLibraryDate = sequencedLibraryDate;
         }
 
         public short getLaneNumber() {
@@ -411,6 +416,13 @@ public class ZimsIlluminaRunFactory {
             return productOrderKey;
         }
 
+        String getSequencedLibraryName() {
+            return sequencedLibraryName;
+        }
+
+        Date getSequencedLibraryDate() {
+            return sequencedLibraryDate;
+        }
 
         @Override
         public boolean equals(Object o) {
@@ -433,6 +445,13 @@ public class ZimsIlluminaRunFactory {
                     that.productOrderKey != null) {
                 return false;
             }
+            if (sequencedLibraryName != null ? !sequencedLibraryName.equals(that.sequencedLibraryName) :
+                    that.sequencedLibraryName != null) {
+                return false;
+            }
+            if (!sequencedLibraryDate.equals(that.sequencedLibraryDate)) {
+                return false;
+            }
             if (sampleId != null ? !sampleId.equals(that.sampleId) : that.sampleId != null) {
                 return false;
             }
@@ -450,6 +469,8 @@ public class ZimsIlluminaRunFactory {
             result = 31 * result + (sampleInstance != null ? sampleInstance.hashCode() : 0);
             result = 31 * result + (sampleId != null ? sampleId.hashCode() : 0);
             result = 31 * result + (productOrderKey != null ? productOrderKey.hashCode() : 0);
+            result = 31 * result + (sequencedLibraryName != null ? sequencedLibraryName.hashCode() : 0);
+            result = 31 * result + (sequencedLibraryDate != null ? sequencedLibraryDate.hashCode() : 0);
             return result;
         }
     }

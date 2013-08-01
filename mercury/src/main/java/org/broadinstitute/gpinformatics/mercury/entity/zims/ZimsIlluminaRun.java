@@ -105,16 +105,16 @@ public class ZimsIlluminaRun {
                            String runDate,
                            Boolean isPaired,
                            String actualReadStructure,
-                           double  imagedAreaPerLaneMM2) {
+                           double imagedAreaPerLaneMM2) {
         this(runName,runBarcode,flowcellBarcode,sequencer,sequencerModel,runDate,isPaired,actualReadStructure,imagedAreaPerLaneMM2,null);
     }
 
     public ZimsIlluminaRun(String runName, String runBarcode, String flowcellBarcode, String sequencer,
                            String sequencerModel, String runDate, Boolean paired, String actualReadStructure,
-                           double imagedAreaPerLaneMM2, String setupReadStructure,String lanesSequenced) {
+                           double imagedAreaPerLaneMM2, String setupReadStructure,
+                           String lanesSequenced) {
         this(runName, runBarcode, flowcellBarcode, sequencer, sequencerModel, runDate, paired, actualReadStructure, imagedAreaPerLaneMM2,lanesSequenced);
         this.setupReadStructure = setupReadStructure;
-        this.lanesSequenced = lanesSequenced;
     }
 
     /**

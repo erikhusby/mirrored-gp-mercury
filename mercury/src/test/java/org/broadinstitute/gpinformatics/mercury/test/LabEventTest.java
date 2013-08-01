@@ -316,7 +316,8 @@ public class LabEventTest extends BaseEventTest {
         // want to check that null is represented properly
         Assert.assertNull(zimsIlluminaRun.getImagedAreaPerLaneMM2());
         Assert.assertEquals(zimsIlluminaRun.getLanesSequenced(),"1,4");
-
+        LabVessel denatureTube = illuminaFlowcell.getNearestTubeAncestorsForLanes().values().iterator().next();
+        Assert.assertEquals(zimsIlluminaChamber.getSequencedLibrary(), denatureTube.getLabel());
         for (LibraryBean bean : zimsIlluminaChamber.getLibraries()) {
             // Every library should have an LCSET, even controls.
             Assert.assertEquals(bean.getLcSet(), workflowBatch.getBatchName());

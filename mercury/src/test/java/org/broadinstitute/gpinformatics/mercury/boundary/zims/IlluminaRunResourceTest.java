@@ -167,6 +167,10 @@ public class IlluminaRunResourceTest extends Arquillian {
         assertEquals(run.getName(),RUN_NAME);
 
         doAssertions(zamboniRun,run,new HashMap<Long,ProductOrder>());
+        for (ZimsIlluminaChamber zimsIlluminaChamber : run.getLanes()) {
+            Assert.assertNotNull(zimsIlluminaChamber.getCreationTime());
+        }
+
         boolean foundBspSample = false;
         boolean foundLcSet = false;
         boolean foundPdo = false;
@@ -227,13 +231,19 @@ public class IlluminaRunResourceTest extends Arquillian {
 
     public static void doAssertions(TZamboniRun thriftRun,ZimsIlluminaRun runBean,Map<Long,ProductOrder> wrIdToPDO) {
         assertNull(runBean.getError());
-        assertEquals(runBean.getLanes().size(),thriftRun.getLanes().size());
+        assertEquals(runBean.getLanes().size(), thriftRun.getLanes().size());
         assertEquals(runBean.getFlowcellBarcode(),thriftRun.getFlowcellBarcode());
         assertEquals(runBean.getSequencer(),thriftRun.getSequencer());
         assertEquals(runBean.getSequencerModel(),thriftRun.getSequencerModel());
         assertEquals(runBean.getPairedRun().booleanValue(),thriftRun.isPairedRun());
         assertEquals(runBean.getActualReadStructure(), thriftRun.getActualReadStructure());
         assertEquals(runBean.getImagedAreaPerLaneMM2(), ThriftConversionUtil.zeroAsNull(thriftRun.getImagedAreaPerLaneMM2())); //actual,exp
+
+        for (ZimsIlluminaChamber lane : runBean.getLanes()) {
+            int laneNum = Integer.parseInt(lane.getName());
+            TZamboniLane zamboniLane = thriftRun.getLanes().get(laneNum-1);
+            assertEquals(lane.getSequencedLibrary(), zamboniLane.getSequencedLibraryName());
+        }
 
         doReadAssertions(thriftRun,runBean);
 
