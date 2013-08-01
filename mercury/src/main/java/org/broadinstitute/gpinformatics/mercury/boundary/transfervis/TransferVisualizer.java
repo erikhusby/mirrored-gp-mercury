@@ -14,9 +14,8 @@ public interface TransferVisualizer {
     String serviceName = "TransferVisualizer";
 
     enum AlternativeId {
-        LIBRARY_NAME("Library Name"),
-        GSSR_SAMPLE("GSSR Sample");
-//        MOLECULAR_INDEX("Molecular Index");
+        SAMPLE_ID("Sample ID"),
+        LCSET("LCSET");
 
         private String displayName;
 

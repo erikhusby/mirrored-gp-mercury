@@ -13,6 +13,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransf
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
@@ -486,7 +488,9 @@ public class TransferEntityGrapher implements TransferVisualizer {
                             new Vertex(barcode + "|" + label, IdType.TUBE_IN_RACK_ID_TYPE.toString(), barcode);
                     tubeVertex.setParentVertex(rackVertex);
 
-                    tubeVertex.setAlternativeIds(getAlternativeIds(receptacle, alternativeIds));
+                    if (receptacle != null) {
+                        tubeVertex.setAlternativeIds(getAlternativeIds(receptacle, alternativeIds));
+                    }
 //                    addLibraryTypeToDetails(receptacle, tubeVertex);
                     // need way to get from geometry to VesselPositions and vice versa
                     VesselGeometry.RowColumn rowColumn = vesselGeometry.getRowColumnForVesselPosition(vesselPosition);
@@ -752,24 +756,22 @@ public class TransferEntityGrapher implements TransferVisualizer {
     private Map<String, List<String>> getAlternativeIds(
             LabVessel receptacle, List<AlternativeId> alternativeIdList) {
         Map<String, List<String>> alternativeIdValues = new HashMap<>();
-//        if (alternativeIdList.contains(AlternativeId.LIBRARY_NAME) || alternativeIdList.contains(AlternativeId.GSSR_SAMPLE)) {
-//            if (receptacle.getContainedContents() != null) {
-//                for (ISeqContent iSeqContent : receptacle.getContainedContents()) {
-//                    if (alternativeIdList.contains(AlternativeId.LIBRARY_NAME) && iSeqContent.getName() != null) {
-//                        Vertex.addAlternativeId(alternativeIdValues, AlternativeId.LIBRARY_NAME.getDisplayName(), iSeqContent.getName());
-//                    }
-//                    if (alternativeIdList.contains(AlternativeId.GSSR_SAMPLE) && iSeqContent.getContentDescriptions() != null) {
-//                        for (ISeqContentDescr iSeqContentDescr : iSeqContent.getContentDescriptions()) {
-//                            String sampleBarcode = iSeqContentDescr.getLcSample() != null ? iSeqContentDescr.getLcSample().getBarcode() : "";
-//                            String indexName = iSeqContentDescr.getIndexingScheme() != null ?
-//                                    iSeqContentDescr.getIndexingScheme().getName() : "";
-//                            Vertex.addAlternativeId(alternativeIdValues, AlternativeId.GSSR_SAMPLE.getDisplayName(),
-//                                    sampleBarcode + ":" + indexName);
-//                        }
-//                    }
-//                }
-//            }
-//        }
+        for (SampleInstance sampleInstance : receptacle.getSampleInstances()) {
+            if (alternativeIdList.contains(AlternativeId.SAMPLE_ID)) {
+                MercurySample startingSample = sampleInstance.getStartingSample();
+                if (startingSample != null) {
+                    Vertex.addAlternativeId(alternativeIdValues, AlternativeId.SAMPLE_ID.getDisplayName(),
+                            startingSample.getSampleKey());
+                }
+            }
+            if (alternativeIdList.contains(AlternativeId.LCSET)) {
+                LabBatch labBatch = sampleInstance.getLabBatch();
+                if (labBatch != null) {
+                    Vertex.addAlternativeId(alternativeIdValues, AlternativeId.LCSET.getDisplayName(),
+                            labBatch.getBatchName());
+                }
+            }
+        }
         return alternativeIdValues;
     }
 
