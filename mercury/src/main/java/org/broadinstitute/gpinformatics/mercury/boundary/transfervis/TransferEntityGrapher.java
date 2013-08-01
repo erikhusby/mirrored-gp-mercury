@@ -261,8 +261,8 @@ public class TransferEntityGrapher implements TransferVisualizer {
      */
     @Override
     public Map<String, List<String>> getIdsForTube(String tubeBarcode) {
-        TwoDBarcodedTube receptacle = twoDBarcodedTubeDao.findByBarcode(tubeBarcode);
-        return getAlternativeIds(receptacle, Arrays.asList(AlternativeId.values()));
+        TwoDBarcodedTube receptacle = twoDBarcodedTubeDAO.findByBarcode(tubeBarcode);
+        return getAlternativeIds(receptacle.getSampleInstances(), Arrays.asList(AlternativeId.values()));
     }
 
     /**
@@ -488,9 +488,8 @@ public class TransferEntityGrapher implements TransferVisualizer {
                             new Vertex(barcode + "|" + label, IdType.TUBE_IN_RACK_ID_TYPE.toString(), barcode);
                     tubeVertex.setParentVertex(rackVertex);
 
-                    if (receptacle != null) {
-                        tubeVertex.setAlternativeIds(getAlternativeIds(receptacle, alternativeIds));
-                    }
+                    tubeVertex.setAlternativeIds(getAlternativeIds(
+                            vesselContainer.getSampleInstancesAtPosition(vesselPosition), alternativeIds));
 //                    addLibraryTypeToDetails(receptacle, tubeVertex);
                     // need way to get from geometry to VesselPositions and vice versa
                     VesselGeometry.RowColumn rowColumn = vesselGeometry.getRowColumnForVesselPosition(vesselPosition);
@@ -565,9 +564,8 @@ public class TransferEntityGrapher implements TransferVisualizer {
             Vertex vertex = graph.getMapIdToVertex().get(receptacle.getLabel());
             if (vertex == null) {
                 newVertex = true;
-                vertex = new Vertex(receptacle.getLabel(), IdType.RECEPTACLE_ID_TYPE.toString(),
-                        buildReceptacleLabel(receptacle));
-                vertex.setAlternativeIds(getAlternativeIds(receptacle, alternativeIds));
+                vertex = new Vertex(receptacle.getLabel(), IdType.RECEPTACLE_ID_TYPE.toString(), buildReceptacleLabel(receptacle));
+                vertex.setAlternativeIds(getAlternativeIds(receptacle.getSampleInstances(), alternativeIds));
                 graph.getMapIdToVertex().put(vertex.getId(), vertex);
                 vertex.setHasMoreEdges(true);
             }
@@ -754,9 +752,9 @@ public class TransferEntityGrapher implements TransferVisualizer {
      * @return list of Ids for the given receptacle
      */
     private Map<String, List<String>> getAlternativeIds(
-            LabVessel receptacle, List<AlternativeId> alternativeIdList) {
+            Set<SampleInstance> sampleInstances, List<AlternativeId> alternativeIdList) {
         Map<String, List<String>> alternativeIdValues = new HashMap<>();
-        for (SampleInstance sampleInstance : receptacle.getSampleInstances()) {
+        for (SampleInstance sampleInstance : sampleInstances) {
             if (alternativeIdList.contains(AlternativeId.SAMPLE_ID)) {
                 MercurySample startingSample = sampleInstance.getStartingSample();
                 if (startingSample != null) {
