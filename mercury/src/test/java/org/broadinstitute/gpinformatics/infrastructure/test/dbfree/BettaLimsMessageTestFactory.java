@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -36,6 +37,7 @@ import java.util.Map;
 @SuppressWarnings("FeatureEnvy")
 public class BettaLimsMessageTestFactory {
     public static final int NUMBER_OF_RACK_COLUMNS = 12;
+    public static final String SEQUENCING_STATION_MACHINE_NAME = "SL-HBU";
 
     private long time = System.currentTimeMillis();
     /** True if the mode element in the messages should be set to Mercury. This causes all messages to bypass
@@ -184,6 +186,9 @@ public class BettaLimsMessageTestFactory {
             String targetPlateBarcode, String physType, String section, String receptacleType) {
         ReceptaclePlateTransferEvent receptaclePlateTransferEvent = new ReceptaclePlateTransferEvent();
         setStationEventData(eventType, receptaclePlateTransferEvent);
+        if(physType.equals(LabEventTest.PHYS_TYPE_FLOWCELL_2_LANE)) {
+            receptaclePlateTransferEvent.setStation(SEQUENCING_STATION_MACHINE_NAME);
+        }
 
         ReceptacleType sourceReceptacle = new ReceptacleType();
         sourceReceptacle.setBarcode(sourceTubeBarcode);
@@ -354,6 +359,7 @@ public class BettaLimsMessageTestFactory {
     public PlateTransferEventType buildStripTubeToFlowcell(String eventType, String stripTubeBarcode, String flowcellBarcode) {
         PlateTransferEventType plateTransferEvent = new PlateTransferEventType();
         setStationEventData(eventType, plateTransferEvent);
+        plateTransferEvent.setStation(SEQUENCING_STATION_MACHINE_NAME);
 
         PlateType stripTube = new PlateType();
         stripTube.setBarcode(stripTubeBarcode);

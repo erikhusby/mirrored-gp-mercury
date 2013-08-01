@@ -116,11 +116,11 @@ public class FlowcellMessageHandler extends AbstractEventHandler {
                     updateFields.add(new CustomField(summaryFieldDefinition, LabBatch.TicketFields.SUMMARY,
                             flowcell.getLabel()));
                     updateFields.add(new CustomField(summaryFieldDefinition, LabBatch.TicketFields.SEQUENCING_STATION,
-                            flowcell.getFlowcellType().getSequencerModel()));
+                            flowcell.getFlowcellType().getSequencingStationName(), stationEvent.getStation()));
                     jiraService.updateIssue(currentUpdateBatch.getBusinessKey(), updateFields);
                 }
 
-            } catch (IOException e) {
+            } catch (Exception e) {
                 LOG.error("Error connecting to Jira: " + e.getMessage() +
                           " while trying to update an FCT ticket for " + flowcell.getLabel());
             }

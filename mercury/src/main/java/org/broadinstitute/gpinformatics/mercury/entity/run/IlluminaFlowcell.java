@@ -118,6 +118,10 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
             return model;
         }
 
+        public String getSequencingStationName() {
+            return sequencingStationName;
+        }
+
         private static Map<String, FlowcellType> mapAutomationNameToType = new HashMap<>();
         private static Map<String, FlowcellType> mapDisplayNameToType = new HashMap<>();
 

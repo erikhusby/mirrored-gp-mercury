@@ -152,11 +152,14 @@ public class VesselTransferEjb {
      */
     public LabEvent reagentKitToFlowcell(@Nonnull String reagentKitBarcode, @Nonnull String flowcellBarcode,
                                          @Nonnull String username, @Nonnull String stationName) {
+
+        BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
         PlateCherryPickEvent transferEvent =
                 labEventFactory
                         .getReagentToFlowcellEventDBFree(reagentKitBarcode, flowcellBarcode, username, stationName);
+        bettaLIMSMessage.getPlateCherryPickEvent().add(transferEvent);
 
-        LabEvent labEvent = labEventFactory.buildFromBettaLims(transferEvent);
+        LabEvent labEvent = labEventFactory.buildFromBettaLims(bettaLIMSMessage).iterator().next();
         labEventHandler.processEvent(labEvent);
         labEventDao.persist(labEvent);
         return labEvent;

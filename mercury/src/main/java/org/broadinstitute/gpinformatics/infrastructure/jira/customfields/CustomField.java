@@ -97,6 +97,12 @@ public class CustomField {
         this(submissionFields.get(field.getFieldName()), new ValueContainer(value));
     }
 
+    public CustomField(@Nonnull Map<String, CustomFieldDefinition> submissionFields,
+                       @Nonnull SubmissionField field,
+                       String parentValue, String childValue) {
+        this(submissionFields.get(field.getFieldName()),new CascadingSelectList(parentValue, childValue));
+    }
+
     @Nonnull
     public CustomFieldDefinition getFieldDefinition() {
         return definition;
