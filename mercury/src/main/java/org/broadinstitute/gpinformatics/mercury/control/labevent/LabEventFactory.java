@@ -75,7 +75,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import static org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell.FlowcellType.MiSeqFlowcell;
 
 /**
  * Creates Lab Event entities from BettaLIMS JAXB beans.  Implements Serializable because it's used by a Stateful
@@ -193,7 +192,7 @@ public class LabEventFactory implements Serializable {
         transferEvent.setStation(stationName);
 
         // yes, yes, miSeq flowcell has one lane.
-        for (VesselPosition vesselPosition : MiSeqFlowcell.getVesselGeometry().getVesselPositions()) {
+        for (VesselPosition vesselPosition : IlluminaFlowcell.FlowcellType.MiSeqFlowcell.getVesselGeometry().getVesselPositions()) {
             CherryPickSourceType cherryPickSource = BettalimsObjectFactory.createCherryPickSourceType(reagentKitBarcode,
                     MiSeqReagentKit.LOADING_WELL.name(), flowcellBarcode, vesselPosition.name());
             transferEvent.getSource().add(cherryPickSource);
@@ -204,7 +203,7 @@ public class LabEventFactory implements Serializable {
         transferEvent.getSourcePlate().add(reagentKitType);
 
         PlateType flowcell = BettalimsObjectFactory
-                .createPlateType(flowcellBarcode, MiSeqFlowcell.getAutomationName(), SBSSection.ALL96.getSectionName(),
+                .createPlateType(flowcellBarcode, IlluminaFlowcell.FlowcellType.MiSeqFlowcell.getAutomationName(), SBSSection.ALL96.getSectionName(),
                         null);
         transferEvent.getPlate().add(flowcell);
         return transferEvent;

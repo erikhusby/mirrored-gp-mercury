@@ -318,7 +318,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
         String runPath = "/tmp/file/run/path/" + runName;
 
         SolexaRunBean solexaRunBean = new SolexaRunBean(flowcellBarcode, flowcellBarcode + format.format(runDate),
-                runDate, "SL-HAL", runPath, null);
+                runDate, BettaLimsMessageTestFactory.HISEQ_SEQUENCING_STATION_MACHINE_NAME, runPath, null);
 
         UriInfo uriInfo = EasyMock.createMock(UriInfo.class);
         UriBuilder uriBuilder1 = EasyMock.createMock(UriBuilder.class);

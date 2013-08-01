@@ -463,7 +463,13 @@ public class ReworkEjbTest extends Arquillian {
         List<ProductOrder> ordersToUpdate = new ArrayList<>();
 
         Collections.addAll(ordersToUpdate, exExProductOrder1, exExProductOrder2, nonExExProductOrder, extraProductOrder);
-
+        for(TwoDBarcodedTube vessel:mapBarcodeToTube.values()) {
+            TwoDBarcodedTube tempVessel = twoDBarcodedTubeDAO.findByBarcode(vessel.getLabel());
+            for(BucketEntry bucketEntry:tempVessel.getBucketEntries()) {
+                bucketEntry.setStatus(BucketEntry.Status.Archived);
+            }
+            twoDBarcodedTubeDAO.persist(tempVessel);
+        }
         productOrderDao.persistAll(ordersToUpdate);
         productOrderDao.flush();
         productOrderDao.clear();
@@ -746,6 +752,14 @@ public class ReworkEjbTest extends Arquillian {
             Assert.assertEquals(candidate.getProductOrderKey(), nonExExProductOrder.getBusinessKey());
         }
 
+        for (String barcode : hybridSelectionJaxbBuilder.getNormCatchBarcodes()) {
+
+            TwoDBarcodedTube currentTube = twoDBarcodedTubeDAO.findByBarcode(barcode);
+            for(BucketEntry currentEntry : currentTube.getBucketEntries()) {
+                currentEntry.setStatus(BucketEntry.Status.Archived);
+            }
+            twoDBarcodedTubeDAO.persist(currentTube);
+        }
     }
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
@@ -893,6 +907,16 @@ public class ReworkEjbTest extends Arquillian {
         Assert.assertEquals(entries.size(), existingReworks + hybridSelectionJaxbBuilder.getNormCatchBarcodes().size());
 
         validateBarcodeExistence(hybridSelectionJaxbBuilder, entries);
+
+        for (String barcode : hybridSelectionJaxbBuilder.getNormCatchBarcodes()) {
+
+            TwoDBarcodedTube currentTube = twoDBarcodedTubeDAO.findByBarcode(barcode);
+            for(BucketEntry currentEntry : currentTube.getBucketEntries()) {
+                currentEntry.setStatus(BucketEntry.Status.Archived);
+            }
+            twoDBarcodedTubeDAO.persist(currentTube);
+        }
+
     }
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
@@ -952,6 +976,16 @@ public class ReworkEjbTest extends Arquillian {
         Assert.assertEquals(entries.size(), existingReworks + hybridSelectionJaxbBuilder.getNormCatchBarcodes().size());
 
         validateBarcodeExistence(hybridSelectionJaxbBuilder, entries);
+
+        for (String barcode : hybridSelectionJaxbBuilder.getNormCatchBarcodes()) {
+
+            TwoDBarcodedTube currentTube = twoDBarcodedTubeDAO.findByBarcode(barcode);
+            for(BucketEntry currentEntry : currentTube.getBucketEntries()) {
+                currentEntry.setStatus(BucketEntry.Status.Archived);
+            }
+            twoDBarcodedTubeDAO.persist(currentTube);
+        }
+
     }
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
@@ -995,6 +1029,16 @@ public class ReworkEjbTest extends Arquillian {
         Assert.assertEquals(entries.size(), existingReworks + hybridSelectionJaxbBuilder.getNormCatchBarcodes().size());
 
         validateBarcodeExistence(hybridSelectionJaxbBuilder, entries);
+
+        for (String barcode : hybridSelectionJaxbBuilder.getNormCatchBarcodes()) {
+
+            TwoDBarcodedTube currentTube = twoDBarcodedTubeDAO.findByBarcode(barcode);
+            for(BucketEntry currentEntry : currentTube.getBucketEntries()) {
+                currentEntry.setStatus(BucketEntry.Status.Archived);
+            }
+            twoDBarcodedTubeDAO.persist(currentTube);
+        }
+
     }
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
@@ -1043,6 +1087,16 @@ public class ReworkEjbTest extends Arquillian {
         for (BucketEntry entry : bucketCleanupItems) {
             entry.setStatus(BucketEntry.Status.Archived);
         }
+
+        for (String barcode : hybridSelectionJaxbBuilder.getNormCatchBarcodes()) {
+
+            TwoDBarcodedTube currentTube = twoDBarcodedTubeDAO.findByBarcode(barcode);
+            for(BucketEntry currentEntry : currentTube.getBucketEntries()) {
+                currentEntry.setStatus(BucketEntry.Status.Archived);
+            }
+            twoDBarcodedTubeDAO.persist(currentTube);
+        }
+
     }
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
