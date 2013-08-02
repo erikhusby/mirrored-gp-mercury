@@ -25,7 +25,7 @@ public class BSPSampleFactory {
 
 
 //    @Inject
-//    private BSPStartingSampleDAO bspStartingSampleDAO;
+//    private BSPStartingSampleDao bspStartingSampleDao;
 
     @Inject
     private BSPPlatingReceiptDao bspPlatingReceiptDao;
