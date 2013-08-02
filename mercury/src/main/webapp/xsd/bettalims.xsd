@@ -240,7 +240,7 @@
         <xs:attribute name="concentration" type="xs:double" use="optional"/>
         <xs:attribute name="fragmentSize" type="xs:double" use="optional"/>
     </xs:complexType>
-    f
+
     <xs:complexType name="lcSampleType">
         <xs:attribute name="lsid" type="xs:NMTOKEN"/>
     </xs:complexType>
