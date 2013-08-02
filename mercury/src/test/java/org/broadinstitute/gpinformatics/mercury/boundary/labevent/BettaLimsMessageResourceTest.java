@@ -30,6 +30,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequenci
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.IndexedPlateFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
@@ -299,6 +300,12 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         for (LibraryBean libraryBean : zimsIlluminaChamber.getLibraries()) {
             Assert.assertEquals(libraryBean.getLcSet(), mapBarcodeToTube.values().iterator().next().
                     getBucketEntries().iterator().next().getLabBatch().getBatchName());
+        }
+
+        for (TwoDBarcodedTube tube:mapBarcodeToTube.values()) {
+            for (BucketEntry entry:tube.getBucketEntries()) {
+                entry.setStatus(BucketEntry.Status.Archived);
+            }
         }
 
 //        Controller.stopCPURecording();
