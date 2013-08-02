@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.test.builders;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLimsMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
@@ -37,7 +37,7 @@ public class LibraryConstructionJaxbBuilder {
     private PlateEventType postABaseThermoCyclerLoadedJaxb;
     private PlateEventType postIdxAdapterLigationThermoCyclerLoadedJaxb;
     private PlateEventType postPondEnrichmentThermoCyclerLoadedJaxb;
-    private final List<BettaLimsMessage> messageList = new ArrayList<>();
+    private final List<BettaLIMSMessage> messageList = new ArrayList<>();
     private int numSamples;
 
     public LibraryConstructionJaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory, String testPrefix,
@@ -99,7 +99,7 @@ public class LibraryConstructionJaxbBuilder {
         return pondRegistrationJaxb;
     }
 
-    public List<BettaLimsMessage> getMessageList() {
+    public List<BettaLIMSMessage> getMessageList() {
         return messageList;
     }
 

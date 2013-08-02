@@ -265,7 +265,7 @@
         </xs:complexContent>
     </xs:complexType>
 
-    <xs:element name="bettaLimsMessage">
+    <xs:element name="bettaLIMSMessage">
         <xs:complexType>
             <xs:choice>
                 <xs:element name="plateEvent" type="plateEventType" maxOccurs="unbounded"/>

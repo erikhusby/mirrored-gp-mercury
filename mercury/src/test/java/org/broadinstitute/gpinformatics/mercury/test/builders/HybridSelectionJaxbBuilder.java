@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.test.builders;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLimsMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
@@ -20,7 +20,7 @@ public class HybridSelectionJaxbBuilder {
     private final List<String> pondRegTubeBarcodes;
     private String normCatchRackBarcode;
     private List<String> normCatchBarcodes;
-    private final List<BettaLimsMessage> messageList = new ArrayList<>();
+    private final List<BettaLIMSMessage> messageList = new ArrayList<>();
 
     private PlateTransferEventType preSelPoolJaxb;
     private PlateTransferEventType preSelPoolJaxb2;
@@ -128,7 +128,7 @@ public class HybridSelectionJaxbBuilder {
         return normCatchBarcodes;
     }
 
-    public List<BettaLimsMessage> getMessageList() {
+    public List<BettaLIMSMessage> getMessageList() {
         return messageList;
     }
 

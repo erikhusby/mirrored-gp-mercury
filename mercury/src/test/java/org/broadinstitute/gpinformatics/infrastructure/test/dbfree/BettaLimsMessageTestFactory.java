@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.test.dbfree;
 
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLimsMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.CherryPickSourceType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * This class is a factory for BettaLimsMessage JAXB objects.  It is intended to facilitate building messages in test cases.
+ * This class is a factory for BettaLIMSMessage JAXB objects.  It is intended to facilitate building messages in test cases.
  */
 @SuppressWarnings("FeatureEnvy")
 public class BettaLimsMessageTestFactory {
@@ -48,9 +48,9 @@ public class BettaLimsMessageTestFactory {
         this.mercuryMode = mercuryMode;
     }
 
-    public static String marshal(BettaLimsMessage blmJaxbObject) {
+    public static String marshal(BettaLIMSMessage blmJaxbObject) {
         try {
-            JAXBContext jc = JAXBContext.newInstance(BettaLimsMessage.class);
+            JAXBContext jc = JAXBContext.newInstance(BettaLIMSMessage.class);
 
             Marshaller marsh = jc.createMarshaller();
 
@@ -73,29 +73,29 @@ public class BettaLimsMessageTestFactory {
      *
      * @return the created BettaLIMS message
      */
-    public BettaLimsMessage addMessage(List<BettaLimsMessage> messageList, StationEventType... stationEventTypes) {
-        BettaLimsMessage bettaLimsMessage = new BettaLimsMessage();
+    public BettaLIMSMessage addMessage(List<BettaLIMSMessage> messageList, StationEventType... stationEventTypes) {
+        BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
         if (mercuryMode) {
-            bettaLimsMessage.setMode(LabEventFactory.MODE_MERCURY);
+            bettaLIMSMessage.setMode(LabEventFactory.MODE_MERCURY);
         }
         for (StationEventType stationEventType : stationEventTypes) {
             if (stationEventType instanceof PlateTransferEventType) {
-                bettaLimsMessage.getPlateTransferEvent().add((PlateTransferEventType) stationEventType);
+                bettaLIMSMessage.getPlateTransferEvent().add((PlateTransferEventType) stationEventType);
             } else if (stationEventType instanceof PlateCherryPickEvent) {
-                bettaLimsMessage.getPlateCherryPickEvent().add((PlateCherryPickEvent) stationEventType);
+                bettaLIMSMessage.getPlateCherryPickEvent().add((PlateCherryPickEvent) stationEventType);
             } else if (stationEventType instanceof PlateEventType) {
-                bettaLimsMessage.getPlateEvent().add((PlateEventType) stationEventType);
+                bettaLIMSMessage.getPlateEvent().add((PlateEventType) stationEventType);
             } else if (stationEventType instanceof ReceptaclePlateTransferEvent) {
-                bettaLimsMessage.getReceptaclePlateTransferEvent().add((ReceptaclePlateTransferEvent) stationEventType);
+                bettaLIMSMessage.getReceptaclePlateTransferEvent().add((ReceptaclePlateTransferEvent) stationEventType);
             } else if (stationEventType instanceof ReceptacleEventType) {
-                bettaLimsMessage.getReceptacleEvent().add((ReceptacleEventType) stationEventType);
+                bettaLIMSMessage.getReceptacleEvent().add((ReceptacleEventType) stationEventType);
             } else {
                 throw new RuntimeException("Unknown station event type " + stationEventType);
             }
         }
-        messageList.add(bettaLimsMessage);
+        messageList.add(bettaLIMSMessage);
         advanceTime();
-        return bettaLimsMessage;
+        return bettaLIMSMessage;
     }
 
     /**

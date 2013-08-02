@@ -12,7 +12,7 @@
 package org.broadinstitute.gpinformatics.mercury.test;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLimsMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
@@ -101,9 +101,9 @@ public class ReagentKitTransferTest {
             // test the kind of event returned
             MatcherAssert.assertThat(transferEventType.getEventType(),
                     Matchers.equalTo(LabEventType.DENATURE_TO_REAGENT_KIT_TRANSFER.getName()));
-            BettaLimsMessage bettaLimsMessage = new BettaLimsMessage();
-            bettaLimsMessage.getPlateCherryPickEvent().add(transferEventType);
-            final String message = BettaLimsMessageBeanTest.marshalMessage(bettaLimsMessage);
+            BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
+            bettaLIMSMessage.getPlateCherryPickEvent().add(transferEventType);
+            final String message = BettaLimsMessageBeanTest.marshalMessage(bettaLIMSMessage);
             Assert.assertFalse(message.isEmpty());
         }
     }

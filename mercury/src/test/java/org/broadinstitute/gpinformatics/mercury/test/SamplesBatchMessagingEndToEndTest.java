@@ -5,7 +5,7 @@ import com.sun.jersey.api.client.filter.LoggingFilter;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLimsMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType;
@@ -53,7 +53,7 @@ public class SamplesBatchMessagingEndToEndTest extends ContainerTest {
         // Receipt of data ?
 
         // Start of extraction - call LabBatchResource
-        BettaLimsMessage extractionStartMsg = new BettaLimsMessage();
+        BettaLIMSMessage extractionStartMsg = new BettaLIMSMessage();
         for (String sampleBarcode : sampleBarcodes) {
             ReceptacleEventType receptacleEventType = bettaLimsMessageTestFactory.buildReceptacleEvent(
                     "SamplesExtractionStart", sampleBarcode, "Conical50");
@@ -86,7 +86,7 @@ public class SamplesBatchMessagingEndToEndTest extends ContainerTest {
                     BettaLimsMessageTestFactory.WellNameType.SHORT)));
         }
 
-        BettaLimsMessage extractionEndMsg = new BettaLimsMessage();
+        BettaLIMSMessage extractionEndMsg = new BettaLIMSMessage();
         PlateCherryPickEvent plateCherryPickEvent = bettaLimsMessageTestFactory.buildCherryPick(
                 "SamplesExtractionEndTransfer", sourceRackBarcodes, sourceTubeBarcodes,
                 Collections.singletonList(extEndRackBarcode), Collections.singletonList(extractionEndTubeBarcodes),
@@ -104,7 +104,7 @@ public class SamplesBatchMessagingEndToEndTest extends ContainerTest {
             normTubeBarcodes.add("2DNorm" + i + timestamp);
         }
         String normRackBarcode = "NormRack" + timestamp;
-        BettaLimsMessage normMsg = new BettaLimsMessage();
+        BettaLIMSMessage normMsg = new BettaLIMSMessage();
         PlateTransferEventType plateTransferEventType =
                 bettaLimsMessageTestFactory.buildRackToRack("SamplesNormalizationTransfer",
                         extEndRackBarcode, extractionEndTubeBarcodes, normRackBarcode, normTubeBarcodes);
@@ -115,7 +115,7 @@ public class SamplesBatchMessagingEndToEndTest extends ContainerTest {
 
         // Plating - rack to Covaris "plate"?  (The Covaris rack is considered to be a plate, because the tubes don't
         // have barcodes)
-        BettaLimsMessage platingMsg = new BettaLimsMessage();
+        BettaLIMSMessage platingMsg = new BettaLIMSMessage();
         PlateTransferEventType rackToCovaris = bettaLimsMessageTestFactory.buildRackToPlate("SamplesPlatingToCovaris",
                 normRackBarcode, normTubeBarcodes, "CovarisRack" + timestamp);
         rackToCovaris.getPlate().setPhysType("CovarisRack");

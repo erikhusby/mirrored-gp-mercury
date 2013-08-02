@@ -6,7 +6,7 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLimsMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.CherryPickSourceType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
@@ -272,7 +272,7 @@ public class LabEventFactory implements Serializable {
      *
      * @return list of entities
      */
-    public List<LabEvent> buildFromBettaLims(BettaLimsMessage bettaLIMSMessage) {
+    public List<LabEvent> buildFromBettaLims(BettaLIMSMessage bettaLIMSMessage) {
         List<LabEvent> labEvents = new ArrayList<>();
         Set<UniqueEvent> uniqueEvents = new HashSet<>();
 

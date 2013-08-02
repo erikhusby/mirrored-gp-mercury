@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.test;
 import com.sun.jersey.api.client.Client;
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLimsMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500JaxbBuilder;
@@ -83,25 +83,25 @@ public class ExomeExpressIntegrationTest {
                     bettaLimsMessageTestFactory,
                     new ArrayList<>(sampleBarcodeMap.values()),
                     testSuffix, exportRackBarcode).invoke();
-            for (BettaLimsMessage bettaLimsMessage : shearingJaxbBuilder.getMessageList()) {
-                sendMessage(baseUrl, bettaLimsMessage);
+            for (BettaLIMSMessage bettaLIMSMessage : shearingJaxbBuilder.getMessageList()) {
+                sendMessage(baseUrl, bettaLIMSMessage);
             }
             LibraryConstructionJaxbBuilder libraryConstructionJaxbBuilder = new LibraryConstructionJaxbBuilder(
                     bettaLimsMessageTestFactory, testSuffix, shearingJaxbBuilder.getShearCleanPlateBarcode(),
                     "000002453323", null,
                     sampleBarcodeMap.size()).invoke();
 
-            for (BettaLimsMessage bettaLimsMessage : libraryConstructionJaxbBuilder.getMessageList()) {
+            for (BettaLIMSMessage bettaLIMSMessage : libraryConstructionJaxbBuilder.getMessageList()) {
                 boolean willSkipEndRepair = false;
                 if (shouldSkipEndRepair) {
-                    for (PlateEventType plateEventType : bettaLimsMessage.getPlateEvent()) {
+                    for (PlateEventType plateEventType : bettaLIMSMessage.getPlateEvent()) {
                         if ("EndRepair".equals(plateEventType.getEventType())) {
                             willSkipEndRepair = true;
                         }
                     }
                 }
                 if (!willSkipEndRepair) {
-                    sendMessage(baseUrl, bettaLimsMessage);
+                    sendMessage(baseUrl, bettaLIMSMessage);
                 } else {
                     System.out.println("Skipped end repair.");
                 }
@@ -110,15 +110,15 @@ public class ExomeExpressIntegrationTest {
             HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = new HybridSelectionJaxbBuilder(
                     bettaLimsMessageTestFactory, testSuffix, libraryConstructionJaxbBuilder.getPondRegRackBarcode(),
                     libraryConstructionJaxbBuilder.getPondRegTubeBarcodes(), "0102692378").invoke();
-            for (BettaLimsMessage bettaLimsMessage : hybridSelectionJaxbBuilder.getMessageList()) {
-                sendMessage(baseUrl, bettaLimsMessage);
+            for (BettaLIMSMessage bettaLIMSMessage : hybridSelectionJaxbBuilder.getMessageList()) {
+                sendMessage(baseUrl, bettaLIMSMessage);
             }
             QtpJaxbBuilder qtpJaxbBuilder = new QtpJaxbBuilder(bettaLimsMessageTestFactory, testSuffix,
                     Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchBarcodes()),
                     Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchRackBarcode()),
                     false).invoke();
-            for (BettaLimsMessage bettaLimsMessage : qtpJaxbBuilder.getMessageList()) {
-                sendMessage(baseUrl, bettaLimsMessage);
+            for (BettaLIMSMessage bettaLIMSMessage : qtpJaxbBuilder.getMessageList()) {
+                sendMessage(baseUrl, bettaLIMSMessage);
             }
 
             System.out.println("About to perform denature to Flowcell Transfer.  Press 'y' if running in Parallel?");
@@ -139,8 +139,8 @@ public class ExomeExpressIntegrationTest {
 
             hiSeq2500JaxbBuilder.invoke();
 
-            for (BettaLimsMessage bettaLimsMessage : hiSeq2500JaxbBuilder.getMessageList()) {
-                sendMessage(baseUrl, bettaLimsMessage);
+            for (BettaLIMSMessage bettaLIMSMessage : hiSeq2500JaxbBuilder.getMessageList()) {
+                sendMessage(baseUrl, bettaLIMSMessage);
             }
 
             System.out.println("Transfer from denature tube: " + qtpJaxbBuilder.getDenatureTubeBarcode());
@@ -176,7 +176,7 @@ public class ExomeExpressIntegrationTest {
         }
     }
 
-    private void sendMessage(URL baseUrl, BettaLimsMessage bean) {
+    private void sendMessage(URL baseUrl, BettaLIMSMessage bean) {
         Client.create().resource(baseUrl + "/rest/bettalimsmessage")
                 .type(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML)

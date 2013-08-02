@@ -4,7 +4,7 @@ import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.filter.LoggingFilter;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLimsMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventResponseBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchBean;
@@ -48,7 +48,7 @@ public class SamplesPicoDbTest extends ContainerTest {
         SamplesPicoJaxbBuilder samplesPicoJaxbBuilder =
                 new SamplesPicoJaxbBuilder(tubeBarcodes, batchId, timestamp);
         samplesPicoJaxbBuilder.buildJaxb();
-        List<BettaLimsMessage> messageList = samplesPicoJaxbBuilder.getMessageList();
+        List<BettaLIMSMessage> messageList = samplesPicoJaxbBuilder.getMessageList();
         sendMessages(baseUrl, client, messageList);
 
         LabEventResponseBean labEventResponseBean = client.resource(baseUrl.toExternalForm() + "rest/labevent/batch")
@@ -94,13 +94,13 @@ public class SamplesPicoDbTest extends ContainerTest {
      * @param client      jersey
      * @param messageList list of messages to send
      */
-    public static void sendMessages(URL baseUrl, Client client, List<BettaLimsMessage> messageList) {
-        for (BettaLimsMessage bettaLimsMessage : messageList) {
+    public static void sendMessages(URL baseUrl, Client client, List<BettaLIMSMessage> messageList) {
+        for (BettaLIMSMessage bettaLIMSMessage : messageList) {
             String response;
             response = client.resource(baseUrl.toExternalForm() + "rest/bettalimsmessage")
                     .type(MediaType.APPLICATION_XML_TYPE)
                     .accept(MediaType.APPLICATION_XML)
-                    .entity(bettaLimsMessage)
+                    .entity(bettaLIMSMessage)
                     .post(String.class);
             System.out.println(response);
         }

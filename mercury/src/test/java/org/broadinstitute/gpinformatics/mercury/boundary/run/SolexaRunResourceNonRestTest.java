@@ -17,7 +17,7 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.monitoring.HipChatMessageSender;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConfig;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLimsMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResource;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResourceTest;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.VesselTransferEjb;
@@ -259,9 +259,9 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         labVesselDao.persist(tube);
         labVesselDao.flush();
 
-        BettaLimsMessage bettaLimsMessage = vesselTransferEjb
+        BettaLIMSMessage bettaLIMSMessage = vesselTransferEjb
                 .denatureToReagentKitTransfer(null, denatureRackMap, reagentKitBarcode, "pdunlea", "ZAN");
-        bettaLimsMessageResource.processMessage(bettaLimsMessage);
+        bettaLimsMessageResource.processMessage(bettaLIMSMessage);
 
         IlluminaSequencingRun run;
         SolexaRunResource runResource =

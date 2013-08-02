@@ -17,7 +17,7 @@ import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLimsMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
@@ -1183,7 +1183,7 @@ public class LabEventTest extends BaseEventTest {
         private PlateTransferEventType fluidigmSampleInputJaxb;
         private PlateTransferEventType fluidigmIndexedAdapterInputJaxb;
         private PlateTransferEventType fluidigmHarvestingToRackJaxb;
-        private final List<BettaLimsMessage> messageList = new ArrayList<>();
+        private final List<BettaLIMSMessage> messageList = new ArrayList<>();
         private String harvestRackBarcode;
 
         private FluidigmMessagesBuilder(String testPrefix, BettaLimsMessageTestFactory bettaLimsMessageTestFactory,

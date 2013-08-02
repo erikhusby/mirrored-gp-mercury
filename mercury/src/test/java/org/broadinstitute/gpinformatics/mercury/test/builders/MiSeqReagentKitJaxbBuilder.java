@@ -12,7 +12,7 @@
 package org.broadinstitute.gpinformatics.mercury.test.builders;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLimsMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.VesselTransferEjb;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
@@ -28,7 +28,7 @@ public class MiSeqReagentKitJaxbBuilder {
     private final String miSeqReagentKitBarcode;
     private final BettaLimsMessageTestFactory bettaLimsMessageTestFactory;
     private PlateCherryPickEvent denatureToReagentKitJaxb;
-    private final List<BettaLimsMessage> messageList = new ArrayList<>();
+    private final List<BettaLIMSMessage> messageList = new ArrayList<>();
 
     public MiSeqReagentKitJaxbBuilder(Map<String, VesselPosition> denatureBarcodeMap,
                                       String miSeqReagentKitBarcode, String flowcellBarcode,
@@ -55,7 +55,7 @@ public class MiSeqReagentKitJaxbBuilder {
         return denatureToReagentKitJaxb;
     }
 
-    public List<BettaLimsMessage> getMessageList() {
+    public List<BettaLIMSMessage> getMessageList() {
         return messageList;
     }
 }

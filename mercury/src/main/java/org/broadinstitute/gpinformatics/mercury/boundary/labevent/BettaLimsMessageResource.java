@@ -8,7 +8,7 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
 import org.broadinstitute.gpinformatics.infrastructure.ws.WsMessageStore;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLimsMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
@@ -146,7 +146,7 @@ public class BettaLimsMessageResource {
         try {
             wsMessageStore.store(WsMessageStore.BETTALIMS_RESOURCE_TYPE, message, now);
 
-            BettaLimsMessage bettaLIMSMessage = unmarshal(message);
+            BettaLIMSMessage bettaLIMSMessage = unmarshal(message);
 
             boolean processInMercury = false;
             boolean processInSquid = false;
@@ -245,9 +245,9 @@ public class BettaLimsMessageResource {
      * @throws JAXBException
      * @throws SAXException
      */
-    BettaLimsMessage unmarshal(String message) throws JAXBException, SAXException {
+    BettaLIMSMessage unmarshal(String message) throws JAXBException, SAXException {
 
-        JAXBContext jc = JAXBContext.newInstance(BettaLimsMessage.class);
+        JAXBContext jc = JAXBContext.newInstance(BettaLIMSMessage.class);
         Unmarshaller unmarshaller = jc.createUnmarshaller();
         if (VALIDATE_SCHEMA) {
             // todo jmt move so done only once
@@ -283,7 +283,7 @@ public class BettaLimsMessageResource {
         //Create a SAXSource specifying the filter
         SAXSource source = new SAXSource(inFilter, is);
 
-        return (BettaLimsMessage) unmarshaller.unmarshal(source);
+        return (BettaLIMSMessage) unmarshaller.unmarshal(source);
     }
 
     /**
@@ -293,7 +293,7 @@ public class BettaLimsMessageResource {
      *
      * @return enum value, or null if not found
      */
-    private LabEventType getLabEventType(BettaLimsMessage bettaLIMSMessage) {
+    private LabEventType getLabEventType(BettaLIMSMessage bettaLIMSMessage) {
         LabEventType labEventType = null;
         for (PlateCherryPickEvent plateCherryPickEvent : bettaLIMSMessage.getPlateCherryPickEvent()) {
             labEventType = LabEventType.getByName(plateCherryPickEvent.getEventType());
@@ -348,7 +348,7 @@ public class BettaLimsMessageResource {
      *
      * @return list of barcodes
      */
-    private Collection<String> getRegisteredBarcodesFromMessage(BettaLimsMessage bettaLIMSMessage) {
+    private Collection<String> getRegisteredBarcodesFromMessage(BettaLIMSMessage bettaLIMSMessage) {
 
         Set<String> barcodes = new HashSet<>();
 
@@ -377,7 +377,7 @@ public class BettaLimsMessageResource {
      *
      * @param message JAXB
      */
-    public void processMessage(BettaLimsMessage message) {
+    public void processMessage(BettaLIMSMessage message) {
         try {
             workflowValidator.validateWorkflow(message);
         } catch (Exception e) {

@@ -4,7 +4,7 @@ import com.sun.jersey.api.client.Client;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLimsMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.TubeBean;
@@ -150,17 +150,17 @@ public class ImportFromBspTest extends ContainerTest {
         PlateTransferEventType plateTransferEventType = bettaLimsMessageTestFactory.buildRackToRack(
                 LabEventType.SAMPLES_NORMALIZATION_TRANSFER.getName(), "ROOT" + testSuffix, normSourceBarcodes,
                 "NORM" + testSuffix, normTargetBarcodes);
-        BettaLimsMessage bettaLimsMessage = new BettaLimsMessage();
-        bettaLimsMessage.getPlateTransferEvent().add(plateTransferEventType);
-        sendMessage(bettaLimsMessage);
+        BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
+        bettaLIMSMessage.getPlateTransferEvent().add(plateTransferEventType);
+        sendMessage(bettaLIMSMessage);
 
         bettaLimsMessageTestFactory.advanceTime();
         plateTransferEventType = bettaLimsMessageTestFactory.buildRackToRack(
                 LabEventType.SAMPLES_PLATING_TO_COVARIS.getName(), "NORM" + testSuffix, normTargetBarcodes,
                 "EXPORT" + testSuffix, platingTargetBarcodes);
-        bettaLimsMessage = new BettaLimsMessage();
-        bettaLimsMessage.getPlateTransferEvent().add(plateTransferEventType);
-        sendMessage(bettaLimsMessage);
+        bettaLIMSMessage = new BettaLIMSMessage();
+        bettaLIMSMessage.getPlateTransferEvent().add(plateTransferEventType);
+        sendMessage(bettaLIMSMessage);
 
         labBatchBean = new LabBatchBean("BP-EXPORT-" + testSuffix, null, exportTubeBeans);
         createBatch(labBatchBean);
@@ -190,11 +190,11 @@ public class ImportFromBspTest extends ContainerTest {
         System.out.println(response);
     }
 
-    private void sendMessage(BettaLimsMessage bettaLimsMessage) {
+    private void sendMessage(BettaLIMSMessage bettaLIMSMessage) {
         String response = Client.create().resource(ImportFromSquidTest.TEST_MERCURY_URL + "/rest/bettalimsmessage")
                 .type(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML)
-                .entity(bettaLimsMessage)
+                .entity(bettaLIMSMessage)
                 .post(String.class);
         System.out.println(response);
     }

@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLimsMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.hornetq.api.core.TransportConfiguration;
@@ -36,18 +36,18 @@ public class BettaLimsMessageBeanTest {
         BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
         PlateTransferEventType plateTransferEventType = bettaLimsMessageTestFactory.buildPlateToPlate(
                 LabEventType.POST_SHEARING_TRANSFER_CLEANUP.getName(), "x", "y");
-        BettaLimsMessage bettaLimsMessage = new BettaLimsMessage();
-        bettaLimsMessage.getPlateTransferEvent().add(plateTransferEventType);
-        String message = BettaLimsMessageTestFactory.marshal(bettaLimsMessage);
+        BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
+        bettaLIMSMessage.getPlateTransferEvent().add(plateTransferEventType);
+        String message = BettaLimsMessageTestFactory.marshal(bettaLIMSMessage);
         sendJmsMessage(message);
     }
 
-    public static String marshalMessage(BettaLimsMessage bettaLimsMessage) {
+    public static String marshalMessage(BettaLIMSMessage bettaLIMSMessage) {
         try {
-            JAXBContext jaxbContext = JAXBContext.newInstance(BettaLimsMessage.class);
+            JAXBContext jaxbContext = JAXBContext.newInstance(BettaLIMSMessage.class);
             Marshaller marshaller = jaxbContext.createMarshaller();
             StringWriter stringWriter = new StringWriter();
-            marshaller.marshal(bettaLimsMessage, stringWriter);
+            marshaller.marshal(bettaLIMSMessage, stringWriter);
             return stringWriter.toString();
         } catch (JAXBException e) {
             throw new RuntimeException(e);
