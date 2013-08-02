@@ -11,7 +11,7 @@ import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadshee
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.testng.Assert;
@@ -37,17 +37,18 @@ import java.util.Map;
 public class LabMetricParserTest extends ContainerTest {
 
     @Inject
-    private TwoDBarcodedTubeDAO vesselDao;
+    private TwoDBarcodedTubeDao vesselDao;
 
     @Inject
     private LabVesselDao labVesselDao;
 
     @Inject
     private UserTransaction utx;
- //   private Map<String, LabVessel> barcodeToTubeMap = new HashMap<>();
+    //   private Map<String, LabVessel> barcodeToTubeMap = new HashMap<>();
     private Map<String, Double> barcodeToQuant = new HashMap<>();
     private InputStream resourceFile;
     private String[] positions;
+
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void setUp() throws Exception {
         // Skip if no injections, meaning we're not running in container.
@@ -96,9 +97,9 @@ public class LabMetricParserTest extends ContainerTest {
             return;
         }
         if (utx == null) {
-                 return;
-             }
-             utx.rollback();
+            return;
+        }
+        utx.rollback();
     }
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
@@ -111,7 +112,7 @@ public class LabMetricParserTest extends ContainerTest {
         Collection<LabMetric> createdMetrics = processor.getMetrics();
         Assert.assertEquals(createdMetrics.size(), barcodeToQuant.size());
 
-        for(LabMetric testMetric:createdMetrics) {
+        for (LabMetric testMetric : createdMetrics) {
             Assert.assertEquals(testMetric.getValue().setScale(2),
                     BigDecimal.valueOf(barcodeToQuant.get(testMetric.getLabVessel().getLabel())));
         }
@@ -122,14 +123,14 @@ public class LabMetricParserTest extends ContainerTest {
         LabMetricProcessor processor = new LabMetricProcessor(labVesselDao, LabMetric.MetricType.ECO_QPCR);
         PoiSpreadsheetParser parser = new PoiSpreadsheetParser(processor);
 
-        File quantUploadFile = createQuantUploadFile(Arrays.asList("Location","Barcode","Quants"),barcodeToQuant);
+        File quantUploadFile = createQuantUploadFile(Arrays.asList("Location", "Barcode", "Quants"), barcodeToQuant);
         InputStream fileInputStream = new FileInputStream(quantUploadFile);
         try {
             parser.processUploadFile(fileInputStream);
         } catch (ValidationException e) {
             Assert.assertEquals(e.getValidationMessages().size(), 1);
         }
-        quantUploadFile = createQuantUploadFile(Arrays.asList("Location","Barcodes","Quants"),barcodeToQuant);
+        quantUploadFile = createQuantUploadFile(Arrays.asList("Location", "Barcodes", "Quants"), barcodeToQuant);
         fileInputStream = new FileInputStream(quantUploadFile);
         try {
             parser.processUploadFile(fileInputStream);

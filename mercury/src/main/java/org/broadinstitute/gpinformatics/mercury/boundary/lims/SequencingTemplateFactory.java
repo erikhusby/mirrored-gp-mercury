@@ -16,7 +16,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceExcep
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.MiSeqReagentKitDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
+import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -48,7 +48,7 @@ public class SequencingTemplateFactory {
     LabVesselDao labVesselDao;
 
     @Inject
-    LabBatchDAO labBatchDAO;
+    LabBatchDao labBatchDao;
 
     /**
      * What you will be searching for with the ID parameter in fetchSequencingTemplate.
@@ -115,7 +115,7 @@ public class SequencingTemplateFactory {
             return getSequencingTemplate(dilutionTube, isPoolTest);
 
         case FLOWCELL_TICKET:
-            LabBatch fctTicket = labBatchDAO.findByBusinessKey(id);
+            LabBatch fctTicket = labBatchDao.findByBusinessKey(id);
             return getSequencingTemplate(fctTicket, isPoolTest);
         // Don't support the following for now, so fall through and throw exception.
         case STRIP_TUBE:
@@ -178,9 +178,9 @@ public class SequencingTemplateFactory {
     private SequencingTemplateType getSequencingTemplateByLabBatch(boolean isPoolTest,
                                                                    SequencingConfigDef sequencingConfig,
                                                                    LabBatch fctBatch) {
-        String sequencingTemplateName=null;
-        if (fctBatch.getLabBatchType()!= LabBatch.LabBatchType.FCT){
-             sequencingTemplateName=fctBatch.getBatchName();
+        String sequencingTemplateName = null;
+        if (fctBatch.getLabBatchType() != LabBatch.LabBatchType.FCT) {
+            sequencingTemplateName = fctBatch.getBatchName();
         }
 
         SequencingTemplateType sequencingTemplate = LimsQueryObjectFactory.createSequencingTemplate(
@@ -206,7 +206,7 @@ public class SequencingTemplateFactory {
                 String vesselPosition = positionNames.next();
                 SequencingTemplateLaneType lane =
                         LimsQueryObjectFactory.createSequencingTemplateLaneType(vesselPosition,
-                                startingVessel.getConcentration(),"",
+                                startingVessel.getConcentration(), "",
                                 startingVessel.getLabVessel().getLabel());
                 lanes.add(lane);
             }
@@ -257,8 +257,8 @@ public class SequencingTemplateFactory {
             SequencingTemplateLaneType lane = new SequencingTemplateLaneType();
             lanes.add(lane);
         }
-        String sequencingTemplateName=null;
-        if (!prodFlowcellBatches.isEmpty()){
+        String sequencingTemplateName = null;
+        if (!prodFlowcellBatches.isEmpty()) {
             sequencingTemplateName = prodFlowcellBatches.iterator().next().getBatchName();
         }
         SequencingConfigDef sequencingConfig = getSequencingConfig(isPoolTest);

@@ -33,7 +33,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDa
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexingSchemeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
+import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
@@ -132,9 +132,12 @@ public class LabEventTest extends BaseEventTest {
 
     private final TemplateEngine templateEngine = new TemplateEngine();
 
-    /** Controls are referenced in the routing logic */
+    /**
+     * Controls are referenced in the routing logic
+     */
     private static final List<Control> controlList = new ArrayList<>();
     private static final List<String> controlCollaboratorIdList = new ArrayList<>();
+
     static {
         controlList.add(new Control("NA12878", Control.ControlType.POSITIVE));
         controlList.add(new Control("WATER_CONTROL", Control.ControlType.NEGATIVE));
@@ -315,7 +318,7 @@ public class LabEventTest extends BaseEventTest {
         Assert.assertEquals(libraryBean.getBaitSetName(), HybridSelectionEntityBuilder.BAIT_DESIGN_NAME, "Wrong bait");
         // want to check that null is represented properly
         Assert.assertNull(zimsIlluminaRun.getImagedAreaPerLaneMM2());
-        Assert.assertEquals(zimsIlluminaRun.getLanesSequenced(),"1,4");
+        Assert.assertEquals(zimsIlluminaRun.getLanesSequenced(), "1,4");
         LabVessel denatureTube = illuminaFlowcell.getNearestTubeAncestorsForLanes().values().iterator().next();
         Assert.assertEquals(zimsIlluminaChamber.getSequencedLibrary(), denatureTube.getLabel());
         for (LibraryBean bean : zimsIlluminaChamber.getLibraries()) {
@@ -476,8 +479,8 @@ public class LabEventTest extends BaseEventTest {
         Assert.assertEquals(zimsIlluminaRun.getLanes().size(), 2, "Wrong number of lanes");
         Assert.assertEquals(zimsIlluminaRun.getActualReadStructure(), readStructureRequest.getActualReadStructure());
         Assert.assertEquals(zimsIlluminaRun.getSetupReadStructure(), readStructureRequest.getSetupReadStructure());
-        Assert.assertEquals(zimsIlluminaRun.getImagedAreaPerLaneMM2(),readStructureRequest.getImagedArea());
-        Assert.assertEquals(zimsIlluminaRun.getLanesSequenced(),"3,6");
+        Assert.assertEquals(zimsIlluminaRun.getImagedAreaPerLaneMM2(), readStructureRequest.getImagedArea());
+        Assert.assertEquals(zimsIlluminaRun.getLanesSequenced(), "3,6");
 
         Map.Entry<String, TwoDBarcodedTube> stringTwoDBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
         ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
@@ -521,7 +524,7 @@ public class LabEventTest extends BaseEventTest {
         Assert.assertEquals(illuminaSequencingRun.getSampleCartridge(),
                 hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell(), "Wrong flowcell");
 
-        Assert.assertEquals(illuminaSequencingRun.getSampleCartridge().getSequencerModel(),"Illumina HiSeq 2500");
+        Assert.assertEquals(illuminaSequencingRun.getSampleCartridge().getSequencerModel(), "Illumina HiSeq 2500");
 
 //        Controller.stopCPURecording();
     }
@@ -610,7 +613,7 @@ public class LabEventTest extends BaseEventTest {
         Assert.assertEquals(zimsIlluminaRun.getLanes().size(), 2, "Wrong number of lanes");
         Assert.assertEquals(zimsIlluminaRun.getActualReadStructure(), readStructureRequest.getActualReadStructure());
         Assert.assertEquals(zimsIlluminaRun.getSetupReadStructure(), readStructureRequest.getSetupReadStructure());
-        Assert.assertEquals(zimsIlluminaRun.getImagedAreaPerLaneMM2(),readStructureRequest.getImagedArea());
+        Assert.assertEquals(zimsIlluminaRun.getImagedAreaPerLaneMM2(), readStructureRequest.getImagedArea());
         Assert.assertNull(zimsIlluminaRun.getLanesSequenced());
 
         Map.Entry<String, TwoDBarcodedTube> stringTwoDBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
@@ -754,8 +757,8 @@ public class LabEventTest extends BaseEventTest {
 
             ZimsIlluminaChamber zimsIlluminaChamber1 = zimsIlluminaRun1.getLanes().iterator().next();
             for (LibraryBean libraryBean : zimsIlluminaChamber1.getLibraries()) {
-                 Assert.assertEquals(libraryBean.getLcSet(), workflowBatch1.getBatchName());
-                 Assert.assertEquals(libraryBean.getProductOrderKey(), productOrder1.getBusinessKey());
+                Assert.assertEquals(libraryBean.getLcSet(), workflowBatch1.getBatchName());
+                Assert.assertEquals(libraryBean.getProductOrderKey(), productOrder1.getBusinessKey());
             }
 
             SolexaRunBean runBean2 = new SolexaRunBean(flowcellBarcode, flowcellBarcode + dateFormat.format(runDate),
@@ -769,8 +772,8 @@ public class LabEventTest extends BaseEventTest {
 
             ZimsIlluminaChamber zimsIlluminaChamber2 = zimsIlluminaRun2.getLanes().iterator().next();
             for (LibraryBean libraryBean : zimsIlluminaChamber2.getLibraries()) {
-                 Assert.assertEquals(libraryBean.getLcSet(), workflowBatch2.getBatchName());
-                 Assert.assertEquals(libraryBean.getProductOrderKey(), productOrder2.getBusinessKey());
+                Assert.assertEquals(libraryBean.getLcSet(), workflowBatch2.getBatchName());
+                Assert.assertEquals(libraryBean.getProductOrderKey(), productOrder2.getBusinessKey());
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -828,7 +831,8 @@ public class LabEventTest extends BaseEventTest {
                     LabBatch.LabBatchType.SAMPLES_IMPORT);
 
             // Add sample from LCSET 1 TO LCSET 2 at shearing bucket
-            final TwoDBarcodedTube reworkTube = picoPlatingEntityBuilder1.getNormBarcodeToTubeMap().values().iterator().next();
+            final TwoDBarcodedTube reworkTube =
+                    picoPlatingEntityBuilder1.getNormBarcodeToTubeMap().values().iterator().next();
 //            workflowBatch2.addLabVessel(reworkTube);
             Map<String, TwoDBarcodedTube> mapBarcodeToTubesPlusRework =
                     new LinkedHashMap<>(picoPlatingEntityBuilder2.getNormBarcodeToTubeMap());
@@ -1074,7 +1078,8 @@ public class LabEventTest extends BaseEventTest {
                 Collections.singletonList("SourcePlate"), Collections.<List<String>>emptyList(),
                 Arrays.asList(new BettaLimsMessageTestFactory.CherryPick("SourceRack", "A01", "SourcePlate", "A01")));
         rackToPlateCherryPickEvent.getPlate().get(0).setPhysType(LabEventFactory.PHYS_TYPE_EPPENDORF_96);
-        LabEvent rackToPlateEntity = getLabEventFactory().buildFromBettaLims(rackToPlateCherryPickEvent, mapBarcodeToVessel);
+        LabEvent rackToPlateEntity =
+                getLabEventFactory().buildFromBettaLims(rackToPlateCherryPickEvent, mapBarcodeToVessel);
         StaticPlate plate = (StaticPlate) rackToPlateEntity.getTargetLabVessels().iterator().next();
 
         mapBarcodeToVessel.clear();
@@ -1084,9 +1089,11 @@ public class LabEventTest extends BaseEventTest {
                 Collections.singletonList("TargetRack"), Collections.singletonList(Arrays.asList("tube1", "tube2")),
                 Arrays.asList(new BettaLimsMessageTestFactory.CherryPick("SourcePlate", "A01", "TargetRack", "A01")));
         plateToRackCherryPickEvent.getSourcePlate().get(0).setPhysType(LabEventFactory.PHYS_TYPE_EPPENDORF_96);
-        LabEvent plateToRackEntity = getLabEventFactory().buildFromBettaLims(plateToRackCherryPickEvent, mapBarcodeToVessel);
+        LabEvent plateToRackEntity =
+                getLabEventFactory().buildFromBettaLims(plateToRackCherryPickEvent, mapBarcodeToVessel);
         LabVessel targetRack = plateToRackEntity.getTargetLabVessels().iterator().next();
-        Assert.assertEquals(targetRack.getContainerRole().getVesselAtPosition(VesselPosition.A01).getSampleInstances().size(),
+        Assert.assertEquals(
+                targetRack.getContainerRole().getVesselAtPosition(VesselPosition.A01).getSampleInstances().size(),
                 1, "Wrong number of sample instances");
     }
 
@@ -1109,7 +1116,7 @@ public class LabEventTest extends BaseEventTest {
         }
 
         BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
-        LabEventFactory labEventFactory = new LabEventFactory(null,null);
+        LabEventFactory labEventFactory = new LabEventFactory(null, null);
         labEventFactory.setLabEventRefDataFetcher(labEventRefDataFetcher);
 
         LabBatchEjb labBatchEJB = new LabBatchEjb();
@@ -1117,17 +1124,17 @@ public class LabEventTest extends BaseEventTest {
         labBatchEJB.setJiraService(JiraServiceProducer.stubInstance());
 
         LabVesselDao tubeDao = EasyMock.createNiceMock(LabVesselDao.class);
-        labBatchEJB.setTubeDAO(tubeDao);
+        labBatchEJB.setTubeDao(tubeDao);
 
         JiraTicketDao mockJira = EasyMock.createNiceMock(JiraTicketDao.class);
         labBatchEJB.setJiraTicketDao(mockJira);
 
-        LabBatchDAO labBatchDAO = EasyMock.createNiceMock(LabBatchDAO.class);
-        labBatchEJB.setLabBatchDao(labBatchDAO);
+        LabBatchDao labBatchDao = EasyMock.createNiceMock(LabBatchDao.class);
+        labBatchEJB.setLabBatchDao(labBatchDao);
 
         BucketDao mockBucketDao = EasyMock.createNiceMock(BucketDao.class);
 
-        EasyMock.replay(mockBucketDao, tubeDao, mockJira, labBatchDAO);
+        EasyMock.replay(mockBucketDao, tubeDao, mockJira, labBatchDao);
 
         LabEventHandler labEventHandler = getLabEventHandler();
         StaticPlate indexPlate = buildIndexPlate(null,
@@ -1297,9 +1304,9 @@ public class LabEventTest extends BaseEventTest {
 
     public static void validateWorkflow(String nextEventTypeName, List<LabVessel> labVessels) {
         MercuryOrSquidRouter mercuryOrSquidRouter = new MercuryOrSquidRouter(null, null, new WorkflowLoader(), null);
-            MercuryOrSquidRouter.MercuryOrSquid mercuryOrSquid = mercuryOrSquidRouter.routeForVessels(labVessels,
-                    controlCollaboratorIdList, mapSampleNameToDto, MercuryOrSquidRouter.Intent.ROUTE);
-            Assert.assertEquals(mercuryOrSquid, expectedRouting);
+        MercuryOrSquidRouter.MercuryOrSquid mercuryOrSquid = mercuryOrSquidRouter.routeForVessels(labVessels,
+                controlCollaboratorIdList, mapSampleNameToDto, MercuryOrSquidRouter.Intent.ROUTE);
+        Assert.assertEquals(mercuryOrSquid, expectedRouting);
 
         WorkflowValidator workflowValidator = new WorkflowValidator();
         AthenaClientService athenaClientService = AthenaClientProducer.stubInstance();
@@ -1317,12 +1324,14 @@ public class LabEventTest extends BaseEventTest {
     /**
      * Builds plates of molecular indexes for the given index positions.  If there are multiple plates, e.g. P5 and P7,
      * a merged P5/P7 scheme is also created, so {@link SampleInstance#addReagent(Reagent)} can find it.
+     *
      * @param molecularIndexingSchemeDao DAO, nullable if in database free test
-     * @param indexPositions list of positions, e.g. P5, P7
-     * @param indexPlateBarcodes list of barcodes for plates to create
+     * @param indexPositions             list of positions, e.g. P5, P7
+     * @param indexPlateBarcodes         list of barcodes for plates to create
      */
     public static List<StaticPlate> buildIndexPlate(@Nullable MolecularIndexingSchemeDao molecularIndexingSchemeDao,
-            List<MolecularIndexingScheme.IndexPosition> indexPositions, List<String> indexPlateBarcodes) {
+                                                    List<MolecularIndexingScheme.IndexPosition> indexPositions,
+                                                    List<String> indexPlateBarcodes) {
 
         char[] bases = {'A', 'C', 'T', 'G'};
 

@@ -13,7 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRout
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.RackOfTubesDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -126,7 +126,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
                 .thenReturn(qtpEntityBuilder.getDenatureRack());
         getLabEventFactory().setTubeFormationDao(mockTubeFormationDao);
 
-        TwoDBarcodedTubeDAO mockTwoDTubeDao = Mockito.mock(TwoDBarcodedTubeDAO.class);
+        TwoDBarcodedTubeDao mockTwoDTubeDao = Mockito.mock(TwoDBarcodedTubeDao.class);
         Mockito.when(mockTwoDTubeDao.findByBarcodes(Mockito.anyList()))
                 .thenReturn(new HashMap<String, TwoDBarcodedTube>() {{
                     put(denatureTube.getLabel(), denatureTube);
@@ -167,7 +167,6 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         Mockito.verify(mockJiraService, Mockito.times(2)).updateIssue(Mockito.anyString(), Mockito.anyCollection());
 
 
-
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
                 runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", FLOWCELL_2500_TICKET_KEY,
                         ProductionFlowcellPath.DENATURE_TO_FLOWCELL, null,
@@ -179,6 +178,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         Mockito.verify(mockJiraService, Mockito.times(4)).updateIssue(Mockito.anyString(), Mockito.anyCollection());
 
     }
+
     @Test(groups = TestGroups.DATABASE_FREE)
     public void testFailureDenatureToFlowcellMsgNoMiseqBatches() throws Exception {
 
@@ -205,7 +205,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
                 .thenReturn(qtpEntityBuilder.getDenatureRack());
         getLabEventFactory().setTubeFormationDao(mockTubeFormationDao);
 
-        TwoDBarcodedTubeDAO mockTwoDTubeDao = Mockito.mock(TwoDBarcodedTubeDAO.class);
+        TwoDBarcodedTubeDao mockTwoDTubeDao = Mockito.mock(TwoDBarcodedTubeDao.class);
         Mockito.when(mockTwoDTubeDao.findByBarcodes(Mockito.anyList()))
                 .thenReturn(new HashMap<String, TwoDBarcodedTube>() {{
                     put(denatureTube.getLabel(), denatureTube);
@@ -244,7 +244,6 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         Mockito.verify(mockAppConfig, Mockito.times(1)).getWorkflowValidationEmail();
         Mockito.verify(mockJiraService, Mockito.never()).getCustomFields(Mockito.anyString(), Mockito.anyString());
         Mockito.verify(mockJiraService, Mockito.never()).updateIssue(Mockito.anyString(), Mockito.anyCollection());
-
 
 
         EmailSender mockEmailSender2 = Mockito.mock(EmailSender.class);
@@ -272,12 +271,14 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         Mockito.verify(mockJiraService2, Mockito.times(2)).updateIssue(Mockito.anyString(), Mockito.anyCollection());
 
     }
+
     @Test(groups = TestGroups.DATABASE_FREE)
     public void testFailureDenatureToFlowcellMsgTooMany2500Batches() throws Exception {
 
         //create a couple Miseq batches then one FCT (2500) batch
         LabBatch fctBatch = new LabBatch(FLOWCELL_2500_TICKET_KEY, starterVessels, LabBatch.LabBatchType.FCT, 12.33f);
-        LabBatch fctBatch2 = new LabBatch(FLOWCELL_2500_TICKET_KEY+"2", starterVessels, LabBatch.LabBatchType.FCT, 12.33f);
+        LabBatch fctBatch2 =
+                new LabBatch(FLOWCELL_2500_TICKET_KEY + "2", starterVessels, LabBatch.LabBatchType.FCT, 12.33f);
 
         final String denatureToFlowcellFlowcellBarcode = "ADTF";
 
@@ -299,7 +300,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
                 .thenReturn(qtpEntityBuilder.getDenatureRack());
         getLabEventFactory().setTubeFormationDao(mockTubeFormationDao);
 
-        TwoDBarcodedTubeDAO mockTwoDTubeDao = Mockito.mock(TwoDBarcodedTubeDAO.class);
+        TwoDBarcodedTubeDao mockTwoDTubeDao = Mockito.mock(TwoDBarcodedTubeDao.class);
         Mockito.when(mockTwoDTubeDao.findByBarcodes(Mockito.anyList()))
                 .thenReturn(new HashMap<String, TwoDBarcodedTube>() {{
                     put(denatureTube.getLabel(), denatureTube);
@@ -338,7 +339,6 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         Mockito.verify(mockAppConfig, Mockito.times(1)).getWorkflowValidationEmail();
         Mockito.verify(mockJiraService, Mockito.never()).getCustomFields(Mockito.anyString(), Mockito.anyString());
         Mockito.verify(mockJiraService, Mockito.never()).updateIssue(Mockito.anyString(), Mockito.anyCollection());
-
 
 
         EmailSender mockEmailSender2 = Mockito.mock(EmailSender.class);
@@ -393,7 +393,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
                 .thenReturn(qtpEntityBuilder.getDenatureRack());
         getLabEventFactory().setTubeFormationDao(mockTubeFormationDao);
 
-        TwoDBarcodedTubeDAO mockTwoDTubeDao = Mockito.mock(TwoDBarcodedTubeDAO.class);
+        TwoDBarcodedTubeDao mockTwoDTubeDao = Mockito.mock(TwoDBarcodedTubeDao.class);
         Mockito.when(mockTwoDTubeDao.findByBarcodes(Mockito.anyList()))
                 .thenReturn(new HashMap<String, TwoDBarcodedTube>() {{
                     put(denatureTube.getLabel(), denatureTube);
@@ -434,7 +434,6 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         Mockito.verify(mockJiraService, Mockito.times(2)).updateIssue(Mockito.anyString(), Mockito.anyCollection());
 
 
-
         EmailSender mockEmailSender2 = Mockito.mock(EmailSender.class);
         JiraService mockJiraService2 = Mockito.mock(JiraService.class);
         JiraService mockJiraSource2 = JiraServiceProducer.stubInstance();
@@ -460,12 +459,13 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         Mockito.verify(mockJiraService2, Mockito.never()).updateIssue(Mockito.anyString(), Mockito.anyCollection());
 
     }
+
     @Test(groups = TestGroups.DATABASE_FREE)
     public void testFailureDenatureToFlowcellMsgTooManyMiSeqBatches() throws Exception {
 
         //create a couple Miseq batches then one FCT (2500) batch
         LabBatch miseqBatch = new LabBatch(MISEQ_TICKET_KEY, starterVessels, LabBatch.LabBatchType.MISEQ, 7f);
-        LabBatch miseqBatch2 = new LabBatch(MISEQ_TICKET_KEY+"2", starterVessels, LabBatch.LabBatchType.MISEQ, 7f);
+        LabBatch miseqBatch2 = new LabBatch(MISEQ_TICKET_KEY + "2", starterVessels, LabBatch.LabBatchType.MISEQ, 7f);
 
         final String denatureToFlowcellFlowcellBarcode = "ADTF";
 
@@ -487,7 +487,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
                 .thenReturn(qtpEntityBuilder.getDenatureRack());
         getLabEventFactory().setTubeFormationDao(mockTubeFormationDao);
 
-        TwoDBarcodedTubeDAO mockTwoDTubeDao = Mockito.mock(TwoDBarcodedTubeDAO.class);
+        TwoDBarcodedTubeDao mockTwoDTubeDao = Mockito.mock(TwoDBarcodedTubeDao.class);
         Mockito.when(mockTwoDTubeDao.findByBarcodes(Mockito.anyList()))
                 .thenReturn(new HashMap<String, TwoDBarcodedTube>() {{
                     put(denatureTube.getLabel(), denatureTube);
@@ -528,7 +528,6 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         Mockito.verify(mockJiraService, Mockito.never()).updateIssue(Mockito.anyString(), Mockito.anyCollection());
 
 
-
         EmailSender mockEmailSender2 = Mockito.mock(EmailSender.class);
         JiraService mockJiraService2 = Mockito.mock(JiraService.class);
         JiraService mockJiraSource2 = JiraServiceProducer.stubInstance();
@@ -561,7 +560,8 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         //create a couple Miseq batches then one FCT (2500) batch
         LabBatch miseqBatch = new LabBatch(MISEQ_TICKET_KEY, starterVessels, LabBatch.LabBatchType.MISEQ, 7f);
         LabBatch fctBatch = new LabBatch(FLOWCELL_2500_TICKET_KEY, starterVessels, LabBatch.LabBatchType.FCT, 12.33f);
-        LabBatch fctBatch2 = new LabBatch(FLOWCELL_2500_TICKET_KEY+"2", starterVessels, LabBatch.LabBatchType.FCT, 12.33f);
+        LabBatch fctBatch2 =
+                new LabBatch(FLOWCELL_2500_TICKET_KEY + "2", starterVessels, LabBatch.LabBatchType.FCT, 12.33f);
 
         final String denatureToFlowcellFlowcellBarcode = "ADDF";
 
@@ -583,7 +583,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
                 .thenReturn(qtpEntityBuilder.getDenatureRack());
         getLabEventFactory().setTubeFormationDao(mockTubeFormationDao);
 
-        TwoDBarcodedTubeDAO mockTwoDTubeDao = Mockito.mock(TwoDBarcodedTubeDAO.class);
+        TwoDBarcodedTubeDao mockTwoDTubeDao = Mockito.mock(TwoDBarcodedTubeDao.class);
         Mockito.when(mockTwoDTubeDao.findByBarcodes(Mockito.anyList()))
                 .thenReturn(new HashMap<String, TwoDBarcodedTube>() {{
                     put(denatureTube.getLabel(), denatureTube);
@@ -666,7 +666,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
                 .thenReturn(qtpEntityBuilder.getDenatureRack());
         getLabEventFactory().setTubeFormationDao(mockTubeFormationDao);
 
-        TwoDBarcodedTubeDAO mockTwoDTubeDao = Mockito.mock(TwoDBarcodedTubeDAO.class);
+        TwoDBarcodedTubeDao mockTwoDTubeDao = Mockito.mock(TwoDBarcodedTubeDao.class);
         Mockito.when(mockTwoDTubeDao.findByBarcodes(Mockito.anyList()))
                 .thenReturn(new HashMap<String, TwoDBarcodedTube>() {{
                     put(denatureTube.getLabel(), denatureTube);
@@ -706,7 +706,6 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         Mockito.verify(mockAppConfig, Mockito.never()).getWorkflowValidationEmail();
         Mockito.verify(mockJiraService, Mockito.times(1)).getCustomFields(Mockito.anyString(), Mockito.anyString());
         Mockito.verify(mockJiraService, Mockito.times(2)).updateIssue(Mockito.anyString(), Mockito.anyCollection());
-
 
 
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =

@@ -32,7 +32,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StripTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
-import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.AbstractEventHandler;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.EventHandlerSelector;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -178,7 +177,7 @@ public class LabEventFactory implements Serializable {
     }
 
     public PlateCherryPickEvent getReagentToFlowcellEventDBFree(String reagentKitBarcode, String flowcellBarcode,
-                                                                 String username, String stationName) {
+                                                                String username, String stationName) {
         PlateCherryPickEvent transferEvent = new PlateCherryPickEvent();
         transferEvent.setEventType(LabEventType.REAGENT_KIT_TO_FLOWCELL_TRANSFER.getName());
         GregorianCalendar gregorianCalendar = new GregorianCalendar();
@@ -192,7 +191,8 @@ public class LabEventFactory implements Serializable {
         transferEvent.setStation(stationName);
 
         // yes, yes, miSeq flowcell has one lane.
-        for (VesselPosition vesselPosition : IlluminaFlowcell.FlowcellType.MiSeqFlowcell.getVesselGeometry().getVesselPositions()) {
+        for (VesselPosition vesselPosition : IlluminaFlowcell.FlowcellType.MiSeqFlowcell.getVesselGeometry()
+                .getVesselPositions()) {
             CherryPickSourceType cherryPickSource = BettalimsObjectFactory.createCherryPickSourceType(reagentKitBarcode,
                     MiSeqReagentKit.LOADING_WELL.name(), flowcellBarcode, vesselPosition.name());
             transferEvent.getSource().add(cherryPickSource);
@@ -203,7 +203,8 @@ public class LabEventFactory implements Serializable {
         transferEvent.getSourcePlate().add(reagentKitType);
 
         PlateType flowcell = BettalimsObjectFactory
-                .createPlateType(flowcellBarcode, IlluminaFlowcell.FlowcellType.MiSeqFlowcell.getAutomationName(), SBSSection.ALL96.getSectionName(),
+                .createPlateType(flowcellBarcode, IlluminaFlowcell.FlowcellType.MiSeqFlowcell.getAutomationName(),
+                        SBSSection.ALL96.getSectionName(),
                         null);
         transferEvent.getPlate().add(flowcell);
         return transferEvent;
@@ -952,9 +953,11 @@ public class LabEventFactory implements Serializable {
 
                     // Send web service call to BSP to update volume and concentration.
                     bspSetVolumeConcentration.setVolumeAndConcentration(
-                            mercurySample.getSampleKey(), receptacleType.getVolume(), receptacleType.getConcentration());
+                            mercurySample.getSampleKey(), receptacleType.getVolume(),
+                            receptacleType.getConcentration());
                     if (!bspSetVolumeConcentration.isValidResult()) {
-                        logger.error("Could not set volume and concentration: " + bspSetVolumeConcentration.getResult()[0]);
+                        logger.error(
+                                "Could not set volume and concentration: " + bspSetVolumeConcentration.getResult()[0]);
                     }
                 }
             }
@@ -1254,7 +1257,7 @@ public class LabEventFactory implements Serializable {
         this.rackOfTubesDao = rackOfTubesDao;
     }
 
-    public void setTwoDBarcodedTubeDao(TwoDBarcodedTubeDAO twoDBarcodedTubeDao) {
+    public void setTwoDBarcodedTubeDao(TwoDBarcodedTubeDao twoDBarcodedTubeDao) {
         this.twoDBarcodedTubeDao = twoDBarcodedTubeDao;
     }
 }
