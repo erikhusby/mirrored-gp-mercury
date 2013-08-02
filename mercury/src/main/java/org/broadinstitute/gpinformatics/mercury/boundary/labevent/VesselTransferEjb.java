@@ -109,7 +109,7 @@ public class VesselTransferEjb {
             denatureRackBarcode = "DenatureRack" + reagentKitBarcode;
         }
 
-        PlateType sourceTubeRack = BettalimsObjectFactory.createPlateType(
+        PlateType sourceTubeRack = BettaLimsObjectFactory.createPlateType(
                 denatureRackBarcode, LabEventFactory.PHYS_TYPE_TUBE_RACK, LabEventFactory.SECTION_ALL_96, null);
 
         // source plate: denature rack
@@ -119,10 +119,10 @@ public class VesselTransferEjb {
         for (Map.Entry<String, VesselPosition> entry : denatureBarcodeMap.entrySet()) {
             String sourceBarcode = entry.getKey();
             String sourcePositionName = entry.getValue().name();
-            ReceptacleType sourceReceptacle = BettalimsObjectFactory.createReceptacleType(
+            ReceptacleType sourceReceptacle = BettaLimsObjectFactory.createReceptacleType(
                     sourceBarcode, "tube", sourcePositionName);
             sourceReceptacles.add(sourceReceptacle);
-            CherryPickSourceType cherryPickSource = BettalimsObjectFactory.createCherryPickSourceType(
+            CherryPickSourceType cherryPickSource = BettaLimsObjectFactory.createCherryPickSourceType(
                     denatureRackBarcode,
                     sourcePositionName,
                     reagentKitBarcode,
@@ -130,10 +130,10 @@ public class VesselTransferEjb {
             transferEvent.getSource().add(cherryPickSource);
         }
         // where on rack is tube?
-        transferEvent.getSourcePositionMap().add(BettalimsObjectFactory.createPositionMapType(
+        transferEvent.getSourcePositionMap().add(BettaLimsObjectFactory.createPositionMapType(
                 denatureRackBarcode, sourceReceptacles));
         // target plate
-        PlateType reagentKitType = BettalimsObjectFactory.createPlateType(reagentKitBarcode,
+        PlateType reagentKitType = BettaLimsObjectFactory.createPlateType(reagentKitBarcode,
                 LabEventFactory.PHYS_TYPE_REAGENT_BLOCK, MiSeqReagentKit.LOADING_WELL.name(), null);
         transferEvent.getPlate().add(reagentKitType);
         bettaLIMSMessage.getPlateCherryPickEvent().add(transferEvent);
@@ -148,6 +148,7 @@ public class VesselTransferEjb {
      * @param flowcellBarcode   flowcell barcode
      * @param username          user performing action.
      * @param stationName       where the transfer occurred (UI, robot, etc)
+     *
      * @return fully persisted labEvent
      */
     public LabEvent reagentKitToFlowcell(@Nonnull String reagentKitBarcode, @Nonnull String flowcellBarcode,

@@ -21,7 +21,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEv
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
-import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettalimsObjectFactory;
+import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsObjectFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.GenericReagentDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
@@ -193,16 +193,16 @@ public class LabEventFactory implements Serializable {
         // yes, yes, miSeq flowcell has one lane.
         for (VesselPosition vesselPosition : IlluminaFlowcell.FlowcellType.MiSeqFlowcell.getVesselGeometry()
                 .getVesselPositions()) {
-            CherryPickSourceType cherryPickSource = BettalimsObjectFactory.createCherryPickSourceType(reagentKitBarcode,
+            CherryPickSourceType cherryPickSource = BettaLimsObjectFactory.createCherryPickSourceType(reagentKitBarcode,
                     MiSeqReagentKit.LOADING_WELL.name(), flowcellBarcode, vesselPosition.name());
             transferEvent.getSource().add(cherryPickSource);
         }
 
-        PlateType reagentKitType = BettalimsObjectFactory.createPlateType(reagentKitBarcode,
+        PlateType reagentKitType = BettaLimsObjectFactory.createPlateType(reagentKitBarcode,
                 StaticPlate.PlateType.MiSeqReagentKit.getDisplayName(), MiSeqReagentKit.LOADING_WELL.name(), null);
         transferEvent.getSourcePlate().add(reagentKitType);
 
-        PlateType flowcell = BettalimsObjectFactory
+        PlateType flowcell = BettaLimsObjectFactory
                 .createPlateType(flowcellBarcode, IlluminaFlowcell.FlowcellType.MiSeqFlowcell.getAutomationName(),
                         SBSSection.ALL96.getSectionName(),
                         null);
