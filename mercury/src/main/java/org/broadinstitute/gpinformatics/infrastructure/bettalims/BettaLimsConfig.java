@@ -13,7 +13,7 @@ import java.io.Serializable;
  */
 @SuppressWarnings("UnusedDeclaration")
 @ConfigKey("bettaLimsServer")
-public class BettalimsConfig extends AbstractConfig implements Serializable {
+public class BettaLimsConfig extends AbstractConfig implements Serializable {
     private String wsHost;
     private int wsPort;
     private String jmsHost;
@@ -21,7 +21,7 @@ public class BettalimsConfig extends AbstractConfig implements Serializable {
     private String jmsQueue;
 
     @Inject
-    public BettalimsConfig(@Nonnull Deployment deployment) {
+    public BettaLimsConfig(@Nonnull Deployment deployment) {
         super(deployment);
     }
 
