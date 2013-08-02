@@ -174,12 +174,12 @@ public class ResearchProjectActionBean extends CoreActionBean {
         }
 
         // Get the totals for the order
-        Collection<String> businessKeys = new ArrayList<>();
+        Collection<Long> productOrderIds = new ArrayList<>();
         for (ProductOrder order : editResearchProject.getProductOrders()) {
-            businessKeys.add(order.getBusinessKey());
+            productOrderIds.add(order.getProductOrderId());
         }
 
-        progressFetcher.loadProgress(productOrderDao, businessKeys);
+        progressFetcher.loadProgress(productOrderDao, productOrderIds);
     }
 
     /**
