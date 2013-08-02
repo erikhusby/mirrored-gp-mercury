@@ -14,25 +14,29 @@ import javax.ws.rs.core.MediaType;
 public class BettalimsConnectorImpl implements BettalimsConnector {
 
     @Inject
-    private BettalimsConfig bettalimsConfig;
+    private BettaLimsConfig bettaLimsConfig;
 
-    /** for CDI */
+    /**
+     * for CDI
+     */
     public BettalimsConnectorImpl() {
     }
 
-    public BettalimsConnectorImpl(BettalimsConfig bettalimsConfig) {
-        this.bettalimsConfig = bettalimsConfig;
+    public BettalimsConnectorImpl(BettaLimsConfig bettaLimsConfig) {
+        this.bettaLimsConfig = bettaLimsConfig;
     }
 
     /**
      * Call JAX-RS web service
+     *
      * @param message from liquid handling deck
+     *
      * @return code and message
      */
     @Override
     public BettalimsResponse sendMessage(String message) {
-        ClientResponse response = Client.create().resource("http://" + bettalimsConfig.getWsHost() + ":" +
-                bettalimsConfig.getWsPort() + "/bettalimsmessage")
+        ClientResponse response = Client.create().resource("http://" + bettaLimsConfig.getWsHost() + ":" +
+                                                           bettaLimsConfig.getWsPort() + "/bettalimsmessage")
                 .type(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML)
                 .entity(message)
