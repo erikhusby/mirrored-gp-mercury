@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -19,7 +20,11 @@ import org.broadinstitute.gpinformatics.mercury.presentation.search.VesselSearch
 
 import javax.inject.Inject;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Utility methods for sending human readable updates
@@ -65,9 +70,10 @@ public class JiraCommentUtil {
             }
         }
         message += labEvent.getLabEventType().getName() + " for <a href=\"" + appConfig.getUrl() +
-                VesselSearchActionBean.ACTIONBEAN_URL_BINDING + "?" + VesselSearchActionBean.VESSEL_SEARCH + "=&searchKey=" +
-                messageLabVessel.getLabel() + "\">" + messageLabVessel.getLabel() + "</a>" +
-                " on " + labEvent.getEventLocation() + " at " + labEvent.getEventDate();
+                   VesselSearchActionBean.ACTIONBEAN_URL_BINDING + "?" + VesselSearchActionBean.VESSEL_SEARCH
+                   + "=&searchKey=" +
+                   messageLabVessel.getLabel() + "\">" + messageLabVessel.getLabel() + "</a>" +
+                   " on " + labEvent.getEventLocation() + " at " + labEvent.getEventDate();
 
         Set<LabVessel> labVessels;
         if (labEvent.getInPlaceLabVessel() == null) {
@@ -97,12 +103,10 @@ public class JiraCommentUtil {
     public void postUpdate(String message, Collection<LabVessel> vessels) {
         Set<JiraTicket> tickets = new HashSet<>();
         for (LabVessel vessel : vessels) {
-            Collection<LabBatch> batches = vessel.getNearestWorkflowLabBatches();
-            if (batches != null) {
-                for (LabBatch batch : batches) {
-                    if (batch.getJiraTicket() != null) {
-                        tickets.add(batch.getJiraTicket());
-                    }
+            for (SampleInstance sampleInstance : vessel.getSampleInstances()) {
+                LabBatch batch = sampleInstance.getLabBatch();
+                if (batch != null && batch.getJiraTicket() != null) {
+                    tickets.add(batch.getJiraTicket());
                 }
             }
         }
