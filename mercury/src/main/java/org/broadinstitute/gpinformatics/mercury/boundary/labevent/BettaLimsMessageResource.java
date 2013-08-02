@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.infrastructure.bettalims.BettalimsConnector;
+import org.broadinstitute.gpinformatics.infrastructure.bettalims.BettaLimsConnector;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
@@ -18,7 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceExcep
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.control.labevent.BettalimsMessageUtils;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.BettaLimsMessageUtils;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowValidator;
@@ -66,14 +66,14 @@ import java.util.Set;
 @Path("/bettalimsmessage")
 @Stateful
 @RequestScoped
-public class BettalimsMessageResource {
+public class BettaLimsMessageResource {
 
     /**
      * workflow error message from Squid
      */
     private static final String WORKFLOW_MESSAGE = " error(s) processing workflows for ";
 
-    private static final Log LOG = LogFactory.getLog(BettalimsMessageResource.class);
+    private static final Log LOG = LogFactory.getLog(BettaLimsMessageResource.class);
     private static final boolean VALIDATE_SCHEMA = false;
 
     @Inject
@@ -86,7 +86,7 @@ public class BettalimsMessageResource {
     private WsMessageStore wsMessageStore;
 
     @Inject
-    private BettalimsConnector bettalimsConnector;
+    private BettaLimsConnector bettaLimsConnector;
 
     @Inject
     private ThriftService thriftService;
@@ -160,54 +160,54 @@ public class BettalimsMessageResource {
                     throw new RuntimeException("Failed to find event type");
                 }
                 switch (labEventType.getSystemOfRecord()) {
-                    case MERCURY:
+                case MERCURY:
+                    processInMercury = true;
+                    processInSquid = false;
+                    break;
+                case SQUID:
+                    processInMercury = false;
+                    processInSquid = true;
+                    break;
+                case WORKFLOW_DEPENDENT:
+
+                    Collection<String> barcodesToBeVerified = getRegisteredBarcodesFromMessage(bettaLIMSMessage);
+
+                    /*
+                    The logic has been Updated to take into account the routing definition being defined
+                    at the workflow level.  This 2 stage approach to routing gives the system the flexibility to
+                    target specific workflows and adjust where the system of record should be considered for
+                    each workflow
+                    */
+                    final MercuryOrSquidRouter.MercuryOrSquid route =
+                            mercuryOrSquidRouter.routeForVesselBarcodes(barcodesToBeVerified);
+
+                    if (MercuryOrSquidRouter.MercuryOrSquid.MERCURY == route) {
                         processInMercury = true;
-                        processInSquid = false;
-                        break;
-                    case SQUID:
-                        processInMercury = false;
-                        processInSquid = true;
-                        break;
-                    case WORKFLOW_DEPENDENT:
-
-                        Collection<String> barcodesToBeVerified = getRegisteredBarcodesFromMessage(bettaLIMSMessage);
-
-                        /*
-                        The logic has been Updated to take into account the routing definition being defined
-                        at the workflow level.  This 2 stage approach to routing gives the system the flexibility to
-                        target specific workflows and adjust where the system of record should be considered for
-                        each workflow
-                        */
-                        final MercuryOrSquidRouter.MercuryOrSquid route =
-                                mercuryOrSquidRouter.routeForVesselBarcodes(barcodesToBeVerified);
-
-                        if (MercuryOrSquidRouter.MercuryOrSquid.MERCURY == route) {
+                    } else {
+                        if (MercuryOrSquidRouter.MercuryOrSquid.BOTH == route) {
                             processInMercury = true;
-                        } else {
-                            if (MercuryOrSquidRouter.MercuryOrSquid.BOTH == route) {
-                                processInMercury = true;
-                            }
-                            processInSquid = true;
                         }
-
-                        if (processInMercury && processInSquid && route != MercuryOrSquidRouter.MercuryOrSquid.BOTH) {
-                            throw new InformaticsServiceException(
-                                    "For Workflow Dependent processing, we cannot process in both " +
-                                            "Mercury and Squid unless routing specifies both");
-                        }
-                        break;
-                    case BOTH:
-                        processInMercury = true;
                         processInSquid = true;
-                        break;
-                    default:
-                        throw new RuntimeException("Unexpected enum value " + labEventType.getSystemOfRecord());
+                    }
+
+                    if (processInMercury && processInSquid && route != MercuryOrSquidRouter.MercuryOrSquid.BOTH) {
+                        throw new InformaticsServiceException(
+                                "For Workflow Dependent processing, we cannot process in both " +
+                                "Mercury and Squid unless routing specifies both");
+                    }
+                    break;
+                case BOTH:
+                    processInMercury = true;
+                    processInSquid = true;
+                    break;
+                default:
+                    throw new RuntimeException("Unexpected enum value " + labEventType.getSystemOfRecord());
                 }
             }
 
-            BettalimsConnector.BettalimsResponse bettalimsResponse = null;
+            BettaLimsConnector.BettalimsResponse bettalimsResponse = null;
             if (processInSquid) {
-                bettalimsResponse = bettalimsConnector.sendMessage(message);
+                bettalimsResponse = bettaLimsConnector.sendMessage(message);
             }
             if (processInMercury) {
                 try {
@@ -216,7 +216,7 @@ public class BettalimsMessageResource {
                     // If we're processing in both Mercury and Squid, and Squid succeeded while Mercury failed,
                     // ignore the Mercury error.
                     if (processInSquid && bettalimsResponse.getCode() !=
-                            Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()) {
+                                          Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()) {
                         LOG.error("Mercury processing failed, returning Squid result to client", e);
                     } else {
                         throw e;
@@ -257,15 +257,15 @@ public class BettalimsMessageResource {
             unmarshaller.setEventHandler(new ValidationEventHandler() {
                 @Override
                 public boolean handleEvent(ValidationEvent event) {
-                    throw new RuntimeException("XSD Validation failure: "+
-                            "SEVERITY: " + event.getSeverity() + "MESSAGE: " + event.getMessage() +
-                            "LINKED EXCEPTION:  " + event.getLinkedException() +
-                            "LINE NUMBER:  " + event.getLocator().getLineNumber() +
-                            "COLUMN NUMBER:  " + event.getLocator().getColumnNumber() +
-                            "OFFSET:  " + event.getLocator().getOffset() +
-                            "OBJECT:  " + event.getLocator().getObject() +
-                            "NODE:  " + event.getLocator().getNode() +
-                            "URL:  " + event.getLocator().getURL());
+                    throw new RuntimeException("XSD Validation failure: " +
+                                               "SEVERITY: " + event.getSeverity() + "MESSAGE: " + event.getMessage() +
+                                               "LINKED EXCEPTION:  " + event.getLinkedException() +
+                                               "LINE NUMBER:  " + event.getLocator().getLineNumber() +
+                                               "COLUMN NUMBER:  " + event.getLocator().getColumnNumber() +
+                                               "OFFSET:  " + event.getLocator().getOffset() +
+                                               "OBJECT:  " + event.getLocator().getObject() +
+                                               "NODE:  " + event.getLocator().getNode() +
+                                               "URL:  " + event.getLocator().getURL());
                 }
             });
         }
@@ -319,7 +319,7 @@ public class BettalimsMessageResource {
         }
         if (labEventType == null) {
             for (ReceptaclePlateTransferEvent receptaclePlateTransferEvent : bettaLIMSMessage
-                                                                                     .getReceptaclePlateTransferEvent()) {
+                    .getReceptaclePlateTransferEvent()) {
                 labEventType = LabEventType.getByName(receptaclePlateTransferEvent.getEventType());
                 if (labEventType != null) {
                     break;
@@ -353,20 +353,20 @@ public class BettalimsMessageResource {
         Set<String> barcodes = new HashSet<>();
 
         for (PlateCherryPickEvent plateCherryPickEvent : bettaLIMSMessage.getPlateCherryPickEvent()) {
-            barcodes.addAll(BettalimsMessageUtils.getBarcodesForCherryPick(plateCherryPickEvent));
+            barcodes.addAll(BettaLimsMessageUtils.getBarcodesForCherryPick(plateCherryPickEvent));
         }
         for (PlateEventType plateEventType : bettaLIMSMessage.getPlateEvent()) {
-            barcodes.addAll(BettalimsMessageUtils.getBarcodesForPlateEvent(plateEventType));
+            barcodes.addAll(BettaLimsMessageUtils.getBarcodesForPlateEvent(plateEventType));
         }
         for (PlateTransferEventType plateTransferEventType : bettaLIMSMessage.getPlateTransferEvent()) {
-            barcodes.addAll(BettalimsMessageUtils.getBarcodesForPlateTransfer(plateTransferEventType));
+            barcodes.addAll(BettaLimsMessageUtils.getBarcodesForPlateTransfer(plateTransferEventType));
         }
         for (ReceptaclePlateTransferEvent receptaclePlateTransferEvent :
                 bettaLIMSMessage.getReceptaclePlateTransferEvent()) {
-            barcodes.addAll(BettalimsMessageUtils.getBarcodesForReceptaclePlateTransfer(receptaclePlateTransferEvent));
+            barcodes.addAll(BettaLimsMessageUtils.getBarcodesForReceptaclePlateTransfer(receptaclePlateTransferEvent));
         }
         for (ReceptacleEventType receptacleEventType : bettaLIMSMessage.getReceptacleEvent()) {
-            barcodes.addAll(BettalimsMessageUtils.getBarcodesForReceptacleEvent(receptacleEventType));
+            barcodes.addAll(BettaLimsMessageUtils.getBarcodesForReceptacleEvent(receptacleEventType));
         }
 
         return barcodes;
@@ -395,7 +395,7 @@ public class BettalimsMessageResource {
      */
     private static class NamespaceFilter extends XMLFilterImpl {
 
-        private String  usedNamespaceUri;
+        private String usedNamespaceUri;
         private boolean addNamespace;
 
         private boolean addedNamespace;
@@ -447,8 +447,8 @@ public class BettalimsMessageResource {
         }
     }
 
-    public void setBettalimsConnector(BettalimsConnector connector) {
-        this.bettalimsConnector = connector;
+    public void setBettaLimsConnector(BettaLimsConnector connector) {
+        this.bettaLimsConnector = connector;
     }
 
 }

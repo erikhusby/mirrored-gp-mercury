@@ -18,8 +18,8 @@ import org.broadinstitute.gpinformatics.infrastructure.monitoring.HipChatMessage
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConfig;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
-import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettalimsMessageResource;
-import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettalimsMessageResourceTest;
+import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResource;
+import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResourceTest;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.VesselTransferEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.rapsheet.ReworkEjbTest;
@@ -130,7 +130,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
     private String pdo1JiraKey;
 
     @Inject
-    BettalimsMessageResource bettalimsMessageResource;
+    BettaLimsMessageResource bettaLimsMessageResource;
 
     @Inject
     private MiSeqReagentKitDao reagentKitDao;
@@ -162,7 +162,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         researchProjectDao.persist(researchProject);
 
         exExProduct = productDao.findByPartNumber(
-                BettalimsMessageResourceTest.mapWorkflowToPartNum.get(WorkflowName.EXOME_EXPRESS.getWorkflowName()));
+                BettaLimsMessageResourceTest.mapWorkflowToPartNum.get(WorkflowName.EXOME_EXPRESS.getWorkflowName()));
 
         final String genomicSample1 = "SM-" + testPrefix + "_Genomic1" + runDate.getTime();
 
@@ -261,12 +261,12 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
 
         BettaLIMSMessage bettaLIMSMessage = vesselTransferEjb
                 .denatureToReagentKitTransfer(null, denatureRackMap, reagentKitBarcode, "pdunlea", "ZAN");
-        bettalimsMessageResource.processMessage(bettaLIMSMessage);
+        bettaLimsMessageResource.processMessage(bettaLIMSMessage);
 
         IlluminaSequencingRun run;
         SolexaRunResource runResource =
                 new SolexaRunResource(runDao, illuminaSequencingRunFactory, flowcellDao, vesselTransferEjb, router,
-                        null, messageSender,squidConfig, reagentKitDao);
+                        null, messageSender, squidConfig, reagentKitDao);
 
         SolexaRunBean runBean =
                 new SolexaRunBean(miSeqBarcode, miSeqRunBarcode, runDate, machineName, runFileDirectory,
@@ -319,7 +319,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
 
         SolexaRunResource runResource =
                 new SolexaRunResource(runDao, illuminaSequencingRunFactory, flowcellDao, vesselTransferEjb, router,
-                        null, messageSender,squidConfig, reagentKitDao);
+                        null, messageSender, squidConfig, reagentKitDao);
 
         ReadStructureRequest readstructureResult = runResource.storeRunReadStructure(readStructure);
 
@@ -357,8 +357,8 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         Assert.assertEquals(readstructureResult.getSetupReadStructure(), run.getSetupReadStructure());
         Assert.assertNotNull(readstructureResult.getActualReadStructure());
         Assert.assertEquals(readstructureResult.getActualReadStructure(), run.getActualReadStructure());
-        Assert.assertEquals(readstructureResult.getImagedArea(),imagedArea);
-        Assert.assertEquals(readstructureResult.getLanesSequenced(),lanesSequenced);
+        Assert.assertEquals(readstructureResult.getImagedArea(), imagedArea);
+        Assert.assertEquals(readstructureResult.getLanesSequenced(), lanesSequenced);
     }
 
 }

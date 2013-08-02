@@ -11,7 +11,7 @@ import javax.ws.rs.core.MediaType;
  * Implementation of connector to BettaLIMS
  */
 @Impl
-public class BettalimsConnectorImpl implements BettalimsConnector {
+public class BettaLimsConnectorImpl implements BettaLimsConnector {
 
     @Inject
     private BettaLimsConfig bettaLimsConfig;
@@ -19,10 +19,10 @@ public class BettalimsConnectorImpl implements BettalimsConnector {
     /**
      * for CDI
      */
-    public BettalimsConnectorImpl() {
+    public BettaLimsConnectorImpl() {
     }
 
-    public BettalimsConnectorImpl(BettaLimsConfig bettaLimsConfig) {
+    public BettaLimsConnectorImpl(BettaLimsConfig bettaLimsConfig) {
         this.bettaLimsConfig = bettaLimsConfig;
     }
 

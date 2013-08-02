@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ejb-jar xmlns="http://java.sun.com/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         version="3.0" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/ejb-jar_3_0.xsd">
+         version="3.0"
+         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/ejb-jar_3_0.xsd">
     <!--
      NOTE: This the Production version of ejb-jar. It will be merged into the war when a Production build is done.
 
@@ -10,18 +11,20 @@
     <enterprise-beans>
         <message-driven>
             <ejb-name>BettalimsMessageBean</ejb-name>
-            <ejb-class>org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettalimsMessageBean</ejb-class>
+            <ejb-class>org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageBean</ejb-class>
             <activation-config>
                 <activation-config-property>
                     <activation-config-property-name>destination</activation-config-property-name>
-                    <activation-config-property-value>queue/broad.queue.mercury.bettalims.production</activation-config-property-value>
+                    <activation-config-property-value>queue/broad.queue.mercury.bettalims.production
+                    </activation-config-property-value>
                 </activation-config-property>
                 <!--
                 Remote broker only for production.  Other environments use local broker, and inherent host / port uniqueness.
                 -->
                 <activation-config-property>
                     <activation-config-property-name>connectorClassName</activation-config-property-name>
-                    <activation-config-property-value>org.hornetq.core.remoting.impl.netty.NettyConnectorFactory</activation-config-property-value>
+                    <activation-config-property-value>org.hornetq.core.remoting.impl.netty.NettyConnectorFactory
+                    </activation-config-property-value>
                 </activation-config-property>
                 <activation-config-property>
                     <activation-config-property-name>connectionParameters</activation-config-property-name>
@@ -35,14 +38,16 @@
             <activation-config>
                 <activation-config-property>
                     <activation-config-property-name>destination</activation-config-property-name>
-                    <activation-config-property-value>queue/broad.queue.mercury.samplereceipt.production</activation-config-property-value>
+                    <activation-config-property-value>queue/broad.queue.mercury.samplereceipt.production
+                    </activation-config-property-value>
                 </activation-config-property>
                 <!--
                 Remote broker only for production.  Other environments use local broker, and inherent host / port uniqueness.
                 -->
                 <activation-config-property>
                     <activation-config-property-name>connectorClassName</activation-config-property-name>
-                    <activation-config-property-value>org.hornetq.core.remoting.impl.netty.NettyConnectorFactory</activation-config-property-value>
+                    <activation-config-property-value>org.hornetq.core.remoting.impl.netty.NettyConnectorFactory
+                    </activation-config-property-value>
                 </activation-config-property>
                 <activation-config-property>
                     <activation-config-property-name>connectionParameters</activation-config-property-name>
@@ -56,14 +61,16 @@
             <activation-config>
                 <activation-config-property>
                     <activation-config-property-name>destination</activation-config-property-name>
-                    <activation-config-property-value>queue/broad.queue.athena.workreporting.production</activation-config-property-value>
+                    <activation-config-property-value>queue/broad.queue.athena.workreporting.production
+                    </activation-config-property-value>
                 </activation-config-property>
                 <!--
                 Remote broker only for production.  Other environments use local broker, and inherent host / port uniqueness.
                 -->
                 <activation-config-property>
                     <activation-config-property-name>connectorClassName</activation-config-property-name>
-                    <activation-config-property-value>org.hornetq.core.remoting.impl.netty.NettyConnectorFactory</activation-config-property-value>
+                    <activation-config-property-value>org.hornetq.core.remoting.impl.netty.NettyConnectorFactory
+                    </activation-config-property-value>
                 </activation-config-property>
                 <activation-config-property>
                     <activation-config-property-name>connectionParameters</activation-config-property-name>

@@ -9,7 +9,7 @@ import javax.enterprise.inject.Alternative;
  */
 @Stub
 @Alternative
-public class BettalimsConnectorStub  implements BettalimsConnector{
+public class BettaLimsConnectorStub implements BettaLimsConnector {
 
     @Override
     public BettalimsResponse sendMessage(String message) {

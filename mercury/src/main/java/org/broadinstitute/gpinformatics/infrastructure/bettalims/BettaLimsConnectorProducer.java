@@ -9,23 +9,23 @@ import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 
 /**
- * CDI producer for BettalimsConnector
+ * CDI producer for BettaLimsConnector
  */
-public class BettalimsConnectorProducer {
+public class BettaLimsConnectorProducer {
 
     @Inject
     private Deployment deployment;
 
-    public static BettalimsConnector stubInstance() {
-        return new BettalimsConnectorStub();
+    public static BettaLimsConnector stubInstance() {
+        return new BettaLimsConnectorStub();
     }
 
     // Can't call SessionScoped beans from a message driven bean, so use RequestScoped
     @Produces
     @Default
     @RequestScoped
-    public BettalimsConnector produce(@New BettalimsConnectorStub stub, @New BettalimsConnectorImpl impl) {
-        if ( deployment == Deployment.STUBBY ) {
+    public BettaLimsConnector produce(@New BettaLimsConnectorStub stub, @New BettaLimsConnectorImpl impl) {
+        if (deployment == Deployment.STUBBY) {
             return stub;
         }
         return impl;

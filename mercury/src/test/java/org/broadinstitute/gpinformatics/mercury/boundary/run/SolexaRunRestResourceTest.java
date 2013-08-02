@@ -18,7 +18,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServic
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
-import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettalimsMessageResourceTest;
+import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResourceTest;
 import org.broadinstitute.gpinformatics.mercury.boundary.rapsheet.ReworkEjbTest;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
@@ -109,7 +109,8 @@ public class SolexaRunRestResourceTest extends Arquillian {
          *
          */
         return DeploymentBuilder
-                .buildMercuryWarWithAlternatives(AUTO_BUILD, AthenaClientServiceStub.class, BSPSampleSearchServiceStub.class);
+                .buildMercuryWarWithAlternatives(AUTO_BUILD, AthenaClientServiceStub.class,
+                        BSPSampleSearchServiceStub.class);
     }
 
     @BeforeMethod(groups = EXTERNAL_INTEGRATION)
@@ -131,7 +132,7 @@ public class SolexaRunRestResourceTest extends Arquillian {
         researchProjectDao.persist(researchProject);
 
         exExProduct = productDao.findByPartNumber(
-                BettalimsMessageResourceTest.mapWorkflowToPartNum.get(WorkflowName.EXOME_EXPRESS.getWorkflowName()));
+                BettaLimsMessageResourceTest.mapWorkflowToPartNum.get(WorkflowName.EXOME_EXPRESS.getWorkflowName()));
 
         final String genomicSample1 = "SM-" + testPrefix + "_Genomic1" + runDate.getTime();
 
@@ -270,7 +271,7 @@ public class SolexaRunRestResourceTest extends Arquillian {
     }
 
     @Test(groups = EXTERNAL_INTEGRATION,
-          dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
+            dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testReadStructureOverHttp(@ArquillianResource URL baseUrl) {
         String wsUrl = baseUrl.toExternalForm() + "rest/solexarun/storeRunReadStructure";
@@ -292,10 +293,10 @@ public class SolexaRunRestResourceTest extends Arquillian {
                         .type(MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON)
                         .entity(readStructureData).post(ReadStructureRequest.class);
 
-        Assert.assertEquals(readStructureResult.getSetupReadStructure(),readStructureData.getSetupReadStructure());
-        Assert.assertEquals(readStructureResult.getActualReadStructure(),readStructureData.getActualReadStructure());
-        Assert.assertEquals(readStructureResult.getLanesSequenced(),readStructureData.getLanesSequenced());
-        Assert.assertEquals(readStructureResult.getImagedArea(),readStructureData.getImagedArea());
+        Assert.assertEquals(readStructureResult.getSetupReadStructure(), readStructureData.getSetupReadStructure());
+        Assert.assertEquals(readStructureResult.getActualReadStructure(), readStructureData.getActualReadStructure());
+        Assert.assertEquals(readStructureResult.getLanesSequenced(), readStructureData.getLanesSequenced());
+        Assert.assertEquals(readStructureResult.getImagedArea(), readStructureData.getImagedArea());
 
     }
 
@@ -356,8 +357,8 @@ public class SolexaRunRestResourceTest extends Arquillian {
         Assert.assertEquals(readstructureResult.getSetupReadStructure(), run.getSetupReadStructure());
         Assert.assertNotNull(readstructureResult.getActualReadStructure());
         Assert.assertEquals(readstructureResult.getActualReadStructure(), run.getActualReadStructure());
-        Assert.assertEquals(readstructureResult.getImagedArea(),imagedArea);
-        Assert.assertEquals(readstructureResult.getLanesSequenced(),lanesSequenced);
+        Assert.assertEquals(readstructureResult.getImagedArea(), imagedArea);
+        Assert.assertEquals(readstructureResult.getLanesSequenced(), lanesSequenced);
     }
 
 }
