@@ -212,7 +212,7 @@ public class ProductOrderDao extends GenericDao {
 
     @SuppressWarnings("unchecked")
     public Map<String, ProductOrderCompletionStatus> getAllProgressByBusinessKey() {
-        return getProgressByBusinessKey(null);
+        return getProgressByOrderId(null);
     }
 
     /**
@@ -224,17 +224,17 @@ public class ProductOrderDao extends GenericDao {
      * <dt>abandoned</dt><dd>The number of samples that ARE abandoned</dd>
      * <dt>total</dt><dd>The total number of samples</dd>
      * </dl>
-     * @param productOrderKeys null if returning info for all orders, the list of keys for specific ones
+     * @param productOrderIds null if returning info for all orders, the list of keys for specific ones
      *
      * @return The mapping of business keys to the completion status object for each order
      */
     @SuppressWarnings("unchecked")
-    public Map<String, ProductOrderCompletionStatus> getProgressByBusinessKey(Collection<String> productOrderKeys) {
-        if (productOrderKeys != null && productOrderKeys.isEmpty()) {
+    public Map<String, ProductOrderCompletionStatus> getProgressByOrderId(Collection<Long> productOrderIds) {
+        if (productOrderIds != null && productOrderIds.isEmpty()) {
             return Collections.emptyMap();
         }
 
-        /**
+        /*
          * This SQL query looks up the product orders specified by the order keys (all, if the keys are null) and then
          * projects out three count queries along with the jira ticket and the order id:
          *
@@ -264,9 +264,9 @@ public class ProductOrderDao extends GenericDao {
                            "    ) AS total" +
                            " FROM athena.PRODUCT_ORDER ord ";
 
-        // Add the business key, if we are only doing one.
-        if (productOrderKeys != null) {
-            sqlString += " WHERE ord.JIRA_TICKET_KEY in (:businessKeys)";
+        // Handle searching by ID.
+        if (productOrderIds != null) {
+            sqlString += " WHERE ord.PRODUCT_ORDER_ID in (:orderIds) ";
         }
 
         Query query = getEntityManager().createNativeQuery(sqlString);
@@ -276,8 +276,8 @@ public class ProductOrderDao extends GenericDao {
              .addScalar("total", StandardBasicTypes.INTEGER);
 
         List<Object> results;
-        if (productOrderKeys != null) {
-            results = JPASplitter.runQuery(query, "businessKeys", productOrderKeys);
+        if (productOrderIds != null) {
+            results = JPASplitter.runQuery(query, "orderIds", productOrderIds);
         } else {
             results = (List<Object>) query.getResultList();
         }

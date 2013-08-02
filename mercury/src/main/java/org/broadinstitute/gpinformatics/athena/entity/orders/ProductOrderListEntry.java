@@ -204,12 +204,12 @@ public class ProductOrderListEntry implements Serializable {
         return ProductOrder.OrderStatus.Draft == orderStatus;
     }
 
-    public static Collection<String> getBusinessKeyList(List<ProductOrderListEntry> productOrderListEntries) {
-        Collection<String> pdoKeys = new ArrayList<> (productOrderListEntries.size());
+    public static Collection<Long> getProductOrderIDs(List<ProductOrderListEntry> productOrderListEntries) {
+        Collection<Long> pdoIds = new ArrayList<>(productOrderListEntries.size());
         for (ProductOrderListEntry entry : productOrderListEntries){
-            pdoKeys.add(entry.getBusinessKey());
+            pdoIds.add(entry.orderId);
         }
 
-        return pdoKeys;
+        return pdoIds;
     }
 }

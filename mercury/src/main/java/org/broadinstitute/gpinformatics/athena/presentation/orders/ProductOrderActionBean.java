@@ -277,7 +277,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (!StringUtils.isBlank(productOrder)) {
             editOrder = productOrderDao.findByBusinessKey(productOrder);
             if (editOrder != null) {
-                progressFetcher.loadProgress(productOrderDao, Collections.singletonList(productOrder));
+                progressFetcher.loadProgress(productOrderDao, Collections.singletonList(editOrder.getProductOrderId()));
             }
         } else {
             // If this was a create with research project specified, find that.
@@ -296,7 +296,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         // Since just getting the one item, get all the lazy data.
         editOrder = productOrderDao.findByBusinessKey(productOrder, ProductOrderDao.FetchSpec.RiskItems);
         if (editOrder != null) {
-            progressFetcher.loadProgress(productOrderDao, Collections.singletonList(productOrder));
+            progressFetcher.loadProgress(productOrderDao, Collections.singletonList(editOrder.getProductOrderId()));
         }
     }
 
@@ -537,7 +537,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
 
         progressFetcher.loadProgress(
-                productOrderDao, ProductOrderListEntry.getBusinessKeyList(displayedProductOrderListEntries));
+                productOrderDao, ProductOrderListEntry.getProductOrderIDs(displayedProductOrderListEntries));
 
         // Get the sorted family list.
         productFamilies = productFamilyDao.findAll();

@@ -128,20 +128,20 @@ public class CompletionStatusFetcherTest extends ContainerTest {
     public void testGetAllStatuses() throws Exception {
         List<ProductOrder> allOrders = pdoDao.findAll();
 
-        List<String> allBusinessKeys = new ArrayList<>();
+        List<Long> allOrderIds = new ArrayList<>();
         for (ProductOrder order : allOrders) {
             if (order.hasJiraTicketKey()) {
-                allBusinessKeys.add(order.getBusinessKey());
+                allOrderIds.add(order.getProductOrderId());
             }
         }
 
-        allBusinessKeys.addAll(allBusinessKeys);
+        allOrderIds.addAll(allOrderIds);
 
-        Assert.assertTrue(allBusinessKeys.size() > 1000);
+        Assert.assertTrue(allOrderIds.size() > 1000);
 
-        Map<String, ProductOrderCompletionStatus> statusMap = pdoDao.getProgressByBusinessKey(allBusinessKeys);
+        Map<String, ProductOrderCompletionStatus> statusMap = pdoDao.getProgressByOrderId(allOrderIds);
 
-        Assert.assertEquals(statusMap.size() * 2, allBusinessKeys.size(), "There should be statuses for every item");
+        Assert.assertEquals(statusMap.size() * 2, allOrderIds.size(), "There should be statuses for every item");
     }
 
     public void testGetPercentInProgress() throws Exception {

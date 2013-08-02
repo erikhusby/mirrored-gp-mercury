@@ -23,8 +23,8 @@ public class CompletionStatusFetcher {
 
 
     @SuppressWarnings("unchecked")
-    public void loadProgress(ProductOrderDao productOrderDao, Collection<String> productOrderKeys) {
-        progressByBusinessKey = DefaultedMap.decorate(productOrderDao.getProgressByBusinessKey(productOrderKeys), DEFAULT);
+    public void loadProgress(ProductOrderDao productOrderDao, Collection<Long> productOrderIds) {
+        progressByBusinessKey = DefaultedMap.decorate(productOrderDao.getProgressByOrderId(productOrderIds), DEFAULT);
     }
 
     @SuppressWarnings("unchecked")
