@@ -13,7 +13,7 @@ import java.util.List;
  * Class is used to create objects generated from bettalims.xsd.
  * The maven jaxb2 xjc generator does not create constructors, so here we do it manually.
  */
-public class BettalimsObjectFactory {
+public class BettaLimsObjectFactory {
     public static CherryPickSourceType createCherryPickSourceType(String barcode, String well,
                                                                   String destinationBarcode,
                                                                   String destinationWell) {

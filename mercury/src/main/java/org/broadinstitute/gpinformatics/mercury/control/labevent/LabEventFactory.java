@@ -656,7 +656,7 @@ public class LabEventFactory implements Serializable {
      * Build an entity to represent a cherry pick (random access) transfer between a source rack and a target strip
      * tube. Builds source and target LabVessels on-the-fly.
      *
-     * @param plateCherryPickEvent          JAXB cherry-pick event, either deserialized from XML or created from BettalimsMessageFactory
+     * @param plateCherryPickEvent          JAXB cherry-pick event, either deserialized from XML or created from BettaLimsMessageFactory
      * @param mapBarcodeToSourceTubeFormation
      *                                      map from source rack barcode to TubeFormation entities; newly created TubeFormations will be added to this map
      * @param mapBarcodeToSourceTube        map from source tube barcode to TwoDBarcodedTube entities; newly created TwoDBarcodedTubes will be added to this this map

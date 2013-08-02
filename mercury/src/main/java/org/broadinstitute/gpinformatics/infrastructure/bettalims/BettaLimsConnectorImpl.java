@@ -11,32 +11,36 @@ import javax.ws.rs.core.MediaType;
  * Implementation of connector to BettaLIMS
  */
 @Impl
-public class BettalimsConnectorImpl implements BettalimsConnector {
+public class BettaLimsConnectorImpl implements BettaLimsConnector {
 
     @Inject
-    private BettalimsConfig bettalimsConfig;
+    private BettaLimsConfig bettaLimsConfig;
 
-    /** for CDI */
-    public BettalimsConnectorImpl() {
+    /**
+     * for CDI
+     */
+    public BettaLimsConnectorImpl() {
     }
 
-    public BettalimsConnectorImpl(BettalimsConfig bettalimsConfig) {
-        this.bettalimsConfig = bettalimsConfig;
+    public BettaLimsConnectorImpl(BettaLimsConfig bettaLimsConfig) {
+        this.bettaLimsConfig = bettaLimsConfig;
     }
 
     /**
      * Call JAX-RS web service
+     *
      * @param message from liquid handling deck
+     *
      * @return code and message
      */
     @Override
-    public BettalimsResponse sendMessage(String message) {
-        ClientResponse response = Client.create().resource("http://" + bettalimsConfig.getWsHost() + ":" +
-                bettalimsConfig.getWsPort() + "/bettalimsmessage")
+    public BettaLimsResponse sendMessage(String message) {
+        ClientResponse response = Client.create().resource("http://" + bettaLimsConfig.getWsHost() + ":" +
+                                                           bettaLimsConfig.getWsPort() + "/bettalimsmessage")
                 .type(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML)
                 .entity(message)
                 .post(ClientResponse.class);
-        return new BettalimsResponse(response.getStatus(), response.getEntity(String.class));
+        return new BettaLimsResponse(response.getStatus(), response.getEntity(String.class));
     }
 }

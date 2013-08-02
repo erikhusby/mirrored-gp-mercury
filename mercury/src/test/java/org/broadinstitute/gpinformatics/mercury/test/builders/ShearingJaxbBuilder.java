@@ -12,7 +12,7 @@ import java.util.List;
  */
 public class ShearingJaxbBuilder {
     private final BettaLimsMessageTestFactory bettaLimsMessageTestFactory;
-    private final List<String>                tubeBarcodeList;
+    private final List<String> tubeBarcodeList;
     private final String testPrefix;
     private final String rackBarcode;
     private String shearPlateBarcode;

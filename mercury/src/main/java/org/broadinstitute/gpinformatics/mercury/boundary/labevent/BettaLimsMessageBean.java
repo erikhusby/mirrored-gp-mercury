@@ -14,11 +14,11 @@ import javax.jms.MessageListener;
 import javax.jms.TextMessage;
 
 /**
-* A Message Driven Bean to receive JMS messages from liquid handling decks.
-* The destination property is overridden in ejb-jar.xml, to allow different values in different environments.
-*/
+ * A Message Driven Bean to receive JMS messages from liquid handling decks.
+ * The destination property is overridden in ejb-jar.xml, to allow different values in different environments.
+ */
 @SuppressWarnings("UnusedDeclaration")
-@MessageDriven(name = "BettalimsMessageBean", activationConfig = {
+@MessageDriven(name = "BettaLimsMessageBean", activationConfig = {
         @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
         // Increase probability that messages are read in the order they were sent
         @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "1")
@@ -26,7 +26,7 @@ import javax.jms.TextMessage;
 //        @ActivationConfigProperty(propertyName = "connectorClassName", propertyValue ="org.hornetq.core.remoting.impl.netty.NettyConnectorFactory"),
 //        @ActivationConfigProperty(propertyName = "connectionParameters", propertyValue = "host=gpinfx-jms;port=5445")
 })
-public class BettalimsMessageBean implements MessageListener {
+public class BettaLimsMessageBean implements MessageListener {
 
     @Inject
     private BoundSessionContext sessionContext;
@@ -35,17 +35,18 @@ public class BettalimsMessageBean implements MessageListener {
     private BeanManager beanManager;
 
     @Inject
-    private BettalimsMessageResource bettalimsMessageResource;
+    private BettaLimsMessageResource bettaLimsMessageResource;
 
     @Inject
     private SessionContextUtility sessionContextUtility;
 
-    public BettalimsMessageBean() {
+    public BettaLimsMessageBean() {
     }
 
     /**
      * Transaction is NOT_SUPPORTED because we don't want re-delivery in case of failure.  We store all messages
      * on the file system, and email in case of failure, so the recipient of the email can resubmit messages manually.
+     *
      * @param message JMS message from deck
      */
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
@@ -59,7 +60,7 @@ public class BettalimsMessageBean implements MessageListener {
                     //noinspection OverlyBroadCatchBlock
                     try {
                         String text = ((TextMessage) message).getText();
-                        bettalimsMessageResource.storeAndProcess(text);
+                        bettaLimsMessageResource.storeAndProcess(text);
                     } catch (Exception e) {
                         // todo jmt email LIMS oddities
                     }

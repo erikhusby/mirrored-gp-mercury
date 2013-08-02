@@ -17,10 +17,10 @@ import java.util.List;
 public class PicoPlatingJaxbBuilder {
     private final BettaLimsMessageTestFactory bettaLimsMessageTestFactory;
     private final String testPrefix;
-    private final List<String>                tubeBarcodes;
+    private final List<String> tubeBarcodes;
     private String rackBarcode;
 
-    private PlateEventType         picoPlatingBucket;
+    private PlateEventType picoPlatingBucket;
     private PlateTransferEventType picoPlatingQc;
     private PlateTransferEventType picoPlatingSetup1;
     private PlateTransferEventType picoPlatingSetup2;

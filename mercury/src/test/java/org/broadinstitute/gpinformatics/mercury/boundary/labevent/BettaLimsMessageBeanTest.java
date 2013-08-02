@@ -29,7 +29,7 @@ import java.util.Map;
 /**
  * Test Message Driven Bean
  */
-public class BettalimsMessageBeanTest {
+public class BettaLimsMessageBeanTest {
 
     @Test(enabled = false)
     public void testJms() {
@@ -57,7 +57,7 @@ public class BettalimsMessageBeanTest {
     public static void sendJmsMessage(String message) {
         Connection connection = null;
         Session session = null;
-        try{
+        try {
             Map<String, Object> connectionParams = new HashMap<>();
             connectionParams.put(TransportConstants.PORT_PROP_NAME, 5445);
             connectionParams.put(TransportConstants.HOST_PROP_NAME, "localhost");

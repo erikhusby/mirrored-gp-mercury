@@ -19,7 +19,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -135,7 +134,7 @@ public class ExomeExpressIntegrationTest {
             HiSeq2500JaxbBuilder hiSeq2500JaxbBuilder =
                     new HiSeq2500JaxbBuilder(bettaLimsMessageTestFactory, testSuffix,
                             qtpJaxbBuilder.getDenatureTubeBarcode(), qtpJaxbBuilder.getDenatureRackBarcode(), fctName,
-                            ProductionFlowcellPath.DILUTION_TO_FLOWCELL, BaseEventTest.NUM_POSITIONS_IN_RACK,null,
+                            ProductionFlowcellPath.DILUTION_TO_FLOWCELL, BaseEventTest.NUM_POSITIONS_IN_RACK, null,
                             "Exome Express");
 
             hiSeq2500JaxbBuilder.invoke();

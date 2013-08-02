@@ -43,7 +43,8 @@ public class MiSeqReagentKitJaxbBuilder {
         String username = "pdunlea";
         String stationName = "ZAN";
         denatureToReagentKitJaxb = vesselTransferEjb
-                .denatureToReagentKitTransfer(null, denatureBarcodeMap, miSeqReagentKitBarcode, username, stationName).getPlateCherryPickEvent().iterator().next();
+                .denatureToReagentKitTransfer(null, denatureBarcodeMap, miSeqReagentKitBarcode, username, stationName)
+                .getPlateCherryPickEvent().iterator().next();
 
         bettaLimsMessageTestFactory.addMessage(messageList, denatureToReagentKitJaxb);
 

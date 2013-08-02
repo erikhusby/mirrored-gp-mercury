@@ -18,7 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEv
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.control.labevent.BettalimsMessageUtils;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.BettaLimsMessageUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -83,28 +83,28 @@ public class WorkflowValidator {
         try {
             for (PlateCherryPickEvent plateCherryPickEvent : bettaLIMSMessage.getPlateCherryPickEvent()) {
                 validateWorkflow(plateCherryPickEvent, new ArrayList<>(
-                        BettalimsMessageUtils.getBarcodesForCherryPick(plateCherryPickEvent)));
+                        BettaLimsMessageUtils.getBarcodesForCherryPick(plateCherryPickEvent)));
             }
 
             for (PlateEventType plateEventType : bettaLIMSMessage.getPlateEvent()) {
                 validateWorkflow(plateEventType, new ArrayList<>(
-                        BettalimsMessageUtils.getBarcodesForPlateEvent(plateEventType)));
+                        BettaLimsMessageUtils.getBarcodesForPlateEvent(plateEventType)));
             }
 
             for (PlateTransferEventType plateTransferEventType : bettaLIMSMessage.getPlateTransferEvent()) {
                 validateWorkflow(plateTransferEventType, new ArrayList<>(
-                        BettalimsMessageUtils.getBarcodesForPlateTransfer(plateTransferEventType)));
+                        BettaLimsMessageUtils.getBarcodesForPlateTransfer(plateTransferEventType)));
             }
 
             for (ReceptacleEventType receptacleEventType : bettaLIMSMessage.getReceptacleEvent()) {
                 validateWorkflow(receptacleEventType, new ArrayList<>(
-                        BettalimsMessageUtils.getBarcodesForReceptacleEvent(receptacleEventType)));
+                        BettaLimsMessageUtils.getBarcodesForReceptacleEvent(receptacleEventType)));
             }
 
             for (ReceptaclePlateTransferEvent receptaclePlateTransferEvent : bettaLIMSMessage
                     .getReceptaclePlateTransferEvent()) {
                 validateWorkflow(receptaclePlateTransferEvent, new ArrayList<>(
-                        BettalimsMessageUtils.getBarcodesForReceptaclePlateTransfer(receptaclePlateTransferEvent)));
+                        BettaLimsMessageUtils.getBarcodesForReceptaclePlateTransfer(receptaclePlateTransferEvent)));
             }
         } catch (RuntimeException e) {
             // convert runtime exceptions to checked, so the transaction is not rolled back

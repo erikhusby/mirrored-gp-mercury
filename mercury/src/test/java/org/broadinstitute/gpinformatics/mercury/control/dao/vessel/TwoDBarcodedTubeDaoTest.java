@@ -16,12 +16,12 @@ import java.util.Map;
 public class TwoDBarcodedTubeDaoTest extends ContainerTest {
 
     @Inject
-    private TwoDBarcodedTubeDao twoDBarcodedTubeDAO;
+    private TwoDBarcodedTubeDao twoDBarcodedTubeDao;
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testFindByBarcodes() throws Exception {
         // todo jmt create tubes
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = twoDBarcodedTubeDAO.findByBarcodes(Arrays.asList(
+        Map<String, TwoDBarcodedTube> mapBarcodeToTube = twoDBarcodedTubeDao.findByBarcodes(Arrays.asList(
                 "R100515045783",
                 "R100515045784",
                 "R100515045785",

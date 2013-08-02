@@ -19,8 +19,8 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
-import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettalimsMessageResource;
-import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettalimsMessageResourceTest;
+import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResource;
+import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResourceTest;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
@@ -147,7 +147,7 @@ public class ReworkEjbTest extends Arquillian {
     private BucketDao bucketDao;
 
     @Inject
-    private BettalimsMessageResource bettalimsMessageResource;
+    private BettaLimsMessageResource bettaLimsMessageResource;
 
     @Inject
     private IndexedPlateFactory indexedPlateFactory;
@@ -373,9 +373,9 @@ public class ReworkEjbTest extends Arquillian {
         researchProjectDao.persist(researchProject);
 
         exExProduct = productDao.findByPartNumber(
-                BettalimsMessageResourceTest.mapWorkflowToPartNum.get(WorkflowName.EXOME_EXPRESS.getWorkflowName()));
+                BettaLimsMessageResourceTest.mapWorkflowToPartNum.get(WorkflowName.EXOME_EXPRESS.getWorkflowName()));
         nonExExProduct = productDao.findByPartNumber(
-                BettalimsMessageResourceTest.mapWorkflowToPartNum.get(WorkflowName.WHOLE_GENOME.getWorkflowName()));
+                BettaLimsMessageResourceTest.mapWorkflowToPartNum.get(WorkflowName.WHOLE_GENOME.getWorkflowName()));
 
         bucketReadySamples1 = new ArrayList<>(2);
         bucketReadySamples1.add(new ProductOrderSample(genomicSample1));
@@ -644,10 +644,10 @@ public class ReworkEjbTest extends Arquillian {
             bucketDao.persist(pBucket);
         }
 
-        HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = BettalimsMessageResourceTest
+        HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = BettaLimsMessageResourceTest
                 .sendMessagesUptoCatch("SGM_RWIT4" + currDate.getTime(), mapBarcodeToTube, bettaLimsMessageFactory,
                         WorkflowName.EXOME_EXPRESS,
-                        bettalimsMessageResource,
+                        bettaLimsMessageResource,
                         reagentDesignDao, twoDBarcodedTubeDao,
                         appConfig.getUrl(), 2);
 
@@ -722,10 +722,10 @@ public class ReworkEjbTest extends Arquillian {
             bucketDao.persist(pBucket);
         }
 
-        HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = BettalimsMessageResourceTest
+        HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = BettaLimsMessageResourceTest
                 .sendMessagesUptoCatch("SGM_RWIT4" + currDate.getTime(), mapBarcodeToTube, bettaLimsMessageFactory,
                         WorkflowName.EXOME_EXPRESS,
-                        bettalimsMessageResource,
+                        bettaLimsMessageResource,
                         reagentDesignDao, twoDBarcodedTubeDao,
                         appConfig.getUrl(), 2);
 
@@ -886,10 +886,10 @@ public class ReworkEjbTest extends Arquillian {
 
         BettaLimsMessageTestFactory bettaLimsMessageFactory = new BettaLimsMessageTestFactory(true);
 
-        HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = BettalimsMessageResourceTest
+        HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = BettaLimsMessageResourceTest
                 .sendMessagesUptoCatch("SGM_RWIT1" + currDate.getTime(), mapBarcodeToTube, bettaLimsMessageFactory,
                         WorkflowName.EXOME_EXPRESS,
-                        bettalimsMessageResource,
+                        bettaLimsMessageResource,
                         reagentDesignDao, twoDBarcodedTubeDao,
                         appConfig.getUrl(), 2);
 
@@ -955,10 +955,10 @@ public class ReworkEjbTest extends Arquillian {
 
         BettaLimsMessageTestFactory bettaLimsMessageFactory = new BettaLimsMessageTestFactory(true);
 
-        HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = BettalimsMessageResourceTest
+        HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = BettaLimsMessageResourceTest
                 .sendMessagesUptoCatch("SGM_RWIT2" + currDate.getTime(), mapBarcodeToTube, bettaLimsMessageFactory,
                         WorkflowName.EXOME_EXPRESS,
-                        bettalimsMessageResource,
+                        bettaLimsMessageResource,
                         reagentDesignDao, twoDBarcodedTubeDao,
                         appConfig.getUrl(), 2);
 
@@ -1008,10 +1008,10 @@ public class ReworkEjbTest extends Arquillian {
             bucketDao.persist(pBucket);
         }
 
-        HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = BettalimsMessageResourceTest
+        HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = BettaLimsMessageResourceTest
                 .sendMessagesUptoCatch("SGM_RWIT4" + currDate.getTime(), mapBarcodeToTube, bettaLimsMessageFactory,
                         WorkflowName.EXOME_EXPRESS,
-                        bettalimsMessageResource,
+                        bettaLimsMessageResource,
                         reagentDesignDao, twoDBarcodedTubeDao,
                         appConfig.getUrl(), 2);
 
@@ -1052,10 +1052,10 @@ public class ReworkEjbTest extends Arquillian {
 
         BettaLimsMessageTestFactory bettaLimsMessageFactory = new BettaLimsMessageTestFactory(true);
 
-        HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = BettalimsMessageResourceTest
+        HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = BettaLimsMessageResourceTest
                 .sendMessagesUptoCatch("SGM_RWIT3" + currDate.getTime(), mapBarcodeToTube, bettaLimsMessageFactory,
                         WorkflowName.EXOME_EXPRESS,
-                        bettalimsMessageResource,
+                        bettaLimsMessageResource,
                         reagentDesignDao, twoDBarcodedTubeDao,
                         appConfig.getUrl(), 2);
 

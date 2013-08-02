@@ -14,12 +14,12 @@ import java.util.List;
 public class PreFlightJaxbBuilder {
     private final BettaLimsMessageTestFactory bettaLimsMessageTestFactory;
     private final String testPrefix;
-    private final List<String>                tubeBarcodes;
+    private final List<String> tubeBarcodes;
 
     private String rackBarcode;
     private PlateTransferEventType preflightPicoSetup1;
     private PlateTransferEventType preflightPicoSetup2;
-    private PlateEventType         preflightNormalization;
+    private PlateEventType preflightNormalization;
     private PlateTransferEventType preflightPostNormPicoSetup1;
     private PlateTransferEventType preflightPostNormPicoSetup2;
 

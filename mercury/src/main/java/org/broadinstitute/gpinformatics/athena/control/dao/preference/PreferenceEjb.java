@@ -30,7 +30,7 @@ import java.util.List;
 public class PreferenceEjb {
 
     @Inject
-    private PreferenceDAO preferenceDAO;
+    private PreferenceDao preferenceDao;
 
     public PreferenceEjb() {
     }
@@ -38,19 +38,19 @@ public class PreferenceEjb {
     /**
      * Add the object preference.
      *
-     * @param associatedUser The user to associate with this preference.
-     * @param preferenceType The preference type for easy searching.
+     * @param associatedUser  The user to associate with this preference.
+     * @param preferenceType  The preference type for easy searching.
      * @param definitionValue The preference definition
      *
      * @throws PreferenceException Any problems processing the preference.
      */
     public void add(
-        @Nonnull Long associatedUser,
-        @Nonnull PreferenceType preferenceType,
-        @Nonnull PreferenceDefinitionValue definitionValue) throws Exception {
+            @Nonnull Long associatedUser,
+            @Nonnull PreferenceType preferenceType,
+            @Nonnull PreferenceDefinitionValue definitionValue) throws Exception {
 
         String data = definitionValue.marshal();
-        List<Preference> userPreferences = preferenceDAO.getPreferences(associatedUser, preferenceType);
+        List<Preference> userPreferences = preferenceDao.getPreferences(associatedUser, preferenceType);
 
         // If the preference is the same as any of the existing preferences, then just update it and return.
         for (Preference preference : userPreferences) {
@@ -62,7 +62,7 @@ public class PreferenceEjb {
 
         // If we have preferences left, just save this one.
         if (userPreferences.size() < preferenceType.getSaveLimit()) {
-            preferenceDAO.persist(new Preference(associatedUser, preferenceType, data));
+            preferenceDao.persist(new Preference(associatedUser, preferenceType, data));
             return;
         }
 
@@ -74,9 +74,9 @@ public class PreferenceEjb {
     /**
      * Add the object preference.
      *
-     * @param object1Id An id for an object that is used for look up.
-     * @param object2Id An id for a second object to be used for look up.
-     * @param preferenceType The preference type.
+     * @param object1Id       An id for an object that is used for look up.
+     * @param object2Id       An id for a second object to be used for look up.
+     * @param preferenceType  The preference type.
      * @param definitionValue The preference definition value
      *
      * @throws PreferenceException Any problems processing the preference.
@@ -89,7 +89,7 @@ public class PreferenceEjb {
             @Nonnull PreferenceDefinitionValue definitionValue) throws Exception {
 
         String data = definitionValue.marshal();
-        List<Preference> userPreferences = preferenceDAO.getPreferences(object1Id, object2Id, preferenceType);
+        List<Preference> userPreferences = preferenceDao.getPreferences(object1Id, object2Id, preferenceType);
 
         // If the preference is the same as any of the existing preferences, then just update it and return.
         for (Preference preference : userPreferences) {
@@ -101,7 +101,7 @@ public class PreferenceEjb {
 
         // If we have preferences left, just save this one.
         if (userPreferences.size() < preferenceType.getSaveLimit()) {
-            preferenceDAO.persist(new Preference(createdBy, object1Id, object2Id, preferenceType, data));
+            preferenceDao.persist(new Preference(createdBy, object1Id, object2Id, preferenceType, data));
             return;
         }
 
@@ -119,9 +119,9 @@ public class PreferenceEjb {
      */
     public void clear(@Nonnull Long associatedUser) throws Exception {
 
-        List<Preference> userPreferences = preferenceDAO.getPreferences(associatedUser);
+        List<Preference> userPreferences = preferenceDao.getPreferences(associatedUser);
         for (Preference preference : userPreferences) {
-            preferenceDAO.remove(preference);
+            preferenceDao.remove(preference);
         }
     }
 
@@ -134,9 +134,9 @@ public class PreferenceEjb {
      * @throws Exception Any problems processing the preference.
      */
     public void clear(@Nonnull Long associatedUser, @Nonnull PreferenceType preferenceType) throws Exception {
-        List<Preference> userPreferences = preferenceDAO.getPreferences(associatedUser, preferenceType);
+        List<Preference> userPreferences = preferenceDao.getPreferences(associatedUser, preferenceType);
         for (Preference preference : userPreferences) {
-            preferenceDAO.remove(preference);
+            preferenceDao.remove(preference);
         }
     }
 
@@ -144,8 +144,8 @@ public class PreferenceEjb {
      * Remove the preferences for objects and type. Object preferences can only be removed by type because we
      * just don't know whether there could be overlapping object types across preference types.
      *
-     * @param object1Id The primary object.
-     * @param object2Id The optional secondary object.
+     * @param object1Id      The primary object.
+     * @param object2Id      The optional secondary object.
      * @param preferenceType The preference type.
      *
      * @throws PreferenceException Any errors.
@@ -154,24 +154,25 @@ public class PreferenceEjb {
             @Nonnull Long object1Id,
             @Nullable Long object2Id,
             @Nonnull PreferenceType preferenceType) throws Exception {
-        List<Preference> userPreferences = preferenceDAO.getPreferences(object1Id, object2Id, preferenceType);
+        List<Preference> userPreferences = preferenceDao.getPreferences(object1Id, object2Id, preferenceType);
         for (Preference preference : userPreferences) {
-            preferenceDAO.remove(preference);
+            preferenceDao.remove(preference);
         }
     }
 
     /**
      * Get a preference associated with objects.
      *
-     * @param object1Id An id for an object that is used for look up.
-     * @param object2Id An id for a second object to be used for look up.
+     * @param object1Id      An id for an object that is used for look up.
+     * @param object2Id      An id for a second object to be used for look up.
      * @param preferenceType The preference type.
      *
      * @return Preference The matching preference
      */
     public List<Preference> getPreferences(
-        @Nonnull Long object1Id, @Nullable Long object2Id, @Nonnull PreferenceType preferenceType) throws Exception {
-        return preferenceDAO.getPreferences(object1Id, object2Id, preferenceType);
+            @Nonnull Long object1Id, @Nullable Long object2Id, @Nonnull PreferenceType preferenceType)
+            throws Exception {
+        return preferenceDao.getPreferences(object1Id, object2Id, preferenceType);
     }
 
     /**
@@ -182,7 +183,7 @@ public class PreferenceEjb {
      * @return Preference The matching preference
      */
     public List<Preference> getPreferences(@Nonnull Long associatedUser) throws Exception {
-        return preferenceDAO.getPreferences(associatedUser);
+        return preferenceDao.getPreferences(associatedUser);
     }
 
     /**
@@ -195,6 +196,6 @@ public class PreferenceEjb {
      */
     public List<Preference> getPreferences(
             @Nonnull Long associatedUser, @Nullable PreferenceType preferenceType) throws Exception {
-        return preferenceDAO.getPreferences(associatedUser, preferenceType);
+        return preferenceDao.getPreferences(associatedUser, preferenceType);
     }
 }
