@@ -32,7 +32,7 @@ import java.util.List;
  */
 @Stateful
 @RequestScoped
-public class PreferenceDAO extends GenericDao {
+public class PreferenceDao extends GenericDao {
 
     /**
      * This grabs ALL preferences that are associated to the specified user.

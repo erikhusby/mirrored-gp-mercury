@@ -21,7 +21,7 @@ import java.util.Map;
  * Tests for the research project dao
  */
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
-public class ResearchProjectDAOTest extends ContainerTest {
+public class ResearchProjectDaoTest extends ContainerTest {
 
     @Inject
     private UserTransaction utx;
