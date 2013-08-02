@@ -11,7 +11,7 @@
 
 package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLimsMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.CherryPickSourceType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateType;
@@ -81,11 +81,11 @@ public class VesselTransferEjb {
      *
      * @return The newly created event.
      */
-    public BettaLIMSMessage denatureToReagentKitTransfer(@Nullable String denatureRackBarcode,
+    public BettaLimsMessage denatureToReagentKitTransfer(@Nullable String denatureRackBarcode,
                                                          Map<String, VesselPosition> denatureBarcodeMap,
                                                          String reagentKitBarcode, String username,
                                                          String stationName) {
-        BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
+        BettaLimsMessage bettaLimsMessage = new BettaLimsMessage();
 
         PlateCherryPickEvent transferEvent = new PlateCherryPickEvent();
         transferEvent.setEventType(LabEventType.DENATURE_TO_REAGENT_KIT_TRANSFER.getName());
@@ -138,8 +138,8 @@ public class VesselTransferEjb {
         PlateType reagentKitType = BettaLimsObjectFactory.createPlateType(reagentKitBarcode,
                 LabEventFactory.PHYS_TYPE_REAGENT_BLOCK, MiSeqReagentKit.LOADING_WELL.name(), null);
         transferEvent.getPlate().add(reagentKitType);
-        bettaLIMSMessage.getPlateCherryPickEvent().add(transferEvent);
-        return bettaLIMSMessage;
+        bettaLimsMessage.getPlateCherryPickEvent().add(transferEvent);
+        return bettaLimsMessage;
     }
 
 

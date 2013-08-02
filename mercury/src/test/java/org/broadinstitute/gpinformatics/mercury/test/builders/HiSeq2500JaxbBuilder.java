@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.test.builders;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLimsMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.MetadataType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
@@ -33,7 +33,7 @@ public class HiSeq2500JaxbBuilder {
     private String dilutionRackBarcode;
     private final String fctTicket;
 
-    private final List<BettaLIMSMessage> messageList = new ArrayList<>();
+    private final List<BettaLimsMessage> messageList = new ArrayList<>();
     private ReceptaclePlateTransferEvent flowcellTransferJaxb;
     private PlateCherryPickEvent dilutionTransferJaxb;
     private final ProductionFlowcellPath productionFlowcellPath;
@@ -155,7 +155,7 @@ public class HiSeq2500JaxbBuilder {
         return flowcellTransferJaxb;
     }
 
-    public List<BettaLIMSMessage> getMessageList() {
+    public List<BettaLimsMessage> getMessageList() {
         return messageList;
     }
 

@@ -11,7 +11,7 @@
     -->
     <enterprise-beans>
         <message-driven>
-            <ejb-name>BettalimsMessageBean</ejb-name>
+            <ejb-name>BettaLimsMessageBean</ejb-name>
             <ejb-class>org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageBean</ejb-class>
             <activation-config>
                 <activation-config-property>

@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.test.builders;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLimsMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 
 import java.util.ArrayList;
@@ -12,7 +12,7 @@ import java.util.List;
  */
 public class ShearingJaxbBuilder {
     private final BettaLimsMessageTestFactory bettaLimsMessageTestFactory;
-    private final List<String>                tubeBarcodeList;
+    private final List<String> tubeBarcodeList;
     private final String testPrefix;
     private final String rackBarcode;
     private String shearPlateBarcode;
@@ -21,7 +21,7 @@ public class ShearingJaxbBuilder {
     private PlateTransferEventType shearingTransferEventJaxb;
     private PlateTransferEventType postShearingTransferCleanupEventJaxb;
     private PlateTransferEventType shearingQcEventJaxb;
-    private final List<BettaLIMSMessage> messageList = new ArrayList<>();
+    private final List<BettaLimsMessage> messageList = new ArrayList<>();
 
     public ShearingJaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory, List<String> tubeBarcodeList,
                                String testPrefix, String rackBarcode) {
@@ -51,7 +51,7 @@ public class ShearingJaxbBuilder {
         return shearCleanPlateBarcode;
     }
 
-    public List<BettaLIMSMessage> getMessageList() {
+    public List<BettaLimsMessage> getMessageList() {
         return messageList;
     }
 

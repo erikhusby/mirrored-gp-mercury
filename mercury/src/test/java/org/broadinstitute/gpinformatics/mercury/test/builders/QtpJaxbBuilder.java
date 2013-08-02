@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.test.builders;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLimsMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 
@@ -24,7 +24,7 @@ public class QtpJaxbBuilder {
     private PlateCherryPickEvent poolingTransferJaxb;
     private String denatureRackBarcode;
     private PlateCherryPickEvent denatureJaxb;
-    private final List<BettaLIMSMessage> messageList = new ArrayList<>();
+    private final List<BettaLimsMessage> messageList = new ArrayList<>();
     private String denatureTubeBarcode;
     private String ecoPlateBarcode;
     private PlateTransferEventType ecoTransferJaxb;
@@ -36,13 +36,13 @@ public class QtpJaxbBuilder {
     private final List<String> normalizationTubeBarcodes = new ArrayList<>();
     private List<String> denatureTubeBarcodes = new ArrayList<>();
 
-    private BettaLIMSMessage poolingTransferMessage;
-    private BettaLIMSMessage ecoTransferMessage;
-    private BettaLIMSMessage viia7TransferMessage;
-    private BettaLIMSMessage denatureMessage;
-    private BettaLIMSMessage stripTubeTransferMessage;
-    private BettaLIMSMessage flowcellTransferMessage;
-    private BettaLIMSMessage flowcellLoadMessage;
+    private BettaLimsMessage poolingTransferMessage;
+    private BettaLimsMessage ecoTransferMessage;
+    private BettaLimsMessage viia7TransferMessage;
+    private BettaLimsMessage denatureMessage;
+    private BettaLimsMessage stripTubeTransferMessage;
+    private BettaLimsMessage flowcellTransferMessage;
+    private BettaLimsMessage flowcellLoadMessage;
     private final boolean doEco;
 
     public QtpJaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageFactory, String testPrefix,
@@ -83,7 +83,7 @@ public class QtpJaxbBuilder {
         return denatureJaxb;
     }
 
-    public List<BettaLIMSMessage> getMessageList() {
+    public List<BettaLimsMessage> getMessageList() {
         return messageList;
     }
 
@@ -182,31 +182,31 @@ public class QtpJaxbBuilder {
         return this;
     }
 
-    public BettaLIMSMessage getStep01PoolingTransferMessage() {
+    public BettaLimsMessage getStep01PoolingTransferMessage() {
         return poolingTransferMessage;
     }
 
-    public BettaLIMSMessage getStep02EcoTransferMessage() {
+    public BettaLimsMessage getStep02EcoTransferMessage() {
         return ecoTransferMessage;
     }
 
-    public BettaLIMSMessage getStep02Viia7TransferMessage() {
+    public BettaLimsMessage getStep02Viia7TransferMessage() {
         return viia7TransferMessage;
     }
 
-    public BettaLIMSMessage getStep03DenatureMessage() {
+    public BettaLimsMessage getStep03DenatureMessage() {
         return denatureMessage;
     }
 
-    public BettaLIMSMessage getStep04StripTubeTransferMessage() {
+    public BettaLimsMessage getStep04StripTubeTransferMessage() {
         return stripTubeTransferMessage;
     }
 
-    public BettaLIMSMessage getStep05FlowcellTransferMessage() {
+    public BettaLimsMessage getStep05FlowcellTransferMessage() {
         return flowcellTransferMessage;
     }
 
-    public BettaLIMSMessage getStep06FlowcellLoadMessage() {
+    public BettaLimsMessage getStep06FlowcellLoadMessage() {
         return flowcellLoadMessage;
     }
 }

@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.test.builders;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLimsMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 
@@ -14,16 +14,16 @@ import java.util.List;
 public class PreFlightJaxbBuilder {
     private final BettaLimsMessageTestFactory bettaLimsMessageTestFactory;
     private final String testPrefix;
-    private final List<String>                tubeBarcodes;
+    private final List<String> tubeBarcodes;
 
     private String rackBarcode;
     private PlateTransferEventType preflightPicoSetup1;
     private PlateTransferEventType preflightPicoSetup2;
-    private PlateEventType         preflightNormalization;
+    private PlateEventType preflightNormalization;
     private PlateTransferEventType preflightPostNormPicoSetup1;
     private PlateTransferEventType preflightPostNormPicoSetup2;
 
-    private final List<BettaLIMSMessage> messageList = new ArrayList<>();
+    private final List<BettaLimsMessage> messageList = new ArrayList<>();
 
     public PreFlightJaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory, String testPrefix,
                                 List<String> tubeBarcodes) {
@@ -52,7 +52,7 @@ public class PreFlightJaxbBuilder {
         return preflightPostNormPicoSetup2;
     }
 
-    public List<BettaLIMSMessage> getMessageList() {
+    public List<BettaLimsMessage> getMessageList() {
         return messageList;
     }
 

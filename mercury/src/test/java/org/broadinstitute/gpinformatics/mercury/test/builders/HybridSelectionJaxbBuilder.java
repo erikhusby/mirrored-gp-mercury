@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.test.builders;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLimsMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
@@ -17,18 +17,18 @@ public class HybridSelectionJaxbBuilder {
     private final BettaLimsMessageTestFactory bettaLimsMessageTestFactory;
     private final String testPrefix;
     private final String pondRegRackBarcode;
-    private final List<String>                pondRegTubeBarcodes;
+    private final List<String> pondRegTubeBarcodes;
     private String normCatchRackBarcode;
     private List<String> normCatchBarcodes;
-    private final List<BettaLIMSMessage> messageList = new ArrayList<>();
+    private final List<BettaLimsMessage> messageList = new ArrayList<>();
 
-    private PlateTransferEventType       preSelPoolJaxb;
+    private PlateTransferEventType preSelPoolJaxb;
     private PlateTransferEventType preSelPoolJaxb2;
     private PlateTransferEventType hybridizationJaxb;
     private String baitTubeBarcode;
     private ReceptaclePlateTransferEvent baitSetupJaxb;
     private PlateTransferEventType baitAdditionJaxb;
-    private PlateEventType               beadAdditionJaxb;
+    private PlateEventType beadAdditionJaxb;
     private PlateEventType apWashJaxb;
     private PlateEventType gsWash1Jaxb;
     private PlateEventType gsWash2Jaxb;
@@ -128,12 +128,14 @@ public class HybridSelectionJaxbBuilder {
         return normCatchBarcodes;
     }
 
-    public List<BettaLIMSMessage> getMessageList() {
+    public List<BettaLimsMessage> getMessageList() {
         return messageList;
     }
+
     public PlateEventType getPostHybridizationThermoCyclerLoadedJaxb() {
         return postHybridizationThermoCyclerLoadedJaxb;
     }
+
     public PlateEventType getPostCatchEnrichmentSetupThermoCyclerLoadedJaxb() {
         return postCatchEnrichmentSetupThermoCyclerLoadedJaxb;
     }
@@ -146,7 +148,7 @@ public class HybridSelectionJaxbBuilder {
         String preSelPoolRackBarcode = "PreSelPool" + testPrefix;
         preSelPoolJaxb = bettaLimsMessageTestFactory.buildRackToRack("PreSelectionPool", pondRegRackBarcode,
                 pondRegTubeBarcodes.subList(0, pondRegTubeBarcodes
-                        .size() / 2), preSelPoolRackBarcode,
+                                                       .size() / 2), preSelPoolRackBarcode,
                 preSelPoolBarcodes);
         bettaLimsMessageTestFactory.addMessage(messageList, preSelPoolJaxb);
 

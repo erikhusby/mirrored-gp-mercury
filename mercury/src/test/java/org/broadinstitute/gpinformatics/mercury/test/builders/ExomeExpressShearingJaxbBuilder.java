@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.test.builders;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLimsMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -14,19 +14,19 @@ import java.util.List;
  */
 public class ExomeExpressShearingJaxbBuilder {
     private final BettaLimsMessageTestFactory bettaLimsMessageTestFactory;
-    private final List<String>                tubeBarcodeList;
+    private final List<String> tubeBarcodeList;
     private final String testPrefix;
     private final String rackBarcode;
     private String shearPlateBarcode;
     private String shearCleanPlateBarcode;
     private String covarisRackBarCode;
 
-    private PlateEventType         exExShearingBucket;
+    private PlateEventType exExShearingBucket;
     private PlateTransferEventType shearTransferEventJaxb;
     private PlateEventType covarisLoadEventJaxb;
     private PlateTransferEventType postShearingTransferCleanupEventJaxb;
     private PlateTransferEventType shearingQcEventJaxb;
-    private final List<BettaLIMSMessage> messageList = new ArrayList<>();
+    private final List<BettaLimsMessage> messageList = new ArrayList<>();
 
     public ExomeExpressShearingJaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
                                            List<String> tubeBarcodeList, String testPrefix, String rackBarcode) {
@@ -65,7 +65,7 @@ public class ExomeExpressShearingJaxbBuilder {
         return shearCleanPlateBarcode;
     }
 
-    public List<BettaLIMSMessage> getMessageList() {
+    public List<BettaLimsMessage> getMessageList() {
         return messageList;
     }
 
@@ -81,8 +81,9 @@ public class ExomeExpressShearingJaxbBuilder {
         bettaLimsMessageTestFactory.addMessage(messageList, exExShearingBucket);
 
         shearPlateBarcode = "ShearPlate" + testPrefix;
-        shearTransferEventJaxb = bettaLimsMessageTestFactory.buildRackToPlate(LabEventType.SHEARING_TRANSFER.getName(), rackBarcode,
-                tubeBarcodeList, shearPlateBarcode);
+        shearTransferEventJaxb =
+                bettaLimsMessageTestFactory.buildRackToPlate(LabEventType.SHEARING_TRANSFER.getName(), rackBarcode,
+                        tubeBarcodeList, shearPlateBarcode);
         bettaLimsMessageTestFactory.addMessage(messageList, shearTransferEventJaxb);
 
         covarisLoadEventJaxb =
@@ -90,14 +91,16 @@ public class ExomeExpressShearingJaxbBuilder {
         bettaLimsMessageTestFactory.addMessage(messageList, covarisLoadEventJaxb);
 
         shearCleanPlateBarcode = "ShearCleanPlate" + testPrefix;
-        postShearingTransferCleanupEventJaxb = bettaLimsMessageTestFactory.buildPlateToPlate(LabEventType.POST_SHEARING_TRANSFER_CLEANUP.getName()
-                , shearPlateBarcode, shearCleanPlateBarcode);
+        postShearingTransferCleanupEventJaxb =
+                bettaLimsMessageTestFactory.buildPlateToPlate(LabEventType.POST_SHEARING_TRANSFER_CLEANUP.getName()
+                        , shearPlateBarcode, shearCleanPlateBarcode);
         bettaLimsMessageTestFactory
                 .addMessage(messageList, postShearingTransferCleanupEventJaxb);
 
         String shearQcPlateBarcode = "ShearQcPlate" + testPrefix;
-        shearingQcEventJaxb = bettaLimsMessageTestFactory.buildPlateToPlate(LabEventType.SHEARING_QC.getName(), shearCleanPlateBarcode,
-                shearQcPlateBarcode);
+        shearingQcEventJaxb = bettaLimsMessageTestFactory
+                .buildPlateToPlate(LabEventType.SHEARING_QC.getName(), shearCleanPlateBarcode,
+                        shearQcPlateBarcode);
         bettaLimsMessageTestFactory.addMessage(messageList, shearingQcEventJaxb);
 
         return this;

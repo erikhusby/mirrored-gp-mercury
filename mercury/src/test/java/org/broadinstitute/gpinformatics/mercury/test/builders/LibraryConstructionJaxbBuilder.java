@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.test.builders;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLimsMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
@@ -24,7 +24,7 @@ public class LibraryConstructionJaxbBuilder {
     private String pondRegRackBarcode;
     private List<String> pondRegTubeBarcodes;
 
-    private PlateEventType         endRepairJaxb;
+    private PlateEventType endRepairJaxb;
     private PlateEventType endRepairCleanupJaxb;
     private PlateEventType aBaseJaxb;
     private PlateEventType aBaseCleanupJaxb;
@@ -37,11 +37,12 @@ public class LibraryConstructionJaxbBuilder {
     private PlateEventType postABaseThermoCyclerLoadedJaxb;
     private PlateEventType postIdxAdapterLigationThermoCyclerLoadedJaxb;
     private PlateEventType postPondEnrichmentThermoCyclerLoadedJaxb;
-    private final List<BettaLIMSMessage> messageList = new ArrayList<>();
+    private final List<BettaLimsMessage> messageList = new ArrayList<>();
     private int numSamples;
 
     public LibraryConstructionJaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory, String testPrefix,
-            String shearCleanPlateBarcode, String p7IndexPlateBarcode, String p5IndexPlateBarcode, int numSamples) {
+                                          String shearCleanPlateBarcode, String p7IndexPlateBarcode,
+                                          String p5IndexPlateBarcode, int numSamples) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.testPrefix = testPrefix;
         this.shearCleanPlateBarcode = shearCleanPlateBarcode;
@@ -98,7 +99,7 @@ public class LibraryConstructionJaxbBuilder {
         return pondRegistrationJaxb;
     }
 
-    public List<BettaLIMSMessage> getMessageList() {
+    public List<BettaLimsMessage> getMessageList() {
         return messageList;
     }
 
@@ -132,7 +133,8 @@ public class LibraryConstructionJaxbBuilder {
         aBaseJaxb = bettaLimsMessageTestFactory.buildPlateEvent("ABase", shearCleanPlateBarcode);
         bettaLimsMessageTestFactory.addMessage(messageList, aBaseJaxb);
 
-        postABaseThermoCyclerLoadedJaxb = bettaLimsMessageTestFactory.buildPlateEvent("PostAbaseThermoCyclerLoaded", shearCleanPlateBarcode);
+        postABaseThermoCyclerLoadedJaxb =
+                bettaLimsMessageTestFactory.buildPlateEvent("PostAbaseThermoCyclerLoaded", shearCleanPlateBarcode);
         bettaLimsMessageTestFactory.addMessage(messageList, postABaseThermoCyclerLoadedJaxb);
 
 

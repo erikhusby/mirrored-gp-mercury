@@ -2,18 +2,18 @@ package org.broadinstitute.gpinformatics.mercury.test;
 
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.filter.LoggingFilter;
-import org.broadinstitute.gpinformatics.mercury.test.builders.SamplesPicoJaxbBuilder;
-import org.testng.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLimsMessage;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventResponseBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.TubeBean;
+import org.broadinstitute.gpinformatics.mercury.test.builders.SamplesPicoJaxbBuilder;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.ws.rs.core.MediaType;
@@ -40,7 +40,7 @@ public class SamplesPicoDbTest extends ContainerTest {
 
         String batchId = "BP-" + timestamp;
         ArrayList<String> tubeBarcodes = new ArrayList<>();
-        for(int i = 1; i <= 96; i++) {
+        for (int i = 1; i <= 96; i++) {
             tubeBarcodes.add("PICO" + i + "_" + timestamp);
         }
         createBatch(baseUrl, client, batchId, tubeBarcodes);
@@ -48,7 +48,7 @@ public class SamplesPicoDbTest extends ContainerTest {
         SamplesPicoJaxbBuilder samplesPicoJaxbBuilder =
                 new SamplesPicoJaxbBuilder(tubeBarcodes, batchId, timestamp);
         samplesPicoJaxbBuilder.buildJaxb();
-        List<BettaLIMSMessage> messageList = samplesPicoJaxbBuilder.getMessageList();
+        List<BettaLimsMessage> messageList = samplesPicoJaxbBuilder.getMessageList();
         sendMessages(baseUrl, client, messageList);
 
         LabEventResponseBean labEventResponseBean = client.resource(baseUrl.toExternalForm() + "rest/labevent/batch")
@@ -62,14 +62,16 @@ public class SamplesPicoDbTest extends ContainerTest {
 
     /**
      * Call the web service to create a lab batch
-     * @param baseUrl server
-     * @param client jersey
-     * @param batchId id of the batch to create
+     *
+     * @param baseUrl      server
+     * @param client       jersey
+     * @param batchId      id of the batch to create
      * @param tubeBarcodes barcodes of the tubes to associate with the batch
+     *
      * @return bean sent to the web service
      */
     public static LabBatchBean createBatch(URL baseUrl, Client client, String batchId,
-            List<String> tubeBarcodes) {
+                                           List<String> tubeBarcodes) {
         ArrayList<TubeBean> tubeBeans = new ArrayList<>();
         for (String tubeBarcode : tubeBarcodes) {
             tubeBeans.add(new TubeBean(tubeBarcode, null));
@@ -87,17 +89,18 @@ public class SamplesPicoDbTest extends ContainerTest {
 
     /**
      * Calls the web service that accepts BettaLIMS messages
-     * @param baseUrl server
-     * @param client jersey
+     *
+     * @param baseUrl     server
+     * @param client      jersey
      * @param messageList list of messages to send
      */
-    public static void sendMessages(URL baseUrl, Client client, List<BettaLIMSMessage> messageList) {
-        for (BettaLIMSMessage bettaLIMSMessage : messageList) {
+    public static void sendMessages(URL baseUrl, Client client, List<BettaLimsMessage> messageList) {
+        for (BettaLimsMessage bettaLimsMessage : messageList) {
             String response;
             response = client.resource(baseUrl.toExternalForm() + "rest/bettalimsmessage")
                     .type(MediaType.APPLICATION_XML_TYPE)
                     .accept(MediaType.APPLICATION_XML)
-                    .entity(bettaLIMSMessage)
+                    .entity(bettaLimsMessage)
                     .post(String.class);
             System.out.println(response);
         }

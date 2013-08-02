@@ -18,7 +18,7 @@ import javax.jms.TextMessage;
  * The destination property is overridden in ejb-jar.xml, to allow different values in different environments.
  */
 @SuppressWarnings("UnusedDeclaration")
-@MessageDriven(name = "BettalimsMessageBean", activationConfig = {
+@MessageDriven(name = "BettaLimsMessageBean", activationConfig = {
         @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
         // Increase probability that messages are read in the order they were sent
         @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "1")

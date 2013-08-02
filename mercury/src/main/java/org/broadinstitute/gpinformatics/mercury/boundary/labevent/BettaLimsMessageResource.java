@@ -8,7 +8,7 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
 import org.broadinstitute.gpinformatics.infrastructure.ws.WsMessageStore;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLimsMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
@@ -146,7 +146,7 @@ public class BettaLimsMessageResource {
         try {
             wsMessageStore.store(WsMessageStore.BETTALIMS_RESOURCE_TYPE, message, now);
 
-            BettaLIMSMessage bettaLIMSMessage = unmarshal(message);
+            BettaLimsMessage bettaLIMSMessage = unmarshal(message);
 
             boolean processInMercury = false;
             boolean processInSquid = false;
@@ -205,9 +205,9 @@ public class BettaLimsMessageResource {
                 }
             }
 
-            BettaLimsConnector.BettalimsResponse bettalimsResponse = null;
+            BettaLimsConnector.BettaLimsResponse bettaLimsResponse = null;
             if (processInSquid) {
-                bettalimsResponse = bettaLimsConnector.sendMessage(message);
+                bettaLimsResponse = bettaLimsConnector.sendMessage(message);
             }
             if (processInMercury) {
                 try {
@@ -215,7 +215,7 @@ public class BettaLimsMessageResource {
                 } catch (Exception e) {
                     // If we're processing in both Mercury and Squid, and Squid succeeded while Mercury failed,
                     // ignore the Mercury error.
-                    if (processInSquid && bettalimsResponse.getCode() !=
+                    if (processInSquid && bettaLimsResponse.getCode() !=
                                           Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()) {
                         LOG.error("Mercury processing failed, returning Squid result to client", e);
                     } else {
@@ -223,8 +223,8 @@ public class BettaLimsMessageResource {
                     }
                 }
             }
-            if (bettalimsResponse != null && bettalimsResponse.getCode() != Response.Status.OK.getStatusCode()) {
-                throw new RuntimeException(bettalimsResponse.getMessage());
+            if (bettaLimsResponse != null && bettaLimsResponse.getCode() != Response.Status.OK.getStatusCode()) {
+                throw new RuntimeException(bettaLimsResponse.getMessage());
             }
         } catch (Exception e) {
             wsMessageStore.recordError(WsMessageStore.BETTALIMS_RESOURCE_TYPE, message, now, e);
@@ -245,9 +245,9 @@ public class BettaLimsMessageResource {
      * @throws JAXBException
      * @throws SAXException
      */
-    BettaLIMSMessage unmarshal(String message) throws JAXBException, SAXException {
+    BettaLimsMessage unmarshal(String message) throws JAXBException, SAXException {
 
-        JAXBContext jc = JAXBContext.newInstance(BettaLIMSMessage.class);
+        JAXBContext jc = JAXBContext.newInstance(BettaLimsMessage.class);
         Unmarshaller unmarshaller = jc.createUnmarshaller();
         if (VALIDATE_SCHEMA) {
             // todo jmt move so done only once
@@ -283,7 +283,7 @@ public class BettaLimsMessageResource {
         //Create a SAXSource specifying the filter
         SAXSource source = new SAXSource(inFilter, is);
 
-        return (BettaLIMSMessage) unmarshaller.unmarshal(source);
+        return (BettaLimsMessage) unmarshaller.unmarshal(source);
     }
 
     /**
@@ -293,7 +293,7 @@ public class BettaLimsMessageResource {
      *
      * @return enum value, or null if not found
      */
-    private LabEventType getLabEventType(BettaLIMSMessage bettaLIMSMessage) {
+    private LabEventType getLabEventType(BettaLimsMessage bettaLIMSMessage) {
         LabEventType labEventType = null;
         for (PlateCherryPickEvent plateCherryPickEvent : bettaLIMSMessage.getPlateCherryPickEvent()) {
             labEventType = LabEventType.getByName(plateCherryPickEvent.getEventType());
@@ -348,7 +348,7 @@ public class BettaLimsMessageResource {
      *
      * @return list of barcodes
      */
-    private Collection<String> getRegisteredBarcodesFromMessage(BettaLIMSMessage bettaLIMSMessage) {
+    private Collection<String> getRegisteredBarcodesFromMessage(BettaLimsMessage bettaLIMSMessage) {
 
         Set<String> barcodes = new HashSet<>();
 
@@ -377,7 +377,7 @@ public class BettaLimsMessageResource {
      *
      * @param message JAXB
      */
-    public void processMessage(BettaLIMSMessage message) {
+    public void processMessage(BettaLimsMessage message) {
         try {
             workflowValidator.validateWorkflow(message);
         } catch (Exception e) {

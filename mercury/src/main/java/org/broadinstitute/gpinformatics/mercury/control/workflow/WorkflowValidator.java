@@ -10,7 +10,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLimsMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
@@ -77,31 +77,31 @@ public class WorkflowValidator {
      * Validate workflow for all events in a message.  Starts a new transaction; without it, exceptions could cause
      * rollbacks, which would cause knock on transactions in the code to persist messages.
      *
-     * @param bettaLIMSMessage JAXB from deck
+     * @param bettaLimsMessage JAXB from deck
      */
-    public void validateWorkflow(BettaLIMSMessage bettaLIMSMessage) throws WorkflowException {
+    public void validateWorkflow(BettaLimsMessage bettaLimsMessage) throws WorkflowException {
         try {
-            for (PlateCherryPickEvent plateCherryPickEvent : bettaLIMSMessage.getPlateCherryPickEvent()) {
+            for (PlateCherryPickEvent plateCherryPickEvent : bettaLimsMessage.getPlateCherryPickEvent()) {
                 validateWorkflow(plateCherryPickEvent, new ArrayList<>(
                         BettaLimsMessageUtils.getBarcodesForCherryPick(plateCherryPickEvent)));
             }
 
-            for (PlateEventType plateEventType : bettaLIMSMessage.getPlateEvent()) {
+            for (PlateEventType plateEventType : bettaLimsMessage.getPlateEvent()) {
                 validateWorkflow(plateEventType, new ArrayList<>(
                         BettaLimsMessageUtils.getBarcodesForPlateEvent(plateEventType)));
             }
 
-            for (PlateTransferEventType plateTransferEventType : bettaLIMSMessage.getPlateTransferEvent()) {
+            for (PlateTransferEventType plateTransferEventType : bettaLimsMessage.getPlateTransferEvent()) {
                 validateWorkflow(plateTransferEventType, new ArrayList<>(
                         BettaLimsMessageUtils.getBarcodesForPlateTransfer(plateTransferEventType)));
             }
 
-            for (ReceptacleEventType receptacleEventType : bettaLIMSMessage.getReceptacleEvent()) {
+            for (ReceptacleEventType receptacleEventType : bettaLimsMessage.getReceptacleEvent()) {
                 validateWorkflow(receptacleEventType, new ArrayList<>(
                         BettaLimsMessageUtils.getBarcodesForReceptacleEvent(receptacleEventType)));
             }
 
-            for (ReceptaclePlateTransferEvent receptaclePlateTransferEvent : bettaLIMSMessage
+            for (ReceptaclePlateTransferEvent receptaclePlateTransferEvent : bettaLimsMessage
                     .getReceptaclePlateTransferEvent()) {
                 validateWorkflow(receptaclePlateTransferEvent, new ArrayList<>(
                         BettaLimsMessageUtils.getBarcodesForReceptaclePlateTransfer(receptaclePlateTransferEvent)));

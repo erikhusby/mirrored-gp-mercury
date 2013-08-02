@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLimsMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.hornetq.api.core.TransportConfiguration;
@@ -29,25 +29,25 @@ import java.util.Map;
 /**
  * Test Message Driven Bean
  */
-public class BettalimsMessageBeanTest {
+public class BettaLimsMessageBeanTest {
 
     @Test(enabled = false)
     public void testJms() {
         BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
         PlateTransferEventType plateTransferEventType = bettaLimsMessageTestFactory.buildPlateToPlate(
                 LabEventType.POST_SHEARING_TRANSFER_CLEANUP.getName(), "x", "y");
-        BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
-        bettaLIMSMessage.getPlateTransferEvent().add(plateTransferEventType);
-        String message = BettaLimsMessageTestFactory.marshal(bettaLIMSMessage);
+        BettaLimsMessage bettaLimsMessage = new BettaLimsMessage();
+        bettaLimsMessage.getPlateTransferEvent().add(plateTransferEventType);
+        String message = BettaLimsMessageTestFactory.marshal(bettaLimsMessage);
         sendJmsMessage(message);
     }
 
-    public static String marshalMessage(BettaLIMSMessage bettaLIMSMessage) {
+    public static String marshalMessage(BettaLimsMessage bettaLimsMessage) {
         try {
-            JAXBContext jaxbContext = JAXBContext.newInstance(BettaLIMSMessage.class);
+            JAXBContext jaxbContext = JAXBContext.newInstance(BettaLimsMessage.class);
             Marshaller marshaller = jaxbContext.createMarshaller();
             StringWriter stringWriter = new StringWriter();
-            marshaller.marshal(bettaLIMSMessage, stringWriter);
+            marshaller.marshal(bettaLimsMessage, stringWriter);
             return stringWriter.toString();
         } catch (JAXBException e) {
             throw new RuntimeException(e);
@@ -57,7 +57,7 @@ public class BettalimsMessageBeanTest {
     public static void sendJmsMessage(String message) {
         Connection connection = null;
         Session session = null;
-        try{
+        try {
             Map<String, Object> connectionParams = new HashMap<>();
             connectionParams.put(TransportConstants.PORT_PROP_NAME, 5445);
             connectionParams.put(TransportConstants.HOST_PROP_NAME, "localhost");

@@ -11,7 +11,7 @@ import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLimsMessage;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResource;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.VesselTransferEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -63,10 +63,10 @@ public class LinkDenatureTubeToReagentBlockActionBean extends CoreActionBean {
         Map<String, VesselPosition> denatureMap = new HashMap<>();
         denatureMap.put(denatureTubeBarcode, VesselPosition.A01);
 
-        BettaLIMSMessage bettaLIMSMessage = vesselTransferEjb
+        BettaLimsMessage bettaLimsMessage = vesselTransferEjb
                 .denatureToReagentKitTransfer(null, denatureMap, reagentBlockBarcode,
                         getUserBean().getLoginUserName(), "UI");
-        bettaLimsMessageResource.processMessage(bettaLIMSMessage);
+        bettaLimsMessageResource.processMessage(bettaLimsMessage);
 
         addMessage("Denature Tube {0} associated with Reagent Block {1}", denatureTubeBarcode,
                 reagentBlockBarcode);

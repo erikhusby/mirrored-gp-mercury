@@ -34,13 +34,13 @@ public class BettaLimsConnectorImpl implements BettaLimsConnector {
      * @return code and message
      */
     @Override
-    public BettalimsResponse sendMessage(String message) {
+    public BettaLimsResponse sendMessage(String message) {
         ClientResponse response = Client.create().resource("http://" + bettaLimsConfig.getWsHost() + ":" +
                                                            bettaLimsConfig.getWsPort() + "/bettalimsmessage")
                 .type(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML)
                 .entity(message)
                 .post(ClientResponse.class);
-        return new BettalimsResponse(response.getStatus(), response.getEntity(String.class));
+        return new BettaLimsResponse(response.getStatus(), response.getEntity(String.class));
     }
 }

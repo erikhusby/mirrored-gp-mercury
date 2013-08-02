@@ -5,14 +5,14 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 import javax.enterprise.inject.Alternative;
 
 /**
- * Stub for Bettalims Connector
+ * Stub for BettaLims Connector
  */
 @Stub
 @Alternative
 public class BettaLimsConnectorStub implements BettaLimsConnector {
 
     @Override
-    public BettalimsResponse sendMessage(String message) {
-        return new BettalimsResponse(500, "");
+    public BettaLimsResponse sendMessage(String message) {
+        return new BettaLimsResponse(500, "");
     }
 }

@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.test.builders;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLimsMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReagentType;
@@ -12,10 +12,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
-* Builds JAXB BettaLIMS DTOs to test messaging for Dried Blood Spot extraction.
-*/
+ * Builds JAXB BettaLIMS DTOs to test messaging for Dried Blood Spot extraction.
+ */
 public class DriedBloodSpotJaxbBuilder {
-    private List<BettaLIMSMessage> messageList = new ArrayList<>();
+    private List<BettaLimsMessage> messageList = new ArrayList<>();
     private List<ReceptaclePlateTransferEvent> samplePunchJaxbs = new ArrayList<>();
     private PlateEventType incubationMixJaxb;
     private PlateEventType lysisBufferJaxb;
@@ -38,8 +38,8 @@ public class DriedBloodSpotJaxbBuilder {
         BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
 
         String incubationPlateBarcode = "DBSIncPlate" + timestamp;
-        BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
-        bettaLIMSMessage.setMode(LabEventFactory.MODE_MERCURY);
+        BettaLimsMessage bettaLimsMessage = new BettaLimsMessage();
+        bettaLimsMessage.setMode(LabEventFactory.MODE_MERCURY);
         int paperNum = 1;
         for (String ftaPaperBarcode : ftaPaperBarcodes) {
             // DBSSamplePunch receptacle -> plate A01 etc.
@@ -50,10 +50,10 @@ public class DriedBloodSpotJaxbBuilder {
             paperNum++;
             samplePunchJaxb.setBatchId(labBatchId);
             samplePunchJaxbs.add(samplePunchJaxb);
-            bettaLIMSMessage.getReceptaclePlateTransferEvent().add(samplePunchJaxb);
+            bettaLimsMessage.getReceptaclePlateTransferEvent().add(samplePunchJaxb);
             bettaLimsMessageTestFactory.advanceTime();
         }
-        messageList.add(bettaLIMSMessage);
+        messageList.add(bettaLimsMessage);
 
         // DBSIncubationMix plateEvent
         incubationMixJaxb = bettaLimsMessageTestFactory.buildPlateEvent("DBSIncubationMix", incubationPlateBarcode);
@@ -73,7 +73,8 @@ public class DriedBloodSpotJaxbBuilder {
 
         String firstPurificationBarcode = "DBS1stPur" + timestamp;
         // DBS1stPurification plate -> plate
-        dbs1stPurificationJaxb = bettaLimsMessageTestFactory.buildPlateToPlate("DBS1stPurification", incubationPlateBarcode, firstPurificationBarcode);
+        dbs1stPurificationJaxb = bettaLimsMessageTestFactory
+                .buildPlateToPlate("DBS1stPurification", incubationPlateBarcode, firstPurificationBarcode);
         bettaLimsMessageTestFactory.addMessage(messageList, dbs1stPurificationJaxb);
 
         // DBSWashBuffer plateEvent
@@ -81,20 +82,22 @@ public class DriedBloodSpotJaxbBuilder {
         bettaLimsMessageTestFactory.addMessage(messageList, dbsWashBufferJaxb);
 
         // DBSElutionBuffer plateEvent
-        dbsElutionBufferJaxb = bettaLimsMessageTestFactory.buildPlateEvent("DBSElutionBuffer", firstPurificationBarcode);
+        dbsElutionBufferJaxb =
+                bettaLimsMessageTestFactory.buildPlateEvent("DBSElutionBuffer", firstPurificationBarcode);
         bettaLimsMessageTestFactory.addMessage(messageList, dbsElutionBufferJaxb);
 
         // DBSFinalTransfer plate -> rack
         List<String> finalTubeBarcodes = new ArrayList<>();
-        for(int i = 0; i < ftaPaperBarcodes.size(); i++) {
+        for (int i = 0; i < ftaPaperBarcodes.size(); i++) {
             finalTubeBarcodes.add("DBSFinal" + i + timestamp);
         }
-        dbsFinalTransferJaxb = bettaLimsMessageTestFactory.buildPlateToRack("DBSFinalTransfer", firstPurificationBarcode,
-                "DBSFinal" + timestamp, finalTubeBarcodes);
+        dbsFinalTransferJaxb =
+                bettaLimsMessageTestFactory.buildPlateToRack("DBSFinalTransfer", firstPurificationBarcode,
+                        "DBSFinal" + timestamp, finalTubeBarcodes);
         bettaLimsMessageTestFactory.addMessage(messageList, dbsFinalTransferJaxb);
     }
 
-    public List<BettaLIMSMessage> getMessageList() {
+    public List<BettaLimsMessage> getMessageList() {
         return messageList;
     }
 

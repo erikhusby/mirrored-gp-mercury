@@ -6,11 +6,11 @@ import java.io.Serializable;
  * Sends message to BettaLIMS, the deck message processor in the Squid suite of applications.
  */
 public interface BettaLimsConnector extends Serializable {
-    class BettalimsResponse {
+    class BettaLimsResponse {
         private int code;
         private String message;
 
-        public BettalimsResponse(int code, String message) {
+        public BettaLimsResponse(int code, String message) {
             this.code = code;
             this.message = message;
         }
@@ -24,5 +24,5 @@ public interface BettaLimsConnector extends Serializable {
         }
     }
 
-    BettalimsResponse sendMessage(String message);
+    BettaLimsResponse sendMessage(String message);
 }

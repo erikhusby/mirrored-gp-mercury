@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.test.builders;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLimsMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
@@ -19,7 +19,7 @@ public class SamplesPicoJaxbBuilder {
     private final String labBatchId;
     private final String timestamp;
 
-    private final List<BettaLIMSMessage> messageList = new ArrayList<>();
+    private final List<BettaLimsMessage> messageList = new ArrayList<>();
     private PlateTransferEventType picoDilutionTransferJaxbA1;
     private PlateTransferEventType picoDilutionTransferJaxbA2;
     private PlateTransferEventType picoDilutionTransferJaxbB1;
@@ -72,7 +72,7 @@ public class SamplesPicoJaxbBuilder {
                     // PicoBufferTransfer
                     PlateTransferEventType picoBufferTransferJaxb = bettaLimsMessageTestFactory.buildPlateToPlate(
                             "PicoBufferTransfer", "PicoBufferPlate", picoDilutionPlateBarcode);
-                    BettaLIMSMessage bettaLIMSMessage2 = new BettaLIMSMessage();
+                    BettaLimsMessage bettaLIMSMessage2 = new BettaLimsMessage();
                     bettaLIMSMessage2.getPlateTransferEvent().add(picoBufferTransferJaxb);
                     messageList.add(bettaLIMSMessage2);
 
@@ -145,7 +145,7 @@ public class SamplesPicoJaxbBuilder {
                         picoStandardsTransferCol10Jaxb, picoStandardsTransferCol12Jaxb);
     }
 
-    public List<BettaLIMSMessage> getMessageList() {
+    public List<BettaLimsMessage> getMessageList() {
         return messageList;
     }
 
