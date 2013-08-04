@@ -15,11 +15,8 @@ import static org.broadinstitute.gpinformatics.athena.entity.products.Operator.O
 
 /**
  * The purpose of this class is to capture any risks that have been calculated on a productOrder sample.
- *
- * User: mccrory
- * Date: 1/18/13
- * Time: 4:17 PM
  */
+@SuppressWarnings("unused")
 @Entity
 @Audited
 @Table(schema = "ATHENA", name = "RISK_ITEM" )
@@ -45,7 +42,7 @@ public class RiskItem implements Serializable {
     @Column(name = "REMARK")
     private String remark;
 
-    RiskItem() {
+    public RiskItem() {
     }
 
     public RiskItem(@Nullable RiskCriterion riskCriterion, @Nullable String comparedValue) {
