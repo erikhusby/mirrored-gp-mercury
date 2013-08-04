@@ -89,17 +89,15 @@ public class BucketViewActionBean extends CoreActionBean {
     private static final String REWORK_CONFIRMED_ACTION = "reworkConfirmed";
 
     private List<WorkflowBucketDef> buckets = new ArrayList<>();
-    private List<WorkflowBucketDef> reworkBuckets = new ArrayList<>();
-    private List<Long> selectedVesselLabels = new ArrayList<>();
-    private List<LabVessel> selectedBatchVessels;
-    private List<Long> selectedReworks = new ArrayList<>();
-    private List<BucketEntry> seletecReworkEntries = new ArrayList<>();
+    private List<Long> selectedEntryIds = new ArrayList<>();
+    private List<BucketEntry> selectedEntries = new ArrayList<>();
 
     @Validate(required = true, on = {CREATE_BATCH_ACTION, "viewBucket"})
     private String selectedBucket;
 
     private Collection<BucketEntry> bucketEntries;
     private Collection<BucketEntry> reworkEntries;
+    private Collection<BucketEntry> collectiveEntries;
 
     private Map<String, ProductOrder> pdoByKeyMap = new HashMap<>();
 
@@ -113,52 +111,11 @@ public class BucketViewActionBean extends CoreActionBean {
     private Date dueDate;
     private String selectedProductWorkflowDef;
     private List<ProductWorkflowDef> allProductWorkflowDefs = new ArrayList<>();
-    @Validate(required = true, on = {ADD_TO_BATCH_ACTION})
+
     private String selectedLcset;
     private LabBatch batch;
-
-    @Before(stages = LifecycleStage.BindingAndValidation)
-    public void init() {
-        WorkflowConfig workflowConfig = workflowLoader.load();
-        List<ProductWorkflowDef> workflowDefs = workflowConfig.getProductWorkflowDefs();
-        //currently only do ExEx
-        for (ProductWorkflowDef workflowDef : workflowDefs) {
-            ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
-            if (workflowDef.getName().equals(WorkflowName.EXOME_EXPRESS.getWorkflowName())) {
-                allProductWorkflowDefs.add(workflowDef);
-                WorkflowBucketDef blankBucketDef = new WorkflowBucketDef("");
-                buckets.add(blankBucketDef);
-                reworkBuckets.add(blankBucketDef);
-                buckets.addAll(workflowVersion.getCreationBuckets());
-                reworkBuckets.addAll(workflowVersion.getReworkBuckets());
-            }
-        }
-        //set the initial bucket to the first in the list and load it
-        if (!buckets.isEmpty()) {
-            if (REWORK_ACTION.equals(getContext().getEventName()) || ADD_TO_BATCH_ACTION.equals(
-                    getContext().getEventName()) || REWORK_CONFIRMED_ACTION.equals(getContext().getEventName())) {
-                viewReworkBucket();
-            } else {
-                viewBucket();
-            }
-        }
-    }
-
-    public List<WorkflowBucketDef> getReworkBuckets() {
-        return reworkBuckets;
-    }
-
-    public void setReworkBuckets(List<WorkflowBucketDef> reworkBuckets) {
-        this.reworkBuckets = reworkBuckets;
-    }
-
-    public List<BucketEntry> getSeletecReworkEntries() {
-        return seletecReworkEntries;
-    }
-
-    public void setSeletecReworkEntries(List<BucketEntry> seletecReworkEntries) {
-        this.seletecReworkEntries = seletecReworkEntries;
-    }
+    private List<Long> bucketEntryIds = new ArrayList<>();
+    private List<Long> reworkEntryIds = new ArrayList<>();
 
     public LabBatch getBatch() {
         return batch;
@@ -200,14 +157,6 @@ public class BucketViewActionBean extends CoreActionBean {
         this.jiraEnabled = jiraEnabled;
     }
 
-    public List<Long> getSelectedReworks() {
-        return selectedReworks;
-    }
-
-    public void setSelectedReworks(List<Long> selectedReworks) {
-        this.selectedReworks = selectedReworks;
-    }
-
     public Collection<BucketEntry> getReworkEntries() {
         return reworkEntries;
     }
@@ -240,6 +189,90 @@ public class BucketViewActionBean extends CoreActionBean {
         this.selectedLcset = selectedLcset;
     }
 
+    public Collection<BucketEntry> getCollectiveEntries() {
+        return collectiveEntries;
+    }
+
+    public void setCollectiveEntries(Collection<BucketEntry> collectiveEntries) {
+        this.collectiveEntries = collectiveEntries;
+    }
+
+    public List<BucketEntry> getSelectedEntries() {
+        return selectedEntries;
+    }
+
+    public void setSelectedEntries(List<BucketEntry> selectedEntries) {
+        this.selectedEntries = selectedEntries;
+    }
+
+    public Date getDueDate() {
+        return dueDate;
+    }
+
+    public String getJiraTicketId() {
+        return jiraTicketId;
+    }
+
+    public String getImportant() {
+        return important;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public String getSummary() {
+        return summary;
+    }
+
+    public List<Long> getSelectedEntryIds() {
+        return selectedEntryIds;
+    }
+
+    public String getExistingJiraTicketValue() {
+        return EXISTING_TICKET;
+    }
+
+    public String getNewJiraTicketValue() {
+        return NEW_TICKET;
+    }
+
+    public void setSummary(String summary) {
+        this.summary = summary;
+    }
+
+    public void setDueDate(Date dueDate) {
+        this.dueDate = dueDate;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public void setImportant(String important) {
+        this.important = important;
+    }
+
+    public void setSelectedEntryIds(List<Long> selectedEntryIds) {
+        this.selectedEntryIds = selectedEntryIds;
+    }
+
+    @Before(stages = LifecycleStage.BindingAndValidation)
+    public void init() {
+        WorkflowConfig workflowConfig = workflowLoader.load();
+        List<ProductWorkflowDef> workflowDefs = workflowConfig.getProductWorkflowDefs();
+        //currently only do ExEx
+        for (ProductWorkflowDef workflowDef : workflowDefs) {
+            ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
+            if (workflowDef.getName().equals(WorkflowName.EXOME_EXPRESS.getWorkflowName())) {
+                allProductWorkflowDefs.add(workflowDef);
+                WorkflowBucketDef blankBucketDef = new WorkflowBucketDef("");
+                buckets.add(blankBucketDef);
+                buckets.addAll(workflowVersion.getCreationBuckets());
+            }
+        }
+    }
+
     @DefaultHandler
     public Resolution view() {
         return new ForwardResolution(VIEW_PAGE);
@@ -253,8 +286,8 @@ public class BucketViewActionBean extends CoreActionBean {
             viewBucket();
         }
 
-        if (CollectionUtils.isEmpty(selectedVesselLabels) && CollectionUtils.isEmpty(selectedReworks)) {
-            addValidationError("selectedVesselLabels",
+        if (CollectionUtils.isEmpty(selectedEntryIds)) {
+            addValidationError("selectedEntryIds",
                     "At least one vessel or rework must be selected to create a batch.");
             viewBucket();
         }
@@ -267,37 +300,14 @@ public class BucketViewActionBean extends CoreActionBean {
 
     @ValidationMethod(on = ADD_TO_BATCH_ACTION)
     public void addReworkToBatchValidation() {
-        if (CollectionUtils.isEmpty(selectedReworks)) {
+        if (StringUtils.isBlank(selectedLcset)) {
+            addValidationError("selectedLcset", "You must provide an LCSET to add to a batch.");
+            viewBucket();
+        }
+        if (CollectionUtils.isEmpty(selectedEntryIds)) {
             addValidationError("selectedReworks", "At least one rework must be selected to add to the batch.");
-            viewReworkBucket();
+            viewBucket();
         }
-    }
-
-    @HandlesEvent(REWORK_ACTION)
-    public Resolution viewReworkBucket() {
-        if (selectedBucket != null) {
-            Bucket bucket = bucketDao.findByName(selectedBucket);
-            if (bucket != null) {
-                reworkEntries = bucket.getReworkEntries();
-            } else {
-                reworkEntries = new ArrayList<>();
-            }
-            if (!reworkEntries.isEmpty()) {
-                List<String> poKeys = new ArrayList<>();
-                List<BucketEntry> collectiveEntries = new ArrayList<>(reworkEntries);
-
-                for (BucketEntry entryForPO : collectiveEntries) {
-                    poKeys.add(entryForPO.getPoBusinessKey());
-                }
-
-                Collection<ProductOrder> foundOrders = athenaClientService.retrieveMultipleProductOrderDetails(poKeys);
-
-                for (ProductOrder orderEntry : foundOrders) {
-                    pdoByKeyMap.put(orderEntry.getBusinessKey(), orderEntry);
-                }
-            }
-        }
-        return new ForwardResolution(REWORK_BUCKET_PAGE);
     }
 
     public Resolution viewBucket() {
@@ -314,7 +324,7 @@ public class BucketViewActionBean extends CoreActionBean {
                 jiraEnabled = true;
 
                 List<String> poKeys = new ArrayList<>();
-                List<BucketEntry> collectiveEntries = new ArrayList<>(bucketEntries);
+                collectiveEntries = new ArrayList<>(bucketEntries);
                 collectiveEntries.addAll(reworkEntries);
 
                 for (BucketEntry entryForPO : collectiveEntries) {
@@ -365,22 +375,22 @@ public class BucketViewActionBean extends CoreActionBean {
             selectedLcset = "LCSET-" + selectedLcset;
         }
         batch = labBatchDao.findByBusinessKey(selectedLcset);
-
-        seletecReworkEntries = bucketEntryDao.findByIds(selectedReworks);
+        selectedEntries = bucketEntryDao.findByIds(selectedEntryIds);
     }
 
     @HandlesEvent(REWORK_CONFIRMED_ACTION)
     public Resolution reworkConfirmed() {
+        seperateEntriesByType();
         try {
             if (!selectedLcset.startsWith("LCSET-")) {
                 selectedLcset = "LCSET-" + selectedLcset;
             }
-            labBatchEjb.updateBatchWithReworks(selectedLcset, selectedReworks);
+            labBatchEjb.updateBatchWithReworks(selectedLcset, reworkEntryIds);
         } catch (IOException e) {
             addGlobalValidationError("IOException contacting JIRA service." + e.getMessage());
             return new RedirectResolution(REWORK_BUCKET_PAGE);
         }
-        addMessage(String.format("Successfully added %d reworks to %s at the '%s'.", selectedReworks.size(),
+        addMessage(String.format("Successfully added %d reworks to %s at the '%s'.", reworkEntryIds.size(),
                 selectedLcset, selectedBucket));
         return new RedirectResolution(BucketViewActionBean.class, REWORK_ACTION);
     }
@@ -392,10 +402,11 @@ public class BucketViewActionBean extends CoreActionBean {
      */
     @HandlesEvent(CREATE_BATCH_ACTION)
     public Resolution createBatch() {
+        seperateEntriesByType();
         try {
             batch = labBatchEjb
                     .createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW, selectedProductWorkflowDef,
-                            selectedVesselLabels, selectedReworks, summary.trim(), description, dueDate, important,
+                            bucketEntryIds, reworkEntryIds, summary.trim(), description, dueDate, important,
                             userBean.getBspUser().getUsername(), LabEvent.UI_EVENT_LOCATION);
         } catch (ValidationException e) {
             addGlobalValidationError(e.getMessage());
@@ -408,64 +419,16 @@ public class BucketViewActionBean extends CoreActionBean {
         return new ForwardResolution(BATCH_CONFIRM_PAGE);
     }
 
-    public Date getDueDate() {
-        return dueDate;
-    }
-
-    public String getJiraTicketId() {
-        return jiraTicketId;
-    }
-
-    public String getImportant() {
-        return important;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public String getSummary() {
-        return summary;
-    }
-
-    public List<LabVessel> getSelectedBatchVessels() {
-        return selectedBatchVessels;
-    }
-
-    public List<Long> getSelectedVesselLabels() {
-        return selectedVesselLabels;
-    }
-
-    public String getExistingJiraTicketValue() {
-        return EXISTING_TICKET;
-    }
-
-    public String getNewJiraTicketValue() {
-        return NEW_TICKET;
-    }
-
-    public void setSummary(String summary) {
-        this.summary = summary;
-    }
-
-    public void setDueDate(Date dueDate) {
-        this.dueDate = dueDate;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public void setImportant(String important) {
-        this.important = important;
-    }
-
-    public void setSelectedBatchVessels(List<LabVessel> selectedBatchVessels) {
-        this.selectedBatchVessels = selectedBatchVessels;
-    }
-
-    public void setSelectedVesselLabels(List<Long> selectedVesselLabels) {
-        this.selectedVesselLabels = selectedVesselLabels;
+    private void seperateEntriesByType() {
+        //iterate through the selected entries and seperate the pdo entries from rework entries
+        selectedEntries = bucketEntryDao.findByIds(selectedEntryIds);
+        for (BucketEntry entry : selectedEntries) {
+            if (BucketEntry.BucketEntryType.PDO_ENTRY.equals(entry.getEntryType())) {
+                bucketEntryIds.add(entry.getBucketEntryId());
+            } else if (BucketEntry.BucketEntryType.REWORK_ENTRY.equals(entry.getEntryType())) {
+                reworkEntryIds.add(entry.getBucketEntryId());
+            }
+        }
     }
 
 }

@@ -44,7 +44,7 @@
                 </tr>
                 </thead>
                 <tbody>
-                <c:forEach items="${actionBean.seletecReworkEntries}" var="entry">
+                <c:forEach items="${actionBean.selectedEntries}" var="entry">
                     <tr>
                         <td>
 
