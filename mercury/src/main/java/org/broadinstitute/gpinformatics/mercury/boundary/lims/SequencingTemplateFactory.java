@@ -126,7 +126,7 @@ public class SequencingTemplateFactory {
     }
 
     /**
-     * This method gets the sequencing template given a denature tube.
+     * This method builds a sequencing template object given a denature or dilution tube.
      *
      * @param templateTargetTube The Dilution tube to create the sequencing template for.
      * @param isPoolTest         A boolean to determine if this is a MiSeq pool test run or not.

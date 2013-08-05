@@ -681,7 +681,7 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
 
         @Nonnull
         @Override
-        public String getFieldName() {
+        public String getName() {
             return fieldName;
         }
     }

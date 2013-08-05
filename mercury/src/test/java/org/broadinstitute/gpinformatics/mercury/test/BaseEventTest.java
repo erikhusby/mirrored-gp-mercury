@@ -34,6 +34,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDa
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventRefDataFetcher;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.DenatureToDilutionTubeHandler;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.EventHandlerSelector;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.FlowcellMessageHandler;
@@ -107,8 +108,8 @@ public class BaseEventTest {
 
     protected static Map<String, BSPSampleDTO> mapSampleNameToDto = new HashMap<>();
 
-    protected final LabEventFactory.LabEventRefDataFetcher labEventRefDataFetcher =
-            new LabEventFactory.LabEventRefDataFetcher() {
+    protected final LabEventRefDataFetcher labEventRefDataFetcher =
+            new LabEventRefDataFetcher() {
 
                 @Override
                 public BspUser getOperator(String userId) {

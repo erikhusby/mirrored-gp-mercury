@@ -44,7 +44,7 @@ import java.util.Map;
 import static org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell;
 
 /**
- * This class has methods for transferring stuff from one Vessel to Another One.
+ * This class has methods for transferring stuff from one Vessel to another One.
  */
 @Stateful
 @RequestScoped
@@ -142,7 +142,8 @@ public class VesselTransferEjb {
 
 
     /**
-     * Transfer contents of MiSeq Reagent Kit to a MiSeq Flowcell
+     * Transfer contents of MiSeq Reagent Kit to a MiSeq Flowcell.  THis method builds a reagent kit to flowcell
+     * transfer message and utilizes the LabEvent Factory to build and persist a labEvent for that transfer.
      *
      * @param reagentKitBarcode barcode of the reagent kit
      * @param flowcellBarcode   flowcell barcode

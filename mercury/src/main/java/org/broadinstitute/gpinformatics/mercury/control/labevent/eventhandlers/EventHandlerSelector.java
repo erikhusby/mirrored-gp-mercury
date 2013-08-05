@@ -11,7 +11,7 @@ import javax.inject.Inject;
  * special cases where specific validation or handling needs to happen.
  *
  * By triggering off of the {@link org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType}, we can
- * target each message at it's own message validator.
+ * target each message at its own message validator.
  */
 public class EventHandlerSelector {
 
@@ -28,13 +28,13 @@ public class EventHandlerSelector {
     }
 
     /**
-     * primarily called in
+     * Primarily called in
      * {@link org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory#buildFromBettaLims}, this
      * method routes message specific handling of lab events to their appropriate handler based on the
      * {@link org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType} associated with the given lab
      * event
      *
-     * @param targetEvent Event that is to be process.  This will have access to the existing/created entities that
+     * @param targetEvent Event that is to be processed.  This will have access to the existing/created entities that
      *                    need some action performed based on the message they were processed with
      * @param stationEvent This is the original JAXB message that was sent for processing.  It will typically contain
      *                     some extra information that may not make sense to store with the {@link LabEvent}.

@@ -86,11 +86,11 @@ public class JiraServiceTest {
                             new CreateFields.Project(CreateFields.ProjectType.PRODUCT_ORDERING.getKeyPrefix()),
                             CreateFields.IssueType.PRODUCT_ORDER);
 
-            Assert.assertTrue(requiredFields.keySet().contains(ProductOrder.JiraField.PRODUCT_FAMILY.getFieldName()));
+            Assert.assertTrue(requiredFields.keySet().contains(ProductOrder.JiraField.PRODUCT_FAMILY.getName()));
 
 
             customFieldList
-                    .add(new CustomField(requiredFields.get(ProductOrder.JiraField.PRODUCT_FAMILY.getFieldName()),
+                    .add(new CustomField(requiredFields.get(ProductOrder.JiraField.PRODUCT_FAMILY.getName()),
                             "Test Exome Express"));
             customFieldList.add(new CustomField(requiredFields.get("Description"),
                     "Athena Test Case:  Test description setting"));
@@ -123,7 +123,7 @@ public class JiraServiceTest {
         Map<String, CustomFieldDefinition> allCustomFields = service.getCustomFields();
 
         CustomField mercuryUrlField = new CustomField(
-                allCustomFields.get(ResearchProject.RequiredSubmissionFields.MERCURY_URL.getFieldName()),
+                allCustomFields.get(ResearchProject.RequiredSubmissionFields.MERCURY_URL.getName()),
                 "http://www.broadinstitute.org/");
         issue.updateIssue(Collections.singletonList(mercuryUrlField));
     }

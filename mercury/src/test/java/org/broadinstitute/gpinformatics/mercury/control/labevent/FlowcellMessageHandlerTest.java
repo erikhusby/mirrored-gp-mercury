@@ -111,10 +111,10 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         EmailSender mockEmailSender = Mockito.mock(EmailSender.class);
         JiraService mockJiraService = Mockito.mock(JiraService.class);
         JiraService mockJiraSource = JiraServiceProducer.stubInstance();
-        Mockito.when(mockJiraService.getCustomFields(Mockito.eq(LabBatch.TicketFields.SUMMARY.getFieldName()),
-                Mockito.eq(LabBatch.TicketFields.SEQUENCING_STATION.getFieldName())))
-                .thenReturn(mockJiraSource.getCustomFields(LabBatch.TicketFields.SUMMARY.getFieldName(),
-                        LabBatch.TicketFields.SEQUENCING_STATION.getFieldName()));
+        Mockito.when(mockJiraService.getCustomFields(Mockito.eq(LabBatch.TicketFields.SUMMARY.getName()),
+                Mockito.eq(LabBatch.TicketFields.SEQUENCING_STATION.getName())))
+                .thenReturn(mockJiraSource.getCustomFields(LabBatch.TicketFields.SUMMARY.getName(),
+                        LabBatch.TicketFields.SEQUENCING_STATION.getName()));
         AppConfig mockAppConfig = Mockito.mock(AppConfig.class);
 
         getLabEventFactory().getEventHandlerSelector().getFlowcellMessageHandler().setEmailSender(mockEmailSender);
@@ -190,10 +190,10 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         EmailSender mockEmailSender = Mockito.mock(EmailSender.class);
         JiraService mockJiraService = Mockito.mock(JiraService.class);
         JiraService mockJiraSource = JiraServiceProducer.stubInstance();
-        Mockito.when(mockJiraService.getCustomFields(Mockito.eq(LabBatch.TicketFields.SUMMARY.getFieldName()),
-                Mockito.eq(LabBatch.TicketFields.SEQUENCING_STATION.getFieldName())))
-                .thenReturn(mockJiraSource.getCustomFields(LabBatch.TicketFields.SUMMARY.getFieldName(),
-                        LabBatch.TicketFields.SEQUENCING_STATION.getFieldName()));
+        Mockito.when(mockJiraService.getCustomFields(Mockito.eq(LabBatch.TicketFields.SUMMARY.getName()),
+                Mockito.eq(LabBatch.TicketFields.SEQUENCING_STATION.getName())))
+                .thenReturn(mockJiraSource.getCustomFields(LabBatch.TicketFields.SUMMARY.getName(),
+                        LabBatch.TicketFields.SEQUENCING_STATION.getName()));
         AppConfig mockAppConfig = Mockito.mock(AppConfig.class);
 
         getLabEventFactory().getEventHandlerSelector().getFlowcellMessageHandler().setEmailSender(mockEmailSender);
@@ -249,10 +249,10 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         EmailSender mockEmailSender2 = Mockito.mock(EmailSender.class);
         JiraService mockJiraService2 = Mockito.mock(JiraService.class);
         JiraService mockJiraSource2 = JiraServiceProducer.stubInstance();
-        Mockito.when(mockJiraService2.getCustomFields(Mockito.eq(LabBatch.TicketFields.SUMMARY.getFieldName()),
-                Mockito.eq(LabBatch.TicketFields.SEQUENCING_STATION.getFieldName())))
-                .thenReturn(mockJiraSource2.getCustomFields(LabBatch.TicketFields.SUMMARY.getFieldName(),
-                        LabBatch.TicketFields.SEQUENCING_STATION.getFieldName()));
+        Mockito.when(mockJiraService2.getCustomFields(Mockito.eq(LabBatch.TicketFields.SUMMARY.getName()),
+                Mockito.eq(LabBatch.TicketFields.SEQUENCING_STATION.getName())))
+                .thenReturn(mockJiraSource2.getCustomFields(LabBatch.TicketFields.SUMMARY.getName(),
+                        LabBatch.TicketFields.SEQUENCING_STATION.getName()));
         AppConfig mockAppConfig2 = Mockito.mock(AppConfig.class);
 
         getLabEventFactory().getEventHandlerSelector().getFlowcellMessageHandler().setEmailSender(mockEmailSender2);
@@ -285,10 +285,10 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         EmailSender mockEmailSender = Mockito.mock(EmailSender.class);
         JiraService mockJiraService = Mockito.mock(JiraService.class);
         JiraService mockJiraSource = JiraServiceProducer.stubInstance();
-        Mockito.when(mockJiraService.getCustomFields(Mockito.eq(LabBatch.TicketFields.SUMMARY.getFieldName()),
-                Mockito.eq(LabBatch.TicketFields.SEQUENCING_STATION.getFieldName())))
-                .thenReturn(mockJiraSource.getCustomFields(LabBatch.TicketFields.SUMMARY.getFieldName(),
-                        LabBatch.TicketFields.SEQUENCING_STATION.getFieldName()));
+        Mockito.when(mockJiraService.getCustomFields(Mockito.eq(LabBatch.TicketFields.SUMMARY.getName()),
+                Mockito.eq(LabBatch.TicketFields.SEQUENCING_STATION.getName())))
+                .thenReturn(mockJiraSource.getCustomFields(LabBatch.TicketFields.SUMMARY.getName(),
+                        LabBatch.TicketFields.SEQUENCING_STATION.getName()));
         AppConfig mockAppConfig = Mockito.mock(AppConfig.class);
 
         getLabEventFactory().getEventHandlerSelector().getFlowcellMessageHandler().setEmailSender(mockEmailSender);
@@ -344,10 +344,10 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         EmailSender mockEmailSender2 = Mockito.mock(EmailSender.class);
         JiraService mockJiraService2 = Mockito.mock(JiraService.class);
         JiraService mockJiraSource2 = JiraServiceProducer.stubInstance();
-        Mockito.when(mockJiraService2.getCustomFields(Mockito.eq(LabBatch.TicketFields.SUMMARY.getFieldName()),
-                Mockito.eq(LabBatch.TicketFields.SEQUENCING_STATION.getFieldName())))
-                .thenReturn(mockJiraSource2.getCustomFields(LabBatch.TicketFields.SUMMARY.getFieldName(),
-                        LabBatch.TicketFields.SEQUENCING_STATION.getFieldName()));
+        Mockito.when(mockJiraService2.getCustomFields(Mockito.eq(LabBatch.TicketFields.SUMMARY.getName()),
+                Mockito.eq(LabBatch.TicketFields.SEQUENCING_STATION.getName())))
+                .thenReturn(mockJiraSource2.getCustomFields(LabBatch.TicketFields.SUMMARY.getName(),
+                        LabBatch.TicketFields.SEQUENCING_STATION.getName()));
         AppConfig mockAppConfig2 = Mockito.mock(AppConfig.class);
 
         getLabEventFactory().getEventHandlerSelector().getFlowcellMessageHandler().setEmailSender(mockEmailSender2);
@@ -378,10 +378,10 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         EmailSender mockEmailSender = Mockito.mock(EmailSender.class);
         JiraService mockJiraService = Mockito.mock(JiraService.class);
         JiraService mockJiraSource = JiraServiceProducer.stubInstance();
-        Mockito.when(mockJiraService.getCustomFields(Mockito.eq(LabBatch.TicketFields.SUMMARY.getFieldName()),
-                Mockito.eq(LabBatch.TicketFields.SEQUENCING_STATION.getFieldName())))
-                .thenReturn(mockJiraSource.getCustomFields(LabBatch.TicketFields.SUMMARY.getFieldName(),
-                        LabBatch.TicketFields.SEQUENCING_STATION.getFieldName()));
+        Mockito.when(mockJiraService.getCustomFields(Mockito.eq(LabBatch.TicketFields.SUMMARY.getName()),
+                Mockito.eq(LabBatch.TicketFields.SEQUENCING_STATION.getName())))
+                .thenReturn(mockJiraSource.getCustomFields(LabBatch.TicketFields.SUMMARY.getName(),
+                        LabBatch.TicketFields.SEQUENCING_STATION.getName()));
         AppConfig mockAppConfig = Mockito.mock(AppConfig.class);
 
         getLabEventFactory().getEventHandlerSelector().getFlowcellMessageHandler().setEmailSender(mockEmailSender);
@@ -437,10 +437,10 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         EmailSender mockEmailSender2 = Mockito.mock(EmailSender.class);
         JiraService mockJiraService2 = Mockito.mock(JiraService.class);
         JiraService mockJiraSource2 = JiraServiceProducer.stubInstance();
-        Mockito.when(mockJiraService2.getCustomFields(Mockito.eq(LabBatch.TicketFields.SUMMARY.getFieldName()),
-                Mockito.eq(LabBatch.TicketFields.SEQUENCING_STATION.getFieldName())))
-                .thenReturn(mockJiraSource2.getCustomFields(LabBatch.TicketFields.SUMMARY.getFieldName(),
-                        LabBatch.TicketFields.SEQUENCING_STATION.getFieldName()));
+        Mockito.when(mockJiraService2.getCustomFields(Mockito.eq(LabBatch.TicketFields.SUMMARY.getName()),
+                Mockito.eq(LabBatch.TicketFields.SEQUENCING_STATION.getName())))
+                .thenReturn(mockJiraSource2.getCustomFields(LabBatch.TicketFields.SUMMARY.getName(),
+                        LabBatch.TicketFields.SEQUENCING_STATION.getName()));
         AppConfig mockAppConfig2 = Mockito.mock(AppConfig.class);
 
         getLabEventFactory().getEventHandlerSelector().getFlowcellMessageHandler().setEmailSender(mockEmailSender2);
@@ -472,10 +472,10 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         EmailSender mockEmailSender = Mockito.mock(EmailSender.class);
         JiraService mockJiraService = Mockito.mock(JiraService.class);
         JiraService mockJiraSource = JiraServiceProducer.stubInstance();
-        Mockito.when(mockJiraService.getCustomFields(Mockito.eq(LabBatch.TicketFields.SUMMARY.getFieldName()),
-                Mockito.eq(LabBatch.TicketFields.SEQUENCING_STATION.getFieldName())))
-                .thenReturn(mockJiraSource.getCustomFields(LabBatch.TicketFields.SUMMARY.getFieldName(),
-                        LabBatch.TicketFields.SEQUENCING_STATION.getFieldName()));
+        Mockito.when(mockJiraService.getCustomFields(Mockito.eq(LabBatch.TicketFields.SUMMARY.getName()),
+                Mockito.eq(LabBatch.TicketFields.SEQUENCING_STATION.getName())))
+                .thenReturn(mockJiraSource.getCustomFields(LabBatch.TicketFields.SUMMARY.getName(),
+                        LabBatch.TicketFields.SEQUENCING_STATION.getName()));
         AppConfig mockAppConfig = Mockito.mock(AppConfig.class);
 
         getLabEventFactory().getEventHandlerSelector().getFlowcellMessageHandler().setEmailSender(mockEmailSender);
@@ -531,10 +531,10 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         EmailSender mockEmailSender2 = Mockito.mock(EmailSender.class);
         JiraService mockJiraService2 = Mockito.mock(JiraService.class);
         JiraService mockJiraSource2 = JiraServiceProducer.stubInstance();
-        Mockito.when(mockJiraService2.getCustomFields(Mockito.eq(LabBatch.TicketFields.SUMMARY.getFieldName()),
-                Mockito.eq(LabBatch.TicketFields.SEQUENCING_STATION.getFieldName())))
-                .thenReturn(mockJiraSource2.getCustomFields(LabBatch.TicketFields.SUMMARY.getFieldName(),
-                        LabBatch.TicketFields.SEQUENCING_STATION.getFieldName()));
+        Mockito.when(mockJiraService2.getCustomFields(Mockito.eq(LabBatch.TicketFields.SUMMARY.getName()),
+                Mockito.eq(LabBatch.TicketFields.SEQUENCING_STATION.getName())))
+                .thenReturn(mockJiraSource2.getCustomFields(LabBatch.TicketFields.SUMMARY.getName(),
+                        LabBatch.TicketFields.SEQUENCING_STATION.getName()));
         AppConfig mockAppConfig2 = Mockito.mock(AppConfig.class);
 
         getLabEventFactory().getEventHandlerSelector().getFlowcellMessageHandler().setEmailSender(mockEmailSender2);
@@ -568,10 +568,10 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         EmailSender mockEmailSender = Mockito.mock(EmailSender.class);
         JiraService mockJiraService = Mockito.mock(JiraService.class);
         JiraService mockJiraSource = JiraServiceProducer.stubInstance();
-        Mockito.when(mockJiraService.getCustomFields(Mockito.eq(LabBatch.TicketFields.SUMMARY.getFieldName()),
-                Mockito.eq(LabBatch.TicketFields.SEQUENCING_STATION.getFieldName())))
-                .thenReturn(mockJiraSource.getCustomFields(LabBatch.TicketFields.SUMMARY.getFieldName(),
-                        LabBatch.TicketFields.SEQUENCING_STATION.getFieldName()));
+        Mockito.when(mockJiraService.getCustomFields(Mockito.eq(LabBatch.TicketFields.SUMMARY.getName()),
+                Mockito.eq(LabBatch.TicketFields.SEQUENCING_STATION.getName())))
+                .thenReturn(mockJiraSource.getCustomFields(LabBatch.TicketFields.SUMMARY.getName(),
+                        LabBatch.TicketFields.SEQUENCING_STATION.getName()));
         AppConfig mockAppConfig = Mockito.mock(AppConfig.class);
 
         getLabEventFactory().getEventHandlerSelector().getFlowcellMessageHandler().setEmailSender(mockEmailSender);
@@ -651,10 +651,10 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         EmailSender mockEmailSender = Mockito.mock(EmailSender.class);
         JiraService mockJiraService = Mockito.mock(JiraService.class);
         JiraService mockJiraSource = JiraServiceProducer.stubInstance();
-        Mockito.when(mockJiraService.getCustomFields(Mockito.eq(LabBatch.TicketFields.SUMMARY.getFieldName()),
-                Mockito.eq(LabBatch.TicketFields.SEQUENCING_STATION.getFieldName())))
-                .thenReturn(mockJiraSource.getCustomFields(LabBatch.TicketFields.SUMMARY.getFieldName(),
-                        LabBatch.TicketFields.SEQUENCING_STATION.getFieldName()));
+        Mockito.when(mockJiraService.getCustomFields(Mockito.eq(LabBatch.TicketFields.SUMMARY.getName()),
+                Mockito.eq(LabBatch.TicketFields.SEQUENCING_STATION.getName())))
+                .thenReturn(mockJiraSource.getCustomFields(LabBatch.TicketFields.SUMMARY.getName(),
+                        LabBatch.TicketFields.SEQUENCING_STATION.getName()));
         AppConfig mockAppConfig = Mockito.mock(AppConfig.class);
 
         getLabEventFactory().getEventHandlerSelector().getFlowcellMessageHandler().setEmailSender(mockEmailSender);

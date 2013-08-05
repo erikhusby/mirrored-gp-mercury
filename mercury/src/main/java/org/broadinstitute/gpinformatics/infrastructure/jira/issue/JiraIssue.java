@@ -208,7 +208,7 @@ public class JiraIssue implements Serializable {
     public void setCustomFieldUsingTransition(CustomField.SubmissionField field,
                                               Object value, String transitionName) throws IOException {
         Transition transition = jiraService.findAvailableTransitionByName(key, transitionName);
-        Map<String, CustomFieldDefinition> definitionMap = getCustomFields(field.getFieldName());
+        Map<String, CustomFieldDefinition> definitionMap = getCustomFields(field.getName());
         List<CustomField> customFields = Collections.singletonList(new CustomField(definitionMap, field, value));
         jiraService.postNewTransition(key, transition, customFields, null);
     }
