@@ -221,6 +221,7 @@ public class ZimsIlluminaRunFactoryTest {
             assertThat(lane.getSequencedLibrary(), equals(denatureTube.getLabel()));
         }
         assertThat(zimsIlluminaRun.getSequencerModel(),equalTo("Illumina HiSeq 2000"));
+        assertThat(zimsIlluminaRun.getRunFolder(), equalTo("/root/path/to/run/" + testRunDirectory));
     }
 
     @Test(groups = DATABASE_FREE)

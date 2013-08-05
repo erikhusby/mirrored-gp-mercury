@@ -66,6 +66,8 @@ public class ZimsIlluminaRun {
     @JsonProperty("lanesSequenced")
     private String lanesSequenced;
 
+    @JsonProperty("runFolder")
+    private String runFolder;
 
     public ZimsIlluminaRun() {
     }
@@ -112,9 +114,10 @@ public class ZimsIlluminaRun {
     public ZimsIlluminaRun(String runName, String runBarcode, String flowcellBarcode, String sequencer,
                            String sequencerModel, String runDate, Boolean paired, String actualReadStructure,
                            double imagedAreaPerLaneMM2, String setupReadStructure,
-                           String lanesSequenced) {
+                           String lanesSequenced, String runFolder) {
         this(runName, runBarcode, flowcellBarcode, sequencer, sequencerModel, runDate, paired, actualReadStructure, imagedAreaPerLaneMM2,lanesSequenced);
         this.setupReadStructure = setupReadStructure;
+        this.runFolder = runFolder;
     }
 
     /**
@@ -216,6 +219,10 @@ public class ZimsIlluminaRun {
 
     public String getLanesSequenced() {
         return lanesSequenced;
+    }
+
+    public String getRunFolder() {
+        return runFolder;
     }
 }
 
