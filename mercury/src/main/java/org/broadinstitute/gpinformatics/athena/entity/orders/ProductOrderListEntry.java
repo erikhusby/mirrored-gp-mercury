@@ -15,33 +15,53 @@ public class ProductOrderListEntry implements Serializable {
 
     private static final long serialVersionUID = 6343514424527232374L;
 
-    private Long orderId;
+    private final Long orderId;
 
-    private String title;
+    private final String title;
 
-    private String jiraTicketKey;
+    private final String jiraTicketKey;
 
-    private String productName;
+    private final String productName;
 
-    private String productFamilyName;
+    private final String productFamilyName;
 
-    private ProductOrder.OrderStatus orderStatus;
+    private final ProductOrder.OrderStatus orderStatus;
 
-    private String researchProjectTitle;
+    private final String researchProjectTitle;
 
-    private Long ownerId;
+    private final Long ownerId;
 
-    private Date placedDate;
+    private final Date placedDate;
 
-    private String quoteId;
+    private final String quoteId;
 
     private Long billingSessionId;
 
     private final long constructedCount;
 
-    private long readyForReviewCount = 0;
+    private long readyForReviewCount;
 
-    private long readyForBillingCount = 0;
+    private long readyForBillingCount;
+
+    private ProductOrderListEntry(Long orderId, String title, String jiraTicketKey, ProductOrder.OrderStatus orderStatus,
+                                  String productName, String productFamilyName, String researchProjectTitle,
+                                  Long ownerId, Date placedDate, String quoteId, Long billingSessionId,
+                                  long constructedCount) {
+        this.orderId = orderId;
+        this.title = title;
+        this.jiraTicketKey = jiraTicketKey;
+        this.orderStatus = orderStatus;
+        this.productName = productName;
+        this.productFamilyName = productFamilyName;
+        this.researchProjectTitle = researchProjectTitle;
+        this.ownerId = ownerId;
+        this.placedDate = placedDate;
+        this.quoteId = quoteId;
+        this.billingSessionId = billingSessionId;
+
+        // This count is used by the query that needs to populate one of the two other counts.
+        this.constructedCount = constructedCount;
+    }
 
     /**
      * Version of the constructor called by the non-ledger aware first pass query.
@@ -54,37 +74,24 @@ public class ProductOrderListEntry implements Serializable {
                                  Long ownerId, Date placedDate, String quoteId) {
 
         // No billing session and a the constructed count is set to 0 because it is not used for this constructor.
-        this(orderId, jiraTicketKey, null, 0);
-
-        this.title = title;
-        this.orderStatus = orderStatus;
-        this.productName = productName;
-        this.productFamilyName = productFamilyName;
-        this.researchProjectTitle = researchProjectTitle;
-        this.ownerId = ownerId;
-        this.placedDate = placedDate;
-        this.quoteId = quoteId;
+        this(orderId, title, jiraTicketKey, orderStatus, productName, productFamilyName, researchProjectTitle, ownerId,
+                placedDate, quoteId, null, 0);
     }
 
     /**
      * Version of the constructor called by the ledger-aware second pass query, these objects are merged
      * into the objects from the first query.
      */
-    @SuppressWarnings("UnusedDeclaration")
     // This is called through reflection and only appears to be unused.
+    @SuppressWarnings("UnusedDeclaration")
     public ProductOrderListEntry(
         Long orderId, String jiraTicketKey, Long billingSessionId, long constructedCount) {
-
-        this.orderId = orderId;
-        this.jiraTicketKey = jiraTicketKey;
-        this.billingSessionId = billingSessionId;
-
-        // This count is used by the query that needs to populate one of the two other counts.
-        this.constructedCount = constructedCount;
+        this(orderId, null, jiraTicketKey, null, null, null, null, null, null, null, billingSessionId,
+                constructedCount);
     }
 
     private ProductOrderListEntry() {
-        constructedCount = 0;
+        this(null, null, null, 0);
     }
 
     public static ProductOrderListEntry createDummy() {
@@ -186,8 +193,12 @@ public class ProductOrderListEntry implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof ProductOrderListEntry)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof ProductOrderListEntry)) {
+            return false;
+        }
 
         ProductOrderListEntry that = (ProductOrderListEntry) o;
 
