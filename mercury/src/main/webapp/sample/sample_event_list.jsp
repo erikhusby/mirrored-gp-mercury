@@ -12,7 +12,7 @@
         $j(document).ready(function () {
             $j(".accordion").on("accordionactivate", function (event, ui) {
                 var active = $j('.accordion').accordion('option', 'active');
-                var resultsId = "#sampleEventListView" + active;
+                var resultsId = "#sampleEventListView-${sample.sampleKey}";
                 $j(resultsId).dataTable({
                     "oTableTools":ttExportDefines,
                     "aaSorting":[
@@ -36,7 +36,7 @@
         });
     </script>
 
-    <table id="sampleEventListView${index - 1}" class="table simple" style="margin: 0 0; width: 100%;">
+    <table id="sampleEventListView-${sample.sampleKey}" class="table simple" style="margin: 0 0; width: 100%;">
         <thead>
         <tr>
             <th>Event Vessel</th>
