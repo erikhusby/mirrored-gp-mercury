@@ -36,9 +36,6 @@ public class JiraTicket {
     @Id
     private String ticketId;
 
-//    @OneToMany(mappedBy = "jiraTicket")
-//    private Set<Project> projects = new HashSet<Project>();
-
     @OneToMany(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY, mappedBy = "jiraTicket")
     private Set<LabBatch> labBatch = new HashSet<>();
 
@@ -142,10 +139,6 @@ public class JiraTicket {
         result = 31 * result + (ticketId != null ? ticketId.hashCode() : 0);
         return result;
     }
-
-//    public Set<Project> getProjects() {
-//        return projects;
-//    }
 
     public LabBatch getLabBatch() {
         return labBatch.iterator().next();
