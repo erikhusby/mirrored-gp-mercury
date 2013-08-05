@@ -52,6 +52,8 @@ public class ProductOrderDao extends GenericDao {
      */
     public boolean isAutoProcessing() {
         int hourOfDay = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
+        // Even though this is a constant expression, we want to leave it in for the time when these values change.
+        //noinspection ConstantConditions
         if (AutomatedBiller.PROCESSING_START_HOUR < AutomatedBiller.PROCESSING_END_HOUR) {
             return hourOfDay >= AutomatedBiller.PROCESSING_START_HOUR && hourOfDay < AutomatedBiller.PROCESSING_END_HOUR;
         }
@@ -210,9 +212,8 @@ public class ProductOrderDao extends GenericDao {
         return findSingle(ProductOrder.class, ProductOrder_.productOrderId, orderId);
     }
 
-    @SuppressWarnings("unchecked")
-    public Map<String, ProductOrderCompletionStatus> getAllProgressByBusinessKey() {
-        return getProgressByOrderId(null);
+    public Map<String, ProductOrderCompletionStatus> getAllProgress() {
+        return getProgress(null);
     }
 
     /**
@@ -228,8 +229,7 @@ public class ProductOrderDao extends GenericDao {
      *
      * @return The mapping of business keys to the completion status object for each order
      */
-    @SuppressWarnings("unchecked")
-    public Map<String, ProductOrderCompletionStatus> getProgressByOrderId(Collection<Long> productOrderIds) {
+    public Map<String, ProductOrderCompletionStatus> getProgress(Collection<Long> productOrderIds) {
         if (productOrderIds != null && productOrderIds.isEmpty()) {
             return Collections.emptyMap();
         }
@@ -266,7 +266,7 @@ public class ProductOrderDao extends GenericDao {
 
         // Handle searching by ID.
         if (productOrderIds != null) {
-            sqlString += " WHERE ord.PRODUCT_ORDER_ID in (:orderIds) ";
+            sqlString += " WHERE ord.PRODUCT_ORDER_ID in (:productOrderIds) ";
         }
 
         Query query = getEntityManager().createNativeQuery(sqlString);
@@ -277,8 +277,9 @@ public class ProductOrderDao extends GenericDao {
 
         List<Object> results;
         if (productOrderIds != null) {
-            results = JPASplitter.runQuery(query, "orderIds", productOrderIds);
+            results = JPASplitter.runQuery(query, "productOrderIds", productOrderIds);
         } else {
+            //noinspection unchecked
             results = (List<Object>) query.getResultList();
         }
 
@@ -309,14 +310,13 @@ public class ProductOrderDao extends GenericDao {
     }
 
     /**
-     * Find all ProductOrders for the specified varargs array of barcodes, will throw {@link IllegalArgumentException}
-     * if given more than 1000 barcodes.
+     * Find all ProductOrders for the specified list of barcodes.
      *
      * @param barcodes One or more sample barcodes.
      *
      * @return All Product Orders containing samples with these barcodes.
      */
-    public List<ProductOrder> findBySampleBarcodes(@Nonnull String... barcodes) throws IllegalArgumentException {
+    public List<ProductOrder> findBySampleBarcodes(@Nonnull String... barcodes) {
 
         CriteriaBuilder cb = getCriteriaBuilder();
 
