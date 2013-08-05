@@ -2,13 +2,12 @@ package org.broadinstitute.gpinformatics.infrastructure.common;
 
 import java.util.*;
 
-@SuppressWarnings("UnusedDeclaration")
 public class BaseSplitter {
 
     /**
      * The maximum number of arguments for an Oracle IN clause.
      */
-    protected static final int DEFAULT_SPLIT_SIZE = 1000;
+    public static final int DEFAULT_SPLIT_SIZE = 1000;
 
     /**
      * Split the data into chunks of a certain size, then return a list of collections,

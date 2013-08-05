@@ -1296,7 +1296,7 @@ public class ProductOrder implements BusinessObject, Serializable {
 
         private String displayName;
 
-        private LedgerStatus(String displayName) {
+        LedgerStatus(String displayName) {
             this.displayName = displayName;
         }
 
