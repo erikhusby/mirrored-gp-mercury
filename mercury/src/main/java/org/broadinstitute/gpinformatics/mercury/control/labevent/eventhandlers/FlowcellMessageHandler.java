@@ -30,7 +30,7 @@ import java.util.Set;
  */
 public class FlowcellMessageHandler extends AbstractEventHandler {
 
-    private static final Log log = LogFactory.getLog(FlowcellMessageHandler.class);
+    private static final Log logger = LogFactory.getLog(FlowcellMessageHandler.class);
 
     @Inject
     private JiraService jiraService;
@@ -77,7 +77,7 @@ public class FlowcellMessageHandler extends AbstractEventHandler {
 
         if (flowcellBatches.isEmpty()) {
             final String emptyBatchListMessage = "Unable to find any Flowcell batch tickets for " + flowcell.getLabel();
-            log.error(emptyBatchListMessage);
+            logger.error(emptyBatchListMessage);
             emailSender.sendHtmlEmail(appConfig.getWorkflowValidationEmail(), "[Mercury] Failed update FCT Ticket",
                     emptyBatchListMessage);
             return;
@@ -89,7 +89,7 @@ public class FlowcellMessageHandler extends AbstractEventHandler {
             if (flowcell.getFlowcellType() == IlluminaFlowcell.FlowcellType.MiSeqFlowcell) {
                 final String emptyBatchListMessage = "There are two many MiSeq Flowcell batch tickets for " +
                                                      flowcell.getLabel() + " to determine which one to update";
-                log.error(emptyBatchListMessage);
+                logger.error(emptyBatchListMessage);
                 emailSender.sendHtmlEmail(appConfig.getWorkflowValidationEmail(), "[Mercury] Failed update FCT Ticket",
                         emptyBatchListMessage);
                 return;
@@ -114,7 +114,7 @@ public class FlowcellMessageHandler extends AbstractEventHandler {
 
         if (batchesToUpdate.isEmpty()) {
             final String emptyBatchListMessage = "Unable to find any Flowcell batch tickets for " + flowcell.getLabel();
-            log.error(emptyBatchListMessage);
+            logger.error(emptyBatchListMessage);
             emailSender.sendHtmlEmail(appConfig.getWorkflowValidationEmail(), "[Mercury] Failed update FCT Ticket",
                     emptyBatchListMessage);
             return;
@@ -137,7 +137,7 @@ public class FlowcellMessageHandler extends AbstractEventHandler {
                 }
 
             } catch (Exception e) {
-                log.error("Error connecting to Jira: " + e.getMessage() +
+                logger.error("Error connecting to Jira: " + e.getMessage() +
                           " while trying to update an FCT ticket for " + flowcell.getLabel());
             }
         }

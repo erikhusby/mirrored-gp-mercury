@@ -24,11 +24,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * @author Scott Matthews
- *         Date: 4/3/13
- *         Time: 6:31 AM
- */
 public class HiSeq2500FlowcellEntityBuilder {
     private final BettaLimsMessageTestFactory bettaLimsMessageTestFactory;
     private final LabEventFactory labEventFactory;
