@@ -495,12 +495,12 @@ public class MercuryOrSquidRouterTest extends BaseEventTest {
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
 
-        Calendar postJuly25CalendarDate = new GregorianCalendar(2013, 6, 26);
+        Calendar postMercuryOnlyLaunchCalendarDate = new GregorianCalendar(2013, 6, 26);
 
         Date today = new Date();
 
-        if (today.before(postJuly25CalendarDate.getTime())) {
-            workflowBatch.setCreatedOn(postJuly25CalendarDate.getTime());
+        if (today.before(postMercuryOnlyLaunchCalendarDate.getTime())) {
+            workflowBatch.setCreatedOn(postMercuryOnlyLaunchCalendarDate.getTime());
         }
 
         workflowBatch.setWorkflowName("Exome Express");
