@@ -163,12 +163,6 @@ public class SequencingTemplateFactory {
         }
     }
 
-    /**
-     * @param labBatch
-     * @param isPoolTest
-     *
-     * @return
-     */
     public SequencingTemplateType getSequencingTemplate(LabBatch labBatch, boolean isPoolTest) {
         SequencingConfigDef sequencingConfig = getSequencingConfig(isPoolTest);
 
