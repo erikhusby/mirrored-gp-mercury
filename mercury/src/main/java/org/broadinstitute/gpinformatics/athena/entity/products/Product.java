@@ -378,11 +378,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     }
 
     public boolean isPriceItemDefault(PriceItem priceItem) {
-        if (primaryPriceItem == priceItem) return true;
-
-        if (primaryPriceItem == null) return false;
-
-        return primaryPriceItem.equals(priceItem);
+        return primaryPriceItem == priceItem || primaryPriceItem != null && primaryPriceItem.equals(priceItem);
     }
 
     @Override
