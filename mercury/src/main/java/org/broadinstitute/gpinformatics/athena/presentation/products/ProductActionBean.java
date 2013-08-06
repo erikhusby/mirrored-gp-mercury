@@ -282,7 +282,6 @@ public class ProductActionBean extends CoreActionBean {
         return createTextResolution(priceItemTokenInput.getJsonString(getQ()));
     }
 
-
     /**
      * This method retrieves all possible material types.
      *
