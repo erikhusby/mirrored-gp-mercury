@@ -145,7 +145,7 @@ public class LabEventHandler implements Serializable {
 
         String workflowName = labBatch.getWorkflowName();
         if (StringUtils.isNotBlank(workflowName)) {
-            versionResult = workflowConfig.getWorkflowByName(workflowName).getEffectiveVersion(labBatch.getCreatedOn());
+            versionResult = workflowConfig.getWorkflowVersionByName(workflowName, labBatch.getCreatedOn());
         }
         return versionResult;
     }

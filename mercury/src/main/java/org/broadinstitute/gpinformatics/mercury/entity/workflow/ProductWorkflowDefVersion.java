@@ -49,7 +49,9 @@ public class ProductWorkflowDefVersion implements Serializable {
     private transient LabEventNode rootLabEventNode;
     private transient ProductWorkflowDef productWorkflowDef;
 
-    /** e.g. SQUID, MERCURY or BOTH*/
+    /**
+     * e.g. SQUID, MERCURY or BOTH
+     */
     private String routingRule;
 
     /**
@@ -61,8 +63,9 @@ public class ProductWorkflowDefVersion implements Serializable {
     private Boolean inValidation;
 
 
-
-    /** For JAXB */
+    /**
+     * For JAXB
+     */
     @SuppressWarnings("UnusedDeclaration")
     ProductWorkflowDefVersion() {
     }
@@ -144,7 +147,7 @@ public class ProductWorkflowDefVersion implements Serializable {
         }
         return workflowBucketDefs;
     }
-    
+
     public List<WorkflowBucketDef> getCreationBuckets() {
         List<WorkflowBucketDef> workflowBucketDefs = new ArrayList<>();
         for (WorkflowProcessDef workflowProcessDef : workflowProcessDefs) {
@@ -168,7 +171,7 @@ public class ProductWorkflowDefVersion implements Serializable {
      * system, or pass all information to another system
      *
      * @return String to represent the routing intent.  Values are based on enums found in
-     * {@link org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid}
+     *         {@link org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid}
      */
     public String getRoutingRule() {
         return routingRule;
@@ -181,8 +184,8 @@ public class ProductWorkflowDefVersion implements Serializable {
      * in the form of a MercuryOrSquid enum
      *
      * @return an instance of
-     * {@link org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid} that
-     * corresponds to the String value found in the routing rule.
+     *         {@link org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid} that
+     *         corresponds to the String value found in the routing rule.
      */
     public MercuryOrSquidRouter.MercuryOrSquid getRouting() {
         return MercuryOrSquidRouter.MercuryOrSquid.valueOf(getRoutingRule());
@@ -190,7 +193,9 @@ public class ProductWorkflowDefVersion implements Serializable {
 
     public boolean getInValidation() {
         return inValidation == null ? false : inValidation;
-    }    public static class LabEventNode {
+    }
+
+    public static class LabEventNode {
         private final LabEventType labEventType;
         private final List<LabEventNode> predecessors = new ArrayList<>();
         private final List<LabEventNode> successors = new ArrayList<>();
@@ -291,7 +296,8 @@ public class ProductWorkflowDefVersion implements Serializable {
     /**
      * Finds the workflow bucket step with the given bucket name.
      *
-     * @param bucketName    the name of the bucket to find
+     * @param bucketName the name of the bucket to find
+     *
      * @return the bucket, or null if not found
      */
     public WorkflowBucketDef findBucketDefByName(String bucketName) {

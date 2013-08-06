@@ -178,16 +178,18 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
         }
 
         if (!workflowDefs.isEmpty()) {
-            String builtProtocol = "";
+            StringBuilder builtProtocol = new StringBuilder();
             for (ProductWorkflowDef currWorkflowDef : workflowDefs.values()) {
 
                 if (StringUtils.isNotBlank(builtProtocol)) {
-                    builtProtocol += ", ";
+                    builtProtocol.append(", ");
                 }
-                builtProtocol += currWorkflowDef.getName() + ":" + currWorkflowDef.getEffectiveVersion(batch.getCreatedOn()).getVersion();
+                builtProtocol.append(currWorkflowDef.getName());
+                builtProtocol.append(":");
+                builtProtocol.append(currWorkflowDef.getEffectiveVersion(batch.getCreatedOn()).getVersion());
             }
             customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.PROTOCOL,
-                    builtProtocol));
+                    builtProtocol.toString()));
         } else {
             customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.PROTOCOL, "N/A"));
         }

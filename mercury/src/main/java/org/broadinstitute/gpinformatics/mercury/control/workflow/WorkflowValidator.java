@@ -32,6 +32,7 @@ import javax.inject.Inject;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -226,8 +227,8 @@ public class WorkflowValidator {
                     is what will happen if the batch is not found (Sample exists in multiple batches)
                  */
                 if (workflowName != null && effectiveBatch != null) {
-                    ProductWorkflowDefVersion workflowVersion = workflowLoader.load().getWorkflowByName(workflowName).
-                            getEffectiveVersion(effectiveBatch.getCreatedOn());
+                    ProductWorkflowDefVersion workflowVersion = workflowLoader.load().getWorkflowVersionByName(
+                            workflowName, effectiveBatch.getCreatedOn());
                     if (workflowVersion != null) {
                         List<ProductWorkflowDefVersion.ValidationError> errors =
                                 workflowVersion.validate(labVessel, eventType);
@@ -251,6 +252,13 @@ public class WorkflowValidator {
 
                         }
                     }
+                } else {
+                    List<ProductWorkflowDefVersion.ValidationError> errors =
+                            Collections.singletonList(new ProductWorkflowDefVersion.ValidationError(
+                                    "Either the lab batch is missing or the Workflow is missing"));
+                    validationErrors.add(new WorkflowValidationError(sampleInstance, errors,
+                            athenaClientService.retrieveProductOrderDetails(
+                                    sampleInstance.getProductOrderKey()), appConfig));
                 }
             }
         }
