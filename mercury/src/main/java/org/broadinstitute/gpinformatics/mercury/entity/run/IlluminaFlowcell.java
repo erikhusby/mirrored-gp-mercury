@@ -32,9 +32,9 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
     }
 
     /**
-     * get information on what vessels loaded given flowcell.
+     * Get information on which vessels are loaded for a given flowcell.
      *
-     * @return Map of VesselAndPosition representing what is loaded onto the flowcell
+     * @return Map of {@link VesselAndPosition} representing what is loaded onto the flowcell
      */
     @DaoFree
     public Set<VesselAndPosition> getLoadingVessels() {
@@ -48,7 +48,7 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
     }
 
     public enum FlowcellType {
-        MiSeqFlowcell("Flowcell1Lane", "MiSeq Flowcell", VesselGeometry.FLOWCELL1x1,"Illumina MiSeq", "^A{1}\\w{4}$",
+        MiSeqFlowcell("Flowcell1Lane", "MiSeq Flowcell", VesselGeometry.FLOWCELL1x1,"Illumina MiSeq", "^A\\w{4}$",
                 "MiSeq"),
         HiSeqFlowcell("Flowcell8Lane", "HiSeq 2000 Flowcell", VesselGeometry.FLOWCELL1x8,"Illumina HiSeq 2000", "^\\w{9}$",
                 "HiSeq"),
@@ -77,7 +77,7 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
         private final VesselGeometry vesselGeometry;
 
         /**
-         * Used primarily when updating the FCT Jira Ticket, this will indicate the Sequencing Station used when the
+         * Used primarily when updating the FCT Jira ticket, this will indicate the sequencing station used when the
          * flowcell was sequenced.
          */
         private  String sequencingStationName;

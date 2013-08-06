@@ -19,8 +19,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
-* Builds an entity graph for Dried Blood Spot messages.
-*/
+ * Builds an entity graph for Dried Blood Spot messages.
+ */
 public class DriedBloodSpotEntityBuilder {
     private DriedBloodSpotJaxbBuilder driedBloodSpotJaxbBuilder;
     private LabBatch labBatch;
@@ -39,12 +39,12 @@ public class DriedBloodSpotEntityBuilder {
         LabEventFactory labEventFactory = new LabEventFactory(null, null);
         labEventFactory.setLabEventRefDataFetcher(new LabEventRefDataFetcher() {
             @Override
-            public BspUser getOperator ( String userId ) {
+            public BspUser getOperator(String userId) {
                 return new BSPUserList.QADudeUser("Test", BSPManagerFactoryStub.QA_DUDE_USER_ID);
             }
 
             @Override
-            public BspUser getOperator ( Long bspUserId ) {
+            public BspUser getOperator(Long bspUserId) {
                 return new BSPUserList.QADudeUser("Test", BSPManagerFactoryStub.QA_DUDE_USER_ID);
             }
 
@@ -65,17 +65,23 @@ public class DriedBloodSpotEntityBuilder {
             tubeNum++;
         }
 
-        labEventFactory.buildFromBettaLimsPlateEventDbFree(driedBloodSpotJaxbBuilder.getIncubationMixJaxb(), incubationPlate);
-        labEventFactory.buildFromBettaLimsPlateEventDbFree(driedBloodSpotJaxbBuilder.getLysisBufferJaxb(), incubationPlate);
-        labEventFactory.buildFromBettaLimsPlateEventDbFree(driedBloodSpotJaxbBuilder.getMagneticResinJaxb(), incubationPlate);
+        labEventFactory
+                .buildFromBettaLimsPlateEventDbFree(driedBloodSpotJaxbBuilder.getIncubationMixJaxb(), incubationPlate);
+        labEventFactory
+                .buildFromBettaLimsPlateEventDbFree(driedBloodSpotJaxbBuilder.getLysisBufferJaxb(), incubationPlate);
+        labEventFactory
+                .buildFromBettaLimsPlateEventDbFree(driedBloodSpotJaxbBuilder.getMagneticResinJaxb(), incubationPlate);
 
         Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
         mapBarcodeToVessel.put(incubationPlate.getLabel(), incubationPlate);
         LabEvent firstPurificationEntity = labEventFactory.buildFromBettaLims(
                 driedBloodSpotJaxbBuilder.getDbs1stPurificationJaxb(), mapBarcodeToVessel);
-        StaticPlate firstPurificationPlate = (StaticPlate) firstPurificationEntity.getTargetLabVessels().iterator().next();
-        labEventFactory.buildFromBettaLimsPlateEventDbFree(driedBloodSpotJaxbBuilder.getDbsWashBufferJaxb(), firstPurificationPlate);
-        labEventFactory.buildFromBettaLimsPlateEventDbFree(driedBloodSpotJaxbBuilder.getDbsElutionBufferJaxb(), firstPurificationPlate);
+        StaticPlate firstPurificationPlate =
+                (StaticPlate) firstPurificationEntity.getTargetLabVessels().iterator().next();
+        labEventFactory.buildFromBettaLimsPlateEventDbFree(driedBloodSpotJaxbBuilder.getDbsWashBufferJaxb(),
+                firstPurificationPlate);
+        labEventFactory.buildFromBettaLimsPlateEventDbFree(driedBloodSpotJaxbBuilder.getDbsElutionBufferJaxb(),
+                firstPurificationPlate);
 
         mapBarcodeToVessel.clear();
         mapBarcodeToVessel.put(firstPurificationPlate.getLabel(), firstPurificationPlate);

@@ -40,16 +40,16 @@ import static org.hamcrest.Matchers.notNullValue;
 public class BatchToJiraTest extends Arquillian {
 
     @Inject
-    LabBatchEjb batchEjb;
+    private LabBatchEjb batchEjb;
 
     @Inject
-    ReworkEjb reworkEjb;
+    private ReworkEjb reworkEjb;
 
     @Inject
-    JiraService jiraService;
+    private JiraService jiraService;
 
     @Inject
-    LabVesselDao labVesselDao;
+    private LabVesselDao labVesselDao;
 
     @Inject
     private UserTransaction transaction;

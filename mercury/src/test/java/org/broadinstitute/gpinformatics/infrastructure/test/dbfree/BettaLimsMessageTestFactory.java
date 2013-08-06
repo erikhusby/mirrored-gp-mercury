@@ -195,7 +195,7 @@ public class BettaLimsMessageTestFactory {
                                                          String receptacleType) {
         ReceptaclePlateTransferEvent receptaclePlateTransferEvent = new ReceptaclePlateTransferEvent();
         setStationEventData(eventType, receptaclePlateTransferEvent);
-        if(physType.equals(LabEventTest.PHYS_TYPE_FLOWCELL_2_LANE)) {
+        if (physType.equals(LabEventTest.PHYS_TYPE_FLOWCELL_2_LANE)) {
             receptaclePlateTransferEvent.setStation(HISEQ_SEQUENCING_STATION_MACHINE_NAME);
         }
 

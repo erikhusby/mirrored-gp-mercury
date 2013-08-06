@@ -390,26 +390,6 @@ public class BaseEventTest {
     /**
      * This method runs the entities through the HiSeq2500 process.
      *
-     *
-     * @param denatureRack  The denature tube rack.
-     * @param barcodeSuffix Uniquifies the generated vessel barcodes. NOT date if test quickly invokes twice.
-     *
-     * @param fctTicket
-     * @param productionFlowcellPath
-     * @return Returns the entity builder that contains the entities after this process has been invoked.
-     */
-//    public HiSeq2500FlowcellEntityBuilder runHiSeq2500FlowcellProcess(TubeFormation denatureRack,
-//                                                                      String barcodeSuffix, String fctTicket,
-//                                                                      ProductionFlowcellPath productionFlowcellPath) {
-//
-//        String flowcellBarcode = "flowcell" + new Date().getTime();
-//        return new HiSeq2500FlowcellEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
-//                denatureRack, flowcellBarcode, barcodeSuffix, fctTicket, productionFlowcellPath).invoke();
-//    }
-
-    /**
-     * This method runs the entities through the HiSeq2500 process.
-     *
      * @param denatureRack           The denature tube rack.
      * @param barcodeSuffix          Uniquifies the generated vessel barcodes. NOT date if test quickly invokes twice.
      * @param productionFlowcellPath

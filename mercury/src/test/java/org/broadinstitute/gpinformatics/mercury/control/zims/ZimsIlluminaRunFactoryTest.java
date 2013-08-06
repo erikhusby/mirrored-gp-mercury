@@ -45,9 +45,6 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-/**
- * @author breilly
- */
 public class ZimsIlluminaRunFactoryTest {
 
     private ZimsIlluminaRunFactory zimsIlluminaRunFactory;

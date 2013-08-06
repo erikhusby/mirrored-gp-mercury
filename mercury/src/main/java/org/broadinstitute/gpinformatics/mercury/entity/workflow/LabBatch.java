@@ -147,7 +147,11 @@ public class LabBatch {
     @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "labBatch")
     private Set<BucketEntry> bucketEntries = new HashSet<>();
 
-    public LabBatch(String batchName, Set<LabVessel> starterVessels, LabBatchType labBatchType) {
+    protected LabBatch() {
+    }
+
+    public LabBatch(@Nonnull String batchName, @Nonnull Set<LabVessel> starterVessels,
+                    @Nonnull LabBatchType labBatchType) {
         this(batchName, starterVessels, labBatchType, null);
     }
 
@@ -161,7 +165,8 @@ public class LabBatch {
         createdOn = new Date();
     }
 
-    public LabBatch(String batchName, Set<LabVessel> startingBatchLabVessels, LabBatchType labBatchType,
+    public LabBatch(@Nonnull String batchName, @Nonnull Set<LabVessel> startingBatchLabVessels,
+                    @Nonnull LabBatchType labBatchType,
                     String batchDescription, Date dueDate, String important) {
 
         this(batchName, startingBatchLabVessels, labBatchType);
@@ -170,8 +175,9 @@ public class LabBatch {
         this.important = important;
     }
 
-    public LabBatch(String batchName, Set<LabVessel> startingLabVessels, Set<LabVessel> reworkLabVessels,
-                    LabBatchType labBatchType, String workflowName, String batchDescription, Date dueDate,
+    public LabBatch(@Nonnull String batchName, @Nonnull Set<LabVessel> startingLabVessels,
+                    Set<LabVessel> reworkLabVessels,
+                    @Nonnull LabBatchType labBatchType, String workflowName, String batchDescription, Date dueDate,
                     String important) {
         this(batchName, startingLabVessels, labBatchType, batchDescription, dueDate, important);
         setWorkflowName(workflowName);
@@ -192,9 +198,6 @@ public class LabBatch {
 
     public Collection<LabVessel> getReworks() {
         return reworks;
-    }
-
-    protected LabBatch() {
     }
 
     /**
@@ -396,26 +399,26 @@ public class LabBatch {
     public enum TicketFields implements CustomField.SubmissionField {
         PROTOCOL("Protocol", true),
 
-        //Will not have WR ID info in Mercury.  Set to a Blank string
+        // Will not have WR ID info in Mercury.  Set to a Blank string
         WORK_REQUEST_IDS("Work Request ID(s)", true),
         POOLING_STATUS("Pooling Status", true),
         PRIORITY("Priority", false),
         DUE_DATE("Due Date", false),
 
-        //User comments at batch creation (Post Dec 1 addition)
+        // User comments at batch creation (Post Dec 1 addition)
         IMPORTANT("Important", true),
         DESCRIPTION("Description", true),
-        // ??
+
         NUMBER_OF_CONTROLS("Number of Controls", true),
         NUMBER_OF_SAMPLES("Number of Samples", true),
 
-        //        DO not set this value.  Leave at its default (for now).
+        // DO not set this value.  Leave at its default (for now).
         LIBRARY_QC_SEQUENCING_REQUIRED("Library QC Sequencing Required?", true),
 
-        //Radio Button custom field
+        // Radio Button custom field
         PROGRESS_STATUS("Progress Status", true),
 
-        //List of Sample names
+        // List of Sample names
         GSSR_IDS("GSSR ID(s)", true),
 
         LIMS_ACTIVITY_STREAM("LIMS Activity Stream", true),
@@ -509,18 +512,20 @@ public class LabBatch {
     /**
      * Future implementation of this method would get a starting vessel based on its specified position (Lane) defined
      * during the creation of an FCT/MiSeq ticket.
-     *
+     * <p/>
      * For now (Exome Express Launch) this method will return the one designated vessel for this batch.
+     *
      * @param position position (lane) by which the targeted lab vessel is referenced
+     *
      * @return Lab Vessel referenced by the given position.
      */
     public LabVessel getStartingVesselByPosition(VesselPosition position) {
-        if(labBatchType != LabBatchType.FCT &&
-                labBatchType != LabBatchType.MISEQ) {
+        if (labBatchType != LabBatchType.FCT &&
+            labBatchType != LabBatchType.MISEQ) {
             throw new RuntimeException("Vessel by Position is only supported for Flowcell Tickets");
         }
 
-        if(startingBatchLabVessels.size() >1) {
+        if (startingBatchLabVessels.size() > 1) {
             throw new RuntimeException("more than one starting vessel for a flowcell is not currently supported");
         }
 

@@ -1126,9 +1126,6 @@ public class LabEventFactory implements Serializable {
 
     public LabEvent constructReferenceData(StationEventType stationEventType,
                                            LabEventRefDataFetcher labEventRefDataFetcher) {
-        //        stationEventType.getComment();
-        //        stationEventType.getEnd();
-        //        stationEventType.getProgram();
 
         LabEventType labEventType = LabEventType.getByName(stationEventType.getEventType());
         if (labEventType == null) {
@@ -1204,14 +1201,6 @@ public class LabEventFactory implements Serializable {
      * Actually does the work to create an event for a given {@link LabVessel}.  Will associate the related Product '
      * Order ID to the event for reference
      *
-     * @param pdoKey
-     * @param batchItem
-     * @param disambiguator
-     * @param operator
-     * @param eventType
-     * @param eventLocation
-     *
-     * @return
      */
     public LabEvent createFromBatchItems(@Nonnull String pdoKey, @Nonnull LabVessel batchItem,
                                          @Nonnull Long disambiguator, String operator,
