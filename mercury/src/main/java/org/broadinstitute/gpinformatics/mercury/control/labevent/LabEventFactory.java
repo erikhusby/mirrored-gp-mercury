@@ -165,24 +165,26 @@ public class LabEventFactory implements Serializable {
 
     private static final Log logger = LogFactory.getLog(LabEventFactory.class);
 
-    //TODO SGM Remove default constructor
-    public LabEventFactory() {
-    }
-
     @Inject
-    //TODO SGM Make inject constructor.  Replace test cases with this and a BSPUserList initialized with test people.
     public LabEventFactory(BSPUserList userList, BSPSetVolumeConcentration bspSetVolumeConcentration) {
         bspUserList = userList;
         this.bspSetVolumeConcentration = bspSetVolumeConcentration;
     }
 
+    /**
+     * This method builds the reagent to flowcell bettalims Jaxb Message
+     * @param reagentKitBarcode barcode of the source reagent kit
+     * @param flowcellBarcode barcode of the target flowcell
+     * @param username username of the submitter
+     * @param stationName station name that this stransfer is initiated from
+     * @return an newly created JAXB object representing the reagent to flowcell transfer message
+     */
     public PlateCherryPickEvent getReagentToFlowcellEventDBFree(String reagentKitBarcode, String flowcellBarcode,
                                                                 String username, String stationName) {
         PlateCherryPickEvent transferEvent = new PlateCherryPickEvent();
         transferEvent.setEventType(LabEventType.REAGENT_KIT_TO_FLOWCELL_TRANSFER.getName());
-        GregorianCalendar gregorianCalendar = new GregorianCalendar();
         try {
-            transferEvent.setStart(DatatypeFactory.newInstance().newXMLGregorianCalendar(gregorianCalendar));
+            transferEvent.setStart(DatatypeFactory.newInstance().newXMLGregorianCalendar(new GregorianCalendar()));
         } catch (DatatypeConfigurationException e) {
             throw new RuntimeException(e);
         }
@@ -190,7 +192,7 @@ public class LabEventFactory implements Serializable {
         transferEvent.setOperator(username);
         transferEvent.setStation(stationName);
 
-        // yes, yes, miSeq flowcell has one lane.
+        // Yes, yes, miSeq flowcell has one lane.
         for (VesselPosition vesselPosition : IlluminaFlowcell.FlowcellType.MiSeqFlowcell.getVesselGeometry()
                 .getVesselPositions()) {
             CherryPickSourceType cherryPickSource = BettaLimsObjectFactory.createCherryPickSourceType(reagentKitBarcode,
@@ -208,14 +210,6 @@ public class LabEventFactory implements Serializable {
                         null);
         transferEvent.getPlate().add(flowcell);
         return transferEvent;
-    }
-
-    public interface LabEventRefDataFetcher {
-        BspUser getOperator(String userId);
-
-        BspUser getOperator(Long bspUserId);
-
-        LabBatch getLabBatch(String labBatchName);
     }
 
     private LabEventRefDataFetcher labEventRefDataFetcher = new LabEventRefDataFetcher() {

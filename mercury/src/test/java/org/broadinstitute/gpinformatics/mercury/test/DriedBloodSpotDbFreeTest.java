@@ -9,8 +9,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventResour
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchResource;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.TubeBean;
-import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventRefDataFetcher;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -58,7 +57,7 @@ public class DriedBloodSpotDbFreeTest {
         LabEventResource labEventResource = new LabEventResource();
         List<LabEventBean> labEventBeans = labEventResource.buildLabEventBeans(
                 new ArrayList<>(labBatch.getLabEvents()),
-                new LabEventFactory.LabEventRefDataFetcher() {
+                new LabEventRefDataFetcher() {
                    @Override
                    public BspUser getOperator(String userId) {
                        BSPUserList testList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());

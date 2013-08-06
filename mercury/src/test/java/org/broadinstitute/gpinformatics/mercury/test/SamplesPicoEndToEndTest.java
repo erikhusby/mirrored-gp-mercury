@@ -24,6 +24,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventRefDataFetcher;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -77,7 +78,7 @@ public class SamplesPicoEndToEndTest {
         LabEventResource labEventResource = new LabEventResource();
         List<LabEventBean> labEventBeans = labEventResource.buildLabEventBeans(new ArrayList<>(
                 labBatch.getLabEvents()),
-                new LabEventFactory.LabEventRefDataFetcher() {
+                new LabEventRefDataFetcher() {
                     @Override
                     public BspUser getOperator(String userId) {
                         BSPUserList testList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
@@ -148,7 +149,7 @@ public class SamplesPicoEndToEndTest {
             samplesPicoJaxbBuilder.buildJaxb();
 
             LabEventFactory labEventFactory = new LabEventFactory(null, null);
-            labEventFactory.setLabEventRefDataFetcher(new LabEventFactory.LabEventRefDataFetcher() {
+            labEventFactory.setLabEventRefDataFetcher(new LabEventRefDataFetcher() {
                 @Override
                 public BspUser getOperator(String userId) {
                     return new BSPUserList.QADudeUser("Test", BSPManagerFactoryStub.QA_DUDE_USER_ID);

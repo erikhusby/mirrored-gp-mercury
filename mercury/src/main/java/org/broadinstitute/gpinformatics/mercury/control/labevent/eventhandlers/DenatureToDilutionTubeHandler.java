@@ -25,7 +25,7 @@ import java.util.Map;
  * The specific handler for the
  * {@link org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType.DENATURE_TO_DILUTION_TRANSFER} message.
  * <p/>
- * This handler will validate the relation ship between an FLOWCELL_TICKET ticket specified for a denature tube and the
+ * This handler will validate the relationship between an FLOWCELL_TICKET ticket specified for a denature tube and the
  * relationship both of these entities will have to the targetted dilution tube.
  */
 public class DenatureToDilutionTubeHandler extends AbstractEventHandler {

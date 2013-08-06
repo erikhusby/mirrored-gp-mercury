@@ -433,7 +433,7 @@ public class LabBatch {
 
         @Nonnull
         @Override
-        public String getFieldName() {
+        public String getName() {
             return fieldName;
         }
     }

@@ -395,7 +395,7 @@ public class BucketEjb {
     //TODO SGM  Move to a bucket factory class
     private void archiveEntries(@Nonnull Collection<BucketEntry> bucketEntries) {
         for (BucketEntry currEntry : bucketEntries) {
-            logger.info("Adding entry " + currEntry.getBucketEntryId() + " for vessel " + currEntry.getLabVessel()
+            logger.debug("Adding entry " + currEntry.getBucketEntryId() + " for vessel " + currEntry.getLabVessel()
                     .getLabCentricName() +
                         " and PDO " + currEntry.getPoBusinessKey() + " to be popped from bucket.");
             currEntry.getBucket().removeEntry(currEntry);

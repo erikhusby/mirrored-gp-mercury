@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderCompletionStatus;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.infrastructure.common.BaseSplitter;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
@@ -17,7 +18,6 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM;
 import static org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM;
@@ -61,9 +61,7 @@ public class CompletionStatusFetcherTest extends ContainerTest {
             }
         }
 
-        if (firstAbandonedPDOKey == null) {
-            Assert.fail("The fetcher returned zero PDOs with abandoned samples");
-        }
+        Assert.assertNotNull(firstAbandonedPDOKey, "The fetcher returned zero PDOs with abandoned samples");
 
         ProductOrder order = pdoDao.findByBusinessKey(firstAbandonedPDOKey);
         ProductOrderCompletionStatus realStatus = calculateStatus(order.getSamples());
@@ -86,9 +84,7 @@ public class CompletionStatusFetcherTest extends ContainerTest {
             }
         }
 
-        if (firstCompletePDOKey == null) {
-            Assert.fail("The fetcher returned zero PDOs with abandoned samples");
-        }
+        Assert.assertNotNull(firstCompletePDOKey, "The fetcher returned zero PDOs with completed samples");
 
         ProductOrder order = pdoDao.findByBusinessKey(firstCompletePDOKey);
         ProductOrderCompletionStatus realStatus = calculateStatus(order.getSamples());
@@ -98,7 +94,7 @@ public class CompletionStatusFetcherTest extends ContainerTest {
                 "Fetcher calculated different complete percentage");
     }
 
-    private ProductOrderCompletionStatus calculateStatus(List<ProductOrderSample> samples) {
+    private static ProductOrderCompletionStatus calculateStatus(List<ProductOrderSample> samples) {
         int total = 0;
         int completed = 0;
         int abandoned = 0;
@@ -125,23 +121,26 @@ public class CompletionStatusFetcherTest extends ContainerTest {
         return new ProductOrderCompletionStatus(abandoned, completed, total);
     }
 
-    public void testGetAllStatuses() throws Exception {
+    public void testGetStatusWithSplit() throws Exception {
         List<ProductOrder> allOrders = pdoDao.findAll();
 
         List<Long> allOrderIds = new ArrayList<>();
         for (ProductOrder order : allOrders) {
-            if (order.hasJiraTicketKey()) {
-                allOrderIds.add(order.getProductOrderId());
-            }
+            allOrderIds.add(order.getProductOrderId());
         }
 
+        // Duplicate the number of items to pad out the query list.
         allOrderIds.addAll(allOrderIds);
 
-        Assert.assertTrue(allOrderIds.size() > 1000);
+        // Make sure we have enough PDOs to test that the Splitter API is being used correctly.
+        // This is also why we don't use getAllProgress() here instead.
+        Assert.assertTrue(allOrderIds.size() > BaseSplitter.DEFAULT_SPLIT_SIZE);
 
-        Map<String, ProductOrderCompletionStatus> statusMap = pdoDao.getProgressByOrderId(allOrderIds);
+        CompletionStatusFetcher fetcher = new CompletionStatusFetcher();
+        fetcher.loadProgress(pdoDao, allOrderIds);
 
-        Assert.assertEquals(statusMap.size() * 2, allOrderIds.size(), "There should be statuses for every item");
+        // Need to use x2 here because of the list duplication above.
+        Assert.assertEquals(fetcher.getKeys().size() * 2, allOrderIds.size(), "There should be statuses for every item");
     }
 
     public void testGetPercentInProgress() throws Exception {
@@ -157,9 +156,7 @@ public class CompletionStatusFetcherTest extends ContainerTest {
             }
         }
 
-        if (firstCompleteAndAbandonedKey == null) {
-            Assert.fail("The fetcher returned zero PDOs with abandoned samples");
-        }
+        Assert.assertNotNull(firstCompleteAndAbandonedKey, "The fetcher returned zero PDOs with completed samples");
 
         ProductOrder order = pdoDao.findByBusinessKey(firstCompleteAndAbandonedKey);
         ProductOrderCompletionStatus realStatus = calculateStatus(order.getSamples());
@@ -181,9 +178,7 @@ public class CompletionStatusFetcherTest extends ContainerTest {
             }
         }
 
-        if (pdoWithSamplesKey == null) {
-            Assert.fail("The fetcher returned zero PDOs with any samples");
-        }
+        Assert.assertNotNull(pdoWithSamplesKey, "The fetcher returned zero PDOs with any samples");
 
         ProductOrder order = pdoDao.findByBusinessKey(pdoWithSamplesKey);
         Assert.assertEquals(
@@ -194,7 +189,7 @@ public class CompletionStatusFetcherTest extends ContainerTest {
     /**
      * Utility method to extract samples which are unique by name within a Product Order from a {@link Multimap}.
      */
-    private ProductOrderSample getSample(Multimap<String, ProductOrderSample> multimap, String sampleName) {
+    private static ProductOrderSample getSample(Multimap<String, ProductOrderSample> multimap, String sampleName) {
         return multimap.get(sampleName).iterator().next();
     }
 
@@ -202,8 +197,8 @@ public class CompletionStatusFetcherTest extends ContainerTest {
     /**
      * Utility method to set delivery status into samples which are unique by name within a Product Order.
      */
-    private void setDeliveryStatus(Multimap<String, ProductOrderSample> multimap, String sampleName,
-                                   ProductOrderSample.DeliveryStatus deliveryStatus) {
+    private static void setDeliveryStatus(Multimap<String, ProductOrderSample> multimap, String sampleName,
+                                          ProductOrderSample.DeliveryStatus deliveryStatus) {
         getSample(multimap, sampleName).setDeliveryStatus(deliveryStatus);
     }
 
@@ -213,7 +208,7 @@ public class CompletionStatusFetcherTest extends ContainerTest {
      */
     public void testCompletionPercentageWithSomeAbandonedSamples() {
         // Two samples are Abandoned, one is in Progress.
-        final ProductOrder productOrder = ProductOrderDBTestFactory.createProductOrder(pdoDao, "SM-001A", "SM-002A", "SM-001P");
+        ProductOrder productOrder = ProductOrderDBTestFactory.createProductOrder(pdoDao, "SM-001A", "SM-002A", "SM-001P");
         Multimap<String, ProductOrderSample> samplesMultimap =
                 ProductOrderTestFactory.groupBySampleId(productOrder);
 
