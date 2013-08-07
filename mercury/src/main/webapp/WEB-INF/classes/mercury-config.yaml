@@ -36,7 +36,7 @@ app:
     PROD:
       host:     mercury.broadinstitute.org
       jmsPort:  5445
-      workflowValidationEmail: gplims@broadinstitute.org
+      workflowValidationEmail: mercury-dev@broadinstitute.org
       #limsworkflowvalidation@broadinstitute.org
 
 bsp:
@@ -190,7 +190,7 @@ hipchat:
 
     PROD:
         baseUrl: https://www.hipchat.com/v1/rooms/message
-        gpLimsRoom: GPLims
+        gpLimsRoom: Mercury & Athena (GPInfx)
         authorizationToken: db3e86c451ef8ac0cddb94133e0455
 
 # Mercury configuration, this describes how Mercury deployments are connected to external system deployments.
