@@ -182,12 +182,9 @@ public class CreateFCTActionBean extends CoreActionBean {
         for (String denatureTubeBarcode : selectedVesselLabels) {
             Set<LabVessel> vesselSet = new HashSet<>(labVesselDao.findByListIdentifiers(selectedVesselLabels));
 
-            LabBatch.LabBatchType batchType = LabBatch.LabBatchType.FCT;
+            LabBatch.LabBatchType batchType = selectedType.getBatchType();
             int lanesPerFlowcell = selectedType.getVesselGeometry().getVesselPositions().length;
             CreateFields.IssueType issueType = selectedType.getIssueType();
-            if (selectedType == IlluminaFlowcell.FlowcellType.MiSeqFlowcell) {
-                batchType = LabBatch.LabBatchType.MISEQ;
-            }
             for (int i = 0; i < numberOfLanes; i += lanesPerFlowcell) {
                 LabBatch batch =
                         new LabBatch(denatureTubeBarcode + " FCT ticket", vesselSet, batchType, loadingConc);

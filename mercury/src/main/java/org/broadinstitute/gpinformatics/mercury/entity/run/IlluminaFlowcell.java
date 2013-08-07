@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainerEmbedder;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
@@ -51,13 +52,13 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
 
     public enum FlowcellType {
         MiSeqFlowcell("Flowcell1Lane", "MiSeq Flowcell", VesselGeometry.FLOWCELL1x1, "Illumina MiSeq", "^A\\w{4}$",
-                "MiSeq", CreateFields.IssueType.MISEQ),
+                "MiSeq", CreateFields.IssueType.MISEQ, LabBatch.LabBatchType.MISEQ),
         HiSeqFlowcell("Flowcell8Lane", "HiSeq 2000 Flowcell", VesselGeometry.FLOWCELL1x8, "Illumina HiSeq 2000",
-                "^\\w{9}$", "HiSeq", CreateFields.IssueType.FLOWCELL),
+                "^\\w{9}$", "HiSeq", CreateFields.IssueType.FLOWCELL, LabBatch.LabBatchType.FCT),
         HiSeq2500Flowcell("Flowcell2Lane", "HiSeq 2500 Flowcell", VesselGeometry.FLOWCELL1x2, "Illumina HiSeq 2500",
-                "^\\w+ADXX$", "HiSeq", CreateFields.IssueType.FLOWCELL),
+                "^\\w+ADXX$", "HiSeq", CreateFields.IssueType.FLOWCELL, LabBatch.LabBatchType.FCT),
         OtherFlowcell("FlowcellUnknown", "Unknown Flowcell", VesselGeometry.FLOWCELL1x2, "Unknown Model", ".*", null,
-                null);
+                null, null);
 
         /**
          * The sequencer model (think vendor/make/model)
@@ -94,6 +95,11 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
         private final CreateFields.IssueType issueType;
 
         /**
+         * The type of batch to use for this flowcell type.
+         */
+        private LabBatch.LabBatchType batchType;
+
+        /**
          * Creates a FlowcellType with an automation name, display name, and geometry.
          *
          * @param automationName    The name that will be supplied by automation scripts
@@ -103,15 +109,17 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
          * @param flowcellTypeRegex The pattern to used to match the barcode to the flowcell type
          * @param sequencingStationName The sequencing station used when the flowcell was sequenced.
          * @param issueType         The Jira IssueType used when creating FCT tickets.
+         * @param batchType         The type of batch to use for this flowcell type.
          */
         FlowcellType(String automationName, String displayName, VesselGeometry vesselGeometry, String model,
-                     String flowcellTypeRegex, String sequencingStationName, CreateFields.IssueType issueType) {
+                     String flowcellTypeRegex, String sequencingStationName, CreateFields.IssueType issueType, LabBatch.LabBatchType batchType) {
             this.automationName = automationName;
             this.displayName = displayName;
             this.vesselGeometry = vesselGeometry;
             this.model = model;
             this.sequencingStationName = sequencingStationName;
             this.issueType = issueType;
+            this.batchType = batchType;
             this.flowcellTypeRegex = Pattern.compile(flowcellTypeRegex);
         }
 
@@ -201,6 +209,14 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
 
         public static CreateFields.IssueType getIssueTypeByAutomationName(String automationName) {
             return mapAutomationNameToType.get(automationName).issueType;
+        }
+
+        public LabBatch.LabBatchType getBatchType() {
+            return batchType;
+        }
+
+        public void setBatchType(LabBatch.LabBatchType batchType) {
+            this.batchType = batchType;
         }
     }
 
