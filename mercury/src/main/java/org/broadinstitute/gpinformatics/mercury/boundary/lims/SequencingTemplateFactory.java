@@ -156,7 +156,7 @@ public class SequencingTemplateFactory {
         }
         if (!labBatches.isEmpty()) {
             LabBatch fctBatch = labBatches.iterator().next();
-            return getSequencingTemplateByLabBatch(isPoolTest, sequencingConfig, fctBatch);
+            return getSequencingTemplateByLabBatch(sequencingConfig, fctBatch, isPoolTest);
         } else {
             throw new InformaticsServiceException(
                     "Could not find FCT batch for tube " + templateTargetTube.getLabel() + ".");
@@ -166,12 +166,11 @@ public class SequencingTemplateFactory {
     public SequencingTemplateType getSequencingTemplate(LabBatch labBatch, boolean isPoolTest) {
         SequencingConfigDef sequencingConfig = getSequencingConfig(isPoolTest);
 
-        return getSequencingTemplateByLabBatch(isPoolTest, sequencingConfig, labBatch);
+        return getSequencingTemplateByLabBatch(sequencingConfig, labBatch, isPoolTest);
     }
 
-    private SequencingTemplateType getSequencingTemplateByLabBatch(boolean isPoolTest,
-                                                                   SequencingConfigDef sequencingConfig,
-                                                                   LabBatch fctBatch) {
+    private SequencingTemplateType getSequencingTemplateByLabBatch(SequencingConfigDef sequencingConfig,
+                                                                   LabBatch fctBatch, boolean isPoolTest) {
         String sequencingTemplateName = null;
         if (fctBatch.getLabBatchType() != LabBatch.LabBatchType.FCT) {
             sequencingTemplateName = fctBatch.getBatchName();

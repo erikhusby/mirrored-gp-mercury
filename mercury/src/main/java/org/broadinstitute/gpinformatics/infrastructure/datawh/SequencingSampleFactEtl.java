@@ -262,6 +262,8 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
 
             Collection<LabBatch> fctBatches = cartridge.getAllLabBatches(LabBatch.LabBatchType.FCT);
 
+            LabBatch firstFctBatch = fctBatches.iterator().next();
+
             for (VesselPosition position : vesselPositions) {
                 Collection<SampleInstance> sampleInstances =
                         cartridge.getContainerRole().getSampleInstancesAtPosition(position, SampleType.WITH_PDO);
@@ -312,14 +314,14 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
                     dtos.add(new SequencingRunDto(entity, flowcellBarcode, position.name(),
                             molecularIndexingSchemeName, productOrderId, sampleKey, researchProjectId, canEtl,
                             (fctBatches.size() == 1) ?
-                                    fctBatches.iterator().next().getStartingVesselByPosition(position) :
+                                    firstFctBatch.getStartingVesselByPosition(position) :
                                     vesselsWithPositions.get(position),
                             batchName));
                 }
                 if (sampleInstances.size() == 0) {
                     dtos.add(new SequencingRunDto(entity, flowcellBarcode, null, null, null, null, null, false,
                             (fctBatches.size() == 1) ?
-                                    fctBatches.iterator().next().getStartingVesselByPosition(position) :
+                                    firstFctBatch.getStartingVesselByPosition(position) :
                                     vesselsWithPositions.get(position),
                             null));
                 }
