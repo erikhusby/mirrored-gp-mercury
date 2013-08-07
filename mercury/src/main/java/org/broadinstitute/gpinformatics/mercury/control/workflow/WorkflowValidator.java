@@ -252,7 +252,12 @@ public class WorkflowValidator {
 
                         }
                     }
-                } else {
+                }
+                /*
+                    TO re-evaluate the usage later.
+                 */
+/*
+                else {
                     List<ProductWorkflowDefVersion.ValidationError> errors =
                             Collections.singletonList(new ProductWorkflowDefVersion.ValidationError(
                                     "Either the lab batch is missing or the Workflow is missing"));
@@ -260,6 +265,7 @@ public class WorkflowValidator {
                             athenaClientService.retrieveProductOrderDetails(
                                     sampleInstance.getProductOrderKey()), appConfig));
                 }
+*/
             }
         }
         return validationErrors;
