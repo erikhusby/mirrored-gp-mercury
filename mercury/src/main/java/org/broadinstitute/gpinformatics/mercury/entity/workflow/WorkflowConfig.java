@@ -4,6 +4,7 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -76,5 +77,10 @@ public class WorkflowConfig {
             throw new WorkflowException("Failed to find workflow " + workflowName);
         }
         return productWorkflowDef;
+    }
+
+    public ProductWorkflowDefVersion getWorkflowVersionByName(String workflowName, Date effectiveDate) {
+        ProductWorkflowDef workflowByName = getWorkflowByName(workflowName);
+        return workflowByName.getEffectiveVersion(effectiveDate);
     }
 }

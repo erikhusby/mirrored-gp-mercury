@@ -217,10 +217,10 @@ public class MercuryOrSquidRouter implements Serializable {
                             possibleControls.add(sampleInstance);
                         } else {
                             String workflowName = sampleInstance.getWorkflowName();
-                            LabBatch effectiveBatch = sampleInstance.getLabBatch();
-                            if (workflowName != null && effectiveBatch != null) {
+                            LabBatch batch = sampleInstance.getLabBatch();
+                            if (workflowName != null && batch != null) {
                                 ProductWorkflowDefVersion productWorkflowDef = getWorkflowVersion(workflowName,
-                                        effectiveBatch.getCreatedOn());
+                                        batch.getCreatedOn());
                                 if (intent == Intent.SYSTEM_OF_RECORD) {
                                     MercuryOrSquid mercuryOrSquid;
                                     if (productWorkflowDef.getInValidation()) {
@@ -355,12 +355,10 @@ public class MercuryOrSquidRouter implements Serializable {
      * @param effectiveDate
      * @return Workflow Definition for the defined workflow for the product order represented by productOrderKey
      */
-    private ProductWorkflowDefVersion getWorkflowVersion(@Nonnull String workflowName, Date effectiveDate) {
+    private ProductWorkflowDefVersion getWorkflowVersion(@Nonnull String workflowName, @Nonnull Date effectiveDate) {
 
         WorkflowConfig workflowConfig = workflowLoader.load();
 
-        ProductWorkflowDef workflow =  workflowConfig.getWorkflowByName(workflowName);
-
-        return workflow.getEffectiveVersion(effectiveDate);
+        return workflowConfig.getWorkflowVersionByName(workflowName, effectiveDate);
     }
 }

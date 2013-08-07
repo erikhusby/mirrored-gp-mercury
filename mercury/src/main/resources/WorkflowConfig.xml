@@ -745,7 +745,7 @@
             <sequencingConfigDefs>Amplicon-Pool-Amplicon</sequencingConfigDefs>
             <sequencingConfigDefs>Resequencing-Production</sequencingConfigDefs>
             <routingRule>MERCURY</routingRule>
-            <inValidation>true</inValidation>
+            <inValidation>false</inValidation>
         </productWorkflowDefVersions>
     </productWorkflowDefs>
     <productWorkflowDefs>

@@ -40,16 +40,16 @@ import static org.hamcrest.Matchers.notNullValue;
 public class BatchToJiraTest extends Arquillian {
 
     @Inject
-    LabBatchEjb batchEjb;
+    private LabBatchEjb batchEjb;
 
     @Inject
-    ReworkEjb reworkEjb;
+    private ReworkEjb reworkEjb;
 
     @Inject
-    JiraService jiraService;
+    private JiraService jiraService;
 
     @Inject
-    LabVesselDao labVesselDao;
+    private LabVesselDao labVesselDao;
 
     @Inject
     private UserTransaction transaction;
@@ -84,7 +84,7 @@ public class BatchToJiraTest extends Arquillian {
 
     private String getGssrFieldFromJiraTicket(JiraIssue issue) throws IOException {
         Map<String, CustomFieldDefinition> gssrField =
-                jiraService.getCustomFields(LabBatch.TicketFields.GSSR_IDS.getFieldName());
+                jiraService.getCustomFields(LabBatch.TicketFields.GSSR_IDS.getName());
         String gssrIdsText =
                 (String) jiraService.getIssueFields(issue.getKey(), gssrField.values()).getFields().values().iterator()
                         .next();

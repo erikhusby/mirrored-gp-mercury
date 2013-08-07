@@ -7,9 +7,6 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEv
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
-import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.AbstractEventHandler;
-import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.DenatureToDilutionTubeHandler;
-import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.EventHandlerSelector;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
@@ -20,7 +17,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.StripTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.testng.Assert;
 
@@ -28,11 +24,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * @author Scott Matthews
- *         Date: 4/3/13
- *         Time: 6:31 AM
- */
 public class HiSeq2500FlowcellEntityBuilder {
     private final BettaLimsMessageTestFactory bettaLimsMessageTestFactory;
     private final LabEventFactory labEventFactory;
@@ -105,7 +96,8 @@ public class HiSeq2500FlowcellEntityBuilder {
             LabEvent flowcellTransferEntity = labEventFactory.buildVesselToSectionDbFree(flowcellTransferJaxb,
                     dilutionRack.getContainerRole().getContainedVessels().iterator().next(), null,
                     SBSSection.ALL2.getSectionName());
-            labEventFactory.getEventHandlerSelector().applyEventSpecificHandling(flowcellTransferEntity, flowcellTransferJaxb);
+            labEventFactory.getEventHandlerSelector().applyEventSpecificHandling(flowcellTransferEntity,
+                    flowcellTransferJaxb);
             labEventHandler.processEvent(flowcellTransferEntity);
             //asserts
             illuminaFlowcell = (IlluminaFlowcell) flowcellTransferEntity.getTargetLabVessels().iterator().next();
@@ -116,7 +108,8 @@ public class HiSeq2500FlowcellEntityBuilder {
             flowcellTransferEntity = labEventFactory.buildVesselToSectionDbFree(flowcellTransferJaxb,
                     denatureRack.getContainerRole().getContainedVessels().iterator().next(), null,
                     SBSSection.ALL2.getSectionName());
-            labEventFactory.getEventHandlerSelector().applyEventSpecificHandling(flowcellTransferEntity, flowcellTransferJaxb);
+            labEventFactory.getEventHandlerSelector()
+                    .applyEventSpecificHandling(flowcellTransferEntity, flowcellTransferJaxb);
             labEventHandler.processEvent(flowcellTransferEntity);
             illuminaFlowcell = (IlluminaFlowcell) flowcellTransferEntity.getTargetLabVessels().iterator().next();
             break;
@@ -138,7 +131,8 @@ public class HiSeq2500FlowcellEntityBuilder {
                             }},
                             mapBarcodeToStripTube, new HashMap<String, RackOfTubes>()
                     );
-            labEventFactory.getEventHandlerSelector().applyEventSpecificHandling(stripTubeTransferEntity , stripTubeTransferJaxb);
+            labEventFactory.getEventHandlerSelector()
+                    .applyEventSpecificHandling(stripTubeTransferEntity, stripTubeTransferJaxb);
             labEventHandler.processEvent(stripTubeTransferEntity);
             // asserts
             stripTube = (StripTube) stripTubeTransferEntity.getTargetLabVessels().iterator().next();
@@ -152,7 +146,8 @@ public class HiSeq2500FlowcellEntityBuilder {
             LabEvent stbFlowcellTransferEntity =
                     labEventFactory.buildFromBettaLimsPlateToPlateDbFree(stbFlowcellTransferJaxb,
                             stripTube, null);
-            labEventFactory.getEventHandlerSelector().applyEventSpecificHandling(stbFlowcellTransferEntity, stbFlowcellTransferJaxb);
+            labEventFactory.getEventHandlerSelector()
+                    .applyEventSpecificHandling(stbFlowcellTransferEntity, stbFlowcellTransferJaxb);
             labEventHandler.processEvent(stbFlowcellTransferEntity);
             //asserts
             illuminaFlowcell = (IlluminaFlowcell) stbFlowcellTransferEntity.getTargetLabVessels().iterator().next();
@@ -184,7 +179,7 @@ public class HiSeq2500FlowcellEntityBuilder {
 
         LabEvent flowcellLoadEntity = labEventFactory
                 .buildReceptacleEventDbFree(flowcellLoadJaxb, illuminaFlowcell);
-        labEventFactory.getEventHandlerSelector().applyEventSpecificHandling(flowcellLoadEntity , flowcellLoadJaxb);
+        labEventFactory.getEventHandlerSelector().applyEventSpecificHandling(flowcellLoadEntity, flowcellLoadJaxb);
         labEventHandler.processEvent(flowcellLoadEntity);
 
         return this;

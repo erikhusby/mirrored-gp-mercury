@@ -10,12 +10,12 @@
             function typeChanged() {
                 var numLanesInput = $j('#numLanesText');
                 var loadingConcInput = $j('#loadingConcText');
-                if ($j('#typeSelect').val() == 'MiSeq Flowcell') {
+                if ($j('#typeSelect').val() == 'MiSeqFlowcell') {
                     numLanesInput.prop('readonly', true);
                     numLanesInput.val(1);
                     loadingConcInput.prop('readonly', true);
                     loadingConcInput.val('7');
-                } else if ($j('#typeSelect').val() == 'HiSeq 2500 Flowcell') {
+                } else if ($j('#typeSelect').val() == 'HiSeq2500Flowcell') {
                     numLanesInput.prop('readonly', true);
                     numLanesInput.val(2);
                     loadingConcInput.val('7');
@@ -69,7 +69,7 @@
                 <div class="control-group" style="margin-left: 50px">
                     <div class="controls">
                         <stripes:select id="typeSelect" name="selectedType" onchange="typeChanged()">
-                            <stripes:options-collection collection="${actionBean.flowcellTypes}"/>
+                            <stripes:options-collection label="displayName" collection="${actionBean.flowcellTypes}"/>
                         </stripes:select>
                     </div>
                 </div>

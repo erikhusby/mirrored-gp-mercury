@@ -5,7 +5,7 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
-import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventRefDataFetcher;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -59,7 +59,7 @@ public class LabEventResource {
     /**
      * Default implementation of the LabEventRefDataFetcher that gets real data from BSP.
      */
-    private class DefaultLabEventRefDataFetcher implements LabEventFactory.LabEventRefDataFetcher {
+    private class DefaultLabEventRefDataFetcher implements LabEventRefDataFetcher {
 
         @Override
         public BspUser getOperator(String userId) {
@@ -138,7 +138,7 @@ public class LabEventResource {
 
 
     public List<LabEventBean> buildLabEventBeans(List<LabEvent> labEvents,
-                                                 LabEventFactory.LabEventRefDataFetcher dataFetcherHelper) {
+                                                 LabEventRefDataFetcher dataFetcherHelper) {
         List<LabEventBean> labEventBeans = new ArrayList<>();
 
         for (LabEvent labEvent : labEvents) {

@@ -17,7 +17,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 
 import javax.inject.Inject;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -31,7 +30,7 @@ import java.util.Set;
  */
 public class FlowcellMessageHandler extends AbstractEventHandler {
 
-    private static final Log LOG = LogFactory.getLog(FlowcellMessageHandler.class);
+    private static final Log logger = LogFactory.getLog(FlowcellMessageHandler.class);
 
     @Inject
     private JiraService jiraService;
@@ -45,6 +44,21 @@ public class FlowcellMessageHandler extends AbstractEventHandler {
     public FlowcellMessageHandler() {
     }
 
+    /**
+     * <p/>
+     * This method will attempt to find the one FCT ticket that it can for the flowcell being processed and set the
+     * summary of that ticket to the flowcell barcode name.  Depending on the {@link LabBatch#labBatchType} this may or
+     * may not be straight forward.
+     * <p/>
+     * If the system is able to uniquely find the FCT for the flowcell (either because there is only one or due to some
+     * unique identifier that is known) that ticket can be updated with the flowcel barcode.  If the system is
+     * unable to find one unique FCT ticket to update, an error is logged and an email is sent to the recipients of
+     * the workflow validation email.
+     *
+     * @param targetEvent Lab event created with the processed bettalims message.  From here, we can accessed the
+     *                    vessels that were referenced/created for the incoming message.
+     * @param stationEvent Event Type representation of the bettalims message.  From here, we can access any extra data
+     */
     @Override
     public void handleEvent(LabEvent targetEvent, StationEventType stationEvent) {
 
@@ -63,7 +77,7 @@ public class FlowcellMessageHandler extends AbstractEventHandler {
 
         if (flowcellBatches.isEmpty()) {
             final String emptyBatchListMessage = "Unable to find any Flowcell batch tickets for " + flowcell.getLabel();
-            LOG.error(emptyBatchListMessage);
+            logger.error(emptyBatchListMessage);
             emailSender.sendHtmlEmail(appConfig.getWorkflowValidationEmail(), "[Mercury] Failed update FCT Ticket",
                     emptyBatchListMessage);
             return;
@@ -75,7 +89,7 @@ public class FlowcellMessageHandler extends AbstractEventHandler {
             if (flowcell.getFlowcellType() == IlluminaFlowcell.FlowcellType.MiSeqFlowcell) {
                 final String emptyBatchListMessage = "There are two many MiSeq Flowcell batch tickets for " +
                                                      flowcell.getLabel() + " to determine which one to update";
-                LOG.error(emptyBatchListMessage);
+                logger.error(emptyBatchListMessage);
                 emailSender.sendHtmlEmail(appConfig.getWorkflowValidationEmail(), "[Mercury] Failed update FCT Ticket",
                         emptyBatchListMessage);
                 return;
@@ -100,7 +114,7 @@ public class FlowcellMessageHandler extends AbstractEventHandler {
 
         if (batchesToUpdate.isEmpty()) {
             final String emptyBatchListMessage = "Unable to find any Flowcell batch tickets for " + flowcell.getLabel();
-            LOG.error(emptyBatchListMessage);
+            logger.error(emptyBatchListMessage);
             emailSender.sendHtmlEmail(appConfig.getWorkflowValidationEmail(), "[Mercury] Failed update FCT Ticket",
                     emptyBatchListMessage);
             return;
@@ -109,8 +123,8 @@ public class FlowcellMessageHandler extends AbstractEventHandler {
                 for (LabBatch currentUpdateBatch : batchesToUpdate) {
 
                     Map<String, CustomFieldDefinition> summaryFieldDefinition =
-                            jiraService.getCustomFields(LabBatch.TicketFields.SUMMARY.getFieldName(),
-                                    LabBatch.TicketFields.SEQUENCING_STATION.getFieldName());
+                            jiraService.getCustomFields(LabBatch.TicketFields.SUMMARY.getName(),
+                                    LabBatch.TicketFields.SEQUENCING_STATION.getName());
 
                     final CustomField summaryCustomField = new CustomField(summaryFieldDefinition, LabBatch.TicketFields.SUMMARY,
                             flowcell.getLabel());
@@ -123,7 +137,7 @@ public class FlowcellMessageHandler extends AbstractEventHandler {
                 }
 
             } catch (Exception e) {
-                LOG.error("Error connecting to Jira: " + e.getMessage() +
+                logger.error("Error connecting to Jira: " + e.getMessage() +
                           " while trying to update an FCT ticket for " + flowcell.getLabel());
             }
         }

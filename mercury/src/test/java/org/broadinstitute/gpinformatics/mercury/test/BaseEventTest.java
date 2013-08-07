@@ -34,6 +34,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDa
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventRefDataFetcher;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.DenatureToDilutionTubeHandler;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.EventHandlerSelector;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.FlowcellMessageHandler;
@@ -107,8 +108,8 @@ public class BaseEventTest {
 
     protected static Map<String, BSPSampleDTO> mapSampleNameToDto = new HashMap<>();
 
-    protected final LabEventFactory.LabEventRefDataFetcher labEventRefDataFetcher =
-            new LabEventFactory.LabEventRefDataFetcher() {
+    protected final LabEventRefDataFetcher labEventRefDataFetcher =
+            new LabEventRefDataFetcher() {
 
                 @Override
                 public BspUser getOperator(String userId) {
@@ -385,26 +386,6 @@ public class BaseEventTest {
                 Collections.singletonList(tubeBarcodes),
                 mapBarcodeToTube, barcodeSuffix).invoke();
     }
-
-    /**
-     * This method runs the entities through the HiSeq2500 process.
-     *
-     *
-     * @param denatureRack  The denature tube rack.
-     * @param barcodeSuffix Uniquifies the generated vessel barcodes. NOT date if test quickly invokes twice.
-     *
-     * @param fctTicket
-     * @param productionFlowcellPath
-     * @return Returns the entity builder that contains the entities after this process has been invoked.
-     */
-//    public HiSeq2500FlowcellEntityBuilder runHiSeq2500FlowcellProcess(TubeFormation denatureRack,
-//                                                                      String barcodeSuffix, String fctTicket,
-//                                                                      ProductionFlowcellPath productionFlowcellPath) {
-//
-//        String flowcellBarcode = "flowcell" + new Date().getTime();
-//        return new HiSeq2500FlowcellEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
-//                denatureRack, flowcellBarcode, barcodeSuffix, fctTicket, productionFlowcellPath).invoke();
-//    }
 
     /**
      * This method runs the entities through the HiSeq2500 process.

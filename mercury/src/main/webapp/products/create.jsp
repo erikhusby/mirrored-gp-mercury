@@ -89,7 +89,7 @@
             }
 
             function updateBillingRules() {
-                if ($j('#useAutomatedBilling').attr('checked')) {
+                if ($j('#useAutomatedBilling').prop('checked')) {
                     $j('#billingRules').show();
                 } else {
                     $j('#billingRules').hide();

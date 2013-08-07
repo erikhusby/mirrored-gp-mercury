@@ -116,7 +116,7 @@ public class JiraCommentUtil {
                 JiraIssue jiraIssue = ticket.getJiraDetails();
                 Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
                 String fieldValue = (String) jiraIssue.getFieldValue(submissionFields.get(
-                        LabBatch.TicketFields.LIMS_ACTIVITY_STREAM.getFieldName()).getJiraCustomFieldId());
+                        LabBatch.TicketFields.LIMS_ACTIVITY_STREAM.getName()).getJiraCustomFieldId());
                 if (fieldValue == null) {
                     fieldValue = "";
                 }

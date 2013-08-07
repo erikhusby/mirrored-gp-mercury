@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventRefDataFetcher;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
@@ -44,9 +45,6 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-/**
- * @author breilly
- */
 public class ZimsIlluminaRunFactoryTest {
 
     private ZimsIlluminaRunFactory zimsIlluminaRunFactory;
@@ -83,7 +81,7 @@ public class ZimsIlluminaRunFactoryTest {
         zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(mockBSPSampleDataFetcher, mockAthenaClientService,
                 mockControlDao);
         LabEventFactory labEventFactory = new LabEventFactory(null, null);
-        labEventFactory.setLabEventRefDataFetcher(new LabEventFactory.LabEventRefDataFetcher() {
+        labEventFactory.setLabEventRefDataFetcher(new LabEventRefDataFetcher() {
             @Override
             public BspUser getOperator(String userId) {
                 return new BSPUserList.QADudeUser("Test", 101L);
@@ -202,13 +200,13 @@ public class ZimsIlluminaRunFactoryTest {
         LabVessel denatureTube = flowcell.getNearestTubeAncestorsForLanes().values().iterator().next();
 
         IlluminaSequencingRun sequencingRun = new IlluminaSequencingRun(flowcell, testRunDirectory, "Run-123",
-                "IlluminaRunServiceImplTest", 101L, true, runDate, "/root/path/to/run/" + testRunDirectory);
+                "ZimsIlluminaRunFactoryTest", 101L, true, runDate, "/root/path/to/run/" + testRunDirectory);
         ZimsIlluminaRun zimsIlluminaRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(sequencingRun);
 
         assertThat(zimsIlluminaRun.getError(), nullValue());
         assertThat(zimsIlluminaRun.getName(), equalTo("TestRun"));
         assertThat(zimsIlluminaRun.getBarcode(), equalTo("Run-123"));
-        assertThat(zimsIlluminaRun.getSequencer(), equalTo("IlluminaRunServiceImplTest"));
+        assertThat(zimsIlluminaRun.getSequencer(), equalTo("ZimsIlluminaRunFactoryTest"));
         assertThat(zimsIlluminaRun.getFlowcellBarcode(), equalTo("testFlowcell"));
         assertThat(zimsIlluminaRun.getRunDateString(), equalTo("01/22/2013 16:11"));
         assertThat(zimsIlluminaRun.getSequencerModel(), equalTo(

@@ -195,45 +195,6 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
     }
 
     /**
-     * This code does not appear to be used.  Seems to have been replaced by
-     * {@link TransferTraverserCriteria.NearestTubeAncestorsCriteria}
-     */
-    @Deprecated
-    public static class NearestTubeAncestorsCriteria implements TransferTraverserCriteria {
-
-        private Set<LabVessel> tubes = new HashSet<>();
-        private Set<VesselAndPosition> vesselAndPositions = new LinkedHashSet<>();
-
-        @Override
-        public TraversalControl evaluateVesselPreOrder(Context context) {
-            if (OrmUtil.proxySafeIsInstance(context.getLabVessel(), TwoDBarcodedTube.class)) {
-                tubes.add(context.getLabVessel());
-                // Check for null, because source tubes in VesselToSectionTransfers (baits) don't have positions.
-                if (context.getVesselPosition() != null) {
-                    vesselAndPositions.add(new VesselAndPosition(context.getLabVessel(), context.getVesselPosition()));
-                }
-                return TraversalControl.StopTraversing;
-            } else {
-                return TraversalControl.ContinueTraversing;
-            }
-        }
-
-        @Override
-        public void evaluateVesselInOrder(Context context) {}
-
-        @Override
-        public void evaluateVesselPostOrder(Context context) {}
-
-        public Set<LabVessel> getTubes() {
-            return tubes;
-        }
-
-        public Set<VesselAndPosition> getVesselAndPositions() {
-            return vesselAndPositions;
-        }
-    }
-
-    /**
      * Returns a list of the most immediate tube ancestors for each well. The "distance" from this plate across upstream
      * plate transfers is not relevant; all upstream branches are traversed until either a tube is found or the branch
      * ends.

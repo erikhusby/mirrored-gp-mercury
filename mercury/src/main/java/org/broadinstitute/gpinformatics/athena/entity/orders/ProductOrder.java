@@ -1156,7 +1156,7 @@ public class ProductOrder implements BusinessObject, Serializable {
 
         @Nonnull
         @Override
-        public String getFieldName() {
+        public String getName() {
             return fieldName;
         }
     }

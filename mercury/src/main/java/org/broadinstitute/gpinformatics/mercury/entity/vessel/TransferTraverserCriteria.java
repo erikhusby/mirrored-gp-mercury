@@ -466,8 +466,8 @@ public interface TransferTraverserCriteria {
      */
     class NearestTubeAncestorsCriteria implements TransferTraverserCriteria {
 
-        private Set<LabVessel> tubes = new HashSet<>();
-        private Set<VesselAndPosition> vesselAndPositions = new LinkedHashSet<>();
+        private final Set<LabVessel> tubes = new HashSet<>();
+        private final Set<VesselAndPosition> vesselAndPositions = new LinkedHashSet<>();
 
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {

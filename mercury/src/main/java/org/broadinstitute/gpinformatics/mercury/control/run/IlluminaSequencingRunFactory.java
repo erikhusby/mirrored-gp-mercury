@@ -36,7 +36,7 @@ public class IlluminaSequencingRunFactory implements Serializable {
     /**
      * storeReadStructureDBFree applies necessary read structure changes to a Sequencing Run based on given information
      *
-     * @param readStructureRequest contains all information necessary to searching for and update a Sequencing run
+     * @param readStructureRequest contains all information necessary to search for and update a Sequencing run
      * @param run                  Sequencing Run to apply read structure to.
      *
      * @return a new instance of a readStructureRequest populated with the values as they are found on the run itself

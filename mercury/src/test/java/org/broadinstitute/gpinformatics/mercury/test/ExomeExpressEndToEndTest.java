@@ -42,6 +42,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventRefDataFetcher;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
@@ -97,10 +98,6 @@ public class ExomeExpressEndToEndTest {
 
     private LibraryRegistrationSOAPService registrationSOAPService =
             LibraryRegistrationSOAPServiceProducer.stubInstance();
-
-    //    private PMBridgeService pmBridgeService = PMBridgeServiceProducer.stubInstance();
-
-    //    private PassService passService = PassServiceProducer.stubInstance();
 
     // if this bombs because of a jira refresh, just switch it to JiraServiceProducer.stubInstance();
     // for integration test fun where we post things back to a real jira, try JiraServiceProducer.testInstance();
@@ -303,7 +300,7 @@ public class ExomeExpressEndToEndTest {
             // (deck query for workflow)
             // deck sends message, check workflow
             LabEventFactory labEventFactory = new LabEventFactory(null, null);
-            labEventFactory.setLabEventRefDataFetcher(new LabEventFactory.LabEventRefDataFetcher() {
+            labEventFactory.setLabEventRefDataFetcher(new LabEventRefDataFetcher() {
                 @Override
                 public BspUser getOperator(String userId) {
                     return new BSPUserList.QADudeUser("Test", BSPManagerFactoryStub.QA_DUDE_USER_ID);

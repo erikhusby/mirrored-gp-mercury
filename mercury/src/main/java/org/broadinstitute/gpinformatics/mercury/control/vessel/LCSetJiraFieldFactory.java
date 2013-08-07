@@ -155,7 +155,7 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
                 new CustomField.ValueContainer(PROGRESS_STATUS)));
 
         customFields.add(new CustomField(
-                submissionFields.get(LabBatch.TicketFields.LIBRARY_QC_SEQUENCING_REQUIRED.getFieldName()),
+                submissionFields.get(LabBatch.TicketFields.LIBRARY_QC_SEQUENCING_REQUIRED.getName()),
                 new CustomField.SelectOption(LIB_QC_SEQ_REQUIRED_DEFAULT)));
 
         int sampleCount = batch.getReworks().size() + batch.getStartingBatchLabVessels().size();
@@ -164,7 +164,7 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
                 buildSamplesListString(batch)));
 
         customFields.add(new CustomField(
-                submissionFields.get(LabBatch.TicketFields.NUMBER_OF_SAMPLES.getFieldName()), sampleCount));
+                submissionFields.get(LabBatch.TicketFields.NUMBER_OF_SAMPLES.getName()), sampleCount));
 
         if (batch.getDueDate() != null) {
 
@@ -178,16 +178,18 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
         }
 
         if (!workflowDefs.isEmpty()) {
-            String builtProtocol = "";
+            StringBuilder builtProtocol = new StringBuilder();
             for (ProductWorkflowDef currWorkflowDef : workflowDefs.values()) {
 
                 if (StringUtils.isNotBlank(builtProtocol)) {
-                    builtProtocol += ", ";
+                    builtProtocol.append(", ");
                 }
-                builtProtocol += currWorkflowDef.getName() + ":" + currWorkflowDef.getEffectiveVersion(batch.getCreatedOn()).getVersion();
+                builtProtocol.append(currWorkflowDef.getName());
+                builtProtocol.append(":");
+                builtProtocol.append(currWorkflowDef.getEffectiveVersion(batch.getCreatedOn()).getVersion());
             }
             customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.PROTOCOL,
-                    builtProtocol));
+                    builtProtocol.toString()));
         } else {
             customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.PROTOCOL, "N/A"));
         }

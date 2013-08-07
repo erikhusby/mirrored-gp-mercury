@@ -26,7 +26,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
-import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -73,11 +72,7 @@ public class ZimsIlluminaRunFactory {
         this.controlDao = controlDao;
     }
 
-    public ZimsIlluminaRun makeZimsIlluminaRun(SequencingRun sequencingRun) {
-        if (!OrmUtil.proxySafeIsInstance(sequencingRun, IlluminaSequencingRun.class)) {
-            throw new RuntimeException("Run, " + sequencingRun.getRunName() + ", is not an Illumina run.");
-        }
-        IlluminaSequencingRun illuminaRun = OrmUtil.proxySafeCast(sequencingRun, IlluminaSequencingRun.class);
+    public ZimsIlluminaRun makeZimsIlluminaRun(IlluminaSequencingRun illuminaRun) {
         RunCartridge flowcell = illuminaRun.getSampleCartridge();
 
         List<List<SampleInstanceDto>> perLaneSampleInstanceDtos = new ArrayList<>();

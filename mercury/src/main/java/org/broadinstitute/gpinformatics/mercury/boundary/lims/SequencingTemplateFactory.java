@@ -126,7 +126,7 @@ public class SequencingTemplateFactory {
     }
 
     /**
-     * This method gets the sequencing template given a denature tube.
+     * This method builds a sequencing template object given a denature or dilution tube.
      *
      * @param templateTargetTube The Dilution tube to create the sequencing template for.
      * @param isPoolTest         A boolean to determine if this is a MiSeq pool test run or not.
@@ -156,28 +156,21 @@ public class SequencingTemplateFactory {
         }
         if (!labBatches.isEmpty()) {
             LabBatch fctBatch = labBatches.iterator().next();
-            return getSequencingTemplateByLabBatch(isPoolTest, sequencingConfig, fctBatch);
+            return getSequencingTemplateByLabBatch(sequencingConfig, fctBatch, isPoolTest);
         } else {
             throw new InformaticsServiceException(
                     "Could not find FCT batch for tube " + templateTargetTube.getLabel() + ".");
         }
     }
 
-    /**
-     * @param labBatch
-     * @param isPoolTest
-     *
-     * @return
-     */
     public SequencingTemplateType getSequencingTemplate(LabBatch labBatch, boolean isPoolTest) {
         SequencingConfigDef sequencingConfig = getSequencingConfig(isPoolTest);
 
-        return getSequencingTemplateByLabBatch(isPoolTest, sequencingConfig, labBatch);
+        return getSequencingTemplateByLabBatch(sequencingConfig, labBatch, isPoolTest);
     }
 
-    private SequencingTemplateType getSequencingTemplateByLabBatch(boolean isPoolTest,
-                                                                   SequencingConfigDef sequencingConfig,
-                                                                   LabBatch fctBatch) {
+    private SequencingTemplateType getSequencingTemplateByLabBatch(SequencingConfigDef sequencingConfig,
+                                                                   LabBatch fctBatch, boolean isPoolTest) {
         String sequencingTemplateName = null;
         if (fctBatch.getLabBatchType() != LabBatch.LabBatchType.FCT) {
             sequencingTemplateName = fctBatch.getBatchName();

@@ -693,7 +693,6 @@ public class LabEventTest extends BaseEventTest {
             AthenaClientServiceStub.addProductOrder(productOrder2);
 
             Map<String, TwoDBarcodedTube> mapBarcodeToTube2 = createInitialRack(productOrder2, "R2_");
-//            TwoDBarcodedTube reworkTube =  picoPlatingEntityBuilder.getNormTubeFormation().getContainerRole().getContainedVessels().iterator().next();
             TwoDBarcodedTube reworkTube = mapBarcodeToTube1.values().iterator().next();
             mapBarcodeToTube2.put(reworkTube.getLabel(), reworkTube);
             LabBatch workflowBatch2 = new LabBatch("Exome Express Batch 2",
