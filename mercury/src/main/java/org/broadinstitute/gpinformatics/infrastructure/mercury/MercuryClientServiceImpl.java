@@ -44,9 +44,6 @@ public class MercuryClientServiceImpl implements MercuryClientService {
     @Inject
     private AlignerDao alignerDao;
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public Collection<ProductOrderSample> addSampleToPicoBucket(@Nonnull ProductOrder pdo, @Nonnull Collection<ProductOrderSample> samples) {
         return mercuryClientEjb.addFromProductOrder(pdo, samples);
