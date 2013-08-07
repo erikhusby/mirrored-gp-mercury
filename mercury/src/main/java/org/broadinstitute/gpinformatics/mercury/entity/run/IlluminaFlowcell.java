@@ -17,6 +17,7 @@ import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -130,7 +131,7 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
         private static Map<String, FlowcellType> mapDisplayNameToType = new HashMap<>();
 
         static {
-            for (FlowcellType plateType : FlowcellType.values()) {
+            for (FlowcellType plateType : EnumSet.allOf(FlowcellType.class)) {
                 mapAutomationNameToType.put(plateType.getAutomationName(), plateType);
                 mapDisplayNameToType.put(plateType.getDisplayName(), plateType);
             }
@@ -165,6 +166,8 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
          * @return The FlowcellType, if found or fall back to HiSeqFlowcell
          */
         public static FlowcellType getTypeForBarcode(@Nonnull String barcode) {
+            // The order that these are evaluated is important which is why there are a
+            // bunch of if-else's instead iterating over an enumSet or values().
             if (FlowcellType.MiSeqFlowcell.getFlowcellTypeRegex().matcher(barcode).matches()) {
                 return MiSeqFlowcell;
             } else if (FlowcellType.HiSeq2500Flowcell.getFlowcellTypeRegex().matcher(barcode).matches()) {

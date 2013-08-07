@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.products;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
@@ -20,8 +21,10 @@ import java.util.*;
 @Table(schema = "athena",
         uniqueConstraints = @UniqueConstraint(columnNames = {"partNumber"}))
 public class Product implements BusinessObject, Serializable, Comparable<Product> {
-    private static final int ONE_DAY_IN_SECONDS = 60 * 60 * 24;
 
+    private static final long serialVersionUID = 4859861191078406439L;
+
+    private static final int ONE_DAY_IN_SECONDS = 60 * 60 * 24;
     public static final boolean TOP_LEVEL_PRODUCT = true;
 
     @Id
@@ -352,11 +355,11 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     }
 
     public BillingRequirement getRequirement() {
-        if (requirements == null) {
-            requirements = Collections.singletonList(new BillingRequirement());
-        } else if (requirements.isEmpty()) {
-            requirements.add(new BillingRequirement());
+
+        if (CollectionUtils.isEmpty(requirements)) {
+            return new BillingRequirement();
         }
+
         return requirements.get(0);
     }
 
