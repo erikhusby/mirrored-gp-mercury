@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.run;
 
 
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -49,13 +50,13 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
     }
 
     public enum FlowcellType {
-        MiSeqFlowcell("Flowcell1Lane", "MiSeq Flowcell", VesselGeometry.FLOWCELL1x1,"Illumina MiSeq", "^A\\w{4}$",
-                "MiSeq"),
-        HiSeqFlowcell("Flowcell8Lane", "HiSeq 2000 Flowcell", VesselGeometry.FLOWCELL1x8,"Illumina HiSeq 2000", "^\\w{9}$",
-                "HiSeq"),
-        HiSeq2500Flowcell("Flowcell2Lane", "HiSeq 2500 Flowcell", VesselGeometry.FLOWCELL1x2,"Illumina HiSeq 2500", "^\\w+ADXX$",
-                "HiSeq"),
-        OtherFlowcell("FlowcellUnknown", "Unknown Flowcell", VesselGeometry.FLOWCELL1x2,"Unknown Model", ".*",
+        MiSeqFlowcell("Flowcell1Lane", "MiSeq Flowcell", VesselGeometry.FLOWCELL1x1, "Illumina MiSeq", "^A\\w{4}$",
+                "MiSeq", CreateFields.IssueType.MISEQ),
+        HiSeqFlowcell("Flowcell8Lane", "HiSeq 2000 Flowcell", VesselGeometry.FLOWCELL1x8, "Illumina HiSeq 2000",
+                "^\\w{9}$", "HiSeq", CreateFields.IssueType.FLOWCELL),
+        HiSeq2500Flowcell("Flowcell2Lane", "HiSeq 2500 Flowcell", VesselGeometry.FLOWCELL1x2, "Illumina HiSeq 2500",
+                "^\\w+ADXX$", "HiSeq", CreateFields.IssueType.FLOWCELL),
+        OtherFlowcell("FlowcellUnknown", "Unknown Flowcell", VesselGeometry.FLOWCELL1x2, "Unknown Model", ".*", null,
                 null);
 
         /**
@@ -73,6 +74,10 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
          */
         private final String displayName;
 
+        /**
+         * In the lab, the barcodes of the different flowcell types have known format. If we don't know what type
+         * of flowcell we are dealing with, we can infer it with by matching it's barcode with a regular expression.
+         */
         private final Pattern flowcellTypeRegex;
 
         private final VesselGeometry vesselGeometry;
@@ -84,20 +89,29 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
         private  String sequencingStationName;
 
         /**
+         * When creating a FCT, different technologies use different JIRA issue types.
+         */
+        private final CreateFields.IssueType issueType;
+
+        /**
          * Creates a FlowcellType with an automation name, display name, and geometry.
          *
-         * @param automationName    the name that will be supplied by automation scripts
-         * @param displayName       the name that will be supplied by automation scripts
-         * @param vesselGeometry    the vessel geometry
-         * @param sequencingStationName
+         * @param automationName    The name that will be supplied by automation scripts
+         * @param displayName       The name that will be supplied by automation scripts
+         * @param vesselGeometry    The vessel geometry
+         * @param model             The sequencer model (think vendor/make/model).
+         * @param flowcellTypeRegex The pattern to used to match the barcode to the flowcell type
+         * @param sequencingStationName The sequencing station used when the flowcell was sequenced.
+         * @param issueType         The Jira IssueType used when creating FCT tickets.
          */
         FlowcellType(String automationName, String displayName, VesselGeometry vesselGeometry, String model,
-                     String flowcellTypeRegex, String sequencingStationName) {
+                     String flowcellTypeRegex, String sequencingStationName, CreateFields.IssueType issueType) {
             this.automationName = automationName;
             this.displayName = displayName;
             this.vesselGeometry = vesselGeometry;
             this.model = model;
             this.sequencingStationName = sequencingStationName;
+            this.issueType = issueType;
             this.flowcellTypeRegex = Pattern.compile(flowcellTypeRegex);
         }
 
@@ -155,6 +169,10 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
             return flowcellTypeRegex;
         }
 
+        public CreateFields.IssueType getIssueType() {
+            return issueType;
+        }
+
         /**
          * Try to figure out what kind of flowcell it is based on barcode:
          * 2500's end in ADXX
@@ -163,7 +181,7 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
          *
          * @param barcode Barcode to test
          *
-         * @return The FlowcellType, if found or fall back to HiSeqFlowcell
+         * @return The FlowcellType.
          */
         public static FlowcellType getTypeForBarcode(@Nonnull String barcode) {
             // The order that these are evaluated is important which is why there are a
@@ -179,6 +197,10 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
             } else {
                 throw new RuntimeException("You seem to have found a FlowcellType that I don't know about.");
             }
+        }
+
+        public static CreateFields.IssueType getIssueTypeByAutomationName(String automationName) {
+            return mapAutomationNameToType.get(automationName).issueType;
         }
     }
 

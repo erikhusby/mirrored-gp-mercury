@@ -35,10 +35,10 @@ import java.util.Set;
 public class CreateFCTActionBean extends CoreActionBean {
     private static String VIEW_PAGE = "/workflow/create_fct.jsp";
     public static final String LOAD_ACTION = "load";
-    public static final List<String> FLOWCELL_TYPES =
-            Arrays.asList(IlluminaFlowcell.FlowcellType.MiSeqFlowcell.getDisplayName(),
-                    IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell.getDisplayName(),
-                    IlluminaFlowcell.FlowcellType.HiSeqFlowcell.getDisplayName());
+    public static final List<IlluminaFlowcell.FlowcellType> FLOWCELL_TYPES =
+            Arrays.asList(IlluminaFlowcell.FlowcellType.MiSeqFlowcell,
+                    IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell,
+                    IlluminaFlowcell.FlowcellType.HiSeqFlowcell);
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -68,13 +68,13 @@ public class CreateFCTActionBean extends CoreActionBean {
 
     private List<LabBatch> createdBatches;
 
-    private String selectedType;
+    private IlluminaFlowcell.FlowcellType selectedType;
 
-    public String getSelectedType() {
+    public IlluminaFlowcell.FlowcellType getSelectedType() {
         return selectedType;
     }
 
-    public void setSelectedType(String selectedType) {
+    public void setSelectedType(IlluminaFlowcell.FlowcellType selectedType) {
         this.selectedType = selectedType;
     }
 
@@ -181,20 +181,12 @@ public class CreateFCTActionBean extends CoreActionBean {
         createdBatches = new ArrayList<>();
         for (String denatureTubeBarcode : selectedVesselLabels) {
             Set<LabVessel> vesselSet = new HashSet<>(labVesselDao.findByListIdentifiers(selectedVesselLabels));
-            //create a new FCT ticket for every two lanes requested.
-            int lanesPerFlowcell = 1;
-            CreateFields.IssueType issueType = CreateFields.IssueType.FLOWCELL;;
+
             LabBatch.LabBatchType batchType = LabBatch.LabBatchType.FCT;
-            if (selectedType.equals(IlluminaFlowcell.FlowcellType.HiSeqFlowcell.getDisplayName())) {
-                lanesPerFlowcell = IlluminaFlowcell.FlowcellType.HiSeqFlowcell.getVesselGeometry().getVesselPositions().length;
-            }
-            if (selectedType.equals(IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell.getDisplayName())) {
-                lanesPerFlowcell = IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell.getVesselGeometry().getVesselPositions().length;
-            }
-            if (selectedType.equals(IlluminaFlowcell.FlowcellType.MiSeqFlowcell.getDisplayName())) {
-                lanesPerFlowcell = IlluminaFlowcell.FlowcellType.MiSeqFlowcell.getVesselGeometry().getVesselPositions().length;
+            int lanesPerFlowcell = selectedType.getVesselGeometry().getVesselPositions().length;
+            CreateFields.IssueType issueType = selectedType.getIssueType();
+            if (selectedType == IlluminaFlowcell.FlowcellType.MiSeqFlowcell) {
                 batchType = LabBatch.LabBatchType.MISEQ;
-                issueType = CreateFields.IssueType.MISEQ;
             }
             for (int i = 0; i < numberOfLanes; i += lanesPerFlowcell) {
                 LabBatch batch =
@@ -227,7 +219,7 @@ public class CreateFCTActionBean extends CoreActionBean {
         }
     }
 
-    public List<String> getFlowcellTypes() {
+    public List<IlluminaFlowcell.FlowcellType> getFlowcellTypes() {
         return FLOWCELL_TYPES;
     }
 }
